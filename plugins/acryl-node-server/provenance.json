@@ -1,0 +1,251 @@
+{
+  "commit": "4b47a0d8a5c12ed69a9f8493df69918f62fb61c0",
+  "directories": [
+    {
+      "ours": "src/adapter",
+      "upstream": "src"
+    },
+    {
+      "ours": "tests/adapter",
+      "upstream": "test"
+    }
+  ],
+  "imports": {
+    "": "acryl-router",
+    "/ws": "acryl-router/helpers",
+    "/conninfo": "acryl-router/helpers",
+    "/streaming": "acryl-router/helpers",
+    "/utils/mime": "acryl-router/helpers",
+    "/basic-auth": "acryl-router/middleware",
+    "/body-limit": "acryl-router/middleware",
+    "/compress": "acryl-router/middleware",
+    "/etag": "acryl-router/middleware",
+    "/powered-by": "acryl-router/middleware"
+  },
+  "files": {
+    "src/adapter/conninfo.ts": {
+      "upstreamSha256": "5b1950418ef95d6cd5ea41be22568dc65c5fde447e93c49b90a9b706bd437d32",
+      "sha256": "33b005d1ba27af208c254391343a97d8442971d3a7898965f1328faae802ca64"
+    },
+    "src/adapter/early-hints.ts": {
+      "upstreamSha256": "9bf6fed204a36ad82b708a11f7d5a41de0643caf53119e5568191b9605eccb61",
+      "sha256": "2d7ae68d42b3795c2ebaf9bc89f393d2717b360434e7ec726e3aba5f4d66e668"
+    },
+    "src/adapter/error.ts": {
+      "upstreamSha256": "e205d90b3d02f42eeecbe5ebc640fbc616e29fb42c28d355d17cba6af527694f",
+      "sha256": "e205d90b3d02f42eeecbe5ebc640fbc616e29fb42c28d355d17cba6af527694f"
+    },
+    "src/adapter/headers.ts": {
+      "upstreamSha256": "6cb4777ef5343c38be3705ec5e36451abb91193938e218305af6b8c71d7fd5a9",
+      "sha256": "6cb4777ef5343c38be3705ec5e36451abb91193938e218305af6b8c71d7fd5a9"
+    },
+    "src/adapter/index.ts": {
+      "upstreamSha256": "4d3f75b40bd1aa30fe2df890506fc92b304211af170152cb46c2f7a5d49d4fc8",
+      "sha256": "09ca4a9e68e4475f542f543322c0d3b1d4113236de358fed8fa4b998bd78b9a3"
+    },
+    "src/adapter/listener.ts": {
+      "upstreamSha256": "f3efe9d14679ed43cf055fb9b85cdb29fda4d13e8808eafc778accbc671106ee",
+      "sha256": "229a56c3915ae3994c2766f902ccb012e0462220e5e52e49f6a3d97a5f67b024",
+      "deviation": "Each writeHead call names ServerResponse: under Node 22 types the ServerResponse | Http2ServerResponse union is not callable (type-only; same runtime code)."
+    },
+    "src/adapter/request.ts": {
+      "upstreamSha256": "26644541d3cfa9a2dc3fc94fcfffe73feefb720b52dae6b0905cd1ef93523261",
+      "sha256": "7a7c605fafc9ddd4ec97e339d181e842b18cd02b9365c50134c3c6ce2b4026be"
+    },
+    "src/adapter/response.ts": {
+      "upstreamSha256": "24d52364b21773acee188bef6a8ed0cd58c2a6fe0ec78cd3440b111e2cca1aa2",
+      "sha256": "24d52364b21773acee188bef6a8ed0cd58c2a6fe0ec78cd3440b111e2cca1aa2"
+    },
+    "src/adapter/serve-static.ts": {
+      "upstreamSha256": "8e143c32afc1092fb74020890cc0432a13128c0474374d713bf7c6f296cddd03",
+      "sha256": "e0a58fe307075813336f5d7e6544b8ba9c1fed415dc5ee0f6b192a8ef649cd72"
+    },
+    "src/adapter/server.ts": {
+      "upstreamSha256": "d9cde30a3e02b8ea1be4461bb13f9b486c750542564d9bd8c2def3d6e93e52ec",
+      "sha256": "2ea21c3646da840554cb6a2783d650a3448cd62ca4c6ce4cbfbafe3ed6626a3a"
+    },
+    "src/adapter/types.ts": {
+      "upstreamSha256": "216c3a940fa27a28c98a0768e3d22112a6c252794eaac110ff32823dd3b2cea8",
+      "sha256": "dd8f92eea0290d3359700c27ca2a3a8c061946a97f474e83b9c7a19f2fd6bb87"
+    },
+    "src/adapter/url.ts": {
+      "upstreamSha256": "0e94a815326023047282daf26f02ff5181ff8d2778fc3357f663346e17fdea10",
+      "sha256": "b92d178a1d2883a1b2bf61b075e8fe3c1816b9c46cb624f0d823515b5f88e4e9"
+    },
+    "src/adapter/utils.ts": {
+      "upstreamSha256": "9b86a115a971464c59c54a012eed313a5b788899dbeee14d462f65ede1da75f1",
+      "sha256": "9b86a115a971464c59c54a012eed313a5b788899dbeee14d462f65ede1da75f1"
+    },
+    "src/adapter/utils/response.ts": {
+      "upstreamSha256": "3c78a5f2d20481a0c28f3e66cd391a937eb5139a12635f7b4d5230c6deb27635",
+      "sha256": "16f3b37720729a9c1a0d9d8d9283bede5dfbb7d838f490461118bdb9ccddac41"
+    },
+    "src/adapter/utils/response/constants.ts": {
+      "upstreamSha256": "28c3b72f95a4afdad89af61782060e63959720dc14b2448ebd962529ec393980",
+      "sha256": "dc85a5b15c3de3c2776082a241070bb4cd1a8ad32b3a6d07e8b5f32c71ed37fd"
+    },
+    "src/adapter/utils/stream.ts": {
+      "upstreamSha256": "106a155dc353fc70808d3b1d3372a454be97e09d600023845bacd1fe64b1bec8",
+      "sha256": "106a155dc353fc70808d3b1d3372a454be97e09d600023845bacd1fe64b1bec8"
+    },
+    "src/adapter/websocket-types.ts": {
+      "upstreamSha256": "b6d2938c85d4f9d5e12fa98e40c685a5009b050239c7174641573d6c3f5264e0",
+      "sha256": "c209a4493ddeb13cb182860b5fceebd0d18f97040b17c09f95f207e6153a4297"
+    },
+    "src/adapter/websocket.ts": {
+      "upstreamSha256": "b123fe881c0556aecb67c9146da54967355c82c33a68d94bcfa058b68eb42952",
+      "sha256": "117075484c4f708f7be62617ab6415b5fa75c129f7b8e8d0b4e62aa5b3fd18ef",
+      "deviation": "The WebSocket context literal is typed as the class's public shape and asserted once: the core class has a private field a literal cannot carry (type-only)."
+    },
+    "tests/adapter/app.ts": {
+      "upstreamSha256": "1da4317b168efa628c53ab77eafcbbc59fb55b58f6cf12dfb5bd536327469ceb",
+      "sha256": "6133cc2dc85e419df11b7254e6258aa8973bf7a9f7d8ee53b8ded1542692fbbe"
+    },
+    "tests/adapter/assets/.static/plain.txt": {
+      "upstreamSha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc",
+      "sha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc"
+    },
+    "tests/adapter/assets/favicon.ico": {
+      "upstreamSha256": "8a253ca000b45eb1a5211c88522b16922c15d178f962a8a3c759efcf40c8706c",
+      "sha256": "8a253ca000b45eb1a5211c88522b16922c15d178f962a8a3c759efcf40c8706c"
+    },
+    "tests/adapter/assets/secret.txt": {
+      "upstreamSha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b",
+      "sha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
+    },
+    "tests/adapter/assets/static-with-context-path/plain.txt": {
+      "upstreamSha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc",
+      "sha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc"
+    },
+    "tests/adapter/assets/static-with-precompressed/hello.bin": {
+      "upstreamSha256": "2f531795c06ca2f68b1fa2dc7160af3e7b717ffaa95166257fbcc84ec2685733",
+      "sha256": "2f531795c06ca2f68b1fa2dc7160af3e7b717ffaa95166257fbcc84ec2685733"
+    },
+    "tests/adapter/assets/static-with-precompressed/hello.bin.br": {
+      "upstreamSha256": "abee649e51d54d29de2c8a7d980c251bffe1834ae7b3ee0fee26ef9c2e68079a",
+      "sha256": "abee649e51d54d29de2c8a7d980c251bffe1834ae7b3ee0fee26ef9c2e68079a"
+    },
+    "tests/adapter/assets/static-with-precompressed/hello.txt": {
+      "upstreamSha256": "2f531795c06ca2f68b1fa2dc7160af3e7b717ffaa95166257fbcc84ec2685733",
+      "sha256": "2f531795c06ca2f68b1fa2dc7160af3e7b717ffaa95166257fbcc84ec2685733"
+    },
+    "tests/adapter/assets/static-with-precompressed/hello.txt.br": {
+      "upstreamSha256": "abee649e51d54d29de2c8a7d980c251bffe1834ae7b3ee0fee26ef9c2e68079a",
+      "sha256": "abee649e51d54d29de2c8a7d980c251bffe1834ae7b3ee0fee26ef9c2e68079a"
+    },
+    "tests/adapter/assets/static-with-precompressed/hello.txt.zst": {
+      "upstreamSha256": "c01a84c7d5ce1557c7354a512a6765b7e37a61fb5328c1a3cbbc3e2584a9eacd",
+      "sha256": "c01a84c7d5ce1557c7354a512a6765b7e37a61fb5328c1a3cbbc3e2584a9eacd"
+    },
+    "tests/adapter/assets/static/acryl.html": {
+      "upstreamSha256": "5c1a548b4ad0047a3bd18fd1d2bd4d87877a61cce3bc210cf1ea60539b47b63a",
+      "sha256": "b7260524801b0b671a0396684133c6b9d121661b5b1d86083d4bb37fad30482b"
+    },
+    "tests/adapter/assets/static/admin/secret.txt": {
+      "upstreamSha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b",
+      "sha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b"
+    },
+    "tests/adapter/assets/static/data.json": {
+      "upstreamSha256": "562d80e3589f1dd35e8885787849f8f373128132ec39e8029741f08d10c988a6",
+      "sha256": "562d80e3589f1dd35e8885787849f8f373128132ec39e8029741f08d10c988a6"
+    },
+    "tests/adapter/assets/static/extensionless": {
+      "upstreamSha256": "369d889967f4f5afd660c77beb095f568acb0667513f2360a5eea95da39dc8dc",
+      "sha256": "369d889967f4f5afd660c77beb095f568acb0667513f2360a5eea95da39dc8dc"
+    },
+    "tests/adapter/assets/static/foo..bar.txt": {
+      "upstreamSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tests/adapter/assets/static/index.html": {
+      "upstreamSha256": "e17b200bd058610fa0f4ad603b8923818c984000fae1ee3810015289ae81ae9f",
+      "sha256": "a53360e718671bb93d9d4c6ef333e90e1a4efca6417c70fe8d13338c12a19f8b"
+    },
+    "tests/adapter/assets/static/plain.txt": {
+      "upstreamSha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc",
+      "sha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc"
+    },
+    "tests/adapter/conninfo.test.ts": {
+      "upstreamSha256": "e937068e54d320762bbe56a0877cde204e06f5f9d5f4651b76d443e69b8bbf06",
+      "sha256": "994047cf534ba74cac741ee267417fc658faa0a0522ecb69c1396f65f9572dc5"
+    },
+    "tests/adapter/content-length.test.ts": {
+      "upstreamSha256": "f9e4fffa38d93158d5d7907380156e145da40203c8e906463597970ec2df984e",
+      "sha256": "ce5c57de6587302198213f8c1f7667382eab1e6c80f70f55f539438017ea74a7"
+    },
+    "tests/adapter/early-hints.test.ts": {
+      "upstreamSha256": "b18b16ae7cb4589ee18c09af5ddb64686dcb34a0c0fc787e7cac8afbb01de32b",
+      "sha256": "d257e7bf3978ae88dbaf911e60e7154787951faeddb80147decfc4fe81669f30"
+    },
+    "tests/adapter/fixtures/keys/agent1-cert.pem": {
+      "upstreamSha256": "5968cc95396f7a49d0fccaee6cf2c6b8a2f66b907efa21531c4c98d20962783c",
+      "sha256": "5968cc95396f7a49d0fccaee6cf2c6b8a2f66b907efa21531c4c98d20962783c"
+    },
+    "tests/adapter/fixtures/keys/agent1-key.pem": {
+      "upstreamSha256": "2b75ca8377f0963f5ce0d47a416b9d40de09dbd6e128ffe6e00af0e52be0eda9",
+      "sha256": "2b75ca8377f0963f5ce0d47a416b9d40de09dbd6e128ffe6e00af0e52be0eda9"
+    },
+    "tests/adapter/headers.test.ts": {
+      "upstreamSha256": "ea27b52220911c68bf4a4c77e46645ecc42a0a7a3e60d9fc6f64d0e16875483d",
+      "sha256": "192a85ad65258e37b64749ae360b2c963a062a6a63fecc4b28f31595fada945b"
+    },
+    "tests/adapter/helpers/request.ts": {
+      "upstreamSha256": "a3361fcd19bd9afdc300be9f020054b0757d33cbb2ce12a9e2ea70ebe51c8b67",
+      "sha256": "01baaf4aebe3ca5da05f3d381678fdbc467d43f4e906a4f96b0eca0cce3db625"
+    },
+    "tests/adapter/listener.test.ts": {
+      "upstreamSha256": "ddc764f90a1cd536782e9ac081116fe7eacaf2369b978327e6d02e625b255379",
+      "sha256": "17f173d3b5f730bbf5213f414a0873bdae0d2abdbfc8755cc3624961bc9d4839"
+    },
+    "tests/adapter/request-client-disconnect.test.ts": {
+      "upstreamSha256": "0cd02a7695b8f927359f21af91da169a8c14a2253c501735492135af1852c96c",
+      "sha256": "376557861586b2c2f9b82d0fe148e3c92ec996b886b40b60212555f44366c59d"
+    },
+    "tests/adapter/request.test.ts": {
+      "upstreamSha256": "c8fc33a42119079fe21e494080f8d47ede0413888102bb53948967f6414776f2",
+      "sha256": "8c4c47b4170b3039d085e2294ccad3490bcd45cd6f05ee02809f2fb0693415e8"
+    },
+    "tests/adapter/response.test.ts": {
+      "upstreamSha256": "e2444b9f612b4f4ed48517b118d91ba9b802e5918a5b1afa13176de93dd921b9",
+      "sha256": "7b75a06cb09bb6539fe985bca1537330da4feda0ee15c422c20a8b8b5e987e96"
+    },
+    "tests/adapter/serve-static.test.ts": {
+      "upstreamSha256": "6db7e594caea788e534f2a69183bf78afb966d7d042a60835d8fa369e27215af",
+      "sha256": "7dc373250a84fdd6aaf9a991f055b8dbe35f62d1be79d6c958ad6786a2d5c517",
+      "deviation": "Two path forms the directory rule cannot map (a path regex and a path.sep join) name tests/adapter/assets."
+    },
+    "tests/adapter/server-socket.test.ts": {
+      "upstreamSha256": "a463a509dfc73ef5ecb25e27e45069f9f37090613c35893b8305eb4353e40353",
+      "sha256": "4b287f764465721dd3918aca3ec762c56793f7ddd796ea03ab4db3b9b946e3cb"
+    },
+    "tests/adapter/server.test.ts": {
+      "upstreamSha256": "5d268474b4d8c887cea01e7d752942da60fbc3a7749f02c4a37c8ad80c9900f7",
+      "sha256": "f8decfd6f66ec8c621648d1d088fddca191a94227177093d9d4f7b10067116b3",
+      "deviation": "The renamed body 'Hello App!' is 10 bytes: its content-length and etag expectations are recomputed; x-powered-by expects this framework's default, ACRYL."
+    },
+    "tests/adapter/setup.ts": {
+      "upstreamSha256": "8a6d290d6676db280ef22fffc4d7847f768cbadcf445391213273b970bd6d6af",
+      "sha256": "8a6d290d6676db280ef22fffc4d7847f768cbadcf445391213273b970bd6d6af"
+    },
+    "tests/adapter/url.test.ts": {
+      "upstreamSha256": "3c54c2e8155670b6c9d19d8ebc195cfbc45eec572c69091be2fbb1748ff8f862",
+      "sha256": "0bd97fab04ca70ca8baa29e1406243f7ce929c48f6c19b7928172bd9f530ea9e"
+    },
+    "tests/adapter/utils.test.ts": {
+      "upstreamSha256": "48b4ad1cadc33c778c30499d4e951b8fefc1ec1919084c145d2d8fe9f9119302",
+      "sha256": "5a3cc9e76fe9d56d6efe9f9bf4a34f861b16478ba0a8eba0034241cbbfc5ffca"
+    },
+    "tests/adapter/utils/response.test.ts": {
+      "upstreamSha256": "4583acce079fce3c9163e886fa9645da5bd52df73e850785076b98ab091bd45d",
+      "sha256": "3e87331c1c1fc32f0d4f3ca6f5c31a71060fd3afc319f21d8f501e4aafa5fdbb"
+    },
+    "tests/adapter/utils/stream.test.ts": {
+      "upstreamSha256": "e57b409bb9d01cabd75bfb924aa072cdfaee12fbcd5364b0eca45d8d0db2d8c3",
+      "sha256": "0a838b5107fd9f24b42eb23e97b87dafb5fd4cd81e4df3a99b285ef1ab99ca82"
+    },
+    "tests/adapter/websocket.test.ts": {
+      "upstreamSha256": "8dd970d72565d8d1670583d11b4037eecebed8bc470186562fd1dedc02a4c939",
+      "sha256": "7b5908c1d76bb2396270a91c0c3ed9ebdcc19406ff28a6b9284e052d7918ae70"
+    }
+  }
+}

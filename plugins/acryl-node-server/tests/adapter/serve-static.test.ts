@@ -1,0 +1,849 @@
+import { App } from 'acryl-router'
+import type * as fs from 'node:fs'
+import {
+  chmodSync,
+  createReadStream,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { serveStatic } from '../../src/adapter/serve-static.ts'
+import { createAdaptorServer } from '../../src/adapter/server.ts'
+import { requestServer } from './helpers/request.ts'
+
+vi.mock('node:fs', async (importOriginal) => {
+  const originalFs = await importOriginal<typeof fs>()
+  return {
+    ...originalFs,
+    statSync: vi.fn(originalFs.statSync),
+    createReadStream: vi.fn(originalFs.createReadStream),
+  }
+})
+
+describe('Serve Static Middleware', () => {
+  const app = new App<{
+    Variables: {
+      path: string
+    }
+  }>()
+
+  app.use(
+    '/static/*',
+    serveStatic({
+      root: './tests/adapter/assets',
+      onFound: (path, c) => {
+        c.header('X-Custom', `Found the file at ${path}`)
+        if (c.req.query('type')) {
+          c.header('Content-Type', c.req.query('type'))
+        }
+      },
+    })
+  )
+  app.use('/favicon.ico', serveStatic({ path: './tests/adapter/assets/favicon.ico' }))
+  app.use(
+    '/dot-static/*',
+    serveStatic({
+      root: './tests/adapter/assets',
+      rewriteRequestPath: (path) => path.replace(/^\/dot-static/, '/.static'),
+    })
+  )
+
+  app.use(
+    '/static-with-context-path-route/*',
+    async (c, next) => {
+      c.set('path', '/static-with-context-path')
+      await next()
+    },
+    serveStatic({
+      root: './tests/adapter/assets',
+      rewriteRequestPath: (path, c) =>
+        path.replace('static-with-context-path-route', c.get('path')),
+    })
+  )
+
+  let notFoundMessage = ''
+  app.use(
+    '/on-not-found/*',
+    serveStatic({
+      root: './not-found',
+      onNotFound: (path, c) => {
+        notFoundMessage = `${path} is not found, request to ${c.req.path}`
+      },
+    })
+  )
+
+  app.use(
+    '/static-with-precompressed/*',
+    serveStatic({
+      root: './tests/adapter/assets',
+      precompressed: true,
+    })
+  )
+
+  const server = createAdaptorServer(app)
+
+  describe('HTTP methods', () => {
+    beforeEach(() => {
+      vi.mocked(statSync).mockClear()
+      vi.mocked(createReadStream).mockClear()
+    })
+
+    it.each(['POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'PROPFIND'])(
+      'Should pass %s requests to the next handler without accessing files',
+      async (method) => {
+        const rewriteRequestPath = vi.fn((path: string) => path)
+        const onFound = vi.fn()
+        const onNotFound = vi.fn()
+        const app = new App().use(
+          '/static/*',
+          serveStatic({ root: './tests/adapter/assets', rewriteRequestPath, onFound, onNotFound })
+        )
+        app.on(method, '/static/plain.txt', (c) => c.text('Handled downstream', 202))
+
+        const res = await requestServer(createAdaptorServer(app), {
+          method,
+          path: '/static/plain.txt',
+        })
+
+        expect(res.status).toBe(202)
+        expect(await res.text()).toBe('Handled downstream')
+        expect(rewriteRequestPath).not.toHaveBeenCalled()
+        expect(statSync).not.toHaveBeenCalled()
+        expect(createReadStream).not.toHaveBeenCalled()
+        expect(onFound).not.toHaveBeenCalled()
+        expect(onNotFound).not.toHaveBeenCalled()
+      }
+    )
+
+    it.each(['/static/plain.txt', '/static/does-not-exist.html'])(
+      'Should return 404 for an unhandled POST request regardless of file existence - %s',
+      async (path) => {
+        const res = await requestServer(server, { method: 'POST', path })
+
+        expect(res.status).toBe(404)
+        expect(await res.text()).toBe('404 Not Found')
+        expect(statSync).not.toHaveBeenCalled()
+        expect(createReadStream).not.toHaveBeenCalled()
+      }
+    )
+  })
+
+  it('Should return index.html', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/' })
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe('<h1>Hello App</h1>')
+    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
+    expect(res.headers.get('x-custom')).toMatch(
+      /Found the file at tests[\/\\]adapter[\/\\]assets[\/\\]static[\/\\]index\.html$/
+    )
+  })
+
+  it('Should return acryl.html', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/acryl.html' })
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe('<h1>This is App.html</h1>')
+    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
+  })
+
+  it('Should return correct headers for icons', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/favicon.ico' })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/x-icon')
+  })
+
+  it('Should return correct headers and data for json files', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/data.json' })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      id: 1,
+      name: 'Foo Bar',
+      flag: true,
+    })
+    expect(res.headers.get('content-type')).toBe('application/json')
+  })
+
+  it('Should return correct headers and data for text', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/plain.txt' })
+    const stats = statSync(path.join(__dirname, 'assets', 'static', 'plain.txt'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(res.headers.get('last-modified')).toBe(stats.mtime.toUTCString())
+    expect(await res.text()).toBe('This is plain.txt')
+  })
+
+  it('Should return 404 for non-existent files', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/does-not-exist.html',
+    })
+    expect(res.status).toBe(404)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=UTF-8')
+    expect(await res.text()).toBe('404 Not Found')
+  })
+
+  it('Should return 200 with rewriteRequestPath', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/dot-static/plain.txt' })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(await res.text()).toBe('This is plain.txt')
+  })
+
+  it('Should return 404 with rewriteRequestPath', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/dot-static/does-no-exists.txt',
+    })
+    expect(res.status).toBe(404)
+  })
+
+  it('Should return 200 with rewriteRequestPath with the context', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static-with-context-path-route/plain.txt',
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(await res.text()).toBe('This is plain.txt')
+  })
+
+  it('Should return 200 response to HEAD request', async () => {
+    const res = await requestServer(server, { method: 'HEAD', path: '/static/plain.txt' })
+    const stats = statSync(path.join(__dirname, 'assets', 'static', 'plain.txt'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(res.headers.get('content-length')).toBe('17')
+    expect(res.headers.get('last-modified')).toBe(stats.mtime.toUTCString())
+    expect(res.body).toBeNull()
+  })
+
+  it('Should return correct headers and data with range headers', async () => {
+    let res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: '0-9' },
+    })
+    const stats = statSync(path.join(__dirname, 'assets', 'static', 'plain.txt'))
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(res.headers.get('content-length')).toBe('10')
+    expect(res.headers.get('content-range')).toBe('bytes 0-9/17')
+    expect(res.headers.get('last-modified')).toBe(stats.mtime.toUTCString())
+    expect(res.headers.get('date')).not.toBe(stats.mtime.toUTCString())
+    expect(res.headers.get('date')).not.toBe(stats.birthtime.toUTCString())
+    let text = await res.text()
+    expect(text.length).toBe(10)
+    expect(text).toBe('This is pl')
+
+    res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: '10-16' },
+    })
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(res.headers.get('content-length')).toBe('7')
+    expect(res.headers.get('content-range')).toBe('bytes 10-16/17')
+    text = await res.text()
+    expect(text.length).toBe(7)
+    expect(text).toBe('ain.txt')
+  })
+
+  it('Should return correct headers and data if client range exceeds the data size', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: '0-20' },
+    })
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(res.headers.get('content-length')).toBe('17')
+    expect(res.headers.get('content-range')).toBe('bytes 0-16/17')
+    const text = await res.text()
+    expect(text.length).toBe(17)
+    expect(text).toBe('This is plain.txt')
+  })
+
+  it('Should handle invalid range header gracefully without NaN error', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'hello' },
+    })
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-length')).toBe('17')
+    expect(res.headers.get('content-range')).toBe('bytes 0-16/17')
+  })
+
+  it('Should return the last N bytes for a suffix range', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=-5' },
+    })
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-length')).toBe('5')
+    expect(res.headers.get('content-range')).toBe('bytes 12-16/17')
+    expect(await res.text()).toBe('n.txt')
+  })
+
+  it('Should return the whole file for a suffix range exceeding the file size', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=-100' },
+    })
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-range')).toBe('bytes 0-16/17')
+    expect(await res.text()).toBe('This is plain.txt')
+  })
+
+  it('Should return exactly 1 byte for range bytes=0-0', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=0-0' },
+    })
+    expect(res.status).toBe(206)
+    expect(res.headers.get('content-length')).toBe('1')
+    expect(res.headers.get('content-range')).toBe('bytes 0-0/17')
+    expect(await res.text()).toBe('T')
+  })
+
+  it('Should return 416 when the range start is beyond the end of the file', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=100-200' },
+    })
+    expect(res.status).toBe(416)
+    expect(res.headers.get('content-range')).toBe('bytes */17')
+  })
+
+  it('Should return 416 when the range start is beyond the file size, even if the window is small', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=20-25' },
+    })
+    expect(res.status).toBe(416)
+    expect(res.headers.get('content-range')).toBe('bytes */17')
+  })
+
+  it('Should return 416 when the range start is after the range end', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=10-5' },
+    })
+    expect(res.status).toBe(416)
+    expect(res.headers.get('content-range')).toBe('bytes */17')
+  })
+
+  it('Should return 416 for a zero-length suffix range', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/plain.txt',
+      headers: { range: 'bytes=-0' },
+    })
+    expect(res.status).toBe(416)
+    expect(res.headers.get('content-range')).toBe('bytes */17')
+  })
+
+  it.each(['bytes=0-1x', 'bytes=x-1', 'bytes=0-1-2', 'bytes=-5-extra'])(
+    'Should treat a malformed range as the whole file: %s',
+    async (range) => {
+      const res = await requestServer(server, {
+        method: 'GET',
+        path: '/static/plain.txt',
+        headers: { range },
+      })
+      expect(res.status).toBe(206)
+      expect(res.headers.get('content-range')).toBe('bytes 0-16/17')
+      expect(await res.text()).toBe('This is plain.txt')
+    }
+  )
+
+  it('Should return 416 instead of crashing for a range request on an empty file', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/foo..bar.txt',
+      headers: { range: 'bytes=0-0' },
+    })
+    expect(res.status).toBe(416)
+    expect(res.headers.get('content-range')).toBe('bytes */0')
+  })
+
+  it('Should return 416 instead of crashing for a malformed range on an empty file', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/foo..bar.txt',
+      headers: { range: 'hello' },
+    })
+    expect(res.status).toBe(416)
+    expect(res.headers.get('content-range')).toBe('bytes */0')
+  })
+
+  it('Should handle the `onNotFound` option', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/on-not-found/foo.txt' })
+    expect(res.status).toBe(404)
+    expect(notFoundMessage).toMatch(
+      /not-found[\/\\]on-not-found[\/\\]foo\.txt is not found, request to \/on-not-found\/foo\.txt$/
+    )
+  })
+
+  it('Should handle the `onFound` option', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static/data.json?type=application/json;%20charset=utf-8',
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('application/json; charset=utf-8')
+  })
+
+  it('Should handle double dots in URL', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/../secret.txt' })
+    expect(res.status).toBe(404)
+  })
+
+  // Skip on Windows as symlink behavior is different
+  ;(process.platform === 'win32' ? it.skip : it)('Should follow symlinks', async () => {
+    const symlinkPath = path.join(__dirname, 'assets', 'static', 'symlink.html')
+    const symlinkTarget = path.join(__dirname, 'assets', 'static', 'index.html')
+    try {
+      // force: true so it doesn't throw if the symlink doesn't exist
+      rmSync(symlinkPath, { force: true })
+      symlinkSync(symlinkTarget, symlinkPath)
+
+      const res = await requestServer(server, { method: 'GET', path: '/static/symlink.html' })
+      expect(res.status).toBe(200)
+      expect(await res.text()).toBe('<h1>Hello App</h1>')
+    } finally {
+      rmSync(symlinkPath, { force: true })
+    }
+  })
+
+  it('Should handle URIError thrown while decoding URI component', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/%c0%afsecret.txt' })
+    expect(res.status).toBe(404)
+  })
+
+  it('Should handle an extension less files', async () => {
+    const res = await requestServer(server, { method: 'GET', path: '/static/extensionless' })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('application/octet-stream')
+    expect(await res.text()).toBe('Extensionless')
+  })
+
+  it('Should return a pre-compressed zstd response - /static-with-precompressed/hello.txt', async () => {
+    // Check if it returns a normal response
+    let res = await requestServer(server, {
+      method: 'GET',
+      path: '/static-with-precompressed/hello.txt',
+    })
+    let stats = statSync(path.join(__dirname, 'assets', 'static-with-precompressed', 'hello.txt'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-length')).toBe('20')
+    expect(res.headers.get('last-modified')).toBe(stats.mtime.toUTCString())
+    expect(await res.text()).toBe('Hello Not Compressed')
+
+    res = await requestServer(server, {
+      method: 'GET',
+      path: '/static-with-precompressed/hello.txt',
+      headers: { 'accept-encoding': 'zstd' },
+    })
+    stats = statSync(path.join(__dirname, 'assets', 'static-with-precompressed', 'hello.txt.zst'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-length')).toBe('21')
+    expect(res.headers.get('content-encoding')).toBe('zstd')
+    expect(res.headers.get('last-modified')).toBe(stats.mtime.toUTCString())
+    expect(res.headers.get('vary')).toBe('Accept-Encoding')
+    // the .zst asset is not really compressed, so the raw body can be asserted directly
+    expect(await res.text()).toBe('Hello zstd Compressed')
+  })
+
+  it('Should return a pre-compressed brotli response - /static-with-precompressed/hello.txt', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static-with-precompressed/hello.txt',
+      headers: { 'accept-encoding': 'wompwomp, gzip, br, deflate, zstd' },
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-length')).toBe('19')
+    expect(res.headers.get('content-encoding')).toBe('br')
+    expect(res.headers.get('vary')).toBe('Accept-Encoding')
+    // the .br asset is not really compressed, so the raw body can be asserted directly
+    expect(await res.text()).toBe('Hello br Compressed')
+  })
+
+  it('Should not return a pre-compressed response - /static-with-precompressed/hello.txt', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static-with-precompressed/hello.txt',
+      headers: { 'accept-encoding': 'wompwomp, unknown' },
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-encoding')).toBeNull()
+    expect(res.headers.get('vary')).toBeNull()
+    expect(await res.text()).toBe('Hello Not Compressed')
+  })
+
+  it('Should return a pre-compressed response for an octet-stream file - /static-with-precompressed/hello.bin', async () => {
+    const res = await requestServer(server, {
+      method: 'GET',
+      path: '/static-with-precompressed/hello.bin',
+      headers: { 'accept-encoding': 'gzip, br, zstd' },
+    })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('application/octet-stream')
+    expect(res.headers.get('content-length')).toBe('19')
+    expect(res.headers.get('content-encoding')).toBe('br')
+    expect(res.headers.get('vary')).toBe('Accept-Encoding')
+    // the .br asset is not really compressed, so the raw body can be asserted directly
+    expect(await res.text()).toBe('Hello br Compressed')
+  })
+
+  describe('Absolute path', () => {
+    const rootPaths = [
+      path.join(__dirname, 'assets'),
+      __dirname + path.sep + '..' + path.sep + 'adapter' + path.sep + 'assets',
+    ]
+    rootPaths.forEach((root) => {
+      describe(root, () => {
+        const app = new App()
+        const server = createAdaptorServer(app)
+        app.use('/static/*', serveStatic({ root }))
+        app.use('/favicon.ico', serveStatic({ path: root + path.sep + 'favicon.ico' }))
+
+        it('Should return index.html', async () => {
+          const res = await requestServer(server, { method: 'GET', path: '/static' })
+          expect(res.status).toBe(200)
+          expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
+          expect(await res.text()).toBe('<h1>Hello App</h1>')
+        })
+
+        it('Should return correct headers and data for text', async () => {
+          const res = await requestServer(server, { method: 'GET', path: '/static/plain.txt' })
+          expect(res.status).toBe(200)
+          expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+          expect(await res.text()).toBe('This is plain.txt')
+        })
+        it('Should return correct headers for icons', async () => {
+          const res = await requestServer(server, { method: 'GET', path: '/favicon.ico' })
+          expect(res.status).toBe(200)
+          expect(res.headers.get('content-type')).toBe('image/x-icon')
+        })
+      })
+    })
+  })
+
+  describe('Root and path combination tests', () => {
+    const rootPaths = [
+      path.join(__dirname, 'assets'),
+      path.join(__dirname, 'assets'),
+      __dirname + path.sep + '..' + path.sep + 'adapter' + path.sep + 'assets',
+    ]
+    const optionPaths = ['favicon.ico', '/favicon.ico']
+    rootPaths.forEach((root) => {
+      optionPaths.forEach((optionPath) => {
+        describe(`${root} + ${optionPath}`, () => {
+          const app = new App()
+          const server = createAdaptorServer(app)
+
+          app.use(
+            '/favicon.ico',
+            serveStatic({
+              root,
+              path: optionPath,
+            })
+          )
+
+          it('Should return 200 response if both root and path set', async () => {
+            const res = await requestServer(server, { method: 'GET', path: '/favicon.ico' })
+            expect(res.status).toBe(200)
+            expect(res.headers.get('content-type')).toBe('image/x-icon')
+          })
+        })
+      })
+    })
+  })
+
+  describe('Path traversal security tests', () => {
+    const app = new App()
+    const server = createAdaptorServer(app)
+    app.use('/static/*', serveStatic({ root: './tests/adapter/assets' }))
+
+    it('Should prevent path traversal attacks with double dots', async () => {
+      const res = await requestServer(server, { method: 'GET', path: '/static/../secret.txt' })
+      expect(res.status).toBe(404)
+    })
+
+    it('Should prevent path traversal attacks with multiple levels', async () => {
+      const res = await requestServer(server, {
+        method: 'GET',
+        path: '/static/../../package.json',
+      })
+      expect(res.status).toBe(404)
+    })
+
+    it('Should prevent path traversal attacks with mixed separators', async () => {
+      const res = await requestServer(server, {
+        method: 'GET',
+        path: '/static/..\\..\\package.json',
+      })
+      expect(res.status).toBe(404)
+    })
+
+    it('Should prevent path traversal attacks with encoded dots', async () => {
+      const res = await requestServer(server, {
+        method: 'GET',
+        path: '/static/%2e%2e%2fsecret.txt',
+      })
+      expect(res.status).toBe(404)
+    })
+
+    it('Should accept filename with double dots', async () => {
+      const res = await requestServer(server, { method: 'GET', path: '/static/foo..bar.txt' })
+      expect(res.status).toBe(200)
+    })
+  })
+
+  describe('Path mismatch security tests', () => {
+    const app = new App()
+    const server = createAdaptorServer(app)
+
+    app.use('/static/admin/*', async (c, next) => {
+      c.header('X-Authorized', 'true')
+      await next()
+    })
+
+    app.use('/static/*', serveStatic({ root: './tests/adapter/assets' }))
+
+    it('Should not allow bypass via path mismatch between middleware and serveStatic', async () => {
+      const res = await requestServer(server, { method: 'GET', path: '/static/admin/secret.txt' })
+      expect(res.headers.get('x-authorized')).toBe('true')
+      expect(await res.text()).toBe('secret')
+
+      const res2 = await requestServer(server, {
+        method: 'GET',
+        path: '/static/admin%2Fsecret.txt',
+      })
+      expect(res2.status).toBe(404)
+      expect(res2.headers.get('x-authorized')).toBeNull()
+      expect(await res2.text()).not.toBe('secret')
+
+      const res3 = await requestServer(server, {
+        method: 'GET',
+        path: '/static//admin/secret.txt',
+      })
+      expect(res3.status).toBe(404)
+
+      const res4 = await requestServer(server, {
+        method: 'GET',
+        path: '/static/admin%5Csecret.txt',
+      })
+      expect(res4.status).toBe(404)
+      expect(res4.headers.get('x-authorized')).toBeNull()
+      expect(await res4.text()).not.toBe('secret')
+    })
+  })
+
+  describe('Percent signs in request paths', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'node-server-serve-static-'))
+    const staticRoot = path.join(root, 'static')
+    for (const filePath of [
+      '100%.txt',
+      '100%/hello.txt',
+      '%2Fadmin/secret.txt',
+      'hello world.txt',
+      '炎.txt',
+    ]) {
+      const fullPath = path.join(staticRoot, filePath)
+      mkdirSync(path.dirname(fullPath), { recursive: true })
+      writeFileSync(fullPath, `Hello in static/${filePath}`)
+    }
+
+    afterAll(() => rmSync(root, { recursive: true, force: true }))
+
+    it.each([
+      ['/static/%E7%82%8E.txt', 'static/炎.txt'],
+      ['/static/hello%20world.txt', 'static/hello world.txt'],
+    ])('Should decode URI strings - %s', async (url, filePath) => {
+      const fileApp = new App().use('/static/*', serveStatic({ root }))
+      const res = await requestServer(createAdaptorServer(fileApp), {
+        method: 'GET',
+        path: url,
+      })
+      expect(res.status).toBe(200)
+      expect(res.headers.get('content-type')).toMatch(/^text\/plain/)
+      expect(await res.text()).toBe(`Hello in ${filePath}`)
+    })
+
+    it.each(['/static/100%25.txt', '/static/100%25/hello.txt', '/static/%2Fadmin/secret.txt'])(
+      'Should skip paths containing percent signs by default - %s',
+      async (url) => {
+        const onNotFound = vi.fn()
+        const rewriteRequestPath = vi.fn((filePath: string) => filePath)
+        const fileApp = new App().use(
+          '/static/*',
+          serveStatic({ root, onNotFound, rewriteRequestPath })
+        )
+
+        const res = await requestServer(createAdaptorServer(fileApp), { method: 'GET', path: url })
+
+        expect(res.status).toBe(404)
+        expect(rewriteRequestPath).not.toHaveBeenCalled()
+        expect(onNotFound).toHaveBeenCalledWith(url, expect.anything())
+      }
+    )
+
+    it.each([
+      ['/static/100%25.txt', 'static/100%.txt'],
+      ['/static/100%25/hello.txt', 'static/100%/hello.txt'],
+      ['/static/%2Fadmin/secret.txt', 'static/%2Fadmin/secret.txt'],
+    ])('Should allow percent signs when opted in - %s', async (url, filePath) => {
+      const fileApp = new App().use('/static/*', serveStatic({ root, allowPercentInPath: true }))
+
+      const res = await requestServer(createAdaptorServer(fileApp), { method: 'GET', path: url })
+
+      expect(res.status).toBe(200)
+      expect(await res.text()).toBe(`Hello in ${filePath}`)
+    })
+
+    it('Should not bypass authentication through a second decode', async () => {
+      const protectedApp = new App()
+      const rewriteRequestPath = vi.fn((filePath: string) => filePath)
+      protectedApp.use('/static/admin/*', async (c) => c.text('Unauthorized', 401))
+      protectedApp.use('/static/*', serveStatic({ root: './tests/adapter/assets', rewriteRequestPath }))
+      const protectedServer = createAdaptorServer(protectedApp)
+
+      for (const url of ['/static/admin/secret.txt', '/static/%61dmin/secret.txt']) {
+        const protectedRes = await requestServer(protectedServer, { method: 'GET', path: url })
+        expect(protectedRes.status).toBe(401)
+        expect(await protectedRes.text()).toBe('Unauthorized')
+      }
+
+      const res = await requestServer(protectedServer, {
+        method: 'GET',
+        path: '/static/%%36%31dmin/secret.txt',
+      })
+      expect(res.status).toBe(404)
+      expect(rewriteRequestPath).not.toHaveBeenCalled()
+      expect(await res.text()).not.toBe('secret')
+    })
+
+    it('Should pass the routed path and context to onNotFound, then continue', async () => {
+      const fileApp = new App()
+      let hookPath: string | undefined
+      let contextPath: string | undefined
+      fileApp.use(
+        '/static/*',
+        serveStatic({
+          root,
+          onNotFound: (requestPath, c) => {
+            hookPath = requestPath
+            contextPath = c.req.path
+          },
+        })
+      )
+      fileApp.get('/static/*', (c) => c.text('next handler', 202))
+
+      const res = await requestServer(createAdaptorServer(fileApp), {
+        method: 'GET',
+        path: '/static/100%25.txt',
+      })
+      expect(res.status).toBe(202)
+      expect(await res.text()).toBe('next handler')
+      expect(hookPath).toBe('/static/100%25.txt')
+      expect(contextPath).toBe(hookPath)
+    })
+
+    it.each(['/static/%2e%2e%5C100%.txt', '/static//100%.txt', '/static/%5C100%.txt'])(
+      'Should retain path validation when opted in: %s',
+      async (requestPath) => {
+        const fileApp = new App()
+        const rewriteRequestPath = vi.fn((requestPath: string) => requestPath)
+        const onNotFound = vi.fn()
+        fileApp.use(
+          '/static/*',
+          serveStatic({ root, allowPercentInPath: true, rewriteRequestPath, onNotFound })
+        )
+        const res = await requestServer(createAdaptorServer(fileApp), {
+          method: 'GET',
+          path: requestPath,
+        })
+        expect(res.status).toBe(404)
+        expect(rewriteRequestPath).not.toHaveBeenCalled()
+        expect(onNotFound).toHaveBeenCalledOnce()
+      }
+    )
+
+    it('Should preserve the fixed path option for percent filenames', async () => {
+      const fileApp = new App()
+      fileApp.use('/static/*', serveStatic({ root, path: 'static/100%.txt' }))
+      const res = await requestServer(createAdaptorServer(fileApp), {
+        method: 'GET',
+        path: '/static/100%25.txt',
+      })
+      expect(res.status).toBe(200)
+      expect(await res.text()).toBe('Hello in static/100%.txt')
+    })
+  })
+
+  describe('Stream error handling', () => {
+    const testFile = path.join(__dirname, 'assets', 'static', 'plain.txt')
+    console.log(testFile)
+    let originalMode: number
+
+    beforeEach(() => {
+      const stats = statSync(testFile)
+      originalMode = stats.mode
+      // Remove read permission to trigger stream error
+      chmodSync(testFile, 0o000)
+    })
+
+    afterEach(() => {
+      chmodSync(testFile, originalMode)
+    })
+
+    // Skip on Windows as chmod doesn't work for file permissions
+    ;(process.platform === 'win32' ? it.skip : it)(
+      'Should handle read permission errors gracefully',
+      async () => {
+        const app = new App()
+        app.use('/static/*', serveStatic({ root: './tests/adapter/assets' }))
+        const server = createAdaptorServer(app)
+        await expect(
+          requestServer(server, { method: 'GET', path: '/static/plain.txt' })
+        ).rejects.toThrow()
+      }
+    )
+  })
+})
+
+describe('Serve Static Middleware with wrong path', () => {
+  it('Should show an error when the path is wrong', async () => {
+    const logSpy = vi.spyOn(console, 'error')
+
+    const app = new App<{
+      Variables: {
+        path: string
+      }
+    }>()
+
+    app.use(
+      '*',
+      serveStatic({
+        root: './public',
+      })
+    )
+
+    expect(logSpy).toHaveBeenCalledWith(
+      "serveStatic: root path './public' is not found, are you sure it's correct?"
+    )
+  })
+})

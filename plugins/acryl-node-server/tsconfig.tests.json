@@ -5,7 +5,18 @@
     "noEmit": true,
     "declaration": false,
     "declarationDir": null,
-    "types": ["node"]
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "erasableSyntaxOnly": false,
+    "noImplicitOverride": false,
+    "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ]
 }

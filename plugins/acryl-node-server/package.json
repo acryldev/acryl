@@ -50,9 +50,12 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/cordis-plugin-loader": "1.0.5",
     "@types/node": "^22.20.0",
+    "@types/ws": "8.18.2",
+    "@whatwg-node/fetch": "0.9.23",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "ws": "8.21.3"
   },
   "acryl": {
     "schemaVersion": 1,
@@ -78,7 +81,6 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "acryl-router": "workspace:*",
-    "acryl-router-http": "workspace:*"
+    "acryl-router": "workspace:*"
   }
 }

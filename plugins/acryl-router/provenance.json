@@ -1,7 +1,20 @@
 {
   "commit": "5ca49b0720755c585c9a9835f0a479ceea36fb52",
-  "upstreamRoot": "src",
-  "directory": "src/core",
+  "directories": [
+    {
+      "ours": "src/core",
+      "upstream": "src"
+    }
+  ],
+  "omitted": {
+    "reason": "not ported yet; spec 047 lists when each comes",
+    "src/jsx": "the JSX renderer (after 0.4.0)",
+    "src/preset": "presets (after 0.4.0)",
+    "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
+    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
+    "src/helper (css, dev, proxy, ssg)": "after 0.4.0",
+    "src/middleware (cache, jsx-renderer, mount)": "after 0.4.0"
+  },
   "files": {
     "src/core/app-base.ts": {
       "upstreamSha256": "731d11ad849056b064b4b87c95b02820c539cee5cd50f6746a308f78f0258460",
@@ -771,14 +784,5 @@
       "upstreamSha256": "c6e14276bb29c19107075f0f029c6b0f762218c1774dec72ab2cd26732c85ee5",
       "sha256": "55dc85883d804e5ff5fd817ce44368be5780e4cb15fceabd26133215eea7bc6d"
     }
-  },
-  "omitted": {
-    "reason": "not ported yet; spec 047 lists when each comes",
-    "src/jsx": "the JSX renderer (after 0.4.0)",
-    "src/preset": "presets (after 0.4.0)",
-    "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
-    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
-    "src/helper (css, dev, proxy, ssg)": "after 0.4.0",
-    "src/middleware (cache, jsx-renderer, mount)": "after 0.4.0"
   }
 }

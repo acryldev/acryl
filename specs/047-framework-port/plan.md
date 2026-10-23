@@ -42,6 +42,16 @@ The record and the script never spell the upstream name: the script reads it fro
    from a plugin, 50 reload cycles back to baseline; the adapter suites (HTTP and in-process give identical answers, streams end on
    unload); every consumer's suite (Market, state, inspect, todo, starter, node-server); a real isolated boot of the IDE Blueprint.
 
+## The Node adapter (gate P5)
+
+`plugins/acryl-node-server/src/adapter/` is the upstream project's Node adapter, ported with its test suite (`tests/adapter/`, 503 tests)
+under the same provenance record and check (`plugins/acryl-node-server/provenance.json`; the upstream MIT notice is in that package's
+`LICENSE`). The `nodeServer` service builds its server with the ported `createAdaptorServer` and keeps what the plugin owned before: the port
+scan, the connection facts handed to `ctx.router.fetch`, and disposal that ends streams and frees the port. The platform's global `Request`
+and `Response` stay in place (the adapter's `overrideGlobalObjects: false`); the adapter's lightweight request is made a real one with the
+ported `Request` before the router sees it, so a client that goes away still aborts `c.req.raw.signal`. `serveStatic` is exported. The
+WebSocket upgrade needs the raw `incoming` in the handler's bindings, which the router does not pass; it is a later task.
+
 ## ACRYL additions kept
 
 - `loopbackOnly` middleware (Host must be loopback with the server's real port; a foreign or null Origin on a change is 403).
@@ -58,3 +68,12 @@ The record and the script never spell the upstream name: the script reads it fro
 - T005 Migrate `acryl-state`, `acryl-inspect`, the Market, `acryl-todo`, the starter. Done.
 - T006 Rewrite `docs/framework/` and `docs/acryl/FRAMEWORK.md` for the new API.
 - T007 Gates, a real isolated boot, commit, CI.
+- T008 Port the Node adapter and its suite into `acryl-node-server`, rebuild `nodeServer` on it (P5). Done.
+
+## After 0.4.0
+
+- T009 Port the proxy helper and the WebSocket adapters; pass the raw socket bindings through `router.fetch` so `upgradeWebSocket` works
+  under the router.
+- T010 Port jsx and jsx-renderer, ssg, css, the cache and mount middleware, and the dev helper, each with its tests.
+- T011 Port the remaining docs pages.
+- T012 Move the Host bridge in `acryl-router-http` onto the ported request listener, so one listener implementation serves both adapters.
