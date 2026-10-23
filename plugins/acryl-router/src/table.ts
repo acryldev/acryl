@@ -70,7 +70,12 @@ export class RouteTable {
     return false
   }
 
-  async dispatch(req: Request, signal: AbortSignal, connection: ConnectionInfo = {}): Promise<Response> {
+  async dispatch(
+    req: Request,
+    signal: AbortSignal,
+    connection: ConnectionInfo = {},
+    track: (task: Promise<unknown>) => void = () => undefined,
+  ): Promise<Response> {
     const parts = splitPath(new URL(req.url).pathname, this.options.trailingSlash)
     const method = req.method.toUpperCase()
 
@@ -99,7 +104,7 @@ export class RouteTable {
         ? () => new Response('Method Not Allowed', { status: 405, headers: { allow: [...allowed].sort().join(', ') } })
         : () => new Response('Not Found', { status: 404 })
 
-    const context = createContext(req, best?.params ?? {}, signal, connection)
+    const context = createContext(req, best?.params ?? {}, signal, connection, track)
     try {
       const response = await compose(chain, final)(context)
       return method === 'HEAD' ? new Response(null, { status: response.status, statusText: response.statusText, headers: response.headers }) : response

@@ -23,7 +23,7 @@ function root(): Context {
 }
 
 const provider = { name, apply }
-const config: Config = { trailingSlash: 'strict' }
+const config: Config = { trailingSlash: 'strict', disposeGraceMs: 2000 }
 
 async function mountRouter(): Promise<{ ctx: Context, router: Router }> {
   const ctx = root()
@@ -152,6 +152,46 @@ describe('acryl-router lifecycle through Cordis', () => {
     expect(await over.json()).toEqual({ remote: '127.0.0.1' })
     const inProcess = await router.fetch(new Request('http://acryl.test/who'))
     expect(await inProcess.json()).toEqual({ remote: null })
+  })
+
+  it('keeps a streaming request in flight through waitUntil: disposal aborts it and waits until it has ended', async () => {
+    const ctx = root()
+    const fiber = ctx.plugin(provider, config)
+    await settle()
+    const router = ctx.router
+    let ended = false
+    router.get('/stream', c => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          const done = new Promise<void>(resolve => {
+            c.signal.addEventListener('abort', () => { ended = true; controller.close(); resolve() }, { once: true })
+          })
+          c.waitUntil(done)
+          controller.enqueue(new TextEncoder().encode('first'))
+        },
+      })
+      return new Response(body)
+    })
+    const response = await router.fetch(new Request('http://acryl.test/stream'))
+    expect(response.status).toBe(200)
+    const reader = response.body!.getReader()
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe('first')
+
+    await fiber.dispose()
+    expect(ended).toBe(true)
+    await expect(reader.read()).resolves.toMatchObject({ done: true })
+  })
+
+  it('gives up on a request that ignores the abort after the grace period instead of hanging disposal', async () => {
+    const ctx = root()
+    const fiber = ctx.plugin(provider, { trailingSlash: 'strict', disposeGraceMs: 30 })
+    await settle()
+    ctx.router.get('/stuck', c => { c.waitUntil(new Promise(() => undefined)); return c.text('x') })
+    await ctx.router.fetch(new Request('http://acryl.test/stuck'))
+    const started = Date.now()
+    await fiber.dispose()
+    expect(Date.now() - started).toBeLessThan(1000)
+    expect(fiber.state).toBe(DISPOSED)
   })
 
   it('forwards the caller\'s own abort to the handler signal', async () => {

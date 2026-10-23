@@ -38,6 +38,8 @@ export async function sendResponse(res: ServerResponse, response: Response, meth
   const cookies = response.headers.getSetCookie()
   if (cookies.length > 0) headers['set-cookie'] = cookies
   res.writeHead(response.status, headers)
+  // A stream may stay silent for a while; the status line and headers must reach the client now, not with the first chunk.
+  res.flushHeaders()
   if (response.body === null || method === 'HEAD') {
     res.end()
     return

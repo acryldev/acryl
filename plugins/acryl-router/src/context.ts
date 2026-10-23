@@ -8,7 +8,13 @@ const NULL_BODY_STATUSES = new Set([101, 204, 205, 304])
 const bodyFor = (status: number, body: string): string | null => NULL_BODY_STATUSES.has(status) ? null : body
 
 /** Build the per-request context. */
-export function createContext(req: Request, params: Record<string, string>, signal: AbortSignal, connection: ConnectionInfo): RouteContext {
+export function createContext(
+  req: Request,
+  params: Record<string, string>,
+  signal: AbortSignal,
+  connection: ConnectionInfo,
+  track: (task: Promise<unknown>) => void,
+): RouteContext {
   const values = new Map<string, unknown>()
   return {
     req,
@@ -16,6 +22,7 @@ export function createContext(req: Request, params: Record<string, string>, sign
     params,
     connection,
     signal,
+    waitUntil: track,
     get: <T>(key: string) => values.get(key) as T | undefined,
     set: (key, value) => { values.set(key, value) },
     json: (data, status = 200) => new Response(bodyFor(status, JSON.stringify(data)), { status, headers: JSON_HEADERS }),

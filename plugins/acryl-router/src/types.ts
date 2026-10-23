@@ -29,6 +29,12 @@ export interface RouteContext {
   /** Request-scoped values shared between middleware and the handler. */
   get<T>(key: string): T | undefined
   set(key: string, value: unknown): void
+  /**
+   * Keep this request "in flight" until `task` settles, even after the handler returned its `Response`. A handler that
+   * streams (server-sent events) registers the promise that resolves when its stream ends; disposing the router aborts
+   * `signal` and waits for it, so a stream never outlives the plugin that served it.
+   */
+  waitUntil(task: Promise<unknown>): void
   json(data: unknown, status?: number): Response
   text(body: string, status?: number): Response
   redirect(location: string, status?: 301 | 302 | 303 | 307 | 308): Response

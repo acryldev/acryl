@@ -53,6 +53,7 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
+    "acryl-state": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
