@@ -1,6 +1,6 @@
 # acryl-node-server
 
-The framework's standalone HTTP adapter (spec 046), the equivalent of Hono's `serve({ fetch })` from `@hono/node-server`. One `node:http` listener
+The framework's standalone HTTP adapter (spec 046), the standalone counterpart of the Host adapter. One `node:http` listener
 that hands every request to `ctx.router.fetch`, with the socket's peer address and local port as connection facts. Use it in an app that runs
 without the ACRYL Host. Inside the Host, `acryl-router-http` mounts prefixes on the Host's own web server instead: one adapter per runtime.
 

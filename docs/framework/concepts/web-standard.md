@@ -1,7 +1,7 @@
 # Web standard
 
 Handlers receive a `RouteContext` and return a Web `Response`. `c.req` is a Web `Request`, so `await c.req.json()`, `c.req.headers`, `URL` and streams work as in a
-browser or Hono. There is no framework-specific request or response type to learn.
+browser. There is no framework-specific request or response type to learn.
 
 Deliberately not abstracted: cookies, body parsing beyond `readJson`/`readText`/`readBytes`, and templating. Use the platform.
 

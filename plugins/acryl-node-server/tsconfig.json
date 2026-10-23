@@ -11,6 +11,7 @@
     "declarationDir": "lib/types",
     "esModuleInterop": true,
     "strict": true,
+    "erasableSyntaxOnly": true,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,

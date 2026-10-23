@@ -127,7 +127,7 @@ export class Router extends Service {
   }
 
   /**
-   * Call the router the way a test calls an app (Hono's `app.request`): a path or URL string, a `URL` or a `Request`, with the usual init.
+   * Call the router the way a test calls an app: a path or URL string, a `URL` or a `Request`, with the usual init.
    * A relative path is resolved against `http://localhost`.
    */
   request(input: string | URL | Request, init?: RequestInit, connection?: ConnectionInfo): Promise<Response> {

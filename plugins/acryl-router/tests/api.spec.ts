@@ -1,5 +1,5 @@
 /**
- * The Hono-shaped registration surface (spec 046): several handlers per route, `all` and `on`, optional-path `use`, `group`, `onError` and
+ * The registration surface (spec 046): several handlers per route, `all` and `on`, optional-path `use`, `group`, `onError` and
  * `notFound`, `HttpError`, `request()`, and the context helpers. Everything runs through the real Cordis service, so ownership is checked too.
  */
 

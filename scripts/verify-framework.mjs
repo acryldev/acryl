@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * The framework's structure gate (spec 046): every package of the ACRYL Framework has the same shape, so a reader who knows one knows all.
- * A package must have a README with a usage example, a `name` export equal to its package name, an `apply` export, tests, and a Loader row whose id is its package name;
+ * A package must run its source unbuilt in plain Node (erasable TypeScript only), have a README with a usage example, a `name` export equal to its package name, an `apply` export, tests, and a Loader row whose id is its package name;
  * its source must not import the DeepSeek Harness (the framework sits beside it, not on it) and must not read homes or ports directly.
  */
+import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -37,10 +38,23 @@ export function problemsFor(name) {
     if (/from '@deepseek-ai\/dsh/u.test(text)) fail(`${shown} imports the DeepSeek Harness`)
     if (/homedir\(|ACRYL_HOME|DSH_HOME|ACRYL_WEB_PORT/u.test(text)) fail(`${shown} reads a home or port directly (use the appInstance service)`)
   }
+  // The source must run unbuilt in plain Node (generated apps vendor it and run it with type stripping), so it may use erasable syntax only
+  // (no parameter properties, enums or namespaces). A package whose dependencies are not built yet fails differently; only the syntax error counts.
+  const entry = join(dir, 'src', 'index.ts')
+  if (existsSync(entry)) {
+    const run = spawnSync(process.execPath, ['--input-type=module', '-e', `import(${JSON.stringify(entry)})`], { encoding: 'utf8' })
+    if (run.stderr.includes('ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX')) fail('src/index.ts does not run unbuilt in plain Node (non-erasable TypeScript syntax)')
+  }
   return problems
 }
 
 const problems = FRAMEWORK_PACKAGES.flatMap(problemsFor)
+// The examples are copied by people, so their source must run unbuilt in plain Node too.
+for (const example of ['acryl-framework-starter', 'acryl-todo']) {
+  const entry = join(root, 'examples', example, 'src', 'index.ts')
+  const run = spawnSync(process.execPath, ['--input-type=module', '-e', `import(${JSON.stringify(entry)})`], { encoding: 'utf8' })
+  if (run.stderr.includes('ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX')) problems.push(`${example}: src/index.ts does not run unbuilt in plain Node (non-erasable TypeScript syntax)`)
+}
 for (const doc of ['docs/framework/README.md']) if (!existsSync(join(root, doc))) problems.push(`missing ${doc}`)
 if (problems.length > 0) {
   console.error(`verify-framework: ${String(problems.length)} problem(s)\n${problems.map(problem => `  - ${problem}`).join('\n')}`)

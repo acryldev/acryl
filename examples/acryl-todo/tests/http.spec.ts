@@ -34,8 +34,11 @@ describe('acryl-todo over HTTP', () => {
       await first.stop()
 
       const second = await start(file)
+      // A plain script (no Origin header) can change the list; a browser page from another origin cannot.
+      const curl = await fetch(`${second.origin}/todo/api`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"title":"from curl"}' })
+      expect(curl.status).toBe(201)
       const listed = await fetch(`${second.origin}/todo/api`)
-      expect(await listed.json()).toEqual([{ id: 1, title: 'over the wire', done: false }])
+      expect(await listed.json()).toEqual([{ id: 1, title: 'over the wire', done: false }, { id: 2, title: 'from curl', done: false }])
       const foreign = await fetch(`${second.origin}/todo/api`, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'http://evil.example' }, body: '{"title":"x"}' })
       expect(foreign.status).toBe(403)
       await second.stop()

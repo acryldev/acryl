@@ -1,5 +1,5 @@
 /**
- * The registration API every router scope shares (Hono's `app.get`, `app.use`, `app.route`): the router itself is one scope with an empty prefix, and
+ * The registration API every router scope shares (`get`, `use`, `group`): the router itself is one scope with an empty prefix, and
  * `router.group('/api')` is another with a prefix. A scope never owns anything; every registration is released by the plugin that made it.
  */
 

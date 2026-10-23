@@ -31,8 +31,7 @@
     "cordis.patch.yml",
     "lib/**",
     "README.md",
-    "LICENSE",
-    "NOTICE"
+    "LICENSE"
   ],
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

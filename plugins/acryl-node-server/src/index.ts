@@ -1,5 +1,5 @@
 /**
- * The framework's standalone HTTP adapter (spec 046), the equivalent of Hono's `serve({ fetch })` from @hono/node-server. It owns one
+ * The framework's standalone HTTP adapter (spec 046), the standalone counterpart of the Host adapter. It owns one
  * `node:http` listener and hands every request to `ctx.router.fetch`, with the socket's peer address and local port as connection facts.
  * Use it in an app that runs without the ACRYL Host; inside the Host, `acryl-router-http` mounts prefixes on the Host's own web server.
  * One adapter per runtime: a plugin keeps asking `ctx.inject(['routerHttp'], ...)` for a mount, which simply never fires here, because this
@@ -40,11 +40,13 @@ declare module '@deepseek-ai/cordis' {
 
 export class NodeServer extends Service {
   readonly hostname: string
+  readonly config: Config
   private readonly server: Server
   private bound = 0
 
-  constructor(ctx: Context, readonly config: Config) {
+  constructor(ctx: Context, config: Config) {
     super(ctx, 'nodeServer')
+    this.config = config
     this.hostname = config.hostname
     const router = ctx.router
     this.server = createServer((req, res) => { void serve(router, req, res) })

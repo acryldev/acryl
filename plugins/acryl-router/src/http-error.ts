@@ -1,5 +1,5 @@
 /**
- * An error that carries the response it should become (Hono's `HTTPException`). A handler or middleware throws it to stop a request
+ * An error that carries the response it should become. A handler or middleware throws it to stop a request
  * with a status: `throw new HttpError(401, { message: 'Sign in first' })`. The router answers with `getResponse()`; a registered
  * `onError` handler still sees every other error.
  */

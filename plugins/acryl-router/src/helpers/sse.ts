@@ -27,7 +27,7 @@ export interface SseOptions {
 const DEFAULT_KEEP_ALIVE_MS = 15_000
 
 /**
- * A server-sent-event response (Hono's `streamSSE`). `run` starts the stream; whatever cleanup function it returns runs exactly once when the stream
+ * A server-sent-event response. `run` starts the stream; whatever cleanup function it returns runs exactly once when the stream
  * ends for any reason (the client disconnects, `close()`, a plugin unload, the router being disposed). The request is held in flight with `waitUntil`
  * until then, so disposal waits for the stream instead of leaking it.
  */

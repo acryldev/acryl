@@ -4,10 +4,10 @@ See `spec.md` for the milestones and `plan.md` for the principles. Reference tas
 
 ## Phase 0 - Decide and set up (M0)
 
-- [x] T001 (owner approved all, 2026-10-23) Owner reviews `spec.md` and confirms the direction (micro-framework design rewritten as Cordis plugins; Hono as the leading reference; Vike not rewritten).
+- [x] T001 (owner approved all, 2026-10-23) Owner reviews `spec.md` and confirms the direction (micro-framework design rewritten as Cordis plugins; Reference A as the leading reference; Vike not rewritten).
 - [x] T002 (`router` is free: no Context augmentation or service of that name in DSH or ACRYL) Answer open question 4: confirm the service name `router` is free (grep the DSH and ACRYL service names).
 - [x] T003 (`plugins/acryl-router/tests/conformance.ts`, 12 checks driven by a `Candidate` of five operations) Write the conformance suite from the outline in `plan.md`, driven by a `makeRouter()` factory (new package under `plugins/`, layout check and `pnpm-workspace.yaml` updated in the same commit).
-- [x] T004 (the Hono-shaped design passes all checks, so H3 and Rou3 were not measured; see research.md) Run the suite against the Hono-shaped design (T006); record the result in `research.md`. Measure H3 and Rou3 only if a check fails or the owner asks.
+- [x] T004 (the reference-shaped design passes all checks, so H3 and Rou3 were not measured; see research.md) Run the suite against the reference-shaped design (T006); record the result in `research.md`. Measure H3 and Rou3 only if a check fails or the owner asks.
 
 ## Phase 1 - The service (M1)
 

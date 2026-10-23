@@ -7,7 +7,7 @@ From `acryl-router/middleware`:
 | `bodyLimit` | refuses a declared body over the limit (413) and makes `read*` enforce it | `maxBytes`, `onError` |
 | `cors` | CORS headers; answers preflight with 204 | `origin`, `allowMethods`, `allowHeaders`, `exposeHeaders`, `maxAge`, `credentials` |
 | `logger` | one line per request to a sink | the sink function |
-| `loopbackOnly` | allows only loopback peers to this app's own `Host`; mutations need a same-origin `Origin` | `hostnames`, `mutations`, `inProcess` |
+| `loopbackOnly` | allows only loopback peers whose `Host` is a loopback address with this server's port (stops DNS rebinding); a change with a foreign or `null` `Origin` gets 403, one with no `Origin` (curl) is allowed | `hostnames`, `mutations`, `inProcess` |
 | `requestId` | reads or makes an id; `c.get('requestId')` and a response header | `header`, `generate` |
 | `secureHeaders` | hardening headers (nosniff, frame, referrer, CORP) | `headers` |
 

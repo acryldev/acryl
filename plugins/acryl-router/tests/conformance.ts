@@ -1,6 +1,6 @@
 /**
  * The framework-neutral conformance suite for a `router` (spec 046, milestone M0). A candidate is one factory returning
- * five operations; the same checks run against every implementation, so choosing between a Hono-shaped rewrite, H3 or
+ * five operations; the same checks run against every implementation, so choosing between the rewrite, H3 or
  * a Rou3-based core is a matter of one adapter function and a test run.
  */
 

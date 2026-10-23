@@ -1,7 +1,7 @@
 {
   "name": "acryl-node-server",
   "version": "0.1.0",
-  "description": "The framework's standalone HTTP adapter, one Cordis service: serves the whole router from a node:http listener where the ACRYL Host is not running (the equivalent of @hono/node-server)",
+  "description": "The framework's standalone HTTP adapter, one Cordis service: serves the whole router from a node:http listener where the ACRYL Host is not running",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -31,8 +31,7 @@
     "cordis.patch.yml",
     "lib/**",
     "README.md",
-    "LICENSE",
-    "NOTICE"
+    "LICENSE"
   ],
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

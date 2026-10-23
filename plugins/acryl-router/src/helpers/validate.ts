@@ -18,7 +18,7 @@ export type ValidationTarget = 'json' | 'query' | 'param'
 const key = (target: ValidationTarget): string => `valid:${target}`
 
 /**
- * Validate part of the request against a schema before the handler runs (Hono's `validator`). A failure is a 400 with the issues; success stores the
+ * Validate part of the request against a schema before the handler runs. A failure is a 400 with the issues; success stores the
  * parsed value, which the handler reads with `valid(c, target)`. `json` reads the body within the limit; `query` is the first value of each query
  * parameter; `param` is the matched path parameters.
  */

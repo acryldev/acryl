@@ -24,7 +24,7 @@ Web, TUI), rewrite it completely as Cordis plugins, and make that the ACRYL Fram
 ## The decision this spec carries (owner confirmation requested)
 
 The base is **a micro-framework's design, rewritten as ACRYL-owned Cordis plugins**, not a fork of a full framework.
-Current leading reference: Hono (HTTP transport; about 1k lines of design to copy). Vike was measured (about 46k lines, a Vite
+Current leading reference: Reference A (HTTP transport; about 1k lines of design to copy). Vike was measured (about 46k lines, a Vite
 plugin, page rendering) and is not rewritten; it stays an optional page layer for public SSR pages if ever needed. The leading
 reference can change: milestone M0 makes the choice testable. Record: `docs/acryl/ROUTER-SERVICE-DESIGN.md`, "Decision record".
 
@@ -40,7 +40,7 @@ reference can change: milestone M0 makes the choice testable. Record: `docs/acry
 
 | # | Milestone | Gate (done when) |
 | --- | --- | --- |
-| M0 | **Conformance suite and candidate check.** One framework-neutral test suite for a `router` service (the six Loader checks and the same-handler-three-ways check). Run it against the Hono-shaped design first; run H3 and a Rou3-based core only if the first fails a check or the owner asks. | The suite exists and the first candidate's result is recorded; a choice is written in research.md. |
+| M0 | **Conformance suite and candidate check.** One framework-neutral test suite for a `router` service (the six Loader checks and the same-handler-three-ways check). Run it against the reference-shaped design first; run H3 and a Rou3-based core only if the first fails a check or the owner asks. | The suite exists and the first candidate's result is recorded; a choice is written in research.md. |
 | M1 | **`acryl-router`.** The service: `route`, `use`, in-process `fetch(Request)`. No I/O, no dependencies. | All conformance checks pass in a real Loader. |
 | M2 | **HTTP adapter and first port.** `acryl-router-http` wraps DSH `webServer`; the market routes move onto the router; typert is untouched. | Market works in Web as before; unload removes its routes; reload registers them once. |
 | M3 | **Three surfaces, one handler.** The same capability runs through HTTP (Web), the Desktop IPC bridge, and in-process in the TUI with no network server. | One handler, three recorded runs. |

@@ -72,7 +72,7 @@ export function apply(ctx: Context): void {
 
 ## Where the docs are
 
-The Hono-shaped documentation tree is `docs/framework/` (getting started, concepts, API, guides, middleware and helpers, a Hono parity table).
+The documentation tree is `docs/framework/` (getting started, concepts, API, guides, middleware and helpers).
 A copyable starter is `examples/acryl-framework-starter`. `node scripts/verify-framework.mjs` (in `check:layout`) enforces the shape of every framework package.
 
 ## In every Blend

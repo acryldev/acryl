@@ -142,13 +142,25 @@ describe('loopbackOnly', () => {
     expect((await router.request('/x', { headers: headers() }, { remoteAddress: '::1', localPort: 3105 })).status).toBe(200)
   })
 
-  it('requires a same-origin Origin for a change, and none for a read', async () => {
+  it('refuses a change from a foreign or null Origin, and accepts this app\'s own', async () => {
     const router = await mount()
     router.use(loopbackOnly())
     router.post('/do', c => c.text('done'))
-    expect((await router.request('/do', { method: 'POST', headers: headers() }, peer)).status).toBe(403)
     expect((await router.request('/do', { method: 'POST', headers: headers({ origin: 'http://evil.example' }) }, peer)).status).toBe(403)
+    expect((await router.request('/do', { method: 'POST', headers: headers({ origin: 'null' }) }, peer)).status).toBe(403)
     expect((await router.request('/do', { method: 'POST', headers: headers({ origin: 'http://127.0.0.1:3105' }) }, peer)).status).toBe(200)
+  })
+
+  it('accepts a change with no Origin (curl) only when the Host is a loopback address with this port', async () => {
+    const router = await mount()
+    router.use(loopbackOnly())
+    router.post('/do', c => c.text('done'))
+    expect((await router.request('/do', { method: 'POST', headers: headers() }, peer)).status).toBe(200)
+    expect((await router.request('/do', { method: 'POST', headers: headers({ host: 'localhost:3105' }) }, peer)).status).toBe(200)
+    expect((await router.request('/do', { method: 'POST', headers: headers({ host: '[::1]:3105' }) }, { remoteAddress: '::1', localPort: 3105 })).status).toBe(200)
+    // DNS rebinding: the page's own domain arrives as the Host, so a foreign Host is refused with or without an Origin.
+    expect((await router.request('/do', { method: 'POST', headers: headers({ host: 'rebind.example:3105' }) }, peer)).status).toBe(403)
+    expect((await router.request('/do', { method: 'POST', headers: headers({ host: '127.0.0.1:9999' }) }, peer)).status).toBe(403)
   })
 
   it('refuses an in-process call by default and lets it through when told the caller is the host', async () => {

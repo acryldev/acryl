@@ -2,11 +2,13 @@ import { BlockList, isIP } from 'node:net'
 import type { Middleware, RouteContext } from '../types.ts'
 
 export interface LoopbackOptions {
-  /** Hostnames a `Host` header may name. Default: `127.0.0.1`, the one origin an ACRYL app serves itself on. */
+  /** Hostnames a `Host` header may name. Default: the loopback names `127.0.0.1`, `localhost` and `[::1]`. */
   readonly hostnames?: readonly string[]
   /**
-   * What a request that changes things (not GET, HEAD or OPTIONS) must show: `same-origin` (default) requires an `Origin` header naming this same
-   * authority, which stops another web page from driving a local app; `none` checks only the peer and the `Host`.
+   * What a request that changes things (not GET, HEAD or OPTIONS) must show: `same-origin` (default) refuses an `Origin` header that is not this same
+   * authority (including `null`), which stops another web page from driving a local app. A browser always sends `Origin` on a cross-origin change, so a
+   * request with no `Origin` (curl, a script) is allowed: the `Host` it names is already checked to be a loopback address with this server's port, which
+   * is what stops DNS rebinding. `none` checks only the peer and the `Host`.
    */
   readonly mutations?: 'same-origin' | 'none'
   /**
@@ -28,7 +30,9 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
  * real local port, names another host, or is marked cross-site by the browser. The peer and the port come from the transport (`c.connection`), never
  * from a header; an in-process call has neither and is refused.
  */
-export function loopbackAuthority(c: RouteContext, hostnames: readonly string[] = ['127.0.0.1']): URL | undefined {
+export const LOOPBACK_HOSTNAMES: readonly string[] = ['127.0.0.1', 'localhost', '[::1]']
+
+export function loopbackAuthority(c: RouteContext, hostnames: readonly string[] = LOOPBACK_HOSTNAMES): URL | undefined {
   const { remoteAddress, localPort } = c.connection
   const host = c.req.headers.get('host')
   if (remoteAddress === undefined || localPort === undefined || host === null) return undefined
@@ -50,10 +54,10 @@ export function loopbackAuthority(c: RouteContext, hostnames: readonly string[] 
   return authority
 }
 
-/** Whether a changing request names this same authority as its `Origin`. */
+/** Whether a changing request is acceptable by its `Origin`: absent (not a browser cross-origin change) or naming this same authority. `null` and any other origin are not. */
 export function sameOrigin(c: RouteContext, authority: URL): boolean {
   const origin = c.req.headers.get('origin')
-  if (origin === null) return false
+  if (origin === null) return true
   try {
     const parsed = new URL(origin)
     return parsed.protocol === 'http:' && parsed.host === authority.host && parsed.pathname === '/'
