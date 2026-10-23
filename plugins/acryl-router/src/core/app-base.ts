@@ -317,7 +317,7 @@ class App<
    * @example
    * ```ts
    * import { Router as IttyRouter } from 'itty-router'
-   * import { App } from './index.ts'
+   * import { App } from 'acryl-router'
    * // Create itty-router application
    * const ittyRouter = IttyRouter()
    * // GET /itty-router/hello
@@ -528,15 +528,7 @@ class App<
    * `.fire()` automatically adds a global fetch event listener.
    * This can be useful for environments that adhere to the Service Worker API, such as non-ES module Cloudflare Workers.
    * @deprecated
-   * Use `fire` from `acryl-router/service-worker` instead.
-   * ```ts
-   * import { App } from './index.ts'
-   * import { fire } from 'acryl-router/service-worker'
-   *
-   * const app = new App()
-   * // ...
-   * fire(app)
-   * ```
+   * ACRYL ships no service-worker adapter: mount the app with `ctx.router.route(path, app)` and serve it through an ACRYL adapter instead.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
    * @see https://developers.cloudflare.com/workers/reference/migrate-to-module-workers/
    */

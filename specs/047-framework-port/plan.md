@@ -11,6 +11,14 @@ validator, the helpers (streaming, cookie, html, accepts, conninfo, route, adapt
 (2075 tests). Changes from upstream are mechanical: explicit `.ts` imports, enums as const objects (erasable TypeScript, so the source
 runs in plain Node), the client and its type tests left out, names and test data renamed.
 
+## Provenance (gate P1)
+
+`plugins/acryl-router/provenance.json` records the upstream commit and, for every ported file, the upstream file's hash, our file's hash and the
+reason for any change beyond the mechanical ones; `omitted` lists what is not ported yet. `node scripts/verify-port.mjs` (in `check:layout`)
+fails when a ported file changed without the record being rewritten. With `--upstream <checkout>` it re-derives every file from the upstream
+checkout and fails on any deviation without a reason; `--write <package>` rewrites the record after a deliberate change or an upstream sync.
+The record and the script never spell the upstream name: the script reads it from the checkout's own `package.json`.
+
 ## Cordis mini-design: `acryl-router` on the ported core
 
 1. **Capability and plugin boundary.** `acryl-router` owns HTTP-shaped routing for every surface. It is a plugin because a Blend can
@@ -43,9 +51,10 @@ runs in plain Node), the client and its type tests left out, names and test data
 ## Tasks
 
 - T001 Port the core and its test suite, green. Done.
-- T002 Rebuild the `router` service on the core (mounts, rebuild, flights, body cancellation), with its ACRYL tests.
-- T003 Port `loopbackOnly`, `schemaValidator`, `getConnInfo`; delete the original-design files and their tests.
-- T004 Migrate `acryl-router-http` and `acryl-node-server`.
-- T005 Migrate `acryl-state`, `acryl-inspect`, the Market, `acryl-todo`, the starter.
+- T001a Provenance record and check (P1). Done.
+- T002 Rebuild the `router` service on the core (mounts, rebuild, flights, body cancellation), with its ACRYL tests. Done.
+- T003 Port `loopbackOnly`, `schemaValidator`, `getConnInfo`; delete the original-design files and their tests. Done.
+- T004 Migrate `acryl-router-http` and `acryl-node-server`. Done.
+- T005 Migrate `acryl-state`, `acryl-inspect`, the Market, `acryl-todo`, the starter. Done.
 - T006 Rewrite `docs/framework/` and `docs/acryl/FRAMEWORK.md` for the new API.
 - T007 Gates, a real isolated boot, commit, CI.

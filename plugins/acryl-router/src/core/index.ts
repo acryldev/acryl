@@ -5,7 +5,7 @@
  *
  * @example
  * ```ts
- * import { App } from './index.ts'
+ * import { App } from 'acryl-router'
  * const app = new App()
  *
  * app.get('/', (c) => c.text('App!'))

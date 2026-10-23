@@ -185,9 +185,9 @@ export interface IPRestrictionRules {
  *
  * @example
  * ```ts
- * import { App } from '../../index.ts'
- * import { ipRestriction } from './index.ts'
- * import { getConnInfo } from 'acryl-router/cloudflare-workers'
+ * import { App } from 'acryl-router'
+ * import { ipRestriction } from 'acryl-router/middleware'
+ * import { getConnInfo } from 'acryl-router/helpers'
  *
  * const app = new App()
  *

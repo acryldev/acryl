@@ -20,7 +20,7 @@ type PoweredByOptions = {
  *
  * @example
  * ```ts
- * import { poweredBy } from 'acryl-router/powered-by'
+ * import { poweredBy } from 'acryl-router/middleware'
  *
  * const app = new App()
  *

@@ -23,8 +23,8 @@ type Condition = (c: Context) => boolean
  *
  * @example
  * ```ts
- * import { some } from './index.ts'
- * import { bearerAuth } from '../bearer-auth/index.ts'
+ * import { some } from 'acryl-router/middleware'
+ * import { bearerAuth } from 'acryl-router/middleware'
  * import { myRateLimit } from '@/rate-limit'
  *
  * // If client has a valid token, then skip rate limiting.
@@ -84,8 +84,8 @@ export const some = (...middleware: (MiddlewareHandler | Condition)[]): Middlewa
  *
  * @example
  * ```ts
- * import { some, every } from './index.ts'
- * import { bearerAuth } from '../bearer-auth/index.ts'
+ * import { some, every } from 'acryl-router/middleware'
+ * import { bearerAuth } from 'acryl-router/middleware'
  * import { myCheckLocalNetwork } from '@/check-local-network'
  * import { myRateLimit } from '@/rate-limit'
  *
@@ -133,8 +133,8 @@ export const every = (...middleware: (MiddlewareHandler | Condition)[]): Middlew
  *
  * @example
  * ```ts
- * import { except } from './index.ts'
- * import { bearerAuth } from '../bearer-auth/index.ts'
+ * import { except } from 'acryl-router/middleware'
+ * import { bearerAuth } from 'acryl-router/middleware'
  *
  * // If client is accessing public API, then skip authentication.
  * // Otherwise, require a valid token.
