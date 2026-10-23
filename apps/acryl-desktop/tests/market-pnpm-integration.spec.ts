@@ -5,6 +5,8 @@ import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
+import { apply as routerApply, name as routerName } from 'acryl-router'
+import { apply as routerHttpApply, inject as routerHttpInject, name as routerHttpName } from 'acryl-router-http'
 import * as acrylSettings from 'acryl-settings'
 import type { SubprocessHandle, SubprocessRuntime, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
 import { describe, expect, it, vi } from 'vitest'
@@ -95,10 +97,23 @@ async function removeInstalledProfilePlugin(profileDir: string): Promise<void> {
 
 async function createWebServer() {
   type Handler = (request: IncomingMessage, response: ServerResponse) => void | Promise<void>
-  const handlers = new Map<string, Handler>()
+  interface FixtureRoute { readonly kind: 'exact' | 'prefix', readonly path: string, readonly handler: Handler }
+  const routes = new Map<string, FixtureRoute>()
+  /** The webServer's own rule: an exact path first, then the longest prefix (the path itself or anything below it). */
+  const match = (pathname: string): Handler | undefined => {
+    const exact = routes.get(`exact:${pathname}`)
+    if (exact !== undefined) return exact.handler
+    let best: FixtureRoute | undefined
+    for (const route of routes.values()) {
+      if (route.kind !== 'prefix') continue
+      if (pathname !== route.path && !pathname.startsWith(`${route.path}/`)) continue
+      if (best === undefined || route.path.length > best.path.length) best = route
+    }
+    return best?.handler
+  }
   const server = createServer((request, response) => {
     const path = new URL(request.url ?? '/', 'http://localhost').pathname
-    const handler = handlers.get(path)
+    const handler = match(path)
     if (handler === undefined) {
       response.statusCode = 404
       response.end()
@@ -121,9 +136,10 @@ async function createWebServer() {
   return {
     service: {
       port: address.port,
-      register(route: { path: string; handler: Handler }) {
-        handlers.set(route.path, route.handler)
-        return () => { handlers.delete(route.path) }
+      register(route: FixtureRoute) {
+        const key = `${route.kind}:${route.path}`
+        routes.set(key, route)
+        return () => { routes.delete(key) }
       },
     },
     async post(path: string, body: unknown) {
@@ -195,6 +211,9 @@ describe('desktop pnpm and community market integration', () => {
       ctx.provide('appInstance', { home: dirname(settingsPath), dshHome: dirname(settingsPath) } as never)
       await ctx.plugin(acrylSettings, { filename: settingsPath })
       await ctx.plugin({ name: desktopPnpmName, inject: desktopPnpmInject, apply: applyDesktopPnpm })
+      // The Market injects the router and its Web adapter (spec 046); these are the real plugins, served by the fixture server.
+      await ctx.plugin({ name: routerName, apply: routerApply })
+      await ctx.plugin({ name: routerHttpName, inject: routerHttpInject, apply: routerHttpApply })
       await ctx.plugin({ name: market.name, inject: market.inject, apply: market.apply })
 
       const preview = await webServer.post(market.marketRoutes.operationPreview, {

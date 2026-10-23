@@ -33,6 +33,8 @@ const WEB_ONLY_ROWS: Readonly<Record<string, string>> = {
   'acryl-engine': 'the engine host row the Web surface mounts the runtime under',
   include: 'the root include row of the engine host',
   'community-market': 'Web always composes the community market; Desktop makes the provider a user choice',
+  'acryl-router': 'the community market injects the router; Desktop mounts it only together with the market it selected (spec 046)',
+  'acryl-router-http': 'the community market injects the router adapter; Desktop mounts it only together with the market it selected (spec 046)',
   'acryl-support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
 }
 
