@@ -173,6 +173,40 @@ describe('acryl-router lifecycle through Cordis', () => {
     expect(await (await get(ctx.router, '/c')).text()).toBe('A')
   })
 
+  it('serves two plugins on the same path in mount order, and hands the path to the other when the first unloads', async () => {
+    const { ctx, router } = await mountRouter()
+    const first = ctx.plugin(consumer('/same', 'first'))
+    await settle()
+    ctx.plugin(consumer('/same', 'second'))
+    await settle()
+    expect(await (await get(router, '/same')).text()).toBe('first')
+    await first.dispose()
+    await settle()
+    expect(await (await get(router, '/same')).text()).toBe('second')
+  })
+
+  it('runs a reloaded plugin\'s handler once per request: reloading leaves no duplicate route behind, ten times', async () => {
+    const { ctx, router } = await mountRouter()
+    let calls = 0
+    const counting = {
+      name: 'counting',
+      inject: ['router'],
+      apply(inner: Context): void {
+        inner.router.route('/', new App().use(async (_c, next) => { calls += 1; await next() }).get('/count', c => c.text(String(calls))))
+      },
+    }
+    for (let round = 0; round < 10; round += 1) {
+      const fiber = ctx.plugin(counting)
+      await settle()
+      expect(router.size).toBe(1)
+      calls = 0
+      expect(await (await get(router, '/count')).text()).toBe('1')
+      await fiber.dispose()
+      await settle()
+      expect(router.size).toBe(0)
+    }
+  })
+
   it('returns to its baseline after fifty consumer mount and unload cycles', async () => {
     const { ctx, router } = await mountRouter()
     ctx.plugin(consumer('/stay', 'S'))
