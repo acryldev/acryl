@@ -7,7 +7,7 @@ marked unverified.
 
 | | Layer | Core size | Runtime deps | Notes |
 | --- | --- | --- | --- | --- |
-| Reference A | HTTP transport | about 3.4k lines across the files that matter (`compose` 73, `router` 103, linear router 152, `hono-base` 564, `context` 797, `request` 520); about 4.9k lines of core without routers, middleware, helpers and adapters | none | in-process `fetch`, Web-standard types |
+| Reference A | HTTP transport | about 3.4k lines across the files that matter (`compose` 73, `router` 103, linear router 152, `app` 564, `context` 797, `request` 520); about 4.9k lines of core without routers, middleware, helpers and adapters | none | in-process `fetch`, Web-standard types |
 | Vike | page rendering, Vite plugin | about 45.9k lines in `packages/vike/src` | 20+ (`vite` >= 7.1, `rolldown`, `@babel/core`, `@universal-middleware/*`, `sirv`...) | server-agnostic; its templates use Reference A |
 | VanJS | reactive UI (DOM) | 141 lines (`van.js`), about 1.8 KB gzipped | none | its DOM-free reactive part is about 40 lines |
 | H3 v2, Rou3, itty-router, srvx | HTTP / routing | not measured | not measured | named in the owner's research file; "H3 v2 stable 2026-10-03" is unverified |
@@ -45,7 +45,7 @@ marked unverified.
   aborted and awaited on disposal (disposed router answers 503), 10 Loader disable/enable cycles.
 - Because the first candidate passed, H3 and Rou3 were not measured. The suite is framework-neutral (`Candidate`), so a
   comparison is one adapter and a test run if one is wanted later.
-- No dependency on `hono` was needed: the matcher, `compose` and context are ACRYL-owned.
+- No dependency on the reference library was needed: the matcher, `compose` and context are ACRYL-owned.
 
 ## M2 result (2026-10-23)
 

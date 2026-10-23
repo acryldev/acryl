@@ -138,7 +138,7 @@ third-party releases are not verified here). Measured here, by shallow clone of 
 | | Reference A | Vike |
 | --- | --- | --- |
 | Layer | HTTP transport: router, middleware, Request/Response | page rendering: file-based routing, SSR, prerender, a Vite plugin |
-| Core source | about 3.4k lines in the files that matter (`compose` 73, `router` 103, linear router 152, `hono-base` 564, `context` 797, `request` 520) | about 45.9k lines in `packages/vike/src` |
+| Core source | about 3.4k lines in the files that matter (`compose` 73, `router` 103, linear router 152, `app` 564, `context` 797, `request` 520) | about 45.9k lines in `packages/vike/src` |
 | Runtime dependencies | none | 20+ (`vite` >= 7.1, `rolldown`, `@babel/core`, `@universal-middleware/*`, `sirv`, and more) |
 | Can a person hold it in their head | yes | no |
 
