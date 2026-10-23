@@ -7,6 +7,8 @@
 
 import { Context, Service } from '@deepseek-ai/cordis'
 import type { RouteContext } from 'acryl-router'
+import { streamSSE } from 'acryl-router/helpers'
+import { loopbackOnly } from 'acryl-router/middleware'
 import { createCell, createDerived, type Cell, type ReadonlyCell } from './cell.ts'
 
 declare module '@deepseek-ai/cordis' {
@@ -19,11 +21,6 @@ declare module '@deepseek-ai/cordis' {
 export const name = 'acryl-state'
 
 const KEY_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$/
-const SSE_HEADERS = {
-  'content-type': 'text/event-stream; charset=utf-8',
-  'cache-control': 'no-store',
-  'x-content-type-options': 'nosniff',
-} as const
 
 export class State extends Service {
   private readonly cells = new Map<string, ReadonlyCell<unknown>>()
@@ -73,49 +70,32 @@ export class State extends Service {
   }
 
   /**
-   * The current value of `key` as a server-sent event stream: the value now, then one event per change, until the request is
-   * aborted, the client cancels, or the router is disposed. The stream registers itself with `waitUntil`, so the router
-   * waits for it to end instead of treating the request as finished when the `Response` is returned.
+   * The current value of `key` as a server-sent event stream: the value now, then one event per change, until the request is aborted, the client
+   * cancels, or the router is disposed. `streamSSE` holds the request in flight until then, so the router waits for the stream.
    */
-  stream(key: string, c: Pick<RouteContext, 'signal' | 'waitUntil'>): Response | undefined {
+  stream(key: string, c: RouteContext): Response | undefined {
     const cell = this.find(key)
     if (cell === undefined) return undefined
-    const { signal } = c
-    const encoder = new TextEncoder()
-    let stop: (() => void) | undefined
-    let finish!: () => void
-    c.waitUntil(new Promise<void>(resolve => { finish = resolve }))
-    const body = new ReadableStream<Uint8Array>({
-      start: controller => {
-        const send = (value: unknown): void => {
-          try { controller.enqueue(encoder.encode(`event: value\ndata: ${JSON.stringify(value)}\n\n`)) } catch { stop?.() }
-        }
-        send(cell.get())
-        const unsubscribe = cell.subscribe(value => { send(value) })
-        stop = () => {
-          unsubscribe()
-          signal.removeEventListener('abort', stop!)
-          try { controller.close() } catch { /* already closed */ }
-          finish()
-        }
-        if (signal.aborted) stop()
-        else signal.addEventListener('abort', stop, { once: true })
-      },
-      cancel: () => { stop?.() },
+    return streamSSE(c, stream => {
+      stream.send(cell.get(), { event: 'value' })
+      return cell.subscribe(value => { stream.send(value, { event: 'value' }) })
     })
-    return new Response(body, { headers: SSE_HEADERS })
   }
 }
 
 export function apply(ctx: Context): void {
   const state = new State(ctx)
-  // The same cells on the router, read-only, for any surface; present only where a router is.
+  // The same cells on the router, read-only, for any surface; present only where a router is. A request over a socket must come from this machine to this
+  // app; the terminal calls the router in process and is the host's own code.
   ctx.inject(['router'], inner => {
-    inner.router.get('/api/state', c => c.json({ keys: state.keys() }))
-    inner.router.get('/api/state/:key', c => {
-      const cell = state.find(c.params['key'] ?? '')
+    const api = inner.router.group('/api/state', loopbackOnly({ inProcess: 'allow' }))
+    api.get('/', c => c.json({ keys: state.keys() }))
+    api.get('/:key', c => {
+      const cell = state.find(c.param('key') ?? '')
       return cell === undefined ? c.json({ error: 'no such state' }, 404) : c.json({ key: cell.key, value: cell.get() })
     })
-    inner.router.get('/api/state/:key/events', c => state.stream(c.params['key'] ?? '', c) ?? c.json({ error: 'no such state' }, 404))
+    api.get('/:key/events', c => state.stream(c.param('key') ?? '', c) ?? c.json({ error: 'no such state' }, 404))
+    // Over HTTP only where an adapter exists (Web and Desktop); the terminal needs none.
+    inner.inject(['routerHttp'], http => { http.routerHttp.mount('/api/state') })
   })
 }

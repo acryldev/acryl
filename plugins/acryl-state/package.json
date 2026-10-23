@@ -47,6 +47,9 @@
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run check"
   },
+  "dependencies": {
+    "acryl-router": "workspace:*"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
     "react": "^18.3.1"
@@ -58,7 +61,6 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "acryl-router": "workspace:*",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

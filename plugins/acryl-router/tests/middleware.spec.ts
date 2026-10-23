@@ -151,6 +151,17 @@ describe('loopbackOnly', () => {
     expect((await router.request('/do', { method: 'POST', headers: headers({ origin: 'http://127.0.0.1:3105' }) }, peer)).status).toBe(200)
   })
 
+  it('refuses an in-process call by default and lets it through when told the caller is the host', async () => {
+    const router = await mount()
+    router.get('/guarded', loopbackOnly(), c => c.text('x'))
+    router.get('/host', loopbackOnly({ inProcess: 'allow' }), c => c.text('x'))
+    expect((await router.request('/guarded')).status).toBe(403)
+    expect((await router.request('/host')).status).toBe(200)
+    // A request with any connection facts is checked in full, even when inProcess is allowed.
+    expect((await router.request('/host', { headers: { host: '127.0.0.1:3105' } }, { remoteAddress: '203.0.113.9', localPort: 3105 })).status).toBe(403)
+    expect((await router.request('/host', { headers: { host: '127.0.0.1:3105' } }, { remoteAddress: '127.0.0.1' })).status).toBe(403)
+  })
+
   it('can check only the peer when mutations are none', async () => {
     const router = await mount()
     router.use(loopbackOnly({ mutations: 'none' }))

@@ -5,15 +5,9 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type {} from 'acryl-router'
+import type { RouterHttpService } from 'acryl-router'
 import { Context, Service } from '@deepseek-ai/cordis'
 import { serve } from './serve.ts'
-
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    routerHttp: RouterHttp
-  }
-}
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
 export const name = 'acryl-router-http'
@@ -35,7 +29,7 @@ export interface WebServerPort {
 
 const PREFIX_PATTERN = /^\/[A-Za-z0-9._~\-/]*[A-Za-z0-9._~-]$/
 
-export class RouterHttp extends Service {
+export class RouterHttp extends Service implements RouterHttpService {
   private readonly router: Context['router']
   private readonly web: WebServerPort
 

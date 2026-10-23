@@ -4,6 +4,7 @@
  * end it and leave nothing subscribed.
  */
 
+import { request as httpRequest } from 'node:http'
 import { Context } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
 import { apply as routerApply, name as routerName } from 'acryl-router'
@@ -31,7 +32,6 @@ async function stack(): Promise<{ ctx: Context, base: string }> {
   ctx.plugin({ name: stateName, apply: stateApply })
   const web = ctx as unknown as { webServer?: { port: number } }
   await until(() => web.webServer?.port !== undefined && (ctx as unknown as { routerHttp?: unknown }).routerHttp !== undefined && (ctx as unknown as { state?: unknown }).state !== undefined, 'the stack')
-  ctx.plugin({ name: 'state-mount', inject: ['routerHttp'], apply(c: Context) { c.routerHttp.mount('/api/state') } })
   await settle(30)
   return { ctx, base: `http://127.0.0.1:${String(web.webServer!.port)}` }
 }
@@ -102,5 +102,32 @@ describe('server-sent events through the real stack', () => {
     const routerFiber = [...[...ctx.registry.values()].find(runtime => runtime.name === routerName)!.fibers][0]!
     await routerFiber.dispose()
     await expect(ended).resolves.toMatchObject({ done: true })
+  })
+})
+
+describe('the loopback guard over real HTTP', () => {
+  /** A raw request, so the test chooses the Host header (fetch would set its own). */
+  function raw(port: number, path: string, headers: Record<string, string>): Promise<{ status: number, body: string }> {
+    return new Promise((resolve, reject) => {
+      const req = httpRequest({ host: '127.0.0.1', port, path, headers }, res => {
+        let body = ''
+        res.on('data', chunk => { body += String(chunk) })
+        res.on('end', () => { resolve({ status: res.statusCode ?? 0, body }) })
+      })
+      req.on('error', reject)
+      req.end()
+    })
+  }
+
+  it('serves the state routes to this machine and refuses a request that names another host or is marked cross-site', async () => {
+    const { ctx, base } = await stack()
+    ctx.state.cell<number>('app.n', 3)
+    const port = Number(new URL(base).port)
+    const ok = await raw(port, '/api/state/app.n', { host: `127.0.0.1:${String(port)}` })
+    expect(ok.status).toBe(200)
+    expect(JSON.parse(ok.body)).toEqual({ key: 'app.n', value: 3 })
+    expect((await raw(port, '/api/state/app.n', { host: 'evil.example' })).status).toBe(403)
+    expect((await raw(port, '/api/state/app.n', { host: `127.0.0.1:${String(port + 1)}` })).status).toBe(403)
+    expect((await raw(port, '/api/state/app.n', { host: `127.0.0.1:${String(port)}`, 'sec-fetch-site': 'cross-site' })).status).toBe(403)
   })
 })

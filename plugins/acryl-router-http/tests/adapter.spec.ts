@@ -8,7 +8,8 @@ import { Context, type FiberState } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
 import { apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import { apply, inject, name, type RouterHttp } from '../src/index.ts'
+import type { RouterHttpService } from 'acryl-router'
+import { apply, inject, name } from '../src/index.ts'
 
 const PENDING = 0 as FiberState.PENDING
 const ACTIVE = 2 as FiberState.ACTIVE
@@ -160,7 +161,7 @@ describe('acryl-router-http against a real webServer', () => {
 
   it('refuses a prefix that is not a clean path and a prefix another plugin already mounted', async () => {
     const { ctx } = await stack()
-    const http: RouterHttp = ctx.routerHttp
+    const http: RouterHttpService = ctx.routerHttp
     expect(() => http.mount('no-slash')).toThrow(/mountable/)
     expect(() => http.mount('/trailing/')).toThrow(/mountable/)
     http.mount('/api/once')

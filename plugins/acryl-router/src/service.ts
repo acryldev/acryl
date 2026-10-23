@@ -26,9 +26,19 @@ export const Config: z<Config> = z.object({
   disposeGraceMs: z.number().min(0).default(DEFAULT_DISPOSE_GRACE_MS).description('How long disposal waits for aborted requests (and their waitUntil tasks) to finish before it gives up on them.'),
 })
 
+/**
+ * The Web adapter's service (`ctx.routerHttp`, provided by `acryl-router-http`). Declared here, beside `router`, so a plugin can ask for its routes to be
+ * served over HTTP without depending on the adapter package.
+ */
+export interface RouterHttpService {
+  /** Serve `prefix` and everything below it through the router; returns a remover. The mount also goes away when the calling plugin unloads. */
+  mount(prefix: string): () => void
+}
+
 declare module '@deepseek-ai/cordis' {
   interface Context {
     router: Router
+    routerHttp: RouterHttpService
   }
 }
 

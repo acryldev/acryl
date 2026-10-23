@@ -9,6 +9,12 @@ export interface LoopbackOptions {
    * authority, which stops another web page from driving a local app; `none` checks only the peer and the `Host`.
    */
   readonly mutations?: 'same-origin' | 'none'
+  /**
+   * A call made inside the process (the terminal UI, a test) has no socket, so no peer to check. `deny` (default) refuses it, the safe choice for a route
+   * that guards something; `allow` lets it through for routes whose in-process caller is the host's own code. A request that came over a socket is always
+   * checked in full: only a call with no connection facts at all counts as in process.
+   */
+  readonly inProcess?: 'deny' | 'allow'
 }
 
 const loopback = new BlockList()
@@ -59,7 +65,9 @@ export function sameOrigin(c: RouteContext, authority: URL): boolean {
 /** Only requests from this machine to this app: loopback peer, the real port, an allowed `Host`, and for mutations a matching `Origin`. Everything else gets a 403. */
 export function loopbackOnly(options: LoopbackOptions = {}): Middleware {
   const mutations = options.mutations ?? 'same-origin'
+  const inProcess = options.inProcess ?? 'deny'
   return async (c, next) => {
+    if (inProcess === 'allow' && c.connection.remoteAddress === undefined && c.connection.localPort === undefined) return next()
     const authority = loopbackAuthority(c, options.hostnames)
     if (authority === undefined) return c.json({ error: 'request authority rejected' }, 403)
     if (mutations === 'same-origin' && !SAFE_METHODS.has(c.req.method) && !sameOrigin(c, authority)) {

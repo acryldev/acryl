@@ -1,4 +1,4 @@
-export { Router, Config, apply, name } from './service.ts'
+export { Router, Config, apply, name, type RouterHttpService } from './service.ts'
 export { RouteTable, type RouteTableOptions } from './table.ts'
 export { compose } from './compose.ts'
 export { HttpError } from './http-error.ts'

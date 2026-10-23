@@ -2320,6 +2320,10 @@ importers:
         version: 3.18.4
 
   plugins/acryl-inspect:
+    dependencies:
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2330,9 +2334,6 @@ importers:
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
@@ -2652,6 +2653,10 @@ importers:
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@8.2.1(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
   plugins/acryl-state:
+    dependencies:
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2671,9 +2676,6 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.3.7(@types/react@18.3.31)
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
       jsdom:
         specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.3.0)
