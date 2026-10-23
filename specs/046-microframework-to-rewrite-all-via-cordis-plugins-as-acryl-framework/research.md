@@ -64,3 +64,16 @@ marked unverified.
 - **Not done in this slice:** seven Market routes (their tests build `req`/`res` emitters by hand), the Desktop IPC bridge,
   the CLI/TUI call path, and a full application boot (Web or Desktop). The worktree's other packages lack `node_modules`, so
   `acryl-plugin-context` and `extension-examples` specs cannot run here; CI is the check for those.
+
+## M4 and M5 results (2026-10-23)
+
+- Cordis exposes a fiber's `inject` (what it requires), its state, and `getEffects()` (a tree of labeled effects; `ctx.provide("x")`
+  for what it provides). With the label convention `<plugin>: <what>`, the whole per-plugin contract is available at runtime, so
+  M4 is an inspector, not a declaration format.
+- **Finding: streaming and "in flight".** A request is done when its `Response` is returned, but a server-sent stream lives on.
+  Without an explicit hand-off the router could not abort or await it at disposal (found when a disposal-closes-the-stream test
+  timed out). `waitUntil` plus a bounded grace period fixed it and is covered by tests in the router and over real HTTP.
+- **Finding: the layout gate.** The repo's DSH import ratchet (134 lines) rejected the first adapter because it imported a
+  type from the DSH webserver; the adapter now owns a two-line port and reads the service by name.
+- The state core is about 70 lines (`cell.ts`), no Cordis and no DOM, VanJS-shaped as proposed; the DOM-renderer half of the idea
+  (M6) is untouched.

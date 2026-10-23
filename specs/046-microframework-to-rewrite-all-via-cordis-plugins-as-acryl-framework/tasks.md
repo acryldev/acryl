@@ -29,13 +29,13 @@ See `spec.md` for the milestones and `plan.md` for the principles. Reference tas
 
 ## Phase 4 - Plugin contract (M4)
 
-- [ ] T014 Mini-design (six points) for the declaration format, building on `acryl.requires` and `acryl.provides`.
-- [ ] T015 Declarations for a chosen set of plugins and a generated "what it does, what unloads" diagnostic.
+- [x] T014 (decided: the contract is derived from the running system, not declared a second time; see plan.md "Decisions"; the static `acryl.requires` and `acryl.provides` stay for catalogs) Mini-design (six points) for the declaration format, building on `acryl.requires` and `acryl.provides`.
+- [x] T015 (`plugins/acryl-inspect`: `ctx.inspect.plugins()`, `explain(name)`, `render()` and `GET /api/inspect/plugins[/:name]`; its "removes N registrations" promise is checked against what the router really lost; 10 tests; applying the label convention to the existing plugins is not done) Declarations for a chosen set of plugins and a generated "what it does, what unloads" diagnostic.
 
 ## Phase 5 - State (M5)
 
-- [ ] T016 Mini-design and prototype of the `state` service (DOM-free reactive core), with React and pi-tui adapters.
-- [ ] T017 One value updates Web, Desktop and the TUI; recorded.
+- [x] T016 (`plugins/acryl-state`: cells, derived cells, `useCell` for React, read-only JSON and server-sent-event routes on the router; mini-design below in plan.md) Mini-design and prototype of the `state` service (DOM-free reactive core), with React and pi-tui adapters.
+- [x] T017 (three recorded runs: in-process subscription for the terminal path, real HTTP server-sent events through the actual webServer for Web and Desktop, and `useCell` under jsdom for React; 14 + 3 tests; a real TUI component and a browser EventSource client are not built) One value updates Web, Desktop and the TUI; recorded.
 
 ## Phase 6 - Optional layers (M6)
 

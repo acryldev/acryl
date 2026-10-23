@@ -49,3 +49,25 @@ M3 surfaces, M4 plugin contract, M5 state service, M7 detach. Each needs the six
   hand-written declaration would drift from the code. M4 therefore adds a label convention and an inspector that reads the
   running system; the static `acryl.requires` and `acryl.provides` in `package.json` stay for catalogs that read a package
   before loading it.
+
+## Cordis mini-design: M4 `acryl-inspect` and M5 `acryl-state`
+
+**`acryl-inspect`.** (1) Boundary: reading the live registry is its own capability, replaceable and optional, separate from the
+router. (2) Provides `inspect`; hard inject none; optional inner inject `router` for two read-only routes. (3) Effects: none of its
+own beyond the service and the optional routes, all released by their owning scopes. (4) No config; row id `acryl-inspect`.
+(5) No events, no durable state: a report is computed on demand. (6) Verification: real Cordis plugins, PENDING shown as
+PENDING, the unload promise compared with the router's real size, the routes through `router.fetch`, and operation with no router.
+
+**`acryl-state`.** (1) Boundary: values that several surfaces watch, owned by the Host plugin that writes them; it needs its own
+lifecycle because a cell must disappear with its owner. (2) Provides `state`; hard inject none; optional inner inject `router` for
+the read-only routes. (3) Effects: each cell and derived cell is released by the owner's scope (derived cells also detach from
+their inputs); a stream registers with the router's `waitUntil` and ends on client cancel, abort or router disposal, releasing its
+subscription in one place. (4) No config; row id `acryl-state`. (5) No Cordis events; change notification is the cell's own
+subscriber list, so a failing subscriber is logged and isolated. No durable state: a cell is a live value, and anything that must
+survive a restart is the owning plugin's business. (6) Verification: cell and derived behavior without Cordis, ownership and
+unload through a real `Context`, the routes and a stream through `router.fetch`, a stream ended by router disposal, and the same
+stream over real HTTP through the actual webServer and adapter; the React hook under jsdom.
+
+**Router addition `waitUntil`.** A streaming handler keeps its request in flight with `c.waitUntil(promise)`; disposal aborts
+`c.signal`, then waits up to `disposeGraceMs` (default 2000) for the tasks, then logs and continues. Found by the stream test:
+without it a stream outlived the router that served it.
