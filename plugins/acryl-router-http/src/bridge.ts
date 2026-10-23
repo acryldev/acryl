@@ -25,7 +25,9 @@ export function toRequest(req: IncomingMessage, signal: AbortSignal): Request {
   }
   const method = (req.method ?? 'GET').toUpperCase()
   if (method === 'GET' || method === 'HEAD') return new Request(url, { method, headers, signal })
-  return new Request(url, { method, headers, signal, body: Readable.toWeb(req) as ReadableStream, duplex: 'half' })
+  // Node's fetch requires `duplex: 'half'` for a streamed body; the DOM lib's `RequestInit` does not declare the field yet.
+  const init: RequestInit & { duplex: 'half' } = { method, headers, signal, body: Readable.toWeb(req) as ReadableStream, duplex: 'half' }
+  return new Request(url, init)
 }
 
 /**
