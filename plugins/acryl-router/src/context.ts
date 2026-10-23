@@ -1,4 +1,4 @@
-import type { RouteContext } from './types.ts'
+import type { ConnectionInfo, RouteContext } from './types.ts'
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' } as const
 const TEXT_HEADERS = { 'content-type': 'text/plain; charset=utf-8' } as const
@@ -8,12 +8,13 @@ const NULL_BODY_STATUSES = new Set([101, 204, 205, 304])
 const bodyFor = (status: number, body: string): string | null => NULL_BODY_STATUSES.has(status) ? null : body
 
 /** Build the per-request context. */
-export function createContext(req: Request, params: Record<string, string>, signal: AbortSignal): RouteContext {
+export function createContext(req: Request, params: Record<string, string>, signal: AbortSignal, connection: ConnectionInfo): RouteContext {
   const values = new Map<string, unknown>()
   return {
     req,
     url: new URL(req.url),
     params,
+    connection,
     signal,
     get: <T>(key: string) => values.get(key) as T | undefined,
     set: (key, value) => { values.set(key, value) },

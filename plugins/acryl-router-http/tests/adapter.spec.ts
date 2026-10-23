@@ -55,6 +55,7 @@ function demo(prefix: string, extra?: (ctx: Context) => void) {
       ctx.router.get(`${prefix}/stream`, () => new Response(new ReadableStream({
         start(controller) { controller.enqueue(new TextEncoder().encode('one,')); controller.enqueue(new TextEncoder().encode('two')); controller.close() },
       })))
+      ctx.router.get(`${prefix}/peer`, c => c.json({ remote: c.connection.remoteAddress ?? null }))
       extra?.(ctx)
     },
   }
@@ -69,6 +70,14 @@ describe('acryl-router-http against a real webServer', () => {
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('application/json')
     expect(await response.json()).toEqual({ hello: 'zed x', q: '1', host: true })
+  })
+
+  it('passes the socket peer address as connection info, not as part of the request', async () => {
+    const { ctx, base } = await stack()
+    ctx.plugin(demo('/api/demo'))
+    await settle(20)
+    const body = await (await fetch(`${base()}/api/demo/peer`)).json() as { remote: string | null }
+    expect(['127.0.0.1', '::ffff:127.0.0.1']).toContain(body.remote)
   })
 
   it('streams a request body into the handler and keeps status and headers on the way out', async () => {

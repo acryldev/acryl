@@ -145,6 +145,15 @@ describe('acryl-router lifecycle through Cordis', () => {
     expect((await router.fetch(new Request('http://acryl.test/slow'))).status).toBe(503)
   })
 
+  it('hands the transport\'s connection info to the handler and gives an in-process call an empty one', async () => {
+    const { router } = await mountRouter()
+    router.get('/who', c => c.json({ remote: c.connection.remoteAddress ?? null }))
+    const over = await router.fetch(new Request('http://acryl.test/who'), { remoteAddress: '127.0.0.1' })
+    expect(await over.json()).toEqual({ remote: '127.0.0.1' })
+    const inProcess = await router.fetch(new Request('http://acryl.test/who'))
+    expect(await inProcess.json()).toEqual({ remote: null })
+  })
+
   it('forwards the caller\'s own abort to the handler signal', async () => {
     const { router } = await mountRouter()
     let seen = false

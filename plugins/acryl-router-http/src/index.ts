@@ -7,7 +7,7 @@
 import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from 'acryl-router'
 import { Context, Service } from '@deepseek-ai/cordis'
-import { sendResponse, toRequest } from './bridge.ts'
+import { serve } from './serve.ts'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -42,18 +42,7 @@ export class RouterHttp extends Service {
     const remove = this.web.register({
       kind: 'prefix',
       path: prefix,
-      handler: async (req, res) => {
-        const controller = new AbortController()
-        res.once('close', () => { if (!res.writableFinished) controller.abort() })
-        const method = (req.method ?? 'GET').toUpperCase()
-        let response: Response
-        try {
-          response = await this.router.fetch(toRequest(req, controller.signal))
-        } catch {
-          response = new Response('Internal Server Error', { status: 500 })
-        }
-        await sendResponse(res, response, method)
-      },
+      handler: (req, res) => serve(this.router, req, res),
     })
     this.ctx.effect(() => () => { remove() }, `acryl-router-http: mount ${prefix}`)
     return remove
@@ -63,3 +52,6 @@ export class RouterHttp extends Service {
 export function apply(ctx: Context): void {
   new RouterHttp(ctx)
 }
+
+export { serve, type FetchRouter } from './serve.ts'
+export { sendResponse, toRequest } from './bridge.ts'

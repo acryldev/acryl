@@ -1,7 +1,7 @@
 import { compose } from './compose.ts'
 import { createContext } from './context.ts'
 import { compareSpecificity, compilePattern, matchPattern, shapeOf, splitPath, type Pattern } from './pattern.ts'
-import type { Handler, Middleware, RouteMethod, TrailingSlash } from './types.ts'
+import type { ConnectionInfo, Handler, Middleware, RouteMethod, TrailingSlash } from './types.ts'
 
 interface RouteEntry {
   readonly method: RouteMethod
@@ -70,7 +70,7 @@ export class RouteTable {
     return false
   }
 
-  async dispatch(req: Request, signal: AbortSignal): Promise<Response> {
+  async dispatch(req: Request, signal: AbortSignal, connection: ConnectionInfo = {}): Promise<Response> {
     const parts = splitPath(new URL(req.url).pathname, this.options.trailingSlash)
     const method = req.method.toUpperCase()
 
@@ -99,7 +99,7 @@ export class RouteTable {
         ? () => new Response('Method Not Allowed', { status: 405, headers: { allow: [...allowed].sort().join(', ') } })
         : () => new Response('Not Found', { status: 404 })
 
-    const context = createContext(req, best?.params ?? {}, signal)
+    const context = createContext(req, best?.params ?? {}, signal, connection)
     try {
       const response = await compose(chain, final)(context)
       return method === 'HEAD' ? new Response(null, { status: response.status, statusText: response.statusText, headers: response.headers }) : response

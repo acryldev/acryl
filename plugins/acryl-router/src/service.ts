@@ -10,7 +10,7 @@
 import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { RouteTable } from './table.ts'
-import type { Handler, Middleware, RouteMethod, TrailingSlash } from './types.ts'
+import type { ConnectionInfo, Handler, Middleware, RouteMethod, TrailingSlash } from './types.ts'
 
 /** Validated plugin configuration. */
 export interface Config {
@@ -78,14 +78,17 @@ export class Router extends Service {
     return remove
   }
 
-  /** Run a request in process. Never throws: failures become a 500, a disposed router answers 503. */
-  fetch(request: Request): Promise<Response> {
+  /**
+   * Run a request in process. Never throws: failures become a 500, a disposed router answers 503. `connection` describes
+   * the transport (an HTTP adapter passes the socket's peer address); an in-process caller omits it.
+   */
+  fetch(request: Request, connection: ConnectionInfo = {}): Promise<Response> {
     if (this.closing) return Promise.resolve(new Response('Service Unavailable', { status: 503 }))
     const controller = new AbortController()
     const forward = (): void => controller.abort()
     if (request.signal.aborted) controller.abort()
     else request.signal.addEventListener('abort', forward, { once: true })
-    const settled = this.table.dispatch(request, controller.signal)
+    const settled = this.table.dispatch(request, controller.signal, connection)
     const flight: Flight = { controller, settled }
     this.flights.add(flight)
     return settled.finally(() => {

@@ -5,6 +5,15 @@ export type RouteMethod = Method | '*'
 /** How a trailing slash is read: `strict` keeps `/a` and `/a/` distinct, `ignore` treats them as one path. */
 export type TrailingSlash = 'strict' | 'ignore'
 
+/**
+ * Facts about the transport the request arrived on, supplied by the caller of `fetch` and never by the request itself.
+ * An in-process caller (the terminal UI) passes nothing, so a handler that needs a trusted peer must refuse it.
+ */
+export interface ConnectionInfo {
+  /** The peer address of the socket, when the request came over one (for example `127.0.0.1`). */
+  readonly remoteAddress?: string | undefined
+}
+
 /** What a handler or middleware sees. Deliberately small: the Web-standard request plus a few response helpers. */
 export interface RouteContext {
   /** The incoming request. */
@@ -13,6 +22,8 @@ export interface RouteContext {
   readonly url: URL
   /** Matched `:name` segments, and `*` for the remainder of a wildcard route. Values are URL-decoded. */
   readonly params: Readonly<Record<string, string>>
+  /** The transport the request arrived on; empty for an in-process call. */
+  readonly connection: ConnectionInfo
   /** Aborted when the caller aborts the request or when the router is disposed. Handlers should honor it. */
   readonly signal: AbortSignal
   /** Request-scoped values shared between middleware and the handler. */
