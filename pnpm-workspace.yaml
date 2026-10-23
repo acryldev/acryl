@@ -23,6 +23,7 @@ packages:
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
   - plugins/acryl-settings
+  - plugins/acryl-router
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save

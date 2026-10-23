@@ -34,3 +34,15 @@ marked unverified.
 
 - Whether H3 v2 and Rou3 are as small and disposable as Hono's design (measure, do not assume).
 - typert and Desktop IPC answers (open questions 1 and 2 in spec.md).
+
+## M0/M1 result (2026-10-23)
+
+- Candidate 1, the Hono-shaped rewrite (`plugins/acryl-router`, about 400 lines of source in 6 files: `pattern` 100, `table` 110,
+  `service` 100, `context` 20, `compose` 20, `types` 35), passes all 12 conformance checks through three routes: the pure
+  `RouteTable`, the `Router` service in a Cordis `Context`, and a real Loader row mounting the built `lib/index.js`.
+- Lifecycle checks green: PENDING without a provider and activation when it appears, provider replacement with no doubled
+  registrations, consumer unload removes only its routes, 50 mount/unload cycles return to baseline, in-flight requests are
+  aborted and awaited on disposal (disposed router answers 503), 10 Loader disable/enable cycles.
+- Because the first candidate passed, H3 and Rou3 were not measured. The suite is framework-neutral (`Candidate`), so a
+  comparison is one adapter and a test run if one is wanted later.
+- No dependency on `hono` was needed: the matcher, `compose` and context are ACRYL-owned.

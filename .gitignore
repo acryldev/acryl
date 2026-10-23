@@ -35,6 +35,7 @@ plugins/acryl-plugin-admin/lib/
 plugins/acryl-support/lib/
 plugins/acryl-agent-control/lib/
 plugins/acryl-app-shell/lib/
+plugins/acryl-router/lib/
 runtime/acryl-loopback-http/lib/
 runtime/acryl-diagnostics/lib/
 

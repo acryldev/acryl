@@ -1,0 +1,84 @@
+{
+  "name": "acryl-router",
+  "version": "0.1.0",
+  "description": "The ACRYL router, one Cordis service: plugin-owned routes and middleware on Web-standard Request and Response, with an in-process fetch every surface can call",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-router"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-router#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "~3.18.4"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.5",
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./lib/index.js"
+      ]
+    },
+    "surfaces": [
+      "web",
+      "desktop",
+      "cli"
+    ],
+    "runtime": "cordis",
+    "compatibility": {
+      "acryl": ">=0.1.0 <1.0.0",
+      "node": "^22.19.0 || >=24.0.0",
+      "hosts": {
+        "@deepseek-ai/cordis": "^4.0.2"
+      }
+    },
+    "capabilities": [
+      "router"
+    ]
+  }
+}

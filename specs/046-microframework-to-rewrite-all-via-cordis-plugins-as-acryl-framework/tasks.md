@@ -4,16 +4,16 @@ See `spec.md` for the milestones and `plan.md` for the principles. Reference tas
 
 ## Phase 0 - Decide and set up (M0)
 
-- [ ] T001 Owner reviews `spec.md` and confirms the direction (micro-framework design rewritten as Cordis plugins; Hono as the leading reference; Vike not rewritten).
-- [ ] T002 Answer open question 4: confirm the service name `router` is free (grep the DSH and ACRYL service names).
-- [ ] T003 Write the conformance suite from the outline in `plan.md`, driven by a `makeRouter()` factory (new package under `plugins/`, layout check and `pnpm-workspace.yaml` updated in the same commit).
-- [ ] T004 Run the suite against the Hono-shaped design (T006); record the result in `research.md`. Measure H3 and Rou3 only if a check fails or the owner asks.
+- [x] T001 (owner approved all, 2026-10-23) Owner reviews `spec.md` and confirms the direction (micro-framework design rewritten as Cordis plugins; Hono as the leading reference; Vike not rewritten).
+- [x] T002 (`router` is free: no Context augmentation or service of that name in DSH or ACRYL) Answer open question 4: confirm the service name `router` is free (grep the DSH and ACRYL service names).
+- [x] T003 (`plugins/acryl-router/tests/conformance.ts`, 12 checks driven by a `Candidate` of five operations) Write the conformance suite from the outline in `plan.md`, driven by a `makeRouter()` factory (new package under `plugins/`, layout check and `pnpm-workspace.yaml` updated in the same commit).
+- [x] T004 (the Hono-shaped design passes all checks, so H3 and Rou3 were not measured; see research.md) Run the suite against the Hono-shaped design (T006); record the result in `research.md`. Measure H3 and Rou3 only if a check fails or the owner asks.
 
 ## Phase 1 - The service (M1)
 
-- [ ] T005 `acryl-router` package: provides `router` (`route`, `use`, `fetch`), no I/O and no dependencies, row id `acryl-router`.
-- [ ] T006 The first implementation: registry with disposers, middleware `compose`, a reduced `Context`, a linear matcher, then a trie matcher if parameters need it.
-- [ ] T007 All conformance checks green in a real Loader, including PENDING and provider replacement.
+- [x] T005 (`plugins/acryl-router`, row id `acryl-router`) `acryl-router` package: provides `router` (`route`, `use`, `fetch`), no I/O and no dependencies, row id `acryl-router`.
+- [x] T006 (registry with disposers, `compose`, reduced `RouteContext`, linear matcher with specificity ordering; no trie needed yet) The first implementation: registry with disposers, middleware `compose`, a reduced `Context`, a linear matcher, then a trie matcher if parameters need it.
+- [x] T007 (35 tests: conformance on the pure table and through a Cordis Context, PENDING and reactivation, provider replacement, 50 mount cycles, in-flight abort, and a real Loader row with 10 disable/enable cycles) All conformance checks green in a real Loader, including PENDING and provider replacement.
 
 ## Phase 2 - HTTP adapter and first port (M2)
 
