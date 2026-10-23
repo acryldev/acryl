@@ -815,7 +815,7 @@ export function prepareDesktopProfile(
   // The selected Blueprint's ACRYL-owned rows (spec 036): brand, extension pack, prompt shaping, UI library, shortcuts and
   // mount anchors, in mount order. The packages resolve from this package's own dependency closure like the market package above.
   // Desktop's Market keeps its own provider switch, so the Blueprint never composes it here.
-  patches.push(...composeBlueprintRows(blueprint, 'desktop').patches)
+  patches.push(...composeBlueprintRows(blueprint, 'desktop', new Set(rows.keys())).patches)
   // The app's own committed plugins may each need an ACRYL-owned framework package (same mechanism and
   // same reasoning as Web's `resolveWebEngineComposition` - a project grown via `acryl new` has no other way
   // to depend on an unpublished ACRYL-owned package; see that function's own doc comments for the full

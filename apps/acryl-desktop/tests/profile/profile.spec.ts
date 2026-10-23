@@ -329,8 +329,8 @@ describe('desktop profile composition', {
     })
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.community.rowId
       || row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
-    // The router rows exist only for the community Market that injects them.
-    expect(rows.some(row => row.id === 'acryl-router' || row.id === 'acryl-router-http')).toBe(false)
+    // The router rows are the framework kit every Blend carries, whether or not a Market is selected.
+    for (const id of ['acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
   })
 
   it('inserts the community Market as one canonical row only after explicit selection', () => {

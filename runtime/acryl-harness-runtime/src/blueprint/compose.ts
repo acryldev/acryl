@@ -38,7 +38,7 @@ const FRAMEWORK_NEEDS = [...ROUTER_ROWS, { rowId: 'acryl-state', packageName: 'a
 /** Declaration order is mount order. The Market is Web-only here: Desktop owns its own provider switch. */
 const ROWS: readonly RowDeclaration[] = [
   { id: 'community-market', surfaces: ['web'], rowId: 'community-market', packageName: 'cordis-plugin-market', needs: ROUTER_ROWS },
-  { id: 'framework-kit', surfaces: ['web'], rowId: 'acryl-inspect', packageName: 'acryl-inspect', needs: FRAMEWORK_NEEDS },
+  { id: 'framework-kit', surfaces: ['web', 'desktop'], rowId: 'acryl-inspect', packageName: 'acryl-inspect', needs: FRAMEWORK_NEEDS },
   { id: 'plugin-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-plugin-context', packageName: 'acryl-plugin-context' },
   { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
