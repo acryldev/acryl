@@ -20,6 +20,14 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./middleware": {
+      "types": "./lib/types/middleware/index.d.ts",
+      "default": "./lib/middleware.js"
+    },
+    "./helpers": {
+      "types": "./lib/types/helpers/index.d.ts",
+      "default": "./lib/helpers.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
