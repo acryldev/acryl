@@ -23,6 +23,7 @@ import {
   readStandardSourceManifest,
   registerMarketRoutes,
 } from '../src/host/routes.js'
+import { routerServices, withRouter } from './router-harness.js'
 import {
   CatalogNetworkError,
   createCachedCatalogHttpClient,
@@ -113,7 +114,7 @@ async function requestMarketCatalog(
     get: () => ({ sources: records }),
     update: vi.fn(),
   } as unknown as SettingsScope<MarketSettingsDocument>
-  const dispose = registerMarketRoutes(ctx as never, scope)
+  const dispose = registerMarketRoutes(withRouter(ctx) as never, scope)
   const request = Object.assign(new EventEmitter(), {
     method: 'GET',
     url,
@@ -1480,49 +1481,42 @@ describe('source mutation boundary', () => {
   })
 
   it('aborts an in-flight source mutation when the plugin generation is disposed', async () => {
-    type RouteHandler = (req: EventEmitter & Record<string, any>, res: EventEmitter & Record<string, any>) => Promise<void>
-    const handlers = new Map<string, RouteHandler>()
     const routeDisposers: ReturnType<typeof vi.fn>[] = []
-    const ctx = {
-      webServer: {
-        port: 43_120,
-        register: vi.fn((route: { path: string; handler: RouteHandler }) => {
-          handlers.set(route.path, route.handler)
-          const routeDispose = vi.fn()
-          routeDisposers.push(routeDispose)
-          return routeDispose
-        }),
-      },
+    const webServer = {
+      port: 43_120,
+      register: vi.fn((_route: { path: string; kind: string; handler: unknown }) => {
+        const routeDispose = vi.fn()
+        routeDisposers.push(routeDispose)
+        return routeDispose
+      }),
     }
+    const services = routerServices(webServer as never)
+    const ctx = { webServer, ...services }
     const update = vi.fn()
     const scope = {
       get: () => ({ sources: [] }),
       update,
     } as unknown as SettingsScope<MarketSettingsDocument>
     const dispose = registerMarketRoutes(ctx as never, scope)
-    const request = Object.assign(new EventEmitter(), {
+    // A body that never finishes: the mutation stays in flight reading it until the generation is disposed.
+    const request = new Request(`http://127.0.0.1:43120${marketRoutes.sources}`, {
       method: 'POST',
-      url: marketRoutes.sources,
-      headers: { host: '127.0.0.1:43120', origin: 'http://127.0.0.1:43120' },
-      socket: { remoteAddress: '127.0.0.1' },
-    })
-    const response = Object.assign(new EventEmitter(), {
-      destroyed: false,
-      writableEnded: false,
-      setHeader: vi.fn(),
-      removeHeader: vi.fn(),
-      end: vi.fn(),
-    })
-    const pending = handlers.get(marketRoutes.sources)!(request, response)
+      headers: { host: '127.0.0.1:43120', origin: 'http://127.0.0.1:43120', 'content-type': 'application/json' },
+      body: new ReadableStream({ start() { /* never closes */ } }),
+      duplex: 'half',
+    } as RequestInit)
+    const pending = services.router.fetch(request, { remoteAddress: '127.0.0.1' })
+    await new Promise(resolve => setTimeout(resolve, 10))
 
     dispose()
     dispose()
-    await pending
+    const response = await pending
 
+    expect(response.status).toBe(499)
     expect(update).not.toHaveBeenCalled()
-    expect(response.end).not.toHaveBeenCalled()
-    for (const event of ['data', 'end', 'error', 'aborted']) expect(request.listenerCount(event)).toBe(0)
-    expect(routeDisposers).toHaveLength(4)
+    // The ported routes leave the router; the webServer keeps one prefix mount and the routes not yet ported (the catalog).
+    expect(services.router.size).toBe(0)
+    expect(routeDisposers.length).toBeGreaterThan(0)
     for (const routeDispose of routeDisposers) expect(routeDispose).toHaveBeenCalledOnce()
   })
 

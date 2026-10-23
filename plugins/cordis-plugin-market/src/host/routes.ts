@@ -3,6 +3,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { BlockList, isIP } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
+import type { RouteContext } from 'acryl-router'
+import type {} from 'acryl-router-http'
 import type { SettingsScope } from 'acryl-settings'
 import type { CatalogSourceManifest } from '../contracts/index.js'
 import { parseCatalogSnapshot, parseCatalogSource, validateLocalSourceRecords } from '../contracts/validate.js'
@@ -81,6 +83,8 @@ const SETTINGS_SCHEMA = z.object({
   }).default(undefined as never),
 }) as unknown as z<MarketSettingsDocument>
 
+/** The prefix the router serves over HTTP; the routes ported to the router share it, the rest still use the webServer. */
+const MARKET_PREFIX = '/api/community-market'
 const ROUTE_STATE = '/api/community-market/state'
 const ROUTE_SOURCES = '/api/community-market/sources'
 const ROUTE_CATALOG = '/api/community-market/catalog'
@@ -119,6 +123,74 @@ function sendJson(res: ServerResponse, status: number, value: unknown): void {
   res.setHeader('cache-control', 'no-store')
   res.setHeader('x-content-type-options', 'nosniff')
   res.end(body)
+}
+
+/** The same response `sendJson` writes, as a Web `Response` for a router handler. */
+function jsonResponse(status: number, value: unknown): Response {
+  return new Response(JSON.stringify(value), {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+    },
+  })
+}
+
+/** What a router handler returns once nobody is listening any more; the status is only visible in logs. */
+function abortedResponse(): Response {
+  return new Response(null, { status: 499 })
+}
+
+function routeContext(c: RouteContext, expectedPort: number): MarketRequestContext {
+  const secFetchSite = c.req.headers.get('sec-fetch-site')
+  return {
+    remoteAddress: c.connection.remoteAddress,
+    origin: c.req.headers.get('origin') ?? undefined,
+    host: c.req.headers.get('host') ?? undefined,
+    ...(secFetchSite === null ? {} : { secFetchSite }),
+    expectedPort,
+  }
+}
+
+function routeAllowed(c: RouteContext, expectedPort: number): boolean {
+  return marketRequestAllowed(routeContext(c, expectedPort))
+}
+
+function routeMutationAllowed(c: RouteContext, expectedPort: number): boolean {
+  return marketMutationAllowed(routeContext(c, expectedPort))
+}
+
+/** Read a bounded JSON body from a Web request: at most `MAX_BODY_BYTES`, rejecting on abort, oversize or bad JSON. */
+async function readJsonBody(request: Request, signal: AbortSignal): Promise<unknown> {
+  signal.throwIfAborted()
+  const chunks: Uint8Array[] = []
+  let size = 0
+  const reader = request.body?.getReader()
+  if (reader !== undefined) {
+    const onAbort = (): void => { void reader.cancel(signal.reason).catch(() => undefined) }
+    signal.addEventListener('abort', onAbort, { once: true })
+    try {
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        size += value.byteLength
+        if (size > MAX_BODY_BYTES) {
+          await reader.cancel().catch(() => undefined)
+          throw new Error('body too large')
+        }
+        chunks.push(value)
+      }
+    } finally {
+      signal.removeEventListener('abort', onAbort)
+    }
+  }
+  signal.throwIfAborted()
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
+  } catch {
+    throw new Error('invalid json')
+  }
 }
 
 function sendInstallError(res: ServerResponse, cause: unknown): void {
@@ -868,13 +940,11 @@ export function registerMarketRoutes(
     if (cache !== undefined) await scope.update({ catalogCache: cache })
   }
   const settingsScope = scope
-  const routes = [
-    ctx.webServer.register({ kind: 'exact', path: ROUTE_STATE, handler: async (_req, res) => {
-      if (generationController.signal.aborted) return
-      if (!requestAllowed(_req, expectedPort)) {
-        sendJson(res, 403, { error: 'market request authority rejected' })
-        return
-      }
+  const routes: Array<() => void> = [
+    ctx.routerHttp.mount(MARKET_PREFIX),
+    ctx.router.route('GET', ROUTE_STATE, async c => {
+      if (generationController.signal.aborted) return abortedResponse()
+      if (!routeAllowed(c, expectedPort)) return jsonResponse(403, { error: 'market request authority rejected' })
       try {
         const desktopActions = desktopActionsProvider?.get()
         const response: MarketStateResponse = {
@@ -886,11 +956,13 @@ export function registerMarketRoutes(
               && (installProvider?.get() !== undefined || desktopPluginsProvider?.get() !== undefined),
           },
         }
-        if (!generationController.signal.aborted && !res.destroyed) sendJson(res, 200, response)
+        if (generationController.signal.aborted || c.signal.aborted) return abortedResponse()
+        return jsonResponse(200, response)
       } catch {
-        if (!generationController.signal.aborted && !res.destroyed) sendJson(res, 500, { error: 'market state unavailable' })
+        if (generationController.signal.aborted || c.signal.aborted) return abortedResponse()
+        return jsonResponse(500, { error: 'market state unavailable' })
       }
-    }}),
+    }),
     ctx.webServer.register({ kind: 'exact', path: ROUTE_CATALOG, handler: async (req, res) => {
       if (!requestAllowed(req, expectedPort)) {
         sendJson(res, 403, { error: 'market request authority rejected' })
@@ -989,75 +1061,52 @@ export function registerMarketRoutes(
         stopWatching()
       }
     }}),
-    ctx.webServer.register({ kind: 'exact', path: ROUTE_ASSETS, handler: async (req, res) => {
-      if (!requestAllowed(req, expectedPort)) {
-        sendJson(res, 403, { error: 'market request authority rejected' })
-        return
-      }
-      if (req.method !== 'GET') {
-        sendJson(res, 405, { error: 'market media requires GET' })
-        return
-      }
-      const requestUrl = new URL(req.url ?? '/', 'http://localhost')
-      const refs = requestUrl.searchParams.getAll('ref')
+    ctx.router.route('*', ROUTE_ASSETS, async c => {
+      if (!routeAllowed(c, expectedPort)) return jsonResponse(403, { error: 'market request authority rejected' })
+      if (c.req.method !== 'GET') return jsonResponse(405, { error: 'market media requires GET' })
+      const refs = c.url.searchParams.getAll('ref')
       const assetRef = refs.length === 1 ? refs[0] : undefined
       if (assetRef === undefined || !MARKET_MEDIA_ASSET_REF_PATTERN.test(assetRef)) {
-        sendJson(res, 404, { error: 'market media unavailable' })
-        return
+        return jsonResponse(404, { error: 'market media unavailable' })
       }
-      const controller = new AbortController()
-      const signal = AbortSignal.any([controller.signal, generationController.signal])
-      const stopWatching = abortOnDisconnect(req, res, controller)
+      const signal = AbortSignal.any([c.signal, generationController.signal])
       try {
         const asset = await media.resolve(assetRef, signal)
-        if (signal.aborted || res.destroyed) return
-        if (asset === undefined) {
-          sendJson(res, 404, { error: 'market media unavailable' })
-          return
-        }
-        res.setHeader('cache-control', 'private, max-age=3600')
-        res.setHeader('content-type', asset.contentType)
-        res.setHeader('content-length', String(asset.body.byteLength))
-        res.setHeader('content-disposition', 'inline')
-        res.setHeader('etag', asset.etag)
-        res.setHeader('x-content-type-options', 'nosniff')
-        res.setHeader('cross-origin-resource-policy', 'same-origin')
-        res.setHeader('content-security-policy', "default-src 'none'; sandbox")
-        res.setHeader('referrer-policy', 'no-referrer')
-        if (req.headers['if-none-match'] === asset.etag) {
-          res.statusCode = 304
-          res.removeHeader('content-length')
-          res.end()
-          return
-        }
-        res.statusCode = 200
-        res.end(asset.body)
+        if (signal.aborted) return abortedResponse()
+        if (asset === undefined) return jsonResponse(404, { error: 'market media unavailable' })
+        const headers = new Headers({
+          'cache-control': 'private, max-age=3600',
+          'content-type': asset.contentType,
+          'content-disposition': 'inline',
+          etag: asset.etag,
+          'x-content-type-options': 'nosniff',
+          'cross-origin-resource-policy': 'same-origin',
+          'content-security-policy': "default-src 'none'; sandbox",
+          'referrer-policy': 'no-referrer',
+        })
+        if (c.req.headers.get('if-none-match') === asset.etag) return new Response(null, { status: 304, headers })
+        headers.set('content-length', String(asset.body.byteLength))
+        return new Response(new Uint8Array(asset.body), { status: 200, headers })
       } catch {
-        if (!signal.aborted && !res.destroyed) sendJson(res, 404, { error: 'market media unavailable' })
-      } finally {
-        stopWatching()
+        if (signal.aborted) return abortedResponse()
+        return jsonResponse(404, { error: 'market media unavailable' })
       }
-    }}),
-    ctx.webServer.register({ kind: 'exact', path: ROUTE_SOURCES, handler: async (req, res) => {
-      if (req.method !== 'POST' || !mutationAllowed(req, expectedPort)) {
-        sendJson(res, 405, { error: 'source changes require a local same-origin POST' })
-        return
+    }),
+    ctx.router.route('*', ROUTE_SOURCES, async c => {
+      if (c.req.method !== 'POST' || !routeMutationAllowed(c, expectedPort)) {
+        return jsonResponse(405, { error: 'source changes require a local same-origin POST' })
       }
-      const controller = new AbortController()
-      const signal = AbortSignal.any([controller.signal, generationController.signal])
-      const stopWatching = abortOnDisconnect(req, res, controller)
+      const signal = AbortSignal.any([c.signal, generationController.signal])
       try {
-        const mutation = asMutation(await readJson(req, signal))
+        const mutation = asMutation(await readJsonBody(c.req, signal))
         await mutateSource(mutation, signal)
-        if (!signal.aborted && !res.destroyed) sendJson(res, 200, { sources: await service.listSources() })
+        if (signal.aborted) return abortedResponse()
+        return jsonResponse(200, { sources: await service.listSources() })
       } catch (cause) {
-        if (!signal.aborted && !res.destroyed) {
-          sendJson(res, 400, { error: cause instanceof Error ? cause.message : 'source change failed' })
-        }
-      } finally {
-        stopWatching()
+        if (signal.aborted) return abortedResponse()
+        return jsonResponse(400, { error: cause instanceof Error ? cause.message : 'source change failed' })
       }
-    }}),
+    }),
   ]
   if (desktopActionsProvider !== undefined) {
     routes.push(

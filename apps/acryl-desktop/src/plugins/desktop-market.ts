@@ -38,6 +38,15 @@ export const DESKTOP_MARKET_IDENTITIES = Object.freeze({
   }),
 })
 
+/**
+ * Rows the community Market injects services from (`router`, `routerHttp`; spec 046), mounted just before it whenever it is the
+ * selected provider. They are not Market identities: a different provider never needs them and they are never provider rows.
+ */
+export const COMMUNITY_MARKET_REQUIRED_ROWS = Object.freeze([
+  Object.freeze({ rowId: 'acryl-router', packageName: 'acryl-router' }),
+  Object.freeze({ rowId: 'acryl-router-http', packageName: 'acryl-router-http' }),
+])
+
 /** Persisted machine-level provider selection. Effective state is derived at boot. */
 export interface DesktopMarketStateV1 {
   readonly version: 1

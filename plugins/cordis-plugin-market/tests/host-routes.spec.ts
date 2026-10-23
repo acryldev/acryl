@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SettingsScope } from 'acryl-settings'
@@ -26,8 +26,7 @@ import type { MarketSettingsDocument } from '../src/catalog/source-store.js'
 import type { CatalogSourceManifest, LocalSourceRecord } from '../src/contracts/index.js'
 import { marketRoutes, registerMarketRoutes } from '../src/host/routes.js'
 import { restrictedHttpClient } from '../src/network/restricted-http.js'
-
-type RouteHandler = (req: IncomingMessage, res: ServerResponse) => void | Promise<void>
+import { FakeWebServer, routerServices } from './router-harness.js'
 
 function fixture(path: string): unknown {
   return JSON.parse(readFileSync(new URL(path, import.meta.url), 'utf8')) as unknown
@@ -107,7 +106,7 @@ async function startMarketServer(
   initialSources: readonly LocalSourceRecord[],
   sharedSettings?: SharedMarketSettings,
 ): Promise<MarketServer> {
-  const routes = new Map<string, RouteHandler>()
+  const fakeWeb = new FakeWebServer(0)
   const settings = sharedSettings ?? { document: { sources: initialSources } }
   const scope = {
     get: () => settings.document,
@@ -117,7 +116,7 @@ async function startMarketServer(
   } as unknown as SettingsScope<MarketSettingsDocument>
   const server = createServer((req, res) => {
     const pathname = new URL(req.url ?? '/', 'http://localhost').pathname
-    const handler = routes.get(pathname)
+    const handler = fakeWeb.match(pathname)?.handler
     if (handler === undefined) {
       res.statusCode = 404
       res.end()
@@ -133,14 +132,10 @@ async function startMarketServer(
     server.listen(0, '127.0.0.1', resolve)
   })
   const { port } = server.address() as AddressInfo
+  const fakeWebWithPort = Object.assign(fakeWeb, { port })
   const ctx = {
-    webServer: {
-      port,
-      register: (route: { readonly path: string; readonly handler: RouteHandler }) => {
-        routes.set(route.path, route.handler)
-        return () => { routes.delete(route.path) }
-      },
-    },
+    webServer: fakeWebWithPort,
+    ...routerServices(fakeWebWithPort),
     logger: { error: vi.fn() },
   } as unknown as Context
   const disposeRoutes = registerMarketRoutes(ctx, scope)

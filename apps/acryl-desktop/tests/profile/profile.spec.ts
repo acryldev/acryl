@@ -329,6 +329,8 @@ describe('desktop profile composition', {
     })
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.community.rowId
       || row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
+    // The router rows exist only for the community Market that injects them.
+    expect(rows.some(row => row.id === 'acryl-router' || row.id === 'acryl-router-http')).toBe(false)
   })
 
   it('inserts the community Market as one canonical row only after explicit selection', () => {
@@ -346,6 +348,12 @@ describe('desktop profile composition', {
       name: DESKTOP_MARKET_IDENTITIES.community.packageName,
     }])
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
+    // The community Market injects `router` and `routerHttp` (spec 046): their rows come with it, once, just before it.
+    const ids = rows.map(row => row.id)
+    expect(ids.filter(id => id === 'acryl-router')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acryl-router-http')).toHaveLength(1)
+    expect(ids.indexOf('acryl-router')).toBeLessThan(ids.indexOf('acryl-router-http'))
+    expect(ids.indexOf('acryl-router-http')).toBe(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId) - 1)
   })
 
   it('loads the exact dshmarket dependency as a direct bundle only after explicit selection', () => {

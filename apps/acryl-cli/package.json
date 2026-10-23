@@ -147,6 +147,8 @@
     "acryl-settings": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-ui-tui": "workspace:*",
+    "acryl-router": "workspace:*",
+    "acryl-router-http": "workspace:*",
     "cordis-plugin-market": "workspace:*",
     "diff": "^9.0.0"
   },

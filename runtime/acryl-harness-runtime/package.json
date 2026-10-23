@@ -189,6 +189,8 @@
     "acryl-ui-tui": "workspace:*",
     "acryl-workspace": "workspace:*",
     "adm-zip": "^0.6.1",
+    "acryl-router": "workspace:*",
+    "acryl-router-http": "workspace:*",
     "cordis-plugin-market": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "koffi": "3.1.5",

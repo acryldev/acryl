@@ -1,6 +1,7 @@
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { FakeWebServer, routerServices } from './router-harness.js'
 
 const assetRef = 'mktimg_0123456789abcdefghijklmnopqrstuv'
 const assetBody = Buffer.from('normalized-png-fixture')
@@ -25,10 +26,10 @@ interface TestServer {
 }
 
 async function startServer(): Promise<TestServer> {
-  const handlers = new Map<string, (req: any, res: any) => void | Promise<void>>()
+  const fakeWeb = new FakeWebServer(0)
   const server = createServer((req, res) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname
-    const handler = handlers.get(path)
+    const handler = fakeWeb.match(path)?.handler
     if (handler === undefined) {
       res.statusCode = 404
       res.end()
@@ -50,14 +51,10 @@ async function startServer(): Promise<TestServer> {
     get: () => ({ sources: [] }),
     update: async () => {},
   }
+  const fakeWebWithPort = Object.assign(fakeWeb, { port })
   const context = {
-    webServer: {
-      port,
-      register: (route: { path: string; handler: (req: any, res: any) => void | Promise<void> }) => {
-        handlers.set(route.path, route.handler)
-        return () => { handlers.delete(route.path) }
-      },
-    },
+    webServer: fakeWebWithPort,
+    ...routerServices(fakeWebWithPort),
     logger: { error: vi.fn() },
   }
   const disposeRoutes = registerMarketRoutes(context as never, scope as never)

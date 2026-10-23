@@ -548,6 +548,12 @@ importers:
       acryl-plugin-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-context
+      acryl-router:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -1449,6 +1455,12 @@ importers:
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
+      acryl-router:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -2122,6 +2134,12 @@ importers:
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
+      acryl-router:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -3048,6 +3066,12 @@ importers:
       '@types/semver':
         specifier: ^7.7.1
         version: 7.8.0
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../acryl-settings
@@ -3657,6 +3681,12 @@ importers:
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
+      acryl-router:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings

@@ -19,11 +19,22 @@ interface RowDeclaration {
   readonly packageName: string
   /** A library a plugin imports rather than mounts: the package must resolve, but there is no Loader row. */
   readonly libraryOnly?: readonly AcrylSurface[]
+  /**
+   * Rows this row's plugin injects services from, mounted just before it (and once, however many rows name them). They are not
+   * Blueprint rows of their own: a Blueprint names capabilities, and which plugin provides a service is this table's business.
+   */
+  readonly needs?: readonly { readonly rowId: string, readonly packageName: string }[]
 }
+
+/** The router (`ctx.router`) and its Web adapter (`ctx.routerHttp`), which the Market injects (spec 046). */
+const ROUTER_ROWS = [
+  { rowId: 'acryl-router', packageName: 'acryl-router' },
+  { rowId: 'acryl-router-http', packageName: 'acryl-router-http' },
+] as const
 
 /** Declaration order is mount order. The Market is Web-only here: Desktop owns its own provider switch. */
 const ROWS: readonly RowDeclaration[] = [
-  { id: 'community-market', surfaces: ['web'], rowId: 'community-market', packageName: 'cordis-plugin-market' },
+  { id: 'community-market', surfaces: ['web'], rowId: 'community-market', packageName: 'cordis-plugin-market', needs: ROUTER_ROWS },
   { id: 'plugin-context', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-plugin-context', packageName: 'acryl-plugin-context' },
   { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], rowId: 'acryl-system-prompt', packageName: 'acryl-system-prompt' },
   { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], rowId: '@acryl/ui', packageName: '@acryl/ui', libraryOnly: ['tui'] },
@@ -90,6 +101,7 @@ export function composeBlueprintRows(
 ): BlueprintComposition {
   const packages: string[] = []
   const patches: PatchOptions[] = []
+  const mountedNeeds = new Set<string>()
 
   // Brand first: it swaps the stock identity row and must exist before any client row reads it.
   if (surface === 'web' || surface === 'desktop') {
@@ -118,6 +130,12 @@ export function composeBlueprintRows(
     if (row.libraryOnly?.includes(surface) === true) {
       packages.push(TUI_LIBRARY_PACKAGE)
       continue
+    }
+    for (const need of row.needs ?? []) {
+      if (existingRowIds.has(need.rowId) || mountedNeeds.has(need.rowId)) continue
+      mountedNeeds.add(need.rowId)
+      packages.push(need.packageName)
+      patches.push({ insert: [{ id: need.rowId, name: need.packageName }] })
     }
     if (existingRowIds.has(row.rowId)) continue
     packages.push(row.packageName)

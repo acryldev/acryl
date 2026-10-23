@@ -19,6 +19,7 @@ import {
   type MarketInstallReceipt,
 } from '../src/install/service.js'
 import { marketRoutes, registerMarketRoutes, registerMarketSettings } from '../src/host/routes.js'
+import { withRouter } from './router-harness.js'
 import { manualInstallHint } from '../src/install/manual.js'
 
 const packageName = 'dsh-plugin-safe'
@@ -1146,7 +1147,7 @@ describe('market install Host routes', () => {
       }),
     }
     const dispose = registerMarketRoutes(
-      ctx as never,
+      withRouter(ctx) as never,
       settings.scope,
       { get: () => install },
       { get: () => actions },
@@ -1452,7 +1453,7 @@ describe('market install Host routes', () => {
       executeEnable: vi.fn(),
     }
     const dispose = registerMarketRoutes(
-      ctx as never,
+      withRouter(ctx) as never,
       memoryScope().scope,
       { get: () => install },
       undefined,
@@ -1512,7 +1513,7 @@ describe('market install Host routes', () => {
       observeCatalog: vi.fn(),
       invalidateSource: vi.fn(),
     } as unknown as MarketInstallService
-    const dispose = registerMarketRoutes(ctx as never, memoryScope().scope, { get: () => install })
+    const dispose = registerMarketRoutes(withRouter(ctx) as never, memoryScope().scope, { get: () => install })
     const req = Object.assign(new EventEmitter(), {
       method: 'POST',
       url: marketRoutes.operationExecute,

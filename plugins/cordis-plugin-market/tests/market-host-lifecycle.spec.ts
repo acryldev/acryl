@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events'
 import { describe, expect, it, vi } from 'vitest'
 import { apply } from '../src/index.js'
 import { marketRoutes } from '../src/host/routes.js'
+import { routerServices } from './router-harness.js'
 
 type Handler = (req: any, res: any) => void | Promise<void>
 
@@ -38,6 +39,14 @@ function createHarness() {
     activeInjection = undefined
   }
 
+  const webServer = {
+    port: 43_120,
+    register: vi.fn((route: { path: string; handler: Handler }) => {
+      handlers.set(route.path, route.handler)
+      return () => { handlers.delete(route.path) }
+    }),
+  }
+  const services = routerServices(webServer as never)
   const context = {
     logger: { error: vi.fn() },
     acrylSettings: {
@@ -46,13 +55,8 @@ function createHarness() {
         update: async (patch: Record<string, unknown>) => { settings = { ...settings, ...patch } },
       })),
     },
-    webServer: {
-      port: 43_120,
-      register: vi.fn((route: { path: string; handler: Handler }) => {
-        handlers.set(route.path, route.handler)
-        return () => { handlers.delete(route.path) }
-      }),
-    },
+    webServer,
+    ...services,
     effect: (factory: () => void | (() => void)) => { registerEffect(factory) },
     inject: (
       names: readonly string[],
@@ -90,7 +94,11 @@ function createHarness() {
       },
     })
     const handler = handlers.get(path)
-    if (handler === undefined) throw new Error(`missing route ${path}`)
+    if (handler === undefined) {
+      // A route served by the router: call it the way an adapter would, with the loopback peer as connection info.
+      const routed = await services.router.fetch(new Request(`http://127.0.0.1:43120${path}`, { headers: req.headers }), { remoteAddress: '127.0.0.1' })
+      return { status: routed.status, body: await routed.json() as unknown }
+    }
     await handler(req, response)
     return { status: response.statusCode, body }
   }
