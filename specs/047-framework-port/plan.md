@@ -52,6 +52,29 @@ and `Response` stay in place (the adapter's `overrideGlobalObjects: false`); the
 ported `Request` before the router sees it, so a client that goes away still aborts `c.req.raw.signal`. `serveStatic` is exported. The
 WebSocket upgrade needs the raw `incoming` in the handler's bindings, which the router does not pass; it is a later task.
 
+## Latency after a mount change (gate P6)
+
+A mount change marks the composed app stale; the next request composes a fresh `App`. Measured with
+`plugins/acryl-router/scripts/bench-remount.mjs` (in process, `router.request`, Node 24, Apple Silicon), median and p95:
+
+| mounts x routes | steady state | first request after a change, default matcher | the same, trie router (shipped) |
+| --- | --- | --- | --- |
+| 20 x 10 | 32 us / 44 us | 2.1 ms / 2.7 ms | 0.22 ms / 0.30 ms |
+| 50 x 20 | 31 us / 45 us | 21 ms / 23 ms | 0.81 ms / 2.5 ms |
+| 100 x 20 | 33 us / 41 us | about 160 ms (one-off probe) | 1.5 ms / 4.1 ms |
+
+The default matcher compiles one regular expression over every route on its first request, and that compile grows faster than the route
+count. The router service therefore composes with the core's trie router, which rebuilds in about 1 ms per 1000 routes and matches as fast
+in steady state (5 to 7 us for a bare app in the same probe). A plugin's own `App` keeps whatever router it chose; only the composed app
+uses the trie.
+
+## Framework app profile (gate P6)
+
+`acryl-router/tsconfig.app.json` is the profile an app extends: ES2024 with the DOM and DOM.Iterable libs (the Web types the framework
+names, such as `CryptoKey` in jwt), `strict`, NodeNext, without this repository's `noUncheckedIndexedAccess` and
+`exactOptionalPropertyTypes`. `tsconfig.framework-app.json` at the root compiles the framework plugins and the todo example under it,
+mapping the package names to their sources so no build is needed; `check:layout` runs it (`pnpm run check:framework-app`).
+
 ## ACRYL additions kept
 
 - `loopbackOnly` middleware (Host must be loopback with the server's real port; a foreign or null Origin on a change is 403).

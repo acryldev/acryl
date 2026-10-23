@@ -1,0 +1,28 @@
+{
+  "//": "The framework app profile gate (spec 047): the framework plugins and the todo example compile under the profile an app extends (acryl-router/tsconfig.app.json), without this repository's stricter flags. Run by check:layout; needs no build, the package names map to their sources.",
+  "extends": "./plugins/acryl-router/tsconfig.app.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "typeRoots": ["./plugins/acryl-router/node_modules/@types"],
+    "paths": {
+      "acryl-router": ["./plugins/acryl-router/src/index.ts"],
+      "acryl-router/middleware": ["./plugins/acryl-router/src/middleware/index.ts"],
+      "acryl-router/helpers": ["./plugins/acryl-router/src/helpers/index.ts"],
+      "acryl-router/client": ["./plugins/acryl-router/src/client.ts"],
+      "acryl-router-http": ["./plugins/acryl-router-http/src/index.ts"],
+      "acryl-state": ["./plugins/acryl-state/src/index.ts"],
+      "acryl-inspect": ["./plugins/acryl-inspect/src/index.ts"],
+      "acryl-node-server": ["./plugins/acryl-node-server/src/index.ts"]
+    }
+  },
+  "include": [
+    "plugins/acryl-router/src/**/*.ts",
+    "plugins/acryl-router-http/src/**/*.ts",
+    "plugins/acryl-state/src/**/*.ts",
+    "plugins/acryl-inspect/src/**/*.ts",
+    "plugins/acryl-node-server/src/**/*.ts",
+    "examples/acryl-todo/src/**/*.ts"
+  ],
+  "exclude": ["**/*.test.ts"]
+}

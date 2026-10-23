@@ -13,6 +13,7 @@ import type { ConnectionInfo, RouterBindings } from './connection.ts'
 import { App } from './core/app.ts'
 import type { ExecutionContext } from './core/context.ts'
 import { HTTPException } from './core/http-exception.ts'
+import { TrieRouter } from './core/router/trie-router/index.ts'
 import { mergePath } from './core/utils/url.ts'
 import type { ErrorHandler, NotFoundHandler } from './core/types.ts'
 
@@ -237,7 +238,10 @@ export class Router extends Service {
 
   private app(): App {
     if (this.state.composed !== undefined) return this.state.composed
-    const root = new App({ strict: this.strict })
+    // The trie router, because the composed app is rebuilt after every mount change: the default matcher compiles one regular expression
+    // over all routes on its first request, which grows faster than the route count (measured: 22 ms at 1000 routes, 163 ms at 2000),
+    // while the trie rebuilds in about 1 ms per 1000 routes and matches as fast (scripts/bench-remount.mjs).
+    const root = new App({ strict: this.strict, router: new TrieRouter() })
     for (const mount of this.state.mounts) root.route(mount.path, mount.app)
     root.onError(this.state.errorHandler ?? this.logError)
     if (this.state.notFoundHandler !== undefined) root.notFound(this.state.notFoundHandler)

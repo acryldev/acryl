@@ -32,6 +32,7 @@
       "types": "./lib/types/client.d.ts",
       "default": "./lib/client.js"
     },
+    "./tsconfig.app.json": "./tsconfig.app.json",
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -42,6 +43,7 @@
   "files": [
     "cordis.patch.yml",
     "lib/**",
+    "tsconfig.app.json",
     "README.md",
     "LICENSE"
   ],
