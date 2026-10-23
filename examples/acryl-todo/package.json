@@ -8,6 +8,7 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run"
   },
@@ -19,7 +20,25 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
     "acryl-router-http": "workspace:*",
+    "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
+  },
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
   }
 }

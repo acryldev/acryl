@@ -16,7 +16,7 @@ From `acryl-router/helpers`:
 | Name | What it does |
 | --- | --- |
 | `readJson`, `readText`, `readBytes` | bounded body reads (413 / 400 as `HttpError`) |
-| `streamSSE` | server-sent events with guaranteed cleanup |
+| `streamSSE` | server-sent events with guaranteed cleanup and a 15 s keepalive |
 | `validate`, `valid` | Standard Schema validation of `json`, `query`, `param` |
 
 Not built (add as plugins when needed): jwt, basic-auth, etag, compress, cache, csrf.

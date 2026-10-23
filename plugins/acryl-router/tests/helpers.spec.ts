@@ -152,3 +152,21 @@ describe('validate', () => {
     expect((await router.request('/x')).status).toBe(500)
   })
 })
+
+describe('streamSSE keepalive and validate on bad JSON', () => {
+  it('sends a comment line on an idle stream and stops when it ends', async () => {
+    const { router } = await mount()
+    router.get('/s', c => streamSSE(c, () => undefined, { keepAliveMs: 10 }))
+    const response = await router.request('/s')
+    const reader = response.body!.getReader()
+    const chunk = new TextDecoder().decode((await reader.read()).value)
+    expect(chunk).toBe(': keepalive\n\n')
+    await reader.cancel()
+  })
+
+  it('answers 400, not 500, when the body is not JSON', async () => {
+    const { router } = await mount()
+    router.post('/v', validate('json', z.object({ a: z.number() }) as never), c => c.json(valid(c, 'json')))
+    expect((await router.request('/v', { method: 'POST', body: '{nope' })).status).toBe(400)
+  })
+})

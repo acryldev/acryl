@@ -25,7 +25,7 @@ What is the same, what differs, and what is not built. Hono is the model, not a 
 | `hono/streaming` `streamSSE` | `streamSSE(c, run)` | |
 | `hono/jwt`, `basic-auth`, `etag`, `compress`, `cache`, `csrf`, `html`, `jsx`, `rpc` client | not built | add as plugins when a Blend needs one |
 | Presets (`hono/tiny`, `quick`) | not needed | the table is one small pure module |
-| Multi-runtime adapters | `acryl-router-http` only | Web uses the DSH `webServer`; Desktop uses its own loopback `webServer`; the terminal calls `fetch` |
+| Runtime adapters (`@hono/node-server`) | `acryl-node-server` (standalone) and `acryl-router-http` (inside the ACRYL Host) | one adapter per runtime; Desktop uses its own loopback `webServer`; the terminal calls `fetch` |
 
 What ACRYL adds: registrations belong to a plugin and vanish when it unloads (Hono routes live as long as the app); `c.connection` carries the
 transport's facts from the socket, never from headers; `loopbackOnly` guards a route to the local machine; `acryl-state` and `acryl-inspect`.

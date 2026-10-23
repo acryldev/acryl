@@ -12,3 +12,5 @@ ctx.router.get('/api/clock', c => streamSSE(c, stream => {
 
 The stream holds the request in flight with `waitUntil`. It ends when the client disconnects, when `stream.close()` is called, when the owning plugin
 unloads, or when the router is disposed; the returned cleanup runs exactly once. `stream.signal` is aborted at that point.
+
+An idle stream gets a `: keepalive` comment line every 15 seconds (`streamSSE(c, run, { keepAliveMs })` changes it), on both adapters.

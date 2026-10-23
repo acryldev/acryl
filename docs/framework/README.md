@@ -24,6 +24,7 @@ everything grown from it) starts with the framework kit on its Web surface.
 | --- | --- | --- |
 | `acryl-router` | `Hono` app, `app.request`, `hono/*` middleware | `ctx.router`: routes, groups, middleware, `fetch`, `request`, errors |
 | `acryl-router-http` | the adapter (`@hono/node-server`) | `ctx.routerHttp.mount(prefix)` serves the router on the Web `webServer` |
+| `acryl-node-server` | `@hono/node-server` `serve` | standalone adapter: one `node:http` listener serving the whole router, `ctx.nodeServer.url`; use where the ACRYL Host is not running |
 | `acryl-state` | none (Hono has no state layer) | observable cells, SSE routes, `useCell` for React |
 | `acryl-inspect` | none | what each plugin requires, provides and registers, from the running system |
 

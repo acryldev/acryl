@@ -19,21 +19,30 @@ const HEADERS = {
 
 const encode = (text: string): Uint8Array => new TextEncoder().encode(text)
 
+export interface SseOptions {
+  /** A comment line is sent this often so proxies and browsers keep an idle stream open. Default 15 seconds. */
+  readonly keepAliveMs?: number
+}
+
+const DEFAULT_KEEP_ALIVE_MS = 15_000
+
 /**
  * A server-sent-event response (Hono's `streamSSE`). `run` starts the stream; whatever cleanup function it returns runs exactly once when the stream
  * ends for any reason (the client disconnects, `close()`, a plugin unload, the router being disposed). The request is held in flight with `waitUntil`
  * until then, so disposal waits for the stream instead of leaking it.
  */
-export function streamSSE(c: RouteContext, run: (stream: SseStream) => void | (() => void)): Response {
+export function streamSSE(c: RouteContext, run: (stream: SseStream) => void | (() => void), options: SseOptions = {}): Response {
   let finish!: () => void
   c.waitUntil(new Promise<void>(resolve => { finish = resolve }))
   let controller!: ReadableStreamDefaultController<Uint8Array>
   let cleanup: (() => void) | undefined
   let ended = false
+  let keepAlive: ReturnType<typeof setInterval> | undefined
 
   const end = (): void => {
     if (ended) return
     ended = true
+    clearInterval(keepAlive)
     c.signal.removeEventListener('abort', end)
     try { cleanup?.() } finally {
       try { controller.close() } catch { /* already closed */ }
@@ -63,6 +72,8 @@ export function streamSSE(c: RouteContext, run: (stream: SseStream) => void | ((
       }
       if (c.signal.aborted) { end(); return }
       c.signal.addEventListener('abort', end, { once: true })
+      keepAlive = setInterval(() => { stream.comment('keepalive') }, options.keepAliveMs ?? DEFAULT_KEEP_ALIVE_MS)
+      keepAlive.unref()
       cleanup = run(stream) ?? undefined
       if (ended) { try { cleanup?.() } catch { /* the stream already ended */ } }
     },

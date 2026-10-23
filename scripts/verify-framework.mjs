@@ -8,7 +8,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = new URL('..', import.meta.url).pathname
-export const FRAMEWORK_PACKAGES = ['acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect']
+export const FRAMEWORK_PACKAGES = ['acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect', 'acryl-node-server']
 
 function sourceFiles(dir) {
   return readdirSync(dir).flatMap(entry => {
@@ -28,7 +28,7 @@ export function problemsFor(name) {
   if (sources.length === 0) fail('no src/')
   const all = sources.map(file => [file, readFileSync(file, 'utf8')])
   if (!all.some(([, text]) => text.includes(`export const name = '${name}'`))) fail(`no \`export const name = '${name}'\` (the Cordis plugin name equals the package name)`)
-  if (!all.some(([, text]) => /export function apply\(/u.test(text))) fail('no `export function apply(ctx, ...)`')
+  if (!all.some(([, text]) => /export (?:async )?function apply\(/u.test(text))) fail('no `export function apply(ctx, ...)`')
   if (!existsSync(join(dir, 'tests')) || sourceFiles(join(dir, 'tests')).filter(file => file.endsWith('.spec.ts')).length === 0) fail('no tests/*.spec.ts')
   const patch = existsSync(join(dir, 'cordis.patch.yml')) ? readFileSync(join(dir, 'cordis.patch.yml'), 'utf8') : ''
   if (!new RegExp(`id: ${name}\\n\\s+name: ${name}\\b`, 'u').test(patch)) fail('cordis.patch.yml must insert a row whose id and name are the package name')
