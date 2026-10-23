@@ -1,0 +1,28 @@
+/** The page: plain HTML and a few lines of script; it follows the list through the server-sent event stream. */
+export const PAGE = `<!doctype html>
+<meta charset="utf-8"><title>Todo</title>
+<style>body{font:16px system-ui;max-width:32rem;margin:2rem auto}li{display:flex;gap:.5rem;padding:.25rem 0}.done span{text-decoration:line-through;opacity:.6}</style>
+<h1>Todo</h1>
+<form id="add"><input id="title" placeholder="What needs doing?" autofocus> <button>Add</button></form>
+<ul id="list"></ul>
+<script>
+const list = document.getElementById('list')
+const send = (url, method, body) => fetch(url, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) })
+document.getElementById('add').onsubmit = async event => {
+  event.preventDefault()
+  const input = document.getElementById('title')
+  await send('/todo/api', 'POST', { title: input.value })
+  input.value = ''
+}
+new EventSource('/todo/events').onmessage = event => {
+  list.replaceChildren(...JSON.parse(event.data).map(todo => {
+    const item = document.createElement('li')
+    item.className = todo.done ? 'done' : ''
+    const box = Object.assign(document.createElement('input'), { type: 'checkbox', checked: todo.done, onchange: () => send('/todo/api/' + todo.id, 'PATCH', { done: box.checked }) })
+    const title = document.createElement('span'); title.textContent = todo.title
+    const remove = Object.assign(document.createElement('button'), { textContent: 'x', onclick: () => send('/todo/api/' + todo.id, 'DELETE') })
+    item.append(box, title, remove)
+    return item
+  }))
+}
+</script>`

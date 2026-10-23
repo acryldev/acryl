@@ -1,0 +1,25 @@
+{
+  "name": "acryl-todo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The reference app of the ACRYL Framework: a todo list built only from the router, state and the validate helper, persisted to a file (spec 046).",
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "acryl-router": "workspace:*",
+    "acryl-state": "workspace:*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-router-http": "workspace:*",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  }
+}
