@@ -2,7 +2,7 @@
 /**
  * Run one ACRYL surface live (real model, real browser or window) without any chance of touching the machine's real app data.
  *
- *   node scripts/live-run.mjs web      [--port 3290] [--key-file ~/.secure-storage/llmproviders/deepseek/deepseek.json] [--keep]
+ *   node scripts/live-run.mjs web      [--port 3290] [--blueprint acryl.blank] [--key-file ~/.secure-storage/llmproviders/deepseek/deepseek.json] [--keep]
  *   node scripts/live-run.mjs desktop  [--port 3291] [--key-file ...] [--keep]
  *   node scripts/live-run.mjs tui      [--key-file ...] [--keep]      (runs in a detached tmux session; attach or send keys with tmux)
  *
@@ -43,7 +43,7 @@ const inspect = option('inspect', undefined)
 if (inspect !== undefined && surface !== 'desktop') throw new Error('live-run: --inspect is for the desktop surface (open the web url in a browser instead)')
 
 const port = Number(option('port', surface === 'desktop' ? '3291' : '3290'))
-const isolated = isolatedEnvironment({ label: `live-${surface}`, port, extra: key === undefined ? {} : { DEEPSEEK_API_KEY: key } })
+const isolated = isolatedEnvironment({ label: `live-${surface}`, port, extra: { ...(key === undefined ? {} : { DEEPSEEK_API_KEY: key }), ...(option('blueprint') === undefined ? {} : { ACRYL_BLUEPRINT: option('blueprint') }) } })
 if (copyHome !== undefined) {
   rmSync(isolated.home, { recursive: true, force: true })
   cpSync(expand(copyHome), isolated.home, { recursive: true, verbatimSymlinks: true })
