@@ -1,6 +1,6 @@
 # Spec 046 - A microframework rewritten as Cordis plugins: the ACRYL Framework
 
-Status: draft for owner review (2026-10-23). Nothing here is implemented. Ticket: new, no earlier spec covers it.
+Status (2026-10-23, end of the first overnight run): M0 to M5 are built and tested on branch `046-acryl-framework` (not merged); M6 is waiting for the owner; M7 is partly done. The overview is `docs/acryl/FRAMEWORK.md`; the ledger is `tasks.md`; what was measured and found is `research.md`. Ticket: new, no earlier spec covers it.
 The folder name carries no framework name on purpose: more than one candidate may be tried.
 
 ## Why
