@@ -24,12 +24,12 @@ class Installer extends Service {
 
   /** Right: mount from the context captured in the constructor. */
   async install(module: object): Promise<void> {
-    await this.owner.plugin(module as never)
+    await this.owner.plugin(module as { apply(ctx: Context): void })
   }
 
   /** Wrong: `this.ctx` inside a method is the shadow context. */
   async installFromShadow(module: object): Promise<void> {
-    await this.ctx.plugin(module as never)
+    await this.ctx.plugin(module as { apply(ctx: Context): void })
   }
 }
 
