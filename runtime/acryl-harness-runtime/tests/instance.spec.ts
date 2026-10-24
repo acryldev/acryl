@@ -8,6 +8,7 @@ import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   AppInstanceError,
+  DEFAULT_WEB_PORT,
   IsolationRequiredError,
   LockHeldError,
   acquireLock,
@@ -22,6 +23,7 @@ import {
   releaseLock,
   removeOnlineSecret,
   selectInstance,
+  stablePort,
   writeOnlineSecret,
   withdraw,
   type AppInstance,
@@ -32,8 +34,11 @@ afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, r
 const temp = (): string => { const dir = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-instance-'))); dirs.push(dir); return dir }
 const app = (root: string, name: string): string => { const dir = join(root, name); mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'blend.yaml'), 'x'); return dir }
 
-/** Every resource of a family that another app must never share. */
-const footprint = (instance: AppInstance): string[] => [instance.home, instance.dshHome, instance.userDataName, instance.runLockFile, String(instance.webPort.start), instance.projectScope ?? '(shared)']
+/**
+ * Every resource of a family that another app must never share. The Web port is not one: an app's port is a first try spread over the app range,
+ * and it scans to the next free one, so two apps whose ids hash to the same start still run side by side (checked separately below).
+ */
+const footprint = (instance: AppInstance): string[] => [instance.home, instance.dshHome, instance.userDataName, instance.runLockFile, instance.projectScope ?? '(shared)']
 
 describe('the families', () => {
   it('two apps share nothing, even when their folders have the same name', () => {
@@ -45,6 +50,11 @@ describe('the families', () => {
     for (let i = 0; i < all.length; i += 1) for (let j = i + 1; j < all.length; j += 1) {
       const shared = footprint(all[i]!).filter(value => footprint(all[j]!).includes(value))
       expect(shared, `${all[i]!.id} and ${all[j]!.id}`).toEqual([])
+    }
+    for (const instance of [a, b, music]) {
+      expect(instance.webPort.scan).toBe(true)
+      expect(instance.webPort.start).toBe(stablePort(instance.id))
+      expect(instance.webPort.start).not.toBe(DEFAULT_WEB_PORT)
     }
   })
 
