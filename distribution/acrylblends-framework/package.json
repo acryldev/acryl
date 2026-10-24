@@ -32,6 +32,14 @@
       "types": "./lib/http-exception.d.ts",
       "default": "./lib/http-exception.js"
     },
+    "./tiny": {
+      "types": "./lib/tiny.d.ts",
+      "default": "./lib/tiny.js"
+    },
+    "./quick": {
+      "types": "./lib/quick.d.ts",
+      "default": "./lib/quick.js"
+    },
     "./basic-auth": {
       "types": "./lib/basic-auth.d.ts",
       "default": "./lib/basic-auth.js"
@@ -139,6 +147,10 @@
     "./cookie": {
       "types": "./lib/cookie.d.ts",
       "default": "./lib/cookie.js"
+    },
+    "./dev": {
+      "types": "./lib/dev.d.ts",
+      "default": "./lib/dev.js"
     },
     "./factory": {
       "types": "./lib/factory.d.ts",

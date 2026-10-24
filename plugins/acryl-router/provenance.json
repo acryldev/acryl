@@ -9,11 +9,10 @@
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
     "src/jsx": "the JSX renderer (after 0.4.0)",
-    "src/preset": "presets (after 0.4.0)",
     "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
     "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
-    "src/helper (css, dev, proxy, ssg)": "after 0.4.0",
-    "src/middleware (cache, jsx-renderer, mount)": "after 0.4.0"
+    "src/middleware (cache, jsx-renderer, mount)": "after 0.4.0",
+    "src/helper (css, proxy, ssg)": "after 0.4.0"
   },
   "files": {
     "src/core/app-base.ts": {
@@ -116,6 +115,14 @@
       "upstreamSha256": "04e1ca7069d34e4fb495da524e43f1ac809f78c836bbdb4f58dcdd2f482942e0",
       "sha256": "775a9f0eda9816739bf9498da9f56e1367d15b31db139cca278f10bb7df7b6c8",
       "deviation": "BufferSource comes from utils/types.ts so the public types do not need the DOM library"
+    },
+    "src/core/helper/dev/index.test.ts": {
+      "upstreamSha256": "fdadea6d33d16a85dbb6c9db516bdf0d515dad7cf25f3e7fd98ebb30318e16e3",
+      "sha256": "f43c9e4ed10e36190d12681e2007b35075b71405d9519d24e7bc9517c0bcdec9"
+    },
+    "src/core/helper/dev/index.ts": {
+      "upstreamSha256": "9f6362b9f980a1c1fae0e424bfc08221224a1e60d8c8c739a9cc4a8cfe6265e8",
+      "sha256": "d18874f5e661ffac75340be681fe6de8675a09f4704480d8e23a2141260e068d"
     },
     "src/core/helper/factory/index.test.ts": {
       "upstreamSha256": "7de1451f50411df9317adeda46492a1bf6495b6aaea8faab215b2fd486de8165",
@@ -449,6 +456,22 @@
     "src/core/middleware/trailing-slash/index.ts": {
       "upstreamSha256": "7d055d718fbe2f4160c4c55f2bc9421bdb48468e7b4c583df711da5de9a8bd01",
       "sha256": "7dab3439d352d0b0fc1cb01c381824c0cbb91a5904dcc557a53d872536bff118"
+    },
+    "src/core/preset/quick.test.ts": {
+      "upstreamSha256": "0353cbe74e4fa808330e11c5dd15cd164c473dcb89598d137f33bd59627783f5",
+      "sha256": "b18b88e22b715c71f0e252c24535d9dbbee53dc944aeaef5cefa7e66fbcb3cf1"
+    },
+    "src/core/preset/quick.ts": {
+      "upstreamSha256": "5be0902db606b91920d2b4c771646d0a8d0010dda31320383a8d9e7f3e1e0cb1",
+      "sha256": "e0896beb6a4ed9dbc89bc61566408976ae8c0c6423bc5bddc70596a549678959"
+    },
+    "src/core/preset/tiny.test.ts": {
+      "upstreamSha256": "ccf0f721c44c6205aa44dee397b79544ff424f0c56ee9b304bc19aedff3d7226",
+      "sha256": "2b5fca030ea3dba5635aba6d8c5a50027690e84def22935fbabacbe5a947beea"
+    },
+    "src/core/preset/tiny.ts": {
+      "upstreamSha256": "0fff9e84b561bb2c905562186f0c986018308211deb0637448a1a9faadd7760b",
+      "sha256": "f3e93581e566abf1ac5525a98a8c97a1a000a05ba94466756b08163e40e8f07f"
     },
     "src/core/request.test.ts": {
       "upstreamSha256": "308046a6a16a610221209e80c175152d36008f12a9615f481537eff9061eb4b4",

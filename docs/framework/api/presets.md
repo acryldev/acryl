@@ -1,8 +1,5 @@
 # Presets
 
-> **Partly available.** The default router (`SmartRouter`), `RegExpRouter`, `TrieRouter`, `LinearRouter` and `PatternRouter` are available and are chosen with the `router` option of `new Acryl()` (see [Routers](../concepts/routers.md)). The presets `acrylblends/quick` and `acrylblends/tiny` are **not yet available**; their examples below are not checked by the docs tests.
-
-
 Acryl has several routers, each designed for a specific purpose.
 You can specify the router you want to use in the constructor of Acryl.
 

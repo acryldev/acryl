@@ -1,8 +1,5 @@
 # Dev Helper
 
-> **Not yet available.** The dev helper (`acrylblends/dev`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 Dev Helper provides useful methods you can use in development.
 
 ```ts

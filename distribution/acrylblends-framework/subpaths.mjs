@@ -19,7 +19,7 @@ const MIDDLEWARE = [
   'language', 'logger', 'method-not-allowed', 'method-override', 'powered-by', 'pretty-json', 'request-id', 'secure-headers', 'serve-static',
   'timeout', 'timing', 'trailing-slash',
 ]
-const HELPERS = ['accepts', 'adapter', 'cookie', 'factory', 'html', 'route', 'streaming', 'testing']
+const HELPERS = ['accepts', 'adapter', 'cookie', 'dev', 'factory', 'html', 'route', 'streaming', 'testing']
 const ROUTERS = ['reg-exp-router', 'smart-router', 'trie-router', 'pattern-router', 'linear-router']
 /** `<upstream>/utils/*`: each utility module by its file name. */
 const UTILS = readdirSync(join(here, CORE, 'utils')).filter(name => name.endsWith('.ts') && !name.endsWith('.test.ts')).map(name => name.slice(0, -3)).sort()
@@ -31,6 +31,9 @@ export const SUBPATHS = {
   'types': `${CORE}/types.ts`,
   'acryl-base': `${CORE}/app-base.ts`,
   'http-exception': `${CORE}/http-exception.ts`,
+  // The presets: the same class on another router (`tiny`: PatternRouter, `quick`: LinearRouter then TrieRouter).
+  'tiny': `${CORE}/preset/tiny.ts`,
+  'quick': `${CORE}/preset/quick.ts`,
   ...Object.fromEntries(MIDDLEWARE.map(name => [name, `${CORE}/middleware/${name}/index.ts`])),
   ...Object.fromEntries(HELPERS.map(name => [name, `${CORE}/helper/${name}/index.ts`])),
   'ws': `${CORE}/helper/websocket/index.ts`,
