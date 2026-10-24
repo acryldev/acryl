@@ -15,7 +15,7 @@ import { logger } from 'acrylblends/logger'
 const app = new Acryl()
 
 app.use(logger())
-app.get('/', (c) => c.text('Hello Acryl!'))
+app.get('/', (c) => c.text('Acryl!'))
 ```
 
 ## Logging Details

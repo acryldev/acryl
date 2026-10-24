@@ -54,7 +54,7 @@ const Top: FC<{ messages: string[] }> = (props: {
 }) => {
   return (
     <Layout>
-      <h1>Hello Acryl!</h1>
+      <h1>Acryl!</h1>
       <ul>
         {props.messages.map((message) => {
           return <li>{message}!!</li>

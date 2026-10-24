@@ -39,7 +39,7 @@ app.use(
   )
 )
 
-app.get('/', (c) => c.text('Hello Acryl!'))
+app.get('/', (c) => c.text('Acryl!'))
 ```
 
 ### some

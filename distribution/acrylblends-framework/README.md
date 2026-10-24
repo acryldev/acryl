@@ -22,7 +22,7 @@ One <code>Request</code> in, one <code>Response</code> out: routing, middleware,
 import { Acryl } from 'acrylblends'
 
 const app = new Acryl()
-app.get('/', (c) => c.text('Hello Acryl!'))
+app.get('/', (c) => c.text('Acryl!'))
 
 export default app
 ```
@@ -68,7 +68,7 @@ import { Acryl } from 'acrylblends'
 
 const app = new Acryl()
 
-app.get('/', (c) => c.text('Hello Acryl!'))
+app.get('/', (c) => c.text('Acryl!'))
 
 export default app
 ```
@@ -202,7 +202,7 @@ Export the app's type, and `acrylblends/client` calls its routes with typed path
 // api.ts
 import { Acryl } from 'acrylblends'
 
-const app = new Acryl().get('/api/hello', (c) => c.json({ message: 'Hello Acryl!' }))
+const app = new Acryl().get('/api/hello', (c) => c.json({ message: 'Acryl!' }))
 export type AppType = typeof app
 export default app
 ```
@@ -231,7 +231,7 @@ import app from './index.ts'
 test('GET / says hello', async () => {
   const response = await app.request('/')
   assert.equal(response.status, 200)
-  assert.equal(await response.text(), 'Hello Acryl!')
+  assert.equal(await response.text(), 'Acryl!')
 })
 ```
 
@@ -271,10 +271,12 @@ See [Node.js](https://github.com/acryldev/acryl/blob/main/docs/framework/getting
 | `acrylblends/http-exception` | `HTTPException` |
 | `acrylblends/router/*` | the routers: `reg-exp-router`, `smart-router`, `trie-router`, `pattern-router`, `linear-router` ([routers](https://github.com/acryldev/acryl/blob/main/docs/framework/concepts/routers.md)) |
 | `acrylblends/utils/*` | the utilities the framework is built from |
+| `acrylblends/tiny`, `acrylblends/quick` | the presets: `Acryl` with another router (`PatternRouter`; `LinearRouter` and `TrieRouter`) ([presets](https://github.com/acryldev/acryl/blob/main/docs/framework/api/presets.md)) |
+| `acrylblends/cache`, `acrylblends/mount` | the cache middleware and mounting another framework's fetch handler |
+| `acrylblends/proxy`, `acrylblends/dev` | the proxy helper and the dev helpers (`showRoutes`, `inspectRoutes`, `getRouterName`) |
 | `acrylblends/node-server` | `serve`, `createAdaptorServer`, `getRequestListener`; with `node-server/serve-static` and `node-server/conninfo` |
 
-Every subpath is listed in the package's `exports`. JSX, SSG, the cache, mount, proxy and dev helpers and other runtimes' adapters are
-being ported. The docs mark them "not yet available" until they ship
+Every subpath is listed in the package's `exports`. JSX, SSG and other runtimes' adapters are being ported. The docs mark them "not yet available" until they ship
 ([FAQ](https://github.com/acryldev/acryl/blob/main/docs/framework/guides/faq.md)).
 
 To extend the context's typed variables, augment the root module:
