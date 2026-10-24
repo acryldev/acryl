@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": false,
+    "verbatimModuleSyntax": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "acryl-router": [
+        "./src/index.ts"
+      ],
+      "acryl-router/helpers": [
+        "../../plugins/acryl-router/src/helpers/index.ts"
+      ]
+    },
+    "noEmit": true
+  },
+  "files": [
+    "src/index.ts",
+    "src/conninfo.ts",
+    "src/node-server.ts"
+  ],
+  "include": [
+    "../../plugins/acryl-router/src/core/**/*.ts",
+    "../../plugins/acryl-router/src/middleware/loopback-only.ts",
+    "../../plugins/acryl-router/src/helpers/schema-validator.ts",
+    "../../plugins/acryl-node-server/src/adapter/**/*.ts"
+  ],
+  "exclude": [
+    "../../plugins/**/*.test.ts",
+    "../../plugins/**/*.test.tsx"
+  ]
+}

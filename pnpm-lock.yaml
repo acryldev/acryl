@@ -2207,6 +2207,18 @@ importers:
 
   distribution/acryl-npm-launcher: {}
 
+  distribution/acrylblends-framework:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
   examples/acryl-blend-demo: {}
 
   examples/acryl-framework-starter:

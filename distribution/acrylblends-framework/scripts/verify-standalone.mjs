@@ -1,0 +1,139 @@
+#!/usr/bin/env node
+/**
+ * The framework as a stranger gets it: pack this package, install the tarball in an empty folder under the public name (`acrylblends`), and
+ * require that the four-line getting-started app serves its route on Node (through `serve` from `acrylblends/node-server`), and that a
+ * consumer with only Node's types and no DOM library typechecks, including a module augmentation of the root. Node is the runtime the
+ * framework targets. Bun (`bun run`, the default export) is informational: it runs only when bun is installed, and a failure there is
+ * reported without failing the check. This script never installs a runtime.
+ *
+ *   node scripts/verify-standalone.mjs [--keep]
+ *
+ * Runs offline: the tarball has no dependencies, and the typecheck uses this workspace's TypeScript and Node types. The folder is a fresh
+ * temporary directory, removed afterwards unless `--keep`.
+ */
+
+import { execFileSync, spawn, spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { createServer } from 'node:net'
+import { tmpdir } from 'node:os'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const keep = process.argv.includes('--keep')
+const folder = mkdtempSync(join(tmpdir(), 'acrylblends-standalone-'))
+const app = join(folder, 'app')
+mkdirSync(app)
+const run = (command, args, cwd) => execFileSync(command, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 600_000 })
+const results = []
+const report = (name, outcome) => { results.push([name, outcome]); console.log(`verify-standalone: ${name}: ${outcome}`) }
+
+/** A free loopback port, so no run here takes a port someone else uses. */
+const freePort = () => new Promise((resolve, reject) => {
+  const probe = createServer().listen(0, '127.0.0.1', () => { const { port } = probe.address(); probe.close(() => { resolve(port) }) })
+  probe.on('error', reject)
+})
+
+/** Start a server process, wait for `GET /` on `port` to answer, and return the body; the process is always stopped. */
+async function serveAndFetch(command, args, port, env = {}) {
+  const child = spawn(command, args, { cwd: app, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] })
+  let output = ''
+  child.stdout.on('data', (chunk) => { output += chunk })
+  child.stderr.on('data', (chunk) => { output += chunk })
+  try {
+    for (let attempt = 0; attempt < 150; attempt += 1) {
+      if (child.exitCode !== null) throw new Error(`${command} exited (${String(child.exitCode)}): ${output}`)
+      try {
+        const response = await fetch(`http://127.0.0.1:${String(port)}/`)
+        return { status: response.status, body: await response.text() }
+      } catch {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+    throw new Error(`${command} never answered on port ${String(port)}: ${output}`)
+  } finally {
+    child.kill('SIGTERM')
+    await new Promise(resolve => { if (child.exitCode !== null) resolve(); else child.once('exit', resolve) })
+  }
+}
+
+const expectHello = (name, answer) => {
+  if (answer.status !== 200 || answer.body !== 'Acryl!') throw new Error(`${name} answered ${String(answer.status)} ${JSON.stringify(answer.body)}`)
+  report(name, 'GET / -> 200 "Acryl!"')
+}
+
+const installed = command => spawnSync(command, ['--version'], { stdio: 'ignore' }).status === 0
+
+try {
+  const packed = run('corepack', ['pnpm', 'pack', '--pack-destination', folder], root).trim().split('\n').pop()
+  const tarball = readdirSync(folder).find(name => name.endsWith('.tgz'))
+  if (tarball === undefined) throw new Error(`no tarball packed: ${packed}`)
+  writeFileSync(join(app, 'package.json'), `${JSON.stringify({ name: 'hello-acryl', private: true, type: 'module', dependencies: { acrylblends: `file:../${tarball}` } }, null, 2)}\n`)
+  run('npm', ['install', '--offline', '--no-audit', '--no-fund'], app)
+
+  // The getting-started app, exactly as the docs show it.
+  writeFileSync(join(app, 'index.ts'), [
+    "import { Acryl } from 'acrylblends'",
+    'const app = new Acryl()',
+    "app.get('/', (c) => c.text('Acryl!'))",
+    'export default app',
+    '',
+  ].join('\n'))
+
+  // Node: the same app served by the Node adapter.
+  writeFileSync(join(app, 'node.ts'), [
+    "import { serve } from 'acrylblends/node-server'",
+    "import app from './index.ts'",
+    'serve({ fetch: app.fetch, port: Number(process.env.PORT), hostname: \'127.0.0.1\' })',
+    '',
+  ].join('\n'))
+  const nodePort = await freePort()
+  expectHello('node (serve from acrylblends/node-server)', await serveAndFetch(process.execPath, ['node.ts'], nodePort, { PORT: String(nodePort) }))
+
+  if (installed('bun')) {
+    const port = await freePort()
+    try {
+      expectHello('bun (bun run, export default app; informational)', await serveAndFetch('bun', ['run', 'index.ts'], port, { PORT: String(port) }))
+    } catch (cause) {
+      report('bun (informational)', `did not pass, not counted: ${cause instanceof Error ? cause.message : String(cause)}`)
+    }
+  } else report('bun (informational)', 'skipped: bun is not installed')
+
+  // Types: Node's types only, no DOM library, every subpath imported, and the root augmented as the docs show.
+  const types = join(root, 'node_modules', '@types')
+  mkdirSync(join(app, 'node_modules', '@types'), { recursive: true })
+  for (const name of readdirSync(types)) {
+    // The workspace links @types packages; the consumer gets real copies, with the packages each one depends on (pnpm keeps those beside it),
+    // so the check reads nothing from the workspace but these types.
+    const real = realpathSync(join(types, name))
+    run('cp', ['-RL', real, join(app, 'node_modules', '@types', name)], app)
+    const { dependencies = {} } = JSON.parse(readFileSync(join(real, 'package.json'), 'utf8'))
+    for (const dependency of Object.keys(dependencies)) run('cp', ['-RL', join(real, '..', '..', dependency), join(app, 'node_modules', dependency)], app)
+  }
+  const subpaths = Object.keys(JSON.parse(run('node', ['-e', "process.stdout.write(JSON.stringify(require('./node_modules/acrylblends/package.json').exports))"], app))).filter(key => key !== './package.json')
+  writeFileSync(join(app, 'types.ts'), [
+    "import type { Acryl } from 'acrylblends'",
+    ...subpaths.map((key, at) => `import type * as Entry${String(at)} from '${key === '.' ? 'acrylblends' : `acrylblends/${key.slice(2)}`}'`),
+    '',
+    "declare module 'acrylblends' {",
+    '  interface ContextVariableMap { user: string }',
+    '  interface NotFoundResponse { readonly notFound: true }',
+    '}',
+    '',
+    "export function who(app: Acryl): void { app.get('/me', c => c.text(c.get('user'))) }",
+    `export type Entries = [${subpaths.map((_, at) => `typeof Entry${String(at)}`).join(', ')}]`,
+    '',
+  ].join('\n'))
+  writeFileSync(join(app, 'tsconfig.json'), `${JSON.stringify({
+    compilerOptions: { target: 'ES2024', lib: ['ES2024'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, types: ['node'] },
+    files: ['index.ts', 'node.ts', 'types.ts'],
+  }, null, 2)}\n`)
+  run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.json'], app)
+  report('types (Node types only, no DOM; every subpath; root augmentation)', `${String(subpaths.length)} entries typecheck`)
+} catch (cause) {
+  console.error(`verify-standalone: FAILED: ${cause instanceof Error ? (cause.stdout ?? '') + (cause.stderr ?? '') + cause.message : String(cause)}`)
+  process.exitCode = 1
+} finally {
+  if (keep) console.log(`verify-standalone: kept ${folder}`)
+  else rmSync(folder, { recursive: true, force: true })
+}

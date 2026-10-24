@@ -1,0 +1,328 @@
+{
+  "name": "acrylblends-framework",
+  "version": "0.5.0",
+  "private": true,
+  "description": "The ACRYL Framework without Cordis, as the public package acrylblends ships it: every upstream subpath, and the Node adapter at node-server.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "lib/**",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./request": {
+      "types": "./lib/request.d.ts",
+      "default": "./lib/request.js"
+    },
+    "./types": {
+      "types": "./lib/types.d.ts",
+      "default": "./lib/types.js"
+    },
+    "./acryl-base": {
+      "types": "./lib/acryl-base.d.ts",
+      "default": "./lib/acryl-base.js"
+    },
+    "./http-exception": {
+      "types": "./lib/http-exception.d.ts",
+      "default": "./lib/http-exception.js"
+    },
+    "./basic-auth": {
+      "types": "./lib/basic-auth.d.ts",
+      "default": "./lib/basic-auth.js"
+    },
+    "./bearer-auth": {
+      "types": "./lib/bearer-auth.d.ts",
+      "default": "./lib/bearer-auth.js"
+    },
+    "./body-limit": {
+      "types": "./lib/body-limit.d.ts",
+      "default": "./lib/body-limit.js"
+    },
+    "./combine": {
+      "types": "./lib/combine.d.ts",
+      "default": "./lib/combine.js"
+    },
+    "./compress": {
+      "types": "./lib/compress.d.ts",
+      "default": "./lib/compress.js"
+    },
+    "./context-storage": {
+      "types": "./lib/context-storage.d.ts",
+      "default": "./lib/context-storage.js"
+    },
+    "./cors": {
+      "types": "./lib/cors.d.ts",
+      "default": "./lib/cors.js"
+    },
+    "./csrf": {
+      "types": "./lib/csrf.d.ts",
+      "default": "./lib/csrf.js"
+    },
+    "./etag": {
+      "types": "./lib/etag.d.ts",
+      "default": "./lib/etag.js"
+    },
+    "./ip-restriction": {
+      "types": "./lib/ip-restriction.d.ts",
+      "default": "./lib/ip-restriction.js"
+    },
+    "./jwk": {
+      "types": "./lib/jwk.d.ts",
+      "default": "./lib/jwk.js"
+    },
+    "./jwt": {
+      "types": "./lib/jwt.d.ts",
+      "default": "./lib/jwt.js"
+    },
+    "./language": {
+      "types": "./lib/language.d.ts",
+      "default": "./lib/language.js"
+    },
+    "./logger": {
+      "types": "./lib/logger.d.ts",
+      "default": "./lib/logger.js"
+    },
+    "./method-not-allowed": {
+      "types": "./lib/method-not-allowed.d.ts",
+      "default": "./lib/method-not-allowed.js"
+    },
+    "./method-override": {
+      "types": "./lib/method-override.d.ts",
+      "default": "./lib/method-override.js"
+    },
+    "./powered-by": {
+      "types": "./lib/powered-by.d.ts",
+      "default": "./lib/powered-by.js"
+    },
+    "./pretty-json": {
+      "types": "./lib/pretty-json.d.ts",
+      "default": "./lib/pretty-json.js"
+    },
+    "./request-id": {
+      "types": "./lib/request-id.d.ts",
+      "default": "./lib/request-id.js"
+    },
+    "./secure-headers": {
+      "types": "./lib/secure-headers.d.ts",
+      "default": "./lib/secure-headers.js"
+    },
+    "./serve-static": {
+      "types": "./lib/serve-static.d.ts",
+      "default": "./lib/serve-static.js"
+    },
+    "./timeout": {
+      "types": "./lib/timeout.d.ts",
+      "default": "./lib/timeout.js"
+    },
+    "./timing": {
+      "types": "./lib/timing.d.ts",
+      "default": "./lib/timing.js"
+    },
+    "./trailing-slash": {
+      "types": "./lib/trailing-slash.d.ts",
+      "default": "./lib/trailing-slash.js"
+    },
+    "./accepts": {
+      "types": "./lib/accepts.d.ts",
+      "default": "./lib/accepts.js"
+    },
+    "./adapter": {
+      "types": "./lib/adapter.d.ts",
+      "default": "./lib/adapter.js"
+    },
+    "./cookie": {
+      "types": "./lib/cookie.d.ts",
+      "default": "./lib/cookie.js"
+    },
+    "./factory": {
+      "types": "./lib/factory.d.ts",
+      "default": "./lib/factory.js"
+    },
+    "./html": {
+      "types": "./lib/html.d.ts",
+      "default": "./lib/html.js"
+    },
+    "./route": {
+      "types": "./lib/route.d.ts",
+      "default": "./lib/route.js"
+    },
+    "./streaming": {
+      "types": "./lib/streaming.d.ts",
+      "default": "./lib/streaming.js"
+    },
+    "./testing": {
+      "types": "./lib/testing.d.ts",
+      "default": "./lib/testing.js"
+    },
+    "./ws": {
+      "types": "./lib/ws.d.ts",
+      "default": "./lib/ws.js"
+    },
+    "./conninfo": {
+      "types": "./lib/conninfo.d.ts",
+      "default": "./lib/conninfo.js"
+    },
+    "./validator": {
+      "types": "./lib/validator.d.ts",
+      "default": "./lib/validator.js"
+    },
+    "./client": {
+      "types": "./lib/client.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./router": {
+      "types": "./lib/router.d.ts",
+      "default": "./lib/router.js"
+    },
+    "./router/reg-exp-router": {
+      "types": "./lib/router/reg-exp-router.d.ts",
+      "default": "./lib/router/reg-exp-router.js"
+    },
+    "./router/smart-router": {
+      "types": "./lib/router/smart-router.d.ts",
+      "default": "./lib/router/smart-router.js"
+    },
+    "./router/trie-router": {
+      "types": "./lib/router/trie-router.d.ts",
+      "default": "./lib/router/trie-router.js"
+    },
+    "./router/pattern-router": {
+      "types": "./lib/router/pattern-router.d.ts",
+      "default": "./lib/router/pattern-router.js"
+    },
+    "./router/linear-router": {
+      "types": "./lib/router/linear-router.d.ts",
+      "default": "./lib/router/linear-router.js"
+    },
+    "./utils/jwt": {
+      "types": "./lib/utils/jwt.d.ts",
+      "default": "./lib/utils/jwt.js"
+    },
+    "./utils/accept": {
+      "types": "./lib/utils/accept.d.ts",
+      "default": "./lib/utils/accept.js"
+    },
+    "./utils/basic-auth": {
+      "types": "./lib/utils/basic-auth.d.ts",
+      "default": "./lib/utils/basic-auth.js"
+    },
+    "./utils/body": {
+      "types": "./lib/utils/body.d.ts",
+      "default": "./lib/utils/body.js"
+    },
+    "./utils/buffer": {
+      "types": "./lib/utils/buffer.d.ts",
+      "default": "./lib/utils/buffer.js"
+    },
+    "./utils/color": {
+      "types": "./lib/utils/color.d.ts",
+      "default": "./lib/utils/color.js"
+    },
+    "./utils/compress": {
+      "types": "./lib/utils/compress.d.ts",
+      "default": "./lib/utils/compress.js"
+    },
+    "./utils/concurrent": {
+      "types": "./lib/utils/concurrent.d.ts",
+      "default": "./lib/utils/concurrent.js"
+    },
+    "./utils/constants": {
+      "types": "./lib/utils/constants.d.ts",
+      "default": "./lib/utils/constants.js"
+    },
+    "./utils/cookie": {
+      "types": "./lib/utils/cookie.d.ts",
+      "default": "./lib/utils/cookie.js"
+    },
+    "./utils/crypto": {
+      "types": "./lib/utils/crypto.d.ts",
+      "default": "./lib/utils/crypto.js"
+    },
+    "./utils/encode": {
+      "types": "./lib/utils/encode.d.ts",
+      "default": "./lib/utils/encode.js"
+    },
+    "./utils/filepath": {
+      "types": "./lib/utils/filepath.d.ts",
+      "default": "./lib/utils/filepath.js"
+    },
+    "./utils/handler": {
+      "types": "./lib/utils/handler.d.ts",
+      "default": "./lib/utils/handler.js"
+    },
+    "./utils/headers": {
+      "types": "./lib/utils/headers.d.ts",
+      "default": "./lib/utils/headers.js"
+    },
+    "./utils/html": {
+      "types": "./lib/utils/html.d.ts",
+      "default": "./lib/utils/html.js"
+    },
+    "./utils/http-status": {
+      "types": "./lib/utils/http-status.d.ts",
+      "default": "./lib/utils/http-status.js"
+    },
+    "./utils/ipaddr": {
+      "types": "./lib/utils/ipaddr.d.ts",
+      "default": "./lib/utils/ipaddr.js"
+    },
+    "./utils/mime": {
+      "types": "./lib/utils/mime.d.ts",
+      "default": "./lib/utils/mime.js"
+    },
+    "./utils/stream": {
+      "types": "./lib/utils/stream.d.ts",
+      "default": "./lib/utils/stream.js"
+    },
+    "./utils/types": {
+      "types": "./lib/utils/types.d.ts",
+      "default": "./lib/utils/types.js"
+    },
+    "./utils/url": {
+      "types": "./lib/utils/url.d.ts",
+      "default": "./lib/utils/url.js"
+    },
+    "./loopback-only": {
+      "types": "./lib/loopback-only.d.ts",
+      "default": "./lib/loopback-only.js"
+    },
+    "./schema-validator": {
+      "types": "./lib/schema-validator.d.ts",
+      "default": "./lib/schema-validator.js"
+    },
+    "./node-server": {
+      "types": "./lib/node-server.d.ts",
+      "default": "./lib/node-server.js"
+    },
+    "./node-server/serve-static": {
+      "types": "./lib/node-server/serve-static.d.ts",
+      "default": "./lib/node-server/serve-static.js"
+    },
+    "./node-server/conninfo": {
+      "types": "./lib/node-server/conninfo.d.ts",
+      "default": "./lib/node-server/conninfo.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown && node scripts/exports.mjs --check",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test tests/*.test.mjs",
+    "verify:standalone": "node scripts/verify-standalone.mjs",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test && pnpm run verify:standalone"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  }
+}

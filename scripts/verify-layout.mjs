@@ -50,6 +50,7 @@ packages:
   - runtime/plugin-hub
   - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
+  - distribution/acrylblends-framework
   - apps/acryl-cli
   - apps/acryl-web
   - apps/acryl-desktop
