@@ -34,7 +34,8 @@ export function apply(ctx: Context): void {
 0.4.0:
 
 ```ts
-import { Acryl, HTTPException } from 'acrylblends'
+import { Acryl } from 'acrylblends'
+import { HTTPException } from 'acrylblends/http-exception'
 import { schemaValidator } from 'acrylblends/schema-validator'
 import { streamSSE } from 'acrylblends/streaming'
 import { bodyLimit } from 'acrylblends/body-limit'

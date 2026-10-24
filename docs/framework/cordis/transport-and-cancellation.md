@@ -33,7 +33,7 @@ Both belong to the current request, and both end with their owner: see [Plugin l
 Return a response for expected failures, or throw an `HTTPException`, which becomes its own response:
 
 ```ts
-import { HTTPException } from 'acrylblends'
+import { HTTPException } from 'acrylblends/http-exception'
 
 if (!todo) return c.json({ error: 'todo_not_found' }, 404)
 if (!allowed) throw new HTTPException(403, { message: 'not yours' })
