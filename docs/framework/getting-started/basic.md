@@ -31,23 +31,16 @@ pnpm create acrylblends@latest my-app
 bun create acrylblends@latest my-app
 ```
 
-**deno**
-
-```sh
-deno init --npm acrylblends@latest my-app
-```
-
 You are asked which template you want:
 
 ```
 ? Which template do you want to use?
 ❯   nodejs
-    bun
-    deno
+    bun (experimental)
     acryl-app
 ```
 
-`nodejs`, `bun` and `deno` are a minimal Acryl application for that runtime. `acryl-app` is a Cordis app built from plugins, with an agent that can extend it while it
+`nodejs` and `bun` (experimental) are a minimal Acryl application for that runtime. `acryl-app` is a Cordis app built from plugins, with an agent that can extend it while it
 runs (see [Acryl in a Cordis app](../cordis/acryl-in-a-cordis-app.md)). Pass `--template` to skip the question, see [create-acrylblends](../guides/create-acrylblends.md).
 
 The template is created in `my-app`: go to it, install the dependencies and start the local server.
@@ -62,8 +55,7 @@ npm run dev
 
 Write your first application in `src/index.ts`. The example below is a starter Acryl application.
 
-The `import` and the final `export default` are the same on every runtime; what differs is how the runtime starts the app (see [Node.js](nodejs.md), [Bun](bun.md) and
-[Deno](deno.md)).
+The `import` and the final `export default` are the same on every runtime; what differs is how the runtime starts the app (see [Node.js](nodejs.md) and [Bun](bun.md)).
 
 ```ts twoslash
 import { Acryl } from 'acrylblends'
@@ -199,6 +191,6 @@ See [Testing](../guides/testing.md).
 
 ## Next
 
-- [Node.js](nodejs.md), [Bun](bun.md) and [Deno](deno.md)
+- [Node.js](nodejs.md) and [Bun](bun.md) (experimental)
 - [Routing](../api/routing.md), [Context](../api/context.md) and [Request](../api/request.md)
 - [Validation](../guides/validation.md)

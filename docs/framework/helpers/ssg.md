@@ -99,25 +99,9 @@ export interface FileSystemModule {
 }
 ```
 
-### Using adapters for Deno and Bun
+### Using the adapter for Bun
 
-If you want to use SSG on Deno or Bun, a `toSSG` function is provided by the `acrylblends/deno` and `acrylblends/bun` packages.
-
-For Deno:
-
-```ts
-import { toSSG } from 'acrylblends/deno'
-
-toSSG(app) // The second argument is an option typed `ToSSGOptions`.
-```
-
-For Bun:
-
-```ts
-import { toSSG } from 'acrylblends/bun'
-
-toSSG(app) // The second argument is an option typed `ToSSGOptions`.
-```
+On Bun, a `toSSG` function is provided by `acrylblends/bun` (not yet available).
 
 ### Options
 

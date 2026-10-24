@@ -8,8 +8,7 @@
 | Template | What you get |
 | --- | --- |
 | `nodejs` | an Acryl application served with `serve()` from `acrylblends/node-server`; run with Node.js 22.19 or newer |
-| `bun` | an Acryl application with `export default app`, run with `bun` |
-| `deno` | an Acryl application served with `Deno.serve(app.fetch)`, run with `deno` |
+| `bun` (experimental) | an Acryl application with `export default app`, run with `bun` |
 | `acryl-app` | a Cordis app built from plugins, with an agent that can extend it while it runs (the same app `npx acrylblends init --template agent` creates) |
 
 Every template includes `AGENTS.md` and `CLAUDE.md` (which imports `AGENTS.md`) and a copy of these docs in `docs/framework/`, so a coding agent working in the folder reads the
@@ -43,18 +42,12 @@ pnpm create acrylblends@latest my-app --template nodejs
 bun create acrylblends@latest my-app --template nodejs
 ```
 
-**deno**
-
-```sh
-deno init --npm acrylblends@latest my-app --template nodejs
-```
-
 ## Arguments
 
 | Argument | Description | Example |
 | :-- | :-- | :-- |
 | `[directory]` | The folder to create. It must not exist or must be empty. Asked for when it is missing. | `my-app` |
-| `--template <template>` | One of `nodejs`, `bun`, `deno`, `acryl-app`. Skips the template question. | `--template bun` |
+| `--template <template>` | One of `nodejs`, `bun` (experimental), `acryl-app`. Skips the template question. | `--template bun` |
 | `--install` | Install the dependencies with the package manager after creating the project. | `--install` |
 | `--pm <packageManager>` | The package manager for `--install`: `npm`, `pnpm`, `yarn` or `bun`. Defaults to the one that started the initializer. | `--pm pnpm` |
 | `--yes`, `-y` | Ask nothing: use `nodejs` unless `--template` is given, and the directory `acryl-app`. | `-y` |

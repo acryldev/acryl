@@ -12,7 +12,7 @@ A `json` validation target reads the body only when the request has a JSON `Cont
 
 ## Which runtimes are verified?
 
-Node.js, Bun and Deno. The others are listed, as not yet verified, on [Other runtimes](../getting-started/other-runtimes.md).
+Node.js. Bun is experimental. The others are listed, as not yet verified, on [Other runtimes](../getting-started/other-runtimes.md).
 
 ## Where are the parts marked "not yet available"?
 

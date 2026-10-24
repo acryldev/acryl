@@ -1,11 +1,11 @@
 # Other runtimes
 
-Acryl is built on Web Standards, so the same application code is expected to run wherever a `fetch`-style handler can run. Only three runtimes are verified so far:
-[Node.js](nodejs.md), [Bun](bun.md) and [Deno](deno.md).
+Acryl is built on Web Standards, so the same application code is expected to run wherever a `fetch`-style handler can run. Only Node.js ([guide](nodejs.md)) is verified so far. Bun is experimental ([guide](bun.md)).
 
 The following runtimes and platforms are **not yet verified**. There are no getting-started pages for them yet, and their adapters (for example `acrylblends/cloudflare-workers`
 or `acrylblends/aws-lambda`) are not part of acrylblends yet:
 
+- Deno, and Deno Deploy
 - Cloudflare Workers, and Cloudflare Pages
 - Fastly Compute
 - AWS Lambda, and Lambda@Edge
