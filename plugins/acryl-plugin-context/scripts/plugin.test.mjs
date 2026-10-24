@@ -847,6 +847,23 @@ test('staging: the author package is copied twice (root and versioned), the entr
   } finally { rmSync(src, { recursive: true, force: true }); rmSync(root, { recursive: true, force: true }) }
 })
 
+test('staging wraps an entry below the package root named by conditional exports, and the wrapper loads the author code', async () => {
+  const src = mkdtempSync(join(tmpdir(), 'src-')); const root = mkdtempSync(join(tmpdir(), 'stage-'))
+  try {
+    writeFileSync(join(src, 'package.json'), JSON.stringify({ name: 'deep-entry', version: '1.0.0', type: 'module', main: 'lib/index.js', exports: { '.': { types: './lib/types/index.d.ts', default: './lib/index.js' }, './package.json': './package.json' } }))
+    mkdirSync(join(src, 'lib'))
+    writeFileSync(join(src, 'lib', 'index.js'), 'export const name = "deep-entry"\nexport function apply() { return "applied" }\n')
+    assert.equal(entryOf(JSON.parse(readFileSync(join(src, 'package.json'), 'utf8'))), 'lib/index.js')
+    const staged = stagePackage(src, root)
+    assert.equal(staged.ok, true)
+    const wrapper = await import(pathToFileURL(join(staged.dir, 'lib', 'index.js')).href)
+    assert.equal(wrapper.name, 'deep-entry')
+    assert.equal(await wrapper.apply({}, {}), 'applied')
+    assert.equal(entryOf({ type: 'module', exports: { '.': { import: './a.js', require: './a.cjs' } } }), 'a.js')
+    assert.equal(entryOf({ type: 'module', exports: { '.': { node: { import: './n.js' }, default: './d.js' } } }), 'n.js')
+  } finally { rmSync(src, { recursive: true, force: true }); rmSync(root, { recursive: true, force: true }) }
+})
+
 test('staging declines what it cannot wrap, with a reason', () => {
   const src = mkdtempSync(join(tmpdir(), 'src-')); const root = mkdtempSync(join(tmpdir(), 'stage-'))
   try {
