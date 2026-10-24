@@ -39,7 +39,7 @@ export type JwtVariables<T = any> = {
  * app.use(
  *   '/auth/*',
  *   jwt({
- *     secret: 'it-is-very-secret',
+ *     secret: process.env.JWT_SECRET, // never a literal in source
  *     alg: 'HS256',
  *     headerName: 'x-custom-auth-header', // Optional, default is 'Authorization'
  *   })

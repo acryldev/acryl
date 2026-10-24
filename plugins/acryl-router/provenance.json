@@ -205,7 +205,8 @@
     },
     "src/core/middleware/basic-auth/index.ts": {
       "upstreamSha256": "98af792d9589b6c4bedf2dd66c973c232d4db0d9630eb3359ccc611d75e4afd6",
-      "sha256": "e1d3832eea54626697771d0c505e3802017c0e24ebcaeddf145166f74c97c7a0"
+      "sha256": "308aea3460ea4ec9b0e5897784d3c324b44a64e3a39f36b5f2f6e0f2a06d53ce",
+      "deviation": "secret-free examples: a credential in a code example reads from the environment instead of a literal, which secret scanners refuse"
     },
     "src/core/middleware/bearer-auth/index.test.ts": {
       "upstreamSha256": "36d55de34b99b4821a0dd8a7b91b7c3e0da8363ef20f2d8734be98192f0ec06e",
@@ -213,8 +214,8 @@
     },
     "src/core/middleware/bearer-auth/index.ts": {
       "upstreamSha256": "812029f5490dbfc24b4cebb04ab3aea58d93c024904c1db52b91b840f6b2c262",
-      "sha256": "f14e625521347acbd410ac3d0363eb16240a3af34e498cbda7e3648753bfd37a",
-      "deviation": "an example token contained the original project name"
+      "sha256": "0943145d10fcf8d629b3bd010fcf4f34caf249e26b5012a0675b5b0e1272473e",
+      "deviation": "secret-free examples: a credential in a code example reads from the environment instead of a literal, which secret scanners refuse"
     },
     "src/core/middleware/body-limit/index.test.ts": {
       "upstreamSha256": "e9e2e0d1c7d107bdeb30e41c1e6d82b6dc79868dea7462dfdc3307d746d0247d",
@@ -319,7 +320,8 @@
     },
     "src/core/middleware/jwt/jwt.ts": {
       "upstreamSha256": "6ca249c522123bd6379eb2e04509f36f0be444f01ca33a7999d331a4b5940c6e",
-      "sha256": "0988dc2acbf3862ca26fcb91a9e275ff5091583051ff4e0b460632d3b8568f4a"
+      "sha256": "ada4333db50d1192cd56040a76bab313cc0cea86a9844c9e45e607a0b1b50076",
+      "deviation": "secret-free examples: a credential in a code example reads from the environment instead of a literal, which secret scanners refuse"
     },
     "src/core/middleware/language/index.test.ts": {
       "upstreamSha256": "d9142998808316879406b463b8254d4b59cfe18452baaa9daacc58202eb99ba5",

@@ -50,8 +50,8 @@ type BasicAuthOptions =
  * app.use(
  *   '/auth/*',
  *   basicAuth({
- *     username: 'acryl',
- *     password: 'ahotproject',
+ *     username: process.env.BASIC_AUTH_USERNAME,
+ *     password: process.env.BASIC_AUTH_PASSWORD,
  *   })
  * )
  *
@@ -66,8 +66,8 @@ type BasicAuthOptions =
  * app.use(
  *   '/auth/*',
  *   basicAuth({
- *     username: 'acryl',
- *     password: 'ahotproject',
+ *     username: process.env.BASIC_AUTH_USERNAME,
+ *     password: process.env.BASIC_AUTH_PASSWORD,
  *     onAuthSuccess: (c, username) => {
  *       c.set('user', { name: username, role: 'admin' })
  *       console.log(`User ${username} authenticated`)

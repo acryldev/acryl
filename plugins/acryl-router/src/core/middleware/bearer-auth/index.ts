@@ -91,7 +91,7 @@ type BearerAuthOptions<E extends Env = Env> =
  * ```ts
  * const app = new App()
  *
- * const token = 'tokenishot'
+ * const token = process.env.API_TOKEN // never a literal in source
  *
  * app.use('/api/*', bearerAuth({ token }))
  *
