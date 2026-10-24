@@ -14,8 +14,9 @@ import { App } from './core/app.ts'
 import type { ExecutionContext } from './core/context.ts'
 import { HTTPException } from './core/http-exception.ts'
 import { TrieRouter } from './core/router/trie-router/index.ts'
+import { COMPOSED_HANDLER } from './core/utils/constants.ts'
 import { mergePath } from './core/utils/url.ts'
-import type { ErrorHandler, NotFoundHandler } from './core/types.ts'
+import type { ErrorHandler, H, NotFoundHandler } from './core/types.ts'
 
 const DEFAULT_DISPOSE_GRACE_MS = 2000
 
@@ -73,6 +74,10 @@ interface RouterState {
 
 interface Flight {
   readonly controller: AbortController
+  /** How many of each mount's handlers are running for this request right now (a middleware counts until its `next()` returns). */
+  readonly running: Map<Mount, number>
+  /** The mount whose handler produced the response; its body is that mount's code still running. */
+  producer: Mount | undefined
   /** Ends the response body early (disposal); a no-op once the body is done or when there is none. */
   readonly endBody: () => void
   /** Settles when the handler is done, its body has been read or cancelled, and every `waitUntil` task it registered has settled. */
@@ -90,12 +95,11 @@ async function drain(tasks: readonly Promise<unknown>[]): Promise<void> {
 }
 
 export class Router extends Service {
-  /**
-   * Everything that changes after construction. A caller reaches the service through its own shadow of this instance (`ctx.router` is
-   * per-plugin), so a field assigned later would land on that shadow; state lives in this one object, mutated and never reassigned.
-   */
+  /** Everything that changes after construction, kept in one object so the service's live state is in one place. */
   private readonly state: RouterState = { mounts: new Set(), errorHandler: undefined, notFoundHandler: undefined, composed: undefined, closing: false }
   private readonly flights = new Set<Flight>()
+  /** The flight of each request the router dispatched, keyed by the request its handlers see as `c.req.raw`. */
+  private readonly flightOf = new WeakMap<Request, Flight>()
   private readonly strict: boolean
   private readonly graceMs: number
   private readonly logError: ErrorHandler
@@ -115,16 +119,7 @@ export class Router extends Service {
     }
     ctx.effect(() => async () => {
       this.state.closing = true
-      const open = [...this.flights]
-      for (const flight of open) {
-        flight.controller.abort()
-        flight.endBody()
-      }
-      let timer: ReturnType<typeof setTimeout> | undefined
-      const gaveUp = new Promise<'gave-up'>(resolve => { timer = setTimeout(() => { resolve('gave-up') }, this.graceMs) })
-      const outcome = await Promise.race([Promise.allSettled(open.map(flight => flight.settled)).then(() => 'settled' as const), gaveUp])
-      clearTimeout(timer)
-      if (outcome === 'gave-up') ctx.logger.warn(`acryl-router: ${String(this.flights.size)} request(s) did not finish ${String(this.graceMs)} ms after abort; disposal continued without them`)
+      await this.end([...this.flights], 'disposal')
     }, 'acryl-router: abort and settle in-flight requests')
   }
 
@@ -139,16 +134,63 @@ export class Router extends Service {
    * are copied now: one the app registers after this call is not served (mount again, or finish the app first).
    */
   route(path: string, app: MountableApp): () => void {
-    const mount: Mount = { path, app: new App().route('/', app) }
+    const mount = this.snapshot(path, app)
     this.state.mounts.add(mount)
     this.state.composed = undefined
-    const remove = (): void => {
-      if (this.state.mounts.delete(mount)) this.state.composed = undefined
+    // Removing a mount ends the requests its code is still serving: their signals abort, a body it produced is cancelled, and the
+    // plugin's unload waits for them (bounded by `disposeGraceMs`), so nothing a plugin started outlives it.
+    const remove = (): Promise<void> => {
+      if (!this.state.mounts.delete(mount)) return Promise.resolve()
+      this.state.composed = undefined
+      return this.end([...this.flights].filter(flight => (flight.running.get(mount) ?? 0) > 0 || flight.producer === mount), `removing ${path}`)
     }
     // The label lists what the mount serves, so the inspector can report routes without asking the router (`ALL` is middleware or `all`).
     const served = app.routes.map(route => `${route.method} ${mergePath(path, route.path)}`).join(', ')
     this.ctx.effect(() => remove, `acryl-router: route ${path} (${served})`)
-    return remove
+    return () => { void remove() }
+  }
+
+  /**
+   * The mount's own copy of `app`'s routes as they are now (like the core's `app.route`), each handler wrapped so the router knows which
+   * mount's code a request is in. The core's `app.route` runs first so a sub-app's own `onError` still applies to its routes.
+   */
+  private snapshot(path: string, app: MountableApp): Mount {
+    const copy = new App().route('/', app)
+    const tagged = new App()
+    const mount: Mount = { path, app: tagged }
+    for (const route of copy.routes) {
+      const inner = route.handler
+      const handler: H = async (c, next) => {
+        const flight = this.flightOf.get(c.req.raw)
+        if (flight === undefined) return inner(c, next)
+        let calledNext = false
+        flight.running.set(mount, (flight.running.get(mount) ?? 0) + 1)
+        try {
+          const result = await inner(c, () => { calledNext = true; return next() })
+          if (!calledNext && result instanceof Response) flight.producer = mount
+          return result
+        } finally {
+          flight.running.set(mount, (flight.running.get(mount) ?? 1) - 1)
+        }
+      }
+      ;(handler as unknown as Record<string, unknown>)[COMPOSED_HANDLER] = inner
+      tagged.on(route.method, route.path, handler)
+    }
+    return mount
+  }
+
+  /** Abort `flights`, cut their bodies short and wait for them to settle, at most `disposeGraceMs`. */
+  private async end(flights: readonly Flight[], why: string): Promise<void> {
+    if (flights.length === 0) return
+    for (const flight of flights) {
+      flight.controller.abort()
+      flight.endBody()
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const gaveUp = new Promise<'gave-up'>(resolve => { timer = setTimeout(() => { resolve('gave-up') }, this.graceMs) })
+    const outcome = await Promise.race([Promise.allSettled(flights.map(flight => flight.settled)).then(() => 'settled' as const), gaveUp])
+    clearTimeout(timer)
+    if (outcome === 'gave-up') this.ctx.logger.warn(`acryl-router: ${String(flights.length)} request(s) did not finish ${String(this.graceMs)} ms after abort (${why}); continued without them`)
   }
 
   /** Turn errors no mounted app handled into responses. One handler per router; the calling plugin owns it. */
@@ -208,18 +250,24 @@ export class Router extends Service {
     const env: RouterBindings = { connection }
     let bodyDone: Promise<void> = Promise.resolve()
     let endBody = (): void => {}
+    let resolveSettled!: (value: Promise<unknown>) => void
+    const flight: Flight = { controller, running: new Map(), producer: undefined, endBody: () => { endBody() }, settled: new Promise(resolve => { resolveSettled = resolve }) }
+    const inner = new Request(request, { signal: controller.signal })
+    this.flightOf.set(inner, flight)
     // The caller gets the Response the moment the handler returns it; the flight lasts until its body ends and every waitUntil task settles.
-    const response = this.dispatch(new Request(request, { signal: controller.signal }), env, executionCtx).then(raw => {
+    const response = this.dispatch(inner, env, executionCtx).then(raw => {
       const tracked = this.track(raw)
       bodyDone = tracked.done
       endBody = tracked.end
+      // Aborted before the handler answered (disposal, or the caller left): nobody is going to read this body, so end it now.
+      if (controller.signal.aborted) tracked.end()
       return tracked.response
     })
     const settled = response.then(async () => {
       await bodyDone
       await drain(tasks)
     })
-    const flight: Flight = { controller, endBody: () => { endBody() }, settled }
+    resolveSettled(settled)
     this.flights.add(flight)
     void settled.finally(() => {
       request.signal.removeEventListener('abort', forward)

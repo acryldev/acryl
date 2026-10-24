@@ -1,7 +1,7 @@
 /**
  * The router as a Cordis service: mounts owned by the plugin that made them, and the lifecycle mechanics the repo protocol requires -
  * PENDING while the provider is missing, reactivation when it appears, provider replacement without duplicate registrations, disposal,
- * repeated mount and reload, in-flight abort, and streams that end with the router. Routing itself is covered by the core's own suite.
+ * repeated mount and reload, in-flight abort, and streams that end with the router or with the plugin that serves them. Routing itself is covered by the core's own suite.
  */
 
 import { Context, type FiberState } from '@deepseek-ai/cordis'
@@ -290,6 +290,93 @@ describe('acryl-router lifecycle through Cordis', () => {
 
     await fiber.dispose()
     expect(cleaned).toBe(true)
+    await expect(reader.read()).resolves.toMatchObject({ done: true })
+  })
+
+  it('ends the stream a plugin opened when that plugin unloads, and leaves another plugin\'s request running', async () => {
+    const { ctx, router } = await mountRouter()
+    let cleaned = false
+    let otherAborted = false
+    let release!: () => void
+    const streaming = ctx.plugin({
+      name: 'streaming',
+      inject: ['router'],
+      apply(inner: Context): void {
+        inner.router.route('/', new App().get('/events', c => streamSSE(c, async stream => {
+          stream.onAbort(() => { cleaned = true })
+          await stream.writeSSE({ data: 'first' })
+          while (!stream.aborted) await stream.sleep(10)
+        })))
+      },
+    })
+    ctx.plugin({
+      name: 'other',
+      inject: ['router'],
+      apply(inner: Context): void {
+        inner.router.route('/', new App().get('/slow', async c => {
+          c.req.raw.signal.addEventListener('abort', () => { otherAborted = true }, { once: true })
+          await new Promise<void>(resolve => { release = resolve })
+          return c.text('done')
+        }))
+      },
+    })
+    await settle()
+    const response = await get(router, '/events')
+    const reader = response.body!.getReader()
+    expect(new TextDecoder().decode((await reader.read()).value)).toBe('data: first\n\n')
+    const slow = get(router, '/slow')
+    await settle()
+
+    await streaming.dispose()
+    expect(cleaned).toBe(true)
+    await expect(reader.read()).resolves.toMatchObject({ done: true })
+    expect(otherAborted).toBe(false)
+    release()
+    expect(await (await slow).text()).toBe('done')
+  })
+
+  it('aborts a request still inside an unloading plugin\'s middleware, but not one that middleware already passed on', async () => {
+    const { ctx, router } = await mountRouter()
+    let guardAborted = false
+    let handlerAborted = false
+    let release!: () => void
+    const guard = ctx.plugin({
+      name: 'guard',
+      inject: ['router'],
+      apply(inner: Context): void {
+        inner.router.route('/', new App()
+          .use('/held/*', async (c, next) => {
+            c.req.raw.signal.addEventListener('abort', () => { guardAborted = true }, { once: true })
+            await new Promise<void>((_resolve, reject) => { c.req.raw.signal.addEventListener('abort', () => { reject(new Error('aborted')) }, { once: true }) })
+            await next()
+          })
+          .use('/passed/*', async (_c, next) => { await next() }))
+      },
+    })
+    ctx.plugin({
+      name: 'handler',
+      inject: ['router'],
+      apply(inner: Context): void {
+        inner.router.route('/', new App()
+          .get('/held/x', c => c.text('held'))
+          .get('/passed/x', c => streamSSE(c, async stream => {
+            stream.onAbort(() => { handlerAborted = true })
+            await stream.writeSSE({ data: 'open' })
+            await new Promise<void>(resolve => { release = resolve })
+          })))
+      },
+    })
+    await settle()
+    const held = get(router, '/held/x')
+    const passed = await get(router, '/passed/x')
+    const reader = passed.body!.getReader()
+    await reader.read()
+
+    await guard.dispose()
+    expect(guardAborted).toBe(true)
+    expect((await held).status).toBe(499)
+    expect(handlerAborted).toBe(false)
+    release()
     await expect(reader.read()).resolves.toMatchObject({ done: true })
   })
 
