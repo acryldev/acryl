@@ -99,6 +99,16 @@ try {
     }
   } else report('bun (informational)', 'skipped: bun is not installed')
 
+  // The README is the npm page: every TypeScript example in it is written into the consumer and typechecked with the rest. A block whose first
+  // line is `// <file>.ts` is that file (other examples import it); every other block is a file of its own.
+  const readme = readFileSync(join(root, 'README.md'), 'utf8')
+  const examples = [...readme.matchAll(/^```ts\n([\s\S]*?)^```$/gmu)].map((match, at) => {
+    const named = /^\/\/ ([\w-]+\.ts)\n/u.exec(match[1])
+    return { file: named === null ? `readme-${String(at)}.ts` : named[1], source: match[1] }
+  })
+  if (examples.length === 0) throw new Error('README.md has no TypeScript examples')
+  for (const example of examples) writeFileSync(join(app, example.file), example.source)
+
   // Types: Node's types only, no DOM library, every subpath imported, and the root augmented as the docs show.
   const types = join(root, 'node_modules', '@types')
   mkdirSync(join(app, 'node_modules', '@types'), { recursive: true })
@@ -126,10 +136,16 @@ try {
   ].join('\n'))
   writeFileSync(join(app, 'tsconfig.json'), `${JSON.stringify({
     compilerOptions: { target: 'ES2024', lib: ['ES2024'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, types: ['node'] },
-    files: ['index.ts', 'node.ts', 'types.ts'],
+    files: ['index.ts', 'node.ts', 'types.ts', ...examples.map(example => example.file)],
   }, null, 2)}\n`)
   run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.json'], app)
   report('types (Node types only, no DOM; every subpath; root augmentation)', `${String(subpaths.length)} entries typecheck`)
+  // The upstream project's name appears only in LICENSE files (owner's rule). The name is read from this package's LICENSE, so this
+  // script does not spell it either.
+  const licensed = /built from the ACRYL port of (\S+) v\d/u.exec(readFileSync(join(root, 'LICENSE'), 'utf8'))
+  if (licensed === null) throw new Error('LICENSE does not name the project this package is ported from')
+  if (new RegExp(`\\b${licensed[1]}\\b`, 'iu').test(readme)) throw new Error('README.md names the upstream project; only LICENSE may')
+  report('README (the npm page)', `${String(examples.length)} TypeScript examples typecheck; no upstream name`)
 } catch (cause) {
   console.error(`verify-standalone: FAILED: ${cause instanceof Error ? (cause.stdout ?? '') + (cause.stderr ?? '') + cause.message : String(cause)}`)
   process.exitCode = 1
