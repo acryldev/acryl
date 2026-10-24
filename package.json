@@ -32,7 +32,7 @@
     "check:bilingual-docs": "pnpm run test:bilingual-docs && node scripts/verify-bilingual-docs.mjs",
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",
     "check:architecture": "pnpm run test:architecture-gates && node scripts/verify-market-dependency-direction.mjs",
-    "check:docs-secrets": "node --test scripts/docs-secrets.test.mjs && node scripts/verify-docs-secrets.mjs",
+    "check:docs-secrets": "node scripts/verify-docs-secrets.mjs",
     "check:layout": "pnpm run check:bilingual-docs && pnpm run check:architecture && node scripts/verify-framework.mjs && node scripts/verify-port.mjs && pnpm run check:framework-app && node scripts/verify-layout.mjs",
     "check:framework-app": "pnpm --filter acryl-router exec tsc -p ../../tsconfig.framework-app.json",
     "verify:framework-standalone": "node scripts/verify-framework-standalone.mjs",

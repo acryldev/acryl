@@ -59,6 +59,28 @@ describe('the secret check', () => {
     ])
     expect(found.map(finding => `${finding.path}:${finding.kind}`)).toEqual(['a.js:Anthropic API key', 'b.js:GitHub token', 'c.yaml:assigned secret', 'config/.env:a secrets file', 'deploy/server.pem:a secrets file'])
   })
+
+  it('finds a short literal password or token, the way docs examples write them', () => {
+    // Both landed in examples once and passed the scan: the rule wanted 16 characters.
+    for (const text of ["  password: 'acoolproject',", "const token = 'acrylblendsiscool'", 'const secret = "secret"', 'basicAuth({ username: "a", password: "x-secret" })', '"apiKey": "k9-77"', 'api_key = "abc123"']) {
+      expect(findSecrets([{ path: 'example.ts', text }]).map(finding => finding.kind), text).toEqual(['assigned secret'])
+    }
+  })
+
+  it('leaves environment reads, placeholders, types, labels and longer names alone', () => {
+    for (const text of [
+      'password: process.env.BASIC_AUTH_PASSWORD!,',
+      "bearerAuth({ token: process.env.ADMIN_TOKEN ?? '' })",
+      "token: 'ACRYL_STATUS_TOKEN',",
+      "password: '<your password>'", "token: '${TOKEN}'", "secret: '{{ secret }}'", "apiKey: 'xxxx'", "password: '****'", "token: '...'", "apiKey: 'your-api-key'",
+      '#### **(required)** secret: `string`',
+      "'api-key': 'Sign in with an API key',",
+      '"@deepseek-ai/dsh-llm-deepseek-api-key": "0.2.0-rc.2",',
+      "tokens: { '--token': 'value' }",
+      "type={kind === 'secret' ? 'password' : 'text'}",
+      'The token is checked on every request.',
+    ]) expect(findSecrets([{ path: 'example.ts', text }]), text).toEqual([])
+  })
 })
 
 // Each save runs a dozen real git processes; on a hosted Windows runner that took 1 s in one run and 7.8 s in the next, past vitest's 5 s default.

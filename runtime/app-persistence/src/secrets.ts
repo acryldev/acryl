@@ -17,8 +17,22 @@ const PATTERNS: ReadonlyArray<{ readonly kind: string, readonly pattern: RegExp 
   { kind: 'Google API key', pattern: /\bAIza[0-9A-Za-z_-]{35}\b/u },
   { kind: 'Slack token', pattern: /\bxox[abposr]-[A-Za-z0-9-]{10,}/u },
   { kind: 'Stripe secret key', pattern: /\b(?:sk|rk)_live_[A-Za-z0-9]{20,}/u },
-  { kind: 'assigned secret', pattern: /\b(?:api[_-]?key|secret|token|password|passwd)\b["']?\s*[:=]\s*["'][^"'\s]{16,}["']/iu },
 ]
+
+/**
+ * A quoted literal assigned to a key or variable named like a credential (`password: '…'`, `const token = "…"`), however short: a
+ * short password is still a password. Not matched: a type (`secret: string`), an expression (`process.env.API_TOKEN`), a longer name that only
+ * contains the word (`"dsh-llm-api-key": "0.2.0"`, `'--token'`), a ternary (`'secret' ? 'password' : 'text'`), and a value with a space in
+ * it, which is prose (`"api-key": "Sign in with an API key"`), not a credential.
+ */
+const ASSIGNED_SECRET = /(?<![\w./@-])(["']?)(?:api[_-]?key|secret|token|password|passwd|private[_-]?key|client[_-]?secret)\1(?::|\s*=)\s*(["'])([^"'\s]{3,})\2/giu
+/**
+ * Values that stand for a secret instead of being one: `<your token>`, `${TOKEN}`, `{{token}}`, `xxxx`, `****`, `...`, `your-api-key`, and
+ * an environment variable's name (`token: 'ACRYL_STATUS_TOKEN'`, the name the value is read from).
+ */
+const PLACEHOLDER = /^(?:<[^>]*>|\$\{[^}]*\}|\{\{[^}]*\}\}|[xX]{3,}|\*{3,}|\.{3,}|…|your[-_].*|YOUR[-_].*|[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+)$/u
+
+const assignsSecret = (line: string): boolean => [...line.matchAll(ASSIGNED_SECRET)].some(match => !PLACEHOLDER.test(match[3] ?? ''))
 
 /** Files never committed whatever their content: environment files and key material. */
 const SECRET_FILES = /(?:^|\/)(?:\.env(?:\.[^/]*)?|[^/]*\.pem|[^/]*\.key|id_(?:rsa|ed25519|ecdsa)|credentials\.json)$/u
@@ -29,6 +43,7 @@ export function findSecrets(files: ReadonlyArray<{ readonly path: string, readon
     if (SECRET_FILES.test(file.path) && !file.path.endsWith('.env.example')) { findings.push({ path: file.path, line: 0, kind: 'a secrets file' }); continue }
     file.text.split('\n').forEach((line, index) => {
       for (const { kind, pattern } of PATTERNS) if (pattern.test(line)) findings.push({ path: file.path, line: index + 1, kind })
+      if (assignsSecret(line)) findings.push({ path: file.path, line: index + 1, kind: 'assigned secret' })
     })
   }
   return findings
