@@ -144,9 +144,15 @@ export class Router extends Service {
       this.state.composed = undefined
       return this.end([...this.flights].filter(flight => (flight.running.get(mount) ?? 0) > 0 || flight.producer === mount), `removing ${path}`)
     }
-    // The label lists what the mount serves, so the inspector can report routes without asking the router (`ALL` is middleware or `all`).
-    const served = app.routes.map(route => `${route.method} ${mergePath(path, route.path)}`).join(', ')
-    this.ctx.effect(() => remove, `acryl-router: route ${path} (${served})`)
+    // Each route the mount serves is a child effect of it, labeled on its own, so the inspector can report routes without asking the
+    // router and no label grows with the size of the app (`ALL` is middleware or `all`). The children hold nothing: the mount does.
+    // (Cordis adopts an effect as a child only when the parent's body yields it.)
+    const served = new Set(app.routes.map(route => `${route.method} ${mergePath(path, route.path)}`))
+    const owner = this.ctx
+    owner.effect(function* () {
+      for (const route of served) yield owner.effect(() => () => {}, `acryl-router: serves ${route}`)
+      yield remove
+    }, `acryl-router: route ${path}`)
     return () => { void remove() }
   }
 

@@ -1,38 +1,34 @@
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { AgentCatalog } from '../../src/agents/catalog.ts'
-import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from '../../src/agents/route.ts'
+import { WORKSPACE_AGENTS_PATH } from '../../src/agents/contract.ts'
+import { agentRoutes } from '../../src/agents/route.ts'
 import { AgentSettings } from '../../src/agents/settings.ts'
 import { WorkspacePtyRegistry, type WorkspacePtyProcess } from '../../src/pty/service.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const stored: { text: string | null } = { text: null }
 const catalog = new AgentCatalog({ read: async () => stored.text, write: async (t) => { stored.text = t } }, command => command !== 'ghost')
 const settingsText: { text: string | null } = { text: null }
 const settings = new AgentSettings({ read: async () => settingsText.text, write: async (t) => { settingsText.text = t } }, catalog, command => command === 'claude')
-let server: Server
+let api: ServedApi
 let origin = ''
 let port = 0
 
 beforeAll(async () => {
-  server = createServer((req, res) => {
-    if (req.url?.startsWith('/settings')) { void handleWorkspaceAgentSettingsRequest(req, res, origin, settings, () => {}); return }
-    const handler = req.url?.startsWith('/remove') ? handleWorkspaceAgentsRemoveRequest : handleWorkspaceAgentsRequest
-    void handler(req, res, origin, catalog, () => {})
-  })
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  const address = server.address()
-  port = typeof address === 'object' && address !== null ? address.port : 0
-  origin = `http://127.0.0.1:${String(port)}`
+  api = await serveApi(agentRoutes(catalog, settings, () => {}))
+  ;({ origin, port } = api)
 })
-afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+afterAll(async () => { await api.close() })
 
+/** `path` is below the agents route: `/` is the catalog, `/settings` and `/remove` its two neighbours. */
 function call(path: string, method: string, body?: unknown, sameOrigin = true): Promise<{ status: number; json: Record<string, unknown> }> {
   const text = body === undefined ? undefined : JSON.stringify(body)
   return new Promise((resolve, reject) => {
     const headers: Record<string, string | number> = {}
     if (text !== undefined) { headers['content-type'] = 'application/json'; headers['content-length'] = Buffer.byteLength(text) }
     if (sameOrigin) Object.assign(headers, { origin, 'sec-fetch-site': 'same-origin' })
-    const req = request({ host: '127.0.0.1', port, path, method, headers }, (res) => {
+    const req = request({ host: '127.0.0.1', port, path: `${WORKSPACE_AGENTS_PATH}${path === '/' ? '' : path}`, method, headers }, (res) => {
       let out = ''
       res.on('data', (c: Buffer) => { out += c.toString('utf8') })
       res.on('end', () => { resolve({ status: res.statusCode ?? 0, json: JSON.parse(out) as Record<string, unknown> }) })

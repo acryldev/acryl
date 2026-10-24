@@ -1,12 +1,13 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { parseFileEntryChange } from '../../src/files/contract.ts'
-import { handleWorkspaceFilesEntryRequest } from '../../src/files/route.ts'
+import { WORKSPACE_FILES_ENTRY_PATH, parseFileEntryChange } from '../../src/files/contract.ts'
+import { filesRoutes } from '../../src/files/route.ts'
 import { WorkspaceFiles, WorkspaceFilesError } from '../../src/files/service.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-entry-')))
 const repo = join(root, 'proj')
@@ -89,24 +90,21 @@ describe('parseFileEntryChange', () => {
 })
 
 describe('entry route', () => {
-  let server: Server
+  let api: ServedApi
   let origin = ''
   let port = 0
   beforeAll(async () => {
-    server = createServer((req, res) => { void handleWorkspaceFilesEntryRequest(req, res, origin, files, () => {}) })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(filesRoutes(files, () => {}))
+    ;({ origin, port } = api)
   })
-  afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+  afterAll(async () => { await api.close() })
 
   function post(body: unknown, sameOrigin = true, method = 'POST'): Promise<number> {
     const text = JSON.stringify(body)
     return new Promise((resolve, reject) => {
       const headers: Record<string, string | number> = { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text) }
       if (sameOrigin) Object.assign(headers, { origin, 'sec-fetch-site': 'same-origin' })
-      const req = request({ host: '127.0.0.1', port, path: '/', method, headers }, (res) => { res.resume(); res.on('end', () => { resolve(res.statusCode ?? 0) }) })
+      const req = request({ host: '127.0.0.1', port, path: WORKSPACE_FILES_ENTRY_PATH, method, headers }, (res) => { res.resume(); res.on('end', () => { resolve(res.statusCode ?? 0) }) })
       req.on('error', reject)
       req.end(text)
     })

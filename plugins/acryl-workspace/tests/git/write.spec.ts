@@ -1,11 +1,13 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { handleWorkspaceGitCommitRequest, handleWorkspaceGitStageRequest, handleWorkspaceGitUnstageRequest } from '../../src/git/route.ts'
+import { gitRoutes } from '../../src/git/route.ts'
 import { WorkspaceGit, WorkspaceGitError } from '../../src/git/service.ts'
+import { WORKSPACE_API_PREFIX } from '../../src/private-route.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const IDENT = { GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null' }
 function git(cwd: string, ...args: string[]): string {
@@ -99,32 +101,24 @@ describe('stage, unstage and commit', () => {
 })
 
 describe('write routes', () => {
-  let server: Server
+  let api: ServedApi
   let origin: string
   let port: number
   const routeGit = new WorkspaceGit()
 
   beforeAll(async () => {
-    server = createServer((req, res) => {
-      const path = new URL(req.url ?? '', 'http://x').pathname
-      const report = (): void => {}
-      if (path === '/stage') void handleWorkspaceGitStageRequest(req, res, origin, routeGit, report)
-      else if (path === '/unstage') void handleWorkspaceGitUnstageRequest(req, res, origin, routeGit, report)
-      else void handleWorkspaceGitCommitRequest(req, res, origin, routeGit, report)
-    })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(gitRoutes(routeGit, () => {}))
+    ;({ origin, port } = api)
   })
-  afterAll(async () => { await routeGit.dispose(); await new Promise<void>(resolve => server.close(() => { resolve() })) })
+  afterAll(async () => { await routeGit.dispose(); await api.close() })
 
+  /** `path` is below the git routes: `/stage`, `/unstage` or `/commit`. */
   function post(path: string, body: unknown, sameOrigin = true): Promise<{ status: number; body: Record<string, unknown> }> {
     return new Promise((resolve, reject) => {
       const payload = typeof body === 'string' ? body : JSON.stringify(body)
       const headers: Record<string, string> = { 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(payload)) }
       if (sameOrigin) { headers.origin = origin; headers['sec-fetch-site'] = 'same-origin' }
-      const req = request({ host: '127.0.0.1', port, path, method: 'POST', headers }, (res) => {
+      const req = request({ host: '127.0.0.1', port, path: `${WORKSPACE_API_PREFIX}/git${path}`, method: 'POST', headers }, (res) => {
         let text = ''
         res.on('data', (chunk: Buffer) => { text += chunk.toString('utf8') })
         res.on('end', () => { resolve({ status: res.statusCode ?? 0, body: JSON.parse(text) as Record<string, unknown> }) })

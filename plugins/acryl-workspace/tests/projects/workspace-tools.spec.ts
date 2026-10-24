@@ -1,8 +1,8 @@
 /**
  * The agent's workspace tools and the registry's event stream (spec 043 T007): through the real settings service and registry, a real
- * Cordis context with a fake `acrylTools` port that records what was registered, and a real loopback HTTP server for the stream.
+ * Cordis context with a fake `acrylTools` port that records what was registered, and the stream mounted on the real router over loopback HTTP.
  */
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -10,18 +10,19 @@ import { Context } from '@deepseek-ai/cordis'
 import * as settingsPlugin from 'acryl-settings'
 import type { AcrylToolCall, AcrylToolDecision } from 'acryl-control'
 import { afterEach, describe, expect, it } from 'vitest'
-import { parseProjectRegistryView } from '../../src/projects/contract.ts'
-import { createProjectEvents } from '../../src/projects/events.ts'
+import { WORKSPACE_PROJECTS_EVENTS_PATH, parseProjectRegistryView } from '../../src/projects/contract.ts'
+import { createKeepAlive, projectRoutes } from '../../src/projects/route.ts'
 import { PROJECTS_NAMESPACE, ProjectRegistry, ProjectsSchema } from '../../src/projects/registry.ts'
 import {
   WORKSPACE_ADD_PROJECT_TOOL, WORKSPACE_CREATE_TOOL, WORKSPACE_LIST_TOOL, WORKSPACE_SWITCH_TOOL, registerWorkspaceTools, type WorkspacesValue,
 } from '../../src/projects/tools.ts'
+import { serveMounted, type ServedApi } from '../serve-api.ts'
 
 const dirs: string[] = []
 const contexts: Context[] = []
-const servers: Server[] = []
+const servers: ServedApi[] = []
 afterEach(async () => {
-  for (const server of servers.splice(0)) await new Promise(resolve => { server.close(resolve) })
+  for (const server of servers.splice(0)) await server.close()
   while (contexts.length > 0) await contexts.pop()?.fiber.dispose()
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
@@ -98,18 +99,16 @@ describe('the workspace tools', () => {
 })
 
 describe('the registry event stream', () => {
-  it('sends the view on connect and after every change, and ends the streams on close', async () => {
+  it('sends the view on connect and after every change, and ends the stream when the mount is removed', async () => {
     const { registry, call } = await mount()
-    const server = createServer()
+    const keepAlive = createKeepAlive()
+    const server = await serveMounted(projectRoutes(registry, keepAlive, () => {}))
     servers.push(server)
-    await new Promise<void>(resolve => { server.listen(0, '127.0.0.1', resolve) })
-    const port = (server.address() as { port: number }).port
-    const events = createProjectEvents(registry, `http://127.0.0.1:${String(port)}`)
-    server.on('request', (req, res) => { events.handle(req, res) })
+    const { origin } = server
     const views: string[] = []
     let ended = false
     await new Promise<void>((resolve) => {
-      request(`http://127.0.0.1:${String(port)}/events`, { headers: { 'sec-fetch-site': 'same-origin', referer: `http://127.0.0.1:${String(port)}/` } }, (res) => {
+      request(`${origin}${WORKSPACE_PROJECTS_EVENTS_PATH}`, { headers: { 'sec-fetch-site': 'same-origin', referer: `${origin}/` } }, (res) => {
         expect(res.headers['content-type']).toBe('text/event-stream')
         res.setEncoding('utf8')
         res.on('data', (chunk: string) => {
@@ -123,8 +122,10 @@ describe('the registry event stream', () => {
     await until(() => views.length === 2)
     expect(views[0]).toBe('default')
     expect(views[1]).not.toBe('default')
-    events.close()
+    // What the plugin's unload does: the router ends the stream its code produced.
+    server.unmount()
     await until(() => ended)
+    keepAlive.stop()
   })
 })
 

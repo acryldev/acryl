@@ -88,7 +88,7 @@ Following the ACRYL framework rules, a plugin declares what it:
 - owns until disposal.
 
 The declaration is what lets tooling answer two questions without reading all the code: what does this plugin do, and what disappears
-when it unloads? `acryl-inspect` reads it from the running system: each mount's label lists the routes it serves.
+when it unloads? `acryl-inspect` reads it from the running system: each mount is labeled with its path and has one labeled child per route it serves.
 
 ## State
 

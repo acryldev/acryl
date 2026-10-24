@@ -1,100 +1,52 @@
-/** Same-origin handlers for the custom agent catalog. */
+/** The custom agent catalog and the agent settings, for the app's own page only. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
+import { App } from 'acryl-router'
+import { failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import type { AgentCatalog } from './catalog.ts'
+import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './contract.ts'
 import { AgentDefinitionError } from './definition.ts'
 import { parsePreferencesPatch } from './preferences.ts'
 import type { AgentSettings } from './settings.ts'
 
-type ReportError = (operation: string, cause: unknown) => void
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
-
-/** GET the catalog; POST `{ agent }` to add one (a refusal is a 400 whose message says what to fix). */
-export async function handleWorkspaceAgentsRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  catalog: AgentCatalog,
-  reportError: ReportError,
-): Promise<void> {
-  if (req.method === 'GET') {
-    if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) return finishJson(res, 403, error('forbidden'))
-    return finishJson(res, 200, { agents: catalog.list() }, 'GET')
-  }
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, error('invalid agent request'))
-  }
-  if (!isRecord(body) || Object.keys(body).length !== 1 || !('agent' in body)) return finishJson(res, 400, error('invalid agent request'))
-  try {
-    await catalog.add(body.agent)
-    return finishJson(res, 200, { agents: catalog.list() })
-  } catch (cause) {
-    if (cause instanceof AgentDefinitionError) return finishJson(res, 400, error(cause.message))
-    reportError('add agent', cause)
-    return finishJson(res, 500, error('the agent could not be saved'))
-  }
-}
-
-/** POST `{ id }`: idempotent removal. */
-export async function handleWorkspaceAgentsRemoveRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  catalog: AgentCatalog,
-  reportError: ReportError,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, error('invalid agent request'))
-  }
-  if (!isRecord(body) || Object.keys(body).length !== 1 || typeof body.id !== 'string') return finishJson(res, 400, error('invalid agent request'))
-  try {
-    await catalog.remove(body.id)
-    return finishJson(res, 200, { agents: catalog.list() })
-  } catch (cause) {
-    reportError('remove agent', cause)
-    return finishJson(res, 500, error('the agent could not be removed'))
-  }
-}
-
-/** GET the settings view (with a fresh check of which programs are installed); POST one change, answered with the whole view. */
-export async function handleWorkspaceAgentSettingsRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  settings: AgentSettings,
-  reportError: ReportError,
-): Promise<void> {
-  if (req.method === 'GET') {
-    if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) return finishJson(res, 403, error('forbidden'))
-    return finishJson(res, 200, settings.view(), 'GET')
-  }
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, error('invalid agent settings request'))
-  }
-  try {
-    return finishJson(res, 200, await settings.apply(parsePreferencesPatch(body)))
-  } catch (cause) {
-    if (cause instanceof AgentDefinitionError) return finishJson(res, 400, error(cause.message))
-    reportError('save agent settings', cause)
-    return finishJson(res, 500, error('the settings could not be saved'))
-  }
+/**
+ * GET `agents` (the catalog) and POST `agents` `{ agent }` to add one, a refusal being a 400 whose message says what to fix; POST `agents/remove`
+ * `{ id }` (idempotent); GET `agents/settings` (with a fresh check of which programs are installed) and POST one change, answered with the whole view.
+ */
+export function agentRoutes(catalog: AgentCatalog, settings: AgentSettings, reportError: ReportError): App {
+  return new App()
+    .get(WORKSPACE_AGENTS_PATH, ownPage, c => c.json({ agents: catalog.list() }))
+    .post(WORKSPACE_AGENTS_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      if (!isRecord(body) || Object.keys(body).length !== 1 || !('agent' in body)) return c.json(failure('invalid agent request'), 400)
+      try {
+        await catalog.add(body.agent)
+        return c.json({ agents: catalog.list() })
+      } catch (cause) {
+        if (cause instanceof AgentDefinitionError) return c.json(failure(cause.message), 400)
+        reportError('add agent', cause)
+        return c.json(failure('the agent could not be saved'), 500)
+      }
+    })
+    .post(WORKSPACE_AGENTS_REMOVE_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      if (!isRecord(body) || Object.keys(body).length !== 1 || typeof body.id !== 'string') return c.json(failure('invalid agent request'), 400)
+      try {
+        await catalog.remove(body.id)
+        return c.json({ agents: catalog.list() })
+      } catch (cause) {
+        reportError('remove agent', cause)
+        return c.json(failure('the agent could not be removed'), 500)
+      }
+    })
+    .get(WORKSPACE_AGENT_SETTINGS_PATH, ownPage, c => c.json(settings.view()))
+    .post(WORKSPACE_AGENT_SETTINGS_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      try {
+        return c.json(await settings.apply(parsePreferencesPatch(body)))
+      } catch (cause) {
+        if (cause instanceof AgentDefinitionError) return c.json(failure(cause.message), 400)
+        reportError('save agent settings', cause)
+        return c.json(failure('the settings could not be saved'), 500)
+      }
+    })
 }

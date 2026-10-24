@@ -64,6 +64,33 @@ Move one capability at a time:
 
 Keep domain calls unchanged until the transport change is green; do not rewrite transport, handlers and authorization in one step.
 
+## A worked example: the workspace
+
+`acryl-workspace` (files, git, terminals, projects, agents) was the largest user of the webServer: 24 exact routes. It now builds one app
+per domain folder (`filesRoutes`, `gitRoutes`, `ptyRoutes`, ...), composes them once (`privateApi` in `src/private-route.ts`), mounts the
+result after the effect that builds its services, and serves the one prefix `/api/acryl-workspace`:
+
+```ts
+const built: { api?: App } = {}
+ctx.effect(() => {
+  // ... the PTY table, git, files, the project registry ...
+  built.api = privateApi(filesRoutes(files, report), gitRoutes(git, report) /* , ... */)
+  return async () => { /* release them */ }
+})
+ctx.router.route('/', built.api)
+ctx.routerHttp.mount('/api/acryl-workspace')
+```
+
+Mounting after the effect orders the unload: the mount goes first, so the requests and event streams its code is serving end and are
+waited for, then the services are released. Each route names its guard (`loopbackOnly({ callers: 'own-page' })` for the page, a bearer token
+for the agent hooks) and its body limit; the event stream is `streamSSE`, and its keep-alive is one timer the plugin owns, not one per
+request. The terminal's WebSocket stays a webServer upgrade until the router carries upgrades (spec 047 T009).
+
+The answers that changed are recorded with it: a body over a route's limit is 413 on every route (some said 400); a wrong method is 405 with
+an `Allow` header on every route; a missing or wrong agent-hook token is 401 with `WWW-Authenticate` (it was 403); and the hook's `Host`
+must be the app's own loopback address. Its routes refuse an in-process call on purpose (the guard needs a socket to check), so its tests
+run over loopback through the same adapter (`tests/serve-api.ts`), which is the "test over the Host" below.
+
 ## Completion check
 
 A capability is migrated when:

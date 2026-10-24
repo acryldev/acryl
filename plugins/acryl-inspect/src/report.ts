@@ -47,11 +47,17 @@ export interface PluginReport {
 }
 
 const PROVIDE = /^ctx\.provide\("(.+)"\)$/
-const MOUNT = /^acryl-router: route (\S+) \((.*)\)$/
-const SERVED = /^([A-Z]+) (\S+)$/
+const MOUNT = /^acryl-router: route (\S+)$/
+const SERVES = /^acryl-router: serves ([A-Z]+) (\S+)$/
 
 function flatten(effects: readonly EffectLabel[]): string[] {
   return effects.flatMap(effect => [effect.label, ...flatten(effect.children)])
+}
+
+/** A mount's children name the routes it serves; they describe that one registration and are not registrations of their own. */
+function routeOf(label: string): RouteReport | undefined {
+  const served = SERVES.exec(label)
+  return served?.[1] !== undefined && served[2] !== undefined ? { method: served[1], path: served[2] } : undefined
 }
 
 export function stateName(state: number): FiberStateName {
@@ -78,17 +84,16 @@ export function reportFiber(fiber: FiberView, adopted: readonly FiberView[] = []
   const routes: RouteReport[] = []
   const other: string[] = []
   const labels = [fiber, ...adopted].flatMap(source => flatten(source.getEffects()))
+  let registrations = 0
   for (const label of labels) {
     const provided = PROVIDE.exec(label)
     const mount = MOUNT.exec(label)
+    const route = routeOf(label)
+    if (route !== undefined) { routes.push(route); continue }
+    registrations += 1
     if (provided?.[1] !== undefined) provides.push(provided[1])
-    else if (mount?.[1] !== undefined) {
-      mounts.push(mount[1])
-      for (const entry of (mount[2] ?? '').split(', ')) {
-        const served = SERVED.exec(entry)
-        if (served?.[1] !== undefined && served[2] !== undefined) routes.push({ method: served[1], path: served[2] })
-      }
-    } else other.push(label)
+    else if (mount?.[1] !== undefined) mounts.push(mount[1])
+    else other.push(label)
   }
   return {
     name: isNamed(fiber) ? fiber.runtime?.name ?? 'anonymous' : 'anonymous',
@@ -98,7 +103,7 @@ export function reportFiber(fiber: FiberView, adopted: readonly FiberView[] = []
     mounts,
     routes,
     other,
-    removedOnUnload: labels.length,
+    removedOnUnload: registrations,
   }
 }
 

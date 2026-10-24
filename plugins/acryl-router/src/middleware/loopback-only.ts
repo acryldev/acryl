@@ -19,6 +19,13 @@ export interface LoopbackOptions {
    * checked in full: only a call with no connection facts at all counts as in process.
    */
   readonly inProcess?: 'deny' | 'allow'
+  /**
+   * Who may call. `local` (default): any program on this machine, a browser page only as `mutations` allows. `own-page`: only this app's own page,
+   * for private routes a script on the machine must not drive or read either. A request then shows an `Origin` that is exactly this authority (with
+   * `Sec-Fetch-Site` absent or `same-origin`), or, for a read (GET, HEAD, OPTIONS), which browsers often send without `Origin`, `Sec-Fetch-Site:
+   * same-origin` and a `Referer` from this authority. `mutations` is not consulted: every request is held to that rule.
+   */
+  readonly callers?: 'local' | 'own-page'
 }
 
 const loopback = new BlockList()
@@ -68,10 +75,31 @@ export function sameOrigin(c: Context, authority: URL): boolean {
   }
 }
 
-/** Only requests from this machine to this app: loopback peer, the real port, an allowed `Host`, and for mutations a matching `Origin`. Everything else gets a 403. */
+function originOf(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined
+  try {
+    return new URL(value).origin
+  } catch {
+    return undefined
+  }
+}
+
+/** Whether the request comes from a page served by this authority itself: the `own-page` rule of {@link LoopbackOptions.callers}. */
+export function fromOwnPage(c: Context, authority: URL): boolean {
+  const origin = c.req.header('origin')
+  const fetchSite = c.req.header('sec-fetch-site')
+  if (origin !== undefined && originOf(origin) === origin && origin === authority.origin) return fetchSite === undefined || fetchSite === 'same-origin'
+  return SAFE_METHODS.has(c.req.method) && fetchSite === 'same-origin' && originOf(c.req.header('referer')) === authority.origin
+}
+
+/**
+ * Only requests from this machine to this app: loopback peer, the real port, an allowed `Host`, and for mutations a matching `Origin` (with
+ * `callers: 'own-page'`, every request from this app's own page). Everything else gets a 403.
+ */
 export function loopbackOnly(options: LoopbackOptions = {}): MiddlewareHandler {
   const mutations = options.mutations ?? 'same-origin'
   const inProcess = options.inProcess ?? 'deny'
+  const ownPage = options.callers === 'own-page'
   return async (c, next) => {
     const connection = connectionOf(c)
     if (inProcess === 'allow' && connection.remoteAddress === undefined && connection.localPort === undefined) {
@@ -80,6 +108,11 @@ export function loopbackOnly(options: LoopbackOptions = {}): MiddlewareHandler {
     }
     const authority = loopbackAuthority(c, options.hostnames)
     if (authority === undefined) return c.json({ error: 'request authority rejected' }, 403)
+    if (ownPage) {
+      if (!fromOwnPage(c, authority)) return c.json({ error: 'only this app\'s own page may call this' }, 403)
+      await next()
+      return
+    }
     if (mutations === 'same-origin' && !SAFE_METHODS.has(c.req.method) && !sameOrigin(c, authority)) {
       return c.json({ error: 'a change must come from this app\'s own origin' }, 403)
     }

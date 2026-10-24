@@ -22,4 +22,4 @@ export { NONCE, secureHeaders, type SecureHeadersVariables } from '../core/middl
 export { timeout } from '../core/middleware/timeout/index.ts'
 export { endTime, setMetric, startTime, timing, wrapTime, type TimingVariables } from '../core/middleware/timing/index.ts'
 export { appendTrailingSlash, trimTrailingSlash } from '../core/middleware/trailing-slash/index.ts'
-export { LOOPBACK_HOSTNAMES, loopbackAuthority, loopbackOnly, sameOrigin, type LoopbackOptions } from './loopback-only.ts'
+export { LOOPBACK_HOSTNAMES, fromOwnPage, loopbackAuthority, loopbackOnly, sameOrigin, type LoopbackOptions } from './loopback-only.ts'

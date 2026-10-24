@@ -19,8 +19,8 @@ standards in the repository `CLAUDE.md`). Each folder holds its model, its UI an
 
 ```text
 src/                     Host half (Node)
-  index.ts               registers the Host routes, owns their disposal
-  http.ts                same-origin loopback checks and JSON helpers shared by the routes
+  index.ts               builds the services, mounts their routes on the router (one prefix, /api/acryl-workspace), owns their disposal
+  private-route.ts       what every route shares: the own-page guard, private headers, body limit, the composed app (privateApi)
   git/                   read-only git and one worktree-creating route: service, route, contract, checks
   files/                 confined browse, read and atomic save of files inside a worktree: service, route, contract
   pty/                   terminal processes: service, route, contract

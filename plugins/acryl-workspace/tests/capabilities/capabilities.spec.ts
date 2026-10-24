@@ -1,8 +1,9 @@
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { loadWorkspaceCapabilities } from '../../src/client/capabilities/capabilities-api.ts'
 import { parseWorkspaceCapabilities, WORKSPACE_CAPABILITIES_PATH } from '../../src/capabilities/contract.ts'
-import { handleWorkspaceCapabilitiesRequest } from '../../src/capabilities/route.ts'
+import { capabilityRoutes } from '../../src/capabilities/route.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 describe('capabilities contract', () => {
   it('accepts exactly a boolean chat flag', () => {
@@ -28,19 +29,16 @@ describe('capabilities client', () => {
 })
 
 describe('capabilities route', () => {
-  let server: Server
+  let api: ServedApi
   let origin = ''
   let port = 0
   const state = { chat: true }
 
   beforeAll(async () => {
-    server = createServer((req, res) => { handleWorkspaceCapabilitiesRequest(req, res, origin, () => ({ chat: state.chat })) })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(capabilityRoutes(() => ({ chat: state.chat })))
+    ;({ origin, port } = api)
   })
-  afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+  afterAll(async () => { await api.close() })
 
   function call(method: string, sameOrigin: boolean): Promise<{ status: number, json: Record<string, unknown> }> {
     return new Promise((resolve, reject) => {

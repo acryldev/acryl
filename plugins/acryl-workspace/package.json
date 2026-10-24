@@ -72,6 +72,7 @@
     "@xterm/xterm": "5.5.0",
     "acryl-control": "workspace:*",
     "acryl-loopback-http": "workspace:*",
+    "acryl-router": "workspace:*",
     "acryl-settings": "workspace:*",
     "codemirror": "6.0.2",
     "node-pty": "1.2.0-beta.15",
@@ -110,7 +111,8 @@
     "react-dom": "18.3.1",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "acryl-router-http": "workspace:*"
   },
   "acryl": {
     "schemaVersion": 1,

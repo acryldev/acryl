@@ -8,6 +8,7 @@ import {
   BLUEPRINT_ROW_IDS,
   InvalidBlueprintError,
   blueprintFromEnvironment,
+  builtInCatalog,
   composeBlueprintRows,
   parseBlueprint,
 } from '../src/index.ts'
@@ -58,6 +59,15 @@ describe('parseBlueprint', () => {
     expect(() => parseBlueprint({ id: 'x', extends: 'nope' })).toThrow(/not a known blueprint/)
     expect(() => parseBlueprint({ id: 'x', shell: 'wide' })).toThrow(/"shell"/)
     expect(() => parseBlueprint([])).toThrow(/expected an object/)
+  })
+
+  it('refuses the workspace without the framework kit that serves its routes, and every built-in with the workspace has the kit', () => {
+    expect(() => parseBlueprint({ id: 'acme.ide', extends: 'acryl.ide', rows: ['plugin-context', 'system-prompt'] })).toThrow(/"framework-kit"/)
+    expect(() => parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'] })).toThrow(/"framework-kit"/)
+    expect(parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'], rows: ['framework-kit'] }).rows).toEqual(['framework-kit'])
+    for (const blueprint of builtInCatalog().list()) {
+      if (blueprint.capabilities.includes('workspace')) expect(blueprint.rows).toContain('framework-kit')
+    }
   })
 
   it('every row id a file may name composes on at least one surface (the id list cannot drift from the row table)', () => {

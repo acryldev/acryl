@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -8,15 +8,16 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ProjectRegistryView, WorkspaceSummary } from '../../src/projects/contract.ts'
 import { BriefTab } from '../../src/client/shared-context/BriefTab.tsx'
-import { handleBriefRequest } from '../../src/shared-context/route.ts'
+import { briefRoutes } from '../../src/shared-context/route.ts'
 import { SharedContext } from '../../src/shared-context/service.ts'
 import { readWorkspaceContext } from '../../src/shared-context/tool.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const dirs: string[] = []
-const servers: Server[] = []
+const servers: ServedApi[] = []
 afterEach(async () => {
   cleanup()
-  for (const server of servers.splice(0)) await new Promise(resolve => { server.close(resolve) })
+  for (const server of servers.splice(0)) await server.close()
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
 
@@ -44,11 +45,9 @@ describe('acryl_workspace_context', () => {
 describe('the brief route', () => {
   async function serve() {
     const context = shared()
-    const server = createServer()
+    const server = await serveApi(briefRoutes(context))
     servers.push(server)
-    await new Promise<void>(resolve => { server.listen(0, '127.0.0.1', resolve) })
-    const origin = `http://127.0.0.1:${String((server.address() as { port: number }).port)}`
-    server.on('request', (req, res) => { void handleBriefRequest(req, res, origin, context) })
+    const { origin } = server
     const call = (method: string, path: string, body?: unknown) => new Promise<{ status: number, json: { ok: boolean, text?: string, message?: string } }>((resolve, reject) => {
       const payload = body === undefined ? undefined : JSON.stringify(body)
       const req = request(`${origin}${path}`, { method, headers: { origin, 'sec-fetch-site': 'same-origin', referer: `${origin}/`, ...(payload === undefined ? {} : { 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(payload)) }) } }, (res) => {

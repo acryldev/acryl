@@ -152,6 +152,23 @@ describe('acryl-router lifecycle through Cordis', () => {
     expect(router.size).toBe(1)
   })
 
+  it('labels a mount by its path with one child per route, so no label grows with the app (an inspector caps label length)', async () => {
+    const { ctx, router } = await mountRouter()
+    const big = new App().use('/api/*', async (_c, next) => { await next() })
+    for (let i = 0; i < 60; i += 1) big.get(`/api/a-fairly-long-resource-name-${String(i)}`, c => c.text('ok'))
+    const fiber = ctx.plugin({ name: 'big', inject: ['router'], apply: (inner: Context) => { inner.router.route('/', big) } })
+    await settle()
+    const [mount, ...rest] = fiber.getEffects()
+    expect(rest).toEqual([])
+    expect(mount?.label).toBe('acryl-router: route /')
+    expect(mount?.children).toHaveLength(61)
+    expect(mount?.children[0]?.label).toBe('acryl-router: serves ALL /api/*')
+    expect(mount?.children.every(child => child.label.length < 100 && child.children.length === 0)).toBe(true)
+    expect(router.size).toBe(1)
+    await fiber.dispose()
+    expect(router.size).toBe(0)
+  })
+
   it('replaces the provider without leaving doubled registrations: consumers re-register exactly once', async () => {
     const ctx = root()
     const first = ctx.plugin(provider, config)

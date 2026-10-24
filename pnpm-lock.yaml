@@ -3008,6 +3008,9 @@ importers:
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
       acryl-settings:
         specifier: workspace:*
         version: link:../acryl-settings
@@ -3066,6 +3069,9 @@ importers:
       acryl-app-shell:
         specifier: workspace:*
         version: link:../acryl-app-shell
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../acryl-router-http
       jsdom:
         specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.3.0)

@@ -1,8 +1,8 @@
-/** Same-origin JSON handlers for ACRYL Workspace PTY sessions. */
+/** The workspace terminal routes: start, snapshot, input, resize and close, for the app's own page only. The output streams over the PTY WebSocket. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import { App } from 'acryl-router'
+import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import type { WorkspacePtyRegistry } from './service.ts'
-import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
 import {
   WORKSPACE_PTY_CLOSE_PATH,
   WORKSPACE_PTY_INPUT_PATH,
@@ -10,157 +10,79 @@ import {
   WORKSPACE_PTY_RESIZE_PATH,
 } from './contract.ts'
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-}
+const START_KEYS = new Set(['commandId', 'cwd', 'cols', 'rows'])
 
 /**
- * POST start and GET snapshot for the Workspace PTY route.
+ * GET `pty?id=` (the session's snapshot) and POST `pty` `{ commandId, cwd?, cols?, rows? }` (start one); POST `input` `{ id, data }`, `resize`
+ * `{ id, cols, rows }` and `close` `{ id }` (idempotent) for a live session.
  */
-export async function handleWorkspacePtyRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  registry: WorkspacePtyRegistry,
-  reportError: (operation: string, cause: unknown) => void,
-): Promise<void> {
-  if (req.method === 'GET') {
-    if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) {
-      return finishJson(res, 403, error('forbidden'))
-    }
-    const id = new URL(req.url ?? '', 'http://127.0.0.1').searchParams.get('id')
-    if (id === null || id.length === 0) return finishJson(res, 400, error('invalid workspace PTY request'))
-    try {
-      return finishJson(res, 200, registry.read(id), 'GET')
-    } catch (cause) {
-      reportError('read workspace PTY', cause)
-      return finishJson(res, 404, error('unknown workspace PTY session'))
-    }
-  }
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch (cause) {
-    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
-    return finishJson(res, 400, error('invalid workspace PTY request'))
-  }
-  const extraKeys = isObject(body) ? Object.keys(body).filter(key => key !== 'commandId' && key !== 'cwd' && key !== 'cols' && key !== 'rows') : []
-  if (!isObject(body) || typeof body.commandId !== 'string' || body.commandId.length === 0 || body.commandId.length > 32 || extraKeys.length > 0
-    || (body.cwd !== undefined && (typeof body.cwd !== 'string' || body.cwd.length === 0))) {
-    return finishJson(res, 400, error('invalid workspace PTY request'))
-  }
-  try {
-    const size = typeof body.cols === 'number' && typeof body.rows === 'number' ? { cols: body.cols, rows: body.rows } : undefined
-    if ((body.cols !== undefined || body.rows !== undefined) && size === undefined) return finishJson(res, 400, error('invalid workspace PTY request'))
-    return finishJson(res, 200, registry.start(body.commandId, body.cwd, size))
-  } catch (cause) {
-    reportError('start workspace PTY', cause)
-    return finishJson(res, 500, error(cause instanceof Error ? cause.message : 'workspace PTY spawn failed'))
-  }
+export function ptyRoutes(registry: WorkspacePtyRegistry, reportError: ReportError): App {
+  return new App()
+    .get(WORKSPACE_PTY_PATH, ownPage, (c) => {
+      const id = c.req.query('id')
+      if (id === undefined || id.length === 0) return c.json(failure('invalid workspace PTY request'), 400)
+      try {
+        return c.json(registry.read(id))
+      } catch (cause) {
+        reportError('read workspace PTY', cause)
+        return c.json(failure('unknown workspace PTY session'), 404)
+      }
+    })
+    .post(WORKSPACE_PTY_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      if (body === INVALID_JSON || !isRecord(body) || Object.keys(body).some(key => !START_KEYS.has(key))
+        || typeof body.commandId !== 'string' || body.commandId.length === 0 || body.commandId.length > 32
+        || (body.cwd !== undefined && (typeof body.cwd !== 'string' || body.cwd.length === 0))) {
+        return c.json(failure('invalid workspace PTY request'), 400)
+      }
+      const size = typeof body.cols === 'number' && typeof body.rows === 'number' ? { cols: body.cols, rows: body.rows } : undefined
+      if ((body.cols !== undefined || body.rows !== undefined) && size === undefined) return c.json(failure('invalid workspace PTY request'), 400)
+      try {
+        return c.json(registry.start(body.commandId, body.cwd as string | undefined, size))
+      } catch (cause) {
+        reportError('start workspace PTY', cause)
+        return c.json(failure(cause instanceof Error ? cause.message : 'workspace PTY spawn failed'), 500)
+      }
+    })
+    .post(WORKSPACE_PTY_INPUT_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      if (!isRecord(body) || typeof body.id !== 'string' || typeof body.data !== 'string' || Object.keys(body).length !== 2) {
+        return c.json(failure('invalid workspace PTY input'), 400)
+      }
+      try {
+        registry.write(body.id, body.data)
+        return c.json({ accepted: true })
+      } catch (cause) {
+        reportError('write workspace PTY', cause)
+        return c.json(failure('unknown workspace PTY session'), 404)
+      }
+    })
+    .post(WORKSPACE_PTY_RESIZE_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      if (!isRecord(body) || typeof body.id !== 'string'
+        || typeof body.cols !== 'number' || typeof body.rows !== 'number'
+        || !Number.isInteger(body.cols) || !Number.isInteger(body.rows)
+        || body.cols < 2 || body.cols > 500 || body.rows < 1 || body.rows > 200
+        || Object.keys(body).length !== 3) {
+        return c.json(failure('invalid workspace PTY resize'), 400)
+      }
+      try {
+        registry.resize(body.id, body.cols, body.rows)
+        return c.json({ accepted: true })
+      } catch (cause) {
+        reportError('resize workspace PTY', cause)
+        return c.json(failure('unknown workspace PTY session'), 404)
+      }
+    })
+    .post(WORKSPACE_PTY_CLOSE_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      if (!isRecord(body) || typeof body.id !== 'string' || Object.keys(body).length !== 1) return c.json(failure('invalid workspace PTY close'), 400)
+      try {
+        await registry.close(body.id)
+        return c.json({ accepted: true })
+      } catch (cause) {
+        reportError('close workspace PTY', cause)
+        return c.json(failure('workspace PTY could not be closed'), 500)
+      }
+    })
 }
-
-/** POST stdin to a live session. */
-export async function handleWorkspacePtyInputRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  registry: WorkspacePtyRegistry,
-  reportError: (operation: string, cause: unknown) => void,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, error('invalid workspace PTY input'))
-  }
-  if (!isObject(body) || typeof body.id !== 'string' || typeof body.data !== 'string'
-    || Object.keys(body).length !== 2) {
-    return finishJson(res, 400, error('invalid workspace PTY input'))
-  }
-  try {
-    registry.write(body.id, body.data)
-    return finishJson(res, 200, { accepted: true })
-  } catch (cause) {
-    reportError('write workspace PTY', cause)
-    return finishJson(res, 404, error('unknown workspace PTY session'))
-  }
-}
-
-/** POST terminal dimensions to a live session. */
-export async function handleWorkspacePtyResizeRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  registry: WorkspacePtyRegistry,
-  reportError: (operation: string, cause: unknown) => void,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, error('invalid workspace PTY resize'))
-  }
-  if (!isObject(body) || typeof body.id !== 'string'
-    || !Number.isInteger(body.cols) || !Number.isInteger(body.rows)
-    || typeof body.cols !== 'number' || typeof body.rows !== 'number'
-    || body.cols < 2 || body.cols > 500 || body.rows < 1 || body.rows > 200
-    || Object.keys(body).length !== 3) {
-    return finishJson(res, 400, error('invalid workspace PTY resize'))
-  }
-  try {
-    registry.resize(body.id, body.cols, body.rows)
-    return finishJson(res, 200, { accepted: true })
-  } catch (cause) {
-    reportError('resize workspace PTY', cause)
-    return finishJson(res, 404, error('unknown workspace PTY session'))
-  }
-}
-
-/** POST idempotent close. */
-export async function handleWorkspacePtyCloseRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  registry: WorkspacePtyRegistry,
-  reportError: (operation: string, cause: unknown) => void,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, error('invalid workspace PTY close'))
-  }
-  if (!isObject(body) || typeof body.id !== 'string' || Object.keys(body).length !== 1) {
-    return finishJson(res, 400, error('invalid workspace PTY close'))
-  }
-  try {
-    await registry.close(body.id)
-    return finishJson(res, 200, { accepted: true })
-  } catch (cause) {
-    reportError('close workspace PTY', cause)
-    return finishJson(res, 500, error('workspace PTY could not be closed'))
-  }
-}
-
-export const workspacePtyRoutePaths = {
-  pty: WORKSPACE_PTY_PATH,
-  input: WORKSPACE_PTY_INPUT_PATH,
-  resize: WORKSPACE_PTY_RESIZE_PATH,
-  close: WORKSPACE_PTY_CLOSE_PATH,
-} as const

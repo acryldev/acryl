@@ -92,7 +92,8 @@ through the router, and refused a foreign `Host` with 403.
 - The terminal UI composes no `framework-kit` row yet.
 - A Desktop transport without a port (`protocol.handle` onto `router.fetch`): `specs/047-framework-port/plan.md` T014.
 - A terminal command that calls `router.fetch`; the in-process path is proved in tests, not wired into the TUI.
-- Other users of the DSH `webServer`: Desktop's own renderer routes, `acryl-agent-control` (through the `acrylWeb` carrier) and the
-  sign-in callback. They keep working unchanged.
+- Other users of the DSH `webServer`: Desktop's own renderer routes, `acryl-agent-control` (through the `acrylWeb` carrier), plugin
+  admin, support and the sign-in callback. They keep working unchanged and move one at a time (spec 047, Phase 8). `acryl-workspace`
+  moved first: its 24 routes are one router mount, and only its terminal WebSocket is still a webServer upgrade.
 - The inspector's label convention is applied to the router, state and Market registrations, not yet to every plugin.
 - The DOM renderer and page/SSR layers (M6) are decisions for the owner, not built.

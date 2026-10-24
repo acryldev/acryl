@@ -1,125 +1,58 @@
-/** Same-origin handlers for the worktree file routes: two reads and one save. */
+/** The worktree file routes: two reads and two changes, for the app's own page only. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
-import { MAX_EDITABLE_BYTES, parseFileEntryChange } from './contract.ts'
+import { App, type Context } from 'acryl-router'
+import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
+import {
+  MAX_EDITABLE_BYTES,
+  WORKSPACE_FILES_ENTRY_PATH,
+  WORKSPACE_FILES_READ_PATH,
+  WORKSPACE_FILES_TREE_PATH,
+  WORKSPACE_FILES_WRITE_PATH,
+  parseFileEntryChange,
+} from './contract.ts'
 import { WorkspaceFilesError, type WorkspaceFiles } from './service.ts'
 
-type ReportError = (operation: string, cause: unknown) => void
+const STATUS = { invalid: 400, 'not-found': 404, conflict: 409, 'too-large': 413, failed: 500 } as const
 
-function respondError(res: ServerResponse, cause: unknown, operation: string, reportError: ReportError): void {
-  if (cause instanceof WorkspaceFilesError) {
-    const status = { invalid: 400, 'not-found': 404, conflict: 409, 'too-large': 413, failed: 500 }[cause.kind]
-    return finishJson(res, status, error(cause.message))
-  }
-  reportError(operation, cause)
-  return finishJson(res, 500, error('file request failed'))
-}
-
-function required(params: URLSearchParams, name: string): string {
-  const value = params.get(name)
-  if (value === null || value.length === 0) throw new WorkspaceFilesError(`missing ${name}`, 'invalid')
+function required(c: Context, name: string): string {
+  const value = c.req.query(name)
+  if (value === undefined || value.length === 0) throw new WorkspaceFilesError(`missing ${name}`, 'invalid')
   return value
 }
 
-async function handleGet(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  operation: string,
-  reportError: ReportError,
-  compute: (params: URLSearchParams) => Promise<object>,
-): Promise<void> {
-  if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) return finishJson(res, 403, error('forbidden'))
-  const params = new URL(req.url ?? '', 'http://127.0.0.1').searchParams
-  try {
-    return finishJson(res, 200, await compute(params), 'GET')
-  } catch (cause) {
-    return respondError(res, cause, operation, reportError)
+/**
+ * GET `tree?path=<worktree>&dir=<relative, empty for the root>` and `read?path=&file=`; POST `write` `{ path, file, content, expectedMtimeMs }`
+ * to replace an existing file's text and `entry` `{ path, op: 'create' | 'rename' | 'delete', file, kind?, to? }` for one structural change.
+ */
+export function filesRoutes(files: WorkspaceFiles, reportError: ReportError): App {
+  const answer = async (c: Context, operation: string, compute: () => Promise<object>): Promise<Response> => {
+    try {
+      return c.json(await compute())
+    } catch (cause) {
+      if (cause instanceof WorkspaceFilesError) return c.json(failure(cause.message), STATUS[cause.kind])
+      reportError(operation, cause)
+      return c.json(failure('file request failed'), 500)
+    }
   }
-}
-
-/** GET one directory: `?path=<worktree>&dir=<relative, empty for the root>`. */
-export function handleWorkspaceFilesTreeRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  files: WorkspaceFiles,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'list files', reportError,
-    params => files.tree(required(params, 'path'), params.get('dir') ?? ''))
-}
-
-/** GET one file's text: `?path=<worktree>&file=<relative>`. */
-export function handleWorkspaceFilesReadRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  files: WorkspaceFiles,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'read file', reportError,
-    params => files.read(required(params, 'path'), required(params, 'file')))
-}
-
-/** POST `{ path, file, content, expectedMtimeMs }`: replace an existing file's text. */
-export async function handleWorkspaceFilesWriteRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  files: WorkspaceFiles,
-  reportError: ReportError,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req, MAX_EDITABLE_BYTES + 64 * 1024)
-  } catch (cause) {
-    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
-    return finishJson(res, 400, error('invalid save request'))
-  }
-  if (typeof body !== 'object' || body === null || Array.isArray(body)
-    || !('path' in body) || typeof body.path !== 'string'
-    || !('file' in body) || typeof body.file !== 'string'
-    || !('content' in body) || typeof body.content !== 'string'
-    || !('expectedMtimeMs' in body) || typeof body.expectedMtimeMs !== 'number'
-    || Object.keys(body).length !== 4) {
-    return finishJson(res, 400, error('invalid save request'))
-  }
-  try {
-    return finishJson(res, 200, await files.write(body.path, body.file, body.content, body.expectedMtimeMs))
-  } catch (cause) {
-    return respondError(res, cause, 'save file', reportError)
-  }
-}
-
-/** POST `{ path, op: 'create' | 'rename' | 'delete', file, kind?, to? }`: one structural change. */
-export async function handleWorkspaceFilesEntryRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  files: WorkspaceFiles,
-  reportError: ReportError,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req, 16 * 1024)
-  } catch (cause) {
-    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
-    return finishJson(res, 400, error('invalid change request'))
-  }
-  const change = parseFileEntryChange(body)
-  if (change === null || typeof body !== 'object' || body === null || !('path' in body) || typeof body.path !== 'string') {
-    return finishJson(res, 400, error('invalid change request'))
-  }
-  try {
-    return finishJson(res, 200, await files.change(body.path, change))
-  } catch (cause) {
-    return respondError(res, cause, 'change file', reportError)
-  }
+  return new App()
+    .get(WORKSPACE_FILES_TREE_PATH, ownPage, c => answer(c, 'list files', () => files.tree(required(c, 'path'), c.req.query('dir') ?? '')))
+    .get(WORKSPACE_FILES_READ_PATH, ownPage, c => answer(c, 'read file', () => files.read(required(c, 'path'), required(c, 'file'))))
+    .post(WORKSPACE_FILES_WRITE_PATH, ownPage, jsonBody(MAX_EDITABLE_BYTES + 64 * 1024), async (c) => {
+      const body = await readJson(c)
+      if (body === INVALID_JSON || !isRecord(body)
+        || typeof body.path !== 'string' || typeof body.file !== 'string'
+        || typeof body.content !== 'string' || typeof body.expectedMtimeMs !== 'number'
+        || Object.keys(body).length !== 4) {
+        return c.json(failure('invalid save request'), 400)
+      }
+      const { path, file, content, expectedMtimeMs } = body
+      return answer(c, 'save file', () => files.write(path, file, content, expectedMtimeMs))
+    })
+    .post(WORKSPACE_FILES_ENTRY_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      const change = body === INVALID_JSON ? null : parseFileEntryChange(body)
+      if (change === null || !isRecord(body) || typeof body.path !== 'string') return c.json(failure('invalid change request'), 400)
+      const { path } = body
+      return answer(c, 'change file', () => files.change(path, change))
+    })
 }

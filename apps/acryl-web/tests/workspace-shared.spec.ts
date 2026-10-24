@@ -164,7 +164,9 @@ describe('the ACRYL workspace on the Web surface', () => {
         const statusList = await (await fetch(`${origin}/api/acryl-workspace/agent-status`, { headers })).json() as { statuses: Array<{ terminalId: string; state: string }> }
         expect(statusList.statuses).toContainEqual(expect.objectContaining({ terminalId: claudeId, state: 'waiting' }))
         const forged = await fetch(field('URL'), { method: 'POST', headers: { authorization: 'Bearer wrong', 'content-type': 'application/json' }, body: JSON.stringify({ terminal: claudeId, state: 'done' }) })
-        expect(forged.status).toBe(403)
+        // A wrong hook token is a failed bearer check: 401 with a challenge (spec 047 Phase 8 slice 1 records the change from 403).
+        expect(forged.status).toBe(401)
+        expect(forged.headers.get('www-authenticate')).toMatch(/^Bearer /)
         const smuggled = await fetch(`${origin}/api/acryl-workspace/pty`, { method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ commandId: 'sh -c id' }) })
         expect(smuggled.status).toBe(500)
       }

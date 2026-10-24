@@ -72,12 +72,18 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
   const base: Blueprint = parent ?? {
     id, name: id, description: '', capabilities: ['authorization', 'acryl-settings'], rows: ['plugin-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility', dshChat: true,
   }
+  const composedCapabilities = capabilities ?? base.capabilities
+  const composedRows = rows ?? base.rows
+  // The workspace's routes are served by the router, which the framework kit brings; without it the workspace would wait (PENDING) silently.
+  if (composedCapabilities.includes('workspace') && !composedRows.includes('framework-kit')) {
+    throw new InvalidBlueprintError('the "workspace" capability needs the "framework-kit" row, which serves its routes')
+  }
   return Object.freeze({
     id,
     name: text(record, 'name', 80) ?? (parent === undefined ? base.name : id),
     description: text(record, 'description', 300) ?? base.description,
-    capabilities: capabilities ?? base.capabilities,
-    rows: rows ?? base.rows,
+    capabilities: composedCapabilities,
+    rows: composedRows,
     brand: brand ?? base.brand,
     shell: (shell as AcrylShellMode | undefined) ?? base.shell,
     dshChat: record.dshChat === undefined ? base.dshChat : record.dshChat,

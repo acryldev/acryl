@@ -1,196 +1,84 @@
-/** Same-origin GET handlers for the read-only ACRYL Workspace git routes. */
+/** The workspace git routes: five reads, and the writes the Changes panel makes (worktree, stage, unstage, commit), for the app's own page only. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { BodyTooLargeError, error, finishJson, isSameOriginLoopbackRequest, readJsonBody } from 'acryl-loopback-http'
+import { App, type Context } from 'acryl-router'
+import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
+import {
+  WORKSPACE_GIT_CHECKS_PATH,
+  WORKSPACE_GIT_COMMIT_PATH,
+  WORKSPACE_GIT_DIFF_PATH,
+  WORKSPACE_GIT_REPO_PATH,
+  WORKSPACE_GIT_SEARCH_PATH,
+  WORKSPACE_GIT_STAGE_PATH,
+  WORKSPACE_GIT_STATUS_PATH,
+  WORKSPACE_GIT_UNSTAGE_PATH,
+  WORKSPACE_GIT_WORKTREE_PATH,
+} from './contract.ts'
 import { WorkspaceGitError, type WorkspaceGit } from './service.ts'
 
-type ReportError = (operation: string, cause: unknown) => void
-
-async function handleGet(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  operation: string,
-  reportError: ReportError,
-  compute: (params: URLSearchParams) => Promise<object | null>,
-): Promise<void> {
-  if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) return finishJson(res, 403, error('forbidden'))
-  const params = new URL(req.url ?? '', 'http://127.0.0.1').searchParams
-  try {
-    const view = await compute(params)
-    if (view === null) return finishJson(res, 404, error('not a git repository'), 'GET')
-    return finishJson(res, 200, view, 'GET')
-  } catch (cause) {
-    return respondError(res, cause, operation, reportError)
-  }
-}
-
-function respondError(res: ServerResponse, cause: unknown, operation: string, reportError: ReportError): void {
-  if (cause instanceof WorkspaceGitError) {
-    if (cause.kind === 'invalid') return finishJson(res, 400, error(cause.message))
-    if (cause.kind === 'conflict') return finishJson(res, 409, error(cause.message))
-    if (cause.kind === 'not-repo') return finishJson(res, 404, error('not a git repository'))
-  }
-  reportError(operation, cause)
-  return finishJson(res, 500, error('git request failed'))
-}
-
-function required(params: URLSearchParams, name: string): string {
-  const value = params.get(name)
-  if (value === null || value.length === 0) throw new WorkspaceGitError(`missing ${name}`, 'invalid')
+function required(c: Context, name: string): string {
+  const value = c.req.query(name)
+  if (value === undefined || value.length === 0) throw new WorkspaceGitError(`missing ${name}`, 'invalid')
   return value
-}
-
-/** GET the repository and its worktrees for `?cwd=`. */
-export function handleWorkspaceGitRepoRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  git: WorkspaceGit,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'read git repo', reportError,
-    // 200 with `{ repo: null }` for a directory that is not a repository: that is an ordinary answer,
-    // and a 404 would print a console error for every temporary folder a chat session uses.
-    async params => ({ repo: await git.repo(required(params, 'cwd')) }))
-}
-
-/** GET changed files for `?path=`. */
-export function handleWorkspaceGitStatusRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  git: WorkspaceGit,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'read git status', reportError,
-    params => git.status(required(params, 'path')))
-}
-
-/** GET the runnable checks (package scripts) for `?path=`. */
-export function handleWorkspaceGitChecksRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  git: WorkspaceGit,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'read checks', reportError,
-    params => git.checks(required(params, 'path')))
-}
-
-/** GET a search: `?path=&q=&mode=name|content`. */
-export function handleWorkspaceGitSearchRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  git: WorkspaceGit,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'search', reportError, (params) => {
-    const mode = params.get('mode')
-    return git.search(required(params, 'path'), required(params, 'q'), mode === 'content' ? 'content' : mode === 'name' ? 'name' : 'name')
-  })
-}
-
-/** GET one file's diff for `?path=&file=`. */
-export function handleWorkspaceGitDiffRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  git: WorkspaceGit,
-  reportError: ReportError,
-): Promise<void> {
-  return handleGet(req, res, expectedOrigin, 'read git diff', reportError,
-    params => git.diff(required(params, 'path'), required(params, 'file')))
-}
-
-/** POST `{ cwd, branch }`: create a branch and its worktree. The only route that changes a repository. */
-export async function handleWorkspaceGitWorktreeRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  git: WorkspaceGit,
-  reportError: ReportError,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch (cause) {
-    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
-    return finishJson(res, 400, error('invalid worktree request'))
-  }
-  if (typeof body !== 'object' || body === null || Array.isArray(body)
-    || !('cwd' in body) || typeof body.cwd !== 'string' || !('branch' in body) || typeof body.branch !== 'string'
-    || Object.keys(body).length !== 2) {
-    return finishJson(res, 400, error('invalid worktree request'))
-  }
-  try {
-    return finishJson(res, 200, await git.createWorktree(body.cwd, body.branch))
-  } catch (cause) {
-    return respondError(res, cause, 'create git worktree', reportError)
-  }
 }
 
 type Parse<T> = (body: Record<string, unknown>) => T | undefined
 
-/** POST a small JSON body, parse it strictly, run one git write, and answer with its result. */
-async function handlePost<T>(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  operation: string,
-  reportError: ReportError,
-  parse: Parse<T>,
-  compute: (input: T) => Promise<object>,
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch (cause) {
-    if (cause instanceof BodyTooLargeError) return finishJson(res, 413, error('body too large'))
-    return finishJson(res, 400, error(`invalid ${operation} request`))
-  }
-  if (typeof body !== 'object' || body === null || Array.isArray(body)) return finishJson(res, 400, error(`invalid ${operation} request`))
-  const input = parse(body as Record<string, unknown>)
-  if (input === undefined) return finishJson(res, 400, error(`invalid ${operation} request`))
-  try {
-    return finishJson(res, 200, await compute(input))
-  } catch (cause) {
-    return respondError(res, cause, operation, reportError)
-  }
-}
-
-function parseFiles(body: Record<string, unknown>): { path: string; files: string[] } | undefined {
+function parseFiles(body: Record<string, unknown>): { path: string, files: string[] } | undefined {
   if (Object.keys(body).length !== 2 || typeof body.path !== 'string' || !Array.isArray(body.files)) return undefined
   if (!body.files.every((file): file is string => typeof file === 'string')) return undefined
   return { path: body.path, files: body.files }
 }
 
-/** POST `{ path, files }`: stage files, answering the worktree's status. */
-export function handleWorkspaceGitStageRequest(req: IncomingMessage, res: ServerResponse, expectedOrigin: string, git: WorkspaceGit, reportError: ReportError): Promise<void> {
-  return handlePost(req, res, expectedOrigin, 'stage', reportError, parseFiles, input => git.stage(input.path, input.files))
+function parseWorktree(body: Record<string, unknown>): { cwd: string, branch: string } | undefined {
+  if (Object.keys(body).length !== 2 || typeof body.cwd !== 'string' || typeof body.branch !== 'string') return undefined
+  return { cwd: body.cwd, branch: body.branch }
 }
 
-/** POST `{ path, files }`: unstage files, answering the worktree's status. */
-export function handleWorkspaceGitUnstageRequest(req: IncomingMessage, res: ServerResponse, expectedOrigin: string, git: WorkspaceGit, reportError: ReportError): Promise<void> {
-  return handlePost(req, res, expectedOrigin, 'unstage', reportError, parseFiles, input => git.unstage(input.path, input.files))
+function parseCommit(body: Record<string, unknown>): { path: string, message: string } | undefined {
+  if (Object.keys(body).length !== 2 || typeof body.path !== 'string' || typeof body.message !== 'string') return undefined
+  return { path: body.path, message: body.message }
 }
 
-/** POST `{ path, message }`: commit what is staged. Never pushes. */
-export function handleWorkspaceGitCommitRequest(req: IncomingMessage, res: ServerResponse, expectedOrigin: string, git: WorkspaceGit, reportError: ReportError): Promise<void> {
-  return handlePost(
-    req, res, expectedOrigin, 'commit', reportError,
-    (body) => {
-      if (Object.keys(body).length !== 2 || typeof body.path !== 'string' || typeof body.message !== 'string') return undefined
-      return { path: body.path, message: body.message }
-    },
-    input => git.commit(input.path, input.message),
-  )
+/**
+ * GET `repo?cwd=`, `status?path=`, `checks?path=`, `search?path=&q=&mode=name|content` and `diff?path=&file=`; POST `worktree` `{ cwd, branch }`
+ * (create a branch and its worktree), `stage` and `unstage` `{ path, files }`, and `commit` `{ path, message }` (never pushes).
+ */
+export function gitRoutes(git: WorkspaceGit, reportError: ReportError): App {
+  const answer = async (c: Context, operation: string, compute: () => Promise<object | null>): Promise<Response> => {
+    try {
+      const view = await compute()
+      if (view === null) return c.json(failure('not a git repository'), 404)
+      return c.json(view)
+    } catch (cause) {
+      if (cause instanceof WorkspaceGitError) {
+        if (cause.kind === 'invalid') return c.json(failure(cause.message), 400)
+        if (cause.kind === 'conflict') return c.json(failure(cause.message), 409)
+        if (cause.kind === 'not-repo') return c.json(failure('not a git repository'), 404)
+      }
+      reportError(operation, cause)
+      return c.json(failure('git request failed'), 500)
+    }
+  }
+  /** A small JSON body, parsed strictly, then one git write answered with its result. */
+  const write = <T>(operation: string, invalid: string, parse: Parse<T>, compute: (input: T) => Promise<object>) => async (c: Context): Promise<Response> => {
+    const body = await readJson(c)
+    const input = body === INVALID_JSON || !isRecord(body) ? undefined : parse(body)
+    if (input === undefined) return c.json(failure(invalid), 400)
+    return answer(c, operation, () => compute(input))
+  }
+  return new App()
+    // 200 with `{ repo: null }` for a directory that is not a repository: that is an ordinary answer, and a 404 would print a console error for
+    // every temporary folder a chat session uses.
+    .get(WORKSPACE_GIT_REPO_PATH, ownPage, c => answer(c, 'read git repo', async () => ({ repo: await git.repo(required(c, 'cwd')) })))
+    .get(WORKSPACE_GIT_STATUS_PATH, ownPage, c => answer(c, 'read git status', () => git.status(required(c, 'path'))))
+    .get(WORKSPACE_GIT_CHECKS_PATH, ownPage, c => answer(c, 'read checks', () => git.checks(required(c, 'path'))))
+    .get(WORKSPACE_GIT_SEARCH_PATH, ownPage, c => answer(c, 'search', () =>
+      git.search(required(c, 'path'), required(c, 'q'), c.req.query('mode') === 'content' ? 'content' : 'name')))
+    .get(WORKSPACE_GIT_DIFF_PATH, ownPage, c => answer(c, 'read git diff', () => git.diff(required(c, 'path'), required(c, 'file'))))
+    .post(WORKSPACE_GIT_WORKTREE_PATH, ownPage, jsonBody(), write('create git worktree', 'invalid worktree request', parseWorktree,
+      input => git.createWorktree(input.cwd, input.branch)))
+    .post(WORKSPACE_GIT_STAGE_PATH, ownPage, jsonBody(), write('stage', 'invalid stage request', parseFiles, input => git.stage(input.path, input.files)))
+    .post(WORKSPACE_GIT_UNSTAGE_PATH, ownPage, jsonBody(), write('unstage', 'invalid unstage request', parseFiles,
+      input => git.unstage(input.path, input.files)))
+    .post(WORKSPACE_GIT_COMMIT_PATH, ownPage, jsonBody(), write('commit', 'invalid commit request', parseCommit, input => git.commit(input.path, input.message)))
 }
-

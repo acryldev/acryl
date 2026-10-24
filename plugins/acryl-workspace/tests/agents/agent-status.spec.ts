@@ -1,11 +1,12 @@
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { AgentStatusError, AgentStatusStore, parseStatusReport } from '../../src/agents/status/agent-status.ts'
+import { AgentStatusError, AgentStatusStore, WORKSPACE_AGENT_STATUS_PATH, parseStatusReport } from '../../src/agents/status/agent-status.ts'
 import { claudeStatusSettings, STATUS_ENV, statusHookArgs } from '../../src/agents/status/claude-hooks.ts'
-import { handleAgentStatusRequest } from '../../src/agents/status/route.ts'
+import { agentStatusRoutes } from '../../src/agents/status/route.ts'
 import { AgentCatalog } from '../../src/agents/catalog.ts'
 import { AgentSettings } from '../../src/agents/settings.ts'
 import { WorkspacePtyRegistry, type WorkspacePtyProcess } from '../../src/pty/service.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 describe('status reports and the store', () => {
   it('reads a report strictly and names what is wrong', () => {
@@ -53,21 +54,18 @@ describe('the status route', () => {
   const live = new Set(['pty_1'])
   const store = new AgentStatusStore(id => live.has(id))
   const reportError = vi.fn()
-  let server: Server
+  let api: ServedApi
   let port = 0
   let origin = ''
   beforeAll(async () => {
-    server = createServer((req, res) => { void handleAgentStatusRequest(req, res, origin, 'secret-token', store, reportError) })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(agentStatusRoutes('secret-token', store, reportError))
+    ;({ origin, port } = api)
   })
-  afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+  afterAll(async () => { await api.close() })
 
   const call = (method: string, headers: Record<string, string>, body?: unknown) => new Promise<{ status: number; json: Record<string, unknown> }>((resolve, reject) => {
     const text = body === undefined ? undefined : JSON.stringify(body)
-    const req = request({ host: '127.0.0.1', port, path: '/', method, headers: { ...headers, ...(text === undefined ? {} : { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text) }) } }, (res) => {
+    const req = request({ host: '127.0.0.1', port, path: WORKSPACE_AGENT_STATUS_PATH, method, headers: { ...headers, ...(text === undefined ? {} : { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text) }) } }, (res) => {
       let out = ''
       res.on('data', (chunk: Buffer) => { out += chunk.toString('utf8') })
       res.on('end', () => { resolve({ status: res.statusCode ?? 0, json: JSON.parse(out) as Record<string, unknown> }) })
@@ -86,10 +84,11 @@ describe('the status route', () => {
     expect((await call('GET', {})).status).toBe(403)
   })
 
-  it('refuses a missing or wrong token, a bad body and a wrong method', async () => {
-    expect((await call('POST', {}, { terminal: 'pty_1', state: 'done' })).status).toBe(403)
-    expect((await call('POST', { authorization: 'Bearer nope' }, { terminal: 'pty_1', state: 'done' })).status).toBe(403)
-    expect((await call('POST', { authorization: 'Bearer secret-token-longer' }, { terminal: 'pty_1', state: 'done' })).status).toBe(403)
+  it('refuses a missing or wrong token, a bad body, a foreign Host and a wrong method', async () => {
+    expect((await call('POST', {}, { terminal: 'pty_1', state: 'done' })).status).toBe(401)
+    expect((await call('POST', { authorization: 'Bearer nope' }, { terminal: 'pty_1', state: 'done' })).status).toBe(401)
+    expect((await call('POST', { authorization: 'Bearer secret-token-longer' }, { terminal: 'pty_1', state: 'done' })).status).toBe(401)
+    expect((await call('POST', { ...bearer, host: 'evil.test' }, { terminal: 'pty_1', state: 'done' })).status).toBe(403)
     expect((await call('POST', bearer, { terminal: 'pty_1', state: 'sleeping' })).status).toBe(400)
     expect((await call('DELETE', bearer)).status).toBe(405)
   })

@@ -3,79 +3,33 @@
 import { randomBytes } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
-import {
-  WORKSPACE_FILES_ENTRY_PATH,
-  WORKSPACE_FILES_READ_PATH,
-  WORKSPACE_FILES_TREE_PATH,
-  WORKSPACE_FILES_WRITE_PATH,
-} from './files/contract.ts'
-import {
-  handleWorkspaceFilesEntryRequest,
-  handleWorkspaceFilesReadRequest,
-  handleWorkspaceFilesTreeRequest,
-  handleWorkspaceFilesWriteRequest,
-} from './files/route.ts'
-import { WorkspaceFiles, WorkspaceFilesError } from './files/service.ts'
-import { WorkspaceGit, WorkspaceGitError } from './git/service.ts'
-import {
-  WORKSPACE_GIT_CHECKS_PATH,
-  WORKSPACE_GIT_COMMIT_PATH,
-  WORKSPACE_GIT_DIFF_PATH,
-  WORKSPACE_GIT_REPO_PATH,
-  WORKSPACE_GIT_SEARCH_PATH,
-  WORKSPACE_GIT_STAGE_PATH,
-  WORKSPACE_GIT_STATUS_PATH,
-  WORKSPACE_GIT_UNSTAGE_PATH,
-  WORKSPACE_GIT_WORKTREE_PATH,
-} from './git/contract.ts'
-import {
-  handleWorkspaceGitChecksRequest,
-  handleWorkspaceGitCommitRequest,
-  handleWorkspaceGitDiffRequest,
-  handleWorkspaceGitRepoRequest,
-  handleWorkspaceGitSearchRequest,
-  handleWorkspaceGitStageRequest,
-  handleWorkspaceGitStatusRequest,
-  handleWorkspaceGitUnstageRequest,
-  handleWorkspaceGitWorktreeRequest,
-} from './git/route.ts'
-import { WORKSPACE_CAPABILITIES_PATH } from './capabilities/contract.ts'
-import { WORKSPACE_PROJECTS_EVENTS_PATH, WORKSPACE_PROJECTS_PATH } from './projects/contract.ts'
-import { createProjectEvents } from './projects/events.ts'
-import { registerWorkspaceTools } from './projects/tools.ts'
-import { registerChatContext, type SystemPromptContextPort } from './shared-context/chat.ts'
-import { WORKSPACE_BRIEF_PATH, handleBriefRequest } from './shared-context/route.ts'
-import { registerContextTool } from './shared-context/tool.ts'
-import { SHARED_CONTEXT_SERVICE, SharedContext } from './shared-context/service.ts'
-import { PROJECTS_NAMESPACE, ProjectRegistry, ProjectsSchema } from './projects/registry.ts'
-import { handleProjectsRequest } from './projects/route.ts'
-import { handleWorkspaceCapabilitiesRequest } from './capabilities/route.ts'
+import type { App } from 'acryl-router'
+import { agentRoutes } from './agents/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
-import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './agents/contract.ts'
 import { agentSettingsFile, agentsFile, createFileCatalogStore } from './agents/file-store.ts'
-import { handleWorkspaceAgentSettingsRequest, handleWorkspaceAgentsRemoveRequest, handleWorkspaceAgentsRequest } from './agents/route.ts'
 import { AgentSettings } from './agents/settings.ts'
 import { AgentStatusStore, WORKSPACE_AGENT_STATUS_PATH } from './agents/status/agent-status.ts'
-import { handleAgentStatusRequest } from './agents/status/route.ts'
-import { spawnNodePty } from './pty/node-pty-spawn.ts'
-import { WORKSPACE_PICK_FOLDER_PATH } from './folder-picker/contract.ts'
+import { agentStatusRoutes } from './agents/status/route.ts'
+import { capabilityRoutes } from './capabilities/route.ts'
+import { filesRoutes } from './files/route.ts'
+import { WorkspaceFiles, WorkspaceFilesError } from './files/service.ts'
 import { pickFolderNatively, singleFlight } from './folder-picker/picker.ts'
-import { handleWorkspacePickFolderRequest } from './folder-picker/route.ts'
+import { pickFolderRoutes } from './folder-picker/route.ts'
+import { gitRoutes } from './git/route.ts'
+import { WorkspaceGit, WorkspaceGitError } from './git/service.ts'
+import { WORKSPACE_API_PREFIX, privateApi } from './private-route.ts'
+import { PROJECTS_NAMESPACE, ProjectRegistry, ProjectsSchema } from './projects/registry.ts'
+import { createKeepAlive, projectRoutes } from './projects/route.ts'
+import { registerWorkspaceTools } from './projects/tools.ts'
+import { WORKSPACE_PTY_STREAM_PATH } from './pty/contract.ts'
+import { spawnNodePty } from './pty/node-pty-spawn.ts'
+import { ptyRoutes } from './pty/route.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
-import {
-  WORKSPACE_PTY_CLOSE_PATH,
-  WORKSPACE_PTY_INPUT_PATH,
-  WORKSPACE_PTY_PATH,
-  WORKSPACE_PTY_RESIZE_PATH,
-  WORKSPACE_PTY_STREAM_PATH,
-} from './pty/contract.ts'
-import {
-  handleWorkspacePtyCloseRequest,
-  handleWorkspacePtyInputRequest,
-  handleWorkspacePtyRequest,
-  handleWorkspacePtyResizeRequest,
-} from './pty/route.ts'
 import { createWorkspacePtyStream } from './pty/stream.ts'
+import { registerChatContext, type SystemPromptContextPort } from './shared-context/chat.ts'
+import { briefRoutes } from './shared-context/route.ts'
+import { SHARED_CONTEXT_SERVICE, SharedContext } from './shared-context/service.ts'
+import { registerContextTool } from './shared-context/tool.ts'
 
 /** Stable Cordis plugin name. */
 export const name = 'acryl-workspace'
@@ -95,12 +49,15 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-/** Loopback Web server required to publish canvas routes; the app instance says where this app keeps its data. */
-export const inject = ['acrylWeb', 'appInstance', 'acrylSettings']
+/**
+ * The routes are served by the router (`router`, `routerHttp`) under {@link WORKSPACE_API_PREFIX}. The loopback Web server is still needed for its
+ * port (the address agent hooks report to) and the terminal's WebSocket, which the router does not carry yet. The app instance says where this
+ * app keeps its data.
+ */
+export const inject = ['acrylWeb', 'appInstance', 'acrylSettings', 'router', 'routerHttp']
 
 /**
- * Activate Development Canvas as a neighboring, required Host plugin.
- * Disable the Loader row to unload routes and kill leftover PTY sessions.
+ * Activate the workspace's Host half: its services and their routes. Disabling the Loader row unmounts the routes and kills leftover PTY sessions.
  * @param ctx - Host context for this generation.
  */
 export function apply(ctx: Context): void {
@@ -113,6 +70,9 @@ export function apply(ctx: Context): void {
       `acryl-workspace: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
     )
   }
+  // The services and the app are built in the effect; the app is mounted after it, so on unload the mount goes first (its requests end and
+  // are waited for) and the PTYs, git and the rest are released after.
+  const built: { api?: App } = {}
   ctx.effect(() => {
     // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
     // The registry asks the settings what an id runs; the settings ask the catalog and the registry's own PATH search.
@@ -148,54 +108,19 @@ export function apply(ctx: Context): void {
     })
     const releases: Array<() => void> = []
     try {
-      const ptyRoutes = [
-        [WORKSPACE_PTY_PATH, handleWorkspacePtyRequest],
-        [WORKSPACE_PTY_INPUT_PATH, handleWorkspacePtyInputRequest],
-        [WORKSPACE_PTY_RESIZE_PATH, handleWorkspacePtyResizeRequest],
-        [WORKSPACE_PTY_CLOSE_PATH, handleWorkspacePtyCloseRequest],
-      ] as const
-      for (const [path, handler] of ptyRoutes) {
-        releases.push(ctx.acrylWeb.register({
-          kind: 'exact',
-          path,
-          handler: (req, res) => handler(req, res, rendererOrigin, workspacePty, reportHostError),
-        }))
-      }
       const ptyStream = createWorkspacePtyStream(workspacePty, rendererOrigin, reportHostError)
       releases.push(() => { ptyStream.close() })
       releases.push(ctx.acrylWeb.registerUpgrade({
         path: WORKSPACE_PTY_STREAM_PATH,
         handler: (req, socket, head) => { ptyStream.handleUpgrade(req, socket, head) },
       }))
-      const agentRoutes = [
-        [WORKSPACE_AGENTS_PATH, handleWorkspaceAgentsRequest],
-        [WORKSPACE_AGENTS_REMOVE_PATH, handleWorkspaceAgentsRemoveRequest],
-      ] as const
-      for (const [path, handler] of agentRoutes) {
-        releases.push(ctx.acrylWeb.register({
-          kind: 'exact',
-          path,
-          handler: (req, res) => handler(req, res, rendererOrigin, catalog, reportHostError),
-        }))
-      }
-      // The chat is the DSH `agents` service; reading it per request, not injecting it, is what lets this plugin stay up when the chat is off.
-      const services: { get(name: string): unknown } = ctx
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_CAPABILITIES_PATH,
-        handler: (req, res) => { handleWorkspaceCapabilitiesRequest(req, res, rendererOrigin, () => ({ chat: services.get('agents') !== undefined })) },
-      }))
       // The project list is ACRYL's own: one section of the ACRYL home's settings, released with this plugin so a reloaded plugin registers it again.
       const projects = new ProjectRegistry(ctx.acrylSettings.register(PROJECTS_NAMESPACE, ProjectsSchema))
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_PROJECTS_PATH,
-        handler: (req, res) => { void handleProjectsRequest(req, res, rendererOrigin, projects, reportHostError) },
-      }))
       // Shared context (spec 043 T009): the generated WORKSPACE.md of every Shared Context workspace stays current, and other plugins can read it.
-      sharedContext = new SharedContext({ registry: projects, home: ctx.appInstance.home })
-      releases.push(sharedContext.start(cause => { reportHostError('write the shared workspace context', cause) }))
-      const withdrawSharedContext = ctx.reflect.provide(SHARED_CONTEXT_SERVICE, sharedContext)
+      const shared = new SharedContext({ registry: projects, home: ctx.appInstance.home })
+      sharedContext = shared
+      releases.push(shared.start(cause => { reportHostError('write the shared workspace context', cause) }))
+      const withdrawSharedContext = ctx.reflect.provide(SHARED_CONTEXT_SERVICE, shared)
       releases.push(() => { void withdrawSharedContext() })
       // The DSH chat in a Shared Context workspace is told about it (T010); present while the harness's system prompt service is.
       const contextFor = (folder: string): { readonly prompt: string } | undefined => sharedContext?.contextFor(folder)
@@ -204,76 +129,33 @@ export function apply(ctx: Context): void {
         child.effect(() => registerChatContext(systemPrompt, contextFor), 'acryl-workspace: shared workspace context for the chat')
       })
       releases.push(() => { void chatContextFiber.dispose() })
-      // The brief, edited in the app (T011), and the context for any agent through the tool registry and the gateway.
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_BRIEF_PATH,
-        handler: (req, res) => { if (sharedContext !== undefined) void handleBriefRequest(req, res, rendererOrigin, sharedContext) },
-      }))
+      // The context for any agent through the tool registry and the gateway, and the agent's workspace tools (spec 043 T007); present while
+      // ACRYL's tool port is.
       const contextToolFiber = ctx.inject(['acrylTools'], (child) => {
         child.effect(() => registerContextTool(child, { view: () => projects.view(), promptFor: id => sharedContext?.promptFor(id) }), 'acryl-workspace: workspace context tool')
       })
       releases.push(() => { void contextToolFiber.dispose() })
-      const projectEvents = createProjectEvents(projects, rendererOrigin)
-      releases.push(() => { projectEvents.close() })
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_PROJECTS_EVENTS_PATH,
-        handler: (req, res) => { projectEvents.handle(req, res) },
-      }))
-      // The agent's workspace tools (spec 043 T007), on the same registry; present while ACRYL's tool port is.
       const toolsFiber = ctx.inject(['acrylTools'], (child) => {
         child.effect(() => registerWorkspaceTools(child, projects), 'acryl-workspace: workspace agent tools')
       })
       releases.push(() => { void toolsFiber.dispose() })
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_AGENT_SETTINGS_PATH,
-        handler: (req, res) => handleWorkspaceAgentSettingsRequest(req, res, rendererOrigin, agentSettings, reportHostError),
-      }))
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_AGENT_STATUS_PATH,
-        handler: (req, res) => handleAgentStatusRequest(req, res, rendererOrigin, statusToken, agentStatus, reportHostError),
-      }))
-      const gitRoutes = [
-        [WORKSPACE_GIT_REPO_PATH, handleWorkspaceGitRepoRequest],
-        [WORKSPACE_GIT_STATUS_PATH, handleWorkspaceGitStatusRequest],
-        [WORKSPACE_GIT_DIFF_PATH, handleWorkspaceGitDiffRequest],
-        [WORKSPACE_GIT_CHECKS_PATH, handleWorkspaceGitChecksRequest],
-        [WORKSPACE_GIT_WORKTREE_PATH, handleWorkspaceGitWorktreeRequest],
-        [WORKSPACE_GIT_SEARCH_PATH, handleWorkspaceGitSearchRequest],
-        [WORKSPACE_GIT_STAGE_PATH, handleWorkspaceGitStageRequest],
-        [WORKSPACE_GIT_UNSTAGE_PATH, handleWorkspaceGitUnstageRequest],
-        [WORKSPACE_GIT_COMMIT_PATH, handleWorkspaceGitCommitRequest],
-      ] as const
-      const filesRoutes = [
-        [WORKSPACE_FILES_TREE_PATH, handleWorkspaceFilesTreeRequest],
-        [WORKSPACE_FILES_READ_PATH, handleWorkspaceFilesReadRequest],
-        [WORKSPACE_FILES_WRITE_PATH, handleWorkspaceFilesWriteRequest],
-        [WORKSPACE_FILES_ENTRY_PATH, handleWorkspaceFilesEntryRequest],
-      ] as const
-      for (const [path, handler] of filesRoutes) {
-        releases.push(ctx.acrylWeb.register({
-          kind: 'exact',
-          path,
-          handler: (req, res) => handler(req, res, rendererOrigin, workspaceFiles, reportHostError),
-        }))
-      }
-      for (const [path, handler] of gitRoutes) {
-        releases.push(ctx.acrylWeb.register({
-          kind: 'exact',
-          path,
-          handler: (req, res) => handler(req, res, rendererOrigin, workspaceGit, reportHostError),
-        }))
-      }
+      const keepAlive = createKeepAlive()
+      releases.push(() => { keepAlive.stop() })
+      // The chat is the DSH `agents` service; reading it per request, not injecting it, is what lets this plugin stay up when the chat is off.
+      const services: { get(name: string): unknown } = ctx
       // The OS's own folder chooser, for the "+" on Web (a browser page cannot open one that yields a path).
       const pickFolder = singleFlight(() => pickFolderNatively(process.platform))
-      releases.push(ctx.acrylWeb.register({
-        kind: 'exact',
-        path: WORKSPACE_PICK_FOLDER_PATH,
-        handler: (req, res) => handleWorkspacePickFolderRequest(req, res, rendererOrigin, pickFolder, reportHostError),
-      }))
+      built.api = privateApi(
+        ptyRoutes(workspacePty, reportHostError),
+        agentRoutes(catalog, agentSettings, reportHostError),
+        agentStatusRoutes(statusToken, agentStatus, reportHostError),
+        capabilityRoutes(() => ({ chat: services.get('agents') !== undefined })),
+        projectRoutes(projects, keepAlive, reportHostError),
+        briefRoutes(shared),
+        filesRoutes(workspaceFiles, reportHostError),
+        gitRoutes(workspaceGit, reportHostError),
+        pickFolderRoutes(pickFolder, reportHostError),
+      )
     } catch (cause) {
       for (const release of releases.reverse()) release()
       void workspaceGit.dispose()
@@ -283,7 +165,11 @@ export function apply(ctx: Context): void {
       for (const release of releases.reverse()) release()
       await Promise.all([workspacePty.disposeAll(), workspaceGit.dispose()])
     }
-  }, 'acryl-workspace: routes, PTY table and git service')
+  }, 'acryl-workspace: PTY table, git, files, projects and agents')
+  if (built.api === undefined) throw new Error('acryl-workspace: the routes were not built')
+  // Removing the mount ends the requests still in flight, the project event streams among them.
+  ctx.router.route('/', built.api)
+  ctx.routerHttp.mount(WORKSPACE_API_PREFIX)
 }
 
 /** The agent's workspace tools, exported so the runtime can check their schemas against DSH's own compiler. */

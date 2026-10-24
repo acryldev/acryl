@@ -133,6 +133,17 @@ A request passes only when:
 An in-process call has no socket and is refused unless `inProcess: 'allow'` says the host's own code may call it. Everything refused gets a
 403.
 
+A private route that no other program on the machine may call either, such as a workspace's file and terminal routes, takes
+`callers: 'own-page'`:
+
+```ts
+app.use('/api/workspace/*', loopbackOnly({ callers: 'own-page', hostnames: ['127.0.0.1'] }))
+```
+
+Then every request must come from a page this app served: an `Origin` that is exactly this authority (with `Sec-Fetch-Site` absent or
+`same-origin`), or, for a read, which browsers often send without `Origin`, `Sec-Fetch-Site: same-origin` and a `Referer` from this
+authority. A script with no `Origin` is refused even for a read. `fromOwnPage(c, authority)` is the same check for middleware of your own.
+
 ## Middleware in Cordis
 
 Middleware belongs to an `App`; it is not a separate Cordis registration, and it disappears with the mount that serves it. A plugin may

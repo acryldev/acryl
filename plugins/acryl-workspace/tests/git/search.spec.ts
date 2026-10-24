@@ -1,12 +1,13 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { handleWorkspaceGitSearchRequest } from '../../src/git/route.ts'
+import { MAX_SEARCH_RESULTS, WORKSPACE_GIT_SEARCH_PATH } from '../../src/git/contract.ts'
+import { gitRoutes } from '../../src/git/route.ts'
 import { WorkspaceGit } from '../../src/git/service.ts'
-import { MAX_SEARCH_RESULTS } from '../../src/git/contract.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-search-')))
 const repo = join(root, 'proj')
@@ -70,23 +71,21 @@ describe('search', () => {
 })
 
 describe('search route', () => {
-  let server: Server
+  let api: ServedApi
   let origin: string
   let port: number
   const routeGit = new WorkspaceGit()
   beforeAll(async () => {
-    server = createServer((req, res) => { void handleWorkspaceGitSearchRequest(req, res, origin, routeGit, () => {}) })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(gitRoutes(routeGit, () => {}))
+    ;({ origin, port } = api)
   })
-  afterAll(async () => { await routeGit.dispose(); await new Promise<void>(resolve => server.close(() => { resolve() })) })
+  afterAll(async () => { await routeGit.dispose(); await api.close() })
 
+  /** `path` is `/?<query>` on the search route. */
   function get(path: string, sameOrigin: boolean): Promise<{ status: number; body: Record<string, unknown> }> {
     return new Promise((resolve, reject) => {
       const headers: Record<string, string> = sameOrigin ? { origin, 'sec-fetch-site': 'same-origin' } : {}
-      const req = request({ host: '127.0.0.1', port, path, headers }, (res) => {
+      const req = request({ host: '127.0.0.1', port, path: `${WORKSPACE_GIT_SEARCH_PATH}${path.slice(1)}`, headers }, (res) => {
         let text = ''
         res.on('data', (chunk: Buffer) => { text += chunk.toString('utf8') })
         res.on('end', () => { resolve({ status: res.statusCode ?? 0, body: JSON.parse(text) as Record<string, unknown> }) })

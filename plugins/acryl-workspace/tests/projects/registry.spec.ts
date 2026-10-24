@@ -1,13 +1,14 @@
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import * as settingsPlugin from 'acryl-settings'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { parseProjectRegistryView, parseProjectRequest, WORKSPACE_PROJECTS_PATH } from '../../src/projects/contract.ts'
 import { normalizeProjectFolder, PROJECTS_NAMESPACE, ProjectFolderError, ProjectRegistry, ProjectsSchema } from '../../src/projects/registry.ts'
-import { handleProjectsRequest } from '../../src/projects/route.ts'
+import { createKeepAlive, projectRoutes } from '../../src/projects/route.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const dirs: string[] = []
 const contexts: Context[] = []
@@ -89,16 +90,14 @@ describe('the project registry', () => {
 })
 
 describe('the project registry route', () => {
-  let server: Server | undefined
-  afterEach(async () => { if (server !== undefined) await new Promise<void>(resolve => server?.close(() => { resolve() })); server = undefined })
+  let api: ServedApi | undefined
+  const keepAlive = createKeepAlive()
+  afterEach(async () => { await api?.close(); api = undefined })
+  afterAll(() => { keepAlive.stop() })
 
   async function serve(registry: ProjectRegistry): Promise<{ call: (method: string, body?: unknown, sameOrigin?: boolean) => Promise<{ status: number, json: any }> }> {
-    let origin = ''
-    server = createServer((req, res) => { void handleProjectsRequest(req, res, origin, registry, () => {}) })
-    await new Promise<void>(resolve => server?.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    const port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(projectRoutes(registry, keepAlive, () => {}))
+    const { origin, port } = api
     return {
       call: (method, body, sameOrigin = true) => new Promise((resolve, reject) => {
         const text = body === undefined ? undefined : JSON.stringify(body)

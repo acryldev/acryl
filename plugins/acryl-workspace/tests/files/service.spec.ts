@@ -1,13 +1,15 @@
 import { execFileSync } from 'node:child_process'
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs'
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { MAX_EDITABLE_BYTES } from '../../src/files/contract.ts'
-import { handleWorkspaceFilesReadRequest, handleWorkspaceFilesTreeRequest, handleWorkspaceFilesWriteRequest } from '../../src/files/route.ts'
+import { filesRoutes } from '../../src/files/route.ts'
 import { confine, WorkspaceFiles, WorkspaceFilesError } from '../../src/files/service.ts'
 import { WorkspaceGit, WorkspaceGitError } from '../../src/git/service.ts'
+import { WORKSPACE_API_PREFIX } from '../../src/private-route.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'acryl-files-')))
 const repo = join(root, 'proj')
@@ -158,31 +160,23 @@ describe('WorkspaceFiles.write', () => {
 })
 
 describe('routes', () => {
-  let server: Server
+  let api: ServedApi
   let origin: string
   let port: number
 
   beforeAll(async () => {
-    server = createServer((req, res) => {
-      const path = new URL(req.url ?? '', 'http://x').pathname
-      const report = (): void => {}
-      if (path === '/tree') void handleWorkspaceFilesTreeRequest(req, res, origin, files, report)
-      else if (path === '/read') void handleWorkspaceFilesReadRequest(req, res, origin, files, report)
-      else void handleWorkspaceFilesWriteRequest(req, res, origin, files, report)
-    })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(filesRoutes(files, () => {}))
+    ;({ origin, port } = api)
   })
-  afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+  afterAll(async () => { await api.close() })
 
+  /** `path` is below the files routes: `/tree`, `/read` or `/write`. */
   function call(method: 'GET' | 'POST', path: string, body: unknown, sameOrigin: boolean): Promise<{ status: number; body: unknown }> {
     return new Promise((resolve, reject) => {
       const payload = body === undefined ? '' : typeof body === 'string' ? body : JSON.stringify(body)
       const headers: Record<string, string> = method === 'POST' ? { 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(payload)) } : {}
       if (sameOrigin) { headers.origin = origin; headers['sec-fetch-site'] = 'same-origin' }
-      const req = request({ host: '127.0.0.1', port, path, method, headers }, (res) => {
+      const req = request({ host: '127.0.0.1', port, path: `${WORKSPACE_API_PREFIX}/files${path}`, method, headers }, (res) => {
         let text = ''
         res.on('data', (chunk: Buffer) => { text += chunk.toString('utf8') })
         res.on('end', () => { resolve({ status: res.statusCode ?? 0, body: JSON.parse(text) as unknown }) })

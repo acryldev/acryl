@@ -1,6 +1,6 @@
 import { execFileSync, spawnSync } from 'node:child_process'
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
-import { createServer, request, type Server } from 'node:http'
+import { request } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, normalize } from 'node:path'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
@@ -11,13 +11,9 @@ import {
   parsePorcelain,
   parseWorktrees,
 } from '../../src/git/service.ts'
-import {
-  handleWorkspaceGitChecksRequest,
-  handleWorkspaceGitDiffRequest,
-  handleWorkspaceGitRepoRequest,
-  handleWorkspaceGitStatusRequest,
-  handleWorkspaceGitWorktreeRequest,
-} from '../../src/git/route.ts'
+import { gitRoutes } from '../../src/git/route.ts'
+import { WORKSPACE_API_PREFIX } from '../../src/private-route.ts'
+import { serveApi, type ServedApi } from '../serve-api.ts'
 
 function git(cwd: string, ...args: string[]): string {
   return execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], {
@@ -333,38 +329,30 @@ describe('disposal', () => {
 })
 
 describe('routes', () => {
-  let server: Server
+  let api: ServedApi
   let origin: string
   let port: number
   const routeGit = new WorkspaceGit()
 
   beforeAll(async () => {
-    server = createServer((req, res) => {
-      const path = new URL(req.url ?? '', 'http://x').pathname
-      const report = (): void => {}
-      if (path === '/worktree') void handleWorkspaceGitWorktreeRequest(req, res, origin, routeGit, report)
-      else if (path === '/repo') void handleWorkspaceGitRepoRequest(req, res, origin, routeGit, report)
-      else if (path === '/checks') void handleWorkspaceGitChecksRequest(req, res, origin, routeGit, report)
-      else if (path === '/status') void handleWorkspaceGitStatusRequest(req, res, origin, routeGit, report)
-      else void handleWorkspaceGitDiffRequest(req, res, origin, routeGit, report)
-    })
-    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    port = typeof address === 'object' && address !== null ? address.port : 0
-    origin = `http://127.0.0.1:${String(port)}`
+    api = await serveApi(gitRoutes(routeGit, () => {}))
+    ;({ origin, port } = api)
   })
 
   afterAll(async () => {
     await routeGit.dispose()
-    await new Promise<void>(resolve => server.close(() => { resolve() }))
+    await api.close()
   })
+
+  /** Paths in this block are below the git routes (`/repo`, `/status`, `/checks`, `/diff`, `/worktree`). */
+  const below = (path: string): string => `${WORKSPACE_API_PREFIX}/git${path}`
 
   function get(path: string, sameOrigin: boolean): Promise<{ status: number; body: unknown }> {
     return new Promise((resolve, reject) => {
       const headers: Record<string, string> = sameOrigin
         ? { origin, 'sec-fetch-site': 'same-origin' }
         : {}
-      const req = request({ host: '127.0.0.1', port, path, headers }, (res) => {
+      const req = request({ host: '127.0.0.1', port, path: below(path), headers }, (res) => {
         let text = ''
         res.on('data', (chunk: Buffer) => { text += chunk.toString('utf8') })
         res.on('end', () => { resolve({ status: res.statusCode ?? 0, body: JSON.parse(text) as unknown }) })
@@ -404,7 +392,7 @@ describe('routes', () => {
       const payload = typeof body === 'string' ? body : JSON.stringify(body)
       const headers: Record<string, string> = { 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(payload)) }
       if (sameOrigin) { headers.origin = origin; headers['sec-fetch-site'] = 'same-origin' }
-      const req = request({ host: '127.0.0.1', port, path, method: 'POST', headers }, (res) => {
+      const req = request({ host: '127.0.0.1', port, path: below(path), method: 'POST', headers }, (res) => {
         let text = ''
         res.on('data', (chunk: Buffer) => { text += chunk.toString('utf8') })
         res.on('end', () => { resolve({ status: res.statusCode ?? 0, body: JSON.parse(text) as unknown }) })
