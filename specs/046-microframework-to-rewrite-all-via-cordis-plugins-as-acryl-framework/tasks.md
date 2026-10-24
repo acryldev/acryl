@@ -46,19 +46,10 @@ See `spec.md` for the milestones and `plan.md` for the principles. Reference tas
 
 - [ ] T020 ACRYL plugins stop importing `ctx.webServer`; the remaining uses listed and justified; docs, tests and `docs/DEVELOPMENT-LOG.md` updated. Partly done: the Market no longer uses it (T009). Remaining on 2026-10-23, none touched: `apps/acryl-desktop/src/index.ts` (five renderer-facing routes: portable with the same recipe); `acryl-agent-control` through the `acrylWeb` carrier (HTTP routes plus a WebSocket upgrade, and security-sensitive MCP and tool gateways: port the HTTP routes only after a review, the upgrade stays on `webServer`); `acryl-sign-in`'s account callback (it provides a `webServer`-shaped object to DSH's account plugin, which is DSH's need, not ours); the two engine composition roots (the seam, they serve DSH itself). Also pending: the agent-facing docs and example for host routes in `acryl-plugin-context` still teach `webServer`; the development log entry is written (`docs/DEVELOPMENT-LOG.md`, 2026-10-23).
 
-## Phase 8 - Port the IDE into the framework (not started)
+## Phase 8 - Port the IDE into the framework: moved
 
-Measure progress by two numbers, both going to zero: source files that still use `webServer` or `acrylWeb` (47 at 2026-10-23, counted with
-`grep -rlE "webServer|acrylWeb"` over runtime, apps and plugins, tests and build output excluded) and the DSH direct-import ceiling in `scripts/verify-layout.mjs` (133 total, 104 outside the seam).
-Port order, largest users first, one slice and one commit each, every slice proven by a real boot (`scripts/live-run.mjs`):
-
-- [ ] T021 `plugins/acryl-workspace` (15 references): its routes onto the router.
-- [ ] T022 `runtime/acryl-harness-runtime` `engine-web.ts`, `engine-dsh.ts`, `coding-capabilities.ts` (19): the composition root stops handing `webServer` to plugins.
-- [ ] T023 `apps/acryl-desktop` `index.ts` and `profile.ts` (12): the five renderer routes.
-- [ ] T024 `plugins/acryl-agent-control` (8): the door; security-sensitive (MCP and tool gateways, upgrade routes), needs the router to carry upgrade routes first.
-- [ ] T025 `plugins/acryl-sign-in` (10): the account callback, which provides a webServer-shaped object to DSH.
-- [ ] T026 `plugins/acryl-plugin-admin` (5), `plugins/acryl-support` (3), `runtime/acryl-control/src/platform/web.ts` (2), `runtime/plugin-hub` (2).
-- [ ] T027 Ratchet: the DSH import ceiling and the `webServer` file count reach zero outside `acryl-router-http`.
+Phase 8 has its own spec, `specs/048-ide-on-framework/` (spec, plan with the slice method, measures and order, and tasks). T021-T027 moved
+there: T021 is 048 T001 (done), T024 is 048 T002, T023 is 048 T003, T025 is 048 T004, T026 is 048 T006, T022 is 048 T008, T027 is 048 T009.
 
 ## Phase 9 - Drivers (not started)
 

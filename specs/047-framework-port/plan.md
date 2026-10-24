@@ -100,52 +100,10 @@ Found and fixed on the way: the installer's hot-reload wrapper assumed the entry
 plugin with `lib/index.js` failed to activate; Desktop's own `/reload` collided with the plugin installer's `/reload` and failed its registration
 at every boot (Desktop's is now `/restart`); `scripts/inspect-page.mjs` gained `type <text>`.
 
-## Phase 8: the IDE onto the framework, one webServer user per slice
+## Phase 8: moved
 
-Each slice takes the largest remaining user of the DSH `webServer`, ports its routes onto `App` + `ctx.router.route` + `routerHttp.mount`,
-deletes what becomes dead, and measures two numbers before and after: webServer registration call sites in production source
-(`register`/`registerUpgrade` on `acrylWeb`, `webServer` or a `web` port, outside tests) and the layout gate's DSH import lines.
-
-### Slice 1: `acryl-workspace` (T016)
-
-Cordis mini-design:
-
-1. Capability and boundary: unchanged. `acryl-workspace` owns files, git, terminals, projects, agents and the brief; only its transport
-   moves. A small owned helper (`src/private-route.ts`) holds what every route shares, not a generic utils folder.
-2. Provides and consumes: injects `router` and `routerHttp` (hard: every route is served through them) beside `acrylWeb` (its port is the
-   agent-hook address, and the terminal WebSocket stays a webServer upgrade until T009), `appInstance` and `acrylSettings`. Provides
-   nothing new; `sharedContext`, the tools and the chat context are unchanged.
-3. Effects and disposal: the services effect builds the app; `route('/')` and `mount('/api/acryl-workspace')` come after it, so on unload
-   the mount goes first (its requests and event streams end and are waited for, bounded by the router's grace) and then the PTYs, git and
-   the registry are released. The project event stream's keep-alive is one plugin-owned timer (`createKeepAlive`, stopped in the effect),
-   not one per request.
-4. Configuration and composition: row id `acryl-workspace` unchanged. A Blueprint with the `workspace` capability must carry the
-   `framework-kit` row, which brings the router rows; `parseBlueprint` refuses it otherwise, so the workspace cannot sit PENDING silently.
-   Every built-in Blueprint with the workspace has the kit (tested).
-5. Events and durability: none changed.
-6. Verification: `tests/plugin.spec.ts` activates the plugin on real Cordis with the real router and router-http over a loopback
-   `webServer`: one prefix mount and no exact routes, PENDING without a router and active when one appears, the mount and upgrade gone on
-   unload, three reloads without duplicates. Every route test runs through the real adapter (`tests/serve-api.ts`); the event stream is
-   mounted on the real router and ends when the mount is removed.
-
-Measured (this branch, before and after the slice):
-
-| | before | after |
-| --- | --- | --- |
-| webServer registration call sites, all packages | 30 | 19 |
-| of them in `acryl-workspace` | 12 (24 exact routes and 1 upgrade) | 1 (the terminal upgrade) |
-| DSH import lines (layout gate) | 133 (104 outside the seam) | 133 (104 outside the seam): the old routes used ACRYL's own `acryl-loopback-http`, not DSH, so this slice could not lower it |
-
-Answers that changed, recorded in `docs/framework/migration-from-dsh-webserver.md`: an oversized body is 413 on every route, a wrong method
-405 with `Allow` on every route, a missing or wrong agent-hook token 401 (was 403), and the hook's `Host` must be the app's loopback address.
-
-Found on the way: the PTY registry runs the user's login shell synchronously when it is built (`$SHELL -lic 'echo $PATH'`), about 1.2 s with
-an interactive zsh, and it blocks the Host's event loop on every activation of the plugin (Desktop boot and every reload). T017.
-
-Also found: the router labeled a mount with every route it serves in one string, so the workspace's mount (24 routes and their
-middleware) made a label longer than the 512 characters the Host's Cordis architecture inspector accepts, and that page answered 500. A
-mount is now labeled `acryl-router: route <path>` with one child effect per route (`acryl-router: serves <METHOD> <path>`), so no label
-grows with an app; `acryl-inspect` reads the children and does not count them as registrations of their own.
+The IDE onto the framework (Phase 8) has its own spec: `specs/048-ide-on-framework/` (the slice method, the measures, slice 1's design and
+evidence, and the tasks). This plan keeps the framework port.
 
 ## ACRYL additions kept
 
@@ -168,9 +126,7 @@ grows with an app; `acryl-inspect` reads the children and does not count them as
 - T008 Port the Node adapter and its suite into `acryl-node-server`, rebuild `nodeServer` on it (P5). Done.
 - T013 End the requests and streams a plugin's code is serving when its mount is removed, as 0.3.0 did, not only when the router is
   disposed: each mounted handler is wrapped to record which mount a request is in and which mount produced its body. Done.
-- T016 Phase 8 slice 1: `acryl-workspace`'s routes onto the router (see Phase 8). Done.
-- T017 Find the terminal's PATH without blocking: ask the login shell asynchronously once, cache the promise, and make the callers that
-  need it (`start`, `canRun`) wait for it, so activating the workspace never blocks the Host's event loop.
+- T016 and T017 moved to `specs/048-ide-on-framework/tasks.md` (T001 and T005 there).
 
 ## After 0.4.0
 
