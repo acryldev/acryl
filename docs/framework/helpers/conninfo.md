@@ -4,20 +4,13 @@ The ConnInfo Helper helps you to get the connection information. For example, yo
 
 ## Import
 
-Only the Node.js adapter, `acrylblends/node-server`, is available today. The adapters for the other platforms (Cloudflare Workers, Deno, Bun, Vercel, AWS Lambda, Netlify and Lambda@Edge) are **not yet available**; their imports are shown for completeness and are not checked by the docs tests.
+Only the Node.js adapter, `acrylblends/node-server`, is available today. The adapters for the other platforms (Cloudflare Workers, Bun, Vercel, AWS Lambda, Netlify and Lambda@Edge) are **not yet available**; their imports are shown for completeness and are not checked by the docs tests.
 
 **Cloudflare Workers**
 
 ```ts
 import { Acryl } from 'acrylblends'
 import { getConnInfo } from 'acrylblends/cloudflare-workers'
-```
-
-**Deno**
-
-```ts
-import { Acryl } from 'acrylblends'
-import { getConnInfo } from 'acrylblends/deno'
 ```
 
 **Bun**

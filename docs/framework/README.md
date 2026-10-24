@@ -1,7 +1,6 @@
 # Acryl
 
-Acryl is a small web framework built on Web Standards. You write handlers over the standard `Request` and `Response`, and the same application runs on Node.js,
-Bun and Deno, and inside a Cordis app as a plugin that an agent can extend while it runs.
+Acryl is a small web framework built on Web Standards. You write handlers over the standard `Request` and `Response`, and the same application runs on Node.js (and, experimentally, Bun), and inside a Cordis app as a plugin that an agent can extend while it runs.
 
 ```ts twoslash
 import { Acryl } from 'acrylblends'
@@ -18,8 +17,8 @@ export default app
 npm create acrylblends@latest my-app
 ```
 
-Other package managers work the same way: `pnpm create acrylblends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`, `deno init --npm acrylblends@latest`.
-The starter asks which template you want (`nodejs`, `bun`, `deno`, or `acryl-app`, a Cordis app with an agent). See [Getting started](getting-started/basic.md).
+Other package managers work the same way: `pnpm create acrylblends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`.
+The starter asks which template you want (`nodejs`, `bun` (experimental), or `acryl-app`, a Cordis app with an agent). See [Getting started](getting-started/basic.md).
 
 ## What is in the box
 
@@ -36,7 +35,7 @@ The starter asks which template you want (`nodejs`, `bun`, `deno`, or `acryl-app
 
 ## Runtimes
 
-Verified: Node.js, Bun and Deno. The other runtimes the framework could target are listed on [Other runtimes](getting-started/other-runtimes.md) as not yet verified.
+Verified: Node.js. Bun is experimental. The other runtimes the framework could target are listed on [Other runtimes](getting-started/other-runtimes.md) as not yet verified.
 
 ## Not yet available
 

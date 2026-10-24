@@ -5,7 +5,7 @@
 Testing is important.
 In actuality, it is easy to test Acryl's applications.
 The way to create a test environment differs from each runtime, but the basic steps are the same.
-In this section, let's test with [Vitest] on Node.js. The same tests run on Bun and Deno with their own test runners, because an app is a function from `Request` to `Response`.
+In this section, let's test with [Vitest] on Node.js. The same tests run on Bun with its own test runner, because an app is a function from `Request` to `Response`.
 
 ## Request and Response
 

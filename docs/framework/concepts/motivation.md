@@ -3,7 +3,7 @@
 ## Motivation
 
 A web application should not be written twice because it runs in two places. Acryl builds on the Web Standard APIs (`Request`, `Response`, `fetch`, `URL`, streams), so a
-handler written once runs on Node.js, Bun and Deno, in a test with no socket, and inside a Cordis app.
+handler written once runs on Node.js (and experimentally Bun), in a test with no socket, and inside a Cordis app.
 
 Three ideas follow from that:
 

@@ -102,7 +102,6 @@ app.use(
 
 **Warning.**
 
-In Deno, it is possible to use a different version of middleware than the Acryl version, but this can lead to bugs.
 For example, this code is not working because the version is different.
 
 ```ts

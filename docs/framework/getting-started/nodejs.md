@@ -36,12 +36,6 @@ pnpm create acrylblends my-app
 bun create acrylblends@latest my-app
 ```
 
-**deno**
-
-```sh
-deno init --npm acrylblends my-app
-```
-
 Move to `my-app` and install the dependencies.
 
 **npm**
@@ -107,7 +101,7 @@ process.on('SIGTERM', () => {
 })
 ```
 
-> **Note.** On Node.js, `serve()` wraps the `node:http` module and returns the underlying server instance, so closing it is up to you. Bun and Deno serve Fetch handlers natively and manage the server themselves, which is why their guides don't include this step.
+> **Note.** On Node.js, `serve()` wraps the `node:http` module and returns the underlying server instance, so closing it is up to you. Bun serves Fetch handlers natively and manages the server itself, which is why its guide doesn't include this step.
 
 ## 3. Run
 

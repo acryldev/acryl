@@ -227,5 +227,5 @@ it('handles HEAD requests correctly', async () => {
 ### Notes
 
 - The automatic HEAD conversion ensures consistent headers between GET and HEAD responses
-- This behavior is consistent across all Acryl runtimes (Cloudflare Workers, Deno, Bun, Node.js)
+- This behavior is consistent across all Acryl runtimes (Node.js, Bun)
 - If you need completely different logic for HEAD vs GET, consider using different endpoints rather than trying to override the framework's HEAD handling

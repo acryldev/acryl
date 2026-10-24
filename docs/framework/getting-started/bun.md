@@ -1,6 +1,9 @@
 # Bun
 
-[Bun](https://bun.com) is another JavaScript runtime. It's not Node.js or Deno. Bun includes a transcompiler, so we can write the code in TypeScript or plain JavaScript.
+> **Experimental.** Bun is not a verified runtime yet: the Acryl application code is the same, but the `bun` template and this guide are not covered by the release checks. Node.js is the verified runtime.
+
+
+[Bun](https://bun.com) is another JavaScript runtime. It's not Node.js. Bun includes a transcompiler, so we can write the code in TypeScript or plain JavaScript.
 Acryl also works on Bun.
 
 ## 1. Install Bun
