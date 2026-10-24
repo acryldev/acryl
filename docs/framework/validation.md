@@ -26,17 +26,57 @@ A validated route has three parts: a schema for one input target, the validator 
 
 ## Failures
 
-When the schema reports issues the handler does not run and the answer is 400:
+When the schema reports issues the handler does not run and the answer is 400 with `Content-Type: application/json` and exactly this
+shape:
 
-```json
-{ "error": "invalid json", "issues": [{ "message": "$.title expected string but got 1", "path": "title" }] }
+```ts
+{ error: `invalid ${target}`, issues: Array<{ message: string, path: string }> }
 ```
 
-Two cases fail before the schema runs:
+```json
+{ "error": "invalid json", "issues": [{ "message": "title must be 1 to 200 characters", "path": "title" }] }
+```
 
-- A `json` target reads the body only when the request's `Content-Type` is JSON (`application/json` or `application/*+json`). Without it
-  the schema sees `{}`, so a required field fails.
-- A body that is not valid JSON (or not a valid form) is a 400 `HTTPException`.
+- `error` names the target: `invalid json`, `invalid query`, `invalid param`, ...
+- There is one entry per issue the schema reported, in its order, with the schema's own `message`.
+- `path` is the issue's path joined with dots: `["items", 0, "title"]` becomes `"items.0.title"`, and a path segment given as
+  `{ key }` (as Standard Schema allows) contributes its `key`.
+- An issue without a path, which a hand-written Standard Schema often reports for a whole-value check, gets `"path": ""`.
+  `{ issues: [{ message: 'not allowed' }] }` answers `{ "error": "invalid json", "issues": [{ "message": "not allowed", "path": "" }] }`.
+  Give issues a path when a client should point at a field.
+
+### A JSON body without a JSON content type
+
+A `json` target reads the body only when the request's `Content-Type` is JSON (`application/json`, with or without parameters such as
+`; charset=utf-8`, or `application/*+json`). Any other content type, or none, is not an error by itself: the schema sees `{}`. So a
+client that forgets the header gets a misleading field error for a field it did send:
+
+```sh
+curl -X POST -d '{"title":"milk"}' http://127.0.0.1:<port>/todo/api      # no content type: curl sends a form type
+# 400 {"error":"invalid json","issues":[{"message":"title must be 1 to 200 characters","path":"title"}]}
+```
+
+If you see a field error for a field the request clearly carries, check the request's `Content-Type` first. A route that wants to say so
+explicitly can refuse other content types before the validator:
+
+```ts
+import type { MiddlewareHandler } from 'acryl-router'
+
+const jsonOnly: MiddlewareHandler = async (c, next) => {
+  // The same types the json target reads: application/json and application/*+json, parameters allowed.
+  const type = c.req.header('content-type')?.split(';', 1)[0]?.trim() ?? ''
+  if (!/^application\/([a-z.-]+\+)?json$/i.test(type)) return c.json({ error: 'content type must be JSON' }, 415)
+  await next()
+}
+
+app.post('/todos', jsonOnly, schemaValidator('json', NewTodo), createTodo)
+```
+
+### A body that is not JSON
+
+A JSON content type with a body that does not parse fails before the schema runs: the answer is 400 with the text body
+`Malformed JSON in request body` (a thrown `HTTPException`, so an `onError` handler can reshape it). The `form` target does the same for
+a form body that does not parse, with the text `Malformed FormData request.`
 
 Keep the public failure shape consistent across the application and do not leak internals in messages. An application that needs a
 different body writes its own check with the core `validator` (below). Valid input is not proof that the caller may use it:

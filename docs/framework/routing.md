@@ -154,8 +154,28 @@ Return client errors from the handler that detected them (or throw an `HTTPExcep
 
 ## Trailing slashes
 
-`/a` and `/a/` are different paths. Configure the router with `trailingSlash: 'ignore'` to treat them as one, or use the
-`trimTrailingSlash` / `appendTrailingSlash` middleware to redirect.
+`/a` and `/a/` are different paths by default. That surprises people most on a mount's root: an app mounted at `/orders` with a route
+`/` answers `/orders` and returns 404 on `/orders/`.
+
+What each choice does for an app mounted at `/orders` with routes `/` and `/:id`, measured on the router:
+
+| Choice | `/orders` | `/orders/` | `/orders/42` | `/orders/42/` |
+| --- | --- | --- | --- | --- |
+| nothing (the default) | 200 | 404 | 200 | 404 |
+| `.use(trimTrailingSlash())` in the app | 200 | 301 to `/orders` | 200 | 301 to `/orders/42` |
+| `acryl-router` row config `trailingSlash: 'ignore'` | 200 | 200 | 200 | 200 |
+| `new App({ strict: false })` for the mounted app | 200 | 404 | 200 | 404 |
+
+- **`trimTrailingSlash()`** (from `acryl-router/middleware`) is the choice a plugin makes for itself. It acts after the handlers: only
+  a GET or HEAD that would be a 404 and ends in `/` is redirected, so a path you did register with a trailing slash keeps working, and a
+  POST, PUT, PATCH or DELETE to `/orders/` stays a 404. `trimTrailingSlash({ alwaysRedirect: true })` redirects before the handlers run,
+  which a wildcard route (`/files/*`) needs. `appendTrailingSlash()` does the opposite, for an app whose canonical paths end in `/`.
+- **`trailingSlash: 'ignore'`** is the router's own setting and applies to every mount at once, without a redirect. Set it in the
+  composition that owns the `acryl-router` row (the Blueprint or profile), not from one plugin.
+- **`strict: false`** on an `App` is the core's option and works for an app you serve yourself (`app.fetch`, `app.request`). It has no
+  effect on a mounted app, because the router composes all mounts into one root app whose strictness comes from `trailingSlash`.
+
+`examples/acryl-todo` uses `trimTrailingSlash()`: `/todo/` sends the browser to `/todo`, and the API keeps one path per route.
 
 ## Testing routes
 

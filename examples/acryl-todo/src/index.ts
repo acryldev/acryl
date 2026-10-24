@@ -7,7 +7,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { App, HTTPException } from 'acryl-router'
-import { bodyLimit, loopbackOnly } from 'acryl-router/middleware'
+import { bodyLimit, loopbackOnly, trimTrailingSlash } from 'acryl-router/middleware'
 import { schemaValidator, streamSSE, type StandardSchema } from 'acryl-router/helpers'
 import type {} from 'acryl-state'
 import { PAGE } from './page.ts'
@@ -84,8 +84,10 @@ export function apply(ctx: Context, config: Config = {}): void {
     return todo
   }
 
+  // `/todo/` is what people type: trimTrailingSlash answers a GET for an unknown path ending in `/` with a 301 to the path without it,
+  // so the page is found either way while each route keeps one canonical path (the router itself treats `/a` and `/a/` as different).
   const api = new App()
-    .use(loopbackOnly({ inProcess: 'allow' }), bodyLimit({ maxSize: MAX_BODY_BYTES }))
+    .use(loopbackOnly({ inProcess: 'allow' }), bodyLimit({ maxSize: MAX_BODY_BYTES }), trimTrailingSlash())
     .get('/', c => c.html(PAGE))
     .get('/api', c => c.json(todos.get()))
     .post('/api', schemaValidator('json', NewTodo), c => {

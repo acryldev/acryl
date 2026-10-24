@@ -56,6 +56,15 @@ describe('acryl-todo', () => {
     expect(await page.text()).toContain('EventSource')
   })
 
+  it('sends /todo/ to the page instead of a 404, and leaves the API paths canonical', async () => {
+    const ctx = await boot()
+    const slash = await ctx.router.request('/todo/')
+    expect(slash.status).toBe(301)
+    expect(new URL(slash.headers.get('location') ?? '').pathname).toBe('/todo')
+    expect((await ctx.router.request('/todo/api/')).status).toBe(301)
+    expect((await ctx.router.request('/todo/api/', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"title":"x"}' })).status).toBe(404)
+  })
+
   it('exposes the list as a state cell', async () => {
     const ctx = await boot()
     await post(ctx, 'a')

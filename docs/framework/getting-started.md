@@ -41,7 +41,32 @@ export function apply(ctx: Context): void {
 | --- | --- |
 | `GET /todo` | `{ "ok": true }` |
 | `GET /todo/todos/42` | `{ "id": "42" }` |
-| `GET /todo/` | 404: `/todo` and `/todo/` are different paths unless the router is configured with `trailingSlash: 'ignore'` |
+| `GET /todo/` | 404: `/todo` and `/todo/` are different paths (see below) |
+
+### `/todo/` is a 404 until you choose
+
+`/todo/` is the first thing people type, and by default it is not found: the router treats `/todo` and `/todo/` as two paths. Choose
+one of these, in this order of preference:
+
+- **Redirect in your app** (what `examples/acryl-todo` does): add `trimTrailingSlash()` from `acryl-router/middleware` to the app.
+  A GET or HEAD that would be a 404 and ends in `/` gets a 301 to the same path without it, so `/todo/` reaches the page and every
+  route keeps one canonical path. Other methods are not redirected: `POST /todo/api/` stays a 404.
+
+  ```ts
+  import { trimTrailingSlash } from 'acryl-router/middleware'
+
+  const app = new App()
+    .use(trimTrailingSlash())
+    .get('/', c => c.json({ ok: true }))
+  ```
+
+- **One path everywhere**: the `acryl-router` row's config `trailingSlash: 'ignore'` makes `/a` and `/a/` the same path for every
+  mounted app, with no redirect. It is the app's composition that sets it (the Blueprint or profile that owns the router row), not one
+  plugin, because it changes every other plugin's routes too.
+
+`new App({ strict: false })` does not help once the app is mounted: the router composes every mount into its own root app, and only the
+router's `trailingSlash` setting decides. `strict: false` applies to an `App` you serve yourself (`app.fetch`, `app.request`). Details
+and a measured table: [Routing and mounting](./routing.md#trailing-slashes).
 
 The mount belongs to the plugin that made it: `route` registers it as a Cordis effect of the caller, so when the plugin unloads the
 routes disappear, and a reload mounts the app again without duplicating routes. `route` also returns a function that removes the mount

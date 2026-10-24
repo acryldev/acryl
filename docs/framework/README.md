@@ -26,6 +26,7 @@ loopback server), the terminal UI and tests call it in process with `ctx.router.
 | Topic | Page |
 | --- | --- |
 | First application | [Getting started](./getting-started.md) |
+| Every everyday call on one page | [API summary](./api-summary.md) |
 | Framework model | [Core concepts](./concepts.md) |
 | Routes and mounting | [Routing and mounting](./routing.md) |
 | Handler context | [Context](./context.md) |
