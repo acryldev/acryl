@@ -1,7 +1,8 @@
 # The ACRYL Framework: the building blocks and how they fit
 
-Status: first working slice on branch `046-acryl-framework` (spec 046). This page is the map a person can hold in their head.
-Rules and decisions: `specs/046-microframework-to-rewrite-all-via-cordis-plugins-as-acryl-framework/`.
+Status: 0.4.0, the application core ported into Cordis plugins (spec 047), on the design of spec 046. This page is the map a person can
+hold in their head. Rules and decisions: `specs/046-microframework-to-rewrite-all-via-cordis-plugins-as-acryl-framework/` and
+`specs/047-framework-port/`.
 
 ## The idea in one paragraph
 
@@ -14,8 +15,9 @@ an evening, and every registration a plugin makes disappears when that plugin un
 | Block | Package | What it gives a plugin author | Size |
 | --- | --- | --- | --- |
 | Lifecycle | Cordis (`@deepseek-ai/cordis`) | plugins, `inject`, effects with disposers, PENDING until dependencies exist | the existing foundation |
-| Routing | `acryl-router` | `ctx.router.get('/x', c => c.json(...))`, middleware, in-process `ctx.router.fetch(request)` | about 440 lines of source, comments included |
-| Web adapter | `acryl-router-http` | `ctx.routerHttp.mount('/api/x')` serves those routes over the DSH `webServer` | about 145 lines |
+| Routing | `acryl-router` | `App` with routes, middleware, validation and helpers, mounted with `ctx.router.route('/x', app)`; in-process `ctx.router.fetch(request)` | the ported core (about 16,200 lines with its suite beside it) plus about 570 lines of Cordis service |
+| Web adapter | `acryl-router-http` | `ctx.routerHttp.mount('/api/x')` serves those routes over the DSH `webServer` | about 140 lines |
+| Standalone server | `acryl-node-server` | the whole router over `node:http` in a process without the Host | the ported Node adapter (about 2,900 lines) plus about 110 lines |
 | Shared state | `acryl-state` | observable cells (`ctx.state.cell`), derived cells, JSON and server-sent-event routes, a React hook | about 200 lines |
 | Introspection | `acryl-inspect` | what every plugin requires, provides and registers, and what unloads with it | about 170 lines |
 
@@ -30,10 +32,11 @@ export const inject = ['router', 'state']
 export function apply(ctx: Context): void {
   const count = ctx.state.cell('notes.count', 0)
 
-  ctx.router.post('/api/notes', async c => {                 // Web-standard Request in, Response out
+  const app = new App().post('/', async c => {                // Web-standard Request in, Response out
     count.update(n => n + 1)
     return c.json({ saved: (await c.req.text()).length }, 201)
   })
+  ctx.router.route('/api/notes', app)
 
   ctx.inject(['routerHttp'], inner => {                      // HTTP only where an adapter exists
     inner.routerHttp.mount('/api/notes')
@@ -54,11 +57,12 @@ export function apply(ctx: Context): void {
 2. **Label what you register.** `ctx.effect(fn, 'my-plugin: what this is')`. The inspector reads those labels, so the
    contract of a plugin is derived from the running system rather than written a second time.
 3. **Ask for HTTP, do not require it.** Register routes in `apply`; mount them over HTTP through an inner `ctx.inject(['routerHttp'], ...)`.
-4. **Transport facts travel beside the request.** The peer address and the real local port are `c.connection`, supplied by the
+4. **Transport facts travel beside the request.** The peer address and the real local port are `connectionOf(c)`, supplied by the
    adapter from the socket. A header is never trusted for them. An in-process call has none, and a handler that needs a trusted
    peer (the Market does) refuses it.
-5. **Long-lived responses say so.** A streaming handler registers `c.waitUntil(promise)` for the life of the stream; disposing the
-   router aborts `c.signal` and waits for it (bounded by `disposeGraceMs`).
+5. **Nothing outlives its owner.** Unloading a plugin ends the requests and streams its code is serving, and disposing the router ends
+   all of them: their `c.req.raw.signal` aborts, open bodies are cancelled, and the unload waits for them and their
+   `c.executionCtx.waitUntil` work (bounded by `disposeGraceMs`).
 
 ## What is proved, and how
 
@@ -72,7 +76,8 @@ export function apply(ctx: Context): void {
 
 ## Where the docs are
 
-The documentation tree is `docs/framework/` (getting started, concepts, API, guides, middleware and helpers).
+The documentation tree is `docs/framework/`: getting started, concepts, routing, context, request, middleware, validation, helpers,
+the Node server, plugin lifecycle, surfaces, and migrations from the DSH `webServer` and from 0.3.
 A copyable starter is `examples/acryl-framework-starter`. `node scripts/verify-framework.mjs` (in `check:layout`) enforces the shape of every framework package.
 
 ## In every Blend

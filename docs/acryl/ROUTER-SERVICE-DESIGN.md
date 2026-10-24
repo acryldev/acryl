@@ -1,6 +1,8 @@
 # Router service: one handler, three surfaces (design draft)
 
-Status: draft for review, nothing implemented. Written 2026-10-23.
+Status: history. Written 2026-10-23; built in spec 046 (0.3.0), then replaced by the ported application API in spec 047 (0.4.0). The
+handler and middleware types below are the 0.3.0 design; the current API is in `docs/framework/` and the mapping in
+`docs/framework/migration-from-0-3.md`.
 
 ## Why
 

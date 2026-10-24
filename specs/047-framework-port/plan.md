@@ -97,9 +97,11 @@ adapter's schemas now declare the partial input (`z<Partial<Config>, Config>`), 
 - T003 Port `loopbackOnly`, `schemaValidator`, `getConnInfo`; delete the original-design files and their tests. Done.
 - T004 Migrate `acryl-router-http` and `acryl-node-server`. Done.
 - T005 Migrate `acryl-state`, `acryl-inspect`, the Market, `acryl-todo`, the starter. Done.
-- T006 Rewrite `docs/framework/` and `docs/acryl/FRAMEWORK.md` for the new API.
+- T006 Rewrite `docs/framework/` and `docs/acryl/FRAMEWORK.md` for the new API (P4). Done.
 - T007 Gates, a real isolated boot, commit, CI.
 - T008 Port the Node adapter and its suite into `acryl-node-server`, rebuild `nodeServer` on it (P5). Done.
+- T013 End the requests and streams a plugin's code is serving when its mount is removed, as 0.3.0 did, not only when the router is
+  disposed: each mounted handler is wrapped to record which mount a request is in and which mount produced its body. Done.
 
 ## After 0.4.0
 
@@ -108,3 +110,5 @@ adapter's schemas now declare the partial input (`z<Partial<Config>, Config>`), 
 - T010 Port jsx and jsx-renderer, ssg, css, the cache and mount middleware, and the dev helper, each with its tests.
 - T011 Port the remaining docs pages.
 - T012 Move the Host bridge in `acryl-router-http` onto the ported request listener, so one listener implementation serves both adapters.
+- T014 A Desktop transport without a port: serve `ctx.router.fetch` through Electron's `protocol.handle` (Web `Request` in, `Response`
+  out), measured against the loopback HTTP path Desktop uses today.
