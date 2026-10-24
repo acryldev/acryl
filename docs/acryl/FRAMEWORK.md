@@ -82,13 +82,15 @@ A copyable starter is `examples/acryl-framework-starter`. `node scripts/verify-f
 
 ## In every Blend
 
-The Blank Blueprint carries a `framework-kit` row (router, HTTP adapter, state, inspector) on the Web surface, so the IDE and everything grown from Blank
-start on the framework. A real isolated boot of the IDE Blueprint served `/api/inspect/plugins` (355 plugins listed) and `/api/state`, the Market routes
+The Blank Blueprint carries a `framework-kit` row (router, HTTP adapter, state, inspector) on the Web and Desktop surfaces, so the IDE and everything
+grown from Blank start on the framework. On Desktop the window loads from the Host's own loopback web server, so a plugin's routes reach Desktop through
+the same `acryl-router-http` mount as Web (proved live, spec 047 P7: `examples/acryl-todo` as an app plugin, full CRUD and its page in the Desktop window). A real isolated boot of the IDE Blueprint served `/api/inspect/plugins` (355 plugins listed) and `/api/state`, the Market routes
 through the router, and refused a foreign `Host` with 403.
 
 ## What is not done
 
-- Desktop and the terminal UI compose no `framework-kit` row yet (Web only); the Market is the Desktop consumer.
+- The terminal UI composes no `framework-kit` row yet.
+- A Desktop transport without a port (`protocol.handle` onto `router.fetch`): `specs/047-framework-port/plan.md` T014.
 - A terminal command that calls `router.fetch`; the in-process path is proved in tests, not wired into the TUI.
 - Other users of the DSH `webServer`: Desktop's own renderer routes, `acryl-agent-control` (through the `acrylWeb` carrier) and the
   sign-in callback. They keep working unchanged.

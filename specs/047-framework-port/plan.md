@@ -83,6 +83,23 @@ a 200 from a real socket and a clean exit. It found that `ctx.plugin(nodeServer,
 callable, so Cordis reads it as a config transform and takes its declared input, which was the full `Config`. The router's and the
 adapter's schemas now declare the partial input (`z<Partial<Config>, Config>`), and the adapter's spec loads the module itself.
 
+## Desktop (gate P7)
+
+The same plugin serves the same routes on Desktop, through the same transport as Web. Desktop's window loads from the Host's own loopback web
+server (`http://127.0.0.1:<port>/`), so `acryl-router-http` serves a plugin's prefix there exactly as on Web; `router.fetch` in process is not
+needed for Desktop and stays the terminal's and the tests' path. A transport without a port is T014.
+
+Proof, an isolated run (`scripts/live-run.mjs desktop --blueprint acryl.blank --no-key --inspect 9333 --copy-home <seed>`; own HOME, app home and
+Electron user data, real homes checked unchanged): the seed home carries `examples/acryl-todo` in `plugins/`, the way a Blend carries its own
+plugins, installed with `/reload new` typed in the window. Over Desktop's Host: POST 201 twice, PATCH 200, DELETE 204, GET 200 with the list, an
+invalid body 400 with the issues, a foreign `Origin` 403, a foreign `Host` 403, and `/api/state/todo.list` 200 with the same list. The window
+navigated to `/todo` rendered the page, and a todo added through the page's form appeared in the API. Stopped with "stopped, port free, real
+homes untouched".
+
+Found and fixed on the way: the installer's hot-reload wrapper assumed the entry sat at the package root and ignored conditional `exports`, so a
+plugin with `lib/index.js` failed to activate; Desktop's own `/reload` collided with the plugin installer's `/reload` and failed its registration
+at every boot (Desktop's is now `/restart`); `scripts/inspect-page.mjs` gained `type <text>`.
+
 ## ACRYL additions kept
 
 - `loopbackOnly` middleware (Host must be loopback with the server's real port; a foreign or null Origin on a change is 403).
@@ -99,6 +116,7 @@ adapter's schemas now declare the partial input (`z<Partial<Config>, Config>`), 
 - T005 Migrate `acryl-state`, `acryl-inspect`, the Market, `acryl-todo`, the starter. Done.
 - T006 Rewrite `docs/framework/` and `docs/acryl/FRAMEWORK.md` for the new API (P4). Done.
 - T007 Gates, a real isolated boot, commit, CI.
+- T015 Prove the framework on Desktop (P7). Done.
 - T008 Port the Node adapter and its suite into `acryl-node-server`, rebuild `nodeServer` on it (P5). Done.
 - T013 End the requests and streams a plugin's code is serving when its mount is removed, as 0.3.0 did, not only when the router is
   disposed: each mounted handler is wrapped to record which mount a request is in and which mount produced its body. Done.
