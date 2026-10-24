@@ -168,6 +168,10 @@
       "types": "./lib/html.d.ts",
       "default": "./lib/html.js"
     },
+    "./proxy": {
+      "types": "./lib/proxy.d.ts",
+      "default": "./lib/proxy.js"
+    },
     "./route": {
       "types": "./lib/route.d.ts",
       "default": "./lib/route.js"

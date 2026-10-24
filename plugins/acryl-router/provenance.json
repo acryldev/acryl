@@ -11,8 +11,8 @@
     "src/jsx": "the JSX renderer (after 0.4.0)",
     "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
     "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
-    "src/helper (css, proxy, ssg)": "after 0.4.0",
-    "src/middleware (jsx-renderer)": "after 0.4.0"
+    "src/middleware (jsx-renderer)": "after 0.4.0",
+    "src/helper (css, ssg)": "after 0.4.0"
   },
   "files": {
     "src/core/app-base.ts": {
@@ -139,6 +139,15 @@
     "src/core/helper/html/index.ts": {
       "upstreamSha256": "53fd1ae2adc9ff5ad80a51589b7ee5833076cb2a23af132d44240f3480d2c256",
       "sha256": "bd46baa7afa28b384e5130e2efee4d6d28b9209c50431b6cf0b4d9e0edf47225"
+    },
+    "src/core/helper/proxy/index.test.ts": {
+      "upstreamSha256": "fee6f29bcb7cd99f4f1819bd845255ecbabf9457c171739a7567cc2f95468af8",
+      "sha256": "3187bb1be30d2246c50cdc605ea84ae76d5ac7c53426b1c8b8c8bc795b00a41e"
+    },
+    "src/core/helper/proxy/index.ts": {
+      "upstreamSha256": "aee3e43f1e841c40546ebc06bf7fb9290b010bbba36639b686f0d05167aacef0",
+      "sha256": "fbebf15098568c05d7cfbfb806777fadbb93f2c039e389e8aea361a0d12649dc",
+      "deviation": "imports HeadersInit from utils/types.ts, so its public types do not need the DOM library"
     },
     "src/core/helper/route/index.test.ts": {
       "upstreamSha256": "fa348627d09ad6d0fc403c646dfb0c0b1a78a9754c2d6ec15c5e7f666393c8b4",
@@ -790,8 +799,8 @@
     },
     "src/core/utils/types.ts": {
       "upstreamSha256": "5a35ea552ab8b1acbb6abb453eff656a119bcdf0941163e496a98043de935ad7",
-      "sha256": "f5e6d8909d250454ec68b2cbd865e2897124b49f24d745786ef7b34a4608ae17",
-      "deviation": "declares BufferSource, CryptoKey, JsonWebKey, BinaryType, MessageEvent and CloseEvent, so the public types do not need the DOM library"
+      "sha256": "798be571f27d97ed8c7e85da7cb0abc4e1a0b437df699812c2920d8bdc39e592",
+      "deviation": "declares BufferSource, CryptoKey, JsonWebKey, BinaryType, MessageEvent, CloseEvent and HeadersInit, so the public types do not need the DOM library"
     },
     "src/core/utils/url.test.ts": {
       "upstreamSha256": "2fc582760602904849e7eefdbd9f66266d0b775a2318d1aa0322928e960af0b9",

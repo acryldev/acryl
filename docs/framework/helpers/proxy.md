@@ -1,8 +1,5 @@
 # Proxy Helper
 
-> **Not yet available.** The proxy helper (`acrylblends/proxy`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 Proxy Helper provides useful functions when using Acryl application as a (reverse) proxy.
 
 ## Import

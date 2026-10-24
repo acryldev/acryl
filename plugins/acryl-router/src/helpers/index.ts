@@ -5,6 +5,7 @@ export { createFactory, createMiddleware, Factory } from '../core/helper/factory
 export { deleteCookie, generateCookie, generateSignedCookie, getCookie, getSignedCookie, setCookie, setSignedCookie } from '../core/helper/cookie/index.ts'
 export { getExtension, getMimeType, mimes, type BaseMime } from '../core/utils/mime.ts'
 export { html, raw } from '../core/helper/html/index.ts'
+export { proxy } from '../core/helper/proxy/index.ts'
 export { getRouterName, inspectRoutes, showRoutes } from '../core/helper/dev/index.ts'
 export { matchedRoutes, routePath, baseRoutePath, basePath } from '../core/helper/route/index.ts'
 export { testClient } from '../core/helper/testing/index.ts'

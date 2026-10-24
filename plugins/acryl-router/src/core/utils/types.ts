@@ -125,6 +125,9 @@ export type BufferSource = ArrayBufferView<ArrayBuffer> | ArrayBuffer
 /** A Web Crypto key, named from the runtime's own `crypto` so the public types do not need the DOM library. */
 export type CryptoKey = Awaited<ReturnType<typeof crypto.subtle.importKey>>
 
+/** What the Web `Headers` constructor accepts, named from the runtime's own `Headers` so the public types do not need the DOM library. */
+export type HeadersInit = NonNullable<ConstructorParameters<typeof Headers>[0]>
+
 /** How a WebSocket hands binary data to `onmessage`; declared here so the public types do not need the DOM library. */
 export type BinaryType = 'arraybuffer' | 'blob'
 
