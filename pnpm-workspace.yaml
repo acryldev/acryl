@@ -48,6 +48,8 @@ allowBuilds:
   electron-winstaller: false
   esbuild: true
   koffi: true
+  # The ported core's test suite mocks fetch with msw in Node; its postinstall only copies a service worker for browser apps.
+  msw: false
   node-pty: true
   protobufjs: false
 
