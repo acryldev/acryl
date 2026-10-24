@@ -52,6 +52,10 @@
       "types": "./lib/body-limit.d.ts",
       "default": "./lib/body-limit.js"
     },
+    "./cache": {
+      "types": "./lib/cache.d.ts",
+      "default": "./lib/cache.js"
+    },
     "./combine": {
       "types": "./lib/combine.d.ts",
       "default": "./lib/combine.js"

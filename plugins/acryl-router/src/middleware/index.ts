@@ -1,6 +1,7 @@
 export { basicAuth } from '../core/middleware/basic-auth/index.ts'
 export { bearerAuth } from '../core/middleware/bearer-auth/index.ts'
 export { bodyLimit } from '../core/middleware/body-limit/index.ts'
+export { cache } from '../core/middleware/cache/index.ts'
 export { every, except, some } from '../core/middleware/combine/index.ts'
 export { compress } from '../core/middleware/compress/index.ts'
 export { contextStorage, getContext, tryGetContext } from '../core/middleware/context-storage/index.ts'

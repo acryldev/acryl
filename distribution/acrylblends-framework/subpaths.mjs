@@ -15,8 +15,8 @@ const CORE = `${ROUTER}/core`
 const NODE = '../../plugins/acryl-node-server/src/adapter'
 
 const MIDDLEWARE = [
-  'basic-auth', 'bearer-auth', 'body-limit', 'combine', 'compress', 'context-storage', 'cors', 'csrf', 'etag', 'ip-restriction', 'jwk',
-  'jwt', 'language', 'logger', 'method-not-allowed', 'method-override', 'mount', 'powered-by', 'pretty-json', 'request-id',
+  'basic-auth', 'bearer-auth', 'body-limit', 'cache', 'combine', 'compress', 'context-storage', 'cors', 'csrf', 'etag', 'ip-restriction',
+  'jwk', 'jwt', 'language', 'logger', 'method-not-allowed', 'method-override', 'mount', 'powered-by', 'pretty-json', 'request-id',
   'secure-headers', 'serve-static', 'timeout', 'timing', 'trailing-slash',
 ]
 const HELPERS = ['accepts', 'adapter', 'cookie', 'dev', 'factory', 'html', 'route', 'streaming', 'testing']
