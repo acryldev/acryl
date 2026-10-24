@@ -1,3 +1,14 @@
+## 2026-10-24 - the framework's public face: Acryl, and the acrylblends package (spec 047)
+
+Commits: `196b28b3` (public types without DOM, already on `main`), `46e5ff55520113e73f134f5ab315c9ba51b218f7` (the rename), `12ee33a38da13ad23c80f2671388d97da49ed38e` (commented `declare module`), `df921a74c7f1bbc84e8911396e2ec5a8f8238100` (the release package).
+
+The owner asked that the framework's public face match the upstream package 1:1 and that getting started be easy. The coordinator turned that into one order: a generated app's imports are the upstream ones with only the name swapped, and ACRYLBLENDS ships the framework as the root of `acrylblends` 0.5.0.
+
+- **Names (`46e5ff55`, `12ee33a3`):** the port's mechanical rule now maps the upstream name to `Acryl` in identifiers, so the class is `Acryl` and the request `AcrylRequest`. All 122 ported files were re-derived from the upstream checkouts; 29 deviating files were merged by hand, and six deviations became mechanical. Renamed test data had its etag hashes and lengths recomputed. `App` and `AppRequest` stay for one release as deprecated aliases (`docs/framework/migration-from-0-4.md`). Comment examples import from the matching `acrylblends` subpath, and a commented `declare module` names `acrylblends`.
+- **Package (`df921a74`):** `distribution/acrylblends-framework` builds the ported modules without Cordis into one dependency-free `lib/`, with 74 subpath entries plus `./package.json`. `subpaths.mjs` is the single table, and `exports` is generated from it. ACRYL's additions are `loopback-only`, `schema-validator`, and `connectionOf`/`RouterEnv`/`ConnectionInfo` in `conninfo`. The Node adapter is `node-server`, plus its `serve-static` and `conninfo` subpaths.
+- **Runtimes (owner, through the coordinator):** Node is the target. Bun may come later (a `bun build --compile` binary). Deno is out of scope, so the gate runs Bun only as information.
+- **Verified:** full gate green (router 2591 tests, node-server 511). `verify:standalone` installed the packed tarball as `acrylblends` in an empty folder: Node via `serve` answered 200 "Acryl!", and so did Bun (informational). A Node-types-only, no-DOM consumer typechecked all 74 subpaths and a root augmentation of `ContextVariableMap` and `NotFoundResponse`; removing the augmentation fails that typecheck.
+
 ## 2026-10-24 - the IDE onto the framework, slice 1: the workspace serves its routes through the router (spec 047 Phase 8)
 
 Commits: `df79b188398b6d4f8cceda35a72b88300a10a9ce` on `main` (secret-free examples); `16fe8aff906a2a96e05a00cecda9f453f8332f3c` on branch `048-ide-on-framework` (not merged; the hash changes if the branch is rebased or squashed on merge).

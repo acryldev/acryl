@@ -105,6 +105,24 @@ at every boot (Desktop's is now `/restart`); `scripts/inspect-page.mjs` gained `
 The IDE onto the framework (Phase 8) has its own spec: `specs/048-ide-on-framework/` (the slice method, the measures, slice 1's design and
 evidence, and the tasks). This plan keeps the framework port.
 
+## The public package (0.5.0)
+
+The coordinator's order: the framework's public face is 1:1 with the upstream package, so a generated app's imports are the upstream ones
+with the name swapped (`'<upstream>'` -> `'acrylblends'`, `'<upstream>/<x>'` -> `'acrylblends/<x>'`, the Node adapter ->
+`'acrylblends/node-server'`).
+
+- The class is `Acryl` and the request `AcrylRequest` (the mechanical rule in `scripts/verify-port.mjs` maps the upstream name to `Acryl` in
+  identifiers); `App` and `AppRequest` stay one release as deprecated aliases (`plugins/acryl-router/src/deprecated.ts`). Code examples in
+  ported comments import from `acrylblends`, and a commented `declare module` names `acrylblends`.
+- `distribution/acrylblends-framework` (private, 0.5.0) builds the ported modules without Cordis into one dependency-free `lib/`, one entry
+  per subpath. `subpaths.mjs` is the single table of subpaths and sources; `exports` is generated from it. ACRYLBLENDS vendors the packed
+  tarball as the root of `acrylblends` 0.5.0. ACRYL's additions: `acrylblends/loopback-only`, `acrylblends/schema-validator`, and
+  `connectionOf`/`RouterEnv`/`ConnectionInfo` beside `getConnInfo` in `acrylblends/conninfo`.
+- Gates: the upstream suites (router 2591, node-server 511); the package tests (exports match the table, built files import only their own
+  chunks and `node:`, the root and the routers import no Node built-in, every entry loads without Cordis); `verify:standalone` (the packed
+  tarball installed under the public name in an empty folder serves the getting-started app on Node via `serve` (Bun informational, when installed), and a
+  Node-types-only, no-DOM consumer typechecks every subpath and a `declare module 'acrylblends'` augmentation); provenance re-derived.
+
 ## ACRYL additions kept
 
 - `loopbackOnly` middleware (Host must be loopback with the server's real port; a foreign or null Origin on a change is 403; `callers:
@@ -126,9 +144,14 @@ evidence, and the tasks). This plan keeps the framework port.
 - T008 Port the Node adapter and its suite into `acryl-node-server`, rebuild `nodeServer` on it (P5). Done.
 - T013 End the requests and streams a plugin's code is serving when its mount is removed, as 0.3.0 did, not only when the router is
   disposed: each mounted handler is wrapped to record which mount a request is in and which mount produced its body. Done.
+- T018 The public names: `Acryl`/`AcrylRequest`, `App`/`AppRequest` deprecated aliases, comment examples on `acrylblends` subpaths. Done.
+- T019 The release package `distribution/acrylblends-framework` 0.5.0 and its standalone gate. Done.
 - T016 and T017 moved to `specs/048-ide-on-framework/tasks.md` (T001 and T005 there).
 
 ## After 0.4.0
+
+Part B order (coordinator, 2026-10-24): presets and the router subpaths; mount, cache, proxy and dev; jsx with jsx-renderer, css and
+streaming; ssg; the remaining host adapters; the bun adapter last. Node is the target runtime; the deno adapter is out of scope (owner).
 
 - T009 Port the proxy helper and the WebSocket adapters; pass the raw socket bindings through `router.fetch` so `upgradeWebSocket` works
   under the router.
