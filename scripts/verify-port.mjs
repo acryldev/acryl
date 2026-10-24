@@ -124,8 +124,8 @@ function normalize(text, theirPath, ourPath, ctx) {
   for (const pair of directories) {
     if (pair.upstream !== pair.ours) s = s.replace(new RegExp(`(['"\`])(\\./)?${pair.upstream}/`, 'gu'), `$1$2${pair.ours}/`)
   }
-  // Code examples in comments import from the same subpath of the public package, which keeps every upstream subpath (`acrylblends/<x>`).
-  s = s.split('\n').map(line => !/^\s*\*/u.test(line) ? line : line.replace(new RegExp(`from '${brand}(/[a-z/-]+)?'`, 'u'), (whole, sub) => `from '${PUBLIC_PACKAGE}${sub ?? ''}'`)).join('\n')
+  // Code examples in comments import from (and augment) the same subpath of the public package, which keeps every upstream subpath (`acrylblends/<x>`).
+  s = s.split('\n').map(line => !/^\s*\*/u.test(line) ? line : line.replace(new RegExp(`from '${brand}(/[a-z/-]+)?'`, 'u'), (whole, sub) => `from '${PUBLIC_PACKAGE}${sub ?? ''}'`).replace(`declare module '${brand}'`, `declare module '${PUBLIC_PACKAGE}'`)).join('\n')
   s = s.replaceAll(`${brand}-base`, 'app-base')
   s = s.split('\n').filter(line => !(line.trim().startsWith('*') && new RegExp(`@see.*${brand}\\.dev`, 'iu').test(line))).join('\n')
   s = s.replace(new RegExp(`\\s*// https://github\\.com/${brand}js/\\S+`, 'gu'), '')

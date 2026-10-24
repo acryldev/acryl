@@ -98,7 +98,7 @@ export type H<
  * You can extend this interface to define a custom `c.notFound()` Response type.
  *
  * @example
- * declare module 'acryl-router' {
+ * declare module 'acrylblends' {
  *   interface NotFoundResponse extends Response, TypedResponse<string, 404, 'text'> {}
  * }
  */
