@@ -248,10 +248,12 @@ export function apply(ctx: Context, config: Config): void {
   // The Settings > Plugins Lifecycle and Architecture routes are the shared `acryl-plugin-admin` plugin's,
   // composed for every surface; this Host only publishes the lifecycle authority they drive
   // (`ctx.acrPluginLifecycle`, above).
+  // `/restart`, not `/reload`: `/reload` is acryl-plugin-context's command on every surface (re-install local plugins, `/reload new`), and
+  // two commands under one name failed this one's registration at every Desktop boot.
   ctx.inject(['commands'], (commandCtx) => {
     commandCtx.effect(() => commandCtx.commands.register({
-      name: 'reload',
-      description: 'Reload managed ACRYL plugins and the Desktop generation',
+      name: 'restart',
+      description: 'Reload managed ACRYL plugins and restart the Desktop generation',
       input: { hint: '[<loader-entry-id>]' },
       recordInput: false,
       handler: async ({ rawInput }) => {
@@ -259,7 +261,7 @@ export function apply(ctx: Context, config: Config): void {
         try {
           const receipt = await pluginLifecycle.reload(entryId)
           setImmediate(() => {
-            void runtime.requestRestart().catch(cause => { reportHostError('restart after /reload', cause) })
+            void runtime.requestRestart().catch(cause => { reportHostError('restart after /restart', cause) })
           })
           return {
             kind: 'success',
@@ -272,7 +274,7 @@ export function apply(ctx: Context, config: Config): void {
           }
         }
       },
-    }), 'acryl-desktop: /reload command')
+    }), 'acryl-desktop: /restart command')
   })
   ctx.on('webserver/index-inject', table => {
     table.push(...desktopBootRecoveryInjections())
