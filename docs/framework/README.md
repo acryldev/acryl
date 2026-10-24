@@ -54,7 +54,9 @@ framework pages here are the API and integration reference behind those guides. 
 | `acryl-state` | observable cells shared by every surface, with read-only HTTP and SSE routes and `useCell` for React |
 | `acryl-inspect` | what each plugin requires, provides and mounts, read from the running system |
 
-An app's `tsconfig.json` can extend `acryl-router/tsconfig.app.json` (ES2024 with the DOM types, strict).
+An app's `tsconfig.json` can extend `acryl-router/tsconfig.app.json` (ES2024 with the DOM types, strict). The DOM types are optional: every
+entry point's types also stand with only `"lib": ["ES2024"]` and `"types": ["node"]`, the setting a Host-only plugin uses so browser globals
+do not typecheck in server code (the router's `tests/no-dom` fixture checks this on every typecheck).
 
 ## Why this exists
 

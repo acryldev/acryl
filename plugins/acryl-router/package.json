@@ -52,7 +52,7 @@
   },
   "scripts": {
     "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tests/no-dom/tsconfig.json",
     "test": "vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run check"

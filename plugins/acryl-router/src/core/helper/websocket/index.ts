@@ -7,6 +7,7 @@
 import type { Context } from '../../context.ts'
 import type { MiddlewareHandler, TypedResponse } from '../../types.ts'
 import type { StatusCode } from '../../utils/http-status.ts'
+import type { BinaryType, CloseEvent, MessageEvent } from '../../utils/types.ts'
 
 /**
  * WebSocket Event Listeners type

@@ -184,7 +184,8 @@
     },
     "src/core/helper/websocket/index.ts": {
       "upstreamSha256": "fbcd0f1bf3eeeca57f5952b86d91fa35055ab12b5569a2126bb358b00a007c62",
-      "sha256": "777cc964c8c48a893d70ea955a2158d8689bf1b23cfcf7718269b78516da6b61"
+      "sha256": "27da284c32c70722b5978e7ffac60814a62a9a0e8897777810f0245834f6856b",
+      "deviation": "MessageEvent, CloseEvent and BinaryType come from utils/types.ts so the public types do not need the DOM library"
     },
     "src/core/http-exception.test.ts": {
       "upstreamSha256": "b0eeb813fa540cb9eaf105ceb4b80b1aebf2160a2f6987dfb586bf1255fdf615",
@@ -304,7 +305,8 @@
     },
     "src/core/middleware/jwk/jwk.ts": {
       "upstreamSha256": "eb00f4fb968dfa130a1b40957802a44dba853aec8f6a0a09e213e7c95ed8fff0",
-      "sha256": "eee9802d45ee68728c527b02fed934af02837f170ec4d45d697ad11626b8c72b"
+      "sha256": "466146634c514e5241c4ff3b0e8722ad49c10f184722af724386c0a54c65a352",
+      "deviation": "BufferSource comes from utils/types.ts so the public types do not need the DOM library"
     },
     "src/core/middleware/jwk/keys.test.json": {
       "upstreamSha256": "591d18d31af3039d04388fe7b522bc73249f07a277cfd89a17833db7a7520ad1",
@@ -320,8 +322,8 @@
     },
     "src/core/middleware/jwt/jwt.ts": {
       "upstreamSha256": "6ca249c522123bd6379eb2e04509f36f0be444f01ca33a7999d331a4b5940c6e",
-      "sha256": "ada4333db50d1192cd56040a76bab313cc0cea86a9844c9e45e607a0b1b50076",
-      "deviation": "secret-free examples: a credential in a code example reads from the environment instead of a literal, which secret scanners refuse"
+      "sha256": "4f8e9bcfead69a66b72ea08fdab134dde9304f3db46fe1e7deda295e665f9449",
+      "deviation": "secret-free examples: a credential in a code example reads from the environment instead of a literal, which secret scanners refuse; BufferSource comes from utils/types.ts so the public types do not need the DOM library"
     },
     "src/core/middleware/language/index.test.ts": {
       "upstreamSha256": "d9142998808316879406b463b8254d4b59cfe18452baaa9daacc58202eb99ba5",
@@ -712,8 +714,8 @@
     },
     "src/core/utils/jwt/jws.ts": {
       "upstreamSha256": "2bc32fc107bdd63cde3fbcea71fd7a62184c211792a3754d14abad559bd1448d",
-      "sha256": "75d7ccb471dffa124c0dbcfdbdcfd3a0a491e906528ac7720ed1d31feeca9e6a",
-      "deviation": "BufferSource comes from utils/types.ts so the public types do not need the DOM library"
+      "sha256": "83ca0a67718c50de1f04e82359039c2d6ae47a054d5515f46f7acf58e6b5fbc7",
+      "deviation": "BufferSource, CryptoKey and JsonWebKey come from utils/types.ts so the public types do not need the DOM library"
     },
     "src/core/utils/jwt/jwt.test.ts": {
       "upstreamSha256": "bf5c06f156c15ec0d81ea8485b52979a90d76f1a249efc653951da964d4d9b37",
@@ -755,8 +757,8 @@
     },
     "src/core/utils/types.ts": {
       "upstreamSha256": "5a35ea552ab8b1acbb6abb453eff656a119bcdf0941163e496a98043de935ad7",
-      "sha256": "051cea0df82620180c618c818ad24c8e3995acb41db4cac9275dafcf10df0691",
-      "deviation": "declares BufferSource, so the public types do not need the DOM library"
+      "sha256": "f5e6d8909d250454ec68b2cbd865e2897124b49f24d745786ef7b34a4608ae17",
+      "deviation": "declares BufferSource, CryptoKey, JsonWebKey, BinaryType, MessageEvent and CloseEvent, so the public types do not need the DOM library"
     },
     "src/core/utils/url.test.ts": {
       "upstreamSha256": "2fc582760602904849e7eefdbd9f66266d0b775a2318d1aa0322928e960af0b9",

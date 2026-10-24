@@ -121,3 +121,45 @@ export type StringLiteralUnion<T> = T | (string & Record<never, never>)
 
 /** Bytes a Web Crypto call accepts; declared here so the public types do not need the DOM library. */
 export type BufferSource = ArrayBufferView<ArrayBuffer> | ArrayBuffer
+
+/** A Web Crypto key, named from the runtime's own `crypto` so the public types do not need the DOM library. */
+export type CryptoKey = Awaited<ReturnType<typeof crypto.subtle.importKey>>
+
+/** How a WebSocket hands binary data to `onmessage`; declared here so the public types do not need the DOM library. */
+export type BinaryType = 'arraybuffer' | 'blob'
+
+/** The members of a WebSocket `message` event the helpers hand out (the Web `MessageEvent`, whose Node global is not generic); declared here so the public types do not need the DOM library. */
+export interface MessageEvent<T = unknown> extends Event {
+  readonly data: T
+  readonly lastEventId: string
+  readonly origin: string
+}
+
+/** The members of a WebSocket `close` event the helpers hand out (the Web `CloseEvent`, which Node has no global type for); declared here so the public types do not need the DOM library. */
+export interface CloseEvent extends Event {
+  readonly code: number
+  readonly reason: string
+  readonly wasClean: boolean
+}
+
+/** A JSON Web Key (RFC 7517), the same members as the Web Crypto dictionary; declared here so the public types do not need the DOM library. */
+export interface JsonWebKey {
+  alg?: string
+  crv?: string
+  d?: string
+  dp?: string
+  dq?: string
+  e?: string
+  ext?: boolean
+  k?: string
+  key_ops?: string[]
+  kty?: string
+  n?: string
+  oth?: { d?: string; r?: string; t?: string }[]
+  p?: string
+  q?: string
+  qi?: string
+  use?: string
+  x?: string
+  y?: string
+}
