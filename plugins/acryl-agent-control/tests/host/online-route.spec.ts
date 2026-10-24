@@ -1,9 +1,10 @@
-// A real http.Server on the loopback interface (spec 041 TB30): proves the auth gate against a real socket,
-// not a faked one - the same convention `plugins/acryl-workspace/tests/agents/route.spec.ts` already uses.
-import { createServer, request, type Server } from 'node:http'
+// A real http.Server on the loopback interface (spec 041 TB30), behind the real router adapter: proves the auth gate against a real
+// socket, not a faked one - the same convention `plugins/acryl-workspace/tests/agents/route.spec.ts` uses.
+import { request } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { UiControlError, type UiRequest, type UiResult } from '../../src/contract.ts'
-import { handleOnlineCallRequest, ONLINE_CALL_PATH } from '../../src/host/online-route.ts'
+import { ONLINE_CALL_PATH, onlineCallRoutes } from '../../src/host/online-route.ts'
+import { serveApi } from './test-host.ts'
 
 const SECRET = 'the-real-secret'
 const calls: UiRequest[] = []
@@ -15,19 +16,15 @@ const run = async (request: UiRequest): Promise<UiResult> => {
   return nextResult
 }
 
-let server: Server
+let api: Awaited<ReturnType<typeof serveApi>>
 let port = 0
 const errors: string[] = []
 
 beforeAll(async () => {
-  server = createServer((req, res) => {
-    void handleOnlineCallRequest(req, res, SECRET, run, (op, cause) => { errors.push(`${op}: ${String(cause)}`) })
-  })
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  const address = server.address()
-  port = typeof address === 'object' && address !== null ? address.port : 0
+  api = await serveApi(onlineCallRoutes(SECRET, run, (op, cause) => { errors.push(`${op}: ${String(cause)}`) }))
+  port = api.port
 })
-afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+afterAll(async () => { await api.close() })
 
 function call(body: unknown, options: { method?: string; token?: string } = {}): Promise<{ status: number; json: Record<string, unknown> }> {
   const text = body === undefined ? undefined : JSON.stringify(body)
@@ -48,7 +45,8 @@ function call(body: unknown, options: { method?: string; token?: string } = {}):
 describe('the online channel route (TB30)', () => {
   it('refuses a missing, wrong, or malformed token, and a non-POST method, before ever running anything', async () => {
     calls.length = 0
-    expect((await call({ op: 'snapshot' })).status).toBe(403)
+    // The exact refusal `acryl control` reads as "refused (secret rotated?)": 403 with `forbidden`, never the bearer middleware's 401.
+    expect(await call({ op: 'snapshot' })).toEqual({ status: 403, json: { error: 'forbidden' } })
     expect((await call({ op: 'snapshot' }, { token: 'nope' })).status).toBe(403)
     expect((await call({ op: 'snapshot' }, { token: `${SECRET}x` })).status).toBe(403)
     expect((await call(undefined, { method: 'GET', token: SECRET })).status).toBe(405)

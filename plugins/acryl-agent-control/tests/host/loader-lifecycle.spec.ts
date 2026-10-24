@@ -2,20 +2,21 @@
  * Real-Loader lifecycle mechanics for `acryl-agent-control` (spec 041 T022): PENDING while its dependencies are
  * missing, reactivation when they appear, restart on provider replacement, settling every pending call on
  * disposal, and no leak across repeated reloads. Mounted through a real `@deepseek-ai/cordis-plugin-loader`
- * Loader, a real HTTP server standing in for `webServer`, and a fake `tools` service that captures what was
- * registered so a mount can be counted. The `appInstance` service points the audit log at a temporary home.
+ * Loader, the real `router` and `routerHttp` over a loopback Host (`test-host.ts`), and a fake `tools` service that captures what
+ * was registered so a mount can be counted. The `appInstance` service points the audit log at a temporary home.
  */
 
-import { createServer, type Server } from 'node:http'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { WebSocket } from 'ws'
 import type { ChannelToPage } from '../../src/contract.ts'
+import { AGENT_CONTROL_API_PREFIX } from '../../src/host/http.ts'
 import { UI_CONTROL_CHANNEL_PATH } from '../../src/host/stream.ts'
+import { provideHost, testHost, type TestHost } from './test-host.ts'
 
 type ToolHandle = { execute(args: unknown, ctx: { signal: AbortSignal }): Promise<unknown> }
 
@@ -23,44 +24,20 @@ const PENDING = 0 as FiberState.PENDING
 const ACTIVE = 2 as FiberState.ACTIVE
 const DISPOSED = 4 as FiberState.DISPOSED
 
-let server: Server
+const hosts: TestHost[] = []
 let port = 0
-
-beforeAll(async () => {
-  server = createServer()
-  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
-  const address = server.address()
-  port = typeof address === 'object' && address !== null ? address.port : 0
-})
-afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
-
 const roots: string[] = []
-afterEach(() => {
-  server.removeAllListeners('upgrade')
+afterEach(async () => {
+  for (const host of hosts.splice(0)) await host.close()
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-/** A `webServer` whose routes are wired to the real HTTP server above, and which counts (de)registrations. */
-function fakeWebServer() {
-  const upgradeHandlers = new Map<string, (req: Parameters<Parameters<Server['on']>[1]>[0], socket: import('node:stream').Duplex, head: Buffer) => void>()
-  server.on('upgrade', (req, socket, head) => {
-    const handler = req.url !== undefined ? upgradeHandlers.get(req.url.split('?')[0] ?? '') : undefined
-    handler?.(req, socket, head)
-  })
-  let registerCalls = 0
-  let upgradeCalls = 0
-  let releaseCalls = 0
-  return {
-    counts: () => ({ registerCalls, upgradeCalls, releaseCalls }),
-    host: '127.0.0.1',
-    port,
-    register: (_route: unknown) => { registerCalls += 1; return () => { releaseCalls += 1 } },
-    registerUpgrade: (route: { path: string; handler: (req: unknown, socket: unknown, head: unknown) => void }) => {
-      upgradeCalls += 1
-      upgradeHandlers.set(route.path, route.handler as never)
-      return () => { releaseCalls += 1; upgradeHandlers.delete(route.path) }
-    },
-  }
+/** A fresh loopback Host for one test; the page channel's WebSocket opens on it. */
+async function newHost(): Promise<TestHost> {
+  const host = await testHost()
+  hosts.push(host)
+  port = host.port
+  return host
 }
 
 /** A `tools` service that records every `defineTool` registration and its disposal, by name. */
@@ -116,54 +93,74 @@ const until = async (check: () => boolean, label: string): Promise<void> => {
   for (let i = 0; i < 300; i += 1) { if (check()) return; await new Promise(resolve => { setTimeout(resolve, 10) }) }
   throw new Error(`timed out waiting for: ${label}`)
 }
+/** The Loader settles first; the row then activates once the router and its HTTP adapter (plugins of their own) are up. */
+const active = async (ctx: Context, entryId: string): Promise<void> => {
+  await ctx.loader.await()
+  await until(() => entryOf(ctx, entryId).fiber?.state === ACTIVE, 'the row to be ACTIVE')
+}
 
 describe('acryl-agent-control through a real Loader', () => {
-  it('is PENDING (not failed) without webServer and tools, and reactivates the moment both are provided', async () => {
+  it('is PENDING (not failed) without the Host, the router and tools, and reactivates the moment all are provided', async () => {
     const { ctx, entryId } = await mount()
     expect(entryOf(ctx, entryId).fiber?.state).toBe(PENDING)
 
-    const web = fakeWebServer()
-    ctx.provide('acrylWeb' as never, web as never)
+    const host = await newHost()
+    provideHost(ctx, host)
     ctx.provide('acrylTools' as never, fakeTools() as never)
-    await ctx.loader.await()
+    await active(ctx, entryId)
 
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    // Its own routes (the audit route, the workers route and the channel upgrade), and its seven ui_* tools.
-    expect(web.counts()).toMatchObject({ registerCalls: 2, upgradeCalls: 1 })
+    // Every HTTP route behind one prefix mount, no exact routes, and the page channel as its one upgrade.
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], exact: [], upgrades: [UI_CONTROL_CHANNEL_PATH] })
+  })
+
+  it('stays PENDING without the router even with everything else present, and activates when it appears', async () => {
+    const { ctx, entryId } = await mount()
+    const host = await newHost()
+    const { router } = provideHost(ctx, host, { router: false })
+    ctx.provide('acrylTools' as never, fakeTools() as never)
+    await ctx.loader.await()
+    expect(entryOf(ctx, entryId).fiber?.state).toBe(PENDING)
+    expect(host.counts()).toMatchObject({ prefixes: [], upgrades: [] })
+
+    router()
+    await active(ctx, entryId)
+    await until(() => entryOf(ctx, entryId).fiber?.state === ACTIVE, 'the plugin to activate')
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], upgrades: [UI_CONTROL_CHANNEL_PATH] })
   })
 
   it('restarts cleanly when the tools provider is replaced, with no doubled registrations left behind', async () => {
     const { ctx, entryId } = await mount()
-    const web = fakeWebServer()
+    const host = await newHost()
     const firstTools = fakeTools()
-    ctx.provide('acrylWeb' as never, web as never)
+    provideHost(ctx, host)
     // `provide()` returns the disposer that retracts exactly this registration - the way to replace a
     // Cordis service safely (a second `provide()` for the same live name is rejected).
     let disposeTools = ctx.provide('acrylTools' as never, firstTools as never)
-    await ctx.loader.await()
+    await active(ctx, entryId)
     expect(firstTools.counts().liveNames).toEqual(['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'])
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
 
     const secondTools = fakeTools()
     disposeTools()
     disposeTools = ctx.provide('acrylTools' as never, secondTools as never)
-    await ctx.loader.await()
+    await active(ctx, entryId)
 
     // The old provider's registrations were released, not left dangling; the new one has exactly one set, not two.
     expect(firstTools.counts()).toMatchObject({ registerCalls: 7, releaseCalls: 7, liveNames: [] })
     expect(secondTools.counts().liveNames).toEqual(['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'])
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    // The Host routes and the upgrade route were each released once and registered again once - not accumulated.
-    expect(web.counts()).toMatchObject({ registerCalls: 4, upgradeCalls: 2, releaseCalls: 3 })
+    // The prefix mount and the upgrade were each released once and registered again once - not accumulated.
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], prefixCalls: 2, exactCalls: 0, upgradeCalls: 2, releaseCalls: 2 })
   })
 
   it('settles a call that is still pending when the row is disabled, instead of leaving it hanging', async () => {
     const { ctx, entryId } = await mount()
-    const web = fakeWebServer()
+    const host = await newHost()
     const tools = fakeTools()
-    ctx.provide('acrylWeb' as never, web as never)
+    provideHost(ctx, host)
     ctx.provide('acrylTools' as never, tools as never)
-    await ctx.loader.await()
+    await active(ctx, entryId)
 
     const ws = await open()
     // The page connects but never answers: `ui_snapshot`'s call stays pending until the row unloads.
@@ -186,17 +183,17 @@ describe('acryl-agent-control through a real Loader', () => {
 
   it('leaves no growing set of registrations after ten disable/enable cycles', async () => {
     const { ctx, entryId } = await mount()
-    const web = fakeWebServer()
+    const host = await newHost()
     const tools = fakeTools()
-    ctx.provide('acrylWeb' as never, web as never)
+    provideHost(ctx, host)
     ctx.provide('acrylTools' as never, tools as never)
-    await ctx.loader.await()
+    await active(ctx, entryId)
 
     for (let i = 0; i < 10; i += 1) {
       await entryOf(ctx, entryId).update({ disabled: true })
       await ctx.loader.await()
       await entryOf(ctx, entryId).update({ disabled: false })
-      await ctx.loader.await()
+      await active(ctx, entryId)
     }
 
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
@@ -206,10 +203,7 @@ describe('acryl-agent-control through a real Loader', () => {
     // Seven tools registered per mount, released per unmount (10 disables); a live mount is never doubled up.
     expect(toolCounts.registerCalls).toBe(11 * 7)
     expect(toolCounts.releaseCalls).toBe(10 * 7)
-    const webCounts = web.counts()
-    expect(webCounts.registerCalls).toBe(11 * 2)
-    expect(webCounts.upgradeCalls).toBe(11)
-    // Three disposers per mount (the audit route, the workers route and the upgrade route), ten unmounts.
-    expect(webCounts.releaseCalls).toBe(30)
+    // One prefix mount and one upgrade per activation, both released on each of the ten unloads; no exact routes ever.
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], prefixCalls: 11, exactCalls: 0, upgradeCalls: 11, releaseCalls: 20 })
   })
 })

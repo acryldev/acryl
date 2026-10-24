@@ -74,9 +74,10 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
   }
   const composedCapabilities = capabilities ?? base.capabilities
   const composedRows = rows ?? base.rows
-  // The workspace's routes are served by the router, which the framework kit brings; without it the workspace would wait (PENDING) silently.
-  if (composedCapabilities.includes('workspace') && !composedRows.includes('framework-kit')) {
-    throw new InvalidBlueprintError('the "workspace" capability needs the "framework-kit" row, which serves its routes')
+  // A capability that serves its routes through the router needs the framework kit, which brings it; without it the plugin would wait (PENDING) silently.
+  const needsRouter = ACRYL_CODING_CAPABILITIES.find(capability => capability.needsRouter === true && composedCapabilities.includes(capability.id))
+  if (needsRouter !== undefined && !composedRows.includes('framework-kit')) {
+    throw new InvalidBlueprintError(`the ${JSON.stringify(needsRouter.id)} capability needs the "framework-kit" row, which serves its routes`)
   }
   return Object.freeze({
     id,

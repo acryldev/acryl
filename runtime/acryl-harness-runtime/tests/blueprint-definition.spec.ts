@@ -14,6 +14,7 @@ import {
 } from '../src/index.ts'
 import { fileURLToPath } from 'node:url'
 import { blueprintRowForPackage } from '../src/blueprint/index.ts'
+import { ACRYL_CODING_CAPABILITIES } from '../src/coding-capabilities.ts'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
@@ -61,12 +62,16 @@ describe('parseBlueprint', () => {
     expect(() => parseBlueprint([])).toThrow(/expected an object/)
   })
 
-  it('refuses the workspace without the framework kit that serves its routes, and every built-in with the workspace has the kit', () => {
+  it('refuses a capability that needs the router without the framework kit that serves its routes, and every built-in with one has the kit', () => {
     expect(() => parseBlueprint({ id: 'acme.ide', extends: 'acryl.ide', rows: ['plugin-context', 'system-prompt'] })).toThrow(/"framework-kit"/)
-    expect(() => parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'] })).toThrow(/"framework-kit"/)
+    expect(() => parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'] })).toThrow(/"workspace" capability needs the "framework-kit"/)
+    expect(() => parseBlueprint({ id: 'acme.door', capabilities: ['agent-control-ui'] })).toThrow(/"agent-control-ui" capability needs the "framework-kit"/)
     expect(parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'], rows: ['framework-kit'] }).rows).toEqual(['framework-kit'])
+    expect(parseBlueprint({ id: 'acme.door', capabilities: ['agent-control-ui'], rows: ['framework-kit'] }).capabilities).toEqual(['agent-control-ui'])
+    const routed = ACRYL_CODING_CAPABILITIES.filter(capability => capability.needsRouter === true).map(capability => capability.id)
+    expect(routed).toEqual(['workspace', 'agent-control-ui'])
     for (const blueprint of builtInCatalog().list()) {
-      if (blueprint.capabilities.includes('workspace')) expect(blueprint.rows).toContain('framework-kit')
+      if (blueprint.capabilities.some(id => routed.includes(id))) expect(blueprint.rows).toContain('framework-kit')
     }
   })
 

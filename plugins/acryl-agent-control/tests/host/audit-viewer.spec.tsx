@@ -1,15 +1,14 @@
 // @vitest-environment jsdom
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { Readable } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createAuditApi } from '../../src/client/audit-api.ts'
 import { AuditSection } from '../../src/client/AuditSection.tsx'
 import { en } from '../../src/client/locales.ts'
 import type { AuditEntry } from '../../src/contract.ts'
 import { AuditLog } from '../../src/host/audit.ts'
-import { createAuditRequestHandler } from '../../src/host/audit-route.ts'
+import { auditRoutes, UI_CONTROL_AUDIT_PATH } from '../../src/host/audit-route.ts'
+import { privateApi } from '../../src/host/http.ts'
 
 afterEach(cleanup)
 const t = (key: keyof typeof en): string => en[key]
@@ -39,27 +38,24 @@ describe('audit viewer', () => {
 
 describe('audit route and client', () => {
   const ORIGIN = 'http://127.0.0.1:43120'
-  const request = (method: string, headers: Record<string, string>, remote = '127.0.0.1'): IncomingMessage => {
-    const req = Readable.from([]) as IncomingMessage
-    req.method = method
-    req.headers = { host: '127.0.0.1:43120', ...headers }
-    Object.defineProperty(req, 'socket', { configurable: true, value: { remoteAddress: remote } })
-    return req
-  }
-  const response = () => { const r = { statusCode: 0, body: '', setHeader: vi.fn(), end: vi.fn((b?: string) => { r.body = b ?? '' }) }; return r }
+  const log = { recent: () => [entry({})] } as unknown as AuditLog
+  const api = privateApi(auditRoutes(log))
+  /** One request as the Host's adapter hands it over: the peer and the local port from the socket, the rest from the request. */
+  const call = (method: string, headers: Record<string, string>, remoteAddress = '127.0.0.1') =>
+    Promise.resolve(api.fetch(new Request(`${ORIGIN}${UI_CONTROL_AUDIT_PATH}`, { method, headers: { host: '127.0.0.1:43120', ...headers } }), { connection: { remoteAddress, localPort: 43120 } }))
+  const page = { 'sec-fetch-site': 'same-origin', referer: `${ORIGIN}/` }
 
-  it('serves the recent entries to the same-origin page only', () => {
-    const log = { recent: () => [entry({})] } as unknown as AuditLog
-    const handle = createAuditRequestHandler(log)
-    const ok = response()
-    handle(request('GET', { 'sec-fetch-site': 'same-origin', referer: `${ORIGIN}/` }), ok as unknown as ServerResponse, ORIGIN)
-    expect(ok.statusCode).toBe(200)
-    expect(JSON.parse(ok.body)).toEqual({ entries: [entry({})] })
-    for (const [req, status] of [[request('GET', { 'sec-fetch-site': 'cross-site', referer: 'http://evil.example/' }), 403], [request('POST', {}), 405], [request('GET', { 'sec-fetch-site': 'same-origin', referer: `${ORIGIN}/` }, '10.0.0.2'), 403]] as const) {
-      const r = response()
-      handle(req, r as unknown as ServerResponse, ORIGIN)
-      expect(r.statusCode).toBe(status)
-    }
+  it('serves the recent entries to the same-origin page only', async () => {
+    const ok = await call('GET', page)
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toEqual({ entries: [entry({})] })
+    expect(ok.headers.get('cache-control')).toBe('no-store')
+    expect((await call('GET', { 'sec-fetch-site': 'cross-site', referer: 'http://evil.example/' })).status).toBe(403)
+    expect((await call('GET', {})).status).toBe(403)
+    expect((await call('GET', page, '10.0.0.2')).status).toBe(403)
+    const post = await call('POST', page)
+    expect(post.status).toBe(405)
+    expect(post.headers.get('allow')).toBe('GET, HEAD')
   })
 
   it('the client keeps only well-formed entries and reports a failed load', async () => {

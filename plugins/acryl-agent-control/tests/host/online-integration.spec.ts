@@ -4,59 +4,39 @@
  * the built `lib/index.js` directly (not the TypeScript source: `AuditLog`'s constructor uses a parameter
  * property Node's type-stripping loader cannot parse - the same reason `loader-lifecycle.spec.ts` does this).
  */
-import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { request } from 'node:http'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
+import { provideHost, testHost, type TestHost } from './test-host.ts'
 
 const BUILT_ENTRY = new URL('../../lib/index.js', import.meta.url).href
 
-// A fresh real server per test (not one shared across the file): the plugin's own dispose() only retracts its
-// route from this fake webServer's own map, it does not know about the underlying 'request' listener, so
-// reusing one server across mounts would leave a stale listener racing the next test's response.
-let server: Server | undefined
+// A fresh Host per test: each mount gets its own socket, so one test's answers never race the next one's.
+let host: TestHost | undefined
 let port = 0
 const roots: string[] = []
 afterEach(async () => {
-  if (server !== undefined) { await new Promise<void>(resolve => { server?.close(() => { resolve() }) }); server = undefined }
+  await host?.close()
+  host = undefined
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-function fakeWebServer(this: void) {
-  const routes = new Map<string, (req: IncomingMessage, res: ServerResponse) => void>()
-  server?.on('request', (req: IncomingMessage, res: ServerResponse) => {
-    const handler = req.url !== undefined ? routes.get(req.url.split('?')[0] ?? '') : undefined
-    if (handler !== undefined) handler(req, res)
-    else { res.statusCode = 404; res.end('{}') }
-  })
-  return {
-    host: '127.0.0.1',
-    port,
-    register: (route: { path: string; handler: (req: unknown, res: unknown) => void }) => {
-      routes.set(route.path, route.handler as never)
-      return () => { routes.delete(route.path) }
-    },
-    registerUpgrade: () => () => {},
-  }
-}
-
 async function mount(config?: unknown): Promise<{ fiber: { dispose(): Promise<void> }; home: string }> {
-  server = createServer()
-  await new Promise<void>(resolve => { server?.listen(0, '127.0.0.1', resolve) })
-  const address = server.address()
-  port = typeof address === 'object' && address !== null ? address.port : 0
+  host = await testHost()
+  port = host.port
 
   const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-online-'))
   roots.push(home)
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
-  ctx.provide('acrylWeb' as never, fakeWebServer() as never)
+  provideHost(ctx, host)
   ctx.provide('acrylTools' as never, { get: () => undefined, register: () => () => {}, policy: () => () => {} } as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance'], apply: module.apply }, config)
-  await new Promise(resolve => { setTimeout(resolve, 0) })
+  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
+  await new Promise(resolve => { setTimeout(resolve, 10) })
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home }
 }
 
@@ -68,7 +48,7 @@ function call(path: string, body: unknown, token?: string): Promise<{ status: nu
     const req = request({ host: '127.0.0.1', port, path, method: 'POST', headers }, (res) => {
       let out = ''
       res.on('data', (c: Buffer) => { out += c.toString('utf8') })
-      res.on('end', () => { resolve({ status: res.statusCode ?? 0, json: JSON.parse(out) as Record<string, unknown> }) })
+      res.on('end', () => { resolve({ status: res.statusCode ?? 0, json: (res.headers['content-type']?.startsWith('application/json') === true ? JSON.parse(out) : {}) as Record<string, unknown> }) })
     })
     req.on('error', reject)
     req.end(text)

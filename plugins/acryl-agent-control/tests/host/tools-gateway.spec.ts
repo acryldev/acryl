@@ -3,7 +3,7 @@
  * HTTP, both behind the instance secret and an allowlist. The registry behind it is a small real-shaped one (definitions with JSON-Schema parameters,
  * `execute` returning the content a real tool returns); the real registry and real tools are exercised in the runtime's own tests.
  */
-import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { request } from 'node:http'
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -11,31 +11,18 @@ import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 import { parseConfig } from '../../src/host/config.ts'
 import { DEFAULT_EXPOSED_TOOLS, MCP_PATH, TOOLS_PATH, parseGatewayCall } from '../../src/tools-contract.ts'
+import { provideHost, testHost, type TestHost } from './test-host.ts'
 
 const BUILT_ENTRY = new URL('../../lib/index.js', import.meta.url).href
 
-let server: Server | undefined
+let host: TestHost | undefined
 let port = 0
 const roots: string[] = []
 afterEach(async () => {
-  if (server !== undefined) { await new Promise<void>(resolve => { server?.close(() => { resolve() }) }); server = undefined }
+  await host?.close()
+  host = undefined
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
-
-function fakeWebServer() {
-  const routes = new Map<string, (req: IncomingMessage, res: ServerResponse) => void>()
-  server?.on('request', (req: IncomingMessage, res: ServerResponse) => {
-    const handler = req.url !== undefined ? routes.get(req.url.split('?')[0] ?? '') : undefined
-    if (handler !== undefined) handler(req, res)
-    else { res.statusCode = 404; res.end('{}') }
-  })
-  return {
-    host: '127.0.0.1',
-    port,
-    register: (route: { path: string; handler: (req: unknown, res: unknown) => void }) => { routes.set(route.path, route.handler as never); return () => { routes.delete(route.path) } },
-    registerUpgrade: () => () => {},
-  }
-}
 
 const definitions = new Map<string, { name: string; description: string; parameters: object }>([
   ['acryl_list_plugins', { name: 'acryl_list_plugins', description: 'List plugins', parameters: { type: 'object', properties: {} } }],
@@ -55,19 +42,17 @@ const fakeTools = {
 }
 
 async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<void> }; home: string; secret: string | undefined }> {
-  server = createServer()
-  await new Promise<void>(resolve => { server?.listen(0, '127.0.0.1', resolve) })
-  const address = server.address()
-  port = typeof address === 'object' && address !== null ? address.port : 0
+  host = await testHost()
+  port = host.port
   const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-gateway-'))
   roots.push(home)
   executed.length = 0
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
-  ctx.provide('acrylWeb' as never, fakeWebServer() as never)
+  provideHost(ctx, host)
   ctx.provide('acrylTools' as never, fakeTools as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance'], apply: module.apply }, config)
+  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
   await new Promise(resolve => { setTimeout(resolve, 50) })
   const secretPath = join(home, 'agent-control-secret')
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home, secret: existsSync(secretPath) ? readFileSync(secretPath, 'utf8').trim() : undefined }
@@ -82,7 +67,7 @@ function send(method: string, path: string, body: unknown, token?: string): Prom
     const req = request({ host: '127.0.0.1', port, path, method, headers }, (res) => {
       let out = ''
       res.on('data', (c: Buffer) => { out += c.toString('utf8') })
-      res.on('end', () => { resolve({ status: res.statusCode ?? 0, text: out, json: out === '' ? undefined : JSON.parse(out) }) })
+      res.on('end', () => { resolve({ status: res.statusCode ?? 0, text: out, json: res.headers['content-type']?.startsWith('application/json') === true ? JSON.parse(out) : undefined }) })
     })
     req.on('error', reject)
     req.end(text)

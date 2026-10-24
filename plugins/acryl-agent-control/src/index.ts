@@ -2,27 +2,29 @@
  * Cordis Host plugin: Agent Control tools for the ACRYL window (spec 041), for every surface that has a page.
  *
  * The tools live here, the DOM lives in the page. The page connects over a same-origin WebSocket
- * (`/api/acryl-agent-control/channel`) and the tools send it calls. One effect owns the channel, the route, the
- * tools and the approval policy; disposing the plugin closes the channel and settles every pending call.
+ * (`/api/acryl-agent-control/channel`) and the tools send it calls. One effect owns the channel, the tools, the
+ * approval policy and the secret; the HTTP routes are one app mounted on the router after it, so an unload ends
+ * their requests first and then closes the channel and settles every pending call.
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
+import type { Acryl } from 'acryl-router'
 import { createApprovalPolicy } from './host/approval.ts'
 import { AuditLog, auditPath } from './host/audit.ts'
-import { createAuditRequestHandler, UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
+import { auditRoutes } from './host/audit-route.ts'
 import { UiChannel } from './host/channel.ts'
 import { parseConfig } from './host/config.ts'
-import { ONLINE_CALL_PATH, handleOnlineCallRequest } from './host/online-route.ts'
+import { AGENT_CONTROL_API_PREFIX, privateApi } from './host/http.ts'
+import { onlineCallRoutes } from './host/online-route.ts'
 import { removeOnlineSecret, writeOnlineSecret } from './host/online-secret.ts'
 import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
 import { RefDirectory, registerUiTools, runOnlineCall } from './host/tools.ts'
-import { MCP_PATH, TOOLS_PATH } from './tools-contract.ts'
+import { MCP_PATH } from './tools-contract.ts'
 import { createToolsGateway } from './host/tools-gateway/gateway.ts'
-import { handleMcpRequest, handleToolsRequest } from './host/tools-gateway/routes.ts'
+import { mcpRoutes, toolsRoutes } from './host/tools-gateway/routes.ts'
 import { docsRootFromLookup, removeWorkerMcpConfig, workerMcpArgs, writeWorkerMcpConfig } from './host/tools-gateway/worker-config.ts'
-import { WORKERS_PATH } from './workers-contract.ts'
-import { handleWorkersRequest } from './host/workers/route.ts'
+import { workersRoutes } from './host/workers/route.ts'
 import { mountWorkers } from './host/workers/service.ts'
 
 export const name = 'acryl-agent-control'
@@ -41,7 +43,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const inject = ['acrylWeb', 'acrylTools', 'appInstance']
+export const inject = ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp']
 
 export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
@@ -61,6 +63,8 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
     return [...workerMcpArgs(workerMcpConfig), ...(docs === undefined ? [] : ['--add-dir', docs])]
   }
   const workers = config.workers.enabled ? mountWorkers(ctx, config.workers, workerArgs) : undefined
+  // The routes are built inside the effect, where the audit log, the channel and the secret exist, and mounted after it.
+  const built: { api?: Acryl } = {}
   ctx.effect(() => {
     const channel = new UiChannel()
     const stream = createUiControlStream(channel, origin)
@@ -69,19 +73,13 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
     const releases: Array<() => void> = []
     let onlineSecret: string | undefined
     try {
+      // The page channel stays a webServer upgrade until the router carries upgrades (spec 047 T009).
       releases.push(ctx.acrylWeb.registerUpgrade({
         path: UI_CONTROL_CHANNEL_PATH,
         handler: (req, socket, head) => { stream.handleUpgrade(req, socket, head) },
       }))
-      const handleAudit = createAuditRequestHandler(audit)
-      releases.push(ctx.acrylWeb.register({ kind: 'exact', path: UI_CONTROL_AUDIT_PATH, handler: (req, res) => { handleAudit(req, res, origin) } }))
-      if (workers !== undefined) {
-        releases.push(ctx.acrylWeb.register({
-          kind: 'exact',
-          path: WORKERS_PATH,
-          handler: (req, res) => { void handleWorkersRequest(req, res, origin, onlineSecret, workers, reportError) },
-        }))
-      }
+      const routes: Acryl[] = [auditRoutes(audit)]
+      if (workers !== undefined) routes.push(workersRoutes(() => onlineSecret, workers, reportError))
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
       releases.push(ctx.acrylTools.policy(createApprovalPolicy(ctx, refs, config.approval)))
       if (config.online) {
@@ -90,17 +88,13 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
         onlineSecret = writeOnlineSecret(ctx.appInstance.home)
         const secret = onlineSecret
         if (gateway !== undefined) {
-          releases.push(ctx.acrylWeb.register({ kind: 'exact', path: TOOLS_PATH, handler: (req, res) => { void handleToolsRequest(req, res, secret, gateway, reportError) } }))
-          releases.push(ctx.acrylWeb.register({ kind: 'exact', path: MCP_PATH, handler: (req, res) => { void handleMcpRequest(req, res, secret, gateway, reportError) } }))
+          routes.push(toolsRoutes(secret, gateway, reportError), mcpRoutes(secret, gateway, reportError))
           workerMcpConfig = writeWorkerMcpConfig(ctx.appInstance.home, `${origin}${MCP_PATH}`, secret)
           releases.push(() => { workerMcpConfig = undefined; removeWorkerMcpConfig(ctx.appInstance.home) })
         }
-        releases.push(ctx.acrylWeb.register({
-          kind: 'exact',
-          path: ONLINE_CALL_PATH,
-          handler: (req, res) => { void handleOnlineCallRequest(req, res, secret, (request, signal) => runOnlineCall({ channel, audit, refs }, request, signal), reportError) },
-        }))
+        routes.push(onlineCallRoutes(secret, (request, signal) => runOnlineCall({ channel, audit, refs }, request, signal), reportError))
       }
+      built.api = privateApi(...routes)
     } catch (cause) {
       for (const release of releases.reverse()) release()
       if (onlineSecret !== undefined) removeOnlineSecret(ctx.appInstance.home)
@@ -114,7 +108,11 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
       stream.close()
       channel.close()
     }
-  }, 'acryl-agent-control: page channel, tools and approval policy')
+  }, 'acryl-agent-control: page channel, tools, approval policy and secret')
+  if (built.api === undefined) throw new Error('acryl-agent-control: the routes were not built')
+  // After the effect, so an unload removes the mount first: its in-flight calls end before the secret goes and the channel closes.
+  ctx.router.route('/', built.api)
+  ctx.routerHttp.mount(AGENT_CONTROL_API_PREFIX)
 }
 
 export { UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'

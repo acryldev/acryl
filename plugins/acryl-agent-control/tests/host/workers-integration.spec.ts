@@ -3,7 +3,7 @@
  * against the real `acrAgentControl` service and the real Claude transport (the process on the other end is a small fake that speaks Claude Code's
  * stream-json protocol), and everything ends when the plugin unloads. Mounts the built `lib/index.js` (see online-integration.spec.ts for why).
  */
-import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { request } from 'node:http'
 import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -11,6 +11,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 import { parseConfig } from '../../src/host/config.ts'
 import { WORKERS_PATH, parseWorkerRequest } from '../../src/workers-contract.ts'
+import { provideHost, testHost, type TestHost } from './test-host.ts'
 
 const BUILT_ENTRY = new URL('../../lib/index.js', import.meta.url).href
 
@@ -27,31 +28,14 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
 })
 `
 
-let server: Server | undefined
+let host: TestHost | undefined
 let port = 0
 const roots: string[] = []
 afterEach(async () => {
-  if (server !== undefined) { await new Promise<void>(resolve => { server?.close(() => { resolve() }) }); server = undefined }
+  await host?.close()
+  host = undefined
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
-
-function fakeWebServer() {
-  const routes = new Map<string, (req: IncomingMessage, res: ServerResponse) => void>()
-  server?.on('request', (req: IncomingMessage, res: ServerResponse) => {
-    const handler = req.url !== undefined ? routes.get(req.url.split('?')[0] ?? '') : undefined
-    if (handler !== undefined) handler(req, res)
-    else { res.statusCode = 404; res.end('{}') }
-  })
-  return {
-    host: '127.0.0.1',
-    port,
-    register: (route: { path: string; handler: (req: unknown, res: unknown) => void }) => {
-      routes.set(route.path, route.handler as never)
-      return () => { routes.delete(route.path) }
-    },
-    registerUpgrade: () => () => {},
-  }
-}
 
 // The stand-in below is a POSIX shell wrapper, and Node cannot spawn a Windows `.cmd` without a shell, so the two tests that run it are POSIX-only.
 const posixOnly = process.platform === 'win32' ? it.skip : it
@@ -68,18 +52,16 @@ function fakeClaudeCommand(): string {
 }
 
 async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<void> }; home: string }> {
-  server = createServer()
-  await new Promise<void>(resolve => { server?.listen(0, '127.0.0.1', resolve) })
-  const address = server.address()
-  port = typeof address === 'object' && address !== null ? address.port : 0
+  host = await testHost()
+  port = host.port
   const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-workers-'))
   roots.push(home)
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
-  ctx.provide('acrylWeb' as never, fakeWebServer() as never)
+  provideHost(ctx, host)
   ctx.provide('acrylTools' as never, { get: () => undefined, register: () => () => {}, policy: () => () => {} } as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance'], apply: module.apply }, config)
+  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
   await new Promise(resolve => { setTimeout(resolve, 50) })
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home }
 }
@@ -92,7 +74,7 @@ function call(body: unknown, token?: string): Promise<{ status: number; json: Re
     const req = request({ host: '127.0.0.1', port, path: WORKERS_PATH, method: 'POST', headers }, (res) => {
       let out = ''
       res.on('data', (c: Buffer) => { out += c.toString('utf8') })
-      res.on('end', () => { resolve({ status: res.statusCode ?? 0, json: JSON.parse(out) as Record<string, unknown> }) })
+      res.on('end', () => { resolve({ status: res.statusCode ?? 0, json: (res.headers['content-type']?.startsWith('application/json') === true ? JSON.parse(out) : {}) as Record<string, unknown> }) })
     })
     req.on('error', reject)
     req.end(text)

@@ -2281,6 +2281,9 @@ importers:
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
       ws:
         specifier: 8.21.3
         version: 8.21.3
@@ -2315,6 +2318,9 @@ importers:
       '@types/ws':
         specifier: 8.18.1
         version: 8.18.1
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../acryl-router-http
       acryl-workspace:
         specifier: workspace:*
         version: link:../acryl-workspace

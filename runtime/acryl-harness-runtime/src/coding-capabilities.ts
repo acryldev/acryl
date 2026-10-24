@@ -62,6 +62,11 @@ export interface AcrylCodingCapability {
    * {@link createAcrylShellCapabilityPatches}; it is left out of {@link createAcrylCodingCapabilityPatches}.
    */
   readonly shellMode?: AcrylShellMode
+  /**
+   * The capability serves its HTTP through the framework's router (`ctx.router`, `ctx.routerHttp`), which the `framework-kit` row brings.
+   * Without that row its plugin waits PENDING with nothing said, so a Blueprint that composes it must also compose the kit.
+   */
+  readonly needsRouter?: boolean
 }
 
 /**
@@ -164,6 +169,7 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     // `require("acryl-app-shell/client") missed the module table` the first time anything actually opened
     // `desktop.main`.
     requiresPackages: ['acryl-app-shell', 'acryl-workspace'],
+    needsRouter: true,
     loaderPatches: [
       { insert: [{ id: 'acryl-app-shell', name: 'acryl-app-shell' }, { id: 'acryl-workspace', name: 'acryl-workspace' }] },
     ],
@@ -218,6 +224,7 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     id: 'agent-control-ui',
     surfaces: ['desktop', 'web'],
     requiresPackages: ['acryl-agent-control'],
+    needsRouter: true,
     loaderPatches: [
       { insert: [{ id: 'acryl-agent-control', name: 'acryl-agent-control' }] },
     ],

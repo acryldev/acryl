@@ -1,36 +1,33 @@
 /** The gateway's two faces: plain JSON and MCP over HTTP. Both are for an outside operator on this machine holding the instance secret. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, isLoopbackAddress, readJsonBody } from 'acryl-loopback-http'
-import { GatewayRequestError, parseGatewayCall, type GatewayCallResponse, type GatewayListResponse } from '../../tools-contract.ts'
-import { tokenMatches } from '../online-route.ts'
+import { Acryl } from 'acryl-router'
+import { error } from 'acryl-loopback-http'
+import { GatewayRequestError, MCP_PATH, TOOLS_PATH, parseGatewayCall, type GatewayCallResponse, type GatewayListResponse } from '../../tools-contract.ts'
+import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from '../http.ts'
 import type { ToolsGateway } from './gateway.ts'
 
-type ReportError = (operation: string, cause: unknown) => void
-
-function authorized(req: IncomingMessage, secret: string): boolean {
-  return isLoopbackAddress(req.socket.remoteAddress) && tokenMatches(req.headers.authorization, secret)
-}
-
-/** GET lists the tools; POST `{ name, arguments }` calls one. */
-export async function handleToolsRequest(req: IncomingMessage, res: ServerResponse, secret: string, gateway: ToolsGateway, reportError: ReportError): Promise<void> {
-  if (req.method !== 'GET' && req.method !== 'POST') { res.setHeader('allow', 'GET, POST'); return finishJson(res, 405, error('method not allowed')) }
-  if (!authorized(req, secret)) return finishJson(res, 403, error('forbidden'))
-  if (req.method === 'GET') return finishJson(res, 200, { ok: true, tools: gateway.list() } satisfies GatewayListResponse, 'GET')
-  let call: ReturnType<typeof parseGatewayCall>
-  try {
-    call = parseGatewayCall(await readJsonBody(req))
-  } catch (cause) {
-    return finishJson(res, 400, { ok: false, code: 'invalid', message: cause instanceof GatewayRequestError ? cause.message : 'invalid request body' } satisfies GatewayCallResponse)
-  }
-  const controller = new AbortController()
-  res.on('close', () => { if (!res.writableEnded) controller.abort() })
-  try {
-    return finishJson(res, 200, await gateway.call(call.name, call.arguments, controller.signal))
-  } catch (cause) {
-    reportError('run a gateway tool call', cause)
-    return finishJson(res, 500, error('the call could not be run'))
-  }
+/** GET lists the tools; POST `{ name, arguments }` calls one. A caller that goes away aborts the call through the request's signal. */
+export function toolsRoutes(secret: string, gateway: ToolsGateway, reportError: ReportError): Acryl {
+  const operator = operatorOnly(secret)
+  return new Acryl()
+    .get(TOOLS_PATH, operator, c => c.json({ ok: true, tools: gateway.list() } satisfies GatewayListResponse))
+    .post(TOOLS_PATH, operator, jsonBody, async (c) => {
+      const invalid = (message: string) => c.json({ ok: false, code: 'invalid', message } satisfies GatewayCallResponse, 400)
+      const body = await readJson(c)
+      if (body === INVALID_JSON) return invalid('invalid request body')
+      let call: ReturnType<typeof parseGatewayCall>
+      try {
+        call = parseGatewayCall(body)
+      } catch (cause) {
+        return invalid(cause instanceof GatewayRequestError ? cause.message : 'invalid request body')
+      }
+      try {
+        return c.json(await gateway.call(call.name, call.arguments, c.req.raw.signal))
+      } catch (cause) {
+        reportError('run a gateway tool call', cause)
+        return c.json(error('the call could not be run'), 500)
+      }
+    })
 }
 
 const SUPPORTED_PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'] as const
@@ -76,29 +73,23 @@ async function answer(message: JsonRpcRequest, gateway: ToolsGateway, signal: Ab
 }
 
 /** MCP over streamable HTTP, request/response only: POST a JSON-RPC message, get its JSON answer (202 for a notification). No SSE stream is offered. */
-export async function handleMcpRequest(req: IncomingMessage, res: ServerResponse, secret: string, gateway: ToolsGateway, reportError: ReportError): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!authorized(req, secret)) return finishJson(res, 403, error('forbidden'))
-  let body: unknown
-  try {
-    body = await readJsonBody(req)
-  } catch {
-    return finishJson(res, 400, rpcError(null, -32700, 'parse error'))
-  }
-  const controller = new AbortController()
-  res.on('close', () => { if (!res.writableEnded) controller.abort() })
-  try {
-    const messages = Array.isArray(body) ? body : [body]
-    const answers: Record<string, unknown>[] = []
-    for (const message of messages) {
-      if (!isRequest(message)) { answers.push(rpcError(null, -32600, 'invalid request')); continue }
-      const response = await answer(message, gateway, controller.signal)
-      if (response !== undefined) answers.push(response)
+export function mcpRoutes(secret: string, gateway: ToolsGateway, reportError: ReportError): Acryl {
+  return new Acryl().post(MCP_PATH, operatorOnly(secret), jsonBody, async (c) => {
+    const body = await readJson(c)
+    if (body === INVALID_JSON) return c.json(rpcError(null, -32700, 'parse error'), 400)
+    try {
+      const messages = Array.isArray(body) ? body : [body]
+      const answers: Record<string, unknown>[] = []
+      for (const message of messages) {
+        if (!isRequest(message)) { answers.push(rpcError(null, -32600, 'invalid request')); continue }
+        const response = await answer(message, gateway, c.req.raw.signal)
+        if (response !== undefined) answers.push(response)
+      }
+      if (answers.length === 0) return c.body(null, 202)
+      return c.json(Array.isArray(body) ? answers : (answers[0] as object))
+    } catch (cause) {
+      reportError('answer an MCP request', cause)
+      return c.json(rpcError(null, -32603, 'internal error'), 500)
     }
-    if (answers.length === 0) { res.statusCode = 202; res.end(); return }
-    return finishJson(res, 200, Array.isArray(body) ? answers : (answers[0] as object))
-  } catch (cause) {
-    reportError('answer an MCP request', cause)
-    return finishJson(res, 500, rpcError(null, -32603, 'internal error'))
-  }
+  })
 }
