@@ -77,7 +77,7 @@ describe('Search Endpoint', () => {
 
   it('should return search results', async () => {
     // Include the token in the headers and set the content type
-    const token = 'this-is-a-very-clean-token'
+    const token = process.env.API_TOKEN!
     const res = await client.search.$get(
       {
         query: { q: 'acrylblends' },

@@ -24,7 +24,7 @@ import { bearerAuth } from 'acrylblends/bearer-auth'
 ```ts
 const app = new Acryl()
 
-const token = 'acrylblendsiscool'
+const token = process.env.API_TOKEN!
 
 app.use('/api/*', bearerAuth({ token }))
 
@@ -38,7 +38,7 @@ To restrict to a specific route + method:
 ```ts
 const app = new Acryl()
 
-const token = 'acrylblendsiscool'
+const token = process.env.API_TOKEN!
 
 app.get('/api/page', (c) => {
   return c.json({ message: 'Read posts' })

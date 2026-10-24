@@ -26,7 +26,7 @@ const app = new Acryl<{ Variables: Variables }>()
 app.use(
   '/auth/*',
   jwt({
-    secret: 'it-is-very-secret',
+    secret: process.env.JWT_SECRET!,
     alg: 'HS256',
   })
 )
@@ -44,7 +44,7 @@ const app = new Acryl()
 app.use(
   '/auth/*',
   jwt({
-    secret: 'it-is-very-secret',
+    secret: process.env.JWT_SECRET!,
     alg: 'HS256',
     verification: {
       iss: 'my-trusted-issuer',
@@ -97,7 +97,7 @@ The name of the header to look for the JWT token. The default is `Authorization`
 app.use(
   '/auth/*',
   jwt({
-    secret: 'it-is-very-secret',
+    secret: process.env.JWT_SECRET!,
     alg: 'HS256',
     headerName: 'x-custom-auth-header',
   })
@@ -112,7 +112,7 @@ The protection space described by the `realm` parameter of the `WWW-Authenticate
 app.use(
   '/auth/*',
   jwt({
-    secret: 'it-is-very-secret',
+    secret: process.env.JWT_SECRET!,
     realm: 'my-protected-api',
   })
 )
