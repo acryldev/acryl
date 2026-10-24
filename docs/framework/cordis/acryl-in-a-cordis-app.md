@@ -43,6 +43,9 @@ export function apply(ctx: Context): void {
 | `GET /todo/todos/42` | `{ "id": "42" }` |
 | `GET /todo/` | 404: `/todo` and `/todo/` are different paths (see below) |
 
+The app can come from `acryl-router` or from the published `acrylblends` package: `route` takes any app by its routes
+(`MountableApp`), so an `Acryl` imported from `acrylblends` mounts as it is, with its middleware and its own `onError`.
+
 ### `/todo/` is a 404 until you choose
 
 `/todo/` is the first thing people type, and by default it is not found: the router treats `/todo` and `/todo/` as two paths. Choose

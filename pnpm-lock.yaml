@@ -2209,9 +2209,15 @@ importers:
 
   distribution/acrylblends-framework:
     devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1
+      acryl-router:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-router
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)

@@ -41,10 +41,11 @@ export class FakeWebServer {
 
 /** The router services over a list of mounts, mounting through `webServer.register` like the production adapter does. */
 export function routerServices(webServer: { register(route: FakeRoute): () => void }) {
-  const mounts = new Set<{ readonly path: string, readonly app: MountableApp }>()
+  const mounts = new Set<{ readonly path: string, readonly app: Acryl }>()
   const router = {
     route: (path: string, app: MountableApp): (() => void) => {
-      const mount = { path, app }
+      // Copied now, as the real router does; the core's `route` reads only the routes and the app's own error handler.
+      const mount = { path, app: new Acryl().route('/', app as unknown as Acryl) }
       mounts.add(mount)
       return () => { mounts.delete(mount) }
     },

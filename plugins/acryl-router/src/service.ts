@@ -54,13 +54,30 @@ declare module '@deepseek-ai/cordis' {
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
 export const name = 'acryl-router'
 
-// Any `Acryl`, whatever its Env and schema; the router only reads its routes.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type MountableApp = Acryl<any, any, any>
+/**
+ * What {@link Router.route} takes: any app with routes, read structurally. An `Acryl` from this package qualifies, and so does one built from
+ * another copy of the framework (the published `acrylblends`), whose classes TypeScript would refuse nominally for their private members:
+ * mounting copies the app's routes (and keeps its own `onError`), which is all the router reads. Their handlers are then called with this
+ * router's `Context`, which has the same shape.
+ */
+export interface MountableApp {
+  readonly routes: readonly MountableRoute[]
+}
+
+/** One route of a {@link MountableApp}, as the core lists it. A handler of any context type fits (`never` parameters accept every function). */
+export interface MountableRoute {
+  readonly basePath: string
+  readonly path: string
+  readonly method: string
+  readonly handler: (c: never, next: never) => unknown
+}
+
+/** The core's `app.route` with a structural app: at run time it reads only the routes and the app's own error handler. */
+const copyRoutes = (app: MountableApp): Acryl => new Acryl().route('/', app as unknown as Acryl)
 
 interface Mount {
   readonly path: string
-  readonly app: MountableApp
+  readonly app: Acryl
 }
 
 interface RouterState {
@@ -161,7 +178,7 @@ export class Router extends Service {
    * mount's code a request is in. The core's `app.route` runs first so a sub-app's own `onError` still applies to its routes.
    */
   private snapshot(path: string, app: MountableApp): Mount {
-    const copy = new Acryl().route('/', app)
+    const copy = copyRoutes(app)
     const tagged = new Acryl()
     const mount: Mount = { path, app: tagged }
     for (const route of copy.routes) {
