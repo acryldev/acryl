@@ -7,6 +7,7 @@
  *   node scripts/inspect-page.mjs [--port 9222] eval '<expression>'  any expression, awaited, printed as JSON
  *   node scripts/inspect-page.mjs [--port 9222] click <x> <y>        a real mouse click at CSS pixels (a user gesture, unlike element.click())
  *   node scripts/inspect-page.mjs [--port 9222] press <key> [meta,shift,alt,ctrl]   a real key press, for example `press . meta,shift`
+ *   node scripts/inspect-page.mjs [--port 9222] type <text>          type text into the focused element (click it first)
  *   node scripts/inspect-page.mjs [--port 9222] shot <file.png>      a screenshot
  *
  * Every command gives up after 15 s: a page that does not answer is itself the finding (a blocked renderer), and is reported as such.
@@ -42,11 +43,14 @@ else if (command === 'click') {
   const [key, modifierList = ''] = rest
   await page.press(key, modifierList.split(',').filter(Boolean))
   console.log(`pressed ${modifierList === '' ? '' : `${modifierList}+`}${key}`)
+} else if (command === 'type') {
+  await page.type(rest[0])
+  console.log(`typed ${JSON.stringify(rest[0])}`)
 } else if (command === 'shot') {
   writeFileSync(rest[0], await page.screenshot())
   console.log(`saved ${rest[0]}`)
 } else {
-  console.error('usage: inspect-page.mjs [--port N] health | tabs | eval <expression> | click <x> <y> | press <key> [modifiers] | shot <file.png>')
+  console.error('usage: inspect-page.mjs [--port N] health | tabs | eval <expression> | click <x> <y> | press <key> [modifiers] | type <text> | shot <file.png>')
   process.exitCode = 2
 }
 clearTimeout(timer)

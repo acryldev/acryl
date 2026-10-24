@@ -38,6 +38,10 @@ export async function connectInspector(port) {
       const [code, keyCode] = KEY_CODES[key] ?? (key.length === 1 ? [`Key${key.toUpperCase()}`, key.toUpperCase().charCodeAt(0)] : [key, 0])
       for (const type of ['rawKeyDown', 'keyUp']) await send('Input.dispatchKeyEvent', { type, key, code, modifiers: bits, windowsVirtualKeyCode: keyCode })
     },
+    /** Type text into the focused element as the keyboard would (one input event per call, like a paste-free IME commit). */
+    async type(text) {
+      await send('Input.insertText', { text })
+    },
     /** @returns PNG bytes of the page. */
     async screenshot() {
       const shot = await send('Page.captureScreenshot', { format: 'png' })
