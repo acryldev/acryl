@@ -12,14 +12,12 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {
-    "acryl-router": "workspace:*",
-    "acryl-state": "workspace:*"
-  },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
+    "acryl-router": "workspace:*",
     "acryl-router-http": "workspace:*",
+    "acryl-state": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
@@ -39,6 +37,18 @@
     "README.md"
   ],
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2"
+    "@deepseek-ai/cordis": "^4.0.2",
+    "acryl-router": "*",
+    "acryl-state": "*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "requiresAcrylPackages": [
+      "acryl-router",
+      "acryl-router-http",
+      "acryl-state"
+    ]
   }
 }
