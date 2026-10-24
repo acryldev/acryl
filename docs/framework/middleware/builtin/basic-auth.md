@@ -21,7 +21,7 @@ app.use(
   '/auth/*',
   basicAuth({
     username: 'acrylblends',
-    password: 'acoolproject',
+    password: process.env.BASIC_AUTH_PASSWORD!,
   })
 )
 
@@ -41,7 +41,7 @@ app.get('/auth/page', (c) => {
 
 app.delete(
   '/auth/page',
-  basicAuth({ username: 'acrylblends', password: 'acoolproject' }),
+  basicAuth({ username: 'acrylblends', password: process.env.BASIC_AUTH_PASSWORD! }),
   (c) => {
     return c.text('Page deleted')
   }
@@ -100,7 +100,7 @@ app.use(
   '/auth/*',
   basicAuth({
     username: 'acrylblends',
-    password: 'acoolproject',
+    password: process.env.BASIC_AUTH_PASSWORD!,
     onAuthSuccess: (c, username) => {
       c.set('username', username)
     },
@@ -129,18 +129,18 @@ app.use(
   basicAuth(
     {
       username: 'acrylblends',
-      password: 'acoolproject',
+      password: process.env.BASIC_AUTH_PASSWORD!,
       // Define other params in the first object
       realm: 'www.example.com',
     },
     {
       username: 'acrylblends-admin',
-      password: 'super-secure',
+      password: process.env.ADMIN_PASSWORD!,
       // Cannot redefine other params here
     },
     {
       username: 'acrylblends-user-1',
-      password: 'a-secret',
+      password: process.env.USER_1_PASSWORD!,
       // Or here
     }
   )

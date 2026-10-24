@@ -35,7 +35,7 @@ const payload = {
   role: 'admin',
   exp: Math.floor(Date.now() / 1000) + 60 * 5, // Token expires in 5 minutes
 }
-const secret = 'mySecretKey'
+const secret = process.env.JWT_SECRET!
 const token = await sign(payload, secret)
 ```
 

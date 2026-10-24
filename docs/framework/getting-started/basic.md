@@ -162,7 +162,7 @@ app.use(
   '/admin/*',
   basicAuth({
     username: 'admin',
-    password: 'secret',
+    password: process.env.ADMIN_PASSWORD!,
   })
 )
 

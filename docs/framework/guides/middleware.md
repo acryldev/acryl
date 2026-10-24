@@ -95,7 +95,7 @@ app.use(
   '/auth/*',
   basicAuth({
     username: 'acrylblends',
-    password: 'acoolproject',
+    password: process.env.BASIC_AUTH_PASSWORD!,
   })
 )
 ```

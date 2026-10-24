@@ -37,7 +37,7 @@ app.get('/cookie', (c) => {
 
 ```ts
 app.get('/signed-cookie', (c) => {
-  const secret = 'secret' // make sure it's a large enough string to be secure
+  const secret = process.env.COOKIE_SECRET! // a long random string, kept out of the source
 
   await setSignedCookie(c, 'cookie_name0', 'cookie_value', secret)
   const fortuneCookie = await getSignedCookie(
