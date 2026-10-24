@@ -1,6 +1,6 @@
 import { matchedRoutes, routePath, baseRoutePath, basePath } from './index.ts'
 import { Context } from '../../context.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 const defaultContextOptions = {
   executionCtx: {
@@ -192,10 +192,10 @@ describe('basePath', () => {
   })
 
   it('should return the fully expanded basePath for nested route() apps', async () => {
-    const app = new App()
-    const sub1 = new App()
-    const sub2 = new App()
-    const sub3 = new App()
+    const app = new Acryl()
+    const sub1 = new Acryl()
+    const sub2 = new Acryl()
+    const sub3 = new Acryl()
 
     sub3.get('/assets/*', (c) => c.json({ baseRoutePath: baseRoutePath(c), basePath: basePath(c) }))
     sub2.route('/:app/sub3/assets', sub3)
@@ -239,8 +239,8 @@ describe('basePath', () => {
   })
 
   it('should return basePath with custom regex pattern mounted with app.route()', async () => {
-    const app = new App()
-    const subApp = new App()
+    const app = new Acryl()
+    const subApp = new Acryl()
 
     subApp.get('/posts/:id', (c) => c.text(basePath(c)))
     app.route('/api/:version{v[0-9]+}', subApp)

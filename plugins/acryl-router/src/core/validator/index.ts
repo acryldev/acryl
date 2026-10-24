@@ -1,6 +1,6 @@
 /**
  * @module
- * Validator for App.
+ * Validator for Acryl.
  */
 
 export { validator } from './validator.ts'

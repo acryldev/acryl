@@ -1,5 +1,5 @@
 import { HTTPException } from './http-exception.ts'
-import { cloneRawRequest, AppRequest } from './request.ts'
+import { cloneRawRequest, AcrylRequest } from './request.ts'
 import type { RouterRoute } from './types.ts'
 
 type RecursiveRecord<K extends string, T> = {
@@ -9,7 +9,7 @@ type RecursiveRecord<K extends string, T> = {
 describe('Query', () => {
   test('req.query() and req.queries()', () => {
     const rawRequest = new Request('http://localhost?page=2&tag=A&tag=B')
-    const req = new AppRequest(rawRequest)
+    const req = new AcrylRequest(rawRequest)
 
     const page = req.query('page')
     expect(page).not.toBeUndefined()
@@ -28,7 +28,7 @@ describe('Query', () => {
 
   test('decode special chars', () => {
     const rawRequest = new Request('http://localhost?mail=framework%40acryl.dev&tag=%401&tag=%402')
-    const req = new AppRequest(rawRequest)
+    const req = new AcrylRequest(rawRequest)
 
     const mail = req.query('mail')
     expect(mail).toBe('framework@acryl.dev')
@@ -40,7 +40,7 @@ describe('Query', () => {
 
 describe('Param', () => {
   test('req.param() on an unmatched request', () => {
-    const req = new AppRequest(new Request('http://localhost/'))
+    const req = new AcrylRequest(new Request('http://localhost/'))
 
     expect(req.param('id')).toBeUndefined()
     expect(req.param()).toEqual({})
@@ -49,7 +49,7 @@ describe('Param', () => {
   test('req.param() should return empty string for zero-length match', () => {
     // Simulate a route like '/:remaining{.*}' matching '/'
     const rawRequest = new Request('http://localhost/')
-    const req = new AppRequest<'/:remaining{.*}'>(rawRequest, '/', [
+    const req = new AcrylRequest<'/:remaining{.*}'>(rawRequest, '/', [
       [[[undefined, {} as RouterRoute], { remaining: 0 }]],
       [''], // ParamStash with empty string for remaining
     ])
@@ -63,7 +63,7 @@ describe('Param', () => {
   })
   test('req.param() with ParamStash', () => {
     const rawRequest = new Request('http://localhost?page=2&tag=A&tag=B')
-    const req = new AppRequest<'/:id/:name'>(rawRequest, '/123/key', [
+    const req = new AcrylRequest<'/:id/:name'>(rawRequest, '/123/key', [
       [
         [[undefined, {} as RouterRoute], { id: 0 }],
         [[undefined, {} as RouterRoute], { id: 0, name: 1 }],
@@ -81,7 +81,7 @@ describe('Param', () => {
 
   test('req.param() without ParamStash', () => {
     const rawRequest = new Request('http://localhost?page=2&tag=A&tag=B')
-    const req = new AppRequest<'/:id/:name'>(rawRequest, '/123/key', [
+    const req = new AcrylRequest<'/:id/:name'>(rawRequest, '/123/key', [
       [
         [[undefined, {} as RouterRoute], { id: '123' }],
         [[undefined, {} as RouterRoute], { id: '456', name: 'key' }],
@@ -98,7 +98,7 @@ describe('Param', () => {
 
   test('req.param() returns empty string for missing param', () => {
     const rawRequest = new Request('http://localhost')
-    const req = new AppRequest<'/:remaining'>(rawRequest, '/', [
+    const req = new AcrylRequest<'/:remaining'>(rawRequest, '/', [
       [[[undefined, {} as RouterRoute], { remaining: 0 }]],
       [''],
     ])
@@ -107,7 +107,7 @@ describe('Param', () => {
 
   test('req.param() without argument returns object with empty string for missing param', () => {
     const rawRequest = new Request('http://localhost')
-    const req = new AppRequest<'/:remaining'>(rawRequest, '/', [
+    const req = new AcrylRequest<'/:remaining'>(rawRequest, '/', [
       [[[undefined, {} as RouterRoute], { remaining: 0 }]],
       [''],
     ])
@@ -119,7 +119,7 @@ describe('Param', () => {
       // When middleware uses Context without an explicit path type, P defaults to any.
       // param(key) should return string | undefined, not string.
       const rawRequest = new Request('http://localhost/users/123')
-      const req = new AppRequest<any>(rawRequest, '/users/123', [
+      const req = new AcrylRequest<any>(rawRequest, '/users/123', [
         [[[undefined, {} as RouterRoute], { id: '123' }]],
       ])
       expectTypeOf(req.param('id')).toEqualTypeOf<string | undefined>()
@@ -128,7 +128,7 @@ describe('Param', () => {
     it('param() returns string when P is a known route string', () => {
       // When P is a concrete route, named params should still return string (non-optional).
       const rawRequest = new Request('http://localhost/123')
-      const req = new AppRequest<'/:id'>(rawRequest, '/123', [
+      const req = new AcrylRequest<'/:id'>(rawRequest, '/123', [
         [[[undefined, {} as RouterRoute], { id: '123' }]],
       ])
       expectTypeOf(req.param('id')).toEqualTypeOf<string>()
@@ -141,7 +141,7 @@ describe('matchedRoutes', () => {
     const handlerA = () => {}
     const handlerB = () => {}
     const rawRequest = new Request('http://localhost?page=2&tag=A&tag=B')
-    const req = new AppRequest<'/:id/:name'>(rawRequest, '/123/key', [
+    const req = new AcrylRequest<'/:id/:name'>(rawRequest, '/123/key', [
       [
         [
           [handlerA, { basePath: '/', handler: handlerA, method: 'GET', path: '/:id' }],
@@ -166,7 +166,7 @@ describe('routePath', () => {
     const handlerA = () => {}
     const handlerB = () => {}
     const rawRequest = new Request('http://localhost?page=2&tag=A&tag=B')
-    const req = new AppRequest<'/:id/:name'>(rawRequest, '/123/key', [
+    const req = new AcrylRequest<'/:id/:name'>(rawRequest, '/123/key', [
       [
         [
           [handlerA, { basePath: '/', handler: handlerA, method: 'GET', path: '/:id' }],
@@ -198,14 +198,14 @@ describe('req.addValidatedData() and req.data()', () => {
   }
 
   test('add data - json', () => {
-    const req = new AppRequest<'/', { json: typeof payload }>(rawRequest)
+    const req = new AcrylRequest<'/', { json: typeof payload }>(rawRequest)
     req.addValidatedData('json', payload)
     const data = req.valid('json')
     expect(data).toEqual(payload)
   })
 
   test('replace data - json', () => {
-    const req = new AppRequest<'/', { json: typeof payload }>(rawRequest)
+    const req = new AcrylRequest<'/', { json: typeof payload }>(rawRequest)
     req.addValidatedData('json', payload)
     req.addValidatedData('json', {
       tag: ['sport', 'music'],
@@ -225,13 +225,13 @@ describe('req.addValidatedData() and req.data()', () => {
 
 describe('headers', () => {
   test('empty string is a valid header value', () => {
-    const req = new AppRequest(new Request('http://localhost', { headers: { foo: '' } }))
+    const req = new AcrylRequest(new Request('http://localhost', { headers: { foo: '' } }))
     const foo = req.header('foo')
     expect(foo).toEqual('')
   })
 
   test('Keys of the arguments for req.header() are not case-sensitive', () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         headers: {
           'Content-Type': 'application/json',
@@ -245,7 +245,7 @@ describe('headers', () => {
   })
 
   test('req.header() is not affected by a `__proto__` header name', () => {
-    const req = new AppRequest(new Request('http://localhost', { headers: { __proto__: 'evil' } }))
+    const req = new AcrylRequest(new Request('http://localhost', { headers: { __proto__: 'evil' } }))
     const headers = req.header()
     expect(Object.getPrototypeOf(headers)).toBeNull()
   })
@@ -257,7 +257,7 @@ const buffer = new TextEncoder().encode('{"foo":"bar"}').buffer
 
 describe('Body methods with caching', () => {
   test('req.text()', async () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: text,
@@ -275,7 +275,7 @@ describe('Body methods with caching', () => {
   })
 
   test('req.json()', async () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: '{"foo":"bar"}',
@@ -294,7 +294,7 @@ describe('Body methods with caching', () => {
 
   test('req.json() should keep the content as is', async () => {
     const text = '{ "foo" : "bar" }'
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: text,
@@ -306,7 +306,7 @@ describe('Body methods with caching', () => {
 
   test('req.arrayBuffer()', async () => {
     const buffer = new TextEncoder().encode('{"foo":"bar"}').buffer
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: buffer,
@@ -325,7 +325,7 @@ describe('Body methods with caching', () => {
 
   test('req.bytes()', async () => {
     const bytes = new TextEncoder().encode('{"foo":"bar"}')
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: bytes,
@@ -348,7 +348,7 @@ describe('Body methods with caching', () => {
     const blob = new Blob(['{"foo":"bar"}'], {
       type: 'application/json',
     })
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: blob,
@@ -364,7 +364,7 @@ describe('Body methods with caching', () => {
   test('req.formData()', async () => {
     const data = new FormData()
     data.append('foo', 'bar')
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: data,
@@ -383,7 +383,7 @@ describe('Body methods with caching', () => {
 
     for (const first of ['text', 'arrayBuffer', 'bytes', 'blob'] as const) {
       test(`req.formData() after req.${first}()`, async () => {
-        const req = new AppRequest(
+        const req = new AcrylRequest(
           new Request('http://localhost', {
             method: 'POST',
             headers: { 'Content-Type': urlencoded },
@@ -404,7 +404,7 @@ describe('Body methods with caching', () => {
         'Content-Disposition: form-data; name="foo"\r\n\r\n' +
         'bar\r\n' +
         `--${boundary}--\r\n`
-      const req = new AppRequest(
+      const req = new AcrylRequest(
         new Request('http://localhost', {
           method: 'POST',
           headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
@@ -416,7 +416,7 @@ describe('Body methods with caching', () => {
     })
 
     test('the cached representation is still returned unchanged', async () => {
-      const req = new AppRequest(
+      const req = new AcrylRequest(
         new Request('http://localhost', {
           method: 'POST',
           headers: { 'Content-Type': urlencoded },
@@ -433,7 +433,7 @@ describe('Body methods with caching', () => {
     it('should parse form data', async () => {
       const data = new FormData()
       data.append('foo', 'bar')
-      const req = new AppRequest(
+      const req = new AcrylRequest(
         new Request('http://localhost', {
           method: 'POST',
           body: data,
@@ -450,7 +450,7 @@ describe('Body methods with caching', () => {
       const data = new FormData()
       data.append('foo', 'bar')
       data.append('file', new File(['hello'], 't.txt', { type: 'text/plain' }))
-      const req = new AppRequest(
+      const req = new AcrylRequest(
         new Request('http://localhost', {
           method: 'POST',
           body: data,
@@ -464,7 +464,7 @@ describe('Body methods with caching', () => {
 
     describe('should not break body methods after parseBody() with non-form content-type', () => {
       const createReq = () =>
-        new AppRequest(
+        new AcrylRequest(
           new Request('http://localhost', {
             method: 'POST',
             body: JSON.stringify({ event: 'push' }),
@@ -511,11 +511,11 @@ describe('Body methods with caching', () => {
     })
 
     describe('Return type', () => {
-      let req: AppRequest
+      let req: AcrylRequest
       beforeEach(() => {
         const data = new FormData()
         data.append('foo', 'bar')
-        req = new AppRequest(
+        req = new AcrylRequest(
           new Request('http://localhost', {
             method: 'POST',
             body: data,
@@ -559,7 +559,7 @@ describe('Body methods with caching', () => {
 
 describe('cloneRawRequest', () => {
   test('clones unconsumed request object', async () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         headers: {
@@ -596,7 +596,7 @@ describe('cloneRawRequest', () => {
   })
 
   test('clones consumed request object', async () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         headers: {
@@ -625,7 +625,7 @@ describe('cloneRawRequest', () => {
     const data = new FormData()
     data.append('foo', 'bar')
     data.append('file', new File(['hello'], 't.txt', { type: 'text/plain' }))
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         body: data,
@@ -655,7 +655,7 @@ describe('cloneRawRequest', () => {
       `--${boundary}--`,
       '',
     ].join('\r\n')
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         headers: {
@@ -674,7 +674,7 @@ describe('cloneRawRequest', () => {
   })
 
   test('clones request when external code populated bodyCache.json', async () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         headers: {
@@ -692,7 +692,7 @@ describe('cloneRawRequest', () => {
   })
 
   test('clones GET request without body', async () => {
-    const req = new AppRequest(
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'GET',
         headers: {
@@ -716,8 +716,8 @@ describe('cloneRawRequest', () => {
     expect(req.raw, 'cloned request should contain the same properties').toMatchObject(clonedReq)
   })
 
-  test('clones request when raw body was consumed directly without AppRequest methods', async () => {
-    const req = new AppRequest(
+  test('clones request when raw body was consumed directly without AcrylRequest methods', async () => {
+    const req = new AcrylRequest(
       new Request('http://localhost', {
         method: 'POST',
         headers: {
@@ -727,7 +727,7 @@ describe('cloneRawRequest', () => {
       })
     )
 
-    // Consume the raw request body directly, bypassing AppRequest methods
+    // Consume the raw request body directly, bypassing AcrylRequest methods
     // This means bodyCache will be empty
     await req.raw.text()
 

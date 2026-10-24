@@ -1,6 +1,6 @@
 /**
  * @module
- * CSRF Protection Middleware for App.
+ * CSRF Protection Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -30,7 +30,7 @@ const isRequestedByFormElementRe =
   /^\b(application\/x-www-form-urlencoded|multipart\/form-data|text\/plain)\b/i
 
 /**
- * CSRF Protection Middleware for App.
+ * CSRF Protection Middleware for Acryl.
  *
  * Protects against Cross-Site Request Forgery attacks by validating request origins
  * and sec-fetch-site headers. The request is allowed if either validation passes.
@@ -53,7 +53,7 @@ const isRequestedByFormElementRe =
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * // Default: both origin and sec-fetch-site validation
  * app.use('*', csrf())

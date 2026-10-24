@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { expectTypeOf } from 'vitest'
 import { hc } from './index.ts'
-import { App } from '../index.ts'
+import { Acryl } from '../index.ts'
 import { defineWebSocketHelper } from '../helper/websocket/index.ts'
 import type { TypedURL } from './types.ts'
 
@@ -9,7 +9,7 @@ import type { TypedURL } from './types.ts'
 const upgradeWebSocket = defineWebSocketHelper(async () => {})
 
 describe('WebSockets', () => {
-  const app = new App()
+  const app = new Acryl()
     .get(
       '/ws',
       upgradeWebSocket(() => ({}))
@@ -30,7 +30,7 @@ describe('WebSockets', () => {
 })
 
 describe('without the leading slash', () => {
-  const app = new App()
+  const app = new Acryl()
     .get('foo', (c) => c.json({}))
     .get('foo/bar', (c) => c.json({}))
     .get('foo/:id/baz', (c) => c.json({}))
@@ -80,7 +80,7 @@ describe('without the leading slash', () => {
 })
 
 describe('with the leading slash', () => {
-  const app = new App()
+  const app = new Acryl()
     .get('/foo', (c) => c.json({}))
     .get('/foo/bar', (c) => c.json({}))
     .get('/foo/:id/baz', (c) => c.json({}))
@@ -97,7 +97,7 @@ describe('with the leading slash', () => {
 })
 
 describe('app.all()', () => {
-  const app = new App()
+  const app = new Acryl()
     .all('/all-route', (c) => c.json({ msg: 'all methods' }))
     .get('/get-route', (c) => c.json({ msg: 'get only' }))
   const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -131,7 +131,7 @@ describe('app.all()', () => {
 })
 
 describe('with base URL pathname', () => {
-  const app = new App()
+  const app = new Acryl()
     .get('foo', (c) => c.json({}))
     .get('foo/bar', (c) => c.json({}))
     .get('foo/:id/baz', (c) => c.json({}))

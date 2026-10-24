@@ -1,6 +1,6 @@
 /** The workspace terminal routes: start, snapshot, input, resize and close, for the app's own page only. The output streams over the PTY WebSocket. */
 
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import type { WorkspacePtyRegistry } from './service.ts'
 import {
@@ -16,8 +16,8 @@ const START_KEYS = new Set(['commandId', 'cwd', 'cols', 'rows'])
  * GET `pty?id=` (the session's snapshot) and POST `pty` `{ commandId, cwd?, cols?, rows? }` (start one); POST `input` `{ id, data }`, `resize`
  * `{ id, cols, rows }` and `close` `{ id }` (idempotent) for a live session.
  */
-export function ptyRoutes(registry: WorkspacePtyRegistry, reportError: ReportError): App {
-  return new App()
+export function ptyRoutes(registry: WorkspacePtyRegistry, reportError: ReportError): Acryl {
+  return new Acryl()
     .get(WORKSPACE_PTY_PATH, ownPage, (c) => {
       const id = c.req.query('id')
       if (id === undefined || id.length === 0) return c.json(failure('invalid workspace PTY request'), 400)

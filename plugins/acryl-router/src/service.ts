@@ -1,7 +1,7 @@
 /**
- * The ACRYL router service (`ctx.router`): plugin-owned `App` mounts on Web-standard Request and Response.
+ * The ACRYL router service (`ctx.router`): plugin-owned `Acryl` mounts on Web-standard Request and Response.
  *
- * A plugin builds an ordinary `App` and mounts it with `ctx.router.route(path, app)` from its own context, so the mount disappears when that
+ * A plugin builds an ordinary `Acryl` and mounts it with `ctx.router.route(path, app)` from its own context, so the mount disappears when that
  * plugin unloads. `fetch(request)` runs a request in process: Web and Desktop serve it behind HTTP through an adapter, the terminal UI calls
  * it directly, so one handler serves every surface without opening a socket. Disposal refuses new requests, aborts in-flight ones, ends any
  * response body still streaming and waits for all of it to settle.
@@ -10,7 +10,7 @@
 import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type { ConnectionInfo, RouterBindings } from './connection.ts'
-import { App } from './core/app.ts'
+import { Acryl } from './core/app.ts'
 import type { ExecutionContext } from './core/context.ts'
 import { HTTPException } from './core/http-exception.ts'
 import { TrieRouter } from './core/router/trie-router/index.ts'
@@ -54,9 +54,9 @@ declare module '@deepseek-ai/cordis' {
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
 export const name = 'acryl-router'
 
-// Any `App`, whatever its Env and schema; the router only reads its routes.
+// Any `Acryl`, whatever its Env and schema; the router only reads its routes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type MountableApp = App<any, any, any>
+export type MountableApp = Acryl<any, any, any>
 
 interface Mount {
   readonly path: string
@@ -68,7 +68,7 @@ interface RouterState {
   errorHandler: ErrorHandler | undefined
   notFoundHandler: NotFoundHandler | undefined
   /** The app composed from the live mounts; dropped on every change and composed again by the next request. */
-  composed: App | undefined
+  composed: Acryl | undefined
   closing: boolean
 }
 
@@ -161,8 +161,8 @@ export class Router extends Service {
    * mount's code a request is in. The core's `app.route` runs first so a sub-app's own `onError` still applies to its routes.
    */
   private snapshot(path: string, app: MountableApp): Mount {
-    const copy = new App().route('/', app)
-    const tagged = new App()
+    const copy = new Acryl().route('/', app)
+    const tagged = new Acryl()
     const mount: Mount = { path, app: tagged }
     for (const route of copy.routes) {
       const inner = route.handler
@@ -291,12 +291,12 @@ export class Router extends Service {
     }
   }
 
-  private app(): App {
+  private app(): Acryl {
     if (this.state.composed !== undefined) return this.state.composed
     // The trie router, because the composed app is rebuilt after every mount change: the default matcher compiles one regular expression
     // over all routes on its first request, which grows faster than the route count (measured: 22 ms at 1000 routes, 163 ms at 2000),
     // while the trie rebuilds in about 1 ms per 1000 routes and matches as fast (scripts/bench-remount.mjs).
-    const root = new App({ strict: this.strict, router: new TrieRouter() })
+    const root = new Acryl({ strict: this.strict, router: new TrieRouter() })
     for (const mount of this.state.mounts) root.route(mount.path, mount.app)
     root.onError(this.state.errorHandler ?? this.logError)
     if (this.state.notFoundHandler !== undefined) root.notFound(this.state.notFoundHandler)

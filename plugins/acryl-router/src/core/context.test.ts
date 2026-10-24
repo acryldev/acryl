@@ -71,16 +71,16 @@ describe('Context', () => {
   })
 
   it('c.html()', async () => {
-    const res: Response = c.html('<h1>Hello! App!</h1>', 201, { 'X-Custom': 'Message' })
+    const res: Response = c.html('<h1>Hello! Acryl!</h1>', 201, { 'X-Custom': 'Message' })
     expect(res.status).toBe(201)
     expect(res.headers.get('Content-Type')).toMatch('text/html')
-    expect(await res.text()).toBe('<h1>Hello! App!</h1>')
+    expect(await res.text()).toBe('<h1>Hello! Acryl!</h1>')
     expect(res.headers.get('X-Custom')).toBe('Message')
   })
 
   it('c.html() with async', async () => {
     const resPromise: Promise<Response> = c.html(
-      new Promise<string>((resolve) => setTimeout(() => resolve('<h1>Hello! App!</h1>'), 0)),
+      new Promise<string>((resolve) => setTimeout(() => resolve('<h1>Hello! Acryl!</h1>'), 0)),
       201,
       {
         'X-Custom': 'Message',
@@ -89,7 +89,7 @@ describe('Context', () => {
     const res = await resPromise
     expect(res.status).toBe(201)
     expect(res.headers.get('Content-Type')).toMatch('text/html')
-    expect(await res.text()).toBe('<h1>Hello! App!</h1>')
+    expect(await res.text()).toBe('<h1>Hello! Acryl!</h1>')
     expect(res.headers.get('X-Custom')).toBe('Message')
   })
 

@@ -1,6 +1,6 @@
 /** The workspace git routes: five reads, and the writes the Changes panel makes (worktree, stage, unstage, commit), for the app's own page only. */
 
-import { App, type Context } from 'acryl-router'
+import { Acryl, type Context } from 'acryl-router'
 import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import {
   WORKSPACE_GIT_CHECKS_PATH,
@@ -43,7 +43,7 @@ function parseCommit(body: Record<string, unknown>): { path: string, message: st
  * GET `repo?cwd=`, `status?path=`, `checks?path=`, `search?path=&q=&mode=name|content` and `diff?path=&file=`; POST `worktree` `{ cwd, branch }`
  * (create a branch and its worktree), `stage` and `unstage` `{ path, files }`, and `commit` `{ path, message }` (never pushes).
  */
-export function gitRoutes(git: WorkspaceGit, reportError: ReportError): App {
+export function gitRoutes(git: WorkspaceGit, reportError: ReportError): Acryl {
   const answer = async (c: Context, operation: string, compute: () => Promise<object | null>): Promise<Response> => {
     try {
       const view = await compute()
@@ -66,7 +66,7 @@ export function gitRoutes(git: WorkspaceGit, reportError: ReportError): App {
     if (input === undefined) return c.json(failure(invalid), 400)
     return answer(c, operation, () => compute(input))
   }
-  return new App()
+  return new Acryl()
     // 200 with `{ repo: null }` for a directory that is not a repository: that is an ordinary answer, and a 404 would print a console error for
     // every temporary folder a chat session uses.
     .get(WORKSPACE_GIT_REPO_PATH, ownPage, c => answer(c, 'read git repo', async () => ({ repo: await git.repo(required(c, 'cwd')) })))

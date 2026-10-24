@@ -1,8 +1,8 @@
 import { logger } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Logger by Middleware', () => {
-  let app: App
+  let app: Acryl
   let log: string
 
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe('Logger by Middleware', () => {
       return new Promise((resolve) => setTimeout(resolve, time))
     }
 
-    app = new App()
+    app = new Acryl()
 
     const logFn = (str: string) => {
       log = str
@@ -127,7 +127,7 @@ describe('Logger by Middleware', () => {
 })
 
 describe('Logger by Middleware in NO_COLOR', () => {
-  let app: App
+  let app: Acryl
   let log: string
 
   beforeEach(() => {
@@ -136,7 +136,7 @@ describe('Logger by Middleware in NO_COLOR', () => {
       return new Promise((resolve) => setTimeout(resolve, time))
     }
 
-    app = new App()
+    app = new Acryl()
 
     const logFn = (str: string) => {
       log = str

@@ -1,6 +1,6 @@
 /**
  * @module
- * SmartRouter for App.
+ * SmartRouter for Acryl.
  */
 
 export { SmartRouter } from './router.ts'

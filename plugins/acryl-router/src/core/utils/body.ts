@@ -3,7 +3,7 @@
  * Body utility.
  */
 
-import type { AppRequest } from '../request.ts'
+import type { AcrylRequest } from '../request.ts'
 import { bufferToFormData } from './buffer.ts'
 
 const MAX_NESTING_DEPTH = 32
@@ -77,28 +77,28 @@ export type ParseBodyOptions = {
   dot: boolean
 }
 
-const isRawRequest = (request: AppRequest | Request): request is Request => 'headers' in request // 'headers' method exists only on Request, not on AppRequest.
+const isRawRequest = (request: AcrylRequest | Request): request is Request => 'headers' in request // 'headers' method exists only on Request, not on AcrylRequest.
 
 /**
  * Parses the body of a request based on the provided options.
  *
  * @template T - The type of the parsed body data.
- * @param {AppRequest | Request} request - The request object to parse.
+ * @param {AcrylRequest | Request} request - The request object to parse.
  * @param {Partial<ParseBodyOptions>} [options] - Options for parsing the body.
  * @returns {Promise<T>} The parsed body data.
  */
 interface ParseBody {
   <Options extends Partial<ParseBodyOptions>, T extends BodyData<Options>>(
-    request: AppRequest | Request,
+    request: AcrylRequest | Request,
     options?: Options
   ): Promise<T>
   <T extends BodyData>(
-    request: AppRequest | Request,
+    request: AcrylRequest | Request,
     options?: Partial<ParseBodyOptions>
   ): Promise<T>
 }
 export const parseBody: ParseBody = async (
-  request: AppRequest | Request,
+  request: AcrylRequest | Request,
   options = Object.create(null)
 ) => {
   const { all = false, dot = false } = options
@@ -119,12 +119,12 @@ export const parseBody: ParseBody = async (
  * Parses form data from a request.
  *
  * @template T - The type of the parsed body data.
- * @param {AppRequest | Request} request - The request object containing form data.
+ * @param {AcrylRequest | Request} request - The request object containing form data.
  * @param {ParseBodyOptions} options - Options for parsing the form data.
  * @returns {Promise<T>} The parsed body data.
  */
 async function parseFormData<T extends BodyData>(
-  request: AppRequest | Request,
+  request: AcrylRequest | Request,
   options: ParseBodyOptions
 ): Promise<T> {
   if (!isRawRequest(request) && request.bodyCache.formData) {

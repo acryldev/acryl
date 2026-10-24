@@ -1,4 +1,4 @@
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import type * as fs from 'node:fs'
 import {
   chmodSync,
@@ -26,7 +26,7 @@ vi.mock('node:fs', async (importOriginal) => {
 })
 
 describe('Serve Static Middleware', () => {
-  const app = new App<{
+  const app = new Acryl<{
     Variables: {
       path: string
     }
@@ -99,7 +99,7 @@ describe('Serve Static Middleware', () => {
         const rewriteRequestPath = vi.fn((path: string) => path)
         const onFound = vi.fn()
         const onNotFound = vi.fn()
-        const app = new App().use(
+        const app = new Acryl().use(
           '/static/*',
           serveStatic({ root: './tests/adapter/assets', rewriteRequestPath, onFound, onNotFound })
         )
@@ -136,7 +136,7 @@ describe('Serve Static Middleware', () => {
   it('Should return index.html', async () => {
     const res = await requestServer(server, { method: 'GET', path: '/static/' })
     expect(res.status).toBe(200)
-    expect(await res.text()).toBe('<h1>Hello App</h1>')
+    expect(await res.text()).toBe('<h1>Hello Acryl</h1>')
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
     expect(res.headers.get('x-custom')).toMatch(
       /Found the file at tests[\/\\]adapter[\/\\]assets[\/\\]static[\/\\]index\.html$/
@@ -146,7 +146,7 @@ describe('Serve Static Middleware', () => {
   it('Should return acryl.html', async () => {
     const res = await requestServer(server, { method: 'GET', path: '/static/acryl.html' })
     expect(res.status).toBe(200)
-    expect(await res.text()).toBe('<h1>This is App.html</h1>')
+    expect(await res.text()).toBe('<h1>This is Acryl.html</h1>')
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
   })
 
@@ -421,7 +421,7 @@ describe('Serve Static Middleware', () => {
 
       const res = await requestServer(server, { method: 'GET', path: '/static/symlink.html' })
       expect(res.status).toBe(200)
-      expect(await res.text()).toBe('<h1>Hello App</h1>')
+      expect(await res.text()).toBe('<h1>Hello Acryl</h1>')
     } finally {
       rmSync(symlinkPath, { force: true })
     }
@@ -514,7 +514,7 @@ describe('Serve Static Middleware', () => {
     ]
     rootPaths.forEach((root) => {
       describe(root, () => {
-        const app = new App()
+        const app = new Acryl()
         const server = createAdaptorServer(app)
         app.use('/static/*', serveStatic({ root }))
         app.use('/favicon.ico', serveStatic({ path: root + path.sep + 'favicon.ico' }))
@@ -523,7 +523,7 @@ describe('Serve Static Middleware', () => {
           const res = await requestServer(server, { method: 'GET', path: '/static' })
           expect(res.status).toBe(200)
           expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
-          expect(await res.text()).toBe('<h1>Hello App</h1>')
+          expect(await res.text()).toBe('<h1>Hello Acryl</h1>')
         })
 
         it('Should return correct headers and data for text', async () => {
@@ -551,7 +551,7 @@ describe('Serve Static Middleware', () => {
     rootPaths.forEach((root) => {
       optionPaths.forEach((optionPath) => {
         describe(`${root} + ${optionPath}`, () => {
-          const app = new App()
+          const app = new Acryl()
           const server = createAdaptorServer(app)
 
           app.use(
@@ -573,7 +573,7 @@ describe('Serve Static Middleware', () => {
   })
 
   describe('Path traversal security tests', () => {
-    const app = new App()
+    const app = new Acryl()
     const server = createAdaptorServer(app)
     app.use('/static/*', serveStatic({ root: './tests/adapter/assets' }))
 
@@ -613,7 +613,7 @@ describe('Serve Static Middleware', () => {
   })
 
   describe('Path mismatch security tests', () => {
-    const app = new App()
+    const app = new Acryl()
     const server = createAdaptorServer(app)
 
     app.use('/static/admin/*', async (c, next) => {
@@ -673,7 +673,7 @@ describe('Serve Static Middleware', () => {
       ['/static/%E7%82%8E.txt', 'static/炎.txt'],
       ['/static/hello%20world.txt', 'static/hello world.txt'],
     ])('Should decode URI strings - %s', async (url, filePath) => {
-      const fileApp = new App().use('/static/*', serveStatic({ root }))
+      const fileApp = new Acryl().use('/static/*', serveStatic({ root }))
       const res = await requestServer(createAdaptorServer(fileApp), {
         method: 'GET',
         path: url,
@@ -688,7 +688,7 @@ describe('Serve Static Middleware', () => {
       async (url) => {
         const onNotFound = vi.fn()
         const rewriteRequestPath = vi.fn((filePath: string) => filePath)
-        const fileApp = new App().use(
+        const fileApp = new Acryl().use(
           '/static/*',
           serveStatic({ root, onNotFound, rewriteRequestPath })
         )
@@ -706,7 +706,7 @@ describe('Serve Static Middleware', () => {
       ['/static/100%25/hello.txt', 'static/100%/hello.txt'],
       ['/static/%2Fadmin/secret.txt', 'static/%2Fadmin/secret.txt'],
     ])('Should allow percent signs when opted in - %s', async (url, filePath) => {
-      const fileApp = new App().use('/static/*', serveStatic({ root, allowPercentInPath: true }))
+      const fileApp = new Acryl().use('/static/*', serveStatic({ root, allowPercentInPath: true }))
 
       const res = await requestServer(createAdaptorServer(fileApp), { method: 'GET', path: url })
 
@@ -715,7 +715,7 @@ describe('Serve Static Middleware', () => {
     })
 
     it('Should not bypass authentication through a second decode', async () => {
-      const protectedApp = new App()
+      const protectedApp = new Acryl()
       const rewriteRequestPath = vi.fn((filePath: string) => filePath)
       protectedApp.use('/static/admin/*', async (c) => c.text('Unauthorized', 401))
       protectedApp.use('/static/*', serveStatic({ root: './tests/adapter/assets', rewriteRequestPath }))
@@ -737,7 +737,7 @@ describe('Serve Static Middleware', () => {
     })
 
     it('Should pass the routed path and context to onNotFound, then continue', async () => {
-      const fileApp = new App()
+      const fileApp = new Acryl()
       let hookPath: string | undefined
       let contextPath: string | undefined
       fileApp.use(
@@ -765,7 +765,7 @@ describe('Serve Static Middleware', () => {
     it.each(['/static/%2e%2e%5C100%.txt', '/static//100%.txt', '/static/%5C100%.txt'])(
       'Should retain path validation when opted in: %s',
       async (requestPath) => {
-        const fileApp = new App()
+        const fileApp = new Acryl()
         const rewriteRequestPath = vi.fn((requestPath: string) => requestPath)
         const onNotFound = vi.fn()
         fileApp.use(
@@ -783,7 +783,7 @@ describe('Serve Static Middleware', () => {
     )
 
     it('Should preserve the fixed path option for percent filenames', async () => {
-      const fileApp = new App()
+      const fileApp = new Acryl()
       fileApp.use('/static/*', serveStatic({ root, path: 'static/100%.txt' }))
       const res = await requestServer(createAdaptorServer(fileApp), {
         method: 'GET',
@@ -814,7 +814,7 @@ describe('Serve Static Middleware', () => {
     ;(process.platform === 'win32' ? it.skip : it)(
       'Should handle read permission errors gracefully',
       async () => {
-        const app = new App()
+        const app = new Acryl()
         app.use('/static/*', serveStatic({ root: './tests/adapter/assets' }))
         const server = createAdaptorServer(app)
         await expect(
@@ -829,7 +829,7 @@ describe('Serve Static Middleware with wrong path', () => {
   it('Should show an error when the path is wrong', async () => {
     const logSpy = vi.spyOn(console, 'error')
 
-    const app = new App<{
+    const app = new Acryl<{
       Variables: {
         path: string
       }

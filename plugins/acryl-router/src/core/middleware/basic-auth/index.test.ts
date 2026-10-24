@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { basicAuth } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Basic Auth by Middleware', () => {
   let handlerExecuted: boolean
@@ -9,7 +9,7 @@ describe('Basic Auth by Middleware', () => {
     handlerExecuted = false
   })
 
-  const app = new App()
+  const app = new Acryl()
 
   const username = 'acryl-user-a'
   const password = 'acryl-password-a'
@@ -326,7 +326,7 @@ describe('Basic Auth with onAuthSuccess', () => {
 
   it('should call onAuthSuccess callback on successful auth', async () => {
     type Env = { Variables: { custom: string } }
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
     let callbackCalled = false
     let callbackUsername = ''
 
@@ -357,7 +357,7 @@ describe('Basic Auth with onAuthSuccess', () => {
 
   it('should support async onAuthSuccess callback', async () => {
     type Env = { Variables: { asyncValue: string } }
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
 
     app.use(
       '/*',
@@ -381,7 +381,7 @@ describe('Basic Auth with onAuthSuccess', () => {
   })
 
   it('should not call onAuthSuccess on failed auth', async () => {
-    const app = new App()
+    const app = new Acryl()
     let callbackCalled = false
 
     app.use(
@@ -407,7 +407,7 @@ describe('Basic Auth with onAuthSuccess', () => {
 
   it('should work with verifyUser mode', async () => {
     type Env = { Variables: { verified: string } }
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
     let callbackUsername = ''
 
     app.use(

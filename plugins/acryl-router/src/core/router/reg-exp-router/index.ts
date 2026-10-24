@@ -1,6 +1,6 @@
 /**
  * @module
- * RegExpRouter for App.
+ * RegExpRouter for Acryl.
  */
 
 export { RegExpRouter } from './router.ts'

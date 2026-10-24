@@ -1,4 +1,4 @@
-import { AppRequest } from './request.ts'
+import { AcrylRequest } from './request.ts'
 import type { Result } from './router.ts'
 import type {
   Env,
@@ -298,7 +298,7 @@ export class Context<
   I extends Input = {},
 > {
   #rawRequest: Request
-  #req: AppRequest<P, I['out']> | undefined
+  #req: AcrylRequest<P, I['out']> | undefined
   /**
    * `.env` can get bindings (environment variables, secrets, KV namespaces, D1 database, R2 bucket etc.) in Cloudflare Workers.
    *
@@ -359,10 +359,10 @@ export class Context<
   }
 
   /**
-   * `.req` is the instance of {@link AppRequest}.
+   * `.req` is the instance of {@link AcrylRequest}.
    */
-  get req(): AppRequest<P, I['out']> {
-    this.#req ??= new AppRequest(this.#rawRequest, this.#path, this.#matchResult)
+  get req(): AcrylRequest<P, I['out']> {
+    this.#req ??= new AcrylRequest(this.#rawRequest, this.#path, this.#matchResult)
     return this.#req
   }
 
@@ -533,7 +533,7 @@ export class Context<
    * @example
    * ```ts
    * app.use('*', async (c, next) => {
-   *   c.set('message', 'App is hot!!')
+   *   c.set('message', 'Acryl is hot!!')
    *   await next()
    * })
    * ```

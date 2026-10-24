@@ -1,6 +1,6 @@
 /** A workspace's brief (spec 043 T011), for the app's own page only: GET `?id=` reads it, POST `{ id, text }` saves it and rewrites the context document. */
 
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { bodyLimit } from 'acryl-router/middleware'
 import { INVALID_JSON, ownPage, readJson, WORKSPACE_API_PREFIX } from '../private-route.ts'
 import { MAX_BRIEF_CHARS, type SharedContext } from './service.ts'
@@ -13,8 +13,8 @@ export type BriefResponse =
 
 const ID = /^[A-Za-z0-9_-]{1,64}$/u
 
-export function briefRoutes(shared: SharedContext): App {
-  return new App()
+export function briefRoutes(shared: SharedContext): Acryl {
+  return new Acryl()
     .get(WORKSPACE_BRIEF_PATH, ownPage, (c) => {
       const id = c.req.query('id') ?? ''
       if (!ID.test(id)) return c.json({ ok: false, message: 'a workspace id is required' } satisfies BriefResponse, 400)

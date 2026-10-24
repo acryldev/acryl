@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { BlockList, isIP } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { App, connectionOf, type Context as RequestContext } from 'acryl-router'
+import { Acryl, connectionOf, type Context as RequestContext } from 'acryl-router'
 import type { SettingsScope } from 'acryl-settings'
 import type { CatalogSourceManifest } from '../contracts/index.js'
 import { parseCatalogSnapshot, parseCatalogSource, validateLocalSourceRecords } from '../contracts/validate.js'
@@ -845,7 +845,7 @@ export function registerMarketRoutes(
     if (cache !== undefined) await scope.update({ catalogCache: cache })
   }
   const settingsScope = scope
-  const app = new App()
+  const app = new Acryl()
   app.get(ROUTE_STATE, async c => {
     if (generationController.signal.aborted) return abortedResponse()
     if (!routeAllowed(c)) return jsonResponse(403, { error: 'market request authority rejected' })

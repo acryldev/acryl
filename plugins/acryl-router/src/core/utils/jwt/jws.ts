@@ -21,11 +21,11 @@ type KeyAlgorithm =
 
 // Extending the JsonWebKey interface to include the "kid" property.
 // https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.4
-export interface AppJsonWebKey extends JsonWebKey {
+export interface AcrylJsonWebKey extends JsonWebKey {
   kid?: string
 }
 
-export type SignatureKey = string | AppJsonWebKey | CryptoKey
+export type SignatureKey = string | AcrylJsonWebKey | CryptoKey
 
 export async function signing(
   privateKey: SignatureKey,

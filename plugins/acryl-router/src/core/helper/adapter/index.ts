@@ -1,6 +1,6 @@
 /**
  * @module
- * Adapter Helper for App.
+ * Adapter Helper for Acryl.
  */
 
 import type { Context } from '../../context.ts'

@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
-import { App } from '../app.ts'
+import { Acryl } from '../app.ts'
 import type { Expect, Equal } from '../utils/types.ts'
 import { hc } from './client.ts'
 import {
@@ -211,7 +211,7 @@ describe('deepMerge', () => {
 })
 
 describe('parseResponse', async () => {
-  const _app = new App()
+  const _app = new Acryl()
     .get('/text', (c) => c.text('hi'))
     .get('/json', (c) => c.json({ message: 'hi' }))
     .get('/might-error-json', (c) => {

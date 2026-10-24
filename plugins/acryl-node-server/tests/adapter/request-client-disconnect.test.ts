@@ -1,5 +1,5 @@
 import type { Context } from 'acryl-router'
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { request as requestHTTP } from 'node:http'
 import type { ClientRequest, OutgoingHttpHeaders } from 'node:http'
 import type { AddressInfo } from 'node:net'
@@ -47,7 +47,7 @@ const readBodyAfterDisconnect = async (
     reportResult = resolve
   })
 
-  const app = new App<{ Bindings: HttpBindings }>()
+  const app = new Acryl<{ Bindings: HttpBindings }>()
   app.post('/', async (c) => {
     try {
       const incoming = c.env.incoming

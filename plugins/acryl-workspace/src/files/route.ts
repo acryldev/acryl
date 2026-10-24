@@ -1,6 +1,6 @@
 /** The worktree file routes: two reads and two changes, for the app's own page only. */
 
-import { App, type Context } from 'acryl-router'
+import { Acryl, type Context } from 'acryl-router'
 import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import {
   MAX_EDITABLE_BYTES,
@@ -24,7 +24,7 @@ function required(c: Context, name: string): string {
  * GET `tree?path=<worktree>&dir=<relative, empty for the root>` and `read?path=&file=`; POST `write` `{ path, file, content, expectedMtimeMs }`
  * to replace an existing file's text and `entry` `{ path, op: 'create' | 'rename' | 'delete', file, kind?, to? }` for one structural change.
  */
-export function filesRoutes(files: WorkspaceFiles, reportError: ReportError): App {
+export function filesRoutes(files: WorkspaceFiles, reportError: ReportError): Acryl {
   const answer = async (c: Context, operation: string, compute: () => Promise<object>): Promise<Response> => {
     try {
       return c.json(await compute())
@@ -34,7 +34,7 @@ export function filesRoutes(files: WorkspaceFiles, reportError: ReportError): Ap
       return c.json(failure('file request failed'), 500)
     }
   }
-  return new App()
+  return new Acryl()
     .get(WORKSPACE_FILES_TREE_PATH, ownPage, c => answer(c, 'list files', () => files.tree(required(c, 'path'), c.req.query('dir') ?? '')))
     .get(WORKSPACE_FILES_READ_PATH, ownPage, c => answer(c, 'read file', () => files.read(required(c, 'path'), required(c, 'file'))))
     .post(WORKSPACE_FILES_WRITE_PATH, ownPage, jsonBody(MAX_EDITABLE_BYTES + 64 * 1024), async (c) => {

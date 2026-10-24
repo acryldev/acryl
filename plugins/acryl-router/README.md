@@ -1,18 +1,18 @@
 # acryl-router
 
-The ACRYL router: the application API (`App`, context, middleware, validation, helpers) and one Cordis service, `ctx.router`, that
+The ACRYL router: the application API (`Acryl`, context, middleware, validation, helpers) and one Cordis service, `ctx.router`, that
 mounts a plugin's app and lets every surface call it. Part of the ACRYL Framework (specs 046 and 047).
 
 ## What it gives you
 
 ```ts
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 
 export const name = 'notes'
 export const inject = ['router']
 
 export function apply(ctx: Context): void {
-  const app = new App()
+  const app = new Acryl()
     .get('/:id', c => c.json({ id: c.req.param('id') }))
     .post('/', async c => c.json(await c.req.json(), 201))
 
@@ -36,7 +36,7 @@ export function apply(ctx: Context): void {
 
 | Import | Contents |
 | --- | --- |
-| `acryl-router` | `App`, `HTTPException`, `connectionOf`, the router service and its types |
+| `acryl-router` | `Acryl`, `HTTPException`, `connectionOf`, the router service and its types |
 | `acryl-router/middleware` | the built-in middleware, including `loopbackOnly` |
 | `acryl-router/helpers` | streaming, cookies, validation, factory, testing, connection info and more |
 | `acryl-router/client` | the typed client for a running server, without Cordis |

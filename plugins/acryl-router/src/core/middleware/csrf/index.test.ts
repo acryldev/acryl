@@ -1,5 +1,5 @@
 import type { Context } from '../../context.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { csrf } from './index.ts'
 
 const simplePostHandler = vi.fn(async (c: Context) => {
@@ -29,7 +29,7 @@ describe('CSRF by Middleware', () => {
   })
 
   describe('simple usage', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use('*', csrf())
     app.get('/form', (c) => c.html('<form></form>'))
@@ -230,7 +230,7 @@ describe('CSRF by Middleware', () => {
 
   describe('with origin option', () => {
     describe('string', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.use(
         '*',
@@ -259,7 +259,7 @@ describe('CSRF by Middleware', () => {
     })
 
     describe('string[]', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.use(
         '*',
@@ -294,7 +294,7 @@ describe('CSRF by Middleware', () => {
     })
 
     describe('IsAllowedOriginHandler', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.use(
         '*',
@@ -336,7 +336,7 @@ describe('CSRF by Middleware', () => {
     })
 
     describe('async IsAllowedOriginHandler', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.use(
         '*',
@@ -383,7 +383,7 @@ describe('CSRF by Middleware', () => {
 
   describe('with secFetchSite option', () => {
     describe('string', () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', csrf({ secFetchSite: 'same-origin' }))
       app.post('/form', simplePostHandler)
 
@@ -413,7 +413,7 @@ describe('CSRF by Middleware', () => {
     })
 
     describe('string[]', () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', csrf({ secFetchSite: ['same-origin', 'none'] }))
       app.post('/form', simplePostHandler)
 
@@ -443,7 +443,7 @@ describe('CSRF by Middleware', () => {
     })
 
     describe('IsAllowedSecFetchSiteHandler', () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '*',
         csrf({
@@ -487,7 +487,7 @@ describe('CSRF by Middleware', () => {
     })
 
     describe('async IsAllowedSecFetchSiteHandler', () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '*',
         csrf({

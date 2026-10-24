@@ -1,6 +1,6 @@
 /**
  * @module
- * Serve Static Middleware for App.
+ * Serve Static Middleware for Acryl.
  */
 
 import type { Context, Data } from '../../context.ts'

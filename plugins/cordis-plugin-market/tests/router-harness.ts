@@ -1,11 +1,11 @@
 /**
- * Test-only stand-ins for the `router` and `routerHttp` services the market injects. They compose the real core `App` from
+ * Test-only stand-ins for the `router` and `routerHttp` services the market injects. They compose the real core `Acryl` from
  * the live mounts on every request, as the router service does, and serve through the real node bridge (`serve`), wired to a
  * fake `webServer` the way the production plugins are wired to the DSH one, so a test sees the same request path a browser does.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { App, type ConnectionInfo, type MountableApp } from 'acryl-router'
+import { Acryl, type ConnectionInfo, type MountableApp } from 'acryl-router'
 import { serve } from 'acryl-router-http'
 
 export interface FakeRoute {
@@ -50,7 +50,7 @@ export function routerServices(webServer: { register(route: FakeRoute): () => vo
     },
     // The request's own signal is the abort signal, as the real router derives it from the caller's.
     fetch: async (request: Request, connection: ConnectionInfo = {}): Promise<Response> => {
-      const root = new App()
+      const root = new Acryl()
       for (const mount of mounts) root.route(mount.path, mount.app)
       return root.fetch(request, { connection }, { waitUntil: () => {}, passThroughOnException: () => {}, props: {} })
     },

@@ -4,7 +4,7 @@ import { hc } from './client/index.ts'
 import { Context } from './context.ts'
 import { createMiddleware } from './helper/factory/index.ts'
 import { testClient } from './helper/testing/index.ts'
-import { App } from './app.ts'
+import { Acryl } from './app.ts'
 import { poweredBy } from './middleware/powered-by/index.ts'
 import type {
   AddParam,
@@ -36,7 +36,7 @@ describe('Env', () => {
         FLAG: boolean
       }
     }
-    const app = new App<E>()
+    const app = new Acryl<E>()
     app.use('*', poweredBy())
     app.get('/', (c) => {
       const foo = c.get('foo')
@@ -54,7 +54,7 @@ describe('HandlerInterface', () => {
   type Payload = { foo: string; bar: boolean }
 
   describe('no path pattern', () => {
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
     const middleware: MiddlewareHandler<
       Env,
       '/',
@@ -107,7 +107,7 @@ describe('HandlerInterface', () => {
   })
 
   describe('path pattern', () => {
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
     const middleware: MiddlewareHandler<
       Env,
       '/foo',
@@ -148,7 +148,7 @@ describe('HandlerInterface', () => {
   })
 
   describe('With path parameters', () => {
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
     const middleware: MiddlewareHandler<Env, '/post/:id', {}, never> = async (_c, next) => {
       await next()
     }
@@ -176,7 +176,7 @@ describe('HandlerInterface', () => {
   })
 
   describe('Without path', () => {
-    const app = new App<Env>().basePath('/foo/:foo')
+    const app = new Acryl<Env>().basePath('/foo/:foo')
 
     it('With basePath and path params', () => {
       const route = app.get(async (c) => {
@@ -244,7 +244,7 @@ describe('HandlerInterface', () => {
     })
 
     it('should use the last registered path for a pathless handler', () => {
-      const app = new App()
+      const app = new Acryl()
         .get('/foo', (c) => c.text('foo'))
         .get('/bar', (c) => c.text('bar'))
         .post((c) => c.text('baz'))
@@ -284,7 +284,7 @@ describe('HandlerInterface', () => {
 })
 
 describe('OnHandlerInterface', () => {
-  const app = new App()
+  const app = new Acryl()
   test('Context', () => {
     const middleware: MiddlewareHandler<
       Env,
@@ -484,7 +484,7 @@ describe('TypedResponse', () => {
 
 describe('Schema', () => {
   test('Schema', () => {
-    type AppType = App<
+    type AppType = Acryl<
       Env,
       ToSchema<
         'post',
@@ -537,7 +537,7 @@ describe('Schema', () => {
 
 describe('Support c.json(undefined)', () => {
   it('Should return a correct type', () => {
-    const app = new App().get('/this/is/a/test', async (c) => {
+    const app = new Acryl().get('/this/is/a/test', async (c) => {
       return c.json(undefined)
     })
     type Actual = ExtractSchema<typeof app>
@@ -565,7 +565,7 @@ describe('Test types of Handler', () => {
   const url = 'http://localhost/'
 
   test('Env', async () => {
-    const app = new App<E>()
+    const app = new Acryl<E>()
     const handler: Handler<E> = (c) => {
       const foo = c.get('foo')
       expectTypeOf(foo).toEqualTypeOf<number>()
@@ -579,7 +579,7 @@ describe('Test types of Handler', () => {
   })
 
   test('Env, Path', async () => {
-    const app = new App<E>()
+    const app = new Acryl<E>()
     const handler: Handler<E, '/'> = (c) => {
       const foo = c.get('foo')
       expectTypeOf(foo).toEqualTypeOf<number>()
@@ -597,7 +597,7 @@ describe('Test types of Handler', () => {
   }
 
   test('Env, Path, Type', async () => {
-    const app = new App<E>()
+    const app = new Acryl<E>()
     const handler: Handler<E, '/', { in: { json: User }; out: { json: User } }> = (c) => {
       const foo = c.get('foo')
       expectTypeOf(foo).toEqualTypeOf<number>()
@@ -609,7 +609,7 @@ describe('Test types of Handler', () => {
 })
 
 describe('`json()`', () => {
-  const app = new App<{ Variables: { foo: string } }>()
+  const app = new Acryl<{ Variables: { foo: string } }>()
   app.get('/post/:id', (c) => {
     c.req.param('id')
     const id = c.req.param('id')
@@ -686,7 +686,7 @@ describe('Path parameters', () => {
 
   describe('Path parameters in app', () => {
     test('Optional parameters - /api/:a/:b?', () => {
-      const app = new App()
+      const app = new Acryl()
       const routes = app.get('/api/:a/:b?', (c) => {
         const a = c.req.param('a')
         const b = c.req.param('b')
@@ -705,7 +705,7 @@ describe('Path parameters', () => {
   })
 })
 
-describe('For AppRequest', () => {
+describe('For AcrylRequest', () => {
   type Input = {
     json: {
       id: number
@@ -1044,7 +1044,7 @@ describe('MergeSchemaPath', () => {
 
 describe('Different types using json()', () => {
   describe('no path pattern', () => {
-    const app = new App()
+    const app = new Acryl()
 
     test('Three different types', () => {
       const route = app.get((c) => {
@@ -1154,7 +1154,7 @@ describe('Different types using json()', () => {
   })
 
   describe('path pattern', () => {
-    const app = new App()
+    const app = new Acryl()
 
     test('Three different types', () => {
       const route = app.get('/foo', (c) => {
@@ -1265,7 +1265,7 @@ describe('Different types using json()', () => {
 })
 
 describe('json() in an async handler', () => {
-  const app = new App()
+  const app = new Acryl()
 
   test('json', () => {
     const route = app.get(async (c) => {
@@ -1374,25 +1374,25 @@ describe('c.var with chaining - test only types', () => {
   it('Should not throw type errors', () => {
     // app.get(handler...)
 
-    new App().get(mw1).get('/', (c) => {
+    new Acryl().get(mw1).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       return c.json(0)
     })
 
-    new App().get(mw1, mw2).get('/', (c) => {
+    new Acryl().get(mw1, mw2).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1400,7 +1400,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4, mw5).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1409,7 +1409,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4, mw5, mw6).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5, mw6).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1419,7 +1419,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1430,7 +1430,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1442,7 +1442,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1455,7 +1455,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, mw10).get('/', (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, mw10).get('/', (c) => {
       expectTypeOf(c.var.foo1).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo2).toEqualTypeOf<string>()
       expectTypeOf(c.var.foo3).toEqualTypeOf<string>()
@@ -1469,7 +1469,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(
+    new Acryl().get(
       mw1,
       mw2,
       mw3,
@@ -1491,7 +1491,7 @@ describe('c.var with chaining - test only types', () => {
       (c) => c.json(0)
     )
 
-    new App().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, (c) => {
+    new Acryl().get(mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, (c) => {
       expectTypeOf(c.req.valid('query')).toMatchTypeOf<{
         bar1: number
         bar2: number
@@ -1507,7 +1507,7 @@ describe('c.var with chaining - test only types', () => {
       return c.json(0)
     })
 
-    new App().get(
+    new Acryl().get(
       '/',
       mw1,
       mw2,
@@ -1530,7 +1530,7 @@ describe('c.var with chaining - test only types', () => {
       (c) => c.json(0)
     )
 
-    new App().get('/', mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, (c) => {
+    new Acryl().get('/', mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, (c) => {
       expectTypeOf(c.req.valid('query')).toMatchTypeOf<{
         bar1: number
         bar2: number
@@ -1552,7 +1552,7 @@ describe('c.var with chaining - test only types', () => {
       }
     }
 
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1569,7 +1569,7 @@ describe('c.var with chaining - test only types', () => {
         c.var.foo1
         return c.json(0)
       })
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1592,7 +1592,7 @@ describe('c.var with chaining - test only types', () => {
         c.var.foo2
         return c.json(0)
       })
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1621,7 +1621,7 @@ describe('c.var with chaining - test only types', () => {
         c.var.foo3
         return c.json(0)
       })
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, mw4, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1657,7 +1657,7 @@ describe('c.var with chaining - test only types', () => {
         return c.json(0)
       })
 
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, mw4, mw5, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1698,7 +1698,7 @@ describe('c.var with chaining - test only types', () => {
         c.var.foo5
         return c.json(0)
       })
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, mw4, mw5, mw6, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1745,7 +1745,7 @@ describe('c.var with chaining - test only types', () => {
         c.var.foo6
         return c.json(0)
       })
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, mw4, mw5, mw6, mw7, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1798,7 +1798,7 @@ describe('c.var with chaining - test only types', () => {
         c.var.foo7
         return c.json(0)
       })
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1858,7 +1858,7 @@ describe('c.var with chaining - test only types', () => {
         return c.json(0)
       })
 
-    new App<Env>()
+    new Acryl<Env>()
       .get('/', mw1, mw2, mw3, mw4, mw5, mw6, mw7, mw8, mw9, (c) => {
         expectTypeOf(c.get('init')).toEqualTypeOf<number>()
         expectTypeOf(c.var.init).toEqualTypeOf<number>()
@@ -1938,11 +1938,11 @@ declare module './context.ts' {
 
 describe('ContextVariableMap type tests', () => {
   it('Should not throw type errors with c.var', () => {
-    new App().get((c) => {
+    new Acryl().get((c) => {
       expectTypeOf(c.get('payload')).toEqualTypeOf<string>()
       return c.json(0)
     })
-    new App().get((c) => {
+    new Acryl().get((c) => {
       expectTypeOf(c.var.payload).toEqualTypeOf<string>()
       return c.json(0)
     })
@@ -1958,7 +1958,7 @@ describe('ContextVariableMap type tests', () => {
       await next()
     })
 
-    new App().get(middleware, (c) => {
+    new Acryl().get(middleware, (c) => {
       expectTypeOf(c.get('payload')).toEqualTypeOf<number>()
       return c.json(0)
     })
@@ -1977,7 +1977,7 @@ describe('ContextVariableMap type tests', () => {
  * It's challenge to test all cases. This is a minimal pattern.
  */
 describe('Env types with chained routes - test only types', () => {
-  const app = new App<{ Variables: { testVar: string } }>()
+  const app = new Acryl<{ Variables: { testVar: string } }>()
   it('Should not throw a type error', () => {
     app
       .post(
@@ -2002,7 +2002,7 @@ describe('Env types with chained routes - test only types', () => {
 /**
  */
 describe('Env types with validator as first middleware - test only types', () => {
-  const app = new App<{ Variables: { testVar: string } }>()
+  const app = new Acryl<{ Variables: { testVar: string } }>()
   it('Should not throw a type error', () => {
     const testApp = app.get(
       validator('json', () => {
@@ -2039,7 +2039,7 @@ describe('Env types with validator as first middleware - test only types', () =>
 })
 describe('c.req.valid() in non-last handler after validator middleware - test only types', () => {
   it('Should not throw a type error', () => {
-    const app = new App()
+    const app = new Acryl()
     app.get(
       '/',
       validator('query', () => {
@@ -2062,7 +2062,7 @@ describe('c.req.valid() in non-last handler after validator middleware - test on
 })
 
 describe('Env types with `use` middleware - test only types', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const mw1 = createMiddleware<{ Variables: { foo1: string } }>(async () => {})
   const mw2 = createMiddleware<{ Variables: { foo2: string } }>(async () => {})
@@ -2093,7 +2093,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
     }
 
     // app.use(path, handler)
-    new App<Env>()
+    new Acryl<Env>()
       .use('/:id', async (c, next) => {
         expectTypeOf(c.var.foo).toEqualTypeOf<string>()
         expectTypeOf(c.req.param('id')).toEqualTypeOf<string>()
@@ -2106,7 +2106,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x2)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2127,7 +2127,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x3)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2153,7 +2153,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x4)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2184,7 +2184,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x5)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2220,7 +2220,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x6)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2261,7 +2261,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x7)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2307,7 +2307,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x8)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2358,7 +2358,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x9)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2414,7 +2414,7 @@ describe('Env types and a path type with `app.use(path, handler...)` - test only
       })
 
     // app.use(path, handler x10)
-    new App<Env>()
+    new Acryl<Env>()
       .use(
         '/:id',
         async (c, next) => {
@@ -2475,7 +2475,7 @@ describe('Returning type from `app.use(path, mw)`', () => {
     await next()
   })
   it('Should ignore the `*` wildcard when building the schema', () => {
-    const app = new App().use('*', mw)
+    const app = new Acryl().use('*', mw)
     type Actual = ExtractSchema<typeof app>
     type Expected = {}
     type verify = Expect<Equal<Expected, Actual>>
@@ -2489,7 +2489,7 @@ describe('generic typed variables', () => {
   type Variables = {
     ok: ReturnType<typeof okHelper>
   }
-  const app = new App<{ Variables: Variables }>()
+  const app = new Acryl<{ Variables: Variables }>()
 
   it('Should set and get variables with correct types', async () => {
     const route = app
@@ -2508,7 +2508,7 @@ describe('generic typed variables', () => {
 })
 
 describe('status code', () => {
-  const app = new App()
+  const app = new Acryl()
 
   it('should only allow to return .json() with contentful status codes', async () => {
     const route = app.get('/', async (c) => c.json({}))
@@ -2586,7 +2586,7 @@ describe('RPC supports Middleware responses', () => {
     test('merge responses from 1 middleware', async () => {
       const middleware = createMiddleware(async (c) => c.json({ '400': true }, 400))
 
-      const app = new App().get('/test', middleware, (c) => c.json({ '200': true }, 200))
+      const app = new Acryl().get('/test', middleware, (c) => c.json({ '200': true }, 200))
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
       const res = await client.test.$get()
 
@@ -2602,7 +2602,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware1 = createMiddleware(async (c) => c.json({ '400': true }, 400))
       const middleware2 = createMiddleware(async (c) => c.json({ '401': true }, 401))
 
-      const app = new App().get('/test', middleware1, middleware2, (c) =>
+      const app = new Acryl().get('/test', middleware1, middleware2, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -2624,7 +2624,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware2 = createMiddleware(async (c) => c.json({ '401': true }, 401))
       const middleware3 = createMiddleware(async (c) => c.json({ '403': true }, 403))
 
-      const app = new App().get('/test', middleware1, middleware2, middleware3, (c) =>
+      const app = new Acryl().get('/test', middleware1, middleware2, middleware3, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -2650,7 +2650,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware3 = createMiddleware(async (c) => c.json({ '403': true }, 403))
       const middleware4 = createMiddleware(async (c) => c.json({ '404': true }, 404))
 
-      const app = new App().get('/test', middleware1, middleware2, middleware3, middleware4, (c) =>
+      const app = new Acryl().get('/test', middleware1, middleware2, middleware3, middleware4, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -2680,7 +2680,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware4 = createMiddleware(async (c) => c.json({ '404': true }, 404))
       const middleware5 = createMiddleware(async (c) => c.json({ '300': true }, 300))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         '/test',
         middleware1,
         middleware2,
@@ -2717,7 +2717,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware5 = createMiddleware(async (c) => c.json({ '300': true }, 300))
       const middleware6 = createMiddleware(async (c) => c.json({ '201': true }, 201))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         '/test',
         middleware1,
         middleware2,
@@ -2762,7 +2762,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware6 = createMiddleware(async (c) => c.json({ '201': true }, 201))
       const middleware7 = createMiddleware(async (c) => c.json({ '202': true }, 202))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         '/test',
         middleware1,
         middleware2,
@@ -2812,7 +2812,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware7 = createMiddleware(async (c) => c.json({ '202': true }, 202))
       const middleware8 = createMiddleware(async (c) => c.json({ '203': true }, 203))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         '/test',
         middleware1,
         middleware2,
@@ -2867,7 +2867,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware8 = createMiddleware(async (c) => c.json({ '203': true }, 203))
       const middleware9 = createMiddleware(async (c) => c.json({ '301': true }, 301))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         '/test',
         middleware1,
         middleware2,
@@ -2925,7 +2925,7 @@ describe('RPC supports Middleware responses', () => {
         await next()
       })
 
-      const app = new App().get('/test', middleware, (c) => c.json({ message: 'Hello' }, 200))
+      const app = new Acryl().get('/test', middleware, (c) => c.json({ message: 'Hello' }, 200))
       const client = hc<typeof app>('http://localhost', {
         fetch: app.request,
       })
@@ -2944,7 +2944,7 @@ describe('RPC supports Middleware responses', () => {
     test('merge responses from 1 middleware', async () => {
       const middleware = createMiddleware(async (c) => c.json({ '400': true }, 400))
 
-      const app = new App().get(middleware, (c) => c.json({ '200': true }, 200))
+      const app = new Acryl().get(middleware, (c) => c.json({ '200': true }, 200))
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
       const res = await client.index.$get()
 
@@ -2960,7 +2960,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware1 = createMiddleware(async (c) => c.json({ '400': true }, 400))
       const middleware2 = createMiddleware(async (c) => c.json({ '401': true }, 401))
 
-      const app = new App().get(middleware1, middleware2, (c) => c.json({ '200': true }, 200))
+      const app = new Acryl().get(middleware1, middleware2, (c) => c.json({ '200': true }, 200))
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
       const res = await client.index.$get()
 
@@ -2980,7 +2980,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware2 = createMiddleware(async (c) => c.json({ '401': true }, 401))
       const middleware3 = createMiddleware(async (c) => c.json({ '403': true }, 403))
 
-      const app = new App().get(middleware1, middleware2, middleware3, (c) =>
+      const app = new Acryl().get(middleware1, middleware2, middleware3, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -3006,7 +3006,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware3 = createMiddleware(async (c) => c.json({ '403': true }, 403))
       const middleware4 = createMiddleware(async (c) => c.json({ '404': true }, 404))
 
-      const app = new App().get(middleware1, middleware2, middleware3, middleware4, (c) =>
+      const app = new Acryl().get(middleware1, middleware2, middleware3, middleware4, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -3036,7 +3036,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware4 = createMiddleware(async (c) => c.json({ '404': true }, 404))
       const middleware5 = createMiddleware(async (c) => c.json({ '300': true }, 300))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         middleware1,
         middleware2,
         middleware3,
@@ -3072,7 +3072,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware5 = createMiddleware(async (c) => c.json({ '300': true }, 300))
       const middleware6 = createMiddleware(async (c) => c.json({ '201': true }, 201))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         middleware1,
         middleware2,
         middleware3,
@@ -3116,7 +3116,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware6 = createMiddleware(async (c) => c.json({ '201': true }, 201))
       const middleware7 = createMiddleware(async (c) => c.json({ '202': true }, 202))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         middleware1,
         middleware2,
         middleware3,
@@ -3165,7 +3165,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware7 = createMiddleware(async (c) => c.json({ '202': true }, 202))
       const middleware8 = createMiddleware(async (c) => c.json({ '203': true }, 203))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         middleware1,
         middleware2,
         middleware3,
@@ -3219,7 +3219,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware8 = createMiddleware(async (c) => c.json({ '203': true }, 203))
       const middleware9 = createMiddleware(async (c) => c.json({ '301': true }, 301))
 
-      const app = new App().get(
+      const app = new Acryl().get(
         middleware1,
         middleware2,
         middleware3,
@@ -3284,37 +3284,37 @@ describe('RPC supports Middleware responses', () => {
     }
 
     test('infer the correct response type with 1 middleware and 1 handler', () => {
-      const routes = new App().get('/', middleware, handler)
+      const routes = new Acryl().get('/', middleware, handler)
       type Actual = ExtractSchema<typeof routes>
       type verify = Expect<Equal<Expected, Actual>>
     })
 
     test('infer the correct response type with 1 middleware and 2 handler', () => {
-      const routes = new App().get('/', middleware, handler, handler)
+      const routes = new Acryl().get('/', middleware, handler, handler)
       type Actual = ExtractSchema<typeof routes>
       type verify = Expect<Equal<Expected, Actual>>
     })
 
     test('infer the correct response type with 2 middleware and 1 handler', () => {
-      const routes = new App().get('/', middleware, middleware, handler)
+      const routes = new Acryl().get('/', middleware, middleware, handler)
       type Actual = ExtractSchema<typeof routes>
       type verify = Expect<Equal<Expected, Actual>>
     })
 
     test('infer the correct response type with 3 middleware and 1 handler', () => {
-      const routes = new App().get('/', middleware, middleware, middleware, handler)
+      const routes = new Acryl().get('/', middleware, middleware, middleware, handler)
       type Actual = ExtractSchema<typeof routes>
       type verify = Expect<Equal<Expected, Actual>>
     })
 
     test('infer the correct response type with 4 middleware and 1 handler', () => {
-      const routes = new App().get('/', middleware, middleware, middleware, middleware, handler)
+      const routes = new Acryl().get('/', middleware, middleware, middleware, middleware, handler)
       type Actual = ExtractSchema<typeof routes>
       type verify = Expect<Equal<Expected, Actual>>
     })
 
     test('infer the correct response type with 5 middleware and 1 handler', () => {
-      const routes = new App().get(
+      const routes = new Acryl().get(
         '/',
         middleware,
         middleware,
@@ -3328,7 +3328,7 @@ describe('RPC supports Middleware responses', () => {
     })
 
     test('infer the correct response type with 6 middleware and 1 handler', () => {
-      const routes = new App().get(
+      const routes = new Acryl().get(
         '/',
         middleware,
         middleware,
@@ -3343,7 +3343,7 @@ describe('RPC supports Middleware responses', () => {
     })
 
     test('infer the correct response type with 7 middleware and 1 handler', () => {
-      const routes = new App().get(
+      const routes = new Acryl().get(
         '/',
         middleware,
         middleware,
@@ -3359,7 +3359,7 @@ describe('RPC supports Middleware responses', () => {
     })
 
     test('infer the correct response type with 8 middleware and 1 handler', () => {
-      const routes = new App().get(
+      const routes = new Acryl().get(
         '/',
         middleware,
         middleware,
@@ -3376,7 +3376,7 @@ describe('RPC supports Middleware responses', () => {
     })
 
     test('infer the correct response type with 9 middleware and 1 handler', () => {
-      const routes = new App().get(
+      const routes = new Acryl().get(
         '/',
         middleware,
         middleware,
@@ -3410,7 +3410,7 @@ describe('RPC supports Middleware responses', () => {
       }
       const middleware2 = async () => {}
 
-      const routes = new App().get('/', middleware1, middleware2, handler)
+      const routes = new Acryl().get('/', middleware1, middleware2, handler)
       type Actual = ExtractSchema<typeof routes>
       type Expected = {
         '/': {
@@ -3459,7 +3459,7 @@ describe('RPC supports Middleware responses', () => {
       }
       const middleware3 = async () => {}
 
-      const routes = new App().get('/', middleware1, middleware2, middleware3, handler)
+      const routes = new Acryl().get('/', middleware1, middleware2, middleware3, handler)
       type Actual = ExtractSchema<typeof routes>
       type Expected = {
         '/': {
@@ -3498,7 +3498,7 @@ describe('RPC supports Middleware responses', () => {
     test('merge responses from 1 middleware', async () => {
       const middleware = createMiddleware(async (c) => c.json({ '400': true }, 400))
 
-      const app = new App().on('GET', '/test', middleware, (c) => c.json({ '200': true }, 200))
+      const app = new Acryl().on('GET', '/test', middleware, (c) => c.json({ '200': true }, 200))
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
       const res = await client.test.$get()
 
@@ -3514,7 +3514,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware1 = createMiddleware(async (c) => c.json({ '400': true }, 400))
       const middleware2 = createMiddleware(async (c) => c.json({ '401': true }, 401))
 
-      const app = new App().on('GET', '/test', middleware1, middleware2, (c) =>
+      const app = new Acryl().on('GET', '/test', middleware1, middleware2, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -3538,7 +3538,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware4 = createMiddleware(async (c) => c.json({ '404': true }, 404))
       const middleware5 = createMiddleware(async (c) => c.json({ '300': true }, 300))
 
-      const app = new App().on(
+      const app = new Acryl().on(
         'GET',
         '/test',
         middleware1,
@@ -3582,7 +3582,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware8 = createMiddleware(async (c) => c.json({ '203': true }, 203))
       const middleware9 = createMiddleware(async (c) => c.json({ '301': true }, 301))
 
-      const app = new App().on(
+      const app = new Acryl().on(
         'GET',
         '/test',
         middleware1,
@@ -3636,7 +3636,7 @@ describe('RPC supports Middleware responses', () => {
     test('merge responses from 1 middleware', async () => {
       const middleware = createMiddleware(async (c) => c.json({ '400': true }, 400))
 
-      const app = new App().on(['GET'], '/test', middleware, (c) => c.json({ '200': true }, 200))
+      const app = new Acryl().on(['GET'], '/test', middleware, (c) => c.json({ '200': true }, 200))
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
       const res = await client.test.$get()
 
@@ -3652,7 +3652,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware1 = createMiddleware(async (c) => c.json({ '400': true }, 400))
       const middleware2 = createMiddleware(async (c) => c.json({ '401': true }, 401))
 
-      const app = new App().on(['GET'], '/test', middleware1, middleware2, (c) =>
+      const app = new Acryl().on(['GET'], '/test', middleware1, middleware2, (c) =>
         c.json({ '200': true }, 200)
       )
       const client = hc<typeof app>('http://localhost', { fetch: app.request })
@@ -3676,7 +3676,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware4 = createMiddleware(async (c) => c.json({ '404': true }, 404))
       const middleware5 = createMiddleware(async (c) => c.json({ '300': true }, 300))
 
-      const app = new App().on(
+      const app = new Acryl().on(
         ['GET'],
         '/test',
         middleware1,
@@ -3720,7 +3720,7 @@ describe('RPC supports Middleware responses', () => {
       const middleware8 = createMiddleware(async (c) => c.json({ '203': true }, 203))
       const middleware9 = createMiddleware(async (c) => c.json({ '301': true }, 301))
 
-      const app = new App().on(
+      const app = new Acryl().on(
         ['GET'],
         '/test',
         middleware1,
@@ -3773,7 +3773,7 @@ describe('RPC supports Middleware responses', () => {
 
 describe('Handlers returning Promise<void>', () => {
   it('should not be added to schema when calling await next() with another route', async () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/', async (c, next) => {
         await next()
       })
@@ -3786,7 +3786,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should not be added to schema when only Promise<void> handler exists', async () => {
-    const app = new App().get('/', async (c, next) => {
+    const app = new Acryl().get('/', async (c, next) => {
       await next()
     })
 
@@ -3797,7 +3797,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should set path from .use() for subsequent handlers without path', () => {
-    const app = new App()
+    const app = new Acryl()
       .use('/:id', async (c, next) => {
         await next()
       })
@@ -3825,7 +3825,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should preserve existing routes when .use() sets a new path', () => {
-    const app = new App()
+    const app = new Acryl()
       .get((c) => c.text('before'))
       .use('/:id', async (c, next) => {
         await next()
@@ -3863,7 +3863,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should work with .get() that returns Promise<void> instead of .use()', () => {
-    const app = new App()
+    const app = new Acryl()
       .get((c) => c.text('before'))
       .get('/:id', async (c, next) => {
         await next()
@@ -3901,7 +3901,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should work with .get() that returns Promise<void> instead of .use() - multiple middleware', () => {
-    const app = new App()
+    const app = new Acryl()
       .get((c) => c.text('before'))
       .get(
         '/:id',
@@ -3945,7 +3945,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should use the last registered path for a pathless handler with multiple middlewares', () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/foo', async (_c, next) => {
         await next()
       })
@@ -3969,7 +3969,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should use the last registered path for a pathless handler with mixed handlers and middlewares', () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/void', async (_c, next) => {
         await next()
       })
@@ -4000,7 +4000,7 @@ describe('Handlers returning Promise<void>', () => {
   })
 
   it('should set path as `*` when .use() is called without path argument', () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/foo', async (_c, next) => {
         await next()
       })
@@ -4029,7 +4029,7 @@ describe('Handlers returning Promise<void>', () => {
 // Regression tests for #4388: routes before .use() with explicit paths should not be dropped
 describe('Routes before .use() with explicit paths (#4388)', () => {
   it('should preserve explicit-path .get() before .use() with path', () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/', (c) => c.text('Hello from /'))
       .use('/noop', async (c, next) => {
         await next()
@@ -4050,7 +4050,7 @@ describe('Routes before .use() with explicit paths (#4388)', () => {
   })
 
   it('should preserve .get() route and infer .post() under .use() path', () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/', (c) => c.text('Hello from /'))
       .use('/:slug', async (c, next) => {
         await next()
@@ -4085,14 +4085,14 @@ describe('Routes before .use() with explicit paths (#4388)', () => {
   })
 
   it('should preserve routes through .route() wrapping', () => {
-    const inner = new App()
+    const inner = new Acryl()
       .get('/', (c) => c.text('index'))
       .use('/:slug', async (c, next) => {
         await next()
       })
       .post((c) => c.text('posted'))
 
-    const app = new App().route('/api', inner)
+    const app = new Acryl().route('/api', inner)
 
     const client = hc<typeof app>('http://localhost')
     // '/api' $get should exist (from inner .get('/'))
@@ -4102,7 +4102,7 @@ describe('Routes before .use() with explicit paths (#4388)', () => {
   })
 
   it('should preserve multiple explicit-path routes before .use()', () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/', (c) => c.text('home'))
       .get('/about', (c) => c.text('about'))
       .use('/mw', async (c, next) => {

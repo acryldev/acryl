@@ -2,11 +2,11 @@ import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { jwk } from './index.ts'
 import { setSignedCookie } from '../../helper/cookie/index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { HTTPException } from '../../http-exception.ts'
 import { encodeBase64Url } from '../../utils/encode.ts'
 import { Jwt } from '../../utils/jwt/index.ts'
-import type { AppJsonWebKey } from '../../utils/jwt/jws.ts'
+import type { AcrylJsonWebKey } from '../../utils/jwt/jws.ts'
 import { signing } from '../../utils/jwt/jws.ts'
 import { verifyWithJwks } from '../../utils/jwt/jwt.ts'
 import type { JWTPayload } from '../../utils/jwt/types.ts'
@@ -50,7 +50,7 @@ describe('JWK', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/backend-auth-or-anon/*', jwk({ keys: verify_keys, allow_anon: true, alg: ['RS256'] }))
 
@@ -117,7 +117,7 @@ describe('JWK', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth-with-keys/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
     app.use('/auth-with-keys-unicode/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
@@ -301,7 +301,7 @@ describe('JWK', () => {
         encodeBase64Url(utf8Encoder.encode(JSON.stringify(part)).buffer).replace(/=/g, '')
       const encodeSignaturePart = (buf: ArrayBufferLike): string =>
         encodeBase64Url(buf).replace(/=/g, '')
-      const jwtSignWithoutHeader = async (payload: JWTPayload, privateKey: AppJsonWebKey) => {
+      const jwtSignWithoutHeader = async (payload: JWTPayload, privateKey: AcrylJsonWebKey) => {
         const encodedPayload = encodeJwtPart(payload)
         const signaturePart = await signing(
           privateKey,
@@ -328,7 +328,7 @@ describe('JWK', () => {
         encodeBase64Url(utf8Encoder.encode(JSON.stringify(part)).buffer).replace(/=/g, '')
       const encodeSignaturePart = (buf: ArrayBufferLike): string =>
         encodeBase64Url(buf).replace(/=/g, '')
-      const jwtSignWithoutKid = async (payload: JWTPayload, privateKey: AppJsonWebKey) => {
+      const jwtSignWithoutKid = async (payload: JWTPayload, privateKey: AcrylJsonWebKey) => {
         const encodedPayload = encodeJwtPart(payload)
         const encodedHeader = encodeJwtPart({ alg: privateKey.alg, typ: 'JWT' })
         const partialToken = `${encodedHeader}.${encodedPayload}`
@@ -490,7 +490,7 @@ describe('JWK', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use(
       '/auth-with-keys/*',
@@ -587,7 +587,7 @@ describe('JWK', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth-with-keys/*', jwk({ keys: verify_keys, cookie: 'access_token', alg: ['RS256'] }))
     app.use(
@@ -734,7 +734,7 @@ describe('JWK', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
     const test_secret = 'Shhh'
 
     app.use(
@@ -826,7 +826,7 @@ describe('JWK', () => {
   })
 
   describe('Error handling with `cause`', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth-with-keys/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
     app.get('/auth-with-keys/*', (c) => c.text('Authorized'))
@@ -866,7 +866,7 @@ describe('JWK', () => {
       return Date.now() / 1000 - 100
     }
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth-with-keys-default/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
     app.use(
@@ -989,7 +989,7 @@ describe('JWK', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     // Only allow RS256
     app.use('/auth-whitelist-rs256/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
@@ -1079,7 +1079,7 @@ describe('JWK', () => {
   })
   describe('WWW-Authenticate realm', () => {
     it('Should default to the request URL', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwk({ keys: verify_keys, alg: ['RS256'] }))
       app.get('/auth/*', (c) => c.text('ok'))
 
@@ -1092,7 +1092,7 @@ describe('JWK', () => {
     })
 
     it('Should use the configured realm', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwk({ keys: verify_keys, alg: ['RS256'], realm: 'my-api' }))
       app.get('/auth/*', (c) => c.text('ok'))
 
@@ -1105,7 +1105,7 @@ describe('JWK', () => {
     })
 
     it('Should use the configured realm for an invalid token', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwk({ keys: verify_keys, alg: ['RS256'], realm: 'my-api' }))
       app.get('/auth/*', (c) => c.text('ok'))
 
@@ -1120,7 +1120,7 @@ describe('JWK', () => {
     })
 
     it('Should escape double quotes in the realm', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwk({ keys: verify_keys, alg: ['RS256'], realm: 'my "quoted" api' }))
       app.get('/auth/*', (c) => c.text('ok'))
 

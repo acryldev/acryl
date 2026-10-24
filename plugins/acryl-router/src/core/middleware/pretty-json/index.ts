@@ -1,6 +1,6 @@
 /**
  * @module
- * Pretty JSON Middleware for App.
+ * Pretty JSON Middleware for Acryl.
  */
 
 import type { MiddlewareHandler } from '../../types.ts'
@@ -28,7 +28,7 @@ interface PrettyOptions {
 const jsonContentTypeRegex = /^application\/(?:[a-z0-9._-]+\+)?json(?=$|[;\s])/i
 
 /**
- * Pretty JSON Middleware for App.
+ * Pretty JSON Middleware for Acryl.
  *
  *
  * @param options - The options for the pretty JSON middleware.
@@ -36,11 +36,11 @@ const jsonContentTypeRegex = /^application\/(?:[a-z0-9._-]+\+)?json(?=$|[;\s])/i
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(prettyJSON()) // With options: prettyJSON({ space: 4 })
  * app.get('/', (c) => {
- *   return c.json({ message: 'App!' })
+ *   return c.json({ message: 'Acryl!' })
  * })
  * ```
  */

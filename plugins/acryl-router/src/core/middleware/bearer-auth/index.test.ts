@@ -1,16 +1,16 @@
 import { expectTypeOf } from 'vitest'
 import { bearerAuth } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import type { Context, MiddlewareHandler } from '../../index.ts'
 
 describe('Bearer Auth by Middleware', () => {
-  let app: App
+  let app: Acryl
   let handlerExecuted: boolean
   let token: string
   let tokens: string[]
 
   beforeEach(async () => {
-    app = new App()
+    app = new Acryl()
     handlerExecuted = false
     token = 'abcdefg12345-._~+/='
     tokens = ['abcdefg12345-._~+/=', 'alternative']
@@ -927,12 +927,12 @@ describe('Bearer Auth by Middleware', () => {
 })
 
 describe('Bearer Auth with prefix containing regex metacharacters', () => {
-  let app: App
+  let app: Acryl
   let handlerExecuted: boolean
   const token = 'testtoken123'
 
   beforeEach(() => {
-    app = new App()
+    app = new Acryl()
     handlerExecuted = false
   })
 

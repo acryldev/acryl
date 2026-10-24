@@ -1,9 +1,9 @@
 import { compress } from './index.ts'
 import { stream, streamSSE } from '../../helper/streaming/index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Compress Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
 
   // Apply compress middleware to all routes
   app.use('*', compress())
@@ -208,7 +208,7 @@ describe('Compress Middleware', () => {
   })
 
   describe('ETag Handling', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', compress())
     app.get('/strong-etag', (c) => {
       c.header('Content-Type', 'text/plain')
@@ -260,7 +260,7 @@ describe('Compress Middleware', () => {
   })
 
   describe('Vary Header', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', compress())
     app.get('/no-vary', (c) => {
       c.header('Content-Type', 'text/plain')
@@ -348,7 +348,7 @@ describe('Compress Middleware', () => {
 
   describe('contentTypeFilter', () => {
     describe('RegExp', () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', compress({ contentTypeFilter: /^application\/json/, threshold: 0 }))
       app.get('/json', (c) => c.json({ data: 'a'.repeat(1024) }))
       app.get('/text', (c) => c.text('a'.repeat(1024)))
@@ -369,7 +369,7 @@ describe('Compress Middleware', () => {
     })
 
     describe('function', () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', compress({ contentTypeFilter: (type) => type.includes('json'), threshold: 0 }))
       app.get('/json', (c) => c.json({ data: 'a'.repeat(1024) }))
       app.get('/text', (c) => c.text('a'.repeat(1024)))
@@ -414,7 +414,7 @@ describe('Compress Middleware', () => {
 
   describe('Encoding Option', () => {
     const buildApp = (encoding: 'gzip' | 'deflate') => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', compress({ encoding }))
       app.get('/large', (c) => {
         c.header('Content-Type', 'text/plain')
@@ -449,7 +449,7 @@ describe('Compress Middleware', () => {
 
   describe('Accept-Encoding parsing', () => {
     const buildAppDefault = () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', compress())
       app.get('/large', (c) => {
         c.header('Content-Type', 'text/plain')
@@ -460,7 +460,7 @@ describe('Compress Middleware', () => {
     }
 
     const buildAppWithEncoding = (encoding: 'gzip' | 'deflate') => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', compress({ encoding }))
       app.get('/large', (c) => {
         c.header('Content-Type', 'text/plain')

@@ -1,5 +1,5 @@
 import { contextStorage, getContext, tryGetContext } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Context Storage Middleware', () => {
   type Env = {
@@ -8,11 +8,11 @@ describe('Context Storage Middleware', () => {
     }
   }
 
-  const app = new App<Env>()
+  const app = new Acryl<Env>()
 
   app.use(contextStorage())
   app.use(async (c, next) => {
-    c.set('message', 'App is hot!!')
+    c.set('message', 'Acryl is hot!!')
     await next()
   })
   app.get('/', (c) => {
@@ -29,7 +29,7 @@ describe('Context Storage Middleware', () => {
 
   it('Should get context', async () => {
     const res = await app.request('/')
-    expect(await res.text()).toBe('App is hot!!')
+    expect(await res.text()).toBe('Acryl is hot!!')
   })
 
   it('Should return undefined when context is missing', () => {
@@ -38,6 +38,6 @@ describe('Context Storage Middleware', () => {
 
   it('Should get context when available via tryGetContext', async () => {
     const res = await app.request('/optional')
-    expect(await res.text()).toBe('App is hot!!')
+    expect(await res.text()).toBe('Acryl is hot!!')
   })
 })

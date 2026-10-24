@@ -1,6 +1,6 @@
 /**
  * @module
- * JWT Auth Middleware for App.
+ * JWT Auth Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -21,7 +21,7 @@ export type JwtVariables<T = any> = {
 }
 
 /**
- * JWT Auth Middleware for App.
+ * JWT Auth Middleware for Acryl.
  *
  *
  * @param {object} options - The options for the JWT middleware.
@@ -35,7 +35,7 @@ export type JwtVariables<T = any> = {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(
  *   '/auth/*',

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as z from 'zod'
 import type { Context } from '../context.ts'
-import { App } from '../app.ts'
+import { Acryl } from '../app.ts'
 import { HTTPException } from '../http-exception.ts'
 import { cloneRawRequest } from '../request.ts'
 import type {
@@ -61,7 +61,7 @@ const zodValidator = <
 }
 
 describe('Basic', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app.get(
     '/search',
@@ -124,7 +124,7 @@ const onErrorHandler: ErrorHandler = (e, c) => {
 }
 
 describe('JSON', () => {
-  const app = new App()
+  const app = new Acryl()
   app.post(
     '/post',
     validator('json', (value) => value),
@@ -230,7 +230,7 @@ describe('JSON', () => {
 })
 
 describe('Malformed JSON', () => {
-  const app = new App()
+  const app = new Acryl()
   app.post(
     '/post',
     validator('json', (value) => value),
@@ -254,7 +254,7 @@ describe('Malformed JSON', () => {
 })
 
 describe('FormData', () => {
-  const app = new App()
+  const app = new Acryl()
   app.post(
     '/post',
     validator('form', (value) => value),
@@ -373,7 +373,7 @@ describe('FormData', () => {
 })
 
 describe('Malformed FormData request', () => {
-  const app = new App()
+  const app = new Acryl()
   app.post(
     '/post',
     validator('form', (value) => value),
@@ -399,7 +399,7 @@ describe('Malformed FormData request', () => {
 })
 
 describe('JSON and FormData', () => {
-  const app = new App()
+  const app = new Acryl()
   app.post(
     '/',
     validator('json', (value) => value),
@@ -442,7 +442,7 @@ describe('JSON and FormData', () => {
 
 describe('Cached contents', () => {
   describe('json', () => {
-    const app = new App()
+    const app = new Acryl()
     const bodyTypes = ['json', 'text', 'arrayBuffer', 'blob']
 
     for (const type of bodyTypes) {
@@ -483,7 +483,7 @@ describe('Cached contents', () => {
   })
 
   describe('Cached content', () => {
-    const app = new App()
+    const app = new Acryl()
     const bodyTypes = ['formData', 'text', 'arrayBuffer', 'blob']
 
     for (const type of bodyTypes) {
@@ -523,7 +523,7 @@ describe('Cached contents', () => {
 })
 
 describe('Validator middleware with a custom validation function', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const validationFunction: ValidationFunction<{ id: string }, { id: number }> = (v) => {
     return {
@@ -595,7 +595,7 @@ describe('Validator middleware with a custom validation function', () => {
 })
 
 describe('Validator middleware with Zod validates JSON', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const schema = z.object({
     id: z.number(),
@@ -688,7 +688,7 @@ describe('Validator middleware with Zod validates JSON', () => {
 })
 
 describe('Validator middleware with Zod validates Form data', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const schema = z.object({
     id: z.string(),
@@ -728,7 +728,7 @@ describe('Validator middleware with Zod validates Form data', () => {
 })
 
 describe('Validator middleware with Zod validates query params', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const schema = z.object({
     page: z
@@ -767,7 +767,7 @@ describe('Validator middleware with Zod validates query params', () => {
 })
 
 describe('Validator middleware with Zod validates param', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const schema = z.object({
     id: z
@@ -804,7 +804,7 @@ describe('Validator middleware with Zod validates param', () => {
 })
 
 describe('Validator middleware with Zod validates header values', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const schema = z.object({
     'x-request-id': z.string().uuid(),
@@ -842,7 +842,7 @@ describe('Validator middleware with Zod validates header values', () => {
 })
 
 describe('Validator middleware with Zod validates cookies', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const schema = z.object({
     debug: z.enum(['0', '1']),
@@ -879,7 +879,7 @@ describe('Validator middleware with Zod validates cookies', () => {
 })
 
 describe('Validator middleware with Zod multiple validators', () => {
-  const app = new App<{ Variables: { id: number } }>()
+  const app = new Acryl<{ Variables: { id: number } }>()
   const route = app.post(
     '/posts',
     zodValidator(
@@ -977,7 +977,7 @@ describe('Validator middleware with Zod multiple validators', () => {
 })
 
 it('With path parameters', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app.put(
     '/posts/:id',
@@ -1020,7 +1020,7 @@ it('With path parameters', () => {
 })
 
 it('`on`', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app.on(
     'PURGE',
@@ -1068,7 +1068,7 @@ it('`on`', () => {
 })
 
 it('`app.on`', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app
     .get(
@@ -1112,7 +1112,7 @@ it('`app.on`', () => {
 
 describe('Clone Request object', () => {
   describe('json', () => {
-    const app = new App()
+    const app = new Acryl()
     app.post(
       '/',
       validator('json', () => {
@@ -1147,7 +1147,7 @@ describe('Clone Request object', () => {
   })
 
   describe('form', () => {
-    const app = new App()
+    const app = new Acryl()
     app.post(
       '/',
       validator('form', () => {
@@ -1212,7 +1212,7 @@ describe('Clone Request object', () => {
 })
 
 describe('Async validator function', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.get(
     '/posts',
@@ -1243,7 +1243,7 @@ describe('Validator with using Zod directly', () => {
       age: z.number(),
       type: z.enum(['a']),
     })
-    const app = new App()
+    const app = new Acryl()
 
     const route = app.post(
       '/posts',
@@ -1308,7 +1308,7 @@ describe('Validator with using Zod directly', () => {
 
 describe('Transform', () => {
   it('Should be number when the type is transformed', () => {
-    const route = new App().get(
+    const route = new Acryl().get(
       '/',
       validator('query', async () => {
         return {
@@ -1347,7 +1347,7 @@ describe('Transform', () => {
   })
 
   it('Should be number and union when the type is transformed', () => {
-    const app = new App()
+    const app = new Acryl()
     const route = app.get(
       '/',
       validator('query', () => {
@@ -1400,7 +1400,7 @@ describe('Transform', () => {
 
 describe('Raw Request cloning after validation', () => {
   it('Should allow the `cloneRawRequest` util to clone the request object after validation', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.post(
       '/json-validation',
@@ -1469,7 +1469,7 @@ describe('Raw Request cloning after validation', () => {
 
 describe('Form validator prototype pollution prevention', () => {
   it('should store __proto__ as data and not misdetect inherited keys', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.post(
       '/form',
       validator('form', (value) => value),

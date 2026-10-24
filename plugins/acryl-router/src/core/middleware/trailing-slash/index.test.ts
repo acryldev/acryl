@@ -1,9 +1,9 @@
 import { appendTrailingSlash, trimTrailingSlash } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Resolve trailing slash', () => {
   describe('trimTrailingSlash middleware', () => {
-    const app = new App({ strict: true })
+    const app = new Acryl({ strict: true })
     app.use('*', trimTrailingSlash())
 
     app.get('/', async (c) => {
@@ -88,7 +88,7 @@ describe('Resolve trailing slash', () => {
   })
 
   describe('trimTrailingSlash middleware with alwaysRedirect option', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', trimTrailingSlash({ alwaysRedirect: true }))
 
     app.get('/', async (c) => {
@@ -155,7 +155,7 @@ describe('Resolve trailing slash', () => {
   })
 
   describe('appendTrailingSlash middleware', () => {
-    const app = new App({ strict: true })
+    const app = new Acryl({ strict: true })
     app.use('*', appendTrailingSlash())
 
     app.get('/', async (c) => {
@@ -257,7 +257,7 @@ describe('Resolve trailing slash', () => {
 
   describe('appendTrailingSlash middleware with skip option', () => {
     const hasExtension = (path: string): boolean => /\.\w+$/.test(path.split('/').at(-1) ?? '')
-    const app = new App({ strict: true })
+    const app = new Acryl({ strict: true })
     app.use('*', appendTrailingSlash({ skip: hasExtension }))
 
     app.get('/page/', (c) => c.text('ok'))
@@ -279,7 +279,7 @@ describe('Resolve trailing slash', () => {
 
   describe('appendTrailingSlash middleware with alwaysRedirect and skip options', () => {
     const hasExtension = (path: string): boolean => /\.\w+$/.test(path.split('/').at(-1) ?? '')
-    const app = new App()
+    const app = new Acryl()
     app.use('*', appendTrailingSlash({ alwaysRedirect: true, skip: hasExtension }))
 
     app.get('/', (c) => c.text('ok'))
@@ -313,7 +313,7 @@ describe('Resolve trailing slash', () => {
   })
 
   describe('appendTrailingSlash middleware with alwaysRedirect option', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', appendTrailingSlash({ alwaysRedirect: true }))
 
     app.get('/', async (c) => {

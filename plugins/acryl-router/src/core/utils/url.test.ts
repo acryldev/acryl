@@ -270,7 +270,7 @@ describe('url', () => {
       )
       expect(getQueryParam('http://example.com/?safe=1#&admin=true')).toEqual({ safe: '1' })
       expect(getQueryParam('http://example.com/?name=hey&age=20&tall=170', 'age')).toBe('20')
-      expect(getQueryParam('http://example.com/?App+is=a+web+framework', 'App is')).toBe(
+      expect(getQueryParam('http://example.com/?Acryl+is=a+web+framework', 'Acryl is')).toBe(
         'a web framework'
       )
       expect(getQueryParam('http://example.com/?name=%E0%A4%A', 'name')).toBe('%E0%A4%A')
@@ -330,7 +330,7 @@ describe('url', () => {
       expect(
         getQueryParams('http://example.com/?name=hey&age=20&tall=170&name=foo&age=30', 'age')
       ).toEqual(['20', '30'])
-      expect(getQueryParams('http://example.com/?App+is=a+web+framework', 'App is')).toEqual([
+      expect(getQueryParams('http://example.com/?Acryl+is=a+web+framework', 'Acryl is')).toEqual([
         'a web framework',
       ])
       expect(getQueryParams('http://example.com/?name=%E0%A4%A', 'name')).toEqual(['%E0%A4%A'])

@@ -1,6 +1,6 @@
 /**
  * @module
- * This module is the base module for the App object.
+ * This module is the base module for the Acryl object.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -43,14 +43,14 @@ const errorHandler: ErrorHandler = (err, c) => {
 
 type GetPath<E extends Env> = (request: Request, options?: { env?: E['Bindings'] }) => string
 
-export type AppOptions<E extends Env> = {
+export type AcrylOptions<E extends Env> = {
   /**
    * `router` option specifies which router to use.
    *
    *
    * @example
    * ```ts
-   * const app = new App({ router: new RegExpRouter() })
+   * const app = new Acryl({ router: new RegExpRouter() })
    * ```
    */
   router?: Router<[H, RouterRoute]>
@@ -69,7 +69,7 @@ export type AppOptions<E extends Env> = {
        *
        * @example
        * ```ts
-       * const app = new App({
+       * const app = new Acryl({
        *  getPath: (req) =>
        *   '/' + req.headers.get('host') + req.url.replace(/^https?:\/\/[^/]+(\/[^?]*)/, '$1'),
        * })
@@ -106,7 +106,7 @@ type MountOptions =
       replaceRequest?: MountReplaceRequest | false
     }
 
-class App<
+class Acryl<
   E extends Env = Env,
   S extends Schema = {},
   BasePath extends string = '/',
@@ -135,7 +135,7 @@ class App<
 
   routes: RouterRoute[] = []
 
-  constructor(options: AppOptions<E> = {}) {
+  constructor(options: AcrylOptions<E> = {}) {
     // Implementation of app.get(...handlers[]) or app.get(path, ...handlers[])
     const allMethods = [...METHODS, METHOD_NAME_ALL_LOWERCASE]
     allMethods.forEach((method) => {
@@ -186,8 +186,8 @@ class App<
     this.getPath = (strict ?? true) ? (options.getPath ?? getPath) : getPathNoStrict
   }
 
-  #clone(): App<E, S, BasePath, CurrentPath> {
-    const clone = new App<E, S, BasePath, CurrentPath>({
+  #clone(): Acryl<E, S, BasePath, CurrentPath> {
+    const clone = new Acryl<E, S, BasePath, CurrentPath>({
       router: this.router,
       getPath: this.getPath,
     })
@@ -202,17 +202,17 @@ class App<
   private errorHandler: ErrorHandler = errorHandler
 
   /**
-   * `.route()` allows grouping other App instance in routes.
+   * `.route()` allows grouping other Acryl instance in routes.
    *
    *
    * @param {string} path - base Path
-   * @param {App} app - other App instance
-   * @returns {App} routed App instance
+   * @param {Acryl} app - other Acryl instance
+   * @returns {Acryl} routed Acryl instance
    *
    * @example
    * ```ts
-   * const app = new App()
-   * const app2 = new App()
+   * const app = new Acryl()
+   * const app2 = new Acryl()
    *
    * app2.get("/user", (c) => c.text("user"))
    * app.route("/api", app2) // GET /api/user
@@ -226,8 +226,8 @@ class App<
     SubCurrentPath extends string,
   >(
     path: SubPath,
-    app: App<SubEnv, SubSchema, SubBasePath, SubCurrentPath>
-  ): App<E, MergeSchemaPath<SubSchema, MergePath<BasePath, SubPath>> | S, BasePath, CurrentPath> {
+    app: Acryl<SubEnv, SubSchema, SubBasePath, SubCurrentPath>
+  ): Acryl<E, MergeSchemaPath<SubSchema, MergePath<BasePath, SubPath>> | S, BasePath, CurrentPath> {
     const subApp = this.basePath(path)
     app.routes.map((r) => {
       let handler
@@ -249,16 +249,16 @@ class App<
    *
    *
    * @param {string} path - base Path
-   * @returns {App} changed App instance
+   * @returns {Acryl} changed Acryl instance
    *
    * @example
    * ```ts
-   * const api = new App().basePath('/api')
+   * const api = new Acryl().basePath('/api')
    * ```
    */
   basePath<SubPath extends string>(
     path: SubPath
-  ): App<E, S, MergePath<BasePath, SubPath>, MergePath<BasePath, SubPath>> {
+  ): Acryl<E, S, MergePath<BasePath, SubPath>, MergePath<BasePath, SubPath>> {
     const subApp = this.#clone()
     subApp._basePath = mergePath(this._basePath, path)
     return subApp
@@ -269,7 +269,7 @@ class App<
    *
    *
    * @param {ErrorHandler} handler - request Handler for error
-   * @returns {App} changed App instance
+   * @returns {Acryl} changed Acryl instance
    *
    * @example
    * ```ts
@@ -279,7 +279,7 @@ class App<
    * })
    * ```
    */
-  onError = (handler: ErrorHandler<E>): App<E, S, BasePath, CurrentPath> => {
+  onError = (handler: ErrorHandler<E>): Acryl<E, S, BasePath, CurrentPath> => {
     this.errorHandler = handler
     return this
   }
@@ -289,7 +289,7 @@ class App<
    *
    *
    * @param {NotFoundHandler} handler - request handler for not-found
-   * @returns {App} changed App instance
+   * @returns {Acryl} changed Acryl instance
    *
    * @example
    * ```ts
@@ -298,13 +298,13 @@ class App<
    * })
    * ```
    */
-  notFound = (handler: NotFoundHandler<E>): App<E, S, BasePath, CurrentPath> => {
+  notFound = (handler: NotFoundHandler<E>): Acryl<E, S, BasePath, CurrentPath> => {
     this.#notFoundHandler = handler
     return this
   }
 
   /**
-   * `.mount()` allows you to mount applications built with other frameworks into your App application.
+   * `.mount()` allows you to mount applications built with other frameworks into your Acryl application.
    *
    * @deprecated Use `mount()` from `acryl-router/mount` instead. `.mount()` will be removed in v5.
    *
@@ -312,24 +312,24 @@ class App<
    * @param {string} path - base Path
    * @param {Function} applicationHandler - other Request Handler
    * @param {MountOptions} [options] - options of `.mount()`
-   * @returns {App} mounted App instance
+   * @returns {Acryl} mounted Acryl instance
    *
    * @example
    * ```ts
    * import { Router as IttyRouter } from 'itty-router'
-   * import { App } from 'acryl-router'
+   * import { Acryl } from 'acrylblends'
    * // Create itty-router application
    * const ittyRouter = IttyRouter()
    * // GET /itty-router/hello
    * ittyRouter.get('/hello', () => new Response('Hello from itty-router'))
    *
-   * const app = new App()
+   * const app = new Acryl()
    * app.mount('/itty-router', ittyRouter.handle)
    * ```
    *
    * @example
    * ```ts
-   * const app = new App()
+   * const app = new Acryl()
    * // Send the request to another application without modification.
    * app.mount('/app', anotherApp, {
    *   replaceRequest: (req) => req,
@@ -340,7 +340,7 @@ class App<
     path: string,
     applicationHandler: (request: Request, ...args: any) => Response | Promise<Response>,
     options?: MountOptions
-  ): App<E, S, BasePath, CurrentPath> {
+  ): Acryl<E, S, BasePath, CurrentPath> {
     // handle options
     let replaceRequest: MountReplaceRequest | undefined
     let optionHandler: MountOptionHandler | undefined
@@ -541,4 +541,4 @@ class App<
   }
 }
 
-export { App as AppBase }
+export { Acryl as AcrylBase }

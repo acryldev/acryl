@@ -1,7 +1,7 @@
 import { describe, expectTypeOf } from 'vitest'
 import { jwt } from './index.ts'
 import type { JwtVariables } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { HTTPException } from '../../http-exception.ts'
 
 describe('JWT', () => {
@@ -12,7 +12,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256' }))
     app.use('/auth-unicode/*', jwt({ secret: 'a-secret', alg: 'HS256' }))
@@ -159,7 +159,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use(
       '/auth/*',
@@ -352,7 +352,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256', cookie: 'access_token' }))
     app.use('/auth-unicode/*', jwt({ secret: 'a-secret', alg: 'HS256', cookie: 'access_token' }))
@@ -441,7 +441,7 @@ describe('JWT', () => {
   })
 
   describe('Error handling with `cause`', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256' }))
     app.get('/auth/*', (c) => c.text('Authorized'))
@@ -473,7 +473,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use(
       '/auth/*',
@@ -526,7 +526,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use(
       '/auth/*',
@@ -578,7 +578,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use(
       '/auth/*',
@@ -630,7 +630,7 @@ describe('JWT', () => {
       handlerExecuted = false
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.use(
       '/auth/*',
@@ -683,7 +683,7 @@ describe('JWT', () => {
     })
 
     it('Should reject tokens with mismatched algorithm', async () => {
-      const app = new App()
+      const app = new Acryl()
 
       // Configure middleware to expect RS256
       app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'RS256' }))
@@ -725,7 +725,7 @@ describe('JWT', () => {
         isAdmin: boolean
       }
 
-      const app = new App<{ Variables: JwtVariables<User> }>()
+      const app = new Acryl<{ Variables: JwtVariables<User> }>()
 
       app.get('/', (c) => {
         const payload = c.var.jwtPayload
@@ -735,7 +735,7 @@ describe('JWT', () => {
     })
 
     it('Should infer unknown when JwtVariables is used without type parameter in Variables', () => {
-      const app = new App<{ Variables: JwtVariables }>()
+      const app = new Acryl<{ Variables: JwtVariables }>()
 
       app.get('/', (c) => {
         const payload = c.var.jwtPayload
@@ -746,7 +746,7 @@ describe('JWT', () => {
   })
   describe('WWW-Authenticate realm', () => {
     it('Should default to the request URL', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256' }))
       app.get('/auth/*', (c) => c.text('ok'))
 
@@ -759,7 +759,7 @@ describe('JWT', () => {
     })
 
     it('Should use the configured realm', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256', realm: 'my-api' }))
       app.get('/auth/*', (c) => c.text('ok'))
 
@@ -772,7 +772,7 @@ describe('JWT', () => {
     })
 
     it('Should use the configured realm for an invalid token', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256', realm: 'my-api' }))
       app.get('/auth/*', (c) => c.text('ok'))
 
@@ -787,7 +787,7 @@ describe('JWT', () => {
     })
 
     it('Should escape double quotes in the realm', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/auth/*', jwt({ secret: 'a-secret', alg: 'HS256', realm: 'my "quoted" api' }))
       app.get('/auth/*', (c) => c.text('ok'))
 

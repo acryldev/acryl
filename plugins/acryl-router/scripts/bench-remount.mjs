@@ -1,9 +1,9 @@
 /**
- * Latency of a request right after a mount change (the router recomposes its App) against steady state, over the built `lib/`.
+ * Latency of a request right after a mount change (the router recomposes its Acryl) against steady state, over the built `lib/`.
  * `node scripts/bench-remount.mjs [mounts] [routesPerMount]`; prints medians and p95 in microseconds.
  */
 import { Context } from '@deepseek-ai/cordis'
-import { App, apply, name } from '../lib/index.js'
+import { Acryl, apply, name } from '../lib/index.js'
 
 const mounts = Number(process.argv[2] ?? 20)
 const routes = Number(process.argv[3] ?? 10)
@@ -23,7 +23,7 @@ const root = new Context()
 root.plugin({ name, apply })
 await settle()
 const appOf = mount => {
-  const app = new App()
+  const app = new Acryl()
   for (let route = 0; route < routes; route += 1) app.get(`/r${String(route)}/:id`, c => c.text(c.req.param('id')))
   return root.router.route(`/m${String(mount)}`, app)
 }

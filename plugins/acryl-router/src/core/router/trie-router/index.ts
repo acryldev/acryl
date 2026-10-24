@@ -1,6 +1,6 @@
 /**
  * @module
- * TrieRouter for App.
+ * TrieRouter for Acryl.
  */
 
 export { TrieRouter } from './router.ts'

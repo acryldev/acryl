@@ -1,6 +1,6 @@
 /**
  * @module
- * WebSocket Helper for App.
+ * WebSocket Helper for Acryl.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

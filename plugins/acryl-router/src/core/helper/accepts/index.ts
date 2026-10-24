@@ -1,6 +1,6 @@
 /**
  * @module
- * Accepts Helper for App.
+ * Accepts Helper for Acryl.
  */
 
 export { accepts } from './accepts.ts'

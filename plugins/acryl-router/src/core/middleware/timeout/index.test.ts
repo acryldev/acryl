@@ -1,11 +1,11 @@
 import type { HTTPExceptionFunction } from './index.ts'
 import { timeout } from './index.ts'
 import type { Context } from '../../context.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { HTTPException } from '../../http-exception.ts'
 
 describe('Timeout API', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.use('/slow-endpoint', timeout(1000))
   app.use(

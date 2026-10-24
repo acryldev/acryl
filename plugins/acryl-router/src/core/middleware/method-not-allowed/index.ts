@@ -1,11 +1,11 @@
 /**
  * @module
- * Method Not Allowed Middleware for App.
+ * Method Not Allowed Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
 import { basePath, matchedRoutes } from '../../helper/route/index.ts'
-import type { App } from '../../app.ts'
+import type { Acryl } from '../../app.ts'
 import { METHOD_NAME_ALL } from '../../router.ts'
 import { TrieRouter } from '../../router/trie-router/index.ts'
 import type { Env, MiddlewareHandler } from '../../types.ts'
@@ -17,24 +17,24 @@ type MethodNotAllowedHandler<E extends Env> = (
 
 type MethodNotAllowedOptions<E extends Env> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app: App<E, any, any>
+  app: Acryl<E, any, any>
   onMethodNotAllowed?: MethodNotAllowedHandler<E>
 }
 
 /**
- * Method Not Allowed Middleware for App.
+ * Method Not Allowed Middleware for Acryl.
  *
  * Returns a `405 Method Not Allowed` response with an `Allow` header when the request path
  * matches a registered route but the request method is not supported.
  *
  * @param {MethodNotAllowedOptions} options - The options for the middleware.
- * @param {App} options.app - The App instance used by the application.
+ * @param {Acryl} options.app - The Acryl instance used by the application.
  * @param {MethodNotAllowedHandler} [options.onMethodNotAllowed] - Generates the response, including its `Allow` header.
  * @returns {MiddlewareHandler} The middleware handler function.
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(methodNotAllowed({ app }))
  *
@@ -77,7 +77,7 @@ export const methodNotAllowed = <E extends Env = Env>(
       const methodsByPath = new Map<string, Set<string>>()
 
       for (const route of options.app.routes) {
-        // App does not distinguish middleware registered with `app.use()` from handlers
+        // Acryl does not distinguish middleware registered with `app.use()` from handlers
         // registered with `app.all()`, so `ALL` routes cannot contribute to the Allow header.
         if (route.method === METHOD_NAME_ALL || route.method === 'HEAD') {
           continue
@@ -86,7 +86,7 @@ export const methodNotAllowed = <E extends Env = Env>(
         const methods = methodsByPath.get(route.path) ?? new Set<string>()
         methods.add(route.method)
 
-        // App dispatches HEAD requests to GET routes.
+        // Acryl dispatches HEAD requests to GET routes.
         if (route.method === 'GET') {
           methods.add('HEAD')
         }

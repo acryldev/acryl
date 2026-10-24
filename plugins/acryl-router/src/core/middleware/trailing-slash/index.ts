@@ -1,6 +1,6 @@
 /**
  * @module
- * Trailing Slash Middleware for App.
+ * Trailing Slash Middleware for Acryl.
  */
 
 import type { MiddlewareHandler } from '../../types.ts'
@@ -17,7 +17,7 @@ type TrimTrailingSlashOptions = {
 }
 
 /**
- * Trailing Slash Middleware for App.
+ * Trailing Slash Middleware for Acryl.
  *
  *
  * @param {TrimTrailingSlashOptions} options - The options for the middleware.
@@ -25,7 +25,7 @@ type TrimTrailingSlashOptions = {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(trimTrailingSlash())
  * app.get('/about/me/', (c) => c.text('With Trailing Slash'))
@@ -34,7 +34,7 @@ type TrimTrailingSlashOptions = {
  * @example
  * ```ts
  * // With alwaysRedirect option for wildcard routes
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(trimTrailingSlash({ alwaysRedirect: true }))
  * app.get('/my-path/*', (c) => c.text('Wildcard route'))
@@ -100,7 +100,7 @@ type AppendTrailingSlashOptions = {
 }
 
 /**
- * Append trailing slash middleware for App.
+ * Append trailing slash middleware for Acryl.
  * Append a trailing slash to the URL if it doesn't have one. For example, `/path/to/page` will be redirected to `/path/to/page/`.
  *
  *
@@ -109,7 +109,7 @@ type AppendTrailingSlashOptions = {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(appendTrailingSlash())
  * ```
@@ -117,7 +117,7 @@ type AppendTrailingSlashOptions = {
  * @example
  * ```ts
  * // With alwaysRedirect option for wildcard routes
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(appendTrailingSlash({ alwaysRedirect: true }))
  * app.get('/my-path/*', (c) => c.text('Wildcard route'))

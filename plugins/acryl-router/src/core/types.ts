@@ -1,11 +1,11 @@
 /**
  * @module
- * This module contains some type definitions for the App modules.
+ * This module contains some type definitions for the Acryl modules.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Context } from './context.ts'
-import type { AppBase } from './app-base.ts'
+import type { AcrylBase } from './app-base.ts'
 import type { CustomHeader, RequestHeader } from './utils/headers.ts'
 import type { StatusCode } from './utils/http-status.ts'
 import type {
@@ -139,7 +139,7 @@ export interface HandlerInterface<
     E2 extends Env = E,
   >(
     handler: H<E2, P, I, R>
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2]>,
     S & ToSchema<M, P, I, MergeTypedResponse<R>>,
     BasePath,
@@ -157,7 +157,7 @@ export interface HandlerInterface<
     M1 extends H<E2, P, I> = H<E2, P, I>,
   >(
     ...handlers: [H<E2, P, I> & M1, H<E3, P, I2, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3]>,
     S & ToSchema<M, P, I2, MergeTypedResponse<R> | MergeMiddlewareResponse<M1>>,
     BasePath,
@@ -174,7 +174,7 @@ export interface HandlerInterface<
   >(
     path: P,
     handler: H<E2, MergedPath, I, R>
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<MergeTypedResponse<R>, S, M, P, I, BasePath>,
     BasePath,
@@ -196,7 +196,7 @@ export interface HandlerInterface<
     M2 extends H<E3, P, I2> = H<E3, P, I2>,
   >(
     ...handlers: [H<E2, P, I> & M1, H<E3, P, I2> & M2, H<E4, P, I3, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4]>,
     S &
       ToSchema<
@@ -223,7 +223,7 @@ export interface HandlerInterface<
   >(
     path: P,
     ...handlers: [H<E2, MergedPath, I> & M1, H<E3, MergedPath, I2, R>]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       MergeTypedResponse<R> | MergeMiddlewareResponse<M1>,
@@ -255,7 +255,7 @@ export interface HandlerInterface<
     M3 extends H<E4, P, I3> = H<E4, P, I3>,
   >(
     ...handlers: [H<E2, P, I> & M1, H<E3, P, I2> & M2, H<E4, P, I3> & M3, H<E5, P, I4, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5]>,
     S &
       ToSchema<
@@ -288,7 +288,7 @@ export interface HandlerInterface<
   >(
     path: P,
     ...handlers: [H<E2, MergedPath, I> & M1, H<E3, MergedPath, I2> & M2, H<E4, MergedPath, I3, R>]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       MergeTypedResponse<R> | MergeMiddlewareResponse<M1> | MergeMiddlewareResponse<M2>,
@@ -329,7 +329,7 @@ export interface HandlerInterface<
       H<E5, P, I4> & M4,
       H<E6, P, I5, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>,
     S &
       ToSchema<
@@ -371,7 +371,7 @@ export interface HandlerInterface<
       H<E4, MergedPath, I3> & M3,
       H<E5, MergedPath, I4, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -419,7 +419,7 @@ export interface HandlerInterface<
       H<E6, P, I5> & M5,
       H<E7, P, I6, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>,
     S &
       ToSchema<
@@ -466,7 +466,7 @@ export interface HandlerInterface<
       H<E5, MergedPath, I4> & M4,
       H<E6, MergedPath, I5, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -519,7 +519,7 @@ export interface HandlerInterface<
       H<E7, P, I6> & M6,
       H<E8, P, I7, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>,
     S &
       ToSchema<
@@ -571,7 +571,7 @@ export interface HandlerInterface<
       H<E6, MergedPath, I5> & M5,
       H<E7, MergedPath, I6, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -629,7 +629,7 @@ export interface HandlerInterface<
       H<E8, P, I7> & M7,
       H<E9, P, I8, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>,
     S &
       ToSchema<
@@ -686,7 +686,7 @@ export interface HandlerInterface<
       H<E7, MergedPath, I6> & M6,
       H<E8, MergedPath, I7, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -749,7 +749,7 @@ export interface HandlerInterface<
       H<E9, P, I8> & M8,
       H<E10, P, I9, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10]>,
     S &
       ToSchema<
@@ -811,7 +811,7 @@ export interface HandlerInterface<
       H<E8, MergedPath, I7> & M7,
       H<E9, MergedPath, I8, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -879,7 +879,7 @@ export interface HandlerInterface<
       H<E10, P, I9> & M9,
       H<E11, P, I10, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11]>,
     S &
       ToSchema<
@@ -946,7 +946,7 @@ export interface HandlerInterface<
       H<E9, MergedPath, I8> & M8,
       H<E10, MergedPath, I9, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -1017,7 +1017,7 @@ export interface HandlerInterface<
       H<E10, MergedPath, I9> & M9,
       H<E11, MergedPath, I10, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     E,
     AddSchemaIfHasResponse<
       | MergeTypedResponse<R>
@@ -1047,13 +1047,13 @@ export interface HandlerInterface<
     R extends HandlerResponse<any> = any,
   >(
     ...handlers: H<E, P, I, R>[]
-  ): AppBase<E, S & ToSchema<M, P, I, MergeTypedResponse<R>>, BasePath, CurrentPath>
+  ): AcrylBase<E, S & ToSchema<M, P, I, MergeTypedResponse<R>>, BasePath, CurrentPath>
 
   // app.get(path, ...handlers[])
   <P extends string, I extends Input = BlankInput, R extends HandlerResponse<any> = any>(
     path: P,
     ...handlers: [H<E, MergePath<BasePath, P>, I, R>, ...H<E, MergePath<BasePath, P>, I, R>[]]
-  ): AppBase<
+  ): AcrylBase<
     E,
     S & ToSchema<M, MergePath<BasePath, P>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -1063,7 +1063,7 @@ export interface HandlerInterface<
   // app.get(path)
   <P extends string, R extends HandlerResponse<any> = any, I extends Input = BlankInput>(
     path: P
-  ): AppBase<
+  ): AcrylBase<
     E,
     S & ToSchema<M, MergePath<BasePath, P>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -1085,12 +1085,12 @@ export interface MiddlewareHandlerInterface<
   //// app.use(...handlers[])
   <E2 extends Env = E>(
     ...handlers: MiddlewareHandler<E2, MergePath<BasePath, '*'>>[]
-  ): AppBase<IntersectNonAnyTypes<[E, E2]>, S, BasePath, MergePath<BasePath, '*'>>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2]>, S, BasePath, MergePath<BasePath, '*'>>
 
   // app.use(handler)
   <E2 extends Env = E>(
     handler: MiddlewareHandler<E2, MergePath<BasePath, '*'>>
-  ): AppBase<IntersectNonAnyTypes<[E, E2]>, S, BasePath, MergePath<BasePath, '*'>>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2]>, S, BasePath, MergePath<BasePath, '*'>>
 
   // app.use(handler x2)
   <
@@ -1099,13 +1099,13 @@ export interface MiddlewareHandlerInterface<
     P extends string = MergePath<BasePath, '*'>,
   >(
     ...handlers: [MiddlewareHandler<E2, P>, MiddlewareHandler<E3, P>]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3]>, S, BasePath, P>
 
   // app.use(path, handler)
   <P extends string, MergedPath extends MergePath<BasePath, P>, E2 extends Env = E>(
     path: P,
     handler: MiddlewareHandler<E2, MergedPath, any, any>
-  ): AppBase<IntersectNonAnyTypes<[E, E2]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2]>, S, BasePath, MergedPath>
 
   // app.use(handler x3)
   <
@@ -1119,7 +1119,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E3, P, any, any>,
       MiddlewareHandler<E4, P, any, any>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4]>, S, BasePath, P>
 
   // app.use(path, handler x2)
   <
@@ -1130,7 +1130,7 @@ export interface MiddlewareHandlerInterface<
   >(
     path: P,
     ...handlers: [MiddlewareHandler<E2, P>, MiddlewareHandler<E3, P>]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3]>, S, BasePath, MergedPath>
 
   // app.use(handler x4)
   <
@@ -1146,7 +1146,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E4, P>,
       MiddlewareHandler<E5, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5]>, S, BasePath, P>
 
   // app.use(path, handler x3)
   <
@@ -1158,7 +1158,7 @@ export interface MiddlewareHandlerInterface<
   >(
     path: P,
     ...handlers: [MiddlewareHandler<E2, P>, MiddlewareHandler<E3, P>, MiddlewareHandler<E4, P>]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4]>, S, BasePath, MergedPath>
 
   // app.use(handler x5)
   <
@@ -1176,7 +1176,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E5, P>,
       MiddlewareHandler<E6, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>, S, BasePath, P>
 
   // app.use(path, handler x4)
   <
@@ -1194,7 +1194,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E4, P>,
       MiddlewareHandler<E5, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5]>, S, BasePath, MergedPath>
 
   // app.use(handler x6)
   <
@@ -1214,7 +1214,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E6, P>,
       MiddlewareHandler<E7, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>, S, BasePath, P>
 
   // app.use(path, handler x5)
   <
@@ -1234,7 +1234,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E5, P>,
       MiddlewareHandler<E6, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>, S, BasePath, MergedPath>
 
   // app.use(handler x7)
   <
@@ -1256,7 +1256,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E7, P>,
       MiddlewareHandler<E8, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>, S, BasePath, P>
 
   // app.use(path, handler x6)
   <
@@ -1278,7 +1278,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E6, P>,
       MiddlewareHandler<E7, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>, S, BasePath, MergedPath>
 
   // app.use(handler x8)
   <
@@ -1302,7 +1302,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E8, P>,
       MiddlewareHandler<E9, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>, S, BasePath, P>
 
   // app.use(path, handler x7)
   <
@@ -1326,7 +1326,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E7, P>,
       MiddlewareHandler<E8, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>, S, BasePath, MergedPath>
 
   // app.use(handler x9)
   <
@@ -1352,7 +1352,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E9, P>,
       MiddlewareHandler<E10, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10]>, S, BasePath, P>
 
   // app.use(path, handler x8)
   <
@@ -1378,7 +1378,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E8, P>,
       MiddlewareHandler<E9, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>, S, BasePath, MergedPath>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>, S, BasePath, MergedPath>
 
   // app.use(handler x10)
   <
@@ -1406,7 +1406,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E10, P>,
       MiddlewareHandler<E11, P>,
     ]
-  ): AppBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11]>, S, BasePath, P>
+  ): AcrylBase<IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11]>, S, BasePath, P>
 
   // app.use(path, handler x9)
   <
@@ -1434,7 +1434,7 @@ export interface MiddlewareHandlerInterface<
       MiddlewareHandler<E9, P>,
       MiddlewareHandler<E10, P>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10]>,
     S,
     BasePath,
@@ -1445,7 +1445,7 @@ export interface MiddlewareHandlerInterface<
   <P extends string, E2 extends Env = E>(
     path: P,
     ...handlers: MiddlewareHandler<E2, MergePath<BasePath, P>>[]
-  ): AppBase<E, S, BasePath, MergePath<BasePath, P>>
+  ): AcrylBase<E, S, BasePath, MergePath<BasePath, P>>
 }
 
 ////////////////////////////////////////
@@ -1471,7 +1471,7 @@ export interface OnHandlerInterface<
     method: M,
     path: P,
     handler: H<E2, MergedPath, I, R>
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2]>,
     S & ToSchema<M, MergePath<BasePath, P>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -1494,7 +1494,7 @@ export interface OnHandlerInterface<
     method: M,
     path: P,
     ...handlers: [H<E2, MergedPath, I> & M1, H<E3, MergedPath, I2, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3]>,
     S &
       ToSchema<M, MergePath<BasePath, P>, I2, MergeTypedResponse<R> | MergeMiddlewareResponse<M1>>,
@@ -1521,7 +1521,7 @@ export interface OnHandlerInterface<
     method: M,
     path: P,
     ...handlers: [H<E2, MergedPath, I> & M1, H<E3, MergedPath, I2> & M2, H<E4, MergedPath, I3, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4]>,
     S &
       ToSchema<
@@ -1561,7 +1561,7 @@ export interface OnHandlerInterface<
       H<E4, MergedPath, I3> & M3,
       H<E5, MergedPath, I4, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5]>,
     S &
       ToSchema<
@@ -1608,7 +1608,7 @@ export interface OnHandlerInterface<
       H<E5, MergedPath, I4> & M4,
       H<E6, MergedPath, I5, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>,
     S &
       ToSchema<
@@ -1660,7 +1660,7 @@ export interface OnHandlerInterface<
       H<E6, MergedPath, I5> & M5,
       H<E7, MergedPath, I6, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>,
     S &
       ToSchema<
@@ -1717,7 +1717,7 @@ export interface OnHandlerInterface<
       H<E7, MergedPath, I6> & M6,
       H<E8, MergedPath, I7, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>,
     S &
       ToSchema<
@@ -1779,7 +1779,7 @@ export interface OnHandlerInterface<
       H<E8, MergedPath, I7> & M7,
       H<E9, MergedPath, I8, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>,
     S &
       ToSchema<
@@ -1846,7 +1846,7 @@ export interface OnHandlerInterface<
       H<E9, MergedPath, I8> & M8,
       H<E10, MergedPath, I9, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10]>,
     S &
       ToSchema<
@@ -1918,7 +1918,7 @@ export interface OnHandlerInterface<
       H<E10, MergedPath, I9> & M9,
       H<E11, MergedPath, I10, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11]>,
     S &
       ToSchema<
@@ -1950,7 +1950,7 @@ export interface OnHandlerInterface<
     method: M,
     path: P,
     ...handlers: [H<E, MergePath<BasePath, P>, I, R>, ...H<E, MergePath<BasePath, P>, I, R>[]]
-  ): AppBase<
+  ): AcrylBase<
     E,
     S & ToSchema<M, MergePath<BasePath, P>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -1969,7 +1969,7 @@ export interface OnHandlerInterface<
     methods: M[],
     path: P,
     handler: H<E2, MergedPath, I, R>
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2]>,
     S & ToSchema<M, MergePath<BasePath, P>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -1992,7 +1992,7 @@ export interface OnHandlerInterface<
     methods: M[],
     path: P,
     ...handlers: [H<E2, MergedPath, I> & M1, H<E3, MergedPath, I2, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3]>,
     S &
       ToSchema<M, MergePath<BasePath, P>, I2, MergeTypedResponse<R> | MergeMiddlewareResponse<M1>>,
@@ -2019,7 +2019,7 @@ export interface OnHandlerInterface<
     methods: M[],
     path: P,
     ...handlers: [H<E2, MergedPath, I> & M1, H<E3, MergedPath, I2> & M2, H<E4, MergedPath, I3, R>]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4]>,
     S &
       ToSchema<
@@ -2059,7 +2059,7 @@ export interface OnHandlerInterface<
       H<E4, MergedPath, I3> & M3,
       H<E5, MergedPath, I4, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5]>,
     S &
       ToSchema<
@@ -2106,7 +2106,7 @@ export interface OnHandlerInterface<
       H<E5, MergedPath, I4> & M4,
       H<E6, MergedPath, I5, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6]>,
     S &
       ToSchema<
@@ -2158,7 +2158,7 @@ export interface OnHandlerInterface<
       H<E6, MergedPath, I5> & M5,
       H<E7, MergedPath, I6, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7]>,
     S &
       ToSchema<
@@ -2215,7 +2215,7 @@ export interface OnHandlerInterface<
       H<E7, MergedPath, I6> & M6,
       H<E8, MergedPath, I7, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8]>,
     S &
       ToSchema<
@@ -2277,7 +2277,7 @@ export interface OnHandlerInterface<
       H<E8, MergedPath, I7> & M7,
       H<E9, MergedPath, I8, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9]>,
     S &
       ToSchema<
@@ -2344,7 +2344,7 @@ export interface OnHandlerInterface<
       H<E9, MergedPath, I8> & M8,
       H<E10, MergedPath, I9, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10]>,
     S &
       ToSchema<
@@ -2416,7 +2416,7 @@ export interface OnHandlerInterface<
       H<E10, MergedPath, I9> & M9,
       H<E11, MergedPath, I10, R>,
     ]
-  ): AppBase<
+  ): AcrylBase<
     IntersectNonAnyTypes<[E, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11]>,
     S &
       ToSchema<
@@ -2448,7 +2448,7 @@ export interface OnHandlerInterface<
     methods: M[],
     path: P,
     ...handlers: [H<E, MergePath<BasePath, P>, I, R>, ...H<E, MergePath<BasePath, P>, I, R>[]]
-  ): AppBase<
+  ): AcrylBase<
     E,
     S & ToSchema<M, MergePath<BasePath, P>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -2466,7 +2466,7 @@ export interface OnHandlerInterface<
     methods: M | M[],
     paths: Ps,
     ...handlers: H<E2, MergePath<BasePath, Ps[number]>, I, R>[]
-  ): AppBase<
+  ): AcrylBase<
     E,
     S & ToSchema<M, MergePath<BasePath, Ps[number]>, I, MergeTypedResponse<R>>,
     BasePath,
@@ -2717,7 +2717,7 @@ export type ParamKeyToRecord<T extends string> = T extends `${infer R}?`
 
 ////////////////////////////////////////
 //////                            //////
-/////       For AppRequest       //////
+/////       For AcrylRequest       //////
 //////                            //////
 ////////////////////////////////////////
 
@@ -2739,7 +2739,7 @@ export type RemoveQuestion<T> = T extends `${infer R}?` ? R : T
 ////////////////////////////////////////
 
 export type ExtractSchema<T> = UnionToIntersection<
-  T extends AppBase<infer _, infer S, any, any> ? S : never
+  T extends AcrylBase<infer _, infer S, any, any> ? S : never
 >
 
 export type ExtractSchemaForStatusCode<T, Status extends number> = {

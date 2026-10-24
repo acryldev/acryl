@@ -1,6 +1,6 @@
 /**
  * @module
- * Compress Middleware for App.
+ * Compress Middleware for Acryl.
  */
 
 import type { MiddlewareHandler } from '../../types.ts'
@@ -46,7 +46,7 @@ const selectEncoding = (
 const varyAcceptEncodingRegExp = /(?:^|,)\s*accept-encoding\s*(?:,|$)/i
 
 /**
- * Compress Middleware for App.
+ * Compress Middleware for Acryl.
  *
  *
  * @param {CompressionOptions} [options] - The options for the compress middleware.
@@ -57,7 +57,7 @@ const varyAcceptEncodingRegExp = /(?:^|,)\s*accept-encoding\s*(?:,|$)/i
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(compress())
  *

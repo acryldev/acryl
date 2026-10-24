@@ -7,7 +7,7 @@
 
 import { Context } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
-import { App, apply as routerApply, name as routerName } from 'acryl-router'
+import { Acryl, apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply as httpApply, inject as httpInject, name as httpName } from '../src/index.ts'
 
@@ -28,7 +28,7 @@ const notes = {
   inject: ['router'],
   apply(ctx: Context): void {
     const store = new Map<string, string>()
-    const app = new App()
+    const app = new Acryl()
       .post('/:id', async c => {
         const text = await c.req.text()
         store.set(c.req.param('id'), text)

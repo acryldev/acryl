@@ -1,10 +1,10 @@
 import { languageDetector } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { DEFAULT_OPTIONS, detectors, normalizeLanguage } from './language.ts'
 
 describe('languageDetector', () => {
   const createTestApp = (options = {}) => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/*', languageDetector(options))
 
@@ -292,7 +292,7 @@ describe('languageDetector', () => {
     })
 
     it('should detect language from original URL when getPath modifies the path', async () => {
-      const app = new App({
+      const app = new Acryl({
         getPath: (req) => {
           const url = new URL(req.url)
           let pathname = url.pathname

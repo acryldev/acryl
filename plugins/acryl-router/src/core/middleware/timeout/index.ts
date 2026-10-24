@@ -1,6 +1,6 @@
 /**
  * @module
- * Timeout Middleware for App.
+ * Timeout Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -14,7 +14,7 @@ const defaultTimeoutException = new HTTPException(504, {
 })
 
 /**
- * Timeout Middleware for App.
+ * Timeout Middleware for Acryl.
  *
  * @param {number} duration - The timeout duration in milliseconds.
  * @param {HTTPExceptionFunction | HTTPException} [exception=defaultTimeoutException] - The exception to throw when the timeout occurs. Can be a function that returns an HTTPException or an HTTPException object.
@@ -22,7 +22,7 @@ const defaultTimeoutException = new HTTPException(504, {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(
  *   '/long-request',

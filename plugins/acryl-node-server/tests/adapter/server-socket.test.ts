@@ -1,4 +1,4 @@
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { bodyLimit } from 'acryl-router/middleware'
 import fs from 'node:fs'
 import { request as requestHTTP } from 'node:http'
@@ -19,7 +19,7 @@ import { app } from './app.ts'
 const nodeVersionV20OrLater = parseInt(process.version.slice(1).split('.')[0]) >= 20
 
 const createBodyLimitApp = () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.post(
     '/',

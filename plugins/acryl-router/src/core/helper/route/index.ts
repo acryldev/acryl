@@ -11,7 +11,7 @@ import { getPattern, splitRoutingPath } from '../../utils/url.ts'
  *
  * @example
  * ```ts
- * import { matchedRoutes } from 'acryl-router/helpers'
+ * import { matchedRoutes } from 'acrylblends/route'
  *
  * app.use('*', async function logger(c, next) {
  *   await next()
@@ -42,7 +42,7 @@ export const matchedRoutes = (c: Context): RouterRoute[] =>
  *
  * @example
  * ```ts
- * import { routePath } from 'acryl-router/helpers'
+ * import { routePath } from 'acrylblends/route'
  *
  * app.use('*', (c, next) => {
  *   console.log(routePath(c)) // '*'
@@ -67,11 +67,11 @@ export const routePath = (c: Context, index?: number): string =>
  *
  * @example
  * ```ts
- * import { baseRoutePath } from 'acryl-router/helpers'
+ * import { baseRoutePath } from 'acrylblends/route'
  *
- * const app = new App()
+ * const app = new Acryl()
  *
- * const subApp = new App()
+ * const subApp = new Acryl()
  * subApp.get('/posts/:id', (c) => {
  *   return c.text(baseRoutePath(c)) // '/:sub'
  * })
@@ -91,11 +91,11 @@ export const baseRoutePath = (c: Context, index?: number): string =>
  *
  * @example
  * ```ts
- * import { basePath } from 'acryl-router/helpers'
+ * import { basePath } from 'acrylblends/route'
  *
- * const app = new App()
+ * const app = new Acryl()
  *
- * const subApp = new App()
+ * const subApp = new Acryl()
  * subApp.get('/posts/:id', (c) => {
  *   return c.text(basePath(c)) // '/requested-sub-app-path'
  * })

@@ -1,6 +1,6 @@
 /**
  * @module
- * Logger Middleware for App.
+ * Logger Middleware for Acryl.
  */
 
 import type { MiddlewareHandler } from '../../types.ts'
@@ -64,7 +64,7 @@ async function log(
 }
 
 /**
- * Logger Middleware for App.
+ * Logger Middleware for Acryl.
  *
  *
  * @param {PrintFunc} [fn=console.log] - Optional function for customized logging behavior.
@@ -72,10 +72,10 @@ async function log(
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(logger())
- * app.get('/', (c) => c.text('Hello App!'))
+ * app.get('/', (c) => c.text('Hello Acryl!'))
  * ```
  */
 export const logger = (fn: PrintFunc = console.log): MiddlewareHandler => {

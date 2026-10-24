@@ -3,7 +3,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import type {} from 'acryl-state'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
@@ -12,7 +12,7 @@ export const inject = ['router', 'state']
 
 export function apply(ctx: Context): void {
   const visits = ctx.state.cell('starter.visits', 0)
-  const api = new App().get('/hello/:who', c => {
+  const api = new Acryl().get('/hello/:who', c => {
     visits.update(count => count + 1)
     return c.json({ hello: c.req.param('who'), visits: visits.get() })
   })

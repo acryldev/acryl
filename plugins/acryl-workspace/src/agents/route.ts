@@ -1,6 +1,6 @@
 /** The custom agent catalog and the agent settings, for the app's own page only. */
 
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import type { AgentCatalog } from './catalog.ts'
 import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './contract.ts'
@@ -12,8 +12,8 @@ import type { AgentSettings } from './settings.ts'
  * GET `agents` (the catalog) and POST `agents` `{ agent }` to add one, a refusal being a 400 whose message says what to fix; POST `agents/remove`
  * `{ id }` (idempotent); GET `agents/settings` (with a fresh check of which programs are installed) and POST one change, answered with the whole view.
  */
-export function agentRoutes(catalog: AgentCatalog, settings: AgentSettings, reportError: ReportError): App {
-  return new App()
+export function agentRoutes(catalog: AgentCatalog, settings: AgentSettings, reportError: ReportError): Acryl {
+  return new Acryl()
     .get(WORKSPACE_AGENTS_PATH, ownPage, c => c.json({ agents: catalog.list() }))
     .post(WORKSPACE_AGENTS_PATH, ownPage, jsonBody(), async (c) => {
       const body = await readJson(c)

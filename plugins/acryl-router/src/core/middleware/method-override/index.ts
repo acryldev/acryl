@@ -1,16 +1,16 @@
 /**
  * @module
- * Method Override Middleware for App.
+ * Method Override Middleware for Acryl.
  */
 
 import type { Context, ExecutionContext } from '../../context.ts'
-import type { App } from '../../app.ts'
+import type { Acryl } from '../../app.ts'
 import type { MiddlewareHandler } from '../../types.ts'
 import { parseBody } from '../../utils/body.ts'
 
 type MethodOverrideOptions = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app: App<any, any, any>
+  app: Acryl<any, any, any>
 } & (
   | {
       // Default is 'form' and the value is `_method`
@@ -33,11 +33,11 @@ type MethodOverrideOptions = {
 const DEFAULT_METHOD_FORM_NAME = '_method'
 
 /**
- * Method Override Middleware for App.
+ * Method Override Middleware for Acryl.
  *
  *
  * @param {MethodOverrideOptions} options - The options for the method override middleware.
- * @param {App} options.app - The instance of App is used in your application.
+ * @param {Acryl} options.app - The instance of Acryl is used in your application.
  * @param {string} [options.form=_method] - Form key with a value containing the method name.
  * @param {string} [options.header] - Header name with a value containing the method name.
  * @param {string} [options.query] - Query parameter key with a value containing the method name.
@@ -45,7 +45,7 @@ const DEFAULT_METHOD_FORM_NAME = '_method'
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * // If no options are specified, the value of `_method` in the form,
  * // e.g. DELETE, is used as the method.

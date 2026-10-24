@@ -1,5 +1,5 @@
 /**
- * @description This file is a modified version of `fetch-result-please` (`ofetch`), minimalized and adapted to App's custom needs.
+ * @description This file is a modified version of `fetch-result-please` (`ofetch`), minimalized and adapted to Acryl's custom needs.
  *
  * @link https://www.npmjs.com/package/fetch-result-please
  */

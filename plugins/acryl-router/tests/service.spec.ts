@@ -7,7 +7,7 @@
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 import { streamSSE } from '../src/helpers/index.ts'
-import { apply, App, Config, connectionOf, HTTPException, name, type Router } from '../src/index.ts'
+import { apply, Acryl, Config, connectionOf, HTTPException, name, type Router } from '../src/index.ts'
 
 const PENDING = 0 as FiberState.PENDING
 const ACTIVE = 2 as FiberState.ACTIVE
@@ -42,7 +42,7 @@ function consumer(path: string, label: string) {
     name: `consumer${label}`,
     inject: ['router'],
     apply(ctx: Context): void {
-      ctx.router.route('/', new App().get(path, c => c.text(label)))
+      ctx.router.route('/', new Acryl().get(path, c => c.text(label)))
     },
   }
 }
@@ -52,7 +52,7 @@ const get = (router: Router, path: string): Promise<Response> => router.fetch(ne
 describe('acryl-router mounts', () => {
   it('serves a mounted app under its path, with the app\'s own routes, middleware and error handler', async () => {
     const { router } = await mountRouter()
-    const api = new App()
+    const api = new Acryl()
       .use(async (c, next) => { await next(); c.header('x-api', 'yes') })
       .get('/items/:id', c => c.json({ id: c.req.param('id') }))
       .get('/boom', () => { throw new Error('boom') })
@@ -70,28 +70,28 @@ describe('acryl-router mounts', () => {
 
   it('removes a mount with its remover, idempotently, and keeps the others', async () => {
     const { router } = await mountRouter()
-    const removeA = router.route('/', new App().get('/a', c => c.text('a')))
-    router.route('/', new App().get('/b', c => c.text('b')))
+    const removeA = router.route('/', new Acryl().get('/a', c => c.text('a')))
+    router.route('/', new Acryl().get('/b', c => c.text('b')))
     expect((await get(router, '/a')).status).toBe(200)
     removeA()
     removeA()
     expect((await get(router, '/a')).status).toBe(404)
     expect(await (await get(router, '/b')).text()).toBe('b')
-    router.route('/', new App().get('/a', c => c.text('a2')))
+    router.route('/', new Acryl().get('/a', c => c.text('a2')))
     expect(await (await get(router, '/a')).text()).toBe('a2')
   })
 
   it('runs mounts in the order they were made, so an earlier mount\'s middleware wraps a later mount\'s routes', async () => {
     const { router } = await mountRouter()
-    router.route('/', new App().use('/guarded/*', async c => c.text('denied', 401)))
-    router.route('/', new App().get('/guarded/x', c => c.text('secret')).get('/open', c => c.text('open')))
+    router.route('/', new Acryl().use('/guarded/*', async c => c.text('denied', 401)))
+    router.route('/', new Acryl().get('/guarded/x', c => c.text('secret')).get('/open', c => c.text('open')))
     expect((await get(router, '/guarded/x')).status).toBe(401)
     expect(await (await get(router, '/open')).text()).toBe('open')
   })
 
   it('takes one router-wide error handler and one not-found handler, owned by the caller', async () => {
     const { router } = await mountRouter()
-    router.route('/', new App().get('/boom', () => { throw new Error('boom') }).get('/teapot', () => { throw new HTTPException(418, { message: 'short' }) }))
+    router.route('/', new Acryl().get('/boom', () => { throw new Error('boom') }).get('/teapot', () => { throw new HTTPException(418, { message: 'short' }) }))
     expect((await get(router, '/boom')).status).toBe(500)
     expect((await get(router, '/teapot')).status).toBe(418)
 
@@ -109,13 +109,13 @@ describe('acryl-router mounts', () => {
     const ctx = root()
     ctx.plugin(provider, { trailingSlash: 'ignore', disposeGraceMs: 2000 })
     await settle()
-    ctx.router.route('/', new App().get('/a', c => c.text('a')))
+    ctx.router.route('/', new Acryl().get('/a', c => c.text('a')))
     expect((await get(ctx.router, '/a/')).status).toBe(200)
   })
 
   it('hands the transport\'s connection info to the handler and gives an in-process call an empty one', async () => {
     const { router } = await mountRouter()
-    router.route('/', new App().get('/who', c => c.json({ remote: connectionOf(c).remoteAddress ?? null, port: connectionOf(c).localPort ?? null })))
+    router.route('/', new Acryl().get('/who', c => c.json({ remote: connectionOf(c).remoteAddress ?? null, port: connectionOf(c).localPort ?? null })))
     const over = await router.fetch(new Request('http://acryl.test/who'), { remoteAddress: '127.0.0.1', localPort: 4000 })
     expect(await over.json()).toEqual({ remote: '127.0.0.1', port: 4000 })
     const inProcess = await router.request('/who')
@@ -154,7 +154,7 @@ describe('acryl-router lifecycle through Cordis', () => {
 
   it('labels a mount by its path with one child per route, so no label grows with the app (an inspector caps label length)', async () => {
     const { ctx, router } = await mountRouter()
-    const big = new App().use('/api/*', async (_c, next) => { await next() })
+    const big = new Acryl().use('/api/*', async (_c, next) => { await next() })
     for (let i = 0; i < 60; i += 1) big.get(`/api/a-fairly-long-resource-name-${String(i)}`, c => c.text('ok'))
     const fiber = ctx.plugin({ name: 'big', inject: ['router'], apply: (inner: Context) => { inner.router.route('/', big) } })
     await settle()
@@ -192,7 +192,7 @@ describe('acryl-router lifecycle through Cordis', () => {
 
   it('serves the routes an app had when it was mounted, whatever else changes later', async () => {
     const { ctx, router } = await mountRouter()
-    const app = new App().get('/early', c => c.text('early'))
+    const app = new Acryl().get('/early', c => c.text('early'))
     router.route('/', app)
     app.get('/late', c => c.text('late'))
     expect((await get(router, '/early')).status).toBe(200)
@@ -223,7 +223,7 @@ describe('acryl-router lifecycle through Cordis', () => {
       name: 'counting',
       inject: ['router'],
       apply(inner: Context): void {
-        inner.router.route('/', new App().use(async (_c, next) => { calls += 1; await next() }).get('/count', c => c.text(String(calls))))
+        inner.router.route('/', new Acryl().use(async (_c, next) => { calls += 1; await next() }).get('/count', c => c.text(String(calls))))
       },
     }
     for (let round = 0; round < 10; round += 1) {
@@ -261,7 +261,7 @@ describe('acryl-router lifecycle through Cordis', () => {
     await settle()
     const router = ctx.router
     let aborted = false
-    router.route('/', new App().get('/slow', async c => {
+    router.route('/', new Acryl().get('/slow', async c => {
       await new Promise<void>((_resolve, reject) => { c.req.raw.signal.addEventListener('abort', () => { aborted = true; reject(new Error('aborted')) }, { once: true }) })
       return c.text('late')
     }))
@@ -278,7 +278,7 @@ describe('acryl-router lifecycle through Cordis', () => {
   it('forwards the caller\'s own abort to the handler signal', async () => {
     const { router } = await mountRouter()
     let seen = false
-    router.route('/', new App().get('/slow', async c => {
+    router.route('/', new Acryl().get('/slow', async c => {
       await new Promise<void>((_resolve, reject) => { c.req.raw.signal.addEventListener('abort', () => { seen = true; reject(new Error('aborted')) }, { once: true }) })
       return c.text('x')
     }))
@@ -295,7 +295,7 @@ describe('acryl-router lifecycle through Cordis', () => {
     const fiber = ctx.plugin(provider, config)
     await settle()
     let cleaned = false
-    ctx.router.route('/', new App().get('/events', c => streamSSE(c, async stream => {
+    ctx.router.route('/', new Acryl().get('/events', c => streamSSE(c, async stream => {
       stream.onAbort(() => { cleaned = true })
       await stream.writeSSE({ data: 'first' })
       while (!stream.aborted) await stream.sleep(10)
@@ -319,7 +319,7 @@ describe('acryl-router lifecycle through Cordis', () => {
       name: 'streaming',
       inject: ['router'],
       apply(inner: Context): void {
-        inner.router.route('/', new App().get('/events', c => streamSSE(c, async stream => {
+        inner.router.route('/', new Acryl().get('/events', c => streamSSE(c, async stream => {
           stream.onAbort(() => { cleaned = true })
           await stream.writeSSE({ data: 'first' })
           while (!stream.aborted) await stream.sleep(10)
@@ -330,7 +330,7 @@ describe('acryl-router lifecycle through Cordis', () => {
       name: 'other',
       inject: ['router'],
       apply(inner: Context): void {
-        inner.router.route('/', new App().get('/slow', async c => {
+        inner.router.route('/', new Acryl().get('/slow', async c => {
           c.req.raw.signal.addEventListener('abort', () => { otherAborted = true }, { once: true })
           await new Promise<void>(resolve => { release = resolve })
           return c.text('done')
@@ -361,7 +361,7 @@ describe('acryl-router lifecycle through Cordis', () => {
       name: 'guard',
       inject: ['router'],
       apply(inner: Context): void {
-        inner.router.route('/', new App()
+        inner.router.route('/', new Acryl()
           .use('/held/*', async (c, next) => {
             c.req.raw.signal.addEventListener('abort', () => { guardAborted = true }, { once: true })
             await new Promise<void>((_resolve, reject) => { c.req.raw.signal.addEventListener('abort', () => { reject(new Error('aborted')) }, { once: true }) })
@@ -374,7 +374,7 @@ describe('acryl-router lifecycle through Cordis', () => {
       name: 'handler',
       inject: ['router'],
       apply(inner: Context): void {
-        inner.router.route('/', new App()
+        inner.router.route('/', new Acryl()
           .get('/held/x', c => c.text('held'))
           .get('/passed/x', c => streamSSE(c, async stream => {
             stream.onAbort(() => { handlerAborted = true })
@@ -402,7 +402,7 @@ describe('acryl-router lifecycle through Cordis', () => {
     const fiber = ctx.plugin(provider, config)
     await settle()
     let finished = false
-    ctx.router.route('/', new App().get('/later', c => {
+    ctx.router.route('/', new Acryl().get('/later', c => {
       c.executionCtx.waitUntil(new Promise<void>(resolve => { setTimeout(() => { finished = true; resolve() }, 30) }))
       return c.text('now')
     }))
@@ -416,7 +416,7 @@ describe('acryl-router lifecycle through Cordis', () => {
     const ctx = root()
     const fiber = ctx.plugin(provider, { trailingSlash: 'strict', disposeGraceMs: 30 })
     await settle()
-    ctx.router.route('/', new App().get('/stuck', c => { c.executionCtx.waitUntil(new Promise(() => undefined)); return c.text('x') }))
+    ctx.router.route('/', new Acryl().get('/stuck', c => { c.executionCtx.waitUntil(new Promise(() => undefined)); return c.text('x') }))
     await get(ctx.router, '/stuck')
     const started = Date.now()
     await fiber.dispose()

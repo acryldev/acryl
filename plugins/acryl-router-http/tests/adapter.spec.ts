@@ -8,7 +8,7 @@ import { Context, type FiberState } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
 import { apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
-import { App, connectionOf, type RouterHttpService } from 'acryl-router'
+import { Acryl, connectionOf, type RouterHttpService } from 'acryl-router'
 import { methodNotAllowed } from 'acryl-router/middleware'
 import { apply, inject, name } from '../src/index.ts'
 
@@ -40,13 +40,13 @@ async function stack(): Promise<{ ctx: Context, base: () => string }> {
   return { ctx, base: () => `http://127.0.0.1:${String((ctx as unknown as { webServer: { port: number } }).webServer.port)}` }
 }
 
-function demo(prefix: string, extra?: (app: App) => void) {
+function demo(prefix: string, extra?: (app: Acryl) => void) {
   return {
     name: `demo${prefix.replaceAll('/', '-')}`,
     inject: ['router', 'routerHttp'],
     apply(ctx: Context): void {
       ctx.routerHttp.mount(prefix)
-      const app = new App()
+      const app = new Acryl()
       app.use(methodNotAllowed({ app }))
       app.get('/hello/:who', c => c.json({ hello: c.req.param('who'), q: c.req.query('q') ?? null, host: c.req.header('host') !== undefined }))
       app.post('/echo', async c => c.json({ got: await c.req.text(), type: c.req.header('content-type') ?? null }, 201))

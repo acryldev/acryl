@@ -1,6 +1,6 @@
 /**
  * @module
- * Server-Timing Middleware for App.
+ * Server-Timing Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -35,7 +35,7 @@ const getTime = (): number => {
 }
 
 /**
- * Server-Timing Middleware for App.
+ * Server-Timing Middleware for Acryl.
  *
  *
  * @param {TimingOptions} [config] - The options for the timing middleware.
@@ -48,7 +48,7 @@ const getTime = (): number => {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * // add the middleware to your router
  * app.use(timing());

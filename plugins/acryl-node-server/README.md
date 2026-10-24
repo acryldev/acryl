@@ -7,13 +7,13 @@ without the ACRYL Host. Inside the Host, `acryl-router-http` mounts prefixes on 
 
 ```ts
 import * as router from 'acryl-router'
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import * as nodeServer from 'acryl-node-server'
 
 const root = new Context()
 root.plugin(router)
 root.plugin(nodeServer, { port: 3000, hostname: '127.0.0.1', scan: 20 })
-// a plugin mounts an App: ctx.router.route('/', new App().get('/hello', c => c.text('hello')))
+// a plugin mounts an Acryl: ctx.router.route('/', new Acryl().get('/hello', c => c.text('hello')))
 // root.nodeServer.url is where it is served
 ```
 
@@ -22,7 +22,7 @@ root.plugin(nodeServer, { port: 3000, hostname: '127.0.0.1', scan: 20 })
 - A plugin that asks `ctx.inject(['routerHttp'], ...)` for a mount simply never gets that callback here, because this adapter serves the whole router.
 - Disposal ends open streams, closes every connection and returns once the port is free.
 - `serveStatic({ root })` serves files from disk (ranges, precompressed `.br`/`.zst`/`.gz` variants, `onFound`/`onNotFound`); use it as
-  middleware in a mounted `App`. A client that goes away aborts `c.req.raw.signal`.
+  middleware in a mounted `Acryl`. A client that goes away aborts `c.req.raw.signal`.
 - The platform's global `Request` and `Response` are left alone.
 
 Row id and package name: `acryl-node-server`.

@@ -1,11 +1,11 @@
 import { requestId } from './index.ts'
 import type { Context } from '../../context.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 const regexUUIDv4 = /([0-9a-f]{8})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{4})-([0-9a-f]{12})/
 
 describe('Request ID Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
   app.use('*', requestId())
   app.get('/requestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
 
@@ -57,17 +57,17 @@ describe('Request ID Middleware', () => {
 
 describe('Request ID Middleware with custom generator', () => {
   function generateWord() {
-    return 'AppIsWebFramework'
+    return 'AcrylIsWebFramework'
   }
   function generateDoubleRequestId(c: Context) {
-    const appId = c.req.header('App-Request-Id')
+    const acrylId = c.req.header('Acryl-Request-Id')
     const ohnoId = c.req.header('Ohno-Request-Id')
-    if (appId && ohnoId) {
-      return appId + ohnoId
+    if (acrylId && ohnoId) {
+      return acrylId + ohnoId
     }
     return crypto.randomUUID()
   }
-  const app = new App()
+  const app = new Acryl()
   app.use('/word', requestId({ generator: generateWord }))
   app.use('/doubleRequestId', requestId({ generator: generateDoubleRequestId }))
   app.get('/word', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
@@ -76,14 +76,14 @@ describe('Request ID Middleware with custom generator', () => {
     const res = await app.request('http://localhost/word')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
-    expect(res.headers.get('X-Request-Id')).toBe('AppIsWebFramework')
-    expect(await res.text()).toBe('AppIsWebFramework')
+    expect(res.headers.get('X-Request-Id')).toBe('AcrylIsWebFramework')
+    expect(await res.text()).toBe('AcrylIsWebFramework')
   })
 
   it('Should return complex request id', async () => {
     const res = await app.request('http://localhost/doubleRequestId', {
       headers: {
-        'App-Request-Id': 'Hello',
+        'Acryl-Request-Id': 'Hello',
         'Ohno-Request-Id': 'World',
       },
     })
@@ -98,7 +98,7 @@ describe('Request ID Middleware with limit length', () => {
   const charactersOf255 = 'h'.repeat(255)
   const charactersOf256 = 'h'.repeat(256)
 
-  const app = new App()
+  const app = new Acryl()
   app.use('/requestId', requestId())
   app.use('/limit256', requestId({ limitLength: 256 }))
   app.get('/requestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
@@ -140,8 +140,8 @@ describe('Request ID Middleware with limit length', () => {
 })
 
 describe('Request ID Middleware with custom header', () => {
-  const app = new App()
-  app.use('/requestId', requestId({ headerName: 'App-Request-Id' }))
+  const app = new Acryl()
+  app.use('/requestId', requestId({ headerName: 'Acryl-Request-Id' }))
   app.get('/emptyId', requestId({ headerName: '' }))
   app.get('/requestId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
   app.get('/emptyId', (c) => c.text(c.get('requestId') ?? 'No Request ID'))
@@ -149,12 +149,12 @@ describe('Request ID Middleware with custom header', () => {
   it('Should return custom request id', async () => {
     const res = await app.request('http://localhost/requestId', {
       headers: {
-        'App-Request-Id': 'acryl-is-hot',
+        'Acryl-Request-Id': 'acryl-is-hot',
       },
     })
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
-    expect(res.headers.get('App-Request-Id')).toBe('acryl-is-hot')
+    expect(res.headers.get('Acryl-Request-Id')).toBe('acryl-is-hot')
     expect(await res.text()).toBe('acryl-is-hot')
   })
 

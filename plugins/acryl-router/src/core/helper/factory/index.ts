@@ -1,11 +1,11 @@
 /**
  * @module
- * Factory Helper for App.
+ * Factory Helper for Acryl.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { App } from '../../app.ts'
-import type { AppOptions } from '../../app-base.ts'
+import { Acryl } from '../../app.ts'
+import type { AcrylOptions } from '../../app-base.ts'
 import type {
   Env,
   H,
@@ -15,7 +15,7 @@ import type {
   MiddlewareHandler,
 } from '../../types.ts'
 
-type InitApp<E extends Env = Env> = (app: App<E>) => void
+type InitApp<E extends Env = Env> = (app: Acryl<E>) => void
 
 export interface CreateHandlersInterface<E extends Env, P extends string> {
   <I extends Input = {}, R extends HandlerResponse<any> = any, E2 extends Env = E>(
@@ -331,18 +331,18 @@ export interface CreateHandlersInterface<E extends Env, P extends string> {
 
 export class Factory<E extends Env = Env, P extends string = string> {
   private initApp?: InitApp<E>
-  #defaultAppOptions?: AppOptions<E>
+  #defaultAppOptions?: AcrylOptions<E>
 
-  constructor(init?: { initApp?: InitApp<E>; defaultAppOptions?: AppOptions<E> }) {
+  constructor(init?: { initApp?: InitApp<E>; defaultAppOptions?: AcrylOptions<E> }) {
     this.initApp = init?.initApp
     this.#defaultAppOptions = init?.defaultAppOptions
   }
 
-  createApp = (options?: AppOptions<E>): App<E> => {
-    const app = new App<E>(
+  createApp = (options?: AcrylOptions<E>): Acryl<E> => {
+    const app = new Acryl<E>(
       (options && this.#defaultAppOptions
         ? { ...this.#defaultAppOptions, ...options }
-        : (options ?? this.#defaultAppOptions)) as AppOptions<E>
+        : (options ?? this.#defaultAppOptions)) as AcrylOptions<E>
     )
     if (this.initApp) {
       this.initApp(app)
@@ -362,7 +362,7 @@ export class Factory<E extends Env = Env, P extends string = string> {
 
 export const createFactory = <E extends Env = Env, P extends string = string>(init?: {
   initApp?: InitApp<E>
-  defaultAppOptions?: AppOptions<E>
+  defaultAppOptions?: AcrylOptions<E>
 }): Factory<E, P> => new Factory<E, P>(init)
 
 export const createMiddleware = <

@@ -1,41 +1,41 @@
 import { prettyJSON } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('JSON pretty by Middleware', () => {
   it('Should return pretty JSON output', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON())
     app.get('/', (c) => {
-      return c.json({ message: 'App!' })
+      return c.json({ message: 'Acryl!' })
     })
 
     const res = await app.request('http://localhost/?pretty')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
     expect(await res.text()).toBe(`{
-  "message": "App!"
+  "message": "Acryl!"
 }`)
   })
 
   it('Should return pretty JSON output with 4 spaces', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ space: 4 }))
     app.get('/', (c) => {
-      return c.json({ message: 'App!' })
+      return c.json({ message: 'Acryl!' })
     })
 
     const res = await app.request('http://localhost/?pretty')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
     expect(await res.text()).toBe(`{
-    "message": "App!"
+    "message": "Acryl!"
 }`)
   })
 
   it('Should return pretty JSON output when middleware received custom query', async () => {
     const targetQuery = 'format'
 
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '*',
       prettyJSON({
@@ -44,38 +44,38 @@ describe('JSON pretty by Middleware', () => {
     )
     app.get('/', (c) =>
       c.json({
-        message: 'App!',
+        message: 'Acryl!',
       })
     )
 
     const prettyText = await (await app.request(`?${targetQuery}`)).text()
     expect(prettyText).toBe(`{
-  "message": "App!"
+  "message": "Acryl!"
 }`)
     const nonPrettyText = await (await app.request('?pretty')).text()
-    expect(nonPrettyText).toBe('{"message":"App!"}')
+    expect(nonPrettyText).toBe('{"message":"Acryl!"}')
   })
 
   it('Should force pretty JSON output when force option is true', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.get('/', (c) => {
-      return c.json({ message: 'App!' })
+      return c.json({ message: 'Acryl!' })
     })
 
     const resWithoutQuery = await (await app.request('http://localhost/')).text()
     expect(resWithoutQuery).toBe(`{
-  "message": "App!"
+  "message": "Acryl!"
 }`)
 
     const resWithQuery = await (await app.request('http://localhost/?pretty')).text()
     expect(resWithQuery).toBe(`{
-  "message": "App!"
+  "message": "Acryl!"
 }`)
   })
 
   it('Should return pretty JSON output for structured JSON content-types (+json)', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.get('/problem', (c) => {
       return c.newResponse(JSON.stringify({ type: 'about:blank', title: 'Bad Request' }), 400, {
@@ -104,24 +104,24 @@ describe('JSON pretty by Middleware', () => {
   })
 
   it('Should not touch responses with non-JSON content-types', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
-    app.get('/text', (c) => c.text('{"message":"App!"}'))
+    app.get('/text', (c) => c.text('{"message":"Acryl!"}'))
     app.get('/json-seq', (c) => {
-      return c.body('{"message":"App!"}', 200, {
+      return c.body('{"message":"Acryl!"}', 200, {
         'Content-Type': 'application/json-seq',
       })
     })
 
     const textRes = await app.request('http://localhost/text')
-    expect(await textRes.text()).toBe('{"message":"App!"}')
+    expect(await textRes.text()).toBe('{"message":"Acryl!"}')
 
     const jsonSeqRes = await app.request('http://localhost/json-seq')
-    expect(await jsonSeqRes.text()).toBe('{"message":"App!"}')
+    expect(await jsonSeqRes.text()).toBe('{"message":"Acryl!"}')
   })
 
   it('Should not break 204 responses with a JSON content-type', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.delete('/x', (c) => {
       c.header('Content-Type', 'application/json')
@@ -134,7 +134,7 @@ describe('JSON pretty by Middleware', () => {
   })
 
   it('Should not break 304 responses with a JSON content-type', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.get('/x', (c) => {
       c.header('Content-Type', 'application/json')
@@ -147,7 +147,7 @@ describe('JSON pretty by Middleware', () => {
   })
 
   it('Should not break empty responses with a JSON content-type', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON())
     app.get('/x', () => new Response('', { headers: { 'Content-Type': 'application/json' } }))
 
@@ -157,7 +157,7 @@ describe('JSON pretty by Middleware', () => {
   })
 
   it('Should pass through a response with an invalid JSON body unchanged', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.get(
       '/x',
@@ -182,13 +182,13 @@ describe('JSON pretty by Middleware', () => {
   })
 
   it('Should pass through a response whose body was already consumed by another middleware', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.use('*', async (c, next) => {
       await next()
       await c.res.text()
     })
-    app.get('/x', (c) => c.json({ message: 'App!' }))
+    app.get('/x', (c) => c.json({ message: 'Acryl!' }))
 
     // The other middleware has read the body, so the bytes are no longer available;
     // pretty JSON must not turn this into a 500 and must leave the response as is.
@@ -199,19 +199,19 @@ describe('JSON pretty by Middleware', () => {
   })
 
   it('Should remove a stale Content-Length when the body is prettified', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', prettyJSON({ force: true }))
     app.get(
       '/x',
       () =>
-        new Response('{"message":"App!"}', {
+        new Response('{"message":"Acryl!"}', {
           headers: { 'Content-Type': 'application/json', 'Content-Length': '19' },
         })
     )
 
     const res = await app.request('http://localhost/x')
     expect(await res.text()).toBe(`{
-  "message": "App!"
+  "message": "Acryl!"
 }`)
     expect(res.headers.get('Content-Length')).toBeNull()
   })

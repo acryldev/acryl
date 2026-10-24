@@ -8,7 +8,7 @@ import { decodeBase64Url, encodeBase64Url } from '../encode.ts'
 import { AlgorithmTypes } from './jwa.ts'
 import type { AsymmetricAlgorithm, SignatureAlgorithm, SymmetricAlgorithm } from './jwa.ts'
 import { signing, verifying } from './jws.ts'
-import type { AppJsonWebKey, SignatureKey } from './jws.ts'
+import type { AcrylJsonWebKey, SignatureKey } from './jws.ts'
 import {
   JwtAlgorithmMismatch,
   JwtAlgorithmNotAllowed,
@@ -198,7 +198,7 @@ const symmetricAlgorithms: SymmetricAlgorithm[] = [
 export const verifyWithJwks = async (
   token: string,
   options: {
-    keys?: AppJsonWebKey[]
+    keys?: AcrylJsonWebKey[]
     jwks_uri?: string
     verification?: VerifyOptions
     allowedAlgorithms: readonly AsymmetricAlgorithm[]
@@ -241,7 +241,7 @@ export const verifyWithJwks = async (
       throw new Error('invalid JWKS response. "keys" field is not an array')
     }
     verifyKeys ??= []
-    verifyKeys.push(...(data.keys as AppJsonWebKey[]))
+    verifyKeys.push(...(data.keys as AcrylJsonWebKey[]))
   } else if (!verifyKeys) {
     throw new Error('verifyWithJwks requires options for either "keys" or "jwks_uri" or both')
   }

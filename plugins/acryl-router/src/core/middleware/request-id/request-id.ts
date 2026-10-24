@@ -1,6 +1,6 @@
 /**
  * @module
- * Request ID Middleware for App.
+ * Request ID Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -17,7 +17,7 @@ export type RequestIdOptions = {
 }
 
 /**
- * Request ID Middleware for App.
+ * Request ID Middleware for Acryl.
  *
  * @param {object} options - Options for Request ID middleware.
  * @param {number} [options.limitLength=255] - The maximum length of request id.
@@ -29,7 +29,7 @@ export type RequestIdOptions = {
  * @example
  * ```ts
  * type Variables = RequestIdVariables
- * const app = new App<{Variables: Variables}>()
+ * const app = new Acryl<{Variables: Variables}>()
  *
  * app.use(requestId())
  * app.get('/', (c) => {

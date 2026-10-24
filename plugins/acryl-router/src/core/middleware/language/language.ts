@@ -1,6 +1,6 @@
 /**
  * @module
- * Language module for App.
+ * Language module for Acryl.
  */
 import type { Context } from '../../context.ts'
 import { setCookie, getCookie } from '../../helper/cookie/index.ts'
@@ -274,12 +274,12 @@ const detectLanguage = (c: Context, options: DetectorOptions): string => {
 /**
  * Language detector middleware factory
  * @param userOptions Configuration options for the language detector
- * @returns App middleware function
+ * @returns Acryl middleware function
  *
  * @example
  * ```ts
  * type Variables = LanguageVariables
- * const app = new App<{ Variables: Variables }>()
+ * const app = new Acryl<{ Variables: Variables }>()
  *
  * app.use(
  *   languageDetector({

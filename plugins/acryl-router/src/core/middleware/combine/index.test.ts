@@ -1,14 +1,14 @@
 import { every, except, some } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import type { MiddlewareHandler } from '../../types.ts'
 
 const nextMiddleware: MiddlewareHandler = async (_, next) => await next()
 
 describe('some', () => {
-  let app: App
+  let app: Acryl
 
   beforeEach(() => {
-    app = new App()
+    app = new Acryl()
   })
 
   it('Should call only the first middleware', async () => {
@@ -140,7 +140,7 @@ describe('some', () => {
       await n()
     })
 
-    const app = new App()
+    const app = new Acryl()
     app.use('/', some(shortCircuit, next))
     app.get('/', (c) => c.text('handler'))
 
@@ -153,10 +153,10 @@ describe('some', () => {
 })
 
 describe('every', () => {
-  let app: App
+  let app: Acryl
 
   beforeEach(() => {
-    app = new App()
+    app = new Acryl()
   })
 
   it('Should call all middleware', async () => {
@@ -227,7 +227,7 @@ describe('every', () => {
   })
 
   it('Should pass the path params to middlewares', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', nextMiddleware)
     const paramMiddleware: MiddlewareHandler = async (c) => {
       return c.json(c.req.param(), 200)
@@ -244,10 +244,10 @@ describe('every', () => {
 })
 
 describe('except', () => {
-  let app: App
+  let app: Acryl
 
   beforeEach(() => {
-    app = new App()
+    app = new Acryl()
   })
 
   it('Should call all middleware, except the one that matches the condition', async () => {

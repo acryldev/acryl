@@ -1,6 +1,6 @@
 /**
  * @module
- * Bearer Auth Middleware for App.
+ * Bearer Auth Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -66,7 +66,7 @@ type BearerAuthOptions<E extends Env = Env> =
     }
 
 /**
- * Bearer Auth Middleware for App.
+ * Bearer Auth Middleware for Acryl.
  *
  *
  * @template E - The environment type.
@@ -89,7 +89,7 @@ type BearerAuthOptions<E extends Env = Env> =
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * const token = process.env.API_TOKEN // never a literal in source
  *

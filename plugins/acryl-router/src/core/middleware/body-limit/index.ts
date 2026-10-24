@@ -1,6 +1,6 @@
 /**
  * @module
- * Body Limit Middleware for App.
+ * Body Limit Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -16,7 +16,7 @@ type BodyLimitOptions = {
 }
 
 /**
- * Body Limit Middleware for App.
+ * Body Limit Middleware for Acryl.
  *
  *
  * @param {BodyLimitOptions} options - The options for the body limit middleware.
@@ -26,7 +26,7 @@ type BodyLimitOptions = {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.post(
  *   '/upload',

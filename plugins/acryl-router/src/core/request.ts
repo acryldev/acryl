@@ -31,7 +31,7 @@ type RequiredRequestInit = Required<Omit<RequestInit, OptionalRequestInitPropert
   [Key in OptionalRequestInitProperties]?: RequestInit[Key]
 }
 
-export class AppRequest<P extends string = '/', I extends Input['out'] = {}> {
+export class AcrylRequest<P extends string = '/', I extends Input['out'] = {}> {
   /**
    * `.raw` can get the raw Request object.
    *
@@ -430,7 +430,7 @@ export class AppRequest<P extends string = '/', I extends Input['out'] = {}> {
 }
 
 /**
- * Clones a AppRequest's underlying raw Request object.
+ * Clones a AcrylRequest's underlying raw Request object.
  *
  * This utility handles both consumed and unconsumed request bodies:
  * - If the request body hasn't been consumed, it uses the native `clone()` method
@@ -440,10 +440,10 @@ export class AppRequest<P extends string = '/', I extends Input['out'] = {}> {
  * - Process the same request body multiple times
  * - Pass requests to external services after validation
  *
- * @param req - The AppRequest object to clone
+ * @param req - The AcrylRequest object to clone
  * @returns A Promise that resolves to a new Request object with the same properties
  * @throws {HTTPException} If the request body was consumed directly via `req.raw`
- *   without using AppRequest methods (e.g., `req.json()`, `req.text()`), making it
+ *   without using AcrylRequest methods (e.g., `req.json()`, `req.text()`), making it
  *   impossible to reconstruct the body from cache
  *
  * @example
@@ -460,7 +460,7 @@ export class AppRequest<P extends string = '/', I extends Input['out'] = {}> {
  * )
  * ```
  */
-export const cloneRawRequest = async (req: AppRequest): Promise<Request> => {
+export const cloneRawRequest = async (req: AcrylRequest): Promise<Request> => {
   if (!req.raw.bodyUsed) {
     return req.raw.clone()
   }
@@ -469,7 +469,7 @@ export const cloneRawRequest = async (req: AppRequest): Promise<Request> => {
   if (!cacheKey) {
     throw new HTTPException(500, {
       message:
-        'Cannot clone request: body was already consumed and not cached. Please use AppRequest methods (e.g., req.json(), req.text()) instead of consuming req.raw directly.',
+        'Cannot clone request: body was already consumed and not cached. Please use AcrylRequest methods (e.g., req.json(), req.text()) instead of consuming req.raw directly.',
     })
   }
 

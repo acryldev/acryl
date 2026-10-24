@@ -1,9 +1,9 @@
 import { methodNotAllowed } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Method Not Allowed Middleware', () => {
   it('infers the environment from the app', () => {
-    const app = new App<{ Variables: { requestId: string } }>()
+    const app = new Acryl<{ Variables: { requestId: string } }>()
     const middleware = methodNotAllowed({
       app,
       onMethodNotAllowed: (c) => c.text(c.var.requestId, 405),
@@ -13,7 +13,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('returns 405 with every allowed method for an existing path', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/resource', (c) => c.text('GET'))
     app.post('/resource', (c) => c.text('POST'))
@@ -31,7 +31,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('does not affect an allowed method', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/resource', (c) => c.text('GET'))
 
@@ -43,7 +43,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('returns 404 when the path does not exist', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/resource', (c) => c.text('GET'))
 
@@ -54,7 +54,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('matches parameterized and overlapping routes without duplicate methods', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/users/:id', (_c, next) => next())
     app.get('/users/me', (c) => c.text('me'))
@@ -67,7 +67,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('preserves an intentional 404 from a handler registered for the request method', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/users/:id', (c) => c.notFound())
     app.post('/users/:id', (c) => c.text('Created'))
@@ -79,7 +79,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('preserves an intentional 404 for HEAD when a GET route is registered', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/users/:id', (c) => c.notFound())
     app.post('/users/:id', (c) => c.text('Created'))
@@ -91,7 +91,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('preserves a 404 returned by the error handler', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.onError((_error, c) => c.text('Handled error', 404))
     app.use(methodNotAllowed({ app }))
     app.use('/resource', () => {
@@ -107,7 +107,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('returns 405 for HEAD when the path does not support GET', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.post('/resource', (c) => c.text('POST'))
 
@@ -118,8 +118,8 @@ describe('Method Not Allowed Middleware', () => {
     expect(await res.text()).toBe('')
   })
 
-  it('does not advertise explicit HEAD routes that App cannot dispatch', async () => {
-    const app = new App()
+  it('does not advertise explicit HEAD routes that Acryl cannot dispatch', async () => {
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.on('HEAD', '/resource', (c) => c.text('HEAD'))
 
@@ -133,7 +133,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('supports custom methods', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.on('PURGE', '/cache', (c) => c.text('Purged'))
 
@@ -144,7 +144,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('compares request methods case-sensitively', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.patch('/item', (c) => c.text('PATCH'))
 
@@ -157,11 +157,11 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('works with routes mounted using app.route()', async () => {
-    const api = new App()
+    const api = new Acryl()
     api.get('/resource', (c) => c.text('GET'))
     api.post('/resource', (c) => c.text('POST'))
 
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.route('/api', api)
 
@@ -172,12 +172,12 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('works when installed in an app mounted using app.route()', async () => {
-    const api = new App().basePath('/v1')
+    const api = new Acryl().basePath('/v1')
     api.use(methodNotAllowed({ app: api }))
     api.get('/resource', (c) => c.text('GET'))
     api.post('/resource', (c) => c.text('POST'))
 
-    const app = new App()
+    const app = new Acryl()
     app.route('/api', api)
 
     const res = await app.request('/api/v1/resource', { method: 'DELETE' })
@@ -187,7 +187,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('ignores ALL routes when collecting allowed methods', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.all('/resource', (_c, next) => next())
 
@@ -198,7 +198,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('does not invoke the error handler for a 405 response', async () => {
-    const app = new App()
+    const app = new Acryl()
     const onError = vi.fn(() => new Response('error', { status: 500 }))
     app.onError(onError)
     app.use(methodNotAllowed({ app }))
@@ -211,7 +211,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('preserves downstream headers and lets outer middleware observe the final status', async () => {
-    const app = new App()
+    const app = new Acryl()
     let observedStatus: number | undefined
 
     app.use(async (c, next) => {
@@ -233,7 +233,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('replaces stale representation headers from the not-found response', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/resource', (c) => c.text('GET'))
     app.post('/resource', (c) => c.text('POST'))
@@ -253,7 +253,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('supports a custom method-not-allowed response', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       methodNotAllowed({
         app,
@@ -278,7 +278,7 @@ describe('Method Not Allowed Middleware', () => {
   })
 
   it('leaves a non-404 custom not-found response unchanged', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(methodNotAllowed({ app }))
     app.get('/resource', (c) => c.text('GET'))
     app.notFound((c) => c.text('Missing', 410))

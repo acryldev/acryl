@@ -99,7 +99,7 @@
     },
     "tests/adapter/app.ts": {
       "upstreamSha256": "1da4317b168efa628c53ab77eafcbbc59fb55b58f6cf12dfb5bd536327469ceb",
-      "sha256": "6133cc2dc85e419df11b7254e6258aa8973bf7a9f7d8ee53b8ded1542692fbbe"
+      "sha256": "6e0a0f389c8b8cf0fc45229b7ab9a13cd84c162ec33fe5ea59b481c37c806469"
     },
     "tests/adapter/assets/.static/plain.txt": {
       "upstreamSha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc",
@@ -139,7 +139,7 @@
     },
     "tests/adapter/assets/static/acryl.html": {
       "upstreamSha256": "5c1a548b4ad0047a3bd18fd1d2bd4d87877a61cce3bc210cf1ea60539b47b63a",
-      "sha256": "b7260524801b0b671a0396684133c6b9d121661b5b1d86083d4bb37fad30482b"
+      "sha256": "e31d0a9dc28790369b9119f46cbbf15cde6aa864b847783dc28a4a48f004015b"
     },
     "tests/adapter/assets/static/admin/secret.txt": {
       "upstreamSha256": "2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b",
@@ -159,7 +159,7 @@
     },
     "tests/adapter/assets/static/index.html": {
       "upstreamSha256": "e17b200bd058610fa0f4ad603b8923818c984000fae1ee3810015289ae81ae9f",
-      "sha256": "a53360e718671bb93d9d4c6ef333e90e1a4efca6417c70fe8d13338c12a19f8b"
+      "sha256": "2f71331063d67380e9d2cab38b46373ffc37cd4a1ad6ce080db6bcd72b262c1f"
     },
     "tests/adapter/assets/static/plain.txt": {
       "upstreamSha256": "ab4e26c9cac1c1c556f9703dcd812e81e6a87e7da73fb130a13b98d9a7370abc",
@@ -167,15 +167,15 @@
     },
     "tests/adapter/conninfo.test.ts": {
       "upstreamSha256": "e937068e54d320762bbe56a0877cde204e06f5f9d5f4651b76d443e69b8bbf06",
-      "sha256": "994047cf534ba74cac741ee267417fc658faa0a0522ecb69c1396f65f9572dc5"
+      "sha256": "75346d19e9fdf2682e543a63aa60ad636ae6b32ae839b412a0780307c108be94"
     },
     "tests/adapter/content-length.test.ts": {
       "upstreamSha256": "f9e4fffa38d93158d5d7907380156e145da40203c8e906463597970ec2df984e",
-      "sha256": "ce5c57de6587302198213f8c1f7667382eab1e6c80f70f55f539438017ea74a7"
+      "sha256": "b04d347a34d27638d0e8d101ddf8989b41a14688a27b51dbe70480f423c5ba06"
     },
     "tests/adapter/early-hints.test.ts": {
       "upstreamSha256": "b18b16ae7cb4589ee18c09af5ddb64686dcb34a0c0fc787e7cac8afbb01de32b",
-      "sha256": "d257e7bf3978ae88dbaf911e60e7154787951faeddb80147decfc4fe81669f30"
+      "sha256": "bd4bb420e88feba5cb695100f72aa1f003211768b64e08aa2a1d61cc9952fd85"
     },
     "tests/adapter/fixtures/keys/agent1-cert.pem": {
       "upstreamSha256": "5968cc95396f7a49d0fccaee6cf2c6b8a2f66b907efa21531c4c98d20962783c",
@@ -199,7 +199,7 @@
     },
     "tests/adapter/request-client-disconnect.test.ts": {
       "upstreamSha256": "0cd02a7695b8f927359f21af91da169a8c14a2253c501735492135af1852c96c",
-      "sha256": "376557861586b2c2f9b82d0fe148e3c92ec996b886b40b60212555f44366c59d"
+      "sha256": "5b63118e00f1e1b1e180ec0210d6150936952d58a65f59e2d4d6ca32e207adca"
     },
     "tests/adapter/request.test.ts": {
       "upstreamSha256": "c8fc33a42119079fe21e494080f8d47ede0413888102bb53948967f6414776f2",
@@ -211,17 +211,17 @@
     },
     "tests/adapter/serve-static.test.ts": {
       "upstreamSha256": "6db7e594caea788e534f2a69183bf78afb966d7d042a60835d8fa369e27215af",
-      "sha256": "7dc373250a84fdd6aaf9a991f055b8dbe35f62d1be79d6c958ad6786a2d5c517",
+      "sha256": "6a5a15a39cd638cb2dabc5f97f9baa8287efabb01bc9126b1d3c16b54968a020",
       "deviation": "Two path forms the directory rule cannot map (a path regex and a path.sep join) name tests/adapter/assets."
     },
     "tests/adapter/server-socket.test.ts": {
       "upstreamSha256": "a463a509dfc73ef5ecb25e27e45069f9f37090613c35893b8305eb4353e40353",
-      "sha256": "4b287f764465721dd3918aca3ec762c56793f7ddd796ea03ab4db3b9b946e3cb"
+      "sha256": "779acea8db3d7725ab3421c08d12ecdeb9b26e9c43b9f32bf9b20ed25af2e4d7"
     },
     "tests/adapter/server.test.ts": {
       "upstreamSha256": "5d268474b4d8c887cea01e7d752942da60fbc3a7749f02c4a37c8ad80c9900f7",
-      "sha256": "f8decfd6f66ec8c621648d1d088fddca191a94227177093d9d4f7b10067116b3",
-      "deviation": "The renamed body 'Hello App!' is 10 bytes: its content-length and etag expectations are recomputed; x-powered-by expects this framework's default, ACRYL."
+      "sha256": "6e2f7ac4ad3a32cd6e25e5ee7374ea32589c86d71a4af3eb4f2dee19715264ce",
+      "deviation": "The renamed body 'Hello Acryl!' is 12 bytes: its content-length and etag expectations are recomputed for it."
     },
     "tests/adapter/setup.ts": {
       "upstreamSha256": "8a6d290d6676db280ef22fffc4d7847f768cbadcf445391213273b970bd6d6af",
@@ -237,7 +237,7 @@
     },
     "tests/adapter/utils/response.test.ts": {
       "upstreamSha256": "4583acce079fce3c9163e886fa9645da5bd52df73e850785076b98ab091bd45d",
-      "sha256": "3e87331c1c1fc32f0d4f3ca6f5c31a71060fd3afc319f21d8f501e4aafa5fdbb"
+      "sha256": "7282caa2bf64480dc3a5e2e91853a3d513c95a2619b46e63a7e1ae9ca7c6963c"
     },
     "tests/adapter/utils/stream.test.ts": {
       "upstreamSha256": "e57b409bb9d01cabd75bfb924aa072cdfaee12fbcd5364b0eca45d8d0db2d8c3",
@@ -245,7 +245,7 @@
     },
     "tests/adapter/websocket.test.ts": {
       "upstreamSha256": "8dd970d72565d8d1670583d11b4037eecebed8bc470186562fd1dedc02a4c939",
-      "sha256": "7b5908c1d76bb2396270a91c0c3ed9ebdcc19406ff28a6b9284e052d7918ae70"
+      "sha256": "271a5342c5c58c0063ed8afc82e4a0081ea5751c6df5434baabb9bbb4e99c9f2"
     }
   }
 }

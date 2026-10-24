@@ -1,6 +1,6 @@
 /**
  * @module
- * CORS Middleware for App.
+ * CORS Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -22,7 +22,7 @@ type CORSOptions = {
 }
 
 /**
- * CORS Middleware for App.
+ * CORS Middleware for Acryl.
  *
  *
  * @param {CORSOptions} [options] - The options for the CORS middleware.
@@ -36,7 +36,7 @@ type CORSOptions = {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use('/api/*', cors())
  * app.use(

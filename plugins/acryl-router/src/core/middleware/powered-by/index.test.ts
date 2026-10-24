@@ -1,8 +1,8 @@
 import { poweredBy } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Powered by Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.use('/poweredBy/*', poweredBy())
   app.get('/poweredBy', (c) => c.text('root'))
@@ -18,14 +18,14 @@ describe('Powered by Middleware', () => {
     const res = await app.request('http://localhost/poweredBy')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
-    expect(res.headers.get('X-Powered-By')).toBe('ACRYL')
+    expect(res.headers.get('X-Powered-By')).toBe('Acryl')
   })
 
   it('Should not return duplicate values', async () => {
     const res = await app.request('http://localhost/poweredBy2')
     expect(res).not.toBeNull()
     expect(res.status).toBe(200)
-    expect(res.headers.get('X-Powered-By')).toBe('ACRYL')
+    expect(res.headers.get('X-Powered-By')).toBe('Acryl')
   })
 
   it('Should return custom serverName', async () => {

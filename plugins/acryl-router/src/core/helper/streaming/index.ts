@@ -1,6 +1,6 @@
 /**
  * @module
- * Streaming Helper for App.
+ * Streaming Helper for Acryl.
  */
 
 export { stream } from './stream.ts'

@@ -1,5 +1,5 @@
 import { RETAINED_304_HEADERS, etag } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 const createPatternedBody = (length: number) => {
   const body = new Uint8Array(length)
@@ -11,25 +11,25 @@ const createPatternedBody = (length: number) => {
 
 describe('Etag Middleware', () => {
   it('Should return etag header', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/abc', (c) => {
-      return c.text('App is hot')
+      return c.text('Acryl is hot')
     })
     app.get('/etag/def', (c) => {
-      return c.json({ message: 'App is hot' })
+      return c.json({ message: 'Acryl is hot' })
     })
     let res = await app.request('http://localhost/etag/abc')
     expect(res.headers.get('ETag')).not.toBeFalsy()
-    expect(res.headers.get('ETag')).toBe('"7c6c452b40ba15d4748e0075f4e402b441c3ea15"')
+    expect(res.headers.get('ETag')).toBe('"ba73e68ded3fb25dd2a1c90023bada7880da6ab7"')
 
     res = await app.request('http://localhost/etag/def')
     expect(res.headers.get('ETag')).not.toBeFalsy()
-    expect(res.headers.get('ETag')).toBe('"a6c237463eac08cd32a99f595cc2a7c87aecaadc"')
+    expect(res.headers.get('ETag')).toBe('"13ac584bb97a25fdb954fc1813d2f03f8f5e017c"')
   })
 
   it('Should return etag header with another algorithm', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '/etag/*',
       etag({
@@ -43,26 +43,26 @@ describe('Etag Middleware', () => {
       })
     )
     app.get('/etag/abc', (c) => {
-      return c.text('App is hot')
+      return c.text('Acryl is hot')
     })
     app.get('/etag/def', (c) => {
-      return c.json({ message: 'App is hot' })
+      return c.json({ message: 'Acryl is hot' })
     })
     let res = await app.request('http://localhost/etag/abc')
     expect(res.headers.get('ETag')).not.toBeFalsy()
     expect(res.headers.get('ETag')).toBe(
-      '"dc6a4486c5794ab001967920a901c34bde9f9485c77eccf142e13b446c6da381"'
+      '"07c00dd761cfbb8e0765274785818aa0a59629d41cd66034acbde90dafe85cf3"'
     )
 
     res = await app.request('http://localhost/etag/def')
     expect(res.headers.get('ETag')).not.toBeFalsy()
     expect(res.headers.get('ETag')).toBe(
-      '"f467464463b028d082ec4327b42c87428502dd71740110d5e5b4e2fbcd8b366d"'
+      '"49c6a1aa5026288ec59011aa6b3df0af8efc3d7531af06150dc7f018979efff7"'
     )
   })
 
   it('Should return etag header - binary', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag', async (c) => {
       return c.body(new Uint8Array(1))
@@ -75,7 +75,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not be the same etag - arrayBuffer', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/ab1', (c) => {
       return c.body(new ArrayBuffer(1))
@@ -91,7 +91,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not be the same etag - Uint8Array', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/ui1', (c) => {
       return c.body(new Uint8Array([1, 2, 3]))
@@ -107,7 +107,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not be the same etag - ReadableStream', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/rs1', (c) => {
       return c.body(
@@ -139,7 +139,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should return the same etag regardless of ReadableStream chunk boundaries', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     const body = createPatternedBody(1_000_000)
     app.get('/etag/rs1', (c) => {
@@ -173,7 +173,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should preserve the SHA-1 digest for bodies up to 256 KiB', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag', (c) => c.body(createPatternedBody(256 * 1024)))
 
@@ -182,7 +182,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not return etag header when the stream is empty', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/abc', (c) => {
       const stream = new ReadableStream({
@@ -198,7 +198,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not return etag header when body is null', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/abc', () => new Response(null, { status: 500 }))
     const res = await app.request('http://localhost/etag/abc')
@@ -207,22 +207,22 @@ describe('Etag Middleware', () => {
   })
 
   it('Should return etag header - weak', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag({ weak: true }))
     app.get('/etag/abc', (c) => {
-      return c.text('App is hot')
+      return c.text('Acryl is hot')
     })
 
     const res = await app.request('http://localhost/etag/abc')
     expect(res.headers.get('ETag')).not.toBeFalsy()
-    expect(res.headers.get('ETag')).toBe('W/"7c6c452b40ba15d4748e0075f4e402b441c3ea15"')
+    expect(res.headers.get('ETag')).toBe('W/"ba73e68ded3fb25dd2a1c90023bada7880da6ab7"')
   })
 
   it('Should handle conditional GETs', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/ghi', (c) =>
-      c.text('App is great', 200, {
+      c.text('Acryl is great', 200, {
         'cache-control': 'public, max-age=120',
         date: 'Mon, Feb 27 2023 12:08:36 GMT',
         expires: 'Mon, Feb 27 2023 12:10:36 GMT',
@@ -286,9 +286,9 @@ describe('Etag Middleware', () => {
   })
 
   it('Should handle conditional QUERY requests', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
-    app.on('QUERY', '/etag/query', (c) => c.text('App is great'))
+    app.on('QUERY', '/etag/query', (c) => c.text('Acryl is great'))
 
     // unconditional QUERY
     let res = await app.request('http://localhost/etag/query', {
@@ -333,7 +333,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not return 304 on unsafe methods or error responses', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.put('/etag/put', (c) => c.text('created', 201, { ETag: '"etag-123"' }))
     app.get('/etag/not-found', (c) => c.text('not found', 404, { ETag: '"etag-123"' }))
@@ -374,18 +374,18 @@ describe('Etag Middleware', () => {
   })
 
   it('Should not return duplicate etag header values', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.use('/etag/*', etag())
-    app.get('/etag/abc', (c) => c.text('App is hot'))
+    app.get('/etag/abc', (c) => c.text('Acryl is hot'))
 
     const res = await app.request('http://localhost/etag/abc')
     expect(res.headers.get('ETag')).not.toBeFalsy()
-    expect(res.headers.get('ETag')).toBe('"7c6c452b40ba15d4748e0075f4e402b441c3ea15"')
+    expect(res.headers.get('ETag')).toBe('"ba73e68ded3fb25dd2a1c90023bada7880da6ab7"')
   })
 
   it('Should not override ETag headers from upstream', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/predefined', (c) =>
       c.text('This response has an ETag', 200, { ETag: '"f-0194-d"' })
@@ -398,7 +398,7 @@ describe('Etag Middleware', () => {
   it('Should retain the default and the specified headers', async () => {
     const cacheControl = 'public, max-age=120'
     const message = 'Hello!'
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '/etag/*',
       etag({
@@ -406,7 +406,7 @@ describe('Etag Middleware', () => {
       })
     )
     app.get('/etag', (c) => {
-      return c.text('App is hot', 200, {
+      return c.text('Acryl is hot', 200, {
         'cache-control': cacheControl,
         'x-message-retain': message,
         'X-Message-Retain-Upper': message,
@@ -415,12 +415,12 @@ describe('Etag Middleware', () => {
     })
     const res = await app.request('/etag', {
       headers: {
-        'If-None-Match': '"7c6c452b40ba15d4748e0075f4e402b441c3ea15"',
+        'If-None-Match': '"ba73e68ded3fb25dd2a1c90023bada7880da6ab7"',
       },
     })
     expect(res.status).toBe(304)
     expect(res.headers.get('ETag')).not.toBeFalsy()
-    expect(res.headers.get('ETag')).toBe('"7c6c452b40ba15d4748e0075f4e402b441c3ea15"')
+    expect(res.headers.get('ETag')).toBe('"ba73e68ded3fb25dd2a1c90023bada7880da6ab7"')
     expect(res.headers.get('Cache-Control')).toBe(cacheControl)
     expect(res.headers.get('x-message-retain')).toBe(message)
     expect(res.headers.get('X-Message-Retain-Upper')).toBe(message)
@@ -428,10 +428,10 @@ describe('Etag Middleware', () => {
   })
 
   it('Should return 304 when weak ETag in If-None-Match matches the generated ETag', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/abc', (c) => {
-      return c.text('App is hot')
+      return c.text('Acryl is hot')
     })
     let res = await app.request('http://localhost/etag/abc')
     const headerEtag = res.headers.get('ETag')!
@@ -440,7 +440,7 @@ describe('Etag Middleware', () => {
 
     res = await app.request('http://localhost/etag/abc', {
       headers: {
-        'If-None-Match': 'W/"7c6c452b40ba15d4748e0075f4e402b441c3ea15"',
+        'If-None-Match': 'W/"ba73e68ded3fb25dd2a1c90023bada7880da6ab7"',
       },
     })
 
@@ -463,9 +463,9 @@ describe('Etag Middleware', () => {
     })
 
     it('Should not generate etag', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/etag/*', etag())
-      app.get('/etag/no-digest', (c) => c.text('App is hot'))
+      app.get('/etag/no-digest', (c) => c.text('Acryl is hot'))
       const res = await app.request('/etag/no-digest')
       expect(res.status).toBe(200)
       expect(res.headers.get('ETag')).toBeNull()
@@ -473,7 +473,7 @@ describe('Etag Middleware', () => {
   })
 
   it('Should remove all non-retained headers on 304 without skipping any', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/etag/*', etag())
     app.get('/etag/multi-headers', (c) => {
       c.header('X-Custom-1', 'val1')
@@ -481,7 +481,7 @@ describe('Etag Middleware', () => {
       c.header('X-Custom-3', 'val3')
       c.header('X-Custom-4', 'val4')
       c.header('Cache-Control', 'max-age=3600')
-      return c.text('App is hot')
+      return c.text('Acryl is hot')
     })
     const res1 = await app.request('http://localhost/etag/multi-headers')
     const etagHeader = res1.headers.get('ETag')!

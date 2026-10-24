@@ -6,7 +6,7 @@ import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createMiddleware, schemaValidator, testClient } from '../src/helpers/index.ts'
-import { App, HTTPException, apply, name } from '../src/index.ts'
+import { Acryl, HTTPException, apply, name } from '../src/index.ts'
 import { methodNotAllowed } from '../src/middleware/index.ts'
 
 const contexts: Context[] = []
@@ -30,7 +30,7 @@ describe('getting-started.md', () => {
       name: 'todo',
       inject: ['router'],
       apply(inner) {
-        const app = new App()
+        const app = new Acryl()
           .get('/', c => c.json({ ok: true }))
           .get('/todos/:id', c => c.json({ id: c.req.param('id') }))
         inner.router.route('/todo', app)
@@ -45,7 +45,7 @@ describe('getting-started.md', () => {
 
 describe('routing.md', () => {
   it('serves the routes an app had at the mount, not ones added later', async () => {
-    const app = new App().get('/a', c => c.text('a'))
+    const app = new Acryl().get('/a', c => c.text('a'))
     const ctx = await withPlugin({ name: 'late', inject: ['router'], apply(inner) { inner.router.route('/x', app) } })
     app.get('/b', c => c.text('b'))
     expect((await ctx.router.request('/x/a')).status).toBe(200)
@@ -53,9 +53,9 @@ describe('routing.md', () => {
   })
 
   it('answers a wrong method with 404, or 405 and Allow with methodNotAllowed', async () => {
-    const plain = new App().get('/item', c => c.text('item'))
+    const plain = new Acryl().get('/item', c => c.text('item'))
     expect((await plain.request('/item', { method: 'POST' })).status).toBe(404)
-    const strict = new App()
+    const strict = new Acryl()
     strict.use(methodNotAllowed({ app: strict })).get('/item', c => c.text('item'))
     const response = await strict.request('/item', { method: 'POST' })
     expect(response.status).toBe(405)
@@ -69,7 +69,7 @@ describe('routing.md', () => {
   })
 
   it('uses a mounted app\'s onError for its routes', async () => {
-    const app = new App().get('/boom', () => { throw new Error('boom') })
+    const app = new Acryl().get('/boom', () => { throw new Error('boom') })
     app.onError((_error, c) => c.json({ error: 'internal_error' }, 500))
     const ctx = await withPlugin({ name: 'errors', inject: ['router'], apply(inner) { inner.router.route('/', app) } })
     expect(await (await ctx.router.request('/boom')).json()).toEqual({ error: 'internal_error' })
@@ -82,14 +82,14 @@ describe('context.md and middleware.md', () => {
       c.set('user', { name: 'ada' })
       await next()
     })
-    const app = new App().use(withUser).get('/me', c => c.json(c.var.user))
+    const app = new Acryl().use(withUser).get('/me', c => c.json(c.var.user))
     expect(await (await app.request('/me')).json()).toEqual({ name: 'ada' })
   })
 
   it('never throws from next(): the error is already a response and is left in c.error', async () => {
     let caught = false
     let seen: unknown
-    const app = new App()
+    const app = new Acryl()
       .use(async (c, next) => {
         try {
           await next()
@@ -105,7 +105,7 @@ describe('context.md and middleware.md', () => {
   })
 
   it('turns an HTTPException into its own response', async () => {
-    const app = new App().get('/', () => { throw new HTTPException(403, { message: 'not yours' }) })
+    const app = new Acryl().get('/', () => { throw new HTTPException(403, { message: 'not yours' }) })
     const response = await app.request('/')
     expect(response.status).toBe(403)
     expect(await response.text()).toBe('not yours')
@@ -117,7 +117,7 @@ describe('validation.md', () => {
     title: z.string().required(),
     done: z.boolean().default(false),
   })
-  const app = new App().post('/todos', schemaValidator('json', NewTodo), c => c.json({ todo: c.req.valid('json') }, 201))
+  const app = new Acryl().post('/todos', schemaValidator('json', NewTodo), c => c.json({ todo: c.req.valid('json') }, 201))
   const post = (body: string, type?: string): Promise<Response> =>
     Promise.resolve(app.request('/todos', { method: 'POST', body, headers: type === undefined ? {} : { 'content-type': type } }))
 
@@ -144,7 +144,7 @@ describe('validation.md', () => {
 
 describe('helpers.md', () => {
   it('calls a chained app through the typed test client', async () => {
-    const app = new App().get('/search', c => c.json({ query: c.req.query('q') }))
+    const app = new Acryl().get('/search', c => c.json({ query: c.req.query('q') }))
     const client = testClient(app)
     const response = await client.search.$get({ query: { q: 'cordis' } })
     expect(await response.json()).toEqual({ query: 'cordis' })

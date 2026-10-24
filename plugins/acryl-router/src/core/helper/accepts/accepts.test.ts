@@ -1,4 +1,4 @@
-import { App } from '../../index.ts'
+import { Acryl } from '../../index.ts'
 import { parseAccept } from '../../utils/accept.ts'
 import type { AcceptHeader } from '../../utils/headers.ts'
 import type { Accept, acceptsConfig, acceptsOptions } from './accepts.ts'
@@ -277,7 +277,7 @@ describe('accepts', () => {
 
 describe('Usage', () => {
   test('decide compression by Accept-Encoding header', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/compressed', async (c) => {
       const encoding = accepts(c, {
         header: 'Accept-Encoding',
@@ -318,7 +318,7 @@ describe('Usage', () => {
   })
 
   test('decide language by Accept-Language header', async () => {
-    const app = new App()
+    const app = new Acryl()
     const SUPPORTED_LANGS = ['en', 'ja', 'zh']
     app.get('/*', async (c) => {
       const lang = accepts(c, {

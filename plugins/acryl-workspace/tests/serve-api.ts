@@ -5,7 +5,7 @@
 
 import { createServer, type Server } from 'node:http'
 import { Context } from '@deepseek-ai/cordis'
-import { App, apply as applyRouter, name as routerName } from 'acryl-router'
+import { Acryl, apply as applyRouter, name as routerName } from 'acryl-router'
 import { serve, type FetchRouter } from 'acryl-router-http'
 import { privateApi } from '../src/private-route.ts'
 
@@ -35,13 +35,13 @@ async function listen(router: FetchRouter, closeRouter: () => Promise<void> = as
 }
 
 /** The routes as one app, served directly. */
-export function serveApi(...routes: readonly App[]): Promise<ServedApi> {
+export function serveApi(...routes: readonly Acryl[]): Promise<ServedApi> {
   const app = privateApi(...routes)
   return listen({ fetch: (request, connection) => Promise.resolve(app.fetch(request, { connection: connection ?? {} })) })
 }
 
 /** The routes mounted on the real `router` service, as the plugin mounts them; `unmount` removes the mount, as the plugin's unload does. */
-export async function serveMounted(...routes: readonly App[]): Promise<ServedApi & { unmount(): void }> {
+export async function serveMounted(...routes: readonly Acryl[]): Promise<ServedApi & { unmount(): void }> {
   const root = new Context()
   root.plugin({ name: routerName, apply: applyRouter })
   await new Promise(resolve => setTimeout(resolve, 0))

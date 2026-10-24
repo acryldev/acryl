@@ -1,6 +1,6 @@
 /**
  * @module
- * Basic Auth Middleware for App.
+ * Basic Auth Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -29,7 +29,7 @@ type BasicAuthOptions =
     }
 
 /**
- * Basic Auth Middleware for App.
+ * Basic Auth Middleware for Acryl.
  *
  *
  * @param {BasicAuthOptions} options - The options for the basic authentication middleware.
@@ -45,7 +45,7 @@ type BasicAuthOptions =
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(
  *   '/auth/*',

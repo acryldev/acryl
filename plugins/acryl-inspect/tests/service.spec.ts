@@ -4,7 +4,7 @@
  */
 
 import { Context } from '@deepseek-ai/cordis'
-import { App, apply as routerApply, name as routerName } from 'acryl-router'
+import { Acryl, apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply, name, type PluginReport } from '../src/index.ts'
 
@@ -18,7 +18,7 @@ const market = {
   name: 'demo-market',
   inject: ['router'],
   apply(ctx: Context): void {
-    ctx.router.route('/api/demo', new App()
+    ctx.router.route('/api/demo', new Acryl()
       .use(async (_c, next) => { await next() })
       .get('/state', c => c.json({ ok: true }))
       .post('/sources', c => c.json({ ok: true }, 201)))
@@ -46,7 +46,7 @@ describe('acryl-inspect', () => {
     ctx.plugin({
       name: 'demo-inline',
       apply(inner: Context): void {
-        inner.inject(['router'], deeper => { deeper.router.route('/', new App().get('/api/inline', c => c.json({ ok: true }))) })
+        inner.inject(['router'], deeper => { deeper.router.route('/', new Acryl().get('/api/inline', c => c.json({ ok: true }))) })
       },
     })
     await settle()

@@ -1,6 +1,6 @@
 /**
  * @module
- * ETag Middleware for App.
+ * ETag Middleware for Acryl.
  */
 
 import type { MiddlewareHandler } from '../../types.ts'
@@ -55,7 +55,7 @@ function initializeGenerator(
 }
 
 /**
- * ETag Middleware for App.
+ * ETag Middleware for Acryl.
  *
  *
  * @param {ETagOptions} [options] - The options for the ETag middleware.
@@ -68,11 +68,11 @@ function initializeGenerator(
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use('/etag/*', etag())
  * app.get('/etag/abc', (c) => {
- *   return c.text('App is hot')
+ *   return c.text('Acryl is hot')
  * })
  * ```
  */

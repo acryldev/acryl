@@ -1,5 +1,5 @@
 import { env, getRuntimeKey } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('getRuntimeKey', () => {
   it('Should return the current runtime key', () => {
@@ -18,7 +18,7 @@ describe('env', () => {
     }
 
     it('Should not throw type errors with env has generics', () => {
-      const app = new App()
+      const app = new Acryl()
       app.get('/var', (c) => {
         const { MY_VAR } = env<{ MY_VAR: string }>(c)
         expectTypeOf<string>(MY_VAR)
@@ -28,8 +28,8 @@ describe('env', () => {
       })
     })
 
-    it('Should not throw type errors with App has generics', () => {
-      const app = new App<Env>()
+    it('Should not throw type errors with Acryl has generics', () => {
+      const app = new Acryl<Env>()
 
       app.get('/var', (c) => {
         const { MY_VAR } = env(c)
@@ -40,8 +40,8 @@ describe('env', () => {
       })
     })
 
-    it('Should not throw type errors with env and App have generics', () => {
-      const app = new App<Env>()
+    it('Should not throw type errors with env and Acryl have generics', () => {
+      const app = new Acryl<Env>()
 
       app.get('/var', (c) => {
         const { MY_VAR } = env<{ MY_VAR: string }>(c)

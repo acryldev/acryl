@@ -1,9 +1,9 @@
 import { serveStatic as baseServeStatic } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Serve Static Middleware with a Blob body', () => {
   it('Should serve content returned as a Blob', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '/static/*',
       baseServeStatic({
@@ -17,7 +17,7 @@ describe('Serve Static Middleware with a Blob body', () => {
 })
 
 describe('Serve Static Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
   const getContent = vi.fn(async (path) => {
     if (path.endsWith('not-found.txt')) {
       return null
@@ -48,7 +48,7 @@ describe('Serve Static Middleware', () => {
   it.each(['GET', 'HEAD'])(
     'Should serve files for %s requests registered with use()',
     async (method) => {
-      const app = new App().use('/static/*', serveStatic)
+      const app = new Acryl().use('/static/*', serveStatic)
 
       const res = await app.request('/static/hello.html', { method })
 
@@ -66,7 +66,7 @@ describe('Serve Static Middleware', () => {
       const rewriteRequestPath = vi.fn((path: string) => path)
       const onFound = vi.fn()
       const onNotFound = vi.fn()
-      const app = new App().use(
+      const app = new Acryl().use(
         '/static/*',
         baseServeStatic({ getContent, isDir, rewriteRequestPath, onFound, onNotFound })
       )
@@ -87,7 +87,7 @@ describe('Serve Static Middleware', () => {
   it.each(['/static/hello.html', '/static/not-found.txt'])(
     'Should return 404 for an unhandled POST request regardless of file existence - %s',
     async (path) => {
-      const app = new App().use('/static/*', serveStatic)
+      const app = new Acryl().use('/static/*', serveStatic)
 
       const res = await app.request(path, { method: 'POST' })
 
@@ -134,7 +134,7 @@ describe('Serve Static Middleware', () => {
     'Should skip paths containing percent signs by default - %s',
     async (path) => {
       const onNotFound = vi.fn()
-      const app = new App().use('*', baseServeStatic({ getContent, onNotFound }))
+      const app = new Acryl().use('*', baseServeStatic({ getContent, onNotFound }))
 
       const res = await app.request(path)
 
@@ -149,7 +149,7 @@ describe('Serve Static Middleware', () => {
     ['/static/100%25/hello.txt', 'static/100%/hello.txt'],
     ['/static/%2Fadmin/secret.txt', 'static/%2Fadmin/secret.txt'],
   ])('Should allow percent signs when opted in - %s', async (url, path) => {
-    const app = new App().use('*', baseServeStatic({ getContent, allowPercentInPath: true }))
+    const app = new Acryl().use('*', baseServeStatic({ getContent, allowPercentInPath: true }))
 
     const res = await app.request(url)
 
@@ -158,7 +158,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should not bypass authentication through a second decode', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/static/admin/*', (c) => c.text('Unauthorized', 401))
     app.use('/static/*', baseServeStatic({ getContent }))
 
@@ -181,7 +181,7 @@ describe('Serve Static Middleware', () => {
 
   it('Should return 200 response for empty string content - /static/empty.txt', async () => {
     const onNotFound = vi.fn()
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent: async () => '',
@@ -214,7 +214,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should return a pre-compressed zstd response - /static/hello.html', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -234,7 +234,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should return a pre-compressed brotli response - /static/hello.html', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -254,7 +254,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should return a pre-compressed brotli response - /static/hello.unknown', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -274,7 +274,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should return a pre-compressed response when Accept-Encoding has q-values', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -293,7 +293,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should not return a pre-compressed response - /static/not-found.txt', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -313,7 +313,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should not return a pre-compressed response - /static/hello.html', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -333,7 +333,7 @@ describe('Serve Static Middleware', () => {
   })
 
   it('Should not find pre-compressed files - /static/hello.jpg', async () => {
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent,
@@ -355,7 +355,7 @@ describe('Serve Static Middleware', () => {
   it('Should return response object content as-is', async () => {
     const body = new ReadableStream()
     const response = new Response(body)
-    const app = new App().use(
+    const app = new Acryl().use(
       '*',
       baseServeStatic({
         getContent: async () => {
@@ -374,7 +374,7 @@ describe('Serve Static Middleware', () => {
 
   describe('Changing root path', () => {
     it('Should return the content with absolute root path', async () => {
-      const app = new App()
+      const app = new Acryl()
       const serveStatic = baseServeStatic({
         getContent,
         root: '/home/acryl/child',
@@ -386,7 +386,7 @@ describe('Serve Static Middleware', () => {
     })
 
     it('Should traverse the directories with absolute root path', async () => {
-      const app = new App()
+      const app = new Acryl()
       const serveStatic = baseServeStatic({
         getContent,
         root: '/home/acryl/../parent',
@@ -398,7 +398,7 @@ describe('Serve Static Middleware', () => {
     })
 
     it('Should treat the root path includes .. as relative path', async () => {
-      const app = new App()
+      const app = new Acryl()
       const serveStatic = baseServeStatic({
         getContent,
         root: '../home/acryl',
@@ -410,7 +410,7 @@ describe('Serve Static Middleware', () => {
     })
 
     it('Should not allow directory traversal with . as relative path', async () => {
-      const app = new App()
+      const app = new Acryl()
       const serveStatic = baseServeStatic({
         getContent,
         root: '.',
@@ -422,7 +422,7 @@ describe('Serve Static Middleware', () => {
     })
 
     it('Should not allow bypass via path mismatch between middleware and serveStatic', async () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.use('/admin/*', async (c, next) => {
         c.header('X-Authorized', 'true')

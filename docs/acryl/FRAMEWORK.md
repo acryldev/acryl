@@ -15,7 +15,7 @@ an evening, and every registration a plugin makes disappears when that plugin un
 | Block | Package | What it gives a plugin author | Size |
 | --- | --- | --- | --- |
 | Lifecycle | Cordis (`@deepseek-ai/cordis`) | plugins, `inject`, effects with disposers, PENDING until dependencies exist | the existing foundation |
-| Routing | `acryl-router` | `App` with routes, middleware, validation and helpers, mounted with `ctx.router.route('/x', app)`; in-process `ctx.router.fetch(request)` | the ported core (about 16,200 lines with its suite beside it) plus about 570 lines of Cordis service |
+| Routing | `acryl-router` | `Acryl` with routes, middleware, validation and helpers, mounted with `ctx.router.route('/x', app)`; in-process `ctx.router.fetch(request)` | the ported core (about 16,200 lines with its suite beside it) plus about 570 lines of Cordis service |
 | Web adapter | `acryl-router-http` | `ctx.routerHttp.mount('/api/x')` serves those routes over the DSH `webServer` | about 140 lines |
 | Standalone server | `acryl-node-server` | the whole router over `node:http` in a process without the Host | the ported Node adapter (about 2,900 lines) plus about 110 lines |
 | Shared state | `acryl-state` | observable cells (`ctx.state.cell`), derived cells, JSON and server-sent-event routes, a React hook | about 200 lines |
@@ -32,7 +32,7 @@ export const inject = ['router', 'state']
 export function apply(ctx: Context): void {
   const count = ctx.state.cell('notes.count', 0)
 
-  const app = new App().post('/', async c => {                // Web-standard Request in, Response out
+  const app = new Acryl().post('/', async c => {                // Web-standard Request in, Response out
     count.update(n => n + 1)
     return c.json({ saved: (await c.req.text()).length }, 201)
   })

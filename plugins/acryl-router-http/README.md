@@ -7,7 +7,7 @@ router asks for a path prefix to be served over HTTP:
 export const inject = ['router']
 
 export function apply(ctx: Context): void {
-  ctx.router.route('/api/market', new App().get('/:id', c => c.json({ id: c.req.param('id') })))
+  ctx.router.route('/api/market', new Acryl().get('/:id', c => c.json({ id: c.req.param('id') })))
   ctx.inject(['routerHttp'], inner => { inner.routerHttp.mount('/api/market') })   // claim the prefix on the DSH webServer
 }
 ```

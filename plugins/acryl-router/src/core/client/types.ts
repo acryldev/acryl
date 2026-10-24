@@ -1,5 +1,5 @@
-import type { App } from '../app.ts'
-import type { AppBase } from '../app-base.ts'
+import type { Acryl } from '../app.ts'
+import type { AcrylBase } from '../app-base.ts'
 import type { METHODS, METHOD_NAME_ALL_LOWERCASE } from '../router.ts'
 import type { Endpoint, ExtractSchema, KnownResponseFormat, ResponseFormat, Schema } from '../types.ts'
 import type { StatusCode, SuccessStatusCode } from '../utils/http-status.ts'
@@ -25,16 +25,16 @@ type ExpandAllMethod<S> = MethodNameAll extends keyof S
   ? { [M in StandardMethods]: S[MethodNameAll] } & Omit<S, MethodNameAll>
   : S
 
-type AppRequest = (typeof App.prototype)['request']
+type AcrylRequest = (typeof Acryl.prototype)['request']
 
 export type BuildSearchParamsFn = (query: Record<string, string | string[]>) => URLSearchParams
 
 export type ClientRequestOptions<T = unknown> = {
-  fetch?: typeof fetch | AppRequest
+  fetch?: typeof fetch | AcrylRequest
   webSocket?: (...args: ConstructorParameters<typeof WebSocket>) => WebSocket
   /**
    * Standard `RequestInit`, caution that this take highest priority
-   * and could be used to overwrite things that App sets for you, like `body | method | headers`.
+   * and could be used to overwrite things that Acryl sets for you, like `body | method | headers`.
    *
    * If you want to add some headers, use in `headers` instead of `init`
    */
@@ -93,7 +93,7 @@ export type ClientRequest<Prefix extends string, Path extends string, S extends 
       | undefined = undefined,
   >(
     arg?: Arg
-  ) => AppURL<Prefix, Path, Arg>
+  ) => AcrylURL<Prefix, Path, Arg>
   $path: <
     const Arg extends
       | (S[keyof S] extends { input: infer R }
@@ -173,7 +173,7 @@ type BuildTypedURL<
   Arg,
 > = TypedURL<`${Protocol}:`, Host, Port, BuildPathname<P, Arg>, BuildSearch<Arg, 'query'>>
 
-type AppURL<Prefix extends string, Path extends string, Arg> =
+type AcrylURL<Prefix extends string, Path extends string, Arg> =
   IsLiteral<Prefix> extends true
     ? TrimEndSlash<Prefix> extends `${infer Protocol}://${infer Rest}`
       ? Rest extends `${infer Hostname}/${infer P}`
@@ -309,7 +309,7 @@ type PathToChain<
       }
 
 export type Client<T, Prefix extends string> =
-  T extends AppBase<any, infer S, any>
+  T extends AcrylBase<any, infer S, any>
     ? S extends Record<infer K, Schema>
       ? K extends string
         ? PathToChain<Prefix, K, S>
@@ -355,10 +355,10 @@ type ModSchema<D, Def extends GlobalResponseDefinition> = {
   }
 }
 
-export type ApplyGlobalResponse<AppType, Def extends GlobalResponseDefinition> =
-  AppType extends AppBase<infer E, infer _ extends Schema, infer B>
-    ? ModSchema<ExtractSchema<AppType>, Def> extends infer S extends Schema
-      ? App<E, S, B>
+export type ApplyGlobalResponse<App, Def extends GlobalResponseDefinition> =
+  App extends AcrylBase<infer E, infer _ extends Schema, infer B>
+    ? ModSchema<ExtractSchema<App>, Def> extends infer S extends Schema
+      ? Acryl<E, S, B>
       : never
     : never
 
@@ -385,9 +385,9 @@ type PickSchema<D, U extends StatusCode> = {
  * const client = hc<AppSuccessOnly>('http://localhost')
  * ```
  */
-export type PickResponseByStatusCode<AppType, U extends StatusCode> =
-  AppType extends AppBase<infer E, infer _ extends Schema, infer B>
-    ? PickSchema<ExtractSchema<AppType>, U> extends infer S extends Schema
-      ? App<E, S, B>
+export type PickResponseByStatusCode<App, U extends StatusCode> =
+  App extends AcrylBase<infer E, infer _ extends Schema, infer B>
+    ? PickSchema<ExtractSchema<App>, U> extends infer S extends Schema
+      ? Acryl<E, S, B>
       : never
     : never

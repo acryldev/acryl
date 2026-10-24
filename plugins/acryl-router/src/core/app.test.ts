@@ -3,7 +3,7 @@
 import { expectTypeOf } from 'vitest'
 import { hc } from './client/index.ts'
 import type { Context, ExecutionContext } from './context.ts'
-import { App } from './app.ts'
+import { Acryl } from './app.ts'
 import { HTTPException } from './http-exception.ts'
 import { logger } from './middleware/logger/index.ts'
 import { poweredBy } from './middleware/powered-by/index.ts'
@@ -50,19 +50,19 @@ describe('GET Request', () => {
   describe('without middleware', () => {
     // In other words, this is a test for cases that do not use `compose()`
 
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
 
     app.get('/hello', async () => {
       return new Response('hello', {
         status: 200,
-        statusText: 'App is OK',
+        statusText: 'Acryl is OK',
       })
     })
 
     app.get('/hello-with-shortcuts', (c) => {
-      c.header('X-Custom', 'This is App')
+      c.header('X-Custom', 'This is Acryl')
       c.status(201)
-      return c.html('<h1>App!!!</h1>')
+      return c.html('<h1>Acryl!!!</h1>')
     })
 
     app.get('/hello-env', (c) => {
@@ -77,7 +77,7 @@ describe('GET Request', () => {
       const res = await app.request('http://localhost/hello')
       expect(res).not.toBeNull()
       expect(res.status).toBe(200)
-      expect(res.statusText).toBe('App is OK')
+      expect(res.statusText).toBe('Acryl is OK')
       expect(await res.text()).toBe('hello')
     })
 
@@ -90,7 +90,7 @@ describe('GET Request', () => {
       const res = await app.request('/hello')
       expect(res).not.toBeNull()
       expect(res.status).toBe(200)
-      expect(res.statusText).toBe('App is OK')
+      expect(res.statusText).toBe('Acryl is OK')
       expect(await res.text()).toBe('hello')
     })
 
@@ -98,7 +98,7 @@ describe('GET Request', () => {
       const res = await app.request('hello')
       expect(res).not.toBeNull()
       expect(res.status).toBe(200)
-      expect(res.statusText).toBe('App is OK')
+      expect(res.statusText).toBe('Acryl is OK')
       expect(await res.text()).toBe('hello')
     })
 
@@ -106,9 +106,9 @@ describe('GET Request', () => {
       const res = await app.request('http://localhost/hello-with-shortcuts')
       expect(res).not.toBeNull()
       expect(res.status).toBe(201)
-      expect(res.headers.get('X-Custom')).toBe('This is App')
+      expect(res.headers.get('X-Custom')).toBe('This is Acryl')
       expect(res.headers.get('Content-Type')).toMatch(/text\/html/)
-      expect(await res.text()).toBe('<h1>App!!!</h1>')
+      expect(await res.text()).toBe('<h1>Acryl!!!</h1>')
     })
 
     it('GET / is not found', async () => {
@@ -141,7 +141,7 @@ describe('GET Request', () => {
   describe('with middleware', () => {
     // when using `compose()`
 
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
 
     app.use('*', async (ctx, next) => {
       await next()
@@ -150,14 +150,14 @@ describe('GET Request', () => {
     app.get('/hello', async () => {
       return new Response('hello', {
         status: 200,
-        statusText: 'App is OK',
+        statusText: 'Acryl is OK',
       })
     })
 
     app.get('/hello-with-shortcuts', (c) => {
-      c.header('X-Custom', 'This is App')
+      c.header('X-Custom', 'This is Acryl')
       c.status(201)
-      return c.html('<h1>App!!!</h1>')
+      return c.html('<h1>Acryl!!!</h1>')
     })
 
     app.get('/hello-env', (c) => {
@@ -172,7 +172,7 @@ describe('GET Request', () => {
       const res = await app.request('http://localhost/hello')
       expect(res).not.toBeNull()
       expect(res.status).toBe(200)
-      expect(res.statusText).toBe('App is OK')
+      expect(res.statusText).toBe('Acryl is OK')
       expect(await res.text()).toBe('hello')
     })
 
@@ -185,7 +185,7 @@ describe('GET Request', () => {
       const res = await app.request('/hello')
       expect(res).not.toBeNull()
       expect(res.status).toBe(200)
-      expect(res.statusText).toBe('App is OK')
+      expect(res.statusText).toBe('Acryl is OK')
       expect(await res.text()).toBe('hello')
     })
 
@@ -193,7 +193,7 @@ describe('GET Request', () => {
       const res = await app.request('hello')
       expect(res).not.toBeNull()
       expect(res.status).toBe(200)
-      expect(res.statusText).toBe('App is OK')
+      expect(res.statusText).toBe('Acryl is OK')
       expect(await res.text()).toBe('hello')
     })
 
@@ -201,9 +201,9 @@ describe('GET Request', () => {
       const res = await app.request('http://localhost/hello-with-shortcuts')
       expect(res).not.toBeNull()
       expect(res.status).toBe(201)
-      expect(res.headers.get('X-Custom')).toBe('This is App')
+      expect(res.headers.get('X-Custom')).toBe('This is Acryl')
       expect(res.headers.get('Content-Type')).toMatch(/text\/html/)
-      expect(await res.text()).toBe('<h1>App!!!</h1>')
+      expect(await res.text()).toBe('<h1>Acryl!!!</h1>')
     })
 
     it('GET / is not found', async () => {
@@ -236,7 +236,7 @@ describe('GET Request', () => {
 
 describe('Register handlers without a path', () => {
   describe('No basePath', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get((c) => {
       return c.text('Hello')
@@ -255,7 +255,7 @@ describe('Register handlers without a path', () => {
   })
 
   describe('With specifying basePath', () => {
-    const app = new App().basePath('/about')
+    const app = new Acryl().basePath('/about')
 
     app.get((c) => {
       return c.text('About')
@@ -274,7 +274,7 @@ describe('Register handlers without a path', () => {
   })
 
   describe('With chaining', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.post('/books').get((c) => {
       return c.text('Books')
@@ -296,11 +296,11 @@ describe('Register handlers without a path', () => {
 describe('Options', () => {
   describe('router option', () => {
     it('Should be SmartRouter', () => {
-      const app = new App()
+      const app = new Acryl()
       expect(app.router instanceof SmartRouter).toBe(true)
     })
     it('Should be RegExpRouter', () => {
-      const app = new App({
+      const app = new Acryl({
         router: new RegExpRouter(),
       })
       expect(app.router instanceof RegExpRouter).toBe(true)
@@ -309,7 +309,7 @@ describe('Options', () => {
 
   describe('strict parameter', () => {
     describe('strict is true with not slash', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.get('/hello', (c) => {
         return c.text('/hello')
@@ -326,7 +326,7 @@ describe('Options', () => {
     })
 
     describe('strict is true with slash', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.get('/hello/', (c) => {
         return c.text('/hello/')
@@ -343,7 +343,7 @@ describe('Options', () => {
     })
 
     describe('strict is false', () => {
-      const app = new App({ strict: false })
+      const app = new Acryl({ strict: false })
 
       app.get('/hello', (c) => {
         return c.text('/hello')
@@ -360,7 +360,7 @@ describe('Options', () => {
     })
 
     describe('strict is false with `getPath` option', () => {
-      const app = new App({
+      const app = new Acryl({
         strict: false,
         // @ts-expect-error `getPath` is not used when `strict` is false
         getPath: getPath,
@@ -384,20 +384,20 @@ describe('Options', () => {
   it('Should not modify the options passed to it', () => {
     const options = { strict: true }
     const clone = structuredClone(options)
-    const app = new App(clone)
+    const app = new Acryl(clone)
     expect(clone).toEqual(options)
   })
 })
 
 describe('Destruct functions in context', () => {
   it('Should return 200 response - text', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/text', ({ text }) => text('foo'))
     const res = await app.request('http://localhost/text')
     expect(res.status).toBe(200)
   })
   it('Should return 200 response - json', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/json', ({ json }) => json({ foo: 'bar' }))
     const res = await app.request('http://localhost/json')
     expect(res.status).toBe(200)
@@ -406,7 +406,7 @@ describe('Destruct functions in context', () => {
 
 describe('Routing', () => {
   it('Return it self', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     const app2 = app.get('/', () => new Response('get /'))
     expect(app2).not.toBeUndefined()
@@ -424,7 +424,7 @@ describe('Routing', () => {
   })
 
   it('Nested route', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     const book = app.basePath('/book')
     book.get('/', (c) => c.text('get /book'))
@@ -475,8 +475,8 @@ describe('Routing', () => {
   })
 
   it('Should match a suffix wildcard after falling back to TrieRouter', async () => {
-    const app = new App()
-    const sub = new App()
+    const app = new Acryl()
+    const sub = new Acryl()
     sub.post('/items', (c) => c.text('items'))
     sub.post('/:slug', (c) => c.text('slug'))
     app.route('/api', sub)
@@ -489,8 +489,8 @@ describe('Routing', () => {
   })
 
   it('Nested route - subApp with basePath', async () => {
-    const app = new App()
-    const book = new App().basePath('/book')
+    const app = new Acryl()
+    const book = new Acryl().basePath('/book')
     book.get('/', (c) => c.text('get /book'))
     app.route('/api', book)
 
@@ -501,8 +501,8 @@ describe('Routing', () => {
 
   describe('Nested route - basePath of the mounted routes', () => {
     it('Should set basePath to the mount path', () => {
-      const app = new App()
-      const sub = new App()
+      const app = new Acryl()
+      const sub = new Acryl()
       sub.get('/posts/:id', (c) => c.text('post'))
       app.route('/:sub', sub)
 
@@ -517,9 +517,9 @@ describe('Routing', () => {
     })
 
     it('Should accumulate basePath through nested route() calls', () => {
-      const app = new App()
-      const sub1 = new App()
-      const sub2 = new App()
+      const app = new Acryl()
+      const sub1 = new Acryl()
+      const sub2 = new Acryl()
       sub2.get('/posts/:id', (c) => c.text('post'))
       sub1.route('/:sub2', sub2)
       app.route('/:sub1', sub1)
@@ -535,8 +535,8 @@ describe('Routing', () => {
     })
 
     it('Should merge the basePath of a subApp created with basePath()', () => {
-      const app = new App()
-      const sub = new App().basePath('/book')
+      const app = new Acryl()
+      const sub = new Acryl().basePath('/book')
       sub.get('/:id', (c) => c.text('book'))
       app.route('/api', sub)
 
@@ -552,12 +552,12 @@ describe('Routing', () => {
   })
 
   it('Multiple route', async () => {
-    const app = new App()
+    const app = new Acryl()
 
-    const book = new App()
+    const book = new Acryl()
     book.get('/hello', (c) => c.text('get /book/hello'))
 
-    const user = new App()
+    const user = new Acryl()
     user.get('/hello', (c) => c.text('get /user/hello'))
 
     app.route('/book', book).route('/user', user)
@@ -572,21 +572,21 @@ describe('Routing', () => {
   })
 
   describe('Nested route with middleware', () => {
-    const api = new App()
+    const api = new Acryl()
     const api2 = api.use('*', async (_c, next) => await next())
 
     it('Should mount routes with no type errors', () => {
-      const app = new App().route('/api', api2)
+      const app = new Acryl().route('/api', api2)
     })
   })
 
   describe('Grouped route', () => {
-    let one: App, two: App, three: App
+    let one: Acryl, two: Acryl, three: Acryl
 
     beforeEach(() => {
-      one = new App()
-      two = new App()
-      three = new App()
+      one = new Acryl()
+      two = new Acryl()
+      three = new Acryl()
     })
 
     it('only works with correct order', async () => {
@@ -645,11 +645,11 @@ describe('Routing', () => {
   })
 
   it('routing with hostname', async () => {
-    const app = new App({
+    const app = new Acryl({
       getPath: (req) => req.url.replace(/^https?:\/(.+?)$/, '$1'),
     })
 
-    const sub = new App()
+    const sub = new Acryl()
     sub.get('/', (c) => c.text('hello sub'))
     sub.get('/foo', (c) => c.text('hello sub foo'))
 
@@ -686,12 +686,12 @@ describe('Routing', () => {
   })
 
   it('routing with request header', async () => {
-    const app = new App({
+    const app = new Acryl({
       getPath: (req) =>
         '/' + req.headers.get('host') + req.url.replace(/^https?:\/\/[^/]+(\/[^?]*)/, '$1'),
     })
 
-    const sub = new App()
+    const sub = new Acryl()
     sub.get('/', (c) => c.text('hello sub'))
     sub.get('/foo', (c) => c.text('hello sub foo'))
 
@@ -749,7 +749,7 @@ describe('Routing', () => {
   })
 
   describe('routing with the bindings value', () => {
-    const app = new App<{ Bindings: { host: string } }>({
+    const app = new Acryl<{ Bindings: { host: string } }>({
       getPath: (req, options) => {
         const url = new URL(req.url)
         const host = options?.env?.host
@@ -776,7 +776,7 @@ describe('Routing', () => {
   })
 
   describe('Chained route', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app
       .get('/chained/:abc', (c) => {
@@ -804,9 +804,9 @@ describe('Routing', () => {
   })
 
   describe('Encoded path', () => {
-    let app: App
+    let app: Acryl
     beforeEach(() => {
-      app = new App()
+      app = new Acryl()
     })
 
     it('should decode path parameter', async () => {
@@ -864,9 +864,9 @@ describe('Routing', () => {
 })
 
 describe('param and query', () => {
-  const apps: Record<string, App> = {}
+  const apps: Record<string, Acryl> = {}
   apps['get by name'] = (() => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/entry/:id', (c) => {
       const id = c.req.param('id')
@@ -898,7 +898,7 @@ describe('param and query', () => {
   })()
 
   apps['get all as an object'] = (() => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/entry/:id', (c) => {
       const { id } = c.req.param()
@@ -983,7 +983,7 @@ describe('param and query', () => {
   })
 
   describe('param with undefined', () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/foo/:foo', (c) => {
       const bar = c.req.param('bar')
       return c.json({ foo: bar })
@@ -997,7 +997,7 @@ describe('param and query', () => {
 })
 
 describe('c.req.path', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/', (c) => c.text(c.req.path))
   app.get('/search', (c) => c.text(c.req.path))
 
@@ -1015,7 +1015,7 @@ describe('c.req.path', () => {
 })
 
 describe('Header', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.get('/text', (c) => {
     return c.text('Hello')
@@ -1044,7 +1044,7 @@ describe('Header', () => {
 
 describe('Middleware', () => {
   describe('Basic', () => {
-    const app = new App()
+    const app = new Acryl()
 
     // Custom Logger
     app.use('*', async (c, next) => {
@@ -1141,7 +1141,7 @@ describe('Middleware', () => {
   })
 
   describe('Chained route', () => {
-    const app = new App()
+    const app = new Acryl()
     app
       .use('/chained/*', async (c, next) => {
         c.req.raw.headers.append('x-before', 'abc')
@@ -1166,7 +1166,7 @@ describe('Middleware', () => {
   })
 
   describe('Multiple handler', () => {
-    const app = new App()
+    const app = new Acryl()
     app
       .use(
         '/multiple/*',
@@ -1194,7 +1194,7 @@ describe('Middleware', () => {
   })
 
   describe('Overwrite the response from middleware after next()', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use('/normal', async (c, next) => {
       await next()
@@ -1225,7 +1225,7 @@ describe('Middleware', () => {
 })
 
 describe('Builtin Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
   app.use('/abc', poweredBy())
   app.use('/def', async (c, next) => {
     const middleware = poweredBy()
@@ -1236,18 +1236,18 @@ describe('Builtin Middleware', () => {
 
   it('"powered-by" middleware', async () => {
     const res = await app.request('http://localhost/abc')
-    expect(res.headers.get('x-powered-by')).toBe('ACRYL')
+    expect(res.headers.get('x-powered-by')).toBe('Acryl')
   })
 
   it('"powered-by" middleware in a handler', async () => {
     const res = await app.request('http://localhost/def')
-    expect(res.headers.get('x-powered-by')).toBe('ACRYL')
+    expect(res.headers.get('x-powered-by')).toBe('Acryl')
   })
 })
 
 describe('Middleware with app.HTTP_METHOD', () => {
   describe('Basic', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.all('*', async (c, next) => {
       c.header('x-before-dispatch', 'foo')
@@ -1290,7 +1290,7 @@ describe('Middleware with app.HTTP_METHOD', () => {
   })
 
   describe('With builtin middleware', () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/abc', poweredBy(), (c) => {
       return c.text('GET /abc')
     })
@@ -1298,13 +1298,13 @@ describe('Middleware with app.HTTP_METHOD', () => {
       const res = await app.request('http://localhost/abc')
       expect(res.status).toBe(200)
       expect(await res.text()).toBe('GET /abc')
-      expect(res.headers.get('x-powered-by')).toBe('ACRYL')
+      expect(res.headers.get('x-powered-by')).toBe('Acryl')
     })
   })
 })
 
 describe('Not Found', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.notFound((c) => {
     return c.text('Custom 404 Not Found', 404)
@@ -1329,7 +1329,7 @@ describe('Not Found', () => {
   })
 
   describe('Not Found with a middleware', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/', (c) => c.text('hello'))
     app.use('*', async (c, next) => {
@@ -1348,7 +1348,7 @@ describe('Not Found', () => {
   })
 
   describe('Not Found with some middleware', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/', (c) => c.text('hello'))
     app.use('*', async (c, next) => {
@@ -1371,7 +1371,7 @@ describe('Not Found', () => {
   })
 
   describe('No response from a handler', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/', (c) => c.text('hello'))
     app.get('/not-found', async (c) => undefined)
@@ -1387,7 +1387,7 @@ describe('Not Found', () => {
   })
 
   describe('Custom 404 Not Found with a middleware like Compress Middleware', () => {
-    const app = new App()
+    const app = new Acryl()
 
     // Custom Middleware which creates a new Response object after `next()`.
     app.use('*', async (c, next) => {
@@ -1408,7 +1408,7 @@ describe('Not Found', () => {
 })
 
 describe('Redirect', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/redirect', (c) => {
     return c.redirect('/')
   })
@@ -1422,7 +1422,7 @@ describe('Redirect', () => {
 
 describe('Error handle', () => {
   describe('Basic', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/error', () => {
       throw new Error('This is Error')
@@ -1459,7 +1459,7 @@ describe('Error handle', () => {
   })
 
   describe('Async custom handler', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/error', () => {
       throw new Error('This is Error')
@@ -1494,7 +1494,7 @@ describe('Error handle', () => {
   })
 
   describe('Handle HTTPException', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/exception', () => {
       throw new HTTPException(401, {
@@ -1508,7 +1508,7 @@ describe('Error handle', () => {
       expect(await res.text()).toBe('Unauthorized')
     })
 
-    const app2 = new App()
+    const app2 = new Acryl()
 
     app2.get('/exception', () => {
       throw new HTTPException(401)
@@ -1529,7 +1529,7 @@ describe('Error handle', () => {
   })
 
   describe('Handle HTTPException like object', () => {
-    const app = new App()
+    const app = new Acryl()
 
     class CustomError extends Error {
       getResponse() {
@@ -1549,7 +1549,7 @@ describe('Error handle', () => {
   })
 
   describe('HTTPException with finally block', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(async (c) => {
       try {
         throw new Error()
@@ -1571,7 +1571,7 @@ describe('Error handle', () => {
 })
 
 describe('Error handling in middleware', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.get('/handle-error-in-middleware', async (c, next) => {
     await next()
@@ -1617,7 +1617,7 @@ describe('Error handling in middleware', () => {
   })
 
   describe('Default route app.use', () => {
-    const app = new App()
+    const app = new Acryl()
     app
       .use(async (c, next) => {
         c.header('x-default-use', 'abc')
@@ -1635,7 +1635,7 @@ describe('Error handling in middleware', () => {
   })
 
   describe('Error in `notFound()`', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use('*', async () => {})
 
@@ -1656,7 +1656,7 @@ describe('Error handling in middleware', () => {
 })
 
 describe('Request methods with custom middleware', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.use('*', async (c, next) => {
     const query = c.req.query('foo')
@@ -1677,7 +1677,7 @@ describe('Request methods with custom middleware', () => {
     c.header('X-Query', query ?? throwExpression('missing `X-Query` header'))
     c.header('X-Param', param)
     c.header('X-Header', header ?? throwExpression('missing `X-Header` header'))
-    return c.body('App')
+    return c.body('Acryl')
   })
 
   it('query', async () => {
@@ -1699,7 +1699,7 @@ describe('Request methods with custom middleware', () => {
 })
 
 describe('Middleware + c.json(0, requestInit)', () => {
-  const app = new App()
+  const app = new Acryl()
   app.use('/', async (c, next) => {
     await next()
   })
@@ -1718,11 +1718,11 @@ describe('Middleware + c.json(0, requestInit)', () => {
   })
 })
 
-describe('App with `app.route`', () => {
+describe('Acryl with `app.route`', () => {
   describe('Basic', () => {
-    const app = new App()
-    const api = new App()
-    const middleware = new App()
+    const app = new Acryl()
+    const api = new Acryl()
+    const middleware = new Acryl()
 
     api.use('*', async (c, next) => {
       await next()
@@ -1785,10 +1785,10 @@ describe('App with `app.route`', () => {
     })
 
     describe('With app.get(...handler)', () => {
-      const app = new App()
-      const about = new App()
+      const app = new Acryl()
+      const about = new Acryl()
       about.get((c) => c.text('me'))
-      const subApp = new App()
+      const subApp = new Acryl()
       subApp.route('/about', about)
       app.route('/', subApp)
 
@@ -1805,8 +1805,8 @@ describe('App with `app.route`', () => {
     })
 
     describe('With app.get(...handler) and app.basePath()', () => {
-      const app = new App()
-      const about = new App().basePath('/about')
+      const app = new Acryl()
+      const about = new Acryl().basePath('/about')
       about.get((c) => c.text('me'))
       app.route('/', about)
 
@@ -1824,8 +1824,8 @@ describe('App with `app.route`', () => {
   })
 
   describe('Chaining', () => {
-    const app = new App()
-    const route = new App()
+    const app = new Acryl()
+    const route = new Acryl()
     route.get('/post', (c) => c.text('GET /POST v2')).post((c) => c.text('POST /POST v2'))
     app.route('/v2', route)
 
@@ -1848,9 +1848,9 @@ describe('App with `app.route`', () => {
   })
 
   describe('Nested', () => {
-    const app = new App()
-    const api = new App()
-    const book = new App()
+    const app = new Acryl()
+    const api = new Acryl()
+    const book = new Acryl()
 
     book.get('/', (c) => c.text('list books'))
     book.get('/:id', (c) => c.text(`book ${c.req.param('id')}`))
@@ -1887,8 +1887,8 @@ describe('App with `app.route`', () => {
   })
 
   describe('onError', () => {
-    const app = new App()
-    const sub = new App()
+    const app = new Acryl()
+    const sub = new Acryl()
 
     app.use('*', async (c, next) => {
       await next()
@@ -1941,8 +1941,8 @@ describe('App with `app.route`', () => {
   })
 
   describe('onError for a single handler', () => {
-    const app = new App()
-    const sub = new App()
+    const app = new Acryl()
+    const sub = new Acryl()
 
     sub.get('/ok', (c) => c.text('OK'))
 
@@ -1969,8 +1969,8 @@ describe('App with `app.route`', () => {
   })
 
   describe('notFound', () => {
-    const app = new App()
-    const sub = new App()
+    const app = new Acryl()
+    const sub = new Acryl()
 
     app.get('/explicit-404', async (c) => {
       c.header('explicit', '1')
@@ -2026,7 +2026,7 @@ describe('App with `app.route`', () => {
 
 describe('Using other methods with `app.on`', () => {
   it('Should handle PURGE method with RegExpRouter', async () => {
-    const app = new App({ router: new RegExpRouter() })
+    const app = new Acryl({ router: new RegExpRouter() })
 
     app.on('PURGE', '/purge', (c) => c.text('Accepted', 202))
 
@@ -2039,7 +2039,7 @@ describe('Using other methods with `app.on`', () => {
   })
 
   it('Should handle PURGE method with TrieRouter', async () => {
-    const app = new App({ router: new TrieRouter() })
+    const app = new Acryl({ router: new TrieRouter() })
 
     app.on('PURGE', '/purge', (c) => c.text('Accepted', 202))
 
@@ -2053,7 +2053,7 @@ describe('Using other methods with `app.on`', () => {
 })
 
 describe('Multiple methods with `app.on`', () => {
-  const app = new App()
+  const app = new Acryl()
   app.on(['PUT', 'DELETE'], '/posts/:id', (c) => {
     return c.json({
       postId: c.req.param('id'),
@@ -2096,7 +2096,7 @@ describe('Multiple methods with `app.on`', () => {
 
 describe('Using QUERY with `app.query` and `app.on`', () => {
   it('Should handle QUERY method with app.query()', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.query('/query', (c) => c.text('Accepted', 202))
 
@@ -2109,7 +2109,7 @@ describe('Using QUERY with `app.query` and `app.on`', () => {
   })
 
   it('Should handle QUERY method with RegExpRouter', async () => {
-    const app = new App({ router: new RegExpRouter() })
+    const app = new Acryl({ router: new RegExpRouter() })
 
     app.on('QUERY', '/query', (c) => c.text('Accepted', 202))
 
@@ -2122,7 +2122,7 @@ describe('Using QUERY with `app.query` and `app.on`', () => {
   })
 
   it('Should handle QUERY method with TrieRouter', async () => {
-    const app = new App({ router: new TrieRouter() })
+    const app = new Acryl({ router: new TrieRouter() })
 
     app.on('QUERY', '/query', (c) => c.text('Accepted', 202))
 
@@ -2136,7 +2136,7 @@ describe('Using QUERY with `app.query` and `app.on`', () => {
 })
 
 describe('Multiple paths with one handler', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const paths = ['/hello', '/ja/hello', '/en/hello']
   app.on('GET', paths, (c) => {
@@ -2161,7 +2161,7 @@ describe('Multiple paths with one handler', () => {
 
 describe('Multiple handler', () => {
   describe('handler + handler', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/posts/:id', (c) => {
       const id = c.req.param('id')
@@ -2185,7 +2185,7 @@ describe('Multiple handler', () => {
 
   describe('Duplicate param name', () => {
     describe('basic', () => {
-      const app = new App()
+      const app = new Acryl()
       app.get('/:type/:url', (c) => {
         return c.text(`type: ${c.req.param('type')}, url: ${c.req.param('url')}`)
       })
@@ -2206,7 +2206,7 @@ describe('Multiple handler', () => {
     })
 
     describe('self', () => {
-      const app = new App()
+      const app = new Acryl()
       app.get('/:id/:id', (c) => {
         const id = c.req.param('id')
         return c.text(`id is ${id}`)
@@ -2220,13 +2220,13 @@ describe('Multiple handler', () => {
 
     describe('self with trailing static is stable across SmartRouter fallback', () => {
       it('Should return the first id whether or not an unrelated route is registered', async () => {
-        const a = new App()
+        const a = new Acryl()
         a.get('/:id/:id/x', (c) => c.text(c.req.param('id')))
         const resA = await a.request('/123/456/x')
         expect(resA.status).toBe(200)
         expect(await resA.text()).toBe('123')
 
-        const b = new App()
+        const b = new Acryl()
         b.get('/:id/:id/x', (c) => c.text(c.req.param('id')))
         b.get('/a', (c) => c.text('a'))
         const resB = await b.request('/123/456/x')
@@ -2237,7 +2237,7 @@ describe('Multiple handler', () => {
     })
 
     describe('hierarchy', () => {
-      const app = new App()
+      const app = new Acryl()
       app.get('/posts/:id/comments/:comment_id', (c) => {
         return c.text(`post: ${c.req.param('id')}, comment: ${c.req.param('comment_id')}`)
       })
@@ -2257,7 +2257,7 @@ describe('Multiple handler', () => {
     })
 
     describe('different regular expression', () => {
-      const app = new App()
+      const app = new Acryl()
       app.get('/:id/:action{create|update}', (c) => {
         return c.text(`id: ${c.req.param('id')}, action: ${c.req.param('action')}`)
       })
@@ -2286,7 +2286,7 @@ describe('Multiple handler', () => {
 
 describe('Multiple handler - async', () => {
   describe('handler + handler', () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/posts/:id', async (c) => {
       await new Promise((resolve) => setTimeout(resolve, 1))
       c.header('foo2', 'bar2')
@@ -2311,7 +2311,7 @@ describe('Multiple handler - async', () => {
 })
 
 describe('Lack returning response with a single handler', () => {
-  const app = new App()
+  const app = new Acryl()
   // @ts-expect-error it should return Response to type it
   app.get('/sync', () => {})
   app.get('/async', async () => {})
@@ -2329,7 +2329,7 @@ describe('Lack returning response with a single handler', () => {
 
 describe('Context is not finalized', () => {
   it('should throw error - lack `await next()`', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     // @ts-ignore
     app.use('*', () => {})
@@ -2345,7 +2345,7 @@ describe('Context is not finalized', () => {
   })
 
   it('should throw error - lack `returning Response`', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', async (_c, next) => {
       await next()
     })
@@ -2362,7 +2362,7 @@ describe('Context is not finalized', () => {
 })
 
 describe('Parse Body', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.post('/json', async (c) => {
     return c.json<{}, 200>(await c.req.parseBody(), 200)
@@ -2416,7 +2416,7 @@ describe('Parse Body', () => {
 
 describe('Both two middleware returning response', () => {
   it('Should return correct Content-Type`', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', async (c, next) => {
       await next()
       return c.html('Foo')
@@ -2437,7 +2437,7 @@ describe('Count of logger called', () => {
   let count = 0
   let log = ''
 
-  const app = new App()
+  const app = new Acryl()
 
   const logFn = (str: string) => {
     count++
@@ -2473,7 +2473,7 @@ describe('Context set/get variables', () => {
     title: string
   }
 
-  const app = new App<{ Variables: Variables }>()
+  const app = new Acryl<{ Variables: Variables }>()
 
   it('Should set and get variables with correct types', async () => {
     app.use('*', async (c, next) => {
@@ -2502,7 +2502,7 @@ describe('Context binding variables', () => {
     USER_NAME: string
   }
 
-  const app = new App<{ Bindings: Bindings }>()
+  const app = new Acryl<{ Bindings: Bindings }>()
 
   it('Should get binding variables with correct types', async () => {
     app.get('/', (c) => {
@@ -2515,7 +2515,7 @@ describe('Context binding variables', () => {
 })
 
 describe('Handler as variables', () => {
-  const app = new App()
+  const app = new Acryl()
 
   it('Should be typed correctly', async () => {
     const handler: Handler = (c) => {
@@ -2531,7 +2531,7 @@ describe('Handler as variables', () => {
 })
 
 describe('json', () => {
-  const api = new App()
+  const api = new Acryl()
 
   api.get('/message', (c) => {
     return c.json({
@@ -2546,7 +2546,7 @@ describe('json', () => {
   })
 
   describe('Single handler', () => {
-    const app = new App()
+    const app = new Acryl()
     app.route('/api', api)
 
     it('Should return 200 response', async () => {
@@ -2567,7 +2567,7 @@ describe('json', () => {
   })
 
   describe('With middleware', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', async (_c, next) => {
       await next()
     })
@@ -2592,7 +2592,7 @@ describe('json', () => {
 })
 
 describe('Optional parameters', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/api/:version/animal/:type?', (c) => {
     const type1 = c.req.param('type')
     expectTypeOf(type1).toEqualTypeOf<string | undefined>()
@@ -2622,7 +2622,7 @@ describe('Optional parameters', () => {
   })
 
   it('Should have a correct type with an optional parameter in a regexp path', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/url/:url{.*}?', (c) => {
       const url = c.req.param('url')
       expectTypeOf(url).toEqualTypeOf<string | undefined>()
@@ -2669,12 +2669,12 @@ describe('app.mount()', () => {
       })
     }
 
-    const app = new App()
+    const app = new Acryl()
     app.use('*', async (c, next) => {
       await next()
       c.header('x-message', 'Foo')
     })
-    app.get('/', (c) => c.text('App'))
+    app.get('/', (c) => c.text('Acryl'))
     app.notFound((c) => {
       return c.text('Not Found from App', 404)
     })
@@ -2687,14 +2687,14 @@ describe('app.mount()', () => {
     })
     app.mount('/another-app2/sub-slash/', anotherApp)
 
-    const api = new App().basePath('/api')
+    const api = new Acryl().basePath('/api')
     api.mount('/another-app', anotherApp)
 
-    it('Should return responses from App app', async () => {
+    it('Should return responses from Acryl app', async () => {
       const res = await app.request('/')
       expect(res.status).toBe(200)
       expect(res.headers.get('x-message')).toBe('Foo')
-      expect(await res.text()).toBe('App')
+      expect(await res.text()).toBe('Acryl')
     })
 
     it('Should return responses from AnotherApp', async () => {
@@ -2763,7 +2763,7 @@ describe('app.mount()', () => {
     const anotherApp = (req: Request) => new Response(getPath(req))
 
     it('Should strip a decoded non-ASCII mount prefix', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.mount('/api/é', anotherApp)
 
       const res = await app.request('/api/%C3%A9/hello')
@@ -2773,7 +2773,7 @@ describe('app.mount()', () => {
     })
 
     it('Should preserve an encoded slash as a literal path segment after stripping the prefix', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.mount('/api/v1', anotherApp)
 
       const res = await app.request('/api/v1/admin%2Fsecret')
@@ -2783,7 +2783,7 @@ describe('app.mount()', () => {
     })
 
     it('Should preserve encoded percent characters after stripping the prefix', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.mount('/api', anotherApp)
 
       const res = await app.request('/api/foo%252Fbar')
@@ -2814,7 +2814,7 @@ describe('app.mount()', () => {
       })
     }
 
-    const app = new App()
+    const app = new Acryl()
     app.mount('/another-app', anotherApp)
 
     it('Should handle Env and ExecuteContext', async () => {
@@ -2864,7 +2864,7 @@ describe('app.mount()', () => {
       })
     }
 
-    const app = new App()
+    const app = new Acryl()
     app.mount('/', anotherApp)
 
     it('Should return responses from AnotherApp - mount on `/`', async () => {
@@ -2892,7 +2892,7 @@ describe('app.mount()', () => {
       return new Response(null, { status: 404 })
     }
 
-    const app = new App()
+    const app = new Acryl()
     app.mount('/app', anotherApp, {
       replaceRequest: (req) => req,
     })
@@ -2913,7 +2913,7 @@ describe('app.mount()', () => {
       return new Response(null, { status: 404 })
     }
 
-    const app = new App()
+    const app = new Acryl()
     app.mount('/app', anotherApp, { replaceRequest: false })
 
     it('Should return 200 response with the correct path', async () => {
@@ -2925,7 +2925,7 @@ describe('app.mount()', () => {
 })
 
 describe('HEAD method', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.get('/page', (c) => {
     c.header('X-Message', 'Foo')
@@ -2961,7 +2961,7 @@ declare module './context.ts' {
 
 describe('app.request()', () => {
   it('Should return response with Request and RequestInit as args', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/foo', (c) => {
       return c.json(c.req.header('x-message'))
     })
@@ -2978,7 +2978,7 @@ describe('app.request()', () => {
 
 describe('app.fire()', () => {
   it('Should call global.addEventListener', () => {
-    const app = new App()
+    const app = new Acryl()
     const addEventListener = vi.fn()
     global.addEventListener = addEventListener
     app.fire()
@@ -2993,7 +2993,7 @@ describe('app.fire()', () => {
 })
 
 describe('Context render and setRenderer', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/default', (c) => {
     return c.render('<h1>content</h1>', { title: 'dummy ' })
   })
@@ -3025,7 +3025,7 @@ describe('Context render and setRenderer', () => {
 })
 
 describe('c.var - with testing types', () => {
-  const app = new App<{
+  const app = new Acryl<{
     Bindings: {
       Token: string
     }
@@ -3670,7 +3670,7 @@ describe('c.var - with testing types', () => {
   })
 
   it('Should not throw type errors', () => {
-    const app = new App<{
+    const app = new Acryl<{
       Variables: {
         hello: () => string
       }
@@ -3700,7 +3700,7 @@ describe('c.var - with testing types', () => {
   })
 
   it('Should not throw a type error', (c) => {
-    const app = new App<{
+    const app = new Acryl<{
       Bindings: {
         TOKEN: string
       }
@@ -3735,21 +3735,21 @@ describe('c.var - with testing types', () => {
   })
 })
 
-describe('Compatible with extended App classes, such Zod OpenAPI App.', () => {
-  class ExtendedApp extends App {
+describe('Compatible with extended Acryl classes, such Zod OpenAPI Acryl.', () => {
+  class ExtendedAcryl extends Acryl {
     // @ts-ignore
-    route(path: string, app?: App) {
+    route(path: string, app?: Acryl) {
       // @ts-ignore
       super.route(path, app)
       return this
     }
     // @ts-ignore
     basePath(path: string) {
-      return new ExtendedApp(super.basePath(path))
+      return new ExtendedAcryl(super.basePath(path))
     }
   }
-  const a = new ExtendedApp()
-  const sub = new App()
+  const a = new ExtendedAcryl()
+  const sub = new Acryl()
   sub.get('/foo', (c) => c.text('foo'))
   a.route('/sub', sub)
 
@@ -3766,11 +3766,11 @@ describe('Generics for Bindings and Variables', () => {
 
   it('Should not throw type errors', () => {
     // @ts-expect-error Bindings should extend object
-    new App<{
+    new Acryl<{
       Bindings: number
     }>()
 
-    const appWithInterface = new App<{
+    const appWithInterface = new Acryl<{
       Bindings: CloudflareBindings
     }>()
 
@@ -3779,7 +3779,7 @@ describe('Generics for Bindings and Variables', () => {
       return c.text('/')
     })
 
-    const appWithType = new App<{
+    const appWithType = new Acryl<{
       Bindings: {
         foo: string
       }
@@ -3787,13 +3787,13 @@ describe('Generics for Bindings and Variables', () => {
 
     appWithType.get('/', (c) => {
       expectTypeOf(c.env.foo).toMatchTypeOf<string>()
-      return c.text('Hello App!')
+      return c.text('Hello Acryl!')
     })
   })
 })
 
 describe('app.basePath() with the internal #clone()', () => {
-  const app = new App()
+  const app = new Acryl()
     .notFound((c) => {
       return c.text('Custom not found', 404)
     })
@@ -3820,7 +3820,7 @@ describe('app.basePath() with the internal #clone()', () => {
 
 describe('Catch-all route with empty segment', () => {
   it('Should return empty string for empty catch-all param', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/:remaining{.*}', (c) => {
       const remaining = c.req.param('remaining')
       return c.json({ type: typeof remaining, value: remaining })

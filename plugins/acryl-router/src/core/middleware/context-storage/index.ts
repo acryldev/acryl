@@ -1,6 +1,6 @@
 /**
  * @module
- * Context Storage Middleware for App.
+ * Context Storage Middleware for Acryl.
  */
 
 import { AsyncLocalStorage } from 'node:async_hooks'
@@ -10,7 +10,7 @@ import type { Env, MiddlewareHandler } from '../../types.ts'
 const asyncLocalStorage = new AsyncLocalStorage<Context>()
 
 /**
- * Context Storage Middleware for App.
+ * Context Storage Middleware for Acryl.
  *
  *
  * @returns {MiddlewareHandler} The middleware handler function.
@@ -23,12 +23,12 @@ const asyncLocalStorage = new AsyncLocalStorage<Context>()
  *   }
  * }
  *
- * const app = new App<Env>()
+ * const app = new Acryl<Env>()
  *
  * app.use(contextStorage())
  *
  * app.use(async (c, next) => {
- *   c.set('message', 'App is hot!!')
+ *   c.set('message', 'Acryl is hot!!')
  *   await next()
  * })
  *

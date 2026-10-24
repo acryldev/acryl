@@ -1,6 +1,6 @@
 /**
  * @module
- * Cookie Helper for App.
+ * Cookie Helper for Acryl.
  */
 
 import type { Context } from '../../context.ts'

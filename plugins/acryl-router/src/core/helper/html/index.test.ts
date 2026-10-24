@@ -49,10 +49,10 @@ describe('Tagged Template Literals', () => {
 
   describe('HtmlEscapedString', () => {
     it('Should preserve callbacks', async () => {
-      const name = raw('App', [
+      const name = raw('Acryl', [
         ({ buffer }) => {
           if (buffer) {
-            buffer[0] = buffer[0].replace('App', 'App!')
+            buffer[0] = buffer[0].replace('Acryl', 'Acryl!')
           }
           return undefined
         },
@@ -60,9 +60,9 @@ describe('Tagged Template Literals', () => {
       const res = html`<p>I'm ${name}.</p>`
       expect(res).toBeInstanceOf(Promise)
 
-      expect((await res).toString()).toBe("<p>I'm App.</p>")
+      expect((await res).toString()).toBe("<p>I'm Acryl.</p>")
       expect(await resolveCallback(await res, HtmlEscapedCallbackPhase.Stringify, false, {})).toBe(
-        "<p>I'm App!.</p>"
+        "<p>I'm Acryl!.</p>"
       )
     })
   })

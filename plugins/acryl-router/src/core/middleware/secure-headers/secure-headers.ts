@@ -1,6 +1,6 @@
 /**
  * @module
- * Secure Headers Middleware for App.
+ * Secure Headers Middleware for Acryl.
  */
 
 import type { Context } from '../../context.ts'
@@ -145,7 +145,7 @@ export const NONCE: ContentSecurityPolicyOptionHandler = (ctx) => {
 }
 
 /**
- * Secure Headers Middleware for App.
+ * Secure Headers Middleware for Acryl.
  *
  *
  * @param {Partial<SecureHeadersOptions>} [customOptions] - The options for the secure headers middleware.
@@ -171,7 +171,7 @@ export const NONCE: ContentSecurityPolicyOptionHandler = (ctx) => {
  *
  * @example
  * ```ts
- * const app = new App()
+ * const app = new Acryl()
  * app.use(secureHeaders())
  * ```
  */

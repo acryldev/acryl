@@ -44,7 +44,7 @@ try {
   }, null, 2)}\n`)
   writeFileSync(join(app, 'app.ts'), `import { Context } from '@deepseek-ai/cordis'
 import * as router from 'acryl-router'
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { schemaValidator } from 'acryl-router/helpers'
 import { bodyLimit } from 'acryl-router/middleware'
 import * as nodeServer from 'acryl-node-server'
@@ -56,7 +56,7 @@ root.plugin({
   name: 'hello',
   inject: ['router'],
   apply(ctx: Context) {
-    ctx.router.route('/', new App().use(bodyLimit({ maxSize: 1024 })).get('/hello/:name', c => c.json({ hello: c.req.param('name') })))
+    ctx.router.route('/', new Acryl().use(bodyLimit({ maxSize: 1024 })).get('/hello/:name', c => c.json({ hello: c.req.param('name') })))
   },
 })
 root.inject(['nodeServer'], async ctx => {

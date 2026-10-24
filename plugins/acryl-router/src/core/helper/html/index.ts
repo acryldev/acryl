@@ -1,6 +1,6 @@
 /**
  * @module
- * html Helper for App.
+ * html Helper for Acryl.
  */
 
 import { escapeToBuffer, raw, resolveCallbackSync, stringBufferToString } from '../../utils/html.ts'

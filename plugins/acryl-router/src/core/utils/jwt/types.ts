@@ -154,4 +154,4 @@ export type JWTPayload = {
   aud?: string | string[]
 }
 
-export type { AppJsonWebKey } from './jws.ts'
+export type { AcrylJsonWebKey } from './jws.ts'

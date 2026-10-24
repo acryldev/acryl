@@ -2,7 +2,7 @@ import { ipRestriction } from './index.ts'
 import type { IPRestrictionRule } from './index.ts'
 import { Context } from '../../context.ts'
 import type { AddressType, GetConnInfo } from '../../helper/conninfo/index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('ipRestriction middleware', () => {
   it('Should restrict', async () => {
@@ -13,7 +13,7 @@ describe('ipRestriction middleware', () => {
         },
       }
     }
-    const app = new App<{
+    const app = new Acryl<{
       Bindings: {
         ip: string
       }
@@ -64,7 +64,7 @@ describe('ipRestriction middleware', () => {
   test.each(['999.999.999.999', '2001:db8::1%eth0', '1234:::5678'])(
     'Should reject invalid remote address: %s',
     async (ip) => {
-      const app = new App<{
+      const app = new Acryl<{
         Bindings: {
           ip: string
         }
@@ -89,7 +89,7 @@ describe('ipRestriction middleware', () => {
   )
 
   it('Should not call onError for invalid remote addresses', async () => {
-    const app = new App<{
+    const app = new Acryl<{
       Bindings: {
         ip: string
       }

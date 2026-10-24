@@ -7,13 +7,13 @@ import {
   generateCookie,
   generateSignedCookie,
 } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Cookie Middleware', () => {
   describe('Parse cookie', () => {
-    const apps: Record<string, App> = {}
+    const apps: Record<string, Acryl> = {}
     apps['get by name'] = (() => {
-      const app = new App()
+      const app = new Acryl()
 
       app.get('/cookie', (c) => {
         const yummyCookie = getCookie(c, 'yummy_cookie')
@@ -30,7 +30,7 @@ describe('Cookie Middleware', () => {
     })()
 
     apps['get all as an object'] = (() => {
-      const app = new App()
+      const app = new Acryl()
 
       app.get('/cookie', (c) => {
         const { yummy_cookie: yummyCookie, tasty_cookie: tastyCookie } = getCookie(c)
@@ -56,7 +56,7 @@ describe('Cookie Middleware', () => {
       })
     })
 
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/cookie-signed-get-all', async (c) => {
       const secret = 'secret lucky charm'
@@ -134,7 +134,7 @@ describe('Cookie Middleware', () => {
     })
 
     describe('get null if the value is undefined', () => {
-      const app = new App()
+      const app = new Acryl()
 
       app.get('/cookie', (c) => {
         const yummyCookie = getCookie(c, 'yummy_cookie')
@@ -156,7 +156,7 @@ describe('Cookie Middleware', () => {
   })
 
   describe('Set cookie', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/set-cookie', (c) => {
       setCookie(c, 'delicious_cookie', 'macha')
@@ -389,7 +389,7 @@ describe('Cookie Middleware', () => {
   })
 
   describe('Delete cookie', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/delete-cookie', (c) => {
       deleteCookie(c, 'delicious_cookie')

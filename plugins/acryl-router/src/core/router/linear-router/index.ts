@@ -1,6 +1,6 @@
 /**
  * @module
- * LinearRouter for App.
+ * LinearRouter for Acryl.
  */
 
 export { LinearRouter } from './router.ts'

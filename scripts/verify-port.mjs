@@ -14,8 +14,8 @@
  *                                                         record the current state; a new deviation is written with reason "TODO" and fails until explained
  *
  * Mechanical changes (applied by `normalize` below, so they need no reason): relative imports name the `.ts` file they resolve to; the upstream
- * name (read from the checkout's own package.json, never spelled here) becomes `App` in identifiers (also inside one), `acryl` in words and `acryl-router` in import
- * paths; code examples in comments import from our entry points; `@see` links to the upstream site and comment lines linking upstream issues are dropped; files named after the upstream project are named `app` (modules) or `acryl` (data); paths the tests open name the directory here.
+ * name (read from the checkout's own package.json, never spelled here) becomes `Acryl` in identifiers (also inside one), `acryl` in words and `acryl-router` in import
+ * paths; code examples in comments import from the same subpath of the public package (`acrylblends`, `acrylblends/<x>`); `@see` links to the upstream site and comment lines linking upstream issues are dropped; files named after the upstream project are named `app` (modules) or `acryl` (data); paths the tests open name the directory here.
  * Anything else is a deviation and carries a one-line reason.
  */
 
@@ -26,6 +26,8 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PACKAGES = ['plugins/acryl-router', 'plugins/acryl-node-server']
+/** The npm package the framework is published as; its subpaths are the upstream package's (`<upstream>/cors` is `acrylblends/cors`). */
+const PUBLIC_PACKAGE = 'acrylblends'
 
 const args = process.argv.slice(2)
 const option = name => {
@@ -96,7 +98,6 @@ function normalize(text, theirPath, ourPath, ctx) {
   const { brand, map, checkout, imports, directories } = ctx
   const Brand = brand[0].toUpperCase() + brand.slice(1)
   const word = new RegExp(`\\b${brand}\\b`, 'gu')
-  const coreRoot = join(checkout, 'src')
   let s = text
   // Imports first, while they still name upstream's files: a relative one names the `.ts` file it resolves to, at its path here; a bare one into
   // the upstream package names the ACRYL entry point that exports the same thing (the record's `imports`, keyed by the subpath).
@@ -123,15 +124,9 @@ function normalize(text, theirPath, ourPath, ctx) {
   for (const pair of directories) {
     if (pair.upstream !== pair.ours) s = s.replace(new RegExp(`(['"\`])(\\./)?${pair.upstream}/`, 'gu'), `$1$2${pair.ours}/`)
   }
-  // Code examples in comments import from our public entry points: the package, its middleware or its helpers.
-  s = s.split('\n').map(line => !/^\s*\*/u.test(line) ? line : line.replace(new RegExp(`from '${brand}(?:/([a-z-]+))?'`, 'u'), (whole, sub) => {
-    if (sub === undefined || sub === 'http-exception') return "from 'acryl-router'"
-    if (existsSync(join(coreRoot, 'middleware', sub))) return "from 'acryl-router/middleware'"
-    if (existsSync(join(coreRoot, 'helper', sub))) return "from 'acryl-router/helpers'"
-    return whole
-  })).join('\n')
+  // Code examples in comments import from the same subpath of the public package, which keeps every upstream subpath (`acrylblends/<x>`).
+  s = s.split('\n').map(line => !/^\s*\*/u.test(line) ? line : line.replace(new RegExp(`from '${brand}(/[a-z/-]+)?'`, 'u'), (whole, sub) => `from '${PUBLIC_PACKAGE}${sub ?? ''}'`)).join('\n')
   s = s.replaceAll(`${brand}-base`, 'app-base')
-  s = s.replaceAll(`${Brand}Request`, 'AppRequest').replaceAll(`${Brand}Base`, 'AppBase').replaceAll(`${Brand}Options`, 'AppOptions')
   s = s.split('\n').filter(line => !(line.trim().startsWith('*') && new RegExp(`@see.*${brand}\\.dev`, 'iu').test(line))).join('\n')
   s = s.replace(new RegExp(`\\s*// https://github\\.com/${brand}js/\\S+`, 'gu'), '')
   s = s.replace(new RegExp(` and https://github\\.com/${brand}js/[^\\s)]+`, 'gu'), '')
@@ -139,7 +134,9 @@ function normalize(text, theirPath, ourPath, ctx) {
   s = s.replaceAll(`${brand}.dev`, 'acryl.dev')
   s = s.replace(new RegExp(`(['"\`])${brand}/`, 'gu'), '$1acryl-router/').replace(new RegExp(`\\b${brand}/`, 'gu'), 'acryl-router/')
   s = s.replaceAll(`declare module '${brand}'`, "declare module 'acryl-router'")
-  s = s.replaceAll(Brand, 'App').replace(word, 'acryl').replace(new RegExp(`\\b${brand.toUpperCase()}\\b`, 'gu'), 'ACRYL')
+  // The name as the start of an identifier (`<name>Id`) is renamed like the word itself.
+  s = s.replace(new RegExp(`\\b${brand}(?=[A-Z0-9_])`, 'gu'), 'acryl')
+  s = s.replaceAll(Brand, 'Acryl').replace(word, 'acryl').replace(new RegExp(`\\b${brand.toUpperCase()}\\b`, 'gu'), 'ACRYL')
   return s
 }
 

@@ -6,7 +6,7 @@ The reference app of the ACRYL Framework: a todo list in one plugin (about 90 li
 export const inject = ['router', 'state']
 export function apply(ctx: Context, config: { file?: string } = {}): void {
   const todos = ctx.state.cell('todo.list', load(config.file))          // the list is a cell
-  const api = new App()
+  const api = new Acryl()
     .use(loopbackOnly({ inProcess: 'allow' }), bodyLimit({ maxSize: MAX_BODY_BYTES }))
     .post('/api', schemaValidator('json', NewTodo), c => { /* ... */ })   // validated body
     .get('/events', c => streamSSE(c, async stream => { /* writeSSE on every change until the stream aborts */ }))

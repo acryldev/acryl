@@ -5,7 +5,7 @@ import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { expectTypeOf, vi } from 'vitest'
 import { defineWebSocketHelper } from '../helper/websocket/index.ts'
-import { App } from '../app.ts'
+import { Acryl } from '../app.ts'
 import { parse } from '../utils/cookie.ts'
 import type { Equal, Expect, JSONValue, SimplifyDeepArray } from '../utils/types.ts'
 import { validator } from '../validator/index.ts'
@@ -32,7 +32,7 @@ class SafeBigInt {
 }
 
 describe('Basic - JSON', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app
     .post(
@@ -58,7 +58,7 @@ describe('Basic - JSON', () => {
           success: true,
           message: 'dummy',
           requestContentType: 'dummy',
-          requestApp: 'dummy',
+          requestAcryl: 'dummy',
           requestMessage: 'dummy',
           requestBody: {
             id: 123,
@@ -78,14 +78,14 @@ describe('Basic - JSON', () => {
   const server = setupServer(
     http.post('http://localhost/posts', async ({ request }) => {
       const requestContentType = request.headers.get('content-type')
-      const requestApp = request.headers.get('x-acryl')
+      const requestAcryl = request.headers.get('x-acryl')
       const requestMessage = request.headers.get('x-message')
       const requestBody = await request.json()
       const payload = {
         message: 'Hello!',
         success: true,
         requestContentType,
-        requestApp,
+        requestAcryl,
         requestMessage,
         requestBody,
       }
@@ -128,7 +128,7 @@ describe('Basic - JSON', () => {
 
   const payload = {
     id: 123,
-    title: 'Hello! App!',
+    title: 'Hello! Acryl!',
   }
 
   const client = hc<AppType>('http://localhost', { headers: { 'x-acryl': 'acryl' } })
@@ -152,7 +152,7 @@ describe('Basic - JSON', () => {
     expect(data.success).toBe(true)
     expect(data.message).toBe('Hello!')
     expect(data.requestContentType).toBe('application/json')
-    expect(data.requestApp).toBe('acryl')
+    expect(data.requestAcryl).toBe('acryl')
     expect(data.requestMessage).toBe('foobar')
     expect(data.requestBody).toEqual(payload)
   })
@@ -199,7 +199,7 @@ describe('Basic - JSON', () => {
   })
 
   it('Should have correct types - primitives', async () => {
-    const app = new App()
+    const app = new Acryl()
     const route = app
       .get('/api/string', (c) => c.json('a-string'))
       .get('/api/number', (c) => c.json(37))
@@ -232,7 +232,7 @@ describe('Basic - JSON', () => {
 })
 
 describe('Basic - query, queries, form, path params, header and cookie', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app
     .get(
@@ -387,15 +387,15 @@ describe('Basic - query, queries, form, path params, header and cookie', () => {
 })
 
 describe('Basic - $url()', () => {
-  const api = new App().get('/', (c) => c.text('API')).get('/posts/:id', (c) => c.text('Post'))
-  const content = new App().get(
+  const api = new Acryl().get('/', (c) => c.text('API')).get('/posts/:id', (c) => c.text('Post'))
+  const content = new Acryl().get(
     '/search',
     validator('query', () => {
       return { page: '1', limit: '10' }
     }),
     (c) => c.text('Search')
   )
-  const app = new App()
+  const app = new Acryl()
     .get('/', (c) => c.text('Index'))
     .route('/api', api)
     .route('/content', content)
@@ -525,7 +525,7 @@ describe('Form - Undefined Values', () => {
 })
 
 describe('Form arrays containing undefined', () => {
-  const app = new App().post(
+  const app = new Acryl().post(
     '/',
     validator('form', () => ({}) as { tag: (string | undefined)[] | undefined }),
     async (c) => {
@@ -557,7 +557,7 @@ describe('Form arrays containing undefined', () => {
 })
 
 describe('Optional header and cookie values', () => {
-  const app = new App().get(
+  const app = new Acryl().get(
     '/',
     validator('header', () => {
       return {} as {
@@ -603,7 +603,7 @@ describe('Optional header and cookie values', () => {
   })
 
   it('Should not send a Cookie header if all cookie values are undefined', async () => {
-    const app = new App().get(
+    const app = new Acryl().get(
       '/',
       validator('cookie', () => {
         return {} as {
@@ -626,7 +626,7 @@ describe('Optional header and cookie values', () => {
 })
 
 describe('Infer the response/request type', () => {
-  const app = new App()
+  const app = new Acryl()
   const route = app.get(
     '/',
     validator('query', () => {
@@ -768,8 +768,8 @@ describe('Merge path with `app.route()`', () => {
   }
 
   it('Should have correct types', async () => {
-    const api = new App<Env>().get('/search', (c) => c.json({ ok: true }))
-    const app = new App<Env>().route('/api', api)
+    const api = new Acryl<Env>().get('/search', (c) => c.json({ ok: true }))
+    const app = new Acryl<Env>().route('/api', api)
     type AppType = typeof app
     const client = hc<AppType>('http://localhost')
     const res = await client.api.search.$get()
@@ -779,7 +779,7 @@ describe('Merge path with `app.route()`', () => {
   })
 
   it('Should have correct types - basePath() then get()', async () => {
-    const base = new App<Env>().basePath('/api')
+    const base = new Acryl<Env>().basePath('/api')
     const app = base.get('/search', (c) => c.json({ ok: true }))
     type AppType = typeof app
     const client = hc<AppType>('http://localhost')
@@ -790,8 +790,8 @@ describe('Merge path with `app.route()`', () => {
   })
 
   it('Should have correct types - basePath(), route(), get()', async () => {
-    const book = new App().get('/', (c) => c.json({ ok: true }))
-    const app = new App().basePath('/v1').route('/book', book)
+    const book = new Acryl().get('/', (c) => c.json({ ok: true }))
+    const app = new Acryl().basePath('/v1').route('/book', book)
     type AppType = typeof app
     const client = hc<AppType>('http://localhost')
     const res = await client.v1.book.$get()
@@ -806,7 +806,7 @@ describe('Merge path with `app.route()`', () => {
       okUndefined?: boolean
     }
     const result: Result = { ok: true }
-    const base = new App<Env>().basePath('/api')
+    const base = new Acryl<Env>().basePath('/api')
     const app = base.get('/search', (c) => c.json(result))
     type AppType = typeof app
     const client = hc<AppType>('http://localhost')
@@ -840,7 +840,7 @@ describe('Merge path with `app.route()`', () => {
     type Results = Result[]
 
     const results: Results = [{ ok: true }]
-    const base = new App<Env>().basePath('/api')
+    const base = new Acryl<Env>().basePath('/api')
     const app = base.get('/searchArray', (c) => c.json(results))
     type AppType = typeof app
     const client = hc<AppType>('http://localhost')
@@ -865,7 +865,7 @@ describe('Merge path with `app.route()`', () => {
   })
 
   it('Should allow a Date object and return it as a string', async () => {
-    const app = new App()
+    const app = new Acryl()
     const route = app.get('/api/foo', (c) => c.json({ datetime: new Date() }))
     type AppType = typeof route
     const client = hc<AppType>('http://localhost')
@@ -875,10 +875,10 @@ describe('Merge path with `app.route()`', () => {
   })
 
   describe('Multiple endpoints', () => {
-    const api = new App()
+    const api = new Acryl()
       .get('/foo', (c) => c.json({ foo: '' }))
       .post('/bar', (c) => c.json({ bar: 0 }))
-    const app = new App().route('/api', api)
+    const app = new Acryl().route('/api', api)
     type AppType = typeof app
     const client = hc<typeof app>('http://localhost')
 
@@ -904,12 +904,12 @@ describe('Merge path with `app.route()`', () => {
   })
 
   describe('With a blank path', () => {
-    const app = new App().basePath('/api/v1')
+    const app = new Acryl().basePath('/api/v1')
     const routes = app.route(
       '/me',
-      new App().route(
+      new Acryl().route(
         '',
-        new App().get('', async (c) => {
+        new Acryl().get('', async (c) => {
           return c.json({ name: 'acryl' })
         })
       )
@@ -929,12 +929,12 @@ describe('Merge path with `app.route()`', () => {
   })
 
   describe('With endpoint pathname', () => {
-    const app = new App().basePath('/api/v1')
+    const app = new Acryl().basePath('/api/v1')
     const routes = app.route(
       '/me',
-      new App().route(
+      new Acryl().route(
         '',
-        new App().get('', async (c) => {
+        new Acryl().get('', async (c) => {
           return c.json({ name: 'acryl' })
         })
       )
@@ -958,8 +958,8 @@ describe('Use custom fetch method', () => {
   it('Should call the custom fetch method when provided', async () => {
     const fetchMock = vi.fn()
 
-    const api = new App().get('/search', (c) => c.json({ ok: true }))
-    const app = new App().route('/api', api)
+    const api = new Acryl().get('/search', (c) => c.json({ ok: true }))
+    const app = new Acryl().route('/api', api)
     type AppType = typeof app
     const client = hc<AppType>('http://localhost', { fetch: fetchMock })
     await client.api.search.$get()
@@ -971,8 +971,8 @@ describe('Use custom fetch method', () => {
     const returnValue = new Response(null, { status: 200 })
     fetchMock.mockReturnValueOnce(returnValue)
 
-    const api = new App().get('/search', (c) => c.json({ ok: true }))
-    const app = new App().route('/api', api)
+    const api = new Acryl().get('/search', (c) => c.json({ ok: true }))
+    const app = new Acryl().route('/api', api)
     type AppType = typeof app
     const client = hc<AppType>('http://localhost', { fetch: fetchMock })
     const res = await client.api.search.$get()
@@ -983,7 +983,7 @@ describe('Use custom fetch method', () => {
 
 describe('Use custom fetch (app.request) method', () => {
   it('Should return Response from app request method', async () => {
-    const app = new App().get('/search', (c) => c.json({ ok: true }))
+    const app = new Acryl().get('/search', (c) => c.json({ ok: true }))
     type AppType = typeof app
     const client = hc<AppType>('', { fetch: app.request })
     const res = await client.search.$get()
@@ -991,7 +991,7 @@ describe('Use custom fetch (app.request) method', () => {
   })
 
   it.each([false, 0, '', null])('Should send falsy JSON value: %j', async (json) => {
-    const app = new App().post(
+    const app = new Acryl().post(
       '/json',
       validator('json', (value) => value as boolean | number | string | null),
       (c) => c.json(c.req.valid('json'))
@@ -1007,7 +1007,7 @@ describe('Use custom fetch (app.request) method', () => {
 
 describe('Optional parameters in JSON response', () => {
   it('Should return the correct type', async () => {
-    const app = new App().get('/', (c) => {
+    const app = new Acryl().get('/', (c) => {
       return c.json({ message: 'foo' } as { message?: string })
     })
     type AppType = typeof app
@@ -1022,7 +1022,7 @@ describe('Optional parameters in JSON response', () => {
 
 describe('ClientResponse<T>.json() returns a Union type correctly', () => {
   const condition = () => true
-  const app = new App().get('/', async (c) => {
+  const app = new Acryl().get('/', async (c) => {
     const ok = condition()
     if (ok) {
       return c.json({ data: 'foo' })
@@ -1040,7 +1040,7 @@ describe('ClientResponse<T>.json() returns a Union type correctly', () => {
 
 describe('Response with different status codes', () => {
   const condition = () => true
-  const app = new App().get('/', async (c) => {
+  const app = new Acryl().get('/', async (c) => {
     const ok = condition()
     if (ok) {
       return c.json({ data: 'foo' }, 200)
@@ -1094,7 +1094,7 @@ describe('Response with different status codes', () => {
 
 describe('Infer the response type with different status codes', () => {
   const condition = () => true
-  const app = new App().get('/', async (c) => {
+  const app = new Acryl().get('/', async (c) => {
     const ok = condition()
     if (ok) {
       return c.json({ data: 'foo' }, 200)
@@ -1134,7 +1134,7 @@ describe('Infer the response type with different status codes', () => {
 })
 
 describe('Infer the response types from middlewares', () => {
-  const app = new App()
+  const app = new Acryl()
     .get(
       '/',
       validator('query', (input, c) => {
@@ -1243,7 +1243,7 @@ const pathname = <T extends URL | string>(value: T): string =>
   value instanceof URL ? value.pathname : value
 
 describe.each(['$path', '$url'] as const)('%s() with a param option', (cmd) => {
-  const app = new App()
+  const app = new Acryl()
     .get('/posts/:id/comments', (c) => c.json({ ok: true }))
     .get('/something/:firstId/:secondId/:version?', (c) => c.json({ ok: true }))
     .get('/docs/:page', (c) => c.json({ ok: true }))
@@ -1316,7 +1316,7 @@ describe.each(['$path', '$url'] as const)('%s() with a param option', (cmd) => {
 })
 
 describe('$url() / $path() with a query option', () => {
-  const app = new App()
+  const app = new Acryl()
     .get(
       '/posts',
       validator('query', () => {
@@ -1378,12 +1378,12 @@ describe('Client can be awaited', () => {
 })
 
 describe('Dynamic headers', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app.post('/posts', (c) => {
     return c.json({
       requestDynamic: 'dummy',
-      requestApp: 'dummy',
+      requestAcryl: 'dummy',
     })
   })
 
@@ -1392,10 +1392,10 @@ describe('Dynamic headers', () => {
   const server = setupServer(
     http.post('http://localhost/posts', async ({ request }) => {
       const requestDynamic = request.headers.get('x-dynamic')
-      const requestApp = request.headers.get('x-acryl')
+      const requestAcryl = request.headers.get('x-acryl')
       const payload = {
         requestDynamic,
-        requestApp,
+        requestAcryl,
       }
       return HttpResponse.json(payload)
     })
@@ -1440,7 +1440,7 @@ describe('Dynamic headers', () => {
 
     expect(res.ok).toBe(true)
     const data = await res.json()
-    expect(data.requestApp).toEqual('acryl')
+    expect(data.requestAcryl).toEqual('acryl')
     expect(data.requestDynamic).toEqual('request')
   })
 
@@ -1456,7 +1456,7 @@ describe('Dynamic headers', () => {
 
     expect(res.ok).toBe(true)
     const data = await res.json()
-    expect(data.requestApp).toEqual('acryl')
+    expect(data.requestAcryl).toEqual('acryl')
     expect(data.requestDynamic).toEqual('request')
   })
 
@@ -1472,7 +1472,7 @@ describe('Dynamic headers', () => {
 
     expect(res.ok).toBe(true)
     const data = await res.json()
-    expect(data.requestApp).toEqual('acryl')
+    expect(data.requestAcryl).toEqual('acryl')
     expect(data.requestDynamic).toEqual('request')
   })
 
@@ -1485,12 +1485,12 @@ describe('Dynamic headers', () => {
 
     expect(res.ok).toBe(true)
     const data = await res.json()
-    expect(data.requestApp).toEqual('request')
+    expect(data.requestAcryl).toEqual('request')
   })
 })
 
 describe('RequestInit work as expected', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const route = app
     .get('/credentials', (c) => {
@@ -1583,7 +1583,7 @@ describe('RequestInit work as expected', () => {
 })
 
 describe('WebSocket URL Protocol Translation', () => {
-  const app = new App()
+  const app = new Acryl()
   const route = app.get(
     '/',
     upgradeWebSocket((c) => ({
@@ -1637,7 +1637,7 @@ describe('WebSocket URL Protocol Translation', () => {
   })
 
   it('Preserves an index path parameter value', async () => {
-    const dynamicRoute = new App().get(
+    const dynamicRoute = new Acryl().get(
       '/:id',
       upgradeWebSocket(() => ({}))
     )
@@ -1650,7 +1650,7 @@ describe('WebSocket URL Protocol Translation', () => {
 })
 
 describe('WebSocket URL Protocol Translation with Query Parameters', () => {
-  const app = new App()
+  const app = new Acryl()
   const route = app.get(
     '/',
     upgradeWebSocket((c) => ({
@@ -1749,7 +1749,7 @@ describe('Client can be console.log in react native', () => {
 })
 
 describe('Text response', () => {
-  const text = 'My name is App'
+  const text = 'My name is Acryl'
   const obj = { ok: true }
   const server = setupServer(
     http.get('http://localhost/about/me', async () => {
@@ -1764,7 +1764,7 @@ describe('Text response', () => {
   afterEach(() => server.resetHandlers())
   afterAll(() => server.close())
 
-  const app = new App().get('/about/me', (c) => c.text(text)).get('/api', (c) => c.json(obj))
+  const app = new Acryl().get('/about/me', (c) => c.text(text)).get('/api', (c) => c.json(obj))
   const client = hc<typeof app>('http://localhost/')
 
   it('Should be never with res.json() - /about/me', async () => {
@@ -1777,7 +1777,7 @@ describe('Text response', () => {
   it('Should be "Hello, World!" with res.text() - /about/me', async () => {
     const res = await client.about.me.$get()
     const data = await res.text()
-    expectTypeOf(data).toEqualTypeOf<'My name is App'>()
+    expectTypeOf(data).toEqualTypeOf<'My name is Acryl'>()
     expect(data).toBe(text)
   })
 
@@ -1804,7 +1804,7 @@ describe('Redirect response - only types', () => {
   afterAll(() => server.close())
 
   const condition = () => true
-  const app = new App().get('/', async (c) => {
+  const app = new Acryl().get('/', async (c) => {
     const ok = condition()
     const temporary = condition()
     if (ok) {
@@ -1847,7 +1847,7 @@ describe('Redirect response - only types', () => {
 })
 
 describe('WebSocket Provider Integration', () => {
-  const app = new App()
+  const app = new Acryl()
   const route = app.get(
     '/',
     upgradeWebSocket((c) => ({
@@ -1898,7 +1898,7 @@ describe('WebSocket Provider Integration', () => {
 describe('Query arrays containing undefined', () => {
   // A validator whose query field is an optional union gives the client an input
   // type of `(string | undefined)[] | undefined`, so this compiles with no cast.
-  const app = new App().get(
+  const app = new Acryl().get(
     '/search',
     validator('query', () => ({}) as { tag: (string | undefined)[] | undefined }),
     (c) => c.json({ ok: true })
@@ -1921,7 +1921,7 @@ describe('Query arrays containing undefined', () => {
 })
 
 describe('Empty serialized query', () => {
-  const app = new App().get(
+  const app = new Acryl().get(
     '/search',
     validator('query', () => ({}) as { q?: string }),
     (c) => c.json({ ok: true })
@@ -1981,7 +1981,7 @@ describe('Empty serialized query', () => {
 })
 
 describe('Custom buildSearchParams', () => {
-  const app = new App()
+  const app = new Acryl()
   const route = app.get(
     '/search',
     validator('query', () => {
@@ -2112,7 +2112,7 @@ describe('ApplyGlobalResponse Type Helper', () => {
 
   it('Should add global error response types to all routes', () => {
     // Use explicit status codes for proper type narrowing
-    const app = new App().get('/api/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
+    const app = new Acryl().get('/api/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
 
     // Apply global error responses with new object syntax
     type AppWithGlobalErrors = ApplyGlobalResponse<
@@ -2134,7 +2134,7 @@ describe('ApplyGlobalResponse Type Helper', () => {
   })
 
   it('Should support multiple global error status codes', async () => {
-    const app = new App()
+    const app = new Acryl()
       .get('/api/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
       .get('/api/unauthorized', (c) =>
         c.json({ error: 'Unauthorized', message: 'Please login' }, 401)
@@ -2171,9 +2171,9 @@ describe('ApplyGlobalResponse Type Helper', () => {
   })
 
   it('Should work with onError handler pattern', () => {
-    // Simulating typical App app with onError handler
+    // Simulating typical Acryl app with onError handler
     // Use explicit status code for proper type narrowing
-    const app = new App().get('/api/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
+    const app = new Acryl().get('/api/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
 
     // In real app: app.onError((err, c) => c.json({ error: err.message }, 500))
     type AppWithOnError = ApplyGlobalResponse<
@@ -2194,8 +2194,8 @@ describe('ApplyGlobalResponse Type Helper', () => {
   })
 
   it('Should keep route() paths when global responses are applied', () => {
-    const users = new App().get('/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
-    const app = new App().route('/api', users)
+    const users = new Acryl().get('/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
+    const app = new Acryl().route('/api', users)
 
     type AppWithGlobalErrors = ApplyGlobalResponse<
       typeof app,
@@ -2216,7 +2216,7 @@ describe('ApplyGlobalResponse Type Helper', () => {
 
 describe('PickResponseByStatusCode Type Helper', () => {
   it('Should keep only specified status code responses', () => {
-    const app = new App().get('/api/users', (c) => {
+    const app = new Acryl().get('/api/users', (c) => {
       try {
         return c.json({ users: ['alice', 'bob'] }, 200)
       } catch {
@@ -2239,7 +2239,7 @@ describe('PickResponseByStatusCode Type Helper', () => {
   })
 
   it('Should work with ApplyGlobalResponse', () => {
-    const app = new App().get('/api/users', (c) => {
+    const app = new Acryl().get('/api/users', (c) => {
       try {
         return c.json({ users: ['alice', 'bob'] }, 200)
       } catch {
@@ -2266,14 +2266,14 @@ describe('PickResponseByStatusCode Type Helper', () => {
   })
 
   it('Should work with route() paths', () => {
-    const users = new App().get('/users', (c) => {
+    const users = new Acryl().get('/users', (c) => {
       try {
         return c.json({ users: ['alice', 'bob'] }, 200)
       } catch {
         return c.json({ error: 'error' }, 500)
       }
     })
-    const app = new App().route('/api', users)
+    const app = new Acryl().route('/api', users)
 
     type AppSuccessOnly = PickResponseByStatusCode<typeof app, 200>
 
@@ -2286,7 +2286,7 @@ describe('PickResponseByStatusCode Type Helper', () => {
   })
 
   it('Should pick multiple status codes', () => {
-    const app = new App().get('/api/users', (c) => {
+    const app = new Acryl().get('/api/users', (c) => {
       try {
         return c.json({ users: ['alice', 'bob'] }, 200)
       } catch {

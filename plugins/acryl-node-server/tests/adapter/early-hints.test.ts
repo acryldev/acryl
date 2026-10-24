@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from 'acryl-router'
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { describe, it, expect, expectTypeOf, vi } from 'vitest'
 import http, { createServer } from 'node:http'
 import http2 from 'node:http2'
@@ -9,7 +9,7 @@ import { getRequestListener } from '../../src/adapter/listener.ts'
 
 describe('HTTP/1.1 Early Hints Middleware', () => {
   it('should send a 103 early hints response before the final response using a string link', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '*',
       earlyHints({
@@ -73,7 +73,7 @@ describe('HTTP/1.1 Early Hints Middleware', () => {
   })
 
   it('should send early hints with an array of link headers', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '*',
       earlyHints({
@@ -139,7 +139,7 @@ describe('HTTP/1.1 Early Hints Middleware', () => {
   })
 
   it('should evaluate dynamic link function with Context', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '*',
       earlyHints({
@@ -208,7 +208,7 @@ describe('HTTP/1.1 Early Hints Middleware', () => {
 
 describe('HTTP/2 Early Hints Middleware', () => {
   it('should send a 103 early hints response over HTTP/2', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '*',
       earlyHints({

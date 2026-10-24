@@ -1,4 +1,4 @@
-import type { App } from '../app.ts'
+import type { Acryl } from '../app.ts'
 import type { FormValue, ValidationTargets } from '../types.ts'
 import { serialize } from '../utils/cookie.ts'
 import type { UnionToIntersection } from '../utils/types.ts'
@@ -148,7 +148,7 @@ class ClientRequestImpl {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const hc = <T extends App<any, any, any>, Prefix extends string = string>(
+export const hc = <T extends Acryl<any, any, any>, Prefix extends string = string>(
   baseUrl: Prefix,
   options?: ClientRequestOptions
 ) =>

@@ -1,5 +1,5 @@
 import { bodyLimit } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 const buildRequestInit = (init: RequestInit = {}): RequestInit & { duplex: 'half' } => {
   const headers: Record<string, string> = {
@@ -18,13 +18,13 @@ const buildRequestInit = (init: RequestInit = {}): RequestInit & { duplex: 'half
 }
 
 describe('Body Limit Middleware', () => {
-  let app: App
+  let app: Acryl
 
   const exampleText = 'data is so hot' // 14byte
   const exampleText2 = 'data is so hot and cute' // 23byte
 
   beforeEach(() => {
-    app = new App()
+    app = new Acryl()
     app.use('*', bodyLimit({ maxSize: 14 }))
     app.get('/', (c) => c.text('index'))
     app.post('/body-limit-15byte', async (c) => {
@@ -104,7 +104,7 @@ describe('Body Limit Middleware', () => {
 
   describe('custom error handler', () => {
     beforeEach(() => {
-      app = new App()
+      app = new Acryl()
       app.post(
         '/text-limit-15byte-custom',
         bodyLimit({
@@ -133,7 +133,7 @@ describe('Body Limit Middleware', () => {
 
   describe('Transfer-Encoding and Content-Length headers', () => {
     beforeEach(() => {
-      app = new App()
+      app = new Acryl()
       app.use('*', bodyLimit({ maxSize: 10 }))
       app.post('/test', async (c) => {
         return c.text(await c.req.text())
@@ -217,7 +217,7 @@ describe('Body Limit Middleware', () => {
 
     beforeEach(() => {
       handler.mockReset()
-      app = new App()
+      app = new Acryl()
       app.use('*', bodyLimit({ maxSize: 8 }))
       app.post('/no-read', (c) => {
         handler()

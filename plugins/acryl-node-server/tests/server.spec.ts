@@ -4,7 +4,7 @@ import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { fileURLToPath } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
-import { App, apply as routerApply, connectionOf, name as routerName } from 'acryl-router'
+import { Acryl, apply as routerApply, connectionOf, name as routerName } from 'acryl-router'
 import { streamSSE } from 'acryl-router/helpers'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as nodeServer from '../src/index.ts'
@@ -42,7 +42,7 @@ const portIsFree = async (port: number): Promise<boolean> => {
 describe('acryl-node-server', () => {
   it('serves the router over a real socket with the peer and port as connection facts', async () => {
     const ctx = await boot()
-    ctx.router.route('/', new App().get('/who', c => c.json({ peer: connectionOf(c).remoteAddress, port: connectionOf(c).localPort })))
+    ctx.router.route('/', new Acryl().get('/who', c => c.json({ peer: connectionOf(c).remoteAddress, port: connectionOf(c).localPort })))
     const body = await (await fetch(`${ctx.nodeServer.url}/who`)).json() as { peer: string, port: number }
     expect(ctx.nodeServer.url).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/u)
     expect(body.port).toBe(ctx.nodeServer.port)
@@ -52,7 +52,7 @@ describe('acryl-node-server', () => {
 
   it('hands a request body to the handler', async () => {
     const ctx = await boot()
-    ctx.router.route('/', new App().post('/echo', async c => c.json(await c.req.json())))
+    ctx.router.route('/', new Acryl().post('/echo', async c => c.json(await c.req.json())))
     const response = await fetch(`${ctx.nodeServer.url}/echo`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"n":1}' })
     expect(await response.json()).toEqual({ n: 1 })
   })
@@ -60,7 +60,7 @@ describe('acryl-node-server', () => {
   it('serves files from disk through a mounted app', async () => {
     const ctx = await boot()
     const root = fileURLToPath(new URL('./adapter/assets', import.meta.url))
-    ctx.router.route('/', new App().use('/static/*', nodeServer.serveStatic({ root })))
+    ctx.router.route('/', new Acryl().use('/static/*', nodeServer.serveStatic({ root })))
     const found = await fetch(`${ctx.nodeServer.url}/static/plain.txt`)
     expect(found.status).toBe(200)
     expect(found.headers.get('content-type')).toBe('text/plain; charset=utf-8')
@@ -72,7 +72,7 @@ describe('acryl-node-server', () => {
     const ctx = await boot()
     let aborted!: () => void
     const seen = new Promise<void>(resolve => { aborted = resolve })
-    ctx.router.route('/', new App().get('/wait', c => new Promise<Response>(resolve => {
+    ctx.router.route('/', new Acryl().get('/wait', c => new Promise<Response>(resolve => {
       c.req.raw.signal.addEventListener('abort', () => { aborted(); resolve(new Response(null, { status: 499 })) }, { once: true })
     })))
     const client = new AbortController()
@@ -110,7 +110,7 @@ describe('acryl-node-server', () => {
 
   it('on dispose ends open event streams and frees the port', async () => {
     const ctx = await boot()
-    ctx.router.route('/', new App().get('/events', c => streamSSE(c, async stream => {
+    ctx.router.route('/', new Acryl().get('/events', c => streamSSE(c, async stream => {
       await stream.writeSSE({ data: 'hello' })
       await new Promise<void>(resolve => { stream.onAbort(resolve) })
     })))

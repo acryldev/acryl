@@ -2,7 +2,7 @@
 import { vi } from 'vitest'
 import { encodeBase64, encodeBase64Url } from '../encode.ts'
 import { AlgorithmTypes } from './jwa.ts'
-import type { AppJsonWebKey } from './jws.ts'
+import type { AcrylJsonWebKey } from './jws.ts'
 import { signing } from './jws.ts'
 import * as JWT from './jwt.ts'
 import { verifyWithJwks } from './jwt.ts'
@@ -1475,7 +1475,7 @@ describe('verifyWithJwks algorithm whitelist', () => {
 
 describe('verifyWithJwks key handling', () => {
   it('Should not mutate provided keys when JWKS is fetched repeatedly', async () => {
-    const localKeys: AppJsonWebKey[] = [
+    const localKeys: AcrylJsonWebKey[] = [
       {
         kty: 'RSA',
         kid: 'local-key',

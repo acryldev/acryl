@@ -3,7 +3,7 @@
  * body is small. Each domain folder builds its routes with these and `index.ts` mounts them under {@link WORKSPACE_API_PREFIX}.
  */
 
-import { App, type Context, type MiddlewareHandler } from 'acryl-router'
+import { Acryl, type Context, type MiddlewareHandler } from 'acryl-router'
 import { bodyLimit, loopbackOnly, methodNotAllowed } from 'acryl-router/middleware'
 
 /** Every workspace route lives below this path; it is the one prefix the plugin mounts on the Web server. */
@@ -28,8 +28,8 @@ export const privateHeaders: MiddlewareHandler = async (c, next) => {
  * The workspace's routes as one app: each domain's routes, every answer with {@link privateHeaders}, and a known path asked with another
  * method answered 405 with its `Allow`. The middleware is scoped to {@link WORKSPACE_API_PREFIX}, so it never wraps another plugin's routes.
  */
-export function privateApi(...routes: readonly App[]): App {
-  const app = new App()
+export function privateApi(...routes: readonly Acryl[]): Acryl {
+  const app = new Acryl()
   app.use(`${WORKSPACE_API_PREFIX}/*`, privateHeaders, methodNotAllowed({
     app,
     onMethodNotAllowed: (c, allowed) => c.json(failure('method not allowed'), 405, { allow: allowed.join(', ') }),

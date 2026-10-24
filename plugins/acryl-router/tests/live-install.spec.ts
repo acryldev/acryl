@@ -7,7 +7,7 @@
  */
 import { Context, Service } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
-import { App, apply, name } from '../src/index.ts'
+import { Acryl, apply, name } from '../src/index.ts'
 
 const contexts: Context[] = []
 const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0))
@@ -46,7 +46,7 @@ const extension = (): object => ({
   name: 'live-ext',
   inject: ['router'],
   apply(ctx: Context): void {
-    ctx.router.route('/', new App().get('/live', c => c.json({ ok: true })))
+    ctx.router.route('/', new Acryl().get('/live', c => c.json({ ok: true })))
   },
 })
 

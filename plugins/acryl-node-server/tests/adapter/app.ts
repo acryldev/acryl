@@ -1,7 +1,7 @@
 import { Response as PonyfillResponse } from '@whatwg-node/fetch'
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 
-export const app = new App()
+export const app = new Acryl()
 
 app.get('/', (c) => c.text('Hello! Node!'))
 app.get('/url', (c) => c.text(c.req.url))

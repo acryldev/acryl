@@ -8,7 +8,7 @@ export const inject = ['router', 'state']
 
 export function apply(ctx: Context): void {
   const visits = ctx.state.cell('starter.visits', 0)
-  const app = new App().get('/hello/:who', c => { visits.update(n => n + 1); return c.json({ hello: c.req.param('who'), visits: visits.get() }) })
+  const app = new Acryl().get('/hello/:who', c => { visits.update(n => n + 1); return c.json({ hello: c.req.param('who'), visits: visits.get() }) })
   ctx.router.route('/api/starter', app)
   ctx.inject(['routerHttp'], inner => { inner.routerHttp.mount('/api/starter') })
 }

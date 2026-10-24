@@ -52,6 +52,7 @@ Some parts of the documented API surface are not part of the package yet, and th
 | Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md) |
 | Use Acryl inside a Cordis app | [Acryl in a Cordis app](cordis/acryl-in-a-cordis-app.md), [Plugin lifecycle](cordis/plugin-lifecycle.md), [Mounting](cordis/mounting.md) |
 | Move from the 0.3 router calls | [Migration from 0.3](cordis/migration-from-0-3.md) |
+| Move from the 0.4 names (`App`) | [Migration from 0.4](cordis/migration-from-0-4.md) |
 
 The license of these pages and of the framework source they describe is in [LICENSE](LICENSE).
 

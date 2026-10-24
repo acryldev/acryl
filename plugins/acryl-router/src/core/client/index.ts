@@ -1,6 +1,6 @@
 /**
  * @module
- * The HTTP Client for App.
+ * The HTTP Client for Acryl.
  */
 
 export { hc } from './client.ts'

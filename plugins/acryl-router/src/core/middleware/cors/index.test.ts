@@ -1,8 +1,8 @@
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { cors } from './index.ts'
 
 describe('CORS by Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.use('/api/*', cors())
 
@@ -278,7 +278,7 @@ describe('CORS by Middleware', () => {
   })
 
   it('Append "Origin" to Vary header on OPTIONS preflight, if response has some Vary header', async () => {
-    const testApp = new App()
+    const testApp = new Acryl()
     testApp.use('/api/*', async (c, next) => {
       c.header('Vary', 'Accept-Encoding', { append: true })
       await next()
@@ -412,7 +412,7 @@ describe('CORS by Middleware', () => {
 
   it('Does not set allow methods when function returns an empty array', async () => {
     for (const allowMethods of [() => [], async () => []]) {
-      const app = new App()
+      const app = new Acryl()
       app.use(cors({ allowMethods }))
 
       const res = await app.request('http://localhost/', { method: 'OPTIONS' })
@@ -481,7 +481,7 @@ describe('CORS by Middleware', () => {
   })
 
   it('Should not reflect an arbitrary Origin when credentials is true with default origin', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', cors({ credentials: true }))
     app.get('/api/me', (c) => c.json({ secret: 'private user data' }))
 
@@ -494,7 +494,7 @@ describe('CORS by Middleware', () => {
   })
 
   it('Preflight should not approve an arbitrary Origin when credentials is true with default origin', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', cors({ credentials: true }))
     app.delete('/api/account', (c) => c.json({ deleted: true }))
 
@@ -513,7 +513,7 @@ describe('CORS by Middleware', () => {
   })
 
   it('Options without origin fall back to wildcard default', async () => {
-    const subApp = new App()
+    const subApp = new Acryl()
     subApp.use('/api/*', cors({ allowMethods: ['GET', 'POST'] }))
     subApp.get('/api/abc', (c) => c.json({ ok: true }))
 

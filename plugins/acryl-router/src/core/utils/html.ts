@@ -31,7 +31,7 @@ export type HtmlEscapedString = string & HtmlEscaped
  *   Promise.resolve('ultra fast'),
  *   'a ',
  *   Promise.resolve('is '),
- *   'App',
+ *   'Acryl',
  * ]
  */
 export type StringBuffer = (string | Promise<string>)[]

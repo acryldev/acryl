@@ -1,20 +1,20 @@
 /**
  * @module
  *
- * App - Web Framework built on Web Standards
+ * Acryl - Web Framework built on Web Standards
  *
  * @example
  * ```ts
- * import { App } from 'acryl-router'
- * const app = new App()
+ * import { Acryl } from 'acrylblends'
+ * const app = new Acryl()
  *
- * app.get('/', (c) => c.text('App!'))
+ * app.get('/', (c) => c.text('Acryl!'))
  *
  * export default app
  * ```
  */
 
-import { App } from './app.ts'
+import { Acryl } from './app.ts'
 
 /**
  * Types for environment variables, error handlers, handlers, middleware handlers, and more.
@@ -39,15 +39,15 @@ export type {
 export { Context } from './context.ts'
 export type { ContextVariableMap, ContextRenderer, ExecutionContext } from './context.ts'
 /**
- * Type for AppRequest.
+ * Type for AcrylRequest.
  */
-export type { AppRequest } from './request.ts'
+export type { AcrylRequest } from './request.ts'
 /**
  * Types for inferring request and response types and client request options.
  */
 export type { InferRequestType, InferResponseType, ClientRequestOptions } from './client/index.ts'
 
 /**
- * App framework for building web applications.
+ * Acryl framework for building web applications.
  */
-export { App }
+export { Acryl }

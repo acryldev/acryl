@@ -1,4 +1,4 @@
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { basicAuth } from 'acryl-router/middleware'
 import { compress } from 'acryl-router/middleware'
 import { etag } from 'acryl-router/middleware'
@@ -46,11 +46,11 @@ describe('Basic', () => {
     const res = await requestServer(server, {
       method: 'GET',
       path: '/user-agent',
-      headers: { 'user-agent': 'App' },
+      headers: { 'user-agent': 'Acryl' },
     })
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toMatch('text/plain')
-    expect(await res.text()).toBe('App')
+    expect(await res.text()).toBe('Acryl')
   })
 
   it('Should return 302 response - POST /posts', async () => {
@@ -142,7 +142,7 @@ describe.each([
 ])('Caller-owned response headers over $protocol', ({ serverOptions, request }) => {
   it('should allow reusing the headers passed to c.body()', async () => {
     const headers = { 'content-type': 'text/plain' }
-    const testApp = new App()
+    const testApp = new Acryl()
     testApp.get('/', (c) => c.body(new Uint8Array([104, 105]), 200, headers))
     const server = createAdaptorServer({ fetch: testApp.fetch, ...serverOptions })
 
@@ -166,7 +166,7 @@ describe.each([
       }
       const bodies = ['hi', 'hello', '']
       let index = 0
-      const testApp = new App()
+      const testApp = new Acryl()
       testApp.get('/', () => new Response(makeBody(bodies[index++]), { headers }))
       const server = createAdaptorServer({ fetch: testApp.fetch, ...serverOptions })
 
@@ -189,7 +189,7 @@ describe('various response body types', () => {
     let resolveEventStreamPromise: () => void
     let resolveEventStreamWithoutTransferEncodingPromise: () => void
     beforeAll(() => {
-      const app = new App()
+      const app = new Acryl()
       app.use('*', async (c, next) => {
         await next()
 
@@ -286,34 +286,34 @@ describe('various response body types', () => {
         })
       })
       app.get('/buffer', () => {
-        const response = new Response(Buffer.from('Hello App!'), {
+        const response = new Response(Buffer.from('Hello Acryl!'), {
           headers: { 'content-type': 'text/plain' },
         })
         return response
       })
       app.get('/text-with-content-length-object', () => {
-        const response = new Response('Hello App!', {
-          headers: { 'content-type': 'text/plain', 'content-length': '00010' },
+        const response = new Response('Hello Acryl!', {
+          headers: { 'content-type': 'text/plain', 'content-length': '00012' },
         })
         return response
       })
       app.get('/text-with-content-length-headers', () => {
-        const response = new Response('Hello App!', {
-          headers: new Headers({ 'content-type': 'text/plain', 'content-length': '00010' }),
+        const response = new Response('Hello Acryl!', {
+          headers: new Headers({ 'content-type': 'text/plain', 'content-length': '00012' }),
         })
         return response
       })
       app.get('/text-with-content-length-array', () => {
-        const response = new Response('Hello App!', {
+        const response = new Response('Hello Acryl!', {
           headers: [
             ['content-type', 'text/plain'],
-            ['content-length', '00010'],
+            ['content-length', '00012'],
           ],
         })
         return response
       })
       app.get('/text-with-set-cookie-array', () => {
-        const response = new Response('Hello App!', {
+        const response = new Response('Hello Acryl!', {
           headers: [
             ['content-type', 'text/plain'],
             ['set-cookie', 'a=1'],
@@ -325,7 +325,7 @@ describe('various response body types', () => {
 
       app.use('/etag/*', etag())
       app.get('/etag/buffer', () => {
-        const response = new Response(Buffer.from('Hello App!'), {
+        const response = new Response(Buffer.from('Hello Acryl!'), {
           headers: { 'content-type': 'text/plain' },
         })
         return response
@@ -442,8 +442,8 @@ describe('various response body types', () => {
       const res = await requestServer(server, { method: 'GET', path: '/buffer' })
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toMatch('text/plain')
-      expect(res.headers.get('content-length')).toMatch('10')
-      expect(await res.text()).toBe('Hello App!')
+      expect(res.headers.get('content-length')).toMatch('12')
+      expect(await res.text()).toBe('Hello Acryl!')
     })
 
     it('Should return 200 response - GET /text-with-content-length-object', async () => {
@@ -453,8 +453,8 @@ describe('various response body types', () => {
       })
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toMatch('text/plain')
-      expect(res.headers.get('content-length')).toBe('00010')
-      expect(await res.text()).toBe('Hello App!')
+      expect(res.headers.get('content-length')).toBe('00012')
+      expect(await res.text()).toBe('Hello Acryl!')
     })
 
     it('Should return 200 response - GET /text-with-content-length-headers', async () => {
@@ -464,8 +464,8 @@ describe('various response body types', () => {
       })
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toMatch('text/plain')
-      expect(res.headers.get('content-length')).toBe('00010')
-      expect(await res.text()).toBe('Hello App!')
+      expect(res.headers.get('content-length')).toBe('00012')
+      expect(await res.text()).toBe('Hello Acryl!')
     })
 
     it('Should return 200 response - GET /text-with-content-length-array', async () => {
@@ -475,8 +475,8 @@ describe('various response body types', () => {
       })
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toMatch('text/plain')
-      expect(res.headers.get('content-length')).toBe('00010')
-      expect(await res.text()).toBe('Hello App!')
+      expect(res.headers.get('content-length')).toBe('00012')
+      expect(await res.text()).toBe('Hello Acryl!')
     })
 
     it('Should return 200 response - GET /text-with-set-cookie-array', async () => {
@@ -487,16 +487,16 @@ describe('various response body types', () => {
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toMatch('text/plain')
       expect(res.headers.getSetCookie()).toEqual(['a=1', 'b=2'])
-      expect(await res.text()).toBe('Hello App!')
+      expect(await res.text()).toBe('Hello Acryl!')
     })
 
     it('Should return 200 response - GET /etag/buffer', async () => {
       const res = await requestServer(server, { method: 'GET', path: '/etag/buffer' })
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toMatch('text/plain')
-      expect(res.headers.get('etag')).toMatch('"a4b794176ec9cd86063d6a0075c27385b32ec9b4"')
-      expect(res.headers.get('content-length')).toMatch('10')
-      expect(await res.text()).toBe('Hello App!')
+      expect(res.headers.get('etag')).toMatch('"687f9e1bf5c0384d6b9cb63d0f6f0ba1803b2669"')
+      expect(res.headers.get('content-length')).toMatch('12')
+      expect(await res.text()).toBe('Hello Acryl!')
     })
   }
 
@@ -511,14 +511,14 @@ describe('various response body types', () => {
 
 describe('Routing', () => {
   describe('Nested Route', () => {
-    const book = new App()
+    const book = new Acryl()
     book.get('/', (c) => c.text('get /book'))
     book.get('/:id', (c) => {
       return c.text('get /book/' + c.req.param('id'))
     })
     book.post('/', (c) => c.text('post /book'))
 
-    const app = new App()
+    const app = new Acryl()
     app.route('/book', book)
 
     const server = createAdaptorServer(app)
@@ -539,7 +539,7 @@ describe('Routing', () => {
   })
 
   describe('Chained route', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app
       .get('/chained/:abc', (c) => {
@@ -568,7 +568,7 @@ describe('Routing', () => {
 })
 
 describe('Request body', () => {
-  const app = new App()
+  const app = new Acryl()
   app.post('/json', async (c) => {
     const data = await c.req.json()
     return c.json(data)
@@ -604,7 +604,7 @@ describe('Request body', () => {
 
 describe('Response body', () => {
   describe('Cached Response', () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/json', (c) => {
       return c.json({ foo: 'bar' })
     })
@@ -649,7 +649,7 @@ describe('Response body', () => {
   })
 
   describe('Fallback to global.Response', () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/json-blob', async () => {
       return new Response(new Blob([JSON.stringify({ foo: 'blob' })]), {
@@ -682,7 +682,7 @@ describe('Response body', () => {
 })
 
 describe('Middleware', () => {
-  const app = new App<{ Variables: { foo: string } }>()
+  const app = new Acryl<{ Variables: { foo: string } }>()
   app.use('*', poweredBy())
   app.use('*', async (c, next) => {
     c.set('foo', 'bar')
@@ -695,13 +695,13 @@ describe('Middleware', () => {
   it('Should have correct header values', async () => {
     const res = await requestServer(server, { method: 'GET', path: '/' })
     expect(res.status).toBe(200)
-    expect(res.headers.get('x-powered-by')).toBe('ACRYL')
+    expect(res.headers.get('x-powered-by')).toBe('Acryl')
     expect(res.headers.get('foo')).toBe('bar')
   })
 })
 
 describe('Error handling', () => {
-  const app = new App()
+  const app = new Acryl()
   app.notFound((c) => {
     return c.text('Custom NotFound', 404)
   })
@@ -732,7 +732,7 @@ describe('Error handling', () => {
 })
 
 describe('Basic Auth Middleware', () => {
-  const app = new App()
+  const app = new Acryl()
   const username = 'acryl-user-a'
   const password = 'acryl-password-a'
   const unicodePassword = '炎'
@@ -788,7 +788,7 @@ describe('Basic Auth Middleware', () => {
 })
 
 describe('Stream and non-stream response', () => {
-  const app = new App()
+  const app = new Acryl()
 
   app.get('/json', (c) => c.json({ foo: 'bar' }))
   app.get('/text', (c) => c.text('Hello!'))
@@ -873,7 +873,7 @@ describe('Stream and non-stream response', () => {
 })
 
 describe('SSL', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/', (c) => c.text('Hello! Node!'))
   app.get('/url', (c) => c.text(c.req.url))
 
@@ -905,7 +905,7 @@ describe('SSL', () => {
 })
 
 describe('HTTP2', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/', (c) => c.text('Hello! Node!'))
   app.get('/headers', (c) => {
     // call newRequestFromIncoming
@@ -949,8 +949,8 @@ describe('HTTP2', () => {
   })
 })
 
-describe('App compression default gzip', () => {
-  const app = new App()
+describe('Acryl compression default gzip', () => {
+  const app = new Acryl()
   app.use('*', compress())
 
   app.notFound((c) => {
@@ -1013,8 +1013,8 @@ describe('App compression default gzip', () => {
   })
 })
 
-describe('App compression deflate', () => {
-  const app = new App()
+describe('Acryl compression deflate', () => {
+  const app = new Acryl()
   app.use('*', compress({ encoding: 'deflate' }))
 
   app.notFound((c) => {
@@ -1078,7 +1078,7 @@ describe('App compression deflate', () => {
 })
 
 describe('set child response to c.res', () => {
-  const app = new App()
+  const app = new Acryl()
   app.use('*', async (c, next) => {
     await next()
     c.res = new Response('', c.res)
@@ -1101,7 +1101,7 @@ describe('Headers appended to a raw Response after construction (issue #304)', (
   // Regression test: a handler returning `new Response(body, init)` and
   // appending headers (e.g. `Set-Cookie`) afterwards must not lose those
   // headers when middleware later clones the response via `new Response(...)`.
-  const app = new App()
+  const app = new Acryl()
   app.use('*', async (c, next) => {
     await next()
     // Mimics what middleware such as `cors`/`compress` does internally.
@@ -1127,7 +1127,7 @@ describe('Headers appended to a raw Response after construction (issue #304)', (
 })
 
 describe('forwarding IncomingMessage and ServerResponse in env', () => {
-  const app = new App<{ Bindings: HttpBindings }>()
+  const app = new Acryl<{ Bindings: HttpBindings }>()
   app.get('/', (c) =>
     c.json({
       incoming: c.env.incoming.constructor.name,
@@ -1151,7 +1151,7 @@ describe('forwarding IncomingMessage and ServerResponse in env', () => {
 })
 
 describe('overrideGlobalObjects', () => {
-  const app = new App()
+  const app = new Acryl()
 
   beforeEach(() => {
     Object.defineProperty(global, 'Headers', {
@@ -1201,7 +1201,7 @@ describe('Memory leak test', () => {
   const registry = new FinalizationRegistry(() => {
     counter--
   })
-  const app = new App()
+  const app = new Acryl()
   const server = createAdaptorServer(app)
 
   let onAbort: () => void
@@ -1286,7 +1286,7 @@ describe('Memory leak test', () => {
 })
 
 describe('serve', () => {
-  const app = new App()
+  const app = new Acryl()
   app.get('/', (c) => c.newResponse(null, 200))
   serve(app)
 

@@ -20,14 +20,14 @@ export interface RouterBindings {
   readonly connection: ConnectionInfo
 }
 
-/** The `Env` of an `App` that wants `c.env.connection` typed: `new App<RouterEnv>()`. */
+/** The `Env` of an `Acryl` that wants `c.env.connection` typed: `new Acryl<RouterEnv>()`. */
 export interface RouterEnv {
   Bindings: RouterBindings
 }
 
 const NONE: ConnectionInfo = Object.freeze({})
 
-/** The transport facts of this request; empty for an in-process call or an `App` run outside the router. */
+/** The transport facts of this request; empty for an in-process call or an `Acryl` run outside the router. */
 export function connectionOf(c: Context): ConnectionInfo {
   const env = c.env as Partial<RouterBindings> | undefined
   return env?.connection ?? NONE

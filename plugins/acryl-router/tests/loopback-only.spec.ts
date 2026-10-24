@@ -4,19 +4,19 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { App, type ConnectionInfo } from '../src/index.ts'
+import { Acryl, type ConnectionInfo } from '../src/index.ts'
 import { loopbackOnly, type LoopbackOptions } from '../src/middleware/index.ts'
 
 const PORT = 43_120
 const SELF = `http://127.0.0.1:${String(PORT)}`
 const LOCAL: ConnectionInfo = { remoteAddress: '127.0.0.1', localPort: PORT }
 
-function guarded(options: LoopbackOptions = {}): App {
-  return new App().use(loopbackOnly(options)).get('/x', c => c.text('read')).post('/x', c => c.text('changed'))
+function guarded(options: LoopbackOptions = {}): Acryl {
+  return new Acryl().use(loopbackOnly(options)).get('/x', c => c.text('read')).post('/x', c => c.text('changed'))
 }
 
 async function status(
-  app: App,
+  app: Acryl,
   method: string,
   headers: Record<string, string>,
   connection: ConnectionInfo = LOCAL,

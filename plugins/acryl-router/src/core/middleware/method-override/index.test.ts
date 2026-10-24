@@ -1,9 +1,9 @@
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { methodOverride } from './index.ts'
 
 describe('Method Override Middleware', () => {
   describe('Form', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/posts/*', methodOverride({ app }))
     app.use('/posts-custom/*', methodOverride({ app, form: 'custom-input-name' }))
     app.on(['post', 'delete'], ['/posts', '/posts-custom'], async (c) => {
@@ -126,7 +126,7 @@ describe('Method Override Middleware', () => {
   })
 
   describe('Header', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/posts/*', methodOverride({ app, header: 'X-METHOD-OVERRIDE' }))
     app.on(['get', 'post', 'delete'], '/posts', async (c) => {
       return c.json({
@@ -165,7 +165,7 @@ describe('Method Override Middleware', () => {
   })
 
   describe('Query', () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/posts/*', methodOverride({ app, query: '_method' }))
     app.on(['get', 'post', 'delete'], '/posts', async (c) => {
       return c.json({
@@ -186,7 +186,7 @@ describe('Method Override Middleware', () => {
     })
 
     it('Should override POST to DELETE when the request has a body', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/posts/*', methodOverride({ app, query: '_method' }))
       app.on(['post', 'delete'], '/posts', async (c) => {
         return c.json({

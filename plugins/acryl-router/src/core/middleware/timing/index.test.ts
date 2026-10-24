@@ -1,8 +1,8 @@
 import { endTime, setMetric, startTime, timing, wrapTime } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 
 describe('Server-Timing API', () => {
-  const app = new App()
+  const app = new Acryl()
 
   const totalDescription = 'my total DescRipTion!'
   const name = 'sleep'
@@ -43,7 +43,7 @@ describe('Server-Timing API', () => {
     return c.text('cache!')
   })
 
-  const sub = new App()
+  const sub = new Acryl()
 
   sub.use(timing())
   sub.get('/', (c) => c.text('sub'))
@@ -105,7 +105,7 @@ describe('Server-Timing API', () => {
 
   describe('Should handle timing options', async () => {
     it('Should handle autoEnd option', async () => {
-      const autoEndApp = new App()
+      const autoEndApp = new Acryl()
 
       autoEndApp.use('*', timing())
       autoEndApp.get('/', (c) => {
@@ -118,7 +118,7 @@ describe('Server-Timing API', () => {
       expect(res.status).toBe(200)
       expect(res.headers.get('server-timing')).toContain('test;dur=')
 
-      const disabledAutoEndApp = new App()
+      const disabledAutoEndApp = new Acryl()
 
       disabledAutoEndApp.use('*', timing({ autoEnd: false }))
       disabledAutoEndApp.get('/', (c) => {
@@ -133,7 +133,7 @@ describe('Server-Timing API', () => {
     })
 
     it('Should use enabled function return value', async () => {
-      const enabledApp = new App()
+      const enabledApp = new Acryl()
       const enabled = vi.fn(() => false)
 
       enabledApp.use('*', timing({ enabled }))
@@ -147,7 +147,7 @@ describe('Server-Timing API', () => {
     })
 
     it('Should handle total false and value-less metrics without description', async () => {
-      const metricApp = new App()
+      const metricApp = new Acryl()
 
       metricApp.use('*', timing({ total: false }))
       metricApp.get('/', (c) => {
@@ -164,7 +164,7 @@ describe('Server-Timing API', () => {
 
   describe('Should handle crossOrigin setting', async () => {
     it('Should do nothing when crossOrigin is falsy', async () => {
-      const crossOriginApp = new App()
+      const crossOriginApp = new Acryl()
 
       crossOriginApp.use(
         '*',
@@ -183,7 +183,7 @@ describe('Server-Timing API', () => {
     })
 
     it('Should set Timing-Allow-Origin to * when crossOrigin is true', async () => {
-      const crossOriginApp = new App()
+      const crossOriginApp = new Acryl()
 
       crossOriginApp.use(
         '*',
@@ -203,7 +203,7 @@ describe('Server-Timing API', () => {
     })
 
     it('Should set Timing-Allow-Origin to the value of crossOrigin when it is a string', async () => {
-      const crossOriginApp = new App()
+      const crossOriginApp = new Acryl()
 
       crossOriginApp.use(
         '*',
@@ -223,7 +223,7 @@ describe('Server-Timing API', () => {
     })
 
     it('Should set Timing-Allow-Origin to the return value of crossOrigin when it is a function', async () => {
-      const crossOriginApp = new App()
+      const crossOriginApp = new Acryl()
 
       crossOriginApp.use(
         '*',
@@ -252,7 +252,7 @@ describe('Server-Timing API', () => {
       delete globalThis.performance
       const DateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(123456789)
 
-      const app = new App().use(timing()).get('/', (c) => {
+      const app = new Acryl().use(timing()).get('/', (c) => {
         startTime(c, 'test')
         endTime(c, 'test')
         return c.text('hello')
@@ -272,7 +272,7 @@ describe('Server-Timing API', () => {
     it('Should silently warn when no timing metrics are available', async () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-      const app = new App().get('/', (c) => {
+      const app = new Acryl().get('/', (c) => {
         setMetric(c, 'test', 123)
         startTime(c, 'test')
         endTime(c, 'test')
@@ -293,7 +293,7 @@ describe('Server-Timing API', () => {
     it('Should silently warn when trying to end a non-existent timer', async () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-      const app = new App().use(timing()).get('/', (c) => {
+      const app = new Acryl().use(timing()).get('/', (c) => {
         setMetric(c, 'region', 'europe-west3')
         endTime(c, 'nonExistentTimer')
         return c.text('hello')

@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
-import type { App } from 'acryl-router'
+import type { Acryl } from 'acryl-router'
 import { agentRoutes } from './agents/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
 import { agentSettingsFile, agentsFile, createFileCatalogStore } from './agents/file-store.ts'
@@ -72,7 +72,7 @@ export function apply(ctx: Context): void {
   }
   // The services and the app are built in the effect; the app is mounted after it, so on unload the mount goes first (its requests end and
   // are waited for) and the PTYs, git and the rest are released after.
-  const built: { api?: App } = {}
+  const built: { api?: Acryl } = {}
   ctx.effect(() => {
     // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
     // The registry asks the settings what an id runs; the settings ask the catalog and the registry's own PATH search.

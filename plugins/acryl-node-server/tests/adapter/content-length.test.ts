@@ -1,4 +1,4 @@
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -31,7 +31,7 @@ describe('automatic Content-Length compatibility', () => {
   })
 
   it('preserves the byte length for c.json()', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/', (c) => c.json({ message: 'hello' }))
     const server = createServer(getRequestListener(app.fetch))
     const res = await requestServer(server, { path: '/' })
@@ -60,7 +60,7 @@ describe('automatic Content-Length compatibility', () => {
   })
 
   it('uses the UTF-8 byte length for automatic Content-Length with c.text()', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/', (c) => c.text('こんにちは'))
     let writeHeadCalls: unknown[][] = []
     const listener = getRequestListener(app.fetch)
@@ -175,7 +175,7 @@ describe('automatic Content-Length compatibility', () => {
   })
 
   it('honors strictContentLength for JSON', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/', (c) => c.json({ message: 'hello' }))
     const listener = getRequestListener(app.fetch)
     const server = createServer((incoming, outgoing) => {

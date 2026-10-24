@@ -1,6 +1,6 @@
 /** The project registry, for the app's own page only: the list, its changes, and a stream of the list as it changes. */
 
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { streamSSE } from 'acryl-router/helpers'
 import { INVALID_JSON, failure, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import {
@@ -56,8 +56,8 @@ function change(registry: ProjectRegistry, request: ProjectRequest): Promise<Pro
  * `projects/events` is a server-sent event stream, so every page follows a change it did not make (an agent's workspace tool, another window):
  * one `data:` message with the whole view on connect and after each change. A stream ends when its page goes away or this plugin unloads.
  */
-export function projectRoutes(registry: ProjectRegistry, keepAlive: KeepAlive, reportError: ReportError): App {
-  return new App()
+export function projectRoutes(registry: ProjectRegistry, keepAlive: KeepAlive, reportError: ReportError): Acryl {
+  return new Acryl()
     .get(WORKSPACE_PROJECTS_PATH, ownPage, c => c.json({ ok: true, view: registry.view() } satisfies ProjectResponse))
     .post(WORKSPACE_PROJECTS_PATH, ownPage, jsonBody(), async (c) => {
       const body = await readJson(c)

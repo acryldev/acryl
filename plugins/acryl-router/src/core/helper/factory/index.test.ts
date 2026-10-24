@@ -2,7 +2,7 @@
 import { expectTypeOf } from 'vitest'
 import { hc } from '../../client/index.ts'
 import type { ClientRequest } from '../../client/types.ts'
-import { App } from '../../index.ts'
+import { Acryl } from '../../index.ts'
 import type { Env, ExtractSchema, H, MiddlewareHandler, ToSchema, TypedResponse } from '../../types.ts'
 import type { ContentfulStatusCode } from '../../utils/http-status.ts'
 import type { Equal, Expect } from '../../utils/types.ts'
@@ -11,7 +11,7 @@ import { createFactory, createMiddleware } from './index.ts'
 
 describe('createMiddleware', () => {
   type Env = { Variables: { foo: string } }
-  const app = new App()
+  const app = new Acryl()
 
   const mw = (message: string) =>
     createMiddleware<Env>(async (c, next) => {
@@ -47,7 +47,7 @@ describe('createMiddleware', () => {
       MY_VAR: string
     }
 
-    const app = new App<{ Bindings: Bindings }>()
+    const app = new Acryl<{ Bindings: Bindings }>()
 
     app.get(
       '/',
@@ -82,7 +82,7 @@ describe('createHandler', () => {
 
   describe('Basic', () => {
     const factory = createFactory()
-    const app = new App()
+    const app = new Acryl()
 
     const handlersA = factory.createHandlers((c) => {
       return c.text('A')
@@ -130,7 +130,7 @@ describe('createHandler', () => {
     type Env = { Variables: { foo: string } }
 
     const factory = createFactory<Env>()
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
 
     const handlers = factory.createHandlers(
       validator('query', () => {
@@ -146,7 +146,7 @@ describe('createHandler', () => {
     )
     const routes = app.get('/posts', ...handlers)
 
-    type Expected = App<
+    type Expected = Acryl<
       Env,
       ToSchema<
         'get',
@@ -178,7 +178,7 @@ describe('createHandler', () => {
     type Env = { Variables: { foo: string } }
 
     const factory = createFactory<Env>()
-    const app = new App<Env>()
+    const app = new Acryl<Env>()
 
     const handlers = factory.createHandlers(
       validator('header', () => {
@@ -206,7 +206,7 @@ describe('createHandler', () => {
     )
     const routes = app.get('/posts', ...handlers)
 
-    type Expected = App<
+    type Expected = Acryl<
       Env,
       ToSchema<
         'get',
@@ -390,7 +390,7 @@ describe('createFactory', () => {
         await next()
       })
 
-      const routes = new App().use('*', middleware)
+      const routes = new Acryl().use('*', middleware)
       type Actual = ExtractSchema<typeof routes>
       type Expected = {}
       type verify = Expect<Equal<Expected, Actual>>

@@ -1,6 +1,6 @@
 /**
  * @module
- * PatternRouter for App.
+ * PatternRouter for Acryl.
  */
 
 export { PatternRouter } from './router.ts'

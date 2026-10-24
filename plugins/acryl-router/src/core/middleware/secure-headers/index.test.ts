@@ -1,6 +1,6 @@
 import { NONCE, secureHeaders } from './index.ts'
 import type { ContentSecurityPolicyOptionHandler } from './index.ts'
-import { App } from '../../app.ts'
+import { Acryl } from '../../app.ts'
 import { poweredBy } from '../powered-by/index.ts'
 
 declare module '../../context.ts' {
@@ -12,7 +12,7 @@ declare module '../../context.ts' {
 
 describe('Secure Headers Middleware', () => {
   it('default middleware', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', secureHeaders())
     app.get('/test', async (ctx) => {
       return ctx.text('test')
@@ -41,7 +41,7 @@ describe('Secure Headers Middleware', () => {
   })
 
   it('all headers enabled', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '*',
       secureHeaders({
@@ -85,7 +85,7 @@ describe('Secure Headers Middleware', () => {
   })
 
   it('specific headers disabled', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('*', secureHeaders({ xFrameOptions: false, xXssProtection: false }))
     app.get('/test', async (ctx) => {
       return ctx.text('test')
@@ -112,27 +112,27 @@ describe('Secure Headers Middleware', () => {
   })
 
   it('should remove x-powered-by header', async () => {
-    const appBefore = new App()
+    const appBefore = new Acryl()
     appBefore.use('*', secureHeaders())
     appBefore.use('*', poweredBy())
 
     const resBefore = await appBefore.request('/')
     expect(resBefore.headers.get('x-powered-by')).toBeFalsy()
 
-    const appAfter = new App()
+    const appAfter = new Acryl()
     appAfter.use('*', poweredBy())
     appAfter.use('*', secureHeaders())
 
     const resAfter = await appAfter.request('/')
-    expect(resAfter.headers.get('x-powered-by')).toBe('ACRYL')
+    expect(resAfter.headers.get('x-powered-by')).toBe('Acryl')
   })
 
   it('should override Strict-Transport-Security header after middleware', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use('/test1', secureHeaders())
 
     app.all('*', async (c) => {
-      c.res.headers.set('Strict-Transport-Security', 'App')
+      c.res.headers.set('Strict-Transport-Security', 'Acryl')
       return c.text('header updated')
     })
 
@@ -142,11 +142,11 @@ describe('Secure Headers Middleware', () => {
     )
 
     const res2 = await app.request('/test2')
-    expect(res2.headers.get('Strict-Transport-Security')).toEqual('App')
+    expect(res2.headers.get('Strict-Transport-Security')).toEqual('Acryl')
   })
 
   it('should use custom value when overridden', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '/test',
       secureHeaders({
@@ -165,7 +165,7 @@ describe('Secure Headers Middleware', () => {
   })
 
   it('should set Permission-Policy header correctly', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.use(
       '/test',
       secureHeaders({
@@ -198,10 +198,10 @@ describe('Secure Headers Middleware', () => {
   })
 
   it('Remove X-Powered-By', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get('/test', secureHeaders(), poweredBy(), async (c) => {
-      return c.text('App is hot')
+      return c.text('Acryl is hot')
     })
 
     app.get(
@@ -211,19 +211,19 @@ describe('Secure Headers Middleware', () => {
       }),
       poweredBy(),
       async (c) => {
-        return c.text('App is hot')
+        return c.text('Acryl is hot')
       }
     )
 
     const res = await app.request('/test')
     const poweredby = res.headers.get('X-Powered-By')
     expect(poweredby).toEqual(null)
-    expect(await res.text()).toEqual('App is hot')
+    expect(await res.text()).toEqual('Acryl is hot')
 
     const res2 = await app.request('/test2')
     const poweredby2 = res2.headers.get('X-Powered-By')
-    expect(poweredby2).toEqual('ACRYL')
-    expect(await res2.text()).toEqual('App is hot')
+    expect(poweredby2).toEqual('Acryl')
+    expect(await res2.text()).toEqual('Acryl is hot')
   })
 
   describe.each([
@@ -234,7 +234,7 @@ describe('Secure Headers Middleware', () => {
     },
   ])('CSP Setting ($cspSettingName)', ({ cspSettingName, cspHeaderName }) => {
     it('CSP Setting', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -255,7 +255,7 @@ describe('Secure Headers Middleware', () => {
       )
 
       app.all('*', async (c) => {
-        c.res.headers.set('Strict-Transport-Security', 'App')
+        c.res.headers.set('Strict-Transport-Security', 'Acryl')
         return c.text('header updated')
       })
 
@@ -266,7 +266,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('CSP Setting one only', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -285,7 +285,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('No CSP Setting', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use('/test', secureHeaders({ [cspSettingName]: {} }))
 
       app.all('*', async (c) => {
@@ -297,7 +297,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('CSP with reportTo', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test1',
         secureHeaders({
@@ -409,7 +409,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('CSP nonce for script-src', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -431,7 +431,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('CSP nonce for script-src and style-src', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -455,7 +455,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('CSP nonce by app own function', async () => {
-      const app = new App()
+      const app = new Acryl()
       const setNonce: ContentSecurityPolicyOptionHandler = (ctx, directive) => {
         ctx.set(`test-${directive}-nonce`, directive)
         return `'nonce-${directive}'`
@@ -486,7 +486,7 @@ describe('Secure Headers Middleware', () => {
 
   describe('CSP with combined modes', () => {
     it('keeps the enforced policy when report-only uses a nonce', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -510,7 +510,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('keeps the report-only policy when the enforced policy uses a nonce', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -534,7 +534,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('supports nonces in both policies', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -562,7 +562,7 @@ describe('Secure Headers Middleware', () => {
   // OUR NEW REPORT-URI TESTS
   describe('CSP report-uri directive', () => {
     it('should set report-uri with single endpoint', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -580,7 +580,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('should set report-uri with multiple endpoints', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -598,7 +598,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('should work with report-to and report-uri together', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -617,7 +617,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('should work with Content-Security-Policy-Report-Only', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -637,7 +637,7 @@ describe('Secure Headers Middleware', () => {
     // ADDED MISSING TEST CASE for Report-Only:
 
     it('should not output report-uri when reportUri is not set', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({
@@ -653,7 +653,7 @@ describe('Secure Headers Middleware', () => {
     })
 
     it('should not output report-uri in Report-Only when reportUri is not set', async () => {
-      const app = new App()
+      const app = new Acryl()
       app.use(
         '/test',
         secureHeaders({

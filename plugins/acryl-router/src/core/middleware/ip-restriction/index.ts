@@ -1,5 +1,5 @@
 /**
- * IP Restriction Middleware for App
+ * IP Restriction Middleware for Acryl
  * @module
  */
 
@@ -175,7 +175,7 @@ export interface IPRestrictionRules {
 }
 
 /**
- * IP Restriction Middleware for App.
+ * IP Restriction Middleware for Acryl.
  *
  *
  * @param {GetConnInfo | ((c: Context) => string)} getIP - A function to retrieve the client IP address. Use `getConnInfo` from the appropriate runtime adapter.
@@ -185,11 +185,11 @@ export interface IPRestrictionRules {
  *
  * @example
  * ```ts
- * import { App } from 'acryl-router'
- * import { ipRestriction } from 'acryl-router/middleware'
- * import { getConnInfo } from 'acryl-router/helpers'
+ * import { Acryl } from 'acrylblends'
+ * import { ipRestriction } from 'acrylblends/ip-restriction'
+ * import { getConnInfo } from 'acrylblends/cloudflare-workers'
  *
- * const app = new App()
+ * const app = new Acryl()
  *
  * app.use(
  *   '*',

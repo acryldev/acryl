@@ -1,11 +1,11 @@
-import { App } from 'acryl-router'
+import { Acryl } from 'acryl-router'
 import { WebSocket, WebSocketServer } from 'ws'
 import { connect } from 'node:net'
 import type { AddressInfo } from 'node:net'
 import { createAdaptorServer, upgradeWebSocket } from '../../src/adapter/index.ts'
 
 describe('WebSocket', () => {
-  const startServer = (app: App) => {
+  const startServer = (app: Acryl) => {
     const wss = new WebSocketServer({ noServer: true })
     const server = createAdaptorServer({ fetch: app.fetch, websocket: { server: wss } })
     return new Promise<{ server: ReturnType<typeof createAdaptorServer>; address: AddressInfo }>(
@@ -18,7 +18,7 @@ describe('WebSocket', () => {
   }
 
   it('should connect with upgradeWebSocket without manual injection', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get(
       '/ws',
@@ -50,7 +50,7 @@ describe('WebSocket', () => {
   })
 
   it('should reject WebSocket upgrade when route is not upgraded', async () => {
-    const app = new App()
+    const app = new Acryl()
     app.get('/ws', (c) => c.text('ok'))
 
     const { server, address } = await startServer(app)
@@ -71,7 +71,7 @@ describe('WebSocket', () => {
   })
 
   it('should forward response headers set by middleware on a successful upgrade', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.use(async (c, next) => {
       await next()
@@ -106,7 +106,7 @@ describe('WebSocket', () => {
   })
 
   it('should forward response headers when the upgrade is rejected', async () => {
-    const app = new App()
+    const app = new Acryl()
 
     app.get(
       '/ws',
@@ -138,7 +138,7 @@ describe('WebSocket', () => {
   })
 
   it('should not block other upgrade listeners', async () => {
-    const app = new App()
+    const app = new Acryl()
     const { server, address } = await startServer(app)
     const wss = new WebSocketServer({ noServer: true })
 
@@ -165,7 +165,7 @@ describe('WebSocket', () => {
   })
 
   it('should call onError with the underlying error when the raw socket errors', async () => {
-    const app = new App()
+    const app = new Acryl()
     const receivedError = new Error('boom')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let rawWs: any
@@ -210,7 +210,7 @@ describe('WebSocket', () => {
       liveCount--
     })
 
-    const app = new App()
+    const app = new Acryl()
     app.use('/ws', async (c, next) => {
       liveCount++
       registry.register((c.env as { incoming: object }).incoming, 'incoming')
