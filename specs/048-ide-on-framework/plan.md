@@ -20,12 +20,12 @@ A slice that would change something a user sees, or remove a feature, stops and 
 
 | Measure | How it is counted | Start (2026-10-24, before slice 1) | Now |
 | --- | --- | --- | --- |
-| `webServer` registration call sites | `register`/`registerUpgrade` calls on `acrylWeb`, `webServer` or a port named `web`, in production source of `apps`, `plugins`, `runtime` (tests and build output excluded) | 30 | 19 (after slice 1) |
+| `webServer` registration call sites | `register`/`registerUpgrade` calls on `acrylWeb`, `webServer` or a port named `web`, in production source of `apps`, `plugins`, `runtime` (tests and build output excluded) | 30 | 14 (after slice 2) |
 | DSH direct-import lines | the ceiling in `scripts/verify-layout.mjs` | 133 (104 outside the seam) | 133 (104 outside the seam) |
 
-The call-site count today, by package: `acryl-agent-control` 6, `apps/acryl-desktop` 5, `runtime/acryl-harness-runtime` 2,
+The call-site count today, by package: `apps/acryl-desktop` 5, `runtime/acryl-harness-runtime` 2,
 `acryl-plugin-admin` 2, `acryl-workspace` 1 (the terminal WebSocket), `acryl-support` 1, `acryl-sign-in` 1 (a loop over its five
-routes), `acryl-router-http` 1 (the adapter itself, which stays). The two in `acryl-harness-runtime` are the `acrylWeb` carrier
+routes), `acryl-router-http` 1 (the adapter itself, which stays), `acryl-agent-control` 1 (the page channel upgrade). The two in `acryl-harness-runtime` are the `acrylWeb` carrier
 (`engine-web.ts`, a delegate to DSH's `webServer` that every consumer above registers through); it goes when its last consumer has moved.
 
 The DSH import ceiling only falls when a slice removes a DSH import. Slice 1 could not: the workspace's old routes used ACRYL's own
@@ -37,7 +37,7 @@ driver spec reach.
 1. **`acryl-workspace`** (T001; 12 call sites, 24 routes): the IDE's core (projects, files, git, terminals, agents) and the largest user. Done.
 2. **`acryl-agent-control`** (T002; 6): the door external drivers use (`acryl control`, the MCP config a worker starts with), and the next
    largest. It goes before Desktop's own routes because the drivers of spec 046 Phase 9 build on it. Security-sensitive: its trust model
-   stays exactly as it is.
+   stays exactly as it is. Done.
 3. **The terminal's PATH lookup** (T005; no call sites): found in slice 1. The workspace runs the login shell synchronously on every
    activation (about 1.2 s with zsh), blocking the Host. A small slice of its own so it does not hide inside a transport change.
 4. **`apps/acryl-desktop`** (T003; 5): Desktop's own renderer routes: the settings routes, preferences, the renderer boot report, and the
@@ -94,7 +94,7 @@ middleware) made a label longer than the 512 characters the Host's Cordis archit
 mount is now labeled `acryl-router: route <path>` with one child effect per route (`acryl-router: serves <METHOD> <path>`), so no label
 grows with an app; `acryl-inspect` reads the children and does not count them as registrations of their own.
 
-### Slice 2: `acryl-agent-control`, the door (T002, in progress)
+### Slice 2: `acryl-agent-control`, the door (T002, done)
 
 The door external drivers (claude, codex, pi through `acryl control`, the MCP config a worker starts with) use to operate the app.
 Rule for this slice: its trust model does not change. Loopback peer plus the per-run secret file for the operator routes, the page's
@@ -126,3 +126,7 @@ Exact answers kept (the CLI reads 403 as "refused, secret rotated?"):
 - method checks answer 405 before auth, as before; `Allow` now lists what the router serves (GET routes also answer HEAD).
 - bodies: malformed JSON 400 with the same bodies; oversized now 413 (was 400), as in slice 1.
 - MCP notification-only batch: 202 with no body.
+
+Measured (before and after the slice): webServer registration call sites 19 -> 14 (`acryl-agent-control` 6 -> 1, the page channel's
+upgrade); DSH import lines 133 -> 133. Live proof and evidence: `tasks.md` T002. Found on the way: the workers route dropped the own-page
+refusal and answered 500 instead of 403 (fixed); `acryl control` cannot discover apps not started by `pnpm blank` (T011).

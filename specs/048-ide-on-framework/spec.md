@@ -1,7 +1,7 @@
 # Spec 048 - The ACRYL IDE on the ACRYL Framework
 
-Status (2026-10-24): slice 1 (`acryl-workspace`) is on `main`; slice 2 (`acryl-agent-control`, the door) is in progress on branch
-`048-ide-on-framework`. The ledger is `tasks.md`; the method, the measures and the slice order are in `plan.md`. This folder takes over
+Status (2026-10-24): slices 1 (`acryl-workspace`) and 2 (`acryl-agent-control`, the door) are on `main`; next is T005, the
+terminal's PATH lookup. The ledger is `tasks.md`; the method, the measures and the slice order are in `plan.md`. This folder takes over
 Phase 8 from spec 046 (`tasks.md` T021-T027) and spec 047 (`plan.md` Phase 8, T016-T017), which now point here.
 
 ## Why

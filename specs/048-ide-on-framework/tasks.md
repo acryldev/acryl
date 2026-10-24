@@ -10,11 +10,14 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   sidebar showing the project and its git badge), Electron user data in the throwaway root, ports free, real homes untouched. Measured:
   call sites 30 -> 19 (workspace 12 -> 1), DSH import lines 133 -> 133. Changed answers recorded: 413, 405 with `Allow`, agent-hook token
   401. Found and fixed: the router's mount label grew with the app and broke the plugin-admin architecture page (500).
-- [ ] T002 `acryl-agent-control`, the door, onto the router (was 046 T024). In progress on branch `048-ide-on-framework`. Keeps the
-  loopback-only rule, the per-run secret file and every-call approval exactly; operator refusals stay 403 (`acryl control` reads them).
-  Proof required: route tests over a real socket, a plugin test on real Cordis with the real router, and `acryl control snapshot` plus one
-  `acryl control tool call` end to end against an isolated app. The `agent-control-ui` capability declares that it needs the router, and
-  Blueprint parsing refuses it without the `framework-kit` row (the workspace's check from T001, generalized).
+- [x] T002 `acryl-agent-control`, the door, onto the router (was 046 T024). Commit `4d0cf1352b37e75f68c3fded816259a541770427`. Trust model unchanged
+  (operator refusals stay 403 `forbidden`). Evidence: full gate; route tests over a real socket through the real adapter; plugin tests on
+  real Cordis with the real router; isolated Web run (`live-run --no-key --copy-home` with the online channel on in the profile patch):
+  `acryl control snapshot` read 26 controls of the live page (headless Chrome), `acryl control tool list` and `tool call
+  acryl_list_plugins` answered through the gateway, no-auth and wrong-secret calls 403, a GET on the online call 405 `Allow: POST`; port
+  free and real homes untouched afterwards. Measured: call sites 19 -> 14 (agent-control 6 -> 1, the page channel upgrade), DSH import
+  lines 133 -> 133. Found and fixed: a workers request from neither the page nor an operator answered 500 instead of 403. Found, ticketed
+  as T011: `acryl control` finds no app started by `pnpm web`, Desktop or the npm CLI.
 - [ ] T003 `apps/acryl-desktop`: the settings, preferences, renderer boot report and directory picker and validator routes (was 046 T023).
 - [ ] T004 `acryl-sign-in`: its five sign-in routes; the checks stay exactly (was part of 046 T025).
 - [ ] T005 Find the terminal's PATH without blocking (was 047 T017): ask the login shell asynchronously once, cache the promise, and make
@@ -28,6 +31,11 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
 - [ ] T009 Ratchet: the call-site count becomes a layout gate in `scripts/verify-layout.mjs`, like the DSH import ceiling (was 046 T027).
 - [ ] T010 The agent-facing plugin docs and example in `acryl-plugin-context` teach the router, not `webServer` (the item left open in
   046 T020).
+- [ ] T011 `acryl control` can discover every running app, not only `pnpm blank` ones. Since `1b10c17c` (2026-09-27) the running-app
+  registry (`runtime/acryl-harness-runtime/src/instance/registry.ts` `announce`) is written only by `scripts/lib/instances.mjs`
+  `claimInstance`; the Web launcher, Desktop and the npm CLI never announce, so `acryl control list` says "no ACRYL app is running" while
+  one runs with its online channel on (reproduced in the T002 live run, which wrote the pointer by hand to reach the door). Each composition
+  root should claim and announce its instance with its real port once it listens, and withdraw on exit.
 
 Next: the drivers (spec 046 Phase 9, T028 `acryl-driver-dsh` and T029 `acryl-driver-pty`) act through the door T002 moves, and get their
 own spec when this one reaches T007.

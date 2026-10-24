@@ -91,6 +91,12 @@ an `Allow` header on every route; a missing or wrong agent-hook token is 401 wit
 must be the app's own loopback address. Its routes refuse an in-process call on purpose (the guard needs a socket to check), so its tests
 run over loopback through the same adapter (`tests/serve-api.ts`), which is the "test over the Host" below.
 
+`acryl-agent-control` (the door `acryl control`, workers and the MCP config use) moved the same way and kept its trust model exactly:
+operator routes still answer a non-loopback peer or a missing or wrong secret with 403 `{ "error": "forbidden" }`, which `acryl control`
+reads as "refused", never the bearer middleware's 401. What changed there: an oversized body is 413 (was 400), a wrong method's `Allow`
+lists what the router serves (`GET, HEAD` for the audit log), and a page route's refusal carries `loopbackOnly`'s message instead of
+`forbidden`. Only the page channel's WebSocket stays a webServer upgrade.
+
 ## Completion check
 
 A capability is migrated when:

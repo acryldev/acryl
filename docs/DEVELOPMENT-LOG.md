@@ -1,3 +1,26 @@
+## 2026-10-24 - the IDE onto the framework, slice 2: the door serves its routes through the router (spec 048 T002)
+
+Commit: `4d0cf1352b37e75f68c3fded816259a541770427`.
+
+`acryl-agent-control` is the door that external drivers (`acryl control`, workers, the MCP config a worker starts with) use to operate the app. It was the next-largest `webServer` user.
+
+- **Moved:** the audit, online call, tools gateway (JSON and MCP) and workers routes are now one private app mounted under `/api/acryl-agent-control`. Only the page channel's WebSocket upgrade stays on `webServer`, until upgrades reach the router (047 T009). The `agent-control-ui` capability declares `needsRouter`, and Blueprint parsing refuses it without the `framework-kit` row. That generalizes slice 1's workspace-only check.
+- **Trust model kept exactly:** operator routes still need a loopback peer and the per-run secret, and refuse with 403 `{ "error": "forbidden" }`, which `acryl control` reads. Page routes keep the own-page rule. Changed answers, recorded in `docs/framework/cordis/migration-from-dsh-webserver.md`:
+  - an oversized body is 413;
+  - `Allow` lists what the router serves (`GET, HEAD`);
+  - a page refusal carries `loopbackOnly`'s message.
+- **Found and fixed:** a workers request from neither the page nor an operator answered 500 instead of 403, because the own-page refusal was dropped.
+- **Found, ticketed (048 T011):** `acryl control` can only discover apps started by `pnpm blank`. Since `1b10c17c` only `scripts/lib/instances.mjs` announces a running app; the Web launcher, Desktop and the npm CLI never write the registry.
+- **Measured:** `webServer` call sites 19 -> 14; DSH import lines 133 -> 133.
+- **Verified:**
+  - Full gate and CI green.
+  - Isolated Web run (`live-run --no-key --copy-home`, online channel on through the profile patch, registry pointer written by hand because of T011, page open in headless Chrome):
+    - `acryl control snapshot` read 26 controls of the live page;
+    - `tool list` and `tool call acryl_list_plugins` answered through the gateway;
+    - no-auth and wrong-secret calls were refused with 403;
+    - the online call answered a GET with 405 `Allow: POST`.
+  - The run stopped with the port free and the real homes untouched.
+
 ## 2026-10-24 - the framework's public face: Acryl, and the acrylblends package (spec 047)
 
 Commits: `196b28b3` (public types without DOM, already on `main`), `dae6f6819614c48d95cba1dfc8365b6ec2067c65` (the rename), `cd1d7350521f566a13423a18dad566b49f5b5dae` (commented `declare module`), `fe827d45c12f6681d8e1d0de2ed42a192f65fb23` (the release package).
