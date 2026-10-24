@@ -220,8 +220,8 @@
     },
     "tests/adapter/server.test.ts": {
       "upstreamSha256": "5d268474b4d8c887cea01e7d752942da60fbc3a7749f02c4a37c8ad80c9900f7",
-      "sha256": "6e2f7ac4ad3a32cd6e25e5ee7374ea32589c86d71a4af3eb4f2dee19715264ce",
-      "deviation": "The renamed body 'Hello Acryl!' is 12 bytes: its content-length and etag expectations are recomputed for it."
+      "sha256": "fee4d00fd7d3272a8f87678c5a7e9cd4c33d67195dedce8b6056c7efd8e4d48a",
+      "deviation": "The renamed body 'Hello Acryl!' is 12 bytes: its content-length and etag expectations are recomputed for it. The /readable-stream route enqueues its second chunk only after the client has received the first: upstream enqueues both back to back, and TCP on Windows joins the two writes into one read, so the two-chunk expectation depended on timing."
     },
     "tests/adapter/setup.ts": {
       "upstreamSha256": "8a6d290d6676db280ef22fffc4d7847f768cbadcf445391213273b970bd6d6af",
