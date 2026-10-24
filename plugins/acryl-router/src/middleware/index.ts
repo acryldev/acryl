@@ -14,6 +14,7 @@ export { detectFromCookie, detectFromHeader, detectFromPath, detectFromQuery, la
 export { logger } from '../core/middleware/logger/index.ts'
 export { methodNotAllowed } from '../core/middleware/method-not-allowed/index.ts'
 export { methodOverride } from '../core/middleware/method-override/index.ts'
+export { mount } from '../core/middleware/mount/index.ts'
 export { poweredBy } from '../core/middleware/powered-by/index.ts'
 export { prettyJSON } from '../core/middleware/pretty-json/index.ts'
 export { requestId, type RequestIdVariables } from '../core/middleware/request-id/index.ts'

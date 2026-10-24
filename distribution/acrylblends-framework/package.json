@@ -104,6 +104,10 @@
       "types": "./lib/method-override.d.ts",
       "default": "./lib/method-override.js"
     },
+    "./mount": {
+      "types": "./lib/mount.d.ts",
+      "default": "./lib/mount.js"
+    },
     "./powered-by": {
       "types": "./lib/powered-by.d.ts",
       "default": "./lib/powered-by.js"

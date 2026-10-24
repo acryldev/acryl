@@ -11,8 +11,8 @@
     "src/jsx": "the JSX renderer (after 0.4.0)",
     "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
     "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
-    "src/middleware (cache, jsx-renderer, mount)": "after 0.4.0",
-    "src/helper (css, proxy, ssg)": "after 0.4.0"
+    "src/helper (css, proxy, ssg)": "after 0.4.0",
+    "src/middleware (cache, jsx-renderer)": "after 0.4.0"
   },
   "files": {
     "src/core/app-base.ts": {
@@ -366,6 +366,14 @@
     "src/core/middleware/method-override/index.ts": {
       "upstreamSha256": "476fbbdc43a68475dfc8d2ffb6756dea1f1df03a5bb492f6a1269781df35e50e",
       "sha256": "6a88b8cb91bbece6370a85333abb3be34065a34e8058eabc6aa1fc05f3cc4158"
+    },
+    "src/core/middleware/mount/index.test.ts": {
+      "upstreamSha256": "29c5a6f7bcb7b8679294a9da71ada4b7c59dc01ed260c35e0eb8f876adf0ba01",
+      "sha256": "6bdddf6467bbe0aec1b3085cd90f90959903a9e979393e97b14fbf72461f0e64"
+    },
+    "src/core/middleware/mount/index.ts": {
+      "upstreamSha256": "dae28d7548b83e147877c47d7575ae2ed9a77a9cca16a3e15ac12d63bb84ed93",
+      "sha256": "216f1a0f0530f168f2158a6917c61419a970931f1ed41cef225edb83d3e5a455"
     },
     "src/core/middleware/powered-by/index.test.ts": {
       "upstreamSha256": "d8a3bbd624275c33a6172a07f689df07992b6afef2bf552a20e42d2dd1c0c059",

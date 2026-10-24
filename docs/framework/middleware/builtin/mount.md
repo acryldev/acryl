@@ -1,8 +1,5 @@
 # Mount Middleware
 
-> **Not yet available.** The `acrylblends/mount` subpath (an app can still call `app.mount()`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 The Mount Middleware lets you mount an application built with another framework into your Acryl application.
 
 ## Import
