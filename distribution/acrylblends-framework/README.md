@@ -30,7 +30,7 @@ are the upstream package's own subpaths, plus ACRYL's additions (`loopback-only`
 `conninfo`) and the Node adapter (`node-server`, `node-server/serve-static`, `node-server/conninfo`).
 
 `App` and `AppRequest` are the 0.4 names of `Acryl` and `AcrylRequest`, kept as deprecated aliases for one release; see
-[migration from 0.4](../../docs/framework/migration-from-0-4.md).
+[migration from 0.4](../../docs/framework/cordis/migration-from-0-4.md).
 
 ## Gates
 
