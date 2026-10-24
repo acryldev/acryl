@@ -7,7 +7,7 @@ Each slice takes one remaining user of the DSH `webServer`, largest first, and:
 1. ports its routes onto one `App` per capability, mounted with `ctx.router.route` after the effect that builds the capability's services
    (so an unload ends the mount's requests before the services go) and served with `ctx.routerHttp.mount(prefix)`;
 2. deletes what becomes dead (the old `(req, res)` handlers and their helpers);
-3. keeps every answer, or records the ones that change in `docs/framework/migration-from-dsh-webserver.md` and here;
+3. keeps every answer, or records the ones that change in `docs/framework/cordis/migration-from-dsh-webserver.md` and here;
 4. writes the Cordis mini-design below before the code (the six points of the repository's Cordis protocol);
 5. measures the two numbers before and after (below);
 6. lands as one commit with its tests, the full gate (`corepack pnpm run check`) and CI green, and an isolated real boot through
@@ -83,7 +83,7 @@ Measured (this branch, before and after the slice):
 | of them in `acryl-workspace` | 12 (24 exact routes and 1 upgrade) | 1 (the terminal upgrade) |
 | DSH import lines (layout gate) | 133 (104 outside the seam) | 133 (104 outside the seam): the old routes used ACRYL's own `acryl-loopback-http`, not DSH, so this slice could not lower it |
 
-Answers that changed, recorded in `docs/framework/migration-from-dsh-webserver.md`: an oversized body is 413 on every route, a wrong method
+Answers that changed, recorded in `docs/framework/cordis/migration-from-dsh-webserver.md`: an oversized body is 413 on every route, a wrong method
 405 with `Allow` on every route, a missing or wrong agent-hook token 401 (was 403), and the hook's `Host` must be the app's loopback address.
 
 Found on the way: the PTY registry runs the user's login shell synchronously when it is built (`$SHELL -lic 'echo $PATH'`), about 1.2 s with

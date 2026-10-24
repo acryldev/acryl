@@ -1,63 +1,57 @@
-# ACRYL Framework
+# Acryl
 
-Status: 0.4.0 (spec 047, `specs/047-framework-port/plan.md`). The application core in `acryl-router` and the Node adapter in
-`acryl-node-server` are ported from a mature MIT web framework with their test suites; the Cordis plugins around them are ACRYL's own.
+Acryl is a small web framework built on Web Standards. You write handlers over the standard `Request` and `Response`, and the same application runs on Node.js,
+Bun and Deno, and inside a Cordis app as a plugin that an agent can extend while it runs.
 
-The ACRYL Framework is the small, readable layer on top of Cordis that turns "a bunch of DSH packages" into building an agentic app. You
-write an ordinary `App` (routes, a `Context`, middleware with `next()`, validators and helpers on Web-standard `Request` and `Response`),
-and a Cordis plugin mounts it with `ctx.router.route(path, app)`.
+```ts twoslash
+import { Acryl } from 'acrylblends'
+const app = new Acryl()
 
-## The five rules
+app.get('/', (c) => c.text('Acryl!'))
 
-1. **Everything extensible is a Cordis plugin.**
-2. **One application, several surfaces** - share capabilities and contracts, not necessarily the transport.
-3. **One declared contract per plugin** - what it provides, needs, and registers (routes, commands, tools, slots).
-4. **Every registration is reversible** - unloading a plugin removes what it owns.
-5. **Conventions are explicit and small** - an ordinary feature needs no knowledge of runtime internals.
+export default app
+```
 
-## What it gives you
+## Quick Start
 
-One handler, every surface. A plugin writes a handler once; Web and Desktop reach it over HTTP (Desktop's window talks to the app's own
-loopback server), the terminal UI and tests call it in process with `ctx.router.request(path)`, and a standalone process serves it with
-`acryl-node-server`. The universal entry point is `ctx.router.fetch(request)`.
+```sh
+npm create acrylblends@latest my-app
+```
 
-## Documentation map
+Other package managers work the same way: `pnpm create acrylblends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`, `deno init --npm acrylblends@latest`.
+The starter asks which template you want (`nodejs`, `bun`, `deno`, or `acryl-app`, a Cordis app with an agent). See [Getting started](getting-started/basic.md).
 
-| Topic | Page |
+## What is in the box
+
+- **Routing** with several routers behind one API: `RegExpRouter`, `TrieRouter`, `SmartRouter` (the default, which chooses between them), `LinearRouter` and `PatternRouter`.
+  See [Routers](concepts/routers.md) and [Routing](api/routing.md).
+- **Web Standards only.** Handlers receive a `Context` over `Request` and return `Response`, with no runtime-specific objects. See [Web Standards](concepts/web-standard.md).
+- **Built-in middleware** for authentication, CORS, CSRF, compression, ETag, logging, request ids, secure headers, timeouts and more.
+  See [Built-in middleware](middleware/builtin/basic-auth.md) and [Middleware](concepts/middleware.md).
+- **Helpers** for cookies, streaming and server-sent events, content negotiation, HTML templates, WebSockets and testing. See [Helpers](guides/helpers.md).
+- **Typed routes and a typed client.** Route types flow from the server to `acrylblends/client`. See [RPC](guides/rpc.md).
+- **Validation** with a validator function or any Standard Schema library. See [Validation](guides/validation.md).
+- **A Cordis plugin around it.** A plugin mounts an app with `ctx.router.route`, the mount goes away when the plugin unloads, and a coding agent can write such plugins
+  into a running app. See [Acryl in a Cordis app](cordis/acryl-in-a-cordis-app.md) and [Agents](agents/index.md).
+
+## Runtimes
+
+Verified: Node.js, Bun and Deno. The other runtimes the framework could target are listed on [Other runtimes](getting-started/other-runtimes.md) as not yet verified.
+
+## Not yet available
+
+Some parts of the documented API surface are not part of the package yet, and their pages say so at the top: the JSX packages, static site generation, the CSS helper, the
+`proxy`, `dev` and `cache` pieces, the `quick` and `tiny` presets and the adapters of the runtimes other than Node.js. They are enabled as they are ported.
+
+## Where to read next
+
+| I want to | Read |
 | --- | --- |
-| First application | [Getting started](./getting-started.md) |
-| Every everyday call on one page | [API summary](./api-summary.md) |
-| Framework model | [Core concepts](./concepts.md) |
-| Routes and mounting | [Routing and mounting](./routing.md) |
-| Handler context | [Context](./context.md) |
-| Reading requests | [Request](./request.md) |
-| Cross-cutting behavior, and the built-in list | [Middleware](./middleware.md) |
-| Input checking | [Validation](./validation.md) |
-| Streaming, cookies, testing and the rest | [Helpers](./helpers.md) |
-| Serving without the ACRYL Host | [Node server](./node-server.md) |
-| Cordis ownership and service state | [Plugin lifecycle and disposal](./plugin-lifecycle.md) |
-| The application surfaces | [Surfaces and adapters](./surfaces.md) |
-| Leaving the DSH server | [Migration from the DSH webServer](./migration-from-dsh-webserver.md) |
-| Moving from 0.3 | [Migration from 0.3](./migration-from-0-3.md) |
+| Run something in five minutes | [Getting started](getting-started/basic.md) |
+| Look up a call | [API](api/index.md), [Routing](api/routing.md), [Context](api/context.md), [Request](api/request.md), [API summary](api/summary.md) |
+| Understand the design | [Concepts](concepts/motivation.md) |
+| Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md) |
+| Use Acryl inside a Cordis app | [Acryl in a Cordis app](cordis/acryl-in-a-cordis-app.md), [Plugin lifecycle](cordis/plugin-lifecycle.md), [Mounting](cordis/mounting.md) |
+| Move from the 0.3 router calls | [Migration from 0.3](cordis/migration-from-0-3.md) |
 
-[ACRYL Blends](https://acrylblends.github.io/) is the product-facing guide for building and publishing complete applications. The
-framework pages here are the API and integration reference behind those guides. The mirrored developer documentation is published at
-[acryl.dev/docs](https://acryl.dev/docs).
-
-## The packages
-
-| Package | What it is |
-| --- | --- |
-| `acryl-router` | `App` and the whole application API; the Cordis `router` service that composes the mounted apps; `acryl-router/middleware`, `acryl-router/helpers`, `acryl-router/client` |
-| `acryl-router-http` | inside the ACRYL Host: `ctx.routerHttp.mount(prefix)` serves a prefix of the router on the Host's web server |
-| `acryl-node-server` | without the Host: one `node:http` server for the whole router, `ctx.nodeServer.url`, and `serveStatic` |
-| `acryl-state` | observable cells shared by every surface, with read-only HTTP and SSE routes and `useCell` for React |
-| `acryl-inspect` | what each plugin requires, provides and mounts, read from the running system |
-
-An app's `tsconfig.json` can extend `acryl-router/tsconfig.app.json` (ES2024 with the DOM types, strict).
-
-## Why this exists
-
-DSH changes fast and stays one optional agent inside ACRYL. Cordis is the lifecycle ACRYL keeps across Web (browser), Desktop (Electron)
-and the terminal UI. HTTP used to go through DSH's `webServer` - a `node:http` route table with no middleware and no Web-standard
-`Request`/`Response` - which the terminal UI cannot reuse. The framework removes that coupling.
+The license of these pages and of the framework source they describe is in [LICENSE](LICENSE).
