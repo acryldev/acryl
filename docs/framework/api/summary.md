@@ -16,8 +16,10 @@ export const name = 'orders'                 // the package name and the Loader 
 export const inject = ['router', 'state']    // the plugin waits (PENDING) until both exist
 
 interface Order { id: string, item: string }
-const NewOrder: StandardSchema<{ item: string }> = {
+const NewOrder: StandardSchema<unknown, { item: string }> = {
   '~standard': {
+    version: 1,
+    vendor: 'orders',
     validate: value => {
       const item = (value as { item?: unknown } | null)?.item
       return typeof item === 'string' && item !== '' ? { value: { item } } : { issues: [{ message: 'item is required', path: ['item'] }] }
@@ -98,8 +100,9 @@ import { validator } from 'acrylblends/validator'
 app.post('/', schemaValidator('json', Schema), c => c.json(c.req.valid('json')))
 ```
 
-- Targets: `json`, `form`, `query`, `param`, `header`, `cookie`. `Schema` is any Standard Schema (Schemastery, Zod, Valibot, or an
-  object with `'~standard': { validate }`).
+- Targets: `json`, `form`, `query`, `param`, `header`, `cookie`. `Schema` is any Standard Schema v1 (Schemastery, Zod, Valibot, or an
+  object with `'~standard': { version: 1, vendor, validate }`; `version` and `vendor` may be left out, as only `validate` is called).
+  `StandardSchema<Input, Output>` is the type of such an object.
 - A failure is 400 `{ error: 'invalid <target>', issues: [{ message, path }] }`; `path` is dotted, and `""` when the issue has none.
 - The `json` target reads the body only with a JSON `Content-Type`; otherwise the schema sees `{}`.
 - `validator(target, (value, c) => valueOrResponse)` is the same middleware with a function instead of a schema.
