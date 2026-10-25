@@ -38,7 +38,9 @@ function app(files: Record<string, string>, { withTypescript = true } = {}): str
 
 // Without NODE_PATH: pnpm's bin shim for vitest sets it to the workspace store, where an app started by `npm run` or `node` would not look.
 const { NODE_PATH: _storePath, ...env } = process.env
-const run = (dir: string, entry: string) => spawnSync(process.execPath, ['--import', register, entry], { cwd: dir, env, encoding: 'utf8', timeout: 60_000 })
+// `--import` takes a module specifier, as `import()` does: an absolute path has to be a file: URL (on Windows `D:\...` reads as scheme `d:`).
+const run = (dir: string, entry: string) =>
+  spawnSync(process.execPath, ['--import', pathToFileURL(register).href, entry], { cwd: dir, env, encoding: 'utf8', timeout: 60_000 })
 
 describe('the JSX register hook', () => {
   it('runs a .tsx page that imports a .tsx component, compiled with the tsconfig.json import source', () => {
