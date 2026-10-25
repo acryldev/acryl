@@ -1,8 +1,42 @@
 diff --git a/lib/index.js b/lib/index.js
-index e60aac4..b78bf96 100644
+index e60aac4..46a3122 100644
 --- a/lib/index.js
 +++ b/lib/index.js
-@@ -3563,6 +3563,7 @@ function parsePatchList(binName, file, content, label) {
+@@ -1,4 +1,4 @@
+-import { createRequire, isBuiltin } from "node:module";
++import Module, { createRequire, isBuiltin } from "node:module";
+ import { fileURLToPath, pathToFileURL } from "node:url";
+ import fs, { existsSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+ import { inspect, parseEnv } from "node:util";
+@@ -1882,12 +1882,21 @@ function iconOf(value, manifestPath) {
+ * @throws when the resolver is unavailable or the resource cannot resolve to a local file.
+ */
+ function resolvePluginResource(specifier, parentURL) {
+-	const loader = ModuleLoader.fromInternal();
+-	if (loader === void 0) throw new Error("Plugin metadata requires the Node module resolver");
+-	return fileURLToPath((loader.version === "v2" ? loader.resolveSync(parentURL, {
+-		specifier,
+-		attributes: {}
+-	}) : loader.resolveSync(specifier, parentURL, {})).url);
++	return resolveImportFrom(specifier, parentURL);
++}
++/**
++* ACRYL: resolve an import as if `parentURL` made it, through Node's public resolver rather than its internal ESM loader, which needs the
++* native internals add-on that ACRYL does not install. The CommonJS resolver with the ESM conditions selects the same package "exports"
++* target for an import, and the profile interception routes it the same way.
++* @returns the resolved file path, or a builtin's own name.
++*/
++function resolveImportFrom(specifier, parentURL) {
++	const path = fileURLToPath(parentURL);
++	const anchor = parentURL.endsWith("/") ? join(path, "package.json") : path;
++	const parent = new Module(anchor);
++	parent.filename = anchor;
++	parent.paths = Module._nodeModulePaths(dirname(anchor));
++	return Module._resolveFilename(specifier, parent, false, { conditions: new Set(["node", "import"]) });
+ }
+ function missingResource(error) {
+ 	const code = error?.code;
+@@ -3563,6 +3572,7 @@ function parsePatchList(binName, file, content, label) {
  	} catch (error) {
  		throw new Error(`${binName}: failed to parse ${label} ${file}: ${String(error)}`);
  	}
@@ -10,3 +44,19 @@ index e60aac4..b78bf96 100644
  	if (!Array.isArray(parsed)) throw new Error(`${binName}: ${label} ${file} must be a top-level YAML array of loader patch entries`);
  	parsed.forEach((entry, index) => {
  		if (typeof entry !== "object" || entry === null || Array.isArray(entry)) throw new Error(`${binName}: ${label} entry ${index + 1} in ${file} must be a mapping (a loader patch entry)`);
+@@ -3694,9 +3704,12 @@ async function mountRootInclude(ctx, absoluteConfigPath, patches = [], bareModul
+ 			const specifier = isAbsolute(name) ? pathToFileURL(name).href : name;
+ 			if (name.startsWith(".") || name.startsWith("cordis:")) return super.import(specifier, getOuterStack);
+ 			const internal = this.ctx.loader.internal;
+-			/* v8 ignore next -- Node supplies the internal loader; this preserves the
+-			original diagnostic for hypothetical embedders without it. */
+-			if (internal === void 0) return super.import(specifier, getOuterStack);
++			// ACRYL: without Node's internal loader, resolve from the host's base too, so a package installed into the profile while the
++			// app runs is found; the Loader's own fallback would import it from the Loader's file.
++			if (internal === void 0) {
++				const target = resolveImportFrom(specifier, bareModuleBaseUrl);
++				return super.import(isBuiltin(target) ? target : pathToFileURL(target).href, getOuterStack);
++			}
+ 			return internal.import(specifier, bareModuleBaseUrl, {});
+ 		}
+ 	};

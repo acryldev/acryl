@@ -13,8 +13,9 @@
  * ASAR paths) to this function - its own behavior is unaffected.
  */
 
-import Module, { registerHooks } from 'node:module'
+import Module from 'node:module'
 import { fileURLToPath } from 'node:url'
+import { requireModuleHooks } from './module-hooks.ts'
 import {
   findOverlayPackage,
   packageNameFromSpecifier,
@@ -63,6 +64,8 @@ export function installProfilePackageResolver(
   profileBaseUrl: string,
   options: InstallProfilePackageResolverOptions,
 ): () => void {
+  // Before `_resolveFilename` is wrapped, so a runtime without module hooks leaves nothing behind.
+  const registerHooks = requireModuleHooks()
   const { binName, installPackageUrl, installEntryUrl, loaderEntryUrl } = options
   const profileManifestPath = fileURLToPath(profileBaseUrl)
   // Directory-derived `createRequire` bases (e.g. `new URL('.', profileBaseUrl)`)

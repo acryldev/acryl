@@ -445,9 +445,6 @@
     "dsh-client-ui-brand-acryl": "workspace:*",
     "dshmarket": "1.17.1",
     "koffi": "3.1.5",
-    "node-addon-require-builtin": "^0.1.6",
-    "node-addon-require-builtin-darwin-arm64": "0.1.7",
-    "node-addon-require-builtin-darwin-x64": "0.1.7",
     "node-pty": "1.2.0-beta.15",
     "open": "^11.0.1",
     "pnpm": "11.11.0",
@@ -458,7 +455,7 @@
     "yaml": "^2.9.0"
   },
   "peerDependencies": {
-    "electron": "44.0.0"
+    "electron": "44.9.3"
   },
   "devDependencies": {
     "@base-ui/react": "^1.7.0",
@@ -474,7 +471,7 @@
     "@vitejs/plugin-react": "^6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "electron": "44.0.0",
+    "electron": "44.9.3",
     "electron-builder": "26.15.7",
     "lucide-react": "^1.33.0",
     "react-dom": "18.3.1",
@@ -550,7 +547,7 @@
       "signIgnore": [
         "\\.(?:pak|dat|wasm)$"
       ],
-      "x64ArchFiles": "**/node_modules/{node-pty/prebuilds/darwin-*/**,node-addon-require-builtin-darwin-*/**,@vscode/ripgrep-darwin-*/**,@img/sharp-darwin-*/**,@img/sharp-libvips-darwin-*/**,@koromix/koffi-darwin-*/**,@deepseek-ai/libreoffice-kit-darwin-*/**,@deepseek-ai/node-addon-system-darwin-*/**,sherpa-onnx-darwin-*/**}"
+      "x64ArchFiles": "**/node_modules/{node-pty/prebuilds/darwin-*/**,@vscode/ripgrep-darwin-*/**,@img/sharp-darwin-*/**,@img/sharp-libvips-darwin-*/**,@koromix/koffi-darwin-*/**,@deepseek-ai/libreoffice-kit-darwin-*/**,@deepseek-ai/node-addon-system-darwin-*/**,sherpa-onnx-darwin-*/**}"
     },
     "dmg": {
       "background": "build/dmg/background.tiff",

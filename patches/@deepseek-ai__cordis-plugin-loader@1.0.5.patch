@@ -1,0 +1,43 @@
+diff --git a/lib/index.js b/lib/index.js
+index aed07af..06031a8 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,4 +1,6 @@
+-import { createRequire } from "node:module";
++import Module, { createRequire, isBuiltin } from "node:module";
++import { fileURLToPath, pathToFileURL } from "node:url";
++import { dirname, join } from "node:path";
+ import { Context, Inject, Service, composeError, resolveConfig } from "@deepseek-ai/cordis";
+ import { deepEqual, defineProperty, isNonNullable, isNullable, updateVolatile, valueMap, volatileEntries } from "@deepseek-ai/cosmokit";
+ //#region lib/types/internal.js
+@@ -220,6 +222,7 @@ var EntryTree = class EntryTree {
+ 				/* @vite-ignore */
+ 				new URL(name, this.ctx.baseUrl).href
+ 			));
++			else if (this.ctx.baseUrl?.startsWith("file:")) return await import(importTargetFrom(name, this.ctx.baseUrl));
+ 			else return await import(__rewriteRelativeImportExtension(
+ 				/* @vite-ignore */
+ 				name
+@@ -228,6 +231,22 @@ var EntryTree = class EntryTree {
+ 	}
+ };
+ //#endregion
++/**
++* ACRYL: what `import(name)` loads when `baseUrl` makes the import, through Node's public resolver. Node's internal loader resolved a
++* bare name from the tree's base; without the native internals add-on, which ACRYL does not install, the import would come from this
++* file instead, and a package installed into a profile while the app runs would not be found. The CommonJS resolver with the ESM
++* conditions selects the same package "exports" target, and the host's profile interception routes it the same way.
++*/
++function importTargetFrom(name, baseUrl) {
++	if (name.startsWith("file:") || isBuiltin(name)) return name;
++	const base = fileURLToPath(baseUrl);
++	const anchor = baseUrl.endsWith("/") ? join(base, "package.json") : base;
++	const parent = new Module(anchor);
++	parent.filename = anchor;
++	parent.paths = Module._nodeModulePaths(dirname(anchor));
++	const target = Module._resolveFilename(name, parent, false, { conditions: new Set(["node", "import"]) });
++	return isBuiltin(target) ? target : pathToFileURL(target).href;
++}
+ //#region lib/types/config/utils.js
+ /** Evaluate a JavaScript expression against a loader context scope. */
+ const evaluate = new Function("ctx", "expr", `

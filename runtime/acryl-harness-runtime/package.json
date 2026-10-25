@@ -196,9 +196,9 @@
     "cordis-plugin-market": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
     "koffi": "3.1.5",
-    "node-addon-require-builtin": "^0.1.6",
     "pnpm": "11.11.0",
     "react": "18.3.1",
+    "resolve.exports": "^2.0.3",
     "semver": "^7.8.5",
     "yaml": "^2.9.0"
   },

@@ -490,3 +490,23 @@ The owner, after two frozen windows: "If there is something identified as smelly
 **Checkpoint (Phase 13):** no white window after a rebuild under a running app; files open as tabs; T081 and T082 verified live in the verify worktree; T083 has an accepted spec.
 
 - [ ] T093 The npm launcher (`distribution/acryl-npm-launcher`) refuses to run under an x64 Node on an Apple Silicon Mac ("unsupported ACRYL target: darwin/x64"), common after migrating from an Intel Mac; it should pick `darwin-arm64` when the process is translated (Rosetta). Intel Macs have no target at all. Found on aion 2026-10-19 (spec 036 clean-machine test)
+- [ ] T094 [found 2026-10-25, Electron 44.9.3 bump] PNPM 11.11.0 (the root `packageManager`, through Corepack) does not relock after a pin
+  change: `corepack pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts` exits 0, prints no `Done` line, and leaves
+  `pnpm-lock.yaml` untouched while `apps/acryl-desktop/package.json` pins `electron` 44.9.3 and the lock still says 44.0.0. Reproduced three
+  times, the last with `--reporter=append-only --loglevel=debug`, whose whole output was:
+  ```
+  Scope: all 40 workspace projects
+  undefined
+  undefined
+  ✓ Lockfile passes supply-chain policies (verified 5h ago)
+  Progress: resolved 1, reused 0, downloaded 0, added 0
+  Progress: resolved 341, reused 0, downloaded 0, added 0
+  Progress: resolved 486, reused 0, downloaded 0, added 0
+  Progress: resolved 1399, reused 0, downloaded 0, added 0
+  Progress: resolved 1404, reused 0, downloaded 0, added 0
+  ```
+  (the two `undefined` lines are printed by PNPM itself). PNPM 11.8.0 (`node ~/.cache/node/corepack/v1/pnpm/11.8.0/bin/pnpm.cjs install
+  --lockfile-only --no-frozen-lockfile --ignore-scripts --config.manage-package-manager-versions=false`) writes the lock in 11 s, and 11.11.0
+  then accepts it with `--frozen-lockfile` ("Lockfile is up to date") and its own `--lockfile-only` leaves no diff, which is how the bump
+  landed. Find why 11.11 stops after resolving (a swallowed rejection is the likely shape, given the `undefined` lines), report it upstream
+  with a minimal workspace, and drop the 11.8 workaround once a fixed release is pinned.

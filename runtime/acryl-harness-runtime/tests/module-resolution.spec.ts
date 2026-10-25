@@ -41,13 +41,15 @@ const harness = vi.hoisted(() => {
   }
 })
 
-vi.mock('node:module', () => ({
-  default: harness.cjsModule,
-  registerHooks: vi.fn((definition: { resolve: typeof harness.resolve }) => {
+vi.mock('node:module', () => {
+  const registerHooks = vi.fn((definition: { resolve: typeof harness.resolve }) => {
     harness.resolve = definition.resolve
     return { deregister: harness.deregister }
-  }),
-}))
+  })
+  // The runtime reads registerHooks from the default export (src/module-hooks.ts).
+  Object.assign(harness.cjsModule, { registerHooks })
+  return { default: harness.cjsModule, registerHooks }
+})
 
 vi.mock('../src/package-overlay.ts', () => ({
   findOverlayPackage: harness.overlay,

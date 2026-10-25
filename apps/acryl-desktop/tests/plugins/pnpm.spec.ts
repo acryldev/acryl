@@ -75,7 +75,7 @@ function bootstrap(root = '/desktop runtime'): DesktopPnpmBootstrap {
     homeDir: join(root, 'harness home'),
     appExecutable: join(root, 'ACRYL'),
     pnpmBinPath: join(root, 'node_modules', 'pnpm', 'bin', 'pnpm.mjs'),
-    electronVersion: '44.0.0',
+    electronVersion: '44.9.3',
     nodeBinDir: join(root, 'private', 'node-bin'),
     nodeShimPath: join(root, 'private', 'node-bin', 'node'),
     clearEnvironmentPath: join(root, 'private', 'clear-env.mjs'),
@@ -168,7 +168,7 @@ describe('desktop pnpm Host service', () => {
         DSH_HOME: bootstrap().homeDir,
         CI: 'true',
         npm_config_runtime: 'electron',
-        npm_config_target: '44.0.0',
+        npm_config_target: '44.9.3',
         npm_config_disturl: 'https://electronjs.org/headers',
       },
     })

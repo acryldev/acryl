@@ -14,9 +14,13 @@ import { createRequire } from 'node:module'
 import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { packagesRemovedByOverride } from './removed-by-override.ts'
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)))
 const rootManifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
+
+/** Packages the workspace overrides away (`name: '-'` under `overrides:` in pnpm-workspace.yaml): declared by a dependency, never installed. */
+const removedByOverride = packagesRemovedByOverride()
 
 /** Licenses accepted for redistribution inside the desktop installers. */
 const ALLOWED_LICENSES = new Set([
@@ -122,6 +126,7 @@ for (let index = 0; index < queue.length; index += 1) {
   void requireFrom
   for (const section of ['dependencies', 'optionalDependencies']) {
     for (const name of Object.keys(manifest[section] ?? {})) {
+      if (removedByOverride.has(name)) continue
       const resolved = resolvePackageManifest(name, current.manifestPath)
       if (resolved === undefined) {
         // Optional dependencies may legitimately be absent on this platform.

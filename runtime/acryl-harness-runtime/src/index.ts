@@ -147,7 +147,6 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
-  PluginPackages,
   boot,
   composeEntries,
   initProfile,
@@ -166,6 +165,7 @@ import {
 } from './coding-capabilities.ts'
 import { materializeProfilePackage } from './engine-dsh.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
+import { ProfilePluginPackages } from './profile-resolution/service.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 
 const require = createRequire(import.meta.url)
@@ -188,7 +188,7 @@ function withAppInstance(
 ): (ctx: Context) => Promise<void> {
   return async ctx => {
     ctx.provide('appInstance', instance)
-    await ctx.plugin(PluginPackages, { resolution })
+    await ctx.plugin(ProfilePluginPackages, { resolution })
     await prepare?.(ctx)
   }
 }

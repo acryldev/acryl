@@ -17,6 +17,7 @@ import {
   FORBIDDEN_MACOS_UNIVERSAL_ENTRIES,
   MACOS_UNIVERSAL_NATIVE_ENTRIES,
 } from './mac-universal.ts'
+import { packagesRemovedByOverride } from './removed-by-override.ts'
 
 /** AfterPack fields consumed without importing Electron Builder's incomplete declaration graph. */
 export interface PackagedRuntimeContext {
@@ -556,6 +557,7 @@ export function verifyPackagedDependencyClosure(
     ...declaredNames(applicationManifest.optionalDependencies),
   ])
 
+  const removedByOverride = packagesRemovedByOverride()
   const missing: string[] = []
   const unshipablePeerEdges: string[] = []
   const optionalAbsences: string[] = []
@@ -588,6 +590,8 @@ export function verifyPackagedDependencyClosure(
     for (const edge of edges) {
       // Electron itself is the application binary, never a packaged module.
       if (edge.specifier === 'electron') continue
+      // The workspace removes these from every install on purpose (an override to '-'), though a manifest still declares them.
+      if (removedByOverride.has(edge.specifier)) continue
       // The page provides react to a package's browser bundle; a package's Node entry does not import it through this peer.
       if (edge.kind === 'peer' && browserBundle && PAGE_PROVIDED_PEERS.has(edge.specifier)) continue
       if (edge.kind === 'peer' && PEERS_UNUSED_BY_THE_DESKTOP[tables.name]?.has(edge.specifier) === true) continue

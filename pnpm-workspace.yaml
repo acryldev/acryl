@@ -56,6 +56,10 @@ allowBuilds:
 
 overrides:
   koffi: 3.1.5
+  # Nothing loads DeepSeek Harness's native internals add-on: ACRYL's profile resolution (runtime/acryl-harness-runtime/src/profile-resolution)
+  # runs on Node's public module hooks, and the Cordis Loader falls back to plain import() without it. The add-on accepts only the Electron
+  # builds named in its binary, so leaving it installed would tie Desktop to them again.
+  node-addon-require-builtin: '-'
   # DSH 0.2.0-rc.2 pins pi-ai ^0.87.1, whose catalog stops at Claude Haiku 4.5, Sonnet 5 and Opus 5; 1.1.0 adds the 5.5 models (owner, 2026-10-11).
   '@earendil-works/pi-ai': 1.1.0
 
@@ -97,6 +101,7 @@ packageExtensions:
       '@deepseek-ai/dsh-anonymous-user-id': 0.2.0-rc.2
 
 patchedDependencies:
+  '@deepseek-ai/cordis-plugin-loader@1.0.5': patches/@deepseek-ai__cordis-plugin-loader@1.0.5.patch
   '@deepseek-ai/dsh-app-boot@0.2.0-rc.2': patches/@deepseek-ai__dsh-app-boot@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-directory-picker-browse@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-directory-picker-browse@0.2.0-rc.2.patch
   '@deepseek-ai/dsh-client-ui-settings-models@0.2.0-rc.2': patches/@deepseek-ai__dsh-client-ui-settings-models@0.2.0-rc.2.patch

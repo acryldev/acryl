@@ -11,5 +11,7 @@ export default defineConfig({
     // the whole suite in 43 s at load 103). Bounded, so the suite's own parallelism cannot be the overload.
     maxWorkers: Math.min(4, Math.max(1, Math.floor(availableParallelism() / 2))),
     hookTimeout: process.platform === 'win32' ? 60_000 : 10_000,
+    // The profile-resolution tests resolve through Node's module hooks with an explicit importer: import.meta.resolve(specifier, parent).
+    execArgv: ['--experimental-import-meta-resolve'],
   },
 })

@@ -39,7 +39,7 @@ function bootstrap(root: string, profileDir: string): DesktopPnpmBootstrap {
     homeDir: join(root, 'home'),
     appExecutable: join(root, 'ACRYL'),
     pnpmBinPath: join(root, 'runtime', 'pnpm.mjs'),
-    electronVersion: '44.0.0',
+    electronVersion: '44.9.3',
     nodeBinDir: join(root, 'runtime', 'node-bin'),
     nodeShimPath: join(root, 'runtime', 'node-bin', 'node'),
     clearEnvironmentPath: join(root, 'runtime', 'clear-env.mjs'),

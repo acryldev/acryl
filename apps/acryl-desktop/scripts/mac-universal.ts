@@ -25,10 +25,6 @@ export const MACOS_UNIVERSAL_NATIVE_ENTRIES = [
   },
   {
     arch: 'arm64',
-    path: 'node_modules/node-addon-require-builtin-darwin-arm64/prebuilt/darwin-arm64-napi-v9.node',
-  },
-  {
-    arch: 'arm64',
     path: 'node_modules/node-pty/prebuilds/darwin-arm64/pty.node',
   },
   {
@@ -50,10 +46,6 @@ export const MACOS_UNIVERSAL_NATIVE_ENTRIES = [
   {
     arch: 'x86_64',
     path: 'node_modules/@vscode/ripgrep-darwin-x64/bin/rg',
-  },
-  {
-    arch: 'x86_64',
-    path: 'node_modules/node-addon-require-builtin-darwin-x64/prebuilt/darwin-x64-napi-v9.node',
   },
   {
     arch: 'x86_64',

@@ -94,6 +94,10 @@ allowBuilds:
 
 overrides:
   koffi: 3.1.5
+  # Nothing loads DeepSeek Harness's native internals add-on: ACRYL's profile resolution (runtime/acryl-harness-runtime/src/profile-resolution)
+  # runs on Node's public module hooks, and the Cordis Loader falls back to plain import() without it. The add-on accepts only the Electron
+  # builds named in its binary, so leaving it installed would tie Desktop to them again.
+  node-addon-require-builtin: '-'
   # DSH 0.2.0-rc.2 pins pi-ai ^0.87.1, whose catalog stops at Claude Haiku 4.5, Sonnet 5 and Opus 5; 1.1.0 adds the 5.5 models (owner, 2026-10-11).
   '@earendil-works/pi-ai': 1.1.0
 
@@ -277,12 +281,15 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 
 // The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
 // `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
-// definition: the engine files, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters and `frame.ts`); a plugin whose sole capability is the DSH chat would
+// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters and `frame.ts`); a plugin whose sole capability is the DSH chat would
 // also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it. Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
-const DSH_IMPORT_CEILING = { total: 133, outsideSeam: 104 }
+// One deliberate raise: total went from 133 to 135 when DSH's profile package resolution was ported into the runtime (2026-10-25), because the port
+// subclasses DSH's PluginPackages and routes DSH's own resolution table; it serves only the DSH engine, so it is part of the seam.
+const DSH_IMPORT_CEILING = { total: 135, outsideSeam: 104 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
+  /^runtime\/acryl-harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
   /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|registry\/.*))$/,

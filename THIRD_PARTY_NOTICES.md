@@ -26,6 +26,15 @@ text applies to those portions.
 - Copyright: see the LICENSE file in the upstream repository (verify the exact copyright line before the first adapted file lands)
 - Status: used as a tool for design prototyping today; candidate to remake as an ACRYL-native feature (see specs/040 parity plan row E1).
 
+## DeepSeek Harness
+
+- Repository: https://github.com/deepseek-ai/deepseek-harness
+- Snapshot: dsh-v0.2.0-rc.2, 639ed01539 (2026-09-29)
+- License: MIT
+- Copyright (c) 2026 DeepSeek
+- Adapted: the profile package resolution in `runtime/acryl-harness-runtime/src/profile-resolution/` and its tests, and the
+  `resolvePluginResource` change in `patches/@deepseek-ai__dsh-app-boot@0.2.0-rc.2.patch`.
+
 ## MIT License text
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

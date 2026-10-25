@@ -822,23 +822,22 @@ describe('published package surface', () => {
 
   it('keeps Electron out of production dependencies consumed by electron-builder', () => {
     expect(manifest.dependencies).not.toHaveProperty('electron')
-    expect(manifest.peerDependencies?.electron).toBe('44.0.0')
-    expect(manifest.devDependencies?.electron).toBe('44.0.0')
+    expect(manifest.peerDependencies?.electron).toBe('44.9.3')
+    expect(manifest.devDependencies?.electron).toBe('44.9.3')
     expect(manifest.dependencies?.pnpm).toBe('11.11.0')
   })
 
-  it('pins an Electron build that DSH\'s require-builtin addon accepts', () => {
-    // DSH's engine boot (dsh-app-boot) loads node-addon-require-builtin, which accepts only the exact Electron builds named in its binary and
-    // refuses any other (43.7.7 failed every installed app into the Recovery window, 2026-10-17). A Dependabot bump must stay inside that list.
+  it('installs no Node internals add-on, so any Electron build can run the DSH engine', () => {
+    // DSH 0.2's engine boot reached Node's internal module loader through node-addon-require-builtin, which accepts only the exact Electron
+    // builds named in its binary (43.7.7 failed every installed app into the Recovery window, 2026-10-17). ACRYL's profile resolution runs on
+    // Node's public module hooks instead (runtime/acryl-harness-runtime/src/profile-resolution), and the workspace overrides the add-on away.
     const fromBoot = createRequire(createRequire(import.meta.url).resolve('@deepseek-ai/dsh-app-boot'))
-    const addonRoot = dirname(fromBoot.resolve('node-addon-require-builtin/package.json'))
-    const addon = JSON.parse(readFileSync(join(addonRoot, 'package.json'), 'utf8')) as { optionalDependencies: Record<string, string> }
-    const platformPackage = Object.keys(addon.optionalDependencies).find(name => name.startsWith(`node-addon-require-builtin-${process.platform}-${process.arch}`))
-    expect(platformPackage).toBeDefined()
-    const platformRoot = dirname(createRequire(join(addonRoot, 'package.json')).resolve(`${platformPackage!}/package.json`))
-    const prebuilt = JSON.parse(readFileSync(join(platformRoot, 'prebuilds.json'), 'utf8')) as { binaries: { path: string }[] }
-    const binary = readFileSync(join(platformRoot, prebuilt.binaries[0]!.path)).toString('latin1')
-    expect(binary).toContain(`\0${manifest.devDependencies?.electron}\0`)
+    const fromLoader = createRequire(fromBoot.resolve('@deepseek-ai/cordis-plugin-loader'))
+    for (const from of [fromBoot, fromLoader]) {
+      expect(() => from.resolve('node-addon-require-builtin/package.json')).toThrow(/Cannot find module/)
+    }
+    expect(manifest.dependencies).not.toHaveProperty('node-addon-require-builtin')
+    expect(readFileSync(new URL('pnpm-workspace.yaml', workspaceRoot), 'utf8')).toContain("  node-addon-require-builtin: '-'\n")
   })
 
   it('packages the native-compiled Koffi Windows runtime', () => {

@@ -32,7 +32,6 @@ import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_TEMPLATES,
-  PluginPackages,
   composeEntries,
   createRuntimeResolution,
   initProfile,
@@ -65,6 +64,7 @@ import { findFreeWebPort, loopbackPortIsFree, webPortPatch } from './web-port.ts
 import { LOOPBACK_WEB_HOST, selectInstance, type AppInstance } from './instance/index.ts'
 import { claimProfile } from './profile-owner.ts'
 import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
+import { ProfilePluginPackages } from './profile-resolution/service.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 import { provideWebMarketInstall } from './web-market-install.ts'
 import { provideWebMarketPlugins } from './web-market-plugins.ts'
@@ -114,7 +114,7 @@ export interface DshEngineComposition {
   readonly installPackageUrl?: string
   /**
    * The package table `@deepseek-ai/dsh-app-boot` computes for this profile (DSH 0.2). Since 0.2 a profile no longer carries link
-   * projections of the installation's packages; the `PluginPackages` service answers every bare-package import from this table, so
+   * projections of the installation's packages; the `pluginPackages` service (ACRYL's `ProfilePluginPackages`) answers every bare-package import from this table, so
    * the engine mounts it before the profile include. Compute it with {@link createProfileRuntimeResolution} after every
    * ACRYL-owned package has been materialized into the profile.
    */
@@ -233,7 +233,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
     ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
   }
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
-  if (composition.runtimeResolution !== undefined) await ctx.plugin(PluginPackages, { resolution: composition.runtimeResolution })
+  if (composition.runtimeResolution !== undefined) await ctx.plugin(ProfilePluginPackages, { resolution: composition.runtimeResolution })
   if (composition.profileContext !== undefined && ctx.root.get('profileContext' as never) === undefined) ctx.root.provide('profileContext', composition.profileContext)
   // The include is recorded under the context it is mounted on, and DSH's profile reload (`config-editor`, `hmr`) looks it up on the
   // root context, so mount it there: a reload then finds "the root Include entry" and an edit can be applied and kept.
