@@ -1,8 +1,5 @@
 # SSG Helper
 
-> **Not yet available.** Static site generation (`acrylblends/ssg`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 SSG Helper generates a static site from your Acryl application. It will retrieve the contents of registered routes and save them as static files.
 
 ## Usage

@@ -8,8 +8,7 @@
   ],
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
-    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
-    "src/helper (ssg)": "after 0.4.0"
+    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)"
   },
   "files": {
     "src/core/app-base.ts": {
@@ -169,6 +168,38 @@
     "src/core/helper/route/index.ts": {
       "upstreamSha256": "c22b82c396b263884322012a0dae95ffd78db46ec60ecffa3b4b3bb355214db4",
       "sha256": "531cce0da40c36237f4be9c50d5640f98de68b9c94fa082da5a3cabe0319c77a"
+    },
+    "src/core/helper/ssg/index.ts": {
+      "upstreamSha256": "0e82708f6dca7e90b27f9409a4f4d45844f4a6dfcb18a5a3d7e8856599cee712",
+      "sha256": "e2914608686363e0e321d370b7de3faf77910b0a4229c18ee7a70086cccd78bf"
+    },
+    "src/core/helper/ssg/middleware.ts": {
+      "upstreamSha256": "b3633974a34ae99875b3b59abf6da94f69d5474d74551684953401f29842aa93",
+      "sha256": "0c13eb716d3d843b098e2ddcf81baf928b30346ea18f57da1d014914626228bc"
+    },
+    "src/core/helper/ssg/plugins.test.tsx": {
+      "upstreamSha256": "a09b879895eed859282b30aae4da67d5b2484352dce7a3d9bc75ba3d9d20d619",
+      "sha256": "55eac0db5b5c94db3dcacb2a1b3586103af39127392914a5ed7b9d1d92cbb6dd"
+    },
+    "src/core/helper/ssg/plugins.ts": {
+      "upstreamSha256": "94e7ae1a23de29527a95bbba4ce64c105426006634f3dc140a9d3f3aa49971dc",
+      "sha256": "28a8a1f5515025dcce451e083f097ebd1deafbcae42eb815df0315c3787da64c"
+    },
+    "src/core/helper/ssg/ssg.test.tsx": {
+      "upstreamSha256": "092e27912dd14b01bbbf5324b6a559bfbd7f100fad4919b7a2c5b4f294da7405",
+      "sha256": "d9910125935c981a7c72976d63c3dc31a124adedd676c1b83917369f2d236f2b"
+    },
+    "src/core/helper/ssg/ssg.ts": {
+      "upstreamSha256": "12f537809f33d2d13bad464c62089c7273e190de456248fb6dc9dd2d55f3e24b",
+      "sha256": "3939b8a6afbba24d5f36ab284a9f8ebd9dfdc203a5368675a105c387a750cd79"
+    },
+    "src/core/helper/ssg/utils.test.ts": {
+      "upstreamSha256": "408efed2d5f75a1a586b3db8b3a8576afe78b9d5e92e092e34696036fb6dc7ca",
+      "sha256": "a2e75936523e49ea005e5dcbbe62861c7a8946f981d52ffde2aac333f879008c"
+    },
+    "src/core/helper/ssg/utils.ts": {
+      "upstreamSha256": "f75899d02141d6ed63546cf5a8e4da546e8c660f7166d9b35f37f0ee0fe7bd07",
+      "sha256": "6e60543ae813927b78e516680b98a145aca0c063d71b89d1104ff3debe6152e6"
     },
     "src/core/helper/streaming/index.ts": {
       "upstreamSha256": "c11172ad5e21ee16df68966477b93d4043ef552277b40d1457d8d86fb98ed621",

@@ -180,6 +180,10 @@
       "types": "./lib/route.d.ts",
       "default": "./lib/route.js"
     },
+    "./ssg": {
+      "types": "./lib/ssg.d.ts",
+      "default": "./lib/ssg.js"
+    },
     "./streaming": {
       "types": "./lib/streaming.d.ts",
       "default": "./lib/streaming.js"

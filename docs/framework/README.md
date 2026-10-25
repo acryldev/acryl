@@ -39,8 +39,8 @@ Verified: Node.js. Bun is experimental. The other runtimes the framework could t
 
 ## Not yet available
 
-Some parts of the documented API surface are not part of the package yet, and their pages say so at the top: static site generation and the adapters of the
-runtimes other than Node.js. They are enabled as they are ported.
+Some parts of the documented API surface are not part of the package yet, and their pages say so at the top: the adapters of the runtimes other than Node.js.
+They are enabled as they are ported.
 
 ## Where to read next
 
