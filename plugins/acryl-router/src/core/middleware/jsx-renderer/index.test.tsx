@@ -424,7 +424,7 @@ d.replaceWith(c.content)
   })
 
   it('Should accept function-based options', async () => {
-    type Env = { Bindings: { HONO_STREAMING?: boolean } }
+    type Env = { Bindings: { ACRYL_STREAMING?: boolean } }
     const app = new Acryl<Env>()
 
     const Component = async () => {
@@ -442,8 +442,8 @@ d.replaceWith(c.content)
           )
         },
         (c) => {
-          expectTypeOf(c.env?.HONO_STREAMING).toEqualTypeOf<boolean | undefined>()
-          return { docType: true, stream: c.env?.HONO_STREAMING ?? true }
+          expectTypeOf(c.env?.ACRYL_STREAMING).toEqualTypeOf<boolean | undefined>()
+          return { docType: true, stream: c.env?.ACRYL_STREAMING ?? true }
         }
       )
     )
@@ -467,7 +467,7 @@ d.replaceWith(c.content)
     expect(textStream).toContain('<script')
     expect(textStream).toContain('loading...')
 
-    const resNotStream = await app.request('/', undefined, { HONO_STREAMING: false })
+    const resNotStream = await app.request('/', undefined, { ACRYL_STREAMING: false })
     expect(resNotStream.status).toBe(200)
     expect(resNotStream.headers.get('Transfer-Encoding')).toBeNull()
     const textNotStream = await resNotStream.text()

@@ -14,7 +14,7 @@ import { STASH_EFFECT } from '../hooks/index.ts'
 import { normalizeIntrinsicElementKey, styleObjectForEach } from '../utils.ts'
 import { createContext } from './context.ts' // import dom-specific versions
 
-const HONO_PORTAL_ELEMENT = '_hp'
+const ACRYL_PORTAL_ELEMENT = '_hp'
 
 const eventAliasMap: Record<string, string> = {
   Change: 'Input',
@@ -334,8 +334,8 @@ const getNextChildren = (
 }
 
 const findInsertBefore = (node: Node | undefined): SupportedElement | Text | undefined => {
-  while (node && (node.tag === HONO_PORTAL_ELEMENT || !node.e)) {
-    node = node.tag === HONO_PORTAL_ELEMENT || !node.vC?.[0] ? node.nN : node.vC[0]
+  while (node && (node.tag === ACRYL_PORTAL_ELEMENT || !node.e)) {
+    node = node.tag === ACRYL_PORTAL_ELEMENT || !node.vC?.[0] ? node.nN : node.vC[0]
   }
   return node?.e
 }
@@ -407,7 +407,7 @@ const applyNodeObject = (node: NodeObject, container: Container, isNew: boolean)
       offset = offsetByNextNode
     } else {
       offset =
-        findChildNodeIndex(childNodes, next.find((n) => n.tag !== HONO_PORTAL_ELEMENT && n.e)?.e) ??
+        findChildNodeIndex(childNodes, next.find((n) => n.tag !== ACRYL_PORTAL_ELEMENT && n.e)?.e) ??
         -1
     }
 
@@ -443,7 +443,7 @@ const applyNodeObject = (node: NodeObject, container: Container, isNew: boolean)
         }
       }
     }
-    if (child.tag === HONO_PORTAL_ELEMENT) {
+    if (child.tag === ACRYL_PORTAL_ELEMENT) {
       offset--
     } else if (isNew) {
       if (!el.parentNode) {
@@ -868,7 +868,7 @@ export const flushSync = (callback: () => void): void => {
 
 export const createPortal = (children: Child, container: HTMLElement, key?: string): Child =>
   ({
-    tag: HONO_PORTAL_ELEMENT,
+    tag: ACRYL_PORTAL_ELEMENT,
     props: {
       children,
     },

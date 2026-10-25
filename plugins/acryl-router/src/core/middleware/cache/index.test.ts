@@ -102,7 +102,7 @@ describe('Customizing Caching Keys', () => {
     await app.request('http://localhost/dynamic-cache-key/')
     const cache = await caches.open('my-app-v1')
     const response = await cache.match(
-      'http://localhost/.acryl-router/cache?__hono_cache_key=dynamic-cache-key&__hono_cache_method=GET'
+      'http://localhost/.acryl-router/cache?__acryl_cache_key=dynamic-cache-key&__acryl_cache_method=GET'
     )
     expect(response).not.toBeNull()
   })
@@ -761,7 +761,7 @@ describe('Cache Skipping Logic', () => {
     expect(requestCount).toBe(1)
     expect(mockCache.put).toHaveBeenCalledOnce()
     expect(mockCache.put.mock.calls[0][0]).toBe(
-      'http://localhost/.acryl-router/cache?__hono_cache_key=http%3A%2F%2Flocalhost%2F%23%3Fname%3Dprobe&__hono_cache_method=GET'
+      'http://localhost/.acryl-router/cache?__acryl_cache_key=http%3A%2F%2Flocalhost%2F%23%3Fname%3Dprobe&__acryl_cache_method=GET'
     )
   })
 
@@ -992,8 +992,8 @@ describe('Cache Skipping Logic', () => {
     expect(requestCount).toBe(2)
     expect(mockCache.put).toHaveBeenCalledTimes(2)
     expect(mockCache.put.mock.calls.map(([key]) => key)).toEqual([
-      'http://localhost/.acryl-router/cache?__hono_cache_key=%2Freport%23acme&__hono_cache_method=GET',
-      'http://localhost/.acryl-router/cache?__hono_cache_key=%2Freport%23globex&__hono_cache_method=GET',
+      'http://localhost/.acryl-router/cache?__acryl_cache_key=%2Freport%23acme&__acryl_cache_method=GET',
+      'http://localhost/.acryl-router/cache?__acryl_cache_key=%2Freport%23globex&__acryl_cache_method=GET',
     ])
   })
 

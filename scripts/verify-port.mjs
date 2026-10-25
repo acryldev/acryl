@@ -51,6 +51,12 @@ function walk(dir) {
 }
 
 /** The upstream project's name, from the checkout's package.json: the package name, or the scope of a scoped one (`@<name>/node-server`). */
+/** The upstream name from the package's LICENSE ("derived from <Name> vX (https://github.com/<name>js/...)"), so the guard below runs without a checkout. */
+function brandFromLicense(dir) {
+  const license = join(dir, 'LICENSE')
+  return existsSync(license) ? /are derived from .+? \(https:\/\/github\.com\/([a-z]+)js\//u.exec(read(license))?.[1] : undefined
+}
+
 function brandOf(checkout) {
   const { name } = JSON.parse(read(join(checkout, 'package.json')))
   return name.startsWith('@') ? name.slice(1).split('/')[0] : name
@@ -94,6 +100,12 @@ function paths(directories, brand, checkout) {
 }
 
 /** Upstream text with the mechanical changes applied, as our file would read if nothing else changed. Paths: checkout-relative and package-relative. */
+/**
+ * The name as its own part of a longer name: not preceded by a letter or digit, not followed by a lower-case letter (so a word it only starts,
+ * in the upstream's own language, is left alone). `after` widens what may not follow, for the capitals form.
+ */
+const segment = (name, after = 'a-z', flags = 'gu') => new RegExp(`(?<![A-Za-z0-9])${name}(?![${after}])`, flags)
+
 function normalize(text, theirPath, ourPath, ctx) {
   const { brand, map, checkout, imports, directories } = ctx
   const Brand = brand[0].toUpperCase() + brand.slice(1)
@@ -134,9 +146,10 @@ function normalize(text, theirPath, ourPath, ctx) {
   s = s.replaceAll(`${brand}.dev`, 'acryl.dev')
   s = s.replace(new RegExp(`(['"\`])${brand}/`, 'gu'), '$1acryl-router/').replace(new RegExp(`\\b${brand}/`, 'gu'), 'acryl-router/')
   s = s.replaceAll(`declare module '${brand}'`, "declare module 'acryl-router'")
-  // The name as the start of an identifier (`<name>Id`) is renamed like the word itself.
+  // The name as the start of an identifier (`<name>Id`) is renamed like the word itself, and so is the name as one part of a longer name
+  // (`__<name>_cache_key`, `X_<NAME>_HEADER`, `<NAME>_PORTAL`).
   s = s.replace(new RegExp(`\\b${brand}(?=[A-Z0-9_])`, 'gu'), 'acryl')
-  s = s.replaceAll(Brand, 'Acryl').replace(word, 'acryl').replace(new RegExp(`\\b${brand.toUpperCase()}\\b`, 'gu'), 'ACRYL')
+  s = s.replaceAll(Brand, 'Acryl').replace(word, 'acryl').replace(segment(brand), 'acryl').replace(segment(brand.toUpperCase(), 'A-Za-z'), 'ACRYL')
   return s
 }
 
@@ -193,10 +206,14 @@ for (const pkg of PACKAGES) {
     }
   }
 
+  // No ported file keeps the upstream name (the owner's rule: it appears only in LICENSE files).
+  const named = ctx?.brand ?? brandFromLicense(dir)
+  if (named === undefined) fail(`${pkg}: its LICENSE does not say which upstream project it is derived from`)
   for (const path of ported) {
     const entry = record.files[path] ?? {}
     const text = isText(path)
     const ours = text ? read(join(dir, path)) : readFileSync(join(dir, path))
+    if (named !== undefined && text && segment(named, 'a-z', 'iu').test(ours)) fail(`${pkg}: ${path} still names the upstream project (rename it, or extend normalize)`)
     if (ctx !== undefined) {
       const theirPath = ctx.map.upstreamOf(path)
       if (theirPath === undefined || !existsSync(join(checkout, theirPath))) { fail(`${pkg}: ${path}: its upstream file does not exist in the checkout`); continue }
