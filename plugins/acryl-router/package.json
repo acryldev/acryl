@@ -32,6 +32,22 @@
       "types": "./lib/types/client.d.ts",
       "default": "./lib/client.js"
     },
+    "./jsx": {
+      "types": "./lib/types/core/jsx/index.d.ts",
+      "default": "./lib/jsx.js"
+    },
+    "./jsx/jsx-runtime": {
+      "types": "./lib/types/core/jsx/jsx-runtime.d.ts",
+      "default": "./lib/jsx/jsx-runtime.js"
+    },
+    "./jsx/jsx-dev-runtime": {
+      "types": "./lib/types/core/jsx/jsx-dev-runtime.d.ts",
+      "default": "./lib/jsx/jsx-dev-runtime.js"
+    },
+    "./jsx/streaming": {
+      "types": "./lib/types/core/jsx/streaming.d.ts",
+      "default": "./lib/jsx/streaming.js"
+    },
     "./tsconfig.app.json": "./tsconfig.app.json",
     "./package.json": "./package.json"
   },
@@ -52,7 +68,7 @@
   },
   "scripts": {
     "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tests/no-dom/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.jsx-tests.json && tsc -p tests/no-dom/tsconfig.json",
     "test": "vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run check"
@@ -66,7 +82,9 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/cordis-plugin-loader": "1.0.5",
+    "@types/jsdom": "21.1.7",
     "@types/node": "^22.20.0",
+    "jsdom": "22.1.0",
     "msw": "2.15.0",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",

@@ -94,6 +94,12 @@ const app = new Acryl()
 Use middleware for authentication, logging, CORS, compression, request IDs and other behavior that should wrap more than one handler.
 The built-in set is listed in [Middleware](../concepts/middleware.md).
 
+## Render pages with JSX
+
+A plugin renders HTML with the same JSX as the published package: set `"jsx": "react-jsx"` and `"jsxImportSource": "acryl-router/jsx"`
+in its `tsconfig.json` (a `.tsx` file), and style with the CSS helper from `acryl-router/helpers`. Streaming with `Suspense` is in
+`acryl-router/jsx/streaming`. The [JSX guide](../guides/jsx.md) covers the rest; its examples import from `acrylblends/jsx` instead.
+
 ## Run the same app on a surface
 
 The application does not open a socket. A surface supplies requests to it:

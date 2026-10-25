@@ -166,3 +166,9 @@ export interface JsonWebKey {
   x?: string
   y?: string
 }
+
+/**
+ * A DOM event type by its global name: the DOM library's own type when it is loaded (a browser project), otherwise the runtime's `Event`,
+ * so the JSX types (event handler props) do not need the DOM library on a server.
+ */
+export type DomEvent<Name extends string> = typeof globalThis extends { readonly [K in Name]: { readonly prototype: infer E } } ? E : Event

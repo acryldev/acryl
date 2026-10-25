@@ -1,8 +1,5 @@
 # JSX
 
-> **Not yet available.** The JSX packages (`acrylblends/jsx` and its subpaths) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 You can write HTML with JSX syntax with `acrylblends/jsx`.
 
 Although `acrylblends/jsx` works on the client, you will probably use it most often when rendering content on the server side. Here are some things related to JSX that are common to both server and client.

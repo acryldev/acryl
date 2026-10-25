@@ -1,8 +1,5 @@
 # css Helper
 
-> **Not yet available.** The CSS helper (`acrylblends/css`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 The CSS helper - `acrylblends/css` - is Acryl's built-in CSS in JS(X).
 
 You can write CSS in JSX in a JavaScript template literal named `css`. The return value of `css` will be the class name, which is set to the value of the class attribute. The `<Style />` component will then contain the value of the CSS.

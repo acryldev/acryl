@@ -1,8 +1,5 @@
 # Client Components
 
-> **Not yet available.** The client-side JSX package (`acrylblends/jsx/dom`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 `acrylblends/jsx` supports not only server side but also client side. This means that it is possible to create an interactive UI that runs in the browser. We call it Client Components or `acrylblends/jsx/dom`.
 
 It is fast and very small. The counter program in `acrylblends/jsx/dom` is only 2.8KB with Brotli compression, but 47.8KB for React.

@@ -2,7 +2,8 @@
 /**
  * The framework as a stranger gets it: pack this package, install the tarball in an empty folder under the public name (`acrylblends`), and
  * require that the four-line getting-started app serves its route on Node (through `serve` from `acrylblends/node-server`), and that a
- * consumer with only Node's types and no DOM library typechecks, including a module augmentation of the root. Node is the runtime the
+ * consumer with only Node's types and no DOM library typechecks, including a module augmentation of the root and a server-side JSX page;
+ * the DOM renderer (`acrylblends/jsx/dom*`, for the browser) typechecks with the DOM library, as a browser project uses it. Node is the runtime the
  * framework targets. Bun (`bun run`, the default export) is informational: it runs only when bun is installed, and a failure there is
  * reported without failing the check. This script never installs a runtime.
  *
@@ -90,6 +91,11 @@ try {
   const nodePort = await freePort()
   expectHello('node (serve from acrylblends/node-server)', await serveAndFetch(process.execPath, ['node.ts'], nodePort, { PORT: String(nodePort) }))
 
+  // Server-side JSX: the string renderer renders on Node, from the published build.
+  const rendered = run(process.execPath, ['--input-type=module', '-e', "import { jsx } from 'acrylblends/jsx'; process.stdout.write(String(jsx('h1', { class: 'title' }, 'Acryl!')))"], app)
+  if (rendered !== '<h1 class="title">Acryl!</h1>') throw new Error(`acrylblends/jsx rendered ${JSON.stringify(rendered)}`)
+  report('node (server JSX from acrylblends/jsx)', 'renders <h1 class="title">Acryl!</h1>')
+
   if (installed('bun')) {
     const port = await freePort()
     try {
@@ -120,10 +126,25 @@ try {
     const { dependencies = {} } = JSON.parse(readFileSync(join(real, 'package.json'), 'utf8'))
     for (const dependency of Object.keys(dependencies)) run('cp', ['-RL', join(real, '..', '..', dependency), join(app, 'node_modules', dependency)], app)
   }
-  const subpaths = Object.keys(JSON.parse(run('node', ['-e', "process.stdout.write(JSON.stringify(require('./node_modules/acrylblends/package.json').exports))"], app))).filter(key => key !== './package.json')
+  const exported = Object.keys(JSON.parse(run('node', ['-e', "process.stdout.write(JSON.stringify(require('./node_modules/acrylblends/package.json').exports))"], app))).filter(key => key !== './package.json')
+  // The DOM renderer is for the browser: its types are the DOM's. Every other subpath needs no DOM library.
+  const isDom = key => key === './jsx/dom' || key.startsWith('./jsx/dom/')
+  const subpaths = exported.filter(key => !isDom(key))
+  const domSubpaths = exported.filter(isDom)
+  if (domSubpaths.length === 0) throw new Error('no acrylblends/jsx/dom subpath to typecheck')
+  const imports = keys => keys.map((key, at) => `import type * as Entry${String(at)} from '${key === '.' ? 'acrylblends' : `acrylblends/${key.slice(2)}`}'`)
+  // A server-side JSX page, the way the JSX guide writes one.
+  writeFileSync(join(app, 'page.tsx'), [
+    '/** @jsxImportSource acrylblends/jsx */',
+    "import { Acryl } from 'acrylblends'",
+    "import type { FC } from 'acrylblends/jsx'",
+    'const Title: FC<{ text: string }> = ({ text }) => <h1 onClick={(event) => event.preventDefault()}>{text}</h1>',
+    "export const pages = new Acryl().get('/', (c) => c.html(<Title text=\"Acryl!\" />))",
+    '',
+  ].join('\n'))
   writeFileSync(join(app, 'types.ts'), [
     "import type { Acryl } from 'acrylblends'",
-    ...subpaths.map((key, at) => `import type * as Entry${String(at)} from '${key === '.' ? 'acrylblends' : `acrylblends/${key.slice(2)}`}'`),
+    ...imports(subpaths),
     '',
     "declare module 'acrylblends' {",
     '  interface ContextVariableMap { user: string }',
@@ -135,11 +156,30 @@ try {
     '',
   ].join('\n'))
   writeFileSync(join(app, 'tsconfig.json'), `${JSON.stringify({
-    compilerOptions: { target: 'ES2024', lib: ['ES2024'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, types: ['node'] },
-    files: ['index.ts', 'node.ts', 'types.ts', ...examples.map(example => example.file)],
+    compilerOptions: { target: 'ES2024', lib: ['ES2024'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, jsx: 'react-jsx', types: ['node'] },
+    files: ['index.ts', 'node.ts', 'types.ts', 'page.tsx', ...examples.map(example => example.file)],
   }, null, 2)}\n`)
   run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.json'], app)
-  report('types (Node types only, no DOM; every subpath; root augmentation)', `${String(subpaths.length)} entries typecheck`)
+  report('types (Node types only, no DOM; every subpath but the DOM renderer; root augmentation; a JSX page)', `${String(subpaths.length)} entries typecheck`)
+
+  // The DOM renderer as a browser project uses it: the DOM library, its entries, and a component rendered into the page.
+  writeFileSync(join(app, 'dom.ts'), [...imports(domSubpaths), '', `export type Entries = [${domSubpaths.map((_, at) => `typeof Entry${String(at)}`).join(', ')}]`, ''].join('\n'))
+  writeFileSync(join(app, 'client.tsx'), [
+    '/** @jsxImportSource acrylblends/jsx/dom */',
+    "import { render, useState } from 'acrylblends/jsx/dom'",
+    'const Counter = () => {',
+    '  const [count, setCount] = useState(0)',
+    '  return <button onClick={(event: MouseEvent) => setCount(count + event.detail)}>{count}</button>',
+    '}',
+    'render(<Counter />, document.body)',
+    '',
+  ].join('\n'))
+  writeFileSync(join(app, 'tsconfig.dom.json'), `${JSON.stringify({
+    compilerOptions: { target: 'ES2024', lib: ['ES2024', 'DOM', 'DOM.Iterable'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, jsx: 'react-jsx', types: [] },
+    files: ['dom.ts', 'client.tsx'],
+  }, null, 2)}\n`)
+  run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.dom.json'], app)
+  report('types (the DOM renderer with the DOM library; a component rendered into the page)', `${String(domSubpaths.length)} entries typecheck`)
   // The upstream project's name appears only in LICENSE files (owner's rule). The name is read from this package's LICENSE, so this
   // script does not spell it either.
   const licensed = /built from the ACRYL port of (\S+) v\d/u.exec(readFileSync(join(root, 'LICENSE'), 'utf8'))

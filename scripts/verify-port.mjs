@@ -13,7 +13,7 @@
  *   node scripts/verify-port.mjs --upstream <checkout> --write <package dir>
  *                                                         record the current state; a new deviation is written with reason "TODO" and fails until explained
  *
- * Mechanical changes (applied by `normalize` below, so they need no reason): relative imports name the `.ts` file they resolve to; the upstream
+ * Mechanical changes (applied by `normalize` below, so they need no reason): relative imports name the `.ts` or `.tsx` file they resolve to; the upstream
  * name (read from the checkout's own package.json, never spelled here) becomes `Acryl` in identifiers (also inside one), `acryl` in words and `acryl-router` in import
  * paths; code examples in comments import from the same subpath of the public package (`acrylblends`, `acrylblends/<x>`); `@see` links to the upstream site and comment lines linking upstream issues are dropped; files named after the upstream project are named `app` (modules) or `acryl` (data); paths the tests open name the directory here.
  * Anything else is a deviation and carries a one-line reason.
@@ -99,7 +99,7 @@ function normalize(text, theirPath, ourPath, ctx) {
   const Brand = brand[0].toUpperCase() + brand.slice(1)
   const word = new RegExp(`\\b${brand}\\b`, 'gu')
   let s = text
-  // Imports first, while they still name upstream's files: a relative one names the `.ts` file it resolves to, at its path here; a bare one into
+  // Imports first, while they still name upstream's files: a relative one names the `.ts` or `.tsx` file it resolves to, at its path here; a bare one into
   // the upstream package names the ACRYL entry point that exports the same thing (the record's `imports`, keyed by the subpath).
   s = s.replace(/((?:from|import|declare module) )(['"])([^'"]+)\2/gu, (whole, pre, quote, spec) => {
     if (spec === brand || spec.startsWith(`${brand}/`)) {
@@ -111,7 +111,7 @@ function normalize(text, theirPath, ourPath, ctx) {
     if (pre.startsWith('declare module') && spec === '../..') target = map.oursOf(posix.normalize(posix.join(posix.dirname(theirPath), '../../context.ts')))
     else {
       const base = posix.normalize(posix.join(posix.dirname(theirPath), spec))
-      const found = [base, `${base}.ts`, posix.join(base, 'index.ts')].find(candidate => candidate.endsWith('.ts') && existsSync(join(checkout, candidate)))
+      const found = [base, `${base}.ts`, `${base}.tsx`, posix.join(base, 'index.ts')].find(candidate => /\.tsx?$/u.test(candidate) && existsSync(join(checkout, candidate)))
       if (found === undefined) return whole
       target = map.oursOf(found)
     }

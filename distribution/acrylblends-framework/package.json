@@ -188,6 +188,50 @@
       "types": "./lib/ws.d.ts",
       "default": "./lib/ws.js"
     },
+    "./css": {
+      "types": "./lib/css.d.ts",
+      "default": "./lib/css.js"
+    },
+    "./jsx": {
+      "types": "./lib/jsx.d.ts",
+      "default": "./lib/jsx.js"
+    },
+    "./jsx/jsx-runtime": {
+      "types": "./lib/jsx/jsx-runtime.d.ts",
+      "default": "./lib/jsx/jsx-runtime.js"
+    },
+    "./jsx/jsx-dev-runtime": {
+      "types": "./lib/jsx/jsx-dev-runtime.d.ts",
+      "default": "./lib/jsx/jsx-dev-runtime.js"
+    },
+    "./jsx/streaming": {
+      "types": "./lib/jsx/streaming.d.ts",
+      "default": "./lib/jsx/streaming.js"
+    },
+    "./jsx/dom": {
+      "types": "./lib/jsx/dom.d.ts",
+      "default": "./lib/jsx/dom.js"
+    },
+    "./jsx/dom/jsx-runtime": {
+      "types": "./lib/jsx/dom/jsx-runtime.d.ts",
+      "default": "./lib/jsx/dom/jsx-runtime.js"
+    },
+    "./jsx/dom/jsx-dev-runtime": {
+      "types": "./lib/jsx/dom/jsx-dev-runtime.d.ts",
+      "default": "./lib/jsx/dom/jsx-dev-runtime.js"
+    },
+    "./jsx/dom/client": {
+      "types": "./lib/jsx/dom/client.d.ts",
+      "default": "./lib/jsx/dom/client.js"
+    },
+    "./jsx/dom/css": {
+      "types": "./lib/jsx/dom/css.d.ts",
+      "default": "./lib/jsx/dom/css.js"
+    },
+    "./jsx/dom/server": {
+      "types": "./lib/jsx/dom/server.d.ts",
+      "default": "./lib/jsx/dom/server.js"
+    },
     "./conninfo": {
       "types": "./lib/conninfo.d.ts",
       "default": "./lib/conninfo.js"

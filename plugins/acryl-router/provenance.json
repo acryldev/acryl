@@ -8,11 +8,9 @@
   ],
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
-    "src/jsx": "the JSX renderer (after 0.4.0)",
-    "src/helper/streaming/sse.test.tsx": "needs the JSX renderer (with it)",
     "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
     "src/middleware (jsx-renderer)": "after 0.4.0",
-    "src/helper (css, ssg)": "after 0.4.0"
+    "src/helper (ssg)": "after 0.4.0"
   },
   "files": {
     "src/core/app-base.ts": {
@@ -116,6 +114,22 @@
       "sha256": "775a9f0eda9816739bf9498da9f56e1367d15b31db139cca278f10bb7df7b6c8",
       "deviation": "BufferSource comes from utils/types.ts so the public types do not need the DOM library"
     },
+    "src/core/helper/css/common.case.test.tsx": {
+      "upstreamSha256": "01e3e4b519fe2023f922336eb2358002f2b62e6e2ff547a83644733cb9378284",
+      "sha256": "9fa74c86c166e5977dba05d7aae6b8bfe64a1f047c68a902c4e898379e781616"
+    },
+    "src/core/helper/css/common.ts": {
+      "upstreamSha256": "e503e08771b2cd50d0659cd9320b84df7e402a291504fdd2f6de38fa6504ae31",
+      "sha256": "9557f3afb992391f488d69c46ecffe5d9843fd7e445589d050eaff757ac85eaa"
+    },
+    "src/core/helper/css/index.test.tsx": {
+      "upstreamSha256": "187aa37a796575fd05a09092bdc97a614810453f99e8b896e8f427d8c8627a73",
+      "sha256": "57f63f6eabed349398982aa14d03a9500b58e7302f548c6ffd48fe258daec7a5"
+    },
+    "src/core/helper/css/index.ts": {
+      "upstreamSha256": "3f6c243fe59ff841c1e98194daedf1af1c2a18ea8807d23eedf621ebeb4f2870",
+      "sha256": "acfc0bd429e19784026c6324dee64b47a08b7a9cf14d40e711a9f9763b5bc546"
+    },
     "src/core/helper/dev/index.test.ts": {
       "upstreamSha256": "fdadea6d33d16a85dbb6c9db516bdf0d515dad7cf25f3e7fd98ebb30318e16e3",
       "sha256": "f43c9e4ed10e36190d12681e2007b35075b71405d9519d24e7bc9517c0bcdec9"
@@ -160,6 +174,10 @@
     "src/core/helper/streaming/index.ts": {
       "upstreamSha256": "c11172ad5e21ee16df68966477b93d4043ef552277b40d1457d8d86fb98ed621",
       "sha256": "0b1304665221e3d8f6dda16aa5954ae26fde55d3d90bd0f517b7acceeb2480ec"
+    },
+    "src/core/helper/streaming/sse.test.tsx": {
+      "upstreamSha256": "f9dbd0817e70ec61f9aa8f67162ec6658363c6a4c1b5ab34ee4022f5f457275c",
+      "sha256": "97d4971dbb6f432f17304db148a2069d08d77bd699ae95f7a7334531b7d340b2"
     },
     "src/core/helper/streaming/sse.ts": {
       "upstreamSha256": "d66e7f8c085c6f35d3d365199f2fdb1896971de841e1c00288d94a6e458b7a54",
@@ -213,6 +231,194 @@
     "src/core/index.ts": {
       "upstreamSha256": "7b6cf83beb39bc315f65824bd5720f93609e673d6959dff369d911effeb2167a",
       "sha256": "4a0dac2285237ae955d07dfa32b01ec3f47b5394dfafd845e0b2208ad7ccd480"
+    },
+    "src/core/jsx/base.test.tsx": {
+      "upstreamSha256": "d8604451df921d6beb72ab094918fe2e193941aa72ed550a5fb95ca541a2682f",
+      "sha256": "180e5302214e93a497b00a72e47835f313ca407105e902b45fb2e9aaa41ff6d6"
+    },
+    "src/core/jsx/base.ts": {
+      "upstreamSha256": "ed0f1ce0d971824db7232527c2a98c48e3e028db39e2d8a93760e02454b2070e",
+      "sha256": "923884787eaf0144307b36a4a91ab48721e13ccb999a5121f9ad3009fb949b14"
+    },
+    "src/core/jsx/children.test.ts": {
+      "upstreamSha256": "75ae9c1cbaa2de471c584c9ccc75319ec0d23a4e962659d1312c537e2005e7ed",
+      "sha256": "9da89b1265c1af9b3df229f61d21036e400be754c3e80bf4e0c6c7c1670ded60"
+    },
+    "src/core/jsx/children.ts": {
+      "upstreamSha256": "b1c7c4874a08793660ab88aea7a9ffaede4565b1cbd48ee8a0a1fff040e4c8f1",
+      "sha256": "26ead0f151faba5307883614b5b064299558f06798c695c432f32acbb1127d56"
+    },
+    "src/core/jsx/components.test.tsx": {
+      "upstreamSha256": "5fc7a55561613ca11ff0b55701415ca24f2f1c90ceb2002129752b37961b8297",
+      "sha256": "c266d39bd635440c9ea925b52863062f76f1c3c0606e712aed1db46a02014750"
+    },
+    "src/core/jsx/components.ts": {
+      "upstreamSha256": "8b3ae2281623a45e39d16943022e884a4f7df6bba76c353309318539eb49f11b",
+      "sha256": "eb847eb031b3d0b83ea59a468e48c92359bbd6027e6323afd57f50a562e9e748"
+    },
+    "src/core/jsx/constants.ts": {
+      "upstreamSha256": "4c57d25d7cdff6dad5aebf4360dd8448c59685f0f4ccbe4281570a5cfe52d7d4",
+      "sha256": "4c57d25d7cdff6dad5aebf4360dd8448c59685f0f4ccbe4281570a5cfe52d7d4"
+    },
+    "src/core/jsx/context-isolation.test.ts": {
+      "upstreamSha256": "63273e07eccf92f01b0eaa6901edc51fcbcc321a0a3e6462569158c6d6ee754b",
+      "sha256": "63273e07eccf92f01b0eaa6901edc51fcbcc321a0a3e6462569158c6d6ee754b"
+    },
+    "src/core/jsx/context.ts": {
+      "upstreamSha256": "20a566de936abfd4f03639ad93297928967bf1c1afc6bb82aceb68409162198b",
+      "sha256": "fb7c24fcb2ed7dd6ec403fbdfa69b3cf7516c2d1e1abe68d1f93cdcebfd9067b"
+    },
+    "src/core/jsx/dom/client.test.tsx": {
+      "upstreamSha256": "502ea36f36010e77785ab94f2bc119d4aaed9bee9e92dba37e3a2fd9a03fa6fa",
+      "sha256": "c85c0c8ba8eb3badb4ed1b16000562b2664ddfd2e91e8eeee62c8db68bbfa2b7"
+    },
+    "src/core/jsx/dom/client.ts": {
+      "upstreamSha256": "ffdcc1e0f623b1c0205b3e66415722f71a9318deab3b31d5bdf748c939d7253f",
+      "sha256": "b75bfc692cbbc2393aa03238cd57eabd5bea003d691ca8b517ffb71b210c75a9"
+    },
+    "src/core/jsx/dom/components.test.tsx": {
+      "upstreamSha256": "3c4e7b8eecc629442998b1325f3a679c32a0cf1d08e7520f0867a3dc41d7cbab",
+      "sha256": "fbe237bf81d761bd8d80e855366e05b43d2984369fba34ddf2728ff1c6f2a2bf"
+    },
+    "src/core/jsx/dom/components.ts": {
+      "upstreamSha256": "c7bf77b3b5bf4cc92527e5a086c7516dd6a8b1dc5ed228f011ef4c4d1bda1c3f",
+      "sha256": "9c449221fea07f5f5f93436706c06e4029fb6d9025d0e838e9b23f9f17dec71a"
+    },
+    "src/core/jsx/dom/context.test.tsx": {
+      "upstreamSha256": "255ca386a564be7e5e7dda79da68d19b6a787e1f8df42e668e9331e4af09a5f3",
+      "sha256": "d8416ec19d5190380f9c687836fe0f1bd2dc714b36ccd32eb1343ff6cd16108c"
+    },
+    "src/core/jsx/dom/context.ts": {
+      "upstreamSha256": "d6622faf5682387d6089311f63afd32b43927ddcccedee13142b2a278e17d7ee",
+      "sha256": "2324724034f67abd52afa1e5072d4f74b7465266ef5b2c541faa0a1c6333ab53"
+    },
+    "src/core/jsx/dom/css.test.tsx": {
+      "upstreamSha256": "fff0f2638ea85177d6a2fd1b39b95c90c9c3ed848c9f169c8955fafa5bcfd187",
+      "sha256": "d844b59dd38456d95c0352f4c39b43801eca90d5d11f34c54081f251e7804c99"
+    },
+    "src/core/jsx/dom/css.ts": {
+      "upstreamSha256": "a5b6544adb2de1fa3c4ce1f2118adb9688ef0db35721c23a5872c2cafe8b1fa7",
+      "sha256": "bc7f261724ee126159b47dc9a71fbe13123ee75378959a7fb3b80f2a432776cf"
+    },
+    "src/core/jsx/dom/hooks/index.test.tsx": {
+      "upstreamSha256": "df071f5096cf7ff385a4c6c0b221f5c401655d22b17893b826cc60acf307dc0f",
+      "sha256": "0ac90fe397f6472d02224026058d949adab3c0c1840447b5c19a4246431723c1"
+    },
+    "src/core/jsx/dom/hooks/index.ts": {
+      "upstreamSha256": "41fcaa6b61c861c303badf58e3eef5f79b23fe09835322d6061c16d00bbb995c",
+      "sha256": "892c8dbb833a8e811349ad8e04684aec594ea13213d1077fd7f99e356f838c3e"
+    },
+    "src/core/jsx/dom/index.test.tsx": {
+      "upstreamSha256": "c56258859a01ef5bc45e60bd514d7aeae28e1af9649d966cba91148b95baa582",
+      "sha256": "87f1678a200ec69c4ce1abcea54018839007cfa79b43d6d3997abcc5170053df"
+    },
+    "src/core/jsx/dom/index.ts": {
+      "upstreamSha256": "657fa90022565839ea39761e689cd08faf46f361c39dee1cff3c24fcb915b2b6",
+      "sha256": "57129a7881fe3620715ed216ea9a2fe523e4539e19cdf2757ba50a39ac07089e",
+      "deviation": "DOMAttributes, a type, is re-exported with `export type` beside the value list (verbatimModuleSyntax, which this package compiles with, refuses a type in a value export)"
+    },
+    "src/core/jsx/dom/intrinsic-element/components.test.tsx": {
+      "upstreamSha256": "1ff12473df6e8746b2cc6b63096aa16a7f76e99a8a549ed838d3543a2d2b3aaf",
+      "sha256": "77ccb888e7a375d4310a952ba2d3067dcf77001149e51a4a8f294b2fa4a2406f"
+    },
+    "src/core/jsx/dom/intrinsic-element/components.ts": {
+      "upstreamSha256": "494d49002c4c7ac604d89227236061081fab0b132ea195f614e9f166487c29db",
+      "sha256": "fb4ef96a4f41014fc621e36095c60c35b2729bf4edbce96af167ba964d9c1418"
+    },
+    "src/core/jsx/dom/jsx-dev-runtime.ts": {
+      "upstreamSha256": "490c92646dd6489537ede8138499506da4fa7979ad8e0ada769c129a69176750",
+      "sha256": "f8a2cbaccd9e2388cea677f6b20cb6a0ce7c272ffd4cacd57be7a6c37470dd90"
+    },
+    "src/core/jsx/dom/jsx-runtime.ts": {
+      "upstreamSha256": "a500005cb2986f29d0120894e7b473f1d44755b8a510901441da22e612c83a46",
+      "sha256": "d5b92c4eb3ca0a677ebcf14df50481ce0c8acfa707ceac1bf073a4ccd1217113"
+    },
+    "src/core/jsx/dom/render.ts": {
+      "upstreamSha256": "2e149dec45fffae20b64bef5de20d44dbd1e1f00513c6391dd066736cc88ac88",
+      "sha256": "ab97bf51e1c5c224ad7db66f2426aac08e6a4e658ef7c167fb15cf5ecffd3183"
+    },
+    "src/core/jsx/dom/server.test.tsx": {
+      "upstreamSha256": "c2e90075fc17d3bdf374e461522b36d521b95ae8c573c04306a595743d44ca62",
+      "sha256": "be54ff86cbf692708751f426363c2e3687053085d29551daf2ab87186a73f0f8"
+    },
+    "src/core/jsx/dom/server.ts": {
+      "upstreamSha256": "c3c8391f435bdd1069121d64b0146da1cd41762b73b25e050952b18b3042aa2f",
+      "sha256": "e6b5d379d5ec737bb4a66c7477ddb9a8192856d3ddc22c43a7fc36afe030a59f"
+    },
+    "src/core/jsx/dom/utils.ts": {
+      "upstreamSha256": "2d212ff64cc49466ec8dfa82b577fbca0a6add2443a176482784ca13a4ac5f08",
+      "sha256": "5d3e8c14996902db9c1223041fb21480fa0e921a4ccdc59f8c7571c08b7810f2"
+    },
+    "src/core/jsx/hooks/dom.test.tsx": {
+      "upstreamSha256": "7a77aecb08bb0a1f1c9455d3266067bbd3128634db51d58b7fb824495290954b",
+      "sha256": "a50020764ecb3b236e46cfbbfd1ff21ae0cd8757f619e07cef628ca0f0ccda20"
+    },
+    "src/core/jsx/hooks/index.ts": {
+      "upstreamSha256": "0b5bf878d6d2002e4bd7acb86f42adfa8f5efca64ecb4d58049a92872b6330da",
+      "sha256": "0d3d91456eb3147c8284331cfcc60a0eac9d3659086915b65acee8ac1363ce24"
+    },
+    "src/core/jsx/hooks/string.test.tsx": {
+      "upstreamSha256": "98fc9e0a68a9797a0976d57e470083346171ac891be82c90eb39d71a8e2af2e4",
+      "sha256": "7a892c9ea80a192c2086975e612c0b9833cf32e8c97f1d397f15f9b345c1873f"
+    },
+    "src/core/jsx/index.test.tsx": {
+      "upstreamSha256": "b9b515a825e671c8314485940d1fd64e21b3013a34c82a5079c4f22818dd6e33",
+      "sha256": "206248bf6d31a989ee20043a82b3127081bb99666a9c466cb193cc27db6ce8f3"
+    },
+    "src/core/jsx/index.ts": {
+      "upstreamSha256": "5c1bbebe3086a51f5ea0f1089cb61479e3e0bdcb8c3f5c9d916d5668c01c250d",
+      "sha256": "420f0752013389e31b67f51c7965d1165253d5cf91807f2b73d3d8c25efaa525",
+      "deviation": "DOMAttributes, a type, is re-exported with `export type` beside the value list (verbatimModuleSyntax, which this package compiles with, refuses a type in a value export)"
+    },
+    "src/core/jsx/intrinsic-element/common.ts": {
+      "upstreamSha256": "0d15e750f7f1c199b8de9f680a845b72c0fdc21bfa69e422f06989505e72d82a",
+      "sha256": "f818fd7f740046bed646d1528b38ad0e512aa03b192e82bf88d68189c2cee2b3"
+    },
+    "src/core/jsx/intrinsic-element/components.test.tsx": {
+      "upstreamSha256": "c7eb6d0bfa14c554d9689cc7d594d47aea4bbf642c4ac7fd8e444e770def2926",
+      "sha256": "b80f245dcacdf8922c60e089dbe1db65123b8ce7883bb1e39be236f2e776c08a"
+    },
+    "src/core/jsx/intrinsic-element/components.ts": {
+      "upstreamSha256": "b6d8d90e5e5add775e4485266a9b751b535be9df87c5ec6210822871faa576e9",
+      "sha256": "8f35cd00d76aa2863279c8facac5145845d82f87723d6e9de11389159effc66d"
+    },
+    "src/core/jsx/intrinsic-elements.ts": {
+      "upstreamSha256": "d7a3a46c2dd52b95b086b0f0cf2942ab766d72c170d120b3ac863f533f943f7c",
+      "sha256": "1be7dbe5caa916cb9409dec30d3d9a1a0048f003df89b69f852f570f4e05619b",
+      "deviation": "the event handler props' the event types are DomEvent from utils/types.ts (the DOM's own type when the DOM library is loaded, otherwise Event) so server-side JSX types do not need the DOM library"
+    },
+    "src/core/jsx/jsx-dev-runtime.ts": {
+      "upstreamSha256": "9a22767b31abe17dcab6111e2021550ef8a7dd3ea93b65b0a14f98dfe6b39ef6",
+      "sha256": "5d9166d4ccbbf7c461980b696cf6f2ba7af8caa7c285f3b0d7b1917ac20f246b"
+    },
+    "src/core/jsx/jsx-runtime.test.tsx": {
+      "upstreamSha256": "2584ff80a9fe2eaac6103060aa682c2969462038906e870d248d6a4a6af861b5",
+      "sha256": "1923dcbcba13c6a0b2d974d708ef21e5cc09ecb4b3ab6ceaa18170268f449f3c"
+    },
+    "src/core/jsx/jsx-runtime.ts": {
+      "upstreamSha256": "544c4706165150390a6885dc89dbd306e25ee98ed59be1e204751f3e40c04161",
+      "sha256": "f25afb37abb0e9d4a3e7fa7dc97b1b9ad40829d55c94aa573cbe762d8df7b743"
+    },
+    "src/core/jsx/streaming.test.tsx": {
+      "upstreamSha256": "57efe8c31e1f0579eae1be2967e194427ca990fcda382e46d9b6e5a01cc68406",
+      "sha256": "b256f4e3ebd500b440bfed8d4064eeb66bdd3951162e1c1590cb99fcb1992318"
+    },
+    "src/core/jsx/streaming.ts": {
+      "upstreamSha256": "cd4a2eac052ac5da624b3b40b716561ca17d292d04d5217810f8ddb53b5cfd5e",
+      "sha256": "8387fe5665b3c41c9046e56bbcd56bb2668ab684bdb458e65fecd9a13739c585"
+    },
+    "src/core/jsx/types.ts": {
+      "upstreamSha256": "c4f5f3cad15c66ff40d3c790b1d937cd2c91efb2968e8e41e688da926e12b432",
+      "sha256": "3d1c57e92c8fcb1b6714c653d4bdc3158b17312592276d049ffbf624ea3c05a9",
+      "deviation": "the event types are DomEvent from utils/types.ts (the DOM's own type when the DOM library is loaded, otherwise Event) so server-side JSX types do not need the DOM library"
+    },
+    "src/core/jsx/utils.test.ts": {
+      "upstreamSha256": "98645584e9756c829b071b40b19177a4d94198497c97d0fe8e97cc95f3db9159",
+      "sha256": "5dda0226fca9fa67c4b261e39e26179c19ecfd2e669e0145472ace2ef7639779"
+    },
+    "src/core/jsx/utils.ts": {
+      "upstreamSha256": "ee39fed9cacc6d14b385e6486a4f6958e197e50c45c451c22c0694602d58b652",
+      "sha256": "ee39fed9cacc6d14b385e6486a4f6958e197e50c45c451c22c0694602d58b652"
     },
     "src/core/middleware/basic-auth/index.test.ts": {
       "upstreamSha256": "bd43496df68c073b1033fdd77063edbfed090ee10f403de443c78cc4bc527964",
@@ -799,8 +1005,8 @@
     },
     "src/core/utils/types.ts": {
       "upstreamSha256": "5a35ea552ab8b1acbb6abb453eff656a119bcdf0941163e496a98043de935ad7",
-      "sha256": "798be571f27d97ed8c7e85da7cb0abc4e1a0b437df699812c2920d8bdc39e592",
-      "deviation": "declares BufferSource, CryptoKey, JsonWebKey, BinaryType, MessageEvent, CloseEvent and HeadersInit, so the public types do not need the DOM library"
+      "sha256": "80fafbd447ad5c74a7e62c0b70b798b1fd91f7d3f7e505cc30c7fc73c619e730",
+      "deviation": "declares BufferSource, CryptoKey, JsonWebKey, BinaryType, MessageEvent, CloseEvent, HeadersInit and DomEvent, so the public types do not need the DOM library"
     },
     "src/core/utils/url.test.ts": {
       "upstreamSha256": "2fc582760602904849e7eefdbd9f66266d0b775a2318d1aa0322928e960af0b9",

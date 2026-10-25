@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.tests.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "acryl-router-jsx",
+    "paths": {
+      "acryl-router-jsx/jsx-runtime": [
+        "./src/core/jsx/jsx-runtime.ts"
+      ],
+      "acryl-router-jsx/jsx-dev-runtime": [
+        "./src/core/jsx/jsx-dev-runtime.ts"
+      ]
+    },
+    "noImplicitOverride": false
+  },
+  "include": [
+    "src/core/jsx",
+    "src/core/helper/css",
+    "src/core/helper/streaming/sse.test.tsx"
+  ],
+  "exclude": []
+}
