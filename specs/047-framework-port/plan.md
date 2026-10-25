@@ -167,3 +167,11 @@ streaming; ssg; the remaining host adapters; the bun adapter last. Node is the t
   handlers and state, replace only where they differ) instead of rendering and replacing the children, so focus, selections and typed
   text survive. Today it is `createRoot` plus `render`, documented as such in `docs/framework/guides/client-modules.md` and checked in
   headless Chrome by the standalone gate (the server button is replaced). Scheduled after the Electron slice (coordinator, 2026-10-25).
+- T022 `readSSE(response)` for the browser: an async iterator over the events of a `text/event-stream` answer from `fetch`, for POST
+  streams that `EventSource` (GET only) cannot read. ACRYL's own addition, not part of the upstream port, so it lives in its own subpath
+  with its own tests and is marked as an addition in provenance.json. Found by the chat gate (Blends, 2026-10-25): every builder wrote the
+  same fetch + reader + parse loop. Scheduled after spec 049 slice 1 (coordinator, 2026-10-25).
+- T023 `stream.aborted` and `c.req.raw.signal`: under `app.request`, aborting the request fires `c.req.raw.signal` but leaves
+  `stream.aborted` false; only cancelling the body reader fires `stream.onAbort`. First check what the upstream does at the pinned commit.
+  If it behaves the same, document it and leave it as is. Change it only with a recorded deviation and tests on both the in-process and
+  the socket paths. Found by the chat gate (Blends, 2026-10-25). Scheduled with T022.
