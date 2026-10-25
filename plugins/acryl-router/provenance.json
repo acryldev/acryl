@@ -605,7 +605,8 @@
     },
     "src/core/middleware/logger/index.test.ts": {
       "upstreamSha256": "4a30b05aaafc6fcb9d76cb7bd55c234fd7f54b336f15f71bf940db2407f74e8c",
-      "sha256": "e6778c77c54568db5de06f6fd7b1cc277b0736c67b0ca66601da4892d2b700b6"
+      "sha256": "c80d7f2aea7f3a16d7e6d1cd2c60d508cd567f61cb843ece0664de26f40fc373",
+      "deviation": "The two 'Time in seconds' tests run on fake timers and advance exactly one second: upstream sleeps on the timer clock while the logger measures with Date.now(), so the delta can be 999 ms ('999ms') or, under load, 1.5 s or more ('2s'), and CI failed on it."
     },
     "src/core/middleware/logger/index.ts": {
       "upstreamSha256": "3222041e4f69119aa30d63a4efacc3e33eec2ebc7fb03f4caa41af113f343843",

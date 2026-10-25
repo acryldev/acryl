@@ -74,11 +74,20 @@ describe('Logger by Middleware', () => {
   })
 
   it('Time in seconds', async () => {
-    const res = await app.request('http://localhost/seconds')
-    expect(res).not.toBeNull()
-    expect(res.status).toBe(200)
-    expect(log.startsWith('--> GET /seconds \x1b[32m200\x1b[0m')).toBe(true)
-    expect(log).toMatch(/1s/)
+    // The handler's sleep runs on the timer clock and the logger measures with Date.now(), which can come out at 999 ms ('999ms', not
+    // '1s') or, on a loaded machine, at 1.5 s or more ('2s'): fake both clocks so exactly one second passes.
+    vi.useFakeTimers()
+    try {
+      const pending = app.request('http://localhost/seconds')
+      await vi.advanceTimersByTimeAsync(1000)
+      const res = await pending
+      expect(res).not.toBeNull()
+      expect(res.status).toBe(200)
+      expect(log.startsWith('--> GET /seconds \x1b[32m200\x1b[0m')).toBe(true)
+      expect(log).toMatch(/1s/)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('Log status 301 with empty body', async () => {
@@ -183,11 +192,20 @@ describe('Logger by Middleware in NO_COLOR', () => {
   })
 
   it('Time in seconds', async () => {
-    const res = await app.request('http://localhost/seconds')
-    expect(res).not.toBeNull()
-    expect(res.status).toBe(200)
-    expect(log.startsWith('--> GET /seconds 200')).toBe(true)
-    expect(log).toMatch(/1s/)
+    // The handler's sleep runs on the timer clock and the logger measures with Date.now(), which can come out at 999 ms ('999ms', not
+    // '1s') or, on a loaded machine, at 1.5 s or more ('2s'): fake both clocks so exactly one second passes.
+    vi.useFakeTimers()
+    try {
+      const pending = app.request('http://localhost/seconds')
+      await vi.advanceTimersByTimeAsync(1000)
+      const res = await pending
+      expect(res).not.toBeNull()
+      expect(res.status).toBe(200)
+      expect(log.startsWith('--> GET /seconds 200')).toBe(true)
+      expect(log).toMatch(/1s/)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('Log status 404', async () => {
