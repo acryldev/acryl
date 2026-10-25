@@ -4,13 +4,202 @@
     {
       "ours": "src/core",
       "upstream": "src"
+    },
+    {
+      "ours": "src/core/adapter",
+      "upstream": "src/adapter"
     }
   ],
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
-    "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)"
+    "src/adapter (bun, deno)": "the bun adapter comes last (spec 047 Part B); the deno adapter is out of scope"
   },
   "files": {
+    "src/core/adapter/aws-lambda/conninfo.test.ts": {
+      "upstreamSha256": "d7ad9e7b45ae0ee100dad71ae58a9dfee5ad770a3850ad7c89741c129ba74330",
+      "sha256": "7c133cb705614ab1430b5ab72673114e45a91c07851dc1f98d8a383032c5a07f"
+    },
+    "src/core/adapter/aws-lambda/conninfo.ts": {
+      "upstreamSha256": "18f983159c0804428674d91dc03b52afd401e10af098046c4e053ed92770e4a2",
+      "sha256": "8d06fe782afffee7015f8796135dca4e919d31aaf56a42c3d80b94027e8878fd",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/aws-lambda/handler.test.ts": {
+      "upstreamSha256": "8cb6c36b6011b11ca5b8bb0cfebec8eb801c7550693483d4a0d248f38035b441",
+      "sha256": "4c677c145b34008deb72447ade17d21109c23c94d83188ca0f06ad65170c4959"
+    },
+    "src/core/adapter/aws-lambda/handler.ts": {
+      "upstreamSha256": "408385fbef4d9b6908050f957b97a74f4d2a4361d4b962ebfa6fce18c57351eb",
+      "sha256": "faf8b19d86d904486271651da85f74b9748cca50387d9406b910a7eb55db3dee",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/aws-lambda/index.ts": {
+      "upstreamSha256": "f61ed6124a730d33ca0367bb7de25b627afdc3ef65d9a0a17bd087a50be66505",
+      "sha256": "b8f5f49864872f0cca6c1bca38aead4a33bf1deffbae62dac5daa4428fac209d",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/aws-lambda/types.ts": {
+      "upstreamSha256": "322fb55c8064ee369a9c23e0530d2090128ba06f44143288b623858c39387a31",
+      "sha256": "deeb64faf14540949efff9a55845600101a9cc96d5fe5d9e896c21745630c718",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/cloudflare-pages/conninfo.test.ts": {
+      "upstreamSha256": "c41e4f22bdf7d81838fae30625532f3bc1ecf6ac5ccd0bd5eb65a9e3b24268ec",
+      "sha256": "14d95d5774a1146be0b32d77287440665abc5c4dc66fbf17cee30b49b3e3e19b"
+    },
+    "src/core/adapter/cloudflare-pages/conninfo.ts": {
+      "upstreamSha256": "1655cb802603393b2548f67ba3b73f58fe9a02e948d25d27d6f37b04aa1010b7",
+      "sha256": "5431b08d1148eb3ac422f93da3e9ec350bdcf7f20105c8e162b41a1bd6776a53",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/cloudflare-pages/handler.test.ts": {
+      "upstreamSha256": "764f07efa7e6993cbba40ffc36167f8bc9a9f5344be68eb97bdfc73d3e59bf64",
+      "sha256": "4f974ed8c4890dca70b0b3ad0af992fb235f8beecfc82c3d09052f326d55bc4a",
+      "deviation": "test data contained the original project name in an environment token value"
+    },
+    "src/core/adapter/cloudflare-pages/handler.ts": {
+      "upstreamSha256": "2b7a085a7ee00d5d2ba181469ee3aee5be0184ed0918c8743165e3e9ffb88f2e",
+      "sha256": "ed649b24039a3dc9a843d19536ec0cc2ac2a21f2cad6e8a570f950998af0b3e6",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/cloudflare-pages/index.ts": {
+      "upstreamSha256": "34b45d414fe845c9542eb9218f1f90c8226e671148ea1c8de16169fbc2f66bd8",
+      "sha256": "762ad200133ed1bde0286634a76ceb626118cc162683c3e795920bfa0c95441b",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages; Cloudflare's own recommendation of Workers with static assets stays"
+    },
+    "src/core/adapter/cloudflare-workers/conninfo.test.ts": {
+      "upstreamSha256": "38ff6b65f5e2bb494acab410567699ebde2e0816e5a337095104d749e6832ba8",
+      "sha256": "67b6ba0366dd3c3f42c9bab1409d0b6fc3b554f77dcfd12717b999bbf0c31fcf"
+    },
+    "src/core/adapter/cloudflare-workers/conninfo.ts": {
+      "upstreamSha256": "5e64473fe3e4eda9161eb54b0ee0b019276af9dd6d1b866820d83f02f5e4eff9",
+      "sha256": "f2a9308340b5a486e8a0228d9f9cb343a09b0e0018faef63f07749af4153b6ee",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/cloudflare-workers/index.ts": {
+      "upstreamSha256": "d45a92780a6de652628efea6b35f1a4dbf60a599ae74ea8fe51ed10ce76e014b",
+      "sha256": "bec66b4526f6a83682329efdda3a249f12054804dc2ab3e4e4264ce6b44784d5",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/cloudflare-workers/serve-static-module.ts": {
+      "upstreamSha256": "b73c28defc4f03fdea45e098cd6434ef53508656efa2133640e271fb34017a21",
+      "sha256": "62b9e667159703ff33ebf2bd9d851a0c4aebcdbff11b58469ea57b17ee22ea9d"
+    },
+    "src/core/adapter/cloudflare-workers/serve-static.test.ts": {
+      "upstreamSha256": "5f8ecbd5c1f55c1ac2f60d3219f11e2295de69df8bfd2ebdd6b07557993fbc92",
+      "sha256": "36677473100fbf41d4ae4b5c6eb62614ec8f17e98c49d6f4e681d31c5023d43d"
+    },
+    "src/core/adapter/cloudflare-workers/serve-static.ts": {
+      "upstreamSha256": "2b8e6230696e4740aef142c47dbcdc007e81cbfdf8860c2ddbe43af867efc74a",
+      "sha256": "1ed2858f747b5a4a873e374fbe51ec8f1f51fecf3413f7789734c56066f94738",
+      "deviation": "the serveStatic deprecation (Cloudflare Static Assets) stays; the pointer to the upstream's create command is dropped"
+    },
+    "src/core/adapter/cloudflare-workers/utils.test.ts": {
+      "upstreamSha256": "cf0a89258bf3f4f267fe3053aeb263e710b09d9461b956f18bec054ef9d95a0a",
+      "sha256": "bf8b1fbc2f45abe6e28a2bc01fcc0af12fda2985bbb40d69b5e90faa1966952d"
+    },
+    "src/core/adapter/cloudflare-workers/utils.ts": {
+      "upstreamSha256": "b1a44dbc56f44dced9da66f49b33b57c93cb0a2139ff8252e5d011d089175141",
+      "sha256": "35ec7619eec63023dfc3d65c9414b0cfc9314dabbb333743d418bd23c0c1a30c",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/cloudflare-workers/websocket.test.ts": {
+      "upstreamSha256": "e30ef4fb490253a0c28c5c23d2513c98bb8cc352c5f1c41f75f9dd63e237da55",
+      "sha256": "2f35bc4d033b19090e3b2effb4afdac3976e0dfcc0fa4d1372cd782433d076dd"
+    },
+    "src/core/adapter/cloudflare-workers/websocket.ts": {
+      "upstreamSha256": "60fabe1e2470fb1f519e5e75d00364b2a3ce99782a2507b865c3f048982328f3",
+      "sha256": "250ea09a3a07134cf21dece8ec293db349f7e9b9146860673e3c87bda2e647bb",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/lambda-edge/conninfo.test.ts": {
+      "upstreamSha256": "8032d69ceea53992e9c50de835924845fcbee453449a5e64674557d6c69bf442",
+      "sha256": "2978e7dc2a9488c4a000ba555cc2ee99ab22283f532c94884f879e01d5c035f0"
+    },
+    "src/core/adapter/lambda-edge/conninfo.ts": {
+      "upstreamSha256": "cce6c6e2811530d24603d1563bdab6ac007b3f3ab6095dad6544df6feeeccfc9",
+      "sha256": "a91c473bfddb4f8852239230a72f4814f13a72ebfbedc25c0783181267ee5b6e",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/lambda-edge/handler.test.ts": {
+      "upstreamSha256": "cb7fb48faa27ebfebf829ae9ffc7f595335cbffc69481f770b792f29dedbd742",
+      "sha256": "85b89f46d5e7af41715a421f4a8a6460d03204beb0c18f649915a9f818d4d338"
+    },
+    "src/core/adapter/lambda-edge/handler.ts": {
+      "upstreamSha256": "7e80938937acd471fba1d08ad16f275b7e56efa525f3399c0a8f8ef0f2ce3500",
+      "sha256": "6a3f10a1467042fbe57b5d7649505e1a420297af9ffe8d645d8fcaa68186d223",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/lambda-edge/index.ts": {
+      "upstreamSha256": "a38fae8ce306c26fbd1ea97bd1b6412ad2a416b20df3221e61d3eb1de76408ed",
+      "sha256": "343e7badf0a434975e51acd6036c28adf570de65252ed3c877f010edfe1bd234",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/netlify/conninfo.test.ts": {
+      "upstreamSha256": "ae563c12743bb2fed1c6fee8c96584da397bbfe70197188c66fbdd9500910178",
+      "sha256": "56433cbab12059c43793917d4dccda4fe47bb28f8733beca4c2276adf1ba4d2e"
+    },
+    "src/core/adapter/netlify/conninfo.ts": {
+      "upstreamSha256": "fb15fec8536ce6accbae10f419c88db76190fbb9283dedc194f9747021bda229",
+      "sha256": "249ffbed02c53788a798a80ae6e33d39687f0a387f86ea44abe16098047365bc",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/netlify/handler.ts": {
+      "upstreamSha256": "4c78efbf4f5999c892a89857bb93d7d62c5e4ccab635dfd50c1312cf08f601c5",
+      "sha256": "87d773f7c181ca92eb23fcd2871090ab40cf1823e68950d49fc643434ce1cfd8",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/netlify/index.ts": {
+      "upstreamSha256": "7e42adbebd866c9542825967c4a34d02bdc4873925b1d4996a13c7b85005797c",
+      "sha256": "730dbae6712fa80a4becf325c7513e9c7c5ba72aa876f830ad589bb3da9299ee",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/netlify/mod.ts": {
+      "upstreamSha256": "0b665a207a7b1137564f34ba216ac2eef924005a5417a63552bbac5b3df4dc99",
+      "sha256": "6cb2b1c581e058b79460d719e6dc7137a61bf8f253d1d97662a1cb4e4bcb646b"
+    },
+    "src/core/adapter/service-worker/handler.test.ts": {
+      "upstreamSha256": "f9e7e8b0fb8caf9d61a66fce7357278c9fb25e91cb42da5d6a50fc881631997b",
+      "sha256": "ccfaae20ee136fbe5c1cb4c7cff4ef27d39ecb67f386a642fa38c10983b794ac"
+    },
+    "src/core/adapter/service-worker/handler.ts": {
+      "upstreamSha256": "85da5caf656e628175e9e01b06342201df1c5d7581bdbbf51f7c1378dd0308f1",
+      "sha256": "6c26b405fc668a619fd1196c2adbc444800084cce2c6c91b4e1c9c3afe13c1e5",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/service-worker/index.ts": {
+      "upstreamSha256": "b3d6cb0328e70d40a5a2f1a8ef258d782f5debc5ff9340f6522549a91226e1f5",
+      "sha256": "5bb7ae713e65ff7dac6d10a68202e66b199e0d443160eec8f867238ac931d756",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/service-worker/types.ts": {
+      "upstreamSha256": "428392998bdad1146f119cf8af1a92498c4f30a5397ed3ea3be5baa2568a26bb",
+      "sha256": "63fbf618800e75d60926cd62fd2464f29778f7b2ce0e4af3f6d65772ff705022",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/vercel/conninfo.test.ts": {
+      "upstreamSha256": "8ab45b4a328d574ad574e89c00ce4254dbfeb7d77e8f1807b0a97fbf1439bc11",
+      "sha256": "074a03c76c8d43a1c47d5d27a5f21bebca4adc1029eb5f59d9c7573dee3f4139"
+    },
+    "src/core/adapter/vercel/conninfo.ts": {
+      "upstreamSha256": "1dc542ef4051777c1fae5426dfac6f231f0bf61bca3245c9fc3d2cff5021d0d0",
+      "sha256": "f0aa35eeed2dc6b55e7ccea20e35e50d5bd3108067c39b04be58d69f15406342",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/vercel/handler.test.ts": {
+      "upstreamSha256": "ee296808ad16dd9ae75088f9f4f3bd8454fc98b1049c1c216c6a016f58782a75",
+      "sha256": "2f1f89f5f67f92cae1aed12d320df3279447cb67370aa33e1a2b9a42d019d892"
+    },
+    "src/core/adapter/vercel/handler.ts": {
+      "upstreamSha256": "4cd4ce2028a2af918b17d6de556130e607c32588936d323f1e71544ff4dceb5f",
+      "sha256": "59d0e2ce0bbf55e651d526c1a0bfc8daf3513818106ac223dc6815f7831ac59c",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/vercel/index.ts": {
+      "upstreamSha256": "9ce200bde7e6283c88eb500923942dd8d6311d8614e6d31d71474e5ba848a9f3",
+      "sha256": "b064eb4b09bd929efcad6cf6f22350c97d8a0c1a0bf2c242ec8219083021d1f5",
+      "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
     "src/core/app-base.ts": {
       "upstreamSha256": "731d11ad849056b064b4b87c95b02820c539cee5cd50f6746a308f78f0258460",
       "sha256": "4e990978beb8221537f0f7641f7983a67f68997738db72c860d80bdb81783456",

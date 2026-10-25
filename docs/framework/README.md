@@ -35,12 +35,12 @@ The starter asks which template you want (`nodejs`, `bun` (experimental), or `ac
 
 ## Runtimes
 
-Verified: Node.js. Bun is experimental. The other runtimes the framework could target are listed on [Other runtimes](getting-started/other-runtimes.md) as not yet verified.
+Verified: Node.js. Bun is experimental. Adapters for AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify and Service Workers are part of the package, with a guide each on [Other runtimes](getting-started/other-runtimes.md); they are tested with the platforms' own events and have not been deployed by the ACRYL team.
 
 ## Not yet available
 
-Some parts of the documented API surface are not part of the package yet, and their pages say so at the top: the adapters of the runtimes other than Node.js.
-They are enabled as they are ported.
+Some parts of the documented API surface are not part of the package yet, and their pages say so at the top: the Bun adapter (`acrylblends/bun`).
+It is enabled when it is ported.
 
 ## Where to read next
 
@@ -49,6 +49,7 @@ They are enabled as they are ported.
 | Run something in five minutes | [Getting started](getting-started/basic.md) |
 | Run the app as a desktop app | [Desktop](getting-started/desktop.md) |
 | Run it on a server | [Deploy](getting-started/deploy.md) |
+| Run it on a hosting platform | [Other runtimes](getting-started/other-runtimes.md): [AWS Lambda](getting-started/aws-lambda.md), [Cloudflare Workers](getting-started/cloudflare-workers.md), [Vercel](getting-started/vercel.md), [Netlify](getting-started/netlify.md) |
 | Look up a call | [API](api/index.md), [Routing](api/routing.md), [Context](api/context.md), [Request](api/request.md), [API summary](api/summary.md) |
 | Understand the design | [Concepts](concepts/motivation.md) |
 | Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md), [Forms, sessions and a database](guides/forms-and-sessions.md), [Client components without a bundler](guides/client-modules.md) |

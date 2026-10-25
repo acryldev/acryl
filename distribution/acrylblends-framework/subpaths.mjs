@@ -20,6 +20,8 @@ const MIDDLEWARE = [
   'request-id', 'secure-headers', 'serve-static', 'timeout', 'timing', 'trailing-slash',
 ]
 const HELPERS = ['accepts', 'adapter', 'cookie', 'dev', 'factory', 'html', 'proxy', 'route', 'ssg', 'streaming', 'testing']
+/** The hosting adapters (a handler for a platform that calls `fetch`): each is `<upstream>/<name>`. */
+const ADAPTERS = ['aws-lambda', 'cloudflare-pages', 'cloudflare-workers', 'lambda-edge', 'netlify', 'service-worker', 'vercel']
 const ROUTERS = ['reg-exp-router', 'smart-router', 'trie-router', 'pattern-router', 'linear-router']
 /** `<upstream>/utils/*`: each utility module by its file name. */
 const UTILS = readdirSync(join(here, CORE, 'utils')).filter(name => name.endsWith('.ts') && !name.endsWith('.test.ts')).map(name => name.slice(0, -3)).sort()
@@ -36,6 +38,7 @@ export const SUBPATHS = {
   'quick': `${CORE}/preset/quick.ts`,
   ...Object.fromEntries(MIDDLEWARE.map(name => [name, `${CORE}/middleware/${name}/index.ts`])),
   ...Object.fromEntries(HELPERS.map(name => [name, `${CORE}/helper/${name}/index.ts`])),
+  ...Object.fromEntries(ADAPTERS.map(name => [name, `${CORE}/adapter/${name}/index.ts`])),
   'ws': `${CORE}/helper/websocket/index.ts`,
   'css': `${CORE}/helper/css/index.ts`,
   // JSX: the string renderer and its runtimes, streaming, and the DOM renderer (with its own runtimes, client, CSS and server entries).

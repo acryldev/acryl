@@ -192,6 +192,34 @@
       "types": "./lib/testing.d.ts",
       "default": "./lib/testing.js"
     },
+    "./aws-lambda": {
+      "types": "./lib/aws-lambda.d.ts",
+      "default": "./lib/aws-lambda.js"
+    },
+    "./cloudflare-pages": {
+      "types": "./lib/cloudflare-pages.d.ts",
+      "default": "./lib/cloudflare-pages.js"
+    },
+    "./cloudflare-workers": {
+      "types": "./lib/cloudflare-workers.d.ts",
+      "default": "./lib/cloudflare-workers.js"
+    },
+    "./lambda-edge": {
+      "types": "./lib/lambda-edge.d.ts",
+      "default": "./lib/lambda-edge.js"
+    },
+    "./netlify": {
+      "types": "./lib/netlify.d.ts",
+      "default": "./lib/netlify.js"
+    },
+    "./service-worker": {
+      "types": "./lib/service-worker.d.ts",
+      "default": "./lib/service-worker.js"
+    },
+    "./vercel": {
+      "types": "./lib/vercel.d.ts",
+      "default": "./lib/vercel.js"
+    },
     "./ws": {
       "types": "./lib/ws.d.ts",
       "default": "./lib/ws.js"

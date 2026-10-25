@@ -12,8 +12,8 @@ A `json` validation target reads the body only when the request has a JSON `Cont
 
 ## Which runtimes are verified?
 
-Node.js. Bun is experimental. The others are listed, as not yet verified, on [Other runtimes](../getting-started/other-runtimes.md).
+Node.js. Bun is experimental. The hosting platforms with an adapter (AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify, Service Worker) and the ones without are listed on [Other runtimes](../getting-started/other-runtimes.md).
 
 ## Where are the parts marked "not yet available"?
 
-Their pages are part of the documentation so that the structure is complete; each starts with a note saying so. They are enabled as they are ported.
+Their pages are part of the documentation so that the structure is complete; each starts with a note saying so. They are enabled as they are ported; today that is the Bun adapter.

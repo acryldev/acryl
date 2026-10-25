@@ -31,7 +31,7 @@ app.use(
 app.get('/', (c) => c.text('Acryl!'))
 ```
 
-Pass the `getConninfo` from the [ConnInfo helper](../../helpers/conninfo.md) appropriate for your environment as the first argument of `ipRestriction`. For a runtime whose adapter is not yet available there is no `getConnInfo` to pass yet.
+Pass the `getConninfo` from the [ConnInfo helper](../../helpers/conninfo.md) appropriate for your environment as the first argument of `ipRestriction`. The Bun adapter is not yet available, so there is no `getConnInfo` for Bun to pass yet.
 
 ## Rules
 
