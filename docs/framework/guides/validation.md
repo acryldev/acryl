@@ -144,6 +144,93 @@ app.post(
 )
 ```
 
+## Validating an HTML form
+
+A browser posts a `<form>` as `application/x-www-form-urlencoded`, or as `multipart/form-data` when it has `enctype="multipart/form-data"` (needed
+for file inputs). `validator('form', ...)` parses both. Each field arrives as a `string`, a file input as a `File`, and a name that appears more
+than once (several checkboxes, or a name ending in `[]`) as an array, so the value has the type `Record<string, string | File | (string | File)[]>`.
+
+This page shows a form and re-renders it with a message when a field is wrong:
+
+```ts
+import { Acryl } from 'acrylblends'
+import { html } from 'acrylblends/html'
+import { validator } from 'acrylblends/validator'
+
+const page = (error?: string) => html`<!doctype html>
+  <form method="post" action="/notes" enctype="multipart/form-data">
+    <input name="title" required>
+    <textarea name="body"></textarea>
+    <input type="file" name="attachment">
+    <button>Save</button>
+    ${error === undefined ? '' : html`<p role="alert">${error}</p>`}
+  </form>`
+
+const app = new Acryl()
+  .get('/notes/new', (c) => c.html(page()))
+  .post(
+    '/notes',
+    validator('form', (form, c) => {
+      const { title, body, attachment } = form
+      if (typeof title !== 'string' || title.trim() === '') return c.html(page('Title is required'), 400)
+      if (body !== undefined && typeof body !== 'string') return c.html(page('Body must be text'), 400)
+      if (attachment !== undefined && !(attachment instanceof File)) return c.html(page('Attachment must be one file'), 400)
+      return {
+        title: title.trim(),
+        body: body ?? '',
+        // A file input left empty still sends a part: a File with no name and no bytes.
+        attachment: attachment !== undefined && attachment.size > 0 ? attachment : undefined,
+      }
+    }),
+    (c) => {
+      const { title, attachment } = c.req.valid('form') // { title: string, body: string, attachment: File | undefined }
+      return c.text(`Saved ${title}${attachment === undefined ? '' : ` with ${attachment.name}`}`, 201)
+    }
+  )
+```
+
+The messages are escaped by `html`, so a field value shown back in the page cannot inject markup.
+
+### With a schema
+
+`schemaValidator('form', schema)` takes the same value. It answers a failure with 400 and JSON issues, which suits a form your own script submits
+with `fetch()`:
+
+```ts
+import * as z from 'zod'
+import { schemaValidator } from 'acrylblends/schema-validator'
+
+const NoteForm = z.object({
+  title: z.string().trim().min(1, 'Title is required'),
+  body: z.string().default(''),
+  attachment: z.instanceof(File).optional(),
+})
+
+app.post('/api/notes', schemaValidator('form', NoteForm), (c) => {
+  const { title } = c.req.valid('form') // typed by the schema's output
+  return c.json({ title }, 201)
+})
+```
+
+For a plain HTML form, call the schema inside `validator('form', ...)` to re-render the page with the first message instead:
+
+```ts
+validator('form', (form, c) => {
+  const result = NoteForm.safeParse(form)
+  return result.success ? result.data : c.html(page(result.error.issues[0]?.message), 400)
+})
+```
+
+To test a form route, send a `FormData`: `app.request` sets the `multipart/form-data` content type with its boundary itself.
+
+```ts
+const form = new FormData()
+form.set('title', 'Groceries')
+form.set('attachment', new File(['milk'], 'list.txt', { type: 'text/plain' }))
+const res = await app.request('/notes', { method: 'POST', body: form })
+// res.status === 201, await res.text() === 'Saved Groceries with list.txt'
+```
+
 ## Multiple validators
 
 You can also include multiple validators to validate different parts of request:

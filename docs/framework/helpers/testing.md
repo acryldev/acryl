@@ -99,3 +99,20 @@ describe('Search Endpoint', () => {
   })
 })
 ```
+
+### Default request options
+
+`testClient(app, env?, executionCtx?, options?)` takes the client's request options as its fourth argument, so headers every request of a test
+needs, such as a session cookie, are set once. Headers given to a single call are merged over them.
+
+```ts
+import { Acryl } from 'acrylblends'
+import { getCookie } from 'acrylblends/cookie'
+import { testClient } from 'acrylblends/testing'
+
+const app = new Acryl().get('/me', (c) => c.json({ session: getCookie(c, 'session') ?? null }))
+
+const client = testClient(app, undefined, undefined, { headers: { cookie: 'session=abc' } })
+await (await client.me.$get()).json() // { session: 'abc' }
+await (await client.me.$get(undefined, { headers: { cookie: 'session=xyz' } })).json() // { session: 'xyz' }
+```
