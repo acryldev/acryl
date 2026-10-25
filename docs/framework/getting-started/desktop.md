@@ -21,7 +21,7 @@ In a Blend app, the same two commands (`npx acrylblends add desktop`, `npm insta
 ## What it adds
 
 - `src/plugins/desktop-web/` (a plain app) or `src/plugins/desktop/` (a Blend app): the window code. Only this folder imports `electron`; the app's own code never does.
-- `electron` as a development dependency (pinned to 44.0.0) and the script `npm run desktop`.
+- `electron` as a development dependency (pinned to 44.9.3) and the script `npm run desktop`.
 - `.acrylblends/` in `.gitignore`: Electron's user data (window state, cache, logs) lives in `.acrylblends/electron` inside the app's own folder, never in the user's application-data folder.
 
 ## What `npm run desktop` does
