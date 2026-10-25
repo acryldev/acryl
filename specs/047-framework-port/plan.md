@@ -155,7 +155,10 @@ streaming; ssg; the remaining host adapters; the bun adapter last. Node is the t
 
 - T009 Port the proxy helper and the WebSocket adapters; pass the raw socket bindings through `router.fetch` so `upgradeWebSocket` works
   under the router.
-- T010 Port jsx and jsx-renderer, ssg, css, the cache and mount middleware, and the dev helper, each with its tests.
+- T010 Port jsx and jsx-renderer, ssg, css, the cache and mount middleware, and the dev helper, each with its tests. Done, with the
+  presets and the proxy helper; the port check now also fails on the upstream name inside a longer identifier.
+- T020 Run `.tsx` apps on Node without a build step: `acrylblends/node-server/register`, a module load hook that compiles JSX files with
+  the app's own `typescript`. Done.
 - T011 Port the remaining docs pages.
 - T012 Move the Host bridge in `acryl-router-http` onto the ported request listener, so one listener implementation serves both adapters.
 - T014 A Desktop transport without a port: serve `ctx.router.fetch` through Electron's `protocol.handle` (Web `Request` in, `Response`
