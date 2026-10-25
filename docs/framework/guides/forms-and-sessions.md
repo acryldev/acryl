@@ -228,4 +228,4 @@ export const Field = () => (
 )
 ```
 
-[Client Components](jsx-dom.md) (`acrylblends/jsx/dom`) are for pages that need components and state in the browser; they have to be bundled for the browser first (with Vite or esbuild).
+[Client Components](jsx-dom.md) (`acrylblends/jsx/dom`) are for pages that need components and state in the browser; on Node, [Client components without a bundler](client-modules.md) serves them to the browser with one script tag, or bundle them with Vite or esbuild.
