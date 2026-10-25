@@ -31,7 +31,7 @@ npm ci --omit=dev
 NODE_ENV=production PORT=3000 npm start
 ```
 
-`npm ci --omit=dev` installs `acrylblends` and `typescript`. `typescript` is a normal dependency on purpose: `.tsx` pages are compiled when the app starts, by `acrylblends/node-server/register`, with the app's own `typescript`.
+`npm ci --omit=dev` installs `acrylblends` and `typescript`. `typescript` is a normal dependency on purpose (it is why a production install is bigger than the framework alone, about 20 MB more): `.tsx` pages are compiled when the app starts, by `acrylblends/node-server/register`, with the app's own `typescript`.
 There is no build step today. When a build step appears (compiling client code, for instance) it belongs in `npm run build` before `npm start`, not in the start command.
 
 ## Keep it running with systemd
