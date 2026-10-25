@@ -84,6 +84,10 @@
       "types": "./lib/ip-restriction.d.ts",
       "default": "./lib/ip-restriction.js"
     },
+    "./jsx-renderer": {
+      "types": "./lib/jsx-renderer.d.ts",
+      "default": "./lib/jsx-renderer.js"
+    },
     "./jwk": {
       "types": "./lib/jwk.d.ts",
       "default": "./lib/jwk.js"

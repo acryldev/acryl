@@ -1,8 +1,5 @@
 # JSX Renderer Middleware
 
-> **Not yet available.** The JSX renderer middleware (`acrylblends/jsx-renderer`) is documented here so the page structure matches the rest of the framework, and is not part of acrylblends yet. The code on this page is not checked by the docs tests.
-
-
 JSX Renderer Middleware allows you to set up the layout when rendering JSX with the `c.render()` function, without the need for using `c.setRenderer()`. Additionally, it enables access to instances of Context within components through the use of `useRequestContext()`.
 
 ## Import

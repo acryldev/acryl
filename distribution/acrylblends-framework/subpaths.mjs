@@ -16,8 +16,8 @@ const NODE = '../../plugins/acryl-node-server/src/adapter'
 
 const MIDDLEWARE = [
   'basic-auth', 'bearer-auth', 'body-limit', 'cache', 'combine', 'compress', 'context-storage', 'cors', 'csrf', 'etag', 'ip-restriction',
-  'jwk', 'jwt', 'language', 'logger', 'method-not-allowed', 'method-override', 'mount', 'powered-by', 'pretty-json', 'request-id',
-  'secure-headers', 'serve-static', 'timeout', 'timing', 'trailing-slash',
+  'jsx-renderer', 'jwk', 'jwt', 'language', 'logger', 'method-not-allowed', 'method-override', 'mount', 'powered-by', 'pretty-json',
+  'request-id', 'secure-headers', 'serve-static', 'timeout', 'timing', 'trailing-slash',
 ]
 const HELPERS = ['accepts', 'adapter', 'cookie', 'dev', 'factory', 'html', 'proxy', 'route', 'streaming', 'testing']
 const ROUTERS = ['reg-exp-router', 'smart-router', 'trie-router', 'pattern-router', 'linear-router']
