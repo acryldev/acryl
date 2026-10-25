@@ -163,3 +163,7 @@ streaming; ssg; the remaining host adapters; the bun adapter last. Node is the t
 - T012 Move the Host bridge in `acryl-router-http` onto the ported request listener, so one listener implementation serves both adapters.
 - T014 A Desktop transport without a port: serve `ctx.router.fetch` through Electron's `protocol.handle` (Web `Request` in, `Response`
   out), measured against the loopback HTTP path Desktop uses today.
+- T021 Real hydration in `acrylblends/jsx/dom`: `hydrateRoot` adopts the server's nodes (walk them alongside the first render, attach
+  handlers and state, replace only where they differ) instead of rendering and replacing the children, so focus, selections and typed
+  text survive. Today it is `createRoot` plus `render`, documented as such in `docs/framework/guides/client-modules.md` and checked in
+  headless Chrome by the standalone gate (the server button is replaced). Scheduled after the Electron slice (coordinator, 2026-10-25).

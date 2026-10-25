@@ -151,7 +151,10 @@ try {
     "import { Acryl } from 'acrylblends'",
     'export const app = new Acryl()',
     "  .get('/', (c) => c.html('<!doctype html><div id=\"counter\"></div><p id=\"greeting\"></p>'",
-    "    + '<script type=\"module\" src=\"/client/counter.tsx\"></script><script type=\"module\" src=\"/client/press.ts\"></script>'))",
+    // Server markup for the hydrated island, and a handle on its button taken before any module runs.
+    "    + '<div id=\"island\"><button>Count 0</button></div><script>window.serverButton = document.querySelector(\"#island button\")</script>'",
+    "    + '<script type=\"module\" src=\"/client/counter.tsx\"></script><script type=\"module\" src=\"/client/island.tsx\"></script>'",
+    "    + '<script type=\"module\" src=\"/client/press.ts\"></script>'))",
     "  .get('/api/hello', (c) => c.json({ hello: 'browser' }))",
     'export type AppType = typeof app',
     '',
@@ -180,15 +183,34 @@ try {
     '',
   ].join('\n'))
   writeFileSync(join(app, 'src', 'client', 'parts', 'label.ts'), 'export const label = (count: number): string => `Count ${count}`\n')
-  // The test's own driver: two clicks once the island rendered, then a mark on the page.
+  // hydrateRoot over server markup, as the guide's hydrateRoot section describes it: the island works, and the server's nodes are replaced.
+  writeFileSync(join(app, 'src', 'client', 'island.tsx'), [
+    "import { useState } from 'acrylblends/jsx/dom'",
+    "import { hydrateRoot } from 'acrylblends/jsx/dom/client'",
+    "import { label } from './parts/label.ts'",
+    'const Island = () => {',
+    '  const [count, setCount] = useState(0)',
+    '  return <button onClick={() => setCount(count + 1)}>{label(count)}</button>',
+    '}',
+    "hydrateRoot(document.getElementById('island')!, <Island />)",
+    "document.body.dataset.hydrated = 'yes'",
+    '',
+  ].join('\n'))
+  // The test's own driver: two clicks on each island once both ran, then marks on the page.
   writeFileSync(join(app, 'src', 'client', 'press.ts'), [
     'const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))',
-    "while (document.querySelector('#counter button') === null || document.getElementById('greeting')!.textContent === '') await pause(10)",
-    "for (let at = 0; at < 2; at += 1) { document.querySelector<HTMLButtonElement>('#counter button')!.click(); await pause(50) }",
+    "while (document.querySelector('#counter button') === null || document.getElementById('greeting')!.textContent === '' || document.body.dataset.hydrated !== 'yes') await pause(10)",
+    "const serverButton = Reflect.get(window, 'serverButton') as Element",
+    "document.body.dataset.replaced = serverButton.isConnected ? 'no' : 'yes'",
+    "for (const island of ['#counter', '#island']) {",
+    "  for (let at = 0; at < 2; at += 1) { document.querySelector<HTMLButtonElement>(`${island} button`)!.click(); await pause(50) }",
+    '}',
     "document.body.dataset.done = 'yes'",
     '',
   ].join('\n'))
-  const islandRan = (dom) => dom.includes('<button>Count 2</button>') && dom.includes('<p id="greeting">hello browser</p>') && dom.includes('data-done="yes"')
+  const islandRan = (dom) =>
+    dom.includes('<div id="counter"><button>Count 2</button></div>') && dom.includes('<p id="greeting">hello browser</p>')
+    && dom.includes('<div id="island"><button>Count 2</button></div>') && dom.includes('data-replaced="yes"') && dom.includes('data-done="yes"')
   const chrome = findChrome()
   if (chrome === undefined && process.env.CI !== undefined) throw new Error('no Google Chrome or Chromium found (set CHROME_PATH); CI needs one for the client components check')
   const browserCheck = async (name, env) => {
@@ -199,7 +221,7 @@ try {
       if (chrome === undefined) { report(name, 'module served; browser skipped: no Google Chrome or Chromium installed'); return }
       const dom = chromeDom(chrome, `http://127.0.0.1:${String(port)}/`)
       if (!islandRan(dom)) throw new Error(`${name}: the island did not run in the browser: ${dom}`)
-      report(name, 'headless Chrome: the island rendered, two clicks counted to 2, the typed client fetched')
+      report(name, 'headless Chrome: the island rendered, two clicks counted to 2, the typed client fetched; hydrateRoot replaced the server button and its island counted to 2')
     })
   }
   await browserCheck('client components, development (compiled on request)', { NODE_ENV: 'development' })

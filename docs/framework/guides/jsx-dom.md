@@ -2,7 +2,9 @@
 
 `acrylblends/jsx` supports not only server side but also client side. This means that it is possible to create an interactive UI that runs in the browser. We call it Client Components or `acrylblends/jsx/dom`.
 
-It is fast and very small. The counter program in `acrylblends/jsx/dom` is only 2.8KB with Brotli compression, but 47.8KB for React.
+It is small and imports nothing. Measured with Node's `zlib.brotliCompressSync` at the highest quality: the whole runtime as
+[`clientModules`](client-modules.md) serves it (`jsx-dom.js`, not minified) is 11,209 bytes with Brotli compression, and the counter
+below, bundled and minified with tsdown so only the parts it uses are kept, is 5,804 bytes.
 
 This section introduces Client Components-specific features.
 

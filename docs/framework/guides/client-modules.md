@@ -88,6 +88,28 @@ types. This is why `AppType` comes from `app.ts`, which does not import the Node
 }
 ```
 
+## Server markup and `hydrateRoot`
+
+A page can carry server-rendered markup for an island and take it over in the browser with `hydrateRoot` from `acrylblends/jsx/dom/client`:
+
+```tsx
+import { useState } from 'acrylblends/jsx/dom'
+import { hydrateRoot } from 'acrylblends/jsx/dom/client'
+
+const Counter = () => {
+  const [count, setCount] = useState(0)
+  return <button onClick={() => setCount(count + 1)}>Count {count}</button>
+}
+
+hydrateRoot(document.getElementById('island')!, <Counter />)
+```
+
+The DOM renderer does not reuse server markup: `hydrateRoot` renders the component and replaces the element's children with its output
+in one step, so the page shows the server markup until the module runs and the component from then on, with no empty frame between. The
+server's nodes are gone afterwards, together with anything the visitor did to them before the module ran: focus, a selection, text typed
+into an input. Keep the server markup the same as the component's first render, so the swap does not show, and keep inputs out of the
+server markup of an island, or render them only in the browser.
+
 ## How the imports reach the browser
 
 - JSX in a client module always compiles for the DOM renderer (`acrylblends/jsx/dom`), whatever the server's `tsconfig.json` says. A file's
@@ -108,7 +130,18 @@ folder and other file types answer 404.
 ## In production
 
 Templates install `typescript` as a development dependency, and a deploy that leaves those out (`npm ci --omit=dev`) has no compiler.
-Compile the client folder once when you build, with `buildClientModules`, for example as the `build` script of your `package.json`:
+Compile the client folder once when you build, as the `build` script of your `package.json`:
+
+```json
+{
+  "scripts": {
+    "build": "acrylblends build-client"
+  }
+}
+```
+
+`acrylblends build-client [root] [outDir]` (from acrylblends 0.7.2; `src/client` and `dist/client` when not given) calls
+`buildClientModules`. With an earlier version, or without the command line tool, call the function itself:
 
 ```json
 {
