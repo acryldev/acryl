@@ -47,6 +47,7 @@ Some parts of the documented API surface are not part of the package yet, and th
 | I want to | Read |
 | --- | --- |
 | Run something in five minutes | [Getting started](getting-started/basic.md) |
+| Run the app as a desktop app | [Desktop](getting-started/desktop.md) |
 | Look up a call | [API](api/index.md), [Routing](api/routing.md), [Context](api/context.md), [Request](api/request.md), [API summary](api/summary.md) |
 | Understand the design | [Concepts](concepts/motivation.md) |
 | Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md) |

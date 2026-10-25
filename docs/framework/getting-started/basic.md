@@ -192,5 +192,6 @@ See [Testing](../guides/testing.md).
 ## Next
 
 - [Node.js](nodejs.md) and [Bun](bun.md) (experimental)
+- [Desktop](desktop.md): the same app in an Electron window
 - [Routing](../api/routing.md), [Context](../api/context.md) and [Request](../api/request.md)
 - [Validation](../guides/validation.md)
