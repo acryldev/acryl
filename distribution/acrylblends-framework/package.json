@@ -384,6 +384,10 @@
       "types": "./lib/node-server/conninfo.d.ts",
       "default": "./lib/node-server/conninfo.js"
     },
+    "./node-server/register": {
+      "types": "./lib/node-server/register.d.ts",
+      "default": "./lib/node-server/register.js"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

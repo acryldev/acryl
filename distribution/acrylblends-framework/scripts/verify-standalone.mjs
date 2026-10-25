@@ -4,7 +4,7 @@
  * require that the four-line getting-started app serves its route on Node (through `serve` from `acrylblends/node-server`), and that a
  * consumer with only Node's types and no DOM library typechecks, including a module augmentation of the root and a server-side JSX page;
  * the DOM renderer (`acrylblends/jsx/dom*`, for the browser) typechecks with the DOM library, as a browser project uses it. Node is the runtime the
- * framework targets. Bun (`bun run`, the default export) is informational: it runs only when bun is installed, and a failure there is
+ * framework targets, and a `.tsx` app runs on it through `acrylblends/node-server/register` with the app's own typescript. Bun (`bun run`, the default export) is informational: it runs only when bun is installed, and a failure there is
  * reported without failing the check. This script never installs a runtime.
  *
  *   node scripts/verify-standalone.mjs [--keep]
@@ -14,7 +14,7 @@
  */
 
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -90,6 +90,22 @@ try {
   ].join('\n'))
   const nodePort = await freePort()
   expectHello('node (serve from acrylblends/node-server)', await serveAndFetch(process.execPath, ['node.ts'], nodePort, { PORT: String(nodePort) }))
+
+  // A .tsx app on Node: the register hook compiles it with the app's own typescript (a devDependency in every template; linked here), and
+  // the default import source, acrylblends/jsx, renders it.
+  symlinkSync(realpathSync(join(root, 'node_modules', 'typescript')), join(app, 'node_modules', 'typescript'), 'junction')
+  writeFileSync(join(app, 'server.tsx'), [
+    "import { Acryl } from 'acrylblends'",
+    "import { serve } from 'acrylblends/node-server'",
+    'const Title = ({ text }: { text: string }) => <h1>{text}</h1>',
+    "const app = new Acryl().get('/', (c) => c.html(<Title text=\"Acryl!\" />))",
+    "serve({ fetch: app.fetch, port: Number(process.env.PORT), hostname: '127.0.0.1' })",
+    '',
+  ].join('\n'))
+  const tsxPort = await freePort()
+  const tsx = await serveAndFetch(process.execPath, ['--import', 'acrylblends/node-server/register', 'server.tsx'], tsxPort, { PORT: String(tsxPort) })
+  if (tsx.status !== 200 || tsx.body !== '<h1>Acryl!</h1>') throw new Error(`the .tsx app answered ${String(tsx.status)} ${JSON.stringify(tsx.body)}`)
+  report('node (a .tsx app through acrylblends/node-server/register)', 'GET / -> 200 "<h1>Acryl!</h1>"')
 
   // Server-side JSX: the string renderer renders on Node, from the published build.
   const rendered = run(process.execPath, ['--input-type=module', '-e', "import { jsx } from 'acrylblends/jsx'; process.stdout.write(String(jsx('h1', { class: 'title' }, 'Acryl!')))"], app)

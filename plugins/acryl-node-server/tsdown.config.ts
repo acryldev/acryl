@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig({
   name: 'acryl-node-server',
-  entry: { index: 'src/index.ts' },
+  entry: { index: 'src/index.ts', register: 'src/register.ts' },
   outDir: 'lib',
   format: 'esm',
   platform: 'node',

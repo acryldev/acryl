@@ -20,6 +20,10 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./register": {
+      "types": "./lib/types/register.d.ts",
+      "default": "./lib/register.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {

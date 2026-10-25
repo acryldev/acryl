@@ -63,6 +63,8 @@ export const SUBPATHS = {
   'node-server': 'src/node-server.ts',
   'node-server/serve-static': `${NODE}/serve-static.ts`,
   'node-server/conninfo': `${NODE}/conninfo.ts`,
+  // ACRYL's addition: `node --import acrylblends/node-server/register app.tsx` compiles JSX files with the app's own typescript.
+  'node-server/register': '../../plugins/acryl-node-server/src/register.ts',
 }
 
 /** The build entry name of a subpath: the file stem under `lib/`. */

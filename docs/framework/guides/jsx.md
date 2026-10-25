@@ -4,30 +4,6 @@ You can write HTML with JSX syntax with `acrylblends/jsx`.
 
 Although `acrylblends/jsx` works on the client, you will probably use it most often when rendering content on the server side. Here are some things related to JSX that are common to both server and client.
 
-## Node.js runs `jsx()`, not JSX syntax
-
-The apps `npm create acrylblends@latest` makes run their TypeScript on Node.js by stripping the types (no build step). That does **not** compile JSX: a `.tsx` file does not load. Either compile the file first (`tsc`
-or a bundler, with the settings below), or write the call that JSX compiles to. `jsx(tag, props, ...children)` takes the children after the props, and a node renders with `toString()`:
-
-```ts
-import { Acryl } from 'acrylblends'
-import { jsx } from 'acrylblends/jsx'
-import type { PropsWithChildren } from 'acrylblends/jsx'
-
-const Layout = (props: PropsWithChildren<{ title: string }>) =>
-  jsx('html', { lang: 'en' }, jsx('head', null, jsx('title', null, props.title)), jsx('body', null, props.children))
-
-const About = () =>
-  jsx(Layout, { title: 'About' }, jsx('h1', null, 'About'), jsx('p', { class: 'lead' }, 'Rendered on the server.'))
-
-const app = new Acryl()
-app.get('/about', (c) => c.html(jsx(About, null).toString()))
-
-export default app
-```
-
-Pass the children as arguments after the props. A `children` entry inside the props object is not rendered by this form.
-
 ## Settings
 
 To use JSX, modify the `tsconfig.json`:
@@ -50,9 +26,34 @@ Alternatively, use the pragma directives:
 /** @jsxImportSource acrylblends/jsx */
 ```
 
+## Run `.tsx` on Node.js
+
+Node.js strips TypeScript's types but does not compile JSX, so a `.tsx` file needs one flag: `--import acrylblends/node-server/register`.
+It compiles each `.tsx` (and `.jsx`) module as Node.js loads it, with your app's own `typescript` (a development dependency) and the
+`jsxImportSource` of your `tsconfig.json` (`acrylblends/jsx` without one); every other module runs exactly as before. Stack traces point at
+the `.tsx` lines.
+
+`package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "node --watch --import acrylblends/node-server/register src/index.tsx",
+    "start": "node --import acrylblends/node-server/register src/index.tsx",
+    "test": "node --import acrylblends/node-server/register --test \"src/**/*.test.{ts,tsx}\""
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
+```
+
+`node --test` looks only for `.js` and `.ts` test files on its own, so the `test` script names the `.tsx` ones with a pattern. Without `typescript` in the app, the first `.tsx` module stops with a message that says to install it. Bun compiles JSX itself and needs
+no flag.
+
 ## Usage
 
-> **Note.** If you are coming straight from the [Quick Start](../README.md#quick-start), the main file has a `.ts` extension - you need to change it to `.tsx` - otherwise you will not be able to run the application at all. You should additionally modify the `package.json` (or `deno.json` if you are using Deno) to reflect that change (e.g. instead of having `bun run --hot src/index.ts` in dev script, you should have `bun run --hot src/index.tsx`).
+> **Note.** If you are coming straight from the [Quick Start](../README.md#quick-start), the main file has a `.ts` extension - you need to change it to `.tsx` - otherwise you will not be able to run the application at all. Change the scripts in `package.json` to match: on Node.js, as [above](#run-tsx-on-nodejs); on Bun, `bun run --hot src/index.tsx` instead of `bun run --hot src/index.ts`.
 
 `index.tsx`:
 
@@ -92,6 +93,31 @@ app.get('/', (c) => {
 
 export default app
 ```
+
+## Without compiling: `jsx()`
+
+A `.ts` file can build the same nodes without JSX syntax and without the register flag: write the call that JSX compiles to.
+`jsx(tag, props, ...children)` takes the children after the props, and a node renders with `toString()`. The `` html`...` `` template
+from `acrylblends/html` is the other build-free choice.
+
+```ts
+import { Acryl } from 'acrylblends'
+import { jsx } from 'acrylblends/jsx'
+import type { PropsWithChildren } from 'acrylblends/jsx'
+
+const Layout = (props: PropsWithChildren<{ title: string }>) =>
+  jsx('html', { lang: 'en' }, jsx('head', null, jsx('title', null, props.title)), jsx('body', null, props.children))
+
+const About = () =>
+  jsx(Layout, { title: 'About' }, jsx('h1', null, 'About'), jsx('p', { class: 'lead' }, 'Rendered on the server.'))
+
+const app = new Acryl()
+app.get('/about', (c) => c.html(jsx(About, null).toString()))
+
+export default app
+```
+
+Pass the children as arguments after the props. A `children` entry inside the props object is not rendered by this form.
 
 ## Metadata hoisting
 
