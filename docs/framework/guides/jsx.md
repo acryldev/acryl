@@ -12,8 +12,9 @@ or a bundler, with the settings below), or write the call that JSX compiles to. 
 ```ts
 import { Acryl } from 'acrylblends'
 import { jsx } from 'acrylblends/jsx'
+import type { PropsWithChildren } from 'acrylblends/jsx'
 
-const Layout = (props: { title: string; children?: unknown }) =>
+const Layout = (props: PropsWithChildren<{ title: string }>) =>
   jsx('html', { lang: 'en' }, jsx('head', null, jsx('title', null, props.title)), jsx('body', null, props.children))
 
 const About = () =>
