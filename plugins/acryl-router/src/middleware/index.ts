@@ -8,6 +8,7 @@ export { contextStorage, getContext, tryGetContext } from '../core/middleware/co
 export { cors } from '../core/middleware/cors/index.ts'
 export { csrf } from '../core/middleware/csrf/index.ts'
 export { etag } from '../core/middleware/etag/index.ts'
+export { jsxRenderer, RequestContext, useRequestContext } from '../core/middleware/jsx-renderer/index.ts'
 export { jwk } from '../core/middleware/jwk/index.ts'
 export { AlgorithmTypes, decode, jwt, sign, verify, verifyWithJwks, type JwtVariables } from '../core/middleware/jwt/index.ts'
 export { ipRestriction, type IPRestrictionRule, type IPRestrictionRules } from '../core/middleware/ip-restriction/index.ts'

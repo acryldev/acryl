@@ -9,7 +9,6 @@
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
     "src/adapter": "runtime adapters for other hosts; ACRYL serves through its own adapters (acryl-router-http, acryl-node-server)",
-    "src/middleware (jsx-renderer)": "after 0.4.0",
     "src/helper (ssg)": "after 0.4.0"
   },
   "files": {
@@ -521,6 +520,14 @@
     "src/core/middleware/ip-restriction/index.ts": {
       "upstreamSha256": "2b68d88cd86843c6a09e299fc0408b3236832406d498c1c076990ef07584a9bc",
       "sha256": "b268ab3376a40b005d49e909b4014e8f9bd0d00c939d6209c683dc01435ea4cf"
+    },
+    "src/core/middleware/jsx-renderer/index.test.tsx": {
+      "upstreamSha256": "6573ce167ddf1daad84c1b5adb6d36eb5f4744ee14ad2cf6b3e17a0692d0ef63",
+      "sha256": "b4403a0f4da8160777437dc203b410821f9f0495e5b9a1cb67389101310f4f64"
+    },
+    "src/core/middleware/jsx-renderer/index.ts": {
+      "upstreamSha256": "48b7028fc1aa2df0d0f53fa061e9832301232e36b57d52cda2055a5ba4a566ef",
+      "sha256": "1a9952cec50d5bfd7a74cd5bfdc685913013a719b8f13fdbf5098e4403a4f964"
     },
     "src/core/middleware/jwk/index.test.ts": {
       "upstreamSha256": "78bb59cfac159cb36173f64852cc1e6a74601e175b88342f67e81e67eb0ffc91",

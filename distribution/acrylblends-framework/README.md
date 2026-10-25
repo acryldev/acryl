@@ -274,12 +274,12 @@ See [Node.js](https://github.com/acryldev/acryl/blob/main/docs/framework/getting
 | `acrylblends/tiny`, `acrylblends/quick` | the presets: `Acryl` with another router (`PatternRouter`; `LinearRouter` and `TrieRouter`) ([presets](https://github.com/acryldev/acryl/blob/main/docs/framework/api/presets.md)) |
 | `acrylblends/cache`, `acrylblends/mount` | the cache middleware and mounting another framework's fetch handler |
 | `acrylblends/proxy`, `acrylblends/dev` | the proxy helper and the dev helpers (`showRoutes`, `inspectRoutes`, `getRouterName`) |
-| `acrylblends/jsx` | JSX on the server: `jsxImportSource: 'acrylblends/jsx'`, with `jsx/streaming` ([JSX guide](https://github.com/acryldev/acryl/blob/main/docs/framework/guides/jsx.md)) |
+| `acrylblends/jsx` | JSX on the server: `jsxImportSource: 'acrylblends/jsx'`, with `jsx/streaming`, and `acrylblends/jsx-renderer` for a layout behind `c.render` ([JSX guide](https://github.com/acryldev/acryl/blob/main/docs/framework/guides/jsx.md)) |
 | `acrylblends/jsx/dom` | JSX in the browser: hooks and `render` (needs the DOM library) ([client components](https://github.com/acryldev/acryl/blob/main/docs/framework/guides/jsx-dom.md)) |
 | `acrylblends/css` | CSS in JSX: `css`, `cx`, `keyframes`, `Style` ([CSS helper](https://github.com/acryldev/acryl/blob/main/docs/framework/helpers/css.md)) |
 | `acrylblends/node-server` | `serve`, `createAdaptorServer`, `getRequestListener`; with `node-server/serve-static` and `node-server/conninfo` |
 
-Every subpath is listed in the package's `exports`. The JSX renderer middleware, SSG and other runtimes' adapters are being ported. The docs mark them "not yet available" until they ship
+Every subpath is listed in the package's `exports`. SSG and other runtimes' adapters are being ported. The docs mark them "not yet available" until they ship
 ([FAQ](https://github.com/acryldev/acryl/blob/main/docs/framework/guides/faq.md)).
 
 To extend the context's typed variables, augment the root module:
