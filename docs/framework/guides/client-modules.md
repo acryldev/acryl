@@ -110,6 +110,40 @@ server's nodes are gone afterwards, together with anything the visitor did to th
 into an input. Keep the server markup the same as the component's first render, so the swap does not show, and keep inputs out of the
 server markup of an island, or render them only in the browser.
 
+## A form and its state in an island
+
+An island that owns an input keeps the text in state and writes it back to the element, so typing and clearing the box both work:
+
+```tsx
+import { render, useState } from 'acrylblends/jsx/dom'
+
+const Ask = () => {
+  const [text, setText] = useState('')
+  const [sent, setSent] = useState<string[]>([])
+  const submit = (event: Event) => {
+    event.preventDefault()
+    if (text.trim() === '') return
+    setSent([...sent, text.trim()])
+    setText('')
+  }
+  return (
+    <form onSubmit={submit}>
+      <textarea value={text} onInput={(e) => setText((e.target as HTMLTextAreaElement).value)} />
+      <button type="submit">Send</button>
+      <ul>
+        {sent.map((message) => (
+          <li>{message}</li>
+        ))}
+      </ul>
+    </form>
+  )
+}
+
+render(<Ask />, document.getElementById('ask')!)
+```
+
+For a request that streams its answer and a Stop button (an `AbortController` kept in a `useRef`), see [Streaming an answer from a model](../helpers/streaming.md#streaming-an-answer-from-a-model).
+
 ## How the imports reach the browser
 
 - JSX in a client module always compiles for the DOM renderer (`acrylblends/jsx/dom`), whatever the server's `tsconfig.json` says. A file's
