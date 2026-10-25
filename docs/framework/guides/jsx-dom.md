@@ -105,11 +105,11 @@ export default function App() {
       </button>
       <div>
         {!showLargeImage ? (
-          <img src=' />
+          <img src="/photo.jpg" alt="" />
         ) : (
           <div
             class={css`
-              background: url(');
+              background: url('/photo.jpg');
               background-size: contain;
               background-repeat: no-repeat;
               background-position: center;
@@ -170,12 +170,12 @@ export default function App() {
       </button>
       <div>
         {!showLargeImage ? (
-          <img src=' />
+          <img src="/photo.jpg" alt="" />
         ) : (
           <div
             class={css`
               ${transitionNameClass}
-              background: url(');
+              background: url('/photo.jpg');
               background-size: contain;
               background-repeat: no-repeat;
               background-position: center;
@@ -240,12 +240,12 @@ export default function App() {
       </button>
       <div>
         {!showLargeImage ? (
-          <img src=' />
+          <img src="/photo.jpg" alt="" />
         ) : (
           <div
             class={css`
               ${transitionNameClass}
-              background: url(');
+              background: url('/photo.jpg');
               background-size: contain;
               background-repeat: no-repeat;
               background-position: center;

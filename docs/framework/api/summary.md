@@ -1,6 +1,6 @@
 # API summary
 
-One page with the calls an ordinary app uses, each linked to the page that explains it. Imports are from `acryl-router` unless noted.
+One page with the calls an ordinary app uses, each linked to the page that explains it. Imports are from `acrylblends` (and its subpaths such as `acrylblends/cookie`) unless noted. The first example is a Cordis plugin; a plain app (`npm create acrylblends@latest`) uses the `Acryl` class below with no plugin around it.
 
 ## A plugin that serves an app
 
