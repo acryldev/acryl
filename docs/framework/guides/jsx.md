@@ -4,6 +4,29 @@ You can write HTML with JSX syntax with `acrylblends/jsx`.
 
 Although `acrylblends/jsx` works on the client, you will probably use it most often when rendering content on the server side. Here are some things related to JSX that are common to both server and client.
 
+## Node.js runs `jsx()`, not JSX syntax
+
+The apps `npm create acrylblends@latest` makes run their TypeScript on Node.js by stripping the types (no build step). That does **not** compile JSX: a `.tsx` file does not load. Either compile the file first (`tsc`
+or a bundler, with the settings below), or write the call that JSX compiles to. `jsx(tag, props, ...children)` takes the children after the props, and a node renders with `toString()`:
+
+```ts
+import { Acryl } from 'acrylblends'
+import { jsx } from 'acrylblends/jsx'
+
+const Layout = (props: { title: string; children?: unknown }) =>
+  jsx('html', { lang: 'en' }, jsx('head', null, jsx('title', null, props.title)), jsx('body', null, props.children))
+
+const About = () =>
+  jsx(Layout, { title: 'About' }, jsx('h1', null, 'About'), jsx('p', { class: 'lead' }, 'Rendered on the server.'))
+
+const app = new Acryl()
+app.get('/about', (c) => c.html(jsx(About, null).toString()))
+
+export default app
+```
+
+Pass the children as arguments after the props. A `children` entry inside the props object is not rendered by this form.
+
 ## Settings
 
 To use JSX, modify the `tsconfig.json`:
