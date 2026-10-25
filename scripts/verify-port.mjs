@@ -23,6 +23,7 @@ import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, normalize as normalizePath, posix, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { upstreamNameFromLicense, upstreamNameIn } from './upstream-name.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const PACKAGES = ['plugins/acryl-router', 'plugins/acryl-node-server']
@@ -51,12 +52,6 @@ function walk(dir) {
 }
 
 /** The upstream project's name, from the checkout's package.json: the package name, or the scope of a scoped one (`@<name>/node-server`). */
-/** The upstream name from the package's LICENSE ("derived from <Name> vX (https://github.com/<name>js/...)"), so the guard below runs without a checkout. */
-function brandFromLicense(dir) {
-  const license = join(dir, 'LICENSE')
-  return existsSync(license) ? /are derived from .+? \(https:\/\/github\.com\/([a-z]+)js\//u.exec(read(license))?.[1] : undefined
-}
-
 function brandOf(checkout) {
   const { name } = JSON.parse(read(join(checkout, 'package.json')))
   return name.startsWith('@') ? name.slice(1).split('/')[0] : name
@@ -104,7 +99,7 @@ function paths(directories, brand, checkout) {
  * The name as its own part of a longer name: not preceded by a letter or digit, not followed by a lower-case letter (so a word it only starts,
  * in the upstream's own language, is left alone). `after` widens what may not follow, for the capitals form.
  */
-const segment = (name, after = 'a-z', flags = 'gu') => new RegExp(`(?<![A-Za-z0-9])${name}(?![${after}])`, flags)
+const segment = (name, after = 'a-z') => new RegExp(`(?<![A-Za-z0-9])${name}(?![${after}])`, 'gu')
 
 function normalize(text, theirPath, ourPath, ctx) {
   const { brand, map, checkout, imports, directories } = ctx
@@ -207,13 +202,13 @@ for (const pkg of PACKAGES) {
   }
 
   // No ported file keeps the upstream name (the owner's rule: it appears only in LICENSE files).
-  const named = ctx?.brand ?? brandFromLicense(dir)
+  const named = ctx?.brand ?? upstreamNameFromLicense(dir)
   if (named === undefined) fail(`${pkg}: its LICENSE does not say which upstream project it is derived from`)
   for (const path of ported) {
     const entry = record.files[path] ?? {}
     const text = isText(path)
     const ours = text ? read(join(dir, path)) : readFileSync(join(dir, path))
-    if (named !== undefined && text && segment(named, 'a-z', 'iu').test(ours)) fail(`${pkg}: ${path} still names the upstream project (rename it, or extend normalize)`)
+    if (named !== undefined && text) for (const hit of upstreamNameIn(ours, named)) fail(`${pkg}: ${path}:${String(hit.line)} still names the upstream project (rename it, or extend normalize)`)
     if (ctx !== undefined) {
       const theirPath = ctx.map.upstreamOf(path)
       if (theirPath === undefined || !existsSync(join(checkout, theirPath))) { fail(`${pkg}: ${path}: its upstream file does not exist in the checkout`); continue }
