@@ -48,6 +48,7 @@ They are enabled as they are ported.
 | --- | --- |
 | Run something in five minutes | [Getting started](getting-started/basic.md) |
 | Run the app as a desktop app | [Desktop](getting-started/desktop.md) |
+| Run it on a server | [Deploy](getting-started/deploy.md) |
 | Look up a call | [API](api/index.md), [Routing](api/routing.md), [Context](api/context.md), [Request](api/request.md), [API summary](api/summary.md) |
 | Understand the design | [Concepts](concepts/motivation.md) |
 | Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md), [Forms, sessions and a database](guides/forms-and-sessions.md) |
