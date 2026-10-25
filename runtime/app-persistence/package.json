@@ -1,6 +1,6 @@
 {
   "name": "@webboxes/app-persistence",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Saving an ACRYL app to its own git repository: the secret check, the private/public guard, commit and push, and connecting a remote through the user's own gh login. Host-independent.",
   "license": "MIT",
   "publishConfig": {
