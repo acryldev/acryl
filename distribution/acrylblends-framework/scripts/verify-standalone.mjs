@@ -14,7 +14,7 @@
  */
 
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -35,8 +35,8 @@ const freePort = () => new Promise((resolve, reject) => {
   probe.on('error', reject)
 })
 
-/** Start a server process, wait for `GET /` on `port` to answer, and return the body; the process is always stopped. */
-async function serveAndFetch(command, args, port, env = {}) {
+/** Start a server process, wait for `GET /` on `port` to answer, run `use` with that first answer, and always stop the process. */
+async function withServer(command, args, port, env, use) {
   const child = spawn(command, args, { cwd: app, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] })
   let output = ''
   child.stdout.on('data', (chunk) => { output += chunk })
@@ -44,17 +44,47 @@ async function serveAndFetch(command, args, port, env = {}) {
   try {
     for (let attempt = 0; attempt < 150; attempt += 1) {
       if (child.exitCode !== null) throw new Error(`${command} exited (${String(child.exitCode)}): ${output}`)
+      let first
       try {
         const response = await fetch(`http://127.0.0.1:${String(port)}/`)
-        return { status: response.status, body: await response.text() }
+        first = { status: response.status, body: await response.text() }
       } catch {
         await new Promise(resolve => setTimeout(resolve, 100))
+        continue
       }
+      return await use(first)
     }
     throw new Error(`${command} never answered on port ${String(port)}: ${output}`)
   } finally {
     child.kill('SIGTERM')
     await new Promise(resolve => { if (child.exitCode !== null) resolve(); else child.once('exit', resolve) })
+  }
+}
+
+/** Start a server process, wait for `GET /` on `port` to answer, and return the body; the process is always stopped. */
+const serveAndFetch = (command, args, port, env = {}) => withServer(command, args, port, env, first => first)
+
+/** Google Chrome or Chromium, for the check of client components in a real browser: `CHROME_PATH`, else the usual install places. */
+function findChrome() {
+  const candidates = [
+    process.env.CHROME_PATH,
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    'google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser',
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  ]
+  return candidates.find(candidate => candidate !== undefined && candidate !== '' && spawnSync(candidate, ['--version'], { stdio: 'ignore', timeout: 30_000 }).status === 0)
+}
+
+/** The page's DOM after its scripts ran, from headless Chrome with a fresh profile of its own (never the user's). */
+function chromeDom(chrome, url) {
+  const profile = mkdtempSync(join(tmpdir(), 'acrylblends-chrome-'))
+  try {
+    const args = ['--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check', `--user-data-dir=${profile}`, '--virtual-time-budget=10000', '--dump-dom', url]
+    // Ubuntu 24.04 blocks the unprivileged user namespaces Chrome's sandbox needs; this loads only the local test page.
+    if (process.platform === 'linux') args.unshift('--no-sandbox')
+    return execFileSync(chrome, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120_000 })
+  } finally {
+    rmSync(profile, { recursive: true, force: true })
   }
 }
 
@@ -111,6 +141,87 @@ try {
   const rendered = run(process.execPath, ['--input-type=module', '-e', "import { jsx } from 'acrylblends/jsx'; process.stdout.write(String(jsx('h1', { class: 'title' }, 'Acryl!')))"], app)
   if (rendered !== '<h1 class="title">Acryl!</h1>') throw new Error(`acrylblends/jsx rendered ${JSON.stringify(rendered)}`)
   report('node (server JSX from acrylblends/jsx)', 'renders <h1 class="title">Acryl!</h1>')
+
+  // Client components without a bundler, as the client components guide sets them up: a page with one script tag, `clientModules` serving
+  // src/client, an island using the DOM renderer and the typed client. A real browser runs it in development (compiled on request), then in
+  // production from the folder `buildClientModules` wrote, with typescript gone as `npm ci --omit=dev` leaves it.
+  mkdirSync(join(app, 'src', 'client', 'parts'), { recursive: true })
+  // The routes and their type live apart from the Node entry, so the browser code imports the type without Node's types.
+  writeFileSync(join(app, 'app.ts'), [
+    "import { Acryl } from 'acrylblends'",
+    'export const app = new Acryl()',
+    "  .get('/', (c) => c.html('<!doctype html><div id=\"counter\"></div><p id=\"greeting\"></p>'",
+    "    + '<script type=\"module\" src=\"/client/counter.tsx\"></script><script type=\"module\" src=\"/client/press.ts\"></script>'))",
+    "  .get('/api/hello', (c) => c.json({ hello: 'browser' }))",
+    'export type AppType = typeof app',
+    '',
+  ].join('\n'))
+  writeFileSync(join(app, 'site.ts'), [
+    "import { Acryl } from 'acrylblends'",
+    "import { clientModules, serve } from 'acrylblends/node-server'",
+    "import { app } from './app.ts'",
+    "const site = new Acryl().route('/', app).route('/client', clientModules({ root: 'src/client', compiled: 'dist/client' }))",
+    "serve({ fetch: site.fetch, port: Number(process.env.PORT), hostname: '127.0.0.1' })",
+    '',
+  ].join('\n'))
+  writeFileSync(join(app, 'src', 'client', 'counter.tsx'), [
+    "import { render, useState } from 'acrylblends/jsx/dom'",
+    "import { hc } from 'acrylblends/client'",
+    "import type { AppType } from '../../app.ts'",
+    "import { label } from './parts/label.ts'",
+    'const Counter = () => {',
+    '  const [count, setCount] = useState(0)',
+    '  return <button onClick={() => setCount(count + 1)}>{label(count)}</button>',
+    '}',
+    "render(<Counter />, document.getElementById('counter')!)",
+    'const client = hc<AppType>(location.origin)',
+    "const { hello } = await (await client.api.hello.$get()).json()",
+    "document.getElementById('greeting')!.textContent = `hello ${hello}`",
+    '',
+  ].join('\n'))
+  writeFileSync(join(app, 'src', 'client', 'parts', 'label.ts'), 'export const label = (count: number): string => `Count ${count}`\n')
+  // The test's own driver: two clicks once the island rendered, then a mark on the page.
+  writeFileSync(join(app, 'src', 'client', 'press.ts'), [
+    'const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))',
+    "while (document.querySelector('#counter button') === null || document.getElementById('greeting')!.textContent === '') await pause(10)",
+    "for (let at = 0; at < 2; at += 1) { document.querySelector<HTMLButtonElement>('#counter button')!.click(); await pause(50) }",
+    "document.body.dataset.done = 'yes'",
+    '',
+  ].join('\n'))
+  const islandRan = (dom) => dom.includes('<button>Count 2</button>') && dom.includes('<p id="greeting">hello browser</p>') && dom.includes('data-done="yes"')
+  const chrome = findChrome()
+  if (chrome === undefined && process.env.CI !== undefined) throw new Error('no Google Chrome or Chromium found (set CHROME_PATH); CI needs one for the client components check')
+  const browserCheck = async (name, env) => {
+    const port = await freePort()
+    await withServer(process.execPath, ['site.ts'], port, { ...env, PORT: String(port) }, async () => {
+      const module = await fetch(`http://127.0.0.1:${String(port)}/client/counter.tsx`)
+      if (module.status !== 200 || module.headers.get('content-type') !== 'text/javascript; charset=utf-8') throw new Error(`${name}: /client/counter.tsx answered ${String(module.status)} ${String(module.headers.get('content-type'))}: ${await module.text()}`)
+      if (chrome === undefined) { report(name, 'module served; browser skipped: no Google Chrome or Chromium installed'); return }
+      const dom = chromeDom(chrome, `http://127.0.0.1:${String(port)}/`)
+      if (!islandRan(dom)) throw new Error(`${name}: the island did not run in the browser: ${dom}`)
+      report(name, 'headless Chrome: the island rendered, two clicks counted to 2, the typed client fetched')
+    })
+  }
+  await browserCheck('client components, development (compiled on request)', { NODE_ENV: 'development' })
+  // The documented build step, run the way an app's package.json script runs it.
+  run(process.execPath, ['--input-type=module', '-e', "import { buildClientModules } from 'acrylblends/node-server'; buildClientModules({ root: 'src/client', outDir: 'dist/client' })"], app)
+  unlinkSync(join(app, 'node_modules', 'typescript'))
+  await browserCheck('client components, production (built folder, no typescript installed)', { NODE_ENV: 'production' })
+  const devPort = await freePort()
+  await withServer(process.execPath, ['site.ts'], devPort, { NODE_ENV: 'development', PORT: String(devPort) }, async () => {
+    const response = await fetch(`http://127.0.0.1:${String(devPort)}/client/counter.tsx`)
+    const text = await response.text()
+    if (response.status !== 500 || !text.includes('npm install --save-dev typescript')) throw new Error(`development without typescript answered ${String(response.status)} ${text}`)
+  })
+  report('client components, development without typescript', '500 naming npm install --save-dev typescript')
+  symlinkSync(realpathSync(join(root, 'node_modules', 'typescript')), join(app, 'node_modules', 'typescript'), 'junction')
+  // The editor's view of the client folder: its own tsconfig.json, the DOM library and the DOM runtime, no Node types.
+  writeFileSync(join(app, 'src', 'client', 'tsconfig.json'), `${JSON.stringify({
+    compilerOptions: { target: 'ES2024', lib: ['ES2024', 'DOM', 'DOM.Iterable'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, jsx: 'react-jsx', jsxImportSource: 'acrylblends/jsx/dom', types: [] },
+    include: ['**/*.ts', '**/*.tsx'],
+  }, null, 2)}\n`)
+  run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', join('src', 'client', 'tsconfig.json')], app)
+  report('client components, types (src/client/tsconfig.json: DOM library, no Node types, the typed client)', 'the island typechecks')
 
   if (installed('bun')) {
     const port = await freePort()

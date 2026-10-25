@@ -1,10 +1,27 @@
 import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'tsdown'
+import { defineConfig, type UserConfig } from 'tsdown'
 import { SUBPATHS, entryName } from './subpaths.mjs'
 
 const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url))
 
-export default defineConfig({
+/**
+ * A browser module a page loads directly (`clientModules` from `acrylblends/node-server` serves it from `lib/browser/`): its own build, so
+ * it is one file with no imports.
+ */
+const browser = (name: string): UserConfig => ({
+  name: `acrylblends-framework browser/${name}`,
+  entry: { [`browser/${name}`]: here(`../../plugins/acryl-router/src/browser/${name}.ts`) },
+  outDir: 'lib',
+  format: 'esm',
+  platform: 'browser',
+  target: 'es2022',
+  fixedExtension: false,
+  dts: false,
+  clean: false,
+  sourcemap: false,
+})
+
+export default defineConfig([{
   name: 'acrylblends-framework',
   entry: Object.fromEntries(Object.entries(SUBPATHS).map(([subpath, source]) => [entryName(subpath), source])),
   outDir: 'lib',
@@ -18,6 +35,7 @@ export default defineConfig({
     'acryl-router': here('./src/index.ts'),
   },
   dts: { tsconfig: here('./tsconfig.json') },
-  clean: true,
+  // `scripts/clean.mjs` empties lib once: the configs build in parallel, so one config's clean could remove another's output.
+  clean: false,
   sourcemap: false,
-})
+}, browser('jsx-dom'), browser('client')])

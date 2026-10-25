@@ -51,7 +51,7 @@ They are enabled as they are ported.
 | Run it on a server | [Deploy](getting-started/deploy.md) |
 | Look up a call | [API](api/index.md), [Routing](api/routing.md), [Context](api/context.md), [Request](api/request.md), [API summary](api/summary.md) |
 | Understand the design | [Concepts](concepts/motivation.md) |
-| Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md), [Forms, sessions and a database](guides/forms-and-sessions.md) |
+| Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md), [Forms, sessions and a database](guides/forms-and-sessions.md), [Client components without a bundler](guides/client-modules.md) |
 | Use Acryl inside a Cordis app | [Acryl in a Cordis app](cordis/acryl-in-a-cordis-app.md), [Plugin lifecycle](cordis/plugin-lifecycle.md), [Mounting](cordis/mounting.md) |
 | Move from the 0.3 router calls | [Migration from 0.3](cordis/migration-from-0-3.md) |
 | Move from the 0.4 names (`App`) | [Migration from 0.4](cordis/migration-from-0-4.md) |

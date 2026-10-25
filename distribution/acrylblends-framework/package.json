@@ -391,7 +391,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsdown && node scripts/exports.mjs --check",
+    "build": "node scripts/clean.mjs && tsdown && node scripts/exports.mjs --check",
     "typecheck": "tsc -p tsconfig.json",
     "test": "tsc -p tsconfig.tests.json && node --test tests/*.test.mjs tests/*.test.ts",
     "verify:standalone": "node scripts/verify-standalone.mjs",
