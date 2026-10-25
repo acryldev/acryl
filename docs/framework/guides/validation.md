@@ -213,7 +213,7 @@ const route = app.post(
   validator('form', (value, c) => {
     const parsed = schema.safeParse(value)
     if (!parsed.success) {
-      return c.text('Invalid!', 401)
+      return c.text('Invalid!', 400)
     }
     return parsed.data
   }),
