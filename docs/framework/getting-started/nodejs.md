@@ -80,26 +80,28 @@ app.get('/', (c) => c.text('Hello Node.js!'))
 serve(app)
 ```
 
-If you want to gracefully shut down the server, write it like this:
+`serve()` listens on `127.0.0.1` unless you pass `hostname`, so a development server is reachable from this machine only, not from the rest
+of the network. See [Listen on another interface](#listen-on-another-interface).
+
+To shut the server down gracefully, stop taking requests, let the ones in flight finish, and exit after a bounded time, so a connection
+that never ends cannot keep the process alive:
 
 ```ts
 const server = serve(app)
 
-// graceful shutdown
-process.on('SIGINT', () => {
-  server.close()
-  process.exit(0)
-})
-process.on('SIGTERM', () => {
-  server.close((err) => {
-    if (err) {
-      console.error(err)
-      process.exit(1)
-    }
-    process.exit(0)
-  })
-})
+function shutdown(): void {
+  server.close(() => process.exit(0))
+  // Keep-alive connections with no request in flight would otherwise hold close() open until they time out.
+  server.closeIdleConnections()
+  setTimeout(() => process.exit(1), 10_000).unref()
+}
+process.once('SIGINT', shutdown)
+process.once('SIGTERM', shutdown)
 ```
+
+`serve(app)` and `serve({ fetch, ... })` return an `http.Server`, which has `closeIdleConnections()`. With `createServer` from
+`node:https` the result is an `https.Server`, and with `node:http2` an `Http2Server` or `Http2SecureServer`, which has no such method;
+there, `server.close()` waits for the open sessions.
 
 > **Note.** On Node.js, `serve()` wraps the `node:http` module and returns the underlying server instance, so closing it is up to you. Bun serves Fetch handlers natively and manages the server itself, which is why its guide doesn't include this step.
 
@@ -135,6 +137,22 @@ serve({
   port: 8787,
 })
 ```
+
+## Listen on another interface
+
+`serve()` binds `127.0.0.1` when `hostname` is not given. That is right on a developer machine and behind a reverse proxy on the same
+host. Inside a container, or when other machines should reach the app directly, bind every interface on purpose:
+
+```ts
+serve({
+  fetch: app.fetch,
+  port: 3000,
+  hostname: '0.0.0.0', // or '::' for IPv6 and IPv4
+})
+```
+
+> **Note.** Many Node servers listen on every interface by default. `serve()` does not, so starting a development server never exposes
+> the app to the local network by accident.
 
 ## WebSocket
 
@@ -311,7 +329,9 @@ bun run build
 
 ### Dockerfile
 
-Here is an example of a Node.js Dockerfile.
+Here is an example of a Node.js Dockerfile. A container's published port reaches the app only when it listens on every interface, so
+the app reads its hostname from the environment, as the templates do (`hostname: process.env.HOST || '127.0.0.1'`), and the image
+sets `HOST=0.0.0.0`.
 
 ```Dockerfile
 FROM node:22-alpine AS base
@@ -338,6 +358,7 @@ COPY --from=builder --chown=acrylblends:nodejs /app/dist /app/dist
 COPY --from=builder --chown=acrylblends:nodejs /app/package.json /app/package.json
 
 USER acrylblends
+ENV HOST=0.0.0.0
 EXPOSE 3000
 
 CMD ["node", "/app/dist/index.js"]

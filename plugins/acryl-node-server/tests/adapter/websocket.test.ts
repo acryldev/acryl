@@ -58,8 +58,10 @@ describe('WebSocket', () => {
     try {
       const ws = new WebSocket(`ws://127.0.0.1:${address.port}/ws`)
       await new Promise<void>((resolve, reject) => {
-        ws.once('unexpected-response', (_, response) => {
+        // With this listener, ws leaves the request to the caller: abort it, or its socket keeps server.close() waiting.
+        ws.once('unexpected-response', (request, response) => {
           expect(response.statusCode).toBe(200)
+          request.destroy()
           resolve()
         })
         ws.once('open', () => reject(new Error('WebSocket must not be upgraded')))
@@ -125,7 +127,8 @@ describe('WebSocket', () => {
       const ws = new WebSocket(`ws://127.0.0.1:${address.port}/ws`)
       const responseHeaders = await new Promise<Record<string, string | string[] | undefined>>(
         (resolve, reject) => {
-          ws.once('unexpected-response', (_, response) => {
+          ws.once('unexpected-response', (request, response) => {
+            request.destroy()
             resolve(response.headers)
           })
           ws.once('open', () => reject(new Error('WebSocket must not be upgraded')))

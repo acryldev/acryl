@@ -62,11 +62,13 @@
     },
     "src/adapter/server.ts": {
       "upstreamSha256": "d9cde30a3e02b8ea1be4461bb13f9b486c750542564d9bd8c2def3d6e93e52ec",
-      "sha256": "2ea21c3646da840554cb6a2783d650a3448cd62ca4c6ce4cbfbafe3ed6626a3a"
+      "sha256": "70d6559721dc77ef9776e95a86b8a865645b2c6941d3c15d585b52f6697e31e5",
+      "deviation": "serve() listens on 127.0.0.1 when no hostname is given (exported as DEFAULT_HOSTNAME), where upstream passes undefined and so listens on every interface: a development server started with `npm run dev` was reachable from the whole local network, which the Cordis adapter (acryl-node-server) never allowed; `hostname: '0.0.0.0'` opts in. serve() and createAdaptorServer() are overloaded on the createServer option, so the default HTTP/1 call returns http.Server (closeIdleConnections() type-checks) and https, HTTP/2 and secure HTTP/2 return their own server types; upstream returns the union for every call."
     },
     "src/adapter/types.ts": {
       "upstreamSha256": "216c3a940fa27a28c98a0768e3d22112a6c252794eaac110ff32823dd3b2cea8",
-      "sha256": "dd8f92eea0290d3359700c27ca2a3a8c061946a97f474e83b9c7a19f2fd6bb87"
+      "sha256": "8d62b24fad3fef55fc5f82f34d714944e6aa4aa47a70643bca9021d794b98a7c",
+      "deviation": "The overload option types HttpOptions, HttpsOptions, Http2Options and SecureHttp2Options; Options is the same union, built from one BaseOptions; hostname documents the 127.0.0.1 default."
     },
     "src/adapter/url.ts": {
       "upstreamSha256": "0e94a815326023047282daf26f02ff5181ff8d2778fc3357f663346e17fdea10",
@@ -220,8 +222,8 @@
     },
     "tests/adapter/server.test.ts": {
       "upstreamSha256": "5d268474b4d8c887cea01e7d752942da60fbc3a7749f02c4a37c8ad80c9900f7",
-      "sha256": "fee4d00fd7d3272a8f87678c5a7e9cd4c33d67195dedce8b6056c7efd8e4d48a",
-      "deviation": "The renamed body 'Hello Acryl!' is 12 bytes: its content-length and etag expectations are recomputed for it. The /readable-stream route enqueues its second chunk only after the client has received the first: upstream enqueues both back to back, and TCP on Windows joins the two writes into one read, so the two-chunk expectation depended on timing."
+      "sha256": "fbb2a2b9321f1f1a97a6f06cc8aacf3ab1b139e4100473d0bb801a82f5bcde44",
+      "deviation": "The renamed body 'Hello Acryl!' is 12 bytes: its content-length and etag expectations are recomputed for it. The /readable-stream route enqueues its second chunk only after the client has received the first: upstream enqueues both back to back, and TCP on Windows joins the two writes into one read, so the two-chunk expectation depended on timing. The ipv6 test passes hostname '::' and a free port: serve() listens on 127.0.0.1 unless told otherwise."
     },
     "tests/adapter/setup.ts": {
       "upstreamSha256": "8a6d290d6676db280ef22fffc4d7847f768cbadcf445391213273b970bd6d6af",
@@ -245,7 +247,8 @@
     },
     "tests/adapter/websocket.test.ts": {
       "upstreamSha256": "8dd970d72565d8d1670583d11b4037eecebed8bc470186562fd1dedc02a4c939",
-      "sha256": "271a5342c5c58c0063ed8afc82e4a0081ea5751c6df5434baabb9bbb4e99c9f2"
+      "sha256": "3191b7fcf46111ec9ad62337658d6ce65cb47566ef50ed0838663a954c889b9c",
+      "deviation": "The two tests that listen for 'unexpected-response' destroy the client request in that listener, as the ws documentation requires once one is added: upstream leaves it open, and its socket kept server.close() waiting past the 5 s test timeout when the whole suite ran under load."
     }
   }
 }

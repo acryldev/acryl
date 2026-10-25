@@ -68,15 +68,27 @@ export type ServerOptions =
   | createHttp2Options
   | createSecureHttp2Options
 
-export type Options = {
+type BaseOptions = {
   fetch: FetchCallback
   overrideGlobalObjects?: boolean
   autoCleanupIncoming?: boolean
   port?: number
+  /** The interface to listen on; `serve` uses `127.0.0.1` when it is not given. */
   hostname?: string
   websocket?: {
     server: WebSocketServerLike
   }
-} & ServerOptions
+}
+
+export type Options = BaseOptions & ServerOptions
+
+/** Options for the default HTTP/1 server: `serve` and `createAdaptorServer` return an `http.Server`. */
+export type HttpOptions = BaseOptions & createHttpOptions
+/** Options naming `https.createServer`: an `https.Server`. */
+export type HttpsOptions = BaseOptions & { serverOptions?: HttpsServerOptions, createServer: typeof createHttpsServer }
+/** Options naming `http2.createServer`: an `Http2Server`. */
+export type Http2Options = BaseOptions & { serverOptions?: Http2ServerOptions, createServer: typeof createHttp2Server }
+/** Options naming `http2.createSecureServer`: an `Http2SecureServer`. */
+export type SecureHttp2Options = BaseOptions & { serverOptions?: SecureHttp2ServerOptions, createServer: typeof createSecureHttp2Server }
 
 export type CustomErrorHandler = (err: unknown) => void | Response | Promise<void | Response>

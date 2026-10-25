@@ -29,6 +29,9 @@ root.inject(['nodeServer'], ctx => {
 | `port` | `0` | port to listen on; 0 lets the system choose |
 | `scan` | `20` | how many further ports to try when the configured one is taken |
 
+Without Cordis, `serve()` from `acrylblends/node-server` binds the same default, `127.0.0.1`; pass `hostname: '0.0.0.0'` to accept other
+machines (see [Node.js](../getting-started/nodejs.md#listen-on-another-interface)).
+
 The plugin becomes active once the server listens, so a plugin that injects `nodeServer` can rely on `ctx.nodeServer.url` and
 `ctx.nodeServer.port`. A failure to bind fails the plugin.
 

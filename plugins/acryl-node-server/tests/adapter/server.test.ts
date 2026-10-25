@@ -1305,8 +1305,11 @@ describe('serve', () => {
     expect(response.status).toBe(200)
   })
 
-  it('should serve on ipv6', async () => {
-    const response = await fetch('http://[::1]:3000')
+  it('should serve on ipv6 when asked with hostname ::', async () => {
+    const port = await new Promise<number>((resolve) => {
+      serve({ fetch: app.fetch, hostname: '::', port: 0 }, (info) => resolve(info.port))
+    })
+    const response = await fetch(`http://[::1]:${port}`)
     expect(response.status).toBe(200)
   })
 })

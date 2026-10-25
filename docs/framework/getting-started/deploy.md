@@ -5,7 +5,7 @@ The snippets are examples to adapt: check them against your own server before re
 
 ## What the template already does
 
-- **Port and address.** `src/index.ts` reads `PORT` (default 3000) and `HOST` (default `127.0.0.1`). The default is local on purpose: `serve()` without a `hostname` listens on every interface. In a container, set `HOST=0.0.0.0`.
+- **Port and address.** `src/index.ts` reads `PORT` (default 3000) and `HOST` (default `127.0.0.1`). The default is local on purpose, and `serve()` without a `hostname` binds `127.0.0.1` too (from acrylblends 0.7.2; earlier versions listened on every interface). In a container, set `HOST=0.0.0.0`.
 - **Graceful stop.** On `SIGTERM` and `SIGINT` the server stops taking requests, closes idle connections, lets the requests in flight finish, closes the database (the `notes` template) and exits with 0. A connection that never ends cannot keep it alive past 10 seconds (it then exits with 1).
 - **Errors.** An error answers `500 Internal Server Error` with no stack and no detail; the stack goes to the log (standard error).
 - **Cookies.** The `notes` template marks its session cookie `Secure` when the request is HTTPS, or when `TRUST_PROXY=1` and the proxy sends `X-Forwarded-Proto: https`.
