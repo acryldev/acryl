@@ -40,6 +40,20 @@ describe('openDb', () => {
     }
   })
 
+  it('opens :memory: (migrations included) and creates a nested parent folder', async () => {
+    const dir = await app({ '001-notes.sql': 'CREATE TABLE notes (body TEXT);\n' })
+    const memory = await openDb({ path: ':memory:', migrations: join(dir, 'migrations') })
+    await memory.db.run('INSERT INTO notes (body) VALUES (?)', 'kept')
+    expect(await memory.db.all('SELECT body FROM notes')).toEqual([{ body: 'kept' }])
+    await memory.close()
+    expect(existsSync(join(dir, ':memory:'))).toBe(false)
+    const nested = join(dir, 'one', 'two', 'three', 'data.sqlite')
+    const opened = await openDb({ path: nested })
+    expect(await opened.db.get('PRAGMA foreign_keys')).toEqual({ foreign_keys: 1 })
+    await opened.close()
+    expect(existsSync(nested)).toBe(true)
+  })
+
   it('releases the file on close, with an empty WAL, and a second close does nothing', async () => {
     const dir = await app()
     const path = join(dir, 'data.sqlite')

@@ -83,4 +83,12 @@ create-acrylblends templates are plain acrylblends apps without Cordis, so they 
 - The conformance suite allows a provider that creates `_migrations` when it opens: the version must then read 0.
 - Blends maps these as `acrylblends/db` (`acryl-db`) and `acrylblends/db/sqlite` (`acryl-db-sqlite/open`). Slice 2's
   `acryl-db-postgres` gets the same `openDb` shape.
-
+- The facts Blends' templates rely on, each with a test (coordinator, 2026-10-26):
+  - `openDb` resolves `{ db, close }`;
+  - `:memory:` works;
+  - the parent folder is created;
+  - `PRAGMA foreign_keys = ON` is set, so `ON DELETE CASCADE` works;
+  - `INSERT ... RETURNING` answers through `get`;
+  - the plain entry exports `type Db`, `DbExecutor` and `SqlValue`.
+- The conformance suite now covers foreign keys (a cascade, and an orphan insert refused) and `RETURNING`, so Postgres in slice 2 must
+  meet them too. Slice 2 also adds `?` inside a string literal and inside a comment, both left untranslated.

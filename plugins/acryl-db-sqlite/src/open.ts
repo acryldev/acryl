@@ -1,15 +1,18 @@
 /**
  * The plain way to open the SQLite provider, for code without Cordis (an acrylblends app): `openDb({ path, migrations })` opens one
- * `node:sqlite` file with the ported facade's settings (WAL, `synchronous = NORMAL`, a busy timeout), applies the numbered migrations, and
- * resolves the `db` port with the function that closes it. The Cordis plugin is a thin wrapper over this, so both run one code path.
+ * `node:sqlite` file with the ported facade's settings (WAL, `synchronous = NORMAL`, a busy timeout) and foreign keys enforced, applies the
+ * numbered migrations, and resolves the `db` port with the function that closes it. The Cordis plugin is a thin wrapper over this, so both
+ * run one code path.
  * This entry imports nothing from Cordis.
  */
 
 import { applyMigrations, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acryl-db'
 import { openNodeSqliteDatabase } from './facade/node.ts'
 
+export type { Db, DbExecutor, SqlValue } from 'acryl-db'
+
 export interface OpenDbOptions {
-  /** The database file. Its folder is created if missing. */
+  /** The database file, its folder created if missing; `:memory:` for a database that lives until `close`. */
   readonly path: string
   /** A folder of `NNN-name.sql` files numbered from 1, as a path or a file URL, applied in order before `openDb` resolves. */
   readonly migrations?: string | URL
@@ -38,6 +41,9 @@ export async function openDb(options: OpenDbOptions): Promise<OpenDb> {
     ...(options.walAutoCheckpointPages === undefined ? {} : { walAutoCheckpointPages: options.walAutoCheckpointPages }),
   })
   try {
+    // Off by default in SQLite, per connection, and ignored inside a transaction: set here, before the migrations' transaction. The port
+    // promises it (`ON DELETE CASCADE` works on every provider).
+    await database.exec('PRAGMA foreign_keys = ON')
     await applyMigrations(database, migrations, { table: MIGRATIONS_TABLE })
   } catch (error) {
     await database.close()

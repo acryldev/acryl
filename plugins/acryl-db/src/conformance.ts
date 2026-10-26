@@ -3,6 +3,8 @@
  * (`describeDbConformance('acryl-db-sqlite', open)` in its own tests); the SQL is the portable subset, with `?` bindings, so the same
  * suite runs unchanged on SQLite and Postgres.
  *
+ * Foreign keys are enforced (`ON DELETE CASCADE` works) and `INSERT ... RETURNING` answers through `get`, on every provider.
+ *
  * The transaction cases are the contract the SQL facade documents (and its SQLite tests check): other calls and transactions wait for
  * an active transaction, a rejected callback rolls back and rejects with its own error, and a handle is dead once its transaction settles.
  */
@@ -70,6 +72,26 @@ export function describeDbConformance(provider: string, open: () => Promise<DbUn
       const db = await fresh()
       await db.exec('CREATE TABLE multi_probe (value INTEGER); INSERT INTO multi_probe (value) VALUES (1); INSERT INTO multi_probe (value) VALUES (2);')
       expect(await db.all('SELECT value FROM multi_probe ORDER BY value')).toEqual([{ value: 1 }, { value: 2 }])
+    })
+
+    it('enforces foreign keys: ON DELETE CASCADE removes the children, and an orphan insert is refused', async () => {
+      const db = await fresh()
+      await db.exec('CREATE TABLE fk_parent (id INTEGER PRIMARY KEY); CREATE TABLE fk_child (id INTEGER PRIMARY KEY, parent INTEGER NOT NULL REFERENCES fk_parent (id) ON DELETE CASCADE)')
+      await db.run('INSERT INTO fk_parent (id) VALUES (?), (?)', 1, 2)
+      await db.run('INSERT INTO fk_child (id, parent) VALUES (?, ?), (?, ?), (?, ?)', 10, 1, 11, 1, 20, 2)
+      expect(await db.run('DELETE FROM fk_parent WHERE id = ?', 1)).toEqual({ changes: 1 })
+      expect(await db.all('SELECT id FROM fk_child ORDER BY id')).toEqual([{ id: 20 }])
+      await expect(db.run('INSERT INTO fk_child (id, parent) VALUES (?, ?)', 30, 99)).rejects.toThrow()
+      expect(await db.all('SELECT id FROM fk_child ORDER BY id')).toEqual([{ id: 20 }])
+    })
+
+    it('returns the inserted row through get with INSERT ... RETURNING, inside a transaction too', async () => {
+      const db = await fresh()
+      await db.exec('CREATE TABLE returning_probe (id INTEGER PRIMARY KEY, body TEXT NOT NULL)')
+      expect(await db.get('INSERT INTO returning_probe (id, body) VALUES (?, ?) RETURNING id, body', 1, 'first')).toEqual({ id: 1, body: 'first' })
+      const second = await db.transaction(tx => tx.get<{ id: number }>('INSERT INTO returning_probe (id, body) VALUES (?, ?) RETURNING id', 2, 'second'))
+      expect(second).toEqual({ id: 2 })
+      expect(await db.all('SELECT body FROM returning_probe ORDER BY id')).toEqual([{ body: 'first' }, { body: 'second' }])
     })
 
     it('commits work done through the transaction handle and resolves the callback value', async () => {
