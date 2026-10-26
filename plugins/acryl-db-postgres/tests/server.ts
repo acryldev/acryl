@@ -7,9 +7,11 @@
  *   afterwards, so the server's `public` schema and other data are never touched.
  */
 
+import { readFileSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import pg from 'pg'
+import { inject } from 'vitest'
 
 export interface TestServer {
   /** A connection string to an empty database, for one case. */
@@ -23,7 +25,8 @@ const REAL = process.env['ACRYL_DB_POSTGRES_URL']
 
 export async function startTestServer(): Promise<TestServer> {
   if (REAL !== undefined && REAL !== '') return realServer(REAL)
-  const db = await PGlite.create()
+  // The cluster `global-setup.ts` created once for the run: loading it skips initdb, most of a fresh PGlite's start.
+  const db = await PGlite.create({ loadDataDir: new Blob([readFileSync(inject('pgliteDataDir'))]) })
   // Two: the case's own pool, and the reset between cases.
   const server = new PGLiteSocketServer({ db, port: 0, host: '127.0.0.1', maxConnections: 4 })
   await server.start()
