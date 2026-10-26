@@ -1,3 +1,36 @@
+## 2026-10-26 - the `db` port and its SQLite provider (spec 049 slice 1)
+
+Commits: `271997371c4761bfaa3d13d4dba629406420080c` (the port and the provider), `58dd752c52740098fc713b54d2aba7c2509a05ca` (Data on ci-data), `7abb716b1d69c6a141950359eb60d7a9569cd153` (the conformance spec's temp folders), `23ad6ab1c5012871301c53b3de988a5181e4d48d` (CI builds what the root chains run)
+
+App plugins get a relational database without importing a driver. They declare `inject: ['db']` and take types from `acryl-db`; a provider row serves `db`, so moving from SQLite to Postgres (slice 2) changes a Loader row, not app code.
+
+- **The port (`plugins/acryl-db`):**
+  - The `Db` and `DbExecutor` interfaces: `exec`, `run` (resolves `{ changes }`), `get`, `all`, and `transaction(work)`, whose handle is a `DbExecutor`. There is no `close`: the provider row owns the connection.
+  - Bindings are `?` placeholders on every provider.
+  - `applyMigrations` runs every pending migration in one transaction and records the version in `_migrations`. Its SQL is portable to Postgres.
+  - `readMigrationFiles` reads `001-name.sql`, `002-...`, numbered from 1 with no gaps, and names any misnamed or misnumbered file.
+  - `acryl-db/conformance` (`describeDbConformance`) is the suite every provider passes, in portable SQL.
+- **The provider (`plugins/acryl-db-sqlite`):** one function plugin; its row id is the package name.
+  - It opens a `node:sqlite` file with the ported facade's settings: WAL, `synchronous = NORMAL`, and a 5 s busy timeout.
+  - The default file is `data.sqlite` in the app home, read from the optional `appInstance` service; without one, `path` is required. Relative paths resolve from the Loader's base URL.
+  - One effect opens the file, migrates it and provides `db`. Unloading withdraws `db` first, then closes the file.
+- **Ported, with provenance:** the SQLite facade of chord, in pi, at `d5b3de22d0e24a3e9c38a9410d3329b099717283` (MIT, notice in the two LICENSE files). Ported: `database.ts`, `migrations.ts` and `schema.ts` into the port; `node.ts` and chord's node and migration tests into the provider.
+  - `provenance.json` gives a reason for every deviation: the names (`Db`, `DbExecutor`, `SqlValue`), `run`'s `{ changes }`, `close` off the port, and the portable migration SQL.
+  - `cloudflare.ts` is not ported. It is a host adapter and comes after slice 3.
+  - `scripts/verify-port.mjs` learns a second upstream project. A record with `"renames": false` takes only the import and path changes.
+- **CI:**
+  - A `Data` workflow runs both packages on Linux, macOS and Windows with Node 22 and 24, path-filtered to the data packages. It also runs on pushes to `ci-data`, because a new workflow cannot be dispatched before it is on main.
+  - The Windows whole-suite job and the Desktop release used to build only `acryl-desktop...` and then typecheck and test every package in the root chains. `acryl-db-sqlite`, outside Desktop's tree, failed the Windows typecheck, and the release would have failed the same way. Both now build from `scripts/root-chain-filters.mjs`: every package the root `typecheck` and `test` chains name, with its dependencies.
+- **A gate miss:** the first local gate ran while the new packages were still untracked. verify-layout reads only tracked files, so its temporary-directory rule never saw the conformance spec, and CI caught it. New files are now added to git before the gate.
+- **Verified:**
+  - The full gate on the rebased head.
+  - The Loader tests:
+    - a consumer stays PENDING until the row provides `db`;
+    - a `path` change moves the consumer to the new file;
+    - ten disable and enable cycles leave the WAL empty and the file free for another connection;
+    - a failed migration fails the row and leaves the file unchanged.
+  - CI, Windows, Desktop on Linux and Data on the branch head (40258510888, 40258513277, 40258515623, and Data's six legs), and on main's push runs after the fast-forward.
+
 ## 2026-10-25 - Desktop on any Electron 44: DSH's profile resolution on Node's public module hooks, and Electron 44.9.3
 
 Commit: `e88126997c285e710303e048c28c65cbf7208f63`
