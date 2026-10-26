@@ -9,8 +9,9 @@
  *
  *   node scripts/verify-standalone.mjs [--keep]
  *
- * Runs offline: the tarball has no dependencies, and the typecheck uses this workspace's TypeScript and Node types. The folder is a fresh
- * temporary directory, removed afterwards unless `--keep`.
+ * The tarball installs offline: it has no dependencies, and the typecheck uses this workspace's TypeScript and Node types. One later step
+ * installs `pg` (an optional peer dependency) and PGlite for the Postgres check, preferring npm's cache. The folder is a fresh temporary
+ * directory, removed afterwards unless `--keep`.
  */
 
 import { execFileSync, spawn, spawnSync } from 'node:child_process'
@@ -261,6 +262,65 @@ try {
   const kvCheck = run(process.execPath, ['kv.mjs'], app).trim()
   if (kvCheck !== 'ok') throw new Error(`the kv entries answered ${JSON.stringify(kvCheck)}`)
   report('kv (acrylblends/kv/json: atomic file, 30 concurrent updates, reopen; acrylblends/kv/db and copyKv: the file imported into SQL)', 'ok')
+
+  // pg is an optional peer dependency: without it the Postgres entry still imports, and openDb names the package to install.
+  const missingPg = run(process.execPath, ['--input-type=module', '-e', [
+    "import { openDb } from 'acrylblends/db/postgres'",
+    "openDb({ url: 'postgres://127.0.0.1:1/none' }).then(() => console.log('opened'), (error) => console.log(error.message))",
+  ].join('\n')], app).trim()
+  if (missingPg !== 'acrylblends/db/postgres needs the pg package: npm install pg') throw new Error(`acrylblends/db/postgres without pg answered ${JSON.stringify(missingPg)}`)
+  report('data (acrylblends/db/postgres without pg installed)', 'imports; openDb names npm install pg')
+
+  // With pg installed, the Postgres entry against PGlite behind its socket server, over the network the way an app reaches Postgres. The one
+  // install here that may use the network: the versions are the workspace's own, so a warm npm cache serves them.
+  const postgresDev = JSON.parse(readFileSync(join(root, '..', '..', 'plugins', 'acryl-db-postgres', 'package.json'), 'utf8')).devDependencies
+  const pgVersion = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).devDependencies.pg
+  run('npm', ['install', '--prefer-offline', '--no-audit', '--no-fund', `pg@${pgVersion}`,
+    ...['@electric-sql/pglite', '@electric-sql/pglite-socket'].map(name => `${name}@${postgresDev[name]}`)], app)
+  // npm prunes what it did not install: the typescript linked above, which the later steps use.
+  symlinkSync(realpathSync(join(root, 'node_modules', 'typescript')), join(app, 'node_modules', 'typescript'), 'junction')
+  mkdirSync(join(app, 'pg-migrations'), { recursive: true })
+  writeFileSync(join(app, 'pg-migrations', '001-notes.sql'), 'CREATE TABLE users (id SERIAL PRIMARY KEY);\nCREATE TABLE notes (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL);\n')
+  writeFileSync(join(app, 'pg-migrations', '002-tags.sql'), 'ALTER TABLE notes ADD COLUMN tags TEXT NOT NULL DEFAULT \'\';\n')
+  writeFileSync(join(app, 'postgres.mjs'), [
+    "import { openDb } from 'acrylblends/db/postgres'",
+    "import { PGlite } from '@electric-sql/pglite'",
+    "import { PGLiteSocketServer } from '@electric-sql/pglite-socket'",
+    "import assert from 'node:assert/strict'",
+    "import { mkdirSync, writeFileSync } from 'node:fs'",
+    'const pglite = await PGlite.create()',
+    "const server = new PGLiteSocketServer({ db: pglite, port: 0, host: '127.0.0.1', maxConnections: 2 })",
+    'await server.start()',
+    'const url = `postgres://postgres@${server.getServerConn()}/postgres`',
+    'try {',
+    "  const first = await openDb({ url, migrations: 'pg-migrations' })",
+    "  const user = await first.db.get('INSERT INTO users DEFAULT VALUES RETURNING id')",
+    "  const note = await first.db.get('INSERT INTO notes (user_id, title) VALUES (?, ?) RETURNING *', user.id, 'hello?')",
+    "  assert.deepEqual({ ...note }, { id: 1, user_id: user.id, title: 'hello?', tags: '' })",
+    "  await assert.rejects(first.db.run('INSERT INTO notes (user_id, title) VALUES (?, ?)', 99, 'orphan'))",
+    "  assert.equal((await first.db.run('DELETE FROM users WHERE id = ?', user.id)).changes, 1)",
+    "  assert.deepEqual(await first.db.all('SELECT id FROM notes'), [])",
+    "  await assert.rejects(first.db.transaction(async (tx) => { await tx.run('INSERT INTO users DEFAULT VALUES'); throw new Error('stop') }), /stop/)",
+    "  assert.deepEqual(await first.db.all('SELECT id FROM users'), [])",
+    "  assert.deepEqual(await first.db.get('SELECT ?::bigint AS big, ?::bytea AS bytes', 2n ** 62n, new Uint8Array([1, 2])), { big: 2n ** 62n, bytes: new Uint8Array([1, 2]) })",
+    '  await first.close(); await first.close()',
+    "  const second = await openDb({ url, migrations: 'pg-migrations' })",
+    "  assert.equal((await second.db.get('SELECT COUNT(*) AS n FROM _migrations')).n, 1)",
+    '  await second.close()',
+    "  mkdirSync('pg-gap', { recursive: true }); writeFileSync('pg-gap/001-a.sql', 'SELECT 1;'); writeFileSync('pg-gap/003-c.sql', 'SELECT 1;')",
+    "  await assert.rejects(openDb({ url, migrations: 'pg-gap' }), /003|002|gap|number/i)",
+    // close ends the pool; the server counts the socket gone once it sees the close, a moment later.
+    '  for (let at = 0; at < 100 && server.getStats().activeConnections !== 0; at += 1) await new Promise(resolve => setTimeout(resolve, 20))',
+    '  assert.equal(server.getStats().activeConnections, 0)',
+    '} finally {',
+    '  await server.stop(); await pglite.close()',
+    '}',
+    "console.log('ok')",
+    '',
+  ].join('\n'))
+  const postgres = run(process.execPath, ['postgres.mjs'], app).trim()
+  if (postgres !== 'ok') throw new Error(`the Postgres entry answered ${JSON.stringify(postgres)}`)
+  report('data (acrylblends/db/postgres with pg, on PGlite over its socket server: migrations once, foreign keys, RETURNING, rollback, bigint and bytes, close, a misnumbered folder refused)', 'ok')
 
   // Client components without a bundler, as the client components guide sets them up: a page with one script tag, `clientModules` serving
   // src/client, an island using the DOM renderer and the typed client. A real browser runs it in development (compiled on request), then in

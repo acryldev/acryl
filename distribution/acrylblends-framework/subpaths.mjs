@@ -15,6 +15,7 @@ const CORE = `${ROUTER}/core`
 const NODE = '../../plugins/acryl-node-server/src/adapter'
 const DB = '../../plugins/acryl-db/src'
 const DB_SQLITE = '../../plugins/acryl-db-sqlite/src'
+const DB_POSTGRES = '../../plugins/acryl-db-postgres/src'
 const KV = '../../plugins/acryl-kv/src'
 const KV_JSON = '../../plugins/acryl-kv-json/src'
 const KV_DB = '../../plugins/acryl-kv-db/src'
@@ -76,6 +77,8 @@ export const SUBPATHS = {
   // Data (spec 049): the `db` port and its plain SQLite opener, without Cordis. `acrylblends/db/sqlite` is the opener, not the Cordis plugin.
   'db': `${DB}/index.ts`,
   'db/sqlite': `${DB_SQLITE}/open.ts`,
+  // The Postgres opener. `pg` is an optional peer dependency, imported when a database opens, so only an app that uses this entry installs it.
+  'db/postgres': `${DB_POSTGRES}/open.ts`,
   // kv (spec 049 slice 3): the port, the JSON-file opener and kv over db, without Cordis. Documents for an app too small for SQL.
   'kv': `${KV}/index.ts`,
   'kv/json': `${KV_JSON}/open.ts`,

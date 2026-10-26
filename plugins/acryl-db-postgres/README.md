@@ -12,6 +12,10 @@ import { openDb } from 'acryl-db-postgres/open'
 const { db, close } = await openDb({ url: process.env.DATABASE_URL!, migrations: new URL('./migrations/', import.meta.url) })
 ```
 
+acrylblends ships this entry as `acrylblends/db/postgres`, with `pg` as an optional peer dependency: an app that uses it runs
+`npm install pg`. `pg` loads when `openDb` runs, so without it `openDb` rejects with "acrylblends/db/postgres needs the pg package: npm
+install pg".
+
 As a Cordis row, `url` defaults to the `DATABASE_URL` environment variable, and relative `migrations` resolve from the app:
 
 ```yaml

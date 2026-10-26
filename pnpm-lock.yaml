@@ -2211,6 +2211,9 @@ importers:
       acryl-router:
         specifier: workspace:*
         version: link:../../plugins/acryl-router
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)

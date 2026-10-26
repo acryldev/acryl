@@ -170,6 +170,24 @@ tested over the wire, through the driver it ships with.
        the rolled-back one;
      - the other 11 tests need no server (the scanner 8, the import closure 1, "ships pg" 1, "no url" 1).
 
+### Slice 2 addendum - `acrylblends/db/postgres`, with `pg` as an optional peer (2026-10-26, Blends and the coordinator)
+
+The distribution maps `acrylblends/db/postgres` to `acryl-db-postgres/open`. `pg` is an optional peer dependency of `acrylblends`
+(`^8.23.1`), so an app that never opens Postgres installs nothing more. Inside the workspace, `acryl-db-postgres` keeps `pg` as a regular
+dependency, so the Cordis plugin works as installed.
+- `pg` loads when a database opens (`PostgresDatabase.create`, through `loadPg` in `src/driver.ts`), never when the module loads.
+- Without `pg`, `openDb` rejects with "acrylblends/db/postgres needs the pg package: npm install pg", and the import error is its cause. A
+  missing package that `pg` itself needs is passed through unchanged.
+- The declarations never name `pg`. `open.d.ts` exposes only the port's types, so an app without `pg`'s types typechecks.
+- Tests:
+  - `loadPg`'s error mapping;
+  - the provider's plain-entry test: built `open.js` has no static `pg` import, and the declarations do not name it;
+  - the distribution's package test: an optional peer may appear only as `import()` in JavaScript, never in declarations, and `pg` is the
+    only peer;
+  - `verify-standalone`: the tarball still installs with `npm install --offline`. Without `pg`, the entry imports and `openDb` names the
+    install. Then one `npm install --prefer-offline` of `pg` and PGlite (the workspace's versions) runs a PGlite check from the packed
+    build: migrations once, foreign keys, `RETURNING`, rollback, `bigint` and bytes, close, and a misnumbered folder refused.
+
 ## Slice 3 - `kv` and the JSON provider (2026-10-26, Blends; moved from Fork3)
 
 `kv` is for an app too small for SQL: named JSON documents. It follows `acryl-db`'s pattern exactly: a port with a plain root entry, the Cordis
