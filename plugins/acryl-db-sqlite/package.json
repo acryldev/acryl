@@ -20,6 +20,10 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./open": {
+      "types": "./lib/types/open.d.ts",
+      "default": "./lib/open.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {

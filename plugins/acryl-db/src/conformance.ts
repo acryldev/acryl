@@ -167,7 +167,9 @@ export function describeDbConformance(provider: string, open: () => Promise<DbUn
       ]
       await expect(applyMigrations(db, failing, { table: MIGRATIONS_TABLE })).rejects.toThrow()
       await expect(db.all('SELECT value FROM migration_first')).rejects.toThrow()
-      await expect(db.all(`SELECT version FROM ${MIGRATIONS_TABLE}`)).rejects.toThrow()
+      // A provider may create the version table when it opens; then it still says 0.
+      const version = await db.get<{ version: unknown }>(`SELECT version FROM ${MIGRATIONS_TABLE}`).catch(() => undefined)
+      expect(version === undefined || Number(version.version) === 0).toBe(true)
       await applyMigrations(db, [failing[0]!, { version: 2, statements: ['CREATE TABLE migration_second (value TEXT)'] }], { table: MIGRATIONS_TABLE })
       expect(await db.get(`SELECT version FROM ${MIGRATIONS_TABLE}`)).toEqual({ version: 2 })
       expect(await db.all('SELECT value FROM migration_first')).toEqual([{ value: 'retained' }])

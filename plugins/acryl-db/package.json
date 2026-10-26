@@ -20,6 +20,10 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./cordis": {
+      "types": "./lib/types/cordis.d.ts",
+      "default": "./lib/cordis.js"
+    },
     "./conformance": {
       "types": "./lib/types/conformance.d.ts",
       "default": "./lib/conformance.js"
@@ -46,6 +50,9 @@
     "vitest": "^4.1.11"
   },
   "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
     "vitest": {
       "optional": true
     }

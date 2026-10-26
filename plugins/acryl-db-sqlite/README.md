@@ -11,7 +11,11 @@ The SQLite provider of the [`db` port](../acryl-db/README.md), one Cordis plugin
     migrations: migrations  # a folder of 001-name.sql, 002-name.sql, ...
 ```
 
-Relative paths resolve from the app (the Loader's base URL). `busyTimeoutMs` (default 5000) and `walAutoCheckpointPages` (default 1000,
+Without Cordis, the same opening is `openDb` from `acryl-db-sqlite/open`: it takes `path` and optional `migrations` (a path or a file
+URL), `busyTimeoutMs` and `walAutoCheckpointPages`, and resolves `{ db, close }`. That entry imports nothing from Cordis. The plugin is a
+thin wrapper over it.
+
+In the plugin, relative paths resolve from the app (the Loader's base URL). `busyTimeoutMs` (default 5000) and `walAutoCheckpointPages` (default 1000,
 0 disables it) tune the connection.
 
 Unloading the row withdraws `db` first, so consumers stop calling, and then closes the file. The close waits for running operations and

@@ -1,18 +1,11 @@
 /**
- * The `db` port: what an app plugin sees of its relational database, whichever provider (`acryl-db-sqlite`, `acryl-db-postgres`) serves
- * it. An app plugin imports these types, declares `inject: ['db']`, and never imports a driver.
+ * The `db` port: what an app's code sees of its relational database, whichever provider (`acryl-db-sqlite`, `acryl-db-postgres`) serves
+ * it. Plain code (an acrylblends app) opens a database with a provider's `openDb`; a Cordis plugin declares `inject: ['db']`, imports
+ * `acryl-db/cordis` for the `ctx.db` type, and never imports a driver.
  *
  * Bindings are positional `?` placeholders on every provider; a provider whose database spells them differently translates them.
+ * This entry imports nothing from Cordis, at runtime or in its types.
  */
-
-import type {} from '@deepseek-ai/cordis'
-import type { Db } from './facade/database.ts'
-
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    db: Db
-  }
-}
 
 /** The service name every `db` provider registers. */
 export const DB_SERVICE = 'db'

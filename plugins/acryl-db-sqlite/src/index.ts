@@ -1,7 +1,8 @@
 /**
  * The SQLite provider of the `db` port (spec 049 slice 1): one `node:sqlite` file, opened with the ported facade's settings (WAL,
  * `synchronous = NORMAL`, a busy timeout), migrated, and provided as `db`. App plugins declare `inject: ['db']` and import types from
- * `acryl-db` only, so replacing this row with another provider does not touch them.
+ * `acryl-db` only, so replacing this row with another provider does not touch them. The plugin is a thin wrapper over `openDb`
+ * (`acryl-db-sqlite/open`), the same opening for code without Cordis.
  *
  * Unloading withdraws `db` first, so consumers stop calling, and then closes the file: the close waits for running operations and
  * transactions, checkpoints the WAL and releases the file.
@@ -11,10 +12,12 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { applyMigrations, DB_SERVICE, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acryl-db'
-import { openNodeSqliteDatabase } from './facade/node.ts'
+import { DB_SERVICE } from 'acryl-db'
+import type {} from 'acryl-db/cordis'
+import { openDb } from './open.ts'
 
 export { NodeSqliteDatabase, openNodeSqliteDatabase, type NodeSqliteDatabaseOptions } from './facade/node.ts'
+export { openDb, type OpenDb, type OpenDbOptions } from './open.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
 export const name = 'acryl-db-sqlite'
@@ -71,25 +74,18 @@ export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void>
   if (config.path !== undefined) file = resolveFromApp(ctx, config.path, 'path')
   else if (appInstance !== undefined) file = join(appInstance.home, DEFAULT_FILE)
   else throw new Error('acryl-db-sqlite: no database path; set `path` in this row\'s config (there is no ACRYL app home to default to)')
-  const migrations = config.migrations === undefined ? [] : await readMigrationFiles(resolveFromApp(ctx, config.migrations, 'migrations'))
+  const migrations = config.migrations === undefined ? undefined : resolveFromApp(ctx, config.migrations, 'migrations')
   const options = {
+    path: file,
+    ...(migrations === undefined ? {} : { migrations }),
     ...(config.busyTimeoutMs === undefined ? {} : { busyTimeoutMs: config.busyTimeoutMs }),
     ...(config.walAutoCheckpointPages === undefined ? {} : { walAutoCheckpointPages: config.walAutoCheckpointPages }),
   }
 
   // Disposers run in reverse: the service is withdrawn before the file closes.
   await ctx.effect(async function* () {
-    const database = await openNodeSqliteDatabase(file, options)
-    yield () => database.close()
-    await applyMigrations(database, migrations, { table: MIGRATIONS_TABLE })
-    // The port, not the adapter: consumers get no `close`, which belongs to this row.
-    const db: Db = {
-      exec: sql => database.exec(sql),
-      run: (sql, ...params) => database.run(sql, ...params),
-      get: <T extends object>(sql: string, ...params: SqlValue[]) => database.get<T>(sql, ...params),
-      all: <T extends object>(sql: string, ...params: SqlValue[]) => database.all<T>(sql, ...params),
-      transaction: work => database.transaction(work),
-    }
-    yield ctx.reflect.provide(DB_SERVICE, db)
+    const opened = await openDb(options)
+    yield () => opened.close()
+    yield ctx.reflect.provide(DB_SERVICE, opened.db)
   }, `acryl-db-sqlite: ${file}`)
 }

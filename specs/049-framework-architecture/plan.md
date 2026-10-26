@@ -66,3 +66,21 @@ with the hosting adapters after slice 3.
      packages).
    - Tooling: `scripts/verify-port.mjs` learns a second upstream project. Its package list gains the two packages, and a package records
      its source project in `provenance.json`, so the router's renames apply only to the router's ports.
+
+### Slice 1 addendum - plain entries (2026-10-26, coordinator, for Blends' slice 4)
+
+create-acrylblends templates are plain acrylblends apps without Cordis, so they cannot `inject: ['db']`.
+- `acryl-db`'s root entry imports nothing from Cordis, at runtime or in its types. The `ctx.db` augmentation moved to `acryl-db/cordis`,
+  and Cordis became an optional peer dependency.
+- `acryl-db-sqlite/open` exports `openDb({ path, migrations?, busyTimeoutMs?, walAutoCheckpointPages? })`, which resolves
+  `{ db, close }`. The Cordis plugin is a thin wrapper over it: one code path.
+- Tests:
+  - the conformance suite runs through `openDb`;
+  - close releases the file;
+  - a failed migration closes the file and leaves it unchanged;
+  - misnumbered files are refused before anything is opened;
+  - the plain entries and everything they import, built JavaScript and declarations, name no Cordis or Schemastery module.
+- The conformance suite allows a provider that creates `_migrations` when it opens: the version must then read 0.
+- Blends maps these as `acrylblends/db` (`acryl-db`) and `acrylblends/db/sqlite` (`acryl-db-sqlite/open`). Slice 2's
+  `acryl-db-postgres` gets the same `openDb` shape.
+

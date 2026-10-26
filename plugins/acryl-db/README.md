@@ -1,20 +1,34 @@
 # acryl-db
 
-The `db` port: the relational database an app plugin sees, whichever provider serves it. An app plugin declares `inject: ['db']`, imports
-types from here, and never imports a driver, so the provider (`acryl-db-sqlite` today, Postgres next) can change without touching it.
+The `db` port: the relational database app code sees, whichever provider serves it. Code depends on the port, never on a driver, so the
+provider (`acryl-db-sqlite` today, Postgres next) can change without touching it.
+
+Plain code (an acrylblends app, no Cordis) opens a database with a provider's `openDb`:
+
+```ts
+import { openDb } from 'acryl-db-sqlite/open'
+
+const { db, close } = await openDb({ path: 'data/app.sqlite', migrations: new URL('./migrations/', import.meta.url) })
+await db.run('INSERT INTO notes (body) VALUES (?)', 'first')
+await close()
+```
+
+A Cordis plugin declares `inject: ['db']` and gets `ctx.db` from the provider row; `acryl-db/cordis` adds the type:
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-db'
+import type {} from 'acryl-db/cordis'
 
 export const name = 'notes'
 export const inject = ['db']
 
 export function apply(ctx: Context) {
-  // `?` placeholders on every provider.
   void ctx.db.run('INSERT INTO notes (body) VALUES (?)', 'first')
 }
 ```
+
+The root entry imports nothing from Cordis, at runtime or in its types; Cordis is an optional peer dependency, needed only for
+`acryl-db/cordis`.
 
 - `exec(sql)` runs SQL text without bindings and may hold several statements; `run`, `get` and `all` run one statement with positional
   bindings, and `run` resolves `{ changes }`.
@@ -36,8 +50,7 @@ Every provider passes the same suite, from its own tests:
 import { describeDbConformance } from 'acryl-db/conformance'
 
 describeDbConformance('my-provider', async () => {
-  const db = await openFreshDatabase()
-  return { db, close: () => db.close() }
+  return openFreshDatabase() // { db, close }, as openDb resolves
 })
 ```
 
