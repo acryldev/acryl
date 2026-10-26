@@ -3,7 +3,7 @@
  * (`describeDbConformance('acryl-db-sqlite', open)` in its own tests); the SQL is the portable subset, with `?` bindings, so the same
  * suite runs unchanged on SQLite and Postgres.
  *
- * Foreign keys are enforced (`ON DELETE CASCADE` works) and `INSERT ... RETURNING` answers through `get`, on every provider.
+ * A `?` inside a string literal, a quoted identifier or a comment is text, not a binding. Foreign keys are enforced (`ON DELETE CASCADE` works) and `INSERT ... RETURNING` answers through `get`, on every provider.
  *
  * The transaction cases are the contract the SQL facade documents (and its SQLite tests check): other calls and transactions wait for
  * an active transaction, a rejected callback rolls back and rejects with its own error, and a handle is dead once its transaction settles.
@@ -92,6 +92,15 @@ export function describeDbConformance(provider: string, open: () => Promise<DbUn
       const second = await db.transaction(tx => tx.get<{ id: number }>('INSERT INTO returning_probe (id, body) VALUES (?, ?) RETURNING id', 2, 'second'))
       expect(second).toEqual({ id: 2 })
       expect(await db.all('SELECT body FROM returning_probe ORDER BY id')).toEqual([{ body: 'first' }, { body: 'second' }])
+    })
+
+    it('binds only the ? outside string literals, quoted identifiers and comments', async () => {
+      const db = await fresh()
+      expect(await db.get("SELECT '?' AS q, CAST(? AS INTEGER) AS v, 'it''s ?' AS r", 7)).toEqual({ q: '?', v: 7, r: "it's ?" })
+      expect(await db.get('SELECT CAST(? AS INTEGER) AS v /* not ? a binding */, CAST(? AS INTEGER) AS w -- nor ?\n', 1, 2)).toEqual({ v: 1, w: 2 })
+      await db.exec('CREATE TABLE "odd?name" ("col?" INTEGER, body TEXT)')
+      await db.run('INSERT INTO "odd?name" ("col?", body) VALUES (?, \'what?\')', 3)
+      expect(await db.all('SELECT "col?" AS c, body FROM "odd?name" WHERE "col?" = ?', 3)).toEqual([{ c: 3, body: 'what?' }])
     })
 
     it('commits work done through the transaction handle and resolves the callback value', async () => {

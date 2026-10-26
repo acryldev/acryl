@@ -93,6 +93,71 @@ create-acrylblends templates are plain acrylblends apps without Cordis, so they 
 - The conformance suite now covers foreign keys (a cascade, and an orphan insert refused) and `RETURNING`, so Postgres in slice 2 must
   meet them too. Slice 2 also adds `?` inside a string literal and inside a comment, both left untranslated.
 
+## Slice 2 - `acryl-db-postgres`, a network Postgres provider (2026-10-26)
+
+The provider serves a real Postgres or Supabase reached through a connection URL (`DATABASE_URL`). PGlite is a devDependency only: the
+conformance suite runs against PGlite through its socket server (`@electric-sql/pglite-socket`), so CI needs no server and the provider is
+tested over the wire, through the driver it ships with.
+
+1. **Capability and plugin boundary.** One package, `plugins/acryl-db-postgres`, the same shape as the SQLite provider:
+   - `acryl-db-postgres/open` exports `openDb({ url, migrations? })`, which resolves `{ db, close }` and imports nothing from Cordis;
+   - the root export is the Cordis plugin, a thin wrapper over `openDb`.
+   Replacing `acryl-db-sqlite` with this row changes no app code.
+2. **Provides and consumes.** Provides `db`. Consumes nothing at runtime beyond its config.
+   - The driver is `pg` (MIT), not `postgres` (Unlicense), for these reasons:
+     - its type parsers are per pool, so normalizing values mutates no process-wide state another package shares;
+     - its extended-protocol statements are unnamed, so they work behind Supabase's transaction-mode pooler;
+     - a query without values runs in the simple protocol, which allows `exec`'s several statements;
+     - it has the widest use and the longest record of the two.
+3. **Effects and disposal.**
+   - One connection pool with at most one connection (`pg.Pool`, `max: 1`). The port's contract serializes everything: other calls wait
+     for an active transaction, and calls run in call order. One connection is the faithful implementation, and the pool reconnects after
+     a dropped connection.
+   - Calls go through one promise chain in call order. A transaction holds the chain from `BEGIN` until `COMMIT` or `ROLLBACK`.
+   - A rejected callback rolls back and rejects with its own error. A failed rollback rejects with an `AggregateError`. A handle used after
+     its transaction settles rejects.
+   - `close` waits for the chain, then ends the pool. A second `close` does nothing. The plugin's disposer withdraws `db` first, then
+     closes.
+4. **Configuration and composition.**
+   - `openDb` options:
+     - `url`, a connection string;
+     - `migrations`, a path or a file URL;
+     - optional `pool` settings left at their defaults.
+   - The plugin config is `url` and `migrations`. `url` defaults to `DATABASE_URL` from the process environment, and the row fails with
+     a message naming `url` and `DATABASE_URL` when neither is set. Relative `migrations` resolve from the Loader's base URL.
+   - Row id `acryl-db-postgres`, the package name.
+5. **Events and durability.** No events. The database is the durable state.
+   - Migrations go through `acryl-db`'s portable `applyMigrations`, one transaction for all pending ones (Postgres has transactional DDL).
+6. **Placeholders and values.**
+   - `?` becomes `$1..$n` through a small scanner, not a regex. The scanner leaves alone:
+     - single-quoted strings (with `''`), `E'...'` strings (with backslash escapes);
+     - double-quoted identifiers;
+     - dollar-quoted strings (`$$...$$`, `$tag$...$tag$`);
+     - `--` line comments and nested `/* */` comments.
+   - A `?` outside those is always a binding, so the jsonb operators `?`, `?|` and `?&` are not available through bindings. Their
+     functions (`jsonb_exists`, `jsonb_exists_any`, `jsonb_exists_all`) are; the README says so.
+   - The number of placeholders must equal the number of values, or the call rejects naming both counts.
+   - `exec(sql)` takes no values and is sent as is.
+   - Values in: a `bigint` is sent as its decimal text, a `Uint8Array` as bytes.
+   - Values out:
+     - `int8` becomes a number when it is a safe integer, else a `bigint` (as `count(*)` does);
+     - `bytea` becomes a plain `Uint8Array`;
+     - `float8` and `int2/4` become numbers;
+     - `numeric` stays text, since it is exact.
+   - `run` resolves `{ changes: rowCount }`.
+7. **Verification.**
+   - The conformance suite on PGlite through the socket server, plus the cases this slice adds to it:
+     - a `?` inside a string literal, an identifier and a comment, all left untranslated (portable SQL, so SQLite runs them too);
+     - a placeholder count mismatch rejected.
+   - The scanner's own tests for the Postgres-only syntax (`E'..'`, dollar quotes, nested comments).
+   - `openDb`'s tests:
+     - close releases the connection (the server's connection count returns to 0);
+     - a failed migration leaves the schema unchanged.
+   - A real Loader test with a consumer that injects `db`.
+   - The suite once by hand against a real server through `ACRYL_DB_POSTGRES_URL`. Each case runs in its own schema (`search_path` in the
+     connection options), dropped afterwards, so a real database's `public` schema is never touched.
+   - The Data workflow gains the package on all six legs.
+
 ## Slice 3 - `kv` and the JSON provider (2026-10-26, Blends; moved from Fork3)
 
 `kv` is for an app too small for SQL: named JSON documents. It follows `acryl-db`'s pattern exactly: a port with a plain root entry, the Cordis
