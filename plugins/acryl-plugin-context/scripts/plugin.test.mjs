@@ -596,7 +596,7 @@ test('startup sync: a changed GLOBAL source is re-installed; a changed project s
   writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: deps }))
   const s = { ...fakes({ preinstalled: true }), profileDir: profile }
   try {
-    assert.deepEqual(await syncOnStartup(s, { globalDir }), { updated: [], installed: [], changed: [], stale: [], pending: ['ext-fresh'], failed: [] }, 'in sync: nothing to do except list the new global folder')
+    assert.deepEqual(await syncOnStartup(s, { globalDir }), { updated: [], installed: [], changed: [], stale: [], pending: ['ext-fresh'], failed: [], retried: [] }, 'in sync: nothing to do except list the new global folder')
     assert.deepEqual(s.calls, [])
     writeFileSync(join(globalSrc, 'index.js'), 'export const name = "ext-global"\nexport function apply() { /* v2 */ }\n')
     writeFileSync(join(projectSrc, 'index.js'), 'export const name = "ext-project"\nexport function apply() { /* v2 */ }\n')
@@ -938,4 +938,50 @@ test('startup hold script: holds the client boot, reloads on 204, boots as serve
   const offline = await run(() => Promise.reject(new Error('network')))
   assert.equal(offline.reloads, 0)
   assert.equal(offline.booted, true)
+})
+
+test('startup sync: an app plugin whose install fails at a machine stage is tried once more; one failing its check is not', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'startup-retry-')); const globalDir = join(root, 'plugins'); const profile = join(root, 'profile')
+  mkdirSync(profile, { recursive: true })
+  writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
+  const plugin = (name, over = {}) => {
+    const dir = join(globalDir, name)
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name, version: '0.1.0', type: 'module', main: './index.js', exports: { '.': './index.js', './package.json': './package.json' }, dsh: { bundle: { patch: './cordis.patch.yml' } }, ...over }))
+    writeFileSync(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: ${name}\n      name: ${name}\n`)
+    writeFileSync(join(dir, 'index.js'), `export const name = ${JSON.stringify(name)}\nexport function apply() {}\n`)
+  }
+  // pnpm answers each `add` with the next exit code in the list, then 0.
+  const services = (exits) => {
+    const s = { ...fakes(), profileDir: profile }
+    s.pnpm = { runPlugin: args => { s.calls.push(['run', ...args]); const exit = args[0] === 'add' ? (exits.shift() ?? 0) : 0; return handle(exit, exit ? 'EBUSY: resource busy or locked' : '') } }
+    return s
+  }
+  const adds = s => s.calls.filter(call => call[1] === 'add').length
+  try {
+    plugin('ext-flaky')
+    const once = services([1])
+    const recovered = await syncOnStartup(once, { globalDir, installPending: true })
+    assert.deepEqual([recovered.installed, recovered.failed], [['ext-flaky'], []])
+    assert.equal(recovered.retried.length, 1)
+    assert.equal(recovered.retried[0].name, 'ext-flaky')
+    assert.match(recovered.retried[0].error, /EBUSY/)
+    assert.equal(adds(once), 2)
+
+    rmSync(join(profile, 'node_modules'), { recursive: true, force: true })
+    writeFileSync(join(profile, 'package.json'), JSON.stringify({ dependencies: {} }))
+    const twice = services([1, 1])
+    const failed = await syncOnStartup(twice, { globalDir, installPending: true })
+    assert.deepEqual([failed.installed, failed.retried], [[], []])
+    assert.equal(failed.failed.length, 1)
+    assert.match(failed.failed[0].error, /EBUSY.*\(twice\)$/)
+    assert.equal(adds(twice), 2, 'one retry, not more')
+
+    rmSync(join(globalDir, 'ext-flaky'), { recursive: true, force: true })
+    plugin('ext-unlinted', { dsh: undefined })
+    const checked = services([])
+    const refused = await syncOnStartup(checked, { globalDir, installPending: true })
+    assert.deepEqual([refused.installed, refused.retried, refused.failed.map(f => f.name)], [[], [], ['ext-unlinted']])
+    assert.deepEqual(checked.calls, [], 'a plugin that fails its check is not installed, and not tried again')
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })

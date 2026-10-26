@@ -160,6 +160,7 @@ export function apply(ctx) {
             summary.changed.length > 0 ? `source changed since install (type /reload to apply): ${summary.changed.join(', ')}` : '',
             summary.stale.length > 0 ? `source folder missing (/reload remove-stale): ${summary.stale.join(', ')}` : '',
             summary.pending.length > 0 ? `new global plugins not installed (/reload new): ${summary.pending.join(', ')}` : '',
+            ...summary.retried.map(r => `${r.name} installed on the second attempt (the first failed: ${r.error})`),
             ...summary.failed.map(f => `FAILED ${f.name}: ${f.error}`),
           ].filter(Boolean)
           if (parts.length > 0) ctx.logger.info(`[plugin-context] startup: ${parts.join('; ')}`)

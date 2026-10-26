@@ -387,6 +387,33 @@ export async function reloadLocalPlugins(services, fs, options = {}) {
   return results
 }
 
+/** The install stages whose failure can come from the machine rather than the plugin (pnpm and the store, loading the module): worth one more try. */
+const RETRYABLE_STAGES = new Set(['install', 'activate'])
+
+/**
+ * Install one plugin at start, once more when the first attempt failed at a stage the machine can cause (a store file lock on Windows, a
+ * transient registry error). A plugin that failed its check, its services or its requirements fails the same way again, so it is not retried.
+ * @returns `{ ok: true }`, `{ ok: true, firstError }` when only the second attempt worked, or `{ ok: false, error }` naming both failures.
+ */
+async function installAtStart(dir, services, fs) {
+  const attempt = async () => {
+    try {
+      const result = await installLocalPlugin({ path: dir }, services, fs)
+      if (result.ok) return undefined
+      // pnpm's own words (the tail of its output) name the cause, such as a store file locked on Windows; the stage error alone is only an exit code.
+      const detail = typeof result.detail === 'string' ? result.detail.replace(/\s+/gu, ' ').trim().slice(-300) : ''
+      const error = [(result.errors ?? []).join('; ') || 'install failed', detail].filter(Boolean).join(': ')
+      return { error, retryable: RETRYABLE_STAGES.has(result.stage) }
+    } catch (cause) { return { error: String(cause?.message ?? cause), retryable: true } }
+  }
+  const first = await attempt()
+  if (first === undefined) return { ok: true }
+  if (!first.retryable) return { ok: false, error: first.error }
+  const second = await attempt()
+  if (second === undefined) return { ok: true, firstError: first.error }
+  return { ok: false, error: second.error === first.error ? `${first.error} (twice)` : `${second.error} (first attempt: ${first.error})` }
+}
+
 /**
  * The startup pass: bring already-installed extensions up to date with their source, without asking, ONLY where that cannot run code the user
  * did not put there. pi.dev auto-loads what it finds, guarded by project trust; ACRYL's equivalent guard is:
@@ -398,12 +425,13 @@ export async function reloadLocalPlugins(services, fs, options = {}) {
  *  - A missing source is only reported; nothing is removed.
  *
  * Never throws: a failure in one extension is recorded and the others still run.
+ * A plugin whose install failed at a stage the machine can cause is tried once more; one that then works is in `retried` with its first error.
  * @param {object} services `{ pnpm, live, profileDir }`
  * @param {{ globalDir?: string }} [options]
- * @returns {Promise<{ updated: string[], changed: string[], stale: string[], pending: string[], failed: Array<{ name: string, error: string }> }>}
+ * @returns {Promise<{ updated: string[], installed: string[], changed: string[], stale: string[], pending: string[], failed: Array<{ name: string, error: string }>, retried: Array<{ name: string, error: string }> }>}
  */
 export async function syncOnStartup(services, options = {}, fs) {
-  const summary = { updated: [], installed: [], changed: [], stale: [], pending: [], failed: [] }
+  const summary = { updated: [], installed: [], changed: [], stale: [], pending: [], failed: [], retried: [] }
   const plugins = listLocalPlugins(services.profileDir, fs)
   const globalRoot = options.globalDir ? canonical(options.globalDir) : undefined
   const inGlobal = dir => globalRoot !== undefined && canonical(dir).startsWith(`${globalRoot}${sep}`)
@@ -416,22 +444,20 @@ export async function syncOnStartup(services, options = {}, fs) {
     if (state === 'stale') { summary.stale.push(plugin.name); continue }
     if (state === 'in-sync') continue
     if (!inGlobal(plugin.installedFrom)) { summary.changed.push(plugin.name); continue }
-    try {
-      const result = await installLocalPlugin({ path: plugin.installedFrom }, services, fs)
-      if (result.ok) summary.updated.push(plugin.name)
-      else summary.failed.push({ name: plugin.name, error: (result.errors ?? []).join('; ') || 'install failed' })
-    } catch (cause) { summary.failed.push({ name: plugin.name, error: String(cause?.message ?? cause) }) }
+    const result = await installAtStart(plugin.installedFrom, services, fs)
+    if (result.firstError !== undefined) summary.retried.push({ name: plugin.name, error: result.firstError })
+    if (result.ok) summary.updated.push(plugin.name)
+    else summary.failed.push({ name: plugin.name, error: result.error })
   }
   for (const found of discoverPlugins({ globalDir: options.globalDir })) {
     if (installed.has(found.dir) || found.shadowed) continue
     // An app's own plugins (its committed `plugins/`, e.g. in a fresh clone) are the app's code: they install at start. Elsewhere a new
     // global folder is only reported, because installing runs code the user has not asked for yet.
     if (options.installPending !== true) { summary.pending.push(found.name); continue }
-    try {
-      const result = await installLocalPlugin({ path: found.dir }, services, fs)
-      if (result.ok) summary.installed.push(found.name)
-      else summary.failed.push({ name: found.name, error: (result.errors ?? []).join('; ') || 'install failed' })
-    } catch (cause) { summary.failed.push({ name: found.name, error: String(cause?.message ?? cause) }) }
+    const result = await installAtStart(found.dir, services, fs)
+    if (result.firstError !== undefined) summary.retried.push({ name: found.name, error: result.firstError })
+    if (result.ok) summary.installed.push(found.name)
+    else summary.failed.push({ name: found.name, error: result.error })
   }
   return summary
 }
