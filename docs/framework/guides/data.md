@@ -10,10 +10,74 @@ provider today; a Postgres provider (Postgres or Supabase through `DATABASE_URL`
 | --- | --- | --- |
 | Normal web or desktop app, users, lists, orders | `db` with SQLite (the `notes` and `chat` templates) | available |
 | Hosted, many users | `db` with Postgres or Supabase | planned |
-| Tiny, one person, a few screens | `kv`, named JSON documents with no SQL | planned |
+| Tiny, one person, a few screens | [`kv`](#a-tiny-app-kv), named JSON documents with no SQL | available |
 | Agents or long tasks that must survive a restart | `durable`, in the same database as `db` | planned |
 
-Start with `db`. It is the only one of the four you can use today, and SQL is what people and coding agents already know.
+Start with `db` when the data has users, lists or relations: SQL is what people and coding agents already know. Start with `kv` when the whole
+data is a handful of settings or a small list that one process reads and writes.
+
+## A tiny app: `kv`
+
+`kv` keeps named JSON documents in one file, with no SQL and no migrations. It suits a settings page, a demo, a one-person tool.
+
+```ts
+import { openKv } from 'acrylblends/kv/json'
+
+const { kv, close } = await openKv({ path: 'data/kv.json' })
+
+await kv.set('theme', 'dark')
+const theme = await kv.get<string>('theme') // 'dark'; undefined for a key that was never set
+
+// Change a value from the value it has now, without losing a concurrent change.
+const visits = await kv.update<number>('visits', (current) => (current ?? 0) + 1)
+
+await kv.set('todos/1', { title: 'Buy milk', done: false })
+await kv.set('todos/2', { title: 'Write docs', done: true })
+const keys = await kv.list('todos/') // ['todos/1', 'todos/2'], sorted by code point
+
+await kv.delete('todos/1') // a key that is not there is not an error
+await close()
+```
+
+- A key is a non-empty string; a prefix such as `todos/` groups related documents. A value is JSON (`null`, booleans, numbers, strings, arrays,
+  objects). `undefined`, functions, bigints and `NaN` are refused with a `TypeError` before anything is written, and a value read back is a copy.
+- `update` runs your function with the current value (`undefined` when the key is missing) and stores what it returns. The function is
+  **synchronous**: an `async` function is a type error. Read what you need first with `await kv.get(...)`, then update with a plain function.
+  If it throws, the value stays as it was.
+- Every write reaches the disk before its promise resolves, and the file is replaced as a whole (a temporary file, then a rename), so a crash
+  or a power cut leaves the old file or the new one, never half of one. A file that exists but does not parse stops the app with a message that
+  names it; it is never started over.
+- Like `db`, the store is passed to the code that needs it (`createApp(kv)`), opened in one place, and closed when the process stops.
+  A test opens a file in a temporary folder.
+
+### When to move to SQL
+
+The whole file is kept in memory and rewritten on every write, and one process owns it. Move to `db` when:
+
+- more than one process must write (two writers would overwrite each other);
+- the file grows past a few megabytes, or you need to search, sort or join the data;
+- the data gets relations (users who own notes).
+
+The same `kv` interface runs on SQL, so the code does not change, only the line that opens it. `kvOnDb` keeps the documents in a `kv` table of the
+database from `openDb`, and `copyKv` moves what the file holds:
+
+```ts
+import { copyKv } from 'acrylblends/kv'
+import { openKv } from 'acrylblends/kv/json'
+import { kvOnDb } from 'acrylblends/kv/db'
+import { openDb } from 'acrylblends/db/sqlite'
+
+const file = await openKv({ path: 'data/kv.json' })
+const sql = await openDb({ path: 'data/app.sqlite', migrations: 'migrations' })
+
+const { copied } = await copyKv(file.kv, kvOnDb(sql.db)) // refuses to overwrite a key the table already has, unless you pass { overwrite: true }
+
+await file.close()
+await sql.close()
+```
+
+On the command line, `npx acrylblends kv import data/kv.json data/app.sqlite` does the same (add `--overwrite` to replace keys the table has).
+The table is created on first use, beside the app's own tables; nothing else changes.
 
 ## Open the database
 
