@@ -1,3 +1,43 @@
+## 2026-10-25 - Desktop on any Electron 44: DSH's profile resolution on Node's public module hooks, and Electron 44.9.3
+
+Commit: `e88126997c285e710303e048c28c65cbf7208f63`
+
+DSH 0.2's engine reached Node's internal ESM and CommonJS loaders through `node-addon-require-builtin`, a native add-on that loads only on the Electron builds named in its binary. Desktop was therefore stuck on Electron 44.0.0. The coordinator's slice: port the resolution onto public API (#1), plus a thin guard for a runtime that lacks it (#2).
+
+- **The port:** DSH 0.2.0-rc.2's profile package resolution is now `runtime/acryl-harness-runtime/src/profile-resolution/`, on `module.registerHooks` for ESM and `Module._resolveFilename` for CommonJS, with the conditions a hook call reports. `ProfilePluginPackages` subclasses DSH's `PluginPackages` (service name `pluginPackages`) and is mounted at both engine sites. DSH's 232 resolution tests are ported through a public `import.meta.resolve` probe, and `profile-resolution-port.spec.ts` pins the installed DSH version and the originals' hashes, so a DSH bump fails until the port is redone. The provenance is in the file headers, the runtime's new LICENSE (with DeepSeek's MIT notice) and the root THIRD_PARTY_NOTICES.md.
+- **The add-on is gone:** a `node-addon-require-builtin: '-'` override in `pnpm-workspace.yaml` removes it from every install. The license walker and the packaged-runtime check skip packages an override removes, through one helper (`apps/acryl-desktop/scripts/removed-by-override.ts`).
+- **Three more places needed internals,** all patched in `patches/`:
+  - dsh-app-boot's plugin metadata (`resolvePluginResource`, behind the plugin inventories);
+  - dsh-app-boot's root Include;
+  - `cordis-plugin-loader`'s no-internals import. It imported a bare name from its own file, so a plugin installed into the profile while the app ran never activated. That was 13 gate failures: Market, `/reload`, the MCP gateway and Blends apply. Both imports now resolve from the tree's base through the public resolver, as the add-on did.
+- **Known limit:** `dsh-hmr` still needs Node internals. That holds while every surface keeps `hmr` off (`HMR_OFF` in `engine-dsh.ts`). `dsh-client-modules` has its own working fallback.
+- **The guard:** on a runtime without `module.registerHooks`, both hook sites throw before anything is patched: Desktop's overlay resolver in `main.ts`, and the engine's interception. The message is "DSH provider unavailable on Electron X (Node Y)", raised at host boot. Desktop then opens Recovery with that cause, because its UI is the DSH profile (booting without DSH is spec 048).
+- **Electron 44.9.3** (Node 24.22.0), from 44.0.0.
+- **Ledger:**
+  - The DSH import ceiling rises once, from 133 to 135, for the port's two imports. The ported folder counts as part of the engine seam, so the 104 imports outside it are unchanged. specs/048 T012 is the path back down.
+  - specs/001 T094 records PNPM 11.11's silent relock no-op. This lock was written by 11.8, then accepted with `--frozen-lockfile` by 11.11, and 11.11's own `--lockfile-only` leaves no diff.
+- **Verified:**
+  - The full gate.
+  - Packaged arm64 apps on Electron 44.0.0 and 44.9.3, each in an isolated home: the main window loads from the Host. In the main process, the add-on is in neither `require.cache` nor the loaded shared objects (only `pty.node` and `system.node` are). The ports are free afterwards and the real homes are unchanged.
+  - `verify-packaged-self-extension.mjs` passes on both: install, call, update (a replace install), call the new behavior, remove, all live.
+  - The engine-swap test: three swaps away and back leave no module hooks and restore `_resolveFilename`.
+  - CI, Windows and Desktop on Linux green on the branch (40211820941, 40211823608, 40211825954), and on main after the fast-forward.
+
+## 2026-10-25 - client modules, serve() defaults, and the form and Standard Schema fixes on main (spec 047)
+
+Commits: `6c49b00ec78d49a68f338299b306ab26b8bbfe1d` (Vite 8.2.4), `7641875936835978c441d63ceb3295bedbc1f44c` (Standard Schema), `aec058910177cee1c73f6c407a5bf277ee1e3040` (form and test-client docs), `aaed6522450ea60c9014c900fb62fbfdbaedd73f` (client modules), `44a3bf5ab24ce5270810168dd585fabf3cbd15d6` (hydration and build docs), `2fb7f1cdb2983bc7a04e627161d48fadda2a16a8` (serve() defaults), `cdc083e1bbaedaeafa7494fe646bdb202ce86d09` (logger test).
+
+- **Vite 8.2.4** closes the six Vite alerts. Desktop dev tooling only; nothing in the framework package.
+- **`schemaValidator`** takes the full Standard Schema v1 shape: version, vendor, `validate` with options, and types. A `{ validate }`-only object still type-checks.
+- **Docs:** validating a real HTML form, and `testClient`'s fourth argument for default headers. The form section covers `validator('form')`, File values, repeated fields and a browser's empty file part.
+- **Client components without a bundler:** `clientModules({ root, compiled })` and `buildClientModules({ root, outDir })` from `acrylblends/node-server`. In development, modules compile on request with the app's own `typescript`. With `NODE_ENV=production` and `compiled`, only the built folder is served. The docs say `hydrateRoot` replaces the server markup (real hydration is T021), give measured Brotli sizes (11,209 B for the full runtime, 5,804 B for a minified counter), and document `acrylblends build-client` as the production build.
+- **`serve()`:**
+  - It binds 127.0.0.1 unless a hostname is given; `0.0.0.0` or `::` opts in. Before, `npm run dev` exposed every app to the local network. This deviation is recorded in provenance.json with the reason.
+  - Overloads on `createServer` make the default HTTP/1 call return `http.Server`, so `closeIdleConnections()` type-checks.
+  - nodejs.md shows a bounded graceful shutdown.
+- **A flaky upstream logger test** now runs on fake timers. It had failed CI run 40179371808.
+- **Verified:** branch CI, Windows and Desktop on Linux green, and main's push runs green (40182271567, 40182271544, 40182271564). acrylblends has the 0.7.2 request: a `build-client` CLI, `src/client/` in the templates, the notes counter as an island, the serve() default, and DEP0190.
+
 ## 2026-10-25 - Part B of the port: presets, mount, cache, proxy, dev, JSX, CSS, the JSX renderer, SSG, and `.tsx` on Node (spec 047 T010, T020)
 
 Commits: `13fb2aa4` (presets, dev), `f1d6b114` (mount), `1c704d22` (cache), `81f28c4e` (proxy), `a847e01dbeb8d8f79cf768f5bbb452edb206362b` (JSX, CSS), `00065b685022d00965f4da3fc374a0a18cfac714` (JSX renderer), `8fde391fa1ed9867c189b88b4375a6384c705875` (rename fix), `50cfcea5f806d7f263777151397821e333d0a752` (SSG), `5e94dab18a08119f0944d42d5eaaa5b532897196` (name guard), `2badb759ab3040f2367f014ae162e44cb3963b13` (register hook).
