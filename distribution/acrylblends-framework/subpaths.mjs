@@ -13,6 +13,8 @@ const here = dirname(fileURLToPath(import.meta.url))
 const ROUTER = '../../plugins/acryl-router/src'
 const CORE = `${ROUTER}/core`
 const NODE = '../../plugins/acryl-node-server/src/adapter'
+const DB = '../../plugins/acryl-db/src'
+const DB_SQLITE = '../../plugins/acryl-db-sqlite/src'
 
 const MIDDLEWARE = [
   'basic-auth', 'bearer-auth', 'body-limit', 'cache', 'combine', 'compress', 'context-storage', 'cors', 'csrf', 'etag', 'ip-restriction',
@@ -68,6 +70,9 @@ export const SUBPATHS = {
   'node-server/conninfo': `${NODE}/conninfo.ts`,
   // ACRYL's addition: `node --import acrylblends/node-server/register app.tsx` compiles JSX files with the app's own typescript.
   'node-server/register': '../../plugins/acryl-node-server/src/register.ts',
+  // Data (spec 049): the `db` port and its plain SQLite opener, without Cordis. `acrylblends/db/sqlite` is the opener, not the Cordis plugin.
+  'db': `${DB}/index.ts`,
+  'db/sqlite': `${DB_SQLITE}/open.ts`,
 }
 
 /** The build entry name of a subpath: the file stem under `lib/`. */
