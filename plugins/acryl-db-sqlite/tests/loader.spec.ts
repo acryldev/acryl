@@ -4,7 +4,7 @@
  * @throws if the package has not been built: run `pnpm run build` first.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -132,6 +132,33 @@ describe('acryl-db-sqlite through a real Loader', () => {
     const other = await openNodeSqliteDatabase(join(root, 'data.sqlite'), { busyTimeoutMs: 0 })
     expect(await other.all("SELECT name FROM sqlite_schema WHERE name = 'ok'")).toEqual([])
     await other.close()
+  })
+
+  it('defaults to data.sqlite in the app home from an appInstance service, and ignores one without a string home', async () => {
+    const root = app()
+    const ctx = await loader(root)
+    const home = join(root, 'home')
+    const withdraw = ctx.reflect.provide('appInstance', { home, dshHome: join(home, '.dsh') })
+    const entryId = await ctx.loader.create({ name: './row.mjs' })
+    await ctx.loader.await()
+    expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
+    await ctx.db.exec('CREATE TABLE here (n INTEGER)')
+    expect(existsSync(join(home, 'data.sqlite'))).toBe(true)
+    await entryOf(ctx, entryId).update({ disabled: true })
+    await ctx.loader.await()
+    void withdraw()
+
+    const other = await loader(app())
+    const withdrawBad = other.reflect.provide('appInstance', { home: 42 })
+    const badId = await other.loader.create({ name: './row.mjs' })
+    await other.loader.await()
+    expect(entryOf(other, badId).fiber?.state).toBe(FAILED)
+    void withdrawBad()
+  })
+
+  it('declares no type for the appInstance service it does not own', () => {
+    const declarations = readFileSync(new URL('../lib/types/index.d.ts', import.meta.url), 'utf8')
+    expect(declarations).not.toMatch(/declare module|appInstance\s*:/u)
   })
 
   it('fails the row when there is neither a path nor an app home', async () => {

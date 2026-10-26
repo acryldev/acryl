@@ -1,13 +1,13 @@
 /**
- * `openDb`, the plain entry (`acryl-db-sqlite/open`) for code without Cordis. The last case reads the built entries, so it needs
- * `pnpm run build` first, like the Loader tests.
+ * `openDb`, the plain entry (`acryl-db-sqlite/open`) for code without Cordis. What the built entries import is checked in
+ * plain-entry-imports.spec.ts.
  */
 
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import { openDb, openNodeSqliteDatabase } from '../src/index.ts'
 
@@ -86,24 +86,5 @@ describe('openDb', () => {
     const path = join(dir, 'data.sqlite')
     await expect(openDb({ path, migrations: join(dir, 'migrations') })).rejects.toThrow('should be number 1')
     expect(existsSync(path)).toBe(false)
-  })
-
-  it('imports nothing from Cordis in the plain entries or anything they import, at runtime or in their types', () => {
-    const specifiers = (text: string) => [...text.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/gu)].map(match => match[1] ?? '')
-    const seen = new Set<string>()
-    const visit = (file: URL): void => {
-      if (seen.has(file.href)) return
-      seen.add(file.href)
-      const imports = specifiers(readFileSync(fileURLToPath(file), 'utf8'))
-      expect(imports.filter(spec => /cordis|schemastery/u.test(spec)), fileURLToPath(file)).toEqual([])
-      for (const spec of imports) {
-        if (!spec.startsWith('.')) continue
-        const target = /\.(?:js|ts)$/u.test(spec) ? spec.replace(/\.ts$/u, file.pathname.endsWith('.d.ts') ? '.d.ts' : '.js') : `${spec}.js`
-        visit(new URL(target, file))
-      }
-    }
-    const lib = (pkg: string, file: string) => new URL(`../../${pkg}/lib/${file}`, import.meta.url)
-    for (const [pkg, file] of [['acryl-db-sqlite', 'open.js'], ['acryl-db-sqlite', 'types/open.d.ts'], ['acryl-db', 'index.js'], ['acryl-db', 'types/index.d.ts']] as const) visit(lib(pkg, file))
-    expect(seen.size).toBeGreaterThan(4)
   })
 })

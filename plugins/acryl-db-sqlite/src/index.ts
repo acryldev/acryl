@@ -23,18 +23,15 @@ export { openDb, type OpenDb, type OpenDbOptions } from './open.ts'
 export const name = 'acryl-db-sqlite'
 
 /**
- * The part of the runtime's `appInstance` service this plugin reads (a separated interface: plugins do not import the runtime). Every
- * plugin declares exactly this shape, so the Context augmentations agree in any program that loads several of them.
+ * What this plugin reads of the runtime's optional `appInstance` service: its home folder. The service belongs to the runtime (and to an
+ * app's own instance plugin), so this plugin declares no type for it on Cordis' Context; it checks the one field it uses at runtime.
  */
-interface AppInstanceService {
+interface AppHome {
   readonly home: string
-  readonly dshHome: string
 }
 
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    appInstance: AppInstanceService
-  }
+function isAppHome(value: unknown): value is AppHome {
+  return typeof value === 'object' && value !== null && 'home' in value && typeof value.home === 'string'
 }
 
 export interface Config {
@@ -69,10 +66,10 @@ function resolveFromApp(ctx: Context, path: string, option: string): string {
 export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void> {
   const config = Config(rawConfig)
   // The app home comes from the runtime's `appInstance` service when this runs inside an ACRYL app; a plain framework app names its file.
-  const appInstance = ctx.get('appInstance')
+  const appInstance: unknown = ctx.get('appInstance')
   let file: string
   if (config.path !== undefined) file = resolveFromApp(ctx, config.path, 'path')
-  else if (appInstance !== undefined) file = join(appInstance.home, DEFAULT_FILE)
+  else if (isAppHome(appInstance)) file = join(appInstance.home, DEFAULT_FILE)
   else throw new Error('acryl-db-sqlite: no database path; set `path` in this row\'s config (there is no ACRYL app home to default to)')
   const migrations = config.migrations === undefined ? undefined : resolveFromApp(ctx, config.migrations, 'migrations')
   const options = {
