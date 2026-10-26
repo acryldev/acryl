@@ -1,0 +1,91 @@
+{
+  "name": "acryl-kv-db",
+  "version": "0.1.0",
+  "description": "The kv provider over the ACRYL db port, one Cordis plugin: a kv table in the app's SQL database, so an app that grows into SQL keeps its data",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-kv-db"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-kv-db#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./open": {
+      "types": "./lib/types/open.d.ts",
+      "default": "./lib/open.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "~3.18.4",
+    "acryl-db": "workspace:*",
+    "acryl-kv": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.5",
+    "acryl-db-sqlite": "workspace:*"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./lib/index.js"
+      ]
+    },
+    "surfaces": [
+      "web",
+      "desktop",
+      "cli"
+    ],
+    "runtime": "cordis",
+    "compatibility": {
+      "acryl": ">=0.1.0 <1.0.0",
+      "node": "^22.19.0 || >=24.0.0",
+      "hosts": {
+        "@deepseek-ai/cordis": "^4.0.2"
+      }
+    },
+    "capabilities": [
+      "kv"
+    ]
+  }
+}

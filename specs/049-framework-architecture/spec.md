@@ -99,7 +99,7 @@ For a demo, a settings page, a one-person tool: named JSON documents, no SQL.
 interface Kv {
   get<T>(key: string): Promise<T | undefined>
   set<T>(key: string, value: T): Promise<void>
-  update<T>(key: string, change: (current: T | undefined) => T): Promise<T>  // atomic
+  update<T>(key: string, change: (current: T | undefined) => T): Promise<T>  // atomic; change is synchronous
   delete(key: string): Promise<void>
   list(prefix?: string): Promise<string[]>
 }
@@ -107,8 +107,11 @@ interface Kv {
 
 - `acryl-kv-json` keeps everything in one JSON file and writes it atomically (write to a temporary file, then rename), so a crash
   leaves the old or the new file, never half of one.
-- Both `db` providers also provide `kv` (one table), so a tiny app that grows into SQL keeps its data: move from `acryl-kv-json` to
-  `acryl-db-sqlite` with one import command.
+- `acryl-kv-db` provides `kv` over whichever `db` provider is active (one `kv` table, created on first use), so a tiny app that grows into
+  SQL keeps its data: move from `acryl-kv-json` to `acryl-kv-db` with one import command (`copyKv`). It is a plugin of its own, not a second
+  service of each `db` provider (decided in slice 3): replacing the file by SQL is then a different row, and a `db` provider stays one service.
+- `update`'s callback is synchronous (an `async` function is a type error and a returned promise is rejected), `list` sorts by code point, and
+  a JSON file belongs to one process; past a few MB or with more than one process, use `acryl-kv-db`.
 
 ### `durable` - agents' and apps' long-running state
 

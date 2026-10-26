@@ -11,6 +11,9 @@ on:
     paths:
       - 'plugins/acryl-db/**'
       - 'plugins/acryl-db-sqlite/**'
+      - 'plugins/acryl-kv/**'
+      - 'plugins/acryl-kv-json/**'
+      - 'plugins/acryl-kv-db/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/data.yml'
   pull_request:
@@ -18,6 +21,9 @@ on:
     paths:
       - 'plugins/acryl-db/**'
       - 'plugins/acryl-db-sqlite/**'
+      - 'plugins/acryl-kv/**'
+      - 'plugins/acryl-kv-json/**'
+      - 'plugins/acryl-kv-db/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/data.yml'
 
@@ -59,10 +65,19 @@ jobs:
 
       # Only the data packages and what they depend on: they import nothing from the rest of the workspace.
       - name: Install the data packages
-        run: corepack pnpm install --frozen-lockfile --filter "acryl-db-sqlite..."
+        run: corepack pnpm install --frozen-lockfile --filter "acryl-db-sqlite..." --filter "acryl-kv-db..." --filter "acryl-kv-json..."
 
       - name: Build, typecheck and test the port
         run: corepack pnpm --filter acryl-db run check
 
       - name: Build, typecheck and test the SQLite provider
         run: corepack pnpm --filter acryl-db-sqlite run check
+
+      - name: Build, typecheck and test the kv port
+        run: corepack pnpm --filter acryl-kv run check
+
+      - name: Build, typecheck and test the JSON-file kv provider (the conformance suite and the crash test)
+        run: corepack pnpm --filter acryl-kv-json run check
+
+      - name: Build, typecheck and test the kv provider over db (the conformance suite on SQLite)
+        run: corepack pnpm --filter acryl-kv-db run check

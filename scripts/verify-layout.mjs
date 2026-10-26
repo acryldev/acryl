@@ -71,6 +71,9 @@ packages:
   - plugins/acryl-state
   - plugins/acryl-db
   - plugins/acryl-db-sqlite
+  - plugins/acryl-kv
+  - plugins/acryl-kv-json
+  - plugins/acryl-kv-db
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save
