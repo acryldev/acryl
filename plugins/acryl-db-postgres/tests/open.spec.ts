@@ -1,6 +1,6 @@
 /**
- * `openDb`, the plain entry (`acryl-db-postgres/open`), over the network to PGlite's socket server. The last case reads the built entries,
- * so it needs `pnpm run build` first, like the Loader tests.
+ * `openDb`, the plain entry (`acryl-db-postgres/open`), over the network to PGlite's socket server. What the built entry imports is
+ * checked in plain-entry-imports.spec.ts.
  */
 
 import { readFileSync } from 'node:fs'
@@ -92,26 +92,6 @@ describe('openDb', () => {
     } finally {
       await opened.close()
     }
-  })
-
-  it('imports nothing from Cordis in the plain entries or anything they import, at runtime or in their types', () => {
-    const specifiers = (text: string) => [...text.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/gu)].map(match => match[1] ?? '')
-    const seen = new Set<string>()
-    const visit = (file: URL): void => {
-      if (seen.has(file.href)) return
-      seen.add(file.href)
-      const imports = specifiers(readFileSync(fileURLToPath(file), 'utf8'))
-      expect(imports.filter(spec => /cordis|schemastery|pglite/u.test(spec)), fileURLToPath(file)).toEqual([])
-      for (const spec of imports) {
-        if (!spec.startsWith('.')) continue
-        const target = /\.(?:js|ts)$/u.test(spec) ? spec.replace(/\.ts$/u, file.pathname.endsWith('.d.ts') ? '.d.ts' : '.js') : `${spec}.js`
-        visit(new URL(target, file))
-      }
-    }
-    const lib = (file: string) => new URL(`../lib/${file}`, import.meta.url)
-    visit(lib('open.js'))
-    visit(lib('types/open.d.ts'))
-    expect(seen.size).toBeGreaterThan(2)
   })
 
   it('ships pg, not PGlite: PGlite only serves the tests', () => {
