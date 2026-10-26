@@ -34,7 +34,6 @@ const shell = process.env.SHELL
 beforeAll(() => { process.env.SHELL = '/bin/sh' })
 afterAll(() => { if (shell === undefined) delete process.env.SHELL; else process.env.SHELL = shell })
 
-const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 10))
 
 /** A `webServer` on a real loopback socket with the Host's rule (exact, then longest prefix), and an `acrylWeb` that records its routes. */
 async function host() {
@@ -75,12 +74,17 @@ async function boot(options: { router?: boolean } = {}) {
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
   ctx.provide('webServer' as never, served.webServer as never)
   ctx.provide('acrylWeb' as never, served.acrylWeb as never)
-  ctx.plugin(settingsPlugin as never, { filename: '' } as never)
-  const router = (): void => { ctx.plugin({ name: routerName, apply: applyRouter }) }
-  if (options.router !== false) router()
-  ctx.plugin(routerHttpPlugin)
+  await ctx.plugin(settingsPlugin as never, { filename: '' } as never)
+  // Each dependency's fiber, then the consumer's: a fiber whose injected service is not yet provided is PENDING, and awaiting it returns at
+  // once, so a fixed wait or an early await only races the load.
+  const router = async (): Promise<void> => {
+    await ctx.plugin({ name: routerName, apply: applyRouter })
+    await http
+    await fiber
+  }
+  const http = ctx.plugin(routerHttpPlugin)
   const fiber = ctx.plugin(workspace)
-  await settle()
+  if (options.router !== false) await router()
   const get = (path: string, headers: Record<string, string> = { origin: served.origin, 'sec-fetch-site': 'same-origin' }) =>
     new Promise<{ status: number, body: string }>((resolve, reject) => {
       const req = request({ host: '127.0.0.1', port: served.port, path, headers }, (res) => {
@@ -114,8 +118,7 @@ describe('the workspace Host plugin', () => {
     const app = await boot({ router: false })
     expect(app.fiber.state).toBe(PENDING)
     expect(app.prefixes.size).toBe(0)
-    app.router()
-    await settle()
+    await app.router()
     expect(app.fiber.state).toBe(ACTIVE)
     expect((await app.get(WORKSPACE_CAPABILITIES_PATH)).status).toBe(200)
   })
@@ -128,7 +131,7 @@ describe('the workspace Host plugin', () => {
     expect((await app.get(WORKSPACE_CAPABILITIES_PATH)).status).toBe(404)
     for (let i = 0; i < 3; i += 1) {
       const again = app.ctx.plugin(workspace)
-      await settle()
+      await again
       expect(again.state).toBe(ACTIVE)
       expect([...app.prefixes.keys()]).toEqual([WORKSPACE_API_PREFIX])
       expect(app.upgrades).toEqual([WORKSPACE_PTY_STREAM_PATH])

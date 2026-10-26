@@ -3935,6 +3935,8 @@ Every serious plugin should be tested under more than startup.
 [ ] no duplicate registrations after N cycles
 ```
 
+**Wait for the fiber, never for a guessed time, and await dependencies first.** `await ctx.plugin(x)` waits only while the fiber has work in flight. A fiber whose injected service is not provided yet is PENDING with nothing in flight, so awaiting it returns at once, before the plugin has even started. A fixed `setTimeout` wait hides this on a fast machine and fails on a slow CI runner (fixed real instance: `acryl-node-server`'s tests waited 20 ms for a server that scans for a free port, and failed on Windows; one of its tests only passed because its fiber was still PENDING when it was checked). So await each dependency's fiber first, then the consumer's, then assert the state you expect: `ACTIVE`, the service present, or the rejection a failing plugin settles with (an awaited fiber that fails rejects with its startup error). When a plugin's readiness is later than its fiber (work deferred past `apply`, such as `acryl-plugin-context`'s startup pass), wait on the signal the plugin provides for it (`pluginContext.startupSettled`) and fail with what it reports, not with a polling deadline.
+
 ---
 
 ## 126. Effect leak test

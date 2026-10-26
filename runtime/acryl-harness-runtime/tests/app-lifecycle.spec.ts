@@ -35,9 +35,11 @@ async function start(app: string) {
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
   })
   const tools = async () => (await host.ctx.get('systemPrompt')!.assemble()).tools.map(tool => tool.name)
-  // The startup pass runs one tick after boot and installs the app's own plugins; wait for it.
-  const deadline = Date.now() + 90_000
-  while (!(await tools()).includes('todo_add') && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 250))
+  // The startup pass runs one tick after boot and installs the app's own plugins: wait for its signal, the one Desktop waits on, and keep what
+  // it reports, so a missing plugin fails with the reason (a failed install) instead of a tool list.
+  const pluginContext = host.ctx.get('pluginContext' as never) as unknown as { startupSettled: Promise<{ status: string, lines: string[] }> }
+  const startup = await pluginContext.startupSettled
+  const report = `startup pass ${startup.status}: ${startup.lines.join('; ') || '(nothing reported)'}`
   const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: `app-${String(Date.now())}`, attachment: 'owner', cwd: app })
   const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(await bridge.open()))
   const commands = host.ctx.get('commands' as never) as unknown as {
@@ -45,6 +47,7 @@ async function start(app: string) {
   }
   return {
     tools,
+    report,
     run: async (line: string) => (await commands.execute(agent, line, [], new AbortController().signal))?.result,
     async stop() { await bridge.dispose(); await host.dispose() },
   }
@@ -62,7 +65,8 @@ describe('an app is its Blend', () => {
     cpSync(organizer, join(a, 'plugins', 'acryl-organizer'), { recursive: true, filter: source => !source.includes('/tests') })
     let app = await start(a)
     try {
-      expect(await app.tools()).toContain('todo_add')   // installed by the startup pass, nobody typed /reload
+      expect(app.report).toBe("startup pass done: installed the app's plugins acryl-organizer")
+      expect(await app.tools(), app.report).toContain('todo_add')   // installed by the startup pass, nobody typed /reload
       const snapshot = await app.run('/blend snapshot')
       expect(snapshot?.kind, String(snapshot?.text)).toBe('success')
       expect(snapshot?.text).toContain(`Recorded the app in ${a}`)
@@ -87,7 +91,7 @@ describe('an app is its Blend', () => {
     writeNewApp(planNewApp(b, { title: 'Planner EU', launcher, from: source }), { git: false, pluginsFrom: join(a, 'plugins') })
     app = await start(b)
     try {
-      expect(await app.tools()).toContain('meeting_book')
+      expect(await app.tools(), app.report).toContain('meeting_book')
       expect((await app.run('/blend verify'))?.text).toContain('matches its lock')
     } finally { await app.stop() }
   }, 300_000)

@@ -48,9 +48,11 @@ export function apply(ctx) {
 
   // Settles when the startup pass below has finished (or cannot run): a surface waits on it before it serves its client, because the client
   // composes once from the plugin list it loads and an app plugin installed after that leaves the page without it (no `layout` on Desktop).
+  // It resolves with what the pass did, `{ status: 'done' | 'skipped' | 'failed' | 'disposed', lines }` (`lines` are the logged report, a
+  // per-plugin failure among them as `FAILED <name>: <error>`), so a waiter sees why an app plugin is missing without reading the log.
   let settleStartup = () => {}
   const startupSettled = new Promise(resolve => { settleStartup = resolve })
-  ctx.effect(() => () => settleStartup(), 'plugin-context: settle startup on disposal')
+  ctx.effect(() => () => settleStartup({ status: 'disposed', lines: [] }), 'plugin-context: settle startup on disposal')
 
   ctx.provide('pluginContext', {
     root,
@@ -85,9 +87,10 @@ export function apply(ctx) {
       let disposed = false
       const timer = setTimeout(async () => {
         if (disposed) return
+        let report = { status: 'failed', lines: [] }
         try {
           const profileDir = scoped.get('desktopProfiles')?.current?.dir
-          if (!profileDir) return
+          if (!profileDir) { report = { status: 'skipped', lines: ['no current profile'] }; return }
           const dshHome = scoped.get('dshHomePath')
           const services = { pnpm: scoped.get('desktopPnpm'), live: scoped.get('livePluginActivation'), pluginHub: ctx.get('pluginHub'), profileDir, acrylFrameworkPackages: ctx.get('acrylFrameworkPackages') }
           // An app (`acryl new`) installs its own committed plugins at start: a fresh clone has them in plugins/ but nothing installed yet.
@@ -113,7 +116,12 @@ export function apply(ctx) {
             ...summary.failed.map(f => `FAILED ${f.name}: ${f.error}`),
           ].filter(Boolean)
           if (parts.length > 0) ctx.logger.info(`[plugin-context] startup: ${parts.join('; ')}`)
-        } catch (cause) { ctx.logger.warn(`[plugin-context] startup sync failed: ${cause instanceof Error ? cause.message : String(cause)}`) } finally { settleStartup() }
+          report = { status: 'done', lines: parts }
+        } catch (cause) {
+          const message = cause instanceof Error ? cause.message : String(cause)
+          ctx.logger.warn(`[plugin-context] startup sync failed: ${message}`)
+          report = { status: 'failed', lines: [message] }
+        } finally { settleStartup(report) }
       }, 0)
       return () => { disposed = true; clearTimeout(timer) }
     }, 'plugin-context: startup sync')
