@@ -31,6 +31,23 @@ import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, P
 export const name = 'acryl-plugin-context'
 export const inject = ['systemPrompt']
 
+/** Answers once the startup pass has settled; a Web page rendered before then waits on it and reloads. */
+export const STARTUP_PATH = '/api/acryl-plugin-context/startup-settled'
+/** Longest hold, as Desktop's (APP_PLUGINS_SETTLE_LIMIT_MS): a slow install still lets the page boot, as it did before the hold existed. */
+export const STARTUP_HOLD_LIMIT_MS = 60_000
+
+/**
+ * The head script for an index rendered before the startup pass settled. It installs the boot-readiness deferred the client awaits, with a
+ * `resolve` that does nothing (the served tail script calls it once every row is in the document), then reloads when STARTUP_PATH answers
+ * 204 and boots as served on any other answer or a network error, so a failed hold never leaves a blank page.
+ * @param path - the startup-settled route.
+ * @returns the script text.
+ */
+export function startupHoldScript(path) {
+  return `(()=>{const gate=Promise.withResolvers();globalThis.__DSH_BOOT_READY__={promise:gate.promise,resolve(){},reject:gate.reject};`
+    + `fetch(${JSON.stringify(path)},{cache:'no-store',credentials:'same-origin'}).then(r=>{if(r.status===204)location.reload();else gate.resolve()},()=>gate.resolve())})()`
+}
+
 export function apply(ctx) {
   const root = resolvePackRoot()
   const manifest = JSON.parse(readFileSync(join(root, 'docs', 'docs.json'), 'utf8'))
@@ -53,6 +70,36 @@ export function apply(ctx) {
   let settleStartup = () => {}
   const startupSettled = new Promise(resolve => { settleStartup = resolve })
   ctx.effect(() => () => settleStartup({ status: 'disposed', lines: [] }), 'plugin-context: settle startup on disposal')
+  let startupDone = false
+  void startupSettled.then(() => { startupDone = true })
+
+  // The Web index embeds the client graph composed when it is requested, and the surface prints its URL before the startup pass has
+  // installed the app's plugins, so a page opened in between composes without the app's client plugins (reproduced, specs/001 T097).
+  // While the pass runs, the index carries one head script that holds the client's boot (`__DSH_BOOT_READY__`, which the client awaits
+  // before it reads the graph), asks STARTUP_PATH to answer once the pass settles, and reloads: the reloaded index renders after it. A
+  // page rendered after the pass gets no script. Desktop waits before it loads its window, so its page never gets one either.
+  ctx.inject(['webServer'], scoped => {
+    scoped.on('webserver/index-inject', table => {
+      if (!startupDone) table.push({ kind: 'script', placement: 'head', text: startupHoldScript(STARTUP_PATH) })
+    })
+    scoped.effect(() => scoped.webServer.register({
+      kind: 'exact',
+      path: STARTUP_PATH,
+      handler: async (req, res) => {
+        // The same admission as the Host API (origin and browser cookie), when this host has a connection.
+        const admission = scoped.get('connection')?.admit(req)
+        if (admission !== undefined && 'rejection' in admission) { res.writeHead(admission.rejection); res.end(); return }
+        let timer
+        const limit = new Promise(resolve => { timer = setTimeout(() => resolve('timed-out'), STARTUP_HOLD_LIMIT_MS) })
+        const closed = new Promise(resolve => { req.once('close', () => resolve('closed')) })
+        const outcome = await Promise.race([startupSettled.then(() => 'settled'), limit, closed]).finally(() => clearTimeout(timer))
+        if (outcome === 'closed') return
+        // 204: the pass settled, reload. 503: it did not settle in time (or cannot run on this host), boot with the graph as served.
+        res.writeHead(outcome === 'settled' ? 204 : 503, { 'cache-control': 'no-store' })
+        res.end()
+      },
+    }), 'plugin-context: startup-settled route')
+  })
 
   ctx.provide('pluginContext', {
     root,

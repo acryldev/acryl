@@ -911,3 +911,31 @@ test('previousStagedDir finds the running staged copy whatever slashes pnpm wrot
     spec('^1.0.0'); assert.equal(previousStagedDir(profile, 'probe', stageRoot), undefined)
   } finally { rmSync(profile, { recursive: true, force: true }) }
 })
+
+test('startup hold script: holds the client boot, reloads on 204, boots as served on any other answer or a network error', async () => {
+  const { startupHoldScript, STARTUP_PATH } = await import('../index.js')
+  const { runInNewContext } = await import('node:vm')
+  const run = async (answer) => {
+    const seen = { reloads: 0, fetched: [] }
+    const page = {
+      Promise,
+      fetch: (url, init) => { seen.fetched.push([url, init]); return answer() },
+      location: { reload: () => { seen.reloads += 1 } },
+    }
+    page.globalThis = page
+    runInNewContext(startupHoldScript(STARTUP_PATH), page)
+    // The served tail script settles the deferred it finds (`??=`): with the hold installed that resolve does nothing.
+    runInNewContext('(globalThis.__DSH_BOOT_READY__ ??= Promise.withResolvers()).resolve()', page)
+    const booted = await Promise.race([page.__DSH_BOOT_READY__.promise.then(() => true), new Promise(resolve => setTimeout(() => resolve(false), 50))])
+    return { ...seen, booted }
+  }
+  const settled = await run(() => Promise.resolve({ status: 204 }))
+  // JSON: the init object comes from the page's realm, with that realm's Object prototype.
+  assert.deepEqual(JSON.parse(JSON.stringify(settled)), { reloads: 1, fetched: [[STARTUP_PATH, { cache: 'no-store', credentials: 'same-origin' }]], booted: false })
+  const timedOut = await run(() => Promise.resolve({ status: 503 }))
+  assert.equal(timedOut.reloads, 0)
+  assert.equal(timedOut.booted, true)
+  const offline = await run(() => Promise.reject(new Error('network')))
+  assert.equal(offline.reloads, 0)
+  assert.equal(offline.booted, true)
+})
