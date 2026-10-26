@@ -17,7 +17,7 @@ fire(app)
 
 A request the app does not answer (`404`) can be passed on to the network by giving `fetch` as an option, so a Service Worker can serve some routes and leave the others to the origin:
 
-```ts
+```ts no-check
 import { Acryl } from 'acrylblends'
 import { handle } from 'acrylblends/service-worker'
 

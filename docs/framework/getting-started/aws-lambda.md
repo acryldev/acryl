@@ -97,6 +97,8 @@ const result = await handle(app)({
   requestContext: {
     accountId: '1',
     apiId: 'example',
+    authentication: null,
+    authorizer: {},
     domainName: 'example.execute-api.eu-west-1.amazonaws.com',
     domainPrefix: 'example',
     http: { method: 'GET', path: '/', protocol: 'HTTP/1.1', sourceIp: '203.0.113.9', userAgent: 'test' },
@@ -106,6 +108,7 @@ const result = await handle(app)({
     time: '25/Oct/2026:12:00:00 +0000',
     timeEpoch: 0,
   },
+  body: null,
   isBase64Encoded: false,
 })
 console.log(result.statusCode, result.body) // 200 Hello from Lambda
