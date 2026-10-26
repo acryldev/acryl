@@ -17,15 +17,17 @@ fire(app)
 
 A request the app does not answer (`404`) can be passed on to the network by giving `fetch` as an option, so a Service Worker can serve some routes and leave the others to the origin:
 
-```ts no-check
+```ts lib=webworker
 import { Acryl } from 'acrylblends'
 import { handle } from 'acrylblends/service-worker'
+
+declare const self: ServiceWorkerGlobalScope
 
 const app = new Acryl()
 
 app.get('/offline', (c) => c.text('Served by the Service Worker'))
 
-addEventListener('fetch', handle(app, { fetch: globalThis.fetch }))
+self.addEventListener('fetch', handle(app, { fetch: globalThis.fetch }))
 ```
 
-`app.fire()` (a method of the app) is deprecated in favour of `fire()` from this module.
+The example is type-checked with the TypeScript `WebWorker` library: declare `self` as a `ServiceWorkerGlobalScope` as above. `app.fire()` (a method of the app) is deprecated in favour of `fire()` from this module.
