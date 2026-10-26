@@ -157,6 +157,18 @@ tested over the wire, through the driver it ships with.
    - The suite once by hand against a real server through `ACRYL_DB_POSTGRES_URL`. Each case runs in its own schema (`search_path` in the
      connection options), dropped afterwards, so a real database's `public` schema is never touched.
    - The Data workflow gains the package on all six legs.
+   - **What covers what.** The Data workflow runs the suite on PGlite only. PGlite ignores the startup `search_path` (every socket
+     connection shares one session), so the schema-per-case mode, the one a real server or Supabase gets, is proved by hand only. Do not
+     read a green Data run as covering it.
+   - **The hand run, 2026-10-26.** PostgreSQL 17.10 (the `@embedded-postgres/darwin-arm64` 17.10.0-beta.17 binaries, run from a scratch folder
+     on 127.0.0.1:55433 with Unix sockets off, stopped by its PID and deleted afterwards):
+     - 33 of 33 tests passed;
+     - 22 cases ran in schema-per-case mode: conformance 15, `openDb` 5 and the Loader 2;
+     - those cases created and dropped 23 schemas, since the first `openDb` case opens twice (a path and a file URL);
+     - no schema was left behind;
+     - the server's 4 ERROR lines are the failures the cases assert: the refused orphan insert, two broken migrations, and the read after
+       the rolled-back one;
+     - the other 11 tests need no server (the scanner 8, the import closure 1, "ships pg" 1, "no url" 1).
 
 ## Slice 3 - `kv` and the JSON provider (2026-10-26, Blends; moved from Fork3)
 
