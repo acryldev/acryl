@@ -228,6 +228,40 @@ try {
   if (data !== 'ok') throw new Error(`the db entries answered ${JSON.stringify(data)}`)
   report('data (acrylblends/db/sqlite: nested folder, migrations once, foreign keys, RETURNING, rollback, :memory:, a misnumbered folder refused)', 'ok')
 
+  // The kv entries, from the packed build: openKv writes one file atomically (no temporary file left), update is atomic under concurrency,
+  // a reopen sees the data, kvOnDb keeps the same documents in the app's SQL database, and copyKv is the import from the file into SQL.
+  writeFileSync(join(app, 'kv.mjs'), [
+    "import { copyKv } from 'acrylblends/kv'",
+    "import { openKv } from 'acrylblends/kv/json'",
+    "import { kvOnDb } from 'acrylblends/kv/db'",
+    "import { openDb } from 'acrylblends/db/sqlite'",
+    "import assert from 'node:assert/strict'",
+    "import { readdirSync } from 'node:fs'",
+    "const file = 'data/kv/kv.json'",
+    "const first = await openKv({ path: file })",
+    "await Promise.all(Array.from({ length: 30 }, () => first.kv.update('count', (n) => (n ?? 0) + 1)))",
+    "await first.kv.set('theme', { dark: true })",
+    "await assert.rejects(first.kv.update('count', async (n) => n + 1), /synchronous/)",
+    "await assert.rejects(first.kv.set('bad', Number.NaN), TypeError)",
+    "await first.close(); await first.close()",
+    "assert.deepEqual(readdirSync('data/kv'), ['kv.json'])",
+    "const second = await openKv({ path: file })",
+    "assert.equal(await second.kv.get('count'), 30)",
+    "assert.deepEqual(await second.kv.list(), ['count', 'theme'])",
+    "const sql = await openDb({ path: ':memory:' })",
+    "const target = kvOnDb(sql.db)",
+    "assert.deepEqual(await copyKv(second.kv, target), { copied: 2, overwritten: 0 })",
+    "assert.deepEqual(await target.get('theme'), { dark: true })",
+    "assert.equal((await sql.db.get('SELECT COUNT(*) AS n FROM kv')).n, 2)",
+    "await assert.rejects(copyKv(second.kv, target), /already has 2/)",
+    "await second.close(); await sql.close()",
+    "console.log('ok')",
+    '',
+  ].join('\n'))
+  const kvCheck = run(process.execPath, ['kv.mjs'], app).trim()
+  if (kvCheck !== 'ok') throw new Error(`the kv entries answered ${JSON.stringify(kvCheck)}`)
+  report('kv (acrylblends/kv/json: atomic file, 30 concurrent updates, reopen; acrylblends/kv/db and copyKv: the file imported into SQL)', 'ok')
+
   // Client components without a bundler, as the client components guide sets them up: a page with one script tag, `clientModules` serving
   // src/client, an island using the DOM renderer and the typed client. A real browser runs it in development (compiled on request), then in
   // production from the folder `buildClientModules` wrote, with typescript gone as `npm ci --omit=dev` leaves it.

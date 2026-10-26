@@ -428,6 +428,18 @@
       "types": "./lib/db/sqlite.d.ts",
       "default": "./lib/db/sqlite.js"
     },
+    "./kv": {
+      "types": "./lib/kv.d.ts",
+      "default": "./lib/kv.js"
+    },
+    "./kv/json": {
+      "types": "./lib/kv/json.d.ts",
+      "default": "./lib/kv/json.js"
+    },
+    "./kv/db": {
+      "types": "./lib/kv/db.d.ts",
+      "default": "./lib/kv/db.js"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
