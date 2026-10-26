@@ -144,7 +144,7 @@ jobs:
         run: corepack pnpm install --frozen-lockfile
 
       - name: Build what the tests import
-        run: corepack pnpm --filter "acryl-desktop..." --workspace-concurrency=1 run build
+        run: corepack pnpm $(node scripts/root-chain-filters.mjs) --workspace-concurrency=1 run build
 
       - name: Typecheck, as the release does before its tests
         run: corepack pnpm run typecheck
