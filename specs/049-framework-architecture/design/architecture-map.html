@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL Framework Map</title>
+<style>
+  /* Design source: ACRYL's own dark token set, the same one specs/040-agentic-multiplexer-ade/design/ux-ade-now-and-next.html uses. */
+  *, *::before, *::after { box-sizing: border-box; }
+  :where(.grid, .flex, .cols) > * { min-width: 0; }
+  :where(p, h1, h2, h3, li, td, th, .chip, .pill-t) { overflow-wrap: anywhere; }
+  :root {
+    color-scheme: dark;
+    --background: hsl(222 20% 7%); --foreground: hsl(220 16% 92%);
+    --panel: hsl(222 18% 10%); --panel2: hsl(222 16% 13%); --panel3: hsl(222 14% 16%);
+    --border: hsl(222 12% 20%); --border-strong: hsl(222 12% 28%);
+    --muted: hsl(220 10% 60%); --soft: hsl(220 8% 42%);
+    --brand: hsl(186 92% 52%); --brand-soft: hsl(186 60% 16%);
+    --blue: hsl(208 90% 62%); --blue-soft: hsl(208 60% 16%);
+    --ok: hsl(152 58% 52%); --ok-soft: hsl(152 50% 15%);
+    --warn: hsl(38 92% 58%); --warn-soft: hsl(38 70% 15%);
+    --bad: hsl(0 72% 64%); --bad-soft: hsl(0 60% 15%);
+    --fresh: hsl(268 92% 74%); --fresh-soft: hsl(268 50% 17%);
+    --idea: hsl(220 10% 62%); --idea-soft: hsl(220 10% 16%);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  html { background: var(--background); color: var(--foreground); font: 14px/1.55 var(--sans); }
+  body { margin: 0; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 90px max(16px, env(safe-area-inset-left, 0px)); background: var(--background); }
+  main { max-width: 1240px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { font-size: 19px; margin: 52px 0 6px; text-wrap: balance; }
+  h3 { font-size: 15px; margin: 0 0 4px; }
+  .eyebrow { font: 600 11px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--brand); margin-bottom: 10px; }
+  p.lede { color: var(--muted); margin: 0 0 16px; max-width: 82ch; }
+  code, .mono { font-family: var(--mono); font-size: 12px; }
+  code { color: var(--brand); }
+  a { color: var(--blue); }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font: 600 11px/1.7 var(--sans); border: 1px solid; white-space: nowrap; }
+  .s-npm { color: var(--ok); border-color: hsl(152 58% 52% / .45); background: var(--ok-soft); }
+  .s-main { color: var(--brand); border-color: hsl(186 92% 52% / .45); background: var(--brand-soft); }
+  .s-building { color: var(--warn); border-color: hsl(38 92% 58% / .45); background: var(--warn-soft); }
+  .s-planned { color: var(--blue); border-color: hsl(208 90% 62% / .45); background: var(--blue-soft); }
+  .s-idea { color: var(--idea); border-color: hsl(220 10% 62% / .4); background: var(--idea-soft); border-style: dashed; }
+  .s-dropped { color: var(--bad); border-color: hsl(0 72% 64% / .45); background: var(--bad-soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+  .card { border: 1px solid var(--border); border-radius: 12px; background: var(--panel); padding: 16px; }
+  .cols { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+  .stat { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); margin: 18px 0 0; }
+  .stat .card { padding: 12px 14px; }
+  .stat b { display: block; font-size: 22px; letter-spacing: -0.01em; }
+  .stat span { color: var(--muted); font-size: 12px; }
+
+  /* the layer figure */
+  .figure { border: 1px solid var(--border); border-radius: 14px; background: var(--panel); padding: 12px; overflow-x: auto; }
+  .figure svg { display: block; width: 100%; min-width: 640px; height: auto; }
+  .band rect.bg { fill: var(--panel2); stroke: var(--border); }
+  .band.sel rect.bg { stroke: var(--brand); stroke-width: 1.5; }
+  .band text.title { fill: var(--foreground); font: 600 13px var(--sans); }
+  .band text.q { fill: var(--muted); font: 11.5px var(--sans); }
+  .pill { cursor: pointer; }
+  .pill rect { stroke-width: 1.2; }
+  .pill text { font: 500 11.5px var(--mono); }
+  .pill:hover rect, .pill.sel rect { stroke-width: 2.2; }
+  .p-npm rect { fill: var(--ok-soft); stroke: var(--ok); } .p-npm text { fill: var(--ok); }
+  .p-main rect { fill: var(--brand-soft); stroke: var(--brand); } .p-main text { fill: var(--brand); }
+  .p-building rect { fill: var(--warn-soft); stroke: var(--warn); } .p-building text { fill: var(--warn); }
+  .p-planned rect { fill: var(--blue-soft); stroke: var(--blue); } .p-planned text { fill: var(--blue); }
+  .p-idea rect { fill: var(--idea-soft); stroke: var(--idea); stroke-dasharray: 4 3; } .p-idea text { fill: var(--idea); }
+  .p-dropped rect { fill: var(--bad-soft); stroke: var(--bad); } .p-dropped text { fill: var(--bad); }
+  .arrowtxt { fill: var(--muted); font: 600 11px var(--sans); }
+
+  /* detail drawer under the figure */
+  .detail { margin-top: 12px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--panel2); padding: 14px 16px; }
+  .detail .hd { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .detail .hd h3 { margin: 0; font-family: var(--mono); font-size: 15px; }
+  .detail dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 10px 0 0; }
+  .detail dt { color: var(--soft); font-size: 12px; }
+  .detail dd { margin: 0; }
+
+  /* rules */
+  .rule { border-left: 3px solid var(--brand); }
+  .rule h3 { color: var(--foreground); }
+  .rule p { margin: 4px 0 0; color: var(--muted); }
+  .rule .why { margin-top: 8px; font-size: 12px; color: var(--soft); }
+
+  /* tabs explorer */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .tabs button { font: 600 12px var(--sans); color: var(--muted); background: var(--panel2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--background); background: var(--brand); border-color: var(--brand); }
+  .layer-head { margin-bottom: 10px; }
+  .layer-head p { margin: 2px 0; color: var(--muted); }
+  .items { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); }
+  .item { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 12px; }
+  .item .top { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+  .item h4 { margin: 0; font: 600 13px var(--mono); color: var(--foreground); }
+  .item .path { font: 11px var(--mono); color: var(--soft); margin: 2px 0 6px; }
+  .item p { margin: 0; color: var(--muted); font-size: 13px; }
+  .item ul { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 12.5px; }
+
+  /* request journey */
+  .journey svg { width: 100%; min-width: 720px; height: auto; display: block; }
+  .jbox rect { fill: var(--panel2); stroke: var(--border-strong); }
+  .jbox text { fill: var(--foreground); font: 600 12px var(--sans); }
+  .jbox text.sub { fill: var(--muted); font: 11px var(--mono); }
+  .jline { stroke: var(--brand); stroke-width: 1.5; fill: none; }
+  .jline.agent { stroke: var(--fresh); }
+  .jlab { fill: var(--muted); font: 11px var(--sans); }
+
+  /* file tree */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  .toolbar input { flex: 1 1 260px; min-width: 0; background: var(--panel2); color: var(--foreground); border: 1px solid var(--border-strong); border-radius: 8px; padding: 7px 10px; font: 13px var(--sans); }
+  .trees { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); }
+  .tree { font: 12px/1.6 var(--mono); }
+  .tree details { margin-left: 14px; }
+  .tree > details { margin-left: 0; }
+  .tree summary { cursor: pointer; color: var(--foreground); list-style: none; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .tree summary::before { content: "▸"; color: var(--soft); width: 10px; display: inline-block; }
+  .tree details[open] > summary::before { content: "▾"; }
+  .tree .leaf { margin-left: 24px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .tree .n { color: var(--foreground); }
+  .tree .dir { color: var(--brand); }
+  .tree .why { color: var(--muted); font-family: var(--sans); font-size: 12px; }
+  .tree .hide { display: none !important; }
+  .tree mark { background: var(--warn-soft); color: var(--warn); border-radius: 3px; }
+
+  /* ideas table */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font: 600 11px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); background: var(--panel); position: sticky; top: 0; }
+  td { font-size: 13px; }
+  td.idea { color: var(--foreground); }
+  td.where { font: 11.5px var(--mono); color: var(--muted); }
+  tr.hide { display: none; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filters button { cursor: pointer; }
+  .filters button[aria-pressed="false"] { opacity: .45; }
+
+  /* slices */
+  .slices { display: grid; gap: 8px; }
+  .slice { display: grid; grid-template-columns: 34px minmax(0, 1fr) max-content; gap: 12px; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 10px 12px; }
+  .slice .num { font: 700 15px var(--mono); color: var(--soft); text-align: center; }
+  .slice b { display: block; }
+  .slice span.m { color: var(--muted); font-size: 12.5px; }
+  @media (max-width: 560px) { .slice { grid-template-columns: 28px minmax(0, 1fr); } .slice .chip { grid-column: 2; justify-self: start; } }
+
+  .q { border: 1px dashed var(--border-strong); border-radius: 10px; padding: 12px 14px; background: var(--panel); }
+  .q b { color: var(--warn); }
+  footer { margin-top: 60px; color: var(--soft); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+
+<div class="eyebrow">spec 049 · ACRYL Framework · architecture map</div>
+<h1>The whole framework on one page</h1>
+<p class="lede">An ACRYL app is a folder of Cordis plugins. Every capability is one plugin that provides one service, and your own code asks for a service by name, never for the plugin that provides it. This page shows every layer, what each package is for, where it lives in the two repositories, what is shipped, and which ideas from the planning doc are done, in progress or still open. Click anything in the figure to read about it.</p>
+
+<div class="legend">
+  <span class="chip s-npm">on npm</span> released in <code>acrylblends</code> / <code>create-acrylblends</code>
+  <span class="chip s-main">on main</span> in the ACRYL repo, used by the IDE, not a public package yet
+  <span class="chip s-building">building</span> an agent is on it now
+  <span class="chip s-planned">planned</span> a spec slice with a gate
+  <span class="chip s-idea">idea</span> from the planning doc, not decided
+  <span class="chip s-dropped">dropped</span> decided against
+</div>
+
+<div class="stat">
+  <div class="card"><b>0.7.5</b><span>acrylblends on npm (0.7.6 with the dependency rule is being released)</span></div>
+  <div class="card"><b>105</b><span>import paths, <code>acrylblends/&lt;x&gt;</code></span></div>
+  <div class="card"><b>183 + 100</b><span>router source and test files ported from Hono 4.13.13, each traced in provenance.json</span></div>
+  <div class="card"><b>9</b><span>runtimes: Node, Bun, AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify, service worker</span></div>
+  <div class="card"><b>4</b><span>starters: nodejs, notes, chat, bun, plus any GitHub or npm template</span></div>
+</div>
+
+<h2 id="map">1. The layers, and which way imports point</h2>
+<p class="lede">Read it from the middle out. Cordis at the bottom runs everything. Your app's own plugins hold the rules ("create a note"). They depend only on <b>ports</b>, the service interfaces. Providers and adapters implement the ports, and surfaces and drivers sit on the outside. Imports always point down this figure, never up, and <code>acrylblends check-deps</code> enforces that for app code.</p>
+<div class="figure"><svg id="layers" viewBox="0 0 1000 600" role="img" aria-label="ACRYL framework layers"></svg></div>
+<div class="detail" id="detail" aria-live="polite"><div class="hd"><h3>Click a box</h3></div><p style="margin:6px 0 0;color:var(--muted)">Each box opens here: what it is for, where it lives, and what to know.</p></div>
+
+<h2 id="rules">2. The rules that keep it simple</h2>
+<p class="lede">These rules come from <i>Clean Architecture</i> and <i>The Pragmatic Programmer</i>, applied to this codebase. Each one has a check, so it does not depend on anyone remembering it.</p>
+<div class="cols" id="rulecards"></div>
+
+<h2 id="layers-explorer">3. Every layer, package by package</h2>
+<p class="lede">Pick a layer. Every card names the package, its folder, what it is for, and its state. The <code>acryl/</code> paths are the ACRYL repo. The <code>blends/</code> paths are the acrylblends repo, which publishes the npm packages.</p>
+<div class="tabs" role="tablist" id="tabs"></div>
+<div id="layerview"></div>
+
+<h2 id="journey">4. Two journeys through the layers</h2>
+<p class="lede">The top row is a browser request in a notes app. The bottom row is a coding agent adding a feature to the same app from inside its folder. Both use the same plugins, so the agent changes the real app, not a copy.</p>
+<div class="figure journey">
+<svg viewBox="0 0 1000 300" role="img" aria-label="Request and agent journeys">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="hsl(186 92% 52%)"/></marker>
+    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="hsl(268 92% 74%)"/></marker>
+  </defs>
+  <text class="jlab" x="10" y="22">A request</text>
+  <g class="jbox"><title>The browser or Desktop window sends a Request</title><rect x="10" y="34" width="140" height="62" rx="8"/><text x="22" y="58">Browser / window</text><text class="sub" x="22" y="78">POST /notes</text></g>
+  <g class="jbox"><title>node-server on Web, the Host loopback on Desktop, app.request in tests</title><rect x="180" y="34" width="150" height="62" rx="8"/><text x="192" y="58">Server adapter</text><text class="sub" x="192" y="78">node-server · Host</text></g>
+  <g class="jbox"><title>The router runs middleware, validation and the matched handler</title><rect x="360" y="34" width="140" height="62" rx="8"/><text x="372" y="58">Router</text><text class="sub" x="372" y="78">csrf · validator</text></g>
+  <g class="jbox"><title>A humble handler calls one use case</title><rect x="530" y="34" width="150" height="62" rx="8"/><text x="542" y="58">Your use case</text><text class="sub" x="542" y="78">createNote(db, …)</text></g>
+  <g class="jbox"><title>The db port: run, get, all, transaction with ? placeholders</title><rect x="710" y="34" width="120" height="62" rx="8"/><text x="722" y="58">db port</text><text class="sub" x="722" y="78">await db.run</text></g>
+  <g class="jbox"><title>The provider, chosen in one place: SQLite by default, Postgres for hosted apps</title><rect x="860" y="34" width="130" height="62" rx="8"/><text x="872" y="58">Provider</text><text class="sub" x="872" y="78">data.sqlite</text></g>
+  <path class="jline" d="M150 65 H178" marker-end="url(#ah)"/><path class="jline" d="M330 65 H358" marker-end="url(#ah)"/><path class="jline" d="M500 65 H528" marker-end="url(#ah)"/><path class="jline" d="M680 65 H708" marker-end="url(#ah)"/><path class="jline" d="M830 65 H858" marker-end="url(#ah)"/>
+  <text class="jlab" x="10" y="150">An agent adds a feature</text>
+  <g class="jbox"><title>claude, codex or pi started inside the app folder by a PTY driver</title><rect x="10" y="162" width="140" height="62" rx="8"/><text x="22" y="186">Coding agent</text><text class="sub" x="22" y="206">in the app folder</text></g>
+  <g class="jbox"><title>AGENTS.md, CLAUDE.md and docs/framework are copied into every app</title><rect x="180" y="162" width="150" height="62" rx="8"/><text x="192" y="186">Reads the docs</text><text class="sub" x="192" y="206">AGENTS.md · docs/</text></g>
+  <g class="jbox"><title>A new numbered migration, never an edit to an old one</title><rect x="360" y="162" width="140" height="62" rx="8"/><text x="372" y="186">Writes code</text><text class="sub" x="372" y="206">002-tags.sql</text></g>
+  <g class="jbox"><title>Typecheck, tests and the dependency rule</title><rect x="530" y="162" width="150" height="62" rx="8"/><text x="542" y="186">Checks itself</text><text class="sub" x="542" y="206">tsc · test · check-deps</text></g>
+  <g class="jbox"><title>acryl control: install or reload a plugin in the running app</title><rect x="710" y="162" width="120" height="62" rx="8"/><text x="722" y="186">The door</text><text class="sub" x="722" y="206">acryl control</text></g>
+  <g class="jbox"><title>Saved to the app's own git repository after the secret check</title><rect x="860" y="162" width="130" height="62" rx="8"/><text x="872" y="186">Save</text><text class="sub" x="872" y="206">secret check · git</text></g>
+  <path class="jline agent" d="M150 193 H178" marker-end="url(#ah2)"/><path class="jline agent" d="M330 193 H358" marker-end="url(#ah2)"/><path class="jline agent" d="M500 193 H528" marker-end="url(#ah2)"/><path class="jline agent" d="M680 193 H708" marker-end="url(#ah2)"/><path class="jline agent" d="M830 193 H858" marker-end="url(#ah2)"/>
+  <text class="jlab" x="10" y="268">Proven on every release: Claude and Codex each add tags to the notes starter from the docs alone (a new 002 migration, tests and check-deps pass).</text>
+</svg>
+</div>
+
+<h2 id="files">5. Where everything lives</h2>
+<p class="lede">Both repositories as trees. Each folder says what it is for. Type to filter, for example <code>db</code>, <code>adapter</code> or <code>agent</code>.</p>
+<div class="toolbar"><input id="treefilter" type="search" placeholder="Filter files and folders…" aria-label="Filter the file tree"><button class="chip s-main" id="expandall" type="button">expand all</button><button class="chip s-idea" id="collapseall" type="button">collapse all</button></div>
+<div class="trees">
+  <div class="card tree" id="tree-acryl"></div>
+  <div class="card tree" id="tree-blends"></div>
+</div>
+
+<h2 id="ideas">6. The ideas, and where each one stands</h2>
+<p class="lede">Every idea from <code>AcryFrameworkBlockOfIDEAS_1.md</code> and the owner's direction, mapped to what exists today. Where we chose differently from the doc, the row says so.</p>
+<div class="filters" id="ideafilters"></div>
+<div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>Idea</th><th>State</th><th>What we did</th><th>Where</th></tr></thead><tbody id="ideas-body"></tbody></table></div>
+
+<h2 id="slices">7. Spec 049 slices, in order</h2>
+<p class="lede">Each slice lands only when its check passes. Owners: Fork3 builds the ports and providers, and Blends builds the starters, docs and releases.</p>
+<div class="slices" id="slicelist"></div>
+
+<h2 id="open">8. Open decisions</h2>
+<div class="cols" id="openq"></div>
+
+<footer>Generated by the coordinator from the ACRYL repo at main 4721bb00 and acrylblends 0.7.5 / candidate 21d20c8, on 2026-10-26. Facts are from the repositories and npm. Rows marked "idea" or with a question are not decided.</footer>
+</main>
+
+<script>
+const LAYERS = [
+  { id: 'surfaces', name: 'Surfaces and drivers', q: 'Who uses the app, a person or an agent?',
+    rule: 'Swappable. Renders and drives, holds no business rules.',
+    items: [
+      { n: 'Web', s: 'main', p: 'acryl/apps/acryl-web', f: 'The browser surface. Boots the shared runtime web profile and serves the local web client.' },
+      { n: 'Desktop', s: 'main', p: 'acryl/apps/acryl-desktop', f: 'Electron 44.9.3. The Host and Client faces, packaging and release tests. Boots DSH profiles through our own module-hook resolver since e8812699, no native add-on.' },
+      { n: 'TUI', s: 'main', p: 'acryl/apps/acryl-cli', f: 'The terminal coding-agent client (pi-tui). Uses acryl-ui-tui, the terminal twin of @acryl/ui.' },
+      { n: 'PTY drivers', s: 'planned', p: 'spec 048 Phase 9', f: 'Run claude, codex, pi and others in a terminal inside the app folder. Proven by hand on Claude Code, Codex, pi, Cursor CLI, Qwen Code, Amp and Goose; the plugin is still to build.' },
+      { n: 'DSH chat', s: 'main', p: 'acryl/deepseek-harness (submodule)', f: 'DeepSeek Harness is now one chat driver among others, kept as a pinned reference. It must never block Desktop boot, an Electron upgrade or another driver.' },
+      { n: 'the door', s: 'main', p: 'acryl/plugins/acryl-agent-control', f: 'acryl control: a governed snapshot-and-act interface an agent uses to drive the running app from inside. One plugin for Web and Desktop.' },
+    ] },
+  { id: 'adapters', name: 'Providers and adapters', q: 'How does it reach the outside world?',
+    rule: 'Implement a port. Chosen in one place. Pass the port\'s conformance suite.',
+    items: [
+      { n: 'acryl-node-server', s: 'npm', p: 'acryl/plugins/acryl-node-server', f: 'Serves the router from node:http where no Host runs. serve() listens on 127.0.0.1 unless asked. Also clientModules (islands without a bundler) and the .tsx register hook.', d: ['acrylblends/node-server', 'acrylblends/node-server/register', 'acrylblends/node-server/serve-static'] },
+      { n: 'acryl-router-http', s: 'main', p: 'acryl/plugins/acryl-router-http', f: 'The Desktop and Web Host adapter: mounts path prefixes on the Host and serves them through the router as Request/Response.' },
+      { n: 'hosting adapters', s: 'npm', p: 'acryl/plugins/acryl-router/src/core/adapter/', f: 'aws-lambda, lambda-edge, cloudflare-workers, cloudflare-pages, vercel, netlify, service-worker and bun, ported with the upstream tests (144 + 15). 0.7.4.', d: ['acrylblends/aws-lambda', 'acrylblends/bun', '…'] },
+      { n: 'acryl-db-sqlite', s: 'npm', p: 'acryl/plugins/acryl-db-sqlite', f: 'The default db provider. openDb({ path, migrations }) → { db, close }: node:sqlite, WAL, foreign keys on, migrations applied, a failed one leaves the file unchanged. Also a thin Cordis plugin over the same code.', d: ['acrylblends/db/sqlite'] },
+      { n: 'acryl-db-postgres', s: 'building', p: 'acryl/plugins/acryl-db-postgres (branch)', f: 'Postgres or Supabase through DATABASE_URL with a network client. The same conformance suite runs on PGlite in CI, which is a test dependency only. ? placeholders are translated, leaving strings and comments alone.' },
+      { n: 'acryl-kv-json', s: 'planned', p: 'slice 3', f: 'Tiny apps: named JSON documents in one file, written atomically (temp file, then rename). Both db providers will also serve kv, so an app can grow into SQL.' },
+      { n: 'durable storage', s: 'planned', p: 'slice 5', f: 'The storage layer of pi\'s durable package, ported with its conformance suite (about 6,500 lines with tests): memory, JSONL, SQLite, plus our own Postgres storage.' },
+      { n: 'desktop plugin', s: 'npm', p: 'blends/plugins/desktop, desktop-web', f: 'Opens a Blend app or a plain app in an Electron window. Every Electron call stays in this plugin, so a later Electrobun provider is one swap.' },
+    ] },
+  { id: 'ports', name: 'Ports', q: 'What can my code ask for?',
+    rule: 'Small typed interfaces. Your plugins import types and receive the service through inject.',
+    items: [
+      { n: 'router', s: 'npm', p: 'acryl/plugins/acryl-router', f: 'The Hono 4.13.13 port as a Cordis service: an Acryl app per plugin, mounted with ctx.router.route, served on Web, Desktop, in process for tests and the TUI.', d: ['acrylblends', 'acrylblends/<middleware>', 'acrylblends/client'] },
+      { n: 'db', s: 'npm', p: 'acryl/plugins/acryl-db', f: 'run, get, all, transaction, all promise-returning, ? placeholders, numbered migrations in migrations/NNN-name.sql recorded in _migrations. Ported from pi\'s chord SQLite facade. The root entry imports nothing from Cordis.', d: ['acrylblends/db'] },
+      { n: 'kv', s: 'planned', p: 'slice 3', f: 'get, set, update (atomic), delete, list. For apps that do not need SQL.' },
+      { n: 'durable', s: 'planned', p: 'slice 5', f: 'Agent conversations (transcripts of immutable entries), tasks that resume after a crash, documents with history. Requests carry an id, so a retry after a crash does not run twice.' },
+      { n: 'state', s: 'npm', p: 'acryl/plugins/acryl-state', f: 'Live state: observable cells and derived values, streamed to the UI over SSE. In memory today; cells will be able to persist through kv or durable.' },
+      { n: 'settings', s: 'main', p: 'acryl/plugins/acryl-settings', f: 'Preferences in one YAML file in the app home: register, get, update, watch.' },
+      { n: 'drivers', s: 'planned', p: 'spec 048 Phase 9', f: 'One contract for any agent: start, send, stream events, interrupt, stop, status. Today acryl-control has providers for claude, codex, ACP and DSH.' },
+    ] },
+  { id: 'app', name: 'Your app plugins', q: 'What does my app do?',
+    rule: 'The rules of your app live here, in small use-case functions. No driver imports.',
+    items: [
+      { n: 'notes starter', s: 'npm', p: 'blends/packages/create/templates/notes', f: 'Accounts (scrypt, cookie sessions), notes on db with migrations, validated forms, search, a JSON API with a typed client, csrf, a test per route, one client island. The golden template.' },
+      { n: 'chat starter', s: 'npm', p: 'blends/packages/create/templates/chat', f: 'Streams an answer token by token from an OpenAI-compatible model (key only from the environment), Stop aborts the upstream, history on db, tests with a mock model.' },
+      { n: 'nodejs starter', s: 'npm', p: 'blends/packages/create/templates/nodejs', f: 'The smallest Acryl app: one route, a page, a client module, tests.' },
+      { n: 'acryl-todo', s: 'main', p: 'acryl/examples/acryl-todo', f: 'The reference app of spec 046: router, state and the validate helper only.' },
+      { n: 'acryl-organizer', s: 'main', p: 'acryl/examples/acryl-organizer', f: 'To-do list, calendar and meeting booking grown from the Blank Blueprint: what a Blend adds.' },
+      { n: 'the IDE', s: 'building', p: 'spec 048', f: 'The ACRYL IDE is the maxed-out ACRYL app. Its capabilities move onto the framework slice by slice (workspace and the door are done).' },
+    ] },
+  { id: 'core', name: 'Core', q: 'How do plugins start, stop and find each other?',
+    rule: 'Cordis only. No second lifecycle, injection, event or provider system.',
+    items: [
+      { n: 'Cordis', s: 'npm', p: '@deepseek-ai/cordis', f: 'Context, services, inject, effect, the Loader (YAML rows), and Fibers: PENDING, LOADING, ACTIVE, FAILED, UNLOADING, DISPOSED. A missing dependency is a valid PENDING state, and a provider change reloads its consumers.' },
+      { n: 'acryl-inspect', s: 'main', p: 'acryl/plugins/acryl-inspect', f: 'What every running plugin requires, provides and registers, and what unloads with it. Read from the running system, not from config.' },
+      { n: 'startupSettled', s: 'main', p: 'acryl/plugins/acryl-plugin-context', f: 'The app-ready signal: resolves when the start-time plugin installs are done, with a report of anything that failed. Desktop waits on it; Web and the CLI are being checked (T097).' },
+    ] },
+];
+
+const TOOLING = [
+  { n: 'create-acrylblends', s: 'npm', p: 'blends/packages/create', f: 'npm create acrylblends@latest my-app. Built-in templates, or a source: github:owner/repo[#ref], @scope/name, a .tgz. Downloads without running anything, refuses a template without acryl.template.json or with secrets.' },
+  { n: 'acrylblends CLI', s: 'npm', p: 'blends/packages/cli/src', f: 'init, add (plugins into a Blend app, including add db), build-client, and check-deps, the dependency rule (0.7.6).' },
+  { n: 'names table', s: 'npm', p: 'blends/packages/create/src/names.ts, scripts/lib/names.mjs', f: 'Every place that spells the package or command name reads it here, so the rename to acryl is one line plus a release.' },
+  { n: 'framework docs', s: 'npm', p: 'acryl/docs/framework', f: 'The upstream docs adapted 1:1: getting-started, api, guides (data, forms and sessions, client modules, testing…), helpers, middleware, concepts, cordis, agents. Every code block is type-checked. Copied into every app and both websites.' },
+  { n: 'AGENTS.md in every app', s: 'npm', p: 'each starter', f: 'Conventions, commands and rules for coding agents, plus a docs copy, so an agent works from inside the folder.' },
+  { n: 'save', s: 'npm', p: 'acryl/runtime/app-persistence', f: 'Saves an app to its own git repository. Refuses secrets (file and line named, never the value) and guards private-to-public.' },
+  { n: 'plugin hub and market', s: 'main', p: 'acryl/runtime/plugin-hub, plugins/acryl-plugin-hub, plugins/cordis-plugin-market', f: 'Save, share and pull plugins, checked by sha512 and by the services the app provides. A failed update brings the previous version back.' },
+  { n: 'plugin context', s: 'main', p: 'acryl/plugins/acryl-plugin-context', f: 'Routed docs, verified examples and skills that let an agent write its own plugins.' },
+];
+const DIST = [
+  { n: 'acrylblends-framework', s: 'npm', p: 'acryl/distribution/acrylblends-framework', f: 'Builds the public acrylblends package from the ACRYL plugins: 105 import paths, without Cordis.' },
+  { n: 'acryl (npm)', s: 'npm', p: 'acryl/distribution/acryl-npm-launcher', f: 'Today the npm name acryl is the CLI agent. Later the framework may take the name (open decision).' },
+  { n: 'release gates', s: 'npm', p: 'blends/scripts, ACRYL CI', f: 'verify-port (provenance), verify-framework-sync, the tarball gate, the upstream-name guard, the docs type-check, registry installs in a scratch HOME, CI on Linux, macOS and Windows.' },
+];
+
+const RULES = [
+  ['One plugin per capability', 'Each capability is one Cordis plugin providing one service. Optional and replaceable.', 'Check: Loader rows named after their package; acryl-inspect shows what each provides.'],
+  ['Imports point inward', 'App code imports ports, never node:sqlite, pg, electron or a driver. The database is opened in one declared file.', 'Check: acrylblends check-deps fails with file:line (0.7.6).'],
+  ['One suite per port', 'Every provider passes the same conformance suite. A new provider is accepted by passing it, not by review alone.', 'Check: the Data workflow runs it on Linux, macOS and Windows, Node 22 and 24.'],
+  ['One way per job', 'One data API per need (db, kv, durable), one way to serve, one way to add a plugin. A second way needs a written reason.', 'Check: spec 049 lists the one way for each layer.'],
+  ['Port means port the source', 'When we take from a mature project (Hono, pi), we port its code and tests with provenance. We do not write our own version "inspired by" it. The MIT notice goes in LICENSE only.', 'Check: provenance.json plus verify-port; the name guard keeps upstream names out.'],
+  ['Humble handlers', 'A route reads the request, calls one use case, writes the response. So the TUI, the door and tests call the same code.', 'Check: app.request() tests with no server in every starter.'],
+  ['Agents work from inside', 'An agent starts in the app folder, reads AGENTS.md and docs, writes a plugin, checks it, and installs it through the door.', 'Check: the Claude and Codex driver gates on every release.'],
+  ['Names in one table', 'acrylblends today, acryl later. The name lives in one file.', 'Check: a test keeps names.ts and names.mjs equal.'],
+];
+
+const TREE_ACRYL = ['acryl/ (the ACRYL repo: framework source, IDE, Desktop)', [
+  ['apps/', 'swappable surfaces', [['acryl-desktop/', 'Electron Desktop'], ['acryl-web/', 'browser surface'], ['acryl-cli/', 'terminal agent client']]],
+  ['runtime/', 'the stable core every surface depends on', [['acryl-control/', 'control plane, agent providers'], ['acryl-harness-runtime/', 'engine host, app instances, profile resolution'], ['acryl-diagnostics/', 'logs, secret masking, support archive'], ['acryl-loopback-http/', 'same-origin loopback check for Host routes'], ['app-persistence/', 'save with the secret check'], ['blends-core/', 'the Blend format: parse, validate, lock'], ['plugin-hub/', 'pack, share, pull plugins']]],
+  ['plugins/', 'replaceable Cordis plugins', [
+    ['acryl-router/', 'the Hono port: the router service', [['src/core/', '183 ported files: app, context, request, router, compose'], ['src/core/middleware/', '26 middleware: cors, csrf, jwt, logger, secure-headers, cache…'], ['src/core/helper/', 'cookie, streaming, ssg, websocket, testing, proxy…'], ['src/core/adapter/', '8 hosting adapters incl. bun'], ['src/core/jsx/', 'server JSX and jsx/dom'], ['provenance.json', 'every file mapped to upstream 5ca49b0'], ['LICENSE', 'the upstream MIT notice']]],
+    ['acryl-node-server/', 'standalone node:http adapter, client modules, .tsx hook'],
+    ['acryl-router-http/', 'Host adapter for Web and Desktop'],
+    ['acryl-db/', 'the db port, migrations, conformance suite', [['src/facade/', 'ported from pi chord'], ['src/conformance/', 'describeDbConformance'], ['provenance.json', 'pi d5b3de22']]],
+    ['acryl-db-sqlite/', 'SQLite provider: open entry + Cordis plugin'],
+    ['acryl-state/', 'live cells over SSE'], ['acryl-settings/', 'YAML preferences'], ['acryl-inspect/', 'what each plugin provides'],
+    ['acryl-agent-control/', 'the door: acryl control'], ['acryl-plugin-context/', 'docs and skills for agents writing plugins'],
+    ['acryl-workspace/', 'IDE workspace shell'], ['acryl-ui/', '@acryl/ui React library'], ['acryl-ui-tui/', 'terminal twin of @acryl/ui'], ['acryl-app-shell/', 'three-column app frame'], ['acryl-brand/', 'configurable brand'],
+    ['acryl-plugin-hub/', 'plugin store in an app'], ['acryl-plugin-admin/', 'Settings > Plugins'], ['cordis-plugin-market/', 'community plugins, optional'], ['acryl-sign-in/', 'model provider sign-in'], ['acryl-app-save/', '/app save'], ['acryl-support/', 'diagnostics archive'], ['acryl-shortcuts/', 'keyboard commands'], ['acryl-system-prompt/', 'ACRYL prompt sections'], ['acryl-mount-anchors/', 'click UI, find its plugin'],
+    ['dsh-client-ui-brand-acryl/', 'brand slots in the DSH client'], ['dsh-community-fabric/', 'interop RFC, docs only']]],
+  ['distribution/', 'release shims, no product logic', [['acrylblends-framework/', 'builds the acrylblends package'], ['acryl-npm-launcher/', 'npm acryl CLI']]],
+  ['examples/', 'reference apps', [['acryl-todo/', 'spec 046 reference app'], ['acryl-organizer/', 'Blend grown from Blank'], ['acryl-framework-starter/', 'copyable plugin starter'], ['acryl-blend-demo/', 'inert demo plugin']]],
+  ['docs/framework/', 'the framework docs (shipped into every app)', [['getting-started/', 'Node, Bun, 7 hosts, desktop, deploy'], ['guides/', 'data, forms and sessions, client modules, testing, rpc…'], ['api/', 'Acryl, Context, Request, routing'], ['middleware/, helpers/', 'one page each'], ['cordis/', 'Acryl in a Cordis app'], ['agents/', 'for coding agents']]],
+  ['specs/', 'decisions and ledgers', [['047-framework-port/', 'the Hono port, T021-T023'], ['048-ide-on-framework/', 'IDE slice by slice'], ['049-framework-architecture/', 'this spec, plan, design/']]],
+  ['deepseek-harness/', 'pinned submodule, never edited'],
+]];
+const TREE_BLENDS = ['blends/ (acrylblends repo: the npm packages)', [
+  ['packages/cli/', 'npm acrylblends', [['src/', 'cli, init, add, build-client, check-deps'], ['framework.json', 'which ACRYL commit is vendored'], ['templates/', 'Blend app templates (acrylblends init)'], ['lib/', 'the vendored framework build']]],
+  ['packages/create/', 'npm create-acrylblends', [['src/source.ts', 'github:, @scope/name, .tgz sources'], ['src/names.ts', 'the names table'], ['templates/nodejs/', 'smallest app'], ['templates/notes/', 'golden full-stack starter'], ['templates/chat/', 'streaming AI chat'], ['templates/bun/', 'Bun, experimental']]],
+  ['plugins/', 'library plugins for Blend apps (acrylblends add)', [['acryl-router/, acryl-node-server/, acryl-router-http/', 'vendored from ACRYL'], ['acryl-state/', 'live cells'], ['acryl-db/, acryl-db-sqlite/', 'add db'], ['tasks/', 'durable task log, moving onto durable'], ['settings/, instance/, manifest/', 'YAML settings, app home, blend.yaml'], ['agent/, builder/, openai/', 'the in-app agent that builds plugins'], ['sandbox/', 'Node permission model for agent code'], ['desktop/, desktop-web/', 'Electron window'], ['save/, extensions/, acryl-inspect/', 'save, install while running, inspect']]],
+  ['docs/', 'site docs, synced from ACRYL docs/framework'],
+  ['scripts/', 'release gates: tarball, name guard, sync, probes'],
+  ['specs/', 'Blends specs (019 trusted publishing…)'],
+]];
+
+const IDEAS = [
+  ['Cordis is the core; one plugin per capability', 'done', 'Every framework part is a Cordis plugin; the five nouns App, Host, Plugin, Surface, Driver.', 'docs/acryl/ARCHITECTURE.md'],
+  ['Port Hono, no second router, keep provenance', 'done', 'Hono 4.13.13 ported file by file with its tests; upstream name only in LICENSE.', 'plugins/acryl-router, spec 047'],
+  ['Node primary, Bun optional, no Deno', 'done', 'Node is verified; Bun adapter shipped as experimental in 0.7.4; Deno dropped.', 'acrylblends/bun'],
+  ['Hosting anywhere through adapters', 'done', '7 hosting adapters plus Bun, with upstream tests and a local Workers run.', 'src/core/adapter/'],
+  ['Separate live state, durable records and UI state', 'progress', 'Spec 049 splits them: state (live), db / kv / durable (stored), component state in islands.', 'spec 049 · Data'],
+  ['A db contract, SQLite default, migrations, no ORM', 'done', 'db port and SQLite provider ported from pi; numbered migrations; no ORM by decision.', 'acrylblends/db (0.7.5)'],
+  ['Postgres for hosted multi-user apps', 'progress', 'Slice 2: network client at runtime, PGlite for CI only.', 'acryl-db-postgres (branch)'],
+  ['A JSON file for tiny apps', 'planned', 'Slice 3: kv with an atomic JSON file, served by db providers too.', 'acryl-kv-json'],
+  ['Durable agent state, inspired by pi durable', 'planned', 'Slice 5: port pi\'s storage layer and its conformance suite; tasks and state move onto it in slice 6.', 'durable'],
+  ['Server-rendered JSX as the default UI', 'done', 'JSX on the server with no build step; .tsx through the register hook.', 'acrylblends/jsx, node-server/register'],
+  ['htmx plus Alpine for interactivity', 'differs', 'Not adopted. We built client modules instead: islands in JSX, compiled on request, no bundler. Open whether htmx should become a documented option.', 'clientModules, build-client'],
+  ['Real hydration of islands', 'planned', 'hydrateRoot replaces markup today (documented); real adoption is T021.', 'specs/047 plan T021'],
+  ['Rich UI: React with acryl-ui, Vite as build tool', 'open', 'acryl-ui exists for the IDE; not yet in templates; no Vite pipeline yet.', 'plugins/acryl-ui'],
+  ['A UI contribution contract (plugin owns page, nav, slot)', 'open', 'Routes are plugin-owned and unload with the plugin; a generic page/nav/slot contract is not designed yet.', '-'],
+  ['acryl-auth: sessions, identities, roles, OAuth', 'open', 'Not started. The notes starter has scrypt accounts and cookie sessions written in the app.', 'templates/notes'],
+  ['Permissions for agent-written plugins', 'progress', 'Blends sandbox plugin (Node permission model) and the governed door exist; a permission registry does not.', 'blends/plugins/sandbox'],
+  ['Staged install, health check, rollback', 'progress', 'Plugin hub rolls back a failed update; startupSettled reports failed installs. No full stage-promote pipeline yet.', 'plugin-hub, startupSettled'],
+  ['One agent driver contract (PTY and chat)', 'progress', 'acryl-control has claude, codex, ACP and DSH providers; PTY driver plugins are spec 048 Phase 9.', 'runtime/acryl-control'],
+  ['Desktop as an adapter, not the framework', 'progress', 'Electron calls stay in the desktop plugin; Electrobun is a later decision.', 'blends/plugins/desktop'],
+  ['Typed client; OpenAPI later', 'done', 'The typed client and testClient ship; OpenAPI generation is an idea.', 'acrylblends/client'],
+  ['WebSockets', 'progress', 'The ws helper and Bun websockets ship. Whether WebSocket upgrades are wired through the Node server needs checking (question).', 'helper/websocket'],
+  ['Background jobs that survive restarts', 'planned', 'The tasks plugin exists; it moves onto durable in slice 6.', 'blends/plugins/tasks'],
+  ['Production workflow: build, migrations, secrets, shutdown, deploy', 'done', 'Starters build client modules, apply migrations, bind 127.0.0.1, close on SIGTERM, keep keys in env; deploy guide.', 'getting-started/deploy.md'],
+  ['Packaged desktop builds of generated apps', 'open', 'The desktop plugin runs an app from source; packaging a generated app as an installer is not done.', '-'],
+  ['npx acryl new, with registry and git templates', 'progress', 'Works under the interim name: create-acrylblends with github: and @scope sources (0.7.4). The rename waits for the owner.', 'packages/create'],
+  ['Enforce the dependency rule', 'done', 'acrylblends check-deps, file:line errors, one declared opener (0.7.6).', 'packages/cli/src/check-deps.ts'],
+  ['A golden multi-user Notes template', 'done', 'The notes starter: accounts, sessions, csrf, db, tests, one island.', 'templates/notes'],
+  ['AGENTS.md and docs in every app; agents build from inside', 'done', 'Every starter carries them; Claude and Codex gates pass each release.', 'each starter'],
+  ['The IDE as the maxed-out ACRYL app', 'progress', 'Spec 048 moves the IDE onto the framework slice by slice.', 'specs/048'],
+  ['Vike as the page layer', 'dropped', 'Evaluated (MIT, Vite-bound, 45.9k lines); the owner dropped it.', '-'],
+];
+const STATE_CHIP = { done: ['s-npm', 'done'], progress: ['s-building', 'in progress'], planned: ['s-planned', 'planned'], open: ['s-idea', 'open'], differs: ['s-main', 'chose differently'], dropped: ['s-dropped', 'dropped'] };
+
+const SLICES = [
+  [1, 'db port and SQLite provider', 'Ported from pi chord, migrations, conformance suite; plus openDb for plain apps.', 'npm', 'done · main 23ad6ab1, 3d44d5c6'],
+  [2, 'Postgres provider', 'Network client at runtime, PGlite in CI, ? translation that leaves strings and comments alone.', 'building', 'building · Fork3'],
+  [3, 'kv and the JSON provider', 'Atomic JSON file; kv also on both db providers; a crash test.', 'planned', 'planned'],
+  [4, 'Starters on db', 'notes and chat on db with migrations; the data guide; Claude and Codex gate.', 'npm', 'done · 0.7.5'],
+  [5, 'durable port', 'pi\'s storage layer and its conformance suite; our Postgres storage.', 'planned', 'planned'],
+  [6, 'Tasks and state on durable', 'A task resumes after a kill; a cell keeps its value across a restart.', 'planned', 'planned'],
+  [7, 'The dependency rule', 'acrylblends check-deps with file:line; one declared opener.', 'building', 'releasing · 0.7.6'],
+  [8, 'acryl new with registry and git', 'create-acrylblends <name> github:… | @scope/… | .tgz; nothing runs without --install.', 'npm', 'done · 0.7.4'],
+];
+const OPEN = [
+  ['The acryl name', 'When the framework takes the npm name acryl, does today\'s CLI agent become acryl agent (one package), or move to another name? Recommendation: one package, decided when you choose.'],
+  ['htmx as an option', 'We chose islands (client modules) over htmx plus Alpine. Should htmx be documented as an equal option for form-heavy apps, or stay out to keep one way?'],
+  ['Rich UI path', 'Bring @acryl/ui and a Vite build into the templates as a rich-UI starter, or keep React for the IDE until a real app needs it?'],
+  ['acryl-auth', 'Extract the notes starter\'s accounts and sessions into an auth plugin with roles and OAuth, and when?'],
+  ['Agent-written plugin safety', 'How far to take permissions and staged activation before agents install plugins in other people\'s apps.'],
+];
+
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const chip = (s) => `<span class="chip s-${s}">${({ npm: 'on npm', main: 'on main', building: 'building', planned: 'planned', idea: 'idea', dropped: 'dropped' })[s]}</span>`;
+
+function drawLayers() {
+  const svg = document.getElementById('layers');
+  const order = ['surfaces', 'adapters', 'ports', 'app', 'core'];
+  const left = 150, width = 840, bandGap = 10;
+  let y = 10;
+  const measure = el('text', { class: 'pill', style: 'font:500 11.5px var(--mono)' }, svg);
+  const tw = (s) => { measure.textContent = s; return measure.getComputedTextLength() || s.length * 7; };
+  const bands = [];
+  for (const id of order) {
+    const L = LAYERS.find((l) => l.id === id);
+    const g = el('g', { class: 'band', id: 'band-' + id }, svg);
+    el('title', {}, g).textContent = L.name + ': ' + L.rule;
+    const rect = el('rect', { class: 'bg', x: left, y, width, rx: 10 }, g);
+    el('text', { class: 'title', x: left + 14, y: y + 22 }, g).textContent = L.name;
+    el('text', { class: 'q', x: left + 14 + tw(L.name) * 1.05 + 14, y: y + 22 }, g).textContent = L.q;
+    let x = left + 14, py = y + 34;
+    for (const it of L.items) {
+      const w = tw(it.n) + 22;
+      if (x + w > left + width - 10) { x = left + 14; py += 32; }
+      const pg = el('g', { class: 'pill p-' + it.s, tabindex: 0, role: 'button', 'data-layer': id, 'data-name': it.n }, g);
+      el('title', {}, pg).textContent = it.n + ': ' + it.f;
+      el('rect', { x, y: py, width: w, height: 24, rx: 12 }, pg);
+      el('text', { x: x + 11, y: py + 16 }, pg).textContent = it.n;
+      pg.addEventListener('click', () => select(id, it.n));
+      pg.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(id, it.n); } });
+      x += w + 8;
+    }
+    const h = py + 24 + 12 - y;
+    rect.setAttribute('height', h);
+    bands.push({ id, y, h });
+    y += h + bandGap;
+  }
+  measure.remove();
+  // the inward arrow on the left
+  const top = bands[0].y + 8, bottom = bands[bands.length - 1].y + bands[bands.length - 1].h - 8;
+  el('defs', {}, svg).innerHTML = '<marker id="down" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0 L10 0 L5 10 z" fill="hsl(186 92% 52%)"/></marker>';
+  el('line', { x1: 70, y1: top, x2: 70, y2: bottom, stroke: 'hsl(186 92% 52%)', 'stroke-width': 2, 'marker-end': 'url(#down)' }, svg);
+  const t = el('text', { class: 'arrowtxt', x: 0, y: 0, transform: `translate(52 ${(top + bottom) / 2}) rotate(-90)`, 'text-anchor': 'middle' }, svg);
+  t.textContent = 'imports point this way, inward';
+  const t2 = el('text', { class: 'arrowtxt', x: 0, y: 0, transform: `translate(100 ${(top + bottom) / 2}) rotate(-90)`, 'text-anchor': 'middle', style: 'fill:hsl(220 8% 42%)' }, svg);
+  t2.textContent = 'outer parts are swappable, inner parts are stable';
+  svg.setAttribute('viewBox', `0 0 1000 ${y}`);
+}
+
+function select(layerId, name) {
+  document.querySelectorAll('.pill.sel').forEach((p) => p.classList.remove('sel'));
+  document.querySelectorAll('.band.sel').forEach((p) => p.classList.remove('sel'));
+  const L = LAYERS.find((l) => l.id === layerId);
+  const it = L.items.find((i) => i.n === name);
+  document.querySelector(`.pill[data-layer="${layerId}"][data-name="${CSS.escape(name)}"]`)?.classList.add('sel');
+  document.getElementById('band-' + layerId)?.classList.add('sel');
+  const d = document.getElementById('detail');
+  d.innerHTML = `<div class="hd"><h3>${esc(it.n)}</h3>${chip(it.s)}<span class="chip s-idea">${esc(L.name)}</span></div>
+    <dl><dt>For</dt><dd>${esc(it.f)}</dd><dt>Where</dt><dd><code>${esc(it.p)}</code></dd>${it.d ? `<dt>Import</dt><dd>${it.d.map((x) => `<code>${esc(x)}</code>`).join(' ')}</dd>` : ''}<dt>Layer rule</dt><dd>${esc(L.rule)}</dd></dl>`;
+  showLayer(layerId);
+}
+
+function drawRules() {
+  document.getElementById('rulecards').innerHTML = RULES.map(([h, p, w]) => `<div class="card rule"><h3>${esc(h)}</h3><p>${esc(p)}</p><div class="why">${esc(w)}</div></div>`).join('');
+}
+
+const TAB_ORDER = [['core', 'Core'], ['ports', 'Ports'], ['app', 'Your app'], ['adapters', 'Providers and adapters'], ['surfaces', 'Surfaces and drivers'], ['tooling', 'Tooling'], ['dist', 'Distribution']];
+function showLayer(id) {
+  document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.id === id)));
+  let L = LAYERS.find((l) => l.id === id);
+  if (id === 'tooling') L = { name: 'Tooling', q: 'How do I start and grow an app?', rule: 'The same start for people and agents.', items: TOOLING };
+  if (id === 'dist') L = { name: 'Distribution', q: 'How does it reach npm?', rule: 'Release shims only. No product logic.', items: DIST };
+  document.getElementById('layerview').innerHTML = `<div class="layer-head"><h3>${esc(L.name)}</h3><p>${esc(L.q)} · <i>${esc(L.rule)}</i></p></div>
+    <div class="items">${L.items.map((it) => `<div class="item"><div class="top"><h4>${esc(it.n)}</h4>${chip(it.s)}</div><div class="path">${esc(it.p)}</div><p>${esc(it.f)}</p>${it.d ? `<ul>${it.d.map((x) => `<li><code>${esc(x)}</code></li>`).join('')}</ul>` : ''}</div>`).join('')}</div>`;
+  try { localStorage.setItem('acryl-map-tab', id); } catch {}
+}
+function drawTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = TAB_ORDER.map(([id, n]) => `<button role="tab" type="button" data-id="${id}" aria-selected="false">${n}</button>`).join('');
+  tabs.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) showLayer(b.dataset.id); });
+  let start = 'core'; try { start = localStorage.getItem('acryl-map-tab') || 'core'; } catch {}
+  showLayer(TAB_ORDER.some(([i]) => i === start) ? start : 'core');
+}
+
+function treeHtml(node, open) {
+  const [name, why, kids] = Array.isArray(node[1]) ? [node[0], '', node[1]] : node;
+  if (!kids) return `<div class="leaf" data-text="${esc((name + ' ' + why).toLowerCase())}"><span class="n ${name.endsWith('/') ? 'dir' : ''}">${esc(name)}</span><span class="why">${esc(why)}</span></div>`;
+  return `<details ${open ? 'open' : ''} data-text="${esc((name + ' ' + why).toLowerCase())}"><summary><span class="n dir">${esc(name)}</span><span class="why">${esc(why)}</span></summary>${kids.map((k) => treeHtml(k, false)).join('')}</details>`;
+}
+function drawTrees() {
+  document.getElementById('tree-acryl').innerHTML = treeHtml(TREE_ACRYL, true);
+  document.getElementById('tree-blends').innerHTML = treeHtml(TREE_BLENDS, true);
+  const all = () => document.querySelectorAll('.tree details');
+  document.getElementById('expandall').onclick = () => all().forEach((d) => (d.open = true));
+  document.getElementById('collapseall').onclick = () => all().forEach((d, i) => (d.open = d.parentElement.classList.contains('tree')));
+  document.getElementById('treefilter').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.tree .leaf, .tree details').forEach((n) => n.classList.remove('hide'));
+    if (!q) return;
+    document.querySelectorAll('.tree .leaf').forEach((n) => n.classList.toggle('hide', !n.dataset.text.includes(q)));
+    [...document.querySelectorAll('.tree details')].reverse().forEach((d) => {
+      const selfHit = d.dataset.text.includes(q);
+      const kidHit = d.querySelector(':scope > .leaf:not(.hide), :scope > details:not(.hide)');
+      const show = selfHit || kidHit || d.parentElement.classList.contains('tree');
+      d.classList.toggle('hide', !show);
+      if (kidHit || selfHit) d.open = true;
+      if (selfHit) d.querySelectorAll('.hide').forEach((x) => x.classList.remove('hide'));
+    });
+  });
+}
+
+function drawIdeas() {
+  const body = document.getElementById('ideas-body');
+  body.innerHTML = IDEAS.map(([i, s, w, where]) => `<tr data-s="${s}"><td class="idea">${esc(i)}</td><td><span class="chip ${STATE_CHIP[s][0]}">${STATE_CHIP[s][1]}</span></td><td>${esc(w)}</td><td class="where">${esc(where)}</td></tr>`).join('');
+  const counts = {}; IDEAS.forEach(([, s]) => (counts[s] = (counts[s] || 0) + 1));
+  const f = document.getElementById('ideafilters');
+  f.innerHTML = Object.keys(STATE_CHIP).filter((s) => counts[s]).map((s) => `<button type="button" class="chip ${STATE_CHIP[s][0]}" data-s="${s}" aria-pressed="true">${STATE_CHIP[s][1]} · ${counts[s]}</button>`).join('');
+  f.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+    const on = new Set([...f.querySelectorAll('button[aria-pressed="true"]')].map((x) => x.dataset.s));
+    body.querySelectorAll('tr').forEach((r) => r.classList.toggle('hide', !on.has(r.dataset.s)));
+  });
+}
+
+function drawSlices() {
+  document.getElementById('slicelist').innerHTML = SLICES.map(([n, t, m, s, label]) => `<div class="slice"><div class="num">${n}</div><div><b>${esc(t)}</b><span class="m">${esc(m)}</span></div><span class="chip s-${s}">${esc(label)}</span></div>`).join('');
+  document.getElementById('openq').innerHTML = OPEN.map(([h, p]) => `<div class="q"><b>${esc(h)}</b><p style="margin:4px 0 0;color:var(--muted)">${esc(p)}</p></div>`).join('');
+}
+
+drawLayers(); drawRules(); drawTabs(); drawTrees(); drawIdeas(); drawSlices();
+</script>
+</body>
+</html>
