@@ -93,11 +93,22 @@ export class NodeServer extends Service {
         this.bound = (this.server.address() as AddressInfo).port
         return
       } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== 'EADDRINUSE') throw error
+        if (!isPortUnavailable(error)) throw error
       }
     }
     throw new Error(`acryl-node-server: no free port from ${String(port)} to ${String(last)} on ${hostname}`)
   }
+}
+
+/**
+ * Whether a failed bind means "this port, try the next one". A port another socket holds answers `EADDRINUSE` everywhere. On Windows a port
+ * inside a range the system reserves (Hyper-V, WSL and Docker exclude ranges, `netsh interface ipv4 show excludedportrange`) answers
+ * `EACCES`, which is a property of that port too; elsewhere `EACCES` means the process may not bind low ports at all, so moving on would
+ * only hide the reason.
+ */
+export function isPortUnavailable(error: unknown, platform: NodeJS.Platform = process.platform): boolean {
+  const code = (error as NodeJS.ErrnoException | undefined)?.code
+  return code === 'EADDRINUSE' || (platform === 'win32' && code === 'EACCES')
 }
 
 /** Loads once the server listens, so a plugin that injects `nodeServer` can rely on `url`. A failure to bind fails the plugin. */

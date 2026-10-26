@@ -13,14 +13,25 @@ const contexts: Context[] = []
 afterEach(async () => {
   while (contexts.length > 0) await contexts.pop()?.fiber.dispose()
 })
-const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 20))
 
-async function boot(config: Partial<nodeServer.Config> = {}): Promise<Context> {
+/** A context with the router active: the adapter injects it, and until it is provided the adapter's fiber is PENDING with nothing to await. */
+async function routed(): Promise<Context> {
   const ctx = new Context()
   contexts.push(ctx)
-  ctx.plugin({ name: routerName, apply: routerApply })
-  ctx.plugin(nodeServer, config)
-  await settle()
+  await ctx.plugin({ name: routerName, apply: routerApply })
+  return ctx
+}
+
+/**
+ * A router and the adapter, returned once the adapter's fiber has settled: the service exists only after the server listens, which a port
+ * scan delays (a fixed wait raced it on a slow Windows runner).
+ * @throws naming the fiber state, when the adapter did not provide its service.
+ */
+async function boot(config: Partial<nodeServer.Config> = {}): Promise<Context> {
+  const ctx = await routed()
+  const fiber = ctx.plugin(nodeServer, config)
+  await fiber
+  if (ctx.get('nodeServer') === undefined) throw new Error(`acryl-node-server did not provide nodeServer (fiber state ${String(fiber.state)}, config ${JSON.stringify(config)})`)
   return ctx
 }
 
@@ -72,12 +83,16 @@ describe('acryl-node-server', () => {
     const ctx = await boot()
     let aborted!: () => void
     const seen = new Promise<void>(resolve => { aborted = resolve })
+    let started!: () => void
+    const handling = new Promise<void>(resolve => { started = resolve })
     ctx.router.route('/', new Acryl().get('/wait', c => new Promise<Response>(resolve => {
       c.req.raw.signal.addEventListener('abort', () => { aborted(); resolve(new Response(null, { status: 499 })) }, { once: true })
+      started()
     })))
     const client = new AbortController()
     const pending = fetch(`${ctx.nodeServer.url}/wait`, { signal: client.signal }).catch(() => undefined)
-    await settle()
+    // Abort once the handler runs, not after a guessed delay: an abort before the request arrives would leave the handler never called.
+    await handling
     client.abort()
     await seen
     await pending
@@ -94,14 +109,44 @@ describe('acryl-node-server', () => {
     }
   })
 
+  it('moves on from a port Windows reserves (EACCES) as from a taken one, and only on Windows', () => {
+    const error = (code: string) => Object.assign(new Error(code), { code })
+    expect(nodeServer.isPortUnavailable(error('EADDRINUSE'), 'linux')).toBe(true)
+    expect(nodeServer.isPortUnavailable(error('EADDRINUSE'), 'win32')).toBe(true)
+    expect(nodeServer.isPortUnavailable(error('EACCES'), 'win32')).toBe(true)
+    expect(nodeServer.isPortUnavailable(error('EACCES'), 'linux')).toBe(false)
+    expect(nodeServer.isPortUnavailable(error('EACCES'), 'darwin')).toBe(false)
+    expect(nodeServer.isPortUnavailable(error('EADDRNOTAVAIL'), 'win32')).toBe(false)
+    expect(nodeServer.isPortUnavailable(new Error('no code'), 'win32')).toBe(false)
+  })
+
+  it('scans past several taken ports and is ready when the plugin settles', async () => {
+    const held: Array<{ port: number, release: () => Promise<void> }> = []
+    try {
+      const first = await occupy()
+      held.push(first)
+      // The next few ports too, where they are free to take: the server has to try each before it settles.
+      for (let port = first.port + 1; port <= first.port + 5; port += 1) {
+        const blocker = createServer()
+        const ok = await new Promise<boolean>(resolve => { blocker.once('error', () => { resolve(false) }); blocker.listen(port, '127.0.0.1', () => { resolve(true) }) })
+        if (ok) held.push({ port, release: () => new Promise<void>(resolve => blocker.close(() => { resolve() })) })
+      }
+      const ctx = await boot({ port: first.port, scan: 20 })
+      expect(held.map(entry => entry.port)).not.toContain(ctx.nodeServer.port)
+      expect(ctx.nodeServer.port).toBeGreaterThan(first.port)
+      expect(ctx.nodeServer.port).toBeLessThanOrEqual(first.port + 20)
+    } finally {
+      for (const entry of held) await entry.release()
+    }
+  })
+
   it('fails the plugin when no port in the scan range is free', async () => {
     const taken = await occupy()
     try {
-      const ctx = new Context()
-      contexts.push(ctx)
-      ctx.plugin({ name: routerName, apply: routerApply })
+      const ctx = await routed()
       const fiber = ctx.plugin(nodeServer, { port: taken.port, scan: 0 })
-      await settle()
+      // A settled fiber rejects with its startup error.
+      await expect(Promise.resolve(fiber)).rejects.toThrow(`no free port from ${String(taken.port)} to ${String(taken.port)}`)
       expect(fiber.state).toBe(3) // FAILED
     } finally {
       await taken.release()
@@ -126,13 +171,11 @@ describe('acryl-node-server', () => {
   })
 
   it('reloads without leaking a listener', async () => {
-    const ctx = new Context()
-    contexts.push(ctx)
-    ctx.plugin({ name: routerName, apply: routerApply })
+    const ctx = await routed()
     const ports: number[] = []
     for (let round = 0; round < 5; round += 1) {
       const fiber = ctx.plugin(nodeServer, {})
-      await settle()
+      await fiber
       ports.push(ctx.nodeServer.port)
       await fiber.dispose()
     }
