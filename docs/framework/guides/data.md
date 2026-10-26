@@ -182,6 +182,41 @@ process.once('SIGTERM', async () => {
 copy of `data/app.sqlite` made afterwards is complete. Keep the file on a disk that outlives a deploy; on a host with only an ephemeral disk the
 data goes with the machine.
 
+## Why the database is opened in one place
+
+Only one file of an app opens the database: the **opener** (`src/db.ts` in the templates). Every other file receives a `Db` as an argument and
+imports its type from `acrylblends/db`. Nothing outside the opener imports `node:sqlite`, `pg`, `postgres`, `@electric-sql/pglite` or another
+driver, or `acrylblends/db/sqlite` itself.
+
+Why it matters:
+
+- **Changing the database is one file.** Moving from SQLite to Postgres changes what the opener calls, and no route, store or test.
+- **A test opens its own database.** Code that opens a database by itself cannot be given an in-memory one, and a test that reaches the real file
+  breaks the next one.
+- **There is one place to close it.** The code that opened a database closes it; the port has no `close`, so a route cannot do it by mistake.
+- **An agent that adds a feature keeps the shape.** A coding agent asked for "tags" writes a migration and a store function, and has no reason to
+  reach for a driver when the interface is in front of it.
+
+The rule is checked, not hoped for. The app names its opener once, in `package.json`:
+
+```json
+{
+  "acryl": { "opener": "src/db.ts" }
+}
+```
+
+`acrylblends check-deps` reads every `.ts`, `.tsx` and `.js` file in `src/`, `test/`, `tests/` and `extensions/`, and fails when a file other than
+the opener imports a database driver, an opener such as `acrylblends/db/sqlite` or `acryl-db-sqlite`, or (outside `src/plugins/desktop`) `electron`.
+It names the file and the line:
+
+```
+src/routes.ts:3: "node:sqlite" is a database driver; take a Db (import type { Db } from "acrylblends/db") as an argument and let src/db.ts open the database
+```
+
+The `notes` and `chat` templates run it in `npm test` and `npm run check`. List more than one opener as an array (`"opener": ["src/db.ts", "src/app.ts"]`).
+In a Blend app, `acrylblends add db` declares `src/app.ts`, where the provider is mounted, and a plugin that declares `inject: ['db']` must not import
+`acryl-db-sqlite`: it receives `ctx.db`.
+
 ## In a Cordis app
 
 An ACRYL app gets the same interface as a service. The `acryl-db-sqlite` plugin row opens the file (by default `data.sqlite` in the app home),
