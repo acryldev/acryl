@@ -3,11 +3,11 @@ name: Data
 # The `db` port and its providers (spec 049) on every operating system and supported Node line: the conformance suite, the ported driver
 # tests and the real Loader tests of each provider. The SQLite provider uses Node's built-in `node:sqlite`, whose behavior follows the Node
 # release and the operating system's file locking, so neither one CI runner nor one Node line proves it.
-# Manual, and on changes to the data packages. The repository is public, so these runners cost nothing.
+# Manual, and on changes to the data packages (a branch proves itself by pushing to ci-data, since a new workflow cannot be dispatched before it is on main). The repository is public, so these runners cost nothing.
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, ci-data]
     paths:
       - 'plugins/acryl-db/**'
       - 'plugins/acryl-db-sqlite/**'
