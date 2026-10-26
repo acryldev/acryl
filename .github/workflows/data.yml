@@ -1,0 +1,68 @@
+name: Data
+
+# The `db` port and its providers (spec 049) on every operating system and supported Node line: the conformance suite, the ported driver
+# tests and the real Loader tests of each provider. The SQLite provider uses Node's built-in `node:sqlite`, whose behavior follows the Node
+# release and the operating system's file locking, so neither one CI runner nor one Node line proves it.
+# Manual, and on changes to the data packages. The repository is public, so these runners cost nothing.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/acryl-db/**'
+      - 'plugins/acryl-db-sqlite/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/data.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/acryl-db/**'
+      - 'plugins/acryl-db-sqlite/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/data.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: data-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  providers:
+    name: db providers (${{ matrix.os }}, Node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+
+      - name: Enable Corepack and prepare pnpm version
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
+
+      # Only the data packages and what they depend on: they import nothing from the rest of the workspace.
+      - name: Install the data packages
+        run: corepack pnpm install --frozen-lockfile --filter "acryl-db-sqlite..."
+
+      - name: Build, typecheck and test the port
+        run: corepack pnpm --filter acryl-db run check
+
+      - name: Build, typecheck and test the SQLite provider
+        run: corepack pnpm --filter acryl-db-sqlite run check

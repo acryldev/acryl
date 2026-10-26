@@ -1,0 +1,95 @@
+/**
+ * The SQLite provider of the `db` port (spec 049 slice 1): one `node:sqlite` file, opened with the ported facade's settings (WAL,
+ * `synchronous = NORMAL`, a busy timeout), migrated, and provided as `db`. App plugins declare `inject: ['db']` and import types from
+ * `acryl-db` only, so replacing this row with another provider does not touch them.
+ *
+ * Unloading withdraws `db` first, so consumers stop calling, and then closes the file: the close waits for running operations and
+ * transactions, checkpoints the WAL and releases the file.
+ */
+
+import { dirname, isAbsolute, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import type { Context } from '@deepseek-ai/cordis'
+import z from '@deepseek-ai/schemastery'
+import { applyMigrations, DB_SERVICE, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acryl-db'
+import { openNodeSqliteDatabase } from './facade/node.ts'
+
+export { NodeSqliteDatabase, openNodeSqliteDatabase, type NodeSqliteDatabaseOptions } from './facade/node.ts'
+
+/** Stable Cordis plugin name, equal to the package name and the Loader row id. */
+export const name = 'acryl-db-sqlite'
+
+/**
+ * The part of the runtime's `appInstance` service this plugin reads (a separated interface: plugins do not import the runtime). Every
+ * plugin declares exactly this shape, so the Context augmentations agree in any program that loads several of them.
+ */
+interface AppInstanceService {
+  readonly home: string
+  readonly dshHome: string
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    appInstance: AppInstanceService
+  }
+}
+
+export interface Config {
+  path?: string
+  migrations?: string
+  busyTimeoutMs?: number
+  walAutoCheckpointPages?: number
+}
+
+export const Config: z<Config> = z.object({
+  path: z.string().description('The database file, absolute or relative to the app. Defaults to data.sqlite in the ACRYL app home; required where there is none.'),
+  migrations: z.string().description('A folder of NNN-name.sql files numbered from 1, absolute or relative to the app, applied in order on start.'),
+  busyTimeoutMs: z.natural().description('How long SQLite waits for a competing file lock, in milliseconds. Defaults to 5000.'),
+  walAutoCheckpointPages: z.natural().description('The WAL auto-checkpoint threshold in pages; 0 disables it. Defaults to 1000.'),
+})
+
+/** The file name used in the app home when `path` is not configured. */
+export const DEFAULT_FILE = 'data.sqlite'
+
+/** A configured path as a file path: absolute as given, relative to the Loader's base URL (the app) otherwise. */
+function resolveFromApp(ctx: Context, path: string, option: string): string {
+  if (path.startsWith('file:')) return fileURLToPath(path)
+  if (isAbsolute(path)) return path
+  const base = ctx.baseUrl
+  if (base === undefined || !base.startsWith('file:')) {
+    throw new Error(`acryl-db-sqlite: ${option} ${JSON.stringify(path)} is relative, but this app has no file base URL to resolve it from; give an absolute path`)
+  }
+  const appDir = base.endsWith('/') ? fileURLToPath(base) : dirname(fileURLToPath(base))
+  return resolve(appDir, path)
+}
+
+export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void> {
+  const config = Config(rawConfig)
+  // The app home comes from the runtime's `appInstance` service when this runs inside an ACRYL app; a plain framework app names its file.
+  const appInstance = ctx.get('appInstance')
+  let file: string
+  if (config.path !== undefined) file = resolveFromApp(ctx, config.path, 'path')
+  else if (appInstance !== undefined) file = join(appInstance.home, DEFAULT_FILE)
+  else throw new Error('acryl-db-sqlite: no database path; set `path` in this row\'s config (there is no ACRYL app home to default to)')
+  const migrations = config.migrations === undefined ? [] : await readMigrationFiles(resolveFromApp(ctx, config.migrations, 'migrations'))
+  const options = {
+    ...(config.busyTimeoutMs === undefined ? {} : { busyTimeoutMs: config.busyTimeoutMs }),
+    ...(config.walAutoCheckpointPages === undefined ? {} : { walAutoCheckpointPages: config.walAutoCheckpointPages }),
+  }
+
+  // Disposers run in reverse: the service is withdrawn before the file closes.
+  await ctx.effect(async function* () {
+    const database = await openNodeSqliteDatabase(file, options)
+    yield () => database.close()
+    await applyMigrations(database, migrations, { table: MIGRATIONS_TABLE })
+    // The port, not the adapter: consumers get no `close`, which belongs to this row.
+    const db: Db = {
+      exec: sql => database.exec(sql),
+      run: (sql, ...params) => database.run(sql, ...params),
+      get: <T extends object>(sql: string, ...params: SqlValue[]) => database.get<T>(sql, ...params),
+      all: <T extends object>(sql: string, ...params: SqlValue[]) => database.all<T>(sql, ...params),
+      transaction: work => database.transaction(work),
+    }
+    yield ctx.reflect.provide(DB_SERVICE, db)
+  }, `acryl-db-sqlite: ${file}`)
+}

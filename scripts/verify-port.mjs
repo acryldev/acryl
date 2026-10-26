@@ -16,6 +16,7 @@
  * Mechanical changes (applied by `normalize` below, so they need no reason): relative imports name the `.ts` or `.tsx` file they resolve to; the upstream
  * name (read from the checkout's own package.json, never spelled here) becomes `Acryl` in identifiers (also inside one), `acryl` in words and `acryl-router` in import
  * paths; code examples in comments import from the same subpath of the public package (`acrylblends`, `acrylblends/<x>`); `@see` links to the upstream site and comment lines linking upstream issues are dropped; files named after the upstream project are named `app` (modules) or `acryl` (data); paths the tests open name the directory here.
+ * A package ported from another project sets `"renames": false` in its record and takes only the import and path changes; the name rule and the renames are the router port's.
  * Anything else is a deviation and carries a one-line reason.
  */
 
@@ -26,7 +27,7 @@ import { fileURLToPath } from 'node:url'
 import { upstreamNameFromLicense, upstreamNameIn } from './upstream-name.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const PACKAGES = ['plugins/acryl-router', 'plugins/acryl-node-server']
+const PACKAGES = ['plugins/acryl-router', 'plugins/acryl-node-server', 'plugins/acryl-db', 'plugins/acryl-db-sqlite']
 /** The npm package the framework is published as; its subpaths are the upstream package's (`<upstream>/cors` is `acrylblends/cors`). */
 const PUBLIC_PACKAGE = 'acrylblends'
 
@@ -73,7 +74,15 @@ function commitOf(checkout) {
  * upstream project (`<name>.ts`, `<name>-base.ts`, `<name>.test.ts`) is named `app` here and a data file (`<name>.html`) `acryl`; the name
  * comes from the checkout, so neither the record nor this script spells it.
  */
-function paths(directories, brand, checkout) {
+function paths(directories, brand, checkout, renames = true) {
+  if (!renames) {
+    const swap = (path, from, to) => (path === from ? to : `${to}/${path.slice(from.length + 1)}`)
+    const within = (path, dir) => path === dir || path.startsWith(`${dir}/`)
+    return {
+      upstreamOf: ours => { const pair = directories.find(d => within(ours, d.ours)); return pair === undefined ? undefined : swap(ours, pair.ours, pair.upstream) },
+      oursOf: theirs => { const pair = directories.find(d => within(theirs, d.upstream)); return pair === undefined ? undefined : swap(theirs, pair.upstream, pair.ours) },
+    }
+  }
   const module = new RegExp(`(^|/)${brand}((?:-base)?(?:\\.test)?\\.tsx?)$`, 'u')
   const data = new RegExp(`(^|/)${brand}(\\.[a-z]+)$`, 'u')
   const swap = (path, from, to) => (path === from ? to : `${to}/${path.slice(from.length + 1)}`)
@@ -102,14 +111,12 @@ function paths(directories, brand, checkout) {
 const segment = (name, after = 'a-z') => new RegExp(`(?<![A-Za-z0-9])${name}(?![${after}])`, 'gu')
 
 function normalize(text, theirPath, ourPath, ctx) {
-  const { brand, map, checkout, imports, directories } = ctx
-  const Brand = brand[0].toUpperCase() + brand.slice(1)
-  const word = new RegExp(`\\b${brand}\\b`, 'gu')
+  const { brand, map, checkout, imports, directories, renames } = ctx
   let s = text
   // Imports first, while they still name upstream's files: a relative one names the `.ts` or `.tsx` file it resolves to, at its path here; a bare one into
   // the upstream package names the ACRYL entry point that exports the same thing (the record's `imports`, keyed by the subpath).
   s = s.replace(/((?:from|import|declare module) )(['"])([^'"]+)\2/gu, (whole, pre, quote, spec) => {
-    if (spec === brand || spec.startsWith(`${brand}/`)) {
+    if (renames && (spec === brand || spec.startsWith(`${brand}/`))) {
       const entry = imports?.[spec.slice(brand.length)]
       return entry === undefined ? whole : `${pre}${quote}${entry}${quote}`
     }
@@ -131,6 +138,10 @@ function normalize(text, theirPath, ourPath, ctx) {
   for (const pair of directories) {
     if (pair.upstream !== pair.ours) s = s.replace(new RegExp(`(['"\`])(\\./)?${pair.upstream}/`, 'gu'), `$1$2${pair.ours}/`)
   }
+  // A package ported with `"renames": false` (from a project the name rule does not cover) takes only the changes above.
+  if (!renames) return s
+  const Brand = brand[0].toUpperCase() + brand.slice(1)
+  const word = new RegExp(`\\b${brand}\\b`, 'gu')
   // Code examples in comments import from (and augment) the same subpath of the public package, which keeps every upstream subpath (`acrylblends/<x>`).
   s = s.split('\n').map(line => !/^\s*\*/u.test(line) ? line : line.replace(new RegExp(`from '${brand}(/[a-z/-]+)?'`, 'u'), (whole, sub) => `from '${PUBLIC_PACKAGE}${sub ?? ''}'`).replace(`declare module '${brand}'`, `declare module '${PUBLIC_PACKAGE}'`)).join('\n')
   s = s.replaceAll(`${brand}-base`, 'app-base')
@@ -162,6 +173,8 @@ for (const pkg of PACKAGES) {
   if (!existsSync(file)) continue
   const record = JSON.parse(read(file))
   const directories = record.directories
+  // The upstream-name renames and the name rule are the router port's; a package ported from another project sets `"renames": false`.
+  const renames = record.renames !== false
   const ported = directories.flatMap(d => walk(join(dir, d.ours))).map(path => relative(dir, path).split('\\').join('/')).sort()
   const listed = Object.keys(record.files)
   const writing = writeTarget !== undefined && normalizePath(join(ROOT, writeTarget)) === normalizePath(dir)
@@ -177,7 +190,7 @@ for (const pkg of PACKAGES) {
   let ctx
   if (checkout !== undefined) {
     const brand = brandOf(checkout)
-    ctx = { brand, map: paths(directories, brand, checkout), checkout, imports: record.imports, directories }
+    ctx = { brand, map: paths(directories, brand, checkout, renames), checkout, imports: record.imports, directories, renames }
   }
 
   if (seedTarget !== undefined && normalizePath(join(ROOT, seedTarget)) === normalizePath(dir)) {
@@ -202,8 +215,8 @@ for (const pkg of PACKAGES) {
   }
 
   // No ported file keeps the upstream name (the owner's rule: it appears only in LICENSE files).
-  const named = ctx?.brand ?? upstreamNameFromLicense(dir)
-  if (named === undefined) fail(`${pkg}: its LICENSE does not say which upstream project it is derived from`)
+  const named = renames ? ctx?.brand ?? upstreamNameFromLicense(dir) : undefined
+  if (renames && named === undefined) fail(`${pkg}: its LICENSE does not say which upstream project it is derived from`)
   for (const path of ported) {
     const entry = record.files[path] ?? {}
     const text = isText(path)

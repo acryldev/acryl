@@ -69,6 +69,8 @@ packages:
   - plugins/acryl-inspect
   - plugins/acryl-node-server
   - plugins/acryl-state
+  - plugins/acryl-db
+  - plugins/acryl-db-sqlite
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save

@@ -1,0 +1,33 @@
+{
+  "commit": "d5b3de22d0e24a3e9c38a9410d3329b099717283",
+  "renames": false,
+  "directories": [
+    {
+      "ours": "src/facade",
+      "upstream": "packages/chord/src/sqlite"
+    }
+  ],
+  "omitted": {
+    "reason": "not part of the port",
+    "packages/chord/src/sqlite/cloudflare.ts": "a host adapter (Durable Object storage); it comes with the hosting adapters after spec 049 slice 3",
+    "packages/chord/src/sqlite/node.ts": "the driver, ported into acryl-db-sqlite",
+    "packages/chord/src/sqlite/index.ts": "the barrel; src/index.ts exports the port"
+  },
+  "files": {
+    "src/facade/database.ts": {
+      "upstreamSha256": "94be8e6030b986e273e135c1c1327ab063c07c7a884d05ab6280c52e6d81bfc2",
+      "sha256": "6946de67e2226b10569ae597db0530cd6f566917e9672959087acf7b44d3c13a",
+      "deviation": "the port serves SQLite and Postgres: the types are named Db, DbExecutor and SqlValue (spec 049), run resolves { changes }, and close is the provider's, not on the port"
+    },
+    "src/facade/migrations.ts": {
+      "upstreamSha256": "bd21356d008b67c1c9c2da00bb49fcf439822d0fe8c2afaa17fac075474bbc40",
+      "sha256": "5ea156638d9b083fc73c604d14a055b10cea57c4d000385cf4388bf03b72b9d4",
+      "deviation": "named for both databases (applyMigrations, Migration, messages without SQLite); the bookkeeping SQL is portable to Postgres (no STRICT, ON CONFLICT DO NOTHING, the version written as a checked integer) and the stored version is read as a number"
+    },
+    "src/facade/schema.ts": {
+      "upstreamSha256": "156d8191d7bcfca84f04e3745323645b2102f270649fb9b2603985a812a12af7",
+      "sha256": "16cc5ebd172d109d4650d38caf97dc49cdece58e91d32f310f90599e0eaded27",
+      "deviation": "named for both databases (validateSchemaPrefix, messages without SQLite)"
+    }
+  }
+}
