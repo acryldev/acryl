@@ -1,6 +1,6 @@
 # Bun
 
-> **Experimental.** Bun is not a verified runtime yet: the Acryl application code is the same, but the `bun` template and this guide are not covered by the release checks. Node.js is the verified runtime.
+> **Experimental.** Bun is not a verified runtime yet: the Acryl application code is the same, and the Bun adapter (`acrylblends/bun`) is checked on Bun in the framework's release check (a static file, the client address, a WebSocket echo), but the `bun` template and this guide are not covered by the release checks. Node.js is the verified runtime.
 
 
 [Bun](https://bun.com) is another JavaScript runtime. It's not Node.js. Bun includes a transcompiler, so we can write the code in TypeScript or plain JavaScript.
@@ -93,8 +93,6 @@ export default {
 ## Serve static files
 
 To serve static files, use `serveStatic` from `acrylblends/bun`.
-
-> **Not yet available.** The Bun adapter, `acrylblends/bun`, is not part of acrylblends yet. The code below shows the planned usage.
 
 ```ts
 import { serveStatic } from 'acrylblends/bun'

@@ -306,6 +306,41 @@ try {
     }
   } else report('bun (informational)', 'skipped: bun is not installed')
 
+  // The Bun adapter on Bun itself: serveStatic reads a file with Bun.file, getConnInfo reads the client's address from the server, and
+  // upgradeWebSocket echoes a message over a real WebSocket. It runs when bun is installed and is counted when it does.
+  if (installed('bun')) {
+    mkdirSync(join(app, 'static'), { recursive: true })
+    writeFileSync(join(app, 'static', 'hello.txt'), 'hello from bun\n')
+    writeFileSync(join(app, 'bun-server.ts'), [
+      "import { Acryl } from 'acrylblends'",
+      "import { getConnInfo, serveStatic, upgradeWebSocket, websocket } from 'acrylblends/bun'",
+      'const app = new Acryl()',
+      "app.get('/', (c) => c.text('Acryl!'))",
+      "app.use('/static/*', serveStatic({ root: './' }))",
+      "app.get('/ip', (c) => c.text(getConnInfo(c).remote.address ?? 'unknown'))",
+      "app.get('/ws', upgradeWebSocket(() => ({ onMessage(event, ws) { ws.send(`echo ${String(event.data)}`) } })))",
+      'export default { port: Number(process.env.PORT), hostname: \'127.0.0.1\', fetch: app.fetch, websocket }',
+      '',
+    ].join('\n'))
+    const bunPort = await freePort()
+    await withServer('bun', ['run', 'bun-server.ts'], bunPort, { PORT: String(bunPort) }, async () => {
+      const base = `http://127.0.0.1:${String(bunPort)}`
+      const file = await fetch(`${base}/static/hello.txt`)
+      if (file.status !== 200 || (await file.text()) !== 'hello from bun\n') throw new Error(`bun serveStatic answered ${String(file.status)}`)
+      const ip = await (await fetch(`${base}/ip`)).text()
+      if (!/^(127\.0\.0\.1|::1|::ffff:127\.0\.0\.1)$/.test(ip)) throw new Error(`bun getConnInfo answered ${JSON.stringify(ip)}`)
+      const echoed = await new Promise((resolve, reject) => {
+        const socket = new WebSocket(`ws://127.0.0.1:${String(bunPort)}/ws`)
+        const timer = setTimeout(() => reject(new Error('bun WebSocket did not echo')), 5000)
+        socket.onopen = () => socket.send('ping')
+        socket.onmessage = (event) => { clearTimeout(timer); socket.close(); resolve(String(event.data)) }
+        socket.onerror = () => { clearTimeout(timer); reject(new Error('bun WebSocket failed')) }
+      })
+      if (echoed !== 'echo ping') throw new Error(`bun WebSocket answered ${JSON.stringify(echoed)}`)
+    })
+    report('bun adapter (acrylblends/bun on Bun: serveStatic, getConnInfo, upgradeWebSocket)', 'a file, the client address and a WebSocket echo')
+  }
+
   // The README is the npm page: every TypeScript example in it is written into the consumer and typechecked with the rest. A block whose first
   // line is `// <file>.ts` is that file (other examples import it); every other block is a file of its own.
   const readme = readFileSync(join(root, 'README.md'), 'utf8')

@@ -35,12 +35,12 @@ The starter asks which template you want (`nodejs`, `bun` (experimental), or `ac
 
 ## Runtimes
 
-Verified: Node.js. Bun is experimental. Adapters for AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify and Service Workers are part of the package, with a guide each on [Other runtimes](getting-started/other-runtimes.md); they are tested with the platforms' own events and have not been deployed by the ACRYL team.
+Verified: Node.js. Bun is experimental (its adapter is checked on Bun). Adapters for AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify and Service Workers are part of the package, with a guide each on [Other runtimes](getting-started/other-runtimes.md); they are tested with the platforms' own events and have not been deployed by the ACRYL team.
 
 ## Not yet available
 
-Some parts of the documented API surface are not part of the package yet, and their pages say so at the top: the Bun adapter (`acrylblends/bun`).
-It is enabled when it is ported.
+Some parts of the documented API surface are not part of the package yet, and their pages say so: the Vite plugin for static site generation, a registry of third-party middleware, and benchmark results.
+They are enabled as they are built.
 
 ## Where to read next
 

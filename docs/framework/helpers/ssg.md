@@ -98,7 +98,7 @@ export interface FileSystemModule {
 
 ### Using the adapter for Bun
 
-On Bun, a `toSSG` function is provided by `acrylblends/bun` (not yet available).
+On Bun, a `toSSG` function is provided by `acrylblends/bun`; it writes the files with `Bun.write`.
 
 ### Options
 

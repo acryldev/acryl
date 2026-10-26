@@ -21,7 +21,7 @@ const MIDDLEWARE = [
 ]
 const HELPERS = ['accepts', 'adapter', 'cookie', 'dev', 'factory', 'html', 'proxy', 'route', 'ssg', 'streaming', 'testing']
 /** The hosting adapters (a handler for a platform that calls `fetch`): each is `<upstream>/<name>`. */
-const ADAPTERS = ['aws-lambda', 'cloudflare-pages', 'cloudflare-workers', 'lambda-edge', 'netlify', 'service-worker', 'vercel']
+const ADAPTERS = ['aws-lambda', 'bun', 'cloudflare-pages', 'cloudflare-workers', 'lambda-edge', 'netlify', 'service-worker', 'vercel']
 const ROUTERS = ['reg-exp-router', 'smart-router', 'trie-router', 'pattern-router', 'linear-router']
 /** `<upstream>/utils/*`: each utility module by its file name. */
 const UTILS = readdirSync(join(here, CORE, 'utils')).filter(name => name.endsWith('.ts') && !name.endsWith('.test.ts')).map(name => name.slice(0, -3)).sort()

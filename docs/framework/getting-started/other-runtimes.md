@@ -15,6 +15,7 @@ These platforms have an adapter in acrylblends, ported from the upstream adapter
 | Vercel | [Vercel](vercel.md) | `acrylblends/vercel` |
 | Netlify | [Netlify](netlify.md) | `acrylblends/netlify` |
 | Service Worker | [Service Worker](service-worker.md) | `acrylblends/service-worker` |
+| Bun | [Bun](bun.md) | `acrylblends/bun` |
 
 ## Not yet verified
 

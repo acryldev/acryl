@@ -12,7 +12,7 @@
   ],
   "omitted": {
     "reason": "not ported yet; spec 047 lists when each comes",
-    "src/adapter (bun, deno)": "the bun adapter comes last (spec 047 Part B); the deno adapter is out of scope"
+    "src/adapter (deno)": "the deno adapter is out of scope"
   },
   "files": {
     "src/core/adapter/aws-lambda/conninfo.test.ts": {
@@ -42,6 +42,48 @@
       "upstreamSha256": "322fb55c8064ee369a9c23e0530d2090128ba06f44143288b623858c39387a31",
       "sha256": "deeb64faf14540949efff9a55845600101a9cc96d5fe5d9e896c21745630c718",
       "deviation": "the upstream's deprecation notices (removed in v5, install a split package) are dropped: ACRYL ships this adapter in acrylblends and there are no such packages"
+    },
+    "src/core/adapter/bun/conninfo.test.ts": {
+      "upstreamSha256": "8e22fdfe4dbd8b3acbba42a12814c0d9a88b2389a353fc46c94f2876ef9b988b",
+      "sha256": "c728b339be4fc3dbedce7909efa5589b92727830140c7a4f29e40a2da6af2306"
+    },
+    "src/core/adapter/bun/conninfo.ts": {
+      "upstreamSha256": "3790f3288a87c589ba39c4f77d079416a0ff5c1276ee91d1696800f791f9449f",
+      "sha256": "bc5d41093f38124be53e1149bcb4f31134b327a0ff5a8a2f0157b15b0261d18a",
+      "deviation": "the upstream's deprecation notice (removed in v5, install a split package) is dropped: ACRYL ships this adapter in acrylblends and there is no such package"
+    },
+    "src/core/adapter/bun/index.ts": {
+      "upstreamSha256": "fd7d0778b26c76a41ca2b6a3536ed9154632f97a231b068874c47a32d2707d17",
+      "sha256": "687541cba2bbd5429adc319b7002361e3bed74670f915546ba9c12a0f7c8a216",
+      "deviation": "the upstream's deprecation notice (removed in v5, install a split package) is dropped: ACRYL ships this adapter in acrylblends and there is no such package"
+    },
+    "src/core/adapter/bun/serve-static.ts": {
+      "upstreamSha256": "36184e33c7a1defb76570157e20ca62f9766e14fdaa5c81a7fd2d6643eaf9064",
+      "sha256": "b6d021a1a3a1af266b000130e912ac519c69dc545e0a383730de8d4fd305800c",
+      "deviation": "the upstream's deprecation notice (removed in v5, install a split package) is dropped: ACRYL ships this adapter in acrylblends and there is no such package"
+    },
+    "src/core/adapter/bun/server.test.ts": {
+      "upstreamSha256": "1f4b37eacfdf781894d6b1a4b6f7158282113741471fdccbf5047cfbbf333ab7",
+      "sha256": "012d59cdc311497831cd97f80f5e8bdb48abc04cdec5f94f2c5e7a5a8e13ba92"
+    },
+    "src/core/adapter/bun/server.ts": {
+      "upstreamSha256": "8a782cd6ea20462cf32346cf7e000c1bdb4a2bccc9e70363f0354f329969c960",
+      "sha256": "bab3cacadddfe3019745004e92fa820d3fc8abf7ba1e0c85f11dbe8383dd24a6",
+      "deviation": "the upstream's deprecation notice (removed in v5, install a split package) is dropped: ACRYL ships this adapter in acrylblends and there is no such package"
+    },
+    "src/core/adapter/bun/ssg.ts": {
+      "upstreamSha256": "ca5419d3c623397180d35527f0a546ed2ae3f7a40054232052bae1cd2ae3e949",
+      "sha256": "bdf2c822ca0c84dd3983dbed99bc2ff34a82f025ed7de2cc62ea85b0a9568549",
+      "deviation": "the upstream's deprecation notice is dropped (ACRYL ships this adapter in acrylblends), and Bun.write is read when a file is written, not when the module loads, so importing acrylblends/bun on a runtime without Bun does not throw"
+    },
+    "src/core/adapter/bun/websocket.test.ts": {
+      "upstreamSha256": "625510b4fd1d8e0cf674eae68920a81135a1ba165e86bd9306a5b10fe1fdd1b7",
+      "sha256": "137064f6880d61df3a0223fba0ffefb7e9ad2c732ee19a568a37745c5166eaa5"
+    },
+    "src/core/adapter/bun/websocket.ts": {
+      "upstreamSha256": "eeefb4e90776b93b8184387e8a4c16d920577d808e289b4d530c4b69cc45e896",
+      "sha256": "93767e71a3e13c0ef9d0357c809ca375e0750b3cb6071ac5ffcd41b7a569f8be",
+      "deviation": "the upstream's deprecation notice (removed in v5, install a split package) is dropped: ACRYL ships this adapter in acrylblends and there is no such package"
     },
     "src/core/adapter/cloudflare-pages/conninfo.test.ts": {
       "upstreamSha256": "c41e4f22bdf7d81838fae30625532f3bc1ecf6ac5ccd0bd5eb65a9e3b24268ec",

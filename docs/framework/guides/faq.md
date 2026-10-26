@@ -16,4 +16,4 @@ Node.js. Bun is experimental. The hosting platforms with an adapter (AWS Lambda,
 
 ## Where are the parts marked "not yet available"?
 
-Their pages are part of the documentation so that the structure is complete; each starts with a note saying so. They are enabled as they are ported; today that is the Bun adapter.
+Their pages are part of the documentation so that the structure is complete; each starts with a note saying so. They are enabled as they are built.

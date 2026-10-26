@@ -196,6 +196,10 @@
       "types": "./lib/aws-lambda.d.ts",
       "default": "./lib/aws-lambda.js"
     },
+    "./bun": {
+      "types": "./lib/bun.d.ts",
+      "default": "./lib/bun.js"
+    },
     "./cloudflare-pages": {
       "types": "./lib/cloudflare-pages.d.ts",
       "default": "./lib/cloudflare-pages.js"
