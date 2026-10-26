@@ -3,9 +3,12 @@
  * memory and resolves the `kv` port with the function that closes it. The Cordis plugin is a thin wrapper over this, so both run one code
  * path. This entry imports nothing from Cordis.
  *
- * Every write queues behind the writes before it and persists the whole map: serialize to a temporary file in the same folder, flush it,
- * rename it over the file, and flush the folder where the platform allows. The call resolves after the rename, so a crash leaves the old file
- * or the new one, never half of one. One process owns the file: two writers would overwrite each other.
+ * Every write persists the whole map: serialize to a temporary file in the same folder, flush it, rename it over the file, and flush the
+ * folder where the platform allows. The call resolves after the rename, so a crash leaves the old file or the new one, never half of one.
+ * Writes are grouped: the calls made in one turn of the event loop, and those that queue while a file write is in flight, are applied in
+ * call order and persisted together by one write, so a burst of calls costs one flush and one rename, not one each (on Windows each costs
+ * tens of milliseconds). One process owns the
+ * file: two writers would overwrite each other.
  */
 
 import { mkdir, open, readdir, readFile, rename, rm } from 'node:fs/promises'
@@ -95,6 +98,20 @@ async function flushFolder(folder: string): Promise<void> {
   }
 }
 
+/** What one call does to the map: the key's new JSON text (`undefined` deletes it), and what the call resolves with. */
+interface Change<T = unknown> {
+  readonly key: string
+  readonly text: string | undefined
+  readonly result: T
+}
+
+/** A call waiting for the file write that will contain it. Its change reads the state as the calls before it in the round left it. */
+interface Pending {
+  readonly change: (read: (key: string) => string | undefined) => Change
+  readonly resolve: (result: unknown) => void
+  readonly reject: (error: unknown) => void
+}
+
 /** Open (and create, when missing) a JSON-file store. @throws when the file exists and is not a readable kv file. */
 export async function openKv(options: OpenKvOptions): Promise<KvOpened> {
   const file = resolve(options.path)
@@ -103,7 +120,12 @@ export async function openKv(options: OpenKvOptions): Promise<KvOpened> {
   let state = await load(file)
   let closed = false
   let sequence = 0
-  let tail: Promise<unknown> = Promise.resolve()
+  /** Calls waiting for the next file write, in call order. */
+  let queue: Pending[] = []
+  /** Whether the loop that writes the queue runs; cleared by the loop itself, so a call queued after it ends starts a new one. */
+  let draining = false
+  /** The latest loop, for `close` to wait on. */
+  let drained: Promise<void> = Promise.resolve()
 
   const guard = (): void => {
     if (closed) throw new Error(`acryl-kv-json: ${file} is closed`)
@@ -129,18 +151,62 @@ export async function openKv(options: OpenKvOptions): Promise<KvOpened> {
     await flushFolder(dirname(file))
   }
 
-  /** Run a change after every earlier one; the map it works on becomes the state only once it is on disk. */
-  const write = <T>(change: (draft: Map<string, string>) => T): Promise<T> => {
-    guard()
-    const task = tail.then(async () => {
+  /**
+   * Write the queue until it is empty. Each round takes every call queued so far and applies them in order to one copy of the state. A call
+   * whose change throws rejects with its error and changes nothing, and the others in the round still apply. The copy becomes the state
+   * only once it is on disk. A failed file write rejects every call in its round and leaves the state as it was.
+   */
+  const drain = async (): Promise<void> => {
+    try {
+      // Let the calls made in this turn join the first round.
+      await Promise.resolve()
+      await rounds()
+    } finally {
+      draining = false
+    }
+  }
+
+  const rounds = async (): Promise<void> => {
+    while (queue.length > 0) {
+      const round = queue
+      queue = []
       const draft = new Map(state)
-      const result = change(draft)
-      await persist(draft)
+      const applied: { readonly call: Pending; readonly result: unknown }[] = []
+      for (const call of round) {
+        let change: Change
+        try {
+          change = call.change(key => draft.get(key))
+        } catch (error) {
+          call.reject(error)
+          continue
+        }
+        if (change.text === undefined) draft.delete(change.key)
+        else draft.set(change.key, change.text)
+        applied.push({ call, result: change.result })
+      }
+      if (applied.length === 0) continue
+      try {
+        await persist(draft)
+      } catch (error) {
+        for (const { call } of applied) call.reject(error)
+        continue
+      }
       state = draft
-      return result
+      for (const { call, result } of applied) call.resolve(result)
+    }
+  }
+
+  /** Queue one change behind every earlier call; it resolves once a file write that contains it is on disk. */
+  const write = <T>(change: (read: (key: string) => string | undefined) => Change<T>): Promise<T> => {
+    guard()
+    const done = new Promise<T>((resolveCall, rejectCall) => {
+      queue.push({ change, resolve: resolveCall as (result: unknown) => void, reject: rejectCall })
     })
-    tail = task.catch(() => undefined)
-    return task
+    if (!draining) {
+      draining = true
+      drained = drain()
+    }
+    return done
   }
 
   const kv: Kv = {
@@ -153,21 +219,19 @@ export async function openKv(options: OpenKvOptions): Promise<KvOpened> {
     async set(key, value) {
       checkKey(key)
       const text = encodeValue(value)
-      await write(draft => { draft.set(key, text) })
+      await write(() => ({ key, text, result: undefined }))
     },
     async update<T>(key: string, change: (current: T | undefined) => T) {
       checkKey(key)
-      return write(draft => {
-        const text = draft.get(key)
-        const next = runChange(change, text === undefined ? undefined : decodeValue<T>(text))
-        const encoded = encodeValue(next)
-        draft.set(key, encoded)
-        return decodeValue<T>(encoded)
+      return write(read => {
+        const text = read(key)
+        const encoded = encodeValue(runChange(change, text === undefined ? undefined : decodeValue<T>(text)))
+        return { key, text: encoded, result: decodeValue<T>(encoded) }
       })
     },
     async delete(key) {
       checkKey(key)
-      await write(draft => { draft.delete(key) })
+      await write(() => ({ key, text: undefined, result: undefined }))
     },
     async list(prefix = '') {
       guard()
@@ -179,7 +243,7 @@ export async function openKv(options: OpenKvOptions): Promise<KvOpened> {
     kv,
     close: async () => {
       closed = true
-      await tail
+      await drained
     },
   }
 }
