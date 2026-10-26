@@ -37,18 +37,20 @@ function app(files: Record<string, string>, { withTypescript = true } = {}): { d
   mkdirSync(runtimeDir)
   writeFileSync(join(runtimeDir, 'jsx-dom.js'), '/* jsx-dom */\n')
   writeFileSync(join(runtimeDir, 'client.js'), '/* client */\n')
+  writeFileSync(join(runtimeDir, 'read-sse.js'), '/* read-sse */\n')
   return { dir, root, runtimeDir }
 }
 
 const COUNTER = [
   "import { render, useState } from 'acrylblends/jsx/dom'",
   "import { hc } from 'acrylblends/client'",
+  "import { readSSE } from 'acrylblends/read-sse'",
   "import confetti from 'canvas-confetti'",
   "import { label } from './parts/label.ts'",
   "const hint: string = \"import x from 'acrylblends/jsx/dom'\"",
   'const Counter = () => { const [n, set] = useState(0); return <button onClick={() => set(n + 1)}>{label(n)}</button> }',
   "render(<Counter />, document.getElementById('counter')!)",
-  'export { hc, confetti, hint }',
+  'export { hc, readSSE, confetti, hint }',
   '',
 ].join('\n')
 const LABEL = "import { jsx } from 'acrylblends/jsx/dom/jsx-runtime'\nexport const label = (n: number): string => `Count ${n}`\nexport { jsx }\n"
@@ -79,6 +81,7 @@ describe('clientModules', () => {
     expect(code).toContain('from "./@acrylblends/jsx-dom.js"') // the JSX runtime TypeScript adds
     expect(code).toContain("from './@acrylblends/jsx-dom.js'")
     expect(code).toContain("from './@acrylblends/client.js'")
+    expect(code).toContain("from './@acrylblends/read-sse.js'")
     expect(code).toContain("from 'canvas-confetti'") // another package is left to the page's import map
     expect(code).toContain("from './parts/label.ts'")
     expect(code).toContain("\"import x from 'acrylblends/jsx/dom'\"") // a string is not an import
@@ -88,6 +91,7 @@ describe('clientModules', () => {
     expect(await (await site.request('/client/parts/label.ts')).text()).toContain("from '../@acrylblends/jsx-dom.js'")
     expect(await (await site.request('/client/@acrylblends/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
     expect(await (await site.request('/client/@acrylblends/client.js')).text()).toBe('/* client */\n')
+    expect(await (await site.request('/client/@acrylblends/read-sse.js')).text()).toBe('/* read-sse */\n')
   })
 
   it('works under whatever path the app is routed at', async () => {
@@ -184,7 +188,7 @@ describe('buildClientModules', () => {
   it('writes each module compiled at the same path and copies the browser files', () => {
     const { dir, root, runtimeDir } = app({ 'counter.tsx': COUNTER, 'parts/label.ts': LABEL, 'plain.js': 'export {}\n', '.hidden.ts': 'x', 'types.d.ts': 'x' })
     const outDir = join(dir, 'dist', 'client')
-    expect(buildClientModules({ root, outDir, runtimeDir })).toEqual(['counter.tsx', 'parts/label.ts', 'plain.js', '@acrylblends/jsx-dom.js', '@acrylblends/client.js'])
+    expect(buildClientModules({ root, outDir, runtimeDir })).toEqual(['counter.tsx', 'parts/label.ts', 'plain.js', '@acrylblends/jsx-dom.js', '@acrylblends/client.js', '@acrylblends/read-sse.js'])
     expect(readFileSync(join(outDir, 'counter.tsx'), 'utf8')).toContain("from './@acrylblends/client.js'")
     expect(readFileSync(join(outDir, 'parts', 'label.ts'), 'utf8')).toContain("from '../@acrylblends/jsx-dom.js'")
     expect(readFileSync(join(outDir, '@acrylblends', 'jsx-dom.js'), 'utf8')).toBe('/* jsx-dom */\n')

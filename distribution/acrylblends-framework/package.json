@@ -404,6 +404,10 @@
       "types": "./lib/schema-validator.d.ts",
       "default": "./lib/schema-validator.js"
     },
+    "./read-sse": {
+      "types": "./lib/read-sse.d.ts",
+      "default": "./lib/read-sse.js"
+    },
     "./node-server": {
       "types": "./lib/node-server.d.ts",
       "default": "./lib/node-server.js"

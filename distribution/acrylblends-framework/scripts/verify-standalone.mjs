@@ -322,6 +322,32 @@ try {
   if (postgres !== 'ok') throw new Error(`the Postgres entry answered ${JSON.stringify(postgres)}`)
   report('data (acrylblends/db/postgres with pg, on PGlite over its socket server: migrations once, foreign keys, RETURNING, rollback, bigint and bytes, close, a misnumbered folder refused)', 'ok')
 
+  // readSSE, from the packed build: a POST event stream served by streamSSE is read event by event, and the browser file clientModules serves
+  // exists and imports nothing.
+  writeFileSync(join(app, 'read-sse.mjs'), [
+    "import { Acryl } from 'acrylblends'",
+    "import { streamSSE } from 'acrylblends/streaming'",
+    "import { readSSE } from 'acrylblends/read-sse'",
+    "import assert from 'node:assert/strict'",
+    "import { readFileSync } from 'node:fs'",
+    "const app = new Acryl().post('/chat', (c) => streamSSE(c, async (stream) => {",
+    "  await stream.writeSSE({ event: 'meta', data: '{\"conversation\":1}' })",
+    "  for (const piece of ['Hel', 'lo\\nthere']) await stream.writeSSE({ event: 'token', data: JSON.stringify(piece) })",
+    "  await stream.writeSSE({ event: 'done', data: '{}' })",
+    "}))",
+    "const seen = []",
+    "for await (const event of readSSE(await app.request('/chat', { method: 'POST' }))) seen.push(event.event + ':' + event.data)",
+    "assert.deepEqual(seen, ['meta:{\"conversation\":1}', 'token:\"Hel\"', 'token:\"lo\\\\nthere\"', 'done:{}'])",
+    "const browser = readFileSync(new URL(import.meta.resolve('acrylblends/read-sse')).pathname.replace(/read-sse\\.js$/, 'browser/read-sse.js'), 'utf8')",
+    "assert.ok(!/^import |from ['\"]/m.test(browser), 'the browser file imports nothing')",
+    "assert.ok(browser.includes('readSSE'))",
+    "console.log('ok')",
+    '',
+  ].join('\n'))
+  const readSse = run(process.execPath, ['read-sse.mjs'], app).trim()
+  if (readSse !== 'ok') throw new Error(`readSSE answered ${JSON.stringify(readSse)}`)
+  report('readSSE (acrylblends/read-sse: a POST event stream from streamSSE read event by event; the browser file imports nothing)', 'ok')
+
   // Client components without a bundler, as the client components guide sets them up: a page with one script tag, `clientModules` serving
   // src/client, an island using the DOM renderer and the typed client. A real browser runs it in development (compiled on request), then in
   // production from the folder `buildClientModules` wrote, with typescript gone as `npm ci --omit=dev` leaves it.

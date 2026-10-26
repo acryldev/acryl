@@ -1,12 +1,12 @@
 /**
  * Client components without a bundler. `clientModules({ root: 'src/client' })` is an app that serves the TypeScript and JSX modules of a
  * folder to the browser as ES modules: a `.tsx`/`.ts`/`.jsx` file compiled with the app's own `typescript` (JSX for `acrylblends/jsx/dom`),
- * a `.js`/`.mjs` file as it is. The framework's own browser imports (`acrylblends/jsx/dom` with its runtimes and `client`, and
- * `acrylblends/client`) are rewritten to two self-contained files the same app serves, at a URL relative to each module, so a page needs
+ * a `.js`/`.mjs` file as it is. The framework's own browser imports (`acrylblends/jsx/dom` with its runtimes and `client`,
+ * `acrylblends/client` and `acrylblends/read-sse`) are rewritten to three self-contained files the same app serves, at a URL relative to each module, so a page needs
  * one `<script type="module" src="/client/counter.tsx">` and no import map, under whatever path the app is routed at.
  *
  * Production runs without `typescript` (a deploy that leaves out devDependencies): `buildClientModules` writes the same compiled modules
- * and the two browser files into a folder, and with `NODE_ENV=production` and `compiled` set, only that folder is served.
+ * and the three browser files into a folder, and with `NODE_ENV=production` and `compiled` set, only that folder is served.
  */
 
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs'
@@ -16,7 +16,7 @@ import { Acryl } from 'acryl-router'
 import { basePath } from 'acryl-router/helpers'
 import { MissingTypeScriptError, compileModule } from './transpile.ts'
 
-/** The folder the two browser files are served from, below the app's mount. A source folder of this name is not served. */
+/** The folder the three browser files are served from, below the app's mount. A source folder of this name is not served. */
 const RUNTIME_DIR = '@acrylblends'
 /** The framework's browser imports and the browser file that provides each. */
 const BROWSER_IMPORTS: Readonly<Record<string, string>> = {
@@ -25,8 +25,9 @@ const BROWSER_IMPORTS: Readonly<Record<string, string>> = {
   'acrylblends/jsx/dom/jsx-dev-runtime': 'jsx-dom.js',
   'acrylblends/jsx/dom/client': 'jsx-dom.js',
   'acrylblends/client': 'client.js',
+  'acrylblends/read-sse': 'read-sse.js',
 }
-const RUNTIME_FILES = ['jsx-dom.js', 'client.js'] as const
+const RUNTIME_FILES = ['jsx-dom.js', 'client.js', 'read-sse.js'] as const
 const COMPILED = new Set(['.ts', '.tsx', '.jsx', '.mts'])
 const SERVED = new Set([...COMPILED, '.js', '.mjs'])
 const JS_TYPE = 'text/javascript; charset=utf-8'
@@ -41,7 +42,7 @@ export interface ClientModulesOptions {
   readonly compiled?: string | undefined
   /** At most this many bytes of compiled modules are kept in memory (least recently served first out); 16 MiB when not given. */
   readonly cacheBytes?: number | undefined
-  /** The folder holding `jsx-dom.js` and `client.js`; the framework's own when not given. */
+  /** The folder holding `jsx-dom.js`, `client.js` and `read-sse.js`; the framework's own when not given. */
   readonly runtimeDir?: string | undefined
 }
 
@@ -51,11 +52,11 @@ export interface BuildClientModulesOptions {
   readonly root: string
   /** Where the compiled modules go, at the same relative paths and file names; it must not lie inside `root`. */
   readonly outDir: string
-  /** The folder holding `jsx-dom.js` and `client.js`; the framework's own when not given. */
+  /** The folder holding `jsx-dom.js`, `client.js` and `read-sse.js`; the framework's own when not given. */
   readonly runtimeDir?: string | undefined
 }
 
-/** The framework's two browser files, next to the built module that contains this code. */
+/** The framework's three browser files, next to the built module that contains this code. */
 const defaultRuntimeDir = (): string => fileURLToPath(new URL('./browser/', import.meta.url))
 
 /** A module path below the root (`widgets/counter.tsx`) with the URL prefix that reaches the browser files from it. */
@@ -264,7 +265,7 @@ function sourceFiles(root: string, dir = root): string[] {
 
 /**
  * Compile a folder of client modules once, for a production that has no `typescript`: each module is written to `outDir` at the same
- * relative path and file name (so the page's URLs stay the same), compiled exactly as {@link clientModules} compiles it, and the two
+ * relative path and file name (so the page's URLs stay the same), compiled exactly as {@link clientModules} compiles it, and the three
  * browser files are copied to `outDir/@acrylblends/`. Files already in `outDir` that no source produces are left there.
  * @param options - the source folder and the output folder.
  * @returns the paths written, relative to `outDir`.

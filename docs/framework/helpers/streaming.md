@@ -86,7 +86,7 @@ app.get('/sse', async (c) => {
 A reader that closes the tab, loses the network or presses a Stop button should not leave your server working for nobody (a request to a paid model, a database scan). There are two signals, and they are not the same:
 
 - **`c.req.raw.signal`** is the request's `AbortSignal`. It aborts when the client goes away. Pass it to anything that takes a `signal`, such as `fetch`, and the work stops with the client. This is the one to use for cancelling work.
-- **`stream.onAbort(callback)`** and **`stream.aborted`** belong to the response stream. They report that the *reader of the response* was cancelled. Measured: when you call `app.request()` with a `signal` and abort it, `c.req.raw.signal` aborts and `stream.aborted` stays `false`; when the reader of the response body is cancelled, `stream.onAbort` fires and `c.req.raw.signal` does not. On a real connection the request signal is what fired when a browser aborted its `fetch`. Use `c.req.raw.signal` for the work, and `stream.onAbort` for cleanup of the stream itself.
+- **`stream.onAbort(callback)`** and **`stream.aborted`** belong to the response stream. They report that the *reader of the response* was cancelled, and they are set when the response body is cancelled, which is what the Node adapter does when the connection closes. Over a real connection, a browser that aborts its `fetch` (or closes the tab) fires both: the request signal and `stream.onAbort`. Under `app.request()` (in-process, no socket) they come apart, and this is how the upstream behaves too: aborting the `signal` you passed to `app.request()` fires `c.req.raw.signal` while `stream.aborted` stays `false`, and cancelling the reader of the response body fires `stream.onAbort` while `c.req.raw.signal` does not. A test that simulates the client leaving therefore aborts the request signal (for work cancelled through the signal) or cancels the body reader (for `stream.onAbort`), whichever the handler listens to. Use `c.req.raw.signal` for the work, and `stream.onAbort` for cleanup of the stream itself.
 
 An abort event that has already fired does not fire again, so check `signal.aborted` before you wait for it:
 
@@ -160,31 +160,10 @@ app.post('/api/chat', async (c) => {
 
 ## Reading a POST event stream in the browser
 
-`EventSource` can only send a GET request. For a POST (a chat message), read the response body yourself; this function calls `on` for each event as it arrives:
+`EventSource` can only send a GET request. For a POST (a chat message), call `fetch` and read the events with `readSSE` from `acrylblends/read-sse`. It is an async iterator over the events of a `text/event-stream` response, parsed by the rules of the SSE standard (LF, CRLF and CR line ends, several `data` lines joined with a line feed, comments, UTF-8 split across chunks):
 
 ```ts
-async function readEvents(body: ReadableStream<Uint8Array>, on: (event: string, data: string) => void): Promise<void> {
-  const reader = body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) return
-    // Line endings may be CRLF; a \r at the end of a chunk is completed by the next chunk, so normalise the whole buffer.
-    buffer = (buffer + decoder.decode(value, { stream: true })).replaceAll('\r\n', '\n')
-    const blocks = buffer.split('\n\n')
-    buffer = blocks.pop() ?? ''
-    for (const block of blocks) {
-      let event = 'message'
-      const data: string[] = []
-      for (const line of block.split('\n')) {
-        if (line.startsWith('event:')) event = line.slice(6).trim()
-        else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, '')) // the SSE spec strips one leading space only
-      }
-      on(event, data.join('\n'))
-    }
-  }
-}
+import { readSSE } from 'acrylblends/read-sse'
 
 const controller = new AbortController() // controller.abort() is the Stop button
 const response = await fetch('/api/chat', {
@@ -193,13 +172,19 @@ const response = await fetch('/api/chat', {
   body: JSON.stringify({ message: 'Hello' }),
   signal: controller.signal,
 })
+
 let answer = ''
-await readEvents(response.body!, (event, data) => {
+for await (const { event, data } of readSSE(response)) {
   if (event === 'token') answer += JSON.parse(data) as string
-})
+}
 ```
 
-A complete chat component built on this is in the `chat` template of `create-acrylblends` (`npm create acrylblends@latest my-chat -- --template chat`).
+- Each event is `{ event, data, id?, retry? }`; `event` is `message` when the server named none, and `data` is a string (parse it yourself when the server sends JSON).
+- Leaving the loop early (a `break`, a thrown error) cancels the response body, so the request to the server ends. Abort the `fetch` with its own `signal` for a Stop button; `readSSE(response, { signal })` also stops reading when a signal aborts.
+- A response that is not `ok` throws with its status (the body is not parsed as events), and a response without a body throws.
+- A client module served by `clientModules` can import it as it is (`import { readSSE } from 'acrylblends/read-sse'`): the import is pointed at a browser file the same app serves, like `acrylblends/client`. With a bundler it is an ordinary import.
+
+A complete chat component is in the `chat` template of `create-acrylblends` (`npm create acrylblends@latest my-chat -- --template chat`).
 
 ## Error Handling
 

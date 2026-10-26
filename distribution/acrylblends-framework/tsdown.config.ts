@@ -41,4 +41,4 @@ export default defineConfig([{
   // `scripts/clean.mjs` empties lib once: the configs build in parallel, so one config's clean could remove another's output.
   clean: false,
   sourcemap: false,
-}, browser('jsx-dom'), browser('client')])
+}, browser('jsx-dom'), browser('client'), browser('read-sse')])

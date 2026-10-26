@@ -68,6 +68,8 @@ export const SUBPATHS = {
   // ACRYL's own additions, not in the upstream package.
   'loopback-only': `${ROUTER}/middleware/loopback-only.ts`,
   'schema-validator': `${ROUTER}/helpers/schema-validator.ts`,
+  // For the browser: the events of a POST event stream read with fetch (`EventSource` reads GET streams only).
+  'read-sse': `${ROUTER}/helpers/read-sse.ts`,
   // The Node adapter, ported from the upstream's separate Node package: its root, and its two subpaths.
   'node-server': 'src/node-server.ts',
   'node-server/serve-static': `${NODE}/serve-static.ts`,

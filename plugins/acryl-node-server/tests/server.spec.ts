@@ -98,6 +98,29 @@ describe('acryl-node-server', () => {
     await pending
   })
 
+  it('a client that goes away fires stream.onAbort, sets stream.aborted and aborts the request signal, over a real socket', async () => {
+    const ctx = await boot()
+    const seen: { aborted?: boolean, signalAborted?: boolean } = {}
+    let finished!: () => void
+    const done = new Promise<void>(resolve => { finished = resolve })
+    ctx.router.route('/', new Acryl().get('/events', c => streamSSE(c, async stream => {
+      await stream.writeSSE({ data: 'hello' })
+      await new Promise<void>(resolve => { stream.onAbort(resolve) })
+      seen.aborted = stream.aborted
+      seen.signalAborted = c.req.raw.signal.aborted
+      finished()
+    })))
+    const client = new AbortController()
+    const response = await fetch(`${ctx.nodeServer.url}/events`, { signal: client.signal })
+    const reader = response.body!.getReader()
+    expect(new TextDecoder().decode((await reader.read()).value)).toContain('data: hello')
+    client.abort()
+    await reader.read().catch(() => undefined)
+    await done
+    // The two ways to notice the client leaving agree here: this is the path real browsers take.
+    expect(seen).toEqual({ aborted: true, signalAborted: true })
+  })
+
   it('scans to the next free port when the configured one is taken', async () => {
     const taken = await occupy()
     try {
