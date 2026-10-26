@@ -17,7 +17,7 @@ The snippets are examples to adapt: check them against your own server before re
 | `NODE_ENV` | unset | set it to `production` on the server |
 | `PORT` | `3000` | the port to listen on |
 | `HOST` | `127.0.0.1` | the address to bind. `0.0.0.0` exposes the app to the network: do it in a container or when nothing else is in front |
-| `NOTES_DB` | `notes.db` in the working directory | the SQLite file (`notes` template) |
+| `NOTES_DB` | `data/notes.sqlite` in the working directory | the SQLite file (`notes` template); `CHAT_DB` is the `chat` template's (`data/chat.sqlite`). The folder is created, and the migrations in `migrations/` run at start. See [Data](../guides/data.md) |
 | `TRUST_PROXY` | unset | `1` when a reverse proxy you run terminates HTTPS in front of the app (`notes` template) |
 | `PUBLIC_ORIGIN` | unset | the address in the browser, for example `https://notes.example.com`. Behind a proxy the app sees `http://127.0.0.1:3000`, so csrf needs to be told which origin is the site (`notes` template) |
 
@@ -64,7 +64,7 @@ WantedBy=multi-user.target
 NODE_ENV=production
 PORT=3000
 HOST=127.0.0.1
-NOTES_DB=/var/lib/notes/notes.db
+NOTES_DB=/var/lib/notes/notes.sqlite
 TRUST_PROXY=1
 PUBLIC_ORIGIN=https://notes.example.com
 ```
@@ -111,18 +111,18 @@ Both pass `X-Forwarded-Proto`. Set `TRUST_PROXY=1` only when the app is reachabl
 
 ## The SQLite file and backups
 
-The database is one file (plus `-wal` and `-shm` files while it is open). Keep it outside the code folder (`NOTES_DB=/var/lib/notes/notes.db`), owned by the service user, on a disk you back up.
+The database is one file (plus `-wal` and `-shm` files while it is open). Keep it outside the code folder (`NOTES_DB=/var/lib/notes/notes.sqlite`), owned by the service user, on a disk you back up.
 Do not copy the file while the app writes to it. Take a consistent copy with SQLite's backup, which is safe on a running database:
 
 ```ts
 import { DatabaseSync, backup } from 'node:sqlite'
 
-const db = new DatabaseSync(process.env.NOTES_DB ?? 'notes.db')
+const db = new DatabaseSync(process.env.NOTES_DB ?? 'data/notes.sqlite')
 await backup(db, `/var/backups/notes-${new Date().toISOString().slice(0, 10)}.db`)
 db.close()
 ```
 
-or, with the `sqlite3` command line tool installed: `sqlite3 /var/lib/notes/notes.db ".backup '/var/backups/notes.db'"`. Run it from cron or a systemd timer and copy the result off the machine. To restore, stop the service and put the backup file in place of `notes.db`.
+or, with the `sqlite3` command line tool installed: `sqlite3 /var/lib/notes/notes.sqlite ".backup '/var/backups/notes.db'"`. Run it from cron or a systemd timer and copy the result off the machine. To restore, stop the service and put the backup file in place of `notes.sqlite`.
 
 ## Check it
 

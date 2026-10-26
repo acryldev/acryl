@@ -3,31 +3,34 @@
 This page shows the parts a small multi-user app needs, in the order an app uses them: a database, passwords, a cookie session, HTML forms with server-side validation, and a JSON API that shares the same rules.
 It is the shape of a "Notes" app built from these docs alone (sign up, log in, create, edit, delete and search notes, a typed test client for the API).
 
-## A database with `node:sqlite`
+## A database with the `db` port
 
-Node.js 22.19 and later include SQLite, so there is nothing to install. `DatabaseSync` is synchronous, which suits a small app.
+`openDb` from `acrylblends/db/sqlite` opens a SQLite file (Node.js 22.19 and later include SQLite, so there is nothing to install), applies the SQL files in `migrations/`, and returns `{ db, close }`.
+Every call on `db` returns a promise, so `await` it. The [data guide](data.md) has the whole story: migrations, transactions, tests and shutdown.
+
+```sql
+-- migrations/001-notes.sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL
+);
+
+CREATE TABLE sessions (
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
+);
+```
 
 ```ts
-import { DatabaseSync } from 'node:sqlite'
+import { openDb } from 'acrylblends/db/sqlite'
 
-export function openDb(path = process.env.NOTES_DB ?? 'notes.db'): DatabaseSync {
-  const db = new DatabaseSync(path)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY,
-      email TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS sessions (
-      token TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
-    );
-  `)
-  return db
+export function openNotesDb(path = process.env.NOTES_DB ?? 'data/notes.sqlite') {
+  return openDb({ path, migrations: 'migrations' })
 }
 ```
 
-Take the database as an argument (`createApp(db)`) instead of opening it at import time. A test then passes `openDb(':memory:')`, and importing the app module does not create a file.
+Take the database as an argument (`createApp(db)`) instead of opening it at import time. A test then opens `openNotesDb(':memory:')`, and importing the app module does not create a file.
 
 ## Passwords with `node:crypto`
 
@@ -63,20 +66,21 @@ import { Acryl } from 'acrylblends'
 import { createMiddleware } from 'acrylblends/factory'
 import { deleteCookie, getCookie, setCookie } from 'acrylblends/cookie'
 import { randomBytes } from 'node:crypto'
-import type { DatabaseSync } from 'node:sqlite'
+import type { Db } from 'acrylblends/db'
 
 type Env = { Variables: { user: { id: number; email: string } } }
 
-export function createApp(db: DatabaseSync) {
+export function createApp(db: Db) {
   const userFor = (token: string | undefined) =>
     token
-      ? (db
-          .prepare('SELECT users.id AS id, users.email AS email FROM sessions JOIN users ON users.id = sessions.user_id WHERE token = ?')
-          .get(token) as { id: number; email: string } | undefined)
+      ? db.get<{ id: number; email: string }>(
+          'SELECT users.id AS id, users.email AS email FROM sessions JOIN users ON users.id = sessions.user_id WHERE token = ?',
+          token
+        )
       : undefined
 
   const requireUser = createMiddleware<Env>(async (c, next) => {
-    const user = userFor(getCookie(c, 'sid'))
+    const user = await userFor(getCookie(c, 'sid'))
     if (!user) return c.redirect('/login')
     c.set('user', user)
     await next()
@@ -87,16 +91,16 @@ export function createApp(db: DatabaseSync) {
   app.use('/notes/*', requireUser)
   app.get('/notes', (c) => c.text(`Hello ${c.get('user').email}`))
 
-  app.post('/login-example', (c) => {
+  app.post('/login-example', async (c) => {
     const token = randomBytes(32).toString('hex')
-    db.prepare('INSERT INTO sessions (token, user_id) VALUES (?, ?)').run(token, 1)
+    await db.run('INSERT INTO sessions (token, user_id) VALUES (?, ?)', token, 1)
     setCookie(c, 'sid', token, { path: '/', httpOnly: true, sameSite: 'Lax', maxAge: 60 * 60 * 24 * 30 })
     return c.redirect('/notes', 303)
   })
 
-  app.post('/logout', (c) => {
+  app.post('/logout', async (c) => {
     const token = getCookie(c, 'sid')
-    if (token) db.prepare('DELETE FROM sessions WHERE token = ?').run(token)
+    if (token) await db.run('DELETE FROM sessions WHERE token = ?', token)
     deleteCookie(c, 'sid', { path: '/' })
     return c.redirect('/login', 303)
   })

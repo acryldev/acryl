@@ -8,8 +8,8 @@
 | Template | What you get |
 | --- | --- |
 | `nodejs` | an Acryl application served with `serve()` from `acrylblends/node-server`; run with Node.js 22.19 or newer |
-| `notes` | a full-stack starter: accounts (scrypt, cookie session), notes in SQLite (`node:sqlite`), validated forms, search, a JSON API with a typed test client, csrf, a test for every route, a client-component counter |
-| `chat` | an AI chat starter: the answer streams token by token from an OpenAI-compatible API (DeepSeek by default, key only from `DEEPSEEK_API_KEY`), a client component with a Stop button that also stops the request to the model, history in SQLite, tests with a mock model |
+| `notes` | a full-stack starter: accounts (scrypt, cookie session), notes in SQLite through the [`db` port](data.md) with numbered migrations, validated forms, search, a JSON API with a typed test client, csrf, a test for every route, a client-component counter |
+| `chat` | an AI chat starter: the answer streams token by token from an OpenAI-compatible API (DeepSeek by default, key only from `DEEPSEEK_API_KEY`), a client component with a Stop button that also stops the request to the model, history in SQLite through the [`db` port](data.md), tests with a mock model |
 | `bun` (experimental) | an Acryl application with `export default app`, run with `bun` |
 | `acryl-app` | a Cordis app built from plugins, with an agent that can extend it while it runs (the same app `npx acrylblends init --template agent` creates) |
 
