@@ -1,3 +1,68 @@
+## 2026-10-27 - `acryl-db-postgres`, the Postgres provider of the `db` port, and `acrylblends/db/postgres` (spec 049 slice 2)
+
+Commits: `57b2e3c0b81cd86fbcab12d2d1d9e513491b5ec0` (the provider), `1c7e42e1477d20934a571327ec70908978792ae0` (the import-closure test in its own file), `b8eb2f0a5329f9e9a39de5f88b4e9b60515a91b3` (the hand run recorded), `66fe50bef9a268716d994578ae9f90ab9c079297` (`acrylblends/db/postgres`, with `pg` as an optional peer), `be8690c18dc3dc846eb6bda17330b6ab6ddcd27b` (one PGlite cluster per test run)
+
+Status: the owner is deciding whether Postgres stays in the framework package or becomes an outside data source. This entry records what is on main; the data guide's Postgres section is written but held.
+
+- **The provider (`plugins/acryl-db-postgres`):**
+  - `openDb({ url, migrations? })` from `acryl-db-postgres/open`, and a Cordis plugin wrapping it whose `url` defaults to `DATABASE_URL`.
+  - The driver is `pg`, with one pooled connection and calls in call order; a transaction holds the connection until it settles.
+  - `?` placeholders become `$n` through a scanner that leaves strings, `E''` strings, dollar quotes, quoted identifiers and nested comments alone. A count mismatch rejects naming both counts.
+  - Values: `int8` reads as a number (a `bigint` beyond the safe range), `bytea` as a `Uint8Array`, `numeric` as exact text.
+- **Tests:** the `db` conformance suite runs over the network against PGlite's socket server, with PGlite a devDependency only. The Data workflow runs the package on all six legs. Schema-per-case mode, the one a real server gets, was proved by one hand run on PostgreSQL 17.10: 33 of 33 passed.
+- **`acrylblends/db/postgres`** (for Blends): `pg` is an optional peer dependency, loaded when a database opens. Without it, `openDb` rejects with "acrylblends/db/postgres needs the pg package: npm install pg". The declarations never name `pg`. The package test allows an optional peer only as `import()` in JavaScript. `verify-standalone` proves the entry without `pg`, then installs `pg` and PGlite and runs a check from the packed build.
+- **A flake, and its cause:** Data run 40334452171 failed on macos-latest with Node 24, after it had landed.
+  - What failed: `open.spec.ts`'s `beforeAll` passed vitest's 10 s hook timeout, so the file was skipped.
+  - Why: every test file started its own PGlite, and initdb is about 85% of that start. Three files ran it at once on a 3-core runner, and `loader.spec.ts` took 9.7 s in the same run.
+  - The fix: vitest's `globalSetup` creates the cluster once, and each file loads the saved data directory in about 0.13 s. The timeout is unchanged.
+  - Proof, with 40 busy threads on an M-series Mac: the hook took 2.2 to 5.2 s before and 1.0 to 1.8 s after. The suite passed 20 of 20 runs, and `open.spec.ts` alone 20 of 20.
+- **A second flake, in `acryl-kv-json` (commit `d3239971c27d7665d7fc95e9e28d97e20a09d166`):** Data run 40420042521 failed on windows-latest with Node 22.
+  - What failed: the kv conformance case "counts fifty concurrent updates to exactly fifty" took 9 s, past vitest's 5 s.
+  - Why: every call was its own whole-file write (temp file, fsync, rename), one after another. On mbpi9win, a Windows i9, that case took 2.3 to 3.6 s, against well under 0.3 s for every other case.
+  - The fix, group commit: the calls made in one turn, and those queued while a write is in flight, are applied in call order and persisted by one write.
+  - The contract is unchanged. A call resolves only after a durable write that contains it. A throwing callback rejects only its own call. A failed write rejects its whole round and keeps the state.
+  - New tests count the writes (fifty calls are one) and cover a throwing callback mid-batch, a failed write and an all-throwing batch.
+- **Verified:** the full gate. On 66fe50be: main's push runs CI 40337709732, Windows 40337709905, Desktop on Linux 40337709783 and Data 40337709789.
+
+## 2026-10-26 (later) - tests wait for readiness instead of a guessed time, and Web holds a page until the startup pass settles
+
+Commits: `a07bcf4310f1053c625445683e877f4414386a30` (node-server), `592736f2a22350423ed77d1c41d1c87b09ca31eb` (startupSettled and the test waits), `41845772dade86774dfd2554490bd8d86bc36c04` (T097, the Web startup hold), `97bbe6353175c45a9c2de747c93bf6da94e6ddda` (T096, one retry)
+
+Windows runs failed twice on timing guesses. Fixing them found one product defect on Web.
+
+- **node-server (Windows run 40267400760):**
+  - The tests waited a fixed 20 ms, which raced the port scan on a slow runner.
+  - `await fiber` resolves at once while a fiber is PENDING, so the helper now awaits the router's fiber first, then the server's. It fails with the fiber state when `nodeServer` is missing.
+  - The scan moves past `EACCES` on Windows only, where excluded port ranges answer it.
+  - The no-free-port test asserts the rejection it previously skipped while PENDING.
+- **The startup pass's report (Windows run 40270610820):**
+  - `pluginContext.startupSettled` resolves with `{ status: done | skipped | failed | disposed, lines }`.
+  - The app-lifecycle test waits on it and fails with the report, instead of polling the tool list for 90 s while the reason went only to the log.
+  - `acryl-workspace`'s plugin test awaits its fibers instead of a 10 ms wait.
+  - The Cordis guide's testing part says why. specs/001 T095 lists the remaining fixed-time waits.
+- **T097, a real defect on Web:**
+  - The Web index embeds the client graph composed when the index is requested. The surface prints its URL before the pass has installed the app's plugins, so an early page composed without their client parts. Reproduced on real engines: the early index has no entry for the app's client plugin, and the later one has it.
+  - While the pass runs, `acryl-plugin-context` adds one head script. It holds the client's boot (`__DSH_BOOT_READY__`) until `/api/acryl-plugin-context/startup-settled` answers: 204 once the pass settles, or 503 after 60 s. The route is admitted like the Host API. On 204 the page reloads; on any other answer it boots as served.
+  - Desktop already waited before loading its window, and the CLI reads tools live, so neither changes.
+- **T096:**
+  - An install that fails at the install or activate stage, or throws, is tried once more. A failed check, services or requirements stage is not.
+  - A plugin that works on the second try is reported with its first error.
+  - A failure carries the tail of pnpm's output, not only its exit code.
+  - The cause is still open: three rounds of the runtime suite on mbpi9win passed, and the failure did not reproduce.
+- **Verified:** the full gate. On 97bbe635: CI 40327290822, Windows 40327290726, Desktop on Linux 40327290888 and Data 40324420869, all green before the fast-forward.
+
+## 2026-10-26 (later) - plain `openDb` entries for apps without Cordis
+
+Commits: `9c74c99d59c6afec8f8fd1a83481540a08388738` (plain entries), `3d44d5c686ef6a7e5133f567964dcfcb09b0fa53` (foreign keys and the facts templates rely on), `790f92385b709dd58bddabcd9a1f58ad4390e3ce` (no `appInstance` type declared by a non-owner)
+
+create-acrylblends templates are plain acrylblends apps and cannot `inject: ['db']`.
+
+- `acryl-db`'s root imports nothing from Cordis. The `ctx.db` augmentation moved to `acryl-db/cordis`, and Cordis became an optional peer dependency.
+- `acryl-db-sqlite/open` exports `openDb({ path, migrations?, ... })`, resolving `{ db, close }`. The Cordis plugin is a thin wrapper over it.
+- `openDb` sets `PRAGMA foreign_keys = ON` before the migrations, creates the parent folder, and supports `:memory:`. The conformance suite gained a cascade, a refused orphan insert and `RETURNING`.
+- `acryl-db-sqlite` no longer declares a type for the `appInstance` service. Its augmentation collided with the owner's declaration.
+- Blends maps the entries as `acrylblends/db` and `acrylblends/db/sqlite`.
+
 ## 2026-10-26 - the `db` port and its SQLite provider (spec 049 slice 1)
 
 Commits: `271997371c4761bfaa3d13d4dba629406420080c` (the port and the provider), `58dd752c52740098fc713b54d2aba7c2509a05ca` (Data on ci-data), `7abb716b1d69c6a141950359eb60d7a9569cd153` (the conformance spec's temp folders), `23ad6ab1c5012871301c53b3de988a5181e4d48d` (CI builds what the root chains run)
