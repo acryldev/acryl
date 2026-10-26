@@ -92,3 +92,58 @@ create-acrylblends templates are plain acrylblends apps without Cordis, so they 
   - the plain entry exports `type Db`, `DbExecutor` and `SqlValue`.
 - The conformance suite now covers foreign keys (a cascade, and an orphan insert refused) and `RETURNING`, so Postgres in slice 2 must
   meet them too. Slice 2 also adds `?` inside a string literal and inside a comment, both left untranslated.
+
+## Slice 3 - `kv` and the JSON provider (2026-10-26, Blends; moved from Fork3)
+
+`kv` is for an app too small for SQL: named JSON documents. It follows `acryl-db`'s pattern exactly: a port with a plain root entry, the Cordis
+types in a subpath, a conformance suite, and per provider one plain `openKv` that the Cordis plugin wraps. Nothing here is ported from pi:
+the contract is spec 049's, the code is ours.
+
+1. **Capability and plugin boundary.** Three packages under `plugins/`:
+   - `acryl-kv`, the port: the `Kv` types, key and value checks, `copyKv`, and the conformance suite (`acryl-kv/conformance`). Its root entry
+     imports no driver and nothing from Cordis; the `ctx.kv` type is `acryl-kv/cordis`.
+   - `acryl-kv-json`, a provider: `openKv({ path })` over one JSON file, and the Cordis plugin around it.
+   - `acryl-kv-db`, a provider over the `db` port (SQLite today, Postgres after slice 2): `kvOnDb(db)` and the Cordis plugin around it, which
+     injects `db` and provides `kv`. A third package, so replacing the file by SQL is a different row and an app that grows into SQL keeps its data.
+2. **Provides and consumes.**
+   - Both plugins provide `kv: Kv`. `acryl-kv-json` consumes `appInstance` through `ctx.get` (optional, read as `{ home: string }` and declared as
+     no type), for the default file `<app home>/kv.json`; without one `path` is required and the fiber fails with a message that says so.
+   - `acryl-kv-db` injects `db` and nothing else. Its table is `kv` (`key TEXT PRIMARY KEY, value TEXT NOT NULL`), created with
+     `CREATE TABLE IF NOT EXISTS` on first use, so it needs no migration of the app's.
+   - Two rows providing `kv` conflict like any two providers of one service; the app picks one.
+3. **The port.** Every call returns a promise; values are JSON.
+   - `get(key)` resolves the value or `undefined`; `set(key, value)`; `delete(key)` (a missing key is not an error); `list(prefix?)` resolves
+     the keys, sorted by code point, that start with the prefix (all of them when there is none).
+   - `update(key, change)` is atomic: `change(current)` is synchronous, receives the current value (`undefined` when missing) and returns the
+     new one, and no other write to that key happens between the read and the write. A `change` that throws, or returns something that is not
+     JSON, leaves the value as it was and rejects with its error.
+   - A key is a non-empty string. A value must survive `JSON.stringify` unchanged in meaning: `undefined`, functions, symbols, bigints and
+     non-finite numbers are refused with a `TypeError` before anything is written. A value read back is a copy: changing it changes nothing stored.
+   - No `close` on the port: the opener owns it, as with `db`.
+4. **Effects and disposal.**
+   - JSON provider: the state is one in-memory map loaded at open. Each write queues behind the previous ones and persists the whole map:
+     serialize to `<path>.<pid>.<n>.tmp` in the same folder, flush it to disk, rename it over `<path>` (atomic), and flush the folder where the
+     platform allows. The call resolves after the rename. A crash leaves the old file or the new one, never half of one; stray `.tmp` files from
+     a crash are removed at the next open. A file that exists but does not parse is an error naming the path; the provider never starts over
+     an unreadable file.
+   - `close()` waits for the queued writes, then later calls reject. Calling it again does nothing.
+   - The Cordis plugin: one `ctx.effect()` opens, provides `kv` and returns the disposer; the disposer withdraws `kv` first (consumers unload),
+     then closes. Disabling and enabling a row leaves no `.tmp` file and nothing open.
+   - `acryl-kv-db`: no connection of its own. The plugin waits PENDING until `db` exists and withdraws `kv` when `db` goes.
+5. **Durability and limits.** One process owns a JSON file (no file lock: two writers would overwrite each other, which the guide says). The whole file is rewritten
+   on every write, so it suits thousands of small values, not megabytes of data; the guide points at `db` for those. `kv` over `db` is
+   transactional: `update` reads and writes in one `db.transaction`, `list` uses `substr(key, 1, n) = ?` (no `LIKE`, so `%`, `_` and case need no escaping).
+   Postgres needs `SELECT ... FOR UPDATE` for the same guarantee; that comes with its provider in slice 2.
+6. **Import.** `copyKv(source, target, { overwrite })` in `acryl-kv` copies every key from one `Kv` to another, refusing to overwrite unless asked,
+   and returns the counts. It is the whole of "one import command": the JSON file opened with `openKv` is the source, `kvOnDb` the target.
+   Blends puts the command line on it (`acrylblends kv import`).
+7. **Verification.**
+   - `describeKvConformance`, run unchanged on `acryl-kv-json` and `acryl-kv-db` (on SQLite files): JSON round trips (null, numbers, strings
+     with unicode, nested objects and arrays), missing keys, overwrite, delete, `list` order by code point (astral characters after BMP ones), prefixes
+     holding `%`, `_` and mixed case, an empty prefix, fifty concurrent `update`s counting to exactly fifty, `update` that throws or returns a
+     non-JSON value leaving the value, bad keys and values refused, returned values are copies, a 1 MB value, and persistence across close and reopen.
+   - A crash test for the JSON file: a child process writes two keys that must differ by at most one step, and is killed with SIGKILL at random moments, forty times;
+     after every kill the file parses, both keys exist and the invariant holds, and no write ever leaves the file unreadable.
+   - Real Loader tests for both plugins: PENDING until the service they need exists; a changed `path` moves consumers; ten disable and enable
+     cycles keep the data and leave no `.tmp` file and nothing open (the folder can be removed at once, on Windows too); a corrupt file fails the row without touching it.
+   - Gate: the `Data` workflow runs all three packages on Linux, macOS and Windows, Node 22 and 24.
