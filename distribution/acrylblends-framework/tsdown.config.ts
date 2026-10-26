@@ -33,6 +33,8 @@ export default defineConfig([{
   alias: {
     'acryl-router/helpers': here('../../plugins/acryl-router/src/helpers/index.ts'),
     'acryl-router': here('./src/index.ts'),
+    // The SQLite opener imports the port by its package name; here it is the port's own Cordis-free entry.
+    'acryl-db': here('../../plugins/acryl-db/src/index.ts'),
   },
   dts: { tsconfig: here('./tsconfig.json') },
   // `scripts/clean.mjs` empties lib once: the configs build in parallel, so one config's clean could remove another's output.

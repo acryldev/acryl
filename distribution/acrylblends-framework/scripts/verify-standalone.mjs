@@ -194,6 +194,40 @@ try {
   if (adapters !== 'ok') throw new Error(`the hosting adapters answered ${JSON.stringify(adapters)}`)
   report('hosting adapters (AWS Lambda v1, v2 and ALB events, Vercel, Netlify, Cloudflare Pages and Workers, Lambda@Edge, service worker; platform events, no account)', 'each answers what the app answers')
 
+  // The data entries, from the packed build: openDb opens a file in a folder it creates, applies the numbered migrations once, enforces
+  // foreign keys, rolls back a failing transaction, refuses a misnumbered folder, and a second open does not run the migrations again.
+  mkdirSync(join(app, 'migrations'), { recursive: true })
+  writeFileSync(join(app, 'migrations', '001-notes.sql'), 'CREATE TABLE users (id INTEGER PRIMARY KEY);\nCREATE TABLE notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL);\n')
+  writeFileSync(join(app, 'migrations', '002-tags.sql'), 'ALTER TABLE notes ADD COLUMN tags TEXT NOT NULL DEFAULT \'\';\n')
+  writeFileSync(join(app, 'data.mjs'), [
+    "import { openDb } from 'acrylblends/db/sqlite'",
+    "import assert from 'node:assert/strict'",
+    "import { mkdirSync, writeFileSync } from 'node:fs'",
+    "const path = 'data/nested/app.sqlite'",
+    "const first = await openDb({ path, migrations: 'migrations' })",
+    "const user = await first.db.get('INSERT INTO users DEFAULT VALUES RETURNING id')",
+    "const note = await first.db.get('INSERT INTO notes (user_id, title) VALUES (?, ?) RETURNING *', user.id, 'hello')",
+    "assert.deepEqual({ ...note }, { id: 1, user_id: user.id, title: 'hello', tags: '' })",
+    "await assert.rejects(first.db.run('INSERT INTO notes (user_id, title) VALUES (?, ?)', 99, 'orphan'))",
+    "assert.equal((await first.db.run('DELETE FROM users WHERE id = ?', user.id)).changes, 1)",
+    "assert.deepEqual(await first.db.all('SELECT id FROM notes'), [])",
+    "await assert.rejects(first.db.transaction(async (tx) => { await tx.run('INSERT INTO users DEFAULT VALUES'); throw new Error('stop') }), /stop/)",
+    "assert.deepEqual(await first.db.all('SELECT id FROM users'), [])",
+    "await first.close(); await first.close()",
+    "const second = await openDb({ path, migrations: 'migrations' })",
+    "assert.equal((await second.db.get('SELECT COUNT(*) AS n FROM _migrations')).n, 1)",
+    "await second.close()",
+    "const memory = await openDb({ path: ':memory:', migrations: 'migrations' })",
+    "assert.deepEqual(await memory.db.all('SELECT * FROM notes'), []); await memory.close()",
+    "mkdirSync('gap', { recursive: true }); writeFileSync('gap/001-a.sql', 'SELECT 1;'); writeFileSync('gap/003-c.sql', 'SELECT 1;')",
+    "await assert.rejects(openDb({ path: ':memory:', migrations: 'gap' }), /003|002|gap|number/i)",
+    "console.log('ok')",
+    '',
+  ].join('\n'))
+  const data = run(process.execPath, ['data.mjs'], app).trim()
+  if (data !== 'ok') throw new Error(`the db entries answered ${JSON.stringify(data)}`)
+  report('data (acrylblends/db/sqlite: nested folder, migrations once, foreign keys, RETURNING, rollback, :memory:, a misnumbered folder refused)', 'ok')
+
   // Client components without a bundler, as the client components guide sets them up: a page with one script tag, `clientModules` serving
   // src/client, an island using the DOM renderer and the typed client. A real browser runs it in development (compiled on request), then in
   // production from the folder `buildClientModules` wrote, with typescript gone as `npm ci --omit=dev` leaves it.
