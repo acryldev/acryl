@@ -289,12 +289,10 @@ What exists:
      in an app whose `.gitignore` lacks the line.
 4. **Configuration and composition.**
    - Row id `acryl-door`, after `acryl-node-server`, `extensions` and `tools` in `blend.yaml`.
-   - Config, validated by Schemastery:
-     - `approval: 'page' | 'none'`, default `page`. A mutating act shows the in-page "agent is driving" indicator with a kill switch,
-       and the person at the page can stop it. The operator holding the secret is the user's own agent, as in 041's online channel,
-       and every call is audited.
-     - `tools.expose`: string[], default empty.
-     - `enabled: boolean` (default true in development).
+   - Config, validated by Schemastery: only `tools.expose` (string[], default empty). As built, there is no `approval` or `enabled`
+     option. Every act shows the in-page "agent is driving" indicator with its kill switch, so the person at the page can always stop
+     it. The operator holding the secret is the user's own agent, as in 041's online channel, and every call is audited with
+     approval `token`. Whether the door runs at all is decided by the row: the template mounts it for development only.
    - The page module is served at `/api/acryl-door/page.js` and added to a page by one script tag. The `acryl-app` template's page
      includes it (Blends).
    - Spec 049 open question 2 (the door off in production) stays the owner's. Until it is answered, the template turns it on for

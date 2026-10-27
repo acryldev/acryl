@@ -1,0 +1,98 @@
+{
+  "name": "acryl-door",
+  "version": "0.1.0",
+  "description": "The door of an ACRYL framework app, one Cordis plugin: an agent working in the app folder looks at the running page (snapshots with refs), acts on it (click, type, select, press, scroll, wait) and installs plugins live, through .acryl/bin/acryl; loopback only, with a per-run secret in .acryl/door.json, an audit log, and an in-page indicator with a kill switch",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-door"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-door#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "bin": {
+    "acryl-door": "lib/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cli": {
+      "types": "./lib/types/cli/acryl.d.ts",
+      "default": "./lib/cli.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "src/page/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.page.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "~3.18.4",
+    "acryl-node-server": "workspace:*",
+    "acryl-router": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.5",
+    "@types/jsdom": "21.1.7",
+    "@types/node": "^22.20.0",
+    "jsdom": "29.1.1",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./lib/index.js"
+      ]
+    },
+    "surfaces": [
+      "web",
+      "desktop"
+    ],
+    "runtime": "cordis",
+    "compatibility": {
+      "acryl": ">=0.1.0 <1.0.0",
+      "node": "^22.19.0 || >=24.0.0",
+      "hosts": {
+        "@deepseek-ai/cordis": "^4.0.2"
+      }
+    },
+    "capabilities": [
+      "door",
+      "ui-snapshot",
+      "ui-actions",
+      "agent-driving-indicator"
+    ]
+  }
+}

@@ -74,6 +74,7 @@ packages:
   - plugins/acryl-db-postgres
   - plugins/acryl-kv
   - plugins/acryl-kv-json
+  - plugins/acryl-door
   - plugins/acryl-kv-db
   - plugins/acryl-sign-in
   - plugins/acryl-brand

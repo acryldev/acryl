@@ -24,6 +24,10 @@
       "types": "./lib/types/register.d.ts",
       "default": "./lib/register.js"
     },
+    "./client-modules": {
+      "types": "./lib/types/client-modules.d.ts",
+      "default": "./lib/client-modules.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
