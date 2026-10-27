@@ -6,7 +6,7 @@
 
 import pg from 'pg'
 import type { Db, DbExecutor, SqlValue } from 'acryl-db'
-import { translatePlaceholders } from './placeholders.ts'
+import { bindStatement } from './dialect.ts'
 
 const OID = { int2: 21, int4: 23, int8: 20, float4: 700, float8: 701, bytea: 17 } as const
 
@@ -43,8 +43,7 @@ function toDriver(value: SqlValue): unknown {
 type Query = (sql: string, params: readonly SqlValue[]) => Promise<pg.QueryResult<Record<string, unknown>>>
 
 function statement(sql: string, params: readonly SqlValue[]): pg.QueryConfig {
-  const { text, count } = translatePlaceholders(sql)
-  if (count !== params.length) throw new Error(`acryl-db-postgres: the statement has ${String(count)} ? placeholder${count === 1 ? '' : 's'} but ${String(params.length)} value${params.length === 1 ? ' was' : 's were'} given`)
+  const text = bindStatement('acryl-db-postgres', sql, params.length)
   // The extended protocol always, so one call is one statement (several statements belong in `exec`).
   return { text, values: params.map(toDriver), queryMode: 'extended' } as pg.QueryConfig
 }

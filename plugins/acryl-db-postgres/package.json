@@ -24,6 +24,10 @@
       "types": "./lib/types/open.d.ts",
       "default": "./lib/open.js"
     },
+    "./dialect": {
+      "types": "./lib/types/dialect.d.ts",
+      "default": "./lib/dialect.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
