@@ -336,6 +336,29 @@ What exists:
 Coordination: Blends owns the template row, the script tag in the template page, the `.gitignore` line, vendoring `acryl-door`
 into the library, and the skill text (verbs sent after this design is accepted).
 
+## Slice 12 - looking at the app (2026-10-27, Fork3)
+
+As built:
+
+- The snapshot lists every run of visible text as a `text` node, in reading order and at the depth of its element:
+  `<p>Time left: <span>24:59</span></p>` reads as `text "Time left:"` and `text "24:59"`. A run is the text between two child
+  elements, collapsed and clipped to 200 characters.
+- Text that is already a name or a value is not listed twice: the content of buttons, links, tabs, options, headings, switches, tree
+  items, checkboxes, radios, alerts and statuses; label text; the content of text boxes, search boxes, comboboxes (a native select's
+  options) and spin buttons. Hidden text, the driver's own bar and marked sensitive areas are left out, as for elements.
+- A text node has a ref. It resolves while its element still shows that run, and is `stale-ref` once the text changed; a click on it
+  clicks its element.
+- The DSH door gets the same snapshot (`ui_snapshot`), through the shared driver.
+- Gate test (`plugins/acryl-door/tests/host/door.spec.ts`, "lets the agent read a value off the page as written"): the operator's
+  `look` reads `25:00` from a plain `<span>` with no role, label or test id; after `act click` it reads `24:59`. Unit cases in
+  `tests/page/visible-text.spec.ts`.
+
+Ticket - screenshot verb, deferred (coordinator, 2026-10-27). A page cannot capture itself without a prompt, and the door has no
+handle on the user's browser. Options were: (a) the page draws itself (SVG `foreignObject` onto a canvas; cross-origin images,
+canvas, video and iframes come out blank), (b) Electron's `webContents.capturePage` for the DSH Desktop door only, (c) both. None is
+built: the text snapshot covers the gate, an agent that wants pixels can use its own browser tooling, and (a) adds a blank-image
+failure mode. Add (c) if the M5 product test shows an agent needing pixels.
+
 ## Slice 17 - one home for the framework: the acrylblends repository (2026-10-27, Blends; execute after slice 9 lands)
 
 Owner, 2026-10-27: the framework's home is acrylblends for now, `acryl` later. Today the source is here and the acrylblends repository holds a

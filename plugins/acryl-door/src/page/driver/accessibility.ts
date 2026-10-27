@@ -38,8 +38,14 @@ export function roleOf(el: Element): string | null {
   return LANDMARKS[tag] ?? null
 }
 
-const collapse = (value: string): string => value.replace(/\s+/g, ' ').trim()
-const clip = (value: string, max: number): string => (value.length > max ? `${value.slice(0, max - 1)}…` : value)
+/** Roles whose accessible name is the text they contain, so that text is not listed again on its own. */
+export const NAMED_BY_CONTENT: ReadonlySet<string> = new Set(['button', 'link', 'tab', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'option', 'heading', 'switch', 'treeitem', 'checkbox', 'radio', 'alert', 'status'])
+
+/** Roles that show their content as a value (a field, a native select), so the text inside them is not listed on its own either. */
+export const SHOWN_AS_VALUE: ReadonlySet<string> = new Set(['textbox', 'searchbox', 'combobox', 'spinbutton'])
+
+export const collapse = (value: string): string => value.replace(/\s+/g, ' ').trim()
+export const clip = (value: string, max: number): string => (value.length > max ? `${value.slice(0, max - 1)}…` : value)
 
 /** The text a reader would hear: like `textContent`, but leaving out what is `aria-hidden` or `hidden` (a check mark, an icon glyph). */
 function readableText(root: Node): string {
@@ -54,6 +60,27 @@ function readableText(root: Node): string {
 }
 
 const textOf = (el: Element, max: number): string => clip(collapse(readableText(el)), max)
+
+/** The role of a run of visible text that is not already a control's name or a field's value: what an agent reads a value from. */
+export const TEXT_ROLE = 'text'
+
+/** The longest text run a snapshot carries. */
+export const MAX_TEXT = 200
+
+/** One run of text as a snapshot lists it: collapsed and clipped, empty when there is nothing to read. */
+export const textRun = (raw: string): string => clip(collapse(raw), MAX_TEXT)
+
+/** The runs of text directly inside an element (between its child elements), as a snapshot lists them. */
+export function textRunsOf(el: Element): string[] {
+  const runs: string[] = []
+  let run = ''
+  for (const child of Array.from(el.childNodes)) {
+    if (child.nodeType === Node.TEXT_NODE) run += child.textContent ?? ''
+    else if (child instanceof Element) { runs.push(textRun(run)); run = '' }
+  }
+  runs.push(textRun(run))
+  return runs.filter(text => text !== '')
+}
 
 /** ARIA-style accessible name, kept short. */
 export function nameOf(el: Element, role: string): string {
@@ -76,7 +103,7 @@ export function nameOf(el: Element, role: string): string {
     if (placeholder !== undefined && placeholder !== '') return clip(placeholder, 120)
   }
   if (role === 'img') return clip(collapse(el.getAttribute('alt') ?? ''), 120)
-  if (['button', 'link', 'tab', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'option', 'heading', 'switch', 'treeitem', 'checkbox', 'radio'].includes(role)) {
+  if (NAMED_BY_CONTENT.has(role)) {
     const text = textOf(el, 120)
     if (text !== '') return text
   }

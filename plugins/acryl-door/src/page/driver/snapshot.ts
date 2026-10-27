@@ -1,7 +1,7 @@
 /** Builds a bounded, redacted accessibility snapshot of the page, with refs. */
 
 import { DEFAULT_SNAPSHOT_NODES, MAX_SNAPSHOT_NODES, UiControlError, type UiNode, type UiSnapshot } from '../protocol.ts'
-import { isHidden, levelOf, nameOf, roleOf, statesOf, valueOf } from './accessibility.ts'
+import { isHidden, levelOf, NAMED_BY_CONTENT, nameOf, roleOf, SHOWN_AS_VALUE, statesOf, TEXT_ROLE, textRun, valueOf } from './accessibility.ts'
 import type { RefTable } from './ref-table.ts'
 import { isProtected, isSensitive } from './sensitivity.ts'
 
@@ -10,6 +10,7 @@ export const DRIVER_UI_ATTRIBUTE = 'data-acryl-agent-control'
 
 /** The most elements one snapshot considers, however large the page. */
 const MAX_CANDIDATES = 5000
+
 
 interface Candidate {
   readonly element: Element
@@ -26,9 +27,14 @@ function inViewport(element: Element, view: Window | null): boolean {
   return rect.bottom > 0 && rect.right > 0 && rect.top < view.innerHeight && rect.left < view.innerWidth
 }
 
+/**
+ * Every element with a role, and every run of visible text, in reading order. Text that is already a name (inside a button, a link, a
+ * heading, a label) is not listed again; a run is the text between two child elements, so `<p>Left: <b>24:59</b></p>` reads as
+ * `Left:` and `24:59`.
+ */
 function collect(root: Element): Candidate[] {
   const found: Candidate[] = []
-  const walk = (element: Element, depth: number): void => {
+  const walk = (element: Element, depth: number, named: boolean): void => {
     if (found.length >= MAX_CANDIDATES) return
     if (element.hasAttribute(DRIVER_UI_ATTRIBUTE)) return
     const tag = element.tagName.toLowerCase()
@@ -42,9 +48,23 @@ function collect(root: Element): Candidate[] {
       found.push({ element, role, name: nameOf(element, role), depth })
       childDepth = depth + 1
     }
-    for (const child of Array.from(element.children)) walk(child, childDepth)
+    const inName = named || tag === 'label' || (role !== null && (NAMED_BY_CONTENT.has(role) || SHOWN_AS_VALUE.has(role)))
+    let run = ''
+    const flush = (): void => {
+      const text = textRun(run)
+      run = ''
+      if (text !== '' && !inName && found.length < MAX_CANDIDATES) found.push({ element, role: TEXT_ROLE, name: text, depth: childDepth })
+    }
+    for (const child of Array.from(element.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) run += child.textContent ?? ''
+      else if (child instanceof Element) {
+        flush()
+        walk(child, childDepth, inName)
+      }
+    }
+    flush()
   }
-  walk(root, 0)
+  walk(root, 0, false)
   return found
 }
 

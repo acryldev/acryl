@@ -107,6 +107,23 @@ describe('the door in a framework app', () => {
     expect(audit.map(entry => [entry.tool, entry.outcome, entry.approval])).toEqual([['look', 'ok', 'token'], ['act click', 'ok', 'token'], ['act click', 'ok', 'token']])
   })
 
+  it('lets the agent read a value off the page as written, with no markup added for it, and see it change after an act (slice 12)', async () => {
+    const running = await app()
+    await page(running)
+    // A value in a plain element, as an app writes it: no role, no label, no test id.
+    document.querySelector('main')?.insertAdjacentHTML('beforeend', '<p>Time left: <span id="left">25:00</span></p>')
+    const button = document.querySelector('button') as HTMLButtonElement
+    button.addEventListener('click', () => { (document.getElementById('left') as HTMLElement).textContent = '24:59' })
+    const before = await operator(running.root, ['look'])
+    expect(before.code, before.err).toBe(0)
+    expect(before.out).toMatch(/- text "Time left:" \[ref=[\d.]+\]\n\s*- text "25:00" \[ref=/u)
+    const ref = /button "Start" \[ref=([\d.]+)\]/u.exec(before.out)?.[1] as string
+    expect((await operator(running.root, ['act', 'click', '--ref', ref])).code).toBe(0)
+    const after = await operator(running.root, ['look', '--json'])
+    const nodes = (JSON.parse(after.out) as { nodes: Array<{ role: string; name: string }> }).nodes
+    expect(nodes.filter(node => node.role === 'text').map(node => node.name)).toContain('24:59')
+  })
+
   it('settles a call in flight as disconnected when the page drops, and a page that comes back answers the next call', async () => {
     const running = await app()
     const { sources } = await page(running)

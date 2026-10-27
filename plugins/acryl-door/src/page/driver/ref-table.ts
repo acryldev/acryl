@@ -8,7 +8,7 @@
  */
 
 import { UiControlError } from '../protocol.ts'
-import { nameOf, roleOf } from './accessibility.ts'
+import { nameOf, roleOf, TEXT_ROLE, textRunsOf } from './accessibility.ts'
 
 interface Entry {
   readonly element: WeakRef<Element>
@@ -65,6 +65,10 @@ export class RefTable {
     const element = entry.element.deref()
     if (element === undefined || !element.isConnected) throw new UiControlError('stale-ref', `${ref} is no longer on the page; take a new snapshot`)
     // The same node can be reused for something else after a re-render: check it is still what was listed.
+    if (entry.role === TEXT_ROLE) {
+      if (!textRunsOf(element).includes(entry.name)) throw new UiControlError('stale-ref', `${ref} changed since the snapshot ("${entry.name}" is no longer there); take a new snapshot`)
+      return { element, role: entry.role, name: entry.name }
+    }
     const role = roleOf(element)
     if (role !== entry.role || nameOf(element, role) !== entry.name) {
       throw new UiControlError('stale-ref', `${ref} changed since the snapshot ("${entry.name}" is now something else); take a new snapshot`)
