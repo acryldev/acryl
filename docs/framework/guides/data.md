@@ -2,16 +2,16 @@
 
 An app that keeps records (users, notes, orders) keeps them in a SQL database, and reaches it through one small interface, `db`. Handlers and
 stores take a `Db` as an argument and never import a driver, so the file or server behind it can change without touching them. SQLite is the
-provider today; a Postgres provider (Postgres or Supabase through `DATABASE_URL`) is planned and serves the same interface.
+provider in `acrylblends`. Postgres (or Supabase, through `DATABASE_URL`) is an optional plugin, `acryl-db-postgres`, that serves the same
+interface; it is not part of `acrylblends` or the templates, and an app adds it only when it must use Postgres.
 
 ## Choosing
 
 | The app | Use | State |
 | --- | --- | --- |
 | Normal web or desktop app, users, lists, orders | `db` with SQLite (the `notes` and `chat` templates) | available |
-| Hosted, many users | `db` with Postgres or Supabase | planned |
+| Must use Postgres or Supabase | `db` with the optional `acryl-db-postgres` plugin | optional, not in `acrylblends` |
 | Tiny, one person, a few screens | [`kv`](#a-tiny-app-kv), named JSON documents with no SQL | available |
-| Agents or long tasks that must survive a restart | `durable`, in the same database as `db` | planned |
 
 Start with `db` when the data has users, lists or relations: SQL is what people and coding agents already know. Start with `kv` when the whole
 data is a handful of settings or a small list that one process reads and writes.
@@ -190,7 +190,7 @@ await db.transaction(async (tx) => {
 
 ## Writing SQL that moves to Postgres
 
-The Postgres provider is not released yet, and it will serve the same interface. SQL that stays inside this list runs on both:
+The optional Postgres plugin serves the same interface. SQL that stays inside this list runs on both:
 
 - Placeholders are `?` on every provider.
 - Use `RETURNING` to get a new row, not a driver-specific "last id".

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 
-it('imports nothing from Cordis in the plain entries or anything they import, at runtime or in their types, and pg only when a database opens', () => {
+it('imports nothing from Cordis in the plain entries or anything they import, at runtime or in their types', () => {
   const specifiers = (text: string) => [...text.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/gu)].map(match => match[1] ?? '')
   const seen = new Set<string>()
   const visit = (file: URL): void => {
@@ -18,10 +18,6 @@ it('imports nothing from Cordis in the plain entries or anything they import, at
     seen.add(file.href)
     const imports = specifiers(readFileSync(fileURLToPath(file), 'utf8'))
     expect(imports.filter(spec => /cordis|schemastery|pglite/u.test(spec)), fileURLToPath(file)).toEqual([])
-    // pg is an optional peer of acrylblends: the code imports it when a database opens, and the declarations never name it.
-    const text = readFileSync(fileURLToPath(file), 'utf8')
-    if (file.pathname.endsWith('.d.ts')) expect(imports, fileURLToPath(file)).not.toContain('pg')
-    else expect(/^\s*import\s[^(]*?from\s*["']pg["']/mu.test(text), fileURLToPath(file)).toBe(false)
     for (const spec of imports) {
       if (!spec.startsWith('.')) continue
       const target = /\.(?:js|ts)$/u.test(spec) ? spec.replace(/\.ts$/u, file.pathname.endsWith('.d.ts') ? '.d.ts' : '.js') : `${spec}.js`

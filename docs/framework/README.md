@@ -29,7 +29,7 @@ The starter asks which template you want (`nodejs`, `bun` (experimental), or `ac
   See [Built-in middleware](middleware/builtin/basic-auth.md) and [Middleware](concepts/middleware.md).
 - **Helpers** for cookies, streaming and server-sent events, content negotiation, HTML templates, WebSockets and testing. See [Helpers](guides/helpers.md).
 - **Typed routes and a typed client.** Route types flow from the server to `acrylblends/client`. See [RPC](guides/rpc.md).
-- **Data** through one small `db` interface: SQL with numbered migrations on SQLite today, the same code on Postgres later. See [Data](guides/data.md).
+- **Data** through one small `db` interface: SQL with numbered migrations on SQLite; the same code runs on Postgres through an optional plugin. See [Data](guides/data.md).
 - **Validation** with a validator function or any Standard Schema library. See [Validation](guides/validation.md).
 - **A Cordis plugin around it.** A plugin mounts an app with `ctx.router.route`, the mount goes away when the plugin unloads, and a coding agent can write such plugins
   into a running app. See [Acryl in a Cordis app](cordis/acryl-in-a-cordis-app.md) and [Agents](agents/index.md).
