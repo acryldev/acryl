@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * The door's operator client: what `<app>/.acryl/bin/acryl` runs. It finds the app from the folder it is started in (the nearest
  * `.acryl/door.json` upward, or `--dir`), never through PATH or a machine-wide registry, so it reaches only the app running from that

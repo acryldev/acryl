@@ -21,6 +21,7 @@ import { newSecret, removeDoorFile, stateDir, writeDoorFile } from './host/door-
 import { DOOR_PREFIX, privateApi } from './host/http.ts'
 import { operatorRoutes } from './host/operator-routes.ts'
 import { pageChannelRoutes } from './host/page-routes.ts'
+import { writeShims, type ShimTarget } from './host/shim.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
 export const name = 'acryl-door'
@@ -56,6 +57,20 @@ export const Config: z<Config> = z.object({
 
 /** The page module, served compiled from source by the app's own TypeScript. */
 const PAGE_DIR = join(import.meta.dirname, import.meta.url.endsWith('.ts') ? 'page' : join('..', 'src', 'page'))
+
+/** The operator client this build runs: the source next to this file, or the built `cli.js`. */
+const CLIENT = import.meta.url.endsWith('.ts') ? join(import.meta.dirname, 'cli', 'acryl.ts') : join(import.meta.dirname, 'cli.js')
+
+/** How the folder's `.acryl/bin/acryl` starts the client: with the Node that runs the app, and its type-stripping flag when run from source. */
+function shimTarget(): ShimTarget {
+  const fromSource = CLIENT.endsWith('.ts')
+  return {
+    node: process.execPath,
+    nodeOptions: fromSource ? process.execArgv.filter(option => /^--experimental-(strip|transform)-types$/u.test(option)) : [],
+    client: CLIENT,
+    electron: process.versions.electron !== undefined,
+  }
+}
 
 /** A listening address as one the operator reaches: an any-address bind is reached on loopback. */
 function loopbackUrl(url: string): string {
@@ -97,8 +112,9 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
   ctx.effect(function* () {
     yield ctx.reflect.provide('door', door)
     writeDoorFile(app.root, loopbackUrl(server.url), secret)
+    writeShims(app.root, shimTarget())
     yield () => { removeDoorFile(app.root, secret) }
-  }, 'acryl-door: the door service and .acryl/door.json')
+  }, 'acryl-door: the door service, .acryl/door.json and .acryl/bin/acryl')
 }
 
 export { Door, DoorError, VERBS, type Verb, type VerbAnswer } from './host/door.ts'

@@ -32,18 +32,23 @@ headers get 403.
 
 ## The operator
 
-The running door writes `<app>/.acryl/door.json` with its loopback URL, this run's secret and its pid. The client finds it by walking up
-from the current folder, and sends each verb to `POST /api/acryl-door/call` with the secret as a Bearer token:
+The running door writes `<app>/.acryl/door.json` with its loopback URL, this run's secret and its pid, and the folder's own command,
+`<app>/.acryl/bin/acryl` (`acryl.cmd` on Windows). The command runs this package's client with the Node that runs the app, pinned to
+this folder (`--dir <app>`), so it reaches only the app running from here: never another app's door, never an `acryl` on PATH. The
+client sends each verb to `POST /api/acryl-door/call` with the secret as a Bearer token:
 
 ```sh
-acryl-door brief
-acryl-door look
-acryl-door act click --ref 3.1
-acryl-door plugin add plugins/pomodoro
-acryl-door tool call --tool add --args '{"a":2,"b":3}' --json
+.acryl/bin/acryl brief
+.acryl/bin/acryl look
+.acryl/bin/acryl act click --ref 3.1
+.acryl/bin/acryl plugin add plugins/pomodoro
+.acryl/bin/acryl tool call --tool add --args '{"a":2,"b":3}' --json
 ```
 
-`acryl-door verbs` lists the verbs, `--dir <folder>` names the app folder, and `--json` prints the value instead of the text. The exit code
+The command is written each time the app starts (a moved folder or a new Node is picked up) and stays when it stops. The package's own
+`acryl-door` binary is the same client; without `--dir` it finds the app by walking up from the current folder.
+
+`acryl verbs` lists the verbs, `--dir <folder>` names the app folder, and `--json` prints the value instead of the text. The exit code
 is 0 for done, 1 when the verb failed (its code and message go to stderr), 2 for a usage error and 3 when no app is running in the folder.
 The ACRYL Host's `acryl control ...` forms are accepted too.
 

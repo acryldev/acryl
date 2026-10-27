@@ -15,7 +15,7 @@ import * as router from 'acryl-router'
 import * as nodeServer from 'acryl-node-server'
 import { afterEach, describe, expect, it } from 'vitest'
 import { doorFilePath, readDoorFile } from '../../src/host/door-file.ts'
-import { appFolder, removeFolders } from '../harness.ts'
+import { appFolder, removeFolders, runCommand } from '../harness.ts'
 
 const PENDING = 0 as FiberState.PENDING
 const ACTIVE = 2 as FiberState.ACTIVE
@@ -67,6 +67,10 @@ describe('acryl-door through a real Loader', () => {
     await expect.poll(() => existsSync(doorFilePath(root))).toBe(true)
     const server = ctx.get('nodeServer') as unknown as { port: number }
     expect(readDoorFile(root)?.url).toBe(`http://127.0.0.1:${String(server.port)}`)
+    // The folder's command runs the built client (lib/cli.js) the way an installed app does.
+    const brief = await runCommand(root, ['brief'], { cwd: root })
+    expect(brief, brief.err).toMatchObject({ code: 0 })
+    expect(brief.out).toContain(`App demo in ${root}.`)
 
     await entryOf(ctx, entryId).update({ disabled: true })
     await ctx.loader.await()

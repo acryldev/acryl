@@ -326,6 +326,12 @@ What exists:
      - `git init && git add -A` in the app stages nothing under `.acryl/`, and no file anywhere in the app holds the secret.
    - The operator client is part of `acryl-door`. Slice 10 writes `<root>/.acryl/bin/acryl` (and `acryl.cmd`), which runs it against
      this folder's `door.json`. Until then the gate runs the client by path from the app folder.
+   - As built (slice 10, 2026-10-27): the door writes both commands each time it starts, after `door.json`, and leaves them when it
+     stops (run then, they exit 3, "no running app"). Each runs the client with the app's own Node (`process.execPath`, with
+     `ELECTRON_RUN_AS_NODE` when that is Electron, and the type-stripping flag when the client runs from source on a Node that needs
+     it) and `--dir <root>`, so PATH plays no part. `.acryl/bin/` is `0700`, `acryl` `0700`. Gate test
+     (`plugins/acryl-door/tests/host/shim.spec.ts`): two apps running at once, each folder's command names its own folder in `brief`,
+     `look` sees only its own page, and a decoy `acryl` first on PATH is never run.
 
 Coordination: Blends owns the template row, the script tag in the template page, the `.gitignore` line, vendoring `acryl-door`
 into the library, and the skill text (verbs sent after this design is accepted).

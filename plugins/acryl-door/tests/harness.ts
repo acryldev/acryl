@@ -4,6 +4,7 @@
  * headers (`Sec-Fetch-Site: same-origin`, a `Referer` from the app) and answers posted with its `Origin`.
  */
 
+import { execFile } from 'node:child_process'
 import { existsSync, mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -173,4 +174,17 @@ export function domPage(html: string): { document: Document; window: Window; clo
       dom.window.close()
     },
   }
+}
+
+/** Run an app folder's own command (`.acryl/bin/acryl`, `acryl.cmd` on Windows) the way an agent's shell does, from `cwd`, with `path` as PATH. */
+export function runCommand(root: string, args: readonly string[], options: { cwd: string; path?: string }): Promise<{ code: number; out: string; err: string }> {
+  const env = { ...process.env, ...(options.path === undefined ? {} : { PATH: options.path }) }
+  const [file, argv] = process.platform === 'win32'
+    ? [process.env.ComSpec ?? 'cmd.exe', ['/d', '/c', join(root, '.acryl', 'bin', 'acryl.cmd'), ...args]]
+    : [join(root, '.acryl', 'bin', 'acryl'), [...args]]
+  return new Promise((resolve) => {
+    execFile(file, argv, { cwd: options.cwd, env, timeout: 30_000 }, (error, out, err) => {
+      resolve({ code: error === null ? 0 : typeof error.code === 'number' ? error.code : 1, out, err })
+    })
+  })
 }
