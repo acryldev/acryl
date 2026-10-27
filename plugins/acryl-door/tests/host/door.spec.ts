@@ -222,6 +222,7 @@ describe('the door in a framework app', () => {
 
   it('offers only the app tools on its allowlist', async () => {
     const tools = {
+      register: () => () => undefined,
       list: () => [{ name: 'add', description: 'adds two numbers' }, { name: 'shell', description: 'runs a command' }],
       call: async (name: string, input: unknown) => (name === 'add' ? (input as { a: number; b: number }).a + (input as { a: number; b: number }).b : 'ran'),
     }

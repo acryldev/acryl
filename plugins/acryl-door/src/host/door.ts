@@ -1,6 +1,6 @@
 /**
  * The door's verbs, one implementation for every face: `brief`, `look`, `act`, `plugin list|add|remove|reload` and `tool list|call`
- * (spec 049 slice 13 names them; the operator client, MCP and the built-in chat all call these). Each verb takes plain JSON arguments,
+ * (`verbs.ts` lists them; the operator client, MCP and the built-in chat all call these). Each verb takes plain JSON arguments,
  * returns a typed value and a text rendering, and fails with a {@link DoorError} or a {@link UiControlError} carrying a code.
  */
 
@@ -10,10 +10,7 @@ import { parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, t
 import { renderSnapshot } from '../page/snapshot-text.ts'
 import type { AuditLog } from './audit.ts'
 import type { UiChannel } from './channel.ts'
-
-/** Every verb, in the order `brief` lists them. */
-export const VERBS = ['brief', 'look', 'act', 'plugin-list', 'plugin-add', 'plugin-remove', 'plugin-reload', 'tool-list', 'tool-call'] as const
-export type Verb = (typeof VERBS)[number]
+import { VERB_SPECS, VERBS } from './verbs.ts'
 
 export type DoorErrorCode = 'invalid' | 'unknown-verb' | 'unavailable' | 'not-exposed' | 'outside-app' | 'failed'
 
@@ -35,8 +32,10 @@ export interface ExtensionsPort {
   list(): readonly unknown[]
 }
 
-/** The slice of acrylblends' `tools` registry (the `agent` plugin's) the tool verbs use. */
+/** The slice of acrylblends' `tools` registry (the `agent` plugin's) the tool verbs use, and where the built-in chat finds the verbs. */
 export interface ToolsPort {
+  /** @returns the function that removes the tool. @throws when the name is taken. */
+  register(name: string, tool: { readonly description: string; run(input: unknown): unknown }): () => void
   list(): ReadonlyArray<{ readonly name: string; readonly description: string }>
   call(name: string, input: unknown): Promise<unknown>
 }
@@ -61,18 +60,6 @@ export interface VerbAnswer {
 
 /** The files an agent should read first, when the app has them. */
 const SELF_KNOWLEDGE = ['AGENTS.md', 'CLAUDE.md', '.agents/skills', '.claude/skills', 'docs', 'plugins']
-
-const VERB_HELP: Readonly<Record<Verb, string>> = {
-  'brief': 'brief: this summary',
-  'look': 'look [--cursor <n>] [--max-nodes <n>]: the page as text, with refs',
-  'act': 'act click|type|select|press|scroll|wait ...: do one thing on the page (refs from the latest look)',
-  'plugin-list': 'plugin list: the plugins installed while the app runs',
-  'plugin-add': 'plugin add <folder>: check, install and start a plugin folder, live',
-  'plugin-remove': 'plugin remove <name>: stop and remove an installed plugin',
-  'plugin-reload': 'plugin reload: bring every installed plugin in line with its folder',
-  'tool-list': 'tool list: the app tools the door offers',
-  'tool-call': 'tool call --tool <name> [--args <json>]: run one of them',
-}
 
 export class Door {
   private readonly deps: DoorDeps
@@ -120,7 +107,7 @@ export class Door {
       read,
       page: this.deps.channel.connected ? 'open' : 'not open',
       plugins: this.deps.extensions() === undefined ? 'unavailable' : 'available',
-      verbs: VERBS.map(verb => VERB_HELP[verb]),
+      verbs: VERBS.map(verb => VERB_SPECS[verb].usage),
     }
     const text = [
       `App ${name} in ${root}.`,

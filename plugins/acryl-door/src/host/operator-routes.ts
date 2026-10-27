@@ -7,8 +7,9 @@
 
 import { Acryl } from 'acryl-router'
 import { UiControlError } from '../page/protocol.ts'
-import { Door, DoorError, VERBS } from './door.ts'
+import { Door, DoorError } from './door.ts'
 import { error, INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from './http.ts'
+import { VERBS } from './verbs.ts'
 
 export type CallResponse =
   | { readonly ok: true; readonly value: unknown; readonly text: string }

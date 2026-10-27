@@ -16,9 +16,11 @@ import { Acryl } from 'acryl-router'
 import { clientModules } from 'acryl-node-server/client-modules'
 import { auditPath, AuditLog } from './host/audit.ts'
 import { UiChannel } from './host/channel.ts'
+import { registerChatTools } from './host/chat-tools.ts'
 import { Door, type ExtensionsPort, type ToolsPort } from './host/door.ts'
 import { newSecret, removeDoorFile, stateDir, writeDoorFile } from './host/door-file.ts'
 import { DOOR_PREFIX, privateApi } from './host/http.ts'
+import { mcpRoutes } from './host/mcp-routes.ts'
 import { operatorRoutes } from './host/operator-routes.ts'
 import { pageChannelRoutes } from './host/page-routes.ts'
 import { writeShims, type ShimTarget } from './host/shim.ts'
@@ -51,7 +53,8 @@ export interface Config {
 
 export const Config: z<Config> = z.object({
   tools: z.object({
-    expose: z.array(z.string().pattern(/^[A-Za-z][A-Za-z0-9_-]{0,63}$/u)).description('App tools (from the tools registry) the door offers; none by default.'),
+    // Not a `door_` name: those are the door's own verbs in the registry, never offered back as app tools.
+    expose: z.array(z.string().pattern(/^(?!door_)[A-Za-z][A-Za-z0-9_-]{0,63}$/u)).description('App tools (from the tools registry) the door offers; none by default.'),
   }),
 })
 
@@ -108,7 +111,12 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
     pageModule,
     pageChannelRoutes(channel, { prefix: DOOR_PREFIX }),
     operatorRoutes(DOOR_PREFIX, secret, door, reportError),
+    mcpRoutes(DOOR_PREFIX, secret, door, reportError),
   ))
+  // The built-in chat's agent reads the `tools` registry: the verbs are in it while both are up.
+  ctx.inject(['tools'], (inner) => {
+    inner.effect(() => registerChatTools(inner.get('tools') as unknown as ToolsPort, door), 'acryl-door: the verbs in the tools registry')
+  })
   ctx.effect(function* () {
     yield ctx.reflect.provide('door', door)
     writeDoorFile(app.root, loopbackUrl(server.url), secret)
@@ -117,7 +125,9 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
   }, 'acryl-door: the door service, .acryl/door.json and .acryl/bin/acryl')
 }
 
-export { Door, DoorError, VERBS, type Verb, type VerbAnswer } from './host/door.ts'
+export { Door, DoorError, type VerbAnswer } from './host/door.ts'
+export { chatToolName, VERB_SPECS, VERBS, type Verb, type VerbSpec } from './host/verbs.ts'
+export { mcpTools } from './host/mcp-routes.ts'
 export { DOOR_PREFIX } from './host/http.ts'
 export { doorFilePath, readDoorFile, STATE_DIR, type DoorFile } from './host/door-file.ts'
 export type { CallResponse } from './host/operator-routes.ts'

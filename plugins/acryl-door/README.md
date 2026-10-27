@@ -59,3 +59,18 @@ The ACRYL Host's `acryl control ...` forms are accepted too.
   file is left alone.
 - `plugin add` takes only a folder inside the app.
 - Every look and act is written to `.acryl/audit/ui-control.jsonl`, without the text that was typed.
+
+## One verb list: CLI, MCP and the built-in chat
+
+The verbs are one table, `src/host/verbs.ts`, and each face reads it, so a verb is in all three or in none:
+
+- The CLI is `.acryl/bin/acryl <verb>`, as above.
+- MCP is `POST /api/acryl-door/mcp`, with the same guard as the operator: loopback, and the secret from `.acryl/door.json` as a Bearer
+  token. It is streamable HTTP in its request/response form, with no event stream. Each verb is a tool under its own name (`look`,
+  `plugin-add`), taking the arguments the CLI sends. A failed verb is a tool result with `isError` and the line the CLI prints,
+  `<code>: <message>`.
+- The built-in chat reads the app's `tools` registry (acrylblends' `agent` plugin). While both are up, the door registers each verb
+  there as `door_<verb>` (`door_look`, `door_plugin_add`), and removes them when either stops. A tool answers the verb's text. A failed
+  verb throws `<code>: <message>`. `tools.expose` refuses `door_` names, so the door never offers its own verbs back as app tools.
+
+`tests/host/verbs.spec.ts` lists the verbs from each face of a running app and compares them.

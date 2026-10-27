@@ -359,6 +359,37 @@ canvas, video and iframes come out blank), (b) Electron's `webContents.capturePa
 built: the text snapshot covers the gate, an agent that wants pixels can use its own browser tooling, and (a) adds a blank-image
 failure mode. Add (c) if the M5 product test shows an agent needing pixels.
 
+## Slice 13 - one verb list (2026-10-27, Fork3)
+
+Mini-design:
+
+1. Boundary: the verbs stay in `acryl-door`; there is no new plugin. MCP and the chat are two more faces of the same `Door.run`.
+2. Provides and consumes: one table, `VERBS` and `VERB_SPECS` (`src/host/verbs.ts`: usage line, description, JSON Schema of the
+   arguments). The operator client's `verbs` and `brief`, MCP's `tools/list` and the chat tools are all read from it. The door
+   consumes the optional `tools` registry (acrylblends' `agent` plugin) through `ctx.inject(['tools'], ...)`; the hard `inject`
+   list is unchanged.
+3. Effects: one effect in that inject child registers the nine chat tools. Its disposer aborts their running calls and removes
+   them. A name that is already taken removes the ones registered before it and fails the child. The MCP route is a door route,
+   mounted and removed with the others.
+4. Configuration: no new row or key. `tools.expose` refuses a `door_` name, so the door never offers its own verbs as app tools.
+5. Events and durability: none.
+6. Verification: a real app with the router, the node server and a Blends-shaped registry, and the door started and stopped three
+   times. Each stop leaves the registry with only the app's tool.
+
+As built:
+
+- CLI: `.acryl/bin/acryl <verb>`, as before; `acryl verbs` prints the table's names.
+- MCP: `POST /api/acryl-door/mcp`, behind the operator's guard (loopback, this run's secret). It is streamable HTTP in its
+  request/response form, with no event stream. It answers `initialize`, `ping`, `tools/list` and `tools/call`. Each verb is one tool
+  under the verb's own name, taking the arguments the CLI sends. A failed verb is a tool result with `isError` and the text
+  `<code>: <message>`, the line the CLI prints.
+- Chat: each verb is registered in the `tools` registry as `door_<verb>` (`door_plugin_add`), so it never meets an app tool's name.
+  A tool answers the verb's text; a failed verb throws `<code>: <message>`. Slice 14's panel reads them from the registry.
+- Gate test: `plugins/acryl-door/tests/host/verbs.spec.ts`, "offers the same verbs in the CLI, over MCP and in the built-in chat".
+  It lists the verbs from the folder's command, from MCP's `tools/list` and from the registry, and compares them with each other and
+  with the table. It also checks that a command line parses for every verb. Further cases check the same `brief` text and the same
+  failure code on all three faces, and the three stop and start cycles.
+
 ## Slice 17 - one home for the framework: the acrylblends repository (2026-10-27, Blends; execute after slice 9 lands)
 
 Owner, 2026-10-27: the framework's home is acrylblends for now, `acryl` later. Today the source is here and the acrylblends repository holds a
