@@ -224,3 +224,110 @@ the contract is spec 049's, the code is ours.
    - Real Loader tests for both plugins: PENDING until the service they need exists; a changed `path` moves consumers; ten disable and enable
      cycles keep the data and leave no `.tmp` file and nothing open (the folder can be removed at once, on Windows too); a corrupt file fails the row without touching it.
    - Gate: the `Data` workflow runs all three packages on Linux, macOS and Windows, Node 22 and 24.
+
+## Slice 9 - the door in every new app, safely (2026-10-27)
+
+Scope (coordinator, 2026-10-27): the door is ported onto the framework's ports, with one implementation. A Cordis face for the
+`acryl-app` template (`acrylblends init`, a `blend.yaml` app) is gated here. ACRYL's DSH Host keeps `acryl-agent-control` as a thin
+adapter over the same core. The plain templates (`nodejs`, `notes`, `chat`) get no door until the owner decides whether the default
+template becomes a Cordis app.
+
+What exists:
+- `plugins/acryl-agent-control` (spec 041). Its host already runs on `acryl-router`: the private routes, the secret check, the audit,
+  the call channel and the refs.
+- Four couplings keep it from running in a framework app:
+  - the page channel is a WebSocket upgrade on DSH's `acrylWeb`;
+  - the tools are registered on `acrylTools`, with approval through the harness's policy pipeline (`sandboxPolicy`, `approval`);
+  - paths come from ACRYL's `appInstance`, which has `home` and `dshHome` (the framework's has `root` and `home`);
+  - the page end is a DSH client plugin. The indicator is React on `@acryl/ui`. The driver (`client/driver/`, 700 lines) and
+    `connection.ts` are DOM only.
+
+1. **Capability and plugin boundary.**
+   - A new plugin, `plugins/acryl-door`: the Door of the five nouns, the one implementation. It holds:
+     - the host core: the channel, refs, audit, the secret and its connection file, the private routes, and the verbs;
+     - its Cordis face for framework apps;
+     - the page module (driver, channel client and a DOM-only indicator with the kill switch);
+     - the operator client that `acryl control` runs.
+   - Its dependencies are only `@deepseek-ai/cordis`, `acryl-router` and `acryl-loopback-http`. There is no DSH, no React and no
+     `ws`.
+   - acrylblends vendors it into its plugin library like `acryl-router`; the `acryl-app` template mounts it.
+   - `acryl-agent-control` keeps its row id, config and tests. Its host becomes an adapter: `acrylTools` registration, the harness
+     approval policy, workers and the MCP gateway, all calling `acryl-door`'s core. Its client keeps the React indicator and the audit
+     section, and calls the shared driver and channel client.
+   - The code moves (`git mv` where a file moves whole), so the 041 tests keep running against the moved code.
+2. **Provides and consumes.** The framework face:
+   - `inject: ['router', 'appInstance', 'nodeServer']`. `appInstance.root` is the app folder; `nodeServer.url` is the origin the page
+     and the operator reach.
+   - Optional through `ctx.get`:
+     - `extensions` (the verbs `plugin add|remove|reload|list`: `install(folder)`, `remove(name)`, `reload()` and the list);
+     - `tools` (the `agent` plugin's registry). Its tools are listed and called only when named in the allowlist `tools.expose`
+       (empty by default). The door is never a second shell.
+   - Provides `door`: `brief()`, `look()`, `act(request)` and the plugin verbs. The future built-in chat (slice 14) and MCP (slice 13)
+     call it in process.
+   - Routes, all under `/api/acryl-door`:
+     - the page channel: `GET /channel`, an event stream of calls; `POST /channel/answer`. Both are guarded by the own-page rule
+       (same origin, loopback);
+     - `POST /verbs/:verb` and `GET /verbs`, for an operator on this machine presenting the secret.
+   - The page channel moves from a WebSocket to server-sent events down and POST up. It is router-carried, so it needs no upgrade on
+     any adapter, and it reuses `streamSSE` and `readSSE`. The DSH face moves to the same transport, so one channel remains, in a
+     commit of its own that can be reverted alone.
+   - The channel has a heartbeat: the Host sends a comment line every 15 s, and a page that hears nothing for 45 s drops the stream and
+     reconnects with backoff. A page that loses the stream resumes on the next one, with a fresh `hello`. A call in flight when its
+     page's stream drops settles at once as `disconnected`, never waiting for the 30 s timeout.
+3. **Effects and disposal.** One `ctx.effect` owns everything, and releases it in reverse:
+   - the channel: open streams end and pending calls settle as `unloaded`;
+   - the audit file handle;
+   - the connection file `<root>/.acryl/door.json` (`{ url, secret, pid }`, file mode 0600, folder 0700). It is written once the
+     routes are mounted and removed on disposal, before the routes unmount, so a reader never finds a file naming routes that are
+     gone. A restart rotates the secret.
+   - A stale file (the `pid` is dead) is replaced at start, never trusted.
+   - On Windows a file mode means nothing. There, `door.json` is protected by where it lives: the app folder in the user's profile,
+     whose ACL gives access to that user, SYSTEM and Administrators only. The door does not widen it. An app folder outside the profile
+     (another drive, a shared folder) is the user's choice, and the guide says so.
+   - The audit goes to `<root>/.acryl/audit/`. Nothing is written outside `<root>/.acryl/`. The template's `.gitignore` lists
+     `.acryl/` (Blends' line); the door also writes `<root>/.acryl/.gitignore` containing `*`, so the folder stays out of git even
+     in an app whose `.gitignore` lacks the line.
+4. **Configuration and composition.**
+   - Row id `acryl-door`, after `acryl-node-server`, `extensions` and `tools` in `blend.yaml`.
+   - Config, validated by Schemastery:
+     - `approval: 'page' | 'none'`, default `page`. A mutating act shows the in-page "agent is driving" indicator with a kill switch,
+       and the person at the page can stop it. The operator holding the secret is the user's own agent, as in 041's online channel,
+       and every call is audited.
+     - `tools.expose`: string[], default empty.
+     - `enabled: boolean` (default true in development).
+   - The page module is served at `/api/acryl-door/page.js` and added to a page by one script tag. The `acryl-app` template's page
+     includes it (Blends).
+   - Spec 049 open question 2 (the door off in production) stays the owner's. Until it is answered, the template turns it on for
+     `npm run dev` only.
+   - A second door row conflicts like any duplicate provider of `door`.
+5. **Events and durability.**
+   - No events. The audit is append-only JSONL, one line per call.
+   - Nothing is replay-critical: a restart starts a new secret, empty refs, and a page that reconnects.
+6. **Verification.**
+   - The moved 041 suites (the channel, refs, audit, routes, secret and driver in jsdom) pass in `acryl-door`, and
+     `acryl-agent-control`'s suites pass unchanged on the adapter.
+   - Real Loader tests on the framework face:
+     - PENDING until `nodeServer` exists;
+     - `extensions` arriving and leaving adds and removes the plugin verbs, with no duplicate routes;
+     - disposal removes `door.json` and ends open streams;
+     - ten mount/unmount cycles leave no file, timer or listener.
+   - Review additions, each a test:
+     - a page whose stream drops reconnects and answers the next call; a call in flight when the stream drops rejects with
+       `disconnected` within a second;
+     - `GET /channel` and `POST /channel/answer` refuse another origin, including another loopback port, and a request with no origin;
+     - the kill switch on the DOM indicator stops an act in progress: a `wait` that is running rejects with `killed`, and later acts are
+       refused until the person turns it back on;
+     - on the Windows runner, `door.json` exists while the app runs, its ACL names no group beyond the user, SYSTEM and Administrators
+       (read with `icacls`), and it is gone after disposal.
+   - The DSH transport commit is gated by the suites and a live check of the DSH door in Desktop and Web, each in an isolated home through
+     `scripts/live-run.mjs`: a snapshot and a click through `acryl control` reach the page, and a reload of the page reconnects.
+   - **The gate:**
+     - in a scratch HOME, a fresh `acrylblends init` app with the template's door row answers `acryl control tool list` with the
+       door's verbs;
+     - `look` returns the page's snapshot from a real browser;
+     - `git init && git add -A` in the app stages nothing under `.acryl/`, and no file anywhere in the app holds the secret.
+   - The operator client is part of `acryl-door`. Slice 10 writes `<root>/.acryl/bin/acryl` (and `acryl.cmd`), which runs it against
+     this folder's `door.json`. Until then the gate runs the client by path from the app folder.
+
+Coordination: Blends owns the template row, the script tag in the template page, the `.gitignore` line, vendoring `acryl-door`
+into the library, and the skill text (verbs sent after this design is accepted).
