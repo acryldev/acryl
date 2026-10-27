@@ -1,4 +1,4 @@
-<!-- Synced from acryl:docs/cordis/cordis_system_guide_for_coding_agents.md @ c8082fb228. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
+<!-- Synced from acryl:docs/cordis/cordis_system_guide_for_coding_agents.md @ 592736f2a2. Do not edit; run scripts/sync-corpus.mjs. Relative links inside may not resolve here. -->
 
 # Cordis System Guide for Coding Agents
 

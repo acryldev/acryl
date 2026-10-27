@@ -45,8 +45,11 @@ export function lintPackageDir(dir, fs = { existsSync, readFileSync }) {
   return { name: pkg.name, hasClient: pkg.dsh?.client !== undefined, hotShim: usesHotShim(dir, pkg, fs), apiVersion, permissions, requiresAcrylPackages: Array.isArray(requiresAcrylPackages) ? requiresAcrylPackages : [], errors }
 }
 
-/** Packages the app itself provides to every plugin: the framework and the terminal toolkit. */
-const HOST_OWNED_PACKAGES = /^@(deepseek-ai|earendil-works)\//u
+/**
+ * Packages the app itself provides to every plugin: the harness framework, the terminal toolkit, and the web framework (`acrylblends`, whose
+ * router a plugin reaches through `dsh.requiresAcrylPackages`, which links the app's own copy into the profile).
+ */
+const HOST_OWNED_PACKAGES = /^(?:@(?:deepseek-ai|earendil-works)\/|acrylblends$)/u
 
 /**
  * A plugin must not install the app's own packages. Listed under `dependencies`, the install puts a second physical copy of the framework into the

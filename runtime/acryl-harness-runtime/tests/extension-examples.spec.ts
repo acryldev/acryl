@@ -105,6 +105,20 @@ describe('extension pack examples on the real web engine', () => {
     } finally { await host.dispose() }
   }, 60_000)
 
+  it('host-route: the route is served on the real socket through the router mount, and leaves with the plugin', async () => {
+    const host = await bootHost()
+    try {
+      const fiber = host.ctx.plugin(await load('host-route-basic') as never) as { state: number, dispose(): Promise<unknown> }
+      for (const deadline = Date.now() + 10_000; Date.now() < deadline && stateOf(fiber) !== 'ACTIVE';) await settle()
+      expect(stateOf(fiber)).toBe('ACTIVE')
+      const { port } = host.ctx.get('webServer' as never) as { port: number }
+      const hello = await fetch(`http://127.0.0.1:${String(port)}/api/example/hello`)
+      expect([hello.status, await hello.text()]).toEqual([200, 'ok'])
+      await fiber.dispose()
+      expect((await fetch(`http://127.0.0.1:${String(port)}/api/example/hello`)).status).not.toBe(200)
+    } finally { await host.dispose() }
+  }, 60_000)
+
   it('config-schema: a valid config mounts, an out-of-range one fails before apply', async () => {
     const host = await bootHost()
     try {

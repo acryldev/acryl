@@ -6,8 +6,8 @@
 //           exact routes under `/api` (`connection.fetch.register` here), in the RPC envelope, so the call is behind connection's
 //           browser-auth and Host/Origin fence and works in stock DSH too. The data is a JSON file under the DSH home, written atomically.
 //           Not `connection.rpc.handle`: stock DSH's connection row does not declare `webServer`, so a third-party channel fails there with
-//           `cannot get property "webServer" without inject` (ACRYL patches that row; spec 044 S11). Not a bare `webServer.register`
-//           route either: it would skip the auth fence.
+//           `cannot get property "webServer" without inject` (ACRYL patches that row; spec 044 S11). Not a plain router route
+//           either: it would skip that auth fence.
 //           Compare: localStorage is per browser origin (Web and Desktop never share it).
 // Expect:   ACTIVE on web/desktop in ACRYL and in stock DSH; the client lists, adds and removes notes; the file
 //           `<DSH_HOME>/plugin-data/acryl-example-state-host/notes.json` holds them.

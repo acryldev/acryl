@@ -25,7 +25,7 @@ which surfaces they work on. If the user did not say, choose from the table and 
 Host half: `inject = ['connection', 'dshHomePath']`, then one `ctx.connection.fetch.register({ path: '/api/<plugin>/<endpoint>', methods: ['POST'],
 requestBody: 'buffered', fetch })` per endpoint, answering the RPC envelope. Client half: `inject = ['slots', 'connection']`, then
 `ctx.connection.rpc.call('/api', '<plugin>/<endpoint>', payload)`. The routes sit behind connection's browser authentication and Host/Origin
-checks, unlike a bare `webServer.register` route (see `host-route.md`), and they work in stock DSH as well as in ACRYL.
+checks, unlike a plain router route (see `host-route.md`), and they work in stock DSH as well as in ACRYL.
 
 Do not use `ctx.connection.rpc.handle(channel, ...)` for a plugin meant for both apps: stock DSH's `connection` row does not declare `webServer`,
 so a third-party channel fails there with `cannot get property "webServer" without inject` (measured on DSH 0.2.0-rc.2, spec 044 S11). ACRYL

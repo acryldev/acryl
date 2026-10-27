@@ -14,9 +14,16 @@
     "index.js",
     "cordis.patch.yml"
   ],
+  "peerDependencies": {
+    "acrylblends": "^0.9.2"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
-    }
+    },
+    "requiresAcrylPackages": [
+      "acrylblends/cordis/router",
+      "acrylblends/cordis/router-http"
+    ]
   }
 }

@@ -220,7 +220,7 @@ export function renderMountPoints(slots, hostSeams) {
     '| A chat slash command | yes (`commands.register`) | yes | yes |',
     '| Text in the system prompt, skills | yes | yes | yes |',
     '| A new model provider | yes (`llm`) | yes | yes |',
-    '| A backend HTTP/RPC route | no web server | yes (`webServer`, typert remote) | yes |',
+    '| A backend HTTP/RPC route | no web server | yes (`router` and `routerHttp`, or `connection` RPC) | yes |',
     '| Native OS integration (menus, notifications, windows) | no | no | Desktop main only (`desktopProfiles`, `desktopPnpm`, Electron); not agent-authorable without the main-process API |',
     '',
     '## Host mount points (every surface unless noted)',

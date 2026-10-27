@@ -15,7 +15,7 @@ Web and Desktop, an optional **browser** half (`client.js`, slots). Pick the mou
 | A chat slash command | yes (`commands.register`) | yes | yes |
 | Text in the system prompt, skills | yes | yes | yes |
 | A new model provider | yes (`llm`) | yes | yes |
-| A backend HTTP/RPC route | no web server | yes (`webServer`, typert remote) | yes |
+| A backend HTTP/RPC route | no web server | yes (`router` and `routerHttp`, or `connection` RPC) | yes |
 | Native OS integration (menus, notifications, windows) | no | no | Desktop main only (`desktopProfiles`, `desktopPnpm`, Electron); not agent-authorable without the main-process API |
 
 ## Host mount points (every surface unless noted)
@@ -31,7 +31,7 @@ Web and Desktop, an optional **browser** half (`client.js`, slots). Pick the mou
 | Settings sections | ctx.settings.installSection(ctx, NS, Config, config, opts) | validated user-editable settings | extending/config-schema.md, example settings-section-basic |
 | Agent presets and personas | a preset directory (agent.cordis.yml + preset.yml) | a different session composition or identity | extending/agent-preset.md |
 | Subagent providers | ctx.subagents.register(...) | a new way to run a delegated agent | reference/subsystems/subagent.md (no example) |
-| Host routes (Web and Desktop) | ctx.webServer route / typert @Remote | an HTTP or RPC endpoint for a browser half | extending/host-route.md |
+| Host routes (Web and Desktop) | ctx.router.route('/', app); ctx.routerHttp.mount(prefix) / connection RPC | an HTTP or RPC endpoint for a browser half | extending/host-route.md |
 | Services | class X extends Service { constructor(ctx) { super(ctx, 'name') } } | a named capability others inject | extending/service.md, extending/three-role-capability.md |
 | Page shell: title, favicon, CSS, scripts (Web, Desktop) | ctx.on('webserver/index-inject', table => table.push(row)); ctx.get('webServer')?.tapIndex(html => html) | structured head/body rows (style, html, script, global) and a raw index.html transform | extending/ui-branding.md, example web-page-branding |
 | Theme tokens and fonts (Web, Desktop client) | ctx.theme.overrideTokens(id, { '--token': { light, dark } }); ctx.theme.register({...}) | colors, surfaces, borders, font family, content font size | extending/ui-theme.md, maps/theme-tokens.md, example client-theme-override |

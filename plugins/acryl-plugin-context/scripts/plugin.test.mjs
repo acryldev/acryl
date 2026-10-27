@@ -87,12 +87,13 @@ test('lint catches the measured failures: missing bundle, missing patch file, ex
 })
 
 test('lint refuses a host package under dependencies (a second framework copy breaks every tool call after a restart) and accepts peerDependencies and third-party dependencies', () => {
-  const asDependency = makePkg({ dependencies: { '@deepseek-ai/dsh-tools': '0.2.0-rc.2', '@earendil-works/pi-tui': '1.0.0' } })
+  const asDependency = makePkg({ dependencies: { '@deepseek-ai/dsh-tools': '0.2.0-rc.2', '@earendil-works/pi-tui': '1.0.0', acrylblends: '^0.9.2' } })
   const asOptional = makePkg({ optionalDependencies: { '@deepseek-ai/cordis': '4.0.4' } })
-  const asPeer = makePkg({ peerDependencies: { '@deepseek-ai/dsh-tools': '0.2.0-rc.2' }, dependencies: { 'left-pad': '1.3.0' } })
+  // A name that only starts like the framework's is somebody else's package.
+  const asPeer = makePkg({ peerDependencies: { '@deepseek-ai/dsh-tools': '0.2.0-rc.2', acrylblends: '^0.9.2' }, dependencies: { 'left-pad': '1.3.0', 'acrylblends-extra': '1.0.0' } })
   try {
     const errors = lintPackageDir(asDependency).errors.join('\n')
-    assert.match(errors, /"dependencies" lists "@deepseek-ai\/dsh-tools", "@earendil-works\/pi-tui"/)
+    assert.match(errors, /"dependencies" lists "@deepseek-ai\/dsh-tools", "@earendil-works\/pi-tui", "acrylblends"/)
     assert.match(errors, /peerDependencies/)
     assert.match(lintPackageDir(asOptional).errors.join('\n'), /"optionalDependencies" lists "@deepseek-ai\/cordis"/)
     assert.deepEqual(lintPackageDir(asPeer).errors, [])
