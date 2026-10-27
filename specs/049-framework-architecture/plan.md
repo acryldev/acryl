@@ -540,6 +540,83 @@ The freeze lifts only after step 6 is verified (ACRYL's workflows green on main)
 1. The names of the Cordis subpaths above are a proposal (`acrylblends/cordis/...`); the owner or the coordinator may prefer another prefix. Nothing else depends on them until execution.
 2. Who announces the freeze: the coordinator (decided). Slice 9 must have landed, and no framework slice may be in flight on the moved paths.
 
+### Slice 17, ACRYL side: the IDE on the published `acrylblends` (2026-10-27, AcrylImplementer; mini-design, target 2026-10-29 12:00 CET)
+
+The freeze started 2026-10-27 11:00 CET at `c3652e7133da6c027bc6cf571ae93ebbc15aaad6` (H). This section is step 5 of the order above, and what ACRYL needs from the release in step 4.
+Inventory at H (outside the moving folders): 23 packages depend on a moving package through `workspace:*`, and there are 106 import lines.
+
+**Corrections to the table above, found in the inventory:**
+
+- `acryl-loopback-http` (`runtime/acryl-loopback-http`, not `plugins/`) does not need to move. The door does not import it: it imports only Cordis, schemastery, `acryl-router` and `acryl-node-server`.
+  It is ACRYL's Host infrastructure (sign-in, support, plugin administration, the workspace, Desktop settings), and it has no dependencies. Proposal: it stays in ACRYL with `acryl-control`.
+- ACRYL imports subpaths the table does not list:
+  - `acryl-door/protocol`, `/host` and `/page`: the DSH door is built on them, and `/page` is browser code.
+  - `acryl-db/conformance`: `acryl-db-postgres` and `acryl-db-pglite` run the suite; it needs `vitest` as an optional peer.
+  - The type-only augmentations `acryl-db/cordis` and `acryl-state`.
+  - `acryl-node-server` as the Cordis plugin.
+
+**1. Capability and plugin boundary.** Nothing new. The same plugins as today, consumed from one published package instead of workspace folders.
+ACRYL keeps `acryl-control`, `acryl-loopback-http`, `acryl-db-postgres`, `acryl-db-pglite` and every IDE package.
+
+**2. Provides and consumes: the import map** (every row is a subpath of the one package `acrylblends`):
+
+| Today | After | Notes |
+| --- | --- | --- |
+| `acryl-router` (plain) | `acrylblends` | `Acryl` and its types |
+| `acryl-router/middleware` | `acrylblends/body-limit`, `/loopback-only`, `/method-not-allowed`, `/trailing-slash`, `/bearer-auth` | one subpath per middleware, as an app imports them |
+| `acryl-router/helpers` | `acrylblends/streaming`, `acrylblends/schema-validator` | |
+| `acryl-router` (the Cordis plugin) | `acrylblends/cordis/router` | |
+| `acryl-router-http` | `acrylblends/cordis/router-http` | `serve` is used by tests in four packages |
+| `acryl-state` | `acrylblends/cordis/state` | also the `Context` augmentation |
+| `acryl-node-server` (plugin) | `acrylblends/cordis/node-server` | |
+| `acryl-db`, `acryl-db/cordis`, `acryl-db/conformance` | `acrylblends/db`, `acrylblends/cordis/db`, `acrylblends/db/conformance` | **needed by Blends:** `db/conformance` |
+| `acryl-door`, `/protocol`, `/host`, `/page` | `acrylblends/cordis/door`, `acrylblends/door/protocol`, `/door/host`, `/door/page` | **needed by Blends:** the three door subpaths |
+
+One copy at run time: the `Acryl` that `acrylblends` exports must be the same class as the one `acrylblends/cordis/router` serves. That holds if tsdown shares the chunks. The cut-over runs a test that mounts a plain `new Acryl()` sub-app on the router plugin's app.
+ACRYL plugins installed into a profile take `acrylblends` as a peer dependency. A second copy broke tool calls once, which is why: see the note on host packages as peers. The `ProfilePluginPackages` resolver links the one copy the surface ships.
+
+**3. Effects and disposal.** No change. The Fibers are the same plugins, loaded from another path.
+
+**4. Configuration and composition: Loader rows.**
+- The Blueprint rows (`runtime/acryl-harness-runtime/src/blueprint/compose.ts`) and Desktop's Market row (`apps/acryl-desktop/src/plugins/desktop-market.ts`) get `packageName: 'acrylblends'`, and the row's module becomes the subpath.
+- This follows the existing subpath row `acryl-plugin-hub/manager`. By the row-naming rule, each row id becomes its module: `acrylblends/cordis/router`, `.../router-http`, `.../state`, `.../node-server`, `.../door`.
+- `materializeProfilePackage` links `acrylblends` once.
+- Profiles and apps written by today's ACRYL name the old rows and packages:
+  - rows in a profile's own file, through the `existingRowIds` path;
+  - `dsh.requiresAcrylPackages` in an app's `plugins/*/package.json` (for example `examples/acryl-todo`).
+  - So compose reads the old ids and names through one rename table, the existing `RENAMED_PACKAGES` mechanism, and never writes them.
+- An app plugin whose own source imports `acryl-router` gets an install and boot error that names the subpath to use. There is no silent alias, because `acryl-router/middleware` maps to five subpaths and an alias would hide that.
+- `examples/acryl-todo` and `examples/acryl-framework-starter` switch to `acrylblends` in the same branch.
+
+**5. Events and durability.** No new events. The durable facts are the persisted row ids and names above, migrated when read.
+
+**6. Verification** (all on the published package, on a branch, before it lands):
+- ACRYL's four workflows: CI, Windows, Desktop on Linux, Data. Data loses the moved packages' legs and keeps `acryl-db-postgres` and `acryl-db-pglite`.
+- The DSH door live check in isolated homes: Web from headless Chrome and Desktop from Electron, a snapshot and a click.
+- A boot of a profile and an app written by today's ACRYL (the 0.8.x rows and `requiresAcrylPackages`), migrated with no rows lost.
+- The one-copy test above.
+- `grep` at the branch tip: no import, `workspace:*` or path under `plugins/acryl-{router,router-http,node-server,state,db,db-sqlite,kv,kv-json,kv-db,door}` or `distribution/acrylblends-framework`.
+- A packaged Desktop on this Mac:
+  - The license notices are regenerated, because `acrylblends` carries Hono's MIT notice.
+  - The 600 MB budget holds; `acrylblends@0.8.1` is 3.2 MB unpacked.
+  - The packaged-runtime check passes.
+
+**Order (proposed to Blends on 2026-10-27; this line records the answer):**
+1. Blends publishes an `acrylblends` build on `next` that has the subpaths above, from the moved source or from the copy, whichever is first.
+2. ACRYL, branch `m6-consume`, commit A: the dependents switch to that build while the folders still exist, and all gates must pass. The folders' own tests keep running as a cross-check.
+3. Blends' first stable release from the new home, verified by its own gate.
+4. Commit B on the same branch: pin `acrylblends@^<that release>`. Then delete the moved folders, the copy-era scripts (`verify-port.mjs`, `verify-framework*.mjs`, `check:framework-app`, `tsconfig.framework-app.json`), their workflow steps, and the `pnpm-workspace.yaml` and `verify-layout.mjs` entries. Run all gates again.
+5. Send the hash to the coordinator, who lands it and then lifts the freeze.
+
+**Rollback:** revert commit B, then A. Both are ACRYL-only and restore the `workspace:*` dependencies.
+
+**Decided by the coordinator, 2026-10-27:**
+- (a) `acryl-loopback-http` stays in ACRYL and is left out of the move.
+- (b) `acrylblends` adds the four subpaths `db/conformance`, `door/protocol`, `door/host` and `door/page`.
+- (c) Row ids become their module (`acrylblends/cordis/...`). 0.8.x profiles and apps are read through the rename table. An app plugin that imports `acryl-router` gets an error naming the subpath; there is no silent alias.
+- (d) `check:framework-app` and the two examples stay in ACRYL, as consumers.
+- The order above is approved. Blends' `next` build is due by 2026-10-28 18:00 CET.
+
 ## Slice 14 - the built-in agent: a chat panel in the app (2026-10-27, Blends; mini-design, execute after 0.8.0)
 
 Spec line: "an app can show its own chat panel whose agent uses the same door (DSH chat or a PTY driver: claude, codex, pi), opt-in per app. Gate: from the panel, the agent adds a feature and the page shows it without a restart."
