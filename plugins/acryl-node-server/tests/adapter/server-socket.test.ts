@@ -572,6 +572,48 @@ describe('lingering close for early 413 responses', () => {
       })
     })
   })
+
+  it('Should drain the rest of the body after body-limit sends 413 and serve the next request on the connection', async () => {
+    // The body reader behind bodyLimit stays attached after the 413 and would pause the request again,
+    // so the drain stalled after one chunk and its deadline closed the socket. The whole body is sent
+    // here, each step after the one before, so the next request is answered only if the drain reads it.
+    const chunk = 64 * 1024
+    const total = 2 * 1024 * 1024 + 1
+
+    const response = await new Promise<string>((resolve, reject) => {
+      const socket = connectNet(address.port, address.address)
+      let received = ''
+
+      socket.on('connect', () => {
+        socket.write(
+          'POST / HTTP/1.1\r\n' +
+            'Host: localhost\r\n' +
+            `Content-Length: ${total}\r\n` +
+            'Content-Type: text/plain\r\n' +
+            '\r\n'
+        )
+        socket.write(Buffer.alloc(chunk))
+      })
+
+      let sentRest = false
+      socket.on('data', (data) => {
+        received += data.toString()
+        if (!sentRest && received.includes('413 Payload Too Large')) {
+          sentRest = true
+          for (let sent = chunk; sent < total; sent += chunk) {
+            socket.write(Buffer.alloc(Math.min(chunk, total - sent)))
+          }
+          socket.write('GET /next HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n')
+        }
+      })
+
+      socket.on('error', reject)
+      socket.on('close', () => resolve(received))
+    })
+
+    expect(response).toMatch(/^HTTP\/1\.1 413 Payload Too Large\r\n/)
+    expect(response).toContain('HTTP/1.1 404 Not Found\r\n')
+  })
 })
 
 describe('autoCleanupIncoming: false', () => {

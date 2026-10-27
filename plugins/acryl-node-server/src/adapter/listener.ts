@@ -89,6 +89,11 @@ const drainIncoming = (incoming: IncomingMessage | Http2ServerRequest): void => 
     }
   }
 
+  // A body reader the app stopped using (Readable.toWeb behind bodyLimit, for one) still listens for
+  // data and pauses the request again as soon as its queue is full, so the drain would stall after
+  // one chunk and the timer would close a socket with unread data, which the kernel answers with RST.
+  // Nobody reads the body any more, so the drain is the only data listener.
+  incoming.removeAllListeners('data')
   incoming.on('data', onData)
   incoming.on('end', cleanup)
   incoming.on('error', cleanup)

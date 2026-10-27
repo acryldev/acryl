@@ -45,8 +45,8 @@
     },
     "src/adapter/listener.ts": {
       "upstreamSha256": "f3efe9d14679ed43cf055fb9b85cdb29fda4d13e8808eafc778accbc671106ee",
-      "sha256": "229a56c3915ae3994c2766f902ccb012e0462220e5e52e49f6a3d97a5f67b024",
-      "deviation": "Each writeHead call names ServerResponse: under Node 22 types the ServerResponse | Http2ServerResponse union is not callable (type-only; same runtime code)."
+      "sha256": "585ac76c33ff561f73401992d294026c8aeba4bb998ee25058510fa234bc677d",
+      "deviation": "Each writeHead call names ServerResponse: under Node 22 types the ServerResponse | Http2ServerResponse union is not callable (type-only; same runtime code). drainIncoming removes the other data listeners before it resumes the request: the Readable.toWeb reader behind bodyLimit stays attached after an early 413 and paused the request again once its queue was full, so the drain read one chunk, and its 500 ms deadline closed a socket with unread data, which Windows answers with RST (the upstream lingering-close test failed on the Windows runner)."
     },
     "src/adapter/request.ts": {
       "upstreamSha256": "26644541d3cfa9a2dc3fc94fcfffe73feefb720b52dae6b0905cd1ef93523261",
@@ -218,7 +218,8 @@
     },
     "tests/adapter/server-socket.test.ts": {
       "upstreamSha256": "a463a509dfc73ef5ecb25e27e45069f9f37090613c35893b8305eb4353e40353",
-      "sha256": "779acea8db3d7725ab3421c08d12ecdeb9b26e9c43b9f32bf9b20ed25af2e4d7"
+      "sha256": "73f6455cf169c6562b5f51c761e9a83be0db34066297109e11a54c8376f922ec",
+      "deviation": "One test added after the upstream lingering-close test: after the 413 the client sends the rest of the body and a second request on the same connection, which is answered only if the drain reads the whole body (it fails at the 500 ms deadline without the drainIncoming fix)."
     },
     "tests/adapter/server.test.ts": {
       "upstreamSha256": "5d268474b4d8c887cea01e7d752942da60fbc3a7749f02c4a37c8ad80c9900f7",
