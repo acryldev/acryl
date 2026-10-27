@@ -4,17 +4,16 @@
  * which is the port's contract (and what SQLite's single connection does).
  */
 
-import type pg from 'pg'
+import pg from 'pg'
 import type { Db, DbExecutor, SqlValue } from 'acryl-db'
-import { loadPg, type PgDriver } from './driver.ts'
 import { translatePlaceholders } from './placeholders.ts'
 
 const OID = { int2: 21, int4: 23, int8: 20, float4: 700, float8: 701, bytea: 17 } as const
 
 /** Values out, the same on every provider: integers and reals as numbers (an `int8` beyond the safe range as a `bigint`), `bytea` as a plain `Uint8Array`. */
-const typeParsers = (driver: PgDriver): pg.CustomTypesConfig => ({
+const types: pg.CustomTypesConfig = {
   getTypeParser: ((oid: number, format?: 'text' | 'binary') => {
-    if (format === 'binary') return driver.types.getTypeParser(oid, 'binary')
+    if (format === 'binary') return pg.types.getTypeParser(oid, 'binary')
     switch (oid) {
       case OID.int8:
         return (text: string) => {
@@ -22,17 +21,17 @@ const typeParsers = (driver: PgDriver): pg.CustomTypesConfig => ({
           return value >= BigInt(Number.MIN_SAFE_INTEGER) && value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : value
         }
       case OID.bytea: {
-        const parse = driver.types.getTypeParser(OID.bytea, 'text') as (text: string) => Buffer
+        const parse = pg.types.getTypeParser(OID.bytea, 'text') as (text: string) => Buffer
         return (text: string) => {
           const buffer = parse(text)
           return new Uint8Array(buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength))
         }
       }
       default:
-        return driver.types.getTypeParser(oid, 'text')
+        return pg.types.getTypeParser(oid, 'text')
     }
   }) as pg.CustomTypesConfig['getTypeParser'],
-})
+}
 
 /** Values in: a `bigint` as its decimal text, bytes as a Buffer over the same memory; `pg` sends the rest as they are. */
 function toDriver(value: SqlValue): unknown {
@@ -71,16 +70,8 @@ export class PostgresDatabase implements Db {
   private closing: Promise<void> | undefined
   private readonly direct: DbExecutor
 
-  /**
-   * A database over `options.url`. The pool connects on the first call, so this resolves without reaching the server.
-   * @throws when `pg` is not installed, naming the package to install.
-   */
-  static async create(options: PostgresDatabaseOptions): Promise<PostgresDatabase> {
-    return new PostgresDatabase(options, await loadPg())
-  }
-
-  private constructor(options: PostgresDatabaseOptions, driver: PgDriver) {
-    this.pool = new driver.Pool({ connectionString: options.url, max: 1, types: typeParsers(driver) })
+  constructor(options: PostgresDatabaseOptions) {
+    this.pool = new pg.Pool({ connectionString: options.url, max: 1, types })
     // An idle connection that the server drops would otherwise surface as an unhandled error; the next call reconnects.
     this.pool.on('error', () => {})
     const query: Query = (sql, params) => this.pool.query(statement(sql, params))

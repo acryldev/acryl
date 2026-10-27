@@ -2,7 +2,7 @@
 
 The Postgres provider of the [`db` port](../acryl-db/README.md), for a Postgres or Supabase server reached through a connection string.
 It ships the `pg` driver. App code depends on the port only, so moving from `acryl-db-sqlite` to this provider changes how the database is
-opened, not the code that uses it.
+opened, not the code that uses it. It is an optional plugin: not part of the `acrylblends` package or its templates (spec 049, 2026-10-27).
 
 Without Cordis (an acrylblends app):
 
@@ -11,10 +11,6 @@ import { openDb } from 'acryl-db-postgres/open'
 
 const { db, close } = await openDb({ url: process.env.DATABASE_URL!, migrations: new URL('./migrations/', import.meta.url) })
 ```
-
-acrylblends ships this entry as `acrylblends/db/postgres`, with `pg` as an optional peer dependency: an app that uses it runs
-`npm install pg`. `pg` loads when `openDb` runs, so without it `openDb` rejects with "acrylblends/db/postgres needs the pg package: npm
-install pg".
 
 As a Cordis row, `url` defaults to the `DATABASE_URL` environment variable, and relative `migrations` resolve from the app:
 

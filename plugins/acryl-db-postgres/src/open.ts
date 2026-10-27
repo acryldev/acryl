@@ -25,13 +25,12 @@ export interface OpenDb {
 
 /**
  * Connect to and migrate a Postgres database. Foreign keys are always enforced by Postgres.
- * @throws when `pg` is not installed (acrylblends lists it as an optional peer dependency), the migration files are misnamed or
- *   misnumbered, the server cannot be reached, a migration fails (the connection is closed, and the schema unchanged: Postgres rolls DDL
- *   back with the transaction), or the database's schema is newer than the migrations.
+ * @throws when the migration files are misnamed or misnumbered, the server cannot be reached, a migration fails (the connection is closed,
+ *   and the schema unchanged: Postgres rolls DDL back with the transaction), or the database's schema is newer than the migrations.
  */
 export async function openDb(options: OpenDbOptions): Promise<OpenDb> {
   const migrations = options.migrations === undefined ? [] : await readMigrationFiles(options.migrations)
-  const database = await PostgresDatabase.create({ url: options.url })
+  const database = new PostgresDatabase({ url: options.url })
   try {
     await applyMigrations(database, migrations, { table: MIGRATIONS_TABLE })
   } catch (error) {

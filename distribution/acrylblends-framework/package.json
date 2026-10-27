@@ -432,10 +432,6 @@
       "types": "./lib/db/sqlite.d.ts",
       "default": "./lib/db/sqlite.js"
     },
-    "./db/postgres": {
-      "types": "./lib/db/postgres.d.ts",
-      "default": "./lib/db/postgres.js"
-    },
     "./kv": {
       "types": "./lib/kv.d.ts",
       "default": "./lib/kv.js"
@@ -460,19 +456,10 @@
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
-  "peerDependencies": {
-    "pg": "^8.23.1"
-  },
-  "peerDependenciesMeta": {
-    "pg": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
     "acryl-router": "workspace:*",
-    "pg": "8.23.1",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"
   }
