@@ -1,50 +1,23 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
-import type { CordisPlaneSnapshot } from '../../src/architecture/contract.ts'
-import {
-  handlePluginArchitectureSnapshotRequest,
-  type PluginArchitectureRouteController,
-} from '../../src/architecture/route.ts'
+import { PLUGIN_ARCHITECTURE_PATH, type CordisPlaneSnapshot } from '../../src/architecture/contract.ts'
+import { architectureRoutes, type PluginArchitectureRouteController } from '../../src/architecture/route.ts'
+import { call } from '../call.ts'
 
-const ORIGIN = 'http://127.0.0.1:43120'
 const SNAPSHOT: CordisPlaneSnapshot = { plane: 'host', fibers: [], services: [] }
 
-function request(method: string, origin = ORIGIN): IncomingMessage {
-  const req = Readable.from([]) as IncomingMessage
-  req.method = method
-  req.headers = { host: '127.0.0.1:43120', origin, 'sec-fetch-site': 'same-origin' }
-  Object.defineProperty(req, 'socket', { configurable: true, value: { remoteAddress: '127.0.0.1' } })
-  return req
-}
-
-function response(): ServerResponse & { body: string } {
-  const res = {
-    body: '',
-    statusCode: 200,
-    setHeader: vi.fn(),
-    end: vi.fn((body?: string) => { res.body = body ?? '' }),
-  }
-  return res as unknown as ServerResponse & typeof res
-}
-
 describe('Cordis architecture private route', () => {
-  it('serves only same-origin loopback GET requests', async () => {
-    const controller: PluginArchitectureRouteController = { snapshot: () => SNAPSHOT }
-    const ok = response()
-    await handlePluginArchitectureSnapshotRequest(request('GET'), ok, ORIGIN, controller)
-    expect(ok.statusCode).toBe(200)
-    expect(JSON.parse(ok.body)).toEqual(SNAPSHOT)
+  it('serves only the own page, and only GET', async () => {
+    const app = architectureRoutes({ snapshot: () => SNAPSHOT })
+    const ok = await call(app, PLUGIN_ARCHITECTURE_PATH)
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toEqual(SNAPSHOT)
+    expect(ok.headers.get('cache-control')).toBe('no-store')
 
-    const foreign = response()
-    await handlePluginArchitectureSnapshotRequest(
-      request('GET', 'http://evil.example'), foreign, ORIGIN, controller,
-    )
-    expect(foreign.statusCode).toBe(403)
-
-    const method = response()
-    await handlePluginArchitectureSnapshotRequest(request('POST'), method, ORIGIN, controller)
-    expect(method.statusCode).toBe(405)
+    expect((await call(app, PLUGIN_ARCHITECTURE_PATH, { headers: { origin: 'http://evil.example', 'sec-fetch-site': 'cross-site' } })).status).toBe(403)
+    expect((await call(app, PLUGIN_ARCHITECTURE_PATH, { remoteAddress: '10.0.0.2' })).status).toBe(403)
+    const method = await call(app, PLUGIN_ARCHITECTURE_PATH, { method: 'POST' })
+    expect(method.status).toBe(405)
+    expect(method.headers.get('allow')).toBe('GET, HEAD')
   })
 
   it('contains projection failures and reports them to the Host logger', async () => {
@@ -52,10 +25,9 @@ describe('Cordis architecture private route', () => {
     const controller: PluginArchitectureRouteController = {
       snapshot: () => { throw new Error('/private/path') },
     }
-    const res = response()
-    await handlePluginArchitectureSnapshotRequest(request('GET'), res, ORIGIN, controller, report)
-    expect(res.statusCode).toBe(500)
-    expect(res.body).not.toContain('/private/path')
+    const res = await call(architectureRoutes(controller, report), PLUGIN_ARCHITECTURE_PATH)
+    expect(res.status).toBe(500)
+    expect(await res.text()).not.toContain('/private/path')
     expect(report).toHaveBeenCalledWith('read Cordis architecture', expect.any(Error))
   })
 })

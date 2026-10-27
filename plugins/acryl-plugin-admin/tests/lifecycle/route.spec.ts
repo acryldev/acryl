@@ -1,17 +1,16 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
-import type { PluginLifecycleReceipt, PluginLifecycleSnapshot } from '../../src/lifecycle/contract.ts'
 import { PluginLifecycleError } from 'acryl-control'
 import {
-  handlePluginLifecycleDisableRequest,
-  handlePluginLifecycleEnableRequest,
-  handlePluginLifecycleReloadRequest,
-  handlePluginLifecycleSnapshotRequest,
-  type PluginLifecycleRouteController,
-} from '../../src/lifecycle/route.ts'
+  PLUGIN_LIFECYCLE_DISABLE_PATH,
+  PLUGIN_LIFECYCLE_ENABLE_PATH,
+  PLUGIN_LIFECYCLE_PATH,
+  PLUGIN_LIFECYCLE_RELOAD_PATH,
+  type PluginLifecycleReceipt,
+  type PluginLifecycleSnapshot,
+} from '../../src/lifecycle/contract.ts'
+import { lifecycleRoutes, type PluginLifecycleRouteController } from '../../src/lifecycle/route.ts'
+import { call, post } from '../call.ts'
 
-const ORIGIN = 'http://127.0.0.1:43120'
 const SNAPSHOT: PluginLifecycleSnapshot = { entries: [], blend: null }
 const RECEIPT: PluginLifecycleReceipt = {
   accepted: true,
@@ -20,6 +19,7 @@ const RECEIPT: PluginLifecycleReceipt = {
   rendererReloadRequired: true,
   snapshot: SNAPSHOT,
 }
+const ENTRY = { entryId: 'include:acryl-development-canvas' }
 
 function controller(): PluginLifecycleRouteController & {
   snapshot: ReturnType<typeof vi.fn>
@@ -36,103 +36,62 @@ function controller(): PluginLifecycleRouteController & {
   }
 }
 
-function request(
-  method: string,
-  value?: unknown,
-  overrides: { origin?: string; remoteAddress?: string; contentType?: string } = {},
-): IncomingMessage {
-  const body = value === undefined ? undefined : JSON.stringify(value)
-  const req = Readable.from(body === undefined ? [] : [body]) as IncomingMessage
-  req.method = method
-  req.headers = {
-    host: '127.0.0.1:43120',
-    origin: overrides.origin ?? ORIGIN,
-    'sec-fetch-site': 'same-origin',
-    ...(body === undefined ? {} : {
-      'content-type': overrides.contentType ?? 'application/json',
-      'content-length': String(Buffer.byteLength(body)),
-    }),
-  }
-  Object.defineProperty(req, 'socket', {
-    configurable: true,
-    value: { remoteAddress: overrides.remoteAddress ?? '127.0.0.1' },
-  })
-  return req
-}
-
-function response(): ServerResponse & { body: string } {
-  const res = {
-    body: '',
-    statusCode: 200,
-    setHeader: vi.fn(),
-    end: vi.fn((body?: string) => { res.body = body ?? '' }),
-  }
-  return res as unknown as ServerResponse & typeof res
-}
-
 describe('plugin lifecycle private routes', () => {
-  it('serves the snapshot only to same-origin loopback GET', async () => {
-    const control = controller()
-    const ok = response()
-    await handlePluginLifecycleSnapshotRequest(request('GET'), ok, ORIGIN, control)
-    expect(ok.statusCode).toBe(200)
-    expect(JSON.parse(ok.body)).toEqual(SNAPSHOT)
-
-    const forbidden = response()
-    await handlePluginLifecycleSnapshotRequest(
-      request('GET', undefined, { origin: 'http://evil.example' }),
-      forbidden,
-      ORIGIN,
-      control,
-    )
-    expect(forbidden.statusCode).toBe(403)
+  it('serves the snapshot only to the own page', async () => {
+    const app = lifecycleRoutes(controller())
+    const ok = await call(app, PLUGIN_LIFECYCLE_PATH)
+    expect(ok.status).toBe(200)
+    expect(await ok.json()).toEqual(SNAPSHOT)
+    expect((await call(app, PLUGIN_LIFECYCLE_PATH, { headers: { origin: 'http://evil.example', 'sec-fetch-site': 'cross-site' } })).status).toBe(403)
   })
 
-  it.each([
-    ['enable', handlePluginLifecycleEnableRequest, { entryId: 'include:acryl-development-canvas' }],
-    ['disable', handlePluginLifecycleDisableRequest, { entryId: 'include:acryl-development-canvas' }],
-    ['reload', handlePluginLifecycleReloadRequest, { entryId: 'include:acryl-development-canvas' }],
-  ] as const)('answers a successful %s with the receipt and does not restart anything itself', async (_name, handler, body) => {
+  it('answers enable, disable and reload with the receipt, and does not restart anything itself', async () => {
     const control = controller()
-    const res = response()
-
-    await handler(request('POST', body), res, ORIGIN, control)
-
-    expect(res.statusCode).toBe(200)
-    expect(res.end).toHaveBeenCalledOnce()
+    const app = lifecycleRoutes(control)
+    const enabled = await post(app, PLUGIN_LIFECYCLE_ENABLE_PATH, ENTRY)
+    expect(enabled.status).toBe(200)
+    expect(await enabled.json()).toMatchObject({ action: 'enable' })
+    expect(control.setEnabled).toHaveBeenLastCalledWith(ENTRY.entryId, true)
+    expect(await (await post(app, PLUGIN_LIFECYCLE_DISABLE_PATH, ENTRY)).json()).toMatchObject({ action: 'disable' })
+    expect(control.setEnabled).toHaveBeenLastCalledWith(ENTRY.entryId, false)
+    expect((await post(app, PLUGIN_LIFECYCLE_RELOAD_PATH, ENTRY)).status).toBe(200)
+    expect(control.reload).toHaveBeenLastCalledWith(ENTRY.entryId)
+    // An empty body reloads every mounted managed entry.
+    expect((await post(app, PLUGIN_LIFECYCLE_RELOAD_PATH, {})).status).toBe(200)
+    expect(control.reload).toHaveBeenLastCalledWith(undefined)
   })
 
-  it('rejects malformed, foreign, and unsupported requests before dispatch', async () => {
+  it('rejects malformed, foreign and unsupported requests before dispatch', async () => {
     const control = controller()
-    const malformed = response()
-    await handlePluginLifecycleEnableRequest(request('POST', { entryId: '', extra: true }), malformed, ORIGIN, control)
-    expect(malformed.statusCode).toBe(400)
-
-    const foreign = response()
-    await handlePluginLifecycleReloadRequest(
-      request('POST', {}, { remoteAddress: '10.0.0.2' }),
-      foreign,
-      ORIGIN,
-      control,
-    )
-    expect(foreign.statusCode).toBe(403)
-
-    const method = response()
-    await handlePluginLifecycleReloadRequest(request('GET'), method, ORIGIN, control)
-    expect(method.statusCode).toBe(405)
+    const app = lifecycleRoutes(control)
+    const malformed = await post(app, PLUGIN_LIFECYCLE_ENABLE_PATH, { entryId: '', extra: true })
+    expect(malformed.status).toBe(400)
+    expect(await malformed.json()).toEqual({ error: 'invalid plugin enable request' })
+    expect((await call(app, PLUGIN_LIFECYCLE_RELOAD_PATH, { method: 'POST', body: '{', headers: { 'content-type': 'application/json' } })).status).toBe(400)
+    expect((await call(app, PLUGIN_LIFECYCLE_RELOAD_PATH, { method: 'POST', body: '{}', headers: { 'content-type': 'text/plain' } })).status).toBe(415)
+    expect((await post(app, PLUGIN_LIFECYCLE_RELOAD_PATH, { entryId: 'x'.repeat(20_000) })).status).toBe(413)
+    expect((await post(app, PLUGIN_LIFECYCLE_RELOAD_PATH, {}, { remoteAddress: '10.0.0.2' })).status).toBe(403)
+    // A change must carry the exact Origin; same-origin fetch metadata is enough only for a read.
+    expect((await post(app, PLUGIN_LIFECYCLE_RELOAD_PATH, {}, { headers: { origin: undefined, referer: 'http://127.0.0.1:43120/' } })).status).toBe(403)
+    const method = await call(app, PLUGIN_LIFECYCLE_RELOAD_PATH)
+    expect(method.status).toBe(405)
+    expect(method.headers.get('allow')).toBe('POST')
     expect(control.reload).not.toHaveBeenCalled()
+    expect(control.setEnabled).not.toHaveBeenCalled()
   })
 
   it('maps controller rejection to a conflict without leaking a raw cause', async () => {
     const control = controller()
+    const report = vi.fn()
     control.reload.mockRejectedValueOnce(new PluginLifecycleError(
       'protected-entry',
       'private failure at /Users/example/secret',
     ))
-    const res = response()
-    await handlePluginLifecycleReloadRequest(request('POST', {}), res, ORIGIN, control)
-    expect(res.statusCode).toBe(409)
-    expect(JSON.parse(res.body)).toEqual({ error: 'The selected plugin is a core capability and cannot be toggled.' })
-    expect(res.body).not.toContain('/Users/example')
+    const res = await post(lifecycleRoutes(control, report), PLUGIN_LIFECYCLE_RELOAD_PATH, {})
+    expect(res.status).toBe(409)
+    const body = await res.text()
+    expect(JSON.parse(body)).toEqual({ error: 'The selected plugin is a core capability and cannot be toggled.' })
+    expect(body).not.toContain('/Users/example')
+    expect(report).toHaveBeenCalledWith('reload plugin', expect.any(PluginLifecycleError))
   })
 })

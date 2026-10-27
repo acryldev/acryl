@@ -180,6 +180,7 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     id: 'plugin-admin',
     surfaces: ['desktop', 'web'],
     requiresPackages: ['acryl-plugin-admin'],
+    needsRouter: true,
     loaderPatches: [
       { insert: [{ id: 'acryl-plugin-admin', name: 'acryl-plugin-admin' }] },
     ],
@@ -214,6 +215,7 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     id: 'support',
     surfaces: ['web'],
     requiresPackages: ['acryl-support'],
+    needsRouter: true,
     loaderPatches: [
       { insert: [{ id: 'acryl-support', name: 'acryl-support' }] },
     ],

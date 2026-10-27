@@ -70,7 +70,7 @@ describe('parseBlueprint', () => {
     expect(parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'], rows: ['framework-kit'] }).rows).toEqual(['framework-kit'])
     expect(parseBlueprint({ id: 'acme.door', capabilities: ['agent-control-ui'], rows: ['framework-kit'] }).capabilities).toEqual(['agent-control-ui'])
     const routed = ACRYL_CODING_CAPABILITIES.filter(capability => capability.needsRouter === true).map(capability => capability.id)
-    expect(routed).toEqual(['workspace', 'sign-in', 'agent-control-ui'])
+    expect(routed).toEqual(['workspace', 'plugin-admin', 'sign-in', 'support', 'agent-control-ui'])
     for (const blueprint of builtInCatalog().list()) {
       if (blueprint.capabilities.some(id => routed.includes(id))) expect(blueprint.rows).toContain('framework-kit')
     }

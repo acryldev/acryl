@@ -1,19 +1,18 @@
 /** Strict private loopback routes for plugin lifecycle inspection and mutation. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import type {
-  PluginLifecycleEntryRequest,
-  PluginLifecycleReceipt,
-  PluginLifecycleSnapshot,
-} from './contract.ts'
+import { Acryl } from 'acrylblends'
 import { PluginLifecycleError } from 'acryl-control'
+import { error } from 'acryl-loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
 import {
-  INVALID_BODY,
-  error,
-  finishJson,
-  isSameOriginLoopbackRequest,
-  parseJsonPostBody,
-} from 'acryl-loopback-http'
+  PLUGIN_LIFECYCLE_DISABLE_PATH,
+  PLUGIN_LIFECYCLE_ENABLE_PATH,
+  PLUGIN_LIFECYCLE_PATH,
+  PLUGIN_LIFECYCLE_RELOAD_PATH,
+  type PluginLifecycleEntryRequest,
+  type PluginLifecycleReceipt,
+  type PluginLifecycleSnapshot,
+} from './contract.ts'
 
 const MAX_ENTRY_ID_LENGTH = 512
 
@@ -52,106 +51,39 @@ function parseReloadRequest(value: unknown): PluginLifecycleEntryRequest | undef
   return parseEntryRequest(value)
 }
 
-/** Serve a current Host and Client-graph lifecycle snapshot. */
-export async function handlePluginLifecycleSnapshotRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: PluginLifecycleRouteController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'GET') {
-    return finishJson(res, 405, error('method not allowed'), 'GET')
-  }
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  try {
-    finishJson(res, 200, controller.snapshot())
-  } catch (cause) {
-    reportError('read plugin lifecycle', cause)
-    finishJson(res, 500, error('plugin lifecycle unavailable'))
-  }
-}
+/**
+ * The lifecycle snapshot and its three changes as one app, under the shared private-route rules: a read only from the app's own page,
+ * a change only with the exact `Origin` and a JSON body (415 otherwise) of at most 16 KiB (413), and 405 with `Allow` for another
+ * method. A malformed or invalid body is 400; a change the lifecycle refuses is reported and answered 409 with a fixed public reason.
+ */
+export function lifecycleRoutes(controller: PluginLifecycleRouteController, report: ReportError = () => {}): Acryl {
+  const app = new Acryl()
+  app.get(PLUGIN_LIFECYCLE_PATH, ownPage, (c) => {
+    try {
+      return c.json(controller.snapshot())
+    } catch (cause) {
+      report('read plugin lifecycle', cause)
+      return c.json(error('plugin lifecycle unavailable'), 500)
+    }
+  })
 
-async function entryAction(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: PluginLifecycleRouteController,
-  action: 'enable' | 'disable',
-  reportError: (operation: string, cause: unknown) => void,
-): Promise<void> {
-  if (req.method !== 'POST') {
-    return finishJson(res, 405, error('method not allowed'), 'POST')
+  const change = <T>(path: string, parse: (value: unknown) => T | undefined, run: (request: T) => Promise<PluginLifecycleReceipt>, operation: string, invalid: string): void => {
+    app.post(path, ownPage, jsonContent, jsonBody(), async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return c.json(error('invalid JSON request'), 400)
+      const request = parse(value)
+      if (request === undefined) return c.json(error(invalid), 400)
+      try {
+        return c.json(await run(request))
+      } catch (cause) {
+        report(operation, cause)
+        return c.json(error(publicLifecycleError(cause)), 409)
+      }
+    })
   }
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parseJsonPostBody(req, res)
-  if (value === INVALID_BODY) return
-  const request = parseEntryRequest(value)
-  if (request === undefined) {
-    return finishJson(res, 400, error(`invalid plugin ${action} request`))
-  }
-  let receipt: PluginLifecycleReceipt
-  try {
-    receipt = await controller.setEnabled(request.entryId, action === 'enable')
-  } catch (cause) {
-    reportError(`${action} plugin`, cause)
-    finishJson(res, 409, error(publicLifecycleError(cause)))
-    return
-  }
-  finishJson(res, 200, receipt)
-}
+  change(PLUGIN_LIFECYCLE_ENABLE_PATH, parseEntryRequest, request => controller.setEnabled(request.entryId, true), 'enable plugin', 'invalid plugin enable request')
+  change(PLUGIN_LIFECYCLE_DISABLE_PATH, parseEntryRequest, request => controller.setEnabled(request.entryId, false), 'disable plugin', 'invalid plugin disable request')
+  change(PLUGIN_LIFECYCLE_RELOAD_PATH, parseReloadRequest, request => controller.reload(request?.entryId), 'reload plugin', 'invalid plugin reload request')
 
-export function handlePluginLifecycleEnableRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: PluginLifecycleRouteController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  return entryAction(req, res, expectedOrigin, controller, 'enable', reportError)
-}
-
-export function handlePluginLifecycleDisableRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: PluginLifecycleRouteController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  return entryAction(req, res, expectedOrigin, controller, 'disable', reportError)
-}
-
-/** Reload one managed entry or every mounted managed entry. */
-export async function handlePluginLifecycleReloadRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: PluginLifecycleRouteController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') {
-    return finishJson(res, 405, error('method not allowed'), 'POST')
-  }
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parseJsonPostBody(req, res)
-  if (value === INVALID_BODY) return
-  const request = parseReloadRequest(value)
-  if (request === undefined) {
-    return finishJson(res, 400, error('invalid plugin reload request'))
-  }
-  let receipt: PluginLifecycleReceipt
-  try {
-    receipt = await controller.reload(request?.entryId)
-  } catch (cause) {
-    reportError('reload plugin', cause)
-    finishJson(res, 409, error(publicLifecycleError(cause)))
-    return
-  }
-  finishJson(res, 200, receipt)
+  return privateApi(PLUGIN_LIFECYCLE_PATH, app)
 }

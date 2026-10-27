@@ -1,34 +1,28 @@
 /** Strict private loopback route for the native Host Cordis architecture snapshot. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import { Acryl } from 'acrylblends'
+import { error } from 'acryl-loopback-http'
+import { ownPage, privateApi, type ReportError } from 'acryl-loopback-http/router'
 import type { CordisPlaneSnapshot } from './contract.ts'
-import {
-  error,
-  finishJson,
-  isSameOriginLoopbackRequest,
-} from 'acryl-loopback-http'
+import { PLUGIN_ARCHITECTURE_PATH } from './contract.ts'
 
 export interface PluginArchitectureRouteController {
   snapshot(): CordisPlaneSnapshot
 }
 
-export async function handlePluginArchitectureSnapshotRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: PluginArchitectureRouteController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'GET') {
-    return finishJson(res, 405, error('method not allowed'), 'GET')
-  }
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  try {
-    finishJson(res, 200, controller.snapshot())
-  } catch (cause) {
-    reportError('read Cordis architecture', cause)
-    finishJson(res, 500, error('Cordis architecture unavailable'))
-  }
+/**
+ * The architecture snapshot as one app, under the shared private-route rules: a read only from the app's own page, 405 with `Allow`
+ * for another method, and a projection failure reported and answered 500 without its cause.
+ */
+export function architectureRoutes(controller: PluginArchitectureRouteController, report: ReportError = () => {}): Acryl {
+  const app = new Acryl()
+  app.get(PLUGIN_ARCHITECTURE_PATH, ownPage, (c) => {
+    try {
+      return c.json(controller.snapshot())
+    } catch (cause) {
+      report('read Cordis architecture', cause)
+      return c.json(error('Cordis architecture unavailable'), 500)
+    }
+  })
+  return privateApi(PLUGIN_ARCHITECTURE_PATH, app)
 }

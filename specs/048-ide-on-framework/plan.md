@@ -253,3 +253,38 @@ Cordis mini-design:
    a start pending at disposal. The existing PTY, agent and shared-context tests run against the asynchronous API.
 
 Measured: webServer registration call sites 8 -> 8 and DSH import lines 135 -> 135 (this slice moves no route).
+
+### Slice 6: `acryl-plugin-admin` and `acryl-support` (T006)
+
+The routes behind Settings > Plugins > Lifecycle and Architecture (Web and Desktop), and Web's Settings > Support > Export diagnostics.
+
+Cordis mini-design:
+
+1. Capability and boundary: unchanged. `acryl-plugin-admin` owns the lifecycle and architecture projections, `acryl-support` the Web
+   file log and the diagnostics archive; only their transport moves. Each route file now exports one App: `architectureRoutes(controller,
+   report)`, `lifecycleRoutes(controller, report)` and `supportRoutes(build, report)`.
+2. Provides and consumes: both replace the `acrylWeb` inject with hard `router` and `routerHttp` (the origin no longer comes from its
+   port: the own-page rule checks the request against the socket's local port). The lifecycle child injects `router` and
+   `acrPluginLifecycle`, the agent-tools child is unchanged, and `acryl-support` keeps `appInstance`. Provides nothing new.
+3. Effects and disposal: `acryl-plugin-admin` mounts `/api/acryl-plugin-admin` once in its root fiber and routes the architecture App
+   there; the lifecycle child routes its App into the same router, so it leaves with `acrPluginLifecycle` and the four paths answer 404,
+   as before, while the architecture route stays. `acryl-support` keeps its one effect for the log sink (closed on unload) and routes and
+   mounts `/api/acryl-support` outside it, owned by the fiber.
+4. Configuration and composition: row ids `acryl-plugin-admin` and `acryl-support` unchanged. The `plugin-admin` and `support`
+   capabilities now declare `needsRouter`; the only built-in Blueprint with either, `acryl.ide`, has the `framework-kit` row, and
+   Desktop composes the router rows itself (slice 4).
+5. Events and durability: none changed.
+6. Verification: route tests call each App as the adapter does; plugin tests on real Cordis with the real router and router-http over
+   a loopback socket: one prefix mount and no exact route, PENDING without a router, the lifecycle routes present only while the
+   lifecycle service is (architecture kept), the support download over the socket with the log folder in the engine home, and three
+   reloads with one mount each.
+
+Checks kept: reads only from the own page (exact `Origin`, or same-origin fetch metadata and `Referer`, which is what the diagnostics
+download, a navigation, sends), changes only with the exact `Origin`, loopback peer and `Host`; 400 for an invalid lifecycle body, 409
+with the fixed public reason for a refused change, 500 without the cause for a failed projection or archive, 429 while an archive is
+being built, the archive's attachment headers. Answers that changed, as in slice 5: a refusal's body is the own-page rule's text instead
+of `forbidden` (still 403); the reads also answer HEAD and list it in `Allow`; a lifecycle change now gets 415, 413 and 400 from the
+shared middleware with the same texts (`parseJsonPostBody` before).
+
+Measured: webServer registration call sites 8 -> 5 (`acryl-plugin-admin` 2 -> 0, a loop over four routes plus one; `acryl-support`
+1 -> 0); DSH import lines 135 -> 135.

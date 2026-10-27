@@ -2,7 +2,7 @@
  * Cordis Host plugin: file logging and the diagnostics download for the Web surface.
  *
  * Web had no persistent logs. This plugin attaches the shared file sink to the Cordis logger for its own
- * lifetime (one effect, disposed with the plugin) and serves the shared support archive. Desktop keeps its
+ * lifetime (one effect, disposed with the plugin) and serves the shared support archive on the framework's router. Desktop keeps its
  * own richer export behind the tray; both use the same masking, sink and archive builder from
  * `acryl-diagnostics`.
  */
@@ -11,9 +11,11 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
+import type {} from 'acrylblends/cordis/router'
+import type {} from 'acrylblends/cordis/router-http'
 import { buildDiagnosticsArchive, FileExporter, LogFileSink } from 'acryl-diagnostics'
-import { SUPPORT_DIAGNOSTICS_PATH } from './contract.ts'
-import { createDiagnosticsRequestHandler } from './route.ts'
+import { SUPPORT_API_PREFIX } from './contract.ts'
+import { supportRoutes } from './route.ts'
 
 export const name = 'acryl-support'
 /**
@@ -31,12 +33,11 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const inject = ['acrylWeb', 'appInstance']
+export const inject = ['router', 'routerHttp', 'appInstance']
 
 const pluginVersion = (createRequire(import.meta.url)('../package.json') as { version: string }).version
 
 export function apply(ctx: Context): void {
-  const origin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`acryl-support: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
@@ -55,21 +56,17 @@ export function apply(ctx: Context): void {
       // Logging is best effort: the app must run without it.
       report('start file logging', cause)
     }
-    const handle = createDiagnosticsRequestHandler(() => buildDiagnosticsArchive({
-      logsDir,
-      surface: 'web',
-      appVersion: `acryl-support ${pluginVersion}`,
-    }))
-    const release = ctx.acrylWeb.register({
-      kind: 'exact',
-      path: SUPPORT_DIAGNOSTICS_PATH,
-      handler: (req, res) => handle(req, res, origin, report),
-    })
     return () => {
-      release()
       sink?.close()
     }
-  }, 'acryl-support: file logging and the diagnostics route')
+  }, 'acryl-support: file logging')
+
+  ctx.router.route('/', supportRoutes(() => buildDiagnosticsArchive({
+    logsDir,
+    surface: 'web',
+    appVersion: `acryl-support ${pluginVersion}`,
+  }), report))
+  ctx.routerHttp.mount(SUPPORT_API_PREFIX)
 }
 
 export { SUPPORT_DIAGNOSTICS_PATH } from './contract.ts'

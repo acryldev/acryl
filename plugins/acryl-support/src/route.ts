@@ -1,10 +1,10 @@
-/** Same-origin handler for the diagnostics download. */
+/** Same-origin route for the diagnostics download. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, isSameOriginLoopbackRequest } from 'acryl-loopback-http'
+import { Acryl } from 'acrylblends'
+import { error } from 'acryl-loopback-http'
+import { ownPage, privateApi, type ReportError } from 'acryl-loopback-http/router'
 import type { DiagnosticsArchive } from 'acryl-diagnostics'
-
-type ReportError = (operation: string, cause: unknown) => void
+import { SUPPORT_API_PREFIX, SUPPORT_DIAGNOSTICS_PATH } from './contract.ts'
 
 /** A file name that cannot break out of the header: letters, digits, dot, dash, underscore. */
 function safeFileName(name: string): string {
@@ -12,35 +12,29 @@ function safeFileName(name: string): string {
 }
 
 /**
- * GET the archive. The build is synchronous file reading with a size cap; only one runs at a time so a
- * page that asks repeatedly cannot pile up work.
+ * GET the archive, from the app's own page only, under the shared private-route rules (405 with `Allow` for another method). The build
+ * is synchronous file reading with a size cap; only one runs at a time so a page that asks repeatedly cannot pile up work (429).
  */
-export function createDiagnosticsRequestHandler(build: () => DiagnosticsArchive) {
+export function supportRoutes(build: () => DiagnosticsArchive, report: ReportError = () => {}): Acryl {
   let busy = false
-  return async function handleDiagnosticsRequest(
-    req: IncomingMessage,
-    res: ServerResponse,
-    expectedOrigin: string,
-    reportError: ReportError,
-  ): Promise<void> {
-    if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
-    if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) return finishJson(res, 403, error('forbidden'))
-    if (busy) return finishJson(res, 429, error('a diagnostics export is already running'))
+  const app = new Acryl()
+  app.get(SUPPORT_DIAGNOSTICS_PATH, ownPage, (c) => {
+    if (busy) return c.json(error('a diagnostics export is already running'), 429)
     busy = true
     try {
       const archive = build()
-      res.statusCode = 200
-      res.setHeader('cache-control', 'no-store')
-      res.setHeader('content-type', 'application/zip')
-      res.setHeader('content-length', String(archive.zip.byteLength))
-      res.setHeader('content-disposition', `attachment; filename="${safeFileName(archive.fileName)}"`)
-      res.setHeader('x-content-type-options', 'nosniff')
-      res.end(archive.zip)
+      // A copy into a plain ArrayBuffer, the body type a Response takes (a Buffer may sit on shared memory); the archive is size-capped.
+      return c.body(new Uint8Array(archive.zip), 200, {
+        'content-type': 'application/zip',
+        'content-length': String(archive.zip.byteLength),
+        'content-disposition': `attachment; filename="${safeFileName(archive.fileName)}"`,
+      })
     } catch (cause) {
-      reportError('build diagnostics archive', cause)
-      finishJson(res, 500, error('the diagnostics archive could not be created'))
+      report('build diagnostics archive', cause)
+      return c.json(error('the diagnostics archive could not be created'), 500)
     } finally {
       busy = false
     }
-  }
+  })
+  return privateApi(SUPPORT_API_PREFIX, app)
 }
