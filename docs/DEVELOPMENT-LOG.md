@@ -1,3 +1,38 @@
+## 2026-10-27 - `acryl-door`, the Door of a framework app, and the DSH door on its core (spec 049 slices 9, 10, 12 and 13)
+
+Commits:
+- `b889d399c4a8245ef21f1242c653ac4466c9a6a1`: `acryl-door`, slice 9.
+- `a1f642fa93e08d331a3340642d08700c5c0f5465`: the DSH door on acryl-door's core.
+- `07ce857aea6c2003722cef56ee9a292684b5de03`: tickets T098 and T099 in specs/001-acryl-refactor-improvements-and-tech-debt/tasks.md.
+- `022587ee372a7d45a64b99adec0db3300dd373e2`: `.acryl/bin/acryl`, slice 10.
+- `b05dfa2d698614b8c74ecf2e919ff3c6aa6173c7`: visible text in the snapshot, slice 12.
+- `13e830e775c6f872927eb4ce339cb420412f1ec1`: one verb list, slice 13.
+
+- **The plugin (`plugins/acryl-door`)** is one Cordis plugin and one Loader row, `acryl-door`. It injects `router`, `appInstance` and `nodeServer`.
+  - The page loads `/api/acryl-door/page.js` and keeps an event stream open to the Host. Calls go down the stream and answers come back by POST. A ping is sent every 15 s; 45 s of silence or a closed stream reconnects. A call in flight when the page goes settles as `disconnected`.
+  - The operator is an agent's shell on this machine. It reaches `/api/acryl-door/call` with this run's secret from `<app>/.acryl/door.json`.
+  - The file is 0600 in a 0700 folder. On Windows it keeps the profile's ACL. The folder has its own `.gitignore` of `*`.
+  - Disposal order: the file is removed first, then the routes, then the channel closes.
+- **The DSH door (`acryl-agent-control`)** now runs on acryl-door's channel, driver and audit, imported from `acryl-door/protocol`, `/host` and `/page`.
+  - Its WebSocket and its `ws` dependency are gone. The page channel is SSE down and POST up, guarded by `loopbackOnly({ callers: 'own-page' })`.
+  - Live check in isolated homes:
+    - Web, from headless Chrome, and Desktop, from Electron: a snapshot and a click.
+    - Closing Chrome mid-wait settled as `disconnected` in 0.08 s; reloading Desktop mid-wait in 0.10 s.
+    - A foreign origin, another port and a request with no headers each got 403.
+- **The folder's own command (slice 10):** each run writes `.acryl/bin/acryl` and `acryl.cmd`.
+  - They start the client with the Node that runs the app, with `ELECTRON_RUN_AS_NODE` under Electron, pinned with `--dir <app>`.
+  - The test runs two apps at once with a decoy `acryl` first on PATH. Each folder's command reaches only its own app.
+- **Looking at the app (slice 12):** the snapshot lists the page's visible text as `text` nodes with refs, without repeating what is already a name or a value. The gate test reads `25:00` from a plain `<span>` and then `24:59` after a click. The screenshot verb is a deferred ticket in the plan.
+- **One verb list (slice 13):** `src/host/verbs.ts` is the only list of verbs.
+  - MCP is `POST /api/acryl-door/mcp`, behind the operator's guard. Each verb is one tool.
+  - The built-in chat finds each verb in the app's `tools` registry as `door_<verb>`, registered while both are up.
+  - The gate test lists the verbs from each face of a running app and compares them.
+  - Live check: the official `@modelcontextprotocol/sdk` 1.30 client initialized, listed the nine tools and called `brief`.
+- **A Windows test fix folded into the first commit:** the ACL test failed twice on windows-latest, and the ACL was right both times.
+  - First, icacls prints the file's 8.3 short path (`RUNNER~1`) on the first entry's line.
+  - Then `whoami` resolved to Git for Windows' copy, which prints the bare user name, not `domain\user` as icacls does. The test now calls `%SystemRoot%\System32\whoami.exe`.
+- **Verified:** the full local gate on each commit. All four workflows passed on each exact sha before it landed.
+
 ## 2026-10-27 - `acryl-db-postgres`, the Postgres provider of the `db` port, and `acrylblends/db/postgres` (spec 049 slice 2)
 
 Commits: `57b2e3c0b81cd86fbcab12d2d1d9e513491b5ec0` (the provider), `1c7e42e1477d20934a571327ec70908978792ae0` (the import-closure test in its own file), `b8eb2f0a5329f9e9a39de5f88b4e9b60515a91b3` (the hand run recorded), `66fe50bef9a268716d994578ae9f90ab9c079297` (`acrylblends/db/postgres`, with `pg` as an optional peer), `be8690c18dc3dc846eb6bda17330b6ab6ddcd27b` (one PGlite cluster per test run)
