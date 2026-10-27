@@ -209,10 +209,10 @@ self-knowledge. With both, Claude Code, Codex and pi each built, installed, clic
     a value on the page without changing its markup.
 13. **One verb list** [Fork3] - the same verbs (`brief`, `look`, `act`, `plugin add|remove|reload`) in the CLI, over MCP and in the
     built-in chat. Gate: one test lists the verbs from each and compares them.
-15. **Bring your own tool** [Blends, after 11] - one guide and one worked example: wrap an outside npm tool as a provider of a port,
-    pass the suite, swap it in through the door. Gate: an agent follows the guide alone and swaps the provider in a running app.
 14. **The built-in agent** [Blends] - an app can show its own chat panel whose agent uses the same door (DSH chat or a PTY driver:
     claude, codex, pi), opt-in per app. Gate: from the panel, the agent adds a feature and the page shows it without a restart.
+15. **Bring your own tool** [Blends, after 11] - one guide and one worked example: wrap an outside npm tool as a provider of a port,
+    pass the suite, swap it in through the door. Gate: an agent follows the guide alone and swaps the provider in a running app.
 
 **Part 2 gate (the product test):** in a fresh `create-acrylblends` app, Claude Code, Codex and pi each, headless and started in the
 app folder, build the same feature from the docs alone, check it by clicking through the door, and the feature survives a restart
