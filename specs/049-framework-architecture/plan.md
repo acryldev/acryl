@@ -442,6 +442,7 @@ through `acrylblends` subpaths, the same way an app does.
 | `acryl-router`, `acryl-router-http` | `plugins/` | `plugins/` | the router, the Cordis plugin that serves it |
 | `acryl-node-server` | `plugins/` | `plugins/` | includes client modules and `read-sse` |
 | `acryl-state` | `plugins/` | `plugins/` | |
+| `acryl-inspect` | `plugins/` | `plugins/` | added 2026-10-27 by the coordinator: it depends only on `acryl-router` and Cordis, and `docs/framework` documents it as part of the framework |
 | `acryl-db`, `acryl-db-sqlite` | `plugins/` | `plugins/` | `acryl-db-postgres` does NOT move: it stays an optional plugin in ACRYL |
 | `acryl-kv`, `acryl-kv-json`, `acryl-kv-db` | `plugins/` | `plugins/` | |
 | the door (`acryl-door`, slice 9) and `acryl-loopback-http` | `plugins/` (and where it is today) | `plugins/` | the door uses `acryl-loopback-http`, so it moves with it |
@@ -568,6 +569,7 @@ ACRYL keeps `acryl-control`, `acryl-loopback-http`, `acryl-db-postgres`, `acryl-
 | `acryl-router` (the Cordis plugin) | `acrylblends/cordis/router` | |
 | `acryl-router-http` | `acrylblends/cordis/router-http` | `serve` is used by tests in four packages |
 | `acryl-state` | `acrylblends/cordis/state` | also the `Context` augmentation |
+| `acryl-inspect` | `acrylblends/cordis/inspect` | the framework kit's Blueprint row on Web and Desktop, with an entry in the rename table |
 | `acryl-node-server` (plugin) | `acrylblends/cordis/node-server` | |
 | `acryl-db`, `acryl-db/cordis`, `acryl-db/conformance` | `acrylblends/db`, `acrylblends/cordis/db`, `acrylblends/db/conformance` | **needed by Blends:** `db/conformance` |
 | `acryl-door`, `/protocol`, `/host`, `/page` | `acrylblends/cordis/door`, `acrylblends/door/protocol`, `/door/host`, `/door/page` | **needed by Blends:** the three door subpaths |
@@ -579,7 +581,7 @@ ACRYL plugins installed into a profile take `acrylblends` as a peer dependency. 
 
 **4. Configuration and composition: Loader rows.**
 - The Blueprint rows (`runtime/acryl-harness-runtime/src/blueprint/compose.ts`) and Desktop's Market row (`apps/acryl-desktop/src/plugins/desktop-market.ts`) get `packageName: 'acrylblends'`, and the row's module becomes the subpath.
-- This follows the existing subpath row `acryl-plugin-hub/manager`. By the row-naming rule, each row id becomes its module: `acrylblends/cordis/router`, `.../router-http`, `.../state`, `.../node-server`, `.../door`.
+- This follows the existing subpath row `acryl-plugin-hub/manager`. By the row-naming rule, each row id becomes its module: `acrylblends/cordis/router`, `.../router-http`, `.../state`, `.../inspect`, `.../node-server`, `.../door`.
 - `materializeProfilePackage` links `acrylblends` once.
 - Profiles and apps written by today's ACRYL name the old rows and packages:
   - rows in a profile's own file, through the `existingRowIds` path;
@@ -613,6 +615,7 @@ ACRYL plugins installed into a profile take `acrylblends` as a peer dependency. 
 **Decided by the coordinator, 2026-10-27:**
 - (a) `acryl-loopback-http` stays in ACRYL and is left out of the move.
 - (b) `acrylblends` adds the four subpaths `db/conformance`, `door/protocol`, `door/host` and `door/page`.
+- `acryl-inspect` moves too, as `acrylblends/cordis/inspect` (11 packages).
 - (c) Row ids become their module (`acrylblends/cordis/...`). 0.8.x profiles and apps are read through the rename table. An app plugin that imports `acryl-router` gets an error naming the subpath; there is no silent alias.
 - (d) `check:framework-app` and the two examples stay in ACRYL, as consumers.
 - The order above is approved. Blends' `next` build is due by 2026-10-28 18:00 CET.
