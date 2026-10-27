@@ -1,3 +1,44 @@
+## 2026-10-27 (later) - M6 on the ACRYL side: the IDE consumes the framework from the published `acrylblends` (spec 049 slice 17)
+
+Commits:
+- `219c8a5428788191a99b02da707a795e2404fb72`: an app plugin's required row is mounted once (F).
+- `659f5cc071c682b0b156d57d3c2d1c66809ed882`: the IDE imports `acrylblends` subpaths, commit A.
+- `8392b9acc80679c327e89cf4bb8b49623a7e8a5e`: DeepSeek's product analytics are off on every surface.
+- `245f6bf794cb6c494df0c26a0f48a39dc1e4f603`: ticket T001 in specs/049-framework-architecture/tasks.md, and specs/048-ide-on-framework/tasks.md T011 extended.
+- `d4c8a07b2c76da2af26b952bf789494dcb0b8061`: ACRYL drops its copy of the framework, commit B.
+
+- **F, a duplicate row:** Desktop inserted a row named in an app plugin's `dsh.requiresAcrylPackages` after checking only the profile's own
+  rows, not the rows the Blueprint had just composed. An app plugin requiring the router (as `examples/acryl-todo` does) got two router rows.
+  Desktop now skips the Blueprint's rows too, as Web already did. The test fails without the fix.
+- **A, imports from the published package:** the 11 consuming packages depend on `acrylblends` and import its subpaths (52 files): the
+  core at `acrylblends`, each middleware and helper at its own subpath, the Cordis side at `acrylblends/cordis/...`.
+  - The framework kit's Loader rows name their module (`acrylblends/cordis/router`) as id and name, and the package to link is
+    `acrylblends`.
+  - Old names in a Blends manifest or an app plugin's `dsh.requiresAcrylPackages` are read through one rename table
+    (`RENAMED_MODULES`) and never written. App code that still imports an old name fails with the subpath to use, not a silent alias.
+  - The live install of `acryl-plugin-context` links a required `acrylblends` module and uses it when its row is mounted. Otherwise it
+    refuses with what to do (live activation is spec 049 T001).
+  - CI found that Web's and Desktop's prebuild had been building `acryl-node-server` and `acryl-door` first, which hid build-order
+    dependencies: a clean checkout found neither ("Cannot find module acryl-router"). Neither prebuild builds them now, and the gate
+    checks `acryl-state` before `acryl-router-http`. Since then the gate runs from cleaned `lib/` folders before a push.
+- **DeepSeek's product analytics:** DSH's Web bundle inserts `desktop-product-telemetry` and `product-analytics` for any profile named
+  `desktop`, which Desktop's is, and the Host row reports to DeepSeek's collector.
+  - ACRYL never set its required `serviceVersion`, so the row failed its config at every Desktop start and `product-analytics` sat
+    PENDING. An inherited `DSH_CLIENT_VERSION` would have started reporting.
+  - `mountDshEngine` now disables both rows next to `hmr` (`UPSTREAM_PRODUCT_ANALYTICS_OFF`), at the first mount and in the overlays
+    every live reload rebuilds from. A first attempt in Desktop's profile broke surface parity, because the upstream switch is a
+    JavaScript expression that Web reads as not-true; the engine is the one place every surface passes.
+  - The test mounts a composition with both rows enabled and fails without the change. A live Desktop boot logged no errors.
+- **B, the framework leaves:** the eleven moved packages, `distribution/acrylblends-framework`, `docs/framework` and the checks only they
+  needed are deleted. Every consumer pins `acrylblends` ^0.9.1, the first stable release from the framework's own repository.
+  - The Data workflow runs the two providers that stay (Postgres and PGlite) against the published conformance suite. The port, SQLite and
+    kv are tested by acrylblends' CI.
+  - The docs secrets scan covers ACRYL's examples; acrylblends scans the framework's docs and sources.
+  - Live check, isolated homes: Web's door listed 39 controls and reconnected in 2 s, `/api/inspect/plugins` answered 200; Desktop's door
+    listed 37 controls, reconnected in 2 s, 0 errors.
+  - The rename table, the moved-import message and `check:framework-app` stay: old profiles, old app plugins and the todo example are
+    ACRYL's.
+
 ## 2026-10-27 - the Windows 413 flake in acryl-node-server, and `acryl-db-pglite`, embedded Postgres for the db port (spec 049 slice 2b)
 
 Commits:
