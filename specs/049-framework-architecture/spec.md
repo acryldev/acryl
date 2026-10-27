@@ -249,15 +249,15 @@ is reported at its deadline with the cause and a new target.
 
 Slices 14 (the agent panel), 15 (bring your own tool) and 2b (PGlite) landed alongside M4-M5 without milestones of their own.
 
-### Next milestones (proposed by the coordinator 2026-10-27, not yet confirmed by the owner)
+### Next milestones (proposed by the coordinator 2026-10-27, approved by the owner 2026-10-27 17:10 CET: "please go on on all mistones i approve all")
 
-Beyond spec 049. Targets assume today's pace and start from M6's close.
+Beyond spec 049. Targets assume today's pace. M6 closed 2026-10-27 16:30 CET (d4c8a07b, five green workflows on main).
 
 | # | Milestone | Owner | Gate (measurable) | Relevant because | Target |
 | --- | --- | --- | --- | --- | --- |
 | M7 | The IDE on the framework (spec 048 T003-T010) | Fork3 | `webServer` registrations in production source outside `acryl-router-http` go from 19 to 0, and `scripts/verify-layout.mjs` gates that count; the DSH import ceiling does not rise; Web and Desktop live checks show no user-visible change; all workflows green | the IDE stops depending on DSH's server shape | 2026-10-28 20:00 |
 | M8 | Drivers (spec 046 T028-T029) | Fork3 + Blends | DSH chat as `acryl-driver-dsh` with no DSH import left in the framework; a PTY driver runs `claude`, `codex` and `pi` inside an app folder and each completes one task through the door (the agent panel's headless drivers are the starting point) | DSH becomes one agent among others | 2026-10-29 20:00 |
-| M9 | The hosted workspace on WebBoxes.ai (owner goal of 2026-10-17) | to assign | an app made with `npm create acrylblends` runs on WebBoxes.ai, reachable by URL, with its agent working through the door | the four-week goal | set when M8 closes, after the owner confirms the order |
+| M9 | The hosted workspace on WebBoxes.ai (owner goal of 2026-10-17) | Fork3, after M7 | an app made with `npm create acrylblends` runs on WebBoxes.ai, reachable by URL, with its agent working through the door | the four-week goal | 2026-10-30 20:00 (a push to webboxesai `main` deploys to production; any Coolify or DNS change still asks the owner first) |
 
 ## Open questions for the owner
 
