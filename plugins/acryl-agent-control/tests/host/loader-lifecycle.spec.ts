@@ -12,10 +12,9 @@ import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
 import { afterEach, describe, expect, it } from 'vitest'
-import { WebSocket } from 'ws'
-import type { ChannelToPage } from '../../src/contract.ts'
+import type { ChannelToPage } from 'acryl-door/protocol'
 import { AGENT_CONTROL_API_PREFIX } from '../../src/host/http.ts'
-import { UI_CONTROL_CHANNEL_PATH } from '../../src/host/stream.ts'
+import { UI_CONTROL_CHANNEL_PATH } from '../../src/index.ts'
 import { provideHost, testHost, type TestHost } from './test-host.ts'
 
 type ToolHandle = { execute(args: unknown, ctx: { signal: AbortSignal }): Promise<unknown> }
@@ -32,7 +31,7 @@ afterEach(async () => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-/** A fresh loopback Host for one test; the page channel's WebSocket opens on it. */
+/** A fresh loopback Host for one test; the page channel's event stream opens on it. */
 async function newHost(): Promise<TestHost> {
   const host = await testHost()
   hosts.push(host)
@@ -84,11 +83,34 @@ function entryOf(ctx: Context, entryId: string) {
   return found
 }
 
-const open = (): Promise<WebSocket> => new Promise((resolve, reject) => {
-  const ws = new WebSocket(`ws://127.0.0.1:${String(port)}${UI_CONTROL_CHANNEL_PATH}`, { headers: { origin: `http://127.0.0.1:${String(port)}` } })
-  ws.once('open', () => { resolve(ws) })
-  ws.once('error', reject)
-})
+/** The page's event stream, opened with the headers the Host's own page sends. @returns each call it receives, and its closer. */
+async function openStream(windowId: string): Promise<{ readonly calls: ChannelToPage[]; close(): void }> {
+  const origin = `http://127.0.0.1:${String(port)}`
+  const controller = new AbortController()
+  const response = await fetch(`${origin}${UI_CONTROL_CHANNEL_PATH}?window=${windowId}&focused=1`, {
+    headers: { accept: 'text/event-stream', referer: `${origin}/`, 'sec-fetch-site': 'same-origin' },
+    signal: controller.signal,
+  })
+  if (!response.ok || response.body === null) throw new Error(`the stream was refused with ${String(response.status)}`)
+  const calls: ChannelToPage[] = []
+  void (async () => {
+    const decoder = new TextDecoder()
+    let buffer = ''
+    try {
+      for await (const chunk of response.body as AsyncIterable<Uint8Array>) {
+        buffer += decoder.decode(chunk, { stream: true })
+        for (let end = buffer.indexOf('\n\n'); end !== -1; end = buffer.indexOf('\n\n')) {
+          const lines = buffer.slice(0, end).split('\n')
+          buffer = buffer.slice(end + 2)
+          if (lines.includes('event: call')) calls.push(JSON.parse(lines.find(line => line.startsWith('data: '))?.slice(6) ?? 'null') as ChannelToPage)
+        }
+      }
+    } catch {
+      // Closed by the test or the Host.
+    }
+  })()
+  return { calls, close: () => { controller.abort() } }
+}
 const until = async (check: () => boolean, label: string): Promise<void> => {
   for (let i = 0; i < 300; i += 1) { if (check()) return; await new Promise(resolve => { setTimeout(resolve, 10) }) }
   throw new Error(`timed out waiting for: ${label}`)
@@ -110,8 +132,8 @@ describe('acryl-agent-control through a real Loader', () => {
     await active(ctx, entryId)
 
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    // Every HTTP route behind one prefix mount, no exact routes, and the page channel as its one upgrade.
-    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], exact: [], upgrades: [UI_CONTROL_CHANNEL_PATH] })
+    // Every HTTP route behind one prefix mount, the page channel among them: no exact routes and no upgrade.
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], exact: [], upgrades: [] })
   })
 
   it('stays PENDING without the router even with everything else present, and activates when it appears', async () => {
@@ -126,7 +148,7 @@ describe('acryl-agent-control through a real Loader', () => {
     router()
     await active(ctx, entryId)
     await until(() => entryOf(ctx, entryId).fiber?.state === ACTIVE, 'the plugin to activate')
-    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], upgrades: [UI_CONTROL_CHANNEL_PATH] })
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], upgrades: [] })
   })
 
   it('restarts cleanly when the tools provider is replaced, with no doubled registrations left behind', async () => {
@@ -150,8 +172,8 @@ describe('acryl-agent-control through a real Loader', () => {
     expect(firstTools.counts()).toMatchObject({ registerCalls: 7, releaseCalls: 7, liveNames: [] })
     expect(secondTools.counts().liveNames).toEqual(['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'])
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)
-    // The prefix mount and the upgrade were each released once and registered again once - not accumulated.
-    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], prefixCalls: 2, exactCalls: 0, upgradeCalls: 2, releaseCalls: 2 })
+    // The prefix mount was released once and registered again once - not accumulated.
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], prefixCalls: 2, exactCalls: 0, upgradeCalls: 0, releaseCalls: 1 })
   })
 
   it('settles a call that is still pending when the row is disabled, instead of leaving it hanging', async () => {
@@ -162,14 +184,12 @@ describe('acryl-agent-control through a real Loader', () => {
     ctx.provide('acrylTools' as never, tools as never)
     await active(ctx, entryId)
 
-    const ws = await open()
     // The page connects but never answers: `ui_snapshot`'s call stays pending until the row unloads.
-    let received: ChannelToPage | undefined
-    ws.on('message', (raw) => { received = JSON.parse(raw.toString('utf8')) as ChannelToPage })
-    ws.send(JSON.stringify({ t: 'hello', windowId: 'w1', focused: true }))
+    const page = await openStream('w1')
     const snapshotTool = tools.get('ui_snapshot') as ToolHandle
     const call = snapshotTool.execute({}, { signal: new AbortController().signal })
-    await until(() => received !== undefined, 'the page to receive the call')
+    await until(() => page.calls.length === 1, 'the page to receive the call')
+    expect(page.calls[0]).toMatchObject({ t: 'call', request: { op: 'snapshot' } })
 
     await entryOf(ctx, entryId).update({ disabled: true })
     await ctx.loader.await()
@@ -178,7 +198,7 @@ describe('acryl-agent-control through a real Loader', () => {
     // Loader 1.0.5 keeps a disabled entry's disposed Fiber rather than clearing it.
     const fiber = entryOf(ctx, entryId).fiber
     expect(fiber === undefined || fiber.state === DISPOSED).toBe(true)
-    ws.close()
+    page.close()
   })
 
   it('leaves no growing set of registrations after ten disable/enable cycles', async () => {
@@ -203,7 +223,7 @@ describe('acryl-agent-control through a real Loader', () => {
     // Seven tools registered per mount, released per unmount (10 disables); a live mount is never doubled up.
     expect(toolCounts.registerCalls).toBe(11 * 7)
     expect(toolCounts.releaseCalls).toBe(10 * 7)
-    // One prefix mount and one upgrade per activation, both released on each of the ten unloads; no exact routes ever.
-    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], prefixCalls: 11, exactCalls: 0, upgradeCalls: 11, releaseCalls: 20 })
+    // One prefix mount per activation, released on each of the ten unloads; no exact routes and no upgrade ever.
+    expect(host.counts()).toMatchObject({ prefixes: [AGENT_CONTROL_API_PREFIX], prefixCalls: 11, exactCalls: 0, upgradeCalls: 0, releaseCalls: 10 })
   })
 })

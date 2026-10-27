@@ -1,24 +1,23 @@
 /**
  * Cordis Host plugin: Agent Control tools for the ACRYL window (spec 041), for every surface that has a page.
  *
- * The tools live here, the DOM lives in the page. The page connects over a same-origin WebSocket
- * (`/api/acryl-agent-control/channel`) and the tools send it calls. One effect owns the channel, the tools, the
- * approval policy and the secret; the HTTP routes are one app mounted on the router after it, so an unload ends
- * their requests first and then closes the channel and settles every pending call.
+ * The tools live here, the DOM lives in the page. The page channel is `acryl-door`'s (spec 049 slice 9): the page keeps an event stream
+ * open (`/api/acryl-agent-control/channel`), the tools send it calls down that stream, and the page posts the answers back. This plugin
+ * is the DSH face over the door's core: its tools, approval policy, workers and MCP gateway. One effect owns the channel, the tools, the
+ * approval policy and the secret; the HTTP routes are one app mounted on the router after it, so an unload ends their requests (the
+ * pages' streams among them) first and then closes the channel and settles every pending call.
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
 import type { Acryl } from 'acryl-router'
+import { AuditLog, auditPath, pageChannelRoutes, UiChannel } from 'acryl-door/host'
 import { createApprovalPolicy } from './host/approval.ts'
-import { AuditLog, auditPath } from './host/audit.ts'
 import { auditRoutes } from './host/audit-route.ts'
-import { UiChannel } from './host/channel.ts'
 import { parseConfig } from './host/config.ts'
 import { AGENT_CONTROL_API_PREFIX, privateApi } from './host/http.ts'
 import { onlineCallRoutes } from './host/online-route.ts'
 import { removeOnlineSecret, writeOnlineSecret } from './host/online-secret.ts'
-import { createUiControlStream, UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
 import { RefDirectory, registerUiTools, runOnlineCall } from './host/tools.ts'
 import { MCP_PATH } from './tools-contract.ts'
 import { createToolsGateway } from './host/tools-gateway/gateway.ts'
@@ -67,18 +66,13 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
   const built: { api?: Acryl } = {}
   ctx.effect(() => {
     const channel = new UiChannel()
-    const stream = createUiControlStream(channel, origin)
     const audit = new AuditLog(config.auditLog ?? auditPath(ctx.appInstance.home))
     const refs = new RefDirectory()
     const releases: Array<() => void> = []
     let onlineSecret: string | undefined
     try {
-      // The page channel stays a webServer upgrade until the router carries upgrades (spec 047 T009).
-      releases.push(ctx.acrylWeb.registerUpgrade({
-        path: UI_CONTROL_CHANNEL_PATH,
-        handler: (req, socket, head) => { stream.handleUpgrade(req, socket, head) },
-      }))
-      const routes: Acryl[] = [auditRoutes(audit)]
+      // The Host serves its pages from 127.0.0.1 only, so that is the one hostname the channel accepts.
+      const routes: Acryl[] = [pageChannelRoutes(channel, { prefix: AGENT_CONTROL_API_PREFIX, hostnames: ['127.0.0.1'] }), auditRoutes(audit)]
       if (workers !== undefined) routes.push(workersRoutes(() => onlineSecret, workers, reportError))
       releases.push(registerUiTools(ctx, { channel, audit, refs, approval: config.approval === 'none' ? 'none' : 'asked' }))
       releases.push(ctx.acrylTools.policy(createApprovalPolicy(ctx, refs, config.approval)))
@@ -98,14 +92,12 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
     } catch (cause) {
       for (const release of releases.reverse()) release()
       if (onlineSecret !== undefined) removeOnlineSecret(ctx.appInstance.home)
-      stream.close()
       channel.close()
       throw cause
     }
     return () => {
       for (const release of releases.reverse()) release()
       if (onlineSecret !== undefined) removeOnlineSecret(ctx.appInstance.home)
-      stream.close()
       channel.close()
     }
   }, 'acryl-agent-control: page channel, tools, approval policy and secret')
@@ -115,12 +107,14 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
   ctx.routerHttp.mount(AGENT_CONTROL_API_PREFIX)
 }
 
-export { UI_CONTROL_CHANNEL_PATH } from './host/stream.ts'
+/** The page's event stream; it answers by POST to `${UI_CONTROL_CHANNEL_PATH}/answer`. */
+export const UI_CONTROL_CHANNEL_PATH = `${AGENT_CONTROL_API_PREFIX}/channel`
 export { DEFAULT_EXPOSED_TOOLS, MCP_PATH, TOOLS_PATH, GatewayRequestError, parseGatewayCall, type GatewayCallResponse, type GatewayListResponse, type GatewayTool } from './tools-contract.ts'
 export { WORKERS_PATH, WORKER_PROVIDERS, WorkerRequestError, parseWorkerRequest, type WorkerProvider, type WorkerRequest, type WorkerResponse } from './workers-contract.ts'
 export { UI_CONTROL_AUDIT_PATH } from './host/audit-route.ts'
 export { ONLINE_CALL_PATH, type OnlineCallResponse } from './host/online-route.ts'
 export {
+  UI_ERROR_CODES,
   UI_OPS,
   UiControlError,
   parseUiRequest,
@@ -128,4 +122,4 @@ export {
   type UiOp,
   type UiRequest,
   type UiResult,
-} from './contract.ts'
+} from 'acryl-door/protocol'

@@ -1,7 +1,7 @@
 /** Same-origin route for reading the recent audit entries (the Settings viewer). */
 
 import { Acryl } from 'acryl-router'
-import type { AuditLog } from './audit.ts'
+import type { AuditLog } from 'acryl-door/host'
 import { ownPage } from './http.ts'
 
 export const UI_CONTROL_AUDIT_PATH = '/api/acryl-agent-control/audit'

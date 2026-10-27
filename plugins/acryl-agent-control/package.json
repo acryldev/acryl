@@ -1,7 +1,7 @@
 {
   "name": "acryl-agent-control",
   "version": "0.1.0",
-  "description": "Agent Control (spec 041): a governed, snapshot-and-act interface to ACRYL's own window for the agent, one Cordis plugin for Web and Desktop. Host tools reach the page over a same-origin WebSocket; the in-page driver builds accessibility snapshots with short-lived refs, redacts sensitive fields, refuses protected controls, and shows an \"agent is driving\" indicator with a kill switch",
+  "description": "Agent Control (spec 041): a governed, snapshot-and-act interface to ACRYL's own window for the agent, one Cordis plugin for Web and Desktop. Host tools reach the page over acryl-door's channel (an event stream down, POST up, same origin); the in-page driver builds accessibility snapshots with short-lived refs, redacts sensitive fields, refuses protected controls, and shows an \"agent is driving\" indicator with a kill switch",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -58,9 +58,9 @@
   "dependencies": {
     "@acryl/ui": "workspace:*",
     "acryl-control": "workspace:*",
+    "acryl-door": "workspace:*",
     "acryl-loopback-http": "workspace:*",
-    "acryl-router": "workspace:*",
-    "ws": "8.21.3"
+    "acryl-router": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
@@ -77,7 +77,6 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@types/ws": "8.18.1",
     "acryl-router-http": "workspace:*",
     "acryl-workspace": "workspace:*",
     "jsdom": "29.1.1",

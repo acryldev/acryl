@@ -2,7 +2,7 @@
 // socket, not a faked one - the same convention `plugins/acryl-workspace/tests/agents/route.spec.ts` uses.
 import { request } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { UiControlError, type UiRequest, type UiResult } from '../../src/contract.ts'
+import { UiControlError, type UiRequest, type UiResult } from 'acryl-door/protocol'
 import { ONLINE_CALL_PATH, onlineCallRoutes } from '../../src/host/online-route.ts'
 import { serveApi } from './test-host.ts'
 

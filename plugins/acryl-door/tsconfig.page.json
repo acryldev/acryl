@@ -21,7 +21,9 @@
     "noUnusedParameters": true,
     "verbatimModuleSyntax": true,
     "types": [],
-    "noEmit": true
+    "outDir": "lib",
+    "declaration": true,
+    "declarationDir": "lib/types"
   },
   "include": [
     "src/page/**/*.ts"

@@ -177,7 +177,8 @@ export function parseChannelToPage(text: string): ChannelToPage {
   throw new UiControlError('invalid', 'not a channel call')
 }
 
-const ERROR_CODES: readonly UiErrorCode[] = ['no-window', 'stale-ref', 'unknown-ref', 'sensitive', 'protected', 'not-actionable', 'not-found', 'killed', 'timeout', 'aborted', 'unloaded', 'disconnected', 'invalid']
+/** Every code a {@link UiControlError} can carry, so a code read off the wire is validated, not cast. */
+export const UI_ERROR_CODES: readonly UiErrorCode[] = ['no-window', 'stale-ref', 'unknown-ref', 'sensitive', 'protected', 'not-actionable', 'not-found', 'killed', 'timeout', 'aborted', 'unloaded', 'disconnected', 'invalid']
 
 /** A window id the page chose: short, printable, so it can travel in a query string and a log line. */
 export const WINDOW_ID = /^[A-Za-z0-9-]{1,80}$/u
@@ -187,7 +188,7 @@ export function parseChannelToHost(value: unknown): ChannelToHost | null {
   if (!isRecord(value)) return null
   if (value.t === 'focus' && typeof value.focused === 'boolean') return { t: 'focus', focused: value.focused }
   if (value.t === 'result' && typeof value.id === 'number' && isRecord(value.value)) return { t: 'result', id: value.id, value: value.value as unknown as UiResult }
-  if (value.t === 'error' && typeof value.id === 'number' && typeof value.message === 'string' && ERROR_CODES.includes(value.code as UiErrorCode)) {
+  if (value.t === 'error' && typeof value.id === 'number' && typeof value.message === 'string' && UI_ERROR_CODES.includes(value.code as UiErrorCode)) {
     return { t: 'error', id: value.id, code: value.code as UiErrorCode, message: value.message.slice(0, 500) }
   }
   return null

@@ -29,6 +29,7 @@
     "src/**/*.ts"
   ],
   "exclude": [
+    "src/page/api.ts",
     "src/page/driver/**",
     "src/page/channel.ts",
     "src/page/indicator.ts",

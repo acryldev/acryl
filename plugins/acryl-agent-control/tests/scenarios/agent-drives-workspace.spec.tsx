@@ -23,8 +23,8 @@ import type { ProjectAction, ProjectsControl } from '../../../acryl-workspace/sr
 import { TabStrip } from '../../../acryl-workspace/src/client/tabs/TabStrip.tsx'
 import { TerminalRegistry } from '../../../acryl-workspace/src/client/terminal/terminal-session.ts'
 import { WorkspaceShellState } from '../../../acryl-workspace/src/client/worktrees/shell-state.ts'
-import { UiControlError, type UiActionResult, type UiSnapshot } from '../../src/contract.ts'
-import { UiDriver } from '../../src/client/driver/driver.ts'
+import { UiControlError, type UiActionResult, type UiSnapshot } from 'acryl-door/protocol'
+import { UiDriver } from 'acryl-door/page'
 
 class NoopObserver { observe() {} disconnect() {} unobserve() {} }
 globalThis.ResizeObserver = NoopObserver as unknown as typeof ResizeObserver

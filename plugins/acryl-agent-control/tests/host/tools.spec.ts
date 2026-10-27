@@ -3,10 +3,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { afterAll, describe, expect, it } from 'vitest'
-import type { UiRequest, UiResult } from '../../src/contract.ts'
-import { UiControlError } from '../../src/contract.ts'
-import { AuditLog } from '../../src/host/audit.ts'
-import { UiChannel } from '../../src/host/channel.ts'
+import { AuditLog, UiChannel } from 'acryl-door/host'
+import { UiControlError, type UiRequest, type UiResult } from 'acryl-door/protocol'
 import { MUTATING_TOOL_NAMES, RefDirectory, registerUiTools, TOOL_NAMES } from '../../src/host/tools.ts'
 
 const dir = mkdtempSync(join(tmpdir(), 'acryl-ui-tools-'))
@@ -20,19 +18,18 @@ function setup(respond: (request: UiRequest) => UiResult | UiControlError) {
   const ctx = { acrylTools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => { registered.delete(tool.name); removed += 1 } } } } as unknown as Context
   const channel = new UiChannel()
   const calls: UiRequest[] = []
-  const page = channel.attach({
-    send: (data) => {
+  channel.attach('w1', true, {
+    send: (data: string) => {
       const call = JSON.parse(data) as { id: number; request: UiRequest }
       calls.push(call.request)
       const answer = respond(call.request)
       queueMicrotask(() => {
-        if (answer instanceof UiControlError) page.onMessage({ t: 'error', id: call.id, code: answer.code, message: answer.message })
-        else page.onMessage({ t: 'result', id: call.id, value: answer })
+        if (answer instanceof UiControlError) channel.receive('w1', { t: 'error', id: call.id, code: answer.code, message: answer.message })
+        else channel.receive('w1', { t: 'result', id: call.id, value: answer })
       })
     },
     close() {},
   })
-  page.onMessage({ t: 'hello', windowId: 'w1', focused: true })
   const audit = new AuditLog(join(dir, `${String(Math.random())}.jsonl`))
   const refs = new RefDirectory()
   const dispose = registerUiTools(ctx, { channel, audit, refs, approval: 'asked' })
@@ -100,8 +97,7 @@ describe('Agent Control tools', () => {
     const registered = new Map<string, Registered>()
     const ctx = { acrylTools: { register: (tool: Registered) => { registered.set(tool.name, tool); return () => {} } } } as unknown as Context
     const channel = new UiChannel()
-    const page = channel.attach({ send: (data) => { page.onMessage({ t: 'result', id: (JSON.parse(data) as { id: number }).id, value: { ok: true } }) }, close() {} })
-    page.onMessage({ t: 'hello', windowId: 'w', focused: true })
+    channel.attach('w', true, { send: (data: string) => { channel.receive('w', { t: 'result', id: (JSON.parse(data) as { id: number }).id, value: { ok: true } }) }, close() {} })
     const audit = new AuditLog(join(dir, 'none.jsonl'))
     registerUiTools(ctx, { channel, audit, refs: new RefDirectory(), approval: 'none' })
     await registered.get(TOOL_NAMES.click)!.execute({ ref: '1.1' }, { signal: new AbortController().signal })

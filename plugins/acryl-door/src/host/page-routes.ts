@@ -8,6 +8,7 @@
 
 import { Acryl } from 'acryl-router'
 import { streamSSE } from 'acryl-router/helpers'
+import { loopbackOnly } from 'acryl-router/middleware'
 import { parseChannelToHost, WINDOW_ID } from '../page/protocol.ts'
 import type { UiChannel } from './channel.ts'
 import { error, INVALID_JSON, jsonBody, ownPage, readJson } from './http.ts'
@@ -19,12 +20,15 @@ export interface PageRoutesOptions {
   /** Where the channel lives, e.g. `/api/acryl-door`. */
   readonly prefix: string
   readonly heartbeatMs?: number
+  /** The only hostnames the page may be served from (default: every loopback name), e.g. `['127.0.0.1']` for a Host that serves only that. */
+  readonly hostnames?: readonly string[]
 }
 
 export function pageChannelRoutes(channel: UiChannel, options: PageRoutesOptions): Acryl {
   const heartbeatMs = options.heartbeatMs ?? HEARTBEAT_MS
+  const page = options.hostnames === undefined ? ownPage : loopbackOnly({ callers: 'own-page', hostnames: options.hostnames })
   return new Acryl()
-    .get(`${options.prefix}/channel`, ownPage, (c) => {
+    .get(`${options.prefix}/channel`, page, (c) => {
       const windowId = c.req.query('window')
       if (windowId === undefined || !WINDOW_ID.test(windowId)) return c.json(error('a window id is required'), 400)
       const focused = c.req.query('focused') === '1'
@@ -49,7 +53,7 @@ export function pageChannelRoutes(channel: UiChannel, options: PageRoutesOptions
         }
       })
     })
-    .post(`${options.prefix}/channel/answer`, ownPage, jsonBody, async (c) => {
+    .post(`${options.prefix}/channel/answer`, page, jsonBody, async (c) => {
       const body = await readJson(c)
       if (body === INVALID_JSON || typeof body !== 'object' || body === null) return c.json(error('invalid request body'), 400)
       const { window: windowId, message } = body as { window?: unknown; message?: unknown }

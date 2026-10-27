@@ -1,6 +1,6 @@
 /** Same-origin client for the audit entries. */
 
-import type { AuditEntry } from '../contract.ts'
+import type { AuditEntry } from 'acryl-door/protocol'
 
 export const AUDIT_PATH = '/api/acryl-agent-control/audit'
 

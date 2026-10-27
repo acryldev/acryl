@@ -27,6 +27,18 @@
       "types": "./lib/types/cli/acryl.d.ts",
       "default": "./lib/cli.js"
     },
+    "./host": {
+      "types": "./lib/types/host/api.d.ts",
+      "default": "./lib/host.js"
+    },
+    "./page": {
+      "types": "./lib/types/page/api.d.ts",
+      "default": "./lib/page.js"
+    },
+    "./protocol": {
+      "types": "./lib/types/page/protocol.d.ts",
+      "default": "./lib/protocol.js"
+    },
     "./package.json": "./package.json"
   },
   "dsh": {
@@ -45,7 +57,7 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "scripts": {
-    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.page.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.page.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
     "test": "vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",

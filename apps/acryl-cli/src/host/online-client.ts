@@ -7,6 +7,7 @@
 
 import {
   ONLINE_CALL_PATH,
+  UI_ERROR_CODES,
   UiControlError,
   TOOLS_PATH,
   WORKERS_PATH,
@@ -22,12 +23,6 @@ import {
 import { listRunning, osHomeDirectory, readOnlineSecret, type RunningApp } from 'acryl-harness-runtime'
 
 export class OnlineChannelError extends Error {}
-
-/** The closed set of codes a {@link UiControlError} can carry, so a code read off the wire can be validated rather than cast. */
-const UI_ERROR_CODES: readonly UiErrorCode[] = [
-  'no-window', 'stale-ref', 'unknown-ref', 'sensitive', 'protected',
-  'not-actionable', 'not-found', 'killed', 'timeout', 'aborted', 'unloaded', 'invalid',
-]
 
 /** Validates a wire-provided error code at this trust boundary instead of casting it (spec/CLAUDE.md 10.2). */
 function toUiErrorCode(code: string): UiErrorCode {

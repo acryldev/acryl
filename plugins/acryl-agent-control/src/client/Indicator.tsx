@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useSyncExternalStore } from 'react'
-import type { UiDriver } from './driver/driver.ts'
+import type { UiDriver } from 'acryl-door/page'
 
 export interface IndicatorProps {
   readonly driver: UiDriver

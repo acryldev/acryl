@@ -2277,15 +2277,15 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../../runtime/acryl-control
+      acryl-door:
+        specifier: workspace:*
+        version: link:../acryl-door
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
       acryl-router:
         specifier: workspace:*
         version: link:../acryl-router
-      ws:
-        specifier: 8.21.3
-        version: 8.21.3
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2314,9 +2314,6 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.3.7(@types/react@18.3.31)
-      '@types/ws':
-        specifier: 8.18.1
-        version: 8.18.1
       acryl-router-http:
         specifier: workspace:*
         version: link:../acryl-router-http

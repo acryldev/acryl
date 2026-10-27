@@ -9,18 +9,19 @@
 import type {} from '@acryl/ui/frame'
 import type {} from 'acryl-workspace/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import { PageChannel, UiDriver, UserInputClock } from 'acryl-door/page'
 import { createAuditApi } from './audit-api.ts'
 import { AuditSection } from './AuditSection.tsx'
-import { PageChannel } from './connection.ts'
-import { UiDriver } from './driver/driver.ts'
 import { AgentDrivingIndicator } from './Indicator.tsx'
 import { en, zh, type AgentControlLocaleKey } from './locales.ts'
 import { installIndicatorStyles } from './styles.ts'
-import { UserInputClock } from './user-input.ts'
 import { createWorkersApi } from './worker-tab/workers-api.ts'
 import { workerTabComponent } from './worker-tab/WorkerTab.tsx'
 
 export const AGENT_CONTROL_LOCALE_NAMESPACE = 'acryl.agentControl'
+
+/** Where the Host serves this plugin's routes; the page channel is `<base>/channel`. */
+const CHANNEL_BASE = '/api/acryl-agent-control'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -53,7 +54,7 @@ export function apply(ctx: ClientContext): void {
 
   ctx.effect(() => {
     const detachInput = clock.attach(document)
-    const channel = new PageChannel(driver, { windowId, focused })
+    const channel = new PageChannel(driver, { windowId, focused, base: CHANNEL_BASE })
     const reportFocus = (): void => { channel.reportFocus(focused()) }
     window.addEventListener('focus', reportFocus)
     window.addEventListener('blur', reportFocus)
@@ -90,6 +91,5 @@ export function apply(ctx: ClientContext): void {
   }, AgentDrivingIndicator))
 }
 
-export { UiDriver } from './driver/driver.ts'
+export { PageChannel, UiDriver } from 'acryl-door/page'
 export { AgentDrivingIndicator } from './Indicator.tsx'
-export { PageChannel } from './connection.ts'

@@ -185,24 +185,47 @@ describe('the ACRYL workspace on the Web surface', () => {
       expect(rows.get('acryl-agent-control')?.fiber).toBeDefined()
       const uiTools = host.ctx.tools as unknown as { get(name: string): unknown; execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: Array<{ text?: string }> }> }
       for (const toolName of ['ui_snapshot', 'ui_click', 'ui_type', 'ui_select', 'ui_press', 'ui_scroll', 'ui_wait']) expect(uiTools.get(toolName), toolName).toBeDefined()
-      const { WebSocket: PageSocket } = createRequire(require.resolve('acryl-workspace/package.json'))('ws') as typeof import('ws')
-      const foreignPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-agent-control/channel`, { headers: { origin: 'http://evil.example' } })
-      await new Promise<void>((resolve) => { foreignPage.once('error', () => { resolve() }); foreignPage.once('unexpected-response', () => { resolve() }) })
-      const uiPage = new PageSocket(`${origin.replace('http', 'ws')}/api/acryl-agent-control/channel`, { headers: { ...headers, origin } })
-      uiPage.on('message', (raw) => {
-        const call = JSON.parse(raw.toString('utf8')) as { id: number; request: { op: string } }
-        uiPage.send(JSON.stringify({ t: 'result', id: call.id, value: { generation: 1, title: 'ACRYL', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Add project', depth: 0, states: [] }] } }))
-      })
-      await new Promise<void>((resolve, reject) => { uiPage.once('open', () => { resolve() }); uiPage.once('error', reject) })
-      uiPage.send(JSON.stringify({ t: 'hello', windowId: 'e2e', focused: true }))
-      await new Promise(resolve => { setTimeout(resolve, 200) })
+      // The page channel is an event stream down and POST up (acryl-door's): another site is refused, the app's own page is served.
+      const channel = `${origin}/api/acryl-agent-control/channel`
+      const foreignPage = await fetch(`${channel}?window=evil&focused=1`, { headers: { origin: 'http://evil.example', referer: 'http://evil.example/', 'sec-fetch-site': 'cross-site' } })
+      expect(foreignPage.status).toBe(403)
+      const pageHeaders = { ...headers, referer: `${origin}/` }
+      const stop = new AbortController()
+      const stream = await fetch(`${channel}?window=e2e&focused=1`, { headers: { ...pageHeaders, accept: 'text/event-stream' }, signal: stop.signal })
+      expect(stream.status).toBe(200)
+      expect(stream.headers.get('content-type')).toMatch(/^text\/event-stream/)
+      let ready = (): void => {}
+      const attached = new Promise<void>((resolve) => { ready = resolve })
+      const answered = (async () => {
+        const decoder = new TextDecoder()
+        let buffer = ''
+        try {
+          for await (const chunk of stream.body as unknown as AsyncIterable<Uint8Array>) {
+            buffer += decoder.decode(chunk, { stream: true })
+            for (let end = buffer.indexOf('\n\n'); end !== -1; end = buffer.indexOf('\n\n')) {
+              const lines = buffer.slice(0, end).split('\n')
+              buffer = buffer.slice(end + 2)
+              if (lines.includes('event: ready')) ready()
+              if (!lines.includes('event: call')) continue
+              const call = JSON.parse(lines.find(line => line.startsWith('data: '))?.slice(6) ?? '{}') as { id: number }
+              const value = { generation: 1, title: 'ACRYL', total: 1, nodes: [{ ref: '1.1', role: 'button', name: 'Add project', depth: 0, states: [] }] }
+              const answer = await fetch(`${channel}/answer`, { method: 'POST', headers: { ...pageHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ window: 'e2e', message: { t: 'result', id: call.id, value } }) })
+              expect(answer.status).toBe(204)
+            }
+          }
+        } catch {
+          // The test closed the stream.
+        }
+      })()
+      await attached
       const looked = await uiTools.execute({ callId: 'e2e-1', name: 'ui_snapshot', arguments: {}, signal: new AbortController().signal })
       expect(looked.isError ?? false).toBe(false)
       expect(JSON.stringify(looked)).toContain('Add project')
-      // Approval is per call: with nobody to answer, a click is denied and never reaches the uiPage.
+      // Approval is per call: with nobody to answer, a click is denied and never reaches the page.
       const clicked = await uiTools.execute({ callId: 'e2e-2', name: 'ui_click', arguments: { ref: '1.1' }, signal: new AbortController().signal })
       expect(clicked.isError).toBe(true)
-      uiPage.close()
+      stop.abort()
+      await answered
       const tree = await fetch(`${origin}/api/acryl-workspace/files/tree?path=${encodeURIComponent(repo)}&dir=`, { headers })
       expect(tree.status).toBe(200)
       expect(await tree.json()).toMatchObject({ entries: [{ name: 'a.txt', kind: 'file' }] })
