@@ -31,7 +31,8 @@ is a configuration change, not a code change.
 | | How is it served? | `routerHttp` | `acryl-node-server`; Desktop's loopback Host; in process for tests and the TUI | exists |
 | Data | Where does my app keep its records? | `db` | `acryl-db-sqlite` (one file in the app home) | exists |
 | | My app is tiny; can it skip SQL? | `kv` | `acryl-kv-json` (one JSON file, atomic replace); `acryl-kv-db` over `db` | exists |
-| | My app must use Postgres or Supabase | `db` | `acryl-db-postgres`: an optional plugin, not in the framework package or the templates | exists, optional |
+| | SQLite is not enough, still no server | `db` | `acryl-db-pglite`: embedded Postgres (PGlite, WASM), one folder in the app home; optional plugin | new, optional |
+| | A hosted or custom backend (hosted Postgres, Supabase, a team server for a distributed desktop app) | `db` | `acryl-db-postgres` (a connection URL), or the app's own provider that passes the `db` conformance suite | exists, optional |
 | | How does the UI see changes live? | `state` (observable cells over SSE) | `acryl-state` | exists, in memory |
 | UI, simple | Pages without a build step | JSX on the server, client modules for islands | `acrylblends/jsx`, `clientModules()` | exists |
 | UI, rich | A full client application | React with ACRYL's component library | `acryl-ui` | exists in the IDE, not yet in templates |
@@ -128,7 +129,12 @@ a real app needs it, not a framework layer.
 | --- | --- |
 | Tiny, one person, a few screens | `kv` with `acryl-kv-json` |
 | Normal web or desktop app | `db` with `acryl-db-sqlite` (the template default) |
-| Must use Postgres or Supabase | `db` with the optional `acryl-db-postgres` plugin |
+| SQLite is not enough, but no server | `db` with the optional `acryl-db-pglite` (embedded Postgres) |
+| Hosted Postgres, Supabase, or a custom backend | `db` with the optional `acryl-db-postgres`, or the app's own provider |
+
+The ladder (owner, 2026-10-27): JSON, then SQLite, then PGlite, then a hosted or custom backend. Each step is one provider row; app code
+that uses `db` does not change between SQLite, PGlite and a hosted Postgres. Login and users (for example Supabase Auth) are not part of
+`db`; an app that needs them adds an auth plugin of its own, and the framework adds one only when a real app needs it.
 
 ## Naming
 
@@ -156,6 +162,9 @@ Each slice lands on `main` only when its gate passes. Owners in brackets.
 
 1. **`db` port and SQLite provider** [Fork3] - done, acrylblends 0.7.5.
 2. **Postgres provider** [Fork3] - built and on main as an optional plugin; not in `acrylblends`, not in templates (owner, 2026-10-27).
+2b. **Embedded Postgres** [Fork3, after slice 9] - `acryl-db-pglite`: PGlite with its data folder in the app home, sharing the
+   Postgres dialect code with `acryl-db-postgres` (one package with two openers if that is simpler). Gate: the `db` conformance suite
+   passes unchanged; data survives closing and reopening the folder; it runs in Electron's main process.
 3. **`kv` and the JSON provider** [Blends] - done, acrylblends 0.7.7 (group commit on Windows: main c6e766da).
 4. **Templates on `db`** [Blends] - done, acrylblends 0.7.5.
 5. ~~`durable` port~~ - dropped (owner, 2026-10-27).
