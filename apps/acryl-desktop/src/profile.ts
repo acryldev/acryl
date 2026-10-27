@@ -815,7 +815,10 @@ export function prepareDesktopProfile(
   // The selected Blueprint's ACRYL-owned rows (spec 036): brand, extension pack, prompt shaping, UI library, shortcuts and
   // mount anchors, in mount order. The packages resolve from this package's own dependency closure like the market package above.
   // Desktop's Market keeps its own provider switch, so the Blueprint never composes it here.
-  patches.push(...composeBlueprintRows(blueprint, 'desktop', new Set(rows.keys())).patches)
+  const blueprintPatches = composeBlueprintRows(blueprint, 'desktop', new Set(rows.keys())).patches
+  patches.push(...blueprintPatches)
+  // A row the Blueprint has just composed (the framework kit's router rows, say) is never inserted a second time for an app plugin that requires it.
+  const blueprintRowIds = new Set(blueprintPatches.flatMap(patch => patch.insert ?? []).map(row => row.id))
   // The app's own committed plugins may each need an ACRYL-owned framework package (same mechanism and
   // same reasoning as Web's `resolveWebEngineComposition` - a project grown via `acryl new` has no other way
   // to depend on an unpublished ACRYL-owned package; see that function's own doc comments for the full
@@ -824,7 +827,7 @@ export function prepareDesktopProfile(
   // so this disables the stock `ui-layout` row unconditionally, not only when `mode === 'advanced'`.
   const requiredFrameworkPackages = instanceHome === undefined
     ? []
-    : pluginRequiredFrameworkPackages(instanceHome).filter(name => rows.get(name) === undefined)
+    : pluginRequiredFrameworkPackages(instanceHome).filter(name => rows.get(name) === undefined && !blueprintRowIds.has(name))
   for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageName, pathToFileURL(INSTALL_ANCHOR).href)
   patches.push(...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })))
   if (requiredFrameworkPackages.includes('acryl-app-shell') && mode !== 'advanced') {

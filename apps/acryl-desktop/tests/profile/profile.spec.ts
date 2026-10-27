@@ -333,6 +333,18 @@ describe('desktop profile composition', {
     for (const id of ['acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
   })
 
+  it('mounts a row an app plugin requires once when the Blueprint already composes it', () => {
+    const home = temporaryHome()
+    const appHome = dirname(home)
+    const pluginDir = join(appHome, 'plugins', 'todo')
+    mkdirSync(pluginDir, { recursive: true })
+    writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ name: 'todo', dsh: { requiresAcrylPackages: ['acryl-router', 'acryl-state'] } }))
+    const prepared = prepareDesktopProfile(undefined, home, 'darwin', undefined, undefined, undefined, undefined, undefined, undefined, appHome)
+    const ids = prepared.patches.flatMap(patch => patch.insert ?? []).map(row => row.id)
+    expect(ids.filter(id => id === 'acryl-router')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acryl-state')).toHaveLength(1)
+  })
+
   it('inserts the community Market as one canonical row only after explicit selection', () => {
     const home = temporaryHome()
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', 'desktop', undefined, {
