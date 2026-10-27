@@ -36,6 +36,12 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   `claimInstance`; the Web launcher, Desktop and the npm CLI never announce, so `acryl control list` says "no ACRYL app is running" while
   one runs with its online channel on (reproduced in the T002 live run, which wrote the pointer by hand to reach the door). Each composition
   root should claim and announce its instance with its real port once it listens, and withdraw on exit.
+  Found again 2026-10-27 (spec 049 slice 17, the DSH door live check, AcrylImplementer): every run of `scripts/live-run.mjs` starts the
+  app with an explicit `ACRYL_HOME` (`apps/acryl-web/lib/bin.js`, Desktop's `launch-dev.mjs`), so no isolated live check can reach its
+  app through `acryl control`; the check called `POST /api/acryl-agent-control/online/call` with the secret read from
+  `<home>/agent-control-secret` instead. Done when a live run of Web and of Desktop with `acryl-agent-control`'s `online` on answers
+  `HOME=<run home> acryl control list` with its instance and `acryl control snapshot` and `click` reach the page, the list is empty after
+  the run stops, and the real `~/.acryl-instances` is unchanged.
 
 - [ ] T012 When the DSH engine stops being the plugin host (DSH demoted to one chat driver), remove `ProfilePluginPackages`
   (`runtime/acryl-harness-runtime/src/profile-resolution/`, the 2026-10-25 port of DSH's profile package resolution): its two direct DSH
