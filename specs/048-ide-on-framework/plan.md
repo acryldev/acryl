@@ -348,3 +348,12 @@ DSH's index rendering, not route registration.
 
 Measured: webServer registration call sites 4 -> 3 (the example); what remains is T007's terminal upgrade and the two `engine-web.ts`
 delegate lines T008 removes. DSH import lines 135 -> 135.
+
+### Slice 8: the ratchet (T009)
+
+`scripts/verify-layout.mjs`, part of the headless gate, counts webServer and acrylWeb registration call sites the same way every slice above
+measured them (the same expression over the tracked files of `apps/`, `plugins/` and `runtime/`, without tests, docs, build output and
+scripts) and holds them at `WEB_REGISTRATION_CEILING`, set to 3. Like the DSH import ceiling it fails both ways: above the ceiling it says to
+serve the route on the router and points at `extending/host-route.md`; below it, it asks for the ceiling to be lowered in the same commit,
+so the number in the script is always the measured one. Its summary line now prints the count. Both failures were run once against a probe
+copy with the ceiling at 4 and at 2. What remains at 3 is T007's terminal upgrade and the two `engine-web.ts` delegate lines (T008).

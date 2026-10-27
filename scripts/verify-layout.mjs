@@ -314,6 +314,23 @@ for (const [key, ceiling] of Object.entries(DSH_IMPORT_CEILING)) {
   if (now < ceiling) fail(`direct DSH import lines (${key}) are ${now}, below the ceiling ${ceiling}: lower DSH_IMPORT_CEILING.${key} to ${now} in scripts/verify-layout.mjs`)
 }
 
+// The webServer registration ratchet (spec 048 T009). ACRYL's own HTTP routes are served by the framework's router (`ctx.router.route` plus one
+// `ctx.routerHttp.mount(prefix)` per plugin); every `register` or `registerUpgrade` call on DSH's `webServer` or ACRYL's `acrylWeb` carrier in shipped
+// source is a route the router does not own. What DSH registers on its own `webServer` (its pages and RPC) is DSH's and lives in the submodule, which
+// is not counted. Tests, docs, build output and scripts are not counted either. Like the DSH import ceiling it only moves down, and a lower count must
+// lower it in the same commit. What remains at 3: the workspace terminal's upgrade (spec 048 T007) and the two delegate lines in `engine-web.ts`
+// that hand the server to plugins (T008).
+const WEB_REGISTRATION_CEILING = 3
+const WEB_REGISTRATION = /(acrylWeb|webServer|[^a-zA-Z]web)[?]?[.](register|registerUpgrade)[(]/
+const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/|\.spec\.|\.test\./
+let webRegistrations = 0
+for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime']).split('\n')) {
+  if (file === '' || NOT_SHIPPED.test(file) || !existsSync(resolve(root, file))) continue
+  for (const line of readFileSync(resolve(root, file), 'utf8').split('\n')) if (WEB_REGISTRATION.test(line)) webRegistrations += 1
+}
+if (webRegistrations > WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, above the ceiling ${WEB_REGISTRATION_CEILING}; serve the route on the router instead (ctx.router.route('/', app) and ctx.routerHttp.mount(prefix), see plugins/acryl-plugin-context/docs/extending/host-route.md)`)
+if (webRegistrations < WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, below the ceiling ${WEB_REGISTRATION_CEILING}: lower WEB_REGISTRATION_CEILING to ${webRegistrations} in scripts/verify-layout.mjs`)
+
 // Isolation fails closed (spec 001, T058). A `verify-*` script that spawns a process able to boot an app (a packed or built bin, Electron, a launcher) must
 // either build its environment with `scripts/lib/isolated-run.mjs` or visibly pin a throwaway HOME / ACRYL_HOME / DSH_HOME: the packed-web smoke once booted
 // against the machine's real ~/.acryl because nothing made it say where its home was. A new script that does neither fails here, in the gate that runs everywhere.
@@ -356,4 +373,4 @@ for (const path of testFiles) {
   }
 }
 
-process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam)\n`)
+process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam); webServer registration call sites ${webRegistrations}\n`)
