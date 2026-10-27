@@ -43,6 +43,7 @@ export {
   createWebEngineDefinition,
   pluginRequiredFrameworkPackages,
   materializeProfilePackage,
+  UPSTREAM_PRODUCT_ANALYTICS_OFF,
   type AcrylFrameworkPackages,
   type DshEngineComposition,
 } from './engine-dsh.ts'

@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { ACRYL_CODING_CAPABILITIES, createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
+import { ACRYL_CODING_CAPABILITIES, createAcrylEngineHost, createWebEngineDefinition, UPSTREAM_PRODUCT_ANALYTICS_OFF } from 'acryl-harness-runtime'
 import { describe, expect, it } from 'vitest'
 import { prepareDesktopProfile } from '../src/profile.ts'
 
@@ -70,9 +70,9 @@ async function composeBoth(): Promise<{
   const desktopHome = mkdtempSync(join(tmpdir(), 'acryl-parity-d-'))
   // Telemetry opt-out given explicitly ('' = not opted out): `undefined` would fall back to the runner's
   // DSH_TELEMETRY_DISABLED (CI sets it), and Desktop's opt-out row would read as a parity difference.
-  // The engine host switches `hmr` off for every surface when it mounts a composition (`mountDshEngine`); mirror that so the two sides
-  // compare what is actually mounted.
-  const desktop = summarize(composeEntries([[...prepareDesktopProfile('', desktopHome, 'darwin').patches, { id: 'hmr', disabled: true }]]))
+  // The engine host switches `hmr` and DeepSeek's product analytics off for every surface when it mounts a composition (`mountDshEngine`);
+  // mirror that so the two sides compare what is actually mounted.
+  const desktop = summarize(composeEntries([[...prepareDesktopProfile('', desktopHome, 'darwin').patches, { id: 'hmr', disabled: true }, ...UPSTREAM_PRODUCT_ANALYTICS_OFF]]))
   const webHome = mkdtempSync(join(tmpdir(), 'acryl-parity-w-'))
   const previousHome = process.env.ACRYL_HOME
   process.env.ACRYL_HOME = webHome
