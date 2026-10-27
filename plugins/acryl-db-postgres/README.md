@@ -36,6 +36,9 @@ As a Cordis row, `url` defaults to the `DATABASE_URL` environment variable, and 
 - One connection: the port's contract serializes calls, and the pool reconnects after a dropped connection. With Supabase, use the
   connection pooler's URL or the direct one; statements are unnamed, so the transaction-mode pooler works.
 
+`acryl-db-postgres/dialect` holds the Postgres dialect code: the `?` translation, and the check that a statement got as many values as it
+binds. It imports nothing, so `acryl-db-pglite`, the embedded provider, shares it without loading `pg`.
+
 The tests run against PGlite (in memory) behind its socket server, so they need no Postgres installed but still go through `pg` over the
 network. To run them against a real server, set `ACRYL_DB_POSTGRES_URL`. Each case then uses a schema of its own, dropped afterwards.
 PGlite is a development dependency only.

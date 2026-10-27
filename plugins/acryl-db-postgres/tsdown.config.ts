@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig({
   name: 'acryl-db-postgres',
-  entry: { index: 'src/index.ts', open: 'src/open.ts' },
+  entry: { index: 'src/index.ts', open: 'src/open.ts', dialect: 'src/dialect.ts' },
   outDir: 'lib',
   format: 'esm',
   platform: 'node',
