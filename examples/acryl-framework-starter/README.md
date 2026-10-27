@@ -1,6 +1,6 @@
 # acryl-framework-starter
 
-Copy this folder to start a plugin on the ACRYL Framework (see `docs/framework/`). It has one route, one state cell and a test that needs no socket.
+Copy this folder to start a plugin on the ACRYL Framework (see [the framework docs](https://github.com/acrylblends/acrylblends/tree/main/docs/framework)). It has one route, one state cell and a test that needs no socket.
 
 ```ts
 export const name = 'acryl-framework-starter'

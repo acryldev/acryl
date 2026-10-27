@@ -1,8 +1,8 @@
 /**
  * The embedded Postgres provider of the `db` port (spec 049 slice 2b): PGlite, with its cluster in one folder of the app home, migrated,
  * and provided as `db`. The step between SQLite and a Postgres server: the same Postgres dialect as `acryl-db-postgres` (which this
- * shares its `?` translation with), and no server to run. App plugins declare `inject: ['db']` and import types from `acryl-db` only, so
- * replacing `acryl-db-sqlite` with this row does not touch them. The plugin is a thin wrapper over `openDb` (`acryl-db-pglite/open`), the
+ * shares its `?` translation with), and no server to run. App plugins declare `inject: ['db']` and import types from `acrylblends/db` only, so
+ * replacing `acrylblends/cordis/db-sqlite` with this row does not touch them. The plugin is a thin wrapper over `openDb` (`acryl-db-pglite/open`), the
  * same opening for code without Cordis.
  *
  * Unloading withdraws `db` first, so consumers stop calling, and then closes PGlite once the running calls finish, which writes the

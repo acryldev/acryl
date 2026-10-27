@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-/** The React indicator over the door's driver (the channel, the driver and the input clock are tested in `acryl-door`). */
+/** The React indicator over the door's driver (the channel, the driver and the input clock are tested in `acrylblends`). */
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { UiDriver } from 'acrylblends/door/page'

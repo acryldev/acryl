@@ -1,9 +1,9 @@
 # acryl-db-pglite
 
-The embedded Postgres provider of the [`db` port](../acryl-db/README.md): [PGlite](https://pglite.dev), Postgres compiled to WebAssembly,
+The embedded Postgres provider of the [`db` port](https://github.com/acrylblends/acrylblends/tree/main/plugins/acryl-db/README.md) (`acrylblends/db`): [PGlite](https://pglite.dev), Postgres compiled to WebAssembly,
 in the app's own process, with its database in one folder. It sits between SQLite and a Postgres server. It is the same Postgres as
 [`acryl-db-postgres`](../acryl-db-postgres/README.md), and shares that provider's `?` translation (`acryl-db-postgres/dialect`), but
-needs no server. App code depends on the port only, so moving between `acryl-db-sqlite`, this provider and `acryl-db-postgres` changes
+needs no server. App code depends on the port only, so moving between `acrylblends/cordis/db-sqlite`, this provider and `acryl-db-postgres` changes
 how the database is opened, not the code that uses it. It is an optional plugin, not part of `acrylblends` or its templates (spec 049
 slice 2b).
 
