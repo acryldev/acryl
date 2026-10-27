@@ -25,7 +25,10 @@ provider whose harness flow offers an account sign-in (GitHub Copilot, ...). API
   `/oauth/callback` on its own loopback port (listening from the first sign-in, closed with the row), as `webServer` in the
   Loader realm `acryl-account-callback` that only the `deepseek-account` row shares, and provides `acrylAccountSignIn`
   (`AccountSignInPort` in `acryl-control`), which `/login` uses for "DeepSeek". Composed by the `account-callback` capability.
-- Routes (same-origin, loopback, bounded JSON; no response carries a secret, and a typed answer is handed to the flow and dropped):
+- Routes (`src/route.ts`): one app on the framework's router, mounted under `/api/acryl-sign-in` with `ctx.routerHttp.mount`, under
+  the shared private-route rules of `acryl-loopback-http/router`: only the app's own page on loopback, 405 with `Allow` for another
+  method, a JSON body (415) of at most 16 KiB (413) for a change, a refusal the harness explains 409 with its reason. No response
+  carries a secret, and a typed answer is handed to the flow and dropped:
 
   | Route | Method | Meaning |
   | --- | --- | --- |
@@ -35,4 +38,6 @@ provider whose harness flow offers an account sign-in (GitHub Copilot, ...). API
   | `/api/acryl-sign-in/answer` | POST `{ attemptId, promptId, value }` | answer the question the flow asks |
   | `/api/acryl-sign-in/cancel` | POST `{ attemptId }` | withdraw the conversation |
 
-Composed for Web and Desktop through the `sign-in` capability in `acryl-harness-runtime`'s `coding-capabilities.ts`.
+Composed for Web and Desktop through the `sign-in` capability in `acryl-harness-runtime`'s `coding-capabilities.ts`, which needs
+the router (`needsRouter`): a Blueprint with the capability must carry the `framework-kit` row, and Desktop composes the router
+rows itself.

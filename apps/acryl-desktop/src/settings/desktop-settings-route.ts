@@ -2,8 +2,8 @@
 
 import { Acryl, type Context } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
-import { afterBody, jsonContent } from '../api/http.ts'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { afterBody } from '../api/http.ts'
 import { assertDesktopProfileName } from '../profile/profile-manager.ts'
 import type { DesktopMarketProvider } from '../plugins/desktop-market.ts'
 import type DesktopSettingsController from './desktop-settings-controller.ts'

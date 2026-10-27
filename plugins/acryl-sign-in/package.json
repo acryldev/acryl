@@ -60,7 +60,8 @@
   "dependencies": {
     "@acryl/ui": "workspace:*",
     "acryl-control": "workspace:*",
-    "acryl-loopback-http": "workspace:*"
+    "acryl-loopback-http": "workspace:*",
+    "acrylblends": "^0.9.2"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
@@ -76,6 +77,7 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "acrylblends": "^0.9.2",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

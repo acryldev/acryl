@@ -13,5 +13,6 @@ Two entries, one rule:
   router carries them, spec 048).
 - `acryl-loopback-http/router`: the same rules on the framework's router (`acrylblends`), for routes served through
   `ctx.routerHttp.mount(prefix)`: `ownPage`, `privateApi(prefixes, ...routes)` (private headers and 405 with `Allow`, scoped to the
-  plugin's prefixes), `jsonBody(maxBytes)` (413) and `readJson`. Used by `acryl-workspace`, `acryl-agent-control` and Desktop.
+  plugin's prefixes), `jsonContent` (415), `jsonBody(maxBytes)` (413) and `readJson`. Used by `acryl-workspace`,
+  `acryl-agent-control`, `acryl-sign-in` and Desktop.
   `acrylblends` is a peer dependency: the router's classes must be the app's one copy.

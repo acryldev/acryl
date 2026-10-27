@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Acryl } from 'acrylblends'
 import { serve } from 'acrylblends/cordis/router-http'
-import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson } from '../src/router.ts'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson } from '../src/router.ts'
 
 let server: Server | undefined
 
@@ -25,7 +25,7 @@ afterEach(async () => {
 function routes(): Acryl {
   return new Acryl()
     .get('/api/a/read', ownPage, c => c.json({ ok: true }))
-    .post('/api/a/write', ownPage, jsonBody(32), async (c) => {
+    .post('/api/a/write', ownPage, jsonContent, jsonBody(32), async (c) => {
       const body = await readJson(c)
       return body === INVALID_JSON ? c.json({ error: 'bad' }, 400) : c.json({ body })
     })
@@ -79,5 +79,16 @@ describe('privateApi', () => {
     expect(await large.json()).toEqual({ error: 'request body is too large' })
     expect((await post('{')).status).toBe(400)
     expect(await (await post('{"a":1}')).json()).toEqual({ body: { a: 1 } })
+  })
+
+  it('refuses a change that does not declare a JSON body with 415, and takes the media type with parameters', async () => {
+    const origin = await listen(privateApi('/api/a', routes()))
+    const post = (type: string | undefined): Promise<Response> =>
+      fetch(`${origin}/api/a/write`, { method: 'POST', headers: { origin, ...(type === undefined ? {} : { 'content-type': type }) }, body: '{"a":1}' })
+    const plain = await post('text/plain')
+    expect(plain.status).toBe(415)
+    expect(await plain.json()).toEqual({ error: 'content type must be application/json' })
+    expect((await post(undefined)).status).toBe(415)
+    expect((await post('Application/JSON; charset=utf-8')).status).toBe(200)
   })
 })

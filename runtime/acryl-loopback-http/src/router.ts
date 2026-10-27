@@ -43,6 +43,14 @@ export function privateApi(prefixes: string | readonly string[], ...routes: read
   return app
 }
 
+/** A changing request must declare a JSON body (`application/json`, any parameters): 415 otherwise, the rule `isJsonRequest` keeps on node:http. */
+export const jsonContent: MiddlewareHandler = async (c, next) => {
+  if (c.req.header('content-type')?.split(';', 1)[0]?.trim().toLowerCase() !== 'application/json') {
+    return c.json(error('content type must be application/json'), 415)
+  }
+  await next()
+}
+
 /** Refuse a body over `maxBytes` with 413 before the handler reads it. */
 export function jsonBody(maxBytes: number = DEFAULT_MAX_BODY_BYTES): MiddlewareHandler {
   return bodyLimit({ maxSize: maxBytes, onError: c => c.json(error('request body is too large'), 413) })

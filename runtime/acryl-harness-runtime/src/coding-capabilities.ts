@@ -190,6 +190,7 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     id: 'sign-in',
     surfaces: ['web', 'desktop'],
     requiresPackages: ['acryl-sign-in'],
+    needsRouter: true,
     loaderPatches: [
       { insert: [{ id: 'acryl-sign-in', name: 'acryl-sign-in' }] },
     ],

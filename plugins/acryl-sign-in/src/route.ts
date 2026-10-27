@@ -1,10 +1,14 @@
 /** Strict same-origin loopback routes for signing in. No response carries a secret; an answer is handed to the flow and dropped. */
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import { Acryl } from 'acrylblends'
 import { SignInAttemptError } from 'acryl-control'
-import { INVALID_BODY, error, finishJson, isSameOriginLoopbackRequest, parseJsonPostBody } from 'acryl-loopback-http'
+import { error } from 'acryl-loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
 import type { SignInController } from './controller.ts'
 import { SignInRequestError } from './controller.ts'
-import type { SignInAnswerRequest, SignInBeginRequest, SignInCancelRequest } from './contract.ts'
+import {
+  SIGN_IN_ANSWER_PATH, SIGN_IN_API_PREFIX, SIGN_IN_ATTEMPT_PATH, SIGN_IN_BEGIN_PATH, SIGN_IN_CANCEL_PATH, SIGN_IN_PROVIDERS_PATH,
+  type SignInAnswerRequest, type SignInBeginRequest, type SignInCancelRequest,
+} from './contract.ts'
 
 const MAX_FIELD_LENGTH = 512
 /** An API key, a pasted authorization code or a redirect URL; far below the body limit, far above any real one. */
@@ -51,58 +55,54 @@ function parseCancel(value: unknown): SignInCancelRequest | undefined {
   return attemptId === undefined ? undefined : { attemptId }
 }
 
-type Reporter = (operation: string, cause: unknown) => void
-
 function refusal(cause: unknown): string | undefined {
   return cause instanceof SignInAttemptError || cause instanceof SignInRequestError ? cause.message : undefined
 }
 
-export async function handleProvidersRequest(req: IncomingMessage, res: ServerResponse, origin: string, controller: SignInController, report: Reporter = () => {}): Promise<void> {
-  if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
-  if (!isSameOriginLoopbackRequest(req, origin, false)) return finishJson(res, 403, error('forbidden'))
-  try {
-    finishJson(res, 200, await controller.providers())
-  } catch (cause) {
-    report('list sign-in providers', cause)
-    finishJson(res, 500, error('sign-in unavailable'))
-  }
-}
-
-export async function handleAttemptRequest(req: IncomingMessage, res: ServerResponse, origin: string, controller: SignInController, report: Reporter = () => {}): Promise<void> {
-  if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
-  if (!isSameOriginLoopbackRequest(req, origin, false)) return finishJson(res, 403, error('forbidden'))
-  try {
-    finishJson(res, 200, { attempt: await controller.attempt() })
-  } catch (cause) {
-    report('read the sign-in', cause)
-    finishJson(res, 500, error('sign-in unavailable'))
-  }
-}
-
-/** A POST route: same-origin JSON in, the attempt out. `run` throws a refusal for a request the harness cannot honour. */
-function postRoute<T>(
-  parse: (value: unknown) => T | undefined,
-  run: (controller: SignInController, request: T) => unknown,
-  operation: string,
-) {
-  return async (req: IncomingMessage, res: ServerResponse, origin: string, controller: SignInController, report: Reporter = () => {}): Promise<void> => {
-    if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-    if (!isSameOriginLoopbackRequest(req, origin, true)) return finishJson(res, 403, error('forbidden'))
-    const value = await parseJsonPostBody(req, res)
-    if (value === INVALID_BODY) return
-    const request = parse(value)
-    if (request === undefined) return finishJson(res, 400, error(`invalid ${operation} request`))
+/**
+ * The five sign-in routes as one app, under the shared private-route rules: only the app's own page (a read may carry same-origin fetch
+ * metadata instead of `Origin`, a change must carry the exact `Origin`), 405 with `Allow` for another method, and for a change a JSON
+ * body (415 otherwise) of at most 16 KiB (413). A refusal the harness explains is 409 with its reason; anything else is reported and 500.
+ */
+export function signInRoutes(controller: SignInController, report: ReportError = () => {}): Acryl {
+  const app = new Acryl()
+  app.get(SIGN_IN_PROVIDERS_PATH, ownPage, async (c) => {
     try {
-      finishJson(res, 200, { attempt: await run(controller, request) })
+      return c.json(await controller.providers())
     } catch (cause) {
-      const reason = refusal(cause)
-      if (reason !== undefined) return finishJson(res, 409, error(reason))
-      report(operation, cause)
-      finishJson(res, 500, error('sign-in unavailable'))
+      report('list sign-in providers', cause)
+      return c.json(error('sign-in unavailable'), 500)
     }
-  }
-}
+  })
+  app.get(SIGN_IN_ATTEMPT_PATH, ownPage, async (c) => {
+    try {
+      return c.json({ attempt: await controller.attempt() })
+    } catch (cause) {
+      report('read the sign-in', cause)
+      return c.json(error('sign-in unavailable'), 500)
+    }
+  })
 
-export const handleBeginRequest = postRoute(parseBegin, (controller, request) => controller.begin(request.key, request.method, request.locale === undefined ? {} : { locale: request.locale }), 'begin sign-in')
-export const handleAnswerRequest = postRoute(parseAnswer, (controller, request) => controller.answer(request.attemptId, request.promptId, request.value), 'answer sign-in')
-export const handleCancelRequest = postRoute(parseCancel, (controller, request) => controller.cancel(request.attemptId), 'cancel sign-in')
+  /** A change: same-origin JSON in, the attempt out. `run` throws a refusal for a request the harness cannot honour. */
+  const change = <T>(path: string, parse: (value: unknown) => T | undefined, run: (request: T) => unknown, operation: string): void => {
+    app.post(path, ownPage, jsonContent, jsonBody(), async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return c.json(error('invalid JSON request'), 400)
+      const request = parse(value)
+      if (request === undefined) return c.json(error(`invalid ${operation} request`), 400)
+      try {
+        return c.json({ attempt: await run(request) })
+      } catch (cause) {
+        const reason = refusal(cause)
+        if (reason !== undefined) return c.json(error(reason), 409)
+        report(operation, cause)
+        return c.json(error('sign-in unavailable'), 500)
+      }
+    })
+  }
+  change(SIGN_IN_BEGIN_PATH, parseBegin, request => controller.begin(request.key, request.method, request.locale === undefined ? {} : { locale: request.locale }), 'begin sign-in')
+  change(SIGN_IN_ANSWER_PATH, parseAnswer, request => controller.answer(request.attemptId, request.promptId, request.value), 'answer sign-in')
+  change(SIGN_IN_CANCEL_PATH, parseCancel, request => controller.cancel(request.attemptId), 'cancel sign-in')
+
+  return privateApi(SIGN_IN_API_PREFIX, app)
+}

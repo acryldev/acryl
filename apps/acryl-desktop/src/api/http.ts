@@ -1,11 +1,10 @@
 /**
  * What Desktop's own private routes share, on the router: the private-route rules of `acryl-loopback-http/router` under Desktop's two
- * prefixes, the JSON media type its changing routes have always required, and an answer whose follow-up (a restart) must wait until the
- * answer itself has gone out. Each context folder (settings, startup, workspaces) builds its routes with these; `plugin.ts` serves them.
+ * prefixes, and an answer whose follow-up (a restart) must wait until the answer itself has gone out. Each context folder (settings,
+ * startup, workspaces) builds its routes with these and the shared rules; `plugin.ts` serves them.
  */
 
-import type { Acryl, MiddlewareHandler } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
+import type { Acryl } from 'acrylblends'
 import { privateApi } from 'acryl-loopback-http/router'
 
 /** The prefixes Desktop's renderer calls its Host on: settings and preferences, and the boot report and directory picker. */
@@ -14,14 +13,6 @@ export const DESKTOP_API_PREFIXES = Object.freeze(['/api/desktop', '/_dsh/deskto
 /** Desktop's routes as one app, the shared private-route rules scoped to {@link DESKTOP_API_PREFIXES}. */
 export function desktopApi(...routes: readonly Acryl[]): Acryl {
   return privateApi(DESKTOP_API_PREFIXES, ...routes)
-}
-
-/** A changing request must declare a JSON body (`application/json`, any parameters): 415 otherwise, as these routes always answered. */
-export const jsonContent: MiddlewareHandler = async (c, next) => {
-  if (c.req.header('content-type')?.split(';', 1)[0]?.trim().toLowerCase() !== 'application/json') {
-    return c.json(error('content type must be application/json'), 415)
-  }
-  await next()
 }
 
 /**

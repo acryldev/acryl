@@ -21,7 +21,7 @@ A slice that would change something a user sees, or remove a feature, stops and 
 
 | Measure | How it is counted | Start (2026-10-24, before slice 1) | Now |
 | --- | --- | --- | --- |
-| `webServer` registration call sites | `register`/`registerUpgrade` calls on `acrylWeb`, `webServer` or a port named `web`, in production source of `apps`, `plugins`, `runtime` (tests and build output excluded) | 30 | 9 (after T003) |
+| `webServer` registration call sites | `register`/`registerUpgrade` calls on `acrylWeb`, `webServer` or a port named `web`, in production source of `apps`, `plugins`, `runtime` (tests and build output excluded) | 30 | 8 (after T004) |
 | DSH direct-import lines | the ceiling in `scripts/verify-layout.mjs` | 133 (104 outside the seam) | 135 (104 outside the seam): raised once by the 2026-10-25 profile resolution port, T012 is its way back |
 
 The count is this command, from the repository root (M7, spec 049, started at 14):
@@ -32,8 +32,8 @@ git grep -nE "(acrylWeb|webServer|[^a-zA-Z]web)[?]?[.](register|registerUpgrade)
 ```
 
 The call-site count today, by package: `runtime/acryl-harness-runtime` 2, `acryl-plugin-admin` 2, `acryl-plugin-context` 2 (the
-`host-route-basic` example, T010, and the startup-hold route, T013), `acryl-workspace` 1 (the terminal WebSocket), `acryl-support` 1,
-`acryl-sign-in` 1 (a loop over its five routes). The two in `acryl-harness-runtime` are the `acrylWeb` carrier (`engine-web.ts`, a
+`host-route-basic` example, T010, and the startup-hold route, T013), `acryl-workspace` 1 (the terminal WebSocket), `acryl-support` 1.
+The two in `acryl-harness-runtime` are the `acrylWeb` carrier (`engine-web.ts`, a
 delegate to DSH's `webServer` that every consumer above registers through); it goes when its last consumer has moved. The router's
 Web adapter, counted here until M6, now lives in the acrylblends repository.
 
@@ -192,3 +192,39 @@ Answers that changed (Desktop's own renderer is the only caller):
   for the boot report, and every status and body of the settings API.
 
 Measured: webServer registration call sites 14 -> 9 (`apps/acryl-desktop` 5 -> 0); DSH import lines 135 -> 135 (104 outside the seam).
+
+### Slice 5: `acryl-sign-in` (T004)
+
+The routes behind the account sign-in card on Settings > Models (Web and Desktop): the provider list, the current attempt, and begin,
+answer and cancel. Credentials pass through them, so the rule for this slice is the one of slice 2: the checks do not change.
+
+Cordis mini-design:
+
+1. Capability and boundary: unchanged. The plugin owns the sign-in conversation over the harness's authorization flows; only its
+   transport moves. `src/route.ts` now exports `signInRoutes(controller, report)`, one App.
+2. Provides and consumes: adds hard `router` and `routerHttp` injects beside `acrylWeb` (its port is still the origin DeepSeek's
+   browser sign-in returns to), `authorization` and `credentials`. `settings`, `llm`, `agentDefaultModel` and `deepseekAccount` stay
+   optional `ctx.get()` lookups made when a sign-in succeeds. Provides nothing new.
+3. Effects and disposal: no resource of its own; the controller holds the one running attempt in memory. `route('/')` and
+   `mount('/api/acryl-sign-in')` are owned by the fiber; on unload the router ends the mount's requests within its grace and releases
+   the prefix.
+4. Configuration and composition: row id `acryl-sign-in` unchanged. The `sign-in` capability now declares `needsRouter`, so a
+   Blueprint that composes it without the `framework-kit` row is refused (the built-ins with it, `acryl.ide` and `acryl.agents`,
+   have the kit; tested). Desktop composes the router rows itself (slice 4). The terminal's account-callback row, which serves
+   DeepSeek's `/oauth/callback` on its own `webServer` realm, is a different plugin and unchanged. Found on the way: the JSON
+   media-type check was Desktop's alone and sign-in needs the same, so it moved to `acryl-loopback-http/router` as `jsonContent`
+   (tested there).
+5. Events and durability: none changed.
+6. Verification: route tests call the App as the adapter does (connection facts included); a plugin test on real Cordis with the
+   real router and router-http over a loopback socket: one prefix mount and no exact route, PENDING without the router and without
+   the harness services, the mount gone while `credentials` is withdrawn and back when it returns, three reloads with one mount each,
+   and the default-model adoption after a sign-in begun over the socket.
+
+Checks kept exactly: a read from the own page (exact `Origin`, or same-origin fetch metadata plus a same-origin `Referer`), a change
+only with the exact `Origin`, loopback peer and `Host` for both; 415 for a body that is not JSON, 413 over 16 KiB, 400 for malformed
+JSON (`invalid JSON request`) and for an invalid body (`invalid <operation> request`), 409 with the harness's reason, 500 `sign-in
+unavailable` with the cause reported, never echoed. Answers that changed: a refusal's body is the own-page rule's text instead of
+`forbidden` (the status stays 403, and only a page that is not the app's own can see it); `Allow` on a 405 lists HEAD beside GET for
+the two reads, which now also answer HEAD.
+
+Measured: webServer registration call sites 9 -> 8 (`acryl-sign-in` 1 -> 0, a loop over five routes); DSH import lines 135 -> 135.

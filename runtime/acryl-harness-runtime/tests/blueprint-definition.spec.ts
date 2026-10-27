@@ -66,10 +66,11 @@ describe('parseBlueprint', () => {
     expect(() => parseBlueprint({ id: 'acme.ide', extends: 'acryl.ide', rows: ['plugin-context', 'system-prompt'] })).toThrow(/"framework-kit"/)
     expect(() => parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'] })).toThrow(/"workspace" capability needs the "framework-kit"/)
     expect(() => parseBlueprint({ id: 'acme.door', capabilities: ['agent-control-ui'] })).toThrow(/"agent-control-ui" capability needs the "framework-kit"/)
+    expect(() => parseBlueprint({ id: 'acme.login', capabilities: ['sign-in'] })).toThrow(/"sign-in" capability needs the "framework-kit"/)
     expect(parseBlueprint({ id: 'acme.ws', capabilities: ['workspace'], rows: ['framework-kit'] }).rows).toEqual(['framework-kit'])
     expect(parseBlueprint({ id: 'acme.door', capabilities: ['agent-control-ui'], rows: ['framework-kit'] }).capabilities).toEqual(['agent-control-ui'])
     const routed = ACRYL_CODING_CAPABILITIES.filter(capability => capability.needsRouter === true).map(capability => capability.id)
-    expect(routed).toEqual(['workspace', 'agent-control-ui'])
+    expect(routed).toEqual(['workspace', 'sign-in', 'agent-control-ui'])
     for (const blueprint of builtInCatalog().list()) {
       if (blueprint.capabilities.some(id => routed.includes(id))) expect(blueprint.rows).toContain('framework-kit')
     }

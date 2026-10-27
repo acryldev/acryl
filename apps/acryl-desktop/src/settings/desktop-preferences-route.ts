@@ -2,8 +2,7 @@
 
 import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
-import { jsonContent } from '../api/http.ts'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
 
 export const DESKTOP_PREFERENCES_PATH = '/api/desktop/preferences'
 

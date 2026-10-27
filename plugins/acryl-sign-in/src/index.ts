@@ -6,23 +6,23 @@
  */
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
-import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
+import type {} from 'acrylblends/cordis/router'
+import type {} from 'acrylblends/cordis/router-http'
 import {
   createDefaultModelAdoption, createRouteActivation, isRouteUsable,
   type CredentialProjectionConfigurableProvider, type DefaultModelAdoptionPort, type DefaultModelAdoptionPorts, type RouteActivationSettingsPort, type RouteUsabilityServices,
 } from 'acryl-control'
 import { SignInController, type SignInPorts } from './controller.ts'
 import type { DeepSeekAccountPort } from './deepseek-account.ts'
-import {
-  SIGN_IN_ANSWER_PATH, SIGN_IN_ATTEMPT_PATH, SIGN_IN_BEGIN_PATH, SIGN_IN_CANCEL_PATH, SIGN_IN_PROVIDERS_PATH,
-} from './contract.ts'
-import { handleAnswerRequest, handleAttemptRequest, handleBeginRequest, handleCancelRequest, handleProvidersRequest } from './route.ts'
+import { SIGN_IN_API_PREFIX } from './contract.ts'
+import { signInRoutes } from './route.ts'
 
 export const name = 'acryl-sign-in'
 /** This package's version (`lib/index.js` sits one folder below `package.json`), sent to DeepSeek as the requesting client's version. */
 const VERSION = (createRequire(import.meta.url)('../package.json') as { version: string }).version
-export const inject = ['acrylWeb', 'authorization', 'credentials']
+/** The routes are served through the framework's router; `acrylWeb` still names the origin DeepSeek's browser sign-in returns to. */
+export const inject = ['router', 'routerHttp', 'acrylWeb', 'authorization', 'credentials']
 
 /**
  * A harness service by name, typed by the narrow port this plugin needs. The harness types are not a dependency of this
@@ -84,16 +84,8 @@ export function apply(ctx: Context): void {
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`acryl-sign-in: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
-  const routes: readonly (readonly [string, (req: IncomingMessage, res: ServerResponse) => unknown])[] = [
-    [SIGN_IN_PROVIDERS_PATH, (req, res) => handleProvidersRequest(req, res, origin, controller, report)],
-    [SIGN_IN_ATTEMPT_PATH, (req, res) => handleAttemptRequest(req, res, origin, controller, report)],
-    [SIGN_IN_BEGIN_PATH, (req, res) => handleBeginRequest(req, res, origin, controller, report)],
-    [SIGN_IN_ANSWER_PATH, (req, res) => handleAnswerRequest(req, res, origin, controller, report)],
-    [SIGN_IN_CANCEL_PATH, (req, res) => handleCancelRequest(req, res, origin, controller, report)],
-  ]
-  for (const [path, handler] of routes) {
-    ctx.effect(() => ctx.acrylWeb.register({ kind: 'exact', path, handler: (req, res) => { void handler(req, res) } }), `acryl-sign-in: route ${path}`)
-  }
+  ctx.router.route('/', signInRoutes(controller, report))
+  ctx.routerHttp.mount(SIGN_IN_API_PREFIX)
 }
 
 export { SignInController, SignInRequestError } from './controller.ts'

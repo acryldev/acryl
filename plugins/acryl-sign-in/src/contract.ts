@@ -1,11 +1,13 @@
 /** The wire contract of the sign-in routes; the account sign-in card on Settings > Models is its client. */
 import type { SignInAttemptView } from 'acryl-control'
 
-export const SIGN_IN_PROVIDERS_PATH = '/api/acryl-sign-in/providers'
-export const SIGN_IN_ATTEMPT_PATH = '/api/acryl-sign-in/attempt'
-export const SIGN_IN_BEGIN_PATH = '/api/acryl-sign-in/begin'
-export const SIGN_IN_ANSWER_PATH = '/api/acryl-sign-in/answer'
-export const SIGN_IN_CANCEL_PATH = '/api/acryl-sign-in/cancel'
+/** Every sign-in route lives under this prefix, the one the Host's Web adapter mounts for this plugin. */
+export const SIGN_IN_API_PREFIX = '/api/acryl-sign-in'
+export const SIGN_IN_PROVIDERS_PATH = `${SIGN_IN_API_PREFIX}/providers`
+export const SIGN_IN_ATTEMPT_PATH = `${SIGN_IN_API_PREFIX}/attempt`
+export const SIGN_IN_BEGIN_PATH = `${SIGN_IN_API_PREFIX}/begin`
+export const SIGN_IN_ANSWER_PATH = `${SIGN_IN_API_PREFIX}/answer`
+export const SIGN_IN_CANCEL_PATH = `${SIGN_IN_API_PREFIX}/cancel`
 
 export interface SignInMethodView {
   readonly id: string
