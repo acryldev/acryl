@@ -1,6 +1,7 @@
 # Spec 049 - The ACRYL Framework Architecture
 
-Status (2026-10-25): design, written by the coordinator for the owner. Nothing here is built yet except where a row says "exists".
+Status (2026-10-27): slices 1, 3, 4, 7 and 8 are done and released; slice 2 (Postgres) is built but is not a default. The owner decided on
+2026-10-27: no `durable` layer, JSON and SQLite are the only defaults, and the next work is agents building apps from inside (Part 2).
 Implementation slices are at the end, each with a gate. Specs 047 (the router port) and 048 (the IDE on the framework) continue
 unchanged and fit into this map.
 
@@ -28,14 +29,14 @@ is a configuration change, not a code change.
 | Core | How do plugins start, stop and find each other? | Cordis `Context`, `inject`, `effect`, Loader | `cordis` | exists |
 | Server and routing | How does a request become a response? | `router` (an `Acryl` app per plugin) | `acryl-router` (the port of the upstream router, spec 047) | exists |
 | | How is it served? | `routerHttp` | `acryl-node-server`; Desktop's loopback Host; in process for tests and the TUI | exists |
-| Data | Where does my app keep its records? | `db` | `acryl-db-sqlite` (one file in the app home); `acryl-db-postgres` (Postgres or Supabase via `DATABASE_URL`) | new |
-| | My app is tiny; can it skip SQL? | `kv` | `acryl-kv-json` (one JSON file, atomic replace); also served by either `db` provider | new |
-| | Where do agents keep conversations, tasks and checkpoints? | `durable` | `acryl-durable` on the same database file as `db` | new |
+| Data | Where does my app keep its records? | `db` | `acryl-db-sqlite` (one file in the app home) | exists |
+| | My app is tiny; can it skip SQL? | `kv` | `acryl-kv-json` (one JSON file, atomic replace); `acryl-kv-db` over `db` | exists |
+| | My app must use Postgres or Supabase | `db` | `acryl-db-postgres`: an optional plugin, not in the framework package or the templates | exists, optional |
 | | How does the UI see changes live? | `state` (observable cells over SSE) | `acryl-state` | exists, in memory |
 | UI, simple | Pages without a build step | JSX on the server, client modules for islands | `acrylblends/jsx`, `clientModules()` | exists |
 | UI, rich | A full client application | React with ACRYL's component library | `acryl-ui` | exists in the IDE, not yet in templates |
 | Desktop | The same app as a desktop window | `desktop` | the desktop plugin (Electron) | exists for Blend apps |
-| Agents | Who builds and runs the app from inside? | `drivers` (one per agent) and the door (`acryl control`) | PTY driver (claude, codex, pi, ...), DSH chat driver | door exists, drivers in spec 048 Phase 9 |
+| Agents | Who builds and runs the app from inside? | `drivers` (one per agent) and the door (`acryl control`) | PTY driver (claude, codex, pi, ...), DSH chat driver | door exists; not yet in new apps (Part 2) |
 | Tooling | How do I start and grow an app? | `acryl new`, `acryl add` | today `npm create acrylblends`, `acrylblends add` | exists under the interim name |
 
 ### The dependency rule
@@ -47,7 +48,7 @@ Surfaces and drivers  (web, desktop, TUI, PTY drivers, DSH chat)
         |  call
 Adapters              (acryl-node-server, acryl-db-sqlite, acryl-db-postgres, acryl-kv-json, desktop)
         |  implement
-Ports                 (the service interfaces: router, db, kv, durable, state, drivers)
+Ports                 (the service interfaces: router, db, kv, state, drivers)
         ^  depend on
 The app's own plugins (its use cases: "create a note", "share a list")
         |  run on
@@ -60,16 +61,17 @@ Core                  (Cordis)
   the use case, so the TUI, the door and tests call the same code without HTTP.
 - Each port has one conformance suite that every provider must pass. A new provider is accepted by passing it, not by review alone.
   (*Pragmatic Programmer*: one authoritative representation, automated checks, short feedback loops.)
-- One way per job. There is one data API per need (`db`, `kv`, `durable`), one way to serve, one way to add a plugin. A second way is
+- One way per job. There is one data API per need (`db`, `kv`), one way to serve, one way to add a plugin. A second way is
   added only when the first cannot do the job, and the spec says why.
 
 ## Data
 
-Three needs, three small ports. Most apps use one of them.
+Two needs, two small ports. Most apps use one of them. The owner, 2026-10-27: no framework is bound to a big stack; JSON and SQLite
+are the defaults, and an app that needs Postgres or Supabase connects it as a data source when it needs one.
 
 ### `db` - relational records (the default)
 
-For any app with users, lists, orders: SQL, because people and agents already know it and it moves between SQLite and Postgres.
+For any app with users, lists, orders: SQL, because people and agents already know it.
 
 ```ts
 interface Db {
@@ -86,8 +88,8 @@ interface Db {
   immediately. One signature for both, so code does not change when the provider does.
 - Migrations: numbered files in the app's `migrations/` folder (`001-notes.sql`, `002-tags.sql`), applied in order at start inside a
   transaction, recorded in a `_migrations` table. No ORM and no query builder in the framework; an app may add one as its own plugin.
-- Providers: `acryl-db-sqlite` (`node:sqlite`, WAL, one file at `<app home>/data.sqlite`) and `acryl-db-postgres` (`DATABASE_URL`;
-  Supabase is Postgres with a connection string). Postgres runs in CI without a server through PGlite.
+- Provider: `acryl-db-sqlite` (`node:sqlite`, WAL, one file at `<app home>/data.sqlite`). `acryl-db-postgres` exists as an optional
+  plugin (`DATABASE_URL`; Supabase is Postgres with a connection string), tested on PGlite in CI, and is not shipped in `acrylblends`.
 - Dialect differences an app must know (placeholders, `RETURNING`, types) are listed once in the `db` guide and checked by the
   conformance suite, which runs the same migrations and queries on both providers.
 
@@ -113,24 +115,12 @@ interface Kv {
 - `update`'s callback is synchronous (an `async` function is a type error and a returned promise is rejected), `list` sorts by code point, and
   a JSON file belongs to one process; past a few MB or with more than one process, use `acryl-kv-db`.
 
-### `durable` - agents' and apps' long-running state
+### No `durable` layer (decided 2026-10-27)
 
-For agent conversations, tasks that survive a restart, and documents edited over time. This is where pi's `durable` package is the
-model, and its storage layer is ported, not reinvented:
-
-- **What is ported** from `packages/durable` (pinned commit, provenance file as in spec 047): the storage contract (one atomic commit
-  per batch; memory adopts a batch only after it is stored, so nothing is shown before it is durable), the memory, JSONL and SQLite
-  storages, and the storage conformance suite (about 1,800 lines of tests). With what they need from `chord` (`delta`, the SQLite
-  facade). About 6,500 lines with tests.
-- **What is not ported**: pi's agent harness, model calls, code mode, telemetry and tools. ACRYL's agents are drivers; pi itself is one
-  of them.
-- **The model an app sees**: conversations are transcripts of immutable entries; tasks are durable state machines with checkpoints that
-  resume after a crash; documents have a kind, a version and either latest-only or rewindable history; every submission carries a
-  request id, so a retry after a crash does not run twice.
-- **Where it lives**: in the same database as `db` (its own table prefix), so an app has one data file, one backup and one migration
-  story. A Postgres storage is ACRYL's own work, accepted only by passing the ported conformance suite.
-- The `tasks` plugin moves onto `durable` and its own JSONL/SQLite store is retired. `acryl-state` cells can be bound to a `durable`
-  document or a `kv` key, so a live view survives a restart.
+An earlier draft ported pi's `durable` package as a third data port. Dropped by the owner: outside agents (Claude Code, Codex, pi)
+keep and resume their own sessions, so ACRYL cannot checkpoint them, and an app that runs its own agent loop needs only a few
+tables in its own SQLite (conversation entries, tasks with a status, a done mark per step). That is app code on `db`, written when
+a real app needs it, not a framework layer.
 
 ### Choosing
 
@@ -138,8 +128,7 @@ model, and its storage layer is ported, not reinvented:
 | --- | --- |
 | Tiny, one person, a few screens | `kv` with `acryl-kv-json` |
 | Normal web or desktop app | `db` with `acryl-db-sqlite` (the template default) |
-| Hosted, many users (SaaS) | `db` with `acryl-db-postgres` (Supabase or any Postgres) |
-| Anything with agents or long tasks | add `durable` (same file or database) |
+| Must use Postgres or Supabase | `db` with the optional `acryl-db-postgres` plugin |
 
 ## Naming
 
@@ -161,32 +150,50 @@ npx acryl new my-app github:someone/their-starter    # any git source
 
 ## Slices
 
-Each slice lands on `main` only when its gate passes. Order matters; owners in brackets.
+Each slice lands on `main` only when its gate passes. Owners in brackets.
 
-1. **`db` port and SQLite provider** [Fork3, after the Electron slice] - port the chord SQLite facade with provenance; `acryl-db-sqlite`;
-   migrations; the conformance suite. Gate: the suite passes on Node 22 and 24, on macOS, Linux and Windows.
-2. **Postgres provider** [Fork3] - `acryl-db-postgres`; the same suite on PGlite in CI and once against a real Postgres. Gate: the
-   suite passes unchanged; the dialect list in the guide matches what the suite checks.
-3. **`kv` and the JSON provider** [Fork3] - `acryl-kv-json`, `kv` on both `db` providers, the import command. Gate: a crash test (kill
-   during write) never leaves an unreadable file.
-4. **Templates on `db`** [Blends] - the notes template and the chat template use `db` and migrations instead of opening `node:sqlite`;
-   docs: the data guide and the choosing table. Gate: claude and codex each build the "add tags" task on the new template from the docs
-   alone, tests pass.
-5. **`durable` port** [Fork3] - pi's storage layer and conformance suite with provenance and the MIT notice in LICENSE; the ACRYL
-   Postgres storage. Gate: the ported suite passes on memory, JSONL, SQLite and Postgres.
-6. **Tasks and state on `durable`** [Blends] - the `tasks` plugin on `durable`; persisted `acryl-state` cells. Gate: a task resumes
-   after the app is killed mid-task; a cell keeps its value across a restart.
-7. **The dependency-rule check** [Fork3] - a test that fails when an app plugin imports a provider (`node:sqlite`, `pg`, `electron`,
-   a driver) instead of a port. Gate: it fails on a planted violation and passes on the templates.
-8. **`acryl new` with registry and git sources** [Blends] - under the interim name first (`create-acrylblends <name> <source>`).
-   Gate: `github:` and a scoped npm template both create a working app in a scratch HOME.
+### Part 1 - the framework and its data (done)
 
-Spec 048 (the IDE, slice by slice) and the hosting adapters and Bun (spec 047 Part B) continue in parallel; the IDE adopts `db` and
-`durable` as its slices reach data.
+1. **`db` port and SQLite provider** [Fork3] - done, acrylblends 0.7.5.
+2. **Postgres provider** [Fork3] - built and on main as an optional plugin; not in `acrylblends`, not in templates (owner, 2026-10-27).
+3. **`kv` and the JSON provider** [Blends] - done, acrylblends 0.7.7 (group commit on Windows: main c6e766da).
+4. **Templates on `db`** [Blends] - done, acrylblends 0.7.5.
+5. ~~`durable` port~~ - dropped (owner, 2026-10-27).
+6. ~~Tasks and state on `durable`~~ - dropped; persisted `acryl-state` cells and the tasks plugin use `db` or `kv` when an app needs them.
+7. **The dependency-rule check** [Fork3] - done, `acrylblends check-deps`, 0.7.6.
+8. **`acryl new` with registry and git sources** [Blends] - done, `create-acrylblends <name> <source>`.
+
+### Part 2 - agents build the app from inside
+
+The owner, 2026-10-27: "we need real usable framework for apps with built-in agents building inside-out". The 2026-10-22 experiment
+(`docs/acryl/ARCHITECTURE.md` section 7) showed what decides it: the door must be open, and the app folder must carry its own
+self-knowledge. With both, Claude Code, Codex and pi each built, installed, clicked-to-verify and kept a plugin. Every app made by
+`create-acrylblends` must have both, with no hand-written files.
+
+9. **The door in every new app, safely** [Fork3] - `acryl-agent-control` is a plugin of the app; its secret, worker files and audit
+   live under `<app>/.acryl/`, which the template's `.gitignore` lists. Gate: a fresh app answers `acryl control tool list`, and
+   `git add -A` in it stages no secret.
+10. **The door is found from the app folder** [Fork3] - `<app>/.acryl/bin/acryl control ...` reaches only the app running from that
+    folder, never a user's own `acryl` on `PATH`. Gate: two apps running at once, each folder's command reaches its own.
+11. **Self-knowledge in the folder** [Blends] - `create-acrylblends` writes `AGENTS.md` and `CLAUDE.md` (the same text) and one skill
+    pointing to `docs/framework/` and the door commands; one plugin folder (`plugins/`) everywhere in the docs. Gate: the docs name no
+    second plugin folder.
+12. **Looking at the app** [Fork3] - the door's snapshot carries the visible text and roles; a screenshot verb. Gate: an agent reads
+    a value on the page without changing its markup.
+13. **One verb list** [Fork3] - the same verbs (`brief`, `look`, `act`, `plugin add|remove|reload`) in the CLI, over MCP and in the
+    built-in chat. Gate: one test lists the verbs from each and compares them.
+14. **The built-in agent** [Blends] - an app can show its own chat panel whose agent uses the same door (DSH chat or a PTY driver:
+    claude, codex, pi), opt-in per app. Gate: from the panel, the agent adds a feature and the page shows it without a restart.
+
+**Part 2 gate (the product test):** in a fresh `create-acrylblends` app, Claude Code, Codex and pi each, headless and started in the
+app folder, build the same feature from the docs alone, check it by clicking through the door, and the feature survives a restart
+and a fresh clone; `git status` shows no secret.
+
+Spec 048 (the IDE on the framework) continues in parallel.
 
 ## Open questions for the owner
 
 1. **The `acryl` name.** When the framework takes the `acryl` npm name, does the current CLI agent become `acryl agent` (one package,
    Bun-style) or move to another name? Recommendation: one package, `acryl agent` as a subcommand, decided when slice 8 lands.
-2. **Agreed by default unless the owner says otherwise:** SQLite is the template default; `kv` is the tiny-app path; `durable` is
-   ported from pi's storage layer (MIT, notice in LICENSE only, as with the router).
+2. **The door on by default?** Recommendation: on in development (`npm run dev`), off in a production build unless the app turns it
+   on. Asked on 2026-10-22, still open.
