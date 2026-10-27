@@ -28,7 +28,7 @@ export function onlineCallRoutes(
   run: (request: ReturnType<typeof parseUiRequest>, signal: AbortSignal) => Promise<UiResult>,
   reportError: ReportError,
 ): Acryl {
-  return new Acryl().post(ONLINE_CALL_PATH, operatorOnly(secret), jsonBody, async (c) => {
+  return new Acryl().post(ONLINE_CALL_PATH, operatorOnly(secret), jsonBody(), async (c) => {
     const body = await readJson(c)
     if (body === INVALID_JSON) return c.json(error('invalid request body'), 400)
     let request: ReturnType<typeof parseUiRequest>

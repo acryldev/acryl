@@ -17,7 +17,7 @@ export function workersRoutes(secret: () => string | undefined, workers: Workers
     if (fromOperator(c, secret())) { await next(); return }
     return ownPage(c, next)
   }
-  return new Acryl().post(WORKERS_PATH, pageOrOperator, jsonBody, async (c) => {
+  return new Acryl().post(WORKERS_PATH, pageOrOperator, jsonBody(), async (c) => {
     const body = await readJson(c)
     if (body === INVALID_JSON) return c.json(error('invalid request body'), 400)
     let request: ReturnType<typeof parseWorkerRequest>

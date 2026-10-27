@@ -1,27 +1,20 @@
 /**
  * What every Agent Control route shares, on the router. Two kinds of caller reach it, each with the guard it always had: the app's own
- * page (same origin, on the loopback address), and an outside operator on this machine (`acryl control`, a worker's MCP client) holding
- * this run's secret. Each domain route file builds its routes with these and `index.ts` mounts them under {@link AGENT_CONTROL_API_PREFIX}.
+ * page (same origin, on the loopback address: `ownPage` from `acryl-loopback-http/router`), and an outside operator on this machine
+ * (`acryl control`, a worker's MCP client) holding this run's secret. Each domain route file builds its routes with these and `index.ts`
+ * mounts them under {@link AGENT_CONTROL_API_PREFIX}.
  */
 
 import { timingSafeEqual } from 'node:crypto'
-import { Acryl, type Context, type MiddlewareHandler } from 'acrylblends'
+import type { Acryl, Context, MiddlewareHandler } from 'acrylblends'
 import { connectionOf } from 'acrylblends/cordis/router'
-import { bodyLimit } from 'acrylblends/body-limit'
-import { loopbackOnly } from 'acrylblends/loopback-only'
-import { methodNotAllowed } from 'acrylblends/method-not-allowed'
 import { error, isLoopbackAddress } from 'acryl-loopback-http'
+import { privateApi as privateRoutes } from 'acryl-loopback-http/router'
+
+export { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
 
 /** Every Agent Control route lives below this path; it is the one prefix the plugin mounts on the Web server. */
 export const AGENT_CONTROL_API_PREFIX = '/api/acryl-agent-control'
-
-/** The cap on a JSON request body. */
-export const MAX_BODY_BYTES = 16 * 1024
-
-export type ReportError = (operation: string, cause: unknown) => void
-
-/** The app's own page, on the loopback address the Host serves it from, and nothing else. */
-export const ownPage: MiddlewareHandler = loopbackOnly({ callers: 'own-page', hostnames: ['127.0.0.1'] })
 
 /** A constant-time comparison of a `Bearer` header with the secret. */
 export function tokenMatches(header: string | undefined, secret: string): boolean {
@@ -47,38 +40,7 @@ export function operatorOnly(secret: string): MiddlewareHandler {
   }
 }
 
-/** The headers every private answer carries, set after the handler so a refusal carries them too. */
-const privateHeaders: MiddlewareHandler = async (c, next) => {
-  await next()
-  c.header('cache-control', 'no-store')
-  c.header('x-content-type-options', 'nosniff')
-}
-
-/**
- * The plugin's routes as one app: each domain's routes, every answer with the private headers, and a known path asked with another method
- * answered 405 with its `Allow` before any guard runs. The middleware is scoped to the prefix, so it never wraps another plugin's routes.
- */
+/** The plugin's routes as one app, the shared private-route rules scoped to {@link AGENT_CONTROL_API_PREFIX}. */
 export function privateApi(...routes: readonly Acryl[]): Acryl {
-  const app = new Acryl()
-  app.use(`${AGENT_CONTROL_API_PREFIX}/*`, privateHeaders, methodNotAllowed({
-    app,
-    onMethodNotAllowed: (c, allowed) => c.json(error('method not allowed'), 405, { allow: allowed.join(', ') }),
-  }))
-  for (const domain of routes) app.route('/', domain)
-  return app
-}
-
-/** Refuse a body over {@link MAX_BODY_BYTES} with 413 before the handler reads it. */
-export const jsonBody: MiddlewareHandler = bodyLimit({ maxSize: MAX_BODY_BYTES, onError: c => c.json(error('request body is too large'), 413) })
-
-/** Returned by {@link readJson} for a body that is not JSON. */
-export const INVALID_JSON = Symbol('invalid JSON')
-
-/** The parsed body, or {@link INVALID_JSON}; each route answers that with its own 400, as before. */
-export async function readJson(c: Context): Promise<unknown> {
-  try {
-    return await c.req.json<unknown>()
-  } catch {
-    return INVALID_JSON
-  }
+  return privateRoutes(AGENT_CONTROL_API_PREFIX, ...routes)
 }

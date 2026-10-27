@@ -1,7 +1,7 @@
 {
   "name": "acryl-loopback-http",
   "version": "0.1.0",
-  "description": "The one strict same-origin loopback check and JSON helpers behind every private ACRYL Host route (workspace, plugin administration, Desktop settings)",
+  "description": "The one strict same-origin loopback check and JSON helpers behind every private ACRYL Host route (workspace, Agent Control, plugin administration, Desktop), on node:http and on the framework's router",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,6 +15,10 @@
     ".": {
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
+    },
+    "./router": {
+      "types": "./lib/types/router.d.ts",
+      "default": "./lib/router.js"
     },
     "./package.json": "./package.json"
   },
@@ -33,8 +37,12 @@
     "prepack": "pnpm run check",
     "prepublishOnly": "pnpm run check"
   },
+  "peerDependencies": {
+    "acrylblends": "^0.9.1"
+  },
   "devDependencies": {
     "@types/node": "^22.20.0",
+    "acrylblends": "^0.9.1",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"

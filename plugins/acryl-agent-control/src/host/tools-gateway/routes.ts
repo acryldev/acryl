@@ -11,7 +11,7 @@ export function toolsRoutes(secret: string, gateway: ToolsGateway, reportError: 
   const operator = operatorOnly(secret)
   return new Acryl()
     .get(TOOLS_PATH, operator, c => c.json({ ok: true, tools: gateway.list() } satisfies GatewayListResponse))
-    .post(TOOLS_PATH, operator, jsonBody, async (c) => {
+    .post(TOOLS_PATH, operator, jsonBody(), async (c) => {
       const invalid = (message: string) => c.json({ ok: false, code: 'invalid', message } satisfies GatewayCallResponse, 400)
       const body = await readJson(c)
       if (body === INVALID_JSON) return invalid('invalid request body')
@@ -74,7 +74,7 @@ async function answer(message: JsonRpcRequest, gateway: ToolsGateway, signal: Ab
 
 /** MCP over streamable HTTP, request/response only: POST a JSON-RPC message, get its JSON answer (202 for a notification). No SSE stream is offered. */
 export function mcpRoutes(secret: string, gateway: ToolsGateway, reportError: ReportError): Acryl {
-  return new Acryl().post(MCP_PATH, operatorOnly(secret), jsonBody, async (c) => {
+  return new Acryl().post(MCP_PATH, operatorOnly(secret), jsonBody(), async (c) => {
     const body = await readJson(c)
     if (body === INVALID_JSON) return c.json(rpcError(null, -32700, 'parse error'), 400)
     try {
