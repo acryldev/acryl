@@ -1,3 +1,23 @@
+## 2026-10-27 - the Windows 413 flake in acryl-node-server, and `acryl-db-pglite`, embedded Postgres for the db port (spec 049 slice 2b)
+
+Commits:
+- `95f6a5994989d96c2a2e65335f663912659d7054`: the drain after an early 413 reads the whole body.
+- `d04d4f8146c4b68eacf97c28c7b56d1de6a6fa01`: `acryl-db-postgres/dialect`.
+- `20bdc263d6f0f8febbd967007bda4cf4a802efd2`: `acryl-db-pglite`, slice 2b.
+
+- **The 413 flake:** the upstream lingering-close test in `tests/adapter/server-socket.test.ts` failed on the Windows runner (run 40450992301, ECANCELED at 516 ms) and in 1 of 40 runs on a Windows PC.
+  - Cause: the `Readable.toWeb` reader behind `bodyLimit` stays attached after the 413 and pauses the request again once its queue is full. `drainIncoming` read one 64 KiB chunk, then its 500 ms deadline closed a socket with unread data, which Windows answers with RST. Every run, on every OS, ended on that deadline.
+  - Fix: `drainIncoming` removes the other data listeners before it resumes the request. Upstream @hono/node-server has the same code.
+  - A new test sends the rest of the body and a second request on the same connection after the 413. It fails at the deadline without the fix. `provenance.json` records both deviations.
+  - Proof on the Windows PC: 60 of 60 runs, and 40 of 40 under load on eight cores. The two tests take about 150 ms instead of 525 ms.
+- **`acryl-db-postgres/dialect`:** the `?` translation and statement binding, shared with PGlite, as an entry with no bare imports.
+- **`acryl-db-pglite` (`plugins/acryl-db-pglite`)** is one Cordis plugin and one Loader row, `acryl-db-pglite`. It provides `db` from PGlite 0.5.11 in the app's process, with its cluster in one folder, `<app home>/pglite` by default.
+  - App plugins keep `inject: ['db']` and types from `acryl-db` only, so swapping it for `acryl-db-sqlite` touches no app code.
+  - The `db` conformance suite passes unchanged, in memory and on a folder. Data survives closing and reopening, from another process too.
+  - PGlite does not lock its folder, and two writers corrupt it, so the provider takes a pid lock (`acryl-db-pglite.lock`). A stale holder is taken over, and a refusal names the holding process.
+  - Disposal order: `db` is withdrawn first, then PGlite closes once running calls finish, which writes the folder out and releases the lock.
+  - It runs in Electron's main process: `scripts/electron-main-check.mjs` runs in CI with Desktop's Electron, on Linux under xvfb and on Windows. The Data workflow runs the package on its six legs.
+
 ## 2026-10-27 - `acryl-door`, the Door of a framework app, and the DSH door on its core (spec 049 slices 9, 10, 12 and 13)
 
 Commits:
