@@ -1,6 +1,6 @@
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acryl-router'
-import { apply as stateApply, name as stateName } from 'acryl-state'
+import { apply as routerApply, name as routerName } from 'acrylblends/cordis/router'
+import { apply as stateApply, name as stateName } from 'acrylblends/cordis/state'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as starter from '../src/index.ts'
 

@@ -1,6 +1,6 @@
 /** The gateway's two faces: plain JSON and MCP over HTTP. Both are for an outside operator on this machine holding the instance secret. */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
 import { GatewayRequestError, MCP_PATH, TOOLS_PATH, parseGatewayCall, type GatewayCallResponse, type GatewayListResponse } from '../../tools-contract.ts'
 import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from '../http.ts'

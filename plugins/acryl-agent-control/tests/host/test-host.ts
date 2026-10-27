@@ -8,8 +8,9 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import type { Duplex } from 'node:stream'
 import type { Context } from '@deepseek-ai/cordis'
-import { apply as applyRouter, name as routerName, type Acryl } from 'acryl-router'
-import * as routerHttpPlugin from 'acryl-router-http'
+import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
+import { type Acryl } from 'acrylblends'
+import * as routerHttpPlugin from 'acrylblends/cordis/router-http'
 import { privateApi } from '../../src/host/http.ts'
 
 type Handler = (req: IncomingMessage, res: ServerResponse) => void | Promise<void>

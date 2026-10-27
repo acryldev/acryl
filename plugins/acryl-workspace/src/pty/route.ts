@@ -1,6 +1,6 @@
 /** The workspace terminal routes: start, snapshot, input, resize and close, for the app's own page only. The output streams over the PTY WebSocket. */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from 'acrylblends'
 import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import type { WorkspacePtyRegistry } from './service.ts'
 import {

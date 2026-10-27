@@ -3,8 +3,10 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acryl-router'
-import type {} from 'acryl-state'
+import { Acryl } from 'acrylblends'
+import type {} from 'acrylblends/cordis/state'
+import type {} from 'acrylblends/cordis/router'
+import type {} from 'acrylblends/cordis/router-http'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
 export const name = 'acryl-framework-starter'

@@ -157,8 +157,8 @@ try {
       // ('advanced'); an id-targeted row replaces only its config.
       { id: 'desktop-shell', config: { mode: 'compatibility' } },
       { insert: [
-        { id: 'acryl-router', name: 'acryl-router' },
-        { id: 'acryl-router-http', name: 'acryl-router-http' },
+        { id: 'acrylblends/cordis/router', name: 'acrylblends/cordis/router' },
+        { id: 'acrylblends/cordis/router-http', name: 'acrylblends/cordis/router-http' },
         { id: 'community-market', name: 'cordis-plugin-market' },
         { id: 'third-party-smoke', name: THIRD_PARTY_NAME },
       ] },

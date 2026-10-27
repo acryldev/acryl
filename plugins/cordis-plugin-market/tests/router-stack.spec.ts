@@ -6,8 +6,8 @@
 
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
-import { apply as routerApply, name as routerName } from 'acryl-router'
-import { apply as httpApply, inject as httpInject, name as httpName } from 'acryl-router-http'
+import { apply as routerApply, name as routerName } from 'acrylblends/cordis/router'
+import { apply as httpApply, inject as httpInject, name as httpName } from 'acrylblends/cordis/router-http'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apply as marketApply, inject as marketInject, name as marketName } from '../src/index.js'
 import { marketRoutes } from '../src/host/routes.js'

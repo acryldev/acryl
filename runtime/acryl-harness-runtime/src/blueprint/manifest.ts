@@ -14,7 +14,7 @@
 import { validateDefinition } from '@webboxes/blends-core'
 import { brandIdentity, type BrandIdentity } from './brand-identity.ts'
 import { builtInCatalog, type Blueprint, type BlueprintCatalog, type BlueprintRowId } from './blueprint.ts'
-import { blueprintRowForPackage, packageForBlueprintRow } from './compose.ts'
+import { blueprintRowForModule, rowForBlueprintRow } from './compose.ts'
 import { InvalidBlueprintError } from './definition.ts'
 
 export const BLENDS_API_VERSION = 'blends.acryl.dev/v1alpha1'
@@ -84,7 +84,7 @@ export function blueprintFromManifest(input: unknown, catalog: BlueprintCatalog 
       brand = row.disabled === true ? { kind: 'acryl' } : { kind: 'custom', identity: brandIdentity(row.config ?? {}) }
       continue
     }
-    const known = blueprintRowForPackage(row.name)
+    const known = blueprintRowForModule(row.name)
     if (known === undefined) continue   // an app plugin: loaded from the app's plugins/, not composed here
     if (row.disabled === true) rows.delete(known)
     else rows.add(known)
@@ -110,7 +110,7 @@ export function appManifest(input: { id: string, name: string, blueprint: Bluepr
     spec: {
       runtime: 'cordis',
       lineage: { blueprint: input.blueprint.id, blueprintVersion: '0.1.0' },
-      rows: [brandRow, ...input.blueprint.rows.map(id => { const row = packageForBlueprintRow(id); return { id: row.rowId, name: row.packageName } })],
+      rows: [brandRow, ...input.blueprint.rows.map(id => { const row = rowForBlueprintRow(id); return { id: row.rowId, name: row.module } })],
     },
   }
 }

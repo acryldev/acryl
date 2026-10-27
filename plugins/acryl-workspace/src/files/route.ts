@@ -1,6 +1,6 @@
 /** The worktree file routes: two reads and two changes, for the app's own page only. */
 
-import { Acryl, type Context } from 'acryl-router'
+import { Acryl, type Context } from 'acrylblends'
 import { INVALID_JSON, failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import {
   MAX_EDITABLE_BYTES,

@@ -5,8 +5,9 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { Acryl, type ConnectionInfo, type MountableApp } from 'acryl-router'
-import { serve } from 'acryl-router-http'
+import { Acryl } from 'acrylblends'
+import { type ConnectionInfo, type MountableApp } from 'acrylblends/cordis/router'
+import { serve } from 'acrylblends/cordis/router-http'
 
 export interface FakeRoute {
   readonly kind: 'exact' | 'prefix'

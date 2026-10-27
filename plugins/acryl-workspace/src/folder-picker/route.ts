@@ -1,6 +1,6 @@
 /** The native folder chooser, for the app's own page only. */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from 'acrylblends'
 import { failure, ownPage, type ReportError } from '../private-route.ts'
 import { PICK_FOLDER_UNAVAILABLE_STATUS, WORKSPACE_PICK_FOLDER_PATH, type PickFolderView } from './contract.ts'
 import { FolderPickerUnavailableError } from './picker.ts'

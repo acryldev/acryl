@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { BlockList, isIP } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { Acryl, connectionOf, type Context as RequestContext } from 'acryl-router'
+import { Acryl, type Context as RequestContext } from 'acrylblends'
+import { connectionOf } from 'acrylblends/cordis/router'
 import type { SettingsScope } from 'acryl-settings'
 import type { CatalogSourceManifest } from '../contracts/index.js'
 import { parseCatalogSnapshot, parseCatalogSource, validateLocalSourceRecords } from '../contracts/validate.js'
@@ -38,6 +39,7 @@ import { createRestrictedImageFetcher } from '../media/restricted-image.js'
 import { createMarketMediaService } from '../media/service.js'
 import { MarketInstallError, type MarketInstallService } from '../install/service.js'
 import { manualInstallHints } from '../install/manual.js'
+import type {} from 'acrylblends/cordis/router-http'
 
 // `SettingsNamespace` is a compile-time-validated string literal type, not a
 // branded runtime value; `ctx.acrylSettings.register` accepts this literal directly.

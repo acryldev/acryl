@@ -13,7 +13,7 @@ export {
   type BlueprintCatalog,
   type BlueprintRowId,
 } from './blueprint.ts'
-export { blueprintRowForPackage, composeBlueprintRows, DSH_CHAT_ROW_IDS, DSH_PLUGIN_MANAGER_ROW_ID, packageForBlueprintRow, PLUGIN_MANAGER_ROW_ID, type BlueprintComposition } from './compose.ts'
+export { blueprintRowForModule, composeBlueprintRows, currentModule, DSH_CHAT_ROW_IDS, DSH_PLUGIN_MANAGER_ROW_ID, packageOfModule, PLUGIN_MANAGER_ROW_ID, RENAMED_MODULES, rowForBlueprintRow, type BlueprintComposition } from './compose.ts'
 export { blueprintFromEnvironment } from './selection.ts'
 export { InvalidBlueprintError, parseBlueprint } from './definition.ts'
 export { readBlueprintFile, readStarters } from './selection.ts'

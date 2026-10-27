@@ -1,6 +1,6 @@
 /** What the running composition offers, for the app's own page only. */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from 'acrylblends'
 import { ownPage } from '../private-route.ts'
 import { WORKSPACE_CAPABILITIES_PATH, type WorkspaceCapabilities } from './contract.ts'
 

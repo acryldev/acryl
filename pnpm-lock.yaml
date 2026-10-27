@@ -547,30 +547,21 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
-      acryl-inspect:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-inspect
       acryl-plugin-context:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-context
-      acryl-router:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
-      acryl-state:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-state
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
       acryl-ui-tui:
         specifier: workspace:*
         version: link:../../plugins/acryl-ui-tui
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1448,9 +1439,6 @@ importers:
       acryl-harness-runtime:
         specifier: workspace:*
         version: link:../../runtime/acryl-harness-runtime
-      acryl-inspect:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-inspect
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
@@ -1466,12 +1454,6 @@ importers:
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
-      acryl-router:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -1481,15 +1463,15 @@ importers:
       acryl-sign-in:
         specifier: workspace:*
         version: link:../../plugins/acryl-sign-in
-      acryl-state:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-state
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
       acryl-workspace:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       adm-zip:
         specifier: ^0.6.1
         version: 0.6.1
@@ -2127,9 +2109,6 @@ importers:
       acryl-brand:
         specifier: workspace:*
         version: link:../../plugins/acryl-brand
-      acryl-inspect:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-inspect
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
@@ -2142,12 +2121,6 @@ importers:
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
-      acryl-router:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -2157,9 +2130,6 @@ importers:
       acryl-sign-in:
         specifier: workspace:*
         version: link:../../plugins/acryl-sign-in
-      acryl-state:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-state
       acryl-support:
         specifier: workspace:*
         version: link:../../plugins/acryl-support
@@ -2169,6 +2139,9 @@ importers:
       acryl-workspace:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -2222,12 +2195,9 @@ importers:
 
   examples/acryl-framework-starter:
     dependencies:
-      acryl-router:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      acryl-state:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-state
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2250,15 +2220,9 @@ importers:
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1
-      acryl-router:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router-http
-      acryl-state:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-state
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
@@ -2277,15 +2241,12 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../../runtime/acryl-control
-      acryl-door:
-        specifier: workspace:*
-        version: link:../acryl-door
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2314,9 +2275,6 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.3.7(@types/react@18.3.31)
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../acryl-router-http
       acryl-workspace:
         specifier: workspace:*
         version: link:../acryl-workspace
@@ -2426,12 +2384,12 @@ importers:
       '@electric-sql/pglite':
         specifier: 0.5.11
         version: 0.5.11
-      acryl-db:
-        specifier: workspace:*
-        version: link:../acryl-db
       acryl-db-postgres:
         specifier: workspace:*
         version: link:../acryl-db-postgres
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2457,9 +2415,9 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: ~3.18.4
         version: 3.18.4
-      acryl-db:
-        specifier: workspace:*
-        version: link:../acryl-db
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -3265,12 +3223,12 @@ importers:
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
       acryl-settings:
         specifier: workspace:*
         version: link:../acryl-settings
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       codemirror:
         specifier: 6.0.2
         version: 6.0.2
@@ -3326,9 +3284,6 @@ importers:
       acryl-app-shell:
         specifier: workspace:*
         version: link:../acryl-app-shell
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../acryl-router-http
       jsdom:
         specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.3.0)
@@ -3510,15 +3465,12 @@ importers:
       '@types/semver':
         specifier: ^7.7.1
         version: 7.8.0
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../acryl-settings
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       jsdom:
         specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.3.0)
@@ -4113,9 +4065,6 @@ importers:
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
-      acryl-inspect:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-inspect
       acryl-mount-anchors:
         specifier: workspace:*
         version: link:../../plugins/acryl-mount-anchors
@@ -4128,12 +4077,6 @@ importers:
       acryl-plugin-hub:
         specifier: workspace:*
         version: link:../../plugins/acryl-plugin-hub
-      acryl-router:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-router-http
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
@@ -4143,9 +4086,6 @@ importers:
       acryl-sign-in:
         specifier: workspace:*
         version: link:../../plugins/acryl-sign-in
-      acryl-state:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-state
       acryl-support:
         specifier: workspace:*
         version: link:../../plugins/acryl-support
@@ -4158,6 +4098,9 @@ importers:
       acryl-workspace:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace
+      acrylblends:
+        specifier: 0.9.0-next.1
+        version: 0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       adm-zip:
         specifier: ^0.6.1
         version: 0.6.1
@@ -8511,6 +8454,25 @@ packages:
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
+
+  acrylblends@0.9.0-next.1:
+    resolution: {integrity: sha512-vXSqImqUscgKpWS7zSIm1rkVTgHBfvLr8Q3c1/KkxLWWOXuDatQlZamEwto6guv9SFU/eIzuGcLuwEot6TYCHA==}
+    engines: {node: '>=22.19.0'}
+    hasBin: true
+    peerDependencies:
+      '@deepseek-ai/cordis': ^4.0.2
+      '@deepseek-ai/schemastery': ~3.18.4
+      react: '>=18'
+      vitest: '>=3'
+    peerDependenciesMeta:
+      '@deepseek-ai/cordis':
+        optional: true
+      '@deepseek-ai/schemastery':
+        optional: true
+      react:
+        optional: true
+      vitest:
+        optional: true
 
   adm-zip@0.6.1:
     resolution: {integrity: sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ==}
@@ -16799,6 +16761,13 @@ snapshots:
     dependencies:
       mime-types: 3.0.2
       negotiator: 1.1.0
+
+  acrylblends@0.9.0-next.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))):
+    optionalDependencies:
+      '@deepseek-ai/cordis': 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/schemastery': 3.18.4
+      react: 18.3.1
+      vitest: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
   adm-zip@0.6.1: {}
 

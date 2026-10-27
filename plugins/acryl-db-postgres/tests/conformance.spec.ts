@@ -1,4 +1,4 @@
-import { describeDbConformance } from 'acryl-db/conformance'
+import { describeDbConformance } from 'acrylblends/db/conformance'
 import { afterAll, beforeAll } from 'vitest'
 import { openDb } from '../src/open.ts'
 import { startTestServer, type TestServer } from './server.ts'

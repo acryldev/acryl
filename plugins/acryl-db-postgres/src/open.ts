@@ -4,10 +4,10 @@
  * plugin is a thin wrapper over this, so both run one code path. This entry imports nothing from Cordis.
  */
 
-import { applyMigrations, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acryl-db'
+import { applyMigrations, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acrylblends/db'
 import { PostgresDatabase } from './database.ts'
 
-export type { Db, DbExecutor, SqlValue } from 'acryl-db'
+export type { Db, DbExecutor, SqlValue } from 'acrylblends/db'
 
 export interface OpenDbOptions {
   /** A connection string, such as `process.env.DATABASE_URL`: `postgres://user:password@host:5432/database?sslmode=require`. */

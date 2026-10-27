@@ -7,11 +7,11 @@
 
 import { mkdirSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
-import { applyMigrations, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acryl-db'
+import { applyMigrations, MIGRATIONS_TABLE, readMigrationFiles, type Db, type SqlValue } from 'acrylblends/db'
 import { PgliteDatabase } from './database.ts'
 import { lockFolder } from './folder-lock.ts'
 
-export type { Db, DbExecutor, SqlValue } from 'acryl-db'
+export type { Db, DbExecutor, SqlValue } from 'acrylblends/db'
 
 /** The `dataDir` of a database that lives in memory until `close`. */
 export const IN_MEMORY = 'memory://'

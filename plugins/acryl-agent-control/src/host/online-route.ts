@@ -5,9 +5,9 @@
  * only, with a constant-time `Bearer` check (`operatorOnly`, `./http.ts`).
  */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
-import { UiControlError, parseUiRequest, type UiResult } from 'acryl-door/protocol'
+import { UiControlError, parseUiRequest, type UiResult } from 'acrylblends/door/protocol'
 import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from './http.ts'
 
 export const ONLINE_CALL_PATH = '/api/acryl-agent-control/online/call'

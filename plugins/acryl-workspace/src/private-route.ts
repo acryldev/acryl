@@ -3,8 +3,10 @@
  * body is small. Each domain folder builds its routes with these and `index.ts` mounts them under {@link WORKSPACE_API_PREFIX}.
  */
 
-import { Acryl, type Context, type MiddlewareHandler } from 'acryl-router'
-import { bodyLimit, loopbackOnly, methodNotAllowed } from 'acryl-router/middleware'
+import { Acryl, type Context, type MiddlewareHandler } from 'acrylblends'
+import { bodyLimit } from 'acrylblends/body-limit'
+import { loopbackOnly } from 'acrylblends/loopback-only'
+import { methodNotAllowed } from 'acrylblends/method-not-allowed'
 
 /** Every workspace route lives below this path; it is the one prefix the plugin mounts on the Web server. */
 export const WORKSPACE_API_PREFIX = '/api/acryl-workspace'

@@ -368,3 +368,4 @@ minimumReleaseAgeExclude:
   - '@deepseek-ai/node-addon-system-linux-arm64@0.1.2'
   - '@deepseek-ai/node-addon-system-linux-x64@0.1.2'
   - '@deepseek-ai/node-addon-system@0.1.2'
+  - acrylblends@0.9.0-next.1

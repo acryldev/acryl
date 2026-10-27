@@ -9,12 +9,15 @@ import {
   IDE_BLUEPRINT,
   InvalidBlueprintError,
   NewAppError,
+  appManifest,
   blueprintFromEnvironment,
   blueprintFromManifest,
+  brandIdentity,
   composeBlueprintRows,
   planNewApp,
   writeNewApp,
 } from '../src/index.ts'
+import { RENAMED_MODULES } from '../src/blueprint/index.ts'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
@@ -73,7 +76,7 @@ describe('acryl new', () => {
     expect(existsSync(join(dir, 'plugins'))).toBe(true)
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: join(dir, 'blend.yaml') })
     expect(blueprint.id).toBe('app.video-cut')
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
   })
 })
 
@@ -104,6 +107,16 @@ describe('reading a Blends manifest', () => {
   it('an app written before the context plugin was renamed still names it (spec 044 step 1b)', () => {
     expect(blueprintFromManifest(blend([{ id: 'extension-context', name: 'acryl-extension-context', disabled: true }])).rows).not.toContain('plugin-context')
     expect(blueprintFromManifest(blend([{ id: 'extension-context', name: 'acryl-extension-context' }])).rows).toContain('plugin-context')
+  })
+
+  it('an app written before the framework moved to acrylblends still names its packages, read as the acrylblends modules (spec 049 slice 17)', () => {
+    expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: 'acryl-inspect', disabled: true }])).rows).not.toContain('framework-kit')
+    expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: 'acryl-inspect' }])).rows).toContain('framework-kit')
+    expect(blueprintFromManifest(blend([{ id: 'acrylblends/cordis/inspect', name: 'acrylblends/cordis/inspect', disabled: true }])).rows).not.toContain('framework-kit')
+    // Written today: each row under its module, never an old name.
+    const written = appManifest({ id: 'app.y', name: 'Y', blueprint: BLANK_BLUEPRINT, brand: brandIdentity({ name: 'Y' }) }) as { spec: { rows: { id: string, name: string }[] } }
+    expect(written.spec.rows).toContainEqual({ id: 'acrylblends/cordis/inspect', name: 'acrylblends/cordis/inspect' })
+    expect(written.spec.rows.map(row => row.name).filter(name => Object.hasOwn(RENAMED_MODULES, name))).toEqual([])
   })
 
   it('a Blueprint manifest names a known Blueprint; the IDE can be selected that way', () => {

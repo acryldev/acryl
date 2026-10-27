@@ -21,7 +21,7 @@ import {
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginRequiredFrameworkPackages, materializeProfilePackage, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginRequiredFrameworkPackages, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 import { findOverlayPackage, resolveOverlayPackage } from './plugins/package-overlay.ts'
@@ -749,7 +749,7 @@ export function prepareDesktopProfile(
       if (marketFailure === undefined) {
         providerPatches.push({
           insert: [
-            ...COMMUNITY_MARKET_REQUIRED_ROWS.map(required => ({ id: required.rowId, name: required.packageName })),
+            ...COMMUNITY_MARKET_REQUIRED_ROWS.map(required => ({ id: required.rowId, name: required.module })),
             {
               id: DESKTOP_MARKET_IDENTITIES.community.rowId,
               name: DESKTOP_MARKET_IDENTITIES.community.packageName,
@@ -827,8 +827,8 @@ export function prepareDesktopProfile(
   // so this disables the stock `ui-layout` row unconditionally, not only when `mode === 'advanced'`.
   const requiredFrameworkPackages = instanceHome === undefined
     ? []
-    : pluginRequiredFrameworkPackages(instanceHome).filter(name => rows.get(name) === undefined && !blueprintRowIds.has(name))
-  for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageName, pathToFileURL(INSTALL_ANCHOR).href)
+    : pluginRequiredFrameworkPackages(instanceHome).filter(module => rows.get(module) === undefined && !blueprintRowIds.has(module))
+  for (const module of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageOfModule(module), pathToFileURL(INSTALL_ANCHOR).href)
   patches.push(...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })))
   if (requiredFrameworkPackages.includes('acryl-app-shell') && mode !== 'advanced') {
     patches.push({ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false })

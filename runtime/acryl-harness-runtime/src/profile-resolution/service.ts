@@ -3,7 +3,8 @@
  * Copyright (c) 2026 DeepSeek; see THIRD_PARTY_NOTICES.md). Deviation: the class extends the original `PluginPackages`, so every
  * consumer of the `pluginPackages` service (the plugin inventories, the plugin manager, the typert loader) keeps its type and its
  * inherited `metaOf`, and constructs it with no resolution, so the original installs nothing; the interception is the port's in
- * ./resolver.ts, which needs no native add-on.
+ * ./resolver.ts, which needs no native add-on. Second deviation: a resolve hook registered after the interception names what replaces a
+ * framework import from before the framework moved to acrylblends (./moved-framework.ts), and is deregistered with it.
  */
 
 /** Package metadata resolved through one runtime interception. */
@@ -13,6 +14,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { PluginPackages, type PluginPackage, type PluginPackagesConfig, type RuntimeResolution } from '@deepseek-ai/dsh-app-boot'
+import { registerMovedFrameworkImports } from './moved-framework.ts'
 import {
   barePackageName,
   installRuntimeInterception,
@@ -47,7 +49,10 @@ export class ProfilePluginPackages extends PluginPackages {
     const interception = installRuntimeInterception(config.resolution)
     this.disposeWorkers = registerWorkerResolution(config.resolution)
     this.routing = interception
+    // Registered after the interception, so an old framework import that the profile cannot resolve fails with what replaces it.
+    const movedImports = registerMovedFrameworkImports()
     ctx.effect(() => () => {
+      movedImports.deregister()
       this.disposeWorkers?.()
       interception.dispose()
     }, 'profile package resolution')
