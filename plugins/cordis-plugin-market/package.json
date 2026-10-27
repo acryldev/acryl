@@ -172,9 +172,6 @@
     }
   },
   "devDependencies": {
-    "acryl-router": "workspace:*",
-    "acryl-router-http": "workspace:*",
-    "acryl-settings": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-agent": "0.2.0-rc.2",
     "@deepseek-ai/dsh-agent-preset-registry": "0.2.0-rc.2",
@@ -186,8 +183,8 @@
     "@deepseek-ai/dsh-client-connection": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-locale": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-store": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-client-ui-layout": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-conversation": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-primitives": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-renderer": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-session": "0.2.0-rc.2",
@@ -223,6 +220,8 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/semver": "^7.7.1",
+    "acryl-settings": "workspace:*",
+    "acrylblends": "0.9.0-next.1",
     "jsdom": "29.1.1",
     "json-schema-to-typescript": "^15.0.4",
     "react": "18.3.1",

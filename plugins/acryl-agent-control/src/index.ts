@@ -10,8 +10,10 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
-import type { Acryl } from 'acryl-router'
-import { AuditLog, auditPath, pageChannelRoutes, UiChannel } from 'acryl-door/host'
+import type { Acryl } from 'acrylblends'
+import { AuditLog, auditPath, pageChannelRoutes, UiChannel } from 'acrylblends/door/host'
+import type {} from 'acrylblends/cordis/router'
+import type {} from 'acrylblends/cordis/router-http'
 import { createApprovalPolicy } from './host/approval.ts'
 import { auditRoutes } from './host/audit-route.ts'
 import { parseConfig } from './host/config.ts'
@@ -122,4 +124,4 @@ export {
   type UiOp,
   type UiRequest,
   type UiResult,
-} from 'acryl-door/protocol'
+} from 'acrylblends/door/protocol'

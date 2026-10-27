@@ -1,7 +1,7 @@
 /** The project registry, for the app's own page only: the list, its changes, and a stream of the list as it changes. */
 
-import { Acryl } from 'acryl-router'
-import { streamSSE } from 'acryl-router/helpers'
+import { Acryl } from 'acrylblends'
+import { streamSSE } from 'acrylblends/streaming'
 import { INVALID_JSON, failure, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import {
   ProjectRequestError,

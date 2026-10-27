@@ -1,7 +1,7 @@
 /** A workspace's brief (spec 043 T011), for the app's own page only: GET `?id=` reads it, POST `{ id, text }` saves it and rewrites the context document. */
 
-import { Acryl } from 'acryl-router'
-import { bodyLimit } from 'acryl-router/middleware'
+import { Acryl } from 'acrylblends'
+import { bodyLimit } from 'acrylblends/body-limit'
 import { INVALID_JSON, ownPage, readJson, WORKSPACE_API_PREFIX } from '../private-route.ts'
 import { MAX_BRIEF_CHARS, type SharedContext } from './service.ts'
 

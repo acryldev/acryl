@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describeDbConformance } from 'acryl-db/conformance'
+import { describeDbConformance } from 'acrylblends/db/conformance'
 import { afterAll } from 'vitest'
 import { IN_MEMORY, openDb } from '../src/open.ts'
 

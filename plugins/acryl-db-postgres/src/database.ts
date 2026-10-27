@@ -5,7 +5,7 @@
  */
 
 import pg from 'pg'
-import type { Db, DbExecutor, SqlValue } from 'acryl-db'
+import type { Db, DbExecutor, SqlValue } from 'acrylblends/db'
 import { bindStatement } from './dialect.ts'
 
 const OID = { int2: 21, int4: 23, int8: 20, float4: 700, float8: 701, bytea: 17 } as const

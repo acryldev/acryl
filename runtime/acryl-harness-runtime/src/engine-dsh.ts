@@ -59,7 +59,7 @@ import {
 } from './coding-capabilities.ts'
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
-import { blueprintFromEnvironment, composeBlueprintRows } from './blueprint/index.ts'
+import { blueprintFromEnvironment, composeBlueprintRows, currentModule, packageOfModule } from './blueprint/index.ts'
 import { findFreeWebPort, loopbackPortIsFree, webPortPatch } from './web-port.ts'
 import { LOOPBACK_WEB_HOST, selectInstance, type AppInstance } from './instance/index.ts'
 import { claimProfile } from './profile-owner.ts'
@@ -230,7 +230,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   const instance = provided ?? composition.instance ?? selectInstance()
   if (provided === undefined) ctx.root.provide('appInstance', instance)
   if (composition.installPackageUrl !== undefined && ctx.root.get('acrylFrameworkPackages' as never) === undefined) {
-    ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(composition.installPackageUrl))
+    ctx.root.provide('acrylFrameworkPackages', createAcrylFrameworkPackages(ctx, composition.installPackageUrl))
   }
   // Owned by this engine's fiber (not the root), so an engine swap releases the interception with the profile it served.
   if (composition.runtimeResolution !== undefined) await ctx.plugin(ProfilePluginPackages, { resolution: composition.runtimeResolution })
@@ -559,12 +559,32 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
  * through the existing `livePluginActivation` service - this object only makes the package resolvable.
  */
 export interface AcrylFrameworkPackages {
-  /** Symlink `name` into `profileDir`'s `node_modules`, replacing a stale link; throws if `name` does not resolve from this installation. */
+  /** Symlink the package of module `name` (read under its current name) into `profileDir`'s `node_modules`, replacing a stale link; throws if it does not resolve from this installation. */
   materialize(profileDir: string, name: string): void
+  /**
+   * What a required name is today: its module, the package that module lives in, and whether a Loader row of that module is mounted
+   * and enabled now. A module inside a package (`acrylblends/cordis/router`) is not a DSH bundle of its own, so it can only be used
+   * live when it is already mounted; a plugin in the app's `plugins/` folder that declares it gets the row at the next start.
+   */
+  describe(name: string): RequiredFrameworkModule
 }
 
-function createAcrylFrameworkPackages(installPackageUrl: string): AcrylFrameworkPackages {
-  return { materialize: (profileDir, name) => { materializeProfilePackage(profileDir, name, installPackageUrl) } }
+export interface RequiredFrameworkModule {
+  readonly module: string
+  readonly packageName: string
+  readonly mounted: boolean
+}
+
+function createAcrylFrameworkPackages(ctx: Context, installPackageUrl: string): AcrylFrameworkPackages {
+  return {
+    materialize: (profileDir, name) => { materializeProfilePackage(profileDir, packageOfModule(currentModule(name)), installPackageUrl) },
+    describe: (name) => {
+      const module = currentModule(name)
+      // Read at call time: the service outlives an engine swap, and the live tree is what a plugin will run against.
+      const mounted = [...ctx.root.loader.entries()].some(entry => entry.options.name === module && entry.options.disabled !== true)
+      return { module, packageName: packageOfModule(module), mounted }
+    },
+  }
 }
 
 declare module '@deepseek-ai/cordis' {
@@ -596,7 +616,8 @@ export function pluginRequiredFrameworkPackages(appHome: string): readonly strin
     try {
       const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh?: { requiresAcrylPackages?: unknown } }
       const required = manifest.dsh?.requiresAcrylPackages
-      if (Array.isArray(required)) for (const name of required) if (typeof name === 'string') names.add(name)
+      // Each entry is a module, mounted as its own row; a name from before the framework moved to acrylblends is read as today's module.
+      if (Array.isArray(required)) for (const name of required) if (typeof name === 'string') names.add(currentModule(name))
     } catch { /* a malformed plugin package.json is the plugin's own problem, reported when it installs, not here */ }
   }
   return [...names]
@@ -652,9 +673,10 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   // The app's own committed plugins may each need an ACRYL-owned framework package (see
   // `pluginRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
   // agent-runtime install path `acryl-plugin-context` otherwise uses).
+  const composedRowIds = new Set(rowsComposition.patches.flatMap(patch => patch.insert ?? []).map(row => row.id))
   const requiredFrameworkPackages = pluginRequiredFrameworkPackages(instance.home)
-    .filter(name => !existingRowIds.has(name) && !rowsComposition.packages.includes(name))
-  for (const packageName of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageName, installPackageUrl)
+    .filter(module => !existingRowIds.has(module) && !composedRowIds.has(module))
+  for (const module of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageOfModule(module), installPackageUrl)
   // A Blueprint that never enables the IDE's own `workspace` capability (every Blank-grown project) keeps the
   // stock `ui-layout` row active, because `createAcrylShellCapabilityPatches`'s disabling patch is gated behind
   // `ACRYL_CODING_CAPABILITIES`' own capability table, which a third-party extension cannot opt into - it is

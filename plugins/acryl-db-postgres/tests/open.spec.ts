@@ -96,7 +96,7 @@ describe('openDb', () => {
 
   it('ships pg, not PGlite: PGlite only serves the tests', () => {
     const manifest = JSON.parse(readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8')) as { dependencies: Record<string, string>, devDependencies: Record<string, string> }
-    expect(Object.keys(manifest.dependencies).sort()).toEqual(['@deepseek-ai/schemastery', 'acryl-db', 'pg'])
+    expect(Object.keys(manifest.dependencies).sort()).toEqual(['@deepseek-ai/schemastery', 'acrylblends', 'pg'])
     expect(Object.keys(manifest.devDependencies)).toContain('@electric-sql/pglite')
   })
 })

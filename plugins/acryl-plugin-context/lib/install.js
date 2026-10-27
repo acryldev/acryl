@@ -144,7 +144,7 @@ export function ensureProfileBundle(profileDir, name, fs = { existsSync, readFil
  * from that list, "cannot be activated by this host", even when it is already present in `node_modules`), and
  * activate it as a Loader entry (the existing `livePluginActivation` service, the same one that activates the
  * extension itself - already-active packages are left alone).
- * @param {{ acrylFrameworkPackages?: { materialize(profileDir: string, name: string): void }, live: any, profileDir?: string }} services
+ * @param {{ acrylFrameworkPackages?: { materialize(profileDir: string, name: string): void, describe(name: string): { module: string, packageName: string, mounted: boolean } }, live: any, profileDir?: string }} services
  * @param {readonly string[]} names
  * @param {object} [fs]
  */
@@ -156,9 +156,17 @@ export async function materializeRequiredAcrylPackages(services, names, fs) {
   if (!services.profileDir) return { errors: ['the active profile directory is not available to resolve ACRYL framework packages'] }
   for (const name of names) {
     try {
-      services.acrylFrameworkPackages.materialize(services.profileDir, name)
-      ensureProfileBundle(services.profileDir, name, fs)
-      if (services.live.statusOf(name) === undefined) await services.live.activate(name)
+      const required = services.acrylFrameworkPackages.describe(name)
+      services.acrylFrameworkPackages.materialize(services.profileDir, required.module)
+      if (required.module !== required.packageName) {
+        // A module inside a package (an acrylblends Cordis plugin) is not a bundle of its own: it is usable once its row is mounted.
+        if (!required.mounted) {
+          errors.push(`"${required.module}" is not mounted in this app and cannot be started while it runs: declare it in "dsh.requiresAcrylPackages" of a plugin in the app's plugins/ folder, and it mounts at the next start`)
+        }
+        continue
+      }
+      ensureProfileBundle(services.profileDir, required.packageName, fs)
+      if (services.live.statusOf(required.packageName) === undefined) await services.live.activate(required.packageName)
     } catch (cause) {
       errors.push(`could not make "${name}" live: ${cause instanceof Error ? cause.message : String(cause)}`)
     }

@@ -1,6 +1,6 @@
 /** The custom agent catalog and the agent settings, for the app's own page only. */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from 'acrylblends'
 import { failure, isRecord, jsonBody, ownPage, readJson, type ReportError } from '../private-route.ts'
 import type { AgentCatalog } from './catalog.ts'
 import { WORKSPACE_AGENT_SETTINGS_PATH, WORKSPACE_AGENTS_PATH, WORKSPACE_AGENTS_REMOVE_PATH } from './contract.ts'

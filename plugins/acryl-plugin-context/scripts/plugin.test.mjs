@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { test } from 'node:test'
-import { previousStagedDir, lintPackageDir, installLocalPlugin, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
+import { previousStagedDir, lintPackageDir, installLocalPlugin, materializeRequiredAcrylPackages, listLocalPlugins, removeLocalPlugin, reloadLocalPlugins, syncOnStartup, ensureProfileBundle, pinPublicHoistPattern, describeInstalledExtensions } from '../lib/install.js'
 import { discoverPlugins, globalPluginsDir, installState } from '../lib/reconcile.js'
 import { captureBlend, verifyBlend, writeBlend, readBundleRows } from '../lib/blend-capture.js'
 import { applyBlend } from '../lib/blend-apply.js'
@@ -984,4 +984,32 @@ test('startup sync: an app plugin whose install fails at a machine stage is trie
     assert.deepEqual([refused.installed, refused.retried, refused.failed.map(f => f.name)], [[], [], ['ext-unlinted']])
     assert.deepEqual(checked.calls, [], 'a plugin that fails its check is not installed, and not tried again')
   } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('required framework modules: a package is linked, registered and started; a mounted acrylblends module is only linked; an unmounted one is refused with what to do', async () => {
+  const profileDir = mkdtempSync(join(tmpdir(), 'acryl-required-'))
+  try {
+    writeFileSync(join(profileDir, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: [] } } }))
+    const linked = []
+    const started = []
+    const modules = {
+      'acryl-router': { module: 'acrylblends/cordis/router', packageName: 'acrylblends', mounted: true },
+      'acrylblends/cordis/db': { module: 'acrylblends/cordis/db', packageName: 'acrylblends', mounted: false },
+      'acryl-app-shell': { module: 'acryl-app-shell', packageName: 'acryl-app-shell', mounted: false },
+    }
+    const services = {
+      profileDir,
+      acrylFrameworkPackages: { materialize: (_dir, name) => { linked.push(name) }, describe: name => modules[name] },
+      live: { statusOf: () => undefined, activate: async (name) => { started.push(name) } },
+    }
+    const result = await materializeRequiredAcrylPackages(services, Object.keys(modules))
+    assert.deepEqual(linked, ['acrylblends/cordis/router', 'acrylblends/cordis/db', 'acryl-app-shell'])
+    assert.deepEqual(started, ['acryl-app-shell'])
+    // Only a package is a bundle: the profile's bundle list never names a module inside a package.
+    assert.deepEqual(JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dsh.profile.bundles, ['acryl-app-shell'])
+    assert.equal(result.errors.length, 1)
+    assert.match(result.errors[0], /"acrylblends\/cordis\/db" is not mounted in this app .* plugins\/ folder, and it mounts at the next start/)
+  } finally {
+    rmSync(profileDir, { recursive: true, force: true })
+  }
 })

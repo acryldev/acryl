@@ -330,10 +330,10 @@ describe('desktop profile composition', {
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.community.rowId
       || row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
     // The router rows are the framework kit every Blend carries, whether or not a Market is selected.
-    for (const id of ['acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
+    for (const id of ['acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
   })
 
-  it('mounts a row an app plugin requires once when the Blueprint already composes it', () => {
+  it('mounts a row an app plugin requires once when the Blueprint already composes it, under its name from before the framework moved too', () => {
     const home = temporaryHome()
     const appHome = dirname(home)
     const pluginDir = join(appHome, 'plugins', 'todo')
@@ -341,8 +341,9 @@ describe('desktop profile composition', {
     writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ name: 'todo', dsh: { requiresAcrylPackages: ['acryl-router', 'acryl-state'] } }))
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', undefined, undefined, undefined, undefined, undefined, undefined, appHome)
     const ids = prepared.patches.flatMap(patch => patch.insert ?? []).map(row => row.id)
-    expect(ids.filter(id => id === 'acryl-router')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acryl-state')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acrylblends/cordis/state')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acryl-router' || id === 'acryl-state')).toEqual([])
   })
 
   it('inserts the community Market as one canonical row only after explicit selection', () => {
@@ -362,10 +363,10 @@ describe('desktop profile composition', {
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
     // The community Market injects `router` and `routerHttp` (spec 046): their rows come with it, once, just before it.
     const ids = rows.map(row => row.id)
-    expect(ids.filter(id => id === 'acryl-router')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acryl-router-http')).toHaveLength(1)
-    expect(ids.indexOf('acryl-router')).toBeLessThan(ids.indexOf('acryl-router-http'))
-    expect(ids.indexOf('acryl-router-http')).toBe(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId) - 1)
+    expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acrylblends/cordis/router-http')).toHaveLength(1)
+    expect(ids.indexOf('acrylblends/cordis/router')).toBeLessThan(ids.indexOf('acrylblends/cordis/router-http'))
+    expect(ids.indexOf('acrylblends/cordis/router-http')).toBe(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId) - 1)
   })
 
   it('loads the exact dshmarket dependency as a direct bundle only after explicit selection', () => {

@@ -9,7 +9,7 @@
 import type {} from '@acryl/ui/frame'
 import type {} from 'acryl-workspace/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import { PageChannel, UiDriver, UserInputClock } from 'acryl-door/page'
+import { PageChannel, UiDriver, UserInputClock } from 'acrylblends/door/page'
 import { createAuditApi } from './audit-api.ts'
 import { AuditSection } from './AuditSection.tsx'
 import { AgentDrivingIndicator } from './Indicator.tsx'
@@ -91,5 +91,5 @@ export function apply(ctx: ClientContext): void {
   }, AgentDrivingIndicator))
 }
 
-export { PageChannel, UiDriver } from 'acryl-door/page'
+export { PageChannel, UiDriver } from 'acrylblends/door/page'
 export { AgentDrivingIndicator } from './Indicator.tsx'

@@ -6,8 +6,8 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { defineAcrylTool } from 'acryl-control'
-import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from 'acryl-door/protocol'
-import { renderSnapshot, type AuditLog, type UiChannel } from 'acryl-door/host'
+import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from 'acrylblends/door/protocol'
+import { renderSnapshot, type AuditLog, type UiChannel } from 'acrylblends/door/host'
 
 /** The tool name for each operation. */
 export const TOOL_NAMES: Readonly<Record<UiOp, string>> = {

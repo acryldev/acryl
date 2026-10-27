@@ -5,8 +5,11 @@
  */
 
 import { timingSafeEqual } from 'node:crypto'
-import { Acryl, connectionOf, type Context, type MiddlewareHandler } from 'acryl-router'
-import { bodyLimit, loopbackOnly, methodNotAllowed } from 'acryl-router/middleware'
+import { Acryl, type Context, type MiddlewareHandler } from 'acrylblends'
+import { connectionOf } from 'acrylblends/cordis/router'
+import { bodyLimit } from 'acrylblends/body-limit'
+import { loopbackOnly } from 'acrylblends/loopback-only'
+import { methodNotAllowed } from 'acrylblends/method-not-allowed'
 import { error, isLoopbackAddress } from 'acryl-loopback-http'
 
 /** Every Agent Control route lives below this path; it is the one prefix the plugin mounts on the Web server. */

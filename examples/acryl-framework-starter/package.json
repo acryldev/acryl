@@ -12,8 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "acryl-router": "workspace:*",
-    "acryl-state": "workspace:*"
+    "acrylblends": "0.9.0-next.1"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
