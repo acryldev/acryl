@@ -242,12 +242,22 @@ is reported at its deadline with the cause and a new target.
 | --- | --- | --- | --- | --- | --- | --- |
 | M1 | acrylblends 0.7.8 | Blends | pg-out on main with 4 green workflows; 0.7.8 on npm; a fresh `notes` app from the registry has `plugins/`, `AGENTS.md`, `CLAUDE.md`, the skill, and its tests pass (checked by the coordinator) | the shape agents will read, testable by the owner | 2026-10-27 08:00 | met 03:55, 0.7.8 verified |
 | M2 | Every template a Cordis app (slice 16) | Blends | `nodejs`, `notes`, `chat` are Cordis apps; each template's tests pass; `check-deps` clean; 4 green workflows | one kind of app, the door's home | 2026-10-27 16:00 | met 04:08; the door in each template moves to M3 |
-| M3 | The door in every app (slices 9, 10) | Fork3 | the slice 9 gate (fresh app answers `tool list`, `look` from a real browser, nothing under `.acryl/` staged) and the slice 10 gate (two apps, each folder reaches its own); DSH door live check in Desktop and Web | agents can act inside the app | 2026-10-27 22:00 | door on main 05:09 (b05dfa2d); open: the fresh-app check on the real template |
+| M3 | The door in every app (slices 9, 10) | Fork3 | the slice 9 gate (fresh app answers `tool list`, `look` from a real browser, nothing under `.acryl/` staged) and the slice 10 gate (two apps, each folder reaches its own); DSH door live check in Desktop and Web | agents can act inside the app | 2026-10-27 22:00 | met: door on main 05:09 (b05dfa2d); the fresh-app check passed on the registry-created template with 0.8.0 (10:28) |
 | M4 | Looking and one verb list (slices 12, 13) | Fork3 | an agent reads a value on the page without changing its markup; one test compares the verbs of CLI, MCP and chat | agents can check their own work | 2026-10-28 08:00 | met 05:09 on main (slices 12, 13; 13e830e7) |
-| M5 | The product test, released as 0.8.0 | Blends | Part 2 gate: Claude Code, Codex and pi each build the same feature in a fresh app from the docs alone, check it through the door, it survives a restart and a fresh clone, `git status` shows no secret; 0.8.0 on npm | the owner starts testing and giving feedback | 2026-10-28 14:00 | open |
-| M6 | One home in acrylblends (slice 17) | Blends | one repository builds and publishes; ACRYL's gates pass on the published package | no copy step, no drift | 2026-10-29 12:00 | design on main (40b9dbec); starts after M3 |
+| M5 | The product test, released as 0.8.0 | Blends | Part 2 gate: Claude Code, Codex and pi each build the same feature in a fresh app from the docs alone, check it through the door, it survives a restart and a fresh clone, `git status` shows no secret; 0.8.0 on npm | the owner starts testing and giving feedback | 2026-10-28 14:00 | met: product test passed (Claude Code 217 s, Codex 67 s, pi 379 s); 0.8.0 on npm 10:28, 0.8.1 10:39 |
+| M6 | One home in acrylblends (slice 17) | Blends | one repository builds and publishes; ACRYL's gates pass on the published package | no copy step, no drift | 2026-10-29 12:00 | Blends' side met 13:15: acrylblends 0.9.1 and create-acrylblends 0.3.3 published from acrylblends alone (0.9.0 and 0.3.2 were broken for installed users for about 15 minutes, deprecated, and the `verify:packed` gate added); ACRYL on the published package with 5 green workflows (659f5cc0); open: commit B (pin `^0.9.1`, delete the moved folders) |
 
-After M5: slice 14 (built-in chat), 15 (bring your own tool) and 2b (PGlite) get milestones when M5 passes.
+Slices 14 (the agent panel), 15 (bring your own tool) and 2b (PGlite) landed alongside M4-M5 without milestones of their own.
+
+### Next milestones (proposed by the coordinator 2026-10-27, not yet confirmed by the owner)
+
+Beyond spec 049. Targets assume today's pace and start from M6's close.
+
+| # | Milestone | Owner | Gate (measurable) | Relevant because | Target |
+| --- | --- | --- | --- | --- | --- |
+| M7 | The IDE on the framework (spec 048 T003-T010) | Fork3 | `webServer` registrations in production source outside `acryl-router-http` go from 19 to 0, and `scripts/verify-layout.mjs` gates that count; the DSH import ceiling does not rise; Web and Desktop live checks show no user-visible change; all workflows green | the IDE stops depending on DSH's server shape | 2026-10-28 20:00 |
+| M8 | Drivers (spec 046 T028-T029) | Fork3 + Blends | DSH chat as `acryl-driver-dsh` with no DSH import left in the framework; a PTY driver runs `claude`, `codex` and `pi` inside an app folder and each completes one task through the door (the agent panel's headless drivers are the starting point) | DSH becomes one agent among others | 2026-10-29 20:00 |
+| M9 | The hosted workspace on WebBoxes.ai (owner goal of 2026-10-17) | to assign | an app made with `npm create acrylblends` runs on WebBoxes.ai, reachable by URL, with its agent working through the door | the four-week goal | set when M8 closes, after the owner confirms the order |
 
 ## Open questions for the owner
 
