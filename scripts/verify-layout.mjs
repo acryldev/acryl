@@ -72,6 +72,7 @@ packages:
   - plugins/acryl-db
   - plugins/acryl-db-sqlite
   - plugins/acryl-db-postgres
+  - plugins/acryl-db-pglite
   - plugins/acryl-kv
   - plugins/acryl-kv-json
   - plugins/acryl-door

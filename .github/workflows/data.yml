@@ -12,6 +12,7 @@ on:
       - 'plugins/acryl-db/**'
       - 'plugins/acryl-db-sqlite/**'
       - 'plugins/acryl-db-postgres/**'
+      - 'plugins/acryl-db-pglite/**'
       - 'plugins/acryl-kv/**'
       - 'plugins/acryl-kv-json/**'
       - 'plugins/acryl-kv-db/**'
@@ -23,6 +24,7 @@ on:
       - 'plugins/acryl-db/**'
       - 'plugins/acryl-db-sqlite/**'
       - 'plugins/acryl-db-postgres/**'
+      - 'plugins/acryl-db-pglite/**'
       - 'plugins/acryl-kv/**'
       - 'plugins/acryl-kv-json/**'
       - 'plugins/acryl-kv-db/**'
@@ -67,7 +69,7 @@ jobs:
 
       # Only the data packages and what they depend on: they import nothing from the rest of the workspace.
       - name: Install the data packages
-        run: corepack pnpm install --frozen-lockfile --filter "acryl-db-sqlite..." --filter "acryl-db-postgres..." --filter "acryl-kv-db..." --filter "acryl-kv-json..."
+        run: corepack pnpm install --frozen-lockfile --filter "acryl-db-sqlite..." --filter "acryl-db-postgres..." --filter "acryl-db-pglite..." --filter "acryl-kv-db..." --filter "acryl-kv-json..."
 
       - name: Build, typecheck and test the port
         run: corepack pnpm --filter acryl-db run check
@@ -78,6 +80,10 @@ jobs:
       # PGlite (a devDependency) serves the suite over its socket server, so the provider's network driver is tested with no Postgres installed.
       - name: Build, typecheck and test the Postgres provider
         run: corepack pnpm --filter acryl-db-postgres run check
+
+      # PGlite in this process, with its data folder on this runner's file system: the suite, data across a reopen, and the folder lock.
+      - name: Build, typecheck and test the embedded Postgres provider
+        run: corepack pnpm --filter acryl-db-pglite run check
 
       - name: Build, typecheck and test the kv port
         run: corepack pnpm --filter acryl-kv run check

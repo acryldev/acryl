@@ -117,6 +117,17 @@ jobs:
         working-directory: apps/acryl-desktop
         run: corepack pnpm exec vitest run tests/windows tests/package-win.spec.ts tests/verify-win-installer.spec.ts tests/verify-win-portable.spec.ts --reporter=verbose
 
+      # spec 049 slice 2b: PGlite in Electron's main process (not ELECTRON_RUN_AS_NODE), with Desktop's own Electron, reopening its data folder.
+      - name: The embedded Postgres provider in Electron's main process
+        run: |
+          corepack pnpm --filter "acryl-db-pglite..." run build
+          # Electron fetches its binary on the first require and says so on stdout; fetch it first, so the path below is the only output.
+          node apps/acryl-desktop/node_modules/electron/install.js
+          electron=$(node -p "require('./apps/acryl-desktop/node_modules/electron')")
+          test -f "$electron" || { echo "no Electron binary at $electron"; exit 1; }
+          timeout 120 "$electron" --no-sandbox plugins/acryl-db-pglite/scripts/electron-main-check.mjs 2>&1 | tee electron-pglite.log
+          grep -q "acryl-db-pglite in Electron main: ok" electron-pglite.log
+
   # The release's Windows Desktop build runs `corepack pnpm run test`, one `&&` chain that stops at the first failing package. This job runs the same
   # packages from that same script but goes on past a failure and names every failing package, so a Windows-only failure shows on an ordinary push,
   # not first in a release (0.2.5's dry run: Windows' own prompt-size ceilings had not been raised with the other platforms').

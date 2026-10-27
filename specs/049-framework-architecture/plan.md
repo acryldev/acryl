@@ -170,6 +170,43 @@ tested over the wire, through the driver it ships with.
        the rolled-back one;
      - the other 11 tests need no server (the scanner 8, the import closure 1, "ships pg" 1, "no url" 1).
 
+## Slice 2b - `acryl-db-pglite`, embedded Postgres (2026-10-27, Fork3)
+
+Mini-design:
+
+1. Boundary: a plugin of its own, `acryl-db-pglite`, a third provider of `db`. It is chosen per app like the other two, and replacing
+   `acryl-db-sqlite` with it touches no consumer. It is a separate package, not a second opener in `acryl-db-postgres`: it ships PGlite
+   (25 MB installed, a 10 MB WebAssembly module and 6 MB of data), which a server user should not install. The shared Postgres dialect code (the `?` scanner and the binding
+   count check) is `acryl-db-postgres/dialect`, an entry that imports nothing, so `pg` is installed but never loaded.
+2. Provides and consumes: provides `db`. It reads the optional `appInstance.home` for its default folder (`<home>/pglite`), as
+   `acryl-db-sqlite` does. There is no hard `inject`.
+3. Effects: one effect opens the database, and its disposers run in reverse. `db` is withdrawn first. Then PGlite closes after the
+   running calls, which writes the folder out, and the lock file goes last.
+4. Configuration: `dataDir`, absolute or relative to the app (`memory://` keeps it in memory), and `migrations`. The row id is
+   `acryl-db-pglite`, the package name.
+5. Events and durability: the data folder is the durable state. One process per folder: PGlite does not lock its folder, and a probe
+   showed two processes writing one cluster at once. The provider holds `acryl-db-pglite.lock` (pid and token). A live holder,
+   this process included, fails the open; a dead holder's lock is taken over.
+6. Verification: a real Loader row on the built `lib/index.js`:
+   - PENDING until it provides `db`;
+   - five unload and reload cycles, each releasing the lock and keeping the data;
+   - the app-home default;
+   - a second row on the same folder fails while the first keeps serving.
+
+As built:
+
+- The `db` conformance suite passes unchanged, twice: in memory and on a data folder.
+- Data survives closing and reopening: in this process, from a second Node process that wrote and closed, and across three reopens
+  with migrations applied once.
+- The lock: refused in this process and from a live second process, taken over from an exited one, and released when a migration
+  fails (the schema is unchanged).
+- Electron's main process: `scripts/electron-main-check.mjs`, run as Electron's main script with ELECTRON_RUN_AS_NODE refused. It
+  migrates, writes in a transaction, closes, reopens and reads. Electron's own folders go to a throwaway userData.
+  - Passed locally on Electron 44.9.3, Node 24.22.0, darwin arm64.
+  - CI runs it with Desktop's Electron in Desktop on Linux (xvfb) and in Windows' Desktop job.
+- The Data workflow runs the package's check on its six legs. PGlite's types never reach the package's public declarations (they need
+  Emscripten's and WebAssembly's globals), and a test pins that.
+
 ## Slice 3 - `kv` and the JSON provider (2026-10-26, Blends; moved from Fork3)
 
 `kv` is for an app too small for SQL: named JSON documents. It follows `acryl-db`'s pattern exactly: a port with a plain root entry, the Cordis

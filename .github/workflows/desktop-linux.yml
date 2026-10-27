@@ -61,6 +61,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb libnss3 libgbm1 libasound2t64 libgtk-3-0t64 libxss1 libxtst6 libatk-bridge2.0-0t64 libdrm2 libxkbcommon0
 
+      # spec 049 slice 2b: PGlite in Electron's main process (not ELECTRON_RUN_AS_NODE), with Desktop's own Electron, reopening its data folder.
+      - name: The embedded Postgres provider in Electron's main process
+        run: |
+          corepack pnpm --filter "acryl-db-pglite..." run build
+          # Electron fetches its binary on the first require and says so on stdout; fetch it first, so the path below is the only output.
+          node apps/acryl-desktop/node_modules/electron/install.js
+          electron=$(node -p "require('./apps/acryl-desktop/node_modules/electron')")
+          test -f "$electron" || { echo "no Electron binary at $electron"; exit 1; }
+          timeout 120 xvfb-run -a "$electron" --no-sandbox plugins/acryl-db-pglite/scripts/electron-main-check.mjs 2>&1 | tee electron-pglite.log
+          grep -q "acryl-db-pglite in Electron main: ok" electron-pglite.log
+
       # `pnpm run desktop` builds first and then starts Electron, so the budget has to cover the build (about a minute on a busy runner) plus the boot; a 75
       # second budget killed the build before Electron started and read as "the Desktop never started".
       - name: Run the Desktop for up to 4 minutes (what the developer runs)

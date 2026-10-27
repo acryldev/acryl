@@ -10,6 +10,7 @@ interface; it is not part of `acrylblends` or the templates, and an app adds it 
 | The app | Use | State |
 | --- | --- | --- |
 | Normal web or desktop app, users, lists, orders | `db` with SQLite (the `notes` and `chat` templates) | available |
+| SQLite is not enough, but no server | `db` with the optional `acryl-db-pglite` plugin: Postgres in the app's process, one folder in the app home | optional, not in `acrylblends` |
 | Must use Postgres or Supabase | `db` with the optional `acryl-db-postgres` plugin | optional, not in `acrylblends` |
 | Tiny, one person, a few screens | [`kv`](#a-tiny-app-kv), named JSON documents with no SQL | available |
 
@@ -190,7 +191,7 @@ await db.transaction(async (tx) => {
 
 ## Writing SQL that moves to Postgres
 
-The optional Postgres plugin serves the same interface. SQL that stays inside this list runs on both:
+The optional Postgres plugins (`acryl-db-pglite` embedded, `acryl-db-postgres` on a server) serve the same interface. SQL that stays inside this list runs on both:
 
 - Placeholders are `?` on every provider.
 - Use `RETURNING` to get a new row, not a driver-specific "last id".

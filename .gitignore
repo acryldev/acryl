@@ -44,6 +44,7 @@ plugins/acryl-state/lib/
 plugins/acryl-db/lib/
 plugins/acryl-db-sqlite/lib/
 plugins/acryl-db-postgres/lib/
+plugins/acryl-db-pglite/lib/
 plugins/acryl-kv/lib/
 plugins/acryl-kv-json/lib/
 plugins/acryl-door/lib/
