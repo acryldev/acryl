@@ -232,6 +232,23 @@ and a fresh clone; `git status` shows no secret.
 
 Spec 048 (the IDE on the framework) continues in parallel.
 
+## Milestones (S.M.A.R.T., set 2026-10-27 03:10 CET)
+
+Specific, Measurable (the gate), Attainable (from today's agent pace, including about 30-40 minutes of CI per landing), Relevant (why
+it matters), Time-bound (CET). The next milestone starts the moment its predecessor's gate passes, never at the date. A missed target
+is reported at its deadline with the cause and a new target.
+
+| # | Milestone | Owner | Gate (measurable) | Relevant because | Target |
+| --- | --- | --- | --- | --- | --- |
+| M1 | acrylblends 0.7.8 | Blends | pg-out on main with 4 green workflows; 0.7.8 on npm; a fresh `notes` app from the registry has `plugins/`, `AGENTS.md`, `CLAUDE.md`, the skill, and its tests pass (checked by the coordinator) | the shape agents will read, testable by the owner | 2026-10-27 08:00 |
+| M2 | Every template a Cordis app (slice 16) | Blends | `nodejs`, `notes`, `chat` are Cordis apps; each template's tests pass; `check-deps` clean; 4 green workflows | one kind of app, the door's home | 2026-10-27 16:00 |
+| M3 | The door in every app (slices 9, 10) | Fork3 | the slice 9 gate (fresh app answers `tool list`, `look` from a real browser, nothing under `.acryl/` staged) and the slice 10 gate (two apps, each folder reaches its own); DSH door live check in Desktop and Web | agents can act inside the app | 2026-10-27 22:00 |
+| M4 | Looking and one verb list (slices 12, 13) | Fork3 | an agent reads a value on the page without changing its markup; one test compares the verbs of CLI, MCP and chat | agents can check their own work | 2026-10-28 08:00 |
+| M5 | The product test, released as 0.8.0 | Blends | Part 2 gate: Claude Code, Codex and pi each build the same feature in a fresh app from the docs alone, check it through the door, it survives a restart and a fresh clone, `git status` shows no secret; 0.8.0 on npm | the owner starts testing and giving feedback | 2026-10-28 14:00 |
+| M6 | One home in acrylblends (slice 17) | Blends | one repository builds and publishes; ACRYL's gates pass on the published package | no copy step, no drift | 2026-10-29 12:00 |
+
+After M5: slice 14 (built-in chat), 15 (bring your own tool) and 2b (PGlite) get milestones when M5 passes.
+
 ## Open questions for the owner
 
 1. **The `acryl` name.** When the framework takes the `acryl` npm name, does the current CLI agent become `acryl agent` (one package,
