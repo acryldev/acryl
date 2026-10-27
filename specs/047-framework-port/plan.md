@@ -175,3 +175,8 @@ streaming; ssg; the remaining host adapters; the bun adapter last. Node is the t
   `stream.aborted` false; only cancelling the body reader fires `stream.onAbort`. First check what the upstream does at the pinned commit.
   If it behaves the same, document it and leave it as is. Change it only with a recorded deviation and tests on both the in-process and
   the socket paths. Found by the chat gate (Blends, 2026-10-25). Scheduled with T022.
+- [x] T024 (done 2026-10-27, Blends: `plugins/acryl-router/src/service.ts` `snapshot`, tests `plugins/acryl-router/tests/subapp-basepath.spec.ts` and the router case in `plugins/acryl-node-server/tests/client-modules.spec.ts`) `basePath(c)` lost the prefix of an app nested in another app that is mounted on the router.
+  `new Acryl().route('/client', clientModules(...))` mounted with `ctx.router.route('/', thatApp)` answered 404 for every file: the router's `snapshot` re-registered each route with `tagged.on(...)`, which gives it the base path of `tagged`
+  (`/`), so `basePath(c)` was `/` and `clientModules` cut nothing off the request path (`/client/counter.tsx` was looked up as a file named `client/counter.tsx`). The core alone was right (`app.request`), and so was `ctx.router.route('/client', clientModules(...))`
+  mounted directly, which is why the unit tests passed. Found by the notes and chat Cordis templates (slice 16). Fix: keep each route's own `basePath` in `snapshot`. The failing tests were written first (router: the nested cases returned `/|tools/a/b`;
+  node-server: a `clientModules` nested in a sub-app answered 404 through the router) and fail again with the fix removed. Every user who nests `clientModules` (or any handler that reads `basePath(c)`) in a sub-app was affected.

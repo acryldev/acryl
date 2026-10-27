@@ -198,6 +198,9 @@ export class Router extends Service {
       }
       ;(handler as unknown as Record<string, unknown>)[COMPOSED_HANDLER] = inner
       tagged.on(route.method, route.path, handler)
+      // `on` registers under the base path of `tagged` (`/`), which would hide the prefix of a nested app from `basePath(c)`; keep the route's own.
+      const registered = tagged.routes.at(-1)
+      if (registered !== undefined) registered.basePath = route.basePath
     }
     return mount
   }

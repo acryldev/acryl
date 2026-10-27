@@ -8,7 +8,8 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Acryl } from 'acryl-router'
+import { Context } from '@deepseek-ai/cordis'
+import { Acryl, apply as routerApply, name as routerName } from 'acryl-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CompileCache, buildClientModules, clientModules } from '../src/client-modules.ts'
 
@@ -231,5 +232,24 @@ describe('buildClientModules', () => {
     await withEnv(undefined, async () => {
       expect(await (await serve({ root, runtimeDir, compiled: outDir }).request('/client/a.ts')).text()).toContain('export const a = 2')
     })
+  })
+})
+
+describe('clientModules inside an app that is mounted on the router', () => {
+  it('serves the files of a client folder nested in a sub-app, as it does mounted on its own', async () => {
+    const { root, runtimeDir } = app({ 'counter.tsx': 'export const answer: number = 42\n' })
+    const page = new Acryl().route('/client', clientModules({ root, runtimeDir }))
+    const context = new Context()
+    try {
+      context.plugin({ name: routerName, apply: routerApply })
+      context.plugin({ name: 'mount', inject: ['router'], apply: (ctx: Context) => { ctx.router.route('/', page) } })
+      await new Promise(resolve => setTimeout(resolve, 0))
+      const module = await context.router.request('/client/counter.tsx')
+      expect(module.status).toBe(200)
+      expect(await module.text()).toContain('42')
+      expect((await context.router.request('/client/@acrylblends/jsx-dom.js')).status).toBe(200)
+    } finally {
+      await context.fiber.dispose()
+    }
   })
 })
