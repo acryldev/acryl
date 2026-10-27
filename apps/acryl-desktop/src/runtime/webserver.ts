@@ -2,11 +2,7 @@
 
 import { Service } from '@deepseek-ai/cordis'
 import WebServer, { type Config } from '@deepseek-ai/dsh-host-webserver'
-import { DESKTOP_WEB_PORT_RETRY_LIMIT } from './desktop-port.ts'
-
-function isAddressInUse(cause: unknown): boolean {
-  return (cause as NodeJS.ErrnoException | null)?.code === 'EADDRINUSE'
-}
+import { bindDesktopPort } from './desktop-port.ts'
 
 /** Close an unbound server left behind by a failed listen attempt. */
 function closeFailedServer(instance: unknown): void {
@@ -39,21 +35,15 @@ export class DesktopWebServer extends WebServer {
       await super[Service.init]()
       return
     }
-    for (let attempt = 0; ; attempt += 1) {
+    await bindDesktopPort(requestedPort, async (port) => {
+      this.desktopConfig.port = port
       try {
         await super[Service.init]()
-        return
       } catch (cause) {
-        const nextPort = requestedPort + attempt + 1
-        if (!isAddressInUse(cause)
-          || attempt >= DESKTOP_WEB_PORT_RETRY_LIMIT
-          || nextPort > 65_535) {
-          throw cause
-        }
         closeFailedServer(this)
-        this.desktopConfig.port = nextPort
+        throw cause
       }
-    }
+    })
   }
 }
 
