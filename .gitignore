@@ -35,20 +35,9 @@ plugins/acryl-plugin-admin/lib/
 plugins/acryl-support/lib/
 plugins/acryl-agent-control/lib/
 plugins/acryl-app-shell/lib/
-plugins/acryl-router/lib/
-plugins/acryl-router-http/lib/
-plugins/acryl-inspect/lib/
-plugins/acryl-node-server/lib/
 examples/acryl-todo/lib/
-plugins/acryl-state/lib/
-plugins/acryl-db/lib/
-plugins/acryl-db-sqlite/lib/
 plugins/acryl-db-postgres/lib/
 plugins/acryl-db-pglite/lib/
-plugins/acryl-kv/lib/
-plugins/acryl-kv-json/lib/
-plugins/acryl-door/lib/
-plugins/acryl-kv-db/lib/
 runtime/acryl-loopback-http/lib/
 runtime/acryl-diagnostics/lib/
 
@@ -90,4 +79,3 @@ plugins/acryl-ui/.scratch-validate-registry-tests/
 
 # Conference presenter scripts and rehearsal screenshots: kept locally, not published (owner, 2026-10-19)
 docs/demo/
-distribution/acrylblends-framework/lib/

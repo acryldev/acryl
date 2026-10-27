@@ -50,7 +50,6 @@ packages:
   - runtime/plugin-hub
   - runtime/acryl-loopback-http
   - distribution/acryl-npm-launcher
-  - distribution/acrylblends-framework
   - apps/acryl-cli
   - apps/acryl-web
   - apps/acryl-desktop
@@ -64,19 +63,8 @@ packages:
   - plugins/acryl-mount-anchors
   - plugins/acryl-shortcuts
   - plugins/acryl-settings
-  - plugins/acryl-router
-  - plugins/acryl-router-http
-  - plugins/acryl-inspect
-  - plugins/acryl-node-server
-  - plugins/acryl-state
-  - plugins/acryl-db
-  - plugins/acryl-db-sqlite
   - plugins/acryl-db-postgres
   - plugins/acryl-db-pglite
-  - plugins/acryl-kv
-  - plugins/acryl-kv-json
-  - plugins/acryl-door
-  - plugins/acryl-kv-db
   - plugins/acryl-sign-in
   - plugins/acryl-brand
   - plugins/acryl-app-save
@@ -95,7 +83,7 @@ allowBuilds:
   electron-winstaller: false
   esbuild: true
   koffi: true
-  # The ported core's test suite mocks fetch with msw in Node; its postinstall only copies a service worker for browser apps.
+  # msw comes in as an optional peer of vitest's mocker; its postinstall only copies a service worker for browser apps.
   msw: false
   node-pty: true
   protobufjs: false
