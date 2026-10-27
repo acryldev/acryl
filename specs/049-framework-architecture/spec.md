@@ -205,7 +205,7 @@ self-knowledge. With both, Claude Code, Codex and pi each built, installed, clic
 11. **Self-knowledge in the folder** [Blends] - `create-acrylblends` writes `AGENTS.md` and `CLAUDE.md` (the same text) and one skill
     pointing to `docs/framework/` and the door commands; one plugin folder (`plugins/`) everywhere in the docs. Gate: the docs name no
     second plugin folder.
-12. **Looking at the app** [Fork3] - the door's snapshot carries the visible text and roles; a screenshot verb. Gate: an agent reads
+12. **Looking at the app** [Fork3] - the door's snapshot carries the visible text and roles (a screenshot verb is deferred until the M5 product test shows an agent needing pixels). Gate: an agent reads
     a value on the page without changing its markup.
 13. **One verb list** [Fork3] - the same verbs (`brief`, `look`, `act`, `plugin add|remove|reload`) in the CLI, over MCP and in the
     built-in chat. Gate: one test lists the verbs from each and compares them.
@@ -238,14 +238,14 @@ Specific, Measurable (the gate), Attainable (from today's agent pace, including 
 it matters), Time-bound (CET). The next milestone starts the moment its predecessor's gate passes, never at the date. A missed target
 is reported at its deadline with the cause and a new target.
 
-| # | Milestone | Owner | Gate (measurable) | Relevant because | Target |
-| --- | --- | --- | --- | --- | --- |
-| M1 | acrylblends 0.7.8 | Blends | pg-out on main with 4 green workflows; 0.7.8 on npm; a fresh `notes` app from the registry has `plugins/`, `AGENTS.md`, `CLAUDE.md`, the skill, and its tests pass (checked by the coordinator) | the shape agents will read, testable by the owner | 2026-10-27 08:00 |
-| M2 | Every template a Cordis app (slice 16) | Blends | `nodejs`, `notes`, `chat` are Cordis apps; each template's tests pass; `check-deps` clean; 4 green workflows | one kind of app, the door's home | 2026-10-27 16:00 |
-| M3 | The door in every app (slices 9, 10) | Fork3 | the slice 9 gate (fresh app answers `tool list`, `look` from a real browser, nothing under `.acryl/` staged) and the slice 10 gate (two apps, each folder reaches its own); DSH door live check in Desktop and Web | agents can act inside the app | 2026-10-27 22:00 |
-| M4 | Looking and one verb list (slices 12, 13) | Fork3 | an agent reads a value on the page without changing its markup; one test compares the verbs of CLI, MCP and chat | agents can check their own work | 2026-10-28 08:00 |
-| M5 | The product test, released as 0.8.0 | Blends | Part 2 gate: Claude Code, Codex and pi each build the same feature in a fresh app from the docs alone, check it through the door, it survives a restart and a fresh clone, `git status` shows no secret; 0.8.0 on npm | the owner starts testing and giving feedback | 2026-10-28 14:00 |
-| M6 | One home in acrylblends (slice 17) | Blends | one repository builds and publishes; ACRYL's gates pass on the published package | no copy step, no drift | 2026-10-29 12:00 |
+| # | Milestone | Owner | Gate (measurable) | Relevant because | Target | Result |
+| --- | --- | --- | --- | --- | --- | --- |
+| M1 | acrylblends 0.7.8 | Blends | pg-out on main with 4 green workflows; 0.7.8 on npm; a fresh `notes` app from the registry has `plugins/`, `AGENTS.md`, `CLAUDE.md`, the skill, and its tests pass (checked by the coordinator) | the shape agents will read, testable by the owner | 2026-10-27 08:00 | met 03:55, 0.7.8 verified |
+| M2 | Every template a Cordis app (slice 16) | Blends | `nodejs`, `notes`, `chat` are Cordis apps; each template's tests pass; `check-deps` clean; 4 green workflows | one kind of app, the door's home | 2026-10-27 16:00 | met 04:08; the door in each template moves to M3 |
+| M3 | The door in every app (slices 9, 10) | Fork3 | the slice 9 gate (fresh app answers `tool list`, `look` from a real browser, nothing under `.acryl/` staged) and the slice 10 gate (two apps, each folder reaches its own); DSH door live check in Desktop and Web | agents can act inside the app | 2026-10-27 22:00 | door on main 05:09 (b05dfa2d); open: the fresh-app check on the real template |
+| M4 | Looking and one verb list (slices 12, 13) | Fork3 | an agent reads a value on the page without changing its markup; one test compares the verbs of CLI, MCP and chat | agents can check their own work | 2026-10-28 08:00 | met 05:09 on main (slices 12, 13; 13e830e7) |
+| M5 | The product test, released as 0.8.0 | Blends | Part 2 gate: Claude Code, Codex and pi each build the same feature in a fresh app from the docs alone, check it through the door, it survives a restart and a fresh clone, `git status` shows no secret; 0.8.0 on npm | the owner starts testing and giving feedback | 2026-10-28 14:00 | open |
+| M6 | One home in acrylblends (slice 17) | Blends | one repository builds and publishes; ACRYL's gates pass on the published package | no copy step, no drift | 2026-10-29 12:00 | design on main (40b9dbec); starts after M3 |
 
 After M5: slice 14 (built-in chat), 15 (bring your own tool) and 2b (PGlite) get milestones when M5 passes.
 
