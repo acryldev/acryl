@@ -269,8 +269,8 @@ The rule is checked, not hoped for. The app names its opener once, in `package.j
 }
 ```
 
-`acrylblends check-deps` reads every `.ts`, `.tsx` and `.js` file in `src/`, `test/`, `tests/` and `extensions/`, and fails when a file other than
-the opener imports a database driver, an opener such as `acrylblends/db/sqlite` or `acryl-db-sqlite`, or (outside `src/plugins/desktop`) `electron`.
+`acrylblends check-deps` reads every `.ts`, `.tsx` and `.js` file in `src/`, `test/`, `tests/` and `plugins/`, and fails when a file other than
+the opener imports a database driver, an opener such as `acrylblends/db/sqlite` or `acryl-db-sqlite`, or (outside `plugins/desktop`) `electron`.
 It names the file and the line:
 
 ```
