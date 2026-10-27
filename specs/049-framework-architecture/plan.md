@@ -331,3 +331,86 @@ What exists:
 
 Coordination: Blends owns the template row, the script tag in the template page, the `.gitignore` line, vendoring `acryl-door`
 into the library, and the skill text (verbs sent after this design is accepted).
+
+## Slice 17 - one home for the framework: the acrylblends repository (2026-10-27, Blends; execute after slice 9 lands)
+
+Owner, 2026-10-27: the framework's home is acrylblends for now, `acryl` later. Today the source is here and the acrylblends repository holds a
+*copy* (`scripts/sync-framework.mjs`, `framework.json`, `vendor-framework-package.mjs`, `verify-framework-sync.mjs`); every release starts with
+a pack, a vendor and a drift check. Slice 17 removes the copy step: the source moves, with its history, and ACRYL depends on what is published.
+
+### Which packages move
+
+| Package (today's name) | From (ACRYL) | To (acrylblends) | Note |
+| --- | --- | --- | --- |
+| `acryl-router`, `acryl-router-http` | `plugins/` | `plugins/` | the router, the Cordis plugin that serves it |
+| `acryl-node-server` | `plugins/` | `plugins/` | includes client modules and `read-sse` |
+| `acryl-state` | `plugins/` | `plugins/` | |
+| `acryl-db`, `acryl-db-sqlite` | `plugins/` | `plugins/` | `acryl-db-postgres` does NOT move: it stays an optional plugin in ACRYL |
+| `acryl-kv`, `acryl-kv-json`, `acryl-kv-db` | `plugins/` | `plugins/` | |
+| the door (`acryl-door`, slice 9) | `plugins/` | `plugins/` | its two dependencies, `acryl-control` and `acryl-loopback-http`, move with it, or the door is published with them as peers: decided at execution by what else uses them (see open questions) |
+| the framework package build | `distribution/acrylblends-framework` | `packages/framework` | what builds the `lib` of the `acrylblends` package |
+| the framework docs | `docs/framework` | `docs/framework` | the source of the pages every new app carries |
+
+`plugins/` in acrylblends is already the library `acrylblends add` copies from. After the move the `acryl-*` folders there are the **source**, not a vendored copy
+(their `upstream.json`, `UPSTREAM.md`, `framework.json` and the `testsNotRun` list go away). Specs, the IDE (`apps/`), the Host, DSH and everything that is not the
+framework stay in ACRYL.
+
+### How the history moves
+
+1. Freeze: the coordinator stops landing changes under the moving paths in ACRYL (a day, announced in the thread). The freeze hash is H.
+2. In a scratch clone of ACRYL at H: `git filter-repo` with one `--path` per moved folder (and `--path-rename` where the destination differs, e.g.
+   `distribution/acrylblends-framework/` to `packages/framework/`). Every commit that touched a moved path stays, with its author and date; others disappear.
+3. In acrylblends, on a branch: remove the vendored copies of those folders in one commit, then `git remote add acryl-history <scratch clone>`,
+   `git fetch acryl-history` and `git merge --allow-unrelated-histories acryl-history/main`. The merge commit says "moved with history from acryldev/acryl at H".
+   Because the vendored copies were removed first, the merge has no add/add conflicts. The tree after the merge equals H for the moved paths (checked by a diff against H).
+4. Delete the copy machinery (`scripts/sync-framework.mjs`, `vendor-framework-package.mjs`, `verify-framework-sync.mjs`, `framework.json`, the `PLUGINS` table) and its
+   tests, in a second commit, so the move itself is a pure history operation.
+5. `git filter-repo` is not installed here; the step needs `brew install git-filter-repo` (or `pip install git-filter-repo`). No other tool is needed.
+
+### How ACRYL consumes them
+
+- ACRYL's `workspace:*` dependencies on the moved packages become the published version range (`^0.8.0` for the first train). pnpm resolves them from the registry; there is no
+  checkout of acrylblends beside ACRYL in CI.
+- To work on both at once, a developer uses `pnpm.overrides` with `link:../acrylblends/plugins/<name>` in a local, uncommitted file (documented in ACRYL's CONTRIBUTING); nothing
+  committed points at a path outside the repository.
+- Every push to acrylblends `main` publishes the `next` dist-tag (`0.8.0-next.<run>`), so ACRYL can test unreleased framework work from the registry without a copy.
+- ACRYL tests that reach into the moved folders by path (`plugins/acryl-router/tests/...` imported from elsewhere, scripts that read `plugins/acryl-node-server/src/...`) are
+  rewritten to import the package. The count is taken at execution with `grep` over the freeze commit; the gate below proves none is left.
+
+### Publishing
+
+- One version train: every moved package and `acrylblends`/`create-acrylblends` are released at the same version number (lockstep), by one workflow in acrylblends that builds,
+  packs, installs from the tarballs in a scratch project, and publishes. Today's per-package `0.1.0` is replaced by the train's number at the first release.
+- Names: the unscoped names (`acryl-router`, `acryl-db`, ...) are free on npm today (checked 2026-10-27: 404). Keeping them avoids renaming churn in ACRYL. A scope (`@acrylblends/*`)
+  needs an npm organisation the owner would create: an owner decision (open question 1). Either way `acrylblends` stays the one package users install.
+- Publishing uses the existing token flow; trusted publishing stays as the written plan (`specs/019-trusted-publishing`), unchanged by this slice.
+
+### CI on three operating systems
+
+The acrylblends workflow `ci.yml` today runs `pnpm run check` on Ubuntu with Node 22 and 24. After the move it gains a matrix of Ubuntu, Windows and macOS (Node 22 and 24 on Ubuntu, 24 on the others), with these jobs:
+
+| Job | Runs | OS |
+| --- | --- | --- |
+| `check` | lint, typecheck, build, package tests (router, node server, state, db, kv, door) | Ubuntu, Windows, macOS |
+| `data` | the `db` and `kv` conformance suites and the kv-json crash test (SIGKILL, 40 rounds) | Ubuntu, Windows |
+| `desktop` | the Electron shell test under `xvfb` | Ubuntu |
+| `scaffold` | `verify:scaffolder`, `verify:tarball`: create every template from the tarballs, run its tests and `check-deps` | Ubuntu, Windows |
+| `release` | on a tag: build once, pack, install in a scratch project, publish | Ubuntu |
+
+These are ACRYL's `ci.yml`, `data.yml`, `windows.yml` and `desktop-linux.yml` brought over, so the 3-OS coverage the moved packages have today does not shrink. ACRYL keeps a job that
+installs the published `next` packages and runs the IDE's own gates (`apps/acryl-desktop`, `apps/acryl-cli`).
+
+### Order, gate, rollback
+
+1. Slice 9 lands (the door exists as a package in ACRYL). 2. Freeze and move (above). 3. acrylblends CI green on the three systems. 4. Release the first train (`0.8.0`) from
+acrylblends alone. 5. In ACRYL, one branch: delete the moved folders, point the dependents at `^0.8.0`, fix path imports, run ACRYL's four workflows. 6. Land; lift the freeze.
+**Gate:** a release is built and published from the acrylblends repository only, and ACRYL's workflows pass on the published packages. **Rollback:** ACRYL keeps its folders until step 5
+lands, so until then nothing depends on the move; after step 5 a revert of that one ACRYL commit restores them.
+
+### Open questions for the owner and the coordinator
+
+1. Unscoped names (`acryl-router`) or the `@acrylblends/*` scope? Recommendation: unscoped now (free, no churn), scope later only if a name is taken.
+2. `acryl-control` and `acryl-loopback-http` (the door's dependencies): move with the door, or stay in ACRYL and be published from there as peers? Recommendation: move them, because the door is
+   Cordis-only framework and a peer published from the IDE repository would bring back the dependency from the framework onto the IDE.
+3. Lockstep versions for all packages, or independent ones? Recommendation: lockstep until the first external consumer asks for independence.
+4. Who owns the freeze announcement: the coordinator. Slice 9 must have landed, and no framework slice may be in flight on the moved paths.
