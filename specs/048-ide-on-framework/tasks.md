@@ -18,7 +18,14 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   free and real homes untouched afterwards. Measured: call sites 19 -> 14 (agent-control 6 -> 1, the page channel upgrade), DSH import
   lines 133 -> 133. Found and fixed: a workers request from neither the page nor an operator answered 500 instead of 403. Found, ticketed
   as T011: `acryl control` finds no app started by `pnpm web`, Desktop or the npm CLI.
-- [ ] T003 `apps/acryl-desktop`: the settings, preferences, renderer boot report and directory picker and validator routes (was 046 T023).
+- [x] T003 `apps/acryl-desktop`: the settings, preferences, renderer boot report and directory picker and validator routes (was 046 T023).
+  Commit `bd0b10303c799dda11133cbf66e463a65319b6c1`, in its own row `acryl-desktop/api` (the row-id exception named in `plan.md`,
+  slice 4). Evidence: full gate; CI, Windows, Desktop on Linux and Data green; a real-Loader test with three router reloads (one
+  registration per prefix each time, the shell never disposed); isolated Desktop run (`live-run --no-key --copy-home ~/.acryl-dev`) from
+  a profile written 2026-10-20 without the router rows: the renderer booted and reported its health through the new route, settings and
+  preferences 200, the validator 200 and 415, the picker and boot report 405 with `Allow`, a foreign origin and no origin 403, Settings >
+  Desktop rendered from the moved API; port free and real homes untouched. Measured: call sites 14 -> 9, DSH import lines 135 -> 135.
+  acrylblends 0.9.2 taken into the lock.
 - [ ] T004 `acryl-sign-in`: its five sign-in routes; the checks stay exactly (was part of 046 T025).
 - [ ] T005 Find the terminal's PATH without blocking (was 047 T017): ask the login shell asynchronously once, cache the promise, and make
   the callers that need it (`start`, `canRun`) wait for it, so activating the workspace never blocks the Host's event loop (about 1.2 s
@@ -49,6 +56,11 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   `scripts/verify-layout.mjs` from 133 to 135, and removing them is the path back to 133.
 - [ ] T013 `acryl-plugin-context`'s startup-hold route (`index.js`, the `STARTUP_PATH` route of specs/001 `tasks.md` T097) onto the
   router. Found while counting for T003: it is one of the nine remaining call sites and no slice above names it.
+- [ ] T014 (low priority) A Desktop boot from the owner's dev home (the T003 live run) warns `patch: entry "desktop-development-canvas"
+  not found`: something stored still names the Development Canvas by its row id from before the rename to `acryl-development-canvas`
+  (the anti-pattern the row-id rule in `CLAUDE.md` names). Not in the profile's own `cordis.patch.yml`, the source or the launcher
+  scripts; likely a stored home or profile file (a `cordis.yml`, a Blend's manifest). Find it, and fix it in the read-time rename table
+  (`RENAMED_BLUEPRINT_ROW_IDS` and its kin), not in anyone's home. Done when that boot logs no such warning and a test pins the rename.
 
 Next: the drivers (spec 046 Phase 9, T028 `acryl-driver-dsh` and T029 `acryl-driver-pty`) act through the door T002 moves, and get their
 own spec when this one reaches T007.
