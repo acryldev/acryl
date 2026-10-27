@@ -21,42 +21,6 @@ import {
   THEME_SETTINGS_NAMESPACE,
   type ThemeSettings,
 } from '@deepseek-ai/dsh-client-ui-theme'
-import {
-  handleRendererBootRequest,
-  RENDERER_BOOT_REPORT_PATH,
-} from './startup/renderer-boot.ts'
-import {
-  DESKTOP_DIRECTORY_PICKER_PATH,
-  DESKTOP_DIRECTORY_VALIDATOR_PATH,
-} from './workspaces/directory-picker-contract.ts'
-import {
-  handleDesktopDirectoryPickerRequest,
-  handleDesktopDirectoryValidationRequest,
-} from './workspaces/directory-picker-route.ts'
-import {
-  DESKTOP_DIAGNOSTICS_EXPORT_PATH,
-  DESKTOP_MARKET_SELECT_PATH,
-  DESKTOP_PROFILE_CREATE_PATH,
-  DESKTOP_PROFILE_CREATE_WINDOW_PATH,
-  DESKTOP_PROFILE_DELETE_PATH,
-  DESKTOP_PROFILE_ROLLBACK_PATH,
-  DESKTOP_PROFILE_SELECT_PATH,
-  DESKTOP_SETTINGS_PATH,
-  DESKTOP_TERMINAL_OPEN_PATH,
-} from './settings/desktop-settings-contract.ts'
-import {
-  handleDesktopDiagnosticsExportRequest,
-  handleDesktopMarketSelectRequest,
-  handleDesktopProfileCreateRequest,
-  handleDesktopProfileCreateWindowRequest,
-  handleDesktopProfileDeleteRequest,
-  handleDesktopProfileRollbackRequest,
-  handleDesktopProfileSelectRequest,
-  handleDesktopSettingsRequest,
-  handleDesktopTerminalOpenRequest,
-} from './settings/desktop-settings-route.ts'
-import { DESKTOP_PREFERENCES_PATH, handleDesktopPreferencesRequest } from './settings/desktop-preferences-route.ts'
-import type {} from './settings/desktop-settings-controller.ts'
 import { LivePluginActivationService, PluginLifecycleController } from './plugins/lifecycle/plugin-lifecycle-controller.ts'
 import { installPluginWatchers, parsePluginWatchSpec } from './plugins/desktop-plugin-watch.ts'
 import type {} from './plugins/lifecycle/plugin-lifecycle-state.ts'
@@ -210,7 +174,6 @@ export function apply(ctx: Context, config: Config): void {
       },
     },
   )
-  const rendererOrigin = `http://127.0.0.1:${String(ctx.webServer.port)}`
   const reportHostError = (operation: string, cause: unknown): void => {
     ctx.logger.error(
       `acryl-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
@@ -280,94 +243,6 @@ export function apply(ctx: Context, config: Config): void {
     table.push(...desktopBootRecoveryInjections())
     table.push(...desktopRootSlotRecoveryInjections())
   })
-  const desktopSettings = ctx.get('desktopSettingsController')
-  if (desktopSettings !== undefined) {
-    const settingsRoutes = [
-      [DESKTOP_SETTINGS_PATH, handleDesktopSettingsRequest],
-      [DESKTOP_PROFILE_CREATE_PATH, handleDesktopProfileCreateRequest],
-      [DESKTOP_PROFILE_CREATE_WINDOW_PATH, handleDesktopProfileCreateWindowRequest],
-      [DESKTOP_PROFILE_DELETE_PATH, handleDesktopProfileDeleteRequest],
-      [DESKTOP_PROFILE_ROLLBACK_PATH, handleDesktopProfileRollbackRequest],
-      [DESKTOP_PROFILE_SELECT_PATH, handleDesktopProfileSelectRequest],
-      [DESKTOP_MARKET_SELECT_PATH, handleDesktopMarketSelectRequest],
-      [DESKTOP_TERMINAL_OPEN_PATH, handleDesktopTerminalOpenRequest],
-      [DESKTOP_DIAGNOSTICS_EXPORT_PATH, handleDesktopDiagnosticsExportRequest],
-    ] as const
-    for (const [path, handler] of settingsRoutes) {
-      ctx.effect(
-        () => ctx.webServer.register({
-          kind: 'exact',
-          path,
-          handler: (req, res) => handler(
-            req,
-            res,
-            rendererOrigin,
-            desktopSettings,
-            reportHostError,
-          ),
-        }),
-        `acryl-desktop: private settings route ${path}`,
-      )
-    }
-  }
-  ctx.effect(
-    () => ctx.webServer.register({
-      kind: 'exact',
-      path: DESKTOP_PREFERENCES_PATH,
-      handler: (req, res) => handleDesktopPreferencesRequest(req, res, rendererOrigin, ctx.acrylSettings, reportHostError),
-    }),
-    'acryl-desktop: private preferences route',
-  )
-  ctx.effect(
-    () => ctx.webServer.register({
-      kind: 'exact',
-      path: RENDERER_BOOT_REPORT_PATH,
-      handler: (req, res) => handleRendererBootRequest(
-        req,
-        res,
-        rendererOrigin,
-        report => { runtime.reportRendererBoot(report) },
-      ),
-    }),
-    'acryl-desktop: renderer boot report route',
-  )
-  // dialog.showOpenDialog/showMessageBox are the same native Electron calls on every platform; the real
-  // per-OS gate is runtime.pickDirectory()'s own canPickDirectory check (electron-platform.ts, T134) -
-  // this route just needs to exist wherever that can say yes, which today is win32 and darwin.
-  if (runtime.platform === 'win32' || runtime.platform === 'darwin') {
-    ctx.effect(
-      () => ctx.webServer.register({
-        kind: 'exact',
-        path: DESKTOP_DIRECTORY_PICKER_PATH,
-        handler: (req, res) => handleDesktopDirectoryPickerRequest(
-          req,
-          res,
-          rendererOrigin,
-          () => runtime.pickDirectory(),
-          cause => {
-            ctx.logger.error(`acryl-desktop: native directory picker failed: ${cause instanceof Error ? cause.message : String(cause)}`)
-          },
-        ),
-      }),
-      'acryl-desktop: native directory picker route',
-    )
-    ctx.effect(
-      () => ctx.webServer.register({
-        kind: 'exact',
-        path: DESKTOP_DIRECTORY_VALIDATOR_PATH,
-        handler: (req, res) => handleDesktopDirectoryValidationRequest(
-          req,
-          res,
-          rendererOrigin,
-          path => runtime.validateDirectory(path),
-          cause => {
-            ctx.logger.error(`acryl-desktop: workspace directory validation failed: ${cause instanceof Error ? cause.message : String(cause)}`)
-          },
-        ),
-      }),
-      'acryl-desktop: workspace directory validation route',
-    )
-  }
   ctx.effect(() => {
     let pending: ReturnType<typeof setImmediate> | undefined
     const stopWatching = settings.watch((next) => {

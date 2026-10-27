@@ -1,7 +1,9 @@
-/** Strict loopback HTTP handler for ACRYL's Desktop preferences (shell mode, notifications), stored by `acryl-settings`. */
+/** Strict loopback route for ACRYL's Desktop preferences (shell mode, notifications), stored by `acryl-settings`, on the router. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, INVALID_BODY, isSameOriginLoopbackRequest, parseJsonPostBody } from 'acryl-loopback-http'
+import { Acryl } from 'acrylblends'
+import { error } from 'acryl-loopback-http'
+import { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { jsonContent } from '../api/http.ts'
 
 export const DESKTOP_PREFERENCES_PATH = '/api/desktop/preferences'
 
@@ -32,29 +34,21 @@ function parseUpdate(value: unknown): { namespace: string, patch: Record<string,
 }
 
 /** GET: the current resolved preferences. POST `{ namespace, patch }`: merge a validated patch and answer the new values. */
-export async function handleDesktopPreferencesRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  store: DesktopPreferencesStore,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
+export function desktopPreferencesRoutes(store: DesktopPreferencesStore, reportError: ReportError = () => {}): Acryl {
   const read = (): Record<string, unknown> => Object.fromEntries(ALLOWED_NAMESPACES.map(namespace => [namespace, store.get(namespace) ?? null]))
-  if (req.method === 'GET') {
-    if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) return finishJson(res, 403, error('forbidden'))
-    return finishJson(res, 200, read())
-  }
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) return finishJson(res, 403, error('forbidden'))
-  const body = await parseJsonPostBody(req, res, MAX_BODY_BYTES)
-  if (body === INVALID_BODY) return
-  const update = parseUpdate(body)
-  if (update === undefined) return finishJson(res, 400, error('invalid preferences request'))
-  try {
-    await store.update(update.namespace, update.patch)
-  } catch (cause) {
-    reportError('update preferences', cause)
-    return finishJson(res, 422, error('preference rejected'))
-  }
-  finishJson(res, 200, read())
+  return new Acryl()
+    .get(DESKTOP_PREFERENCES_PATH, ownPage, c => c.json(read()))
+    .post(DESKTOP_PREFERENCES_PATH, ownPage, jsonContent, jsonBody(MAX_BODY_BYTES), async (c) => {
+      const body = await readJson(c)
+      if (body === INVALID_JSON) return c.json(error('invalid JSON request'), 400)
+      const update = parseUpdate(body)
+      if (update === undefined) return c.json(error('invalid preferences request'), 400)
+      try {
+        await store.update(update.namespace, update.patch)
+      } catch (cause) {
+        reportError('update preferences', cause)
+        return c.json(error('preference rejected'), 422)
+      }
+      return c.json(read())
+    })
 }

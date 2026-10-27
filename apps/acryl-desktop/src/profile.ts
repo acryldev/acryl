@@ -33,7 +33,6 @@ import {
   readDesktopDisabledBundles,
 } from './plugins/desktop-plugins.ts'
 import {
-  COMMUNITY_MARKET_REQUIRED_ROWS,
   DESKTOP_MARKET_IDENTITIES,
   desktopMarketSnapshotWithEffective,
   type DesktopMarketProvider,
@@ -743,18 +742,13 @@ export function prepareDesktopProfile(
         DESKTOP_MARKET_IDENTITIES.community.packageName,
         bareModuleBaseUrl,
       )
-      for (const required of COMMUNITY_MARKET_REQUIRED_ROWS) {
-        marketFailure ??= validateMarketPackage(required.packageName, bareModuleBaseUrl)
-      }
+      // The router rows it injects are Desktop's own (cordis.patch.yml), composed whatever the Market.
       if (marketFailure === undefined) {
         providerPatches.push({
-          insert: [
-            ...COMMUNITY_MARKET_REQUIRED_ROWS.map(required => ({ id: required.rowId, name: required.module })),
-            {
-              id: DESKTOP_MARKET_IDENTITIES.community.rowId,
-              name: DESKTOP_MARKET_IDENTITIES.community.packageName,
-            },
-          ],
+          insert: [{
+            id: DESKTOP_MARKET_IDENTITIES.community.rowId,
+            name: DESKTOP_MARKET_IDENTITIES.community.packageName,
+          }],
         })
         effectiveMarket = DESKTOP_MARKET_IDENTITIES.community.provider
       }

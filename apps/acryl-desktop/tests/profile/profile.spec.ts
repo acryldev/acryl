@@ -14,6 +14,7 @@ import {
   readDesktopShellMode,
   validateDshMarketBundlePatches,
 } from '../../src/profile.ts'
+import { BLANK_BLUEPRINT, IDE_BLUEPRINT } from 'acryl-harness-runtime'
 import { DESKTOP_MARKET_IDENTITIES } from '../../src/plugins/desktop-market.ts'
 
 const homes: string[] = []
@@ -333,6 +334,24 @@ describe('desktop profile composition', {
     for (const id of ['acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
   })
 
+  it.each([
+    ['a Blueprint without the framework kit', { ...BLANK_BLUEPRINT, rows: BLANK_BLUEPRINT.rows.filter(row => row !== 'framework-kit') }],
+    ['the IDE, whose kit and Market need the same rows', IDE_BLUEPRINT],
+  ] as const)('always composes the router rows its own routes are served through, once, before acryl-desktop/api: %s', (_label, blueprint) => {
+    const home = temporaryHome()
+    const prepared = prepareDesktopProfile(undefined, home, 'darwin', 'desktop', undefined, {
+      requested: 'community-market',
+      effective: 'community-market',
+      legacyDefaulted: false,
+    }, undefined, undefined, blueprint)
+    const ids = composeEntries([prepared.patches]).map(row => row.id)
+
+    expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acrylblends/cordis/router-http')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acryl-desktop/api')).toHaveLength(1)
+    expect(ids.indexOf('acrylblends/cordis/router-http')).toBeLessThan(ids.indexOf('acryl-desktop/api'))
+  })
+
   it('mounts a row an app plugin requires once when the Blueprint already composes it, under its name from before the framework moved too', () => {
     const home = temporaryHome()
     const appHome = dirname(home)
@@ -361,12 +380,12 @@ describe('desktop profile composition', {
       name: DESKTOP_MARKET_IDENTITIES.community.packageName,
     }])
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
-    // The community Market injects `router` and `routerHttp` (spec 046): their rows come with it, once, just before it.
+    // The community Market injects `router` and `routerHttp` (spec 046): Desktop's own rows, composed once before it, not a second time for it.
     const ids = rows.map(row => row.id)
     expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
     expect(ids.filter(id => id === 'acrylblends/cordis/router-http')).toHaveLength(1)
     expect(ids.indexOf('acrylblends/cordis/router')).toBeLessThan(ids.indexOf('acrylblends/cordis/router-http'))
-    expect(ids.indexOf('acrylblends/cordis/router-http')).toBe(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId) - 1)
+    expect(ids.indexOf('acrylblends/cordis/router-http')).toBeLessThan(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId))
   })
 
   it('loads the exact dshmarket dependency as a direct bundle only after explicit selection', () => {

@@ -1,25 +1,22 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
 import type { DesktopMarketSnapshot } from '../../src/plugins/desktop-market.ts'
 import DesktopSettingsController, {
   type DesktopSettingsControllerBootstrap,
 } from '../../src/settings/desktop-settings-controller.ts'
 import {
-  handleDesktopDiagnosticsExportRequest,
-  handleDesktopMarketSelectRequest,
-  handleDesktopProfileCreateRequest,
-  handleDesktopProfileCreateWindowRequest,
-  handleDesktopProfileDeleteRequest,
-  handleDesktopProfileRollbackRequest,
-  handleDesktopProfileSelectRequest,
-  handleDesktopSettingsRequest,
-  handleDesktopTerminalOpenRequest,
-  desktopSettingsRouteConstants,
-} from '../../src/settings/desktop-settings-route.ts'
+  DESKTOP_DIAGNOSTICS_EXPORT_PATH,
+  DESKTOP_MARKET_SELECT_PATH,
+  DESKTOP_PROFILE_CREATE_PATH,
+  DESKTOP_PROFILE_CREATE_WINDOW_PATH,
+  DESKTOP_PROFILE_DELETE_PATH,
+  DESKTOP_PROFILE_ROLLBACK_PATH,
+  DESKTOP_PROFILE_SELECT_PATH,
+  DESKTOP_SETTINGS_PATH,
+  DESKTOP_TERMINAL_OPEN_PATH,
+} from '../../src/settings/desktop-settings-contract.ts'
+import { desktopSettingsRouteConstants, desktopSettingsRoutes } from '../../src/settings/desktop-settings-route.ts'
 import type { DesktopProfileSummary } from '../../src/profile/profile-manager.ts'
-
-const ORIGIN = 'http://127.0.0.1:43120'
+import { call, ORIGIN, postJson } from '../api/call.ts'
 
 const DESKTOP: DesktopProfileSummary = {
   name: 'desktop',
@@ -77,55 +74,6 @@ function bootstrap(
     }),
     ...overrides,
   }
-}
-
-interface RequestOptions {
-  readonly body?: string | Buffer
-  readonly headers?: Readonly<Record<string, string | undefined>>
-  readonly remoteAddress?: string
-}
-
-function request(method: string, options: RequestOptions = {}): IncomingMessage {
-  const req = Readable.from(options.body === undefined ? [] : [options.body]) as IncomingMessage
-  req.method = method
-  req.headers = {
-    host: '127.0.0.1:43120',
-    origin: ORIGIN,
-    'sec-fetch-site': 'same-origin',
-    ...options.headers,
-  }
-  Object.defineProperty(req, 'socket', {
-    configurable: true,
-    value: { remoteAddress: options.remoteAddress ?? '127.0.0.1' },
-  })
-  return req
-}
-
-function jsonRequest(value: unknown, options: RequestOptions = {}): IncomingMessage {
-  const body = JSON.stringify(value)
-  return request('POST', {
-    ...options,
-    body,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'content-length': String(Buffer.byteLength(body)),
-      ...options.headers,
-    },
-  })
-}
-
-function response(): ServerResponse & {
-  body: string
-  end: ReturnType<typeof vi.fn>
-  setHeader: ReturnType<typeof vi.fn>
-} {
-  const res = {
-    body: '',
-    statusCode: 200,
-    setHeader: vi.fn(),
-    end: vi.fn((body?: string) => { res.body = body ?? '' }),
-  }
-  return res as unknown as ServerResponse & typeof res
 }
 
 describe('desktop settings controller', () => {
@@ -302,20 +250,20 @@ describe('desktop settings controller', () => {
   })
 })
 
+const nextTurn = (): Promise<void> => new Promise<void>((resolve) => { setImmediate(resolve) })
+
 describe('desktop settings HTTP boundary', () => {
   it('serves GET state with no-store headers and supports browser GET fetch metadata', async () => {
     const controller = new DesktopSettingsController(bootstrap())
-    const req = request('GET', {
+
+    const res = await call(desktopSettingsRoutes(controller), DESKTOP_SETTINGS_PATH, {
       headers: { origin: undefined, referer: `${ORIGIN}/settings` },
     })
-    const res = response()
 
-    await handleDesktopSettingsRequest(req, res, ORIGIN, controller)
-
-    expect(res.statusCode).toBe(200)
-    expect(JSON.parse(res.body)).toEqual(controller.read())
-    expect(res.setHeader).toHaveBeenCalledWith('cache-control', 'no-store')
-    expect(res.setHeader).toHaveBeenCalledWith('x-content-type-options', 'nosniff')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual(controller.read())
+    expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff')
   })
 
   it.each([
@@ -327,11 +275,11 @@ describe('desktop settings HTTP boundary', () => {
     const readMarket = vi.fn(() => market())
     const controller = new DesktopSettingsController(bootstrap({ readMarket }))
     readMarket.mockClear()
-    const res = response()
 
-    await handleDesktopSettingsRequest(request('GET', options), res, ORIGIN, controller)
+    const res = await call(desktopSettingsRoutes(controller), DESKTOP_SETTINGS_PATH, options)
 
-    expect(res.statusCode).toBe(403)
+    expect(res.status).toBe(403)
+    expect(res.headers.get('cache-control')).toBe('no-store')
     expect(readMarket).not.toHaveBeenCalled()
   })
 
@@ -344,12 +292,11 @@ describe('desktop settings HTTP boundary', () => {
         create,
       },
     }))
-    const res = response()
 
-    await handleDesktopProfileCreateRequest(jsonRequest({ name: 'work' }), res, ORIGIN, controller)
+    const res = await postJson(desktopSettingsRoutes(controller), DESKTOP_PROFILE_CREATE_PATH, { name: 'work' })
 
-    expect(res.statusCode).toBe(201)
-    expect(JSON.parse(res.body)).toEqual({
+    expect(res.status).toBe(201)
+    expect(await res.json()).toEqual({
       current: 'desktop',
       profiles: [
         { name: 'desktop', exists: true, webCapable: true, selectable: true, deletable: false },
@@ -371,13 +318,12 @@ describe('desktop settings HTTP boundary', () => {
         delete: remove,
       },
     }))
-    const res = response()
 
-    await handleDesktopProfileDeleteRequest(jsonRequest({ name: 'work' }), res, ORIGIN, controller)
+    const res = await postJson(desktopSettingsRoutes(controller), DESKTOP_PROFILE_DELETE_PATH, { name: 'work' })
 
-    expect(res.statusCode).toBe(200)
+    expect(res.status).toBe(200)
     expect(remove).toHaveBeenCalledWith('work')
-    expect(JSON.parse(res.body).profiles).toEqual([
+    expect((await res.json() as { profiles: unknown }).profiles).toEqual([
       { name: 'desktop', exists: true, webCapable: true, selectable: true, deletable: false },
       { name: 'work', exists: true, webCapable: true, selectable: true, deletable: true },
     ])
@@ -401,64 +347,48 @@ describe('desktop settings HTTP boundary', () => {
       },
       selectMarket,
     }))
-    const res = response()
 
-    if ('provider' in body) {
-      await handleDesktopMarketSelectRequest(jsonRequest(body), res, ORIGIN, controller)
-    } else {
-      await handleDesktopProfileCreateRequest(jsonRequest(body), res, ORIGIN, controller)
-    }
+    const res = await postJson(desktopSettingsRoutes(controller), 'provider' in body ? DESKTOP_MARKET_SELECT_PATH : DESKTOP_PROFILE_CREATE_PATH, body)
 
-    expect(res.statusCode).toBe(statusCode)
+    expect(res.status).toBe(statusCode)
     expect(create).not.toHaveBeenCalled()
     expect(selectMarket).not.toHaveBeenCalled()
   })
 
-  it('rejects unsupported media types and declared or streamed oversized bodies', async () => {
-    const controller = new DesktopSettingsController(bootstrap())
+  it('rejects unsupported media types, malformed JSON, and declared or streamed oversized bodies', async () => {
+    const create = vi.fn(() => WORK)
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
+      profiles: { current: { name: DESKTOP.name, dir: DESKTOP.dir }, list: () => [], create },
+    })))
+    const post = (body: BodyInit, headers: Record<string, string>): Promise<Response> =>
+      call(routes, DESKTOP_PROFILE_CREATE_PATH, { method: 'POST', body, headers })
 
-    const wrongType = response()
-    await handleDesktopProfileCreateRequest(
-      request('POST', { body: '{}', headers: { 'content-type': 'text/plain' } }),
-      wrongType,
-      ORIGIN,
-      controller,
-    )
-    expect(wrongType.statusCode).toBe(415)
+    const wrongType = await post('{}', { 'content-type': 'text/plain' })
+    expect(wrongType.status).toBe(415)
+    expect(await wrongType.json()).toEqual({ error: 'content type must be application/json' })
 
-    const declared = response()
-    await handleDesktopProfileCreateRequest(
-      request('POST', {
-        body: '{}',
-        headers: {
-          'content-type': 'application/json',
-          'content-length': String(desktopSettingsRouteConstants.maxBodyBytes + 1),
-        },
-      }),
-      declared,
-      ORIGIN,
-      controller,
-    )
-    expect(declared.statusCode).toBe(413)
+    const malformed = await post('{', { 'content-type': 'application/json' })
+    expect(malformed.status).toBe(400)
+    expect(await malformed.json()).toEqual({ error: 'invalid JSON request' })
 
-    const streamed = response()
-    await handleDesktopProfileCreateRequest(
-      request('POST', {
-        body: Buffer.alloc(desktopSettingsRouteConstants.maxBodyBytes + 1, 0x20),
-        headers: { 'content-type': 'application/json' },
-      }),
-      streamed,
-      ORIGIN,
-      controller,
-    )
-    expect(streamed.statusCode).toBe(413)
+    const declared = await post('{}', {
+      'content-type': 'application/json',
+      'content-length': String(desktopSettingsRouteConstants.maxBodyBytes + 1),
+    })
+    expect(declared.status).toBe(413)
+
+    const oversized = new Uint8Array(desktopSettingsRouteConstants.maxBodyBytes + 1).fill(0x20)
+    const streamed = await post(new ReadableStream({ start(controller) { controller.enqueue(oversized); controller.close() } }), { 'content-type': 'application/json' })
+    expect(streamed.status).toBe(413)
+    expect(await streamed.json()).toEqual({ error: 'request body is too large' })
+    expect(create).not.toHaveBeenCalled()
   })
 
-  it('selects a profile and persists a Market provider through their fixed endpoints', async () => {
+  it('selects a profile and persists a Market provider, and restarts only after each answer has gone out', async () => {
     const persistProfileSelection = vi.fn(async () => {})
     const selectMarket = vi.fn(async () => market('community-market'))
     const scheduleRestart = vi.fn()
-    const controller = new DesktopSettingsController(bootstrap({
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
       profiles: {
         current: { name: DESKTOP.name, dir: DESKTOP.dir },
         list: () => [DESKTOP, WORK],
@@ -467,49 +397,52 @@ describe('desktop settings HTTP boundary', () => {
       persistProfileSelection,
       selectMarket,
       scheduleRestart,
-    }))
-    const profileResponse = response()
-    const marketResponse = response()
+    })))
 
-    await handleDesktopProfileSelectRequest(
-      jsonRequest({ name: 'work' }), profileResponse, ORIGIN, controller,
-    )
-    await handleDesktopMarketSelectRequest(
-      jsonRequest({ provider: 'community-market' }), marketResponse, ORIGIN, controller,
-    )
+    const profileResponse = await postJson(routes, DESKTOP_PROFILE_SELECT_PATH, { name: 'work' })
+    const marketResponse = await postJson(routes, DESKTOP_MARKET_SELECT_PATH, { provider: 'community-market' })
 
-    expect(profileResponse.statusCode).toBe(202)
-    expect(JSON.parse(profileResponse.body)).toEqual({ accepted: true, restartRequired: true })
-    expect(marketResponse.statusCode).toBe(202)
-    expect(JSON.parse(marketResponse.body)).toEqual({ accepted: true, restartRequired: true })
+    expect(profileResponse.status).toBe(202)
+    expect(marketResponse.status).toBe(202)
     expect(persistProfileSelection).toHaveBeenCalledWith('work')
     expect(selectMarket).toHaveBeenCalledWith('community-market')
+    await nextTurn()
+    // Neither answer has been read yet, so neither restart has started.
     expect(scheduleRestart).not.toHaveBeenCalled()
-    await new Promise<void>(resolve => { setImmediate(resolve) })
+    expect(await profileResponse.json()).toEqual({ accepted: true, restartRequired: true })
+    expect(await marketResponse.json()).toEqual({ accepted: true, restartRequired: true })
+    await nextTurn()
     expect(scheduleRestart).toHaveBeenCalledTimes(2)
+  })
+
+  it('still restarts when the client goes away before reading the answer', async () => {
+    const afterResponse = vi.fn()
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
+      prepareProfileRollback: () => ({
+        response: { accepted: true, restartRequired: true, targetProfile: 'desktop' },
+        afterResponse,
+      }),
+    })))
+
+    const res = await postJson(routes, DESKTOP_PROFILE_ROLLBACK_PATH, {})
+    await res.body?.cancel()
+    await nextTurn()
+
+    expect(afterResponse).toHaveBeenCalledOnce()
   })
 
   it('opens the terminal only for an exact same-origin empty request', async () => {
     const openTerminal = vi.fn()
-    const controller = new DesktopSettingsController(bootstrap({ openTerminal }))
-    const accepted = response()
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({ openTerminal })))
 
-    await handleDesktopTerminalOpenRequest(
-      jsonRequest({}), accepted, ORIGIN, controller,
-    )
+    const accepted = await postJson(routes, DESKTOP_TERMINAL_OPEN_PATH, {})
 
-    expect(accepted.statusCode).toBe(200)
-    expect(JSON.parse(accepted.body)).toEqual({ accepted: true })
+    expect(accepted.status).toBe(200)
+    expect(await accepted.json()).toEqual({ accepted: true })
     expect(openTerminal).toHaveBeenCalledOnce()
 
-    for (const req of [
-      jsonRequest({ command: 'dsh plugin add untrusted' }),
-      jsonRequest({}, { headers: { origin: 'https://example.com' } }),
-    ]) {
-      const rejected = response()
-      await handleDesktopTerminalOpenRequest(req, rejected, ORIGIN, controller)
-      expect(rejected.statusCode).toBe(req.headers.origin === ORIGIN ? 400 : 403)
-    }
+    expect((await postJson(routes, DESKTOP_TERMINAL_OPEN_PATH, { command: 'dsh plugin add untrusted' })).status).toBe(400)
+    expect((await postJson(routes, DESKTOP_TERMINAL_OPEN_PATH, {}, { headers: { origin: 'https://example.com' } })).status).toBe(403)
     expect(openTerminal).toHaveBeenCalledOnce()
   })
 
@@ -517,72 +450,83 @@ describe('desktop settings HTTP boundary', () => {
     const exportDiagnostics = vi.fn(async () => {})
     const openProfileCreator = vi.fn()
     const afterResponse = vi.fn()
-    const controller = new DesktopSettingsController(bootstrap({
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
       exportDiagnostics,
       openProfileCreator,
       prepareProfileRollback: () => ({
         response: { accepted: true, restartRequired: true, targetProfile: 'desktop' },
         afterResponse,
       }),
-    }))
-    const diagnosticResponse = response()
-    const creatorResponse = response()
-    const rollbackResponse = response()
+    })))
 
-    await handleDesktopDiagnosticsExportRequest(jsonRequest({}), diagnosticResponse, ORIGIN, controller)
-    await handleDesktopProfileCreateWindowRequest(jsonRequest({}), creatorResponse, ORIGIN, controller)
-    await handleDesktopProfileRollbackRequest(jsonRequest({}), rollbackResponse, ORIGIN, controller)
+    const diagnosticResponse = await postJson(routes, DESKTOP_DIAGNOSTICS_EXPORT_PATH, {})
+    const creatorResponse = await postJson(routes, DESKTOP_PROFILE_CREATE_WINDOW_PATH, {})
+    const rollbackResponse = await postJson(routes, DESKTOP_PROFILE_ROLLBACK_PATH, {})
 
-    expect(diagnosticResponse.statusCode).toBe(200)
-    expect(creatorResponse.statusCode).toBe(200)
-    expect(rollbackResponse.statusCode).toBe(202)
-    expect(JSON.parse(rollbackResponse.body)).toEqual({
+    expect(diagnosticResponse.status).toBe(200)
+    expect(creatorResponse.status).toBe(200)
+    expect(rollbackResponse.status).toBe(202)
+    expect(exportDiagnostics).toHaveBeenCalledOnce()
+    expect(openProfileCreator).toHaveBeenCalledOnce()
+    await nextTurn()
+    expect(afterResponse).not.toHaveBeenCalled()
+    expect(await rollbackResponse.json()).toEqual({
       accepted: true,
       restartRequired: true,
       targetProfile: 'desktop',
     })
-    expect(exportDiagnostics).toHaveBeenCalledOnce()
-    expect(openProfileCreator).toHaveBeenCalledOnce()
-    expect(afterResponse).not.toHaveBeenCalled()
-    await new Promise<void>(resolve => { setImmediate(resolve) })
+    await nextTurn()
     expect(afterResponse).toHaveBeenCalledOnce()
+  })
+
+  it('reports a restart that throws instead of answering it', async () => {
+    const reportError = vi.fn()
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
+      prepareProfileRollback: () => ({
+        response: { accepted: true, restartRequired: true, targetProfile: 'desktop' },
+        afterResponse: () => { throw new Error('relaunch refused') },
+      }),
+    })), reportError)
+
+    const res = await postJson(routes, DESKTOP_PROFILE_ROLLBACK_PATH, {})
+    expect(res.status).toBe(202)
+    await res.json()
+    await nextTurn()
+
+    expect(reportError).toHaveBeenCalledWith('restore last-known-good Profile restart', expect.any(Error))
   })
 
   it('reports terminal launch failures without exposing the native cause', async () => {
     const reportError = vi.fn()
-    const controller = new DesktopSettingsController(bootstrap({
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
       openTerminal: () => { throw new Error('open -a Terminal failed at /private/path') },
-    }))
-    const res = response()
+    })), reportError)
 
-    await handleDesktopTerminalOpenRequest(
-      jsonRequest({}), res, ORIGIN, controller, reportError,
-    )
+    const res = await postJson(routes, DESKTOP_TERMINAL_OPEN_PATH, {})
+    const text = await res.text()
 
-    expect(res.statusCode).toBe(500)
-    expect(JSON.parse(res.body)).toEqual({ error: 'terminal could not be opened' })
-    expect(res.body).not.toContain('/private')
+    expect(res.status).toBe(500)
+    expect(JSON.parse(text)).toEqual({ error: 'terminal could not be opened' })
+    expect(text).not.toContain('/private')
     expect(reportError).toHaveBeenCalledWith('open terminal', expect.any(Error))
   })
 
   it('reports stable operation errors without exposing native causes', async () => {
     const reportError = vi.fn()
-    const controller = new DesktopSettingsController(bootstrap({
+    const routes = desktopSettingsRoutes(new DesktopSettingsController(bootstrap({
       profiles: {
         current: { name: DESKTOP.name, dir: DESKTOP.dir },
         list: () => [],
         create: () => { throw new Error('EACCES /private/profiles/work') },
       },
-    }))
-    const res = response()
+    })), reportError)
 
-    await handleDesktopProfileCreateRequest(
-      jsonRequest({ name: 'work' }), res, ORIGIN, controller, reportError,
-    )
+    const res = await postJson(routes, DESKTOP_PROFILE_CREATE_PATH, { name: 'work' })
+    const text = await res.text()
 
-    expect(res.statusCode).toBe(409)
-    expect(JSON.parse(res.body)).toEqual({ error: 'profile could not be created' })
-    expect(res.body).not.toContain('/private')
+    expect(res.status).toBe(409)
+    expect(JSON.parse(text)).toEqual({ error: 'profile could not be created' })
+    expect(text).not.toContain('/private')
     expect(reportError).toHaveBeenCalledWith('create profile', expect.any(Error))
   })
 
@@ -590,12 +534,12 @@ describe('desktop settings HTTP boundary', () => {
     const readMarket = vi.fn(() => market())
     const controller = new DesktopSettingsController(bootstrap({ readMarket }))
     readMarket.mockClear()
-    const res = response()
 
-    await handleDesktopSettingsRequest(request('POST'), res, ORIGIN, controller)
+    const res = await call(desktopSettingsRoutes(controller), DESKTOP_SETTINGS_PATH, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
 
-    expect(res.statusCode).toBe(405)
-    expect(res.setHeader).toHaveBeenCalledWith('allow', 'GET')
+    expect(res.status).toBe(405)
+    expect(res.headers.get('allow')).toContain('GET')
+    expect(await res.json()).toEqual({ error: 'method not allowed' })
     expect(readMarket).not.toHaveBeenCalled()
   })
 })

@@ -38,15 +38,6 @@ export const DESKTOP_MARKET_IDENTITIES = Object.freeze({
   }),
 })
 
-/**
- * Rows the community Market injects services from (`router`, `routerHttp`; spec 046), mounted just before it whenever it is the
- * selected provider. They are not Market identities: a different provider never needs them and they are never provider rows.
- */
-export const COMMUNITY_MARKET_REQUIRED_ROWS = Object.freeze([
-  Object.freeze({ rowId: 'acrylblends/cordis/router', module: 'acrylblends/cordis/router', packageName: 'acrylblends' }),
-  Object.freeze({ rowId: 'acrylblends/cordis/router-http', module: 'acrylblends/cordis/router-http', packageName: 'acrylblends' }),
-])
-
 /** Persisted machine-level provider selection. Effective state is derived at boot. */
 export interface DesktopMarketStateV1 {
   readonly version: 1

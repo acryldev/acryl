@@ -47,6 +47,8 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   (`runtime/acryl-harness-runtime/src/profile-resolution/`, the 2026-10-25 port of DSH's profile package resolution): its two direct DSH
   imports (`resolver.ts` takes DSH's resolution types, `service.ts` subclasses DSH's `PluginPackages`) raised the DSH import ceiling in
   `scripts/verify-layout.mjs` from 133 to 135, and removing them is the path back to 133.
+- [ ] T013 `acryl-plugin-context`'s startup-hold route (`index.js`, the `STARTUP_PATH` route of specs/001 `tasks.md` T097) onto the
+  router. Found while counting for T003: it is one of the nine remaining call sites and no slice above names it.
 
 Next: the drivers (spec 046 Phase 9, T028 `acryl-driver-dsh` and T029 `acryl-driver-pty`) act through the door T002 moves, and get their
 own spec when this one reaches T007.

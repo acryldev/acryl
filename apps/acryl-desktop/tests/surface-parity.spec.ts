@@ -18,6 +18,7 @@ import { prepareDesktopProfile } from '../src/profile.ts'
 /** Rows only the Electron app has: the native shell around the same runtime. */
 const DESKTOP_NATIVE_ROWS: Readonly<Record<string, string>> = {
   'desktop-shell': 'the Electron window, tray and menu, Desktop settings, native folder drop and directory-picker bridge',
+  'acryl-desktop/api': 'Desktop\'s private renderer routes on the router: its profile, Market and preferences settings, the renderer boot report and the native directory picker (Web has no native shell to report to)',
   'desktop-webserver': 'Desktop owns the loopback web server the renderer loads from (Web uses the stock one)',
   'desktop-profiles': 'desktop profile selection and creation (Web serves one profile)',
   'desktop-pnpm': 'the package manager Desktop installs plugins with (Web has its own install service)',
@@ -33,8 +34,6 @@ const WEB_ONLY_ROWS: Readonly<Record<string, string>> = {
   'acryl-engine': 'the engine host row the Web surface mounts the runtime under',
   include: 'the root include row of the engine host',
   'community-market': 'Web always composes the community market; Desktop makes the provider a user choice',
-  'acrylblends/cordis/router': 'the community market injects the router; Desktop mounts it only together with the market it selected (spec 046)',
-  'acrylblends/cordis/router-http': 'the community market injects the router adapter; Desktop mounts it only together with the market it selected (spec 046)',
   'acryl-support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
 }
 

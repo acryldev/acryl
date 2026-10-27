@@ -1,4 +1,3 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defaultDesktopShellMode } from '../../src/shell/default-mode.ts'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
@@ -17,12 +16,7 @@ import {
   type Config as DesktopConfig,
   type DesktopSettings,
 } from '../../src/index.ts'
-import {
-  DESKTOP_DIRECTORY_PICKER_PATH,
-  DESKTOP_DIRECTORY_VALIDATOR_PATH,
-} from '../../src/workspaces/directory-picker-contract.ts'
 import type { DesktopRuntime, DesktopShellSpec } from '../../src/shell/runtime.ts'
-import { RENDERER_BOOT_REPORT_PATH, type RendererBootReport } from '../../src/startup/renderer-boot-contract.ts'
 
 const config: DesktopConfig = {
   mode: 'compatibility',
@@ -43,10 +37,6 @@ interface PluginHarness {
   restart: ReturnType<typeof vi.fn<() => Promise<void>>>
   setLocalePreference: ReturnType<typeof vi.fn<(locale: LocaleId | undefined) => void>>
   setThemeSource: ReturnType<typeof vi.fn<(source: ThemePreference) => void>>
-  rendererBoot: ReturnType<typeof vi.fn<(report: RendererBootReport) => void>>
-  pickDirectory: ReturnType<typeof vi.fn<() => Promise<string | null>>>
-  validateDirectory: ReturnType<typeof vi.fn<(path: string) => Promise<boolean>>>
-  route(path: string): WebRoute | undefined
   notify(next: DesktopSettings, prev: DesktopSettings): Promise<void>
   notifyLocale(preference: LocaleId | undefined): void
   notifyTheme(preference: ThemePreference): void
@@ -59,10 +49,6 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
   const restart = vi.fn(async () => {})
   const setLocalePreference = vi.fn<(locale: LocaleId | undefined) => void>()
   const setThemeSource = vi.fn<(source: ThemePreference) => void>()
-  const rendererBoot = vi.fn<(report: RendererBootReport) => void>()
-  const pickDirectory = vi.fn(async () => null)
-  const validateDirectory = vi.fn(async () => true)
-  const routes = new Map<string, WebRoute>()
   const settingsUpdated = new Set<(namespace: unknown, next: unknown) => void>()
   let localePreference: LocaleId | undefined
   let themePreference: ThemePreference = 'system'
@@ -90,10 +76,10 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
     registerTrayItem: () => ({ refresh: () => {}, dispose: () => {} }),
     openTerminal: () => {},
     exportDiagnostics: async () => {},
-    pickDirectory,
-    validateDirectory,
+    pickDirectory: async () => null,
+    validateDirectory: async () => true,
     openProfileCreateWindow: () => {},
-    reportRendererBoot: rendererBoot,
+    reportRendererBoot: () => {},
     setLocalePreference,
     setThemeSource,
     requestRestart: restart,
@@ -120,10 +106,7 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
     webServer: {
       host: '127.0.0.1',
       port: 43120,
-      register: vi.fn((route: WebRoute) => {
-        routes.set(route.path, route)
-        return () => { if (routes.get(route.path) === route) routes.delete(route.path) }
-      }),
+      register: vi.fn((_route: WebRoute) => () => {}),
     },
     connection: { authenticatedUrl: vi.fn((url: string) => url) },
     acrylSettings: settings,
@@ -150,10 +133,6 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
     restart,
     setLocalePreference,
     setThemeSource,
-    rendererBoot,
-    pickDirectory,
-    validateDirectory,
-    route: path => routes.get(path),
     notify: async (next, prev) => { await watcher?.(next, prev) },
     notifyLocale: (preference) => {
       localePreference = preference
@@ -275,116 +254,12 @@ describe('desktop Host plugin', () => {
     expect(harness.update).toHaveBeenCalledWith({ mode: 'advanced' })
   })
 
-  it('forwards same-origin renderer boot reports through the Host route', async () => {
-    const harness = createHarness()
+  it.each(['darwin', 'win32', 'linux'] as const)('registers no Web route of its own on %s: Desktop\'s routes are acryl-desktop/api\'s', (platform) => {
+    const harness = createHarness(platform)
     apply(harness.ctx, config)
-    const route = harness.route(RENDERER_BOOT_REPORT_PATH)
-    expect(route).toEqual(expect.objectContaining({
-      kind: 'exact',
-      path: RENDERER_BOOT_REPORT_PATH,
-    }))
-    const report = { status: 'failed', plugins: ['dsh-vision-router'], error: 'slot conflict' } as const
-    const req = {
-      method: 'POST',
-      headers: {
-        origin: 'http://127.0.0.1:43120',
-        'content-type': 'application/json',
-      },
-      async * [Symbol.asyncIterator]() { yield Buffer.from(JSON.stringify(report)) },
-    } as unknown as IncomingMessage
-    const res = { statusCode: 200, end: vi.fn() } as unknown as ServerResponse
-
-    await route?.handler(req, res)
-
-    expect(harness.rendererBoot).toHaveBeenCalledWith(report)
-    expect(res.statusCode).toBe(204)
-  })
-
-  it('serves the Windows native picker through a same-origin desktop route', async () => {
-    const harness = createHarness('win32')
-    harness.pickDirectory.mockResolvedValue('C:\\Work')
-    apply(harness.ctx, config)
-    const route = harness.route(DESKTOP_DIRECTORY_PICKER_PATH)
-    expect(route).toEqual(expect.objectContaining({
-      kind: 'exact',
-      path: DESKTOP_DIRECTORY_PICKER_PATH,
-    }))
-    const req = {
-      method: 'POST',
-      headers: { origin: 'http://127.0.0.1:43120' },
-    } as unknown as IncomingMessage
-    let body = ''
-    const res = {
-      statusCode: 200,
-      setHeader: vi.fn(),
-      end: vi.fn((value?: string) => { body = value ?? '' }),
-    } as unknown as ServerResponse
-
-    await route?.handler(req, res)
-
-    expect(harness.pickDirectory).toHaveBeenCalledOnce()
-    expect(res.statusCode).toBe(200)
-    expect(JSON.parse(body)).toEqual({ path: 'C:\\Work' })
-  })
-
-  it('serves the same native picker route on macOS (T134: this route used to be Windows-only, causing a 405 on darwin)', async () => {
-    const harness = createHarness('darwin')
-    harness.pickDirectory.mockResolvedValue('/Users/x/proj')
-    apply(harness.ctx, config)
-    const route = harness.route(DESKTOP_DIRECTORY_PICKER_PATH)
-    expect(route).toEqual(expect.objectContaining({
-      kind: 'exact',
-      path: DESKTOP_DIRECTORY_PICKER_PATH,
-    }))
-    const req = {
-      method: 'POST',
-      headers: { origin: 'http://127.0.0.1:43120' },
-    } as unknown as IncomingMessage
-    let body = ''
-    const res = {
-      statusCode: 200,
-      setHeader: vi.fn(),
-      end: vi.fn((value?: string) => { body = value ?? '' }),
-    } as unknown as ServerResponse
-
-    await route?.handler(req, res)
-
-    expect(harness.pickDirectory).toHaveBeenCalledOnce()
-    expect(res.statusCode).toBe(200)
-    expect(JSON.parse(body)).toEqual({ path: '/Users/x/proj' })
-  })
-
-  it('does not register the native picker route on Linux, which has no native picker seam', () => {
-    const harness = createHarness('linux')
-    apply(harness.ctx, config)
-    expect(harness.route(DESKTOP_DIRECTORY_PICKER_PATH)).toBeUndefined()
-  })
-
-  it('validates a Windows workspace through a same-origin desktop route', async () => {
-    const harness = createHarness('win32')
-    harness.validateDirectory.mockResolvedValue(false)
-    apply(harness.ctx, config)
-    const route = harness.route(DESKTOP_DIRECTORY_VALIDATOR_PATH)
-    const req = {
-      method: 'POST',
-      headers: {
-        origin: 'http://127.0.0.1:43120',
-        'content-type': 'application/json',
-      },
-      async * [Symbol.asyncIterator]() { yield Buffer.from(JSON.stringify({ path: 'E:\\repo' })) },
-    } as unknown as IncomingMessage
-    let body = ''
-    const res = {
-      statusCode: 200,
-      setHeader: vi.fn(),
-      end: vi.fn((value?: string) => { body = value ?? '' }),
-    } as unknown as ServerResponse
-
-    await route?.handler(req, res)
-
-    expect(harness.validateDirectory).toHaveBeenCalledWith('E:\\repo')
-    expect(res.statusCode).toBe(200)
-    expect(JSON.parse(body)).toEqual({ allowed: false })
+    expect(vi.mocked(harness.ctx.webServer.register)).not.toHaveBeenCalled()
+    expect(inject).not.toContain('router')
+    expect(inject).not.toContain('routerHttp')
   })
 
   it.each(['win32', 'linux'] as const)(

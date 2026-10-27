@@ -1,109 +1,64 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { Readable } from 'node:stream'
 import { describe, expect, it, vi } from 'vitest'
-import {
-  handleDesktopDirectoryPickerRequest,
-  handleDesktopDirectoryValidationRequest,
-} from '../../src/workspaces/directory-picker-route.ts'
+import { DESKTOP_DIRECTORY_PICKER_PATH, DESKTOP_DIRECTORY_VALIDATOR_PATH } from '../../src/workspaces/directory-picker-contract.ts'
+import { directoryPickerRoutes, type DesktopDirectoryNative } from '../../src/workspaces/directory-picker-route.ts'
+import { call, postJson } from '../api/call.ts'
 
-function request(origin = 'http://127.0.0.1:43120', method = 'POST'): IncomingMessage {
-  return { method, headers: { origin } } as IncomingMessage
-}
-
-function jsonRequest(value: unknown, origin = 'http://127.0.0.1:43120'): IncomingMessage {
-  const req = Readable.from([JSON.stringify(value)]) as IncomingMessage
-  req.method = 'POST'
-  req.headers = { origin, 'content-type': 'application/json' }
-  return req
-}
-
-function response(): ServerResponse & {
-  body: string
-  end: ReturnType<typeof vi.fn>
-  setHeader: ReturnType<typeof vi.fn>
-} {
-  const res = {
-    body: '',
-    statusCode: 200,
-    setHeader: vi.fn(),
-    end: vi.fn((body?: string) => { res.body = body ?? '' }),
-  }
-  return res as unknown as ServerResponse & typeof res
+function native(overrides: Partial<DesktopDirectoryNative> = {}): DesktopDirectoryNative {
+  return { pickDirectory: async () => null, validateDirectory: async () => true, ...overrides }
 }
 
 describe('desktop directory picker route', () => {
   it('returns the path selected by the native desktop adapter', async () => {
-    const pick = vi.fn(async () => 'C:\\Work')
-    const res = response()
+    const pickDirectory = vi.fn(async () => 'C:\\Work')
 
-    await handleDesktopDirectoryPickerRequest(
-      request(),
-      res,
-      'http://127.0.0.1:43120',
-      pick,
-    )
+    const res = await call(directoryPickerRoutes(native({ pickDirectory })), DESKTOP_DIRECTORY_PICKER_PATH, { method: 'POST' })
 
-    expect(pick).toHaveBeenCalledOnce()
-    expect(res.statusCode).toBe(200)
-    expect(res.setHeader).toHaveBeenCalledWith('content-type', 'application/json; charset=utf-8')
-    expect(JSON.parse(res.body)).toEqual({ path: 'C:\\Work' })
+    expect(pickDirectory).toHaveBeenCalledOnce()
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toMatch(/^application\/json/u)
+    expect(await res.json()).toEqual({ path: 'C:\\Work' })
   })
 
   it('keeps cancellation distinct from route failure', async () => {
-    const res = response()
+    const res = await call(directoryPickerRoutes(native()), DESKTOP_DIRECTORY_PICKER_PATH, { method: 'POST' })
 
-    await handleDesktopDirectoryPickerRequest(
-      request(),
-      res,
-      'http://127.0.0.1:43120',
-      async () => null,
-    )
-
-    expect(res.statusCode).toBe(200)
-    expect(JSON.parse(res.body)).toEqual({ path: null })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ path: null })
   })
 
   it('rejects cross-origin and non-POST requests without opening a dialog', async () => {
-    const pick = vi.fn(async () => null)
+    const pickDirectory = vi.fn(async () => null)
+    const routes = directoryPickerRoutes(native({ pickDirectory }))
 
-    for (const req of [request('https://example.com'), request(undefined, 'GET')]) {
-      const res = response()
-      await handleDesktopDirectoryPickerRequest(req, res, 'http://127.0.0.1:43120', pick)
-      expect(res.statusCode).toBe(req.method === 'GET' ? 405 : 403)
-    }
-    expect(pick).not.toHaveBeenCalled()
+    expect((await call(routes, DESKTOP_DIRECTORY_PICKER_PATH, { method: 'POST', headers: { origin: 'https://example.com' } })).status).toBe(403)
+    expect((await call(routes, DESKTOP_DIRECTORY_PICKER_PATH, { method: 'POST', remoteAddress: '192.0.2.10' })).status).toBe(403)
+    const get = await call(routes, DESKTOP_DIRECTORY_PICKER_PATH)
+    expect(get.status).toBe(405)
+    expect(get.headers.get('allow')).toBe('POST')
+    expect(pickDirectory).not.toHaveBeenCalled()
   })
 
   it('returns a stable error without exposing Electron details', async () => {
-    const res = response()
+    const reportError = vi.fn()
+    const routes = directoryPickerRoutes(native({ pickDirectory: async () => { throw new Error('private native failure') } }), reportError)
 
-    await handleDesktopDirectoryPickerRequest(
-      request(),
-      res,
-      'http://127.0.0.1:43120',
-      async () => { throw new Error('private native failure') },
-    )
+    const res = await call(routes, DESKTOP_DIRECTORY_PICKER_PATH, { method: 'POST' })
 
-    expect(res.statusCode).toBe(500)
-    expect(JSON.parse(res.body)).toEqual({ error: 'native directory picker failed' })
+    expect(res.status).toBe(500)
+    expect(await res.json()).toEqual({ error: 'native directory picker failed' })
+    expect(reportError).toHaveBeenCalledWith('open the native directory picker', expect.any(Error))
   })
 })
 
 describe('desktop directory validation route', () => {
   it('returns the runtime decision for a selected path', async () => {
-    const validate = vi.fn(async () => false)
-    const res = response()
+    const validateDirectory = vi.fn(async () => false)
 
-    await handleDesktopDirectoryValidationRequest(
-      jsonRequest({ path: 'E:\\repo' }),
-      res,
-      'http://127.0.0.1:43120',
-      validate,
-    )
+    const res = await postJson(directoryPickerRoutes(native({ validateDirectory })), DESKTOP_DIRECTORY_VALIDATOR_PATH, { path: 'E:\\repo' })
 
-    expect(validate).toHaveBeenCalledWith('E:\\repo')
-    expect(res.statusCode).toBe(200)
-    expect(JSON.parse(res.body)).toEqual({ allowed: false })
+    expect(validateDirectory).toHaveBeenCalledWith('E:\\repo')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ allowed: false })
   })
 
   it.each([
@@ -111,46 +66,33 @@ describe('desktop directory validation route', () => {
     [{ path: '' }, 400],
     [{ path: 42 }, 400],
   ])('rejects an invalid validation body', async (body, statusCode) => {
-    const validate = vi.fn(async () => true)
-    const res = response()
+    const validateDirectory = vi.fn(async () => true)
 
-    await handleDesktopDirectoryValidationRequest(
-      jsonRequest(body),
-      res,
-      'http://127.0.0.1:43120',
-      validate,
-    )
+    const res = await postJson(directoryPickerRoutes(native({ validateDirectory })), DESKTOP_DIRECTORY_VALIDATOR_PATH, body)
 
-    expect(validate).not.toHaveBeenCalled()
-    expect(res.statusCode).toBe(statusCode)
+    expect(validateDirectory).not.toHaveBeenCalled()
+    expect(res.status).toBe(statusCode)
   })
 
   it('rejects cross-origin validation before reading the path', async () => {
-    const validate = vi.fn(async () => true)
-    const res = response()
+    const validateDirectory = vi.fn(async () => true)
 
-    await handleDesktopDirectoryValidationRequest(
-      jsonRequest({ path: 'C:\\Work' }, 'https://example.com'),
-      res,
-      'http://127.0.0.1:43120',
-      validate,
-    )
+    const res = await postJson(directoryPickerRoutes(native({ validateDirectory })), DESKTOP_DIRECTORY_VALIDATOR_PATH, { path: 'C:\\Work' }, {
+      headers: { origin: 'https://example.com' },
+    })
 
-    expect(validate).not.toHaveBeenCalled()
-    expect(res.statusCode).toBe(403)
+    expect(validateDirectory).not.toHaveBeenCalled()
+    expect(res.status).toBe(403)
   })
 
   it('reports a runtime validation failure as a stable server error', async () => {
-    const res = response()
+    const reportError = vi.fn()
+    const routes = directoryPickerRoutes(native({ validateDirectory: async () => { throw new Error('private volume query failure') } }), reportError)
 
-    await handleDesktopDirectoryValidationRequest(
-      jsonRequest({ path: 'E:\\repo' }),
-      res,
-      'http://127.0.0.1:43120',
-      async () => { throw new Error('private volume query failure') },
-    )
+    const res = await postJson(routes, DESKTOP_DIRECTORY_VALIDATOR_PATH, { path: 'E:\\repo' })
 
-    expect(res.statusCode).toBe(500)
-    expect(JSON.parse(res.body)).toEqual({ error: 'directory validation failed' })
+    expect(res.status).toBe(500)
+    expect(await res.json()).toEqual({ error: 'directory validation failed' })
+    expect(reportError).toHaveBeenCalledWith('validate a workspace directory', expect.any(Error))
   })
 })

@@ -47,6 +47,10 @@
       "types": "./lib/types/terminal/terminal.d.ts",
       "default": "./lib/terminal.js"
     },
+    "./api": {
+      "types": "./lib/types/api/plugin.d.ts",
+      "default": "./lib/api.js"
+    },
     "./hello-world": {
       "types": "./lib/types/plugins/hello-world.d.ts",
       "default": "./lib/hello-world.js"
@@ -435,7 +439,7 @@
     "acryl-sign-in": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-workspace": "workspace:*",
-    "acrylblends": "^0.9.1",
+    "acrylblends": "^0.9.2",
     "adm-zip": "^0.6.1",
     "commander": "^15.0.0",
     "cordis-plugin-market": "workspace:*",

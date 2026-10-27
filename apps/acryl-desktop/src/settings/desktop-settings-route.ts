@@ -1,22 +1,28 @@
-/** Strict loopback HTTP handlers for the private Desktop settings API. */
+/** Strict loopback routes for the private Desktop settings API, on the router. */
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import { error, finishJson, INVALID_BODY, isSameOriginLoopbackRequest, parseJsonPostBody } from 'acryl-loopback-http'
+import { Acryl, type Context } from 'acrylblends'
+import { error } from 'acryl-loopback-http'
+import { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { afterBody, jsonContent } from '../api/http.ts'
 import { assertDesktopProfileName } from '../profile/profile-manager.ts'
 import type { DesktopMarketProvider } from '../plugins/desktop-market.ts'
 import type DesktopSettingsController from './desktop-settings-controller.ts'
 import type { DesktopSettingsPostResponse } from './desktop-settings-controller.ts'
-import type {
-  DesktopMarketSelectRequest,
-  DesktopProfileCreateRequest,
-  DesktopProfileDeleteRequest,
-  DesktopProfileSelectRequest,
+import {
+  DESKTOP_DIAGNOSTICS_EXPORT_PATH,
+  DESKTOP_MARKET_SELECT_PATH,
+  DESKTOP_PROFILE_CREATE_PATH,
+  DESKTOP_PROFILE_CREATE_WINDOW_PATH,
+  DESKTOP_PROFILE_DELETE_PATH,
+  DESKTOP_PROFILE_ROLLBACK_PATH,
+  DESKTOP_PROFILE_SELECT_PATH,
+  DESKTOP_SETTINGS_PATH,
+  DESKTOP_TERMINAL_OPEN_PATH,
+  type DesktopMarketSelectRequest,
+  type DesktopProfileCreateRequest,
 } from './desktop-settings-contract.ts'
 
 const MAX_SETTINGS_BODY_BYTES = 16 * 1024
-
-// The strict loopback check, JSON helpers and body reader are shared with the workspace and plugin-admin routes.
-export { error, finishJson, INVALID_BODY, isSameOriginLoopbackRequest } from 'acryl-loopback-http'
 
 function isExactRecord(value: unknown, key: string): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -48,255 +54,146 @@ function isEmptyRequest(value: unknown): boolean {
     && Object.keys(value).length === 0
 }
 
-/** Read a settings POST body (JSON, at most {@link MAX_SETTINGS_BODY_BYTES}); answers a bad one itself. */
-export function parsePostBody(req: IncomingMessage, res: ServerResponse): Promise<unknown | typeof INVALID_BODY> {
-  return parseJsonPostBody(req, res, MAX_SETTINGS_BODY_BYTES)
-}
-
-function finishPostResponse<T extends object>(
-  res: ServerResponse,
-  statusCode: number,
+/** The answer, and its follow-up (the restart) once the answer has gone out; a follow-up that throws is reported, never answered. */
+function postResponse<T extends object>(
+  c: Context,
+  statusCode: 200 | 202,
   operation: DesktopSettingsPostResponse<T>,
   operationName: string,
-  reportError: (operation: string, cause: unknown) => void,
-): void {
-  finishJson(res, statusCode, operation.response)
-  if (operation.afterResponse === undefined) return
-  setImmediate(() => {
+  reportError: ReportError,
+): Response {
+  const response = c.json(operation.response, statusCode)
+  const after = operation.afterResponse
+  if (after === undefined) return response
+  return afterBody(response, () => {
     try {
-      operation.afterResponse?.()
+      after()
     } catch (cause) {
       reportError(`${operationName} restart`, cause)
     }
   })
 }
 
-/** Serve the renderer-safe Desktop settings snapshot. */
-export async function handleDesktopSettingsRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'GET') return finishJson(res, 405, error('method not allowed'), 'GET')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, false)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  try {
-    finishJson(res, 200, controller.read())
-  } catch (cause) {
-    reportError('read settings', cause)
-    finishJson(res, 500, error('desktop settings unavailable'))
-  }
-}
+/** Every changing route: the own page, a JSON body of at most {@link MAX_SETTINGS_BODY_BYTES}. */
+const change = [ownPage, jsonContent, jsonBody(MAX_SETTINGS_BODY_BYTES)] as const
 
-/** Create one safe Web profile without changing the active generation. */
-export async function handleDesktopProfileCreateRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  const request = parseProfileRequest(value)
-  if (request === undefined) return finishJson(res, 400, error('invalid profile creation request'))
-  try {
-    finishJson(res, 201, controller.createProfile(request.name))
-  } catch (cause) {
-    reportError('create profile', cause)
-    finishJson(res, 409, error('profile could not be created'))
-  }
-}
-
-/** Select one compatible profile through the restart-safe launcher service. */
-export async function handleDesktopProfileSelectRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  const request = parseProfileRequest(value) as DesktopProfileSelectRequest | undefined
-  if (request === undefined) return finishJson(res, 400, error('invalid profile selection request'))
-  try {
-    const operation = await controller.selectProfile(request.name)
-    finishPostResponse(
-      res,
-      operation.response.restartRequired ? 202 : 200,
-      operation,
-      'select profile',
-      reportError,
-    )
-  } catch (cause) {
-    reportError('select profile', cause)
-    finishJson(res, 409, error('profile could not be selected'))
-  }
-}
-
-/** Delete one inactive user profile and return a fresh settings projection. */
-export async function handleDesktopProfileDeleteRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  const request = parseProfileRequest(value) as DesktopProfileDeleteRequest | undefined
-  if (request === undefined) return finishJson(res, 400, error('invalid profile deletion request'))
-  try {
-    finishJson(res, 200, await controller.deleteProfile(request.name))
-  } catch (cause) {
-    reportError('delete profile', cause)
-    finishJson(res, 409, error('profile could not be deleted'))
-  }
-}
-
-/** Persist one Market provider and queue restart only after persistence succeeds. */
-export async function handleDesktopMarketSelectRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  const request = parseMarketRequest(value)
-  if (request === undefined) return finishJson(res, 400, error('invalid Market selection request'))
-  try {
-    const operation = await controller.selectMarket(request.provider)
-    finishPostResponse(
-      res,
-      operation.response.restartRequired ? 202 : 200,
-      operation,
-      'select Market provider',
-      reportError,
-    )
-  } catch (cause) {
-    reportError('select Market provider', cause)
-    finishJson(res, 500, error('Market selection could not be saved'))
-  }
-}
-
-/** Open the launcher-owned DSH terminal from an exact empty request. */
-export async function handleDesktopTerminalOpenRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  if (!isEmptyRequest(value)) return finishJson(res, 400, error('invalid terminal request'))
-  try {
-    finishJson(res, 200, controller.openTerminal())
-  } catch (cause) {
-    reportError('open terminal', cause)
-    finishJson(res, 500, error('terminal could not be opened'))
-  }
-}
-
-/** Export diagnostics from an exact empty same-origin request. */
-export async function handleDesktopDiagnosticsExportRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  if (!isEmptyRequest(value)) return finishJson(res, 400, error('invalid diagnostic export request'))
-  try {
-    finishJson(res, 200, await controller.exportDiagnostics())
-  } catch (cause) {
-    reportError('export diagnostics', cause)
-    finishJson(res, 500, error('diagnostics could not be exported'))
-  }
-}
-
-/** Open the isolated native Profile creator from an exact empty request. */
-export async function handleDesktopProfileCreateWindowRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  if (!isEmptyRequest(value)) return finishJson(res, 400, error('invalid Profile creator request'))
-  try {
-    finishJson(res, 200, controller.openProfileCreator())
-  } catch (cause) {
-    reportError('open Profile creator', cause)
-    finishJson(res, 500, error('Profile creator could not be opened'))
-  }
-}
-
-/** Restore the last-known-good Profile from an exact empty request. */
-export async function handleDesktopProfileRollbackRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  controller: DesktopSettingsController,
-  reportError: (operation: string, cause: unknown) => void = () => {},
-): Promise<void> {
-  if (req.method !== 'POST') return finishJson(res, 405, error('method not allowed'), 'POST')
-  if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) {
-    return finishJson(res, 403, error('forbidden'))
-  }
-  const value = await parsePostBody(req, res)
-  if (value === INVALID_BODY) return
-  if (!isEmptyRequest(value)) return finishJson(res, 400, error('invalid Profile rollback request'))
-  try {
-    finishPostResponse(
-      res,
-      202,
-      controller.rollbackProfile(),
-      'restore last-known-good Profile',
-      reportError,
-    )
-  } catch (cause) {
-    reportError('prepare last-known-good Profile restore', cause)
-    finishJson(res, 409, error('last-known-good Profile could not be restored'))
-  }
+/**
+ * The settings routes: the renderer-safe snapshot (GET), profile creation, selection, deletion and rollback, the Market provider, the
+ * terminal, the native Profile creator and the diagnostic export (POST, each with an exact body). Native causes are reported, never answered.
+ */
+export function desktopSettingsRoutes(controller: DesktopSettingsController, reportError: ReportError = () => {}): Acryl {
+  const invalidJson = (c: Context): Response => c.json(error('invalid JSON request'), 400)
+  return new Acryl()
+    .get(DESKTOP_SETTINGS_PATH, ownPage, (c) => {
+      try {
+        return c.json(controller.read())
+      } catch (cause) {
+        reportError('read settings', cause)
+        return c.json(error('desktop settings unavailable'), 500)
+      }
+    })
+    // Create one safe Web profile without changing the active generation.
+    .post(DESKTOP_PROFILE_CREATE_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      const request = parseProfileRequest(value)
+      if (request === undefined) return c.json(error('invalid profile creation request'), 400)
+      try {
+        return c.json(controller.createProfile(request.name), 201)
+      } catch (cause) {
+        reportError('create profile', cause)
+        return c.json(error('profile could not be created'), 409)
+      }
+    })
+    // Select one compatible profile through the restart-safe launcher service.
+    .post(DESKTOP_PROFILE_SELECT_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      const request = parseProfileRequest(value)
+      if (request === undefined) return c.json(error('invalid profile selection request'), 400)
+      try {
+        const operation = await controller.selectProfile(request.name)
+        return postResponse(c, operation.response.restartRequired ? 202 : 200, operation, 'select profile', reportError)
+      } catch (cause) {
+        reportError('select profile', cause)
+        return c.json(error('profile could not be selected'), 409)
+      }
+    })
+    // Delete one inactive user profile and return a fresh settings projection.
+    .post(DESKTOP_PROFILE_DELETE_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      const request = parseProfileRequest(value)
+      if (request === undefined) return c.json(error('invalid profile deletion request'), 400)
+      try {
+        return c.json(await controller.deleteProfile(request.name))
+      } catch (cause) {
+        reportError('delete profile', cause)
+        return c.json(error('profile could not be deleted'), 409)
+      }
+    })
+    // Persist one Market provider and queue the restart only after persistence succeeds.
+    .post(DESKTOP_MARKET_SELECT_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      const request = parseMarketRequest(value)
+      if (request === undefined) return c.json(error('invalid Market selection request'), 400)
+      try {
+        const operation = await controller.selectMarket(request.provider)
+        return postResponse(c, operation.response.restartRequired ? 202 : 200, operation, 'select Market provider', reportError)
+      } catch (cause) {
+        reportError('select Market provider', cause)
+        return c.json(error('Market selection could not be saved'), 500)
+      }
+    })
+    // Open the launcher-owned DSH terminal from an exact empty request.
+    .post(DESKTOP_TERMINAL_OPEN_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      if (!isEmptyRequest(value)) return c.json(error('invalid terminal request'), 400)
+      try {
+        return c.json(controller.openTerminal())
+      } catch (cause) {
+        reportError('open terminal', cause)
+        return c.json(error('terminal could not be opened'), 500)
+      }
+    })
+    // Export diagnostics from an exact empty request.
+    .post(DESKTOP_DIAGNOSTICS_EXPORT_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      if (!isEmptyRequest(value)) return c.json(error('invalid diagnostic export request'), 400)
+      try {
+        return c.json(await controller.exportDiagnostics())
+      } catch (cause) {
+        reportError('export diagnostics', cause)
+        return c.json(error('diagnostics could not be exported'), 500)
+      }
+    })
+    // Open the isolated native Profile creator from an exact empty request.
+    .post(DESKTOP_PROFILE_CREATE_WINDOW_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      if (!isEmptyRequest(value)) return c.json(error('invalid Profile creator request'), 400)
+      try {
+        return c.json(controller.openProfileCreator())
+      } catch (cause) {
+        reportError('open Profile creator', cause)
+        return c.json(error('Profile creator could not be opened'), 500)
+      }
+    })
+    // Restore the last-known-good Profile from an exact empty request.
+    .post(DESKTOP_PROFILE_ROLLBACK_PATH, ...change, async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return invalidJson(c)
+      if (!isEmptyRequest(value)) return c.json(error('invalid Profile rollback request'), 400)
+      try {
+        return postResponse(c, 202, controller.rollbackProfile(), 'restore last-known-good Profile', reportError)
+      } catch (cause) {
+        reportError('prepare last-known-good Profile restore', cause)
+        return c.json(error('last-known-good Profile could not be restored'), 409)
+      }
+    })
 }
 
 export const desktopSettingsRouteConstants = Object.freeze({

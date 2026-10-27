@@ -1,5 +1,8 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { RendererBootReport } from './renderer-boot-contract.ts'
+import { Acryl } from 'acrylblends'
+import { error } from 'acryl-loopback-http'
+import { INVALID_JSON, jsonBody, ownPage, readJson } from 'acryl-loopback-http/router'
+import { jsonContent } from '../api/http.ts'
+import { RENDERER_BOOT_REPORT_PATH, type RendererBootReport } from './renderer-boot-contract.ts'
 
 export { RENDERER_BOOT_REPORT_PATH } from './renderer-boot-contract.ts'
 export type { RendererBootReport } from './renderer-boot-contract.ts'
@@ -30,41 +33,13 @@ function parseReport(value: unknown): RendererBootReport | undefined {
   }
 }
 
-async function readReport(req: IncomingMessage): Promise<RendererBootReport | undefined> {
-  const chunks: Buffer[] = []
-  let size = 0
-  for await (const chunk of req) {
-    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array)
-    size += bytes.byteLength
-    if (size > MAX_REPORT_BYTES) return undefined
-    chunks.push(bytes)
-  }
-  try {
-    return parseReport(JSON.parse(Buffer.concat(chunks).toString('utf8')))
-  } catch {
-    return undefined
-  }
-}
-
-function finish(res: ServerResponse, statusCode: number): void {
-  res.statusCode = statusCode
-  res.end()
-}
-
-/** Validate and forward one same-origin renderer Loader outcome. */
-export async function handleRendererBootRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  expectedOrigin: string,
-  report: (value: RendererBootReport) => void,
-): Promise<void> {
-  if (req.method !== 'POST') return finish(res, 405)
-  if (req.headers.origin !== expectedOrigin) return finish(res, 403)
-  if (req.headers['content-type']?.split(';', 1)[0]?.trim().toLowerCase() !== 'application/json') {
-    return finish(res, 415)
-  }
-  const value = await readReport(req)
-  if (value === undefined) return finish(res, 400)
-  report(value)
-  finish(res, 204)
+/** Validate and forward one same-origin renderer Loader outcome: 204 with no body once it is forwarded. */
+export function rendererBootRoutes(report: (value: RendererBootReport) => void): Acryl {
+  return new Acryl().post(RENDERER_BOOT_REPORT_PATH, ownPage, jsonContent, jsonBody(MAX_REPORT_BYTES), async (c) => {
+    const body = await readJson(c)
+    const value = body === INVALID_JSON ? undefined : parseReport(body)
+    if (value === undefined) return c.json(error('invalid renderer boot report'), 400)
+    report(value)
+    return c.body(null, 204)
+  })
 }

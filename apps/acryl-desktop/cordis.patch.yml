@@ -1,10 +1,20 @@
 # Desktop Host operations compose around the existing Web bundle. Compatibility
 # mode keeps upstream ownership of the browser carrier and rendered UI.
 - insert:
+    # The framework's router and its Web adapter: Desktop's own routes (acryl-desktop/api) are served through them, so Desktop
+    # composes them whatever the Blueprint carries (spec 048 T003). A Blueprint's framework kit and the community Market find
+    # them here and do not insert them again.
+    - id: acrylblends/cordis/router
+      name: acrylblends/cordis/router
+    - id: acrylblends/cordis/router-http
+      name: acrylblends/cordis/router-http
     - id: desktop-shell
       name: acryl-desktop
       config:
         mode: advanced
+    # Desktop's private renderer routes, on the router: their own row, so a router reload never unloads the shell.
+    - id: acryl-desktop/api
+      name: acryl-desktop/api
     - id: desktop-terminal
       name: acryl-desktop/terminal
       disabled: !!js process.platform === 'linux'
