@@ -26,18 +26,37 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   preferences 200, the validator 200 and 415, the picker and boot report 405 with `Allow`, a foreign origin and no origin 403, Settings >
   Desktop rendered from the moved API; port free and real homes untouched. Measured: call sites 14 -> 9, DSH import lines 135 -> 135.
   acrylblends 0.9.2 taken into the lock.
-- [ ] T004 `acryl-sign-in`: its five sign-in routes; the checks stay exactly (was part of 046 T025).
-- [ ] T005 Find the terminal's PATH without blocking (was 047 T017): ask the login shell asynchronously once, cache the promise, and make
+- [x] T004 `acryl-sign-in`: its five sign-in routes; the checks stay exactly (was part of 046 T025).
+  Commit `35921763e3ece10637e1db21d07aca669a889062` (`plan.md` slice 5). Evidence: full gate; CI, Windows, Desktop on Linux and Data
+  green; a plugin test on real Cordis with the real router over a loopback socket; an isolated Web run answered every route as recorded
+  and Settings > Models rendered the sign-in card from its own calls (200). Measured: call sites 9 -> 8, DSH import lines 135 -> 135.
+- [x] T005 Find the terminal's PATH without blocking (was 047 T017): ask the login shell asynchronously once, cache the promise, and make
   the callers that need it (`start`, `canRun`) wait for it, so activating the workspace never blocks the Host's event loop (about 1.2 s
   with an interactive zsh today, on every activation). Planned right after T002.
-- [ ] T006 `acryl-plugin-admin` and `acryl-support` (was part of 046 T026).
+  Commit `22018414409da0eed9d33137f5a699355ba84ac5` (`plan.md` slice 3), on the flake fix `1b5e5575781b8c9cb7220555e600dad6eebd6b50`
+  (Desktop's port-retry rule as `bindDesktopPort`, tested without real ports; the real-socket test holds both ports itself). Evidence:
+  full gate; all four workflows green; five tests with a fake login shell, among them a timer that keeps firing while the shell answers.
+  Measured: call sites 8 -> 8.
+- [x] T006 `acryl-plugin-admin` and `acryl-support` (was part of 046 T026).
+  Commit `602b375b6fa61344440f321203cea2397dbdab56` (`plan.md` slice 6). Evidence: full gate; all four workflows green; plugin tests on
+  real Cordis with the real router over a loopback socket; an isolated Web run of `acryl.ide` (`live-run --no-key`): architecture,
+  lifecycle and diagnostics 200, a foreign origin 403, PUT 405, an invalid reload body 400, a text body 415; port free and real homes
+  untouched. Measured: call sites 8 -> 5.
 - [ ] T007 WebSocket upgrades on the router (spec 047 T009), then the workspace terminal stream and the door's page channel move off
-  `registerUpgrade`.
+  `registerUpgrade`. Waiting on 047 T009 (coordinator, 2026-10-27: Blends ports the original framework's `upgradeWebSocket` helper with
+  its tests after its M8 run; what the terminal needs from it was sent with the assignment). The door's page channel no longer upgrades,
+  so the terminal stream is the only user left. Done with T008 in one commit that lowers T009's ceiling to 0.
 - [ ] T008 Remove the `acrylWeb` carrier's registration methods and the `engine-web.ts` delegate once nothing registers through them (was
   046 T022, rescoped: the composition root stops handing the server to plugins).
-- [ ] T009 Ratchet: the call-site count becomes a layout gate in `scripts/verify-layout.mjs`, like the DSH import ceiling (was 046 T027).
-- [ ] T010 The agent-facing plugin docs and example in `acryl-plugin-context` teach the router, not `webServer` (the item left open in
+- [x] T009 Ratchet: the call-site count becomes a layout gate in `scripts/verify-layout.mjs`, like the DSH import ceiling (was 046 T027).
+  Commit `9073312d7afb7803cefa7157ae765fac8c5b8fac` (`plan.md` slice 8): `WEB_REGISTRATION_CEILING = 3`, failing above and below. Evidence:
+  full gate (its line reads "webServer registration call sites 3"); all four workflows green; both failures run once on a probe copy.
+  T007 and T008 lower it to 0 in their commit.
+- [x] T010 The agent-facing plugin docs and example in `acryl-plugin-context` teach the router, not `webServer` (the item left open in
   046 T020).
+  Commit `f6538891199a6618b313b041aaeeac4247c31ec4` (`plan.md` slice 7). Evidence: full gate; all four workflows green; the example gate
+  gets `ok` from the example's route on the real socket and a non-200 after it unloads; the install lint refuses `acrylblends` under
+  `dependencies`. Measured: call sites 4 -> 3.
 - [ ] T011 `acryl control` can discover every running app, not only `pnpm blank` ones. Since `1b10c17c` (2026-09-27) the running-app
   registry (`runtime/acryl-harness-runtime/src/instance/registry.ts` `announce`) is written only by `scripts/lib/instances.mjs`
   `claimInstance`; the Web launcher, Desktop and the npm CLI never announce, so `acryl control list` says "no ACRYL app is running" while
@@ -54,8 +73,11 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   (`runtime/acryl-harness-runtime/src/profile-resolution/`, the 2026-10-25 port of DSH's profile package resolution): its two direct DSH
   imports (`resolver.ts` takes DSH's resolution types, `service.ts` subclasses DSH's `PluginPackages`) raised the DSH import ceiling in
   `scripts/verify-layout.mjs` from 133 to 135, and removing them is the path back to 133.
-- [ ] T013 `acryl-plugin-context`'s startup-hold route (`index.js`, the `STARTUP_PATH` route of specs/001 `tasks.md` T097) onto the
+- [x] T013 `acryl-plugin-context`'s startup-hold route (`index.js`, the `STARTUP_PATH` route of specs/001 `tasks.md` T097) onto the
   router. Found while counting for T003: it is one of the nine remaining call sites and no slice above names it.
+  Commit `f612cc60112cc2cfc2cfc12619d577a76ce2b3fb` (`plan.md` slice 6b). Evidence: full gate; all four workflows green; a unit test of the
+  route (a page that leaves releases the hold at once) and the real-engine `web-startup-hold.spec.ts` on the router. Measured: call
+  sites 5 -> 4.
 - [ ] T014 (low priority) A Desktop boot from the owner's dev home (the T003 live run) warns `patch: entry "desktop-development-canvas"
   not found`: something stored still names the Development Canvas by its row id from before the rename to `acryl-development-canvas`
   (the anti-pattern the row-id rule in `CLAUDE.md` names). Not in the profile's own `cordis.patch.yml`, the source or the launcher

@@ -1,3 +1,38 @@
+## 2026-10-27 (latest) - the IDE onto the framework, M7: webServer registrations 14 -> 3, and a ratchet that holds them (spec 048 T003-T006, T009, T010, T013)
+
+Commits, in order on `main`: `9c43a4ef992af0fa6a6945fedea92249e978db0c` (one copy of the private-route rules, `acryl-loopback-http/router`),
+`bd0b10303c799dda11133cbf66e463a65319b6c1` (T003), `35921763e3ece10637e1db21d07aca669a889062` (T004), `1b5e5575781b8c9cb7220555e600dad6eebd6b50`
+(the port-retry flake), `22018414409da0eed9d33137f5a699355ba84ac5` (T005), `602b375b6fa61344440f321203cea2397dbdab56` (T006),
+`f612cc60112cc2cfc2cfc12619d577a76ce2b3fb` (T013), `f6538891199a6618b313b041aaeeac4247c31ec4` (T010), `9073312d7afb7803cefa7157ae765fac8c5b8fac` (T009).
+
+ACRYL's own HTTP routes leave DSH's `webServer` for the framework's router: each plugin builds one app and serves it under one
+`ctx.routerHttp.mount(prefix)`. Every slice kept its trust rules and recorded the answers that changed in `specs/048-ide-on-framework/plan.md`.
+
+- **Moved:**
+  - Desktop's own renderer routes, in their own `acryl-desktop/api` row (T003);
+  - the five sign-in routes (T004);
+  - plugin admin's lifecycle and architecture routes, and support's diagnostics download (T006);
+  - plugin-context's startup hold, which now sees a page leave through the request signal (T013).
+  - Capabilities that serve routes declare `needsRouter`, so a Blueprint without the `framework-kit` row is refused.
+- **Not blocking any more:** the terminal's PATH lookup ran the login shell synchronously on every workspace activation (about 1.2 s with
+  zsh). It is now one background process per shell, home and PATH, awaited only by a terminal start (T005).
+- **Taught:** the agent-facing plugin docs and the verified `host-route.basic` example use the router. An installed plugin names the
+  router modules in `dsh.requiresAcrylPackages` and `acrylblends` as a peer, and the install lint refuses `acrylblends` under `dependencies`,
+  which would bring a second framework copy (T010).
+- **Held:** `scripts/verify-layout.mjs` counts the remaining call sites and fails above and below `WEB_REGISTRATION_CEILING` (3), like the DSH
+  import ceiling (T009).
+- **Found and fixed:**
+  - Desktop's port-retry test raced other processes for the next port. The rule is now tested with a fake binder, and the one real-socket
+    test holds both ports itself.
+  - A new dependency on `acrylblends` without `@types/node` 22 made PNPM write a third, peer-keyed copy of acrylblends into the lock; the
+    devDependency keeps one.
+- **Left:** the workspace terminal's `registerUpgrade` and the two `engine-web.ts` delegate lines. They wait on WebSocket upgrades in
+  `acryl-router-http` (spec 047 T009, assigned to Blends); T007 and T008 then take the count and the ceiling to 0 together.
+- **Measured:** call sites 14 -> 3; DSH import lines 135 -> 135.
+- **Verified:** for every commit, the full local gate and CI, Windows, Desktop on Linux and Data green on the exact commit. Isolated live
+  runs (`scripts/live-run.mjs`) for T003 (Desktop from an old profile), T004 and T006 (Web), each ending with its port free and the real homes
+  untouched.
+
 ## 2026-10-27 (later) - M6 on the ACRYL side: the IDE consumes the framework from the published `acrylblends` (spec 049 slice 17)
 
 Commits:
