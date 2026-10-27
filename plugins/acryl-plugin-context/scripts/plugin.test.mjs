@@ -912,6 +912,31 @@ test('previousStagedDir finds the running staged copy whatever slashes pnpm wrot
   } finally { rmSync(profile, { recursive: true, force: true }) }
 })
 
+test('startup-settled route: the Host API admission first, then 204 once the pass settles, and a page that leaves releases the hold at once', async () => {
+  const { startupRoutes, STARTUP_PATH, STARTUP_HOLD_LIMIT_MS } = await import('../index.js')
+  const ask = (app, init = {}) => app.fetch(new Request(`http://127.0.0.1:3290${STARTUP_PATH}`, init))
+  const scope = connection => ({ get: name => (name === 'connection' ? connection : undefined) })
+
+  // Settled: reload. No connection on this host: no admission to pass.
+  const settledAnswer = await ask(startupRoutes(Promise.resolve({ status: 'done', lines: [] }), scope(undefined)))
+  assert.equal(settledAnswer.status, 204)
+  assert.equal(settledAnswer.headers.get('cache-control'), 'no-store')
+
+  // Refused like the Host API, before any hold; the admission sees the request's headers.
+  const seen = []
+  const refusing = { admit: request => { seen.push(request.headers.get('origin')); return { rejection: 401 } } }
+  assert.equal((await ask(startupRoutes(new Promise(() => {}), scope(refusing)), { headers: { origin: 'http://evil.test' } })).status, 401)
+  assert.deepEqual(seen, ['http://evil.test'])
+
+  // Still running, and the page goes away: the hold ends with the request, long before its limit.
+  const leaving = new AbortController()
+  const started = Date.now()
+  const pending = ask(startupRoutes(new Promise(() => {}), scope({ admit: () => ({ peer: {} }) })), { signal: leaving.signal })
+  setTimeout(() => leaving.abort(), 20)
+  assert.equal((await pending).status, 503)
+  assert.ok(Date.now() - started < STARTUP_HOLD_LIMIT_MS / 10, 'the hold outlived the page')
+})
+
 test('startup hold script: holds the client boot, reloads on 204, boots as served on any other answer or a network error', async () => {
   const { startupHoldScript, STARTUP_PATH } = await import('../index.js')
   const { runInNewContext } = await import('node:vm')

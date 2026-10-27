@@ -2523,6 +2523,9 @@ importers:
       '@webboxes/plugin-hub':
         specifier: workspace:*
         version: link:../../runtime/plugin-hub
+      acrylblends:
+        specifier: ^0.9.2
+        version: 0.9.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -2539,6 +2542,9 @@ importers:
       '@earendil-works/pi-tui':
         specifier: 1.1.0
         version: 1.1.0(patch_hash=cafd73997964c16b4eb13f7220af2c9046a6de820cf652bbd1f181ca494fb1ee)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
       acryl-ui-tui:
         specifier: workspace:*
         version: link:../acryl-ui-tui

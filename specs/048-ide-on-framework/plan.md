@@ -288,3 +288,35 @@ shared middleware with the same texts (`parseJsonPostBody` before).
 
 Measured: webServer registration call sites 8 -> 5 (`acryl-plugin-admin` 2 -> 0, a loop over four routes plus one; `acryl-support`
 1 -> 0); DSH import lines 135 -> 135.
+
+### Slice 6b: `acryl-plugin-context`'s startup hold (T013)
+
+The route a Web page rendered before the startup pass settled waits on (`/api/acryl-plugin-context/startup-settled`, specs/001 T097).
+
+Cordis mini-design:
+
+1. Capability and boundary: unchanged. The plugin owns the startup pass and the hold; only the route's transport moves. `index.js`
+   exports `startupRoutes(settled, ctx)`, one App.
+2. Provides and consumes: the optional `ctx.inject(['webServer'], ...)` scope becomes `['webServer', 'router', 'routerHttp']`: the
+   `webserver/index-inject` hook (DSH's own index rendering, not a registration) and the route now live in one scope, so a page gets the
+   hold script only where the route is served. `connection` stays an optional lookup made per request; its `admit` takes the request's
+   headers, which the router's request carries. The plugin is still required by TUI, which has no web server: nothing activates there.
+3. Effects and disposal: `route('/')` and `mount('/api/acryl-plugin-context')` are owned by the scope; on unload the router aborts a
+   hold in flight within its grace. Each hold owns one timer and one abort listener, both released when it ends. A page that leaves
+   is seen through `c.req.raw.signal` (router-http aborts it when the response closes unfinished) where it was `req.once('close')`.
+4. Configuration and composition: row id `acryl-plugin-context` unchanged. Every built-in Blueprint has the `framework-kit` row. A
+   custom Blueprint without it serves no hold and no script: its page composes as it did before the hold existed (the race of specs/001
+   T097 returns there), instead of fetching a route that is not there. Not declared as a hard requirement because the row also serves
+   TUI and Desktop, which never need the hold.
+5. Events and durability: none changed.
+6. Verification: a unit test of the App (204 once settled with `no-store`, a refused admission answered with its status before any hold
+   and given the request's headers, a page that leaves releasing the hold at once); the real-engine test `web-startup-hold.spec.ts`
+   (a blank app with the kit: the early index carries the script, 401 and 403 for the unauthenticated and foreign requests, 204 once the
+   pass settles, the later index full and without the script) passes on the router.
+
+Answers that changed: the route answers GET only (another method falls through to 404; the page only ever sends GET). acrylblends
+^0.9.2 is a dependency; `@types/node` ^22.20.0 joins the devDependencies so the lock resolves acrylblends' optional peers like every
+other package's (without it PNPM wrote a third, peer-keyed copy of acrylblends).
+
+Measured: webServer registration call sites 5 -> 4 (`acryl-plugin-context` 2 -> 1: the `host-route-basic` example is T010's); DSH
+import lines 135 -> 135.

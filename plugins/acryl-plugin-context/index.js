@@ -13,6 +13,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import { Acryl } from 'acrylblends'
 import { globalPluginsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureApp, captureBlend, verifyBlend, writeAppBlend, writeBlend } from './lib/blend-capture.js'
@@ -31,8 +32,10 @@ import { buildRouterText, INSTALL_TOOL_NAME, LIST_TOOL_NAME, REMOVE_TOOL_NAME, P
 export const name = 'acryl-plugin-context'
 export const inject = ['systemPrompt']
 
+/** The prefix this plugin mounts on the framework's router. */
+export const PLUGIN_CONTEXT_API_PREFIX = '/api/acryl-plugin-context'
 /** Answers once the startup pass has settled; a Web page rendered before then waits on it and reloads. */
-export const STARTUP_PATH = '/api/acryl-plugin-context/startup-settled'
+export const STARTUP_PATH = `${PLUGIN_CONTEXT_API_PREFIX}/startup-settled`
 /** Longest hold, as Desktop's (APP_PLUGINS_SETTLE_LIMIT_MS): a slow install still lets the page boot, as it did before the hold existed. */
 export const STARTUP_HOLD_LIMIT_MS = 60_000
 
@@ -46,6 +49,35 @@ export const STARTUP_HOLD_LIMIT_MS = 60_000
 export function startupHoldScript(path) {
   return `(()=>{const gate=Promise.withResolvers();globalThis.__DSH_BOOT_READY__={promise:gate.promise,resolve(){},reject:gate.reject};`
     + `fetch(${JSON.stringify(path)},{cache:'no-store',credentials:'same-origin'}).then(r=>{if(r.status===204)location.reload();else gate.resolve()},()=>gate.resolve())})()`
+}
+
+/**
+ * The startup-settled route as one app. The same admission as the Host API (origin and browser cookie), when this host has a connection;
+ * then it holds until the startup pass settles (204: reload), the hold limit passes (503: boot with the graph as served), or the page
+ * leaves (the request's signal, which the router fires when the client closes).
+ * @param settled - the startup pass's promise.
+ * @param ctx - the scope that owns the route, read for `connection` at request time.
+ * @returns the app to route.
+ */
+export function startupRoutes(settled, ctx) {
+  const app = new Acryl()
+  app.get(STARTUP_PATH, async c => {
+    const admission = ctx.get('connection')?.admit({ headers: c.req.raw.headers })
+    if (admission !== undefined && 'rejection' in admission) return c.body(null, admission.rejection)
+    const signal = c.req.raw.signal
+    let timer
+    let onAbort
+    const limit = new Promise(resolve => { timer = setTimeout(() => resolve('timed-out'), STARTUP_HOLD_LIMIT_MS) })
+    const closed = new Promise(resolve => { onAbort = () => resolve('closed'); signal.addEventListener('abort', onAbort, { once: true }) })
+    const outcome = await Promise.race([settled.then(() => 'settled'), limit, closed]).finally(() => {
+      clearTimeout(timer)
+      signal.removeEventListener('abort', onAbort)
+    })
+    // 204: the pass settled, reload. 503: it did not settle in time (or cannot run on this host), boot with the graph as served. A page that
+    // left is answered too, though nobody reads it.
+    return c.body(null, outcome === 'settled' ? 204 : 503, { 'cache-control': 'no-store' })
+  })
+  return app
 }
 
 export function apply(ctx) {
@@ -78,27 +110,14 @@ export function apply(ctx) {
   // While the pass runs, the index carries one head script that holds the client's boot (`__DSH_BOOT_READY__`, which the client awaits
   // before it reads the graph), asks STARTUP_PATH to answer once the pass settles, and reloads: the reloaded index renders after it. A
   // page rendered after the pass gets no script. Desktop waits before it loads its window, so its page never gets one either.
-  ctx.inject(['webServer'], scoped => {
+  // The route is on the framework's router: a Blueprint without the `framework-kit` row serves no route, so its page gets no script either
+  // (it composes as it did before the hold existed) rather than one that asks a route that is not there.
+  ctx.inject(['webServer', 'router', 'routerHttp'], scoped => {
     scoped.on('webserver/index-inject', table => {
       if (!startupDone) table.push({ kind: 'script', placement: 'head', text: startupHoldScript(STARTUP_PATH) })
     })
-    scoped.effect(() => scoped.webServer.register({
-      kind: 'exact',
-      path: STARTUP_PATH,
-      handler: async (req, res) => {
-        // The same admission as the Host API (origin and browser cookie), when this host has a connection.
-        const admission = scoped.get('connection')?.admit(req)
-        if (admission !== undefined && 'rejection' in admission) { res.writeHead(admission.rejection); res.end(); return }
-        let timer
-        const limit = new Promise(resolve => { timer = setTimeout(() => resolve('timed-out'), STARTUP_HOLD_LIMIT_MS) })
-        const closed = new Promise(resolve => { req.once('close', () => resolve('closed')) })
-        const outcome = await Promise.race([startupSettled.then(() => 'settled'), limit, closed]).finally(() => clearTimeout(timer))
-        if (outcome === 'closed') return
-        // 204: the pass settled, reload. 503: it did not settle in time (or cannot run on this host), boot with the graph as served.
-        res.writeHead(outcome === 'settled' ? 204 : 503, { 'cache-control': 'no-store' })
-        res.end()
-      },
-    }), 'plugin-context: startup-settled route')
+    scoped.router.route('/', startupRoutes(startupSettled, scoped))
+    scoped.routerHttp.mount(PLUGIN_CONTEXT_API_PREFIX)
   })
 
   ctx.provide('pluginContext', {
