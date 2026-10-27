@@ -214,6 +214,18 @@ self-knowledge. With both, Claude Code, Codex and pi each built, installed, clic
 15. **Bring your own tool** [Blends, after 11] - one guide and one worked example: wrap an outside npm tool as a provider of a port,
     pass the suite, swap it in through the door. Gate: an agent follows the guide alone and swaps the provider in a running app.
 
+### Part 3 - one kind of app, one home (owner, 2026-10-27)
+
+The owner: "we are cordis agentic framework for apps web/desktop"; the framework's home is acrylblends for now, `acryl` later.
+
+16. **Every new app is a Cordis app** [Blends] - `create-acrylblends` makes only Cordis apps (`blend.yaml`, plugins in `plugins/`);
+    the `nodejs`, `notes` and `chat` templates become Cordis apps with the same features. Gate: each template's tests pass, the door
+    (slice 9) mounts in each, `check-deps` is clean.
+17. **One home for the framework** [Blends, after slice 9 lands] - the framework's packages (router, node server, state, db, kv, door,
+    client modules) live in the acrylblends repository and are published from there; ACRYL's IDE consumes the published packages,
+    so the framework never depends on the IDE and there is no copy step before a release. Git history moves with the files. Gate: a
+    release is built and published from one repository; ACRYL's gates pass on the published packages.
+
 **Part 2 gate (the product test):** in a fresh `create-acrylblends` app, Claude Code, Codex and pi each, headless and started in the
 app folder, build the same feature from the docs alone, check it by clicking through the door, and the feature survives a restart
 and a fresh clone; `git status` shows no secret.
