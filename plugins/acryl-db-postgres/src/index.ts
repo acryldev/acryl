@@ -1,6 +1,6 @@
 /**
  * The Postgres provider of the `db` port (spec 049 slice 2): one connection to a Postgres or Supabase server, migrated, and provided as
- * `db`. App plugins declare `inject: ['db']` and import types from `acryl-db` only, so replacing `acryl-db-sqlite` with this row does not
+ * `db`. App plugins declare `inject: ['db']` and import types from `acrylblends/db` only, so replacing `acrylblends/cordis/db-sqlite` with this row does not
  * touch them. The plugin is a thin wrapper over `openDb` (`acryl-db-postgres/open`), the same opening for code without Cordis.
  *
  * Unloading withdraws `db` first, so consumers stop calling, and then closes the connection once the running calls finish.

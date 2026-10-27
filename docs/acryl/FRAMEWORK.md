@@ -12,14 +12,14 @@ an evening, and every registration a plugin makes disappears when that plugin un
 
 ## The blocks
 
-| Block | Package | What it gives a plugin author | Size |
+| Block | Module | What it gives a plugin author | Size |
 | --- | --- | --- | --- |
 | Lifecycle | Cordis (`@deepseek-ai/cordis`) | plugins, `inject`, effects with disposers, PENDING until dependencies exist | the existing foundation |
-| Routing | `acryl-router` | `Acryl` with routes, middleware, validation and helpers, mounted with `ctx.router.route('/x', app)`; in-process `ctx.router.fetch(request)` | the ported core (about 16,200 lines with its suite beside it) plus about 570 lines of Cordis service |
-| Web adapter | `acryl-router-http` | `ctx.routerHttp.mount('/api/x')` serves those routes over the DSH `webServer` | about 140 lines |
-| Standalone server | `acryl-node-server` | the whole router over `node:http` in a process without the Host | the ported Node adapter (about 2,900 lines) plus about 110 lines |
-| Shared state | `acryl-state` | observable cells (`ctx.state.cell`), derived cells, JSON and server-sent-event routes, a React hook | about 200 lines |
-| Introspection | `acryl-inspect` | what every plugin requires, provides and registers, and what unloads with it | about 170 lines |
+| Routing | `acrylblends`, `acrylblends/cordis/router` | `Acryl` with routes, middleware, validation and helpers, mounted with `ctx.router.route('/x', app)`; in-process `ctx.router.fetch(request)` | the ported core (about 16,200 lines with its suite beside it) plus about 570 lines of Cordis service |
+| Web adapter | `acrylblends/cordis/router-http` | `ctx.routerHttp.mount('/api/x')` serves those routes over the DSH `webServer` | about 140 lines |
+| Standalone server | `acrylblends/node-server`, `acrylblends/cordis/node-server` | the whole router over `node:http` in a process without the Host | the ported Node adapter (about 2,900 lines) plus about 110 lines |
+| Shared state | `acrylblends/cordis/state` | observable cells (`ctx.state.cell`), derived cells, JSON and server-sent-event routes, a React hook | about 200 lines |
+| Introspection | `acrylblends/cordis/inspect` | what every plugin requires, provides and registers, and what unloads with it | about 170 lines |
 
 React, Vite, Electron, `pi-tui` and typert are unchanged.
 
@@ -66,25 +66,29 @@ export function apply(ctx: Context): void {
 
 ## What is proved, and how
 
+The framework's own tests named here are in [the acrylblends repository](https://github.com/acrylblends/acrylblends) at the same paths
+(`plugins/acryl-router-http/tests/...`); the Market's are in this repository.
+
 | Claim | Evidence |
 | --- | --- |
 | One handler gives identical results over HTTP and in process | `acryl-router-http/tests/surfaces.spec.ts` |
-| Routes vanish on unload, reload registers once, 50 cycles return to baseline | `acryl-router` conformance suite, run on the pure core, through Cordis, and against the real Market with the real `webServer` |
+| Routes vanish on unload, reload registers once, 50 cycles return to baseline | the router's conformance suite, run on the pure core, through Cordis, and against the real Market with the real `webServer` |
 | The Market works on the router | `cordis-plugin-market`: all 285 tests, plus `router-stack.spec.ts` with the real `webServer`, adapter and plugin over real HTTP |
 | Server-sent events work end to end and end cleanly | `acryl-router-http/tests/stream.spec.ts`, `acryl-state/tests/service.spec.ts` |
 | The inspector tells the truth | `acryl-inspect/tests/service.spec.ts` compares its "removes N registrations" with what the router really lost |
 
 ## Where the docs are
 
-The documentation tree is `docs/framework/`: getting started, concepts, routing, context, request, middleware, validation, helpers,
-the Node server, plugin lifecycle, surfaces, and migrations from the DSH `webServer` and from 0.3.
-A copyable starter is `examples/acryl-framework-starter`. `node scripts/verify-framework.mjs` (in `check:layout`) enforces the shape of every framework package.
+The framework lives in its own repository since spec 049 slice 17, and ACRYL consumes it as the published `acrylblends` package. Its
+documentation is [`docs/framework/` in acrylblends](https://github.com/acrylblends/acrylblends/tree/main/docs/framework): getting started, concepts, routing, context, request, middleware, validation,
+helpers, the Node server, plugin lifecycle, surfaces, and migrations from the DSH `webServer` and from 0.3. A copyable starter is
+`examples/acryl-framework-starter`; the packages' own structure checks and suites run in acrylblends.
 
 ## In every Blend
 
 The Blank Blueprint carries a `framework-kit` row (router, HTTP adapter, state, inspector) on the Web and Desktop surfaces, so the IDE and everything
 grown from Blank start on the framework. On Desktop the window loads from the Host's own loopback web server, so a plugin's routes reach Desktop through
-the same `acryl-router-http` mount as Web (proved live, spec 047 P7: `examples/acryl-todo` as an app plugin, full CRUD and its page in the Desktop window). A real isolated boot of the IDE Blueprint served `/api/inspect/plugins` (355 plugins listed) and `/api/state`, the Market routes
+the same `acrylblends/cordis/router-http` mount as Web (proved live, spec 047 P7: `examples/acryl-todo` as an app plugin, full CRUD and its page in the Desktop window). A real isolated boot of the IDE Blueprint served `/api/inspect/plugins` (355 plugins listed) and `/api/state`, the Market routes
 through the router, and refused a foreign `Host` with 403.
 
 ## What is not done

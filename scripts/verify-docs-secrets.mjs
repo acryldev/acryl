@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * No literal token, secret or password in what ACRYLBLENDS ships into generated apps: the framework docs, the examples, the ported framework
- * sources (their JSDoc examples) and the release package. Twice an example with a literal credential landed here, and `save` then refused
+ * No literal token, secret or password in the examples, which apps are started from (the framework's docs, sources and release package
+ * moved to the acrylblends repository and are scanned there). Twice an example with a literal credential landed here, and `save` then refused
  * every generated app. The check is `save`'s own scan (`findSecrets` from `@webboxes/app-persistence`, one rule for both), over the files git
  * tracks there, tests excluded (their fixtures need literals). A literal credential in an example is read from the environment instead
  * (`process.env.JWT_SECRET!`).
@@ -19,7 +19,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** What is scanned: the folders ACRYLBLENDS copies into apps, without tests. */
-const SCANNED = ['docs/framework', 'examples', 'plugins/acryl-router/src', 'plugins/acryl-node-server/src', 'distribution/acrylblends-framework']
+const SCANNED = ['examples']
 const TEST_FILE = /(^|\/)tests?\/|\.(test|spec)\.[cm]?[jt]sx?$/u
 
 function trackedFiles() {

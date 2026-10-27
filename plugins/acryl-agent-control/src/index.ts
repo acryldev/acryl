@@ -1,7 +1,7 @@
 /**
  * Cordis Host plugin: Agent Control tools for the ACRYL window (spec 041), for every surface that has a page.
  *
- * The tools live here, the DOM lives in the page. The page channel is `acryl-door`'s (spec 049 slice 9): the page keeps an event stream
+ * The tools live here, the DOM lives in the page. The page channel is `acrylblends/cordis/door`'s (spec 049 slice 9): the page keeps an event stream
  * open (`/api/acryl-agent-control/channel`), the tools send it calls down that stream, and the page posts the answers back. This plugin
  * is the DSH face over the door's core: its tools, approval policy, workers and MCP gateway. One effect owns the channel, the tools, the
  * approval policy and the secret; the HTTP routes are one app mounted on the router after it, so an unload ends their requests (the

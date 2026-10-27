@@ -221,7 +221,7 @@
     "@types/react-dom": "^18",
     "@types/semver": "^7.7.1",
     "acryl-settings": "workspace:*",
-    "acrylblends": "0.9.0-next.1",
+    "acrylblends": "^0.9.1",
     "jsdom": "29.1.1",
     "json-schema-to-typescript": "^15.0.4",
     "react": "18.3.1",
