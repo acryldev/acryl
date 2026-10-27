@@ -35,7 +35,7 @@ const text = (terminal: Terminal): string[] => {
 
 describe.skipIf(process.platform === 'win32')('a full-screen program on a real PTY', () => {
   it('restores the alternate screen for a view that attaches later, at the resized size', async () => {
-    const view = registry.start('shell', undefined, { cols: 60, rows: 15 })
+    const view = await registry.start('shell', undefined, { cols: 60, rows: 15 })
     registry.write(view.id, `printf '\\033[?1049h\\033[2J\\033[1;1HTITLE BAR\\033[6;4Hbody line\\033[15;1Hstatus'; sleep 30\r`)
     await until(() => registry.read(view.id).output.includes('status'))
     registry.resize(view.id, 80, 20)
@@ -57,7 +57,7 @@ describe.skipIf(process.platform === 'win32')('a full-screen program on a real P
   })
 
   it('keeps every line of a large burst of output', async () => {
-    const view = registry.start('shell', undefined, { cols: 100, rows: 30 })
+    const view = await registry.start('shell', undefined, { cols: 100, rows: 30 })
     // The marker is computed, so the shell echoing the typed command cannot be mistaken for the finish.
     registry.write(view.id, 'seq 1 30000; echo DONE-$((1+1))\r')
     await until(() => registry.read(view.id).output.includes('DONE-2'), 20000)
@@ -70,8 +70,8 @@ describe.skipIf(process.platform === 'win32')('a full-screen program on a real P
     await registry.close(view.id)
   })
 
-  it('refuses a size the Host would not accept', () => {
-    expect(() => registry.start('shell', undefined, { cols: 1, rows: 10 })).toThrow('size')
-    expect(() => registry.start('shell', undefined, { cols: 100, rows: 5000 })).toThrow('size')
+  it('refuses a size the Host would not accept', async () => {
+    await expect(registry.start('shell', undefined, { cols: 1, rows: 10 })).rejects.toThrow('size')
+    await expect(registry.start('shell', undefined, { cols: 100, rows: 5000 })).rejects.toThrow('size')
   })
 })

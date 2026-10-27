@@ -8,9 +8,9 @@ import { WorkspacePtyRegistry, type WorkspacePtyProcess } from '../../src/pty/se
 import { serveApi, type ServedApi } from '../serve-api.ts'
 
 const stored: { text: string | null } = { text: null }
-const catalog = new AgentCatalog({ read: async () => stored.text, write: async (t) => { stored.text = t } }, command => command !== 'ghost')
+const catalog = new AgentCatalog({ read: async () => stored.text, write: async (t) => { stored.text = t } }, async command => command !== 'ghost')
 const settingsText: { text: string | null } = { text: null }
-const settings = new AgentSettings({ read: async () => settingsText.text, write: async (t) => { settingsText.text = t } }, catalog, command => command === 'claude')
+const settings = new AgentSettings({ read: async () => settingsText.text, write: async (t) => { settingsText.text = t } }, catalog, async command => command === 'claude')
 let api: ServedApi
 let origin = ''
 let port = 0
@@ -97,17 +97,17 @@ describe('starting a custom agent', () => {
       env: { SHELL: '/bin/sh', PATH: '/usr/bin:/bin' },
       platform: 'darwin',
     })
-    registry.start('runner')
+    await registry.start('runner')
     expect(spawned).toEqual([{ file: '/bin/echo', args: ['a b', '$(id)'] }])
-    expect(() => registry.start('not-in-catalog')).toThrow('unknown workspace PTY command')
-    expect(() => registry.start('sh -c "x"')).toThrow('unknown workspace PTY command')
+    await expect(registry.start('not-in-catalog')).rejects.toThrow('unknown workspace PTY command')
+    await expect(registry.start('sh -c "x"')).rejects.toThrow('unknown workspace PTY command')
     // This registry is built for darwin, so only a POSIX absolute path counts as absolute here.
-    if (process.platform !== 'win32') expect(registry.canRun('/bin/echo')).toBe(true)
-    expect(registry.canRun('/nonexistent/tool')).toBe(false)
-    expect(registry.canRun('definitely-not-installed-xyz')).toBe(false)
+    if (process.platform !== 'win32') expect(await registry.canRun('/bin/echo')).toBe(true)
+    expect(await registry.canRun('/nonexistent/tool')).toBe(false)
+    expect(await registry.canRun('definitely-not-installed-xyz')).toBe(false)
   })
 
-  it('starts a known agent with the user\'s settings: command, flags and environment', () => {
+  it('starts a known agent with the user\'s settings: command, flags and environment', async () => {
     const spawned: Array<{ file: string; args: readonly string[]; env: NodeJS.ProcessEnv }> = []
     const registry = new WorkspacePtyRegistry({
       spawn: (file, args, options) => { spawned.push({ file, args, env: options.env }); return fakeProcess() },
@@ -115,9 +115,9 @@ describe('starting a custom agent', () => {
       env: { SHELL: '/bin/sh', PATH: '/usr/bin:/bin' },
       platform: 'darwin',
     })
-    registry.start('goose')
+    await registry.start('goose')
     expect(spawned[0]).toMatchObject({ file: '/bin/echo', args: ['--x'] })
     expect(spawned[0]?.env.GOOSE_MODE).toBe('auto')
-    expect(() => registry.start('not-an-agent')).toThrow('unknown workspace PTY command')
+    await expect(registry.start('not-an-agent')).rejects.toThrow('unknown workspace PTY command')
   })
 })

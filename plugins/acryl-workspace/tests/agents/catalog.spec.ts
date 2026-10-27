@@ -21,7 +21,7 @@ function memoryStore(initial: string | null = null): CatalogStore & { text: stri
 describe('AgentCatalog', () => {
   it('adds, lists, resolves and removes, persisting each change', async () => {
     const store = memoryStore()
-    const catalog = new AgentCatalog(store, () => true)
+    const catalog = new AgentCatalog(store, async () => true)
     await catalog.add(agent('one'))
     await catalog.add({ ...agent('two'), args: ['--x'] })
     expect(catalog.list().map(a => a.id)).toEqual(['one', 'two'])
@@ -31,14 +31,14 @@ describe('AgentCatalog', () => {
     await catalog.remove('one')
     await catalog.remove('one')
     expect(JSON.parse(store.text ?? '[]')).toHaveLength(1)
-    const again = new AgentCatalog(store, () => true)
+    const again = new AgentCatalog(store, async () => true)
     await again.load()
     expect(again.list().map(a => a.id)).toEqual(['two'])
   })
 
   it('refuses duplicates, a command that is not on this machine, and too many agents, saving nothing', async () => {
     const store = memoryStore()
-    const catalog = new AgentCatalog(store, command => command !== 'ghost')
+    const catalog = new AgentCatalog(store, async command => command !== 'ghost')
     await catalog.add(agent('one'))
     await expect(catalog.add(agent('one'))).rejects.toThrow('already exists')
     await expect(catalog.add(agent('two', 'ghost'))).rejects.toThrow('not found on this machine')
@@ -49,10 +49,10 @@ describe('AgentCatalog', () => {
   })
 
   it('ignores a damaged file and keeps the good entries of a partly damaged one', async () => {
-    const broken = new AgentCatalog(memoryStore('{not json'), () => true)
+    const broken = new AgentCatalog(memoryStore('{not json'), async () => true)
     await broken.load()
     expect(broken.list()).toEqual([])
-    const partly = new AgentCatalog(memoryStore(JSON.stringify([agent('good'), { id: 'claude' }, { command: 'rm -rf /' }, agent('good')])), () => true)
+    const partly = new AgentCatalog(memoryStore(JSON.stringify([agent('good'), { id: 'claude' }, { command: 'rm -rf /' }, agent('good')])), async () => true)
     await partly.load()
     expect(partly.list().map(a => a.id)).toEqual(['good'])
   })

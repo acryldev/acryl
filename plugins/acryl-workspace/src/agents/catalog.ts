@@ -15,8 +15,8 @@ export interface CatalogStore {
   write(text: string): Promise<void>
 }
 
-/** Answers whether a command names a real executable on this machine. */
-export type CommandExists = (command: string) => boolean
+/** Answers whether a command names a real executable on this machine (it may wait for the login shell's search path). */
+export type CommandExists = (command: string) => Promise<boolean>
 
 export class AgentCatalog {
   private agents: readonly CustomAgent[] = []
@@ -62,7 +62,7 @@ export class AgentCatalog {
     const agent = parseCustomAgent(raw)
     if (this.agents.some(existing => existing.id === agent.id)) throw new AgentDefinitionError(`"${agent.id}" already exists`)
     if (this.agents.length >= MAX_CUSTOM_AGENTS) throw new AgentDefinitionError(`at most ${String(MAX_CUSTOM_AGENTS)} custom agents`)
-    if (!this.commandExists(agent.command)) throw new AgentDefinitionError(`"${agent.command}" was not found on this machine`)
+    if (!await this.commandExists(agent.command)) throw new AgentDefinitionError(`"${agent.command}" was not found on this machine`)
     const next = [...this.agents, agent]
     await this.store.write(JSON.stringify(next, null, 2))
     this.agents = next

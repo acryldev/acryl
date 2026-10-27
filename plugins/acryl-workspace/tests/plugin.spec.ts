@@ -28,8 +28,8 @@ afterEach(async () => {
   while (cleanups.length > 0) await cleanups.pop()?.()
 })
 
-// The PTY registry asks the login shell for PATH when it is built (about a second with an interactive zsh); a plain sh keeps each
-// activation here about routing, not the developer's shell start-up.
+// The PTY registry asks the login shell for PATH in the background (about a second with an interactive zsh); a plain sh keeps the
+// processes these tests leave behind about routing, not the developer's shell start-up.
 const shell = process.env.SHELL
 beforeAll(() => { process.env.SHELL = '/bin/sh' })
 afterAll(() => { if (shell === undefined) delete process.env.SHELL; else process.env.SHELL = shell })

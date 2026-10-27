@@ -1,6 +1,6 @@
 /** Host-owned ACRYL Workspace PTY sessions. UI observes; this module owns lifetime. */
 
-import { execFileSync } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { statSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -16,13 +16,27 @@ const KILL_GRACE_MS = 1_000
 const DEFAULT_COLS = 120
 const DEFAULT_ROWS = 40
 
-/**
- * A Finder-launched macOS app gets a minimal PATH (`/usr/bin:/bin:…`), so a
- * bare agent name such as `claude` fails to spawn even when it is installed.
- * Resolve bare commands to an absolute executable by merging `env.PATH` with
- * the user's login-shell PATH (cached per registry).
- */
-export function workspacePtySpawnDirs(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): string[] {
+const PROBE_TIMEOUT_MS = 3_000
+
+/** What `shell args` printed on stdout, or `undefined` when it failed, timed out or could not start. Never blocks the event loop. */
+function probe(shell: string, args: readonly string[], env: NodeJS.ProcessEnv): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    let out = ''
+    let child: ReturnType<typeof spawn>
+    try {
+      child = spawn(shell, args, { env, stdio: ['ignore', 'pipe', 'ignore'], timeout: PROBE_TIMEOUT_MS, windowsHide: true })
+    } catch {
+      resolve(undefined)
+      return
+    }
+    child.stdout?.setEncoding('utf8')
+    child.stdout?.on('data', (chunk: string) => { out += chunk })
+    child.on('error', () => { resolve(undefined) })
+    child.on('close', (code) => { resolve(code === 0 ? out : undefined) })
+  })
+}
+
+async function lookUpSpawnDirs(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): Promise<readonly string[]> {
   const dirs: string[] = []
   const add = (raw: string | undefined): void => {
     if (raw === undefined) return
@@ -36,18 +50,32 @@ export function workspacePtySpawnDirs(env: NodeJS.ProcessEnv, platform: NodeJS.P
     ? [['/d', '/s', '/c', 'echo %PATH%']]
     : [['-lic', 'echo $PATH'], ['-lc', 'echo $PATH']]
   for (const args of probes) {
-    try {
-      const out = execFileSync(shell, args, {
-        encoding: 'utf8',
-        env,
-        timeout: 3_000,
-        stdio: ['ignore', 'pipe', 'ignore'],
-      })
-      add(out.trimEnd())
-      if (dirs.length > 0) break
-    } catch {
-      // Log-in shell not available; keep the env PATH we already have.
-    }
+    const out = await probe(shell, args, env)
+    // Log-in shell not available: keep the env PATH we already have.
+    if (out === undefined) continue
+    add(out.trimEnd())
+    if (dirs.length > 0) break
+  }
+  return Object.freeze(dirs)
+}
+
+/** One lookup per shell, home and PATH for the life of the process, so a reload of the plugin does not ask the shell again. */
+const spawnDirsCache = new Map<string, Promise<readonly string[]>>()
+
+/**
+ * A Finder-launched macOS app gets a minimal PATH (`/usr/bin:/bin:…`), so a
+ * bare agent name such as `claude` fails to spawn even when it is installed.
+ * Resolve bare commands to an absolute executable by merging `env.PATH` with
+ * the user's login-shell PATH. The login shell is asked asynchronously (an
+ * interactive zsh takes about a second, which must not stall the Host), once
+ * per shell, home and PATH; callers wait for the answer.
+ */
+export function workspacePtySpawnDirs(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): Promise<readonly string[]> {
+  const key = [platform, env.SHELL ?? env.ComSpec ?? '', env.HOME ?? env.USERPROFILE ?? '', env.PATH ?? ''].join('\0')
+  let dirs = spawnDirsCache.get(key)
+  if (dirs === undefined) {
+    dirs = lookUpSpawnDirs(env, platform)
+    spawnDirsCache.set(key, dirs)
   }
   return dirs
 }
@@ -212,10 +240,13 @@ export class WorkspacePtyRegistry {
   private readonly cwd: string
   private readonly platform: NodeJS.Platform
   private readonly createId: () => string
-  private readonly spawnDirs: string[]
+  /** The search path for bare commands; the login shell's answer arrives after the registry is built (see {@link workspacePtySpawnDirs}). */
+  private readonly spawnDirs: Promise<readonly string[]>
   private readonly agents: AgentResolver | undefined
   private readonly agentStatus: { readonly url: string; readonly token: string } | undefined
   private readonly launchContext: LaunchContextProvider | undefined
+  /** Set by {@link disposeAll}: a start still waiting for the search path then spawns nothing. */
+  private disposed = false
 
   constructor(options: WorkspacePtyRegistryOptions) {
     this.spawnImpl = options.spawn
@@ -234,7 +265,7 @@ export class WorkspacePtyRegistry {
    * @param commandId - catalog id from the Terminal/agent tab.
    * @param cwd - optional working directory (a worktree); must be an existing absolute directory.
    */
-  start(commandId: AgentId, cwd?: string, size?: { readonly cols: number; readonly rows: number }): WorkspacePtyView {
+  async start(commandId: AgentId, cwd?: string, size?: { readonly cols: number; readonly rows: number }): Promise<WorkspacePtyView> {
     // The terminal is planned here; any other id is an agent, and the resolver (when there is one) knows the user's settings.
     const known = isWorkspacePtyCommandId(commandId) ? knownAgent(commandId) : undefined
     const agentPlan: WorkspacePtySpawnPlan | undefined = commandId === 'shell'
@@ -252,10 +283,12 @@ export class WorkspacePtyRegistry {
       throw new Error('acryl-workspace: workspace PTY size is out of range')
     }
     const plan: WorkspacePtySpawnPlan = agentPlan ?? planWorkspacePtyCommand('shell', this.platform, this.env)
+    const dirs = await this.spawnDirs
+    if (this.disposed) throw new Error('acryl-workspace: workspace PTY registry is disposed')
     const id = this.createId()
     let process: WorkspacePtyProcess
     try {
-      const resolved = resolveWorkspacePtyCommand(plan.command, this.spawnDirs, this.platform)
+      const resolved = resolveWorkspacePtyCommand(plan.command, dirs, this.platform)
       if (resolved === undefined && !plan.command.includes('/') && !plan.command.includes('\\')) {
         throw new Error(`workspace PTY command not found in PATH: ${plan.command}`)
       }
@@ -316,7 +349,7 @@ export class WorkspacePtyRegistry {
   }
 
   /** True when `command` is an absolute executable file or a program on the search path. */
-  canRun(command: string): boolean {
+  async canRun(command: string): Promise<boolean> {
     if (isAbsolute(command)) {
       try {
         const info = statSync(command)
@@ -325,7 +358,7 @@ export class WorkspacePtyRegistry {
         return false
       }
     }
-    return resolveWorkspacePtyCommand(command, this.spawnDirs, this.platform) !== undefined
+    return resolveWorkspacePtyCommand(command, await this.spawnDirs, this.platform) !== undefined
   }
 
   /** Write exact terminal input bytes. */
@@ -402,6 +435,7 @@ export class WorkspacePtyRegistry {
 
   /** Stop every session owned by this fiber. */
   async disposeAll(): Promise<void> {
+    this.disposed = true
     const ids = [...this.sessions.keys()]
     await Promise.all(ids.map(async id => this.close(id)))
   }

@@ -14,8 +14,8 @@ function memoryStore(initial: string | null = null): CatalogStore & { text: stri
 
 const installed = new Set(['claude', 'goose', 'cursor-agent', 'my-agent'])
 const make = (store = memoryStore()) => {
-  const catalog = new AgentCatalog(memoryStore(), command => installed.has(command))
-  return { settings: new AgentSettings(store, catalog, command => installed.has(command)), catalog, store }
+  const catalog = new AgentCatalog(memoryStore(), async command => installed.has(command))
+  return { settings: new AgentSettings(store, catalog, async command => installed.has(command)), catalog, store }
 }
 
 describe('known agents', () => {
@@ -33,7 +33,7 @@ describe('AgentSettings', () => {
   it('starts manual: no permission flags, every agent enabled, default automatic', async () => {
     const { settings } = make()
     await settings.load()
-    const view = settings.view()
+    const view = await settings.view()
     expect(view.permissions).toBe('manual')
     expect(view.defaultAgent).toBe('auto')
     expect(settings.resolve('claude')).toEqual({ command: 'claude', args: [], statusHooks: 'claude' })
@@ -47,7 +47,7 @@ describe('AgentSettings', () => {
     await settings.apply({ permissions: 'yolo' })
     expect(settings.resolve('claude')).toEqual({ command: 'claude', args: ['--dangerously-skip-permissions'], statusHooks: 'claude' })
     expect(settings.resolve('goose')).toEqual({ command: 'goose', args: [], env: { GOOSE_MODE: 'auto' } })
-    const view = settings.view()
+    const view = await settings.view()
     expect(view.agents.find(entry => entry.id === 'goose')?.preview).toBe('GOOSE_MODE=auto goose')
     expect(view.agents.find(entry => entry.id === 'claude')?.preview).toBe('claude --dangerously-skip-permissions')
   })
@@ -66,7 +66,7 @@ describe('AgentSettings', () => {
     await first.settings.apply({ defaultAgent: 'claude', agent: { id: 'codex', enabled: false } })
     const second = make(first.store)
     await second.settings.load()
-    const view = second.settings.view()
+    const view = await second.settings.view()
     expect(view.defaultAgent).toBe('claude')
     expect(view.agents.find(entry => entry.id === 'codex')?.enabled).toBe(false)
   })
@@ -86,11 +86,11 @@ describe('AgentSettings', () => {
     await catalog.add({ id: 'my-agent', label: 'Mine', command: 'my-agent', args: ['--fast'], badge: { letter: 'M', color: '#10a37f' } })
     await settings.apply({ defaultAgent: 'my-agent' })
     expect(settings.resolve('my-agent')).toEqual({ command: 'my-agent', args: ['--fast'] })
-    const view = settings.view()
+    const view = await settings.view()
     expect(view.agents.at(-1)).toMatchObject({ id: 'my-agent', kind: 'custom', installed: true, homepageUrl: null })
     expect(view.defaultAgent).toBe('my-agent')
     await catalog.remove('my-agent')
-    expect(settings.view().defaultAgent).toBe('auto')
+    expect((await settings.view()).defaultAgent).toBe('auto')
   })
 
   it('reads a damaged file as the defaults and drops one bad override', () => {
@@ -103,7 +103,7 @@ describe('AgentSettings', () => {
   it('produces a view the page accepts', async () => {
     const { settings } = make()
     await settings.load()
-    const round: unknown = JSON.parse(JSON.stringify(settings.view()))
+    const round: unknown = JSON.parse(JSON.stringify(await settings.view()))
     expect(parseAgentSettingsView(round).agents.length).toBe(KNOWN_AGENTS.length)
     expect(() => parseAgentSettingsView({ permissions: 'x' })).toThrow()
   })

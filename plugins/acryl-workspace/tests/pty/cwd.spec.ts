@@ -38,15 +38,15 @@ describe('WorkspacePtyRegistry cwd', () => {
   const worktree = mkdtempSync(join(tmpdir(), 'acryl-pty-wt-'))
   afterAll(() => { for (const dir of [home, worktree]) rmSync(dir, { recursive: true, force: true }) })
 
-  it('starts in the registry default directory when none is given', () => {
+  it('starts in the registry default directory when none is given', async () => {
     const { registry: r, cwds } = registry(home)
-    r.start('shell')
+    await r.start('shell')
     expect(cwds).toEqual([home])
   })
 
-  it('starts in the requested worktree directory', () => {
+  it('starts in the requested worktree directory', async () => {
     const { registry: r, cwds } = registry(home)
-    r.start('shell', worktree)
+    await r.start('shell', worktree)
     expect(cwds).toEqual([worktree])
   })
 
@@ -55,16 +55,16 @@ describe('WorkspacePtyRegistry cwd', () => {
     ['empty', ''],
     ['missing', join(tmpdir(), 'acryl-pty-does-not-exist')],
     ['NUL', `${worktree}\0x`],
-  ])('rejects a %s cwd without spawning', (_name, cwd) => {
+  ])('rejects a %s cwd without spawning', async (_name, cwd) => {
     const { registry: r, cwds } = registry(home)
-    expect(() => r.start('shell', cwd)).toThrow(/cwd must be an existing absolute directory/)
+    await expect(r.start('shell', cwd)).rejects.toThrow(/cwd must be an existing absolute directory/)
     expect(cwds).toEqual([])
   })
 
-  it('rejects a file used as cwd', () => {
+  it('rejects a file used as cwd', async () => {
     const file = join(worktree, 'a.txt')
     writeFileSync(file, 'x')
     const { registry: r } = registry(home)
-    expect(() => r.start('shell', file)).toThrow(/cwd must be an existing absolute directory/)
+    await expect(r.start('shell', file)).rejects.toThrow(/cwd must be an existing absolute directory/)
   })
 })

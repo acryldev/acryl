@@ -228,3 +228,28 @@ unavailable` with the cause reported, never echoed. Answers that changed: a refu
 the two reads, which now also answer HEAD.
 
 Measured: webServer registration call sites 9 -> 8 (`acryl-sign-in` 1 -> 0, a loop over five routes); DSH import lines 135 -> 135.
+
+### Slice 3: the terminal's search path without blocking (T005)
+
+Found in slice 1: building the workspace's PTY registry ran the user's login shell synchronously (`$SHELL -lic 'echo $PATH'`, about
+1.2 s with an interactive zsh), so every activation of `acryl-workspace` (each boot and each reload) stalled the Host's event loop.
+
+Cordis mini-design:
+
+1. Capability and boundary: unchanged. The registry (`src/pty/service.ts`) still owns the search path a bare command is resolved on;
+   only when and how it is found changes.
+2. Provides and consumes: no service or inject changes. Inside the plugin, `WorkspacePtyRegistry.start` and `canRun` return promises,
+   and the agents' "is this program installed" port (`CommandExists`) is asynchronous, so `AgentSettings.view()` is too; the PTY start
+   route and the agent settings route await them. The answers on the wire are the same.
+3. Effects and disposal: the lookup is one child process (`spawn`, stdin ignored, stderr dropped, killed after 3 s), started when the
+   registry is built and never awaited by activation. Its promise is kept per shell, home and PATH for the life of the process, so a
+   reload does not ask again; it never rejects (a failed or slow shell leaves the environment's PATH). A start that is still waiting
+   when the registry is disposed (the plugin unloaded) spawns nothing and rejects.
+4. Configuration and composition: none changed.
+5. Events and durability: none changed.
+6. Verification: a fake login shell that sleeps, counts its runs and prints a folder only it knows: the registry is built at once and a
+   20 ms timer keeps firing while the shell answers (the old code fails this), `canRun` and `start` find the program only the login
+   shell knows, one run for three registries, the environment PATH kept when the shell fails (both probe forms tried), and no spawn for
+   a start pending at disposal. The existing PTY, agent and shared-context tests run against the asynchronous API.
+
+Measured: webServer registration call sites 8 -> 8 and DSH import lines 135 -> 135 (this slice moves no route).

@@ -46,7 +46,7 @@ beforeAll(async () => {
 })
 afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
 
-beforeEach(() => {
+beforeEach(async () => {
   server.removeAllListeners('upgrade')
   process = fakeProcess()
   registry = new WorkspacePtyRegistry({
@@ -55,7 +55,7 @@ beforeEach(() => {
     platform: 'darwin',
     createId: () => 'pty_test',
   })
-  registry.start('shell')
+  await registry.start('shell')
   stream = createWorkspacePtyStream(registry, origin, () => {})
   server.on('upgrade', (req, socket, head) => { stream.handleUpgrade(req, socket, head) })
 })

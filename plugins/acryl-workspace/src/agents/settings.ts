@@ -46,13 +46,13 @@ export class AgentSettings {
     const next = applyPreferencesPatch(this.preferences, patch, id => this.isAgent(id))
     await this.store.write(JSON.stringify(next, null, 2))
     this.preferences = next
-    return this.view()
+    return await this.view()
   }
 
   /** The list Settings shows: known agents first, then the user's own. Detection is fresh on every call. */
-  view(): AgentSettingsView {
+  async view(): Promise<AgentSettingsView> {
     const { permissions, overrides, statusHooks } = this.preferences
-    const known: AgentSettingsEntry[] = KNOWN_AGENTS.map((agent) => {
+    const known: AgentSettingsEntry[] = await Promise.all(KNOWN_AGENTS.map(async (agent) => {
       const override = overrides[agent.id] ?? DEFAULT_OVERRIDE
       const launch = planKnownLaunch(agent, override, permissions)
       return {
@@ -66,12 +66,12 @@ export class AgentSettings {
         permissionArgs: permissions === 'yolo' ? agent.yoloArgs : [],
         permissionEnv: permissions === 'yolo' ? agent.yoloEnv ?? {} : {},
         enabled: override.enabled,
-        installed: this.commandExists(launch.command),
+        installed: await this.commandExists(launch.command),
         preview: describeLaunch(launch),
         badge: null,
       }
-    })
-    const custom: AgentSettingsEntry[] = this.catalog.list().map(agent => ({
+    }))
+    const custom: AgentSettingsEntry[] = await Promise.all(this.catalog.list().map(async agent => ({
       id: agent.id,
       label: agent.label,
       kind: 'custom',
@@ -82,10 +82,10 @@ export class AgentSettings {
       permissionArgs: [],
       permissionEnv: {},
       enabled: (overrides[agent.id] ?? DEFAULT_OVERRIDE).enabled,
-      installed: this.commandExists(agent.command),
+      installed: await this.commandExists(agent.command),
       preview: describeLaunch({ command: agent.command, args: agent.args }),
       badge: agent.badge,
-    }))
+    })))
     const agents = [...known, ...custom]
     // A default that no longer names an agent (a removed custom agent) reads as automatic.
     const stored = this.preferences.defaultAgent

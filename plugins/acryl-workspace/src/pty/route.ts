@@ -38,7 +38,7 @@ export function ptyRoutes(registry: WorkspacePtyRegistry, reportError: ReportErr
       const size = typeof body.cols === 'number' && typeof body.rows === 'number' ? { cols: body.cols, rows: body.rows } : undefined
       if ((body.cols !== undefined || body.rows !== undefined) && size === undefined) return c.json(failure('invalid workspace PTY request'), 400)
       try {
-        return c.json(registry.start(body.commandId, body.cwd as string | undefined, size))
+        return c.json(await registry.start(body.commandId, body.cwd as string | undefined, size))
       } catch (cause) {
         reportError('start workspace PTY', cause)
         return c.json(failure(cause instanceof Error ? cause.message : 'workspace PTY spawn failed'), 500)

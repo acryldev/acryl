@@ -38,7 +38,7 @@ export function agentRoutes(catalog: AgentCatalog, settings: AgentSettings, repo
         return c.json(failure('the agent could not be removed'), 500)
       }
     })
-    .get(WORKSPACE_AGENT_SETTINGS_PATH, ownPage, c => c.json(settings.view()))
+    .get(WORKSPACE_AGENT_SETTINGS_PATH, ownPage, async c => c.json(await settings.view()))
     .post(WORKSPACE_AGENT_SETTINGS_PATH, ownPage, jsonBody(), async (c) => {
       const body = await readJson(c)
       try {

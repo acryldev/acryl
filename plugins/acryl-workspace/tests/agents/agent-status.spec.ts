@@ -100,8 +100,8 @@ describe('starting a reporting agent', () => {
 
   it('adds the reporting settings and the terminal credentials only to an agent that reports, and only when a status target exists', async () => {
     const spawned: Array<{ file: string; args: readonly string[]; env: NodeJS.ProcessEnv }> = []
-    const catalog = new AgentCatalog(memory(), () => true)
-    const settings = new AgentSettings(memory(), catalog, () => true)
+    const catalog = new AgentCatalog(memory(), async () => true)
+    const settings = new AgentSettings(memory(), catalog, async () => true)
     await settings.load()
     const make = (agentStatus?: { url: string; token: string }) => new WorkspacePtyRegistry({
       spawn: (file, args, options) => { spawned.push({ file, args, env: options.env }); return fakeProcess() },
@@ -112,21 +112,21 @@ describe('starting a reporting agent', () => {
       createId: () => 'pty_test',
     })
     await settings.apply({ agent: { id: 'claude', command: '/bin/echo' } })
-    make({ url: 'http://127.0.0.1:1/api/status', token: 'tok' }).start('claude')
+    await make({ url: 'http://127.0.0.1:1/api/status', token: 'tok' }).start('claude')
     expect(spawned[0]?.args[0]).toBe('--settings')
     expect(JSON.parse(spawned[0]?.args[1] ?? '{}').hooks.Stop).toBeDefined()
     expect(spawned[0]?.env).toMatchObject({ [STATUS_ENV.terminal]: 'pty_test', [STATUS_ENV.url]: 'http://127.0.0.1:1/api/status', [STATUS_ENV.token]: 'tok' })
     // Pinned like claude above: resolving the default command would look `codex` up in PATH, which only passes on a machine that has it installed.
     await settings.apply({ agent: { id: 'codex', command: '/bin/echo' } })
-    make({ url: 'http://x', token: 'tok' }).start('codex')
+    await make({ url: 'http://x', token: 'tok' }).start('codex')
     expect(spawned[1]?.env[STATUS_ENV.token]).toBeUndefined()
-    make().start('claude')
+    await make().start('claude')
     expect(spawned[2]?.args).toEqual([])
     expect(spawned[2]?.env[STATUS_ENV.token]).toBeUndefined()
     await settings.apply({ statusHooks: false })
-    make({ url: 'http://x', token: 'tok' }).start('claude')
+    await make({ url: 'http://x', token: 'tok' }).start('claude')
     expect(spawned[3]?.args).toEqual([])
     expect(spawned[3]?.env[STATUS_ENV.token]).toBeUndefined()
-    expect(settings.view().statusHooks).toBe(false)
+    expect((await settings.view()).statusHooks).toBe(false)
   })
 })

@@ -25,7 +25,7 @@ describe('WorkspacePtyRegistry with a launch context', () => {
   const folder = mkdtempSync(join(tmpdir(), 'acryl-pty-ctx-'))
   afterAll(() => { rmSync(folder, { recursive: true, force: true }) })
 
-  function start(commandId: string) {
+  async function start(commandId: string) {
     const spawned: { args: readonly string[], env: Record<string, string | undefined> }[] = []
     const spawn: WorkspacePtySpawn = (_file, args, options) => {
       spawned.push({ args, env: options.env as Record<string, string | undefined> })
@@ -37,19 +37,19 @@ describe('WorkspacePtyRegistry with a launch context', () => {
       agents: { resolve: id => (id === 'claude' ? { command: '/bin/echo', args: ['--model', 'x'] } : undefined) },
       launchContext: { launchFor: (id, cwd) => { asked.push(`${id}@${cwd}`); return contextLaunch(id, context) } },
     })
-    registry.start(commandId, folder)
+    await registry.start(commandId, folder)
     return { spawned, asked }
   }
 
-  it('starts an agent with its context before its own arguments, and the document path in its environment', () => {
-    const { spawned, asked } = start('claude')
+  it('starts an agent with its context before its own arguments, and the document path in its environment', async () => {
+    const { spawned, asked } = await start('claude')
     expect(asked).toEqual([`claude@${folder}`])
     expect(spawned[0]?.args).toEqual(['--add-dir', '/p/web', '/p/docs', '/h/workspaces/s', '--append-system-prompt', context.prompt, '--model', 'x'])
     expect(spawned[0]?.env[WORKSPACE_CONTEXT_ENV]).toBe(context.documentPath)
   })
 
-  it('gives the shell nothing', () => {
-    const { spawned, asked } = start('shell')
+  it('gives the shell nothing', async () => {
+    const { spawned, asked } = await start('shell')
     expect(asked).toEqual([])
     expect(spawned[0]?.env[WORKSPACE_CONTEXT_ENV]).toBeUndefined()
   })
