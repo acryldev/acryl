@@ -251,6 +251,42 @@ describe('the composition-based dsh engine entry point (for a surface with its o
     }
   })
 
+  it('never mounts DeepSeek\'s product analytics, which upstream switches on for a profile named desktop', async () => {
+    await freshDshHome()
+    const profileDirectory = resolveProfileDir('acryl-test')
+    initProfile(profileDirectory, DEFAULT_PROFILE_BUNDLES)
+    const profile = loadProfile('acryl', 'acryl-test', dshInstallAnchor)
+    const rootConfig = join(profile.dir, 'cordis.yml')
+    writeFileSync(rootConfig, '[]\n')
+    // The two rows as DSH's Web bundle composes them for Desktop's profile: enabled, the Host one reporting to DeepSeek's collector.
+    const upstreamAnalytics = {
+      insert: [
+        { id: 'desktop-product-telemetry', name: '@deepseek-ai/dsh-host-product-telemetry-otel', disabled: false, config: { serviceName: 'deepseek-harness-desktop' } },
+        { id: 'product-analytics', name: '@deepseek-ai/dsh-client-product-analytics', disabled: false, config: { enabled: true } },
+      ],
+    }
+    const patches = structuredClone([...profile.layers.flatMap(layer => layer.patches), ...profile.patches, upstreamAnalytics])
+
+    const host = await createAcrylEngineHost({
+      engines: [createDshEngineDefinitionFromComposition({
+        rootConfig,
+        patches,
+        surface: 'desktop',
+        runtimeResolution: await createProfileRuntimeResolution(profile),
+      })],
+      initialEngine: 'dsh',
+    })
+    try {
+      const entries = [...host.ctx.loader.entries()]
+      for (const id of ['desktop-product-telemetry', 'product-analytics']) {
+        expect(entries.find(entry => entry.options.id === id)?.options.disabled, id).toBe(true)
+      }
+      expect(host.ctx.get('productTelemetry' as never)).toBeUndefined()
+    } finally {
+      await host.dispose()
+    }
+  })
+
   it('rejects an empty surface name before any Loader activation', () => {
     expect(() => createDshEngineDefinitionFromComposition({ rootConfig: '/x/cordis.yml', patches: [], surface: '' }))
       .toThrow('ACRYL dsh engine surface must not be empty')

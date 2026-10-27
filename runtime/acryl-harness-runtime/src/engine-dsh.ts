@@ -145,6 +145,17 @@ function acrylAdditions(
 const HMR_OFF: PatchOptions = { id: 'hmr', disabled: true }
 
 /**
+ * DeepSeek's own product analytics, which DSH's Web bundle switches on for any profile named `desktop` (Desktop's profile is) and which report
+ * to DeepSeek's collector. ACRYL is not that product: they are off on every surface, at the first mount and at every reload, instead of
+ * depending on a profile name. Mounted, the Host row also failed its config at every start, since only DeepSeek's shell sets its
+ * `serviceVersion` (`DSH_CLIENT_VERSION`).
+ */
+export const UPSTREAM_PRODUCT_ANALYTICS_OFF: readonly PatchOptions[] = Object.freeze([
+  { id: 'desktop-product-telemetry', disabled: true },
+  { id: 'product-analytics', disabled: true },
+])
+
+/**
  * The patches an app instance contributes to every composition: an instance that must not use the OS user's Documents folder points the chat's first
  * workspace at its own `documents` folder. A patch for a row the surface does not compose (the terminal has no workspace controller) is ignored.
  */
@@ -174,7 +185,7 @@ export function createProfileContext(
     cwd: process.cwd(),
     home: options.home,
     startedBundles: profile.layers.map(layer => layer.packageName),
-    overlays: [...(options.overlays ?? []), HMR_OFF, ...instancePatches(options.instance)],
+    overlays: [...(options.overlays ?? []), HMR_OFF, ...UPSTREAM_PRODUCT_ANALYTICS_OFF, ...instancePatches(options.instance)],
     telemetryDisabledEnv: process.env.DSH_TELEMETRY_DISABLED,
   }
 }
@@ -204,7 +215,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // (and needs Loader internals plus a launcher readiness signal); in-app edits (`config-editor`, Settings, Models) reconcile the Loader
   // themselves. ACRYL activates and reloads plugins through Loader entries and `livePluginActivation`, so every composition switches it off.
   // Left on, it also stalls engine disposal after a swap (its queued reload waits on a tree that is unloading).
-  const patches: PatchOptions[] = [...composition.patches, HMR_OFF, ...instancePatches(composition.instance ?? selectInstance())]
+  const patches: PatchOptions[] = [...composition.patches, HMR_OFF, ...UPSTREAM_PRODUCT_ANALYTICS_OFF, ...instancePatches(composition.instance ?? selectInstance())]
   // This assignment feeds mountRootInclude's own nested composition tree
   // (constructed below, from this ctx) - not the host root's own top-level
   // tree, whose baseUrl is a one-time snapshot taken when `createAcrylEngineHost`
