@@ -65,6 +65,24 @@ Core                  (Cordis)
 - One way per job. There is one data API per need (`db`, `kv`), one way to serve, one way to add a plugin. A second way is
   added only when the first cannot do the job, and the spec says why.
 
+### Defaults with choices, never rigid (owner, 2026-10-27)
+
+"In JS world it's important to stay not rigid as Rails, but swappable options from the fast changing JS ecosystem of thousands of
+tools, so ACRYL can adapt to the use case: have some fallbacks, but offer choice made during development as it's needed, or made
+completely by an agent. Use all benefits of Cordis as an agentic-first framework."
+
+- **Every choice is a plugin behind a port.** The framework ships a working default for each port (SQLite, JSX, the node server) and
+  any outside tool (a renderer such as Vike, an ORM, an auth library, a hosted database) can be wrapped as another provider of the
+  same service. The app's code does not change; one Loader row does.
+- **Cordis is what makes this safe while the app runs.** Services are found by name (`inject`), so a consumer never knows the
+  provider; replacing a provider unloads and reactivates its consumers (PENDING is a valid state, not an error); every resource is
+  owned by an `effect` and released on unload. A swap is therefore a live operation, not a rebuild.
+- **An agent can make the choice.** Adding, removing and reloading plugins are door verbs (`acryl control plugin ...`, slice 13), so the
+  agent inside the app picks and swaps providers the same way a person does, and the result is visible at once.
+- **The suite is the contract.** A provider is accepted by passing its port's conformance suite, whoever wrote it. That is what lets
+  thousands of outside tools in without the framework becoming a mess.
+- **Not Rails:** no tool is required beyond Cordis and the ports. A default is a fallback, not a lock.
+
 ## Data
 
 Two needs, two small ports. Most apps use one of them. The owner, 2026-10-27: no framework is bound to a big stack; JSON and SQLite
@@ -191,6 +209,8 @@ self-knowledge. With both, Claude Code, Codex and pi each built, installed, clic
     a value on the page without changing its markup.
 13. **One verb list** [Fork3] - the same verbs (`brief`, `look`, `act`, `plugin add|remove|reload`) in the CLI, over MCP and in the
     built-in chat. Gate: one test lists the verbs from each and compares them.
+15. **Bring your own tool** [Blends, after 11] - one guide and one worked example: wrap an outside npm tool as a provider of a port,
+    pass the suite, swap it in through the door. Gate: an agent follows the guide alone and swaps the provider in a running app.
 14. **The built-in agent** [Blends] - an app can show its own chat panel whose agent uses the same door (DSH chat or a PTY driver:
     claude, codex, pi), opt-in per app. Gate: from the panel, the agent adds a feature and the page shows it without a restart.
 
