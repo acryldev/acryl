@@ -18,7 +18,7 @@ npm create acrylblends@latest my-app
 ```
 
 Other package managers work the same way: `pnpm create acrylblends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`.
-The starter asks which template you want (`nodejs`, `bun` (experimental), or `acryl-app`, a Cordis app with an agent). See [Getting started](getting-started/basic.md).
+Every template is a Cordis app (`blend.yaml`, plugins in `plugins/`). The starter asks which one you want (`nodejs`, `notes`, `chat`, or `acryl-app`, with an agent), and `npm create acrylblends@latest my-app notes` names it directly. See [Getting started](getting-started/basic.md).
 
 ## What is in the box
 

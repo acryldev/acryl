@@ -36,11 +36,10 @@ You are asked which template you want:
 ```
 ? Which template do you want to use?
 ❯   nodejs
-    bun (experimental)
     acryl-app
 ```
 
-`nodejs` and `bun` (experimental) are a minimal Acryl application for that runtime. `acryl-app` is a Cordis app built from plugins, with an agent that can extend it while it
+Every template is a Cordis app: `blend.yaml` lists its plugins and every plugin is a folder in `plugins/`. `nodejs` is a web app with a page and a client component, `notes` and `chat` add a database, and `acryl-app` adds an agent that can extend it while it
 runs (see [Acryl in a Cordis app](../cordis/acryl-in-a-cordis-app.md)). Pass `--template` to skip the question, see [create-acrylblends](../guides/create-acrylblends.md).
 
 The template is created in `my-app`: go to it, install the dependencies and start the local server.

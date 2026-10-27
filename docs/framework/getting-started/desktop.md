@@ -5,7 +5,7 @@ template) and a Blend app (the `acryl-app` template or `acrylblends init`). It r
 
 ## Add it
 
-In an Acryl app made by `npm create acrylblends@latest my-app -- --template nodejs`:
+In an app made by `npm create acrylblends@latest my-app nodejs` (or `notes`, `chat`):
 
 ```sh
 cd my-app
