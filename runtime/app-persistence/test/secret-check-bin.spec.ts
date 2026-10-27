@@ -22,5 +22,6 @@ describe('acryl-secret-check', () => {
       expect(lines[0]).toBe('leak.js:1  Anthropic API key')
       expect(main([join(dir, '..', 'definitely-not-a-repo-xyz')], () => {})).toBe(2)
     } finally { rmSync(dir, { recursive: true, force: true }) }
-  })
+    // git runs several times one after another (init, add and the checks), and a Windows runner took 6.2 s for them on 2026-10-27, over vitest's 5 s default.
+  }, 30_000)
 })
