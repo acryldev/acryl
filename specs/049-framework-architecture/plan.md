@@ -502,3 +502,34 @@ The freeze lifts only after step 6 is verified (ACRYL's workflows green on main)
 
 1. The names of the Cordis subpaths above are a proposal (`acrylblends/cordis/...`); the owner or the coordinator may prefer another prefix. Nothing else depends on them until execution.
 2. Who announces the freeze: the coordinator (decided). Slice 9 must have landed, and no framework slice may be in flight on the moved paths.
+
+## Slice 14 - the built-in agent: a chat panel in the app (2026-10-27, Blends; mini-design, execute after 0.8.0)
+
+Spec line: "an app can show its own chat panel whose agent uses the same door (DSH chat or a PTY driver: claude, codex, pi), opt-in per app. Gate: from the panel, the agent adds a feature and the page shows it without a restart."
+
+### What exists to build on
+
+- The door (slices 9 to 13): `look`, `act`, `plugin add|remove|reload|list`, `tool list|call`; with the `agent` plugin's `tools` registry up, the door registers `door_brief`, `door_look`, `door_act`, `door_plugin_*` and `door_tool_*` in it (slice 13), so the built-in agent needs nothing door-specific.
+- The `agent` template (`acrylblends init --template agent`): `agent`, `tools`, `model` (an offline scripted model, or any OpenAI-compatible API from `OPENAI_*` / `DEEPSEEK_API_KEY`), `builder` (writes a plugin into `plugins/`), `extensions` (installs it live, rolls back a broken one), `sandbox`, `tasks`, `POST /ask`, and the state cells `GET /api/state/tasks/events` and `GET /api/state/extensions/events`.
+- `readSSE` (0.7.8) for a streamed answer in the browser, and `clientModules` for browser code with no bundler.
+
+### The panel
+
+One library plugin, `agent-panel` (authored in this repository's `plugins/`, copied by `acrylblends add agent-panel`; not vendored from ACRYL). It requires the `agent` family (`agent`, `tools`, `model`, `builder`, `extensions`, `sandbox`, `tasks`), so adding it to an app without them adds them. Opt-in is the act of adding it; `blend.yaml` gets one row and `disabled: true` switches it off.
+
+- **Where it appears.** A router middleware appends one script tag, `/api/agent-panel/panel.js`, to every HTML response of the app (before `</body>`), so no template page is edited. The script draws a small button at a screen corner that opens a side panel (a shadow root, so the app's CSS cannot touch it and it cannot touch the app's): the conversation, a text box, Send and Stop.
+- **How it asks.** `POST /api/agent-panel/ask` with `{ message, driver }`, answered as server-sent events: `text` (a piece of the answer), `tool` (a tool call and its result, one line), `change` (a plugin was installed, updated or removed), `done`, `error`. The browser reads it with `readSSE`; Stop aborts the request and the route stops the run (`c.req.raw.signal`).
+- **Drivers.** `driver: 'agent'` (default) runs the app's own `agent` service with its tools, including the `door_*` ones; this is the "DSH chat" form and needs no program on the machine. `driver: 'claude' | 'codex' | 'pi'` starts that program headless in the app folder with the message as its prompt (the same command lines the product test uses), and relays its output as `text` events; those programs use `.acryl/bin/acryl` as `AGENTS.md` tells them. A driver whose program is not installed is not offered by the panel. Keys come only from the environment the app was started in; none is stored.
+- **The page shows it without a restart.** When a `change` arrives (the extensions cell reports an install or a removal), the panel reloads the page it sits on after the run is `done`, and says so in the conversation. A new route or page is then served by the plugin that was just installed live; nothing restarts.
+- **Safety.** Same switches as the door: off with `NODE_ENV=production` or `ACRYL_DOOR=off`. The route accepts only a loopback connection carrying the app's own origin (as the door's channel does) and a per-run token the page script is given, so another site or another local program cannot drive the agent. One run at a time per app; a second `ask` while one runs is refused with a message. Every ask and every tool call is written to `.acryl/audit/agent-panel.jsonl` without the secrets.
+
+### Gate and tests
+
+1. Plugin unit tests: the SSE event sequence for a scripted model; a broken plugin install ends in `error` with the previous version kept; the middleware adds the tag only to HTML; the route refuses a foreign origin and a second concurrent run.
+2. The scaffolder: an `agent` app with the panel added, an offline scripted model, headless Chrome on the app's page: the panel opens, the message "create route hello /hello Hello" is sent, `change` arrives, the page reloads, and `/hello` answers `Hello` with the process id unchanged (no restart). Read through `.acryl/bin/acryl look` as well.
+3. The product test: the same scenario with a real model (DeepSeek key from the environment) adding a visible element to the page, and once per driver program that is installed.
+
+### Open questions
+
+1. Reload the page automatically after a `change`, or show a "reload" button? Recommendation: reload after `done` unless the text box holds unsent text.
+2. Should `acrylblends init --template agent` include the panel by default? Recommendation: no; it is the opt-in `acrylblends add agent-panel`, so an app that never asks for an agent never serves its script.
