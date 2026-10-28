@@ -4,7 +4,12 @@
  * `scripts/check-features.mjs` (the feature check run after a DSH upgrade).
  */
 
-const KEY_CODES = { '.': ['Period', 190], ',': ['Comma', 188], '/': ['Slash', 191] }
+/** `code` and key code per key name; a key without one is sent with key code 0, which a terminal (xterm) ignores. */
+const KEY_CODES = {
+  '.': ['Period', 190], ',': ['Comma', 188], '/': ['Slash', 191],
+  Enter: ['Enter', 13], Tab: ['Tab', 9], Escape: ['Escape', 27], Backspace: ['Backspace', 8], Delete: ['Delete', 46],
+  ArrowLeft: ['ArrowLeft', 37], ArrowUp: ['ArrowUp', 38], ArrowRight: ['ArrowRight', 39], ArrowDown: ['ArrowDown', 40],
+}
 const MODIFIER_BITS = { alt: 1, ctrl: 2, meta: 4, shift: 8 }
 
 /**

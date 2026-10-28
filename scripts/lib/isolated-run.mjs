@@ -5,7 +5,9 @@
  *  - `isolatedEnvironment` builds the child environment: a throwaway root holding HOME, the ACRYL and engine homes, and the Electron user data, with every
  *    ACRYL_/DSH_ placement variable of the caller removed first, and ACRYL_REQUIRE_ISOLATED_HOME set so the runtime itself refuses a real home
  *    (`runtime/acryl-harness-runtime/src/instance/select.ts`). HOME is moved too, so code that asks the OS for "the home" (the engine's default workspace
- *    under ~/Documents, macOS Application Support, a stray ~/.dsh) lands in the throwaway root as well.
+ *    under ~/Documents, macOS Application Support, a stray ~/.dsh) lands in the throwaway root as well, and the caller's variables that point a shell
+ *    or a tool at the user's own files instead of HOME (ZDOTDIR, HISTFILE, the XDG base directories) are dropped, so a terminal opened in the app
+ *    neither loads the user's dotfiles nor writes their history.
  *  - `snapshotRealHomes` / `changedSince` record and compare the OS user's real ACRYL and DSH data, so a breach is reported by the run that caused it.
  *
  * A script that spawns a built or packed app must use this module (scripts/verify-layout.mjs enforces it for every such script).
@@ -21,6 +23,12 @@ export const REQUIRE_ISOLATED_HOME_ENV = 'ACRYL_REQUIRE_ISOLATED_HOME'
 
 /** Variables that decide where an app lives or how it is named; none may leak in from the caller. */
 const PLACEMENT = /^(ACRYL_(HOME|WEB_PORT|INSTANCE|LOCAL_PRODUCT_NAME|BLUEPRINT)|DSH_(HOME|DESKTOP_USER_DATA))$/u
+
+/**
+ * Variables that send a program to the user's own files instead of HOME: zsh's dotfile folder and history file, and the XDG base directories. A run's
+ * terminal once loaded the real ~/.zshenv and ~/.zshrc through an inherited ZDOTDIR (2026-10-28), where it could also have written the real history.
+ */
+const HOME_OVERRIDES = /^(ZDOTDIR|HISTFILE|XDG_(CONFIG|DATA|STATE|CACHE)_HOME)$/u
 
 /** The OS user's real app data a run must never touch, relative to the real home. */
 const REAL_PATHS = [
@@ -46,7 +54,9 @@ export function isolatedEnvironment({ label, base = process.env, port, extra = {
   const userData = join(root, 'electron-user-data')
   for (const dir of [home, acrylHome, userData]) mkdirSync(dir, { recursive: true })
   const env = {}
-  for (const [key, value] of Object.entries(base)) if (value !== undefined && !PLACEMENT.test(key) && key !== REQUIRE_ISOLATED_HOME_ENV) env[key] = value
+  for (const [key, value] of Object.entries(base)) {
+    if (value !== undefined && !PLACEMENT.test(key) && !HOME_OVERRIDES.test(key) && key !== REQUIRE_ISOLATED_HOME_ENV) env[key] = value
+  }
   Object.assign(env, {
     HOME: home,
     USERPROFILE: home,
