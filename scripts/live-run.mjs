@@ -14,14 +14,19 @@
  * The run gets an isolated environment (`scripts/lib/isolated-run.mjs`: its own HOME, ACRYL and engine homes, Electron user data, ACRYL_REQUIRE_ISOLATED_HOME
  * so the runtime refuses a real home) and the model key in its process environment only: it is read from the key file, never printed, never written.
  * The real homes are snapshotted first; on exit the run stops its processes, checks that its port is free, compares the real homes with the snapshot and
- * fails loudly if anything changed. `--keep` leaves the throwaway root for inspection (its path is printed). Stop with Ctrl-C or SIGTERM.
+ * fails loudly if anything changed. `--keep` leaves the throwaway root for inspection (its path is printed).
+ *
+ * Stop it with Ctrl-C, SIGTERM (macOS, Linux) or Ctrl-Break (Windows), or from anywhere with `node scripts/live-run.mjs stop [root]`, which asks every
+ * running live run (or the one in `root`) to stop and waits until it has. On Windows that command is the way to stop a run from another process:
+ * Node cannot deliver a signal there, `process.kill` terminates at once, and the run would not stop its app or check anything.
  *
  * It runs the checkout's built `lib/` and never builds: in a checkout that is not built it stops before making anything, names the unbuilt package
  * and prints the build command (`scripts/lib/build-outputs.mjs`), because a build rewrites lib/ under any app running from the same checkout.
  */
 import { spawn, spawnSync } from 'node:child_process'
-import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createConnection } from 'node:net'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { osHomeDirectory } from './lib/instance-module.mjs'
@@ -32,7 +37,26 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const [surface, ...rest] = process.argv.slice(2)
 const option = (name, fallback) => { const at = rest.indexOf(`--${name}`); return at >= 0 ? rest[at + 1] : fallback }
 const keep = rest.includes('--keep')
-if (!['web', 'desktop', 'tui'].includes(surface)) { console.error('usage: live-run.mjs web|desktop|tui [--port N] [--key-file F | --no-key] [--copy-home DIR] [--inspect PORT] [--keep]'); process.exit(2) }
+/** The file a run's root gets when `live-run.mjs stop` asks it to stop; the run looks for it four times a second. */
+const STOP_FILE = 'stop'
+const running = pid => { try { process.kill(pid, 0); return true } catch { return false } }
+if (surface === 'stop') process.exit(await requestStop(rest[0]))
+
+/** Ask the run in `root`, or every running live run under the temp folder, to stop, and wait until each has exited. */
+async function requestStop(root) {
+  const runs = (root === undefined ? readdirSync(tmpdir()).filter(name => name.startsWith('acryl-live-')).map(name => join(tmpdir(), name)) : [resolve(root)])
+    .flatMap((dir) => { try { return [{ dir, ...JSON.parse(readFileSync(join(dir, 'live-run.json'), 'utf8')) }] } catch { return [] } })
+    .filter(run => typeof run.livePid === 'number' && running(run.livePid))
+  if (runs.length === 0) { console.error(`live-run: no running live run${root === undefined ? ` under ${tmpdir()}` : ` in ${root}`}`); return 1 }
+  for (const run of runs) writeFileSync(join(run.dir, STOP_FILE), '')
+  // A run stops its app within 15 s and then checks the port and the real homes; its own output says how that went.
+  for (let waited = 0; waited < 30_000 && runs.some(run => running(run.livePid)); waited += 250) await new Promise(done => setTimeout(done, 250))
+  const stuck = runs.filter(run => running(run.livePid))
+  for (const run of runs) console.log(`live-run: ${run.dir} ${stuck.includes(run) ? 'did not stop within 30 s' : 'stopped (its output has the checks)'}`)
+  return stuck.length === 0 ? 0 : 1
+}
+
+if (!['web', 'desktop', 'tui'].includes(surface)) { console.error('usage: live-run.mjs web|desktop|tui [--port N] [--key-file F | --no-key] [--copy-home DIR] [--inspect PORT] [--keep], or live-run.mjs stop [root]'); process.exit(2) }
 // A checkout that was never built stops here, before any home is made or process spawned, with the package and the build command.
 const SURFACE_OUTPUTS = { web: ['apps/acryl-web', ['lib/bin.js']], desktop: ['apps/acryl-desktop', ['lib/main.js']], tui: ['apps/acryl-cli', ['lib/bin.js']] }
 const missingOutput = findMissingBuildOutput(root, ...SURFACE_OUTPUTS[surface])
@@ -109,37 +133,49 @@ const announce = chunk => {
 }
 child?.stdout.on('data', announce)
 child?.stderr.on('data', announce)
-writeFileSync(join(isolated.root, 'live-run.json'), `${JSON.stringify({ surface, pid: child?.pid, session, port, root: isolated.root })}\n`)
-console.log(`live-run: ${surface} started in ${isolated.root}${session === undefined ? '' : ` (tmux session ${session})`}; Ctrl-C or SIGTERM to stop and verify`)
+writeFileSync(join(isolated.root, 'live-run.json'), `${JSON.stringify({ surface, pid: child?.pid, livePid: process.pid, session, port, root: isolated.root })}\n`)
+console.log(`live-run: ${surface} started in ${isolated.root}${session === undefined ? '' : ` (tmux session ${session})`}; stop and verify with Ctrl-C, SIGTERM or \`node scripts/live-run.mjs stop ${isolated.root}\``)
 
 let stopping = false
 async function stop(code) {
   if (stopping) return
   stopping = true
-  // The launcher starts the app as its own child (Desktop: Electron); signalling only the launcher left that app running. Each child leads its own
-  // process group (detached), so the whole group is signalled.
-  const signalGroup = signal => { if (child?.pid === undefined) return; try { process.kill(process.platform === 'win32' ? child.pid : -child.pid, signal) } catch { /* already gone */ } }
-  signalGroup('SIGTERM')
+  // The launcher starts the app as its own child (Desktop: Electron); signalling only the launcher left that app running. On macOS and Linux each
+  // child leads its own process group (detached), so the whole group is signalled. Windows has no groups to signal and `process.kill` ends one
+  // process at once, so the tree is stopped with taskkill /T: without /F it asks windows to close (Electron saves and quits), with /F it ends
+  // the rest. A console app (Web) can only be ended with /F, so a Windows Web run is ended at once rather than waiting out the grace period.
+  const windows = process.platform === 'win32'
+  const signalGroup = (signal) => {
+    if (child?.pid === undefined) return
+    if (windows) { spawnSync('taskkill', ['/PID', String(child.pid), '/T', ...(signal === 'SIGKILL' ? ['/F'] : [])], { stdio: 'ignore', windowsHide: true }); return }
+    try { process.kill(-child.pid, signal) } catch { /* already gone */ }
+  }
+  signalGroup(windows && surface === 'web' ? 'SIGKILL' : 'SIGTERM')
   if (session !== undefined) { spawnSync('tmux', ['send-keys', '-t', session, 'C-c']); spawnSync('sleep', ['2']); spawnSync('tmux', ['kill-session', '-t', session]) }
   // Electron shuts down gracefully (it saves state, stops the engine): give the group up to 15 s before forcing it.
-  const groupAlive = () => { if (child?.pid === undefined) return false; try { process.kill(process.platform === 'win32' ? child.pid : -child.pid, 0); return true } catch { return false } }
-  for (let waited = 0; waited < 15_000 && groupAlive(); waited += 250) await new Promise(done => setTimeout(done, 250))
+  const groupAlive = () => { if (child?.pid === undefined) return false; try { process.kill(windows ? child.pid : -child.pid, 0); return true } catch { return false } }
+  const pause = () => new Promise(done => setTimeout(done, 250))
+  for (let waited = 0; waited < 15_000 && groupAlive(); waited += 250) await pause()
   let failure
   if (groupAlive()) { signalGroup('SIGKILL'); failure = 'the process did not stop within 15 s' }
+  // A process that was just ended releases its listening socket a moment later.
+  for (let waited = 0; waited < 5_000 && surface !== 'tui' && await portInUse(); waited += 250) await pause()
   if (surface !== 'tui' && await portInUse()) failure = `${failure ?? ''} port ${String(port)} is still in use`.trim()
   if (inspect !== undefined && await portInUse(Number(inspect))) failure = `${failure ?? ''} inspector port ${inspect} is still in use`.trim()
   try { assertRealHomesUntouched(before, `live-run ${surface}`) } catch (error) { failure = `${failure === undefined ? '' : `${failure}; `}${error.message}` }
   if (keep) console.log(`live-run: kept ${isolated.root}`)
-  else rmSync(isolated.root, { recursive: true, force: true })
+  // dispose retries: Windows keeps the files of a just-ended app locked for a moment.
+  else isolated.dispose()
   if (failure !== undefined) { console.error(`live-run: FAILED - ${failure}`); process.exit(1) }
   console.log('live-run: stopped, port free, real homes untouched')
   process.exit(code)
 }
 process.on('SIGINT', () => { void stop(0) })
 process.on('SIGTERM', () => { void stop(0) })
+if (process.platform === 'win32') process.on('SIGBREAK', () => { void stop(0) })
 child?.on('exit', (code, signal) => {
   if (stopping) return
   console.error(`live-run: the ${surface} app exited by itself (${signal ?? `code ${String(code)}`}); its last output:\n${recent.map(line => `  ${line}`).join('\n')}`)
   void stop(1)
 })
-setInterval(() => {}, 1 << 30)
+setInterval(() => { if (existsSync(join(isolated.root, STOP_FILE))) void stop(0) }, 250)
