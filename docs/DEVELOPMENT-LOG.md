@@ -1,3 +1,24 @@
+## 2026-10-28 (latest) - tests cannot write the real ACRYL homes any more (spec 048 T011 follow-up)
+
+Commits: `bf5841d6` (this change), `e429ed44` (the surface-parity flake, on main, recorded below with what its one timeout turned out to be).
+
+- **Why now:** once a composition root claims the app and announces it (T011), any test that boots one for real writes where the product writes -
+  the running Registry and its run lock under `~/.acryl-instances`, session logs under `~/.acryl*`, engine state under `~/.dsh`. Pointed at the
+  developer's own home, a suite could edit or break the installed app's data and nothing would say so.
+- **Structural, not per spec:** `scripts/testing/isolate-home.ts` runs before any test module in every vitest worker, points `HOME` (and
+  `USERPROFILE`) at a temp folder of that worker, drops the XDG homes, and removes the folder when the worker exits. All 22 vitest configs in the
+  repo load it (the pinned submodule keeps its own). A test that needs a particular home still sets its own afterwards, and
+  `ACRYL_TESTS_KEEP_REAL_HOME=1` opts a debugging session out.
+- **The gate's backstop:** `scripts/real-home-guard.mjs` snapshots every file under `~/.acryl`, `~/.acryl-dev`, `~/.acryl-worktrees`,
+  `~/.acryl-instances` and `~/.dsh`, runs the rest of `check`, and fails naming anything added, removed, resized or rewritten. `check` is now
+  that guard around `check:steps`, so the `node --test` runners, the scaffolder and the packed/tarball gates are covered too, not only vitest.
+- **Allowed, with its reason:** the bulkhead spec's list of files that may look at the OS home gains the guard: it must know the real homes to
+  prove nothing changed one, it only reads them, and it is not part of any app.
+- **Proven:** a command that writes `~/.acryl-instances/leak.json` under a throwaway home fails the guard and names the file; a clean command
+  exits 0, and the same suite served by `serveWeb` leaves nothing behind either (its claim is withdrawn on dispose - the guard sees lasting
+  changes, the isolation prevents the transient ones). Suites of loopback-http, harness-runtime, desktop (866), workspace (803), sign-in and
+  web-serve pass under the isolated home.
+
 ## 2026-10-28 (later) - `acryl control list` finds every running app: the process that serves it announces it (spec 048 T011)
 
 Commits: `d1725c87b528f17c2efb2b48e90b2aa1b5d48bba`.
@@ -25,6 +46,21 @@ Commits: `d1725c87b528f17c2efb2b48e90b2aa1b5d48bba`.
   quitting the command answered "no ACRYL app is running", the port was free and nothing under the real `~/Library/Application Support/ACRYL*`
   changed. A group kill that reaches the app a second time can still outlive the withdrawal; the Registry drops a dead pid's entry when read,
   which is what the next `acryl control list` does. The real `~/.acryl-instances` was never written by a gate - watched through a whole run.
+
+## 2026-10-28 - the surface-parity gate composes one runtime, not three (flake under load)
+
+Commit `e429ed4490a20a0e29e5327818d8a01b95efadd0`, on `main`.
+
+- **The failure:** one run of the desktop suite timed out in `tests/surface-parity.spec.ts`, the second of its three tests, under a 120 s bound.
+  DS_Fork3's output showed the file at 326.8 s with that test at 323.7 s, which cannot come from a slow await: the event loop itself was blocked
+  for over 200 s past the timer, inside a second `createAcrylEngineHost` boot that followed the first test's boot and dispose.
+- **The cause the fix removes:** the file booted the whole Web engine once per test - profile resolution, module import, the Loader settling,
+  then dispose and temp-home removal, three times. Under load that boot is what stretches: idle the file took 3.58 s, with three concurrent runs
+  and ten CPU hogs 7.3 s, and inside three concurrent desktop suites the first test alone reached 12.4 s. `composeBoth` is now called once in
+  `beforeAll` and the three tests assert on the shared result: same load 7.3 s -> 4.9 s, idle 3.58 s -> 2.10 s, one boot and one dispose.
+- **Honest limit:** the 200 s stall itself did not reproduce here, and the exact synchronous call inside the second boot is not named. If it
+  recurs, the single boot is now one named wait and the next step is to instrument `resolveWebEngineComposition`'s materialize and
+  `loadProfile` steps, the only synchronous file work on that path.
 
 ## 2026-10-28 - M8 met: DSH is one agent among others (spec 046 T028, T029)
 
