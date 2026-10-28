@@ -6,6 +6,11 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { CLI_TARGETS, payloadSha256, receiptFor, targetForNode, targetPackageName } from '../distribution/acryl-npm-launcher/release-contract.js'
 
+// npm packs and installs with a cache of this run, not the machine's ~/.npm; every npm these tests start inherits it.
+const npmCache = mkdtempSync(join(tmpdir(), 'acryl-npm-cache-'))
+process.env.npm_config_cache = npmCache
+test.after(() => { rmSync(npmCache, { recursive: true, force: true }) })
+
 function pack(directory) {
   return join(directory, execFileSync('npm', ['pack', '--silent'], { cwd: directory, encoding: 'utf8' }).trim())
 }
@@ -72,10 +77,12 @@ test('packs every CLI_TARGETS archive, including the windows-x64 .zip', () => {
   const artifactDir = mkdtempSync(join(tmpdir(), 'acryl-npm-artifacts-'))
   const outDir = mkdtempSync(join(tmpdir(), 'acryl-npm-out-'))
   const version = JSON.parse(readFileSync(new URL('../distribution/acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
+  const stagings = []
   try {
     for (const target of Object.keys(CLI_TARGETS)) {
       const windows = target === 'windows-x64'
       const staging = mkdtempSync(join(tmpdir(), `acryl-npm-stage-${target}-`))
+      stagings.push(staging)
       const runtimeDir = join(staging, `acryl-cli-${target}`)
       mkdirSync(join(runtimeDir, 'bin'), { recursive: true })
       const launcher = join(runtimeDir, 'bin', windows ? 'acryl.cmd' : 'acryl')
@@ -98,5 +105,6 @@ test('packs every CLI_TARGETS archive, including the windows-x64 .zip', () => {
   } finally {
     rmSync(artifactDir, { recursive: true, force: true })
     rmSync(outDir, { recursive: true, force: true })
+    for (const staging of stagings) rmSync(staging, { recursive: true, force: true })
   }
 })
