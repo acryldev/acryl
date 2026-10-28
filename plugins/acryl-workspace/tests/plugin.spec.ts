@@ -132,8 +132,25 @@ function terminal(app: { port: number, origin: string }, query: string, origin =
     ws.once('error', reject)
   })
   const closed = new Promise<number>(resolve => ws.once('close', (code: number) => { resolve(code) }))
-  const output = (): string => messages.map(m => (m.t === 'out' ? m.data : '')).join('')
+  const output = (): string => plain(messages.map(m => (m.t === 'out' ? m.data : '')).join(''))
   return { ws, messages, opened, closed, output }
+}
+
+/**
+ * What a terminal shows, without colors, cursor moves and carriage returns (ConPTY on Windows redraws a line with them).
+ */
+function plain(text: string): string {
+  // eslint-disable-next-line no-control-regex -- the escapes a terminal sends are control bytes.
+  return text.replace(/\u001B\][^\u0007\u001B]*(?:\u0007|\u001B\\)|\u001B\[[0-9;?]*[ -/]*[@-~]|\u001B[@-_]|\r/gu, '')
+}
+
+/**
+ * A line that makes the shell print `ACRYL_MARK_<n>`, written so the typed line itself does not contain the mark: seeing it proves the
+ * shell ran the command, not just that the keystrokes were echoed. The terminal's shell is `cmd.exe` on Windows and a POSIX shell
+ * elsewhere, so the mark is split with the one escape each of them removes.
+ */
+function printMark(n: number): string {
+  return process.platform === 'win32' ? `echo ACRYL_MARK^_${String(n)}\r` : `echo ACRYL_MARK"_"${String(n)}\r`
 }
 
 async function until(check: () => boolean, ms = 10_000): Promise<void> {
@@ -161,17 +178,17 @@ describe('the workspace Host plugin', () => {
     const { id } = JSON.parse(started.body) as { id: string }
     const first = terminal(app, `id=${id}&since=0`)
     await first.opened
-    first.ws.send(JSON.stringify({ t: 'in', data: 'echo acryl-$((6*7))\r' }))
-    await until(() => first.output().includes('acryl-42'))
+    first.ws.send(JSON.stringify({ t: 'in', data: printMark(1) }))
+    await until(() => first.output().includes('ACRYL_MARK_1'))
     const cursor = Math.max(...first.messages.map(m => (m.t === 'out' ? m.cursor : 0)))
     first.ws.close()
     expect(await first.closed).toBe(1005)
     // A reconnect from the cursor gets only what came after it, then the live output again.
     const second = terminal(app, `id=${id}&since=${String(cursor)}`)
     await second.opened
-    second.ws.send(JSON.stringify({ t: 'in', data: 'echo again-$((2+3))\r' }))
-    await until(() => second.output().includes('again-5'))
-    expect(second.output()).not.toContain('acryl-42')
+    second.ws.send(JSON.stringify({ t: 'in', data: printMark(2) }))
+    await until(() => second.output().includes('ACRYL_MARK_2'))
+    expect(second.output()).not.toContain('ACRYL_MARK_1')
     expect(second.messages.every(m => m.t !== 'out' || !m.replace)).toBe(true)
     second.ws.close()
     await second.closed
