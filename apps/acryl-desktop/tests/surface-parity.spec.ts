@@ -12,7 +12,7 @@ import { join } from 'node:path'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { ACRYL_CODING_CAPABILITIES, createAcrylEngineHost, createWebEngineDefinition, UPSTREAM_PRODUCT_ANALYTICS_OFF } from 'acryl-harness-runtime'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { prepareDesktopProfile } from '../src/profile.ts'
 
 /** Rows only the Electron app has: the native shell around the same runtime. */
@@ -96,8 +96,14 @@ async function composeBoth(): Promise<{
 }
 
 describe('Web and Desktop compose the same ACRYL features', () => {
-  it('composes every capability declared for both surfaces, identically, on both', async () => {
-    const { desktop, web } = await composeBoth()
+  // One composed pair for the three assertions: booting the Web runtime is the expensive part of this file (cold it is seconds even on an idle
+  // machine and scales with whatever else runs on it), and composing is a fact about the current tree, not state a test may change.
+  let composed: Awaited<ReturnType<typeof composeBoth>> | undefined
+  beforeAll(async () => { composed = await composeBoth() }, 120_000)
+  afterAll(() => { composed = undefined })
+
+  it('composes every capability declared for both surfaces, identically, on both', () => {
+    const { desktop, web } = composed!
     const sharedRowIds = ACRYL_CODING_CAPABILITIES
       .filter(capability => capability.surfaces.includes('web') && capability.surfaces.includes('desktop') && capability.shellMode === undefined)
       .flatMap(capability => capability.loaderPatches.flatMap(patch => 'insert' in patch ? (patch.insert ?? []).map(row => row.id) : []))
@@ -112,20 +118,20 @@ describe('Web and Desktop compose the same ACRYL features', () => {
     for (const id of ['ui-layout', 'ui-sidebar', 'ui-conversation']) {
       expect(web.get(id), id).toEqual(desktop.get(id))
     }
-  }, 120_000)
+  })
 
-  it('registers the same Agent Control tools on Web as on Desktop (spec 041 TS04)', async () => {
+  it('registers the same Agent Control tools on Web as on Desktop (spec 041 TS04)', () => {
     // Desktop composes the identical `acryl-agent-control` row (proven above: same package, same enabled
     // state), and that package registers its tools with no surface branching - so the live Web tool names
     // checked here are the same set Desktop registers when it mounts the same row. A real Electron boot to
     // enumerate Desktop's live `ctx.tools` too is out of scope for a headless gate.
-    const { desktop, webAgentControlToolNames } = await composeBoth()
+    const { desktop, webAgentControlToolNames } = composed!
     expect(desktop.get('acryl-agent-control')).toBeDefined()
     expect(webAgentControlToolNames).toEqual([...AGENT_CONTROL_TOOL_NAMES])
-  }, 120_000)
+  })
 
-  it('differs only by rows that are native to one surface, each with a stated reason', async () => {
-    const { desktop, web } = await composeBoth()
+  it('differs only by rows that are native to one surface, each with a stated reason', () => {
+    const { desktop, web } = composed!
     const desktopOnly = [...desktop.keys()].filter(id => !web.has(id))
     const webOnly = [...web.keys()].filter(id => !desktop.has(id))
     const unexplainedDesktop = desktopOnly.filter(id => !(id in DESKTOP_NATIVE_ROWS))
@@ -140,5 +146,5 @@ describe('Web and Desktop compose the same ACRYL features', () => {
       .filter(id => web.has(id) && id !== 'webserver')
       .filter(id => JSON.stringify(desktop.get(id)) !== JSON.stringify(web.get(id)))
     expect(disagreements).toEqual([])
-  }, 120_000)
+  })
 })
