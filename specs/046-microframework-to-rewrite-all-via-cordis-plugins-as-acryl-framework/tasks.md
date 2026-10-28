@@ -69,3 +69,7 @@ The framework assumes no built-in agent. DSH becomes one driver among others, al
   `claude` provider, `dshNativeProvider` without a transport) relates to the framework's `drivers` registry (`acrylblends/drivers`). Both describe
   "an agent the app can run", with different contracts. One should become the other's adapter, or one should go; record the decision before either
   grows. Found while designing T028.
+  Risk for that decision (2026-10-28, the 1.0 door check): ACRYL composes no acrylblends door plugin today - `acryl-agent-control` imports
+  `acrylblends/door/host`, `/page` and `/protocol` and wires its own routes, and nothing here sets `NODE_ENV` - but a future `acrylblends/cordis/door`
+  row would bring the door's `NODE_ENV=production` gate (`plugins/acryl-door/src/index.ts:94` there) into the packaged app and need
+  `allowInProduction: true`.
