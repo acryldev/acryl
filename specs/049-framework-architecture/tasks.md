@@ -9,7 +9,7 @@
 
 ## Open
 
-- [ ] T001 [found 2026-10-27, slice 17 commit A, AcrylImplementer; coordinator: yes, low priority, after M6] Live activation of an
+- [x] T001 [found 2026-10-27, slice 17 commit A, AcrylImplementer; coordinator: yes, low priority, after M6] Live activation of an
   `acrylblends` module. An app plugin installed into a running app that declares an `acrylblends/cordis/...` module in
   `dsh.requiresAcrylPackages` gets it linked into the profile, and it is used when its row is already mounted. When it is not, the live
   install path of `acryl-plugin-context` (`materializeRequiredAcrylPackages` in `plugins/acryl-plugin-context/lib/install.js`) refuses
@@ -21,6 +21,21 @@
   the plugin's `ctx.state` works without a restart; a second install of a plugin requiring it adds no second row; uninstalling both
   leaves the row as it was before.
   Mini-design: [plan.md, T001](./plan.md#t001---live-activation-of-an-acrylblends-module-2026-10-28-acrylimplementer-mini-design).
+  Done 2026-10-28 (eeffe673): `AcrPluginLifecycleController.requireModules` inserts, shares and removes the module rows, called by the
+  install and remove paths; the real-Loader tests in `runtime/acryl-control/tests/plugin-lifecycle.spec.ts` and the real-engine tests in
+  `runtime/acryl-harness-runtime/tests/plugin-context.spec.ts` (two plugins share one `include:acrylblends/cordis/state` row, none after
+  both leave, the row composed again after a restart). Live check: `scripts/live-run.mjs web` with a Blueprint without the framework-kit
+  row, a plugin injecting `state` placed in the app's plugins folder, `/reload new`, then `/probe-state` answered
+  `probe-state: clicks=4, keys=probe-clicks` on its fourth run, without a restart.
+  Limits: a row composed at boot has no owner in memory, so it stays until the next start after its last plugin leaves; the TUI does not
+  compose these rows at boot (as for app plugins before).
+
+- [ ] T002 [found 2026-10-28, T001's live check, AcrylImplementer; coordinator: not yet decided] A host command's reply is not shown on
+  the Web page of a new session. `/probe-state` typed on the start page (no session started, no provider key) is answered by
+  `api/commands/execute` with `{ kind: 'success', text: ... }`, the composer clears, and no text appears anywhere on the page (seen
+  through the DOM and a screenshot). Not checked yet: whether a started session shows it, and whether this is the pinned DSH client's
+  behaviour or ACRYL's.
+  Done when: a test on the Web page shows a command's success text where the user typed it.
 
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).
