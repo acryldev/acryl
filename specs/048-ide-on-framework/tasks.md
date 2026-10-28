@@ -104,11 +104,16 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   Commit `f612cc60112cc2cfc2cfc12619d577a76ce2b3fb` (`plan.md` slice 6b). Evidence: full gate; all four workflows green; a unit test of the
   route (a page that leaves releases the hold at once) and the real-engine `web-startup-hold.spec.ts` on the router. Measured: call
   sites 5 -> 4.
-- [ ] T014 (low priority) A Desktop boot from the owner's dev home (the T003 live run) warns `patch: entry "desktop-development-canvas"
+- [x] T014 (low priority) A Desktop boot from the owner's dev home (the T003 live run) warns `patch: entry "desktop-development-canvas"
   not found`: something stored still names the Development Canvas by its row id from before the rename to `acryl-development-canvas`
   (the anti-pattern the row-id rule in `CLAUDE.md` names). Not in the profile's own `cordis.patch.yml`, the source or the launcher
   scripts; likely a stored home or profile file (a `cordis.yml`, a Blend's manifest). Find it, and fix it in the read-time rename table
   (`RENAMED_BLUEPRINT_ROW_IDS` and its kin), not in anyone's home. Done when that boot logs no such warning and a test pins the rename.
+  Done 2026-10-28: the stored name was the plugin lifecycle state (`<engine home>/plugin-lifecycle/state.json`), whose desktop profile
+  kept `include:desktop-development-canvas` disabled; the canvas is a Market plugin no longer installed in that home. `RENAMED_ENTRY_IDS`
+  maps the old id to the package name, and `pluginLifecyclePatches` composes a stored disable only for a row the composition has (it
+  stays stored, and `acryl plugin doctor` reports it as stale). Two tests in `plugin-lifecycle-state.spec.ts` pin both; a Desktop boot
+  from a copy of the dev home logs no `patch: entry` warning.
 
 Next: the drivers (spec 046 Phase 9, T028 `acryl-driver-dsh` and T029 `acryl-driver-pty`) act through the door T002 moves, and get their
 own spec when this one reaches T007.

@@ -996,7 +996,7 @@ export function prepareDesktopProfile(
     patches.push(...pluginLifecyclePatches({
       profileName: profile.name,
       statePath: hooks.pluginLifecycleStatePath,
-    }))
+    }, new Set(composeEntries([patches]).flatMap(row => (typeof row.id === 'string' ? [row.id] : [])))))
   }
   return {
     homeDir: home,

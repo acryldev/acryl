@@ -458,7 +458,7 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   patches.push(...pluginLifecyclePatches({
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
-  }))
+  }, rowIdsOf(patches)))
   return { rootConfig, patches, surface: 'tui', instance, installPackageUrl: import.meta.url, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }) }
 }
 
@@ -759,8 +759,13 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   patches.push(...pluginLifecyclePatches({
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
-  }))
+  }, rowIdsOf(patches)))
   return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+}
+
+/** The Loader row ids a list of patches composes, for overrides that apply only to rows that exist. */
+function rowIdsOf(patches: readonly PatchOptions[]): ReadonlySet<string> {
+  return new Set(composeEntries([[...patches]]).flatMap(row => (typeof row.id === 'string' ? [row.id] : [])))
 }
 
 /** A Loader row's config as a plain object to merge into, or an empty one when the profile set none. */

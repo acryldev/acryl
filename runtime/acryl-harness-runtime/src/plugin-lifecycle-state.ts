@@ -94,12 +94,15 @@ export function isPluginLifecycleEntryId(value: unknown): value is string {
 }
 
 /**
- * Loader rows that were renamed, old entry id to new (spec 044 step 1b): a disable kept under the old id applies to the row by its new
- * id, and is written back under the new id on the next change.
+ * Loader rows that were renamed, old entry id to new: a disable kept under the old id applies to the row by its new id, and is written
+ * back under the new id on the next change. `extension-context` became `acryl-plugin-context` in spec 044 step 1b; the Development
+ * Canvas row `desktop-development-canvas` took its package name `acryl-development-canvas` under the row-id rule (spec 048 T014).
  */
 const RENAMED_ENTRY_IDS: Readonly<Record<string, string>> = Object.freeze({
   'include:extension-context': 'include:acryl-plugin-context',
   'extension-context': 'acryl-plugin-context',
+  'include:desktop-development-canvas': 'include:acryl-development-canvas',
+  'desktop-development-canvas': 'acryl-development-canvas',
 })
 
 /** Base-template bundles: never user-mutable. Every other profile bundle is. */
@@ -325,14 +328,23 @@ export async function clearProfilePatchDisable(profileDir: string, patchId: stri
 }
 
 /**
- * Convert persisted overrides into profile overlay rows. A disable patch
- * matches its target by id only - no `name`, so a row whose id and package
- * name differ (e.g. `dsh-editor` / `acryl-dsh-editor-plugin`) still disables,
- * and a stale id is a Loader warning rather than a skipped patch.
+ * Convert persisted overrides into profile overlay rows for the rows this
+ * composition has. A disable patch matches its target by id only - no `name`,
+ * so a row whose id and package name differ (e.g. `dsh-editor` /
+ * `acryl-dsh-editor-plugin`) still disables. A disable whose row is not
+ * composed (its plugin was uninstalled) yields no patch, so the Loader does not
+ * warn on every boot; it stays stored, applies again when the plugin comes
+ * back, and `acryl plugin doctor` reports it as a stale override.
+ * @param persistence - the override file and profile to read.
+ * @param composedRowIds - the Loader row ids the composition already has.
+ * @returns one disable patch per stored disable whose row is composed.
  */
 export function pluginLifecyclePatches(
   persistence: PluginLifecycleStatePersistence,
+  composedRowIds: ReadonlySet<string>,
 ): readonly { readonly id: string; readonly disabled: true }[] {
   return [...readDisabledPluginLifecycleEntries(persistence)]
-    .map(entryId => ({ id: entryPatchId(entryId), disabled: true as const }))
+    .map(entryPatchId)
+    .filter(id => composedRowIds.has(id))
+    .map(id => ({ id, disabled: true as const }))
 }
