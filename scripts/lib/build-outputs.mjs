@@ -9,7 +9,7 @@
  * @module scripts/lib/build-outputs
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { join, relative, resolve } from 'node:path'
 
 /** The folders that hold workspace packages (`pnpm-workspace.yaml`, enforced by `scripts/verify-layout.mjs`). */
 const PACKAGE_GROUPS = ['apps', 'runtime', 'plugins', 'examples', 'distribution']
@@ -49,7 +49,8 @@ function entryFile(manifest) {
  */
 export function findMissingBuildOutput(root, surfaceDir, surfaceFiles = []) {
   const packages = workspacePackages(root)
-  const surface = [...packages.values()].find(entry => relative(root, entry.dir) === surfaceDir)
+  // Compared as resolved paths: `surfaceDir` is written with `/`, and on Windows the package folders are found with `\`.
+  const surface = [...packages.values()].find(entry => resolve(entry.dir) === resolve(root, surfaceDir))
   if (surface === undefined) throw new Error(`build-outputs: no workspace package in ${surfaceDir}`)
   for (const file of surfaceFiles) {
     if (!existsSync(join(surface.dir, file))) return { packageName: surface.manifest.name, file: join(surfaceDir, file) }

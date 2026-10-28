@@ -28,7 +28,7 @@
     "start:local": "node scripts/dev-local.mjs --skip-build",
     "local": "node scripts/dev-local.mjs",
     "lifecycle": "pnpm run verify && node scripts/dev-local.mjs",
-    "test:scripts": "node --test \"scripts/*.test.mjs\"",
+    "test:scripts": "node --test \"scripts/*.test.mjs\" \"distribution/acryl-npm-launcher/tests/*.test.mjs\"",
     "test:bilingual-docs": "node --test scripts/bilingual-docs.test.mjs",
     "check:bilingual-docs": "pnpm run test:bilingual-docs && node scripts/verify-bilingual-docs.mjs",
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",

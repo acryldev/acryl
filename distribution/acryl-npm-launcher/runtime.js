@@ -35,3 +35,15 @@ export function runtimeLauncher({ require = createRequire(import.meta.url), plat
   }
   return join(root, 'runtime', 'bin', platform === 'win32' ? 'acryl.cmd' : 'acryl')
 }
+
+/**
+ * How to start the CLI runtime whose launcher `runtimeLauncher` returned. Elsewhere that is the launcher itself. On Windows the launcher is a
+ * `.cmd`, which Node starts only through cmd.exe (CVE-2024-27980), where the user's arguments would be parsed again (`%`, `^`, `"`) and Ctrl-C
+ * asks "Terminate batch job (Y/N)?". So what the `.cmd` runs (apps/acryl-cli/scripts/acryl-cli-launcher.cmd) is run directly: this Node, with
+ * --expose-internals, on the runtime's lib/bin.js.
+ * @returns {{ command: string, args: string[] }}
+ */
+export function runtimeCommand(launcher, args, { platform = process.platform, node = process.execPath } = {}) {
+  if (platform !== 'win32') return { command: launcher, args }
+  return { command: node, args: ['--expose-internals', join(dirname(dirname(launcher)), 'lib', 'bin.js'), ...args] }
+}

@@ -19,7 +19,7 @@ test('relocateHome re-points a copied app home at itself and leaves paths outsid
     const changed = relocateHome(copy, source)
     assert.deepEqual(changed.sort(), [join(copy, '.dsh', 'profiles', 'web', 'package.json'), join(copy, '.dsh', 'storages', 'workspace.json')])
     assert.deepEqual(JSON.parse(readFileSync(join(copy, '.dsh', 'storages', 'workspace.json'), 'utf8')).workspaces, [join(copy, 'documents', 'default-workspace'), project])
-    assert.match(readFileSync(join(copy, '.dsh', 'profiles', 'web', 'package.json'), 'utf8'), new RegExp(`file:${join(copy, 'plugins')}`.replace(/[/.]/gu, '\\$&')))
+    assert.equal(JSON.parse(readFileSync(join(copy, '.dsh', 'profiles', 'web', 'package.json'), 'utf8')).dependencies.q, `file:${join(copy, 'plugins', '.store', 'q', '1.0.0.tgz')}`)
     assert.match(readFileSync(join(copy, '.dsh', 'profiles', 'web', 'node_modules', 'x', 'package.json'), 'utf8'), /source/u, 'dependencies are not rewritten')
     assert.match(readFileSync(join(source, '.dsh', 'storages', 'workspace.json'), 'utf8'), /source/u, 'the source is never written')
   } finally { rmSync(root, { recursive: true, force: true }) }

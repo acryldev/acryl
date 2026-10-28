@@ -31,7 +31,7 @@ test('rm deletes a stopped managed app, refuses a running one, and cannot escape
   const app = managedApp('alpha', home)
   claimInstance(app, { pid: 10 }, () => false, home)
   assert.throws(() => removeInstance('alpha', home, () => true), /is running/)
-  assert.equal(removeInstance('alpha', home, () => false), realpathSync(join(home, '.acryl-instances')) + '/alpha')
+  assert.equal(removeInstance('alpha', home, () => false), join(realpathSync(join(home, '.acryl-instances')), 'alpha'))
   assert.ok(!existsSync(app.home))
   assert.throws(() => removeInstance('../escape', home), InstanceError)
 }))

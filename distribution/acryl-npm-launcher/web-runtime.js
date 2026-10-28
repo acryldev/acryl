@@ -66,8 +66,21 @@ export function hasVerifiedWebRuntime(root, { version, target, sha256 }) {
   } catch { return false }
 }
 
+/**
+ * How to start a verified Web runtime under `root`. On Windows its launcher is a `.cmd`, started by Node only through cmd.exe (see
+ * `runtimeCommand` in runtime.js), so what the `.cmd` runs is run directly: the runtime's own node.exe on its lib/bin.js.
+ * @returns {{ command: string, args: string[] }}
+ */
+export function webRuntimeCommand(root, args, { platform = process.platform } = {}) {
+  if (platform !== 'win32') return { command: join(root, 'runtime', 'bin', 'acryl-web'), args }
+  return { command: join(root, 'runtime', 'bin', 'node.exe'), args: [join(root, 'lib', 'bin.js'), ...args] }
+}
+
+// Windows' own tar (bsdtar): the first `tar` on a Windows PATH is often Git's GNU tar, which reads `C:\...` as a remote host.
+const TAR = process.platform === 'win32' ? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe') : 'tar'
+
 function defaultExtract(archive, destination) {
-  execFileSync('tar', ['-xzf', archive, '--no-same-owner', '--no-same-permissions', '--strip-components=1', '-C', destination])
+  execFileSync(TAR, ['-xzf', archive, '--no-same-owner', '--no-same-permissions', '--strip-components=1', '-C', destination])
 }
 
 async function defaultDownload(url) {

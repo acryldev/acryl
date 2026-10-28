@@ -10,8 +10,8 @@ const temp = run => { const dir = realpathSync(mkdtempSync(join(tmpdir(), 'blank
 test('every surface runs a managed app in its own home, and no ambient placement variable leaks in', () => {
   for (const surface of ['web', 'cli', 'desktop']) {
     const plan = blankLaunchPlan(surface, {}, { PATH: 'x', DSH_HOME: '/real/home', ACRYL_WEB_PORT: '3080', ACRYL_INSTANCE: 'other' }, '/h', '/r')
-    assert.equal(plan.env.ACRYL_HOME, '/h/.acryl-instances/blank', surface)
-    assert.equal(plan.env.DSH_HOME, '/h/.acryl-instances/blank/.dsh', surface)
+    assert.equal(plan.env.ACRYL_HOME, join('/h', '.acryl-instances', 'blank'), surface)
+    assert.equal(plan.env.DSH_HOME, join('/h', '.acryl-instances', 'blank', '.dsh'), surface)
     assert.equal(plan.env.ACRYL_INSTANCE, 'blank', surface)
     assert.equal(plan.env.ACRYL_LOCAL_PRODUCT_NAME, 'ACRYL blank', surface)
     assert.equal(plan.env.ACRYL_BLUEPRINT, 'acryl.blank', surface)

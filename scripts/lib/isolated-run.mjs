@@ -121,10 +121,15 @@ const RELOCATE_MAX_BYTES = 8 * 1024 * 1024
  * After copying an app home to `home`, point every absolute path the copy records into the source home (`from`) at the copy instead. Without
  * it a run started from a copy reads and writes the source: its default workspace, its sessions and its pulled plugins' tarballs are recorded
  * by absolute path (found 2026-10-19: `/blend snapshot` in a `--copy-home` run wrote into the source home's workspace). Paths outside the
- * source home (the user's own projects) are left as they are. Returns the files changed.
+ * source home (the user's own projects) are left as they are. Each path is matched as written and as JSON writes it, which differ on Windows,
+ * where JSON doubles every backslash (`C:\\Users\\...`). Returns the files changed.
  */
 export function relocateHome(home, from) {
-  const spellings = [...new Set([from, safeRealpath(from)].filter(Boolean).map(path => path.replace(/\/+$/u, '')))].sort((a, b) => b.length - a.length)
+  const raw = [...new Set([from, safeRealpath(from)].filter(Boolean).map(path => path.replace(/[/\\]+$/u, '')))]
+  // Longest first, so a shorter spelling is never replaced inside a longer one. Where a path has no backslash both spellings are the same, and the
+  // map keeps one.
+  const asJson = path => JSON.stringify(path).slice(1, -1)
+  const spellings = [...new Map(raw.flatMap(path => [[asJson(path), asJson(home)], [path, home]])).entries()].sort(([a], [b]) => b.length - a.length)
   const changed = []
   const walk = dir => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -133,7 +138,7 @@ export function relocateHome(home, from) {
       if (!entry.isFile() || !RELOCATED_FILE.test(entry.name) || lstatSync(path).size > RELOCATE_MAX_BYTES) continue
       const text = readFileSync(path, 'utf8')
       let next = text
-      for (const spelling of spellings) next = next.split(spelling).join(home)
+      for (const [spelling, replacement] of spellings) next = next.split(spelling).join(replacement)
       if (next !== text) { writeFileSync(path, next); changed.push(path) }
     }
   }

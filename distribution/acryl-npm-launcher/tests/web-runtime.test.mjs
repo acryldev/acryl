@@ -8,6 +8,7 @@ import {
   acquireWebRuntime,
   confirmWebAcquisition,
   selectWebArtifact,
+  webRuntimeCommand,
 } from '../web-runtime.js'
 
 const target = 'darwin-arm64'
@@ -28,7 +29,8 @@ async function extractor(archive, runtimeRoot) {
     assert.deepEqual(readFileSync(archive), contents)
     mkdirSync(join(runtimeRoot, 'runtime', 'bin'), { recursive: true })
     writeFileSync(join(runtimeRoot, 'ready'), 'ready')
-    writeFileSync(join(runtimeRoot, 'runtime', 'bin', 'acryl-web'), 'ready')
+    // The launcher the real archive has on this machine's platform, which the readiness check looks for.
+    writeFileSync(join(runtimeRoot, 'runtime', 'bin', process.platform === 'win32' ? 'acryl-web.cmd' : 'acryl-web'), 'ready')
 }
 
 test('requires explicit confirmation unless --yes was supplied', () => {
@@ -86,4 +88,12 @@ test('requires extracted runtime readiness before committing cache', async () =>
   const root = store()
   await assert.rejects(acquireWebRuntime({ root, version, target, manifest, download: async () => contents, extract: async () => {} }), /readiness check failed/)
   assert.equal(existsSync(join(root, version, target)), false)
+})
+
+test('starts the Web runtime through its launcher, and on Windows runs what the .cmd launcher runs, without cmd.exe', () => {
+  assert.deepEqual(webRuntimeCommand('/w', ['--port', '3000'], { platform: 'darwin' }), { command: join('/w', 'runtime', 'bin', 'acryl-web'), args: ['--port', '3000'] })
+  assert.deepEqual(webRuntimeCommand('/w', ['--port', '3000'], { platform: 'win32' }), { command: join('/w', 'runtime', 'bin', 'node.exe'), args: [join('/w', 'lib', 'bin.js'), '--port', '3000'] })
+  // The .cmd the Web archive ships (scripts/build-web-archive.mjs) must keep running the same thing.
+  const builder = readFileSync(new URL('../../../scripts/build-web-archive.mjs', import.meta.url), 'utf8')
+  assert.ok(builder.includes(String.raw`'@echo off\r\n"%~dp0node.exe" "%~dp0..\\..\\lib\\bin.js" %*\r\n'`))
 })

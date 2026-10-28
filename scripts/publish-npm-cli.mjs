@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execShim, tarCommand } from './lib/portable-commands.mjs'
 import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -49,16 +50,17 @@ function extractRuntime(target, output) {
   if (!existsSync(archive)) throw new Error(`publish-npm-cli: missing prepared artifact ${archive}; run build-cli-archive first`)
   mkdirSync(output, { recursive: true })
   // windows-x64 ships as .zip (see build-cli-archive.mjs); GNU tar cannot
-  // extract PKZIP archives, so this target requires unzip instead of tar -xf.
-  if (target === 'windows-x64') execFileSync('unzip', ['-q', archive, '-d', output], { stdio: 'inherit' })
-  else execFileSync('tar', ['-xf', archive, '-C', output], { stdio: 'inherit' })
+  // extract PKZIP archives, so this target requires unzip instead of tar -xf,
+  // except on Windows, whose own tar reads both.
+  if (target === 'windows-x64' && process.platform !== 'win32') execFileSync('unzip', ['-q', archive, '-d', output], { stdio: 'inherit' })
+  else execFileSync(tarCommand(), ['-xf', archive, '-C', output], { stdio: 'inherit' })
   const extracted = join(output, `acryl-cli-${target}`)
   if (!existsSync(join(extracted, 'receipt.json'))) throw new Error(`publish-npm-cli: ${archive} has no runtime receipt`)
   return extracted
 }
 
 function pack(directory) {
-  execFileSync('npm', ['pack', '--silent'], { cwd: directory, stdio: 'inherit' })
+  execShim('npm', ['pack', '--silent'], { cwd: directory, stdio: 'inherit' })
   const tarball = readdirSync(directory).find(name => name.endsWith('.tgz'))
   if (!tarball) throw new Error(`publish-npm-cli: npm pack did not produce a tarball for ${directory}`)
   mkdirSync(outDir, { recursive: true })

@@ -4,6 +4,7 @@ import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, r
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { execShim, tarCommand } from './lib/portable-commands.mjs'
 import { CLI_TARGETS, payloadSha256, receiptFor, targetForNode, targetPackageName } from '../distribution/acryl-npm-launcher/release-contract.js'
 
 // npm packs and installs with a cache of this run, not the machine's ~/.npm; every npm these tests start inherits it.
@@ -12,7 +13,7 @@ process.env.npm_config_cache = npmCache
 test.after(() => { rmSync(npmCache, { recursive: true, force: true }) })
 
 function pack(directory) {
-  return join(directory, execFileSync('npm', ['pack', '--silent'], { cwd: directory, encoding: 'utf8' }).trim())
+  return join(directory, execShim('npm', ['pack', '--silent'], { cwd: directory, encoding: 'utf8' }).trim())
 }
 
 test('assembles a selector-only manifest with exact optional target dependencies', () => {
@@ -41,10 +42,13 @@ test('clean local tarball global install launches the prepared target TUI withou
   const runtime = join(directory, packageName, 'runtime')
   const launcher = join(runtime, 'bin', process.platform === 'win32' ? 'acryl.cmd' : 'acryl')
   try {
-    mkdirSync(join(runtime, 'bin'), { recursive: true })
+    // The real archive's layout: the launcher runs lib/bin.js on the host's Node (apps/acryl-cli/scripts), and on Windows the npm launcher runs
+    // lib/bin.js itself instead of the .cmd.
+    mkdirSync(join(runtime, 'bin'), { recursive: true }); mkdirSync(join(runtime, 'lib'), { recursive: true })
+    writeFileSync(join(runtime, 'lib', 'bin.js'), `console.log(process.argv[2] === '--version' ? '${version}' : JSON.stringify({ mode: 'tui' }))\n`)
     writeFileSync(launcher, process.platform === 'win32'
-      ? '@echo off\r\nnode -e "if (process.argv[1] === \'--version\') console.log(\'0.1.19\'); else console.log(\'{\\\"mode\\\":\\\"tui\\\"}\')" %*\r\n'
-      : `#!/usr/bin/env node\nif (process.argv[2] === '--version') console.log('${version}')\nelse console.log('{\"mode\":\"tui\"}')\n`)
+      ? '@echo off\r\nnode --expose-internals "%~dp0..\\lib\\bin.js" %*\r\n'
+      : '#!/bin/sh\nexec node --expose-internals "$(dirname "$0")/../lib/bin.js" "$@"\n')
     if (process.platform !== 'win32') chmodSync(launcher, 0o755)
     writeFileSync(join(runtime, 'receipt.json'), JSON.stringify(receiptFor({ target, version, payloadSha256: payloadSha256(runtime) })))
     writeFileSync(join(directory, packageName, 'package.json'), JSON.stringify({
@@ -60,10 +64,11 @@ test('clean local tarball global install launches the prepared target TUI withou
     }))
     const selectorTarball = pack(selector)
 
-    execFileSync('npm', ['install', '--global', '--prefix', prefix, '--include=optional', selectorTarball, targetTarball], { stdio: 'pipe' })
-    const executable = join(prefix, 'bin', process.platform === 'win32' ? 'acryl.cmd' : 'acryl')
-    assert.equal(execFileSync(executable, ['--version'], { encoding: 'utf8' }).trim(), version)
-    assert.deepEqual(JSON.parse(execFileSync(executable, ['tui', '--json'], { encoding: 'utf8' })), { mode: 'tui' })
+    execShim('npm', ['install', '--global', '--prefix', prefix, '--include=optional', selectorTarball, targetTarball], { stdio: 'pipe' })
+    // A global install puts its bins in the prefix itself on Windows, and in its bin folder elsewhere.
+    const executable = process.platform === 'win32' ? join(prefix, 'acryl.cmd') : join(prefix, 'bin', 'acryl')
+    assert.equal(execShim(executable, ['--version'], { encoding: 'utf8' }).trim(), version)
+    assert.deepEqual(JSON.parse(execShim(executable, ['tui', '--json'], { encoding: 'utf8' })), { mode: 'tui' })
   } finally {
     rmSync(directory, { recursive: true, force: true })
   }
@@ -90,8 +95,10 @@ test('packs every CLI_TARGETS archive, including the windows-x64 .zip', () => {
       if (!windows) chmodSync(launcher, 0o755)
       writeFileSync(join(runtimeDir, 'receipt.json'), JSON.stringify(receiptFor({ target, version, payloadSha256: payloadSha256(runtimeDir) })))
       const archive = join(artifactDir, `acryl-cli-${target}.${windows ? 'zip' : 'tar.gz'}`)
-      if (windows) execFileSync('zip', ['-qr', archive, `acryl-cli-${target}`], { cwd: staging })
-      else execFileSync('tar', ['-czf', archive, '-C', staging, `acryl-cli-${target}`])
+      // Windows has no zip command; its own tar writes a .zip from the extension (-a).
+      if (windows && process.platform === 'win32') execFileSync(tarCommand(), ['-a', '-cf', archive, `acryl-cli-${target}`], { cwd: staging })
+      else if (windows) execFileSync('zip', ['-qr', archive, `acryl-cli-${target}`], { cwd: staging })
+      else execFileSync(tarCommand(), ['-czf', archive, '-C', staging, `acryl-cli-${target}`])
     }
     execFileSync(process.execPath, ['scripts/publish-npm-cli.mjs', '--pack-only', outDir], {
       env: { ...process.env, ACRYL_CLI_ARTIFACT_DIR: artifactDir },
