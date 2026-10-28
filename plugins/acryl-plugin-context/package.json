@@ -45,7 +45,7 @@
     "@webboxes/blends-core": "workspace:*",
     "@webboxes/plugin-hub": "workspace:*",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
-    "acrylblends": "^0.11.0",
+    "acrylblends": "^1.0.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

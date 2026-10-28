@@ -120,6 +120,7 @@ supportedArchitectures:
     - arm64
 
 minimumReleaseAgeExclude:
+  - acrylblends@1.0.0
   - '@deepseek-ai/dsh-acp-app@0.2.0-rc.2'
   - '@deepseek-ai/dsh-acp@0.2.0-rc.2'
   - '@deepseek-ai/dsh-agent-default-model@0.2.0-rc.2'
@@ -356,4 +357,3 @@ minimumReleaseAgeExclude:
   - '@deepseek-ai/node-addon-system-linux-arm64@0.1.2'
   - '@deepseek-ai/node-addon-system-linux-x64@0.1.2'
   - '@deepseek-ai/node-addon-system@0.1.2'
-  - acrylblends@0.11.0

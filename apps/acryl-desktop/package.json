@@ -439,7 +439,7 @@
     "acryl-sign-in": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-workspace": "workspace:*",
-    "acrylblends": "^0.11.0",
+    "acrylblends": "^1.0.0",
     "adm-zip": "^0.6.1",
     "commander": "^15.0.0",
     "cordis-plugin-market": "workspace:*",

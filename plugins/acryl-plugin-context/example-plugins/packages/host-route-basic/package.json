@@ -15,7 +15,7 @@
     "cordis.patch.yml"
   ],
   "peerDependencies": {
-    "acrylblends": "^0.11.0"
+    "acrylblends": "^1.0.0"
   },
   "dsh": {
     "bundle": {

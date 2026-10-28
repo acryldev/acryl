@@ -560,8 +560,8 @@ importers:
         specifier: workspace:*
         version: link:../../plugins/acryl-ui-tui
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -1470,8 +1470,8 @@ importers:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       adm-zip:
         specifier: ^0.6.1
         version: 0.6.1
@@ -2140,8 +2140,8 @@ importers:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       cordis-plugin-market:
         specifier: workspace:*
         version: link:../../plugins/cordis-plugin-market
@@ -2178,8 +2178,8 @@ importers:
   examples/acryl-framework-starter:
     dependencies:
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2203,8 +2203,8 @@ importers:
         specifier: ^22.20.0
         version: 22.20.1
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
@@ -2227,8 +2227,8 @@ importers:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2352,8 +2352,8 @@ importers:
         specifier: workspace:*
         version: link:../acryl-db-postgres
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2380,8 +2380,8 @@ importers:
         specifier: ~3.18.4
         version: 3.18.4
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -2463,8 +2463,8 @@ importers:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2524,8 +2524,8 @@ importers:
         specifier: workspace:*
         version: link:../../runtime/plugin-hub
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -2635,8 +2635,8 @@ importers:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2699,8 +2699,8 @@ importers:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: 4.0.4
@@ -2891,8 +2891,8 @@ importers:
         specifier: workspace:*
         version: link:../acryl-settings
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       codemirror:
         specifier: 6.0.2
         version: 6.0.2
@@ -3133,8 +3133,8 @@ importers:
         specifier: workspace:*
         version: link:../acryl-settings
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       jsdom:
         specifier: 29.1.1
         version: 29.1.1(@noble/hashes@2.3.0)
@@ -3763,8 +3763,8 @@ importers:
         specifier: workspace:*
         version: link:../../plugins/acryl-workspace
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       adm-zip:
         specifier: ^0.6.1
         version: 0.6.1
@@ -3821,8 +3821,8 @@ importers:
         specifier: ^22.20.0
         version: 22.20.1
       acrylblends:
-        specifier: ^0.11.0
-        version: 0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
+        specifier: ^1.0.0
+        version: 1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0)
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
@@ -8094,8 +8094,8 @@ packages:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
     engines: {node: '>= 0.6'}
 
-  acrylblends@0.11.0:
-    resolution: {integrity: sha512-e6ycoQcT3+DqRy88oxEWpxJa+edcO82UFQGmaVGbD+f7QzHhs0rGnPfM1bogKIfMGu5hjBj58+PWBOJkfwMX3A==}
+  acrylblends@1.0.0:
+    resolution: {integrity: sha512-6A74Lw5/skRwR7ImfNM2JhAPJablybRr0BMWroUgBB6OPi+nVPSwy/BSJZKNDrB73WyWlKE4G0iY2qEa46TI4Q==}
     engines: {node: '>=22.19.0'}
     hasBin: true
     peerDependencies:
@@ -16265,7 +16265,7 @@ snapshots:
       mime-types: 3.0.2
       negotiator: 1.1.0
 
-  acrylblends@0.11.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0):
+  acrylblends@1.0.0(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/schemastery@3.18.4)(react@18.3.1)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)))(ws@8.22.0):
     optionalDependencies:
       '@deepseek-ai/cordis': 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
       '@deepseek-ai/schemastery': 3.18.4

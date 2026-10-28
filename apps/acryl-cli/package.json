@@ -147,7 +147,7 @@
     "acryl-settings": "workspace:*",
     "acryl-system-prompt": "workspace:*",
     "acryl-ui-tui": "workspace:*",
-    "acrylblends": "^0.11.0",
+    "acrylblends": "^1.0.0",
     "cordis-plugin-market": "workspace:*",
     "diff": "^9.0.0"
   },
