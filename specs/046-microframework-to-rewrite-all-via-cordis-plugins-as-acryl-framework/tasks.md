@@ -56,5 +56,12 @@ there: T021 is 048 T001 (done), T024 is 048 T002, T023 is 048 T003, T025 is 048 
 The framework assumes no built-in agent. DSH becomes one driver among others, all acting through the door (`acryl-agent-control`).
 
 - [ ] T028 `acryl-driver-dsh`: the DeepSeek Harness chat (many LLM providers) as a driver plugin; the framework packages keep no DSH or harness import.
+  Reshaped 2026-10-28 (coordinator): a generic ACP chat driver, `driver-acp` in acrylblends (`plugins/driver-acp`, beside `driver-pty`), with `dsh`
+  (`dsh --profile acp`) as its first preset and other ACP agents by config, so DSH gets no code of its own. It speaks ACP v1 over stdio with no
+  `@deepseek-ai/*` import and finds `dsh` on the PATH. Authored on acrylblends branch `075-driver-acp`; Blends reviews, merges and ships it.
+  Done when it is on acrylblends main and the panel gate (`verify-agent-panel.mjs --driver acp:dsh`) passes against a real `dsh`.
 - [ ] T029 `acryl-driver-pty`: a PTY driver plugin that runs `claude`, `codex`, `pi` and others inside the app folder, acting through the door.
-
+- [ ] T030 (low priority, after acrylblends 1.0) Decide how ACRYL's `acrAgentControl` (`runtime/acryl-control/src/agent/`, the door's workers with the
+  `claude` provider, `dshNativeProvider` without a transport) relates to the framework's `drivers` registry (`acrylblends/drivers`). Both describe
+  "an agent the app can run", with different contracts. One should become the other's adapter, or one should go; record the decision before either
+  grows. Found while designing T028.

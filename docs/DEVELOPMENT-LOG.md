@@ -1,3 +1,29 @@
+## 2026-10-28 - M7 met: no ACRYL plugin registers on DSH's webServer, the terminal's WebSocket included (spec 048 T007, T008)
+
+Commits: `3eba613593f38441fae06e41cd6cca790b8215c3` (M9 parked by the owner, its design kept in `specs/049-framework-architecture/design/m9-hosted-workspace.md`),
+`f01f3da2457f2bea4c89dd7768a0f132bc27969d` (T007, T008), `f8f903db58d90f6b0efed0ed3e94d9b9d6955127` (the isolation gap the live check found), `a09fefc2836fe0d47f6e5cbeeb31778cee7473a2` (the real-terminal test on Windows).
+
+- **Moved:** the workspace terminal's stream is one router route under the workspace prefix, mounted with
+  `routerHttp.mount(prefix, { upgrade: [path] })` and upgraded by `routerHttp.upgrades()` from acrylblends 0.11.0 (spec 047 T009, Blends).
+  The framework's hub owns the sockets: it pings them, ends dead peers and closes them with 1001 when the plugin unloads. The plugin no
+  longer runs a `ws` server of its own. The wire format, the path and the client are unchanged.
+- **Kept:** the trust rule. `ownPageSocket` (new in `acryl-loopback-http/router`) is the own-page rule plus always the exact `Origin`, and a
+  refusal is a plain status before any handshake.
+- **Removed:** `AcrylWeb.register` and `registerUpgrade` (T008). `acrylWeb` is the server's address only; routes go through the router.
+- **Measured:** call sites 3 -> 0, and `WEB_REGISTRATION_CEILING` is 0 in `scripts/verify-layout.mjs`; over M7, 14 -> 0. DSH import lines
+  135 -> 135.
+- **Found and fixed:** an isolated run (`scripts/lib/isolated-run.mjs`) moved HOME but passed the caller's `ZDOTDIR` through, so a live run's
+  terminal loaded the real `~/.zshenv` and `~/.zshrc` and could have written the real history, which the real-home check does not watch.
+  `ZDOTDIR`, `HISTFILE` and the XDG base directories are now dropped (a test fails without it). `scripts/inspect-page.mjs press Enter`
+  sent key code 0, which xterm ignores; named keys now carry their codes. The Windows workflow failed the new real-terminal test: it
+  typed `echo acryl-$((6*7))`, and cmd.exe, the terminal's shell there, prints that as typed. Reproduced through ConPTY on a Windows
+  machine; the test now types a line that makes any shell print `ACRYL_MARK_<n>` without the typed line containing it.
+- **Packages:** every ACRYL package is on acrylblends ^0.11.0, one instance in the lock. The workspace's `ws` moved to 8.22.0 so the
+  framework's optional `ws` peer resolves once.
+- **Verified:** full gate and all four workflows green; live in isolated homes on Web (a scripted page client: a shell's output, resize,
+  reconnect from a cursor, the refusals) and in the Desktop window (a terminal tab before and after a reload, and again after the fix with
+  `ZDOTDIR` unset), each run ending with its ports free and the real homes untouched.
+
 ## 2026-10-27 (latest) - the IDE onto the framework, M7: webServer registrations 14 -> 3, and a ratchet that holds them (spec 048 T003-T006, T009, T010, T013)
 
 Commits, in order on `main`: `9c43a4ef992af0fa6a6945fedea92249e978db0c` (one copy of the private-route rules, `acryl-loopback-http/router`),

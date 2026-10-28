@@ -42,12 +42,19 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   real Cordis with the real router over a loopback socket; an isolated Web run of `acryl.ide` (`live-run --no-key`): architecture,
   lifecycle and diagnostics 200, a foreign origin 403, PUT 405, an invalid reload body 400, a text body 415; port free and real homes
   untouched. Measured: call sites 8 -> 5.
-- [ ] T007 WebSocket upgrades on the router (spec 047 T009), then the workspace terminal stream and the door's page channel move off
-  `registerUpgrade`. Waiting on 047 T009 (coordinator, 2026-10-27: Blends ports the original framework's `upgradeWebSocket` helper with
-  its tests after its M8 run; what the terminal needs from it was sent with the assignment). The door's page channel no longer upgrades,
-  so the terminal stream is the only user left. Done with T008 in one commit that lowers T009's ceiling to 0.
-- [ ] T008 Remove the `acrylWeb` carrier's registration methods and the `engine-web.ts` delegate once nothing registers through them (was
+- [x] T007 WebSocket upgrades on the router (spec 047 T009), then the workspace terminal stream and the door's page channel move off
+  `registerUpgrade`. The door's page channel no longer upgrades, so the terminal stream was the only user left. Done with T008 in one commit
+  that lowers T009's ceiling to 0.
+  Commit `f01f3da2457f2bea4c89dd7768a0f132bc27969d` (`plan.md` slice 9), on acrylblends 0.11.0. Evidence: full gate; all four workflows green; the stream's tests on the
+  framework's real `UpgradeHub` and the plugin's on a real shell through the real `router` and `routerHttp`; live in isolated homes on Web
+  (a scripted page client: output, resize, reconnect from a cursor, 403/403/400 refusals, 4404) and in the Desktop window (a terminal tab
+  before and after a reload). Measured: call sites 3 -> 0.
+- [x] T008 Remove the `acrylWeb` carrier's registration methods and the `engine-web.ts` delegate once nothing registers through them (was
   046 T022, rescoped: the composition root stops handing the server to plugins).
+  Commit `f01f3da2457f2bea4c89dd7768a0f132bc27969d`, with T007: `AcrylWeb` is `host` and `port`, and `engine-web.ts` delegates those two only. `WEB_REGISTRATION_CEILING` is 0.
+  The live check exposed an isolation gap in the run launcher, fixed in `f8f903db58d90f6b0efed0ed3e94d9b9d6955127`: an isolated run passed the caller's `ZDOTDIR`
+  through, so its terminal loaded the real `~/.zshenv` and `~/.zshrc`. The Windows workflow then found the plugin's real-terminal test
+  waiting for POSIX arithmetic that cmd.exe does not do; fixed in `a09fefc2836fe0d47f6e5cbeeb31778cee7473a2` with a mark every shell prints.
 - [x] T009 Ratchet: the call-site count becomes a layout gate in `scripts/verify-layout.mjs`, like the DSH import ceiling (was 046 T027).
   Commit `9073312d7afb7803cefa7157ae765fac8c5b8fac` (`plan.md` slice 8): `WEB_REGISTRATION_CEILING = 3`, failing above and below. Evidence:
   full gate (its line reads "webServer registration call sites 3"); all four workflows green; both failures run once on a probe copy.
