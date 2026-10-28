@@ -1,3 +1,33 @@
+## 2026-10-28 - M8 met: DSH is one agent among others (spec 046 T028, T029)
+
+Commits, on acrylblends `main`: `8967ee78380b932d1255afe9087e15a656232549` (driver-acp, authored here), `4baf606b09b9506b56ef881b1fe187e4f635cf10`
+(the review fix that ends the agent's whole process group) and `761cfaa18c11d944d1e008e711beb1d66afe46b2` (formatting), merged as
+`d81e1bb2c7c48f1dedfcc38f15e8b8e76b2919a8`. The ACRYL-side change is this entry and the spec rows.
+
+- **Reshaped before it was built** (coordinator, 2026-10-28): not `acryl-driver-dsh` but a generic `driver-acp`, so DSH gets no code of
+  its own. The plugin is an ACP v1 chat driver of the agent panel beside `driver-pty`: an agent is a preset command line, `dsh --profile acp`
+  is the first, `config.agents` adds others. It has no `@deepseek-ai/*` import and finds its command on the `PATH`; an agent that is not
+  installed gets no driver and one log line.
+- **The client is our own**, written from the ACP v1 specification (newline-delimited JSON-RPC 2.0), because the official SDK is 8.3 MB
+  with two required peers, too much for a plugin copied into every app. `provenance.json` records the schema it follows (ACP v1,
+  `@agentclientprotocol/sdk@2.0.2`, Apache-2.0, sha256), vendored unmodified with its license as a test fixture and kept out of packed apps,
+  and `test/conformance.test.ts` checks every message of a session, both ways, against it, including that the session used every message the
+  client speaks. Drift is a failing test, not a broken agent.
+- **What the panel gets:** message chunks as text; each tool call once, when it completes or fails (title, input, result or error); an error
+  for a turn that stops short (refusal, token or request limit) or an agent that ends. Thoughts and plans stay out. One message at a time;
+  Stop sends `session/cancel`; permission requests get the agent's own reject option, or allow with config.
+- **Review found one defect worth the wait:** closing an agent ended the process but not its tool children, and an agent that crashed left its
+  effect behind; the fix ends the whole process group (the tree on Windows) in every path, with a test that starts a tool child process.
+- **The PTY half (T029)** is `driver-pty` in acrylblends (0.10.0). The M8 evidence run has `claude`, `codex` and `pi`, each interactive in
+  its terminal in the app folder, build a route and install it through the door in 19-31 s; the run's table, screenshots and what it found
+  are in `acrylblends docs/plans/pty-driver-evidence.md`, and `scripts/verify-driver-pty.mjs` is the repeatable gate.
+- **Measured:** ACRYL's direct DSH import lines 135 -> 135; the plugin has none. M7's zero `webServer` registrations still hold.
+- **Verified:** 17 plugin tests (among them the ACP v1 conformance check, the tool child process that ends with the agent, and three reloads with one driver each), `biome`, the plugins typecheck, the
+  full acrylblends `pnpm run check` including the packed and tarball gates (no plugin test file ships, so the schema stays in the repo), the
+  branch CI 8/8, and live: the panel gate with the real `dsh` 0.2.1-rc.2 (isolated `HOME` and `DSH_HOME`, the key in the app's environment
+  only) built `/hello` from the panel and installed it through the door, the page reloaded and the process stayed the same; a standalone turn
+  wrote, verified and reported a file in 5 s. Every run ended with its processes gone and the real homes untouched.
+
 ## 2026-10-28 - M7 met: no ACRYL plugin registers on DSH's webServer, the terminal's WebSocket included (spec 048 T007, T008)
 
 Commits: `3eba613593f38441fae06e41cd6cca790b8215c3` (M9 parked by the owner, its design kept in `specs/049-framework-architecture/design/m9-hosted-workspace.md`),
