@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.spec.{ts,tsx}'],
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['../../scripts/testing/isolate-home.ts', './tests/setup.ts'],
     // Tests that run real git (worktrees, commits) take longer than vitest's 5 s default on Windows file systems; nothing is wrong when they do.
     testTimeout: process.platform === 'win32' ? 60_000 : 5_000,
   },

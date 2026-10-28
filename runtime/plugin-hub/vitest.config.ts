@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
+    setupFiles: ['../../scripts/testing/isolate-home.ts'],
     environment: 'node',
     include: ['test/**/*.spec.ts'],
     // These tests pack real tarballs and drive real git repositories; on the Windows runner the first of them in a file takes about 5 s (process and
