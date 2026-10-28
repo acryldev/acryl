@@ -1,7 +1,7 @@
 name: Windows
 
 # Native Windows proofs that cannot run on Linux: the ACL write-restriction sandbox (spec 001, T061), the Windows-specific Desktop specs, and the
-# whole test suite as the release's Windows build runs it.
+# whole test suite as the release's Windows build runs it, with the repository scripts' own tests.
 # Manual, and on changes that can affect them. The repository is public, so these runners cost nothing.
 on:
   workflow_dispatch:
@@ -11,6 +11,7 @@ on:
       - 'apps/**'
       - 'runtime/**'
       - 'plugins/**'
+      - 'scripts/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'deepseek-harness'
@@ -21,6 +22,7 @@ on:
       - 'apps/**'
       - 'runtime/**'
       - 'plugins/**'
+      - 'scripts/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'deepseek-harness'
@@ -154,13 +156,21 @@ jobs:
       - name: Install dependencies
         run: corepack pnpm install --frozen-lockfile
 
+      # The repository scripts' own tests (live runs, the build lock, instances, isolated runs, release packaging), which Linux runs inside `check`.
+      # They are where Windows differs most (paths, shell quoting, signals), and nothing else ran them here.
+      - name: Repository script tests
+        run: corepack pnpm run test:scripts
+
       - name: Build what the tests import
+        if: success() || failure()
         run: corepack pnpm $(node scripts/root-chain-filters.mjs) --workspace-concurrency=1 run build
 
       - name: Typecheck, as the release does before its tests
+        if: success() || failure()
         run: corepack pnpm run typecheck
 
       - name: Every package's tests, all failures listed
+        if: success() || failure()
         run: |
           packages=$(node -p "require('./package.json').scripts.test.split('&&').map(step => step.match(/--filter (\\S+)/)[1]).join(' ')")
           failed=''
