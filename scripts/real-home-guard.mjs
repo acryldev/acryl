@@ -12,6 +12,9 @@
  * An app built before T011 does not announce itself, so the Registry cannot excuse it; when a change lands in one of the homes such an app writes,
  * the failure says so and how to proceed (quit it, or run with `ACRYL_REAL_HOME_GUARD=off`).
  *
+ * A file created only when missing is reported like any other addition, but a machine that already has it cannot show that write; CI's clean home is
+ * the authority for that case (it found the Desktop smokes pinning DSH_HOME to the real ~/.acryl-dev).
+ *
  * An app that is running right now writes its own home (the development app's session logs, the installed app's settings), so the homes of
  * the live apps the Registry lists are left out and said so, one line each. `~/.acryl-instances` itself is always checked, except that the
  * live apps' own Registry entries may change. Nothing else is excused: a home with no live entry still fails, and so does a stale entry (its

@@ -10,7 +10,7 @@ import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
-import { applyIsolatedDevHomeDefault, selectInstance } from 'acryl-harness-runtime'
+import { selectInstance } from 'acryl-harness-runtime'
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 
 // Match the isolated `~/.acryl-dev` home `pnpm run dev` (the root
@@ -18,7 +18,6 @@ import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js
 // --filter acryl-desktop run dev`, which this file's own package.json chain
 // invokes without going through the root script - resolves the identical
 // home instead of silently falling back to the packaged-install default.
-applyIsolatedDevHomeDefault()
 import { installProfilePackageResolver } from '../lib/module-resolution.js'
 import { prepareDesktopProfile } from '../lib/profile.js'
 import { createDesktopWebProfile } from '../lib/profile-manager.js'
@@ -41,6 +40,8 @@ mkdirSync(isolatedHome, { recursive: true })
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
 process.env.ACRYL_HOME = join(home, 'acryl-home')
+// The engine home too: this smoke must not read or write the developer's ~/.acryl-dev/.dsh, and a DSH_HOME inherited from the caller would.
+process.env.DSH_HOME = join(home, 'acryl-home', '.dsh')
 let ctx
 let mounted
 let mountedSpec

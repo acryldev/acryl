@@ -18,6 +18,16 @@ Commits: `bf5841d6` (this change), `e429ed44` (the surface-parity flake, on main
   Registry entries may change; a stale entry (its process gone) excuses nothing, and any other write still fails. Four tests run the real
   script against a throwaway home: a live app writing its home passes, a home with no live entry fails and is named, a stale entry does not
   excuse it, and the Registry allows only the live app's own entry.
+- **The first leak CI found (3e373538):** on a clean runner the gate created `~/.acryl-dev/.dsh/.credentials.yaml` and `.dsh/storages/workspace.json`.
+  The writer was `apps/acryl-desktop/scripts/verify-profile-boot.mjs` (and the same trap in `verify-loader-boot.mjs`): both called
+  `applyIsolatedDevHomeDefault()` at import time, before moving HOME into their throwaway folder, so that helper pinned `DSH_HOME` to the developer's
+  real `~/.acryl-dev/.dsh`; the smokes then overrode HOME and ACRYL_HOME but not DSH_HOME, and the engine wrote credentials and workspace state into
+  the real home. Both smokes now remove that call and set `DSH_HOME` inside their own folder with the other two variables. The remaining four
+  packages that ran vitest without a config (`apps/acryl-web`, `runtime/acryl-control`, `runtime/blends-core`, `runtime/app-persistence`) got one with
+  the isolation setup, so no suite runs against the real HOME.
+- **Create-if-missing writes, and where the authority is:** the guard reports a file that is created when absent like any other addition (a test
+  proves it), but a developer machine that already holds the file will never show it, which is exactly how 3e373538 passed locally and failed on
+  CI. The authority for that case is CI's clean home; the local gate catches rewrites, deletions and genuinely new files.
 - **An older app does not announce:** the owner's dev app and the installed 0.2.x app were built before T011, so they write their homes while the
   Registry knows nothing about them. When a change lands under `~/.acryl`, `~/.acryl-dev` or `~/.dsh`, the failure adds: "An ACRYL app built before
   905a801c (T011) does not announce itself; if one is running against this home, quit it or run with ACRYL_REAL_HOME_GUARD=off."

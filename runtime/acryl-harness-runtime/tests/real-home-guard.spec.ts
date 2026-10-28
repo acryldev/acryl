@@ -72,6 +72,20 @@ describe('the real-home guard and live apps', () => {
     expect(status).toBe(1)
   })
 
+  it('reports a write that only happens when the file is missing, as CI found for credentials and workspace storage', () => {
+    const osHome = home()
+    const file = join(osHome, '.acryl', '.dsh', '.credentials.yaml')
+    // The writer that failed CI on 3e373538 created its file only when absent, which a developer machine that already has the file cannot show; an
+    // empty home can. The guard reports the creation like any other addition.
+    const onlyIfMissing = [
+      '-e',
+      `const fs = require('node:fs'); if (!fs.existsSync(${JSON.stringify(file)})) { fs.mkdirSync(require('node:path').dirname(${JSON.stringify(file)}), { recursive: true }); fs.writeFileSync(${JSON.stringify(file)}, 'x') }`,
+    ]
+    const { status, output } = run(osHome, onlyIfMissing)
+    expect(output).toContain('.credentials.yaml')
+    expect(status).toBe(1)
+  })
+
   it('does not excuse a Registry entry whose process is gone', () => {
     const osHome = home()
     const appHome = join(osHome, '.acryl-dev')
