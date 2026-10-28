@@ -9,6 +9,9 @@
  * (`node --test`, the packaged and scaffolding gates) and for a future test that overrides HOME on purpose. A file added, removed, resized or
  * rewritten in a real home fails the gate with its path.
  *
+ * An app built before T011 does not announce itself, so the Registry cannot excuse it; when a change lands in one of the homes such an app writes,
+ * the failure says so and how to proceed (quit it, or run with `ACRYL_REAL_HOME_GUARD=off`).
+ *
  * An app that is running right now writes its own home (the development app's session logs, the installed app's settings), so the homes of
  * the live apps the Registry lists are left out and said so, one line each. `~/.acryl-instances` itself is always checked, except that the
  * live apps' own Registry entries may change. Nothing else is excused: a home with no live entry still fails, and so does a stale entry (its
@@ -25,6 +28,8 @@ import { registryDir } from '../runtime/acryl-harness-runtime/src/instance/regis
 const REAL_HOME_FOLDERS = ['.acryl', '.acryl-dev', '.acryl-worktrees', '.acryl-instances', '.dsh']
 /** The Registry is always checked; only its live entries may change. */
 const REGISTRY_FOLDER = '.acryl-instances'
+/** The homes an app built before T011 writes while it runs, without announcing itself. */
+const HOMES_OF_UNANNOUNCING_APPS = ['.acryl', '.acryl-dev', '.dsh']
 
 /** The apps that are running now, read through the AppInstance family (`registryDir`): the Registry files whose pid is alive. A dead entry excuses nothing. */
 function liveApps(osHome) {
@@ -118,15 +123,18 @@ const after = snapshot(osHome, skipHomes, allowed)
 const changed = []
 for (const [path, state] of after) {
   const was = before.get(path)
-  if (was === undefined) changed.push(`added   ${path}`)
-  else if (was !== state) changed.push(`changed ${path}`)
+  if (was === undefined) changed.push({ line: `added   ${path}`, path })
+  else if (was !== state) changed.push({ line: `changed ${path}`, path })
 }
-for (const path of before.keys()) if (!after.has(path)) changed.push(`removed ${path}`)
+for (const path of before.keys()) if (!after.has(path)) changed.push({ line: `removed ${path}`, path })
 
 if (changed.length > 0) {
   console.error(`real-home-guard: the gate wrote the OS user's real ACRYL homes (${REAL_HOME_FOLDERS.map(folder => `~/${folder}`).join(', ')}):`)
-  for (const line of changed.slice(0, 40)) console.error(`  ${line}`)
+  for (const { line } of changed.slice(0, 40)) console.error(`  ${line}`)
   if (changed.length > 40) console.error(`  … and ${String(changed.length - 40)} more`)
+  // A pre-T011 app (built before 905a801c) writes these homes and announces nothing, so the Registry above cannot have excused it.
+  const early = HOMES_OF_UNANNOUNCING_APPS.some(folder => changed.some(({ path }) => path === join(osHome, folder) || path.startsWith(`${join(osHome, folder)}${sep}`)))
+  if (early) console.error('An ACRYL app built before 905a801c (T011) does not announce itself; if one is running against this home, quit it or run with ACRYL_REAL_HOME_GUARD=off.')
   console.error('Isolate the test that wrote them (set HOME to a temp folder before it boots a composition root), then run the gate again.')
   process.exit(1)
 }

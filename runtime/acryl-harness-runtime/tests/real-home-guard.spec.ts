@@ -67,6 +67,8 @@ describe('the real-home guard and live apps', () => {
     const appHome = join(osHome, '.acryl-worktrees', 'someone-else')
     const { status, output } = run(osHome, write(join(appHome, 'not-a-live-app.log')))
     expect(output).toContain('not-a-live-app.log')
+    // Trays the old apps do not write: the pre-T011 hint belongs to ~/.acryl, ~/.acryl-dev and ~/.dsh only.
+    expect(output).not.toContain('built before 905a801c')
     expect(status).toBe(1)
   })
 
@@ -77,6 +79,8 @@ describe('the real-home guard and live apps', () => {
     const { status, output } = run(osHome, write(join(appHome, 'stale-write.log')))
     expect(output).not.toContain('skipped ~/.acryl-dev')
     expect(output).toContain('stale-write.log')
+    // An app built before 905a801c (T011) announces nothing, so a change here may be that app, and the failure says what to do about it.
+    expect(output).toContain('An ACRYL app built before 905a801c (T011) does not announce itself; if one is running against this home, quit it or run with ACRYL_REAL_HOME_GUARD=off.')
     expect(status).toBe(1)
   })
 

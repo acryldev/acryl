@@ -18,6 +18,9 @@ Commits: `bf5841d6` (this change), `e429ed44` (the surface-parity flake, on main
   Registry entries may change; a stale entry (its process gone) excuses nothing, and any other write still fails. Four tests run the real
   script against a throwaway home: a live app writing its home passes, a home with no live entry fails and is named, a stale entry does not
   excuse it, and the Registry allows only the live app's own entry.
+- **An older app does not announce:** the owner's dev app and the installed 0.2.x app were built before T011, so they write their homes while the
+  Registry knows nothing about them. When a change lands under `~/.acryl`, `~/.acryl-dev` or `~/.dsh`, the failure adds: "An ACRYL app built before
+  905a801c (T011) does not announce itself; if one is running against this home, quit it or run with ACRYL_REAL_HOME_GUARD=off."
 - **Allowed, with its reason:** the bulkhead spec's list of files that may look at the OS home gains the guard: it must know the real homes to
   prove nothing changed one, it only reads them, and it is not part of any app.
 - **Proven:** a command that writes `~/.acryl-instances/leak.json` under a throwaway home fails the guard and names the file; a clean command
