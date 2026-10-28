@@ -15,6 +15,9 @@
  * so the runtime refuses a real home) and the model key in its process environment only: it is read from the key file, never printed, never written.
  * The real homes are snapshotted first; on exit the run stops its processes, checks that its port is free, compares the real homes with the snapshot and
  * fails loudly if anything changed. `--keep` leaves the throwaway root for inspection (its path is printed). Stop with Ctrl-C or SIGTERM.
+ *
+ * It runs the checkout's built `lib/` and never builds: in a checkout that is not built it stops before making anything, names the unbuilt package
+ * and prints the build command (`scripts/lib/build-outputs.mjs`), because a build rewrites lib/ under any app running from the same checkout.
  */
 import { spawn, spawnSync } from 'node:child_process'
 import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -22,6 +25,7 @@ import { createConnection } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { osHomeDirectory } from './lib/instance-module.mjs'
+import { findMissingBuildOutput, unbuiltMessage } from './lib/build-outputs.mjs'
 import { assertRealHomesUntouched, isolatedEnvironment, relocateHome, snapshotRealHomes } from './lib/isolated-run.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -29,6 +33,10 @@ const [surface, ...rest] = process.argv.slice(2)
 const option = (name, fallback) => { const at = rest.indexOf(`--${name}`); return at >= 0 ? rest[at + 1] : fallback }
 const keep = rest.includes('--keep')
 if (!['web', 'desktop', 'tui'].includes(surface)) { console.error('usage: live-run.mjs web|desktop|tui [--port N] [--key-file F | --no-key] [--copy-home DIR] [--inspect PORT] [--keep]'); process.exit(2) }
+// A checkout that was never built stops here, before any home is made or process spawned, with the package and the build command.
+const SURFACE_OUTPUTS = { web: ['apps/acryl-web', ['lib/bin.js']], desktop: ['apps/acryl-desktop', ['lib/main.js']], tui: ['apps/acryl-cli', ['lib/bin.js']] }
+const missingOutput = findMissingBuildOutput(root, ...SURFACE_OUTPUTS[surface])
+if (missingOutput !== undefined) { console.error(unbuiltMessage(missingOutput)); process.exit(1) }
 
 const realHome = osHomeDirectory()
 const expand = path => path.replace(/^~/u, realHome)
