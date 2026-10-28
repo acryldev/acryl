@@ -64,7 +64,7 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   Commit `f6538891199a6618b313b041aaeeac4247c31ec4` (`plan.md` slice 7). Evidence: full gate; all four workflows green; the example gate
   gets `ok` from the example's route on the real socket and a non-200 after it unloads; the install lint refuses `acrylblends` under
   `dependencies`. Measured: call sites 4 -> 3.
-- [ ] T011 `acryl control` can discover every running app, not only `pnpm blank` ones. Since `1b10c17c` (2026-09-27) the running-app
+- [x] T011 `acryl control` can discover every running app, not only `pnpm blank` ones. Since `1b10c17c` (2026-09-27) the running-app
   registry (`runtime/acryl-harness-runtime/src/instance/registry.ts` `announce`) is written only by `scripts/lib/instances.mjs`
   `claimInstance`; the Web launcher, Desktop and the npm CLI never announce, so `acryl control list` says "no ACRYL app is running" while
   one runs with its online channel on (reproduced in the T002 live run, which wrote the pointer by hand to reach the door). Each composition
@@ -75,6 +75,25 @@ Each task is one slice and one commit (see `plan.md`, "The slice method"). Earli
   `<home>/agent-control-secret` instead. Done when a live run of Web and of Desktop with `acryl-agent-control`'s `online` on answers
   `HOME=<run home> acryl control list` with its instance and `acryl control snapshot` and `click` reach the page, the list is empty after
   the run stops, and the real `~/.acryl-instances` is unchanged.
+  Commit `d1725c87b528f17c2efb2b48e90b2aa1b5d48bba`. The process that serves an app is the holder: `announceSelf` (new,
+  `runtime/acryl-harness-runtime/src/instance/announce-self.ts`) takes the run lock and writes the Registry entry with the port the server
+  really bound, and its `release()` withdraws both. `serveWeb` announces once the Web carrier listens (the `--json` probe does not claim),
+  Desktop's Host plugin announces `ctx.webServer`'s port, `runAcrylTui` announces the terminal surface with no port, and `scripts/blank.mjs`
+  no longer claims or announces - it refuses early from the Registry and lets the app's own claim settle a race. Desktop quits the process
+  without unloading the Loader, so its announcement also ends on the process's own `exit` and on the `SIGINT`/`SIGTERM` the launcher handles;
+  until those existed, a stopped Desktop app left its entry for a reader to prune. Evidence: full gate; `tests/announce-self.spec.ts` (five:
+  real port in the entry and the lock, idempotent release, a live second app refused and nothing changed, a dead holder replaced and an older
+  release not clearing a newer claim, a same-process re-announce); the existing instance and bulkhead specs, the web serve, CLI host/run and
+  desktop plugin specs, and the launcher script tests. Live checks with `scripts/live-run.mjs ... --no-key --keep` (isolated HOME, ACRYL_HOME
+  and Electron user data): Web - while it ran, `HOME=<run home> acryl control list` answered `pinned-... web pid ... port 3292`, and after
+  SIGTERM the kept run root's `.acryl-instances/.running` was empty; Desktop - while it ran, the same command answered
+  `pinned-... desktop pid ... port 3295`, the Electron process held that port, and after quitting the command answered "no ACRYL app is
+  running" with the port free and nothing under the real `~/Library/Application Support/ACRYL*` changed. A group kill that reaches the app
+  with a second signal can still outlive the withdrawal; the Registry's own rule (an announcement whose process is gone is dropped when read)
+  covers that, and the next `acryl control list` removes it. The real `~/.acryl-instances/.running` was never written by a gate (watched
+  through a whole gate run). Found and fixed on the way: the desktop loader and profile smokes boot a real Desktop root and wrote the real
+  registry - both now boot inside a throwaway `HOME`, and the desktop plugin fixture reports no `appInstance` rather than a catch-all stub.
+  Measured: DSH import lines 135 -> 135.
 
 - [ ] T012 When the DSH engine stops being the plugin host (DSH demoted to one chat driver), remove `ProfilePluginPackages`
   (`runtime/acryl-harness-runtime/src/profile-resolution/`, the 2026-10-25 port of DSH's profile package resolution): its two direct DSH

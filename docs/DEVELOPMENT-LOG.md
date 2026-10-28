@@ -1,3 +1,31 @@
+## 2026-10-28 (later) - `acryl control list` finds every running app: the process that serves it announces it (spec 048 T011)
+
+Commits: `d1725c87b528f17c2efb2b48e90b2aa1b5d48bba`.
+
+- **Moved:** the claim and the announcement out of the launcher and into the composition root. `announceSelf` (new,
+  `runtime/acryl-harness-runtime/src/instance/announce-self.ts`) takes the app's run lock and writes the Registry entry with the port the server
+  really bound; `release()` withdraws both. `serveWeb` announces once the Web carrier listens (the `--json` readiness probe does not claim),
+  Desktop's Host plugin announces `ctx.webServer`'s port and releases through an effect, and `runAcrylTui` announces the terminal surface with no
+  port. Before, only `scripts/blank.mjs` announced - with the port it asked for, not the one bound - so `acryl control list` said "no ACRYL app is
+  running" while `pnpm web` or Desktop ran, and an isolated live check could not reach its own app through the door.
+- **Removed:** the launcher's claim. `scripts/blank.mjs` now refuses early from the Registry with the same wording and lets the app's own claim
+  settle a race between two launches, so a stop signal reaches the process that serves the app instead of the one that spawned it.
+- **Found and fixed:** Desktop quits the process without unloading the Loader, so its effect disposer never ran and a stopped Desktop app left
+  its entry in the Registry for a reader to prune (measured in the live run). The announcement now also ends on the process's own `exit` and on
+  the `SIGINT`/`SIGTERM` the launcher handles, registered and removed with the effect. The desktop loader and profile smokes boot a real
+  Desktop root, and a real root now announces - they were writing the machine's real `~/.acryl-instances` during the gate. Both boot inside a
+  throwaway `HOME` now. The desktop plugin's test fixture returned a catch-all stub for every service it did not model, so `appInstance`
+  arrived as a function and the announce threw; it reports no instance now.
+- **Measured:** DSH import lines 135 -> 135; no change to a single registration count (`acrylWeb` is still the address only).
+- **Verified:** full gate; the new `tests/announce-self.spec.ts` (five: the real port in the entry and the lock, an idempotent release, a live
+  second app refused and nothing changed, a dead holder replaced and an older release not clearing a newer claim, a same-process re-announce),
+  plus the instance, bulkhead, web serve, CLI host/run, desktop plugin and launcher script suites. Live with `scripts/live-run.mjs ... --no-key
+  --keep` in an isolated HOME, ACRYL_HOME and Electron user data: Web answered `pinned-... web pid ... port 3292` while it ran and nothing
+  after SIGTERM; Desktop answered `pinned-... desktop pid ... port 3295` while it ran with the Electron process holding that port, and after
+  quitting the command answered "no ACRYL app is running", the port was free and nothing under the real `~/Library/Application Support/ACRYL*`
+  changed. A group kill that reaches the app a second time can still outlive the withdrawal; the Registry drops a dead pid's entry when read,
+  which is what the next `acryl control list` does. The real `~/.acryl-instances` was never written by a gate - watched through a whole run.
+
 ## 2026-10-28 - M8 met: DSH is one agent among others (spec 046 T028, T029)
 
 Commits, on acrylblends `main`: `8967ee78380b932d1255afe9087e15a656232549` (driver-acp, authored here), `4baf606b09b9506b56ef881b1fe187e4f635cf10`
