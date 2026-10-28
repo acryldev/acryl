@@ -63,7 +63,7 @@ import { blueprintFromEnvironment, composeBlueprintRows, currentModule, packageO
 import { findFreeWebPort, loopbackPortIsFree, webPortPatch } from './web-port.ts'
 import { LOOPBACK_WEB_HOST, selectInstance, type AppInstance } from './instance/index.ts'
 import { claimProfile } from './profile-owner.ts'
-import { pluginLifecyclePatches, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
+import { pluginLifecyclePatches, readUserMutableBundleNames, resolvePluginLifecycleStatePath } from './plugin-lifecycle-state.ts'
 import { ProfilePluginPackages } from './profile-resolution/service.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
 import { provideWebMarketInstall } from './web-market-install.ts'
@@ -621,17 +621,36 @@ export function pluginRequiredFrameworkPackages(appHome: string): readonly strin
   if (!existsSync(pluginsDir)) return []
   const names = new Set<string>()
   for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue
-    const manifestPath = join(pluginsDir, entry.name, 'package.json')
-    if (!existsSync(manifestPath)) continue
-    try {
-      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh?: { requiresAcrylPackages?: unknown } }
-      const required = manifest.dsh?.requiresAcrylPackages
-      // Each entry is a module, mounted as its own row; a name from before the framework moved to acrylblends is read as today's module.
-      if (Array.isArray(required)) for (const name of required) if (typeof name === 'string') names.add(currentModule(name))
-    } catch { /* a malformed plugin package.json is the plugin's own problem, reported when it installs, not here */ }
+    if (entry.isDirectory()) for (const module of requiredModulesOf(join(pluginsDir, entry.name, 'package.json'))) names.add(module)
   }
   return [...names]
+}
+
+/**
+ * The modules inside a package (`acrylblends/cordis/state`) that the plugins installed in a profile (its user bundles) declare through
+ * `dsh.requiresAcrylPackages`. A running app mounts such a module's row when one of them is installed (spec 049 T001); composing the same
+ * rows at start keeps the next start's tree what the running one had. A whole package a plugin requires is a profile bundle of its own and
+ * composes as one, so it is not listed here. Never throws: an unreadable manifest is skipped.
+ */
+export function profileRequiredFrameworkModules(profileDir: string): readonly string[] {
+  const modules = new Set<string>()
+  for (const bundle of readUserMutableBundleNames(profileDir)) {
+    for (const module of requiredModulesOf(join(profileDir, 'node_modules', bundle, 'package.json'))) {
+      if (module !== packageOfModule(module)) modules.add(module)
+    }
+  }
+  return [...modules]
+}
+
+/** The modules one plugin's `package.json` declares in `dsh.requiresAcrylPackages`, by today's names; none when it is missing or malformed. */
+function requiredModulesOf(manifestPath: string): readonly string[] {
+  if (!existsSync(manifestPath)) return []
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { dsh?: { requiresAcrylPackages?: unknown } }
+    const required = manifest.dsh?.requiresAcrylPackages
+    // Each entry is a module, mounted as its own row; a name from before the framework moved to acrylblends is read as today's module.
+    return Array.isArray(required) ? required.filter((name): name is string => typeof name === 'string').map(currentModule) : []
+  } catch { return [] /* a malformed plugin package.json is the plugin's own problem, reported when it installs, not here */ }
 }
 
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
@@ -683,9 +702,10 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   }
   // The app's own committed plugins may each need an ACRYL-owned framework package (see
   // `pluginRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
-  // agent-runtime install path `acryl-plugin-context` otherwise uses).
+  // agent-runtime install path `acryl-plugin-context` otherwise uses), and a plugin installed into the
+  // profile may need a module whose row the running app mounted for it (`profileRequiredFrameworkModules`).
   const composedRowIds = new Set(rowsComposition.patches.flatMap(patch => patch.insert ?? []).map(row => row.id))
-  const requiredFrameworkPackages = pluginRequiredFrameworkPackages(instance.home)
+  const requiredFrameworkPackages = [...new Set([...pluginRequiredFrameworkPackages(instance.home), ...profileRequiredFrameworkModules(profile.dir)])]
     .filter(module => !existingRowIds.has(module) && !composedRowIds.has(module))
   for (const module of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageOfModule(module), installPackageUrl)
   // A Blueprint that never enables the IDE's own `workspace` capability (every Blank-grown project) keeps the

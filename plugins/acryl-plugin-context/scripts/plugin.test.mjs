@@ -1012,6 +1012,44 @@ test('startup sync: an app plugin whose install fails at a machine stage is trie
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
 
+test('required framework modules: an acrylblends module is mounted through live.requireModules for its plugin, all in one call, and its failure is reported (spec 049 T001)', async () => {
+  const profileDir = mkdtempSync(join(tmpdir(), 'acryl-required-live-'))
+  try {
+    writeFileSync(join(profileDir, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: [] } } }))
+    const modules = {
+      'acryl-state': { module: 'acrylblends/cordis/state', packageName: 'acrylblends', mounted: false },
+      'acrylblends/cordis/router': { module: 'acrylblends/cordis/router', packageName: 'acrylblends', mounted: true },
+    }
+    const required = []
+    let fail = false
+    const services = {
+      profileDir,
+      acrylFrameworkPackages: { materialize: () => {}, describe: name => modules[name] },
+      live: { statusOf: () => undefined, activate: async () => {}, requireModules: async (owner, list) => { required.push([owner, list]); if (fail) throw new Error('state-failed-3') } },
+    }
+    assert.deepEqual(await materializeRequiredAcrylPackages(services, Object.keys(modules), undefined, 'my-plugin'), { errors: [] })
+    // Today's names, the mounted one included: the controller uses a mounted row as it is and owns only what it inserts.
+    assert.deepEqual(required, [['my-plugin', ['acrylblends/cordis/state', 'acrylblends/cordis/router']]])
+    fail = true
+    const failed = await materializeRequiredAcrylPackages(services, ['acryl-state'], undefined, 'my-plugin')
+    assert.equal(failed.errors.length, 1)
+    assert.match(failed.errors[0], /could not start what my-plugin needs: state-failed-3/)
+  } finally {
+    rmSync(profileDir, { recursive: true, force: true })
+  }
+})
+
+test('removing a plugin releases the module rows it owned, after the plugin itself stopped (spec 049 T001)', async () => {
+  const calls = []
+  const services = {
+    cwd: tmpdir(),
+    pnpm: { runPlugin: (args) => { calls.push(['pnpm', ...args]); return { done: Promise.resolve({ exitCode: 0 }), stdout: null, stderr: null } } },
+    live: { deactivate: async name => { calls.push(['deactivate', name]) }, requireModules: async (owner, list) => { calls.push(['requireModules', owner, list]) } },
+  }
+  assert.equal((await removeLocalPlugin({ package: 'my-plugin' }, services)).ok, true)
+  assert.deepEqual(calls, [['deactivate', 'my-plugin'], ['requireModules', 'my-plugin', []], ['pnpm', 'remove', 'my-plugin']])
+})
+
 test('required framework modules: a package is linked, registered and started; a mounted acrylblends module is only linked; an unmounted one is refused with what to do', async () => {
   const profileDir = mkdtempSync(join(tmpdir(), 'acryl-required-'))
   try {

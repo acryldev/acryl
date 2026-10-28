@@ -142,28 +142,34 @@ export function ensureProfileBundle(profileDir, name, fs = { existsSync, readFil
 /**
  * Make the ACRYL-owned workspace packages a local extension named in `dsh.requiresAcrylPackages` resolvable
  * and live, in the same profile its own install lands in: symlink each in (`acrylFrameworkPackages`, not
- * published so `pnpm add` cannot fetch it), register it in `dsh.profile.bundles` (the same thing `dsh plugin
- * add` does for an ordinary local install - `livePluginActivation.activate()` refuses any package name absent
- * from that list, "cannot be activated by this host", even when it is already present in `node_modules`), and
- * activate it as a Loader entry (the existing `livePluginActivation` service, the same one that activates the
- * extension itself - already-active packages are left alone).
+ * published so `pnpm add` cannot fetch it). A whole package is registered in `dsh.profile.bundles` (the same
+ * thing `dsh plugin add` does for an ordinary local install - `livePluginActivation.activate()` refuses any
+ * package name absent from that list, "cannot be activated by this host", even when it is already present in
+ * `node_modules`) and activated as a Loader entry (already-active packages are left alone). A module inside a
+ * package (`acrylblends/cordis/state`) is not a bundle: `livePluginActivation.requireModules(owner, modules)`
+ * mounts its row when no row of it is mounted, owned by `owner` and removed when its last owner leaves
+ * (spec 049 T001). A runtime whose live activation cannot do that keeps the refusal, and the module mounts at
+ * the next start of an app whose `plugins/` folder declares it.
  * @param {{ acrylFrameworkPackages?: { materialize(profileDir: string, name: string): void, describe(name: string): { module: string, packageName: string, mounted: boolean } }, live: any, profileDir?: string }} services
  * @param {readonly string[]} names
  * @param {object} [fs]
+ * @param {string} [owner] the plugin that needs them, which owns any module row inserted for it
  */
-export async function materializeRequiredAcrylPackages(services, names, fs) {
+export async function materializeRequiredAcrylPackages(services, names, fs, owner) {
   const errors = []
   if (!services.acrylFrameworkPackages) {
     return { errors: [`this runtime cannot resolve ACRYL framework packages (needed: ${names.join(', ')})`] }
   }
   if (!services.profileDir) return { errors: ['the active profile directory is not available to resolve ACRYL framework packages'] }
+  const modules = []
   for (const name of names) {
     try {
       const required = services.acrylFrameworkPackages.describe(name)
       services.acrylFrameworkPackages.materialize(services.profileDir, required.module)
       if (required.module !== required.packageName) {
-        // A module inside a package (an acrylblends Cordis plugin) is not a bundle of its own: it is usable once its row is mounted.
-        if (!required.mounted) {
+        // A module inside a package (an acrylblends Cordis plugin) is not a bundle of its own: its row is mounted below, all of them in one call.
+        if (owner !== undefined && typeof services.live.requireModules === 'function') modules.push(required.module)
+        else if (!required.mounted) {
           errors.push(`"${required.module}" is not mounted in this app and cannot be started while it runs: declare it in "dsh.requiresAcrylPackages" of a plugin in the app's plugins/ folder, and it mounts at the next start`)
         }
         continue
@@ -174,7 +180,18 @@ export async function materializeRequiredAcrylPackages(services, names, fs) {
       errors.push(`could not make "${name}" live: ${cause instanceof Error ? cause.message : String(cause)}`)
     }
   }
+  if (errors.length === 0 && owner !== undefined && typeof services.live.requireModules === 'function') {
+    try { await services.live.requireModules(owner, modules) } catch (cause) {
+      errors.push(`could not start what ${owner} needs: ${cause instanceof Error ? cause.message : String(cause)}`)
+    }
+  }
   return { errors }
+}
+
+/** Release the module rows a plugin owned (best effort: a row left behind is gone at the next start, and never fails an uninstall). */
+async function releaseRequiredModules(live, owner) {
+  if (typeof live?.requireModules !== 'function') return
+  try { await live.requireModules(owner, []) } catch { /* the next start composes without it */ }
 }
 
 /**
@@ -311,9 +328,13 @@ export async function installLocalPlugin(input, services, fs) {
   // had ever been dynamically activated matched the wrong group ("dsh-client-ui-layout") and failed with
   // "invalid plugin, expect function or object with an apply method, received object". Activating the plugin
   // itself first settles the tree into the shape every later dynamic activation (including this one) expects.
-  if (lint.requiresAcrylPackages.length > 0) {
-    const required = await materializeRequiredAcrylPackages(services, lint.requiresAcrylPackages, fs)
+  if (lint.requiresAcrylPackages.length === 0) {
+    // An update that no longer names any module releases the rows the earlier version owned.
+    await releaseRequiredModules(services.live, lint.name)
+  } else {
+    const required = await materializeRequiredAcrylPackages(services, lint.requiresAcrylPackages, fs, lint.name)
     if (required.errors.length > 0) {
+      // No release here: a failed `requireModules` changed nothing, so the modules an earlier version owned stay for it when it is restored.
       await services.live.deactivate(lint.name).catch(() => {})
       const removed = await runPlugin(services.pnpm, ['remove', lint.name], installDir)
       const restored = await restorePrevious(services, previousDir, lint.name, fs)
@@ -345,6 +366,8 @@ export async function removeLocalPlugin(input, services) {
   if (!name) return { ok: false, errors: ['a package name is required'] }
   if (!services.pnpm || !services.live) return { ok: false, stage: 'services', errors: ['plugin services are not available in this runtime'] }
   try { await services.live.deactivate(name) } catch { /* not active: still remove it */ }
+  // After the plugin itself: the rows it needed outlive their consumer by a moment, never the other way round.
+  await releaseRequiredModules(services.live, name)
   const removed = await runPlugin(services.pnpm, ['remove', name], services.cwd ?? process.cwd())
   if (!removed.ok) return { ok: false, stage: 'remove', errors: [`dsh plugin remove failed (exit ${removed.exitCode})`], detail: removed.output }
   services.record?.({ kind: 'removed', module: name })

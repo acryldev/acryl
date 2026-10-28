@@ -20,6 +20,7 @@
   Done when: a test installs, into a running app, a plugin that requires `acrylblends/cordis/state` while no row for it is mounted, and
   the plugin's `ctx.state` works without a restart; a second install of a plugin requiring it adds no second row; uninstalling both
   leaves the row as it was before.
+  Mini-design: [plan.md, T001](./plan.md#t001---live-activation-of-an-acrylblends-module-2026-10-28-acrylimplementer-mini-design).
 
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).

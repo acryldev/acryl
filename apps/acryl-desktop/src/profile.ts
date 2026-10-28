@@ -21,7 +21,7 @@ import {
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginRequiredFrameworkPackages, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginRequiredFrameworkPackages, profileRequiredFrameworkModules, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 import { findOverlayPackage, resolveOverlayPackage } from './plugins/package-overlay.ts'
@@ -819,9 +819,11 @@ export function prepareDesktopProfile(
   // design). A third-party extension claiming the advanced shell this way has no "compatibility vs advanced"
   // toggle of its own - unlike the IDE, there is no fallback content for it to show in compatibility mode -
   // so this disables the stock `ui-layout` row unconditionally, not only when `mode === 'advanced'`.
-  const requiredFrameworkPackages = instanceHome === undefined
-    ? []
-    : pluginRequiredFrameworkPackages(instanceHome).filter(module => rows.get(module) === undefined && !blueprintRowIds.has(module))
+  // ...and a plugin installed into the profile may need a module whose row the running app mounted for it (spec 049 T001).
+  const requiredFrameworkPackages = [...new Set([
+    ...(instanceHome === undefined ? [] : pluginRequiredFrameworkPackages(instanceHome)),
+    ...profileRequiredFrameworkModules(profileDir),
+  ])].filter(module => rows.get(module) === undefined && !blueprintRowIds.has(module))
   for (const module of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageOfModule(module), pathToFileURL(INSTALL_ANCHOR).href)
   patches.push(...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })))
   if (requiredFrameworkPackages.includes('acryl-app-shell') && mode !== 'advanced') {

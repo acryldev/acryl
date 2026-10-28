@@ -42,6 +42,7 @@ export {
   createProfileRuntimeResolution,
   createWebEngineDefinition,
   pluginRequiredFrameworkPackages,
+  profileRequiredFrameworkModules,
   materializeProfilePackage,
   UPSTREAM_PRODUCT_ANALYTICS_OFF,
   type AcrylFrameworkPackages,

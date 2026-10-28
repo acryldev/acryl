@@ -99,6 +99,11 @@ export class AcrPluginLifecycleController {
    * activation actually created is the only authority that outlives it.
    */
   private readonly activatedEntries = new Map<string, string>()
+  /**
+   * Module rows this controller inserted for {@link requireModules}, each with the plugin packages that need it. A row is removed when
+   * its last owner leaves; a row that was already mounted when a plugin asked for it is never in here, so this path never removes it.
+   */
+  private readonly moduleOwners = new Map<string, Set<string>>()
 
   constructor(
     private readonly ctx: Context,
@@ -247,32 +252,76 @@ export class AcrPluginLifecycleController {
         return this.receipt('enable', [already.id])
       }
 
-      const group = this.host.bundleGroup?.() ?? this.ctx.loader.root
-      // The Loader's create() keeps a provided id (ensureId only generates one
-      // when absent); its type omits `id` to steer callers toward generated
-      // ids, but a bundle row's id must stay stable so the reboot patch (by id)
-      // and a lifecycle toggle target the same entry.
-      const rowOptions: EntryOptions & { id: string } = { id: row.id, name: row.name }
+      let entry: Entry | undefined
       try {
-        await group.create(rowOptions)
-        group.data.push(rowOptions)
-        await this.ctx.loader.await?.()
-        // Loader 1.0.5 (DSH 0.2) logs a throwing `apply` as a FAILED Fiber instead of rejecting `create()`: surface it here so the
-        // caller rolls the install back with the plugin's own error.
-        const created = [...this.ctx.loader.entries()].find(candidate => candidate.options.id === row.id)
-        if (created !== undefined && (created.fiber === undefined || phaseOf(created) === 'failed')) {
-          throw fiberFailure(created) ?? new Error(`plugin ${row.id} did not activate`)
-        }
+        entry = await this.mountRow(row)
       } catch (cause) {
-        try { await group.remove(row.id) } catch { /* best effort */ }
         throw new PluginLifecycleError(
           'lifecycle-failed',
           `Plugin ${packageName} failed to activate: ${describe(cause)}`,
         )
       }
-      const entry = [...this.ctx.loader.entries()].find(candidate => candidate.options.id === row.id)
       if (entry !== undefined) this.activatedEntries.set(packageName, entry.id)
       return this.receipt('enable', [entry?.id ?? `include:${row.id}`])
+    })
+  }
+
+  /**
+   * Make the modules `owner` needs mounted (a module inside a package, such as `acrylblends/cordis/state`, which is not a profile bundle of
+   * its own), and release the ones it needed before and no longer names. `modules` is the owner's whole list, so an install, an update and
+   * an uninstall (`[]`) are the same call. A module already mounted is used as it is and never removed by this path; a missing one gets
+   * the row `{ id: module, name: module }`, owned by every plugin that asks for it, and removed when its last owner leaves.
+   *
+   * All or nothing: when a module cannot be mounted, the rows this call inserted are removed and the owners it added dropped before the
+   * error is thrown, and nothing is released; releases run only after every module is mounted. A row of the module that exists but is
+   * turned off is left alone and refused, because turning it off was a choice.
+   * @param owner - the plugin package that needs the modules.
+   * @param modules - every module it needs now.
+   */
+  requireModules(owner: string, modules: readonly string[]): Promise<void> {
+    return this.exclusive(async () => {
+      const wanted = new Set(modules)
+      const inserted: string[] = []
+      const joined: string[] = []
+      try {
+        for (const module of wanted) {
+          const owners = this.moduleOwners.get(module)
+          if (owners !== undefined) {
+            if (!owners.has(owner)) { owners.add(owner); joined.push(module) }
+            continue
+          }
+          const existing = [...this.ctx.loader.entries()].find(entry => !entry.options.group && entry.options.name === module)
+          if (existing !== undefined) {
+            if (existing.disabled) {
+              throw new PluginLifecycleError('lifecycle-failed', `${module} is turned off in this app (row ${existing.id}); turn it on, then install ${owner} again.`)
+            }
+            continue
+          }
+          try {
+            await this.mountRow({ id: module, name: module })
+          } catch (cause) {
+            throw new PluginLifecycleError('lifecycle-failed', `${module}, which ${owner} needs, failed to start: ${describe(cause)}`)
+          }
+          this.moduleOwners.set(module, new Set([owner]))
+          inserted.push(module)
+        }
+      } catch (cause) {
+        for (const module of joined) this.moduleOwners.get(module)?.delete(owner)
+        for (const module of inserted.reverse()) {
+          this.moduleOwners.delete(module)
+          await this.unmountRow(module).catch((error: unknown) => { this.host.warn?.(`could not remove ${module} after a failed start: ${describe(error)}`) })
+        }
+        throw cause
+      }
+      for (const [module, owners] of this.moduleOwners) {
+        if (wanted.has(module) || !owners.delete(owner) || owners.size > 0) continue
+        this.moduleOwners.delete(module)
+        try {
+          await this.unmountRow(module)
+        } catch (cause) {
+          throw new PluginLifecycleError('lifecycle-failed', `${module}, which only ${owner} needed, failed to stop: ${describe(cause)}`)
+        }
+      }
     })
   }
 
@@ -476,6 +525,42 @@ export class AcrPluginLifecycleController {
       entryIds: Object.freeze([...entryIds]),
       snapshot: this.snapshot(),
     })
+  }
+
+  /**
+   * Insert one row into the profile's include group and wait until it settled; a row that did not reach ACTIVE (or PENDING) is removed
+   * again and its error thrown. Returns the mounted entry.
+   */
+  private async mountRow(row: { readonly id: string; readonly name: string }): Promise<Entry | undefined> {
+    const group = this.host.bundleGroup?.() ?? this.ctx.loader.root
+    // The Loader's create() keeps a provided id (ensureId only generates one
+    // when absent); its type omits `id` to steer callers toward generated
+    // ids, but a bundle row's id must stay stable so the reboot patch (by id)
+    // and a lifecycle toggle target the same entry.
+    const rowOptions: EntryOptions & { id: string } = { id: row.id, name: row.name }
+    try {
+      await group.create(rowOptions)
+      group.data.push(rowOptions)
+      await this.ctx.loader.await?.()
+      // Loader 1.0.5 (DSH 0.2) logs a throwing `apply` as a FAILED Fiber instead of rejecting `create()`: surface it here so the
+      // caller rolls the install back with the plugin's own error.
+      const created = [...this.ctx.loader.entries()].find(candidate => candidate.options.id === row.id)
+      if (created !== undefined && (created.fiber === undefined || phaseOf(created) === 'failed')) {
+        throw fiberFailure(created) ?? new Error(`plugin ${row.id} did not activate`)
+      }
+      return created
+    } catch (cause) {
+      try { await group.remove(row.id) } catch { /* best effort */ }
+      throw cause
+    }
+  }
+
+  /** Remove a row this controller inserted, wherever it sits, and wait until its Fiber has unloaded. */
+  private async unmountRow(rowId: string): Promise<void> {
+    const entry = [...this.ctx.loader.entries()].find(candidate => candidate.options.id === rowId)
+    if (entry === undefined) return
+    await entry.parent.remove(rowId)
+    await this.ctx.loader.await?.()
   }
 
   /** Serialize mutations: one lifecycle transition settles before the next starts. */

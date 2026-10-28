@@ -650,3 +650,46 @@ One library plugin, `agent-panel` (authored in this repository's `plugins/`, cop
 
 1. Reload the page automatically after a `change`, or show a "reload" button? Recommendation: reload after `done` unless the text box holds unsent text.
 2. Should `acrylblends init --template agent` include the panel by default? Recommendation: no; it is the opt-in `acrylblends add agent-panel`, so an app that never asks for an agent never serves its script.
+
+## T001 - live activation of an `acrylblends` module (2026-10-28, AcrylImplementer; mini-design)
+
+The ticket is [T001](./tasks.md). Today a plugin installed into a running app that declares `acrylblends/cordis/<x>` in
+`dsh.requiresAcrylPackages` is refused when no row of that module is mounted (`materializeRequiredAcrylPackages` in
+`plugins/acryl-plugin-context/lib/install.js`), and the install is rolled back. Every built-in Blueprint mounts the framework kit
+(router, router-http, state, inspect), so the case is an app whose Blueprint has no `framework-kit` row, or a module outside the kit
+(`kv-json`, `door`, `db`, ...).
+
+1. **Capability and plugin boundary.** Inserting, owning and removing a module row is Loader mutation, so it belongs to the one
+   controller that already does it with ordering and rollback: `AcrPluginLifecycleController` in `acryl-control`. A new method,
+   `requireModules(owner, modules)`, takes the full list of modules one plugin needs (declarative: the list replaces the previous one),
+   so install, update and uninstall are the same call with different lists. The three `livePluginActivation` services (Web, CLI,
+   Desktop) forward it, as they forward `activate`. `acryl-plugin-context` stays a consumer: it links the package into the profile
+   (`acrylFrameworkPackages.materialize`, unchanged) and calls `live.requireModules`. No new plugin, service or lifecycle.
+2. **Provides and consumes.** Provides nothing new to Cordis; one method on the existing `livePluginActivation` service. Consumes the
+   Loader (`ctx.loader`) through the controller, as `activate` does. `acryl-plugin-context` reads `livePluginActivation` at call time as
+   today; a surface whose service lacks `requireModules` keeps today's refusal text, so nothing half-works.
+3. **Effects and disposal.** The resource is a Loader row; its Fiber's effects are the module's own. Ownership: the controller keeps,
+   for each row it inserted, the set of plugin packages that required it (reference counting by owner name, not a number, so a repeated
+   or retried call cannot count twice). A row that was already mounted when a plugin asked (by the Blueprint, the app's `plugins/`
+   folder, or composed at start) is never owned and never removed by this path. A plugin's owned modules are released when it is
+   uninstalled (`requireModules(owner, [])` from `removeLocalPlugin`) and when its install fails after the rows went in; a row is removed
+   when its last owner leaves, after the plugin itself was deactivated (consumer first, then provider). Rollback inside one call: rows
+   the call inserted are removed again and owners it added are dropped before the error is thrown; releases (modules the new list no
+   longer names) run only after every acquisition succeeded. A row of the module that exists but is turned off is not touched: the call
+   fails with a message that says to turn it on, because turning off was someone's choice.
+4. **Configuration and composition.** The row is `{ id: <module>, name: <module> }`, the same form boot already inserts for a module a
+   plugin in the app's `plugins/` folder declares (the row-naming rule: a module's row id is its module). It goes into the profile
+   include group (`bundleGroup()`), as `activate` does. Durability: the live row lives until the process ends; so that the next start
+   composes the same tree, the start-up composition (Web `resolveWebEngineComposition`, Desktop `profile.ts`) also reads
+   `dsh.requiresAcrylPackages` from the plugins installed in the profile (its user bundles), next to the app's `plugins/` folder. A row
+   composed at start is not owned by the controller, so after a restart uninstalling its last plugin leaves it until the next start,
+   which composes without it.
+5. **Events and durability.** No events, no session state. The durable fact is the installed plugin's own `package.json`, which the next
+   start reads; nothing new is written.
+6. **Verification.** Real Loader, in `acryl-control`'s controller tests: a module row inserted for one owner and removed with it; a
+   second owner adds no second row and the row stays until both left; a row mounted before is never removed; a failing module rolls back
+   the rows the call inserted; a turned-off row is refused and left alone; a list that drops a module releases it. Real engine (the
+   ticket's test, `runtime/acryl-harness-runtime/tests/plugin-context.spec.ts`): a Web app booted from a Blueprint file without
+   `framework-kit`, two plugins installed through `installLocalPlugin` that require `acrylblends/cordis/state` and use `ctx.state`,
+   one row for the module while they are installed, none after both are removed. Live: `scripts/live-run.mjs web` with that Blueprint,
+   the plugin installed into the running app, its state answered without a restart.
