@@ -61,6 +61,7 @@ packages:
   - plugins/acryl-ui
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
+  - plugins/acryl-command-reply
   - plugins/acryl-shortcuts
   - plugins/acryl-settings
   - plugins/acryl-db-postgres
@@ -282,7 +283,10 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
 // One deliberate raise: total went from 133 to 135 when DSH's profile package resolution was ported into the runtime (2026-10-25), because the port
 // subclasses DSH's PluginPackages and routes DSH's own resolution table; it serves only the DSH engine, so it is part of the seam.
-const DSH_IMPORT_CEILING = { total: 135, outsideSeam: 104 }
+// A second deliberate raise, 135 to 137 (outside the seam 104 to 106), for acryl-command-reply (spec 049 T002, 2026-10-28): it shows a host command's
+// reply on DSH's start page, so it reads DSH's own conversation phase (a value no facade can carry) and listens to DSH's command event. It is a plugin
+// whose sole capability is the DSH chat, recorded in spec 049 T002 as that finding, not added to the seam.
+const DSH_IMPORT_CEILING = { total: 137, outsideSeam: 106 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^runtime\/acryl-harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,

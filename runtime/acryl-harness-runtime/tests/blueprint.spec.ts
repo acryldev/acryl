@@ -69,7 +69,7 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'community-market', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'community-market', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('dsh-client-ui-brand-acryl')
     // The Market injects `router` and `routerHttp`, so their rows come with it, once and just before it (spec 046).
     expect(packages).toEqual(expect.arrayContaining(['acrylblends', 'cordis-plugin-market']))
@@ -82,9 +82,9 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).not.toContain('acrylblends/cordis/router-http')
   })
 
-  it('blank web: brand, extension pack, prompt shaping and UI library only', () => {
+  it('blank web: brand, extension pack, prompt shaping, UI library and the start-page command reply only', () => {
     const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
     expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])

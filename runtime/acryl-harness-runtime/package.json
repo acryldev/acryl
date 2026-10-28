@@ -176,6 +176,7 @@
     "acryl-app-save": "workspace:*",
     "acryl-app-shell": "workspace:*",
     "acryl-brand": "workspace:*",
+    "acryl-command-reply": "workspace:*",
     "acryl-control": "workspace:*",
     "acryl-mount-anchors": "workspace:*",
     "acryl-plugin-admin": "workspace:*",

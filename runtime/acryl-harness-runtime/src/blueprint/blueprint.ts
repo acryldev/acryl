@@ -27,9 +27,10 @@ export type BlueprintRowId =
   | 'plugin-hub'
   | 'app-shell'
   | 'framework-kit'
+  | 'command-reply'
 
 /** Every row id, as data: what a Blueprint file may name. Kept next to the type so the two cannot drift (a test asserts it). */
-export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'community-market', 'shortcuts', 'mount-anchors', 'app-shell', 'framework-kit']
+export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'community-market', 'shortcuts', 'mount-anchors', 'app-shell', 'framework-kit', 'command-reply']
 
 /** Row ids a Blueprint file once used, read as their current names (spec 044 step 1b); never written. */
 export const RENAMED_BLUEPRINT_ROW_IDS: Readonly<Record<string, BlueprintRowId>> = Object.freeze({ 'extension-context': 'plugin-context' })
@@ -71,7 +72,7 @@ export const BLANK_BLUEPRINT: Blueprint = freezeBlueprint({
   description: 'The smallest working agent that can grow itself: chat, model choice, and the plugin context pack.',
   // `acryl-settings` is essential: surface plugins (Desktop's shell, notifications) keep their preferences there.
   capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', 'acryl-settings'],
-  rows: ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'framework-kit'],
+  rows: ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'framework-kit', 'command-reply'],
   brand: { kind: 'custom', identity: brandIdentity({ name: 'Blank', tagline: 'Ask for what you need. It builds it.', accent: '#3b6ef5', accentDark: '#7c9dff' }) },
   shell: 'compatibility',
   dshChat: true,
