@@ -12,6 +12,12 @@ Commits: `bf5841d6` (this change), `e429ed44` (the surface-parity flake, on main
 - **The gate's backstop:** `scripts/real-home-guard.mjs` snapshots every file under `~/.acryl`, `~/.acryl-dev`, `~/.acryl-worktrees`,
   `~/.acryl-instances` and `~/.dsh`, runs the rest of `check`, and fails naming anything added, removed, resized or rewritten. `check` is now
   that guard around `check:steps`, so the `node --test` runners, the scaffolder and the packed/tarball gates are covered too, not only vitest.
+- **Running apps are excused, by name:** the development app and the installed app write their own homes all the time, so the guard reads the
+  Registry through the AppInstance family (`registryDir`) and leaves out the home of every app whose pid is alive, printing one line each
+  (`skipped ~/.acryl-dev: app ACRYL Development pid 4711 is running`). `~/.acryl-instances` is always checked, except that those apps' own
+  Registry entries may change; a stale entry (its process gone) excuses nothing, and any other write still fails. Four tests run the real
+  script against a throwaway home: a live app writing its home passes, a home with no live entry fails and is named, a stale entry does not
+  excuse it, and the Registry allows only the live app's own entry.
 - **Allowed, with its reason:** the bulkhead spec's list of files that may look at the OS home gains the guard: it must know the real homes to
   prove nothing changed one, it only reads them, and it is not part of any app.
 - **Proven:** a command that writes `~/.acryl-instances/leak.json` under a throwaway home fails the guard and names the file; a clean command
