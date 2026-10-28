@@ -30,6 +30,15 @@ const BIN_NAME = 'acryl-desktop-profile-smoke'
 const HOST_SERVICE_PLUGIN_NAME = 'dsh-desktop-host-services-smoke-plugin'
 const HOST_SERVICE_PROBE_KEY = 'desktopHostServiceProbe'
 const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-'))
+// This smoke boots a real Desktop composition, and a Desktop root claims the app it serves and announces it with its port (spec 048 T011): the app home, the
+// run lock and the Registry entry all live under the OS home, so the smoke moves HOME too and writes into its own throwaway folder, never into the
+// developer's ~/.acryl-dev or the machine's real ~/.acryl-instances. `dsh-desktop.port` is fixed by the settings written below, so nothing else depends on
+// the real home.
+const isolatedHome = join(home, 'home')
+mkdirSync(isolatedHome, { recursive: true })
+process.env.HOME = isolatedHome
+process.env.USERPROFILE = isolatedHome
+process.env.ACRYL_HOME = join(home, 'acryl-home')
 let ctx
 let engineHost
 let releasePackageResolver

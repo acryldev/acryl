@@ -1,4 +1,10 @@
 export {
+  announceSelf,
+  InstanceAnnounceError,
+  type SelfAnnouncement,
+  type SelfAnnouncementInfo,
+} from './announce-self.ts'
+export {
   APP_DEFINITION_FILE,
   AppInstanceError,
   DEFAULT_WEB_PORT,

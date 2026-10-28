@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { InstanceError, appFolder, claimInstance, isMainModule, listInstances, managedApp, releaseInstance } from './lib/instances.mjs'
+import { InstanceError, appFolder, isMainModule, listInstances, managedApp } from './lib/instances.mjs'
 import { instanceEnvironment, osHomeDirectory, withWebPort } from './lib/instance-module.mjs'
 
 export const DEFAULT_INSTANCE = 'blank'
@@ -69,19 +69,23 @@ export function parseFlags(argv) {
 if (isMainModule(import.meta.url)) {
   const [surface = '', ...rest] = process.argv.slice(2)
   try {
-    const running = listInstances().filter(app => app.running).map(app => app.surface)
-    const plan = blankLaunchPlan(surface, parseFlags(rest), process.env, undefined, undefined, running)
-    claimInstance(plan.instance, { pid: process.pid, surface: plan.surface, ...(plan.surface === 'web' ? { port: plan.webPort } : {}) })
+    const running = listInstances().filter(app => app.running)
+    const plan = blankLaunchPlan(surface, parseFlags(rest), process.env, undefined, undefined, running.map(app => app.surface))
+    // The process that serves the app claims it and announces it with its real port (spec 048 T011), so the launcher only refuses early, with the same
+    // wording, when the Registry already shows the app running; a race between two launches is still settled by the claim inside the app.
+    const already = running.find(app => app.id === plan.instance.id)
+    if (already !== undefined) {
+      throw new InstanceError(`app "${already.id}" is already running (pid ${String(already.pid)}${already.surface === undefined ? '' : `, ${already.surface}`}${already.port === undefined ? '' : `, port ${String(already.port)}`}). Stop it (node scripts/instances.mjs stop ${already.id}) or start another app.`)
+    }
     process.stdout.write(`acryl: app "${plan.instance.id}" in ${plan.instance.home}\n`)
     if (plan.skipBuild) process.stdout.write('acryl: another Desktop app is running from the current build, so this one starts without rebuilding\n')
-    const release = () => releaseInstance(plan.instance)
     // The app runs in its own process group (the dev launchers run it through further child processes), so a stop reaches every one of them.
     const grouped = process.platform !== 'win32'
     const child = spawn(plan.command, plan.args, { env: plan.env, stdio: 'inherit', detached: grouped })
     const stop = signal => { try { process.kill(grouped ? -child.pid : child.pid, signal) } catch { /* already gone */ } }
     for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => stop(signal))
-    child.on('exit', code => { release(); process.exitCode = code ?? 0 })
-    child.on('error', error => { release(); process.stderr.write(`acryl: ${error.message}\n`); process.exitCode = 1 })
+    child.on('exit', code => { process.exitCode = code ?? 0 })
+    child.on('error', error => { process.stderr.write(`acryl: ${error.message}\n`); process.exitCode = 1 })
   } catch (error) {
     process.stderr.write(`acryl: ${error instanceof Error ? error.message : String(error)}\n`)
     process.exitCode = error instanceof InstanceError ? 3 : 2

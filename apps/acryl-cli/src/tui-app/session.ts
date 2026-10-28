@@ -12,7 +12,7 @@
 import { randomUUID } from 'node:crypto'
 import { execFile } from 'node:child_process'
 import type { Context } from '@deepseek-ai/cordis'
-import { createAcrylSessionBridge, type AcrylSessionBridge } from 'acryl-harness-runtime'
+import { announceSelf, createAcrylSessionBridge, type AcrylSessionBridge, type AppInstance } from 'acryl-harness-runtime'
 import {
   ACCOUNT_SIGN_IN_SERVICE,
   DEEPSEEK_ACCOUNT_FLOW_KEY,
@@ -1012,6 +1012,10 @@ function storeSetStatus(store: TuiStore, snapshot: { agentStatus: string }): voi
 /** Mount one interactive pi-tui session over the bridge; loop over `/clear` re-attaches. */
 export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTuiResult> {
   const host: DirectHost = await startDirectHost({ profile: options.profile })
+  // This process runs the app for the terminal, so it holds the claim and the Registry entry (spec 048 T011). A terminal serves no port: the entry
+  // carries the surface only, and `acryl control list` shows the app while this session lives.
+  const runningInstance = host.ctx.get('appInstance' as never) as AppInstance | undefined
+  const announcement = runningInstance === undefined ? undefined : announceSelf(runningInstance, { surface: 'cli' })
   // Re-read on demand (not just once at boot, unlike every other plugin-
   // contributed command): a /market install mounts a new Loader row into
   // this same live tree (spec 034 T006's shared live-activation path), and
@@ -1050,6 +1054,7 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
     // Restore the terminal before handing the resume hint back to the CLI.
     stopWatchingCommands?.()
     await current.dispose(false)
+    announcement?.release()
     await host.dispose()
     settled = true
     return Object.freeze({
@@ -1058,12 +1063,14 @@ export async function runAcrylTui(options: RunAcrylTuiOptions): Promise<AcrylTui
       async dispose() {
         if (settled) return
         settled = true
+        announcement?.release()
         await host.dispose()
       },
     })
   } catch (error) {
     stopWatchingCommands?.()
     await current?.dispose(false).catch(() => {})
+    announcement?.release()
     await host.dispose()
     throw error
   }

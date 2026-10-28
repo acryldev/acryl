@@ -397,6 +397,7 @@ export {
   LockHeldError,
   acquireLock,
   announce,
+  announceSelf,
   appFolder,
   appFolderInstance,
   appName,
@@ -424,10 +425,12 @@ export {
   withdraw,
   worktreeInstance,
   writeOnlineSecret,
+  InstanceAnnounceError,
   type AppInstance,
   type AppInstanceKind,
   type LockHolder,
   type RunningApp,
+  type SelfAnnouncement,
   type SelectInstanceOptions,
 } from './instance/index.ts'
 export { PUBLIC_REGISTRY, StartSourceError, classifyStartSource, gitClone, resolveStartSource, type GitClone, type ResolvedStartSource, type StartSource } from './app/start-source.ts'

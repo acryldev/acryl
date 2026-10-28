@@ -1,7 +1,7 @@
 /** ACRYL Host plugin: owns the selected native shell generation. */
 
 import { fileURLToPath } from 'node:url'
-import type { AppInstance } from 'acryl-harness-runtime'
+import { type AppInstance, announceSelf } from 'acryl-harness-runtime'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-cmdline'
@@ -153,6 +153,28 @@ export function apply(ctx: Context, config: Config): void {
   }
   if (ctx.webServer.host !== '127.0.0.1') {
     throw new Error('acryl-desktop: desktop shell requires a loopback Web server')
+  }
+  // This process serves the page (the renderer is a loopback URL), so it holds the app's claim and its Registry entry until the shell unloads
+  // (spec 048 T011): `acryl control list` finds a running Desktop app and names the port the Web carrier really bound.
+  const runningInstance = ctx.get('appInstance' as never) as AppInstance | undefined
+  if (runningInstance !== undefined) {
+    const announcement = announceSelf(runningInstance, { surface: 'desktop', port: ctx.webServer.port })
+    ctx.effect(() => {
+      const release = (): void => { announcement.release() }
+      // Electron quits the process without unloading the Loader - the launcher's shutdown releases the shell generation and then exits - so the entry
+      // would otherwise sit in the Registry until something read it and found the pid gone (measured: a stopped Desktop app still listed an entry). The
+      // process's own exit and the two signals the launcher handles take both back; the effect removes the listeners when the shell unloads, so a reload
+      // neither leaks a listener nor loses the claim. `release` is idempotent, and its own SIGINT/SIGTERM listeners do not stop the launcher's.
+      process.once('exit', release)
+      process.once('SIGINT', release)
+      process.once('SIGTERM', release)
+      return () => {
+        process.off('exit', release)
+        process.off('SIGINT', release)
+        process.off('SIGTERM', release)
+        release()
+      }
+    }, 'acryl-desktop: instance announcement')
   }
   const iconFilename = runtime.platform === 'darwin'
     ? 'app-icon-mac.png'

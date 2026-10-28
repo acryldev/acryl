@@ -111,7 +111,10 @@ function createHarness(platform: DesktopRuntime['platform'] = 'darwin'): PluginH
     connection: { authenticatedUrl: vi.fn((url: string) => url) },
     acrylSettings: settings,
     logger: { warn: vi.fn(), error: vi.fn() },
-    get: vi.fn((key: unknown) => String(key) === 'desktopRuntime' ? runtime : () => {}),
+    // `appInstance` is the one service this fixture does not model: a real boot provides the app's instance, and the plugin announces it (spec 048 T011),
+    // which needs a real home and the Registry. Undefined here means "this fixture is not attached to an app"; the announce path is covered by
+    // `runtime/acryl-harness-runtime/tests/announce-self.spec.ts` and by the isolated live run.
+    get: vi.fn((key: unknown) => String(key) === 'desktopRuntime' ? runtime : String(key) === 'appInstance' ? undefined : () => {}),
     effect: vi.fn((register: () => unknown) => register()),
     // Runs the callback only when every requested service is present on
     // this fixture (immediately, unlike the real deferred Cordis inject) —

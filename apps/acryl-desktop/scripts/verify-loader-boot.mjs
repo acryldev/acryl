@@ -33,6 +33,14 @@ const RUNNER_ENVIRONMENT_NAMES = new Set([
   'NPM_CONFIG_DISTURL',
 ])
 const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-loader-'))
+// This smoke boots a real Desktop composition, and a Desktop root claims the app it serves and announces it with its port (spec 048 T011): the Registry
+// entry lives under the OS home, so the smoke moves HOME and the app home into its throwaway folder, never into the developer's ~/.acryl-dev or the
+// machine's real ~/.acryl-instances.
+const isolatedHome = join(home, 'home')
+mkdirSync(isolatedHome, { recursive: true })
+process.env.HOME = isolatedHome
+process.env.USERPROFILE = isolatedHome
+process.env.ACRYL_HOME = join(home, 'acryl-home')
 let ctx
 let mounted
 let mountedSpec
