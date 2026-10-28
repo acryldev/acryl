@@ -1,9 +1,16 @@
+/**
+ * The terminal stream route on a real loopback socket, upgraded by the framework's own hub (`UpgradeHub` from `acrylblends/node-server`, the one
+ * `routerHttp` runs), so the guard sees the peer, the port and the headers a browser sends, and the sockets belong to an owner that can unload.
+ */
+
 import { createServer, type Server } from 'node:http'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { UpgradeHub } from 'acrylblends/node-server'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { WebSocket } from 'ws'
-import { parsePtyServerMessage, type PtyServerMessage } from '../../src/pty/contract.ts'
+import { privateApi } from '../../src/private-route.ts'
+import { WORKSPACE_PTY_STREAM_PATH, parsePtyServerMessage, type PtyServerMessage } from '../../src/pty/contract.ts'
 import { WorkspacePtyRegistry, type WorkspacePtyProcess } from '../../src/pty/service.ts'
-import { createWorkspacePtyStream, type WorkspacePtyStream } from '../../src/pty/stream.ts'
+import { ptyStreamRoutes } from '../../src/pty/stream.ts'
 
 interface FakeProcess extends WorkspacePtyProcess {
   emit(data: string): void
@@ -33,9 +40,11 @@ function fakeProcess(): FakeProcess {
 let server: Server
 let port = 0
 let origin = ''
-let stream: WorkspacePtyStream
+let hub: UpgradeHub
 let registry: WorkspacePtyRegistry
 let process: FakeProcess
+/** The owning plugin's disposers: running them is what an unload does to its sockets. */
+let unload: Array<() => unknown> = []
 
 beforeAll(async () => {
   server = createServer()
@@ -45,6 +54,10 @@ beforeAll(async () => {
   origin = `http://127.0.0.1:${String(port)}`
 })
 afterAll(async () => { await new Promise<void>(resolve => server.close(() => { resolve() })) })
+afterEach(async () => {
+  await Promise.all(unload.splice(0).map(dispose => dispose()))
+  await hub.close()
+})
 
 beforeEach(async () => {
   server.removeAllListeners('upgrade')
@@ -56,13 +69,15 @@ beforeEach(async () => {
     createId: () => 'pty_test',
   })
   await registry.start('shell')
-  stream = createWorkspacePtyStream(registry, origin, () => {})
-  server.on('upgrade', (req, socket, head) => { stream.handleUpgrade(req, socket, head) })
+  hub = new UpgradeHub()
+  const owner = { effect: (execute: () => () => unknown) => { unload.push(execute()) } }
+  const app = privateApi(ptyStreamRoutes(registry, hub.upgradeWebSocketFor(owner), () => {}))
+  hub.attach(server, { fetch: (request, connection, bindings) => Promise.resolve(app.fetch(request, Object.assign(bindings ?? {}, { connection }))) })
 })
 
 function open(query: string, headers: Record<string, string> = { origin }): Promise<{ ws: WebSocket; messages: PtyServerMessage[] }> {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(`ws://127.0.0.1:${String(port)}/stream?${query}`, { headers })
+    const ws = new WebSocket(`ws://127.0.0.1:${String(port)}${WORKSPACE_PTY_STREAM_PATH}?${query}`, { headers })
     const messages: PtyServerMessage[] = []
     ws.on('message', (raw) => { messages.push(parsePtyServerMessage(raw.toString('utf8'))) })
     ws.once('open', () => { resolve({ ws, messages }) })
@@ -135,9 +150,18 @@ describe('terminal stream', () => {
     expect(await new Promise<number>(resolve => unknown.ws.once('close', code => { resolve(code) }))).toBe(4404)
   })
 
-  it('refuses a page from another origin and a malformed request', async () => {
+  it('refuses before the handshake a page from another origin, one with no Origin, and a malformed request', async () => {
     await expect(open('id=pty_test&since=0', { origin: 'http://evil.example' })).rejects.toThrow('HTTP 403')
+    await expect(open('id=pty_test&since=0', {})).rejects.toThrow('HTTP 403')
     await expect(open('id=pty_test&since=abc')).rejects.toThrow('HTTP 400')
     await expect(open('since=0')).rejects.toThrow('HTTP 400')
+  })
+
+  it('closes its sockets with 1001 when the owning plugin unloads', async () => {
+    const { ws } = await open('id=pty_test&since=0')
+    const closed = new Promise<number>(resolve => ws.once('close', code => { resolve(code) }))
+    await Promise.all(unload.splice(0).map(dispose => dispose()))
+    expect(await closed).toBe(1001)
+    expect(hub.size).toBe(0)
   })
 })

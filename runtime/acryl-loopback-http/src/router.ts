@@ -6,18 +6,31 @@
 
 import { Acryl, type Context, type MiddlewareHandler } from 'acrylblends'
 import { bodyLimit } from 'acrylblends/body-limit'
-import { loopbackOnly } from 'acrylblends/loopback-only'
+import { loopbackAuthority, loopbackOnly } from 'acrylblends/loopback-only'
 import { methodNotAllowed } from 'acrylblends/method-not-allowed'
 import { DEFAULT_MAX_BODY_BYTES, error } from './index.ts'
 
 export type ReportError = (operation: string, cause: unknown) => void
+
+/** The one name the Host serves its page on. */
+const OWN_HOSTNAMES: readonly string[] = ['127.0.0.1']
 
 /**
  * The app's own page, on the loopback address the Host serves it from, and nothing else: a loopback peer on the real local port, that
  * `Host`, and the exact `Origin` (a read may instead carry same-origin fetch metadata and a same-origin `Referer`). No other page and no
  * other program on the machine.
  */
-export const ownPage: MiddlewareHandler = loopbackOnly({ callers: 'own-page', hostnames: ['127.0.0.1'] })
+export const ownPage: MiddlewareHandler = loopbackOnly({ callers: 'own-page', hostnames: OWN_HOSTNAMES })
+
+/**
+ * A WebSocket upgrade from the app's own page: {@link ownPage}, and always the exact `Origin`. A browser sends `Origin` on every handshake, and a
+ * socket changes things (keystrokes go up it), so the `Referer` a read may show instead is not enough. A refusal is a plain 403 before any handshake.
+ */
+export const ownPageSocket: MiddlewareHandler = async (c, next) => {
+  const authority = loopbackAuthority(c, OWN_HOSTNAMES)
+  if (authority === undefined || c.req.header('origin') !== authority.origin) return c.json(error('forbidden'), 403)
+  return ownPage(c, next)
+}
 
 /** The headers every private answer carries, set after the handler so a refusal carries them too. */
 export const privateHeaders: MiddlewareHandler = async (c, next) => {

@@ -318,9 +318,9 @@ for (const [key, ceiling] of Object.entries(DSH_IMPORT_CEILING)) {
 // `ctx.routerHttp.mount(prefix)` per plugin); every `register` or `registerUpgrade` call on DSH's `webServer` or ACRYL's `acrylWeb` carrier in shipped
 // source is a route the router does not own. What DSH registers on its own `webServer` (its pages and RPC) is DSH's and lives in the submodule, which
 // is not counted. Tests, docs, build output and scripts are not counted either. Like the DSH import ceiling it only moves down, and a lower count must
-// lower it in the same commit. What remains at 3: the workspace terminal's upgrade (spec 048 T007) and the two delegate lines in `engine-web.ts`
-// that hand the server to plugins (T008).
-const WEB_REGISTRATION_CEILING = 3
+// lower it in the same commit. It reached 0 with spec 048 T007 and T008: the workspace terminal's WebSocket is a router route upgraded by
+// `routerHttp`, and `acrylWeb` carries only the address, so a new call site has nowhere to hide.
+const WEB_REGISTRATION_CEILING = 0
 const WEB_REGISTRATION = /(acrylWeb|webServer|[^a-zA-Z]web)[?]?[.](register|registerUpgrade)[(]/
 const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/|\.spec\.|\.test\./
 let webRegistrations = 0

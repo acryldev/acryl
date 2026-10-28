@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "acrylblends": "^0.9.2",
+    "acrylblends": "^0.11.0",
     "pg": "^8.23.1"
   },
   "peerDependencies": {

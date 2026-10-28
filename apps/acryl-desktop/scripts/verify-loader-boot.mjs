@@ -178,7 +178,7 @@ try {
         host: '127.0.0.1',
         port: 43120,
         register() { return () => {} },
-        // The terminal stream registers a WebSocket upgrade route; the real server has this method.
+        // routerHttp claims the terminal stream's WebSocket upgrade path through it; the real server has this method.
         registerUpgrade() { return () => {} },
       })
       // `dsh-client-connection`'s own cordis.patch.yml config row spreads

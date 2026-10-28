@@ -188,7 +188,7 @@
     "acryl-system-prompt": "workspace:*",
     "acryl-ui-tui": "workspace:*",
     "acryl-workspace": "workspace:*",
-    "acrylblends": "^0.9.2",
+    "acrylblends": "^0.11.0",
     "adm-zip": "^0.6.1",
     "cordis-plugin-market": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",
