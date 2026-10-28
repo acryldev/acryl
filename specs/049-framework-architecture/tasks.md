@@ -38,14 +38,18 @@
   `blank` phase); a command does not end that phase. Not ACRYL's code, and the pinned DSH is not edited.
   Done when: a test on the Web page shows a command's success text where the user typed it.
   Done 2026-10-28: the new plugin `acryl-command-reply` (Blueprint row `command-reply`, in `acryl.blank` and so in every built-in Blueprint,
-  Web and Desktop) listens to `command/executed` and, while DSH's own `conversationPhase` is `blank`, shows the reply as the composer notice
-  (`conversation.input.notify`, the line the composer uses for a command it refused; an error reply as an error). Once the conversation is
-  drawn it shows nothing, so a reply never appears twice. Tests: `plugins/acryl-command-reply/tests/reply.spec.ts` on real Cordis (blank,
-  four drawn phases, no text, another session, unloaded), the Blueprint rows in `runtime/acryl-harness-runtime/tests/blueprint.spec.ts`,
+  Web and Desktop) listens to `command/executed` and, while the chat's phase is `blank`, shows the reply as the composer notice (the line
+  the composer uses for a command it refused; an error reply as an error). Once the conversation is drawn it shows nothing, so a reply never
+  appears twice. It reads the chat through `@acryl/ui`'s new `acrylChat` service (`phase(sessionId)`, DSH's own `conversationPhase`, and
+  `notice(sessionId, level, text)`, DSH's `conversation.input.notify`), so the plugin names no DSH package. Tests:
+  `plugins/acryl-command-reply/tests/reply.spec.ts` on real Cordis (blank, drawn phases, no text, another session, unloaded),
+  `plugins/acryl-ui/tests/chat.spec.ts` (the phase on the start page and in every drawn state, the notice, withdrawn on unload) and the
+  built bundle providing `acrylChat` in `plugins/acryl-ui/tests/built-bundle.spec.ts`, the Blueprint rows in `runtime/acryl-harness-runtime/tests/blueprint.spec.ts`,
   and Desktop's profile in `apps/acryl-desktop/tests/profile/profile-blueprint.spec.ts`. Live: `scripts/live-run.mjs web`, `/reload new`
   then `/probe-state` on the start page showed `acryl-probe-state [global]: installed (new) ...` and `probe-state: clicks=1, ...` above
-  the composer (screenshots). Finding: the plugin's sole capability is the DSH chat, so its two DSH import lines raise the import ceiling
-  (`scripts/verify-layout.mjs`, total 137, outside the seam 106) instead of joining the seam.
+  the composer (screenshots). Import ratchet (`scripts/verify-layout.mjs`): outside the seam unchanged at 104; the seam grows by two lines
+  (`frame.ts`'s command event type and `client/chat.ts`'s phase rule), total 135 to 137. A first version raised the outside count to 106
+  instead; the coordinator rejected the raise: the direction is fewer DSH imports outside the seam, never more.
 
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).

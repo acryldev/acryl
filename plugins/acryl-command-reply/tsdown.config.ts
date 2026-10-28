@@ -27,10 +27,7 @@ export default defineConfig([
     dts: false,
     clean: false,
     sourcemap: true,
-    external: [
-      '@deepseek-ai/cordis',
-      '@deepseek-ai/dsh-client-ui-conversation/client',
-    ],
+    external: ['@deepseek-ai/cordis'],
     noExternal: (id: string) => id.startsWith('@deepseek-ai/') ? undefined : true,
     outputOptions: {
       entryFileNames: 'client.js',

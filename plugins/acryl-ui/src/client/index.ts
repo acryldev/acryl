@@ -18,6 +18,7 @@ import { Dialog } from './registry/Dialog/Dialog.tsx'
 import { ToolCallCard, type ToolCallCardProps, type ToolCallLabels, type ToolCallState } from './registry/ToolCallCard/ToolCallCard.tsx'
 import { SidebarRow, type SidebarRowProps } from './registry/SidebarRow/SidebarRow.tsx'
 import { Stack } from './registry/Stack.tsx'
+import { provideAcrylChat } from './chat.ts'
 import { Kbd, type KbdProps } from './registry/Kbd/Kbd.tsx'
 import { Badge, type BadgeProps, type BadgeVariant } from './registry/Badge/Badge.tsx'
 import { Skeleton, type SkeletonProps } from './registry/Skeleton/Skeleton.tsx'
@@ -98,6 +99,7 @@ export const inject = ['theme']
  * @param ctx - client plugin context.
  */
 export function apply(ctx: Context): void {
+  ctx.effect(() => provideAcrylChat(ctx), '@acryl/ui: the acrylChat service')
   const theme = (ctx as Context & { theme?: { overrideTokens(source: string, tokens: typeof EXTRA_TOKENS): () => void } }).theme
   if (theme === undefined) return
   ctx.effect(() => theme.overrideTokens('@acryl/ui', EXTRA_TOKENS), '@acryl/ui: extra theme tokens')

@@ -278,21 +278,21 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 
 // The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
 // `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
-// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters and `frame.ts`); a plugin whose sole capability is the DSH chat would
+// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters, `frame.ts` and the `acrylChat` service in `client/chat.ts`); a plugin whose sole capability is the DSH chat would
 // also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it. Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
 // One deliberate raise: total went from 133 to 135 when DSH's profile package resolution was ported into the runtime (2026-10-25), because the port
 // subclasses DSH's PluginPackages and routes DSH's own resolution table; it serves only the DSH engine, so it is part of the seam.
-// A second deliberate raise, 135 to 137 (outside the seam 104 to 106), for acryl-command-reply (spec 049 T002, 2026-10-28): it shows a host command's
-// reply on DSH's start page, so it reads DSH's own conversation phase (a value no facade can carry) and listens to DSH's command event. It is a plugin
-// whose sole capability is the DSH chat, recorded in spec 049 T002 as that finding, not added to the seam.
-const DSH_IMPORT_CEILING = { total: 137, outsideSeam: 106 }
+// The seam grew by two lines, total 135 to 137 with outside the seam unchanged at 104, for `@acryl/ui`'s `acrylChat` service (spec 049 T002,
+// 2026-10-28): `frame.ts` re-exports DSH's `command/executed` event type and `client/chat.ts` reads DSH's own conversation phase, so a client plugin such
+// as acryl-command-reply reads the chat's phase and posts a composer notice without naming a DSH package.
+const DSH_IMPORT_CEILING = { total: 137, outsideSeam: 104 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^runtime\/acryl-harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
-  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|registry\/.*))$/,
+  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|chat\.ts|registry\/.*))$/,
 ]
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
   const path = resolve(dir, entry.name)

@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
+import * as conversationClient from '@deepseek-ai/dsh-client-ui-conversation/client'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const bundlePath = join(root, 'lib/client.js')
@@ -50,7 +51,7 @@ function loadBuilt(): LoadedModule {
   const window = { __ModuleLoader__: { load: (entry: typeof registered) => { registered = entry } } }
   new Function('window', 'document', readFileSync(bundlePath, 'utf8'))(window, document)
   if (registered === undefined) throw new Error('the bundle did not call __ModuleLoader__.load')
-  const exports = registered.factory(name => (name === 'react' ? require('react') : name === 'react/jsx-runtime' ? require('react/jsx-runtime') : name === '@deepseek-ai/dsh-client-ui-primitives' ? primitives : (() => { throw new Error(`unexpected require ${name}`) })()))
+  const exports = registered.factory(name => (name === 'react' ? require('react') : name === 'react/jsx-runtime' ? require('react/jsx-runtime') : name === '@deepseek-ai/dsh-client-ui-primitives' ? primitives : name === '@deepseek-ai/dsh-client-ui-conversation/client' ? conversationClient : (() => { throw new Error(`unexpected require ${name}`) })()))
   return { id: registered.id, exports, styleTags }
 }
 
@@ -60,11 +61,11 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     expect(stale, `lib/client.js is older than ${stale.length} source file(s) (${stale.slice(0, 5).join(', ')}): rebuild before trusting the assertions below`).toEqual([])
   })
 
-  it('registers under the package name and requires only react and the app primitives from the loader', () => {
+  it('registers under the package name and requires only react, the app primitives and the conversation client (the phase rule acrylChat reads) from the loader', () => {
     const { id } = loadBuilt()
     expect(id).toBe('@acryl/ui')
     const source = readFileSync(bundlePath, 'utf8')
-    expect([...source.matchAll(/require\("([^"]+)"\)/gu)].map(m => m[1]).sort()).toEqual(['@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'])
+    expect([...source.matchAll(/require\("([^"]+)"\)/gu)].map(m => m[1]).sort()).toEqual(['@deepseek-ai/dsh-client-ui-conversation/client', '@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'])
   })
 
   it('exports exactly the contracted components, helpers and re-exports, plus apply, inject, roles and version', () => {
@@ -91,16 +92,19 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     expect(new Set(styleTags.map(t => t.pluginCss)).size).toBe(styleTags.length)
   })
 
-  it('apply registers the two extra tokens with the theme service (light and dark) and removes them with the plugin', () => {
+  it('apply registers the two extra tokens with the theme service (light and dark), provides acrylChat, and removes both with the plugin', () => {
     const { exports } = loadBuilt()
     const registered: Array<{ source: string, tokens: Record<string, { light: string, dark: string }> }> = []
+    const provided: string[] = []
     let disposed = 0
-    const ctx = { theme: { overrideTokens: (source: string, tokens: Record<string, { light: string, dark: string }>) => { registered.push({ source, tokens }); return () => { disposed += 1 } } }, effect: (fn: () => () => void) => fn() }
+    const reflect = { provide: (name: string) => { provided.push(name); return () => { disposed += 1 } } }
+    const ctx = { theme: { overrideTokens: (source: string, tokens: Record<string, { light: string, dark: string }>) => { registered.push({ source, tokens }); return () => { disposed += 1 } } }, effect: (fn: () => () => void) => fn(), reflect }
     ;(exports.apply as (c: unknown) => void)(ctx)
+    expect(provided).toEqual(['acrylChat'])
     expect(registered).toHaveLength(1); expect(registered[0]?.source).toBe('@acryl/ui')
     expect(Object.keys(registered[0]?.tokens ?? {}).sort()).toEqual(['--acryl-accent', '--acryl-reasoning'])
     for (const pair of Object.values(registered[0]?.tokens ?? {})) { expect(pair.light).toMatch(/^#[0-9A-Fa-f]{6}$/u); expect(pair.dark).toMatch(/^#[0-9A-Fa-f]{6}$/u) }
     expect(disposed).toBe(0)
-    ;(exports.apply as (c: unknown) => void)({})   // a client without a theme service is not an error
+    ;(exports.apply as (c: unknown) => void)({ effect: ctx.effect, reflect })   // a client without a theme service is not an error
   })
 })
