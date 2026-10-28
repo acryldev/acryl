@@ -1,3 +1,25 @@
+## 2026-10-28 - acrylblends 1.0 is on `latest`, and ACRYL adopts it (spec 049 M10)
+
+Commits: `1ace2620` (the bump), and the docs commit that carries this entry.
+
+- **Bumped:** every package that depends on acrylblends moves to `^1.0.0` (17 manifests). The lock holds one instance with the same peers as 0.11.0
+  (cordis 4.0.4, schemastery 3.18.4, react 18.3.1, vitest 4.1.11, ws 8.22.0), so the 1.0 export cut - App/AppRequest, acryl-base, utils/* and the
+  seven serverless/edge adapters - pulled no dependency changes. All 20 distinct specifiers ACRYL imports resolve in the published package (98 exports),
+  including the four an earlier hand count missed (cordis/state, http-exception, schema-validator, trailing-slash).
+- **The release-age policy needs a temporary entry:** 1.0.0 was published 2026-10-28 19:15 CET, inside the 24 h window, so
+  `minimumReleaseAgeExclude` holds `acrylblends@1.0.0` (in the combined selector form while the lock still named 0.11.0) and the 0.11.0 entry is gone.
+  A later commit removes the 1.0.0 line once the release is older than the window; CI's frozen installs need it until then.
+- **pnpm 11.11.0 note:** its `install --lockfile-only` reports success but leaves the lock unchanged, also with `pnpm update --lockfile-only`. The 11.8.0
+  binary (`~/.cache/node/corepack/v1/pnpm/11.8.0/bin/pnpm.cjs`, with `--no-frozen-lockfile --ignore-scripts
+  --config.manage-package-manager-versions=false`) rewrites it correctly, and `corepack pnpm install --frozen-lockfile` at the repo's 11.11.0 accepts the
+  result. Measured on both the 1.0.0 release candidate bump and this one.
+- **M10 met:** target 2026-10-30 12:00 CET (defined in acrylblends `docs/plans/framework-1-0-readiness.md`); met 2026-10-28 19:15 CET, about 41 h early.
+  Evidence: shasum `145fb2c9745d5b8935f650f3b94500fbb969d4f5`, `latest` and `next` both 1.0.0, 98 exports; Blends' release evidence in
+  `docs/plans/release-evidence-1-0.md`. 1.0.1 follows as a patch with a security default: the agent template's `agent`, `builder` and `extensions` rows
+  are off in production.
+- **Verified:** the full gate under `with-build-lock` and ACRYL's four workflows on the branch's top commit; the reach of the bump is the whole workspace,
+  and the guard confirmed the gate wrote no real home.
+
 ## 2026-10-28 (latest) - tests cannot write the real ACRYL homes any more (spec 048 T011 follow-up)
 
 Commits: `bf5841d6` (this change), `e429ed44` (the surface-parity flake, on main, recorded below with what its one timeout turned out to be).
