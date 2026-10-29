@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions, deployArguments, deployEnvironment } from './cli-archive-platform.mjs'
+import { tarCommand } from './lib/portable-commands.mjs'
 import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { verifyArtifactManifest, inspectDirectory } from './inspect-artifact.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
@@ -43,7 +44,7 @@ async function main() {
     mkdirSync(join(archiveDir, 'runtime', 'bin'), { recursive: true })
     const nodeArchive = join(tmpdir(), `${nodeDist.basename}.${nodeDist.extension}`)
     run('curl', ['-fsSL', '-o', nodeArchive, `https://nodejs.org/dist/v${nodeVersion}/${nodeDist.basename}.${nodeDist.extension}`])
-    run('tar', ['-xf', nodeArchive, '-C', staging])
+    run(tarCommand(), ['-xf', nodeArchive, '-C', staging])
     copyFileSync(join(staging, nodeDist.basename, spec.windows ? 'node.exe' : 'bin/node'), join(archiveDir, 'runtime', 'bin', spec.windows ? 'node.exe' : 'node'))
     const launcher = join(archiveDir, 'runtime', 'bin', spec.windows ? 'acryl-web.cmd' : 'acryl-web')
     writeFileSync(launcher, spec.windows
@@ -69,7 +70,7 @@ async function main() {
     }, inspectDirectory(archiveDir, directoryEntries))
     mkdirSync(outDir, { recursive: true })
     const archive = join(outDir, archiveName)
-    run('tar', ['-czf', archive, '-C', staging, `acryl-web-${target}`])
+    run(tarCommand(), ['-czf', archive, '-C', staging, `acryl-web-${target}`])
     const receipt = artifactReceipt({ version, target, archive: `${releaseBaseUrl}/${archiveName}`, sha256: sha256(archive) })
     writeFileSync(join(outDir, `${archiveName}.receipt.json`), `${JSON.stringify(receipt, null, 2)}\n`)
     const checksums = join(outDir, 'checksums.txt')

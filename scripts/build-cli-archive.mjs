@@ -21,6 +21,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions, deployArguments, deployEnvironment } from './cli-archive-platform.mjs'
+import { tarCommand } from './lib/portable-commands.mjs'
 import { flattenNodeModules } from './flatten-node-modules.mjs'
 import { pruneTargetNative } from './prune-target-native.mjs'
 import { pruneReleasePayload } from './prune-release-payload.mjs'
@@ -156,8 +157,8 @@ async function main() {
     // 4. Archive + checksum.
     mkdirSync(outDir, { recursive: true })
     const archivePath = join(outDir, archiveName)
-    if (windows) run('tar', ['-a', '-c', '-f', archivePath, '-C', staging, `acryl-cli-${target}`])
-    else run('tar', ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
+    if (windows) run(tarCommand(), ['-a', '-c', '-f', archivePath, '-C', staging, `acryl-cli-${target}`])
+    else run(tarCommand(), ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
     const checksumPath = join(outDir, 'checksums.txt')
     const line = `${sha256File(archivePath)}  ${archiveName}`
     const existing = existsSync(checksumPath)
