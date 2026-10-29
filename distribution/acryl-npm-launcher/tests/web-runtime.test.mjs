@@ -4,9 +4,15 @@ import { mkdtempSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test, { afterEach } from 'node:test'
+import { createServer } from 'node:http'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { RELEASE_MANIFEST_NAME } from '../release-contract.js'
 import {
   acquireWebRuntime,
   confirmWebAcquisition,
+  fetchReleaseManifest,
+  manifestUrl,
   selectWebArtifact,
   webRuntimeCommand,
 } from '../web-runtime.js'
@@ -96,4 +102,29 @@ test('starts the Web runtime through its launcher, and on Windows runs what the 
   // The .cmd the Web archive ships (scripts/build-web-archive.mjs) must keep running the same thing.
   const builder = readFileSync(new URL('../../../scripts/build-web-archive.mjs', import.meta.url), 'utf8')
   assert.ok(builder.includes(String.raw`'@echo off\r\n"%~dp0node.exe" "%~dp0..\\..\\lib\\bin.js" %*\r\n'`))
+})
+
+test('looks for the release manifest under the name the release uploads it with', () => {
+  const workflow = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '.github', 'workflows', 'release-cli.yml'), 'utf8')
+  assert.match(workflow, new RegExp(`path: artifacts/${RELEASE_MANIFEST_NAME.replaceAll('.', '\\.')}\\n`, 'u'))
+  assert.equal(manifestUrl('1.2.3', {}), `https://github.com/acryldev/acryl/releases/download/v1.2.3/${RELEASE_MANIFEST_NAME}`)
+})
+
+// GitHub answers every release download with a redirect to its asset host, so a Web runtime is only reachable through one.
+test('fetches the manifest and the Web archive through the redirects a release download answers with', async () => {
+  const served = { ...manifest, artifacts: [{ ...artifact, location: 'web.tgz', receipt: { ...artifact.receipt, location: 'web.tgz' } }] }
+  const server = createServer((request, response) => {
+    if (request.url === `/download/v${version}/${RELEASE_MANIFEST_NAME}`) response.writeHead(302, { location: '/assets/manifest' }).end()
+    else if (request.url === `/download/v${version}/web.tgz`) response.writeHead(302, { location: '/assets/web' }).end()
+    else if (request.url === '/assets/manifest') response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(served))
+    else if (request.url === '/assets/web') response.writeHead(200).end(contents)
+    else response.writeHead(404).end()
+  })
+  await new Promise(done => server.listen(0, '127.0.0.1', done))
+  try {
+    const url = manifestUrl(version, { ACRYL_RELEASE_MANIFEST_URL: `http://127.0.0.1:${String(server.address().port)}/download/v${version}/${RELEASE_MANIFEST_NAME}` })
+    const fetched = await fetchReleaseManifest(url)
+    const result = await acquireWebRuntime({ root: store(), version, target, manifest: fetched, extract: extractor })
+    assert.equal(readFileSync(join(result.root, 'ready'), 'utf8'), 'ready')
+  } finally { await new Promise(done => server.close(done)) }
 })

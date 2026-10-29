@@ -55,6 +55,32 @@ describe('serveWeb', () => {
     expect(url.searchParams.get('token')).toBeTruthy()
   }, 30000)
 
+  it('takes a second stop signal calmly while it disposes, and lets go of its signal handlers once it has stopped', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-web-stop-'))
+    temporaryHomes.push(home)
+    process.env.ACRYL_HOME = home
+    const before = { SIGINT: process.listenerCount('SIGINT'), SIGTERM: process.listenerCount('SIGTERM') }
+    const write = process.stdout.write.bind(process.stdout)
+    let printed: () => void = () => {}
+    const ready = new Promise<void>(resolve => { printed = resolve })
+    process.stdout.write = ((chunk: string | Uint8Array, ...rest: never[]) => {
+      if (String(chunk).startsWith('ACRYL web: ')) printed()
+      return write(chunk, ...rest)
+    }) as typeof process.stdout.write
+    try {
+      const served = serveWeb({ cmdlineArgs: ['--no-open', '--port', '0'] })
+      await ready
+      process.emit('SIGINT')
+      // Still listening while the host disposes: a real second SIGINT here would otherwise take its default action and end the process.
+      expect(process.listenerCount('SIGINT')).toBe(before.SIGINT + 1)
+      process.emit('SIGINT')
+      await served
+      expect({ SIGINT: process.listenerCount('SIGINT'), SIGTERM: process.listenerCount('SIGTERM') }).toEqual(before)
+    } finally {
+      process.stdout.write = write
+    }
+  }, 30000)
+
   it('serves beyond loopback when the instance asks (a container behind a proxy): all interfaces, trusted proxy names, a printable URL', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-web-access-'))
     temporaryHomes.push(home)

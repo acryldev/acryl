@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 export const RECEIPT_SCHEMA_VERSION = 1
+export const RELEASE_MANIFEST_NAME = 'acryl-release-manifest.json'
 
 // darwin-x64 is intentionally absent: GitHub's macos-14 runners are arm64 and
 // cannot cross-compile sharp/koffi's native binaries for x64, so the CLI is
@@ -31,13 +32,16 @@ export function sha256(value) {
   return createHash('sha256').update(value).digest('hex')
 }
 
+/** A payload file's name in the receipt: forward slashes on every platform, so a receipt made on one machine validates on another. */
+export function payloadPath(path) { return path.replaceAll('\\', '/') }
+
 /** Hash a prepared runtime tree in a stable, receipt-excluding form. */
 export function payloadSha256(directory) {
   const entries = []
   const visit = current => {
     for (const entry of readdirSync(current)) {
       const absolute = join(current, entry)
-      const path = relative(directory, absolute).replaceAll('\\\\', '/')
+      const path = payloadPath(relative(directory, absolute))
       if (path === 'receipt.json') continue
       // npm strips .npmignore/.gitignore/.npmrc when packing a vendored
       // node_modules, so exclude them from the payload hash or the installed

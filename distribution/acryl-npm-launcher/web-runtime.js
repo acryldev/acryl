@@ -10,6 +10,7 @@ import {
 } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { RELEASE_MANIFEST_NAME } from './release-contract.js'
 
 const RECEIPT_NAME = '.acryl-web-runtime.json'
 const DEFAULT_RELEASE = 'https://github.com/acryldev/acryl/releases/download'
@@ -23,7 +24,7 @@ export function managedWebRoot(env = process.env) {
 }
 
 export function manifestUrl(version, env = process.env) {
-  return env.ACRYL_RELEASE_MANIFEST_URL ?? `${DEFAULT_RELEASE}/v${version}/release-manifest.json`
+  return env.ACRYL_RELEASE_MANIFEST_URL ?? `${DEFAULT_RELEASE}/v${version}/${RELEASE_MANIFEST_NAME}`
 }
 
 export function confirmWebAcquisition({ yes, interactive, confirm }) {
@@ -84,7 +85,8 @@ function defaultExtract(archive, destination) {
 }
 
 async function defaultDownload(url) {
-  const response = await fetch(url, { redirect: 'error' })
+  // GitHub answers a release download with a redirect to its asset host; the archive is checked against the manifest's SHA-256 either way.
+  const response = await fetch(url, { redirect: 'follow' })
   if (!response.ok) fail(`Web artifact download failed: ${response.status} ${response.statusText}`)
   return Buffer.from(await response.arrayBuffer())
 }
@@ -137,7 +139,7 @@ export async function acquireWebRuntime({
 }
 
 export async function fetchReleaseManifest(url = manifestUrl('unknown')) {
-  const response = await fetch(url, { redirect: 'error' })
+  const response = await fetch(url, { redirect: 'follow' })
   if (!response.ok) fail(`release manifest lookup failed: ${response.status} ${response.statusText}`)
   try {
     const manifest = await response.json()

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stderr } from 'node:process'
-import { runtimeCommand, runtimeLauncher, targetFor } from './runtime.js'
+import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor } from './runtime.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact, webRuntimeCommand } from './web-runtime.js'
 
@@ -14,11 +14,16 @@ const args = process.argv.slice(2)
 
 function run({ command, args: commandArgs }) {
   const child = spawn(command, commandArgs, { stdio: 'inherit' })
+  const stopForwarding = forwardStopSignals(child)
   child.once('error', cause => {
+    stopForwarding()
     console.error(`acryl: ${cause.message}`)
     process.exitCode = 1
   })
-  child.once('exit', code => { process.exitCode = code ?? 1 })
+  child.once('exit', code => {
+    stopForwarding()
+    process.exitCode = code ?? 1
+  })
 }
 
 async function confirmDownload() {

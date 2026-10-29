@@ -83,17 +83,20 @@ export async function serveWeb(
   // and `acryl control list` finds the app whichever launcher started it. A second live app on the same instance is refused before it serves anything.
   const instance = ctx.get('appInstance' as never) as AppInstance | undefined
   const announcement = instance === undefined ? undefined : announceSelf(instance, { surface: 'web', port })
-  const stopped = new Promise<void>(resolve => {
-    const onSignal = () => resolve()
-    process.once('SIGINT', onSignal)
-    process.once('SIGTERM', onSignal)
-  })
+  // `on`, not `once`, until disposal ends: a terminal's Ctrl-C reaches this process and the `acryl` launcher that started it, which passes stop
+  // signals on, so a second signal can arrive while the host disposes, and its default action would end the process before it freed the port.
+  let onSignal = () => {}
+  const stopped = new Promise<void>(resolve => { onSignal = () => { resolve() } })
+  process.on('SIGINT', onSignal)
+  process.on('SIGTERM', onSignal)
   process.stdout.write(`ACRYL web: ${url}\n`)
   try {
     await stopped
   } finally {
     announcement?.release()
     await host.dispose()
+    process.off('SIGINT', onSignal)
+    process.off('SIGTERM', onSignal)
   }
   return { url, engine }
 }

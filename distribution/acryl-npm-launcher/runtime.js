@@ -47,3 +47,20 @@ export function runtimeCommand(launcher, args, { platform = process.platform, no
   if (platform !== 'win32') return { command: launcher, args }
   return { command: node, args: ['--expose-internals', join(dirname(dirname(launcher)), 'lib', 'bin.js'), ...args] }
 }
+
+export const STOP_SIGNALS = Object.freeze(['SIGINT', 'SIGTERM', 'SIGHUP'])
+
+/**
+ * Pass the stop signals this process receives on to the runtime it started, and stay alive until that runtime exits. A supervisor or `kill`
+ * signals this process alone, and the runtime (the Web server, holding its port) outlived it. A terminal's Ctrl-C reaches both, so the runtime
+ * gets it twice and must take a repeated signal calmly (apps/acryl-web/src/serve.ts does). On Windows nothing is passed on: the console sends
+ * Ctrl-C to both processes itself, Node can only end a child there, not signal it, and the child is in a job that ends with this process.
+ * @returns {() => void} removes the handlers
+ */
+export function forwardStopSignals(child, { platform = process.platform, host = process } = {}) {
+  const forward = signal => {
+    if (platform !== 'win32' && child.exitCode === null && child.signalCode === null) child.kill(signal)
+  }
+  for (const signal of STOP_SIGNALS) host.on(signal, forward)
+  return () => { for (const signal of STOP_SIGNALS) host.off(signal, forward) }
+}

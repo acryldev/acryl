@@ -3,8 +3,9 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { payloadSha256, receiptFor } from '../release-contract.js'
-import { runtimeCommand, runtimeLauncher, targetPackageName, targetFor } from '../runtime.js'
+import { payloadPath, payloadSha256, receiptFor } from '../release-contract.js'
+import { EventEmitter } from 'node:events'
+import { forwardStopSignals, runtimeCommand, runtimeLauncher, STOP_SIGNALS, targetPackageName, targetFor } from '../runtime.js'
 
 const version = '0.1.19'
 
@@ -62,4 +63,43 @@ test('starts the CLI runtime through its launcher, and on Windows runs what the 
   // The .cmd in the archive must keep running the same thing, or the two ways of starting the CLI drift apart.
   const cmd = readFileSync(new URL('../../../apps/acryl-cli/scripts/acryl-cli-launcher.cmd', import.meta.url), 'utf8')
   assert.match(cmd, /^node --expose-internals "%DIR%\.\.\\lib\\bin\.js" %\*\r?$/mu)
+})
+
+// The receipt of a Windows runtime is made on one machine and checked on another, so its file names must not depend on the separator.
+test('names payload files with forward slashes on every platform', () => {
+  assert.equal(payloadPath('node_modules\\koffi\\index.js'), 'node_modules/koffi/index.js')
+  assert.equal(payloadPath('node_modules/koffi/index.js'), 'node_modules/koffi/index.js')
+})
+
+test('leaves out what npm pack strips from a vendored node_modules, so the installed runtime still matches its receipt', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'acryl-payload-'))
+  try {
+    mkdirSync(join(directory, 'node_modules', 'koffi'), { recursive: true })
+    writeFileSync(join(directory, 'node_modules', 'koffi', 'index.js'), 'export {}\n')
+    const packed = payloadSha256(directory)
+    writeFileSync(join(directory, 'node_modules', 'koffi', '.npmignore'), 'src\n')
+    writeFileSync(join(directory, 'node_modules', 'koffi', '.gitignore'), 'build\n')
+    assert.equal(payloadSha256(directory), packed)
+  } finally { rmSync(directory, { recursive: true, force: true }) }
+})
+
+test('passes stop signals on to the runtime while it runs, not on Windows, and lets go of them when asked', () => {
+  const started = () => { const kills = []; return { kills, child: { exitCode: null, signalCode: null, kill: signal => { kills.push(signal) } } } }
+  const host = new EventEmitter()
+  const posix = started()
+  const stop = forwardStopSignals(posix.child, { platform: 'linux', host })
+  for (const signal of STOP_SIGNALS) host.emit(signal, signal)
+  assert.deepEqual(posix.kills, ['SIGINT', 'SIGTERM', 'SIGHUP'])
+  posix.child.exitCode = 0
+  host.emit('SIGTERM', 'SIGTERM')
+  assert.deepEqual(posix.kills, ['SIGINT', 'SIGTERM', 'SIGHUP'], 'an exited runtime is not signalled')
+  stop()
+  for (const signal of STOP_SIGNALS) assert.equal(host.listenerCount(signal), 0)
+
+  const windows = started()
+  const stopWindows = forwardStopSignals(windows.child, { platform: 'win32', host })
+  host.emit('SIGINT', 'SIGINT')
+  assert.deepEqual(windows.kills, [], 'Windows: the console already sent Ctrl-C to the runtime, and kill() there would end it at once')
+  assert.equal(host.listenerCount('SIGINT'), 1, 'Windows: the launcher still waits for the runtime instead of exiting first')
+  stopWindows()
 })
