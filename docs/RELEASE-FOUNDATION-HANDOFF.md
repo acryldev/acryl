@@ -53,7 +53,7 @@ versions, and the npm packages are published at that version.
 # 3. Commit "chore(release): bump to <new>" and land it on main.
 # 4. Tag v<new> on that commit and push the tag: CLI + Web archives, Desktop, manifest, npm (the 4 acryl-cli-<target> packages, then the
 #    acryl selector), then the GitHub release. About 30 minutes. Before npm publish a failed run may be fixed and the tag recreated; never after.
-# 5. Confirm: npm view acryl version == <new> (the target tarballs can lag 20-35 minutes), a clean install on the three OSes, the release
+# 5. Confirm: npm view acryl version == <new> (the target tarballs can lag 10-35 minutes behind it: curl -I each acryl-cli-<target> tarball until it answers 200), a clean install on the three OSes, the release
 #    marked Latest with no draft left, release notes, node scripts/sync-release-readme.mjs v<new>, and the DEVELOPMENT-LOG entry.
 ```
 
