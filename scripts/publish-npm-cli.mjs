@@ -18,6 +18,11 @@ const packOnly = packOnlyIndex !== -1
 const outDir = resolve(packOnly ? (process.argv[packOnlyIndex + 1] ?? '.') : process.env.ACRYL_NPM_OUT_DIR ?? 'release-artifacts/npm')
 const artifactDir = resolve(process.env.ACRYL_CLI_ARTIFACT_DIR ?? join(root, 'release-artifacts'))
 const printManifests = process.argv.includes('--print-manifests')
+// --only <target>: pack that target's runtime and the selector, from that one archive (the npm round trip on one machine, scripts/npm-round-trip.mjs).
+const onlyIndex = process.argv.indexOf('--only')
+const only = onlyIndex === -1 ? undefined : process.argv[onlyIndex + 1]
+if (only !== undefined && !CLI_TARGETS[only]) throw new Error(`publish-npm-cli: --only needs one of ${Object.keys(CLI_TARGETS).join(', ')}`)
+const packedTargets = only === undefined ? Object.keys(CLI_TARGETS) : [only]
 const staging = mkdtempSync(join(tmpdir(), 'acryl-npm-'))
 
 function targetManifest(target) {
@@ -70,7 +75,7 @@ function pack(directory) {
 try {
   if (printManifests) {
     console.log(JSON.stringify({ selector: selectorManifest(), targets: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [target, targetManifest(target)])) }))
-  } else for (const target of Object.keys(CLI_TARGETS)) {
+  } else for (const target of packedTargets) {
     const directory = join(staging, targetPackageName(target))
     const runtime = extractRuntime(target, directory)
     // The archive root is the npm package's runtime payload.

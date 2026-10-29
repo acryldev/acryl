@@ -66,3 +66,8 @@ jobs:
       # (the stale list here failed every push once `acryl-settings` was added).
       - name: Check
         run: corepack pnpm run check
+
+      # The `acryl` npm package as a user installs it (pack, npm install --global, --version, web --yes through a release redirect, stop). 0.2.5 shipped
+      # an `acryl web` that could not find its release; the release's own smoke runs the archive's launcher, never npm. Windows runs it too.
+      - name: npm round trip of the acryl CLI
+        run: node scripts/npm-round-trip.mjs
