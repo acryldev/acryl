@@ -4,7 +4,7 @@
 # network in front of it (a proxy, a port mapping). See README.md next to this file for the contract.
 #
 # Two ways to get the ACRYL web archive (the same portable runtime the GitHub release ships):
-#   docker build -f distribution/acryl-web-container/Dockerfile --build-arg ACRYL_VERSION=0.2.5 .        a published release (default)
+#   docker build -f distribution/acryl-web-container/Dockerfile --build-arg ACRYL_VERSION=0.2.6 .        a published release (default)
 #   docker build -f distribution/acryl-web-container/Dockerfile --build-arg ARCHIVE_SOURCE=source .      built from this checkout (unreleased changes)
 # The build context is the repository root either way; the source build needs a clean tree (`git archive HEAD` piped to `docker build -` works).
 
@@ -13,7 +13,7 @@ ARG NODE_VERSION=24.19.0
 
 # --- the archive, from a published release ---------------------------------------------------------------------------------------------------------------
 FROM debian:bookworm-slim AS archive-release
-ARG ACRYL_VERSION=0.2.5
+ARG ACRYL_VERSION=0.2.6
 ARG TARGETARCH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && rm -rf /var/lib/apt/lists/*
 RUN set -eu; \

@@ -9,7 +9,7 @@ The build context is the repository root.
 
 ```sh
 # from a published release (checks the archive against its release receipt)
-docker build -f distribution/acryl-web-container/Dockerfile --build-arg ACRYL_VERSION=0.2.5 -t acryl-web:0.2.5 .
+docker build -f distribution/acryl-web-container/Dockerfile --build-arg ACRYL_VERSION=0.2.6 -t acryl-web:0.2.6 .
 
 # from this checkout, for changes not released yet (send a clean tree: untracked files and the submodule are not needed)
 git archive HEAD | docker build -f distribution/acryl-web-container/Dockerfile --build-arg ARCHIVE_SOURCE=source -t acryl-web:dev -
