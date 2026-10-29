@@ -1,18 +1,18 @@
-# ACRYL distribution foundation — release handoff
+# ACRYL distribution foundation - release handoff
 
-Status: **the legacy Release Candidate workflow and Windows long-path blocker
-were removed.** The first authoritative non-publishing matrix run exposed a
-Windows CLI archive spawn defect, fixed in `5d268c7` and `02d3ff2`.
-Portable darwin-arm64 CLI archive is proven without host Node. A new
-non-publishing matrix run is required before the next tag.
+Status (2026-10-29): one tag `v<version>` runs `.github/workflows/release-cli.yml`, which builds the 4 CLI and 4 Web archives, calls
+`release-desktop.yml` for the 5 Desktop installers, publishes the npm packages and promotes the GitHub release, and does none of the
+irreversible steps unless every surface built. A `workflow_dispatch` run on `main` is the non-publishing dry run; it must be green before a tag.
+The sections after "Release procedure" below are the history of the first release work and name the workflow by its old file name.
 
 ## Remaining verification
 
-1. **NPM clean-install verification** — run an isolated `npm install -g acryl`
-   smoke against the published package.
-2. **Authoritative release matrix** — run `.github/workflows/release.yml` through
-   `workflow_dispatch` and require every desktop and CLI target to pass before
-   creating another tag.
+1. **npm round trip** - `scripts/npm-round-trip.mjs` packs this machine's CLI target and the selector, installs them with
+   `npm install --global` into a scratch prefix, and runs `acryl --version` and `acryl web --yes` through a release-style redirect. CI (Linux)
+   and the Windows workflow run it on every change; 0.2.5 shipped a Windows selector that could not start its runtime and an `acryl web` that
+   could not find its release, because the release smoke runs each archive's launcher, never npm.
+2. **After publishing** - a clean `npm install -g acryl` with `acryl --version`, `acryl web --yes` and `acryl control list` on macOS, Windows
+   and Linux.
 
 ## Verified deliverables (goal's completion list)
 
@@ -42,40 +42,31 @@ non-publishing matrix run is required before the next tag.
 
 ## Release procedure (version-synced; npm auto-published)
 
-The release tag is the **single source of truth** for the version. The workflow
-now enforces that the tag, the five workspace package versions, and the npm
-package all match — a mismatch fails the release.
+The release tag is the single source of truth for the version. The workflow's manifest job checks that the tag equals all seven package
+versions, and the npm packages are published at that version.
 
 ```sh
-# 1. Bump the five core package versions <old> -> <new> (they must all be equal):
-#    package.json, acryl-cli, acryl-harness-runtime, acryl-control, acryl-desktop
-# 2. Commit "release: bump workspace packages to v<new>", push main.
-# 3. Tag v<new>, push tag -> Release workflow runs build + cli + npm-publish + release.
-# 4. Watch: every matrix job must verify green; any failure stops the release,
-#    and the version-sync guards fail the job if tag != workspace package version.
-# 5. Confirm assets: acryl-desktop-* (DMG/EXE/DEB + blockmaps),
-#    acryl-cli-* (5 targets), checksums.txt, README download links synced,
-#    AND that `npm view acryl version` == v<new> (the npm-publish job publishes it).
+# 1. Dry run: gh workflow run release-cli.yml --ref main. Everything but the version check must be green, and the Windows workflow too.
+# 2. Bump the seven package versions <old> -> <new> (they must all be equal), and distribution/acryl-web-container's ARG ACRYL_VERSION:
+#    package.json, runtime/acryl-control, runtime/acryl-harness-runtime, apps/acryl-cli, apps/acryl-web, apps/acryl-desktop,
+#    distribution/acryl-npm-launcher. Check: node scripts/release-manifest.mjs verify-versions <new> <the seven package.json files>
+# 3. Commit "chore(release): bump to <new>" and land it on main.
+# 4. Tag v<new> on that commit and push the tag: CLI + Web archives, Desktop, manifest, npm (the 4 acryl-cli-<target> packages, then the
+#    acryl selector), then the GitHub release. About 30 minutes. Before npm publish a failed run may be fixed and the tag recreated; never after.
+# 5. Confirm: npm view acryl version == <new> (the target tarballs can lag 20-35 minutes), a clean install on the three OSes, the release
+#    marked Latest with no draft left, release notes, node scripts/sync-release-readme.mjs v<new>, and the DEVELOPMENT-LOG entry.
 ```
 
-Prerequisite for the npm auto-publish: a valid `NPM_TOKEN` stored as a GitHub
-Actions secret on the repository. Without it the `npm-publish` job fails; the
-GitHub Release itself is unaffected.
-
-The old `ACRYL_NPM_VERSION` publish override is gone — the npm version must
-always equal the workspace package version, and the workflow verifies the tag
-matches that too.
+Prerequisite for the npm auto-publish: a valid `NPM_TOKEN` stored as a GitHub Actions secret on the repository.
 
 ## Supported targets
 
-- Desktop: macOS ARM64 DMG, macOS Intel DMG, Windows x64 EXE, Linux x64 DEB,
-  Linux ARM64 DEB (`acryl-desktop-*`, version-less, with `.blockmap`).
-- CLI portable: `acryl-cli-darwin-arm64/x64.tar.gz`, `acryl-cli-linux-arm64/x64.tar.gz`,
-  `acryl-cli-windows-x64.zip` + `checksums.txt`.
-- CLI npm: `npm install -g acryl` (canonical, published); `acryldev` / `@webboxes/acryl`
-  are compatibility aliases only.
-- Installer seam: `scripts/acryl-cli-install.sh` (SHA-256 verify, user-owned dir,
-  no sudo/GUI/Web) — not advertised until hosting + release archives + checksums live.
+- Desktop: macOS ARM64 DMG, macOS Intel DMG, Windows x64 EXE, Linux x64 DEB, Linux ARM64 DEB (`acryl-desktop-*`, with `.blockmap`).
+- CLI, 4 targets: darwin-arm64, linux-arm64, linux-x64 (`acryl-cli-<target>.tar.gz`) and windows-x64 (`acryl-cli-windows-x64.zip`). darwin-x64
+  is not built (no x64 macOS runner can build its natives); Intel Mac users build it with `scripts/build-darwin-x64-from-source.sh`.
+- Web, the same 4 targets (`acryl-web-<target>.tar.gz`), downloaded by `acryl web` from the release's `acryl-release-manifest.json`.
+- npm: `npm install -g acryl`, the selector, which installs the matching `acryl-cli-<target>` package as an optional dependency.
+- Installer seam: `apps/acryl-cli/scripts/acryl-cli-install.sh` (SHA-256 verify, user-owned dir, no sudo/GUI/Web), not advertised.
 
 ## Deferred (recorded, not built)
 
@@ -99,6 +90,4 @@ format → `e92b9b3` deferred channels.
 
 ## Next task
 
-Run the authoritative release workflow through `workflow_dispatch`, inspect all
-five desktop and five CLI jobs, then address any target-specific failure before
-authorizing a new tag.
+Release 0.2.6: the dry run on `main`, then the procedure above.

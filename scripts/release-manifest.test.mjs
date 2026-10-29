@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -89,11 +89,13 @@ test('rejects manifest and receipt version, checksum, and baseline drift', () =>
 
 test('rejects absent and tampered receipt artifacts', () => {
   const root = mkdtempSync(join(tmpdir(), 'acryl-release-manifest-'))
-  const valid = receipt('web', 'linux-x64')
-  writeFileSync(join(root, 'receipt.json'), JSON.stringify(valid))
-  assert.throws(() => validateReceiptFiles([join(root, 'receipt.json')]), /location is absent/)
-  writeFileSync(join(root, valid.location), 'tampered')
-  assert.throws(() => validateReceiptFiles([join(root, 'receipt.json')]), /checksum mismatch/)
+  try {
+    const valid = receipt('web', 'linux-x64')
+    writeFileSync(join(root, 'receipt.json'), JSON.stringify(valid))
+    assert.throws(() => validateReceiptFiles([join(root, 'receipt.json')]), /location is absent/)
+    writeFileSync(join(root, valid.location), 'tampered')
+    assert.throws(() => validateReceiptFiles([join(root, 'receipt.json')]), /checksum mismatch/)
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })
 
 test('rejects CLI clean-install size and time budget regressions', () => {

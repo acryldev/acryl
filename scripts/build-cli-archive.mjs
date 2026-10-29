@@ -89,91 +89,95 @@ async function main() {
 
   rmSync(staging, { recursive: true, force: true })
 
-  // 1. Production dependency closure (isolated, hoisted) for the CLI.
-  // Override platform/arch env vars to ensure correct prebuilds are fetched for the target.
-  const platformEnv = spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform
-  run(corepackCommand(process.platform), deployArguments('acryl-cli', archiveDir), {
-    ...corepackSpawnOptions(process.platform),
-    env: deployEnvironment(process.env, { npm_config_platform: platformEnv, npm_config_arch: spec.nodeArch }),
-  })
-  mkdirSync(join(archiveDir, 'bin'), { recursive: true })
-
-  // 2. Launcher: resolves host Node --expose-internals (Cordis HMR boot guard).
-  copyFileSync(launcher, join(archiveDir, 'bin', launcherName))
-  if (!windows) chmodSync(join(archiveDir, 'bin', launcherName), 0o755)
-
-  // 3. Flatten the pnpm isolated (.pnpm symlinked) node_modules to a hoisted,
-  // symlink-free layout. ZIP archives and Windows extractors do not preserve
-  // pnpm's relative symlinks, so an unflattened archive fails to resolve bare
-  // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves
-  // symlinks but a symlink-free tree works on every extractor and platform.
-  flattenNodeModules(archiveDir)
-  // Force recompilation for cross-arch targets by removing ALL native prebuilds.
-  // pnpm rebuild will recompile with target-arch environment variables.
-  const hostArch = process.arch === 'arm64' ? 'arm64' : 'x64'
-  const targetArch = spec.nodeArch === 'arm64' ? 'arm64' : 'x64'
-  if (spec.nodePlatform === 'darwin' && hostArch !== targetArch) {
-    console.log(`Removing all prebuilds before cross-compiling darwin-${hostArch} → darwin-${targetArch}...`)
-    run('find', [archiveDir, '-type', 'f', '-name', '*.node', '-delete'])
-    run('find', [archiveDir, '-type', 'd', '-name', 'prebuilds', '-delete'])
-  }
-  // Rebuild native modules for the target platform. GitHub runners may use
-  // a different arch than the build target (e.g., macos-latest is arm64 but
-  // darwin-x64 target needs x64 binaries). Rebuild recompiles native modules
-  // with explicit cross-compilation flags for the target architecture. Same
-  // condition as the prebuild-deletion step above -- a native-arch build
-  // (host === target, e.g. darwin-arm64 on an arm64 runner) already has
-  // correct prebuilds from the initial `pnpm install` and doesn't need this;
-  // running it anyway hits ERR_PNPM_NO_LOCKFILE, since the flattened archive
-  // dir (`flattenNodeModules` above) never carries pnpm-lock.yaml with it.
-  if (spec.nodePlatform === 'darwin' && hostArch !== targetArch) {
-    console.log(`Rebuilding native modules for ${target}...`)
-    const rebuildEnv = {
-      ...process.env,
-      CI: 'true',
-      npm_config_platform: spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform,
-      npm_config_arch: spec.nodeArch,
-    }
-    run(corepackCommand(process.platform), ['pnpm', 'rebuild', '--prefix', archiveDir], {
+  try {
+    // 1. Production dependency closure (isolated, hoisted) for the CLI.
+    // Override platform/arch env vars to ensure correct prebuilds are fetched for the target.
+    const platformEnv = spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform
+    run(corepackCommand(process.platform), deployArguments('acryl-cli', archiveDir), {
       ...corepackSpawnOptions(process.platform),
-      cwd: archiveDir,
-      env: rebuildEnv,
+      env: deployEnvironment(process.env, { npm_config_platform: platformEnv, npm_config_arch: spec.nodeArch }),
+    })
+    mkdirSync(join(archiveDir, 'bin'), { recursive: true })
+
+    // 2. Launcher: resolves host Node --expose-internals (Cordis HMR boot guard).
+    copyFileSync(launcher, join(archiveDir, 'bin', launcherName))
+    if (!windows) chmodSync(join(archiveDir, 'bin', launcherName), 0o755)
+
+    // 3. Flatten the pnpm isolated (.pnpm symlinked) node_modules to a hoisted,
+    // symlink-free layout. ZIP archives and Windows extractors do not preserve
+    // pnpm's relative symlinks, so an unflattened archive fails to resolve bare
+    // specifiers (e.g. `@deepseek-ai/cordis`) after extraction. Tar.gz preserves
+    // symlinks but a symlink-free tree works on every extractor and platform.
+    flattenNodeModules(archiveDir)
+    // Force recompilation for cross-arch targets by removing ALL native prebuilds.
+    // pnpm rebuild will recompile with target-arch environment variables.
+    const hostArch = process.arch === 'arm64' ? 'arm64' : 'x64'
+    const targetArch = spec.nodeArch === 'arm64' ? 'arm64' : 'x64'
+    if (spec.nodePlatform === 'darwin' && hostArch !== targetArch) {
+      console.log(`Removing all prebuilds before cross-compiling darwin-${hostArch} → darwin-${targetArch}...`)
+      run('find', [archiveDir, '-type', 'f', '-name', '*.node', '-delete'])
+      run('find', [archiveDir, '-type', 'd', '-name', 'prebuilds', '-delete'])
+    }
+    // Rebuild native modules for the target platform. GitHub runners may use
+    // a different arch than the build target (e.g., macos-latest is arm64 but
+    // darwin-x64 target needs x64 binaries). Rebuild recompiles native modules
+    // with explicit cross-compilation flags for the target architecture. Same
+    // condition as the prebuild-deletion step above -- a native-arch build
+    // (host === target, e.g. darwin-arm64 on an arm64 runner) already has
+    // correct prebuilds from the initial `pnpm install` and doesn't need this;
+    // running it anyway hits ERR_PNPM_NO_LOCKFILE, since the flattened archive
+    // dir (`flattenNodeModules` above) never carries pnpm-lock.yaml with it.
+    if (spec.nodePlatform === 'darwin' && hostArch !== targetArch) {
+      console.log(`Rebuilding native modules for ${target}...`)
+      const rebuildEnv = {
+        ...process.env,
+        CI: 'true',
+        npm_config_platform: spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform,
+        npm_config_arch: spec.nodeArch,
+      }
+      run(corepackCommand(process.platform), ['pnpm', 'rebuild', '--prefix', archiveDir], {
+        ...corepackSpawnOptions(process.platform),
+        cwd: archiveDir,
+        env: rebuildEnv,
+      })
+    }
+    pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)
+    pruneReleasePayload(archiveDir)
+    verifyCliRuntimeClosure(archiveDir, target, spec)
+
+    // A receipt binds this prepared, target-specific payload to one release.
+    // It intentionally hashes the runtime tree excluding the receipt itself.
+    writeFileSync(join(archiveDir, 'receipt.json'), `${JSON.stringify(receiptFor({
+      target,
+      version,
+      payloadSha256: payloadSha256(archiveDir),
+    }), null, 2)}\n`)
+
+    // 4. Archive + checksum.
+    mkdirSync(outDir, { recursive: true })
+    const archivePath = join(outDir, archiveName)
+    if (windows) run('tar', ['-a', '-c', '-f', archivePath, '-C', staging, `acryl-cli-${target}`])
+    else run('tar', ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
+    const checksumPath = join(outDir, 'checksums.txt')
+    const line = `${sha256File(archivePath)}  ${archiveName}`
+    const existing = existsSync(checksumPath)
+      ? readFileSync(checksumPath, 'utf8').split('\n').map((l) => l.trimEnd()).filter((l) => l.length > 0 && !l.includes(archiveName))
+      : []
+    writeFileSync(checksumPath, [...existing, line].join('\n') + '\n')
+    console.log(`built ${archivePath}`)
+    console.log(`checksum: ${line}`)
+  } finally {
+    // The staging tree is a full deployed runtime (hundreds of MB); a local build must not leave it in the system temp folder.
+    rmSync(staging, { recursive: true, force: true })
+    // `pnpm deploy --prod` marks the workspace modules state as production-only
+    // (node_modules/.modules.yaml included.devDependencies=false), which prunes
+    // devDependencies on the next install. Restore the full dev graph so a local
+    // run leaves the workspace healthy; CI runners are isolated and unaffected.
+    run(corepackCommand(process.platform), ['pnpm', 'install'], {
+      ...corepackSpawnOptions(process.platform),
+      env: { ...process.env, CI: 'true' },
     })
   }
-  pruneTargetNative(archiveDir, spec.nodePlatform === 'win' ? 'win32' : spec.nodePlatform, spec.nodeArch)
-  pruneReleasePayload(archiveDir)
-  verifyCliRuntimeClosure(archiveDir, target, spec)
-
-  // A receipt binds this prepared, target-specific payload to one release.
-  // It intentionally hashes the runtime tree excluding the receipt itself.
-  writeFileSync(join(archiveDir, 'receipt.json'), `${JSON.stringify(receiptFor({
-    target,
-    version,
-    payloadSha256: payloadSha256(archiveDir),
-  }), null, 2)}\n`)
-
-  // 4. Archive + checksum.
-  mkdirSync(outDir, { recursive: true })
-  const archivePath = join(outDir, archiveName)
-  if (windows) run('tar', ['-a', '-c', '-f', archivePath, '-C', staging, `acryl-cli-${target}`])
-  else run('tar', ['-czf', archivePath, '-C', staging, `acryl-cli-${target}`])
-  const checksumPath = join(outDir, 'checksums.txt')
-  const line = `${sha256File(archivePath)}  ${archiveName}`
-  const existing = existsSync(checksumPath)
-    ? readFileSync(checksumPath, 'utf8').split('\n').map((l) => l.trimEnd()).filter((l) => l.length > 0 && !l.includes(archiveName))
-    : []
-  writeFileSync(checksumPath, [...existing, line].join('\n') + '\n')
-  console.log(`built ${archivePath}`)
-  console.log(`checksum: ${line}`)
-
-  // `pnpm deploy --prod` marks the workspace modules state as production-only
-  // (node_modules/.modules.yaml included.devDependencies=false), which prunes
-  // devDependencies on the next install. Restore the full dev graph so a local
-  // run leaves the workspace healthy; CI runners are isolated and unaffected.
-  run(corepackCommand(process.platform), ['pnpm', 'install'], {
-    ...corepackSpawnOptions(process.platform),
-    env: { ...process.env, CI: 'true' },
-  })
 }
 
 main().catch((cause) => {
