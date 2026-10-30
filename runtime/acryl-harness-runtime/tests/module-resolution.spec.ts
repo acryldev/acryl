@@ -212,6 +212,46 @@ describe('installProfilePackageResolver', () => {
     expect(harness.cjsModule._resolveFilename).toBe(harness.cjsOriginal)
   })
 
+  it('resolves a bare plugin import from the Profile anchor on the overlay-selected side', () => {
+    // dsh-app-boot's root Include resolves every Loader row with the Profile manifest as the CommonJS parent; a fresh Profile
+    // holds no node_modules, so an installation-selected package must be looked up from the installation's own manifest.
+    const profileManifest = resolve('/tmp/dsh-profile/package.json')
+    harness.sources.set('@deepseek-ai/cordis-plugin-timer', 'install')
+    harness.sources.set('profile-plugin', 'profile')
+    const dispose = installProfilePackageResolver(pathToFileURL(profileManifest).href, anchors())
+    const resolveFilename = harness.cjsModule._resolveFilename
+    const options = { conditions: new Set(['node', 'import']) }
+
+    resolveFilename('@deepseek-ai/cordis-plugin-timer', { filename: profileManifest }, false, options)
+    const installCall = harness.cjsOriginal.mock.calls.at(-1)!
+    const installManifest = new URL(installPackageUrl).pathname
+    expect(installCall[1]).toMatchObject({ filename: expect.stringContaining('app.asar') })
+    expect((installCall[1] as { paths: string[] }).paths[0]).toBe(resolve(installManifest, '..', 'node_modules'))
+    expect(installCall[3]).toBe(options)
+
+    resolveFilename('profile-plugin/lib/index.js', { filename: profileManifest }, false, options)
+    expect(harness.cjsOriginal.mock.calls.at(-1)![1]).toEqual({ filename: profileManifest })
+
+    // The file the Loader imports next keeps the Profile fallback for a dependency it cannot find beside itself.
+    const pluginFile = resolve('/install/node_modules/third-party/index.js')
+    harness.cjsOriginal.mockImplementationOnce(() => pluginFile)
+    harness.sources.set('third-party', 'install')
+    expect(resolveFilename('third-party', { filename: profileManifest }, false, options)).toBe(pluginFile)
+    const nextResolve = vi.fn((specifier: string, context: { parentURL?: string }) => {
+      if (context.parentURL !== pathToFileURL(profileManifest).href) throw missing(specifier, context.parentURL)
+      return { url: `file:///profile/node_modules/${specifier}/index.js` }
+    })
+    expect(harness.resolve?.('third-party-dependency', { parentURL: pathToFileURL(pluginFile).href }, nextResolve))
+      .toEqual({ url: 'file:///profile/node_modules/third-party-dependency/index.js' })
+
+    // Relative requests and parents outside the Profile never consult the overlay.
+    harness.overlay.mockClear()
+    resolveFilename('./local.js', { filename: profileManifest }, false)
+    resolveFilename('@deepseek-ai/cordis-plugin-timer', { filename: resolve('/elsewhere/index.js') }, false)
+    expect(harness.overlay).not.toHaveBeenCalled()
+    dispose()
+  })
+
   it('deregisters hooks only once even if the disposer is reused', () => {
     const dispose = installProfilePackageResolver('file:///C:/Users/test/profile/package.json', anchors())
     dispose()

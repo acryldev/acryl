@@ -14,7 +14,8 @@
  */
 
 import Module from 'node:module'
-import { fileURLToPath } from 'node:url'
+import { basename, dirname, isAbsolute, join } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { requireModuleHooks } from './module-hooks.ts'
 import {
   findOverlayPackage,
@@ -29,6 +30,15 @@ interface CommonJsModuleResolver {
     isMain: boolean | undefined,
     options?: unknown,
   ): string
+}
+
+/** Node's CommonJS package lookup list for a directory: every ancestor's node_modules, nearest first. */
+function nodeModulePaths(directory: string): string[] {
+  const paths: string[] = []
+  for (let current = directory; ; current = dirname(current)) {
+    if (basename(current) !== 'node_modules') paths.push(join(current, 'node_modules'))
+    if (dirname(current) === current) return paths
+  }
 }
 
 function packageNameFromManifestSpecifier(specifier: string): string | undefined {
@@ -82,8 +92,14 @@ export function installProfilePackageResolver(
   // only package manifests requested from a parent anchored in this Profile
   // (the manifest itself or a synthetic module under the profile directory);
   // every other CJS resolution remains untouched.
+  // Track the module graph rooted at every overlay-selected Loader package.
+  const overlayModuleUrls = new Set<string>()
   const commonJsModule = Module as unknown as CommonJsModuleResolver
   const previousResolveFilename = commonJsModule._resolveFilename
+  // The parent an installation-selected package resolves from: the installation's own manifest, with Node's node_modules lookup
+  // list from its directory upwards (what `Module._nodeModulePaths` computes).
+  const installManifestPath = fileURLToPath(installPackageUrl)
+  const installParent = { filename: installManifestPath, id: installManifestPath, paths: nodeModulePaths(dirname(installManifestPath)) }
   const overlayResolveFilename: CommonJsModuleResolver['_resolveFilename'] = function (
     this: CommonJsModuleResolver,
     request,
@@ -93,23 +109,30 @@ export function installProfilePackageResolver(
   ) {
     const profileAnchored = parent?.filename !== undefined
       && (parent.filename === profileManifestPath || parent.filename.startsWith(profileDirPath))
-    const packageName = profileAnchored
-      ? packageNameFromManifestSpecifier(request)
-      : undefined
+    const manifestPackage = profileAnchored ? packageNameFromManifestSpecifier(request) : undefined
+    // A bare plugin import from the Profile anchor (dsh-app-boot's root Include resolves every Loader row this way) takes the
+    // same overlay: a package the Profile does not hold, or holds at an older version, comes from the installation. Without
+    // this, a fresh Profile (no node_modules since DSH 0.2 removed the link projections) resolved no plugin at all.
+    const packageName = manifestPackage
+      ?? (profileAnchored && isBareSpecifier(request) ? packageNameFromSpecifier(request) : undefined)
     if (packageName !== undefined) {
       const overlay = findOverlayPackage(packageName, {
         binName,
         installPackageUrl,
         profilePackageUrl: profileBaseUrl,
       })
-      if (overlay !== undefined) return overlay.selected.manifestPath
+      if (overlay !== undefined) {
+        if (manifestPackage !== undefined) return overlay.selected.manifestPath
+        const target = previousResolveFilename.call(
+          this, request, overlay.selected.source === 'install' ? installParent : parent, isMain, resolveOptions)
+        // The Loader imports this file next: its graph gets the Profile fallback for dependencies, as a Loader import through the ESM hook does.
+        if (isAbsolute(target)) overlayModuleUrls.add(pathToFileURL(target).href)
+        return target
+      }
     }
     return previousResolveFilename.call(this, request, parent, isMain, resolveOptions)
   }
   commonJsModule._resolveFilename = overlayResolveFilename
-
-  // Track the module graph rooted at every overlay-selected Loader package.
-  const overlayModuleUrls = new Set<string>()
   const hooks = registerHooks({
     resolve(specifier, context, nextResolve) {
       const fromLoader = context.parentURL === loaderEntryUrl
