@@ -97,9 +97,14 @@ export function installProfilePackageResolver(
   const commonJsModule = Module as unknown as CommonJsModuleResolver
   const previousResolveFilename = commonJsModule._resolveFilename
   // The parent an installation-selected package resolves from: the installation's own manifest, with Node's node_modules lookup
-  // list from its directory upwards (what `Module._nodeModulePaths` computes).
-  const installManifestPath = fileURLToPath(installPackageUrl)
-  const installParent = { filename: installManifestPath, id: installManifestPath, paths: nodeModulePaths(dirname(installManifestPath)) }
+  // list from its directory upwards (what `Module._nodeModulePaths` computes). Made on first use, so installing the resolver converts no path.
+  let installParent: { filename: string, id: string, paths: string[] } | undefined
+  const installParentModule = () => {
+    if (installParent !== undefined) return installParent
+    const installManifestPath = fileURLToPath(installPackageUrl)
+    installParent = { filename: installManifestPath, id: installManifestPath, paths: nodeModulePaths(dirname(installManifestPath)) }
+    return installParent
+  }
   const overlayResolveFilename: CommonJsModuleResolver['_resolveFilename'] = function (
     this: CommonJsModuleResolver,
     request,
@@ -124,7 +129,7 @@ export function installProfilePackageResolver(
       if (overlay !== undefined) {
         if (manifestPackage !== undefined) return overlay.selected.manifestPath
         const target = previousResolveFilename.call(
-          this, request, overlay.selected.source === 'install' ? installParent : parent, isMain, resolveOptions)
+          this, request, overlay.selected.source === 'install' ? installParentModule() : parent, isMain, resolveOptions)
         // The Loader imports this file next: its graph gets the Profile fallback for dependencies, as a Loader import through the ESM hook does.
         if (isAbsolute(target)) overlayModuleUrls.add(pathToFileURL(target).href)
         return target

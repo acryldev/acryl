@@ -65,8 +65,10 @@ vi.mock('../src/package-overlay.ts', () => ({
 const { installProfilePackageResolver } = await import('../src/module-resolution.ts')
 
 const loaderEntryUrl = import.meta.resolve('@deepseek-ai/cordis-plugin-loader')
-const installPackageUrl = 'file:///Applications/DSH.app/Contents/Resources/app.asar/package.json'
-const installEntryUrl = 'file:///Applications/DSH.app/Contents/Resources/app.asar/lib/index.js'
+// Built for the host, like the Profile paths below: a file URL without a drive letter is not a path on Windows.
+const installManifest = resolve('/Applications/DSH.app/Contents/Resources/app.asar/package.json')
+const installPackageUrl = pathToFileURL(installManifest).href
+const installEntryUrl = pathToFileURL(resolve(installManifest, '..', 'lib', 'index.js')).href
 
 function anchors(): Parameters<typeof installProfilePackageResolver>[1] {
   return { binName: 'test-app', installPackageUrl, installEntryUrl, loaderEntryUrl }
@@ -224,7 +226,6 @@ describe('installProfilePackageResolver', () => {
 
     resolveFilename('@deepseek-ai/cordis-plugin-timer', { filename: profileManifest }, false, options)
     const installCall = harness.cjsOriginal.mock.calls.at(-1)!
-    const installManifest = new URL(installPackageUrl).pathname
     expect(installCall[1]).toMatchObject({ filename: expect.stringContaining('app.asar') })
     expect((installCall[1] as { paths: string[] }).paths[0]).toBe(resolve(installManifest, '..', 'node_modules'))
     expect(installCall[3]).toBe(options)
