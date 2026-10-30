@@ -240,6 +240,19 @@ try {
   }
   await runtime.mountScheduled()
 
+  // A row whose module never imported is a broken composition, not a warning: the boot only reports it, and on 2026-10-30 this check
+  // passed on Linux with two rows unimported (acryl-sign-in, the third-party smoke) while on macOS 178 rows failed and Desktop could not start.
+  // Rows waiting on a service the smoke does not provide stay PENDING and are allowed.
+  const unimported = []
+  for (const entry of ctx.loader.entries()) {
+    let disabled = false
+    try { disabled = entry.disabled } catch { disabled = false }
+    if (!disabled && entry.fiber === undefined) unimported.push(`${entry.options.id} (${entry.options.name})`)
+  }
+  if (unimported.length > 0) {
+    throw new Error(`${unimported.length} Loader row(s) failed to import: ${unimported.join(', ')}`)
+  }
+
   const desktopEntry = ctx.loader.resolve('include:desktop-shell')
   const marketEntry = ctx.loader.resolve('include:community-market')
   const thirdPartyEntry = ctx.loader.resolve('include:third-party-smoke')
