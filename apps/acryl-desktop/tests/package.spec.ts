@@ -642,6 +642,9 @@ describe('published package surface', () => {
       // The build runs under the checkout's build lock (scripts/lib/build-lock.mjs), so a launch and a gate in one tree never rewrite lib/ at the same time.
       .toBe('node ../../scripts/with-build-lock.mjs pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
     expect(manifest.scripts?.check).not.toContain('pnpm run build:canvas')
+    // Every workspace package Desktop depends on, from the dependency graph: a hand-written list left acryl-sign-in unbuilt on a fresh checkout,
+    // and `pnpm desktop` failed to import it.
+    expect(manifest.scripts?.prebuild).toBe('pnpm --filter "acryl-desktop^..." --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['package:dir'])
       .toBe('pnpm run build && node scripts/package-dir.mjs')
     expect(packageDir).toContain("CSC_IDENTITY_AUTO_DISCOVERY: 'false'")
