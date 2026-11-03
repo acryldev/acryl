@@ -69,8 +69,8 @@ section { display: grid; gap: 14px; min-width: 0; }
 /* ---------- the mock window ---------- */
 .stage { overflow-x: auto; border-radius: 12px; }
 .win {
-  --lw: 248px; --rw: 380px;
-  min-width: 980px; height: 600px; background: var(--bg); color: #e8e8ea;
+  --lw: 248px; --rw: 412px;
+  min-width: 1010px; height: 600px; background: var(--bg); color: #e8e8ea;
   border: 1px solid #2a2a2f; border-radius: 12px; overflow: hidden;
   display: grid; grid-template-rows: 38px 1fr; font-size: 13px;
   color-scheme: dark;
@@ -135,7 +135,7 @@ section { display: grid; gap: 14px; min-width: 0; }
 .term { flex: 1; background: #0a0a0b; padding: 12px; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: #cfcfd4; display: none; }
 .files, .file, .git { flex: 1; overflow: auto; padding: 10px 8px; display: none; }
 .win[data-rtab="term"] .term, .win[data-rtab="files"] .files, .win[data-rtab="file"] .file, .win[data-rtab="git"] .git { display: block; }
-.win:not([data-rtab="chat"]) .chat, .win:not([data-rtab="chat"]) .composer { display: none; }
+.win:not([data-rtab="chat"]) .chat, .win:not([data-rtab="chat"]) .composer, .win:not([data-rtab="chat"]) .chathead { display: none; }
 .frow { display: flex; gap: 8px; align-items: center; padding: 4px 8px; border-radius: 5px; color: #d4d4da; cursor: default; }
 .frow.i2 { padding-left: 24px; }
 .frow.sel { background: var(--accent-dim); color: #fff; cursor: pointer; }
@@ -145,7 +145,8 @@ section { display: grid; gap: 14px; min-width: 0; }
 .file pre { margin: 0; font: 12px/1.6 ui-monospace, "SF Mono", Menlo, monospace; color: #d6d6dc; white-space: pre; }
 .file .ln { color: #55555c; display: inline-block; width: 22px; }
 .menu .mh { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); padding: 6px 8px 2px; }
-.tab { padding: 6px 8px; }
+.tab { padding: 6px 7px; }
+.smallbtn { white-space: nowrap; }
 .win[data-mode="production"] .task.hl, .win[data-mode="preview"] .task.hl { outline: 0; }
 .win[data-feedback="on"][data-mode="production"] .task.picked { outline: 2px dashed var(--warn); outline-offset: 2px; }
 .win[data-feedback="on"][data-mode="production"] .task.picked::before { content: "Picked: task card"; position: absolute; right: 22px; top: 8px; background: var(--warn); color: #1d1c1a; font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
@@ -174,7 +175,7 @@ section { display: grid; gap: 14px; min-width: 0; }
 .win[data-feedback="on"][data-mode="production"] .pin { display: grid; }
 .fbbtn { position: absolute; right: 16px; bottom: 16px; background: var(--app-ink); color: #fff; border-radius: 99px; padding: 8px 14px; font-size: 12.5px; display: none; }
 .win[data-feedback="on"][data-mode="production"] .fbbtn { display: block; }
-.fbpop { position: absolute; right: 16px; bottom: 58px; width: 250px; background: #fff; color: var(--app-ink); border: 1px solid var(--app-line); border-radius: 10px; padding: 10px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.18); font-size: 12.5px; display: none; }
+.fbpop { position: absolute; right: 16px; bottom: 58px; width: 320px; background: #fff; color: var(--app-ink); border: 1px solid var(--app-line); border-radius: 10px; padding: 10px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.18); font-size: 12.5px; display: none; }
 .win[data-feedback="on"][data-mode="production"] .fbpop { display: block; }
 .fbpop .ta { border: 1px solid var(--app-line); border-radius: 6px; padding: 6px 8px; margin: 6px 0; color: var(--app-ink); }
 .fbpop .row2 { display: flex; justify-content: space-between; align-items: center; color: var(--app-dim); font-size: 11px; }
@@ -190,6 +191,101 @@ section { display: grid; gap: 14px; min-width: 0; }
 .win[data-mode="production"] { grid-template-rows: 1fr; }
 .win[data-mode="production"] .bar { display: none; }
 .produrl { display: none; }
+
+/* left panel branch tree */
+.br { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; color: #e2e2e6; font-weight: 600; white-space: nowrap; }
+.br .car { width: 10px; color: var(--dim); font-weight: 400; }
+.br svg { width: 13px; height: 13px; color: var(--dim); flex: none; }
+.br .meta { margin-left: auto; color: var(--dim); font-size: 11px; font-weight: 400; }
+.it { display: flex; align-items: center; gap: 7px; padding: 4px 8px 4px 30px; border-radius: 6px; color: #cfcfd6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.it:hover { background: var(--surface-2); }
+.it.on { background: var(--accent-dim); color: #fff; }
+.it .ic { width: 16px; font: 10px ui-monospace, Menlo, monospace; color: var(--dim); text-align: center; flex: none; }
+.it .meta { margin-left: auto; color: var(--dim); font-size: 11px; }
+/* chat history */
+.chathead { display: flex; align-items: center; gap: 8px; padding: 8px 10px 0; }
+.histbtn { font: inherit; font-size: 11.5px; color: #c8c8d0; background: transparent; border: 1px solid #2f2f35; border-radius: 6px; padding: 2px 8px; cursor: pointer; display: flex; gap: 5px; align-items: center; }
+.histbtn[aria-pressed="true"] { background: var(--accent-dim); color: #fff; border-color: var(--accent); }
+.chathead .title { color: var(--dim); font-size: 11.5px; }
+.hist { display: none; flex: 1; overflow: auto; padding: 8px 10px; }
+.win[data-hist="on"][data-rtab="chat"] .hist { display: block; }
+.win[data-hist="on"] .chat, .win[data-hist="on"] .composer { display: none !important; }
+.hsearch { border: 1px solid #34343a; border-radius: 7px; padding: 5px 9px; color: var(--dim); margin-bottom: 8px; }
+.hrow { padding: 7px 9px; border-radius: 6px; display: grid; gap: 1px; }
+.hrow:hover { background: var(--surface-2); }
+.hrow small { color: var(--dim); font-size: 11px; }
+.hgroup { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); padding: 8px 9px 3px; }
+/* a PTY agent tab: the TUI as it is */
+.tui { display: none; flex: 1; background: #0a0a0b; padding: 12px; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: #cfcfd4; overflow: hidden; }
+.win[data-rtab="claude"] .tui { display: block; }
+.tui .box { border: 1px solid #d97757; border-radius: 6px; padding: 6px 10px; color: #d97757; margin-bottom: 10px; }
+.tui .dimt { color: #6b6b73; }
+.tui .acc { color: #d97757; }
+.tui .grn { color: #6cc28a; }
+.tui .prompt { border: 1px solid #3a3a40; border-radius: 6px; padding: 6px 10px; margin-top: 10px; }
+.ptynote { display: none; font-size: 11px; color: var(--dim); padding: 6px 12px; border-top: 1px solid #2a2a2f; }
+.win[data-rtab="claude"] .ptynote { display: block; }
+/* files: fuzzy search */
+.fsearch { border: 1px solid var(--accent); border-radius: 7px; padding: 5px 9px; margin: 0 0 8px; color: #fff; display: flex; gap: 8px; }
+.fsearch kbd { margin-left: auto; font: 10.5px ui-monospace, Menlo, monospace; color: var(--dim); }
+.fres { margin-bottom: 10px; border-bottom: 1px solid #2a2a2f; padding-bottom: 8px; }
+.fres .frow b { color: var(--warn); font-weight: 600; }
+.fres .frow .meta { font-size: 10.5px; }
+/* syntax colours (One Dark-like) */
+.file pre .kw { color: #c678dd; } .file pre .fn { color: #61afef; } .file pre .st { color: #98c379; }
+.file pre .ty { color: #e5c07b; } .file pre .pu { color: #abb2bf; } .file pre .va { color: #e06c75; } .file pre .cm { color: #5c6370; font-style: italic; }
+/* feedback: general option */
+.fbopts { display: flex; gap: 6px; margin: 6px 0 2px; }
+.fbopts span { white-space: nowrap; font-size: 11px; border: 1px solid var(--app-line); border-radius: 99px; padding: 2px 9px; color: var(--app-dim); }
+.fbopts span.on { border-color: var(--warn); background: #fdf3e2; color: var(--app-ink); }
+/* assistant mode: only the agent panel, which can drive the app but not change it */
+.win[data-mode="assist"] { grid-template-rows: 1fr; }
+.win[data-mode="assist"] .bar { display: none; }
+.win[data-mode="assist"] .body { grid-template-columns: 0 minmax(0,1fr) 330px; }
+.win[data-mode="assist"] .left { border: 0; }
+.win[data-mode="assist"] .own { display: none; }
+.win[data-mode="assist"] .task.hl { outline: 0; }
+.win[data-mode="assist"] .tabs > .tab:not(.astab), .win[data-mode="assist"] .plus { display: none; }
+.astab { display: none; }
+.ph-a { display: none; }
+.win[data-mode="assist"] .ph-a { display: inline; }
+.win[data-mode="assist"] .ph-b { display: none; }
+.win[data-mode="assist"] .astab { display: flex; }
+.asnote { display: none; margin: 8px 10px 0; padding: 6px 9px; border-radius: 7px; background: rgba(63,182,123,.12); color: #bfe8d0; font-size: 11.5px; }
+.win[data-mode="assist"] .asnote { display: block; }
+.win[data-mode="assist"] .chat.build, .win[data-mode="assist"] .chathead { display: none; }
+.chat.assist { display: none; }
+.win[data-mode="assist"] .chat.assist { display: grid; }
+.win:not([data-mode="assist"]) .chat.assist { display: none !important; }
+.win[data-mode="assist"] .app-nav div.on { background: transparent; color: var(--app-dim); font-weight: 400; }
+.win[data-mode="assist"] .app-nav div.mine { background: #e7f4ec; color: var(--app-ink); font-weight: 600; outline: 2px solid var(--ok); }
+.win[data-mode="assist"] .composer .ctx { display: none; }
+/* settings dialog with the plugins navigator */
+.settings { display: none; position: absolute; inset: 40px 70px; background: var(--surface); border: 1px solid #34343a; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.6); z-index: 8; grid-template-columns: 170px minmax(0,1fr); overflow: hidden; }
+.win[data-settings="on"] .settings { display: grid; }
+.win[data-settings="on"]::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.5); z-index: 7; }
+.win { position: relative; }
+.body { position: relative; }
+.snav { background: var(--side); padding: 14px 8px; display: grid; gap: 2px; align-content: start; border-right: 1px solid #2a2a2f; }
+.snav div { padding: 6px 10px; border-radius: 6px; color: #c8c8d0; }
+.snav div.on { background: var(--accent-dim); color: #fff; }
+.spane { padding: 16px 18px; overflow: auto; min-width: 0; }
+.spane h3 { font-size: 15px; margin: 0 0 2px; color: #fff; }
+.spane .sub { color: var(--dim); font-size: 12px; margin: 0 0 12px; }
+.ptools { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.ptools .hsearch { flex: 1; margin: 0; min-width: 160px; }
+.chip { font-size: 11px; border: 1px solid #34343a; border-radius: 99px; padding: 3px 10px; color: #c8c8d0; }
+.chip.on { border-color: var(--accent); color: #fff; background: var(--accent-dim); }
+.plug { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 4px 12px; align-items: center; padding: 9px 10px; border: 1px solid #2a2a2f; border-radius: 8px; margin-bottom: 6px; }
+.plug b { color: #fff; font-weight: 600; font-size: 12.5px; }
+.plug small { grid-column: 1; color: var(--dim); font-size: 11.5px; }
+.plug .by { font-size: 10.5px; color: var(--dim); border: 1px solid #34343a; border-radius: 4px; padding: 1px 6px; grid-row: 1 / span 2; grid-column: 2; }
+.plug .st { font-size: 10.5px; color: var(--ok); }
+.plug .st.p { color: var(--warn); }
+.tog { grid-row: 1 / span 2; grid-column: 3; width: 30px; height: 17px; border-radius: 99px; background: var(--accent); position: relative; }
+.tog::after { content: ""; position: absolute; top: 2px; right: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; }
+.tog.off { background: #3a3a40; }
+.tog.off::after { right: auto; left: 2px; }
 
 /* tables */
 .tw { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
@@ -221,11 +317,15 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
   <h2>Try it</h2>
   <div class="scenarios" role="group" aria-label="Scenario">
     <button type="button" data-s="first" aria-pressed="false">1 · First run</button>
-    <button type="button" data-s="agent" aria-pressed="true">2 · Building with an agent</button>
-    <button type="button" data-s="term" aria-pressed="false">3 · Terminal, files and git as tabs</button>
-    <button type="button" data-s="preview" aria-pressed="false">4 · Preview as a user</button>
-    <button type="button" data-s="prod" aria-pressed="false">5 · Production</button>
-    <button type="button" data-s="prodfb" aria-pressed="false">6 · Production + feedback</button>
+    <button type="button" data-s="agent" aria-pressed="true">2 · Building with the chat</button>
+    <button type="button" data-s="claude" aria-pressed="false">3 · Claude as it is (PTY)</button>
+    <button type="button" data-s="files" aria-pressed="false">4 · Files, search, git</button>
+    <button type="button" data-s="hist" aria-pressed="false">5 · Chat history</button>
+    <button type="button" data-s="plugins" aria-pressed="false">6 · Settings: plugins</button>
+    <button type="button" data-s="preview" aria-pressed="false">7 · Preview as a user</button>
+    <button type="button" data-s="prod" aria-pressed="false">8 · Production</button>
+    <button type="button" data-s="prodfb" aria-pressed="false">9 · Production + feedback</button>
+    <button type="button" data-s="assist" aria-pressed="false">10 · Production + assistant</button>
   </div>
   <p class="caption" id="caption"></p>
 
@@ -233,26 +333,42 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
   <div class="win" id="win" data-mode="build" data-left="open" data-right="open" data-rtab="chat" data-feedback="off">
     <div class="bar">
       <div class="dots"><i></i><i></i><i></i></div>
-      <button class="ibtn" id="tl" aria-pressed="true" title="Left panel: sessions and versions (Ctrl B)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg></button>
+      <button class="ibtn" id="tl" aria-pressed="true" title="Left panel: branches, open agents and versions (Ctrl B)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg></button>
       <span class="appname">Team Board <small>v7 · saved</small></span>
       <span class="grow"></span>
       <div class="modepill" role="group" aria-label="Mode">
         <button type="button" data-m="build" aria-pressed="true">Build</button>
         <button type="button" data-m="preview" aria-pressed="false">Preview</button>
       </div>
-      <button class="ibtn" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg></button>
+      <button class="ibtn" id="gear" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg></button>
       <button class="ibtn" id="tr" aria-pressed="true" title="Right panel: agents (Ctrl J)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M10 2.5v11"/></svg></button>
+    </div>
+
+    <div class="settings" role="dialog" aria-label="Settings">
+      <div class="snav"><div>General</div><div>Models</div><div>Agents</div><div class="on">Plugins</div><div>Support</div></div>
+      <div class="spane">
+        <h3>Plugins</h3>
+        <p class="sub">Everything this app is made of. Agents add features as Cordis plugins; each one can be switched off, replaced or shared.</p>
+        <div class="ptools"><div class="hsearch">Search plugins</div><span class="chip on">All 14</span><span class="chip">Made by agents 4</span><span class="chip">Registry 6</span><span class="chip">Frame 4</span></div>
+        <div class="plug"><b>board-mobile</b><span class="by">Claude · today</span><span class="tog"></span><small>Responsive board layout for phones · <span class="st">active</span></small></div>
+        <div class="plug"><b>due-dates</b><span class="by">Chat · today</span><span class="tog"></span><small>Due dates on tasks, today's in orange · <span class="st">active</span></small></div>
+        <div class="plug"><b>team-sign-in</b><span class="by">registry · v1.3</span><span class="tog"></span><small>Sign-in with email links · <span class="st">active</span></small></div>
+        <div class="plug"><b>calendar-sync</b><span class="by">Codex · Mon</span><span class="tog off"></span><small>Two-way Google Calendar sync · <span class="st p">waiting for a key in Settings → Models</span></small></div>
+        <div class="plug"><b>feedback</b><span class="by">frame</span><span class="tog off"></span><small>Production feedback with the element picker · off</small></div>
+      </div>
     </div>
 
     <div class="body">
       <!-- LEFT: what happened, and where can I go back -->
-      <aside class="left" aria-label="Sessions and versions">
-        <div class="pane-h"><span class="label">Sessions</span><button class="smallbtn">New</button></div>
+      <aside class="left" aria-label="Branches, their open agents, and versions">
+        <div class="pane-h"><span class="label">Branches</span><button class="smallbtn">New</button></div>
         <div class="list">
-          <div class="row on"><span class="dot live"></span>Add due dates to tasks<span class="meta">now</span></div>
-          <div class="row"><span class="dot"></span>Draggable columns<span class="meta">2 h</span></div>
-          <div class="row"><span class="dot"></span>Sign-in for the team<span class="meta">Mon</span></div>
-          <div class="row"><span class="dot"></span>First version of the board<span class="meta">Sun</span></div>
+          <div class="br"><span class="car">▸</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="6" r="1.6"/><path d="M4 5v6M12 7.6c0 2.4-3 2.4-6.5 3.4"/></svg>main<span class="meta">2 open</span></div>
+          <div class="br"><span class="car">▾</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="6" r="1.6"/><path d="M4 5v6M12 7.6c0 2.4-3 2.4-6.5 3.4"/></svg>feature-due-dates<span class="meta"><span class="dot live" style="display:inline-block"></span></span></div>
+          <div class="it on" data-open="chat"><span class="ic">◆</span>Chat · Add due dates<span class="meta">now</span></div>
+          <div class="it" data-open="claude"><span class="ic">&gt;_</span>Claude Code<span class="meta">PTY</span></div>
+          <div class="it" data-open="term"><span class="ic">$</span>Terminal<span class="meta">npm test</span></div>
+          <div class="br"><span class="car">▸</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="6" r="1.6"/><path d="M4 5v6M12 7.6c0 2.4-3 2.4-6.5 3.4"/></svg>feature-mobile-layout<span class="meta">1 open</span></div>
         </div>
         <div class="sep"></div>
         <div class="pane-h"><span class="label">Versions</span><button class="smallbtn">Save point</button></div>
@@ -276,7 +392,7 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
         <div class="backbar">You are seeing what users see <button class="smallbtn" data-m="build">Back to Build</button></div>
         <div class="app-top"><b>Team Board</b><span style="color:var(--app-dim)">Sprint 14</span><span class="search">Search tasks</span></div>
         <div class="app-body">
-          <nav class="app-nav"><div class="on">Board</div><div>My tasks</div><div>Calendar</div><div>People</div></nav>
+          <nav class="app-nav"><div class="on">Board</div><div class="mine">My tasks</div><div>Calendar</div><div>People</div></nav>
           <div class="board">
             <div class="col"><h4>To do</h4>
               <div class="task">Write the onboarding email<div class="who">Ana · due Fri</div><span class="pin"><span>1</span></span></div>
@@ -293,14 +409,15 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
         <span class="own t">the app's own top bar</span>
         <span class="own n">the app's own side nav</span>
         <div class="fbbtn">Feedback</div>
-        <div class="fbpop"><b>What should change here?</b><div class="ta">Due date is cut off on my phone</div><div class="row2"><span>⌖ Pick element · <b style="color:var(--app-ink)">task card</b></span> <span class="send">Send</span></div></div>
+        <div class="fbpop"><b>Your feedback</b><div class="fbopts"><span class="on">⌖ On this element: task card</span><span>Nothing specific</span></div><div class="ta">Due date is cut off on my phone</div><div class="row2"><span>Pressing Feedback turns the picker on; click anything, or choose "Nothing specific".</span> <span class="send">Send</span></div></div>
       </div>
 
       <!-- RIGHT: the action on the app. Agents and terminals as tabs, opened with + -->
       <aside class="right" aria-label="Agents">
         <div class="tabs">
           <button class="tab on" data-t="chat">Chat <span class="k">DeepSeek</span></button>
-          <button class="tab" data-t="chat">Claude</button>
+          <button class="tab astab on" data-t="chat">Assistant</button>
+          <button class="tab" data-t="claude">Claude <span class="k">PTY</span></button>
           <button class="tab" data-t="term">Terminal</button>
           <button class="tab" data-t="files">Files</button>
           <button class="tab" data-t="file">board.ts</button>
@@ -319,15 +436,47 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
             <div class="mi gone">Browser <small>the canvas is it</small></div>
           </div>
         </div>
-        <div class="chat">
+        <div class="asnote">The assistant can use the app for you: open pages, filter, fill in forms. It cannot change the app.</div>
+        <div class="chathead"><button class="histbtn" id="hist" aria-pressed="false"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v2.6h2.6M8 5v3.2l2 1.3"/></svg>History</button><span class="title">Add due dates · feature-due-dates</span></div>
+        <div class="hist">
+          <div class="hsearch">Search chats</div>
+          <div class="hgroup">feature-due-dates</div>
+          <div class="hrow">Add due dates <small>open · now</small></div>
+          <div class="hrow">Orange for today's tasks <small>closed · 1 h · opens as a tab</small></div>
+          <div class="hgroup">main</div>
+          <div class="hrow">Draggable columns <small>closed · 2 h</small></div>
+          <div class="hrow">Sign-in for the team <small>closed · Mon</small></div>
+          <div class="hrow">First version of the board <small>closed · Sun</small></div>
+        </div>
+        <div class="chat assist">
+          <div class="msg me">Show me only my tasks that are due this week.</div>
+          <div class="msg">Opened My tasks and filtered to this week: 2 tasks.<span class="tool">ui.open("My tasks") · ui.fill(filter, "due: this week")</span></div>
+          <div class="msg me">Add "Book the venue" for Friday.</div>
+          <div class="msg">Filled the new-task form; check it and press Save.<span class="tool">ui.click("New task") · ui.fill(title, due)</span></div>
+        </div>
+        <div class="chat build">
           <div class="msg me">Add a due date to each task, and show "due today" in orange.</div>
           <div class="msg">Done. Each task now has a due date; today's are orange on the board.<span class="tool">edited src/routes.ts, src/board.ts · saved as v7</span></div>
           <div class="msg me">The invite link card is wrong, fix it.</div>
           <div class="msg">I see the card you selected on the page ("Fix the invite link"). Working on it…</div>
         </div>
-        <div class="composer"><span class="ctx">Selected: task card</span>Ask for a change…</div>
+        <div class="composer"><span class="ctx">Selected: task card</span><span class="ph-b">Ask for a change…</span><span class="ph-a">Ask the assistant…</span></div>
         <div class="term">app % npm test<br>✓ board.test.ts (6)<br>✓ routes.test.ts (4)<br>app % <span style="background:#cfcfd4">&nbsp;</span></div>
+        <div class="tui"><div class="box">✻ Welcome to <b>Claude Code</b><br><span class="dimt">cwd: ~/apps/team-board · skills: acryl-app, cordis-plugin</span></div>
+<span class="dimt">&gt;</span> make the board work on phones<br><br>
+<span class="acc">●</span> I'll add a responsive layout as a Cordis plugin.<br>
+<span class="dimt">  ⎿</span> <span class="grn">Created</span> plugins/board-mobile/index.ts<br>
+<span class="dimt">  ⎿</span> <span class="grn">Updated</span> blend.yml (+1 row)<br>
+<span class="acc">●</span> Checking it in the app<span class="dimt"> · acryl-control: ui.resize(390)</span><br>
+<div class="prompt"><span class="dimt">&gt;</span> <span style="background:#cfcfd4">&nbsp;</span></div></div>
+        <div class="ptynote">Claude, Codex and Pi run as they are, in a terminal. They drive the app from inside: they know the ACRYL app's architecture through its skills, extend it with Cordis plugins, and use the app's UI through acryl-control.</div>
         <div class="files">
+          <div class="fsearch">brd<kbd>⌘P</kbd></div>
+          <div class="fres">
+            <div class="frow sel" data-open="file"><span><b>b</b>oa<b>rd</b>.ts</span><span class="meta">src</span></div>
+            <div class="frow"><span><b>b</b>oa<b>rd</b>.test.ts</span><span class="meta">test</span></div>
+            <div class="frow"><span><b>b</b>oa<b>rd</b>-mobile/index.ts</span><span class="meta">plugins</span></div>
+          </div>
           <div class="frow">▾ src</div>
           <div class="frow i2 sel" data-open="file">board.ts</div>
           <div class="frow i2">routes.ts</div>
@@ -336,15 +485,17 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
           <div class="frow">▸ test</div>
           <div class="frow">AGENTS.md</div>
           <div class="frow">package.json</div>
-          <p class="hint">Click a file to open it as a tab.</p>
+          <p class="hint">Type to fuzzy-search every file (⌘P anywhere). Click a file to open it as a tab.</p>
         </div>
-        <div class="file"><pre><span class="ln">12</span> export function dueBadge(task: Task) {
-<span class="ln">13</span>   if (!task.due) return '';
-<span class="ln">14</span>   const today = isToday(task.due);
-<span class="ln">15</span>   return today
-<span class="ln">16</span>     ? `&lt;b class="due today"&gt;due today&lt;/b&gt;`
-<span class="ln">17</span>     : `&lt;span class="due"&gt;${fmt(task.due)}&lt;/span&gt;`;
-<span class="ln">18</span> }</pre></div>
+        <div class="file"><pre><span class="ln">10</span> <span class="cm">// A task's due date, as a badge on its card.</span>
+<span class="ln">11</span> <span class="kw">import</span> <span class="pu">{</span> <span class="va">isToday</span><span class="pu">,</span> <span class="va">fmt</span> <span class="pu">}</span> <span class="kw">from</span> <span class="st">'./dates.ts'</span><span class="pu">;</span>
+<span class="ln">12</span> <span class="kw">export function</span> <span class="fn">dueBadge</span><span class="pu">(</span><span class="va">task</span><span class="pu">:</span> <span class="ty">Task</span><span class="pu">) {</span>
+<span class="ln">13</span>   <span class="kw">if</span> <span class="pu">(!</span><span class="va">task</span><span class="pu">.</span>due<span class="pu">)</span> <span class="kw">return</span> <span class="st">''</span><span class="pu">;</span>
+<span class="ln">14</span>   <span class="kw">const</span> <span class="va">today</span> <span class="pu">=</span> <span class="fn">isToday</span><span class="pu">(</span><span class="va">task</span><span class="pu">.</span>due<span class="pu">);</span>
+<span class="ln">15</span>   <span class="kw">return</span> <span class="va">today</span>
+<span class="ln">16</span>     <span class="pu">?</span> <span class="st">`&lt;b class="due today"&gt;due today&lt;/b&gt;`</span>
+<span class="ln">17</span>     <span class="pu">:</span> <span class="st">`&lt;span class="due"&gt;</span><span class="pu">${</span><span class="fn">fmt</span><span class="pu">(</span><span class="va">task</span><span class="pu">.</span>due<span class="pu">)}</span><span class="st">&lt;/span&gt;`</span><span class="pu">;</span>
+<span class="ln">18</span> <span class="pu">}</span></pre></div>
         <div class="git">
           <div class="label" style="padding:4px 2px 8px">Changes since v7</div>
           <div class="frow"><span class="gm">M</span> src/board.ts <span class="meta">+14 −3</span></div>
@@ -368,8 +519,8 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
     <thead><tr><th>Place</th><th>Holds</th><th>The question it answers</th><th>Default</th></tr></thead>
     <tbody>
       <tr><td class="m">Centre canvas</td><td>The app, full size. The app's own panels, top bar and bottom bar live <em>inside</em> the canvas and never touch the frame's panels.</td><td>"What does my app look like and do right now?"</td><td>Always shown, the largest area</td></tr>
-      <tr><td class="m">Right panel</td><td>Everything you work <em>with</em>, as tabs opened with <b>+</b>. Agents: the chat with your model, Claude, Codex or Pi as they are (PTY). Tools: a terminal, Files (a tree; clicking a file opens it as its own tab) and Git (changes and history). The tab strip with <b>+</b> moves here from ACRYL's centre. There is no Browser tab, because the canvas is the browser.</td><td>"Change this for me" and "Let me look under the hood"</td><td>Open on first run, then remembered</td></tr>
-      <tr><td class="m">Left panel</td><td>Sessions (past work with agents, resumable), Versions under them (save points: go back, keep, share through git or the Blend registry), and Feedback from users when it is switched on.</td><td>"What did we do before? Take me back to the version that worked. What do users say?"</td><td>Open on first run, then remembered</td></tr>
+      <tr><td class="m">Right panel</td><td>Everything you work <em>with</em>, as tabs opened with <b>+</b>. Agents: the chat (DSH chat mode with your model), and Claude, Codex or Pi run as they are, TUIs in a PTY, never rebuilt as chats. They are the app's drivers: skills teach them the ACRYL app, they extend it with Cordis plugins and use its UI through acryl-control. Tools: a terminal, Files (fuzzy search over every file, ⌘P; a file opens as its own tab, with syntax highlighting) and Git (changes and history). The chat has a History button at its top left that lists every chat, closed ones included, and opens a pick as a tab. The tab strip with <b>+</b> moves here from ACRYL's centre. There is no Browser tab, because the canvas is the browser.</td><td>"Change this for me" and "Let me look under the hood"</td><td>Open on first run, then remembered</td></tr>
+      <tr><td class="m">Left panel</td><td>As in the ACRYL IDE: the project's git branches (main, feature-…). Expanding a branch shows what is open on it: chats, agent sessions and PTYs, never files or other secondary tabs. Clicking an item opens it in the right panel. Below: Versions of the selected branch (save points: go back, keep, share through git or the Blend registry), and Feedback from users when it is on.</td><td>"Which line of work am I on, and what is running there? Take me back to the version that worked. What do users say?"</td><td>Open on first run, then remembered</td></tr>
       <tr><td class="m">Settings</td><td>General (with a short list of shortcuts), Models (keys and sign-in), Agents, Plugins (a Blend is plugins), Support.</td><td>"Set up my model and agents once"</td><td>A dialog from the gear</td></tr>
     </tbody>
   </table></div>
@@ -379,10 +530,11 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
   <h2>Modes</h2>
   <p>The frame belongs to the builder, so the mode decides whether it exists at all. Production is not a theme of the frame; it is the app with no frame.</p>
   <div class="cards">
-    <div class="card decided"><h3>Build <span class="tag ok">agreed</span></h3><p>The frame: sessions and versions, the canvas, agents. Only the app's owner reaches it (the owner-only frame token).</p></div>
+    <div class="card decided"><h3>Build <span class="tag ok">agreed</span></h3><p>The frame: branches and versions, the canvas, agents and tools. Only the app's owner reaches it (the owner-only frame token).</p></div>
     <div class="card decided"><h3>Preview <span class="tag ok">agreed</span></h3><p>A Build / Preview switch in the top bar hides the frame, so you see exactly what users will see, on the same running app. A small pill brings you back. Nothing restarts.</p></div>
     <div class="card decided"><h3>Production <span class="tag ok">agreed</span></h3><p>The published app with no frame and no editing: no panels, no agent, no Settings. Today's ACRYL_PRODUCTION_KEEP switch already turns the agent off; the frame goes off with it.</p></div>
-    <div class="card decided"><h3>Production + feedback <span class="tag ok">agreed, opt-in plugin</span></h3><p>Real users get one Feedback button and a pinpoint tool: they pick the exact element where they hit a problem or had an idea, then write the note. Notes land in the builder's left panel; one click hands a note to an agent as a task, with the page, the element's selector and a screenshot attached.</p></div>
+    <div class="card"><h3>Production + assistant <span class="tag new">your idea, power-user mode</span></h3><p>Only the agent panel is exposed. The assistant drives the app's UI through acryl-control: opens pages and panels, filters, fills in the app's own forms, helps people find things. It is refused anything that changes the app, its code, its plugins or its secrets, so a prompt injection can at most click what the user could click.</p></div>
+    <div class="card decided"><h3>Production + feedback <span class="tag ok">agreed, opt-in plugin</span></h3><p>Pressing Feedback turns the pinpoint picker on: the user clicks the exact element where they hit a problem or had an idea, or chooses "Nothing specific" for general feedback, then writes the note. Notes land in the builder's left panel; one click hands a note to an agent as a task, with the page, the element's selector and a screenshot attached.</p></div>
   </div>
   <p style="color:var(--dim);font-size:14px">Other modes worth considering later, not proposed now: <b>Share preview</b> (a link to one version for a client to try and comment on, before it goes live) and <b>Demo</b> (Production with seeded sample data, for a workshop or a sales call).</p>
 </section>
@@ -412,14 +564,20 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
       <tr><td class="m">Versions</td><td>In the left panel, under Sessions.</td></tr>
       <tr><td class="m">First run</td><td>Both panels open, then remembered.</td></tr>
       <tr><td class="m">Modes</td><td>Build, Preview (switch in the top bar), Production (no frame).</td></tr>
-      <tr><td class="m">Production feedback</td><td>Build now as an opt-in plugin, with an element pinpoint tool; notes land in the left panel and go to an agent with one click.</td></tr>
+      <tr><td class="m">Left panel</td><td>Git branches as the top level; expanding one shows its open chats, agent sessions and PTYs. Versions of the selected branch below.</td></tr>
+      <tr><td class="m">Chat history</td><td>The left panel shows only open items; a History button in the chat lists all chats and opens one as a tab.</td></tr>
+      <tr><td class="m">PTY agents</td><td>Claude, Codex, Pi run as they are; they drive the app (skills, Cordis plugins, acryl-control).</td></tr>
+      <tr><td class="m">Files</td><td>Fuzzy search over every file; syntax highlighting in file tabs.</td></tr>
+      <tr><td class="m">Settings → Plugins</td><td>A navigator of every Cordis plugin the app is made of, with who made it, its state and an on/off switch.</td></tr>
+      <tr><td class="m">Production feedback</td><td>Build now as an opt-in plugin, with an element pinpoint tool that switches on with Feedback, plus "Nothing specific"; notes land in the left panel and go to an agent with one click.</td></tr>
+      <tr><td class="m">Production + assistant</td><td>Proposed from your note: only the agent panel; drives the UI, cannot change the app. <em>Your note ended with "but also"; what was the rest?</em></td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section>
   <h2>What happens next</h2>
-  <p>The redesign becomes one acrylblends branch (125), built as Cordis plugins on the frame that 119, 122 and 123 put on main, in three slices: (1) the right panel's tab strip with <b>+</b> (agents, PTYs, terminal, Files, file tabs, Git) and the centre canvas holding only the app; (2) the left panel's Sessions and Versions, the Build / Preview switch, and dropping the IDE-only parts; (3) the production feedback plugin with the element pinpoint tool. The visual reference screenshots come after slice 2.</p>
+  <p>The redesign becomes one acrylblends branch (125), built as Cordis plugins on the frame that 119, 122 and 123 put on main, in four slices: (1) the right panel: the tab strip with <b>+</b>, the chat with its History button, PTY agents as they are, terminal, Files with fuzzy search and highlighted file tabs, Git; the centre canvas holds only the app; (2) the left panel: branches with their open items, Versions, the Build / Preview switch, and dropping the IDE-only parts; (3) Settings → Plugins, the plugin navigator; (4) the production modes: feedback with the pinpoint picker, and the assistant that drives the UI through acryl-control without changing the app. The visual reference screenshots come after slice 2.</p>
 </section>
 
 </main>
@@ -427,39 +585,50 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
 (() => {
   const win = document.getElementById('win');
   const cap = document.getElementById('caption');
+  const base = { mode:'build', left:'open', right:'open', rtab:'chat', fb:'off', hist:'off', settings:'off' };
   const S = {
-    first:  { mode:'build', left:'open', right:'open',   rtab:'chat', fb:'off', c:'First run: both panels open, so a newcomer sees sessions, versions and the agent at once. Collapsing either is remembered from then on.', r:'≈ 55% app' },
-    agent:  { mode:'build', left:'open',   right:'open',   rtab:'chat', fb:'off', c:'Building with an agent: history on the left, the app in the centre, the agent on the right. The agent sees the element you selected on the page.', r:'≈ 55% app with both panels, 65% with one' },
-    term:   { mode:'build', left:'closed', right:'open',   rtab:'files', fb:'off', c:'The same + opens a terminal, Files and Git as tabs next to the agents. Click a file in the tree and it opens as its own tab. There is no terminal dock and no Browser tab. Click the tabs to switch.', r:'≈ 65% app' },
-    preview:{ mode:'preview',left:'open',  right:'open',   rtab:'chat', fb:'off', c:'Preview: one click hides the whole frame on the same running app, so you see exactly what a user sees. The pill takes you back.', r:'100% app' },
-    prod:   { mode:'production',left:'open',right:'open', rtab:'chat', fb:'off', c:'Production: the published app with no frame, no agent and no Settings. This is all its users ever see.', r:'100% app' },
-    prodfb: { mode:'production',left:'open',right:'open', rtab:'chat', fb:'on',  c:'Production with feedback: a user picks the exact element with the pinpoint tool and writes a note. Notes appear in the builder\'s left panel (switch to scenario 2 to see them there).', r:'100% app, plus one Feedback button' },
+    first:   { c:'First run: both panels open. Left, the branches with what is open on each; centre, the app; right, the agent. Collapsing either panel is remembered.', r:'≈ 55% app' },
+    agent:   { c:'The chat (DSH chat mode with your model) works on the branch selected on the left. Clicking an item on the left opens it on the right. The agent sees the element you selected on the page.', r:'≈ 55% app' },
+    claude:  { rtab:'claude', c:'Claude, Codex and Pi are not rebuilt as chats. They run as they are, a TUI in a terminal tab, and drive the app from inside: skills teach them the app, they extend it with Cordis plugins, and they use its UI through acryl-control.', r:'≈ 55% app' },
+    files:   { left:'closed', rtab:'files', c:'Files, with fuzzy search over every file (⌘P anywhere, as in VS Code or JetBrains). A file opens as its own tab with syntax highlighting; Git shows changes and history. Click the tabs.', r:'≈ 65% app' },
+    hist:    { hist:'on', c:'Chat history: the left panel lists only what is open. The History button at the top left of the chat lists every chat of every branch, closed ones included, with search; picking one opens it as a tab.', r:'≈ 55% app' },
+    plugins: { settings:'on', c:'Settings → Plugins: the navigator of everything the app is made of. Agents build features as Cordis plugins, so this is where you see what they added, switch it off, or share it.', r:'' },
+    preview: { mode:'preview', c:'Preview: the Build / Preview switch hides the whole frame on the same running app, so you see exactly what a user sees. The pill takes you back.', r:'100% app' },
+    prod:    { mode:'production', c:'Production: the published app with no frame, no agent and no Settings.', r:'100% app' },
+    prodfb:  { mode:'production', fb:'on', c:'Production + feedback: pressing Feedback turns the element picker on. The user clicks the element, or chooses "Nothing specific" for general feedback. Notes land in the builder\'s left panel.', r:'100% app, plus one Feedback button' },
+    assist:  { mode:'assist', c:'Production + assistant (power-user mode): only the agent panel. The assistant drives the app\'s UI through acryl-control (opens pages, filters, fills forms) and is refused anything that changes the app, its code or its secrets.', r:'≈ 70% app' },
   };
   let fbSeen = false;
   function apply(k) {
-    const s = S[k];
-    win.dataset.mode = s.mode; win.dataset.left = s.left; win.dataset.right = s.right; win.dataset.rtab = s.rtab;
+    const s = Object.assign({}, base, S[k]);
+    for (const f of ['mode','left','right','rtab','hist','settings']) win.dataset[f] = s[f];
     if (s.fb === 'on') fbSeen = true;
     win.dataset.feedback = (s.fb === 'on' || fbSeen) ? 'on' : 'off';
-    cap.innerHTML = s.c + ' <span class="ratio">' + s.r + '</span>';
+    cap.innerHTML = s.c + (s.r ? ' <span class="ratio">' + s.r + '</span>' : '');
     document.querySelectorAll('.scenarios button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === k)));
     sync();
   }
   function sync() {
     document.getElementById('tl').setAttribute('aria-pressed', String(win.dataset.left === 'open'));
     document.getElementById('tr').setAttribute('aria-pressed', String(win.dataset.right === 'open'));
+    document.getElementById('hist').setAttribute('aria-pressed', String(win.dataset.hist === 'on'));
     document.querySelectorAll('.modepill button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === win.dataset.mode)));
-    let first = true; document.querySelectorAll('.tab').forEach(t => { const on = t.dataset.t === win.dataset.rtab && first; if (on) first = false; t.classList.toggle('on', on); });
+    let first = true;
+    document.querySelectorAll('.tabs > .tab:not(.astab)').forEach(t => { const on = t.dataset.t === win.dataset.rtab && first; if (on) first = false; t.classList.toggle('on', on); });
+    document.querySelectorAll('.it').forEach(i => i.classList.toggle('on', i.dataset.open === win.dataset.rtab));
   }
   document.querySelectorAll('.scenarios button').forEach(b => b.addEventListener('click', () => apply(b.dataset.s)));
   document.getElementById('tl').addEventListener('click', () => { win.dataset.left = win.dataset.left === 'open' ? 'closed' : 'open'; sync(); });
   document.getElementById('tr').addEventListener('click', () => { win.dataset.right = win.dataset.right === 'open' ? 'closed' : 'open'; sync(); });
-  document.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => { win.dataset.mode = b.dataset.m; cap.textContent = b.dataset.m === 'preview' ? S.preview.c : 'Build mode.'; sync(); }));
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { win.dataset.rtab = t.dataset.t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t)); }));
-  document.querySelectorAll('[data-open]').forEach(f => f.addEventListener('click', () => { win.dataset.rtab = f.dataset.open; sync(); }));
+  document.getElementById('hist').addEventListener('click', () => { win.dataset.hist = win.dataset.hist === 'on' ? 'off' : 'on'; sync(); });
+  document.getElementById('gear').addEventListener('click', e => { e.stopPropagation(); win.dataset.settings = win.dataset.settings === 'on' ? 'off' : 'on'; });
+  document.querySelector('.settings').addEventListener('click', e => e.stopPropagation());
+  document.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => { win.dataset.mode = b.dataset.m; sync(); }));
+  document.querySelectorAll('.tabs > .tab').forEach(t => t.addEventListener('click', () => { win.dataset.rtab = t.dataset.t; win.dataset.hist = 'off'; sync(); }));
+  document.querySelectorAll('[data-open]').forEach(f => f.addEventListener('click', () => { win.dataset.rtab = f.dataset.open; win.dataset.hist = 'off'; sync(); }));
   const plus = document.getElementById('plus'), menu = document.getElementById('menu');
   plus.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
-  document.addEventListener('click', () => menu.classList.remove('open'));
+  document.addEventListener('click', () => { menu.classList.remove('open'); if (win.dataset.settings === 'on') win.dataset.settings = 'off'; });
   apply('agent');
 })();
 </script>
