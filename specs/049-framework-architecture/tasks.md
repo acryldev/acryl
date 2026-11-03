@@ -51,5 +51,31 @@
   (`frame.ts`'s command event type and `client/chat.ts`'s phase rule), total 135 to 137. A first version raised the outside count to 106
   instead; the coordinator rejected the raise: the direction is fewer DSH imports outside the seam, never more.
 
+### M11 - the Blank app, prebuilt for every desktop (owner, 2026-11-03)
+
+Owner's words: "we should have acryl pre-built Blank version of empty desktop App for macOS arm/intel, windows intel, linux ubuntu
+arm/intel for acrylblends Blank app so that we download it and it's easiest for user to start building. no flags, no nothing, no installs
+of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImplementer.
+
+- [ ] T003 [M11] The Blank app as a desktop product: the Blends frame around an empty `acrylblends` Blank app, packaged with its own
+  runtime (Node or Electron's, git included or not needed), so it starts from the downloaded file alone. The app folder it builds in is
+  created on first start in the person's documents (through the `AppInstance` family, never `homedir()`), named by the person.
+  Done when: on a clean user account with no Node, git or npm, opening the app shows the frame with the Blank app running in it.
+- [ ] T004 [M11] First start asks nothing technical: no flag, environment variable or terminal command. A model is chosen in the app's own
+  Settings (sign in, or paste a key), and until one is set the chat says how in one sentence.
+  Done when: the T003 walk reaches a working chat by pressing only the app's buttons.
+- [ ] T005 [M11] Builds in CI for macOS arm64 and x64 (signed and notarized DMG), Windows x64 (signed NSIS installer) and Ubuntu arm64
+  and x64 (`.deb` and AppImage), attached to one release page with a plain download table.
+  Done when: one tag produces all five downloads and each one's size is on the page.
+- [ ] T006 [M11] A first change from the chat lands in the app: asked in the chat, the agent builds it through the door, the canvas shows
+  it, and a Save point records it, all without a restart.
+  Done when: the same walk on each OS ends with the change visible and saved.
+- [ ] T007 [M11] Updates without reinstalling: the app checks its release page and offers the new version; the person's app folder is
+  kept across the update.
+  Done when: installing version N, building a change, then updating to N+1 keeps the change and the chat history.
+- [ ] T008 [M11] Hand walk per OS: this Mac (arm64, and x64 through Rosetta or an Intel build), mbpi9win (Windows), z370n (Ubuntu x64)
+  and an Ubuntu arm64 machine, each from the downloaded file on a fresh account; screenshots of each step for the workshop handout.
+  Done when: the five walks pass and their screenshots are in the handout.
+
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).
