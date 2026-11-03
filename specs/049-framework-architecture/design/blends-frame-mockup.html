@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en" data-lavish-annotate="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blends Frame Mockup</title>
+<style>
+/* ACRYL frame palette, taken from the 1.2.0-rc kit screenshots (dark first). */
+:root {
+  color-scheme: dark;
+  --bg: #0b0b0d;
+  --side: #111113;
+  --surface: #18181b;
+  --surface-2: #222226;
+  --border: #2a2a2f;
+  --text: #e8e8ea;
+  --dim: #8b8b93;
+  --accent: #5468ff;
+  --accent-dim: rgba(84,104,255,.16);
+  --ok: #3fb67b;
+  --warn: #e0a43a;
+  --warn-dim: rgba(224,164,58,.14);
+  --app-bg: #f6f4ef;
+  --app-ink: #1d1c1a;
+  --app-dim: #77736b;
+  --app-line: #e3dfd5;
+  --app-accent: #c2410c;
+  --page: #0e0e10;
+  --card: #151518;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --page: #f4f4f6; --card: #ffffff; --text: #18181b; --dim: #62626b; --border: #dcdce2;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page: #f4f4f6; --card: #ffffff; --text: #18181b; --dim: #62626b; --border: #dcdce2;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--page); color: var(--text);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+}
+main { max-width: 1240px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: 21px; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0 0 4px; }
+p { margin: 0 0 10px; max-width: 72ch; }
+.lede { color: var(--dim); font-size: 16px; }
+.label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+section { display: grid; gap: 14px; min-width: 0; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.card p { font-size: 14px; color: var(--dim); margin: 0; }
+.card.decided { border-color: var(--ok); }
+.tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--border); color: var(--dim); margin-left: 6px; vertical-align: 2px; }
+.tag.ok { color: var(--ok); border-color: var(--ok); }
+.tag.new { color: var(--warn); border-color: var(--warn); }
+
+/* scenario switcher */
+.scenarios { display: flex; flex-wrap: wrap; gap: 8px; }
+.scenarios button { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
+.scenarios button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.caption { font-size: 14px; color: var(--dim); min-height: 2.6em; max-width: 90ch; }
+.ratio { font-variant-numeric: tabular-nums; color: var(--text); }
+
+/* ---------- the mock window ---------- */
+.stage { overflow-x: auto; border-radius: 12px; }
+.win {
+  --lw: 248px; --rw: 380px;
+  min-width: 980px; height: 600px; background: var(--bg); color: #e8e8ea;
+  border: 1px solid #2a2a2f; border-radius: 12px; overflow: hidden;
+  display: grid; grid-template-rows: 38px 1fr; font-size: 13px;
+  color-scheme: dark;
+}
+.win[data-left="closed"] { --lw: 0px; }
+.win[data-right="closed"] { --rw: 0px; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 0 10px; border-bottom: 1px solid #2a2a2f; background: var(--side); }
+.dots { display: flex; gap: 6px; margin-right: 6px; }
+.dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a3a40; display: block; }
+.appname { font-weight: 600; }
+.appname small { color: var(--dim); font-weight: 400; margin-left: 6px; }
+.grow { flex: 1; }
+.ibtn { width: 28px; height: 26px; display: grid; place-items: center; border-radius: 6px; border: 0; background: transparent; color: #b8b8c0; cursor: pointer; }
+.ibtn:hover { background: var(--surface-2); }
+.ibtn[aria-pressed="true"] { color: #fff; background: var(--surface-2); }
+.ibtn svg { width: 16px; height: 16px; }
+.modepill { display: flex; border: 1px solid #2a2a2f; border-radius: 7px; overflow: hidden; }
+.modepill button { font: inherit; font-size: 12px; padding: 3px 10px; border: 0; background: transparent; color: var(--dim); cursor: pointer; }
+.modepill button[aria-pressed="true"] { background: var(--accent-dim); color: #fff; }
+.body { display: grid; grid-template-columns: var(--lw) minmax(0,1fr) var(--rw); min-height: 0; transition: grid-template-columns .2s ease; }
+.left, .right { background: var(--side); min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+.left { border-right: 1px solid #2a2a2f; }
+.right { border-left: 1px solid #2a2a2f; }
+.win[data-left="closed"] .left { border: 0; }
+.win[data-right="closed"] .right { border: 0; }
+.pane-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 6px; }
+.pane-h .label { color: var(--dim); }
+.list { display: grid; gap: 1px; padding: 0 6px; }
+.row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; color: #d4d4da; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row.on { background: var(--accent-dim); color: #fff; }
+.row .meta { margin-left: auto; color: var(--dim); font-size: 11px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #55555c; flex: none; }
+.dot.live { background: var(--ok); }
+.ver .dot { border-radius: 2px; background: transparent; border: 1.5px solid #77777f; }
+.ver.on .dot { background: var(--accent); border-color: var(--accent); }
+.smallbtn { font: inherit; font-size: 11px; color: #c8c8d0; background: var(--surface-2); border: 1px solid #2f2f35; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.sep { height: 1px; background: #2a2a2f; margin: 10px 12px; }
+.left-foot { margin-top: auto; padding: 10px 12px; display: flex; align-items: center; gap: 8px; color: var(--dim); border-top: 1px solid #2a2a2f; }
+.fb { display: none; }
+.win[data-feedback="on"] .fb { display: block; }
+.fbitem { margin: 0 6px 4px; padding: 7px 9px; background: var(--warn-dim); border-radius: 6px; color: #ecdcbc; font-size: 12px; white-space: normal; }
+.fbitem b { color: #fff; font-weight: 600; }
+
+/* right panel: agent tabs */
+.tabs { display: flex; align-items: center; gap: 2px; padding: 6px 8px 0; border-bottom: 1px solid #2a2a2f; position: relative; }
+.tab { padding: 6px 10px; border-radius: 6px 6px 0 0; color: var(--dim); display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer; border: 0; background: transparent; font: inherit; font-size: 12px; }
+.tab.on { color: #fff; box-shadow: inset 0 -2px 0 var(--accent); }
+.tab .k { font-size: 10px; color: #77777f; }
+.plus { margin-left: 2px; }
+.menu { position: absolute; top: 34px; left: 8px; z-index: 5; width: 230px; background: var(--surface); border: 1px solid #34343a; border-radius: 8px; padding: 6px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.menu.open { display: block; }
+.menu .mi { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 6px; color: #e2e2e6; }
+.menu .mi:hover { background: var(--surface-2); }
+.menu .mi small { color: var(--dim); margin-left: auto; }
+.menu .gone { color: #66666e; text-decoration: line-through; }
+.chat { flex: 1; overflow: auto; padding: 12px 14px; display: grid; gap: 10px; align-content: start; }
+.msg { max-width: 92%; padding: 8px 10px; border-radius: 9px; background: var(--surface); line-height: 1.45; }
+.msg.me { justify-self: end; background: var(--accent-dim); }
+.msg .tool { display: block; margin-top: 6px; font: 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--dim); }
+.composer { margin: 10px; border: 1px solid #34343a; border-radius: 9px; padding: 8px 10px; color: var(--dim); display: flex; gap: 8px; align-items: center; }
+.composer .ctx { font-size: 11px; color: #c8c8d0; background: var(--surface-2); border-radius: 5px; padding: 1px 6px; }
+.term { flex: 1; background: #0a0a0b; padding: 12px; font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace; color: #cfcfd4; display: none; }
+.files, .file, .git { flex: 1; overflow: auto; padding: 10px 8px; display: none; }
+.win[data-rtab="term"] .term, .win[data-rtab="files"] .files, .win[data-rtab="file"] .file, .win[data-rtab="git"] .git { display: block; }
+.win:not([data-rtab="chat"]) .chat, .win:not([data-rtab="chat"]) .composer { display: none; }
+.frow { display: flex; gap: 8px; align-items: center; padding: 4px 8px; border-radius: 5px; color: #d4d4da; cursor: default; }
+.frow.i2 { padding-left: 24px; }
+.frow.sel { background: var(--accent-dim); color: #fff; cursor: pointer; }
+.frow .meta { margin-left: auto; color: var(--dim); font-size: 11px; }
+.gm { color: var(--warn); font: 11px ui-monospace, Menlo, monospace; }
+.hint { color: var(--dim); font-size: 11.5px; padding: 10px 8px 0; margin: 0; }
+.file pre { margin: 0; font: 12px/1.6 ui-monospace, "SF Mono", Menlo, monospace; color: #d6d6dc; white-space: pre; }
+.file .ln { color: #55555c; display: inline-block; width: 22px; }
+.menu .mh { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); padding: 6px 8px 2px; }
+.tab { padding: 6px 8px; }
+.win[data-mode="production"] .task.hl, .win[data-mode="preview"] .task.hl { outline: 0; }
+.win[data-feedback="on"][data-mode="production"] .task.picked { outline: 2px dashed var(--warn); outline-offset: 2px; }
+.win[data-feedback="on"][data-mode="production"] .task.picked::before { content: "Picked: task card"; position: absolute; right: 22px; top: 8px; background: var(--warn); color: #1d1c1a; font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+.col { padding-top: 4px; }
+
+/* centre canvas: the app, with ITS OWN panels inside */
+.canvas { position: relative; min-width: 0; background: var(--app-bg); color: var(--app-ink); display: grid; grid-template-rows: 44px 1fr; overflow: hidden; }
+.app-top { display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--app-line); background: #fffdf8; }
+.app-top b { font-size: 15px; }
+.app-top .search { margin-left: auto; border: 1px solid var(--app-line); border-radius: 7px; padding: 4px 10px; color: var(--app-dim); width: 180px; }
+.app-body { display: grid; grid-template-columns: 170px minmax(0,1fr); min-height: 0; }
+.app-nav { border-right: 1px solid var(--app-line); padding: 12px 10px; display: grid; gap: 2px; align-content: start; background: #fbf9f4; }
+.app-nav div { padding: 5px 8px; border-radius: 6px; color: var(--app-dim); }
+.app-nav div.on { background: #efe9dc; color: var(--app-ink); font-weight: 600; }
+.board { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; padding: 14px; align-content: start; overflow: hidden; }
+.col h4 { margin: 0 0 8px; font-size: 12px; color: var(--app-dim); text-transform: uppercase; letter-spacing: .06em; }
+.task { background: #fff; border: 1px solid var(--app-line); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 12.5px; position: relative; }
+.task .who { color: var(--app-dim); font-size: 11px; }
+.task.hl { outline: 2px solid var(--accent); outline-offset: 1px; }
+.own { position: absolute; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; color: var(--app-accent); background: #fff4ec; border: 1px dashed var(--app-accent); border-radius: 4px; padding: 1px 6px; pointer-events: none; }
+.own.t { top: 12px; right: 210px; }
+.own.n { top: 300px; left: 18px; }
+.win[data-mode="production"] .own, .win[data-mode="preview"] .own { display: none; }
+.pin { position: absolute; top: -9px; right: -7px; width: 22px; height: 22px; border-radius: 50% 50% 50% 0; background: var(--warn); color: #1d1c1a; font-size: 11px; font-weight: 700; display: none; place-items: center; transform: rotate(-45deg); }
+.pin span { transform: rotate(45deg); }
+.win[data-feedback="on"][data-mode="production"] .pin { display: grid; }
+.fbbtn { position: absolute; right: 16px; bottom: 16px; background: var(--app-ink); color: #fff; border-radius: 99px; padding: 8px 14px; font-size: 12.5px; display: none; }
+.win[data-feedback="on"][data-mode="production"] .fbbtn { display: block; }
+.fbpop { position: absolute; right: 16px; bottom: 58px; width: 250px; background: #fff; color: var(--app-ink); border: 1px solid var(--app-line); border-radius: 10px; padding: 10px 12px; box-shadow: 0 10px 30px rgba(0,0,0,.18); font-size: 12.5px; display: none; }
+.win[data-feedback="on"][data-mode="production"] .fbpop { display: block; }
+.fbpop .ta { border: 1px solid var(--app-line); border-radius: 6px; padding: 6px 8px; margin: 6px 0; color: var(--app-ink); }
+.fbpop .row2 { display: flex; justify-content: space-between; align-items: center; color: var(--app-dim); font-size: 11px; }
+.fbpop .send { background: var(--app-accent); color: #fff; border-radius: 6px; padding: 3px 10px; }
+.backbar { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: rgba(17,17,19,.92); color: #fff; border-radius: 99px; padding: 5px 6px 5px 14px; font-size: 12px; display: none; gap: 10px; align-items: center; z-index: 3; }
+.backbar .smallbtn { background: var(--accent); border-color: var(--accent); color: #fff; }
+.win[data-mode="preview"] .backbar { display: flex; }
+
+/* modes: preview and production hide the frame entirely */
+.win[data-mode="preview"] .body, .win[data-mode="production"] .body { grid-template-columns: 0 minmax(0,1fr) 0; }
+.win[data-mode="preview"] .left, .win[data-mode="preview"] .right,
+.win[data-mode="production"] .left, .win[data-mode="production"] .right { border: 0; }
+.win[data-mode="production"] { grid-template-rows: 1fr; }
+.win[data-mode="production"] .bar { display: none; }
+.produrl { display: none; }
+
+/* tables */
+.tw { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 680px; font-size: 14px; background: var(--card); }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td.m { font-weight: 600; white-space: nowrap; }
+
+/* decisions */
+form.q { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; }
+form.q label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+form.q label span small { display: block; color: var(--dim); }
+form.q textarea { font: inherit; font-size: 14px; background: var(--page); color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; min-height: 52px; width: 100%; }
+form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 7px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.rec { color: var(--accent); font-size: 12px; margin-left: 4px; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <div class="label">specs/049-framework-architecture · design</div>
+  <h1>The Blends frame: the app is the product, the frame is a workbench</h1>
+  <p class="lede">Every app made with ACRYL Blends is shown inside a frame while it is being built. This mockup tests the frame against the 80/20 worry: the frame may only hold what every builder of every kind of app needs, and it disappears for the people the app is for.</p>
+</header>
+
+<section>
+  <h2>Try it</h2>
+  <div class="scenarios" role="group" aria-label="Scenario">
+    <button type="button" data-s="first" aria-pressed="false">1 · First run</button>
+    <button type="button" data-s="agent" aria-pressed="true">2 · Building with an agent</button>
+    <button type="button" data-s="term" aria-pressed="false">3 · Terminal, files and git as tabs</button>
+    <button type="button" data-s="preview" aria-pressed="false">4 · Preview as a user</button>
+    <button type="button" data-s="prod" aria-pressed="false">5 · Production</button>
+    <button type="button" data-s="prodfb" aria-pressed="false">6 · Production + feedback</button>
+  </div>
+  <p class="caption" id="caption"></p>
+
+  <div class="stage">
+  <div class="win" id="win" data-mode="build" data-left="open" data-right="open" data-rtab="chat" data-feedback="off">
+    <div class="bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <button class="ibtn" id="tl" aria-pressed="true" title="Left panel: sessions and versions (Ctrl B)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg></button>
+      <span class="appname">Team Board <small>v7 · saved</small></span>
+      <span class="grow"></span>
+      <div class="modepill" role="group" aria-label="Mode">
+        <button type="button" data-m="build" aria-pressed="true">Build</button>
+        <button type="button" data-m="preview" aria-pressed="false">Preview</button>
+      </div>
+      <button class="ibtn" title="Settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg></button>
+      <button class="ibtn" id="tr" aria-pressed="true" title="Right panel: agents (Ctrl J)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M10 2.5v11"/></svg></button>
+    </div>
+
+    <div class="body">
+      <!-- LEFT: what happened, and where can I go back -->
+      <aside class="left" aria-label="Sessions and versions">
+        <div class="pane-h"><span class="label">Sessions</span><button class="smallbtn">New</button></div>
+        <div class="list">
+          <div class="row on"><span class="dot live"></span>Add due dates to tasks<span class="meta">now</span></div>
+          <div class="row"><span class="dot"></span>Draggable columns<span class="meta">2 h</span></div>
+          <div class="row"><span class="dot"></span>Sign-in for the team<span class="meta">Mon</span></div>
+          <div class="row"><span class="dot"></span>First version of the board<span class="meta">Sun</span></div>
+        </div>
+        <div class="sep"></div>
+        <div class="pane-h"><span class="label">Versions</span><button class="smallbtn">Save point</button></div>
+        <div class="list">
+          <div class="row ver on"><span class="dot"></span>v7 · Due dates (current)<span class="meta">now</span></div>
+          <div class="row ver"><span class="dot"></span>v6 · Draggable columns<span class="meta">2 h</span></div>
+          <div class="row ver"><span class="dot"></span>v5 · Team sign-in <span class="meta">shared</span></div>
+          <div class="row ver"><span class="dot"></span>v4 · First board<span class="meta">Sun</span></div>
+        </div>
+        <div class="fb">
+          <div class="sep"></div>
+          <div class="pane-h"><span class="label">Feedback from users</span><span class="meta" style="color:var(--warn);font-size:11px">3 new</span></div>
+          <div class="fbitem"><b>Board page</b> · "Can I see only my tasks?" <br><span style="opacity:.75">pinned on the filter · 12 min</span></div>
+          <div class="fbitem"><b>Task card</b> · "Due date is cut off on my phone" <br><span style="opacity:.75">pinned on a card · 1 h</span></div>
+        </div>
+        <div class="left-foot"><span class="dot live"></span>Running locally · port 3128</div>
+      </aside>
+
+      <!-- CENTRE: the app itself. Its own top bar and side nav live INSIDE the canvas. -->
+      <div class="canvas" aria-label="The app">
+        <div class="backbar">You are seeing what users see <button class="smallbtn" data-m="build">Back to Build</button></div>
+        <div class="app-top"><b>Team Board</b><span style="color:var(--app-dim)">Sprint 14</span><span class="search">Search tasks</span></div>
+        <div class="app-body">
+          <nav class="app-nav"><div class="on">Board</div><div>My tasks</div><div>Calendar</div><div>People</div></nav>
+          <div class="board">
+            <div class="col"><h4>To do</h4>
+              <div class="task">Write the onboarding email<div class="who">Ana · due Fri</div><span class="pin"><span>1</span></span></div>
+              <div class="task hl picked">Fix the invite link<div class="who">Ben · due Thu</div><span class="pin"><span>2</span></span></div>
+              <div class="task">Plan the retro<div class="who">Cleo</div></div></div>
+            <div class="col"><h4>Doing</h4>
+              <div class="task">Pricing page copy<div class="who">Ana · due today</div></div>
+              <div class="task">Calendar sync<div class="who">Dev</div></div></div>
+            <div class="col"><h4>Done</h4>
+              <div class="task">Team sign-in<div class="who">Ben</div></div>
+              <div class="task">Board layout<div class="who">Cleo</div></div></div>
+          </div>
+        </div>
+        <span class="own t">the app's own top bar</span>
+        <span class="own n">the app's own side nav</span>
+        <div class="fbbtn">Feedback</div>
+        <div class="fbpop"><b>What should change here?</b><div class="ta">Due date is cut off on my phone</div><div class="row2"><span>⌖ Pick element · <b style="color:var(--app-ink)">task card</b></span> <span class="send">Send</span></div></div>
+      </div>
+
+      <!-- RIGHT: the action on the app. Agents and terminals as tabs, opened with + -->
+      <aside class="right" aria-label="Agents">
+        <div class="tabs">
+          <button class="tab on" data-t="chat">Chat <span class="k">DeepSeek</span></button>
+          <button class="tab" data-t="chat">Claude</button>
+          <button class="tab" data-t="term">Terminal</button>
+          <button class="tab" data-t="files">Files</button>
+          <button class="tab" data-t="file">board.ts</button>
+          <button class="tab" data-t="git">Git</button>
+          <button class="ibtn plus" id="plus" title="Open an agent, a terminal, files or git"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10M3 8h10"/></svg></button>
+          <div class="menu" id="menu">
+            <div class="mh">Agents</div>
+            <div class="mi">Chat <small>your model</small></div>
+            <div class="mi">Claude Code <small>PTY</small></div>
+            <div class="mi">Codex <small>PTY</small></div>
+            <div class="mi">Pi <small>PTY</small></div>
+            <div class="mh">Tools</div>
+            <div class="mi">Terminal <small>shell</small></div>
+            <div class="mi">Files <small>tree; a file opens as a tab</small></div>
+            <div class="mi">Git <small>changes, history</small></div>
+            <div class="mi gone">Browser <small>the canvas is it</small></div>
+          </div>
+        </div>
+        <div class="chat">
+          <div class="msg me">Add a due date to each task, and show "due today" in orange.</div>
+          <div class="msg">Done. Each task now has a due date; today's are orange on the board.<span class="tool">edited src/routes.ts, src/board.ts · saved as v7</span></div>
+          <div class="msg me">The invite link card is wrong, fix it.</div>
+          <div class="msg">I see the card you selected on the page ("Fix the invite link"). Working on it…</div>
+        </div>
+        <div class="composer"><span class="ctx">Selected: task card</span>Ask for a change…</div>
+        <div class="term">app % npm test<br>✓ board.test.ts (6)<br>✓ routes.test.ts (4)<br>app % <span style="background:#cfcfd4">&nbsp;</span></div>
+        <div class="files">
+          <div class="frow">▾ src</div>
+          <div class="frow i2 sel" data-open="file">board.ts</div>
+          <div class="frow i2">routes.ts</div>
+          <div class="frow i2">tasks.ts</div>
+          <div class="frow">▸ plugins</div>
+          <div class="frow">▸ test</div>
+          <div class="frow">AGENTS.md</div>
+          <div class="frow">package.json</div>
+          <p class="hint">Click a file to open it as a tab.</p>
+        </div>
+        <div class="file"><pre><span class="ln">12</span> export function dueBadge(task: Task) {
+<span class="ln">13</span>   if (!task.due) return '';
+<span class="ln">14</span>   const today = isToday(task.due);
+<span class="ln">15</span>   return today
+<span class="ln">16</span>     ? `&lt;b class="due today"&gt;due today&lt;/b&gt;`
+<span class="ln">17</span>     : `&lt;span class="due"&gt;${fmt(task.due)}&lt;/span&gt;`;
+<span class="ln">18</span> }</pre></div>
+        <div class="git">
+          <div class="label" style="padding:4px 2px 8px">Changes since v7</div>
+          <div class="frow"><span class="gm">M</span> src/board.ts <span class="meta">+14 −3</span></div>
+          <div class="frow"><span class="gm">M</span> src/routes.ts <span class="meta">+2 −1</span></div>
+          <div class="label" style="padding:14px 2px 8px">History</div>
+          <div class="frow">Due dates (v7) <span class="meta">now</span></div>
+          <div class="frow">Draggable columns (v6) <span class="meta">2 h</span></div>
+          <div class="frow">Team sign-in (v5) <span class="meta">Mon</span></div>
+          <p class="hint">Push and pull to a remote, or publish to the Blend registry.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+  </div>
+</section>
+
+<section>
+  <h2>Where each thing goes, and why</h2>
+  <p>You read left to right. Left is history and context, the centre is the thing itself, and right is the action on it. That's also where ACRYL already puts them, so people coming from ACRYL find them where they expect.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Place</th><th>Holds</th><th>The question it answers</th><th>Default</th></tr></thead>
+    <tbody>
+      <tr><td class="m">Centre canvas</td><td>The app, full size. The app's own panels, top bar and bottom bar live <em>inside</em> the canvas and never touch the frame's panels.</td><td>"What does my app look like and do right now?"</td><td>Always shown, the largest area</td></tr>
+      <tr><td class="m">Right panel</td><td>Everything you work <em>with</em>, as tabs opened with <b>+</b>. Agents: the chat with your model, Claude, Codex or Pi as they are (PTY). Tools: a terminal, Files (a tree; clicking a file opens it as its own tab) and Git (changes and history). The tab strip with <b>+</b> moves here from ACRYL's centre. There is no Browser tab, because the canvas is the browser.</td><td>"Change this for me" and "Let me look under the hood"</td><td>Open on first run, then remembered</td></tr>
+      <tr><td class="m">Left panel</td><td>Sessions (past work with agents, resumable), Versions under them (save points: go back, keep, share through git or the Blend registry), and Feedback from users when it is switched on.</td><td>"What did we do before? Take me back to the version that worked. What do users say?"</td><td>Open on first run, then remembered</td></tr>
+      <tr><td class="m">Settings</td><td>General (with a short list of shortcuts), Models (keys and sign-in), Agents, Plugins (a Blend is plugins), Support.</td><td>"Set up my model and agents once"</td><td>A dialog from the gear</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Modes</h2>
+  <p>The frame belongs to the builder, so the mode decides whether it exists at all. Production is not a theme of the frame; it is the app with no frame.</p>
+  <div class="cards">
+    <div class="card decided"><h3>Build <span class="tag ok">agreed</span></h3><p>The frame: sessions and versions, the canvas, agents. Only the app's owner reaches it (the owner-only frame token).</p></div>
+    <div class="card decided"><h3>Preview <span class="tag ok">agreed</span></h3><p>A Build / Preview switch in the top bar hides the frame, so you see exactly what users will see, on the same running app. A small pill brings you back. Nothing restarts.</p></div>
+    <div class="card decided"><h3>Production <span class="tag ok">agreed</span></h3><p>The published app with no frame and no editing: no panels, no agent, no Settings. Today's ACRYL_PRODUCTION_KEEP switch already turns the agent off; the frame goes off with it.</p></div>
+    <div class="card decided"><h3>Production + feedback <span class="tag ok">agreed, opt-in plugin</span></h3><p>Real users get one Feedback button and a pinpoint tool: they pick the exact element where they hit a problem or had an idea, then write the note. Notes land in the builder's left panel; one click hands a note to an agent as a task, with the page, the element's selector and a screenshot attached.</p></div>
+  </div>
+  <p style="color:var(--dim);font-size:14px">Other modes worth considering later, not proposed now: <b>Share preview</b> (a link to one version for a client to try and comment on, before it goes live) and <b>Demo</b> (Production with seeded sample data, for a workshop or a sales call).</p>
+</section>
+
+<section>
+  <h2>One frame for every app</h2>
+  <p>No special UX per kind of app. Every Blends app, a shop, a todo board or a coding tool, gets the same left panel and the same right panel with the same contents. We take from the ACRYL IDE only what building an app needs, and drop what only an IDE needs.</p>
+  <div class="cards">
+    <div class="card decided"><h3>Kept, as right-panel tabs <span class="tag ok">agreed</span></h3><p>Agents and PTYs (Claude, Codex, Pi, terminal). Files: the tree, and a file opens as a tab. Git: changes and history, push and pull.</p></div>
+    <div class="card decided"><h3>Kept, in the left panel <span class="tag ok">agreed</span></h3><p>Sessions, and Versions under them: the everyday face of git.</p></div>
+    <div class="card"><h3>Dropped: IDE review views</h3><p>Review, Checks, Comments, and the separate Changes page (Git's tab shows the changes).</p></div>
+    <div class="card"><h3>Dropped: branches and worktrees</h3><p>The branch/worktree tree, the branch tab and the git status bar. Versions and the Git tab cover what an app builder needs.</p></div>
+    <div class="card"><h3>Dropped: a separate terminal dock</h3><p>Terminals are tabs in the right panel, next to the agents.</p></div>
+    <div class="card"><h3>Dropped: IDE Settings sections</h3><p>Tabs, Command palette, Shortcuts, Built-in plugins. A short shortcuts list goes into General.</p></div>
+  </div>
+  <p style="color:var(--dim);font-size:14px">The ratio: default view is about 100% app. While working with an agent it is about 65% app and 35% agent. For the people the app is for, it is 100% app, always.</p>
+</section>
+
+<section>
+  <h2>Decided</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Question</th><th>Your answer</th></tr></thead>
+    <tbody>
+      <tr><td class="m">Frame per app type</td><td>None. Every app gets the same left and right panels with the same contents.</td></tr>
+      <tr><td class="m">Right panel</td><td>The tab strip with <b>+</b> moves here: agents, PTYs, terminal, Files (a file opens as a tab), Git.</td></tr>
+      <tr><td class="m">App's own panels</td><td>Inside the canvas, never touching the frame's panels.</td></tr>
+      <tr><td class="m">Versions</td><td>In the left panel, under Sessions.</td></tr>
+      <tr><td class="m">First run</td><td>Both panels open, then remembered.</td></tr>
+      <tr><td class="m">Modes</td><td>Build, Preview (switch in the top bar), Production (no frame).</td></tr>
+      <tr><td class="m">Production feedback</td><td>Build now as an opt-in plugin, with an element pinpoint tool; notes land in the left panel and go to an agent with one click.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>What happens next</h2>
+  <p>The redesign becomes one acrylblends branch (125), built as Cordis plugins on the frame that 119, 122 and 123 put on main, in three slices: (1) the right panel's tab strip with <b>+</b> (agents, PTYs, terminal, Files, file tabs, Git) and the centre canvas holding only the app; (2) the left panel's Sessions and Versions, the Build / Preview switch, and dropping the IDE-only parts; (3) the production feedback plugin with the element pinpoint tool. The visual reference screenshots come after slice 2.</p>
+</section>
+
+</main>
+<script>
+(() => {
+  const win = document.getElementById('win');
+  const cap = document.getElementById('caption');
+  const S = {
+    first:  { mode:'build', left:'open', right:'open',   rtab:'chat', fb:'off', c:'First run: both panels open, so a newcomer sees sessions, versions and the agent at once. Collapsing either is remembered from then on.', r:'≈ 55% app' },
+    agent:  { mode:'build', left:'open',   right:'open',   rtab:'chat', fb:'off', c:'Building with an agent: history on the left, the app in the centre, the agent on the right. The agent sees the element you selected on the page.', r:'≈ 55% app with both panels, 65% with one' },
+    term:   { mode:'build', left:'closed', right:'open',   rtab:'files', fb:'off', c:'The same + opens a terminal, Files and Git as tabs next to the agents. Click a file in the tree and it opens as its own tab. There is no terminal dock and no Browser tab. Click the tabs to switch.', r:'≈ 65% app' },
+    preview:{ mode:'preview',left:'open',  right:'open',   rtab:'chat', fb:'off', c:'Preview: one click hides the whole frame on the same running app, so you see exactly what a user sees. The pill takes you back.', r:'100% app' },
+    prod:   { mode:'production',left:'open',right:'open', rtab:'chat', fb:'off', c:'Production: the published app with no frame, no agent and no Settings. This is all its users ever see.', r:'100% app' },
+    prodfb: { mode:'production',left:'open',right:'open', rtab:'chat', fb:'on',  c:'Production with feedback: a user picks the exact element with the pinpoint tool and writes a note. Notes appear in the builder\'s left panel (switch to scenario 2 to see them there).', r:'100% app, plus one Feedback button' },
+  };
+  let fbSeen = false;
+  function apply(k) {
+    const s = S[k];
+    win.dataset.mode = s.mode; win.dataset.left = s.left; win.dataset.right = s.right; win.dataset.rtab = s.rtab;
+    if (s.fb === 'on') fbSeen = true;
+    win.dataset.feedback = (s.fb === 'on' || fbSeen) ? 'on' : 'off';
+    cap.innerHTML = s.c + ' <span class="ratio">' + s.r + '</span>';
+    document.querySelectorAll('.scenarios button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === k)));
+    sync();
+  }
+  function sync() {
+    document.getElementById('tl').setAttribute('aria-pressed', String(win.dataset.left === 'open'));
+    document.getElementById('tr').setAttribute('aria-pressed', String(win.dataset.right === 'open'));
+    document.querySelectorAll('.modepill button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === win.dataset.mode)));
+    let first = true; document.querySelectorAll('.tab').forEach(t => { const on = t.dataset.t === win.dataset.rtab && first; if (on) first = false; t.classList.toggle('on', on); });
+  }
+  document.querySelectorAll('.scenarios button').forEach(b => b.addEventListener('click', () => apply(b.dataset.s)));
+  document.getElementById('tl').addEventListener('click', () => { win.dataset.left = win.dataset.left === 'open' ? 'closed' : 'open'; sync(); });
+  document.getElementById('tr').addEventListener('click', () => { win.dataset.right = win.dataset.right === 'open' ? 'closed' : 'open'; sync(); });
+  document.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => { win.dataset.mode = b.dataset.m; cap.textContent = b.dataset.m === 'preview' ? S.preview.c : 'Build mode.'; sync(); }));
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { win.dataset.rtab = t.dataset.t; document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t)); }));
+  document.querySelectorAll('[data-open]').forEach(f => f.addEventListener('click', () => { win.dataset.rtab = f.dataset.open; sync(); }));
+  const plus = document.getElementById('plus'), menu = document.getElementById('menu');
+  plus.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
+  document.addEventListener('click', () => menu.classList.remove('open'));
+  apply('agent');
+})();
+</script>
+</body>
+</html>
