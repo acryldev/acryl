@@ -95,6 +95,9 @@ of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImp
   build random voluntary plugin however he can, but always strictly abides to build cordis plugin that we display in settings and can
   easily enable / disable and share to the CordisPlugins registry" (https://cordisplugins.github.io/plugins,
   https://github.com/orgs/cordisplugins).
+  Owner: "composition of those Cordis plugins comprises blend.yml, that is the essence snapshot of any acrylblend app". So the frame
+  composes the app in the canvas from its `blend.yaml` (the rows `npm start` composes), and a row added, disabled or removed there, or
+  through Settings > Plugins, is what changes the canvas; `src/frame.ts` carries no feature wiring.
   Done when: on a fresh Blank app the prompt "please build a simple Notes widget" ends with `plugins/notes` as a Cordis plugin row (no
   hand edits to `src/frame.ts` or `src/routes.ts`), the agent consulted the index first (Trajectory), no guessed imports and no "Not
   reloaded", the widget shows in the canvas, Settings > Plugins lists it, disabling it removes it from the canvas and enabling brings it
