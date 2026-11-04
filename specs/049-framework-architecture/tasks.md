@@ -77,5 +77,16 @@ of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImp
   and an Ubuntu arm64 machine, each from the downloaded file on a fresh account; screenshots of each step for the workshop handout.
   Done when: the five walks pass and their screenshots are in the handout.
 
+### Frame UX (owner, 2026-11-04)
+
+- [ ] T009 [frame UX, owner 2026-11-04] The left and right panels are resizable. Owner's words: "lets make LEft pane and right pane to be
+  resizable ... when we need more space to read or comfortable navigate we do it ... so we can click and hold and drag the left and right pane to resize, just like in Super.engineering".
+  Dragging a panel's inner edge sets its width (the
+  centre, the app, keeps at least 360px; a panel stays between 180px and 60% of the window); double-click on the edge puts the default
+  width back; the widths are remembered per app across restarts, and collapsing and reopening a panel returns it at its own width.
+  The mockup shows it: [blends-frame-mockup.html](./design/blends-frame-mockup.html), the grip on each panel's inner edge.
+  Done when: in the Blends frame on web and desktop, both panels resize by dragging and reset on double-click, the width survives a
+  restart and a collapse, and side-by-side captures with the mockup match.
+
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).

@@ -69,7 +69,7 @@ section { display: grid; gap: 14px; min-width: 0; }
 /* ---------- the mock window ---------- */
 .stage { overflow-x: auto; border-radius: 12px; }
 .win {
-  --lw: 248px; --rw: 412px;
+  --lw-open: 248px; --rw-open: 412px; --lw: var(--lw-open); --rw: var(--rw-open);
   min-width: 1010px; height: 600px; background: var(--bg); color: #e8e8ea;
   border: 1px solid #2a2a2f; border-radius: 12px; overflow: hidden;
   display: grid; grid-template-rows: 38px 1fr; font-size: 13px;
@@ -95,6 +95,13 @@ section { display: grid; gap: 14px; min-width: 0; }
 .left { border-right: 1px solid #2a2a2f; }
 .right { border-left: 1px solid #2a2a2f; }
 .win[data-left="closed"] .left { border: 0; }
+/* Both side panels resize by dragging their inner edge (double-click puts the default width back); the width is remembered per app. */
+.left, .right { position: relative; }
+.grip { position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 3; }
+.left > .grip { right: 0; } .right > .grip { left: 0; }
+.grip:hover, .win.resizing .grip.on { background: color-mix(in srgb, var(--accent, #5b8def) 45%, transparent); }
+.win.resizing .body { transition: none; }
+.win.resizing { cursor: col-resize; user-select: none; }
 .win[data-right="closed"] .right { border: 0; }
 .pane-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 6px; }
 .pane-h .label { color: var(--dim); }
@@ -361,6 +368,7 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
     <div class="body">
       <!-- LEFT: what happened, and where can I go back -->
       <aside class="left" aria-label="Branches, their open agents, and versions">
+        <div class="grip" data-grip="left" role="separator" aria-orientation="vertical" aria-label="Resize the left panel" title="Drag to resize, double-click to reset"></div>
         <div class="pane-h"><span class="label">Branches</span><button class="smallbtn">New</button></div>
         <div class="list">
           <div class="br"><span class="car">▸</span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="6" r="1.6"/><path d="M4 5v6M12 7.6c0 2.4-3 2.4-6.5 3.4"/></svg>main<span class="meta">2 open</span></div>
@@ -414,6 +422,7 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
 
       <!-- RIGHT: the action on the app. Agents and terminals as tabs, opened with + -->
       <aside class="right" aria-label="Agents">
+        <div class="grip" data-grip="right" role="separator" aria-orientation="vertical" aria-label="Resize the right panel" title="Drag to resize, double-click to reset"></div>
         <div class="tabs">
           <button class="tab on" data-t="chat">Chat <span class="k">DeepSeek</span></button>
           <button class="tab astab on" data-t="chat">Assistant</button>
@@ -629,6 +638,23 @@ form.q button { justify-self: start; font: inherit; font-size: 13px; padding: 6p
   const plus = document.getElementById('plus'), menu = document.getElementById('menu');
   plus.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
   document.addEventListener('click', () => { menu.classList.remove('open'); if (win.dataset.settings === 'on') win.dataset.settings = 'off'; });
+  // Resizing: drag a panel's inner edge; the centre (the app) keeps at least 360px, a panel stays between 180px and 60% of the window.
+  const DEFAULT = { left: 248, right: 412 };
+  document.querySelectorAll('.grip').forEach(g => {
+    const side = g.dataset.grip, prop = side === 'left' ? '--lw-open' : '--rw-open';
+    g.addEventListener('dblclick', () => win.style.setProperty(prop, DEFAULT[side] + 'px'));
+    g.addEventListener('pointerdown', e => {
+      e.preventDefault(); g.setPointerCapture(e.pointerId); win.classList.add('resizing'); g.classList.add('on');
+      const box = win.getBoundingClientRect(), other = side === 'left' ? win.querySelector('.right') : win.querySelector('.left');
+      const move = ev => {
+        const want = side === 'left' ? ev.clientX - box.left : box.right - ev.clientX;
+        const max = Math.min(box.width * 0.6, box.width - other.getBoundingClientRect().width - 360);
+        win.style.setProperty(prop, Math.round(Math.max(180, Math.min(max, want))) + 'px');
+      };
+      const up = () => { g.removeEventListener('pointermove', move); win.classList.remove('resizing'); g.classList.remove('on'); };
+      g.addEventListener('pointermove', move); g.addEventListener('pointerup', up, { once: true });
+    });
+  });
   apply('agent');
 })();
 </script>
