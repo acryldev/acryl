@@ -100,6 +100,9 @@ of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImp
   through Settings > Plugins, is what changes the canvas; `src/frame.ts` carries no feature wiring.
   The same snapshot (`blend.yaml` + `plugins/`) is what a person shares, what a saved version holds, and what a blueprint is made from
   (owner: "and we share as snapshot, version or make blueprint from"); one artifact, no second export format.
+  Its verbs, in the frame and as agent tools: capture (running composition to `blend.yaml`), load (start or switch an app from a snapshot),
+  save version (a commit), push and pull version (the app's remote), push and pull to a registry (the whole app as a Blend entry, one plugin to
+  CordisPlugins) - owner: "capture current snapshot, save version, push version, pull version". ACRYL's blend-capture and blend-apply are ported for it.
   Done when: on a fresh Blank app the prompt "please build a simple Notes widget" ends with `plugins/notes` as a Cordis plugin row (no
   hand edits to `src/frame.ts` or `src/routes.ts`), the agent consulted the index first (Trajectory), no guessed imports and no "Not
   reloaded", the widget shows in the canvas, Settings > Plugins lists it, disabling it removes it from the canvas and enabling brings it
