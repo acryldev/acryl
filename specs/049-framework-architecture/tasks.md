@@ -89,5 +89,16 @@ of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImp
   Done when: in the Blends frame on web and desktop, both panels resize by dragging and reset on double-click, the width survives a
   restart and a collapse, and side-by-side captures with the mockup match.
 
+- [ ] T010 [frame UX, owner 2026-11-04] The app's agent extends the app the way ACRYL IDE's agent extends itself (spec 037, guardrailed
+  self-extension): ACRYL's Extension Context Pack (`plugins/acryl-plugin-context`: routed docs index, verified examples, authoring
+  skills, verify/stage/install, `acryl-system-prompt`) is ported to the Blends app, not rewritten. Owner's rule: the agent "doesn't just
+  build random voluntary plugin however he can, but always strictly abides to build cordis plugin that we display in settings and can
+  easily enable / disable and share to the CordisPlugins registry" (https://cordisplugins.github.io/plugins,
+  https://github.com/orgs/cordisplugins).
+  Done when: on a fresh Blank app the prompt "please build a simple Notes widget" ends with `plugins/notes` as a Cordis plugin row (no
+  hand edits to `src/frame.ts` or `src/routes.ts`), the agent consulted the index first (Trajectory), no guessed imports and no "Not
+  reloaded", the widget shows in the canvas, Settings > Plugins lists it, disabling it removes it from the canvas and enabling brings it
+  back, and Share packages it in the registry's format.
+
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).
