@@ -41,13 +41,12 @@ Classified by who owns it and what happens when it is deleted. They differ in ra
 | Kind | Owner | If deleted | Lives in |
 | --- | --- | --- | --- |
 | **Program** | the product (the installed app) | reinstall restores it | the bundle: Electron, the frame, the framework packages, the framework's `node_modules`. Read-only, replaced by every update, never copied out |
-| **Source** | the person | their work is lost, so it is a git repository with versions | `apps/<id>/source/`: `blend.yaml`, `plugins/`, `src/`, `package.json`, `.git` |
-| **Data** | the person | their history is lost | `apps/<id>/data/`: settings, sessions and chat, notes, storages |
-| **Derived** | the machine | rebuilt on demand | `apps/<id>/cache/`: dependencies a person's own plugin added, build output |
-| **Logs** | the machine | nothing is lost | `apps/<id>/logs/` |
+| **Source** | the person | their work is lost, so it is a git repository with versions | `apps/<id>/source/`: `blend.yaml`, the person's `plugins/` and `src/`, `package.json` (no framework packages: they are peers), `.git`. `node_modules/` is allowed here, gitignored, and holds only what the person added |
+| **Data** | the person | their history is lost | `apps/<id>/data/`: settings, sessions and chat, notes, storages, and `logs/` (the engine writes its logs under its home, so logs are a member of the family, not a sibling folder) |
+| **Derived** | the machine | rebuilt on demand | `apps/<id>/cache/`: build output and anything else rebuildable (it is inside the OS backup, as everything under the root is; a backup exclusion is a later step) |
 
-The Program is not copied. Today's copy of the bundle is the root of the duplicated `node_modules` and of the "old state kept" problem: the framework is
-resolved from the bundle at run time (`NODE_PATH`-style resolution through the loader), and the person's app carries only what is theirs.
+The Program is not copied, and it is not in `source/` either: the framework plugins (`acryl-node-server`, `instance`, `desktop`, `acryl-router` and the rest), the generated host (`ide-host.mjs`, `cordis.patch.yml`) and the frame packages load from the bundle through bundle-relative rows, so an update replaces them for every app (a framework file that must stay in `source/` carries the Generated marker and is rewritten on open, as `acrylblends upgrade` does). Today's copy of the bundle is the root of the duplicated `node_modules` and of the "old state kept" problem: the framework is
+resolved from the bundle at run time and the person's app carries only what is theirs. `NODE_PATH` does not work for ESM; the seam is the sync `registerHooks` resolver in `acryl-node-server/register.ts`, generalised so that framework names (`acrylblends`, `@deepseek-ai/*`, the frame packages, the vendored plugin names) resolve to the bundle FIRST for any parent, and everything else resolves normally with the bundle as the fallback. Framework-first is required: a person's dependency carrying its own copy would give two framework copies (the `matchedRoutes` 500). The bundle stays unpacked (`asar` false) and vendored `.ts` stays outside any `node_modules` path, because type stripping refuses `.ts` under `node_modules`.
 
 ### One root, the same on every OS, chosen in one place
 
@@ -61,8 +60,8 @@ resolved from the bundle at run time (`NODE_PATH`-style resolution through the l
 ```
 
 `<root>` is the platform's per-user application data folder plus the product name, the same rule the OS gives every app so that backup, uninstall and
-permissions behave as the person expects: macOS `~/Library/Application Support/<Product>`, Windows `%APPDATA%\<Product>`, Linux
-`${XDG_DATA_HOME:-~/.local/share}/<Product>`. It is computed by one pure function `platformDataDir(platform, env, home)` inside the `AppInstance` family
+permissions behave as the person expects: macOS `~/Library/Application Support/<Product>`, Windows `%LOCALAPPDATA%\<Product>` (the per-machine folder, not the Roaming profile that domain logons sync; fallback `<home>\AppData\Local`), Linux
+`$XDG_DATA_HOME/<Product>` when that is an absolute path, else `~/.local/share/<Product>`. It is computed by one pure function `platformDataDir(platform, env, home)` inside the `AppInstance` family
 (`select.ts`), so a unit test can run all three rules on one machine, and nothing else calls `app.getPath` or `homedir()`.
 
 An app's id is a generated slug (`my-notes-3f2a`), never the name. The person names the app (and renames it) as a label in `apps.json`; renaming never
@@ -71,10 +70,10 @@ moves a folder, which also keeps paths short and legal on Windows (no reserved n
 ### Behaving the same across macOS, Windows and Linux
 
 - One code path. The only per-OS code is `platformDataDir`. Everything below it is the same layout built by the same function.
-- No absolute path is ever written into a file the app owns (`blend.yaml`, `layout.json`, `apps.json`, settings): paths are relative to `<root>` or to an
-  app folder, so a folder moved or restored from a backup still opens.
+- No absolute path is ever written into a file the app owns (`blend.yaml`, `layout.json`, `apps.json`, settings, lockfiles), and no path into the bundle either: paths are relative to `<root>` or to an
+  app folder, so a folder moved or restored from a backup still opens, and macOS App Translocation (a random read-only bundle path that changes between launches) cannot break an app.
 - No symlinks in the tree (Windows needs privilege to make them); copies use `dereference`. Slugs are lower-case and compared case-insensitively
-  (macOS and Windows are, Linux is not). Git runs with `core.autocrlf=false` and `core.longpaths=true` for the app's own repository.
+  (macOS and Windows are, Linux is not); reserved Windows names (CON, PRN, AUX, NUL, COM1-9, LPT1-9) and names ending in a dot or space are refused. Git runs with `core.autocrlf=false` and `core.longpaths=true` for the app's own repository.
 - A conformance test creates a root in a temp folder, runs first start, open, rename, export, import and reset, and writes the resulting tree as a
   listing; the listing must be identical on every OS. It runs on this Mac and, in T007, on mbpi9win and z370n from the built installers.
 
@@ -108,9 +107,13 @@ a parameter so it is one more branch in one function when it is wanted.
    silently, never deleted); then mbpi9win and z370n from the installers.
 4. The 2026-11-05 failure as a test: install N, build a change, install N+1: the change and the chat remain, and Start over really starts clean.
 
+## Git on a clean machine (open, gates T002's "no git needed")
+
+Source is a git repository, but a clean Mac without the Command Line Tools has only a `/usr/bin/git` shim that opens an install dialog, and Windows has no git. Export uses `git bundle` (source with full history in one file, data as a second entry). The product therefore needs a bundled git binary per OS or isomorphic-git; the implementer researches both, with sizes, and recommends before slice 5.
+
 ## Slices (for the implementer; each is one commit with its own tests)
 
-1. `platformDataDir` and the layout (`layout.json`, `apps.json`, ids) in `AppInstance`, with the three-platform tests. No behaviour change yet.
+1. `platformDataDir` and the layout (`layout.json`, `apps.json`, ids, `productInstance`) beside `selectInstance` in `plugins/instance` of acrylblends (the acryl repo's `select.ts` stays as is), with the three-platform tests and a bulkhead test there (no `homedir()` or `app.getPath` outside it; `plugins/agent-panel/headless.ts` fixed in the same slice). No behaviour change yet.
 2. `AppStorage` port and its adapter; `main.ts` runs the frame on `apps/<id>/source` and keeps Data, Cache and Logs where the table says; `product.ts`'s
    copy-into-Documents is deleted, not kept as a fallback.
 3. The framework resolved from the bundle instead of a copied `node_modules` (the slice that shrinks the app folder; report the size before and after).
