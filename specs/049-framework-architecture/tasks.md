@@ -28,8 +28,9 @@ arm/intel for acrylblends Blank app so that we download it and it's easiest for 
 of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImplementer.
 
 - [ ] T002 [M10] The Blank app as a desktop product: the Blends frame around an empty `acrylblends` Blank app, packaged with its own
-  runtime (Node or Electron's, git included or not needed), so it starts from the downloaded file alone. The app folder it builds in is
-  created on first start in the person's documents (through the `AppInstance` family, never `homedir()`), named by the person.
+  runtime (Node or Electron's, git included or not needed), so it starts from the downloaded file alone. Where each app keeps its source, data,
+  cache and logs is `app-storage.md` in this folder (one sealed folder per app in the product's per-user app data root, the same layout on every OS,
+  decided in the `AppInstance` family, never `homedir()` or Documents); the person names the app on first start.
   Done when: on a clean user account with no Node, git or npm, opening the app shows the frame with the Blank app running in it.
 - [ ] T003 [M10] First start asks nothing technical: no flag, environment variable or terminal command. A model is chosen in the app's own
   Settings (sign in, or paste a key), and until one is set the chat says how in one sentence.
