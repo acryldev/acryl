@@ -1,3 +1,11 @@
+## 2026-11-06 - a plugin's identity and portability are pure policy in blends-core 0.5.0 (spec 049, portable plugins step 1)
+
+A plugin written on Windows must work on macOS after a pull from the registry, and Git for Windows' default line endings broke that: the same plugin with CRLF digests differently, so it can fail its own lock on another machine.
+
+- **The policy** (`f5e3b76409b06bc43f2ae5a8f462e6ed78711c10`): `runtime/blends-core/src/plugin-identity/` holds `digestFiles` and `portabilityIssues`, both pure over plain `{path, bytes, kind}` files, so every rule runs on any one machine. `pluginFiles` is the disk adapter and `digestFolder` is the two together. The digest formula did not change, and a value computed from the old code pins it, so no lock changes.
+- **The rules**: a name Windows reserves, a trailing dot or space, a character Windows refuses, two paths that are one name ignoring case or Unicode form (folders too), a path over 200 characters, a symbolic link, and a carriage return in a text file. A plugin with an issue still has a digest: refusing is the caller's decision.
+- **Published**: `@webboxes/blends-core@0.5.0`, additions only. All 43 entries of the public registry measured clean before anything enforced the rules.
+
 ## 2026-10-29 (release) - release 0.2.6: the npm CLI works on Windows, `acryl web` works at all, and the npm round trip is tested on every push
 
 Release 0.2.6 (tag `v0.2.6` on `7b3449278ea45582678801249c2315308bfc0264`) ships everything since 0.2.5 on every surface: CLI and Web archives for four targets, five Desktop installers, npm (`acryl` and its four `acryl-cli-*` packages) and the GitHub release (Latest, 21 assets). Its notes list the user-facing changes.
