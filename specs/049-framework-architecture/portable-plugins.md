@@ -62,6 +62,19 @@ policy would depend on directory shapes. Here the transaction owns the port and 
    and on z370n: the three digests are equal and the plugin runs. Folded into T007 of `tasks.md`; the same fixture plugins (reserved name, CRLF,
    case pair, long path) go through step 1's tests on all three OSes in CI.
 
+## The five top books, one rule each that decided something here
+
+Owner, 2026-11-06: Clean Architecture, Clean Code, A Philosophy of Software Design, Domain-Driven Design Distilled and The Pragmatic
+Programmer are used in all technical implementation, always (`~/.agents/rules/agent-rules-books/_all-agent-rules-books/`).
+
+| Book | Rule | Decided |
+| --- | --- | --- |
+| Clean Architecture | policy pure, I/O behind a boundary the use case owns | `digestFiles` and `portabilityIssues` pure; `PluginStore` port owned by the install transaction; composition root wires the folder adapter |
+| Clean Code | small functions, one thing, no boolean flags, explicit dependencies, one word per concept | each portability rule is its own small function returning issues (no `strict` flag); the pure functions take files, never read the disk or env; the word is "plugin" (the `extensions` folder name is history, not new vocabulary) |
+| A Philosophy of Software Design | deep module: small interface hiding a lot; one change must not spread across files | `PluginStore` is four verbs and hides the new-URL copy, the atomic rename, the watcher rule and pruning; today a change to staging touches `stage.ts`, `index.ts` and `resolve.ts` |
+| Domain-Driven Design Distilled | bounded contexts with their own language; context map; translate foreign models | three contexts: Plugin identity (digest, portability), App storage (app-storage.md), Registry (entries). A registry entry and a git repository are foreign models: fetching translates them into plain files before the policy sees them (anticorruption layer); the entry's `blend.yaml` and digest are the published language |
+| The Pragmatic Programmer | DRY, orthogonality, tracer bullet, no ambient globals | one digest formula for lock, stage and registry; portability separate from identity; the Windows-to-macOS scenario is the tracer bullet, built first end to end with the thinnest policy; no `process.env` in the policy |
+
 ## Kept from the discussion
 
 Sealed unit with its own tree and a file browser view (already the frame's Files body over `apps/<id>/source`), content identity of plugins,
@@ -72,8 +85,7 @@ transactional evolution with restore-previous, pack/unpack, desktop store outsid
 Digest-named directories as the source of truth, `live/` symlinks, a separate `view/` projection tree, moving `blend.yaml` and the lock into the
 home, and treating `stage.ts` as storage.
 
-## Open for the owner
+## Decided by the owner (2026-11-06)
 
-1. Git inside `source` as the person's version history (kept, bundled, hidden behind a history port) against git only as an export format. The
-   discussion says export; app-storage.md keeps it inside because "Build/Preview versions" in the frame need history. Recommendation: keep inside.
-2. Line endings: pin and refuse (step 2, recommended) or normalise in the digest.
+1. Git stays inside `source` as the person's version history (bundled, hidden behind a history port); the app does not need git to run.
+2. Line endings are pinned to LF and entries that break it are refused (step 2); the digest formula does not change.
