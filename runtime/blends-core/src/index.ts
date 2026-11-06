@@ -15,6 +15,7 @@ export { manifestDigest } from './digest.js'
 export { digestFolder, pluginFiles } from './plugin-identity/folder-digest.js'
 export { digestFiles, FOLDER_DIGEST_SKIPPED, FOLDER_DIGEST_SKIPPED_PREFIX, isSkippedName, type PluginFile } from './plugin-identity/plugin-digest.js'
 export { portabilityIssues, type PortabilityIssue, type PortabilityRule } from './plugin-identity/plugin-portability.js'
+export { snapshotProblems, verifySnapshot, type LockedFolderDigest, type SnapshotVerification } from './plugin-identity/verify-snapshot.js'
 export { planUpgrade, applyUpgrade, type ApplyResult, type RowChange, type RowField, type UpgradeInput, type UpgradePlan, type UpgradeResult } from './upgrade.js'
 export { REGISTRY_INDEX_FORMAT, buildRegistryIndex, parseRegistryIndex, type RegistryEntry, type RegistryIndex, type RegistryProblem } from './registry.js'
 

@@ -7,7 +7,7 @@ import type { BlendLock, LockGenerator, LockLineage, LockModule, LockOrigin, Res
 
 // Version truth: kept in lockstep with packages/blends-core/package.json.
 // unit/lock.spec.ts asserts the two match so they cannot drift silently.
-export const BLENDS_CORE_VERSION = '0.5.0'
+export const BLENDS_CORE_VERSION = '0.6.0'
 
 export interface LockResult {
   lock: BlendLock

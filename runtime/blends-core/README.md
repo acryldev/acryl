@@ -45,6 +45,8 @@ refuses, two paths that are one name ignoring case or Unicode form, a path over 
 text file (the digest counts every byte, so the same text with CRLF is a different plugin). A plugin with an issue still has a digest; refusing
 it is the caller's decision.
 
+`verifySnapshot(dir)` checks an app or a registry entry against its own `blend.lock.json`, offline: `blend.yaml` still has the recorded digest, and every local plugin folder the lock names still hashes to its digest. It returns every problem in a sentence, and `snapshotProblems` is the same check with no disk.
+
 ## Upgrading a Blend
 
 A Blend records the Blueprint and version it was made from in `spec.lineage`. `planUpgrade` answers what moving it to a newer Blueprint

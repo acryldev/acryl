@@ -27,6 +27,7 @@ describe('public surface (contracts/blends-core.api.md)', () => {
     expect(typeof blends.digestFiles).toBe('function')
     expect(typeof blends.isSkippedName).toBe('function')
     expect(typeof blends.portabilityIssues).toBe('function')
+    expect(typeof blends.verifySnapshot).toBe('function')
   })
 
   it('drives the full pipeline through the barrel alone', () => {
