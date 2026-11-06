@@ -23,6 +23,10 @@ describe('public surface (contracts/blends-core.api.md)', () => {
     expect(typeof blends.applyUpgrade).toBe('function')
     expect(typeof blends.generateBlendLock).toBe('function')
     expect(typeof blends.digestFolder).toBe('function')
+    expect(typeof blends.pluginFiles).toBe('function')
+    expect(typeof blends.digestFiles).toBe('function')
+    expect(typeof blends.isSkippedName).toBe('function')
+    expect(typeof blends.portabilityIssues).toBe('function')
   })
 
   it('drives the full pipeline through the barrel alone', () => {

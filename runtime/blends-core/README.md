@@ -33,6 +33,18 @@ File digests (`origin.digest`, `lineage.digest`) are `manifestDigest`, bare sha2
 folder, `sha512-` for a tarball. `digestFolder(dir)` is the one folder digest: sha256 over each file's relative path (always `/`) and bytes, in path order, skipping
 `node_modules`, `.git`, `acryl-source.json` and `acryl-v-*` folders. `generateLock` still writes v1 and v2 for existing callers.
 
+## Plugin identity and portability
+
+A plugin's digest and its portability are pure functions over plain files (`PluginFile`: `{ path, bytes, kind }`), so a folder, a fetched
+registry entry and a test all reach the same answer without a disk. `pluginFiles(dir)` reads a folder into them, and `digestFolder(dir)` is
+`digestFiles(pluginFiles(dir))`.
+
+`portabilityIssues(files)` lists every reason a plugin would not work the same on macOS, Windows and Linux, each with a `rule`, a `path` and
+a `reason` a person can act on. The rules: a name Windows reserves (`con`, `nul.txt`), a name ending in a dot or space, a character Windows
+refuses, two paths that are one name ignoring case or Unicode form, a path over 200 characters, a symbolic link, and a carriage return in a
+text file (the digest counts every byte, so the same text with CRLF is a different plugin). A plugin with an issue still has a digest; refusing
+it is the caller's decision.
+
 ## Upgrading a Blend
 
 A Blend records the Blueprint and version it was made from in `spec.lineage`. `planUpgrade` answers what moving it to a newer Blueprint
