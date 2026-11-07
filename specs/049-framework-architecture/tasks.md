@@ -75,6 +75,15 @@ remembering where each pulled plugin came from.
   (`inboxxobni`) and read by `cordisplugins.github.io`'s sync, and its entry shows the right provides, consumes and compatibility. If the contract
   an `acrylblends` plugin declares is not what the sync reads, the gap and the fix are written here before T009.
   Done when: the entry is listed with the expected compatibility, and the finding (or "no gap") is recorded under this ticket.
+  Finding, offline half (Fork3, 2026-11-07; real code, nothing published: a sample plugin injecting `router` and `routerHttp`, `packageManifest`,
+  `packFolder` from `@webboxes/plugin-hub`, then the registry's `packageJsonFromTarball` and `pluginFromRelease`). Today the registry would list it as
+  `compatibility: "DSH stock"`, `provides: []`, `consumes: []`, with a `dsh plugin ... add` install line, which is wrong for an acrylblends app.
+  - G1: `package_plugin` writes no contract (`acryl.requires/provides/slots`). Fix in T010: call the hub's `syncServiceContract` when packaging.
+  - G2: `files: ['*.ts', '**/*.ts', 'README.md']` silently drops `plugin.json`, other `*.json` data and `.js` files. Fix in T010: drop the list, let the standard skips apply.
+  - G3: `SOURCE_EXTENSIONS` in the hub's `contract.ts` is `.js .mjs .cjs`, so `provides` and `slots` of `.ts` plugins are never seen. Fix: add `.ts .mts .tsx`; needs `@webboxes/plugin-hub` 0.2.0.
+  - G4: with a contract, `compatibilityOf` still says "Both" for `router`/`routerHttp` (false) and the install line stays wrong. Fix in `cordisplugins.github.io` (`scripts/lib/discover.mjs` and the badge): the keyword `acrylblends` gives compatibility "ACRYL Blends" and the line `npm run acryl -- plugin pull github:<owner>/<repo>@<version>` (wording final when T009 lands). Not a new registry kind.
+  - G5 (seen in code, not run): the hub's `sharePlugin` and `bundleProblem` require a DSH Loader patch (`dsh.bundle.patch`) that acrylblends plugins do not have. T011 handles this without weakening it for DSH bundles.
+  - Good: installed `@webboxes/plugin-hub` 0.1.0 has `contract`, `pack`, `pull`, `tarball`, `share` identical to source and its tarball is already deterministic, so it is a dependency, not a copy. Pull reuses `pullPlugin`, `parsePluginSource`, `readTarball`; the `@sha256:` content digest is `digestFiles` over the unpacked package. A new acrylblends plugin `plugins/plugin-share/` owns pull and publish.
 - [ ] T009 [M11] `plugin pull <source>` in the door and the CLI of an `acrylblends` app. Sources: `github:<owner>/<repo>[@version]` and a
   `.tgz` path or address first (`store:` and `npm:` follow the ACRYL IDE and are not needed for the bootcamp). It fetches without running anything
   (never a clone, no install scripts), checks the sha512 against the release and, when the source names one (`@sha256:<digest>`), the plugin's
