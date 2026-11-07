@@ -238,3 +238,14 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   Wanted: hash CSS-module names from the package-relative path, strip or relativize the region comments, and add a pack check that fails on an absolute
   home path in any tarball. (Clean Code / Pragmatic Programmer: a build is a function of its source.)
   Done when: the same source built in two different folders packs byte-identical tarballs, and the pack check fails on a planted `/Users/x/` path.
+- [ ] T028 [M12, found 2026-11-08, blocks the guide's first command] `create-acrylblends` 1.4.0 carries the 1.3.0 templates, so `npm create acrylblends@latest my-app agent -- --desktop`
+  after the 1.3.1 release gives an app whose runtime is acrylblends 1.3.1 and frame 0.1.1 but whose plugin sources are 1.3.0: `plugins/acryl-door/src/host/door.ts` is
+  byte-identical to v1.3.0 (so `plugin list` answers "this door has no extensions plugin to drive" in the frame), `plugin-share` is the 1.3.0 one, and
+  `frame/app-plugins.mjs` has no route getter (T021 route ownership). A pull itself works. Fix: release create-acrylblends 1.4.1 carrying framework 1.3.1;
+  then re-run the guide line from npm with two pulls in a row, list, remove and a poll of the page that must never answer 404. Prevention: a check that the
+  create package's template equals the framework version it is released after (or one release process for both).
+- [ ] T029 [M12, found 2026-11-08] `npx acrylblends upgrade` in a fresh `create-acrylblends` 1.4.0 app (agent template, only one `plugin pull` done) stops with
+  "src/app.ts ... is not the previous release's scaffold and acrylblends did not write it; nothing was changed", so an app made before 1.3.1 cannot take
+  the 1.3.1 plugin sources by the path the release notes name. Find why an untouched scaffold is not recognized (the previous release's reference
+  differs from what create 1.4.0 wrote?), fix, and test upgrade from a package-made 1.4.0 app, not only from the repo's own scaffold. `--force` saves the
+  app's versions first and is the owner's choice, not the default.
