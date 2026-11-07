@@ -224,3 +224,9 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   a plugin that throws is refused and the others keep answering. Gaps: the agent template has no `home` plugin, so a widget plugin is refused there (T020
   covers blank); the list shows no author or source, folded into T021 together with a same-name refusal that names the installed copy's author.
 
+- [ ] T026 [M12, found 2026-11-07 by Fork3, low priority] Templates declare `allowScripts` for the packages whose install scripts the terminal needs
+  (`node-pty`, `@deepseek-ai/dsh-subprocess-local`, `koffi`, by name only). Today `npm install` of a scaffolded app on npm 11.17 prints "5 packages have
+  install scripts not yet covered by allowScripts"; the field is advisory there and the scripts run (measured from the published packages: node-pty spawned a
+  PTY, spawn-helpers executable, koffi loads), so attendees do nothing and the guide says so. A future npm that blocks unreviewed scripts would break the
+  frame's terminal tabs without it.
+  Done when: a scaffolded app installs without the warning on the npm in use at the workshop, and the terminal tab opens a PTY.
