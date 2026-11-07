@@ -213,3 +213,14 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   Done when: five plugins made by five people (on at least two OSes) are pulled one after the other into one running app and all answer at their routes
   (or fill their slots); a sixth with a clashing route is refused with a plain reason and changes nothing; the guide (T017) has this as its group exercise,
   with the line each person sends the group (`github:<owner>/<repo>@<version>@sha256:<digest>`, as `plugin publish` prints it).
+- [ ] T025 [M12, for T024; found 2026-11-07 by Fork3 running five plugins into one app] A pulled plugin whose route is already served is refused, naming the
+  plugin that serves it and asking to rename the route, and nothing changes. Today the second mount is accepted and silently shadowed (the first wins), and
+  the newcomer's install check passes on the other plugin's answer. `acryl-inspect` already maps each route to the plugin that mounted it (through the
+  router's effect labels), so `plugin-share` compares the new plugin's routes with every other plugin's after its mount, and removes it and refuses on overlap.
+  The same holds for a home widget id already on the page.
+  Done when: in one running app, a sixth plugin with `/pomodoro` is refused with "/pomodoro is served by acrylblends-pomodoro (inboxxobni); rename your route",
+  `GET /pomodoro` is unchanged and `plugins/` has no new folder; the same for a widget id.
+  What already holds (measured): five plugins pulled one after the other all answer; a same-name plugin by another author is refused and the first stays;
+  a plugin that throws is refused and the others keep answering. Gaps: the agent template has no `home` plugin, so a widget plugin is refused there (T020
+  covers blank); the list shows no author or source, folded into T021 together with a same-name refusal that names the installed copy's author.
+
