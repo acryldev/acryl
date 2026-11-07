@@ -177,3 +177,10 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   app assembled from several people's plugins is reproducible. Removing the plugin removes the record.
   Done when: pull a plugin, snapshot the app, create a new app from the snapshot on another OS, and the same plugin is fetched, verified and
   running; a source whose bytes changed since the record is refused, not silently replaced.
+- [ ] T019 [M12, found 2026-11-07 by Fork3, later; owner decision needed] `upgrade` does not give an existing app the `plugin-share` plugin. It brings the
+  `acryl` npm script and moves `@webboxes/blends-core` forward, but a new plugin also needs an import and a registry entry in the person's own
+  `src/app.ts`, a config entry and a row in `blend.yaml`, and `upgrade` does not rewrite a person's `src/app.ts`. Today an existing app gets a refusal that
+  names `npx acrylblends add plugin-share` and the README, then three hand edits (measured on an app made by 0.10.0). Apps newly made by the
+  release have it, which covers the bootcamp (attendees scaffold fresh).
+  Wanted, if the owner wants it: `upgrade` proposes the three edits as a shown diff the person accepts (as it already does for generated files), never silently.
+  Done when: an app made by 0.10.0 is upgraded, the person accepts the diff, and `npm run acryl -- plugin pull <source>` installs a plugin with no hand edit.
