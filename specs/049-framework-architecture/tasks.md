@@ -50,3 +50,44 @@ of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImp
 
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).
+
+### M11 - share a plugin between people: publish, then pull into your own app (owner, 2026-11-07)
+
+Owner's words: "the idea is that we're gonna build first agentic apps and share created on the fly plugins between us to try collaborative
+mode of agentic software development" (the bootcamp of 2026-11-20), then "person publishes a plugin, person B pulls it into own app", and
+"we have https://cordisplugins.github.io for cordis plugins, https://acrylblends.github.io for BLENDS". Recorded by Acryl_main_thread_1.
+
+The registry already exists and is not changed: a public GitHub repository with the topic `cordis-plugin` and a release holding one `.tgz`
+is listed by `cordisplugins.github.io` (hourly sync, entry built from the package's contract, sha512 recorded), and the ACRYL IDE pulls it with
+`plugin pull github:<owner>/<repo>[@version]` (`apps/acryl-cli`). What is missing is the same two moves inside an `acrylblends` app: its door
+has `plugin add <folder>` (local folder, live, with check and rollback) and `package_plugin` writes a folder to `plugin-packages/<name>/`,
+neither is a release and neither takes a source. Pulling goes straight to the GitHub release, not through the hourly listing, so a plugin is
+usable the moment it is released. Portability (`portabilityIssues`, `verifySnapshot` in blends-core, see `portable-plugins.md`) decides
+whether a pulled plugin is accepted, so a plugin made on Windows works on macOS.
+
+- [ ] T008 [M11] Compatibility, proven first: one plugin the agent builds in an `acrylblends` app is packed, released on the test org
+  (`inboxxobni`) and read by `cordisplugins.github.io`'s sync, and its entry shows the right provides, consumes and compatibility. If the contract
+  an `acrylblends` plugin declares is not what the sync reads, the gap and the fix are written here before T009.
+  Done when: the entry is listed with the expected compatibility, and the finding (or "no gap") is recorded under this ticket.
+- [ ] T009 [M11] `plugin pull <source>` in the door and the CLI of an `acrylblends` app. Sources: `github:<owner>/<repo>[@version]` and a
+  `.tgz` path or address first (`store:` and `npm:` follow the ACRYL IDE and are not needed for the bootcamp). It fetches without running anything
+  (never a clone, no install scripts), checks the sha512 against the release, runs the portability check on the unpacked files, then hands the
+  folder to the existing live `plugin add`. Every refusal names what is wrong and what to do; a failed install leaves the app as it was.
+  Done when: a test pulls a plugin from a local release fixture into a running app and its route answers without a restart; a tampered archive,
+  a CRLF or reserved-name plugin and a plugin needing a missing service are each refused with their reason and change nothing.
+- [ ] T010 [M11] `package_plugin` produces a release-ready package: deterministic `.tgz` (sorted entries, LF, no timestamps), a `package.json`
+  with the topic `cordis-plugin` and `@deepseek-ai/cordis` as a peer, and the digest recorded.
+  Done when: packing the same plugin twice, on macOS and Windows, gives the same sha512.
+- [ ] T011 [M11] `plugin publish <name>`: creates the repository (or reuses the person's), the topic and the release with the `.tgz`. An outward
+  action: the verb shows the exact account, repository and version and waits for the person's yes in the chat or the frame; the agent never
+  confirms for them and no one-click handler publishes (read the handler first). Rehearsed on `inboxxobni` before any personal account.
+  Done when: a rehearsal publish on `inboxxobni` shows up as a release and, within the hour, in the registry; declining publishes nothing.
+- [ ] T012 [M11] The frame offers both: a Share action on a plugin and a Pull field in Settings > Plugins, calling the T009 and T011 verbs and
+  showing their refusals in plain words. No logic lives in the frame.
+  Done when: on screen, a plugin is shared from one app and pulled into another by pressing buttons only, shown side by side with the mockup.
+- [ ] T013 [M11] The acceptance walk: on mbpi9win (Windows) the agent builds a plugin and it is published; on this Mac and on z370n (Ubuntu) it
+  is pulled into a different app and works live with an identical digest on all three.
+  Done when: the three digests match and the screenshots are in the workshop handout.
+- [ ] T014 [M11] Workshop guide step and a dry run: step 7 of the guide gains "share a plugin, pull a neighbour's", and two people run it
+  together at least a week before 2026-11-20.
+  Done when: the guide's step passes for two people on different OSes with no help.
