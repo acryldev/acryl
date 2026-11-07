@@ -65,13 +65,20 @@ neither is a release and neither takes a source. Pulling goes straight to the Gi
 usable the moment it is released. Portability (`portabilityIssues`, `verifySnapshot` in blends-core, see `portable-plugins.md`) decides
 whether a pulled plugin is accepted, so a plugin made on Windows works on macOS.
 
+This was already decided in the steering discussion (`docs-acryl-project-RnD-ideas-discussions-questions/acrylblends_strategic_direction_steering/
+Discussion_acrylblends_strategic_direction_steering.md`, "Portability & sharing" and the opening brief): the registry serves both BLENDs and individual
+Cordis plugins; "someone on Windows can push a CP; you on macOS pull it by digest, identical bytes"; and anybody can build a "Frankenstein app" from
+other people's plugins. T009 and T015 carry the two parts of that the first draft of this milestone lacked: verification by digest, and the app
+remembering where each pulled plugin came from.
+
 - [ ] T008 [M11] Compatibility, proven first: one plugin the agent builds in an `acrylblends` app is packed, released on the test org
   (`inboxxobni`) and read by `cordisplugins.github.io`'s sync, and its entry shows the right provides, consumes and compatibility. If the contract
   an `acrylblends` plugin declares is not what the sync reads, the gap and the fix are written here before T009.
   Done when: the entry is listed with the expected compatibility, and the finding (or "no gap") is recorded under this ticket.
 - [ ] T009 [M11] `plugin pull <source>` in the door and the CLI of an `acrylblends` app. Sources: `github:<owner>/<repo>[@version]` and a
   `.tgz` path or address first (`store:` and `npm:` follow the ACRYL IDE and are not needed for the bootcamp). It fetches without running anything
-  (never a clone, no install scripts), checks the sha512 against the release, runs the portability check on the unpacked files, then hands the
+  (never a clone, no install scripts), checks the sha512 against the release and, when the source names one (`@sha256:<digest>`), the plugin's
+  content digest, so the same bytes arrive on every OS; runs the portability check on the unpacked files, then hands the
   folder to the existing live `plugin add`. Every refusal names what is wrong and what to do; a failed install leaves the app as it was.
   Done when: a test pulls a plugin from a local release fixture into a running app and its route answers without a restart; a tampered archive,
   a CRLF or reserved-name plugin and a plugin needing a missing service are each refused with their reason and change nothing.
@@ -91,3 +98,8 @@ whether a pulled plugin is accepted, so a plugin made on Windows works on macOS.
 - [ ] T014 [M11] Workshop guide step and a dry run: step 7 of the guide gains "share a plugin, pull a neighbour's", and two people run it
   together at least a week before 2026-11-20.
   Done when: the guide's step passes for two people on different OSes with no help.
+- [ ] T015 [M11] A pulled plugin is remembered: the app's `blend.yaml` and lock record its source (`github:<owner>/<repo>@<version>`), release
+  sha512 and content digest, so the app (its snapshot, an export, a copy on another machine) can fetch exactly the same plugin again, and an
+  app assembled from several people's plugins is reproducible. Removing the plugin removes the record.
+  Done when: pull a plugin, snapshot the app, create a new app from the snapshot on another OS, and the same plugin is fetched, verified and
+  running; a source whose bytes changed since the record is refused, not silently replaced.
