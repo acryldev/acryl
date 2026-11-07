@@ -230,3 +230,11 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   PTY, spawn-helpers executable, koffi loads), so attendees do nothing and the guide says so. A future npm that blocks unreviewed scripts would break the
   frame's terminal tabs without it.
   Done when: a scaffolded app installs without the warning on the npm in use at the workshop, and the terminal tab opens a PTY.
+- [ ] T027 [M12, found 2026-11-07 by Fork3, low priority] The frame's `ui` and `workspace` builds are not reproducible across checkout paths and carry the
+  builder's absolute path. `@acrylblends/ui` 0.3.0 `lib/client.js` embeds `/Users/.../acrylblends.worktrees/<checkout>/ide/acryl-ui/src/...` in its `\0dsh-css:`
+  region comments and derives each CSS-module class prefix from that path, so the same source built in another folder gives different bytes;
+  `@acrylblends/workspace` 0.1.0 carries the path in 2 files. Found comparing the packed frame of `c5ed1756` with npm: with the path and the 54 modules'
+  prefixes normalized, `ui` is byte-identical.
+  Wanted: hash CSS-module names from the package-relative path, strip or relativize the region comments, and add a pack check that fails on an absolute
+  home path in any tarball. (Clean Code / Pragmatic Programmer: a build is a function of its source.)
+  Done when: the same source built in two different folders packs byte-identical tarballs, and the pack check fails on a planted `/Users/x/` path.
