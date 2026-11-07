@@ -102,11 +102,20 @@ sandbox.
 
 Engineering reference (authoritative for clean-architecture, DDD, and
 day-to-day engineering-discipline judgement; this section is the
-ACRYL-specific interpretation):
+ACRYL-specific interpretation). The owner's rule (2026-11-06): these five
+books are the top ones and are used in ALL technical implementation, always -
+read the relevant one before designing or changing code, and say in the
+design note or commit which rule decided a boundary:
 
-- `~/.agents/rules/agent-rules-books/clean-architecture/clean-architecture.md`
-- `~/.agents/rules/agent-rules-books/implementing-domain-driven-design/implementing-domain-driven-design.md`
-- `~/.agents/rules/agent-rules-books/the-pragmatic-programmer/the-pragmatic-programmer.md`
+- `~/.agents/rules/agent-rules-books/_all-agent-rules-books/clean-architecture.md`
+- `~/.agents/rules/agent-rules-books/_all-agent-rules-books/clean-code.md`
+- `~/.agents/rules/agent-rules-books/_all-agent-rules-books/a-philosophy-of-software-design.md`
+- `~/.agents/rules/agent-rules-books/_all-agent-rules-books/domain-driven-design-distilled.md`
+- `~/.agents/rules/agent-rules-books/_all-agent-rules-books/the-pragmatic-programmer.md`
+
+The other books under `~/.agents/rules/agent-rules-books/` (Release It!,
+DDIA, PEAA, DDD, implementing DDD, refactoring) are used where a problem
+calls for them, never instead of these five.
 
 Precedence: the constitution, the Cordis coding-agent guide, and the ACRYL
 control-surface design win over this section; this section never overrides a
