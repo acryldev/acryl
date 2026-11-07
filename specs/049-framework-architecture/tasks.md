@@ -184,3 +184,23 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   release have it, which covers the bootcamp (attendees scaffold fresh).
   Wanted, if the owner wants it: `upgrade` proposes the three edits as a shown diff the person accepts (as it already does for generated files), never silently.
   Done when: an app made by 0.10.0 is upgraded, the person accepts the diff, and `npm run acryl -- plugin pull <source>` installs a plugin with no hand edit.
+- [ ] T020 [M12, found 2026-11-07 by Fork3] Every framed template can pull. `plugin-share` becomes a row of blank, notes, chat and nodejs without bringing
+  the agent into them: `packagePlugin` moves out of `builder` (today `plugin.json` says `plugin-share` requires `builder`, which requires `agent` and
+  `sandbox`; and it requires `manifest`, which a framed app leaves out as a host row, so that claim is checked). It cannot be part of the frame's own
+  composition: it injects `extensions`, which lives in the app's isolated realm, and the frame host has none. Needed by 2026-11-20: the Blank DMG
+  (`127-blank-dmg`, `scripts/pack-blank-mac.mjs`, `init --template blank --desktop`) is a framed blank app and today answers "plugin-share is not running".
+  Done when: a framed blank app, and the DMG's app, pull `github:<owner>/<repo>@<version>` and the plugin answers at `/app/<route>`; `todo`'s lack of an
+  `extensions` row is either fixed or refused in plain words.
+- [ ] T021 [M12, with T015] A pulled plugin can be listed and removed in a framed app. `plugin list` and `plugin remove` answer "no extensions plugin"
+  there because `extensions` is isolated on purpose from the host's DSH rows, which may provide that name. The door and Settings > Plugins reach the app's
+  own through the app's scope.
+  Done when: in a framed app the door lists and removes a pulled plugin, its record leaves `blend.yaml`, and the DSH host's own rows are unaffected.
+- [ ] T022 [M12, found 2026-11-07 by Fork3] A framed pull does not answer "active" before the plugin is reachable. The frame reloads the app's rows
+  about 430 ms after the pull for about 4 seconds (one measured run on a loaded Mac), so the route answers 404 and `plugin-share` itself is away; a pull
+  in that window says "plugin-share is not running ... restarting".
+  Done when: the reload is awaited or avoided, and the plugin answers without a gap after the pull returns.
+- [ ] T023 [M12, decided by the coordinator 2026-11-07, owner may overrule] The workshop guide's first command makes the framed app it describes. Found by
+  Fork3 running it for real: `npm create acrylblends@latest my-app agent` makes a framework-only app ("init --desktop puts it inside the ACRYL frame"),
+  while `docs/framework/workshop/README.md` section 1 says `npm run dev` opens the frame. Decision: `create` passes `--desktop` through to `init` (additive, the
+  default stays framework-only so no existing use changes) and the guide's line uses it, spelling out npm's `--` before the flag.
+  Done when: the guide's exact first command, run from the published `create`, gives an app whose `npm run dev` prints `acrylblends host: ...` and shows the frame.
