@@ -132,6 +132,10 @@ Cordis plugins; "someone on Windows can push a CP; you on macOS pull it by diges
 other people's plugins. T012 and T018 carry the two parts of that the first draft of this milestone lacked: verification by digest, and the app
 remembering where each pulled plugin came from.
 
+Numbering: commits made before 2026-11-07 14:50 name these tasks by their first numbers, T008-T015 under M11. The mapping is T008=T011 (compatibility),
+T009=T012 (pull), T010=T013 (package), T011=T014 (publish), T012=T015 (frame), T013=T016 (walk), T014=T017 (guide step), T015=T018 (record the source).
+Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone is M12 and the numbers moved; commit hashes are not rewritten.
+
 - [ ] T011 [M12] Compatibility, proven first: one plugin the agent builds in an `acrylblends` app is packed, released on the test org
   (`inboxxobni`) and read by `cordisplugins.github.io`'s sync, and its entry shows the right provides, consumes and compatibility. If the contract
   an `acrylblends` plugin declares is not what the sync reads, the gap and the fix are written here before T012.
