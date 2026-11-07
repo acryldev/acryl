@@ -58,8 +58,9 @@ arm/intel for acrylblends Blank app so that we download it and it's easiest for 
 of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImplementer.
 
 - [ ] T003 [M11] The Blank app as a desktop product: the Blends frame around an empty `acrylblends` Blank app, packaged with its own
-  runtime (Node or Electron's, git included or not needed), so it starts from the downloaded file alone. The app folder it builds in is
-  created on first start in the person's documents (through the `AppInstance` family, never `homedir()`), named by the person.
+  runtime (Node or Electron's, git included or not needed), so it starts from the downloaded file alone. Where each app keeps its source, data,
+  cache and logs is `app-storage.md` in this folder (one sealed folder per app in the product's per-user app data root, the same layout on every OS,
+  decided in the `AppInstance` family, never `homedir()` or Documents); the person names the app on first start.
   Done when: on a clean user account with no Node, git or npm, opening the app shows the frame with the Blank app running in it.
 - [ ] T004 [M11] First start asks nothing technical: no flag, environment variable or terminal command. A model is chosen in the app's own
   Settings (sign in, or paste a key), and until one is set the chat says how in one sentence.
@@ -110,3 +111,65 @@ of weird packages. for non-tech it'd be ideal start point." Recorded by AcrylImp
 
 `acryl control list` not seeing an app started with an explicit home, found by the same slice, is in spec 048's ticket
 [T011](../048-ide-on-framework/tasks.md).
+
+### M12 - share a plugin between people: publish, then pull into your own app (owner, 2026-11-07)
+
+Owner's words: "the idea is that we're gonna build first agentic apps and share created on the fly plugins between us to try collaborative
+mode of agentic software development" (the bootcamp of 2026-11-20), then "person publishes a plugin, person B pulls it into own app", and
+"we have https://cordisplugins.github.io for cordis plugins, https://acrylblends.github.io for BLENDS". Recorded by Acryl_main_thread_1.
+
+The registry already exists and is not changed: a public GitHub repository with the topic `cordis-plugin` and a release holding one `.tgz`
+is listed by `cordisplugins.github.io` (hourly sync, entry built from the package's contract, sha512 recorded), and the ACRYL IDE pulls it with
+`plugin pull github:<owner>/<repo>[@version]` (`apps/acryl-cli`). What is missing is the same two moves inside an `acrylblends` app: its door
+has `plugin add <folder>` (local folder, live, with check and rollback) and `package_plugin` writes a folder to `plugin-packages/<name>/`,
+neither is a release and neither takes a source. Pulling goes straight to the GitHub release, not through the hourly listing, so a plugin is
+usable the moment it is released. Portability (`portabilityIssues`, `verifySnapshot` in blends-core, see `portable-plugins.md`) decides
+whether a pulled plugin is accepted, so a plugin made on Windows works on macOS.
+
+This was already decided in the steering discussion (`docs-acryl-project-RnD-ideas-discussions-questions/acrylblends_strategic_direction_steering/
+Discussion_acrylblends_strategic_direction_steering.md`, "Portability & sharing" and the opening brief): the registry serves both BLENDs and individual
+Cordis plugins; "someone on Windows can push a CP; you on macOS pull it by digest, identical bytes"; and anybody can build a "Frankenstein app" from
+other people's plugins. T012 and T018 carry the two parts of that the first draft of this milestone lacked: verification by digest, and the app
+remembering where each pulled plugin came from.
+
+- [ ] T011 [M12] Compatibility, proven first: one plugin the agent builds in an `acrylblends` app is packed, released on the test org
+  (`inboxxobni`) and read by `cordisplugins.github.io`'s sync, and its entry shows the right provides, consumes and compatibility. If the contract
+  an `acrylblends` plugin declares is not what the sync reads, the gap and the fix are written here before T012.
+  Done when: the entry is listed with the expected compatibility, and the finding (or "no gap") is recorded under this ticket.
+  Finding, offline half (Fork3, 2026-11-07; real code, nothing published: a sample plugin injecting `router` and `routerHttp`, `packageManifest`,
+  `packFolder` from `@webboxes/plugin-hub`, then the registry's `packageJsonFromTarball` and `pluginFromRelease`). Today the registry would list it as
+  `compatibility: "DSH stock"`, `provides: []`, `consumes: []`, with a `dsh plugin ... add` install line, which is wrong for an acrylblends app.
+  - G1: `package_plugin` writes no contract (`acryl.requires/provides/slots`). Fix in T013: call the hub's `syncServiceContract` when packaging.
+  - G2: `files: ['*.ts', '**/*.ts', 'README.md']` silently drops `plugin.json`, other `*.json` data and `.js` files. Fix in T013: drop the list, let the standard skips apply.
+  - G3: `SOURCE_EXTENSIONS` in the hub's `contract.ts` is `.js .mjs .cjs`, so `provides` and `slots` of `.ts` plugins are never seen. Fix: add `.ts .mts .tsx`; needs `@webboxes/plugin-hub` 0.2.0.
+  - G4: with a contract, `compatibilityOf` still says "Both" for `router`/`routerHttp` (false) and the install line stays wrong. Fix in `cordisplugins.github.io` (`scripts/lib/discover.mjs` and the badge): the keyword `acrylblends` gives compatibility "ACRYL Blends" and the line `npm run acryl -- plugin pull github:<owner>/<repo>@<version>` (wording final when T012 lands). Not a new registry kind.
+  - G5 (seen in code, not run): the hub's `sharePlugin` and `bundleProblem` require a DSH Loader patch (`dsh.bundle.patch`) that acrylblends plugins do not have. T014 handles this without weakening it for DSH bundles.
+  - Good: installed `@webboxes/plugin-hub` 0.1.0 has `contract`, `pack`, `pull`, `tarball`, `share` identical to source and its tarball is already deterministic, so it is a dependency, not a copy. Pull reuses `pullPlugin`, `parsePluginSource`, `readTarball`; the `@sha256:` content digest is `digestFiles` over the unpacked package. A new acrylblends plugin `plugins/plugin-share/` owns pull and publish.
+- [ ] T012 [M12] `plugin pull <source>` in the door and the CLI of an `acrylblends` app. Sources: `github:<owner>/<repo>[@version]` and a
+  `.tgz` path or address first (`store:` and `npm:` follow the ACRYL IDE and are not needed for the bootcamp). It fetches without running anything
+  (never a clone, no install scripts), checks the sha512 against the release and, when the source names one (`@sha256:<digest>`), the plugin's
+  content digest, so the same bytes arrive on every OS; runs the portability check on the unpacked files, then hands the
+  folder to the existing live `plugin add`. Every refusal names what is wrong and what to do; a failed install leaves the app as it was.
+  Done when: a test pulls a plugin from a local release fixture into a running app and its route answers without a restart; a tampered archive,
+  a CRLF or reserved-name plugin and a plugin needing a missing service are each refused with their reason and change nothing.
+- [ ] T013 [M12] `package_plugin` produces a release-ready package: deterministic `.tgz` (sorted entries, LF, no timestamps), a `package.json`
+  with the topic `cordis-plugin` and `@deepseek-ai/cordis` as a peer, and the digest recorded.
+  Done when: packing the same plugin twice, on macOS and Windows, gives the same sha512.
+- [ ] T014 [M12] `plugin publish <name>`: creates the repository (or reuses the person's), the topic and the release with the `.tgz`. An outward
+  action: the verb shows the exact account, repository and version and waits for the person's yes in the chat or the frame; the agent never
+  confirms for them and no one-click handler publishes (read the handler first). Rehearsed on `inboxxobni` before any personal account.
+  Done when: a rehearsal publish on `inboxxobni` shows up as a release and, within the hour, in the registry; declining publishes nothing.
+- [ ] T015 [M12] The frame offers both: a Share action on a plugin and a Pull field in Settings > Plugins, calling the T012 and T014 verbs and
+  showing their refusals in plain words. No logic lives in the frame.
+  Done when: on screen, a plugin is shared from one app and pulled into another by pressing buttons only, shown side by side with the mockup.
+- [ ] T016 [M12] The acceptance walk: on mbpi9win (Windows) the agent builds a plugin and it is published; on this Mac and on z370n (Ubuntu) it
+  is pulled into a different app and works live with an identical digest on all three.
+  Done when: the three digests match and the screenshots are in the workshop handout.
+- [ ] T017 [M12] Workshop guide step and a dry run: step 7 of the guide gains "share a plugin, pull a neighbour's", and two people run it
+  together at least a week before 2026-11-20.
+  Done when: the guide's step passes for two people on different OSes with no help.
+- [ ] T018 [M12] A pulled plugin is remembered: the app's `blend.yaml` and lock record its source (`github:<owner>/<repo>@<version>`), release
+  sha512 and content digest, so the app (its snapshot, an export, a copy on another machine) can fetch exactly the same plugin again, and an
+  app assembled from several people's plugins is reproducible. Removing the plugin removes the record.
+  Done when: pull a plugin, snapshot the app, create a new app from the snapshot on another OS, and the same plugin is fetched, verified and
+  running; a source whose bytes changed since the record is refused, not silently replaced.
