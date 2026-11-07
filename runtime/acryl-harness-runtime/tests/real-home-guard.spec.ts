@@ -113,3 +113,56 @@ describe('the real-home guard and live apps', () => {
     expect(foreign.output).toContain('other.json')
   })
 })
+
+/** Keeps `file` open and appends to it, as a long-running database does. */
+const holderSource = (file: string): string =>
+  `const fs = require('node:fs'); fs.mkdirSync(require('node:path').dirname(${JSON.stringify(file)}), { recursive: true }); const fd = fs.openSync(${JSON.stringify(file)}, 'a'); setInterval(() => fs.writeSync(fd, 'x'), 100)`
+
+/** A process older than the gate that keeps writing `file`. The ages are compared in whole seconds, so it is given more than one. */
+async function olderHolder(file: string): Promise<void> {
+  const child = spawn(process.execPath, ['-e', holderSource(file)], { stdio: 'ignore' })
+  cleanups.push(() => child.kill('SIGKILL'))
+  await new Promise(done => setTimeout(done, 2_200))
+}
+
+const pause = ['-e', 'setTimeout(() => {}, 1200)']
+
+// lsof and ps -o lstart do not exist on Windows; there the guard excuses nothing, which fails safe.
+describe.skipIf(process.platform === 'win32')('the real-home guard and processes older than the gate', () => {
+  it('excuses a file only a process older than the gate holds open, and names both', async () => {
+    const osHome = home()
+    const wal = join(osHome, '.dsh', 'state', 'superagent', 'orchestrator.sqlite-wal')
+    await olderHolder(wal)
+    const { status, output } = run(osHome, pause)
+    expect(output).toMatch(/real-home-guard: excused ~\/\.dsh\/state\/superagent\/orchestrator\.sqlite-wal: held open by pid \d+, older than this gate/)
+    expect(status).toBe(0)
+  }, 20_000)
+
+  it('still fails what the gate itself wrote while an older process writes beside it', async () => {
+    const osHome = home()
+    await olderHolder(join(osHome, '.dsh', 'state', 'superagent', 'orchestrator.sqlite-wal'))
+    const { status, output } = run(osHome, write(join(osHome, '.dsh', 'state', 'a-test-wrote-this.log')))
+    expect(output).toContain('a-test-wrote-this.log')
+    expect(status).toBe(1)
+  }, 20_000)
+
+  it('does not excuse a writer the gate started and left running', () => {
+    const osHome = home()
+    const file = join(osHome, '.dsh', 'state', 'leaked.log')
+    const leak = ['-e', `const { spawn } = require('node:child_process'); const c = spawn(process.execPath, ['-e', ${JSON.stringify(holderSource(file))}], { stdio: 'ignore', detached: true }); c.unref(); console.log('leaked-pid=' + c.pid); setTimeout(() => {}, 1200)`]
+    const { status, output } = run(osHome, leak)
+    const pid = Number(/leaked-pid=(\d+)/u.exec(output)?.[1])
+    if (pid > 0) cleanups.push(() => process.kill(pid, 'SIGKILL'))
+    expect(output).toContain('leaked.log')
+    expect(status).toBe(1)
+  }, 20_000)
+
+  it('never excuses a change in the Registry, whoever holds it', async () => {
+    const osHome = home()
+    const entry = join(osHome, '.acryl-instances', '.running', 'held.json')
+    await olderHolder(entry)
+    const { status, output } = run(osHome, pause)
+    expect(output).toContain('held.json')
+    expect(status).toBe(1)
+  }, 20_000)
+})

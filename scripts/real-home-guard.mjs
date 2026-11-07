@@ -19,6 +19,11 @@
  * the live apps the Registry lists are left out and said so, one line each. `~/.acryl-instances` itself is always checked, except that the
  * live apps' own Registry entries may change. Nothing else is excused: a home with no live entry still fails, and so does a stale entry (its
  * process is gone). Set `ACRYL_REAL_HOME_GUARD=off` only to inspect a home by hand.
+ *
+ * Another program that is not an ACRYL app may run on the same machine against these homes (a DSH profile's database, kept open for days). A process
+ * started before the gate cannot be something the gate started, so a file it holds open when the gate ends is left out and said so, one line each. The
+ * rest still fails: the gate's own writes beside it, a writer the gate started and left running, and the Registry, whoever holds it. Where `lsof` is
+ * missing (Windows) nothing is excused.
  */
 import { spawnSync } from 'node:child_process'
 import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -95,6 +100,17 @@ function snapshot(osHome, skipHomes, allowed) {
   return entries
 }
 
+/** The processes holding `path` open that started before `gateStart`, compared in whole seconds (what `ps` reports), rounded against excusing. */
+function holdersOlderThan(path, gateStart) {
+  const holders = spawnSync('lsof', ['-t', '--', path], { encoding: 'utf8' })
+  if (holders.error !== undefined || typeof holders.stdout !== 'string') return []
+  return holders.stdout.split('\n').filter(pid => /^\d+$/u.test(pid)).filter((pid) => {
+    const started = spawnSync('ps', ['-o', 'lstart=', '-p', pid], { encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } })
+    const at = Date.parse(started.stdout ?? '')
+    return Number.isFinite(at) && at < Math.floor(gateStart / 1000) * 1000
+  })
+}
+
 const argv = process.argv.slice(2)
 const at = argv.indexOf('--')
 if (at === -1 || at === argv.length - 1) {
@@ -113,6 +129,7 @@ const skipHomes = apps.map(app => app.home)
 const allowed = new Set(apps.map(app => app.file))
 for (const app of apps) console.error(`real-home-guard: skipped ${tilde(osHome, app.home)}: app ${app.name} pid ${String(app.pid)} is running`)
 
+const gateStart = Date.now()
 const report = join(osHome, '.cache', 'acryl-real-home-guard.json')
 const before = snapshot(osHome, skipHomes, allowed)
 try {
@@ -124,10 +141,16 @@ try {
 const child = spawnSync(command[0], command.slice(1), { stdio: 'inherit' })
 const after = snapshot(osHome, skipHomes, allowed)
 const changed = []
+const registry = join(osHome, REGISTRY_FOLDER)
+const recordChange = (line, path) => {
+  const older = path === registry || path.startsWith(`${registry}${sep}`) ? [] : holdersOlderThan(path, gateStart)
+  if (older.length === 0) changed.push({ line, path })
+  else console.error(`real-home-guard: excused ${tilde(osHome, path)}: held open by pid ${older.join(', ')}, older than this gate`)
+}
 for (const [path, state] of after) {
   const was = before.get(path)
-  if (was === undefined) changed.push({ line: `added   ${path}`, path })
-  else if (was !== state) changed.push({ line: `changed ${path}`, path })
+  if (was === undefined) recordChange(`added   ${path}`, path)
+  else if (was !== state) recordChange(`changed ${path}`, path)
 }
 for (const path of before.keys()) if (!after.has(path)) changed.push({ line: `removed ${path}`, path })
 
