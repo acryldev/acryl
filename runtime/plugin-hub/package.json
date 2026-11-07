@@ -1,6 +1,6 @@
 {
   "name": "@webboxes/plugin-hub",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Saving, sharing and pulling Cordis plugins: dotted plugin names, the source argument, deterministic packing with sha512, the local plugin store, and the pull pipeline. Host-independent: no Cordis, DSH or surface dependencies.",
   "license": "MIT",
   "publishConfig": {

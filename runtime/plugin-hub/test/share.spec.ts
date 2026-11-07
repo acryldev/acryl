@@ -156,6 +156,15 @@ describe('the host inject, read from the source', () => {
     expect(hostInjectFromSource("export const inject = ['tools', name]")).toMatchObject({ error: expect.stringMatching(/non-literal entry "name"/u) })
   })
 
+  it('reads what a TypeScript plugin provides and fills, as it reads a JavaScript one', async () => {
+    const dir = join(root, 'ts-plugin')
+    mkdirSync(join(dir, 'lib'), { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'ts-plugin', version: '1.0.0', exports: { '.': './index.ts' } }))
+    writeFileSync(join(dir, 'index.ts'), "export const inject = ['router']\nexport function apply(ctx) { ctx.provide('timer') }\n")
+    writeFileSync(join(dir, 'lib', 'panel.tsx'), "slots.inject('frame.panel', {})\n")
+    expect(await readServiceContract(dir)).toEqual({ errors: [], contract: { requires: { host: ['router'] }, provides: { host: ['timer'] }, slots: { offers: [], fills: ['frame.panel'] } } })
+  })
+
   it('a plugin that imports a host package the app provides still gets its contract (it is not imported)', async () => {
     const dir = join(root, 'tool-plugin')
     mkdirSync(dir, { recursive: true })
