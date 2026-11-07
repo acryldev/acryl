@@ -204,3 +204,12 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   while `docs/framework/workshop/README.md` section 1 says `npm run dev` opens the frame. Decision: `create` passes `--desktop` through to `init` (additive, the
   default stays framework-only so no existing use changes) and the guide's line uses it, spelling out npm's `--` before the flag.
   Done when: the guide's exact first command, run from the published `create`, gives an app whose `npm run dev` prints `acrylblends host: ...` and shows the frame.
+- [ ] T024 [M12, owner 2026-11-07, the workshop's shape] A group builds one app together: "the idea is that the group builds together, each builds 1 plugin, and we
+  then share it into 1 app - collaboration of humans". Each attendee builds one plugin in their own app with their agent, publishes it (T014), and the
+  group pulls every plugin into one shared app, shown on the facilitator's screen or an attendee's app. Plugins must therefore compose without knowing
+  each other: a route that is already taken, a name that is already installed or a UI slot another plugin fills is refused with the other plugin's name and
+  what to rename, never overwritten; a plugin that fails leaves the others running; every pulled plugin is listed in the shared app with its author
+  (T018 records the source) and can be removed (T021).
+  Done when: five plugins made by five people (on at least two OSes) are pulled one after the other into one running app and all answer at their routes
+  (or fill their slots); a sixth with a clashing route is refused with a plain reason and changes nothing; the guide (T017) has this as its group exercise,
+  with the line each person sends the group (`github:<owner>/<repo>@<version>@sha256:<digest>`, as `plugin publish` prints it).
