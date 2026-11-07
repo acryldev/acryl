@@ -20,10 +20,10 @@
  * live apps' own Registry entries may change. Nothing else is excused: a home with no live entry still fails, and so does a stale entry (its
  * process is gone). Set `ACRYL_REAL_HOME_GUARD=off` only to inspect a home by hand.
  *
- * Another program that is not an ACRYL app may run on the same machine against these homes (a DSH profile's database, kept open for days). A process
- * started before the gate cannot be something the gate started, so a file it holds open when the gate ends is left out and said so, one line each. The
- * rest still fails: the gate's own writes beside it, a writer the gate started and left running, and the Registry, whoever holds it. Where `lsof` is
- * missing (Windows) nothing is excused.
+ * A DSH profile on the same machine keeps its database open under `~/.dsh/state` for days. A process started before the gate cannot be something the
+ * gate started, so such a database file (`*.sqlite`, `*.db`, with `-wal`, `-shm` or `-journal`) that one holds open when the gate ends is left out and
+ * said so, one line each. Everything else still fails: any other path, whoever holds it, the gate's own writes beside it, a writer the gate started and
+ * left running. Where `lsof` is missing (Windows) nothing is excused.
  */
 import { spawnSync } from 'node:child_process'
 import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
@@ -100,6 +100,9 @@ function snapshot(osHome, skipHomes, allowed) {
   return entries
 }
 
+/** A database file a long-running DSH profile keeps open, the only kind an older holder can excuse. */
+const ENGINE_DATABASE_FILE = /\.(?:sqlite|db)(?:-wal|-shm|-journal)?$/u
+
 /** The processes holding `path` open that started before `gateStart`, compared in whole seconds (what `ps` reports), rounded against excusing. */
 function holdersOlderThan(path, gateStart) {
   const holders = spawnSync('lsof', ['-t', '--', path], { encoding: 'utf8' })
@@ -141,9 +144,9 @@ try {
 const child = spawnSync(command[0], command.slice(1), { stdio: 'inherit' })
 const after = snapshot(osHome, skipHomes, allowed)
 const changed = []
-const registry = join(osHome, REGISTRY_FOLDER)
+const engineState = `${join(osHome, '.dsh', 'state')}${sep}`
 const recordChange = (line, path) => {
-  const older = path === registry || path.startsWith(`${registry}${sep}`) ? [] : holdersOlderThan(path, gateStart)
+  const older = path.startsWith(engineState) && ENGINE_DATABASE_FILE.test(path) ? holdersOlderThan(path, gateStart) : []
   if (older.length === 0) changed.push({ line, path })
   else console.error(`real-home-guard: excused ${tilde(osHome, path)}: held open by pid ${older.join(', ')}, older than this gate`)
 }

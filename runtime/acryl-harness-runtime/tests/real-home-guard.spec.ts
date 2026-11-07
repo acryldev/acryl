@@ -157,6 +157,16 @@ describe.skipIf(process.platform === 'win32')('the real-home guard and processes
     expect(status).toBe(1)
   }, 20_000)
 
+  it('excuses only a database file under ~/.dsh/state, so an older holder cannot excuse an arbitrary path', async () => {
+    for (const path of [join('.dsh', 'state', 'superagent', 'notes.log'), join('.dsh', 'orchestrator.sqlite-wal'), join('.acryl', 'state', 'orchestrator.sqlite-wal')]) {
+      const osHome = home()
+      await olderHolder(join(osHome, path))
+      const { status, output } = run(osHome, pause)
+      expect(output, path).not.toContain('excused')
+      expect(status, path).toBe(1)
+    }
+  }, 30_000)
+
   it('never excuses a change in the Registry, whoever holds it', async () => {
     const osHome = home()
     const entry = join(osHome, '.acryl-instances', '.running', 'held.json')
