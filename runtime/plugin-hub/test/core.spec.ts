@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -7,7 +8,7 @@ import { gunzipSync, gzipSync } from 'node:zlib'
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   bumpVersion, formatPluginSource, integrityOf, newestVersion, packFolder, parsePluginName, parsePluginSource, pluginNameOf, PluginStore,
-  pullPlugin, readTarball, savePlugin, StoreConflictError, writeTarball, type RegistryPort, type ReleasePort,
+  githubReleasesOverHttps, pullPlugin, readTarball, savePlugin, StoreConflictError, writeTarball, type Fetch, type RegistryPort, type ReleasePort,
 } from '../src/index.js'
 
 const made: string[] = []
@@ -249,6 +250,26 @@ describe('pulling', () => {
     expect(pulled.added).toBe(true)
     const fromStore = await pullPlugin(parsePluginSource('@scope/name'), { store })
     expect(fromStore.added).toBe(false)
+  })
+
+  it('checks the digest the host publishes for a release asset, when it publishes one', async () => {
+    const bytes = release('1.0.0')
+    const sha256 = createHash('sha256').update(bytes).digest('hex')
+    const port = (digest?: string): ReleasePort => ({
+      release: async () => ({ tag: 'v1.0.0', assets: [{ name: 'a.tgz', url: 'https://dl/a.tgz', ...(digest === undefined ? {} : { digest }) }] }),
+      download: async () => bytes,
+    })
+    const store = new PluginStore(temp())
+    await expect(pullPlugin(parsePluginSource('github:o/r@1.0.0'), { store, releases: port(`sha256:${'0'.repeat(64)}`) })).rejects.toThrow(/changed on the way/)
+    expect(store.list()).toEqual([])
+    expect((await pullPlugin(parsePluginSource('github:o/r@1.0.0'), { store, releases: port(`sha256:${sha256}`) })).added).toBe(true)
+    expect((await pullPlugin(parsePluginSource('github:o/r@1.0.0'), { store: new PluginStore(temp()), releases: port() })).added).toBe(true)
+  })
+
+  it('the HTTPS adapter reads the digest GitHub lists for an asset', async () => {
+    const answer = { tag_name: 'v1.0.0', assets: [{ name: 'a.tgz', browser_download_url: 'https://dl/a.tgz', digest: 'sha256:abc' }, { name: 'b.tgz', browser_download_url: 'https://dl/b.tgz', digest: null }] }
+    const port = githubReleasesOverHttps((async () => new Response(JSON.stringify(answer))) as unknown as Fetch)
+    expect((await port.release('o', 'r'))?.assets).toEqual([{ name: 'a.tgz', url: 'https://dl/a.tgz', digest: 'sha256:abc' }, { name: 'b.tgz', url: 'https://dl/b.tgz' }])
   })
 
   it('a tarball file pulls the same bytes as its release, and a folder is not a pull', async () => {

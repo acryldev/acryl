@@ -60,6 +60,24 @@ const repoFiles = (github: ReturnType<typeof fakeGithub>, owner: string, repo: s
   execFileSync('git', ['--git-dir', join(root, 'remotes', owner, `${repo}.git`), 'ls-tree', '-r', '--name-only', ref], { encoding: 'utf8' }).trim().split('\n').sort()
 
 describe('share', () => {
+  it('a source plugin needs no Loader patch and carries only its own labels; a bundle is checked as before', async () => {
+    const github = fakeGithub()
+    const dir = join(root, 'src', 'pomodoro')
+    mkdirSync(dir, { recursive: true })
+    const manifest = JSON.stringify({ name: 'pomodoro', version: '0.1.0', type: 'module', license: 'MIT', keywords: ['cordis-plugin', 'acrylblends'], exports: { '.': './index.ts' } })
+    writeFileSync(join(dir, 'package.json'), manifest)
+    writeFileSync(join(dir, 'index.ts'), "export const name = 'pomodoro'\nexport const inject = ['router']\nexport function apply() {}\n")
+    const store = new PluginStore(join(root, 'store'))
+    const asBundle = await sharePlugin(dir, {}, { host: github, git: gitCli(), store })
+    expect(asBundle).toMatchObject({ status: 'refused', reason: expect.stringMatching(/Loader patch/u) })
+    // The hub brings package.json in line before its guards, so the refused share above added the DSH labels: start again from the plugin's own.
+    writeFileSync(join(dir, 'package.json'), manifest)
+    const result = await sharePlugin(dir, { kind: 'source-plugin', visibility: 'public' }, { host: github, git: gitCli(), store })
+    expect(result.status).toBe('shared')
+    expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).keywords).toEqual(['cordis-plugin', 'acrylblends'])
+    expect([...github.repos.get('inboxxobni/pomodoro')!.topics]).toEqual(['cordis-plugin'])
+  })
+
   it('first share creates a private repository with exactly the packed files, tag, release and labels, and keeps the version', async () => {
     const github = fakeGithub()
     const store = new PluginStore(join(root, 'store'))

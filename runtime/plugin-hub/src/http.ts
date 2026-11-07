@@ -27,8 +27,10 @@ export function githubReleasesOverHttps(fetchImpl: Fetch = fetch as unknown as F
       if (!response.ok) throw new Error(`GitHub answered ${response.status} for ${owner}/${repo}`)
       const body = await response.json() as { tag_name?: unknown; assets?: unknown }
       if (typeof body.tag_name !== 'string' || !Array.isArray(body.assets)) throw new Error(`GitHub returned an unexpected release for ${owner}/${repo}`)
-      const assets = body.assets.flatMap((asset: { name?: unknown; browser_download_url?: unknown }) =>
-        typeof asset.name === 'string' && typeof asset.browser_download_url === 'string' ? [{ name: asset.name, url: asset.browser_download_url }] : [])
+      const assets = body.assets.flatMap((asset: { name?: unknown; browser_download_url?: unknown; digest?: unknown }) =>
+        typeof asset.name === 'string' && typeof asset.browser_download_url === 'string'
+          ? [{ name: asset.name, url: asset.browser_download_url, ...(typeof asset.digest === 'string' ? { digest: asset.digest } : {}) }]
+          : [])
       return { tag: body.tag_name, assets } satisfies ReleaseInfo
     },
     download: url => downloadBytes(fetchImpl, url),
