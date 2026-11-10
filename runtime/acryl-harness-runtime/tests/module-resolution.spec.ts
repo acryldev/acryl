@@ -37,7 +37,10 @@ const harness = vi.hoisted(() => {
       }
     }),
     cjsOriginal,
-    cjsModule: { _resolveFilename: cjsOriginal },
+    cjsModule: {
+      _resolveFilename: cjsOriginal,
+      _nodeModulePaths: (from: string) => [`${from}/node_modules`],
+    },
   }
 })
 
@@ -48,7 +51,8 @@ vi.mock('node:module', () => {
   })
   // The runtime reads registerHooks from the default export (src/module-hooks.ts).
   Object.assign(harness.cjsModule, { registerHooks })
-  return { default: harness.cjsModule, registerHooks }
+  const isBuiltin = (specifier: string) => ['fs', 'path'].includes(specifier.replace(/^node:/u, ''))
+  return { default: harness.cjsModule, registerHooks, isBuiltin }
 })
 
 vi.mock('../src/package-overlay.ts', () => ({
@@ -202,14 +206,47 @@ describe('installProfilePackageResolver', () => {
       { filename: resolve('/tmp/another-profile/package.json') },
       false,
     )).toBe('ordinary:@deepseek-ai/dsh-client-modules/package.json')
+    // Not a manifest request: it is resolved from the selected side (next test), never from the parent's own folders.
     expect(resolveFilename(
       '@deepseek-ai/dsh-client-modules/client.js',
-      { filename: profileManifest },
+      { filename: resolve('/tmp/another-profile/package.json') },
       false,
     )).toBe('ordinary:@deepseek-ai/dsh-client-modules/client.js')
 
     dispose()
     expect(harness.cjsModule._resolveFilename).toBe(harness.cjsOriginal)
+  })
+
+  it('resolves bare package requests from the Profile anchor on the side the overlay selects (the patched Loader imports plugins this way)', () => {
+    const profileManifest = resolve('/tmp/dsh-profile/package.json')
+    const profileBaseUrl = pathToFileURL(profileManifest).href
+    const installEntry = resolve('/opt/acryl/lib/index.js')
+    harness.sources.set('acryl-desktop', 'install')
+    harness.sources.set('profile-only-plugin', 'profile')
+    installProfilePackageResolver(profileBaseUrl, { ...anchors(), installEntryUrl: pathToFileURL(installEntry).href })
+    const resolveFilename = harness.cjsModule._resolveFilename
+    const options = { conditions: new Set(['node', 'import']) }
+    const fromProfile = { filename: profileManifest }
+
+    // The installation wins: the lookup is made as the installation's own entry module, keeping the caller's options.
+    expect(resolveFilename('acryl-desktop/terminal', fromProfile, false, options)).toBe('ordinary:acryl-desktop/terminal')
+    expect(harness.cjsOriginal).toHaveBeenLastCalledWith(
+      'acryl-desktop/terminal',
+      { id: installEntry, filename: installEntry, paths: [`${resolve('/opt/acryl/lib')}/node_modules`] },
+      false,
+      options,
+    )
+
+    // The Profile wins: its own folders are searched, as before.
+    expect(resolveFilename('profile-only-plugin', fromProfile, false, options)).toBe('ordinary:profile-only-plugin')
+    expect(harness.cjsOriginal).toHaveBeenLastCalledWith('profile-only-plugin', fromProfile, false, options)
+
+    // Node builtins, relative requests and parents outside the Profile never ask the overlay.
+    harness.overlay.mockClear()
+    resolveFilename('fs', fromProfile, false, options)
+    resolveFilename('./local.js', fromProfile, false, options)
+    resolveFilename('acryl-desktop', { filename: resolve('/tmp/another-profile/package.json') }, false, options)
+    expect(harness.overlay).not.toHaveBeenCalled()
   })
 
   it('deregisters hooks only once even if the disposer is reused', () => {

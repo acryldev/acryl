@@ -13,7 +13,8 @@
  * ASAR paths) to this function - its own behavior is unaffected.
  */
 
-import Module from 'node:module'
+import Module, { isBuiltin } from 'node:module'
+import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { requireModuleHooks } from './module-hooks.ts'
 import {
@@ -23,6 +24,7 @@ import {
 } from './package-overlay.ts'
 
 interface CommonJsModuleResolver {
+  _nodeModulePaths(from: string): string[]
   _resolveFilename(
     request: string,
     parent: { filename?: string } | null | undefined,
@@ -74,14 +76,25 @@ export function installProfilePackageResolver(
   // directory, so treat any parent anchored there as profile-owned.
   const profileDirPath = fileURLToPath(new URL('.', profileBaseUrl))
 
-  // ClientModuleRegistry intentionally uses createRequire(ctx.baseUrl) to
-  // resolve each browser bundle from the config tree. Node's ESM resolve hook
-  // does not observe that CommonJS manifest lookup, so without this narrow
-  // bridge the Loader can activate the installation's own copy while the
-  // browser receives an older Profile copy of the same package. Intercept
-  // only package manifests requested from a parent anchored in this Profile
-  // (the manifest itself or a synthetic module under the profile directory);
-  // every other CJS resolution remains untouched.
+  // Two CommonJS lookups start from the Profile anchor and must follow the
+  // same overlay rule as the ESM hook below, because Node's ESM resolve hook
+  // does not observe either of them:
+  //  - ClientModuleRegistry uses createRequire(ctx.baseUrl) to resolve each
+  //    browser bundle from the config tree. Without the bridge the Loader can
+  //    activate the installation's own copy while the browser receives an
+  //    older Profile copy of the same package.
+  //  - The patched Cordis Loader (patches/@deepseek-ai__cordis-plugin-loader)
+  //    resolves every plugin name of a tree that has a file: base through
+  //    Module._resolveFilename from that base. A package that only the
+  //    installation has (acryl-desktop and its sub-plugins, every ACRYL
+  //    plugin) is not in the Profile's node_modules, so it was found only
+  //    where pnpm happened to hoist it, and the entry failed to import.
+  // Only requests from a parent anchored in this Profile are intercepted (the
+  // manifest itself or a synthetic module under the profile directory); every
+  // other CommonJS resolution remains untouched. A package manifest request
+  // answers the overlay's selected manifest. Any other package request is
+  // resolved from the selected side: the installation's own dependency graph
+  // when the installation wins, the Profile when it does.
   const commonJsModule = Module as unknown as CommonJsModuleResolver
   const previousResolveFilename = commonJsModule._resolveFilename
   const overlayResolveFilename: CommonJsModuleResolver['_resolveFilename'] = function (
@@ -93,16 +106,36 @@ export function installProfilePackageResolver(
   ) {
     const profileAnchored = parent?.filename !== undefined
       && (parent.filename === profileManifestPath || parent.filename.startsWith(profileDirPath))
-    const packageName = profileAnchored
-      ? packageNameFromManifestSpecifier(request)
-      : undefined
-    if (packageName !== undefined) {
-      const overlay = findOverlayPackage(packageName, {
-        binName,
-        installPackageUrl,
-        profilePackageUrl: profileBaseUrl,
-      })
-      if (overlay !== undefined) return overlay.selected.manifestPath
+    if (profileAnchored) {
+      const manifestPackage = packageNameFromManifestSpecifier(request)
+      if (manifestPackage !== undefined) {
+        const overlay = findOverlayPackage(manifestPackage, {
+          binName,
+          installPackageUrl,
+          profilePackageUrl: profileBaseUrl,
+        })
+        if (overlay !== undefined) return overlay.selected.manifestPath
+      } else if (isBareSpecifier(request) && !isBuiltin(request)) {
+        const packageName = packageNameFromSpecifier(request)
+        const overlay = packageName === undefined
+          ? undefined
+          : findOverlayPackage(packageName, {
+            binName,
+            installPackageUrl,
+            profilePackageUrl: profileBaseUrl,
+          })
+        if (overlay?.selected.source === 'install') {
+          // A parent inside the installation, not an `options.paths` lookup: only a real parent lets a
+          // package import itself by name (`acryl-desktop/terminal` from the desktop's own entry).
+          const installEntryPath = fileURLToPath(installEntryUrl)
+          const installParent = {
+            id: installEntryPath,
+            filename: installEntryPath,
+            paths: commonJsModule._nodeModulePaths(dirname(installEntryPath)),
+          }
+          return previousResolveFilename.call(this, request, installParent, isMain, resolveOptions)
+        }
+      }
     }
     return previousResolveFilename.call(this, request, parent, isMain, resolveOptions)
   }
