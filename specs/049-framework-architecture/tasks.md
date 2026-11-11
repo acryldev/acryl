@@ -167,6 +167,16 @@ commands stay as the fallback.
   Done when: on macOS, Windows and Ubuntu, `npx acryl new my-app` then `cd my-app && npm run dev` opens the frame with the chat and agents, the
   same with `notes`, and a registry starter shows the same frame; the old commands still work; checked from local tarballs before anything is
   published.
+- [ ] T026 [M12, Phase A, with T025] The data of an app made by `acryl new` is in `~/.acryl/apps/<id>/data/`, as for an installed app (owner,
+  2026-11-11: "data goes to the same location"; the three cases are the table in `app-storage.md`). The app's id is written into its `blend.yaml`
+  when it is made (not derived from the folder path); the app's home (settings, sessions, logs, keys, the frame's chats) is that folder; the
+  source stays in the generated folder; `.gitignore` of the templates no longer needs `.acrylblends/`. An app that already has a `.acrylblends/`
+  folder is moved once on its first start (copied first, the old one kept until the copy is checked). Chats are no longer filed under an
+  absolute folder path, so a moved app keeps them.
+  Done when: on macOS, Windows and Ubuntu, `npx acryl new shop` then running it writes chats, settings and logs only under `~/.acryl/apps/<id>/data/`
+  (checked with `ACRYL_HOME` set to a scratch folder), nothing under `shop/.acrylblends/`; moving `shop/` to another folder keeps its chats;
+  export then import of the folder gives the same app; an old app with `.acrylblends/` opens with its data after the move; the instance, CLI and
+  frame tests pass.
 - [ ] T024 [M12, after T020] The sites, READMEs and the workshop guide say `acryl` first: `acryl.dev`, `acrylblends.github.io`,
   `cordisplugins.github.io` and the package pages point to one another and to the same commands.
   Done when: every public page that tells a person how to start shows the same one command.

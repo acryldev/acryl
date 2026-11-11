@@ -80,6 +80,22 @@ moves a folder, which also keeps paths short and legal on Windows (no reserved n
 - A conformance test creates a root in a temp folder, runs first start, open, rename, export, import and reset, and writes the resulting tree as a
   listing; the listing must be identical on every OS. It runs on this Mac and, in T007, on mbpi9win and z370n from the built installers.
 
+### The cases: where the program, the source and the data are (owner, 2026-11-11)
+
+An installed app's folder (`/Applications/<App>.app`, `C:\Program Files\<App>` or `%LOCALAPPDATA%\Programs\<App>`, `/opt/<App>`) is read-only for a normal
+user, so nothing a person or an agent makes can live there. The program is one place; what changes is another. **The data is always in
+`~/.acryl/apps/<id>/data/`, in every case.** Only the source differs.
+
+| Case | Program | Source (blend.yaml, plugins the agent builds) | Data (chats, settings, logs, keys) |
+| --- | --- | --- | --- |
+| Installed app (DMG, installer, a built Blend) | the OS install folder, read-only | `~/.acryl/apps/<id>/source/` | `~/.acryl/apps/<id>/data/` |
+| Dev mode (`acryl new shop`, then `npm run desktop`) | `shop/node_modules/` | `shop/` (`blend.yaml`, `plugins/`, `src/`; git) | `~/.acryl/apps/<id>/data/` |
+
+- The `<id>` of a dev-mode app is stored in its `blend.yaml`, never derived from the folder path, so moving or renaming `shop/` keeps its chats. (Today the
+  id is a digest of the path and the data is `shop/.acrylblends/`: that is what changes, task T026.)
+- Dev mode to installed: export the folder as one `.acrylblend` file and import it (slice 4).
+- Windows paths are `C:\Users\<name>\.acryl\apps\<id>\...`. No per-OS rule anywhere.
+
 ### What the person sees, without touching a folder
 
 - First start asks one thing in the app's own page: "Name your app" (a default is offered). No path, no flag.
@@ -126,5 +142,5 @@ Source is a git repository, but a clean Mac without the Command Line Tools has o
 
 ## Open for the owner
 
-None that block slice 1. Defaults chosen: per-user app data folder, many apps per product, portable later. Say if a person should instead be able to
+None that block slice 1. Defaults chosen: `~/.acryl` (the owner's rule, decided), many apps per product, portable later. Say if a person should instead be able to
 choose the folder (then it becomes a parameter of `AppStorage.open`, still one place).
