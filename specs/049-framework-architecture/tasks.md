@@ -168,15 +168,21 @@ commands stay as the fallback.
   same with `notes`, and a registry starter shows the same frame; the old commands still work; checked from local tarballs before anything is
   published.
 - [ ] T026 [M12, Phase A, with T025] The data of an app made by `acryl new` is in `~/.acryl/apps/<id>/data/`, as for an installed app (owner,
-  2026-11-11: "data goes to the same location"; the three cases are the table in `app-storage.md`). The app's id is written into its `blend.yaml`
-  when it is made (not derived from the folder path); the app's home (settings, sessions, logs, keys, the frame's chats) is that folder; the
-  source stays in the generated folder; `.gitignore` of the templates no longer needs `.acrylblends/`. An app that already has a `.acrylblends/`
-  folder is moved once on its first start (copied first, the old one kept until the copy is checked). Chats are no longer filed under an
-  absolute folder path, so a moved app keeps them.
-  Done when: on macOS, Windows and Ubuntu, `npx acryl new shop` then running it writes chats, settings and logs only under `~/.acryl/apps/<id>/data/`
-  (checked with `ACRYL_HOME` set to a scratch folder), nothing under `shop/.acrylblends/`; moving `shop/` to another folder keeps its chats;
-  export then import of the folder gives the same app; an old app with `.acrylblends/` opens with its data after the move; the instance, CLI and
-  frame tests pass.
+  2026-11-11: "data goes to the same location"; the three cases are the table in `app-storage.md`). Findings of 2026-11-11 that shape it:
+  (1) the id cannot live in `blend.yaml`, which is committed: a git clone of the app would share the id, so two copies on one machine would share
+  one set of chats. It lives in `.acryl/app.json` of the app folder (git-ignored, travels with a moved folder, absent in a clone, which then gets its
+  own). (2) The rule "where is the app's home" is repeated in about eight production places (`plugins/instance/index.ts`, `plugins/desktop/frame.ts`,
+  `plugins/desktop-web/main.ts`, `packages/cli/src/frame-url.ts`, four spots in `packages/cli/src/ide-profile.ts` including the generated host,
+  `packages/cli/src/upgrade.ts`) and hardcoded in about ten `scripts/verify-*.mjs`; they all change together, or the frame, the door and the
+  desktop disagree about where the app lives. (3) The engine files chats under the absolute folder they ran in (`sessions/--Users-...--`), so a moved
+  app loses them until the engine keys them by app id: that is a change in how the engine names sessions and is not part of this task; the move keeps
+  every other file. (4) The door's `.acryl/` folder in the app is its own state and stays there. An app that already has `.acrylblends/` is moved once
+  on its first start (copied first, checked file by file, the old folder renamed `.acrylblends.old`, never deleted). The templates' `.gitignore` keeps
+  `.acrylblends/` ignored for apps not yet moved.
+  Done when: on macOS, Windows and Ubuntu, `npx acryl new shop` then running it writes settings, sessions and logs only under
+  `~/.acryl/apps/<id>/data/` (checked with `ACRYL_HOME` set to a scratch folder), nothing under `shop/.acrylblends/`; moving `shop/` to another folder
+  keeps its settings and logs; an old app with `.acrylblends/` opens with its data after the move; one function owns the rule and a test fails
+  when another file computes it; the instance, CLI, frame, desktop and door tests and the verify scripts pass.
 - [ ] T024 [M12, after T020] The sites, READMEs and the workshop guide say `acryl` first: `acryl.dev`, `acrylblends.github.io`,
   `cordisplugins.github.io` and the package pages point to one another and to the same commands.
   Done when: every public page that tells a person how to start shows the same one command.
