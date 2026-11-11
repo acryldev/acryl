@@ -8,6 +8,7 @@
   },
   "files": [
     "bin.js",
+    "forward.js",
     "runtime.js",
     "release-contract.js",
     "web-runtime.js",

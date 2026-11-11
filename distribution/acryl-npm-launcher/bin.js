@@ -4,6 +4,8 @@ import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stderr } from 'node:process'
+import { existsSync } from 'node:fs'
+import { forwardCommand } from './forward.js'
 import { runtimeLauncher, targetFor } from './runtime.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact } from './web-runtime.js'
@@ -68,7 +70,16 @@ async function runWeb(webArgs) {
   run(join(result.root, 'runtime', 'bin', process.platform === 'win32' ? 'acryl-web.cmd' : 'acryl-web'), forwarded)
 }
 
-if (args[0] === 'web') {
+// The short commands (acryl new, plugin, blends, update) run the part that owns them (forward.js).
+const forwarded = forwardCommand(args, { env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, exists: existsSync })
+if (forwarded?.error) {
+  console.error(`acryl: ${forwarded.error}`)
+  process.exitCode = 2
+} else if (forwarded) {
+  const child = spawn(forwarded.command, forwarded.args, { stdio: 'inherit', cwd: forwarded.cwd, shell: forwarded.shell === true })
+  child.once('error', cause => { console.error(`acryl: ${cause.message}`); process.exitCode = 1 })
+  child.once('exit', code => { process.exitCode = code ?? 1 })
+} else if (args[0] === 'web') {
   runWeb(args.slice(1)).catch(cause => {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
     process.exitCode = 1
