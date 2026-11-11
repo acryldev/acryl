@@ -136,6 +136,14 @@ commands stay as the fallback.
   record: does `acryl-door` still start when the agent plugin is absent (it must use `ctx.get`, not `inject`)?
   Done when: the check runs on `main`, names each offending import, and its result today (pass, or the list the door and any other plugin
   have to fix) is recorded under this ticket.
+  First finding, measured 2026-11-11 (not yet a test): the Blank template made with `--bare` (no frame) already is the core. Its
+  `package.json` has 7 dependencies (`@deepseek-ai/cordis`, `schemastery`, `@webboxes/app-persistence`, `@webboxes/blends-core`,
+  `@webboxes/plugin-hub`, `typescript`, `yaml`); `npm install` adds 17 packages, 32 MB; the same app made with the frame has about 184
+  packages and 823 MB. Every plugin under its `plugins/` imports only `@deepseek-ai/cordis` and `schemastery` (the three "agent" matches in
+  `acryl-door` are comments). `npm run dev` starts it, and `acryl brief`, `plugin add`, `look`, `act` and `tool call` answer, so an outside
+  agent can drive it with the door; its `AGENTS.md` and `docs/framework/` are the instructions. The first question (does the door start with
+  no agent plugin) is answered: yes. What is still open: the check itself, and the name `@acryl/core` (today the core is vendored as source
+  into each app, `plugins/acryl-router` alone is about 195 files).
 - [ ] T019 [M12] `acryl` is the one command and forwards to the parts without changing them. The surface is the v2 discussion's (section 2):
   `acryl` and `acryl web` behave as before; `acryl new` (alias `create`), `acryl install <blend>`, `acryl list`, `acryl update`,
   `acryl blends`, `acryl plugin` (alias `plugins`) and `acryl code` run the existing `acrylblends` CLI and the IDE. Flags reach the parts
