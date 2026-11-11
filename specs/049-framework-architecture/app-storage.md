@@ -59,17 +59,20 @@ resolved from the bundle at run time and the person's app carries only what is t
   trash/                       a reset app is moved here, never deleted
 ```
 
-`<root>` is the platform's per-user application data folder plus the product name, the same rule the OS gives every app so that backup, uninstall and
-permissions behave as the person expects: macOS `~/Library/Application Support/<Product>`, Windows `%LOCALAPPDATA%\<Product>` (the per-machine folder, not the Roaming profile that domain logons sync; fallback `<home>\AppData\Local`), Linux
-`$XDG_DATA_HOME/<Product>` when that is an absolute path, else `~/.local/share/<Product>`. It is computed by one pure function `platformDataDir(platform, env, home)` inside the `AppInstance` family
-(`select.ts`), so a unit test can run all three rules on one machine, and nothing else calls `app.getPath` or `homedir()`.
+`<root>` is `~/.acryl`: one short, predictable folder in the person's home, the same on macOS, Windows (`C:\Users\<name>\.acryl`) and Linux, as DeepSeek
+Harness keeps `~/.dsh`. It is deliberately not the OS's application-data folder (`Library/Application Support`, `%LOCALAPPDATA%`, `~/.local/share`): those differ
+on every OS, hide the work in a place nobody types or finds, and make the guide three different explanations. (The owner's rule, 2026-11-11, repeated: "predictable
+concise location like DeepSeekHarness does, so ~/.acryl". An earlier draft of this note chose the per-OS folders; that was wrong.) `ACRYL_HOME`, when it is an absolute path, moves the
+root for an isolated run or a test, as it moves ACRYL's own home. It is computed by one pure function `acrylRoot(platform, env, home)` in `plugins/instance`, and
+nothing else calls `app.getPath` or `homedir()`. `~/.acryl` is shared with the ACRYL IDE's own folders (`agent`, `plugins`, `control`, `workspace` and so on); the
+names this layout adds (`layout.json`, `apps.json`, `apps/`, `electron/`, `trash/`) collide with none of them.
 
 An app's id is a generated slug (`my-notes-3f2a`), never the name. The person names the app (and renames it) as a label in `apps.json`; renaming never
 moves a folder, which also keeps paths short and legal on Windows (no reserved names, no trailing dots, ASCII, 40 characters at most).
 
 ### Behaving the same across macOS, Windows and Linux
 
-- One code path. The only per-OS code is `platformDataDir`. Everything below it is the same layout built by the same function.
+- One code path, and no per-OS rule at all: `acrylRoot` is `<home>/.acryl` everywhere (only the path separator differs). Everything below it is the same layout built by the same function.
 - No absolute path is ever written into a file the app owns (`blend.yaml`, `layout.json`, `apps.json`, settings, lockfiles), and no path into the bundle either: paths are relative to `<root>` or to an
   app folder, so a folder moved or restored from a backup still opens, and macOS App Translocation (a random read-only bundle path that changes between launches) cannot break an app.
 - No symlinks in the tree (Windows needs privilege to make them); copies use `dereference`. Slugs are lower-case and compared case-insensitively
@@ -88,7 +91,7 @@ moves a folder, which also keeps paths short and legal on Windows (no reserved n
 
 ### A portable build, later
 
-A `portable` file beside the executable moves `<root>` next to it (Windows zip, Linux AppImage). Not part of the first slice; `platformDataDir` takes it as
+A `portable` file beside the executable moves `<root>` next to it (Windows zip, Linux AppImage). Not part of the first slice; `acrylRoot` takes it as
 a parameter so it is one more branch in one function when it is wanted.
 
 ## Terms (one meaning each)
@@ -99,7 +102,7 @@ a parameter so it is one more branch in one function when it is wanted.
 
 ## Verification
 
-1. Unit: `platformDataDir` for darwin, win32 and linux with and without `XDG_DATA_HOME`, with spaces and non-ASCII in the home name, in the `AppInstance`
+1. Unit: `acrylRoot` for darwin, win32 and linux (`<home>/.acryl`, the OS data-folder variables ignored, `ACRYL_HOME` honoured only as an absolute path), with spaces and non-ASCII in the home name, in the `AppInstance`
    selector tests; `tests/bulkhead.spec.ts` still passes and gains the rule "no `app.getPath('documents')` outside `select.ts`".
 2. Unit: slug rules (reserved Windows names, case, length), the migration runner (idempotent, copy first, refuses a newer layout), export then import
    round trip (equal trees).
@@ -113,7 +116,7 @@ Source is a git repository, but a clean Mac without the Command Line Tools has o
 
 ## Slices (for the implementer; each is one commit with its own tests)
 
-1. `platformDataDir` and the layout (`layout.json`, `apps.json`, ids, `productInstance`) beside `selectInstance` in `plugins/instance` of acrylblends (the acryl repo's `select.ts` stays as is), with the three-platform tests and a bulkhead test there (no `homedir()` or `app.getPath` outside it; `plugins/agent-panel/headless.ts` fixed in the same slice). No behaviour change yet.
+1. `acrylRoot` and the layout (`layout.json`, `apps.json`, ids, `productInstance`) beside `selectInstance` in `plugins/instance` of acrylblends (the acryl repo's `select.ts` stays as is), with the three-platform tests and a bulkhead test there (no `homedir()` or `app.getPath` outside it; `plugins/agent-panel/headless.ts` fixed in the same slice). No behaviour change yet.
 2. `AppStorage` port and its adapter; `main.ts` runs the frame on `apps/<id>/source` and keeps Data, Cache and Logs where the table says; `product.ts`'s
    copy-into-Documents is deleted, not kept as a fallback.
 3. The framework resolved from the bundle instead of a copied `node_modules` (the slice that shrinks the app folder; report the size before and after).
