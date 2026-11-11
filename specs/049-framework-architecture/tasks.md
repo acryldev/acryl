@@ -131,7 +131,7 @@ commands stay as the fallback.
 - [ ] T017 [M12] The questions of `acryl-namespace.md` answered (the `acryl agent` subcommand, one repository or two, registry id prefix), the
   answers written into that note as decisions, and open question 1 of `spec.md` closed.
   Done when: the note has no open question left and `spec.md` points to it.
-- [ ] T018 [M12] The core boundary as a test: a check that builds the package set of the Blank template without the frame and fails when it
+- [x] T018 [M12] The core boundary as a test: a check that builds the package set of the Blank template without the frame and fails when it
   imports `agent*`, `driver-*`, `openai`, the frame or a DSH agent package, including the packaged closure and dynamic imports. First finding to
   record: does `acryl-door` still start when the agent plugin is absent (it must use `ctx.get`, not `inject`)?
   Done when: the check runs on `main`, names each offending import, and its result today (pass, or the list the door and any other plugin
@@ -144,6 +144,13 @@ commands stay as the fallback.
   agent can drive it with the door; its `AGENTS.md` and `docs/framework/` are the instructions. The first question (does the door start with
   no agent plugin) is answered: yes. What is still open: the check itself, and the name `@acryl/core` (today the core is vendored as source
   into each app, `plugins/acryl-router` alone is about 195 files).
+  The check, 2026-11-11 (acrylblends `7fcb3c6e`, on its main, not yet pushed): `pnpm run verify:core-boundary`, part of `pnpm run check`.
+  It runs `acrylblends init --template blank --yes --install` into a scratch folder and fails on any source import (static, re-export,
+  side-effect, dynamic `import()`, `require`) or any package in `package-lock.json` that is the agent pack (`agent*`), a driver (`driver-*`),
+  a model vendor (`openai`, `@openai/*`, `@anthropic-ai/*`), the frame (`@acrylblends/*`, `blends-frame`) or a DSH package other than the kernel
+  (`@deepseek-ai/cordis`, `schemastery`, `cosmokit`), naming each with file and line. Unit tests: `scripts/lib/core-boundary.test.mjs`.
+  Result today: pass (7 dependencies, 17 installed packages, no crossing). What remains for the name `@acryl/core` is the package itself
+  (moving the vendored core into it is after the workshop, D8).
 - [ ] T019 [M12] `acryl` is the one command and forwards to the parts without changing them. The surface is the v2 discussion's (section 2):
   `acryl` and `acryl web` behave as before; `acryl new` (alias `create`), `acryl install <blend>`, `acryl list`, `acryl update`,
   `acryl blends`, `acryl plugin` (alias `plugins`) and `acryl code` run the existing `acrylblends` CLI and the IDE. Flags reach the parts
