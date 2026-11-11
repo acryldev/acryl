@@ -20,13 +20,21 @@ test('ACRYL_CREATE pins another version or a tarball without a flag', () => {
   assert.deepEqual(pinned.args, ['exec', '--yes', 'file:/x/c.tgz', '--', 'shop'])
 })
 
-test('the npm that started acryl runs it, with no shell; Windows without one goes through npm.cmd and a shell', () => {
+test('the npm that started acryl runs it, with no shell; on Windows the npm CLI file beside node.exe, and npm.cmd through a shell only as the last resort', () => {
   const cli = '/usr/lib/node_modules/npm/bin/npm-cli.js'
   assert.deepEqual(npmExec({ env: { npm_execpath: cli }, platform: 'win32', execPath }, 'x', ['a']), {
     command: execPath,
     args: [cli, 'exec', '--yes', 'x', '--', 'a'],
   })
-  assert.deepEqual(npmExec({ env: {}, platform: 'win32', execPath }, 'x', ['a']), {
+  // Windows without npm_execpath: the npm CLI file beside node.exe, run by node itself, no shell.
+  const winNode = 'C:\\Program Files\\nodejs\\node.exe'
+  const beside = 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js'
+  assert.deepEqual(
+    npmExec({ env: {}, platform: 'win32', execPath: winNode, exists: (p) => p === beside }, 'x', ['a']),
+    { command: winNode, args: [beside, 'exec', '--yes', 'x', '--', 'a'] },
+  )
+  // Only when that file is not there, npm.cmd through a shell.
+  assert.deepEqual(npmExec({ env: {}, platform: 'win32', execPath: winNode, exists: () => false }, 'x', ['a']), {
     command: 'npm.cmd',
     args: ['exec', '--yes', 'x', '--', 'a'],
     shell: true,

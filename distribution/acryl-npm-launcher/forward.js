@@ -7,7 +7,7 @@
 //
 // The functions here only decide what to run; bin.js runs it. Nothing here touches the network or the disk except `existsSync` of the door file.
 import { existsSync } from 'node:fs'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve, win32 } from 'node:path'
 
 /** The commands this module answers. `acryl` with anything else keeps its old meaning. */
 export const FORWARDED = ['new', 'create', 'plugin', 'plugins', 'blends', 'update']
@@ -20,16 +20,20 @@ export const BLENDS_SPEC = 'acrylblends'
 export const DOOR = join('plugins', 'acryl-door', 'src', 'cli', 'acryl.ts')
 
 /**
- * The npm that runs a package from the registry (or a local one): the npm that started this process when there is one (npx sets npm_execpath), so no shell
- * is needed and the same npm is used; else `npm` (`npm.cmd` through the shell on Windows, as every .cmd must be).
+ * The npm that runs a package from the registry (or a local one), without a shell wherever that is possible: the npm that started this process (npx sets
+ * npm_execpath), else on Windows the npm CLI file that installs next to node.exe, run by node itself; only when neither exists `npm`, and `npm.cmd`
+ * through a shell on Windows, as a .cmd file must be.
  */
-export function npmExec({ env, platform, execPath }, spec, rest) {
-  const cli = env.npm_execpath
+export function npmExec({ env, platform, execPath, exists = existsSync }, spec, rest) {
   const args = ['exec', '--yes', spec, '--', ...rest]
+  const cli = env.npm_execpath
   if (cli && /npm-cli\.c?js$/u.test(basename(cli))) return { command: execPath, args: [cli, ...args] }
-  return platform === 'win32'
-    ? { command: 'npm.cmd', args, shell: true }
-    : { command: 'npm', args }
+  if (platform === 'win32') {
+    const beside = win32.join(win32.dirname(execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
+    if (exists(beside)) return { command: execPath, args: [beside, ...args] }
+    return { command: 'npm.cmd', args, shell: true }
+  }
+  return { command: 'npm', args }
 }
 
 /** The app folder that holds this directory: the nearest parent with the door file. */
