@@ -112,3 +112,61 @@ remembering where each pulled plugin came from.
   app assembled from several people's plugins is reproducible. Removing the plugin removes the record.
   Done when: pull a plugin, snapshot the app, create a new app from the snapshot on another OS, and the same plugin is fetched, verified and
   running; a source whose bytes changed since the record is refused, not silently replaced.
+
+### M12 - one name for every part: `acryl` as the entry point, `@acryl/*` as the parts (owner, 2026-11-10)
+
+Owner's words: "use our npm name 'acryl' as main entry point that will point to acrylblends and any other sub part, like @acryl/blends or
+@acryl/core etc." Design, facts checked on 2026-11-10 and the questions for the owner: [acryl-namespace.md](./acryl-namespace.md). Recorded
+by AcrylImplementer. Updated 2026-11-11 with the owner's answers: `@acryl` is the owner's npm organization and the `acryl` package page is
+the owner's; the commands must be short and memorable, with no `--` separator and no pile of flags ("it has to be simple and memorable using
+namespaces like @acryl/blends"). The workshop of 2026-11-20 (D8) uses the short commands once T025 passes on all three systems; the old
+commands stay as the fallback.
+
+- [ ] T016 [M12] The names are ours: the owner said on 2026-11-11 that `@acryl` is theirs and that npmjs.com/package/acryl is theirs. Still to
+  check once, with the owner signed in (this Mac is not signed in to npm): the organization's members and write access, and the owner says
+  which names may be reserved before 2026-11-20 (`@acryl/core`, `@acryl/blends`, `@acryl/create-blends`, `@acryl/code`, `create-acryl`).
+  Reserving publishes a placeholder version: an outward action, only on the owner's explicit go.
+  Done when: the organization's package list or `npm access` shows the owner's accounts with write access, and the owner's answer on
+  reserving is recorded here.
+- [ ] T017 [M12] The questions of `acryl-namespace.md` answered (the `acryl agent` subcommand, one repository or two, registry id prefix), the
+  answers written into that note as decisions, and open question 1 of `spec.md` closed.
+  Done when: the note has no open question left and `spec.md` points to it.
+- [ ] T018 [M12] The core boundary as a test: a check that builds the package set of the Blank template without the frame and fails when it
+  imports `agent*`, `driver-*`, `openai`, the frame or a DSH agent package, including the packaged closure and dynamic imports. First finding to
+  record: does `acryl-door` still start when the agent plugin is absent (it must use `ctx.get`, not `inject`)?
+  Done when: the check runs on `main`, names each offending import, and its result today (pass, or the list the door and any other plugin
+  have to fix) is recorded under this ticket.
+- [ ] T019 [M12] `acryl` is the one command and forwards to the parts without changing them. The surface is the v2 discussion's (section 2):
+  `acryl` and `acryl web` behave as before; `acryl new` (alias `create`), `acryl install <blend>`, `acryl list`, `acryl update`,
+  `acryl blends`, `acryl plugin` (alias `plugins`) and `acryl code` run the existing `acrylblends` CLI and the IDE. Flags reach the parts
+  without a `--` (through `npx`/the installed bin; `npm create` needs a separate form, T025).
+  Done when: `npx acryl new my-app` makes the same app as `npm create acrylblends@latest my-app -- --template blank --desktop -y --install`
+  (file for file), `npx acryl plugin publish hello --owner x` works inside an app, and the existing `acryl` tests still pass. Code only; no publish.
+- [ ] T020 [M12, owner's go for each publish, in this order] The canonical names are published: `acryl` with the new subcommands, `create-acryl`
+  (`npm create acryl my-app`), `@acryl/blends` and `@acryl/create-blends` (`npm create @acryl/blends my-app`), then `@acryl/create` and
+  `@acryl/code`; `acrylblends` and `create-acrylblends` become thin aliases. The v2 discussion's sequence: organization, repository, blends and
+  create, core, code and commands, application Blends, Registry and store.
+  Done when: an app made by the old command and one made by the new command are identical, `from 'acrylblends'` and
+  `from '@acryl/blends'` both resolve in a running app, and ACRYL's own CLI runs on the new package.
+- [ ] T021 [M12, after T017] The repository is where the owner decided (question 2): `acrylblends/acrylblends` moved, with its old address
+  redirecting, and the pins in `acryldev/acryl` updated.
+  Done when: both repositories build from their new places and the old GitHub address opens the new one.
+- [ ] T022 [M12, after T018] Core and Full editions of one Blend: a `profiles` field in the Blend format (`core` and `full extends core`), read by
+  the resolver, and the Registry offering both.
+  Done when: one Blend resolves to a core app with no agent row and a full app with them, from the same id, and both pass the T018 check or
+  its inverse.
+- [ ] T023 [M12, after T017] Registry ids use the umbrella: a stable id in the Blend's metadata (`com.acryl.crm` in the discussion, `acryl.crm`
+  in the registry today; T017 picks one), the npm family `@acryl/blend-*` for Blends that ship as packages, and the old `acrylblends.` ids keep
+  resolving.
+  Done when: `npx acryl new my-app acryl.notes-desktop` and `acrylblends.notes-desktop` make the same app.
+- [ ] T025 [M12, Phase A, before 2026-11-20] Short commands, no `--`, no flag pile: creating an app needs one line and running it one more.
+  The defaults of the create command become the frame with agents, the install, and no questions when a directory is given; flags only turn
+  things off (`--no-install`, `--bare`). A starter is a plain word after the directory (`my-app notes`), and a registry starter opens inside
+  the frame (today `--from` is refused with `--desktop`, so it opens as a bare app: the owner's screenshot of 2026-11-10). `npm create`
+  gets the same line through `create-acryl` and `@acryl/create-blends`, whose arguments are all positional.
+  Done when: on macOS, Windows and Ubuntu, `npx acryl new my-app` then `cd my-app && npm run dev` opens the frame with the chat and agents, the
+  same with `notes`, and a registry starter shows the same frame; the old commands still work; checked from local tarballs before anything is
+  published.
+- [ ] T024 [M12, after T020] The sites, READMEs and the workshop guide say `acryl` first: `acryl.dev`, `acrylblends.github.io`,
+  `cordisplugins.github.io` and the package pages point to one another and to the same commands.
+  Done when: every public page that tells a person how to start shows the same one command.
