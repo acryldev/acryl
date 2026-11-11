@@ -117,6 +117,9 @@ ids (T023), sites and docs (T024).
 
 ## Questions for the owner
 
+0. Answered 2026-11-11 (owner): `@acryl/core` is a dependency of an app, not source copied into it. The whole picture and the reasons are in
+   [vision-simplification.md](./vision-simplification.md); the door as its own package (`@acryl/door`) is proposed there, not yet decided.
+
 1. Answered 2026-11-11: `@acryl` is ours. Still open inside T016: which names may be reserved before 2026-11-20, and the member check once the owner is signed in.
 2. One repository or two (`acryldev/acryl` only, or `acryldev/acryl` plus `acryldev/blends`)? The discussion recommends two.
 3. Does the agent CLI the `acryl` package is today become `acryl agent` (recommended in open question 1)?
