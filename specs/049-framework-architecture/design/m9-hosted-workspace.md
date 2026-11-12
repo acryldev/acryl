@@ -100,6 +100,20 @@ Owner answers of 2026-11-12 for the workshop:
   on z370n, read by the runner, never printed).
 - Attendees: 17 signed up (https://luma.com/nvede5nv); z370n's room for about 30 boxes is enough.
 
+### W3 in detail (2026-11-12)
+
+1. **One route.** Traefik on z370n sends every `https://<id>.213-47-80-26.sslip.io` request to a second runner listener, the box gate
+   (port 7071), with a Let's Encrypt certificate per name (HTTP challenge; sslip.io answers with the public address).
+2. **Entering a box.** Only the signed-in owner of a box gets in. On webboxes.ai, "Open" checks the session and the row, as the preview
+   does today, and redirects to `https://<id>.<suffix>/__webbox/enter?t=<signed>`. The signature is the preview's HMAC scheme (same secret,
+   shared with the runner), valid two minutes. The gate checks it, sets a host-only cookie `__Host-webbox` (`Secure`, `HttpOnly`,
+   `SameSite=Lax`, 12 hours), and redirects to the app's own launch address (its frame token, read from the box), so the ACRYL frame's own
+   sign-in happens on that origin too.
+3. **Every later request.** No valid cookie: 403 with a link back to webboxes.ai. Valid: the gate passes the request to the box (method,
+   body, `Host` = the public host, `Origin`, `Referer`, `Sec-Fetch-*`, the app's own cookies without `__Host-webbox`), streams the answer,
+   upgrades WebSockets, and closes an idle stream after 10 minutes instead of cutting every request at 30 seconds.
+4. **What the box checks** is acrylblends 1.5.2's trusted front: the peer is the runner's fixed address, the `Host` is the public host.
+
 Risk named: the home line's address can change; every sslip.io name then breaks until the template is re-pointed. The
 `<appId>.webboxes.ai` names (later, owner) remove that.
 
