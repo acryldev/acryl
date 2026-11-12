@@ -86,6 +86,39 @@ test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is liste
       }
       assert.match(plain(again), /my-app +ready +acrylblends\.blank/u)
     } finally { second.kill() }
+    // `acryl model set deepseek` over a pipe (a script) stores the key owner-only and never prints it; the status shows only its tail.
+    const KEY = 'sk-0123456789abcdef0123456789abcdef'
+    const stored = spawnSync(process.execPath, [join(selector, 'bin.js'), 'model', 'set', 'deepseek'], { cwd: work, env, input: KEY, encoding: 'utf8' })
+    assert.equal(stored.status, 0, stored.stderr)
+    assert.equal((stored.stdout + stored.stderr).includes(KEY), false)
+    assert.equal(JSON.parse(readFileSync(join(home, '.acryl', 'model.json'), 'utf8')).deepseek, KEY)
+    const status = spawnSync(process.execPath, [join(selector, 'bin.js'), 'model'], { cwd: work, env, encoding: 'utf8' })
+    assert.match(status.stdout, /set \(sk-\.\.\.cdef\)/u)
+    // The same at a real prompt: typing is hidden, so the key is not on the screen, only its tail in the answer.
+    const typed = 'sk-fedcba9876543210fedcba9876543210'
+    const prompt = pty.spawn(process.execPath, [join(selector, 'bin.js'), 'model', 'set', 'deepseek'], { name: 'xterm-256color', cols: 80, rows: 30, cwd: work, env })
+    let asked = ''
+    prompt.onData(data => { asked += data })
+    const promptExit = new Promise(resolve => prompt.onExit(resolve))
+    try {
+      const until = Date.now() + 30_000
+      while (!plain(asked).includes('typing is hidden')) {
+        if (Date.now() > until) throw new Error(`no prompt; the screen shows:\n${plain(asked)}`)
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
+      prompt.write(`${typed}\r`)
+      assert.equal((await promptExit).exitCode, 0, plain(asked))
+    } finally { prompt.kill() }
+    assert.equal(plain(asked).includes(typed), false, 'the typed key is never echoed')
+    assert.match(plain(asked), /Saved \(sk-\.\.\.3210\)/u)
+    assert.equal(JSON.parse(readFileSync(join(home, '.acryl', 'model.json'), 'utf8')).deepseek, typed)
+    writeFileSync(join(home, '.acryl', 'model.json'), JSON.stringify({ deepseek: KEY }))
+    // An app the selector starts gets the stored key as DEEPSEEK_API_KEY (the stand-in create package writes what it saw).
+    const seen = join(root, 'seen-key.txt')
+    writeFileSync(join(create, 'bin.js'), '#!/usr/bin/env node\nrequire("node:fs").writeFileSync(process.env.ACRYL_TEST_SEEN, process.env.DEEPSEEK_API_KEY || "none")\n')
+    const started = spawnSync(process.execPath, [join(selector, 'bin.js'), 'new', 'other-app'], { cwd: work, env: { ...env, ACRYL_TEST_SEEN: seen }, encoding: 'utf8' })
+    assert.equal(started.status, 0, started.stderr)
+    assert.equal(readFileSync(seen, 'utf8'), KEY)
     const noTerminal = spawnSync(process.execPath, [join(selector, 'bin.js'), '--tui'], { cwd: work, env, encoding: 'utf8' })
     assert.equal(noTerminal.status, 1)
     assert.match(noTerminal.stderr, /--tui needs a terminal/u)

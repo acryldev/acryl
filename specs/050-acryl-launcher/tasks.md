@@ -44,9 +44,12 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
 - [ ] T009 [packaging] `npx acryl` downloads only the selector and the launcher: the 454 MB IDE runtime (`acryl-cli-<os>-<cpu>`) stops being an
   optional dependency and is fetched and verified when `acryl code` is chosen, the way `acryl web` fetches the Web runtime.
   Done when: `npx acryl` on a fresh machine shows the launcher after downloading under 1 MB; `acryl code` then fetches the runtime once.
-- [ ] T010 [core] "Set up a model": a command that sets a model provider and key for an app (none exists yet: not in the CLI grammar, the
+- [x] T010 [core] "Set up a model": a command that sets a model provider and key for an app (none exists yet: not in the CLI grammar, the
   acrylblends command or the app door), then its journey.
   Done when: the journey sets a working model for an app made by "create an app" and the command it shows does the same.
+  Done 2026-11-12: `acryl model` (status), `acryl model set deepseek` (asks for the key with typing hidden, or reads a pipe; stored once in
+  `~/.acryl/model.json`, owner-only, never shown beyond its last four characters), `acryl model clear`. Every app the `acryl` command starts
+  gets it as DEEPSEEK_API_KEY unless the environment already names one. The launcher has a "Set up a model" row.
 - [ ] T011 [design, then both faces] The launcher as the local app store and control center (owner direction 2026-11-12, spec.md
       "Direction"): every app made with ACRYL on this machine in one list (path, Blend, running or not, address, update waiting), open with one
       key, and upkeep from the same place (update, check, share, stop, remove). Needs one registry of local apps under `~/.acryl` that

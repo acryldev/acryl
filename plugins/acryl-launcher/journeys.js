@@ -126,6 +126,13 @@ export const JOURNEYS = Object.freeze([
     command: answers => acryl(['apps', 'add', answers.folder]),
   },
   {
+    id: 'model',
+    title: 'Set up a model',
+    summary: 'your DeepSeek key, once, for every app',
+    steps: [],
+    command: () => acryl(['model', 'set', 'deepseek']),
+  },
+  {
     id: 'check',
     title: 'Check this machine',
     summary: 'Node, npm, git, an agent, a free port',

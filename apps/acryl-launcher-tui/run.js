@@ -6,7 +6,7 @@ import { ProcessTerminal, TuiMainScreen, matchesKey } from '@earendil-works/pi-t
 import { nodeContext } from 'acryl-launcher/node'
 
 // The list of apps is read and written by the same code the terminal face shows it with; the selector reaches it through this bundle.
-export { addApp, runAppsCommand } from 'acryl-launcher'
+export { addApp, modelEnv, runAppsCommand, runModelCommand } from 'acryl-launcher'
 import { isPaletteForced, paletteModeFromEnv, paletteTheme, schemeOfBackground } from 'acryl-ui-tui/scheme'
 import { createLauncherView } from './view.js'
 

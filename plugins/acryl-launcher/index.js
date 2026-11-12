@@ -4,3 +4,4 @@ export { APP_NAME, JOURNEYS, STARTERS, appNameProblem, commandLine, journey, nam
 export { APP_MARKER, REGISTRY_FILE, addApp, blendOf, inspectApp, readApps, removeApp } from './apps-registry.js'
 export { runAppsCommand } from './apps-command.js'
 export { createSession } from './session.js'
+export { MODEL_FILE, PROVIDERS, clearModelKey, keyProblem, maskKey, modelEnv, readModelKey, runModelCommand, saveModelKey } from './model-key.js'

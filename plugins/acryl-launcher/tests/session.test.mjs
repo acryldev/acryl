@@ -31,6 +31,7 @@ test('every journey ends in the command that is shown, with Enter-only defaults 
     share: [['shop', 'cart'], 'cd shop && acryl plugin publish cart'],
     update: [['shop'], 'cd shop && acryl update'],
     add: [['shop'], 'acryl apps add shop'],
+    model: [[], 'acryl model set deepseek'],
     check: [[], 'acryl blends preflight'],
     code: [[], 'acryl code'],
   }

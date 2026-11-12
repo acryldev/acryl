@@ -9,6 +9,7 @@ import { homedir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createdAppName, forwardCommand, launcherCommand } from './forward.js'
 import { installedDesktop } from './desktop-open.js'
+import { readSecret } from './secret-input.js'
 import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor } from './runtime.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact, webRuntimeCommand } from './web-runtime.js'
@@ -112,7 +113,7 @@ async function openLauncher() {
   // A new app's folder may not exist yet (the suggested ~/ACRYL on a first run): make it, so the command has somewhere to run.
   if (chosen.command.ensureCwd === true) mkdirSync(target.cwd, { recursive: true })
   console.log(`\n$ ${chosen.line}\n`)
-  const child = spawn(target.command, target.args, { stdio: 'inherit', cwd: target.cwd, shell: target.shell === true })
+  const child = spawn(target.command, target.args, { stdio: 'inherit', cwd: target.cwd, shell: target.shell === true, env: await appEnvironment() })
   const stopForwarding = forwardStopSignals(child)
   child.once('error', cause => { stopForwarding(); console.error(`acryl: ${cause.message}`); process.exitCode = 1 })
   child.once('exit', code => {
@@ -134,6 +135,24 @@ async function openDesktop() {
   child.unref()
 }
 
+/** The environment an app the `acryl` command starts gets: this one, plus the stored model key when the environment names none (acryl model). */
+async function appEnvironment() {
+  if (!existsSync(LAUNCHER)) return process.env
+  try {
+    const { modelEnv } = await loadLauncher()
+    return { ...process.env, ...modelEnv(ACRYL_HOME, process.env) }
+  } catch { return process.env }
+}
+
+/** `acryl model [set deepseek | clear]`: the machine's model key, asked for without echo and never in an argument. */
+async function runModel(modelArgs) {
+  if (!existsSync(LAUNCHER)) throw new Error('the launcher is not part of this install; install acryl from npm')
+  const { runModelCommand } = await loadLauncher()
+  process.exitCode = await runModelCommand(modelArgs, {
+    home: ACRYL_HOME, env: process.env, out: line => console.log(line), err: line => console.error(line), readSecret,
+  })
+}
+
 /** `acryl apps ...`: the list the launcher shows, as commands. */
 async function runApps(appsArgs) {
   if (!existsSync(LAUNCHER)) throw new Error('the launcher is not part of this install; install acryl from npm')
@@ -152,12 +171,16 @@ if (forwarded?.error) {
   console.error(`acryl: ${forwarded.error}`)
   process.exitCode = 2
 } else if (forwarded) {
-  const child = spawn(forwarded.command, forwarded.args, { stdio: 'inherit', cwd: forwarded.cwd, shell: forwarded.shell === true })
-  child.once('error', cause => { console.error(`acryl: ${cause.message}`); process.exitCode = 1 })
-  child.once('exit', code => {
-    process.exitCode = code ?? 1
-    void listCreatedApp(args, forwarded.cwd ?? process.cwd())
-  })
+  appEnvironment().then(env => {
+    const child = spawn(forwarded.command, forwarded.args, { stdio: 'inherit', cwd: forwarded.cwd, shell: forwarded.shell === true, env })
+    child.once('error', cause => { console.error(`acryl: ${cause.message}`); process.exitCode = 1 })
+    child.once('exit', code => {
+      process.exitCode = code ?? 1
+      void listCreatedApp(args, forwarded.cwd ?? process.cwd())
+    })
+  }, fail)
+} else if (args[0] === 'model') {
+  runModel(args.slice(1)).catch(fail)
 } else if (args[0] === 'apps') {
   runApps(args.slice(1)).catch(fail)
 } else if (args[0] === '--gui') {

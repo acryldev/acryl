@@ -17,6 +17,7 @@ const ACTIONS = Object.freeze([
   { value: 'journey:create', label: '+ New app', description: 'asks where it goes, suggests ~/ACRYL' },
   { value: 'journey:blend', label: 'Blends store', description: 'install a ready app from the registry' },
   { value: 'journey:add', label: 'Add an app folder', description: 'an app you already have' },
+  { value: 'journey:model', label: 'Set up a model', description: 'your DeepSeek key, once, for every app' },
   { value: 'journey:check', label: 'Health', description: 'Node, npm, git, an agent, a free port' },
   { value: 'journey:code', label: 'ACRYL Code', description: 'the coding IDE, in this terminal' },
   { value: 'more', label: 'All things to do', description: 'every journey, including pull and share a plugin' },

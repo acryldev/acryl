@@ -17,6 +17,7 @@
     "session.js",
     "apps-registry.js",
     "apps-command.js",
+    "model-key.js",
     "node-context.js",
     "README.md"
   ],

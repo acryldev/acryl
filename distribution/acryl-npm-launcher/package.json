@@ -10,6 +10,7 @@
     "bin.js",
     "cli.js",
     "desktop-open.js",
+    "secret-input.js",
     "node-version.js",
     "forward.js",
     "launcher.js",
