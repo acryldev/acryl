@@ -137,3 +137,14 @@ file builds and runs unsigned on each OS.
 
 The Cordis `launcher` service of the mini-design comes with the desktop face (T004): the terminal face runs inside the light `acryl` package,
 which has no Cordis host, and uses the session directly. Both faces walk the same session, so the journeys stay written once.
+
+## Desktop face: the Cordis mini-design (T004, written 2026-11-12, not built yet)
+
+1. **Capability and boundary.** One new package, `plugins/acryl-launcher-desktop`, with a Host half and a client half, because the desktop needs two things the light terminal package never had: a Host that can read the list and run a command, and a client plugin that claims the first screen. The journeys, the session and the list stay in `plugins/acryl-launcher` (written once); this package only draws and runs.
+2. **Provides and consumes.** Host: consumes `router` and `routerHttp` (hard `inject`), provides routes under `/api/launcher` (`GET apps`, `GET blends`, `GET plugins?app=`, `GET exists?path=`, `POST run`, `GET run/<id>` for the output so far, `POST run/<id>/stop`, `POST apps/add`). Client: consumes `slots` and `locale`, claims `desktop.main` ahead of the workspace (priority -2, the workspace uses -1) while the launcher screen is showing; "ACRYL Code" hands the slot back to the workspace. The client runs the session itself (`createSession` is pure) with a context whose lists come from those routes, so the questions and checks are the ones the terminal asks.
+3. **Effects and disposal.** The one Host resource is the child process of a run, owned by one `ctx.effect()` per run, killed by its disposer (and by the stop route); output is kept in a bounded buffer. The client's slot registration and styles are each one effect.
+4. **Configuration and composition.** No configuration. Loader rows `acryl-launcher-desktop` (Host) and its client, composed in `apps/acryl-desktop/cordis.patch.yml`; the row id equals the package name. The apps list is `<OS home>/.acryl/apps.json`, the same file the terminal reads, found through `osHomeDirectory` of the instance selector (the one place allowed to look at the OS home), so Desktop and the terminal always show one list.
+5. **Events and durability.** None beyond the list file; a run's output is not replay-critical and is not stored.
+6. **Verification.** Real Loader activation of both halves, repeated mount/reload leaving one slot registration and no child process, a run stopped by its disposer, and a Playwright run on the Electron window (scratch home) that makes the same app as the terminal face and sees an app made in the terminal in its list.
+
+Open until built: the exact first-screen switch (a launcher/workspace toggle in the window chrome, or "ACRYL" as the first item of the left pane). Recommendation: the launcher is what the window shows until a project or ACRYL Code is opened, and a button in the left pane's header returns to it.
