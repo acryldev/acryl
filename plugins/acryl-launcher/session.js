@@ -12,12 +12,17 @@ import { commandLine, journey } from './journeys.js'
  * @param {{ exists(path: string): boolean, listApps(): Promise<object[]> | object[], listBlends(): Promise<object[]> | object[],
  *           listPlugins(app: string): Promise<object[]> | object[] }} context where the lists come from (node-context.js, or a fake)
  */
-export function createSession(journeyId, context) {
+export function createSession(journeyId, context, preset = {}) {
   const { steps, command, title } = journey(journeyId)
   const answers = {}
   let state
 
-  async function enter(index, error) {
+  async function enter(index, error, backwards = false) {
+    // A face that already knows an answer (the app picked on the home list) skips that step.
+    while (index < steps.length && steps[index].id in preset && !error && !backwards) {
+      answers[steps[index].id] = preset[steps[index].id]
+      index += 1
+    }
     if (index >= steps.length) {
       const next = command({ ...answers })
       state = Object.freeze({ kind: 'ready', title, command: next, line: commandLine(next) })
@@ -29,7 +34,7 @@ export function createSession(journeyId, context) {
       const options = await step.options(context, { ...answers })
       state = Object.freeze({ ...base, options, ...(options.length === 0 ? { empty: step.empty ?? 'Nothing to choose from.' } : {}) })
     } else {
-      const initial = answers[step.id] ?? step.initial?.({ ...answers }) ?? ''
+      const initial = answers[step.id] ?? step.initial?.({ ...answers }, context) ?? ''
       state = Object.freeze({ ...base, initial })
     }
     return state
@@ -54,9 +59,10 @@ export function createSession(journeyId, context) {
     },
     /** One step back; undefined when already at the first step (the face goes back to the list of journeys). */
     async back() {
-      const index = state?.kind === 'ready' ? steps.length - 1 : (state?.index ?? 0) - 1
+      let index = state?.kind === 'ready' ? steps.length - 1 : (state?.index ?? 0) - 1
+      while (index >= 0 && steps[index].id in preset) index -= 1   // a pre-answered step is not stepped back onto
       if (index < 0) return undefined
-      return enter(index)
+      return enter(index, undefined, true)
     },
   }
 }

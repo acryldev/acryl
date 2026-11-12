@@ -1,12 +1,14 @@
 // The selector itself, loaded by bin.js once the Node version is known to be new enough.
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stderr } from 'node:process'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { forwardCommand, launcherCommand } from './forward.js'
+import { createdAppName, forwardCommand, launcherCommand } from './forward.js'
+import { installedDesktop } from './desktop-open.js'
 import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor } from './runtime.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact, webRuntimeCommand } from './web-runtime.js'
@@ -79,20 +81,69 @@ async function runWeb(webArgs) {
 /** The launcher (spec 050), bundled into this package as one file at pack time (apps/acryl-launcher-tui/scripts/bundle.mjs). */
 const LAUNCHER = fileURLToPath(new URL('./launcher.js', import.meta.url))
 
-/** A bare `acryl` in a terminal: every step offered; what the person chose then runs exactly as if they had typed it. */
+/** ACRYL's own folder (the list of apps lives here) and the visible folder new apps are suggested in (spec 050 D8). HOME moves both, which is how tests isolate. */
+const ACRYL_HOME = join(homedir(), '.acryl')
+const APPS_FOLDER = join(homedir(), 'ACRYL')
+
+const loadLauncher = () => import(pathToFileURL(LAUNCHER).href)
+
+/** After `acryl new`, put the new app in the list (spec 050 D6). The list is a convenience: a failure says so and never fails the command. */
+async function listCreatedApp(commandArgs, cwd) {
+  const name = createdAppName(commandArgs)
+  // The app is made before it starts, and a person stops a running app with Ctrl-C, so the exit code says nothing: the folder does.
+  if (name === undefined || !existsSync(LAUNCHER) || !existsSync(join(resolve(cwd, name), 'blend.yaml'))) return
+  try {
+    const { addApp } = await loadLauncher()
+    addApp(ACRYL_HOME, { path: resolve(cwd, name) })
+  } catch (cause) {
+    console.error(`acryl: ${name} was made but could not be added to the list of apps: ${cause instanceof Error ? cause.message : String(cause)}`)
+  }
+}
+
+/** `acryl` or `acryl --tui` in a terminal: the ACRYL app screen; what the person chose then runs exactly as if they had typed it. */
 async function openLauncher() {
-  const { runLauncher } = await import(pathToFileURL(LAUNCHER).href)
-  const chosen = await runLauncher()
+  const { runLauncher } = await loadLauncher()
+  const chosen = await runLauncher({ home: ACRYL_HOME, appsFolder: APPS_FOLDER })
   if (!chosen) return
   const target = launcherCommand(chosen.command, {
     env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, bin: fileURLToPath(new URL('./bin.js', import.meta.url)), exists: existsSync,
   })
   if (target.error) throw new Error(target.error)
+  // A new app's folder may not exist yet (the suggested ~/ACRYL on a first run): make it, so the command has somewhere to run.
+  if (chosen.command.ensureCwd === true) mkdirSync(target.cwd, { recursive: true })
   console.log(`\n$ ${chosen.line}\n`)
   const child = spawn(target.command, target.args, { stdio: 'inherit', cwd: target.cwd, shell: target.shell === true })
   const stopForwarding = forwardStopSignals(child)
   child.once('error', cause => { stopForwarding(); console.error(`acryl: ${cause.message}`); process.exitCode = 1 })
-  child.once('exit', code => { stopForwarding(); process.exitCode = code ?? 1 })
+  child.once('exit', code => {
+    stopForwarding()
+    process.exitCode = code ?? 1
+    void listCreatedApp(chosen.command.args, target.cwd)
+  })
+}
+
+/** `acryl --gui`: open the installed ACRYL desktop app; when none is installed, fetch the installer for this version and open that. */
+async function openDesktop() {
+  const installed = installedDesktop({ platform: process.platform, env: process.env, home: homedir(), exists: existsSync })
+  if (installed === undefined) {
+    console.log('ACRYL desktop is not installed on this machine yet: fetching the installer.')
+    return runDesktop([])
+  }
+  const child = spawn(installed.command, installed.args, { stdio: 'ignore', detached: true })
+  child.once('error', cause => { console.error(`acryl: could not open ${installed.command}: ${cause.message}`); process.exitCode = 1 })
+  child.unref()
+}
+
+/** `acryl apps ...`: the list the launcher shows, as commands. */
+async function runApps(appsArgs) {
+  if (!existsSync(LAUNCHER)) throw new Error('the launcher is not part of this install; install acryl from npm')
+  const { runAppsCommand } = await loadLauncher()
+  process.exitCode = runAppsCommand(appsArgs, { home: ACRYL_HOME, cwd: process.cwd(), out: line => console.log(line), err: line => console.error(line) })
+}
+
+const fail = cause => {
+  console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
+  process.exitCode = 1
 }
 
 // The short commands (acryl new, plugin, blends, update) run the part that owns them (forward.js).
@@ -103,7 +154,18 @@ if (forwarded?.error) {
 } else if (forwarded) {
   const child = spawn(forwarded.command, forwarded.args, { stdio: 'inherit', cwd: forwarded.cwd, shell: forwarded.shell === true })
   child.once('error', cause => { console.error(`acryl: ${cause.message}`); process.exitCode = 1 })
-  child.once('exit', code => { process.exitCode = code ?? 1 })
+  child.once('exit', code => {
+    process.exitCode = code ?? 1
+    void listCreatedApp(args, forwarded.cwd ?? process.cwd())
+  })
+} else if (args[0] === 'apps') {
+  runApps(args.slice(1)).catch(fail)
+} else if (args[0] === '--gui') {
+  openDesktop().catch(fail)
+} else if (args[0] === '--tui') {
+  if (!stdin.isTTY || !process.stdout.isTTY) fail(new Error('acryl --tui needs a terminal; to open the app window instead run: acryl --gui'))
+  else if (!existsSync(LAUNCHER)) fail(new Error('the terminal screen is not part of this install; install acryl from npm'))
+  else openLauncher().catch(fail)
 } else if (args[0] === 'web') {
   runWeb(args.slice(1)).catch(cause => {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)

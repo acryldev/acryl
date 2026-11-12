@@ -4,10 +4,14 @@
 // background and its later light/dark switches.
 import { ProcessTerminal, TuiMainScreen, matchesKey } from '@earendil-works/pi-tui'
 import { nodeContext } from 'acryl-launcher/node'
+
+// The list of apps is read and written by the same code the terminal face shows it with; the selector reaches it through this bundle.
+export { addApp, runAppsCommand } from 'acryl-launcher'
 import { isPaletteForced, paletteModeFromEnv, paletteTheme, schemeOfBackground } from 'acryl-ui-tui/scheme'
 import { createLauncherView } from './view.js'
 
-export function runLauncher({ cwd = process.cwd(), env = process.env, terminal = new ProcessTerminal() } = {}) {
+/** `home` is ACRYL's own folder (~/.acryl) and `appsFolder` where new apps are suggested (~/ACRYL): the selector decides both, this face only passes them on. */
+export function runLauncher({ cwd = process.cwd(), env = process.env, terminal = new ProcessTerminal(), home, appsFolder } = {}) {
   const tui = new TuiMainScreen(terminal)
   let mode = paletteModeFromEnv(env)
   const theme = { get mode() { return mode }, color: role => paletteTheme(mode).color(role) }
@@ -20,7 +24,7 @@ export function runLauncher({ cwd = process.cwd(), env = process.env, terminal =
 
   return new Promise(resolve => {
     const view = createLauncherView({
-      context: nodeContext(cwd),
+      context: nodeContext(cwd, { home, appsFolder }),
       theme,
       requestRender: () => tui.requestRender(),
       finish: result => {

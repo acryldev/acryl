@@ -16,11 +16,18 @@ export const STARTERS = Object.freeze([
 /** The rule create-acrylblends applies to a new app's name. */
 export const APP_NAME = /^[a-z][a-z0-9-]*$/u
 
-/** Why `name` cannot be a new app's name here, or undefined when it can. */
-export function appNameProblem(name, context) {
+/** Why `name` cannot be a new app's name (in the folder the `where` answer names, else here), or undefined when it can. */
+export function appNameProblem(name, context, answers = {}) {
   if (!APP_NAME.test(name)) return 'lower case letters, digits and dashes, starting with a letter'
-  if (context.exists(name)) return `there is already a folder named ${name} here`
+  const path = answers.where && answers.where !== '.' ? `${answers.where}/${name}` : name
+  if (context.exists(path)) return `there is already a folder named ${name} ${answers.where && answers.where !== '.' ? `in ${answers.where}` : 'here'}`
   return undefined
+}
+
+/** Why `folder` cannot hold new apps, or undefined when it can (it need not exist yet: the launcher makes it). */
+export function whereProblem(folder) {
+  if (folder.startsWith('~')) return 'type the whole folder path (the default shown is one), not one starting with ~'
+  return folder === '' ? 'say which folder the app goes in' : undefined
 }
 
 /** A name for an app made from a registry id: its last part (`acrylblends.notes-desktop` gives `notes-desktop`). */
@@ -44,10 +51,15 @@ export const JOURNEYS = Object.freeze([
     title: 'Create an app',
     summary: 'a new app, installed and started',
     steps: [
+      text('where', 'Which folder should it live in', {
+        initial: (_answers, context) => context.defaultAppsFolder?.() ?? '.',
+        hint: 'a new folder is made if needed; Enter keeps the suggestion',
+        check: whereProblem,
+      }),
       text('name', 'Name of the app', { initial: () => 'my-app', check: appNameProblem }),
       choose('starter', 'Start from', () => STARTERS),
     ],
-    command: answers => acryl(['new', answers.name, answers.starter]),
+    command: answers => ({ ...acryl(['new', answers.name, answers.starter], answers.where), ensureCwd: answers.where !== '.' }),
   },
   {
     id: 'blend',
@@ -55,9 +67,14 @@ export const JOURNEYS = Object.freeze([
     summary: 'a ready app from the registry',
     steps: [
       choose('blend', 'Which Blend', context => context.listBlends(), { empty: 'The registry could not be read. Check the network and try again.' }),
+      text('where', 'Which folder should it live in', {
+        initial: (_answers, context) => context.defaultAppsFolder?.() ?? '.',
+        hint: 'a new folder is made if needed; Enter keeps the suggestion',
+        check: whereProblem,
+      }),
       text('name', 'Name of the app', { initial: answers => nameFromId(answers.blend), check: appNameProblem }),
     ],
-    command: answers => acryl(['new', answers.name, '--from', answers.blend]),
+    command: answers => ({ ...acryl(['new', answers.name, '--from', answers.blend], answers.where), ensureCwd: answers.where !== '.' }),
   },
   {
     id: 'open',
@@ -95,6 +112,18 @@ export const JOURNEYS = Object.freeze([
     summary: 'the newest frame and library plugins',
     steps: [chooseApp],
     command: answers => acryl(['update'], answers.app),
+  },
+  {
+    id: 'add',
+    title: 'Add an app folder',
+    summary: 'put an app you already have in the list',
+    steps: [
+      text('folder', 'The app\'s folder', {
+        hint: 'a folder with a blend.yaml in it',
+        check: (folder, context) => (folder.trim() === '' ? 'say which folder' : context.exists(`${folder}/blend.yaml`) ? undefined : `no blend.yaml in ${folder}: this is not an app folder`),
+      }),
+    ],
+    command: answers => acryl(['apps', 'add', answers.folder]),
   },
   {
     id: 'check',

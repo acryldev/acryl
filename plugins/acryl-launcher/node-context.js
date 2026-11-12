@@ -2,9 +2,9 @@
 // Only reads: nothing here writes, spawns or changes anything.
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
+import { APP_MARKER, inspectApp, readApps } from './apps-registry.js'
 
-/** What makes a folder an app: the Blend manifest create-acrylblends writes at its root. */
-export const APP_MARKER = 'blend.yaml'
+export { APP_MARKER }
 /** The public registry's index (create-acrylblends PUBLIC_REGISTRY). */
 export const REGISTRY_INDEX = 'https://acrylblends.github.io/registry/index.json'
 
@@ -19,6 +19,19 @@ export function listApps(cwd) {
   if (isApp(cwd)) apps.push({ value: '.', label: basename(resolve(cwd)), description: 'this folder' })
   for (const name of folders(cwd).sort()) if (isApp(join(cwd, name))) apps.push({ value: name, label: name })
   return apps
+}
+
+/**
+ * Every app a person can choose: the ones in the list (value = the app's whole path, so any command runs in the right folder) and the ones in the
+ * folder the launcher started in that are not listed yet.
+ */
+export function listAllApps(cwd, home) {
+  const listed = home ? readApps(home).filter(entry => inspectApp(entry).state === 'ready').map(entry => ({
+    value: entry.path, label: entry.id, description: `${entry.blend || 'Blend'}  ${entry.path}`,
+  })) : []
+  const known = new Set(listed.map(entry => resolve(entry.value)))
+  const local = listApps(cwd).filter(entry => !known.has(resolve(cwd, entry.value)))
+  return [...listed, ...local]
 }
 
 /** An app's own plugins: its plugin folders that the library (plugins/library.lock.json) did not put there. */
@@ -47,9 +60,15 @@ export async function listBlends({ fetch = globalThis.fetch, url = REGISTRY_INDE
 /** The context a session needs, for the folder the launcher started in. */
 export function nodeContext(cwd = process.cwd(), options = {}) {
   let blends
+  const { home } = options
   return {
     exists: path => existsSync(resolve(cwd, path)),
-    listApps: () => listApps(cwd),
+    listApps: () => listAllApps(cwd, home),
+    // The list as the home screen shows it (state: ready or missing); empty without a home.
+    registeredApps: () => (home ? readApps(home).map(entry => ({ ...entry, ...inspectApp(entry) })) : []),
+    // Where a new app goes unless the person says otherwise (spec 050 D8): a visible folder, never ACRYL's hidden one.
+    defaultAppsFolder: () => options.appsFolder ?? '.',
+    home,
     listPlugins: app => listPlugins(cwd, app),
     // Read once per launcher run: going back and forth does not fetch again.
     listBlends: () => (blends ??= listBlends(options)),

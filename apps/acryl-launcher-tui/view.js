@@ -10,6 +10,17 @@ import { createTuiUi } from 'acryl-ui-tui'
 
 const bold = text => `\x1b[1m${text}\x1b[22m`
 const MENU_ROWS = JOURNEYS.length
+const HOME_ROWS = 12
+
+/** The rows of the home list after the apps (the mockup's footer: + New app, Blends store, Health), each opening one journey. */
+const ACTIONS = Object.freeze([
+  { value: 'journey:create', label: '+ New app', description: 'asks where it goes, suggests ~/ACRYL' },
+  { value: 'journey:blend', label: 'Blends store', description: 'install a ready app from the registry' },
+  { value: 'journey:add', label: 'Add an app folder', description: 'an app you already have' },
+  { value: 'journey:check', label: 'Health', description: 'Node, npm, git, an agent, a free port' },
+  { value: 'journey:code', label: 'ACRYL Code', description: 'the coding IDE, in this terminal' },
+  { value: 'more', label: 'All things to do', description: 'every journey, including pull and share a plugin' },
+])
 
 export function createLauncherView({ context, theme, requestRender = () => {}, finish }) {
   const ui = createTuiUi(theme)
@@ -35,12 +46,36 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
     finish(result)
   }
 
-  function showMenu(selected) {
+  const apps = () => (context.registeredApps?.() ?? [])
+  const begin = (journeyId, preset) => follow(createSession(journeyId, context, preset), session => session.begin())
+
+  /** The first screen (spec 050 D6): the apps on this machine, then the things to do. Enter opens an app; u updates it; p pulls a plugin into it. */
+  function showHome(selected) {
+    const listed = apps()
+    const rows = [
+      ...listed.map(app => ({ value: `app:${app.path}`, label: app.id, description: `${app.state}  ${app.blend || 'Blend'}`, detail: app.state === 'missing' ? `${app.path} - the folder is gone` : app.path })),
+      ...ACTIONS,
+    ]
+    list = new SelectList(rows, Math.min(HOME_ROWS, rows.length), listTheme)
+    list.setSelectedIndex(Math.max(0, rows.findIndex(row => row.value === selected)))
+    list.onSelect = item => {
+      if (item.value === 'more') return showMore()
+      if (item.value.startsWith('journey:')) return begin(item.value.slice('journey:'.length))
+      const app = listed.find(entry => `app:${entry.path}` === item.value)
+      if (app?.state === 'missing') return undefined   // nothing to open: its folder is gone; the row says so
+      return begin('open', { app: app.path })
+    }
+    field = undefined
+    screen = { kind: 'home', apps: listed }
+  }
+
+  /** Every journey, for the ones the home list does not name. */
+  function showMore(selected) {
     list = new SelectList(JOURNEYS.map(entry => ({ value: entry.id, label: entry.title, description: entry.summary })), MENU_ROWS, listTheme)
     if (selected) list.setSelectedIndex(Math.max(0, JOURNEYS.findIndex(entry => entry.id === selected)))
-    list.onSelect = item => follow(createSession(item.value, context), session => session.begin())
+    list.onSelect = item => begin(item.value)
     field = undefined
-    screen = { kind: 'menu' }
+    screen = { kind: 'more' }
   }
 
   /** Wait for the session's next state, showing that something is happening meanwhile; undefined (back from the first step) is the menu. */
@@ -49,7 +84,7 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
     requestRender()
     pending = Promise.resolve(step(session)).then(
       state => {
-        if (state === undefined) showMenu(session.id)
+        if (state === undefined) showHome()
         else present(session, state)
       },
       cause => { screen = { kind: 'failed', session, message: cause instanceof Error ? cause.message : String(cause) } },
@@ -79,14 +114,18 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
   }
 
   function body() {
-    if (screen.kind === 'menu') return [ui.Card({ title: 'What do you want to do?', body: [list] })]
+    if (screen.kind === 'home') {
+      const title = screen.apps.length === 0 ? 'No apps yet - start one' : `Your apps (${String(screen.apps.length)})`
+      return [ui.Card({ title, body: [list, highlighted(list, 'detail')] })]
+    }
+    if (screen.kind === 'more') return [ui.Card({ title: 'What do you want to do?', body: [list] })]
     if (screen.kind === 'busy') return [c('muted')('Working...')]
     if (screen.kind === 'failed') return [ui.Card({ title: 'Something went wrong', body: [c('error')(screen.message), '', c('muted')('Esc to go back')] })]
     const { state } = screen
     if (state.kind === 'ready') {
       return [ui.Card({
         title: `${state.title}: ready`,
-        body: ['This runs now:', '', c('primary')(bold(state.line)), '', c('muted')('Next time you can type it yourself.')],
+        body: ['This runs now:', '', wrapped(c('primary')(bold(state.line))), '', c('muted')('Next time you can type it yourself.')],
       })]
     }
     const where = state.total > 1 ? `  ${c('muted')(`step ${state.index + 1} of ${state.total}`)}` : ''
@@ -101,10 +140,16 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
     return [ui.Card({ title: `${state.title}${where}`, body: parts })]
   }
 
-  function highlighted(from) {
+  /** A line that wraps at the card's width instead of being cut: the command shown must be the whole command, however long the folder. */
+  function wrapped(text) {
+    return { render: width => wrapTextWithAnsi(text, width), invalidate() {} }
+  }
+
+  function highlighted(from, key = 'description') {
     return {
       render(width) {
-        const description = from.getSelectedItem()?.description
+        const item = from.getSelectedItem()
+        const description = key === 'detail' ? item?.detail : item?.description
         if (!description) return []
         // At most three lines, so a long description never pushes the list off a 24-row terminal.
         const wrapped = wrapTextWithAnsi(c('muted')(description), width)
@@ -117,19 +162,20 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
   }
 
   function keysHint() {
-    if (screen.kind === 'menu') return 'Up/Down choose   Enter go   Esc quit'
+    if (screen.kind === 'home') return 'Up/Down choose   Enter open   u update   p pull a plugin   Esc quit'
+    if (screen.kind === 'more') return 'Up/Down choose   Enter go   Esc back'
     if (screen.kind === 'session' && screen.state.kind === 'ready') return 'Enter run   Esc back   Ctrl-C quit'
     if (screen.kind === 'session' && screen.state.step?.kind === 'text') return 'Enter next   Esc back   Ctrl-C quit'
     return 'Up/Down choose   Enter next   Esc back   Ctrl-C quit'
   }
 
-  showMenu()
+  showHome()
 
   return {
     /** Settles when the last answer has been handled (tests wait on it; the terminal just re-renders). */
     get settled() { return pending },
     render(width) {
-      const header = `${c('primary')(bold('ACRYL'))}  ${c('muted')('every step offered, no commands to remember')}`
+      const header = `${c('primary')(bold('ACRYL'))}  ${c('muted')('every app on this machine, every step offered')}`
       return ui.Stack({ children: [header, '', ...body(), c('muted')(keysHint())], gap: 0 }).render(width).map(line => truncateToWidth(line, width))
     },
     handleInput(data) {
@@ -137,12 +183,17 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
       if (matchesKey(data, 'ctrl+c')) return close(undefined)
       if (screen.kind === 'busy') return
       if (matchesKey(data, 'escape')) {
-        if (screen.kind === 'menu') return close(undefined)
+        if (screen.kind === 'home') return close(undefined)
+        if (screen.kind === 'more') return showHome('more')
         return follow(screen.session, session => session.back())
       }
       if (screen.kind === 'session' && screen.state.kind === 'ready') {
         if (matchesKey(data, 'enter') || matchesKey(data, 'return')) close({ command: screen.state.command, line: screen.state.line })
         return
+      }
+      if (screen.kind === 'home' && (data === 'u' || data === 'p')) {
+        const row = list.getSelectedItem()
+        if (row?.value.startsWith('app:')) return begin(data === 'u' ? 'update' : 'pull', { app: row.value.slice('app:'.length) })
       }
       ;(field ?? list)?.handleInput(data)
       requestRender()

@@ -9,6 +9,7 @@
   "files": [
     "bin.js",
     "cli.js",
+    "desktop-open.js",
     "node-version.js",
     "forward.js",
     "launcher.js",

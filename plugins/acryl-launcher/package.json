@@ -15,6 +15,8 @@
     "index.js",
     "journeys.js",
     "session.js",
+    "apps-registry.js",
+    "apps-command.js",
     "node-context.js",
     "README.md"
   ],

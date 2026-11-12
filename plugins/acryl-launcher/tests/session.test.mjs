@@ -7,7 +7,7 @@ import { JOURNEYS, commandLine, createSession, nameFromId } from '../index.js'
 import { listApps, listBlends, listPlugins } from '../node-context.js'
 
 const fake = (more = {}) => ({
-  exists: path => path === 'taken',
+  exists: path => path === 'taken' || path === 'shop/blend.yaml',
   listApps: () => [{ value: 'shop', label: 'shop' }],
   listBlends: async () => [{ value: 'acrylblends.notes-desktop', label: 'Notes' }],
   listPlugins: app => (app === 'shop' ? [{ value: 'cart', label: 'cart' }] : []),
@@ -24,12 +24,13 @@ async function walk(id, answers, context = fake()) {
 
 test('every journey ends in the command that is shown, with Enter-only defaults where a default exists', async () => {
   const expected = {
-    create: [['shop', 'notes'], 'acryl new shop notes'],
-    blend: [['acrylblends.notes-desktop', 'notes-desktop'], 'acryl new notes-desktop --from acrylblends.notes-desktop'],
+    create: [['.', 'shop', 'notes'], 'acryl new shop notes'],
+    blend: [['acrylblends.notes-desktop', '.', 'notes-desktop'], 'acryl new notes-desktop --from acrylblends.notes-desktop'],
     open: [['shop'], 'cd shop && npm run dev'],
     pull: [['shop', 'github:someone/pomodoro@0.1.0'], 'cd shop && acryl plugin pull github:someone/pomodoro@0.1.0'],
     share: [['shop', 'cart'], 'cd shop && acryl plugin publish cart'],
     update: [['shop'], 'cd shop && acryl update'],
+    add: [['shop'], 'acryl apps add shop'],
     check: [[], 'acryl blends preflight'],
     code: [[], 'acryl code'],
   }
@@ -44,7 +45,9 @@ test('every journey ends in the command that is shown, with Enter-only defaults 
 
 test('a text step offers its default, so Enter alone answers it', async () => {
   const session = createSession('create', fake())
-  const first = await session.begin()
+  const where = await session.begin()
+  assert.equal(where.initial, '.')
+  const first = await session.answer(where.initial)
   assert.equal(first.initial, 'my-app')
   const second = await session.answer(first.initial)
   assert.equal(second.step.id, 'starter')
@@ -53,13 +56,15 @@ test('a text step offers its default, so Enter alone answers it', async () => {
   // The Blend journey names the app after the Blend.
   const blend = createSession('blend', fake())
   await blend.begin()
-  assert.equal((await blend.answer('acrylblends.notes-desktop')).initial, 'notes-desktop')
+  await blend.answer('acrylblends.notes-desktop')
+  assert.equal((await blend.answer('.')).initial, 'notes-desktop')
   assert.equal(nameFromId('acrylblends.42-things'), 'things')
 })
 
 test('a wrong answer stays on its step with the reason; a right one moves on', async () => {
   const session = createSession('create', fake())
   await session.begin()
+  await session.answer('.')
   assert.match((await session.answer('Shop')).error, /lower case/u)
   assert.match((await session.answer('taken')).error, /already a folder/u)
   const next = await session.answer('  shop  ')
@@ -71,15 +76,44 @@ test('a wrong answer stays on its step with the reason; a right one moves on', a
 test('back walks one step back, keeps the answer as the default, and leaves the journey from the first step', async () => {
   const session = createSession('create', fake())
   await session.begin()
+  await session.answer('.')
   await session.answer('shop')
   const back = await session.back()
   assert.equal(back.step.id, 'name')
   assert.equal(back.initial, 'shop')
+  assert.equal((await session.back()).step.id, 'where')
   assert.equal(await session.back(), undefined)
+  await session.answer('.')
   // From the end, back is the last question again.
   await session.answer('shop')
   await session.answer('todo')
   assert.equal((await session.back()).step.id, 'starter')
+})
+
+test('a folder for the new app: the suggestion, the folder in the command, and the name checked inside it', async () => {
+  const context = fake({ defaultAppsFolder: () => '/home/me/ACRYL', exists: path => path === '/home/me/ACRYL/taken' })
+  const session = createSession('create', context)
+  const where = await session.begin()
+  assert.equal(where.initial, '/home/me/ACRYL')
+  assert.match((await session.answer('~/x')).error, /whole folder path/u)
+  await session.answer('/home/me/ACRYL')
+  assert.match((await session.answer('taken')).error, /already a folder named taken in \/home\/me\/ACRYL/u)
+  await session.answer('shop')
+  const ready = await session.answer('blank')
+  assert.equal(ready.line, 'cd /home/me/ACRYL && acryl new shop blank')
+  assert.equal(ready.command.ensureCwd, true)
+})
+
+test('a pre-answered step (the app picked on the home list) is skipped, going forward and back', async () => {
+  const session = createSession('update', fake(), { app: '/home/me/ACRYL/shop' })
+  const ready = await session.begin()
+  assert.equal(ready.kind, 'ready')
+  assert.equal(ready.line, 'cd /home/me/ACRYL/shop && acryl update')
+  assert.equal(await session.back(), undefined)
+  const pull = createSession('pull', fake(), { app: 'shop' })
+  const step = await pull.begin()
+  assert.equal(step.step.id, 'source')
+  assert.equal(await pull.back(), undefined)
 })
 
 test('a choice with nothing to choose says why instead of an empty list', async () => {

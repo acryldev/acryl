@@ -54,3 +54,9 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       Done when: the owner approves the design, and in the terminal face an app made by `acryl new` appears in the list and opens from it.
       State 2026-11-12: design in `design/control-center.html`, answered by the owner (spec.md D6-D9). Build order: the registry
       `~/.acryl/apps.json` and the list in the terminal face first, then the desktop screen, both before the workshop of 2026-11-20.
+      Built 2026-11-12 (terminal face): the list `~/.acryl/apps.json` (plugins/acryl-launcher/apps-registry.js), `acryl apps` / `acryl apps add <folder>` /
+      `acryl apps remove <id>`, an app made by `acryl new` (direct or from the launcher) listed when the command ends, the ACRYL home screen
+      (apps with state and Blend, then + New app, Blends store, Add an app folder, Health, ACRYL Code, All things to do; Enter opens, u updates,
+      p pulls a plugin), "+ New app" asking for the folder (suggests ~/ACRYL, made if missing), `acryl --tui` (the same screen, needs a terminal)
+      and `acryl --gui` (opens the installed desktop app, else fetches its installer). Not built yet: running state and the address in the list
+      (the launcher runs nothing and records no port), update-waiting, start/stop, deploy, keep (agent apps); the desktop screen (T004).

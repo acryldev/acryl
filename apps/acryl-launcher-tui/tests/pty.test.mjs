@@ -6,6 +6,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import pty from 'node-pty'
 import { bundleLauncher } from '../scripts/bundle.mjs'
@@ -13,7 +14,7 @@ import { bundleLauncher } from '../scripts/bundle.mjs'
 const selectorSource = fileURLToPath(new URL('../../../distribution/acryl-npm-launcher', import.meta.url))
 const plain = text => text.replace(/\x1b\[[0-9;?<>=]*[A-Za-z]|\x1b\][^\x07]*\x07|\x1b[PX^_][^\x1b]*\x1b\\/gu, '')
 
-test('Enter, Enter, Enter, Enter in a terminal: acryl new my-app blank runs', { timeout: 120_000 }, async () => {
+test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is listed, and acryl apps and acryl --tui show it', { timeout: 120_000 }, async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-launcher-pty-')))
   try {
     const selector = join(root, 'acryl')
@@ -24,12 +25,16 @@ test('Enter, Enter, Enter, Enter in a terminal: acryl new my-app blank runs', { 
     const create = join(root, 'fake-create')
     mkdirSync(create)
     writeFileSync(join(create, 'package.json'), JSON.stringify({ name: 'fake-create', version: '1.0.0', bin: { 'fake-create': 'bin.js' } }))
-    writeFileSync(join(create, 'bin.js'), '#!/usr/bin/env node\nrequire("node:fs").writeFileSync(process.env.ACRYL_TEST_MARKER, JSON.stringify(process.argv.slice(2)))\n')
+    // The stand-in records what it was asked and makes the folder a real create would (a blend.yaml), so the selector can list the app.
+    writeFileSync(join(create, 'bin.js'), '#!/usr/bin/env node\nconst fs = require("node:fs")\nfs.writeFileSync(process.env.ACRYL_TEST_MARKER, JSON.stringify(process.argv.slice(2)))\nfs.mkdirSync(process.argv[2])\nfs.writeFileSync(process.argv[2] + "/blend.yaml", "id: acrylblends.blank\\n")\n')
     const work = join(root, 'work')
     mkdirSync(work)
     const marker = join(root, 'asked.json')
 
-    const env = { ...process.env, ACRYL_CREATE: create, ACRYL_TEST_MARKER: marker, ACRYL_TUI_THEME: 'dark', npm_config_cache: join(root, 'npm-cache') }
+    // HOME is a scratch folder: the list (~/.acryl) and the suggested folder (~/ACRYL) must never touch the real ones.
+    const home = join(root, 'home')
+    mkdirSync(home)
+    const env = { ...process.env, HOME: home, USERPROFILE: home, ACRYL_CREATE: create, ACRYL_TEST_MARKER: marker, ACRYL_TUI_THEME: 'dark', npm_config_cache: join(root, 'npm-cache') }
     delete env.npm_execpath
     const terminal = pty.spawn(process.execPath, [join(selector, 'bin.js')], { name: 'xterm-256color', cols: 80, rows: 30, cwd: work, env })
     let screen = ''
@@ -43,13 +48,15 @@ test('Enter, Enter, Enter, Enter in a terminal: acryl new my-app blank runs', { 
       }
     }
     try {
-      await waitFor('What do you want to do?')
+      await waitFor('No apps yet')
+      terminal.write('\r')
+      await waitFor('Which folder should it live in')
       terminal.write('\r')
       await waitFor('Name of the app')
       terminal.write('\r')
       await waitFor('Start from')
       terminal.write('\r')
-      await waitFor('acryl new my-app blank')
+      await waitFor('This runs now')
       terminal.write('\r')
       const { exitCode } = await exited
       assert.equal(exitCode, 0, plain(screen).slice(-2000))
@@ -58,6 +65,30 @@ test('Enter, Enter, Enter, Enter in a terminal: acryl new my-app blank runs', { 
     }
     assert.ok(existsSync(marker), `the create package never ran; the screen shows:\n${plain(screen).slice(-2000)}`)
     assert.deepEqual(JSON.parse(readFileSync(marker, 'utf8')), ['my-app', 'blank'])
+    const made = join(realpathSync(home), 'ACRYL', 'my-app')
+    assert.ok(existsSync(join(made, 'blend.yaml')), 'the app was made in the suggested folder, which the selector created')
+    const listed = JSON.parse(readFileSync(join(home, '.acryl', 'apps.json'), 'utf8')).apps
+    assert.deepEqual(listed.map(entry => [entry.id, entry.blend, entry.madeBy]), [['my-app', 'acrylblends.blank', 'person']])
+
+    // `acryl apps` says the same in words.
+    const apps = spawnSync(process.execPath, [join(selector, 'bin.js'), 'apps'], { cwd: work, env, encoding: 'utf8' })
+    assert.equal(apps.status, 0, apps.stderr)
+    assert.match(apps.stdout, /^my-app {2}ready {2}acrylblends\.blank {2}/u)
+    // `acryl --tui` opens the app screen with it; without a terminal it says what to do instead.
+    const second = pty.spawn(process.execPath, [join(selector, 'bin.js'), '--tui'], { name: 'xterm-256color', cols: 80, rows: 30, cwd: work, env })
+    let again = ''
+    second.onData(data => { again += data })
+    try {
+      const until = Date.now() + 30_000
+      while (!plain(again).includes('Your apps (1)')) {
+        if (Date.now() > until) throw new Error(`waited for the app list; the screen shows:\n${plain(again).slice(-2000)}`)
+        await new Promise(resolve => setTimeout(resolve, 50))
+      }
+      assert.match(plain(again), /my-app +ready +acrylblends\.blank/u)
+    } finally { second.kill() }
+    const noTerminal = spawnSync(process.execPath, [join(selector, 'bin.js'), '--tui'], { cwd: work, env, encoding: 'utf8' })
+    assert.equal(noTerminal.status, 1)
+    assert.match(noTerminal.stderr, /--tui needs a terminal/u)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

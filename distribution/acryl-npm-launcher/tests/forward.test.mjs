@@ -82,3 +82,13 @@ test('what the launcher chose runs through this same acryl, or through npm for a
   assert.deepEqual(launcherCommand({ program: 'npm', args: ['run', 'dev'], cwd: 'shop' }, context), { command: 'npm', args: ['run', 'dev'], cwd: resolve('/work', 'shop') })
   assert.match(launcherCommand({ program: 'rm', args: ['-rf', '/'], cwd: '.' }, context).error, /does not run/u)
 })
+
+test('createdAppName finds the folder acryl new makes', async () => {
+  const { createdAppName } = await import('../forward.js')
+  assert.equal(createdAppName(['new', 'shop']), 'shop')
+  assert.equal(createdAppName(['create', 'shop', 'todo']), 'shop')
+  assert.equal(createdAppName(['new', 'shop', '--from', 'acrylblends.notes']), 'shop')
+  assert.equal(createdAppName(['new', '--from', 'acrylblends.notes', 'shop']), 'shop')
+  assert.equal(createdAppName(['new']), undefined)
+  assert.equal(createdAppName(['update']), undefined)
+})

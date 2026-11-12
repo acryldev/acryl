@@ -84,3 +84,17 @@ export function forwardCommand(argv, context) {
     return { error: `acryl ${command} needs what to do, for example: acryl plugin publish my-plugin` }
   return { command: context.execPath, args: [join(root, DOOR), 'plugin', ...rest], cwd: root }
 }
+
+/**
+ * The folder name `acryl new <name> [starter] [--from <blend>]` makes, or undefined when there is none. The selector lists the app after the
+ * command succeeds (acryl apps), so it must name the same folder the create command does: the first argument that is not a flag or a flag's value.
+ */
+export function createdAppName(argv) {
+  const [command, ...rest] = argv
+  if (command !== 'new' && command !== 'create') return undefined
+  for (let i = 0; i < rest.length; i += 1) {
+    if (rest[i] === '--from') { i += 1; continue }
+    if (!rest[i].startsWith('-')) return rest[i]
+  }
+  return undefined
+}
