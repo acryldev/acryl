@@ -69,4 +69,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       "coming". Runs commands with the Node and npm on the machine and says so when missing (T005 comes after).
       Done when: the screen opens as the first screen of the desktop app on this Mac in an isolated home, makes an app, lists an app made in the
       terminal, and matches the design side by side.
+      State 2026-11-12: built as `plugins/acryl-launcher-desktop` (Host routes and the screen in the frame's `shell.overlay` seat, composed on Web
+      and Desktop; spec 050 "Desktop face"). Run on this Mac in the worktree's own isolated instance: the screen opens first with the design's nav,
+      search, + New app, Add a folder, surface chips (CLI (TUI) greyed "coming"), the four numbers, cards and the selected app's panel; an app made
+      through its route (`create-acrylblends` with the machine's npm) was listed, started with `npm run dev` and shown running with its address.
+      Each app has a surface in `apps.json`; the terminal list shows it too. Not built (disabled with "coming" or a sentence): updates waiting,
+      Deploy to WebBoxes.ai, Share, Open folder, Keep and Discard; "+ New app" in the terminal does not yet ask for the surface.
 

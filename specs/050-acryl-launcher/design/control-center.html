@@ -199,6 +199,9 @@ acryl            the command, same
               <button type="button" class="btn primary">+ New app</button>
               <button type="button" class="btn">Add a folder</button>
             </div>
+            <div class="row" role="group" aria-label="Surface" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+              <span class="pill">All</span><span class="pill off">Web</span><span class="pill off">Desktop</span><span class="pill off" title="coming">CLI (TUI) (coming)</span>
+            </div>
             <div class="tiles">
               <div class="tile"><b>6</b><span>apps on this Mac</span></div>
               <div class="tile"><b style="color:var(--success)">2</b><span>running now</span></div>
@@ -335,13 +338,14 @@ acryl            the command, same
 
 <script>
 const APPS = [
-  { id: 'shop', name: 'shop', color: '#3652D9', blend: 'acryl.notes 1.3.0', state: 'run', where: '127.0.0.1:3080', path: '~/ACRYL/shop', by: 'you, 3 days ago', note: '' },
-  { id: 'code', name: 'ACRYL Code', color: '#0f766e', blend: 'acryl.code 0.2.7', state: 'run', where: '127.0.0.1:3010', path: 'the IDE, inside ACRYL.app', by: 'ACRYL', note: '' },
-  { id: 'crm', name: 'crm', color: '#be123c', blend: 'acryl.crm 1.5.1', state: 'stop', where: '', path: '~/work/crm', by: 'you, last week', note: 'update', },
-  { id: 'todo', name: 'todo-demo', color: '#0369A1', blend: 'acryl.todo 1.0.0', state: 'cloud', where: 'a1b2.213-47-80-26.sslip.io', path: '~/ACRYL/todo-demo', by: 'you, today', note: '' },
-  { id: 'inv', name: 'invoice-split', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/ACRYL/invoice-split', by: 'agent in shop, 2 h ago', note: 'agent' },
-  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/ACRYL/trip-planner', by: 'agent in ACRYL Code, yesterday', note: 'agent' },
+  { id: 'shop', name: 'shop', color: '#3652D9', blend: 'acryl.notes 1.3.0', surface: 'web', state: 'run', where: '127.0.0.1:3080', path: '~/ACRYL/shop', by: 'you, 3 days ago', note: '' },
+  { id: 'code', name: 'ACRYL Code', color: '#0f766e', blend: 'acryl.code 0.2.7', surface: 'desktop', state: 'run', where: '127.0.0.1:3010', path: 'the IDE, inside ACRYL.app', by: 'ACRYL', note: '' },
+  { id: 'crm', name: 'crm', color: '#be123c', blend: 'acryl.crm 1.5.1', surface: 'web', state: 'stop', where: '', path: '~/work/crm', by: 'you, last week', note: 'update', },
+  { id: 'todo', name: 'todo-demo', color: '#0369A1', blend: 'acryl.todo 1.0.0', surface: 'web', state: 'cloud', where: 'a1b2.213-47-80-26.sslip.io', path: '~/ACRYL/todo-demo', by: 'you, today', note: '' },
+  { id: 'inv', name: 'invoice-split', color: '#a16207', blend: 'blank', surface: 'tui', state: 'stop', where: '', path: '~/ACRYL/invoice-split', by: 'agent in shop, 2 h ago', note: 'agent' },
+  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', surface: 'web', state: 'stop', where: '', path: '~/ACRYL/trip-planner', by: 'agent in ACRYL Code, yesterday', note: 'agent' },
 ]
+const SURFACE = { web: 'Web', desktop: 'Desktop', tui: 'CLI (TUI)' }
 const STATE = { run: ['run', 'running'], stop: ['stop', 'stopped'], cloud: ['cloud', 'on WebBoxes.ai'] }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 let selected = 'shop'
@@ -350,7 +354,7 @@ function renderApps() {
   const box = document.getElementById('apps')
   box.innerHTML = APPS.map(a => {
     const [cls, label] = STATE[a.state]
-    const badges = (a.note === 'update' ? '<span class="pill warn">update 1.6.0</span>' : '') + (a.note === 'agent' ? '<span class="pill agent">by agent</span>' : '')
+    const badges = `<span class="pill${a.surface === 'tui' ? ' off' : ''}">${SURFACE[a.surface]}</span>` + (a.note === 'update' ? '<span class="pill warn">update 1.6.0</span>' : '') + (a.note === 'agent' ? '<span class="pill agent">by agent</span>' : '')
     return `<button type="button" class="app" data-id="${a.id}" aria-pressed="${a.id === selected}">
       <div class="head"><div class="icon" style="background:${a.color}">${esc(a.name[0].toUpperCase())}</div><div style="min-width:0"><div class="name">${esc(a.name)}</div><div class="meta">${esc(a.blend)}</div></div></div>
       <div class="row"><span class="state ${cls}"><i></i>${label}${a.where ? ' · <span class="mono" style="font-size:12px">' + esc(a.where) + '</span>' : ''}</span></div>
@@ -368,7 +372,7 @@ function renderDetail() {
   const upd = a.note === 'update' ? '<button type="button" class="btn">Update to 1.6.0</button>' : ''
   document.getElementById('detail').innerHTML = `
     <div class="toprow"><h3>${esc(a.name)}</h3><div class="acts">${main}${upd}${extra}<button type="button" class="btn">Deploy to WebBoxes.ai</button><button type="button" class="btn">Share</button><button type="button" class="btn">Move to Applications</button><button type="button" class="btn">Open folder</button><button type="button" class="btn">...</button></div></div>
-    <dl class="kv"><dt>Blend</dt><dd>${esc(a.blend)}</dd><dt>Folder</dt><dd>${esc(a.path)}</dd><dt>Made by</dt><dd>${esc(a.by)}</dd><dt>Address</dt><dd>${esc(a.where || 'not running')}</dd>
+    <dl class="kv"><dt>Blend</dt><dd>${esc(a.blend)}</dd><dt>Surface</dt><dd>${SURFACE[a.surface]}</dd><dt>Folder</dt><dd>${esc(a.path)}</dd><dt>Made by</dt><dd>${esc(a.by)}</dd><dt>Address</dt><dd>${esc(a.where || 'not running')}</dd>
     <dt>Runs</dt><dd>${a.state === 'run' ? 'npm run dev (started by ACRYL)' : a.state === 'cloud' ? 'on WebBoxes.ai, box a1b2' : 'cd ' + esc(a.path) + ' && npm run dev'}</dd></dl>`
 }
 
