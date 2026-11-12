@@ -25,7 +25,8 @@ the need to know them at all.
 **One launcher, two faces, one list of things to do.**
 
 1. **The things to do (journeys)** are data, written once: create an app, open or run an app, install a Blend from the registry, pull a
-   plugin, share a plugin, set up a model, update, check this machine (preflight), open ACRYL Code. Each journey is a short list of steps
+   plugin, share a plugin, set up a model, update, check this machine (preflight), open ACRYL Code. (First version: all but "set up a
+   model", which has no command yet; it is T010.) Each journey is a short list of steps
    (choose, type, confirm, run, done). Its last step always shows the one command that does the same thing, so a person learns the
    commands by using the launcher and never has to look them up.
 2. **The terminal face** draws the journeys with the components the ACRYL CLI already uses: `@earendil-works/pi-tui` and `acryl-ui-tui`
@@ -77,9 +78,30 @@ the need to know them at all.
 The web face (WebBoxes) and signing/notarization of the desktop file (049 M11 T005) are separate; this spec only requires that the desktop
 file builds and runs unsigned on each OS.
 
-## Open questions (on the design page, with controls)
+## Decisions (owner, 2026-11-12, on the design page: "ok, looks good for now, let's build first version this way")
 
-- Q1. What `acryl` with no arguments opens in a terminal: the launcher (and `acryl code` the IDE's terminal client), or the IDE as today
-  (and `acryl start` the launcher)?
-- Q2. Before the workshop of 2026-11-20: the terminal face only, both, or neither?
-- Q3. The desktop launcher: a new small app, or the first screen of the existing ACRYL Desktop app?
+- D1 (was Q1). A bare `acryl` in a terminal opens the launcher; `acryl code` opens ACRYL Code (the IDE). Without a terminal (a script, a
+  pipe) a bare `acryl` keeps opening the IDE as before, so nothing that scripts it breaks.
+- D2 (was Q2). The terminal face ships before the workshop of 2026-11-20; the desktop face after it.
+- D3 (was Q3). The desktop launcher is the first screen of the one ACRYL desktop app, not a second app.
+
+## Packaging (decided while building, 2026-11-12)
+
+- The terminal launcher is bundled at pack time into the `acryl` npm package as one file, `launcher.js` (about 250 KB: the journeys,
+  `acryl-ui-tui` and the workspace's patched `pi-tui`, nothing to install). It is made by `apps/acryl-launcher-tui/scripts/bundle.mjs`, called
+  by `scripts/publish-npm-cli.mjs`; the source tree keeps no generated copy.
+- What the launcher chose runs through the same `acryl` (`launcherCommand` in `distribution/acryl-npm-launcher/forward.js`), so a journey and
+  the typed command take one path.
+- The `acryl` package still depends on the 454 MB per-OS IDE runtime (`acryl-cli-<os>-<cpu>`, an optional dependency), so `npx acryl` still
+  downloads it before the launcher shows. Fetching that runtime only when `acryl code` is chosen, like `acryl web`, is T009; until it lands the
+  launcher is light to run but not yet light to download.
+
+## Where the code is
+
+- `plugins/acryl-launcher`: the journeys (data), the session (the state machine every face walks), and the Node context (the apps in a folder,
+  an app's own plugins, the registry's Blends). No dependencies.
+- `apps/acryl-launcher-tui`: the terminal face (`view.js`, a pi-tui component driven by keys in tests; `run.js`, the real terminal).
+- `plugins/acryl-ui-tui/scheme.js`: light or dark for a terminal, the CLI's rules in one place (T008 moves the CLI onto it).
+
+The Cordis `launcher` service of the mini-design comes with the desktop face (T004): the terminal face runs inside the light `acryl` package,
+which has no Cordis host, and uses the session directly. Both faces walk the same session, so the journeys stay written once.
