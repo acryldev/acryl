@@ -3,10 +3,13 @@
 apiVersion: blends.acryl.dev/v1alpha1
 kind: Blueprint
 metadata:
-  id: acrylblends.acryl-ade
-  name: acryl-ade
+  id: acryl.ade
+  name: "ACRYL ADE"
   version: 0.1.0
-  visibility: private # `npm run save` never pushes a private app to a public remote
+  category: ai
+  description: "ACRYL ADE, the Agent Development Environment: the ACRYL IDE as a Blend. Projects and git worktrees on the left, chats, terminals and coding agents as tabs, the changed files, review and files on the right."
+  license: MIT
+  visibility: public
 spec:
   runtime: cordis
   parameters:

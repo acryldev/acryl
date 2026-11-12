@@ -26,10 +26,8 @@
       name: '@acrylblends/app-shell'
     - id: acryl-versions
       name: '@acrylblends/versions'
-    - id: acryl-blends-frame
-      name: '@acrylblends/blends-frame'
-      config:
-        appPage: /app
+    - id: acryl-workspace
+      name: '@acrylblends/workspace'
     - id: acryl-plugin-admin
       name: '@acrylblends/plugin-admin'
     - id: acryl-system-prompt

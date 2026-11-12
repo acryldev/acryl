@@ -28,14 +28,6 @@
     "precheck": "node scripts/check-node.cjs"
   },
   "dependencies": {
-    "@deepseek-ai/cordis": "4.0.5",
-    "@deepseek-ai/schemastery": "3.18.4",
-    "@webboxes/app-persistence": "0.1.1",
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.0",
-    "acrylblends": "^1.5.2",
-    "typescript": "6.0.3",
-    "yaml": "2.9.0",
     "@acrylblends/app-context": "^0.1.0",
     "@acrylblends/app-shell": "^0.1.0",
     "@acrylblends/blends-frame": "^0.1.2",
@@ -47,11 +39,20 @@
     "@acrylblends/system-prompt": "^0.1.0",
     "@acrylblends/versions": "^0.1.1",
     "@acrylblends/web": "^0.1.0",
+    "@acrylblends/workspace": "^0.1.0",
+    "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/cordis-plugin-loader": "~1.0.6",
     "@deepseek-ai/dsh-app-boot": "0.2.0-rc.2",
     "@deepseek-ai/dsh-base": "0.2.0-rc.2",
     "@deepseek-ai/dsh-web-app": "0.2.0-rc.2",
-    "js-yaml": "^4.2.0"
+    "@deepseek-ai/schemastery": "3.18.4",
+    "@webboxes/app-persistence": "0.1.1",
+    "@webboxes/blends-core": "0.5.0",
+    "@webboxes/plugin-hub": "0.2.0",
+    "acrylblends": "^1.5.2",
+    "js-yaml": "^4.2.0",
+    "typescript": "6.0.3",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

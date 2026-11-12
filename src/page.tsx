@@ -4,7 +4,7 @@ import { doorEnabled } from './door.ts'
 const About = () => (
   <main>
     <h1>About</h1>
-    <p>Rendered on the server with the JSX runtime in plugins/acryl-router.</p>
+    <p>ACRYL ADE, the Agent Development Environment: the ACRYL IDE as a Blend.</p>
   </main>
 )
 
