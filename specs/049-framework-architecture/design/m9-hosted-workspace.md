@@ -1,7 +1,15 @@
 # M9 - the hosted workspace on WebBoxes.ai (design)
 
-**Status: parked by the owner 2026-10-28.** The framework comes first (M7, M8); hosting resumes at a later date, with no target
-until then. Nothing here has been built, nothing has gone to webboxesai, and z370n was only read.
+**Status: unparked by the owner 2026-11-12, target the workshop of 2026-11-20** (parked 2026-10-28 so the framework came first).
+Owner: "do it also please, for the browser-only attendees on 20.11 so that those attendees can follow the workshop with 0 setup, just
+from the browser". Nothing here has been built yet, nothing has gone to webboxesai, and z370n was only read.
+
+What the owner wants on 20.11 (2026-11-12, their words condensed):
+
+- An app made with `acryl new` has a deployment option: deploy to the WebBoxes.ai cloud, with no hosting setup of one's own. This is
+  one of WebBoxes.ai's commercial models ("our clients can choose to deploy to webboxes.ai").
+- Attendees see their own web apps running in the cloud.
+- Attendees can edit an app in the WebBoxes.ai cloud with no setup at all, from the browser only.
 
 The goal (milestone M9 in [spec 049](../spec.md)): an app made with `npm create acrylblends` runs on WebBoxes.ai, reachable by URL,
 with its agent working through the door.
@@ -74,9 +82,9 @@ Each one is verifiable on its own:
 
 ## Questions
 
-- **Q1 (open, parked with M9).** The per-box origin: wildcard DNS on which domain? A webboxes.ai subdomain such as
-  `*.box.webboxes.ai`, or a separate domain so a box's cookies can never meet the control plane's? Or `<id>.<ip>.sslip.io` names for
-  the alpha, which need no DNS change but break when the dynamic IP changes?
+- **Q1 (answered by the owner 2026-11-12).** "for now let's make what is faster to demonstrate so `<id>.<ip>.sslip.io` will be fine
+  for now and later with `<appId>.webboxes.ai` subdomain". So the workshop uses sslip.io names (no DNS change); the webboxes.ai
+  subdomain comes later.
 - **Q2 (answered by the owner 2026-10-28).** The agent of the gate is the app's own agent: the agent panel with the account's own
   model key (BYOK), not `@webboxes/agent`.
 - **Q3 (moot while parked).** The order of the Blends trusted-front slice against spec 047 T009 (upgrades). T009 shipped in
