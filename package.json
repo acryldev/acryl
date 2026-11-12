@@ -22,10 +22,11 @@
     "snapshot": "node plugins/manifest/snapshot.ts",
     "save": "node plugins/save/cli.ts",
     "upgrade": "node plugins/manifest/upgrade-cli.ts",
-    "predev": "node scripts/check-node.cjs",
+    "predev": "node scripts/check-node.cjs && node scripts/ade-root.mjs",
     "prestart": "node scripts/check-node.cjs",
     "pretest": "node scripts/check-node.cjs",
-    "precheck": "node scripts/check-node.cjs"
+    "precheck": "node scripts/check-node.cjs",
+    "predesktop": "node scripts/ade-root.mjs"
   },
   "dependencies": {
     "@acrylblends/app-context": "^0.1.0",
