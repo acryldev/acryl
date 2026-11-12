@@ -17,7 +17,7 @@ export default defineConfig({
   dts: false,
   clean: false,
   sourcemap: true,
-  deps: { neverBundle: ['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client', '@deepseek-ai/cordis', '@deepseek-ai/dsh-client-ui-primitives', '@deepseek-ai/dsh-client-ui-theme', '@deepseek-ai/dsh-client-ui-slots'], onlyBundle: ['clsx'] },
+  deps: { neverBundle: ['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client', '@deepseek-ai/cordis', '@deepseek-ai/dsh-client-ui-primitives', '@deepseek-ai/dsh-client-ui-theme', '@deepseek-ai/dsh-client-ui-slots', '@deepseek-ai/dsh-client-ui-conversation/client'], onlyBundle: ['clsx'] },
   plugins: [cssModulesInline(PACKAGE_NAME)],
   outputOptions: {
     entryFileNames: 'client.js',

@@ -13,7 +13,7 @@ import { createDshEngineDefinition, createWebEngineDefinition } from '../src/eng
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 // @ts-expect-error plain JS package
-import { installLocalPlugin, listLocalPlugins } from '../../../plugins/acryl-plugin-context/lib/install.js'
+import { installLocalPlugin, listLocalPlugins, removeLocalPlugin } from '../../../plugins/acryl-plugin-context/lib/install.js'
 // @ts-expect-error plain JS package
 import { stagedInfo } from '../../../plugins/acryl-plugin-context/lib/reconcile.js'
 // @ts-expect-error plain JS package
@@ -475,6 +475,137 @@ describe('/reload on the web engine', () => {
       await host.dispose()
     }
   }, 180_000)
+
+  it('a plugin that requires acrylblends/cordis/state in an app without it gets the row live, shared by a second plugin and removed with the last (spec 049 T001)', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-module-row-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    // An app whose Blueprint has no framework kit: nothing mounts `acrylblends/cordis/state` at start.
+    const blueprint = join(home, 'no-kit.yaml')
+    writeFileSync(blueprint, 'id: test.no-kit\nextends: acryl.blank\nrows: [plugin-context, system-prompt, ui-library, app-save, plugin-hub]\n')
+    const previousBlueprint = process.env.ACRYL_BLUEPRINT
+    process.env.ACRYL_BLUEPRINT = blueprint
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-module-row-ws-'))
+    temporaryHomes.push(workspace)
+    // Each plugin counts in a cell of its own and reads the other's: the state is the one shared service, not a copy per plugin.
+    const plugin = (id: string, other: string) => {
+      const dir = join(workspace, '.acryl-plugins', id)
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, 'package.json'), JSON.stringify({
+        name: `acryl-probe-${id}`, version: '0.1.0', type: 'module', main: './index.js',
+        exports: { '.': './index.js', './package.json': './package.json' },
+        peerDependencies: { acrylblends: '*' },
+        dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['acrylblends/cordis/state'] },
+      }))
+      writeFileSync(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: acryl-probe-${id}\n      name: acryl-probe-${id}\n`)
+      writeFileSync(join(dir, 'index.js'), [
+        `export const name = 'acryl-probe-${id}'`,
+        "export const inject = ['state', 'commands']",
+        'export function apply(ctx) {',
+        `  const count = ctx.state.cell('${id}-count', 0)`,
+        `  ctx.effect(() => ctx.commands.register({ name: 'probe-${id}', description: 'probe', async handler() { count.update(n => n + 1); return { kind: 'success', text: count.get() + ':' + (ctx.state.find('${other}-count')?.get() ?? '-') } } }), 'probe-${id}')`,
+        '}',
+      ].join('\n'))
+      return dir
+    }
+    const first = plugin('first', 'second')
+    const second = plugin('second', 'first')
+    const host = await createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'module-row', attachment: 'owner', cwd: workspace })
+    try {
+      const loader = (host.ctx as unknown as { loader: { entries(): Iterable<{ id: string, options: { name: string } }> } }).loader
+      const stateRows = () => [...loader.entries()].filter(entry => entry.options.name === 'acrylblends/cordis/state').map(entry => entry.id)
+      expect(stateRows()).toEqual([])
+      const sessionId = await bridge.open()
+      const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
+      const commands = host.ctx.get('commands' as never) as unknown as {
+        execute(agent: unknown, line: string, attachments: unknown[], signal: AbortSignal): Promise<{ result: { kind: string; text?: string } } | undefined>
+      }
+      const run = async (line: string) => (await commands.execute(agent, line, [], new AbortController().signal))?.result.text
+      const services = {
+        pnpm: host.ctx.get('desktopPnpm' as never),
+        live: host.ctx.get('livePluginActivation' as never),
+        profileDir: (host.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir,
+        acrylFrameworkPackages: host.ctx.get('acrylFrameworkPackages' as never),
+        cwd: workspace,
+      }
+
+      expect(await installLocalPlugin({ path: first }, services)).toMatchObject({ ok: true, status: 'active', action: 'installed' })
+      expect(stateRows()).toEqual(['include:acrylblends/cordis/state'])
+      expect([await run('/probe-first'), await run('/probe-first')]).toEqual(['1:-', '2:-'])
+
+      expect(await installLocalPlugin({ path: second }, services)).toMatchObject({ ok: true, status: 'active', action: 'installed' })
+      expect(stateRows()).toEqual(['include:acrylblends/cordis/state'])
+      expect(await run('/probe-second')).toBe('1:2')
+
+      expect(await removeLocalPlugin({ package: 'acryl-probe-first' }, services)).toMatchObject({ ok: true })
+      expect(stateRows()).toEqual(['include:acrylblends/cordis/state'])
+      expect(await run('/probe-second')).toBe('2:-')
+
+      expect(await removeLocalPlugin({ package: 'acryl-probe-second' }, services)).toMatchObject({ ok: true })
+      expect(stateRows()).toEqual([])
+    } finally {
+      if (previousBlueprint === undefined) delete process.env.ACRYL_BLUEPRINT
+      else process.env.ACRYL_BLUEPRINT = previousBlueprint
+      await bridge.dispose()
+      await host.dispose()
+    }
+  }, 180_000)
+
+  it('the module row a plugin got live is composed again at the next start of the same app (spec 049 T001)', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'acryl-module-restart-'))
+    temporaryHomes.push(home)
+    process.env.DSH_HOME = home
+    const blueprint = join(home, 'no-kit.yaml')
+    writeFileSync(blueprint, 'id: test.no-kit\nextends: acryl.blank\nrows: [plugin-context, system-prompt, ui-library, app-save, plugin-hub]\n')
+    const previousBlueprint = process.env.ACRYL_BLUEPRINT
+    process.env.ACRYL_BLUEPRINT = blueprint
+    const workspace = await mkdtemp(join(tmpdir(), 'acryl-module-restart-ws-'))
+    temporaryHomes.push(workspace)
+    const dir = join(workspace, '.acryl-plugins', 'kept')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({
+      name: 'acryl-probe-kept', version: '0.1.0', type: 'module', main: './index.js',
+      exports: { '.': './index.js', './package.json': './package.json' },
+      peerDependencies: { acrylblends: '*' },
+      dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['acrylblends/cordis/state'] },
+    }))
+    writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: acryl-probe-kept\n      name: acryl-probe-kept\n')
+    writeFileSync(join(dir, 'index.js'), "export const name = 'acryl-probe-kept'\nexport const inject = ['state']\nexport function apply(ctx) { ctx.state.cell('kept', 'yes') }\n")
+    const boot = () => createAcrylEngineHost({
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      initialEngine: 'dsh',
+      prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
+    })
+    type Live = { loader: { entries(): Iterable<{ options: { name: string }, fiber?: { state: number } }> }, state?: { find(key: string): { get(): unknown } | undefined } }
+    const stateRowStates = (ctx: unknown) => [...(ctx as Live).loader.entries()].filter(entry => entry.options.name === 'acrylblends/cordis/state').map(entry => entry.fiber?.state)
+    try {
+      const first = await boot()
+      try {
+        const services = {
+          pnpm: first.ctx.get('desktopPnpm' as never),
+          live: first.ctx.get('livePluginActivation' as never),
+          profileDir: (first.ctx.get('desktopProfiles' as never) as { current: { dir: string } }).current.dir,
+          acrylFrameworkPackages: first.ctx.get('acrylFrameworkPackages' as never),
+          cwd: workspace,
+        }
+        expect(await installLocalPlugin({ path: dir }, services)).toMatchObject({ ok: true, status: 'active' })
+      } finally { await first.dispose() }
+      const second = await boot()
+      try {
+        // ACTIVE (2): composed at start from the installed plugin's manifest, not left to a refusal or a missing service.
+        expect(stateRowStates(second.ctx)).toEqual([2])
+        expect((second.ctx as unknown as Live).state?.find('kept')?.get()).toBe('yes')
+      } finally { await second.dispose() }
+    } finally {
+      if (previousBlueprint === undefined) delete process.env.ACRYL_BLUEPRINT
+      else process.env.ACRYL_BLUEPRINT = previousBlueprint
+    }
+  }, 240_000)
 
   it('a staged plugin whose apply throws surfaces its own error and is rolled back', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-extension-throw-'))

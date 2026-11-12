@@ -60,6 +60,24 @@ const repoFiles = (github: ReturnType<typeof fakeGithub>, owner: string, repo: s
   execFileSync('git', ['--git-dir', join(root, 'remotes', owner, `${repo}.git`), 'ls-tree', '-r', '--name-only', ref], { encoding: 'utf8' }).trim().split('\n').sort()
 
 describe('share', () => {
+  it('a source plugin needs no Loader patch and carries only its own labels; a bundle is checked as before', async () => {
+    const github = fakeGithub()
+    const dir = join(root, 'src', 'pomodoro')
+    mkdirSync(dir, { recursive: true })
+    const manifest = JSON.stringify({ name: 'pomodoro', version: '0.1.0', type: 'module', license: 'MIT', keywords: ['cordis-plugin', 'acrylblends'], exports: { '.': './index.ts' } })
+    writeFileSync(join(dir, 'package.json'), manifest)
+    writeFileSync(join(dir, 'index.ts'), "export const name = 'pomodoro'\nexport const inject = ['router']\nexport function apply() {}\n")
+    const store = new PluginStore(join(root, 'store'))
+    const asBundle = await sharePlugin(dir, {}, { host: github, git: gitCli(), store })
+    expect(asBundle).toMatchObject({ status: 'refused', reason: expect.stringMatching(/Loader patch/u) })
+    // The hub brings package.json in line before its guards, so the refused share above added the DSH labels: start again from the plugin's own.
+    writeFileSync(join(dir, 'package.json'), manifest)
+    const result = await sharePlugin(dir, { kind: 'source-plugin', visibility: 'public' }, { host: github, git: gitCli(), store })
+    expect(result.status).toBe('shared')
+    expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).keywords).toEqual(['cordis-plugin', 'acrylblends'])
+    expect([...github.repos.get('inboxxobni/pomodoro')!.topics]).toEqual(['cordis-plugin'])
+  })
+
   it('first share creates a private repository with exactly the packed files, tag, release and labels, and keeps the version', async () => {
     const github = fakeGithub()
     const store = new PluginStore(join(root, 'store'))
@@ -154,6 +172,15 @@ describe('the host inject, read from the source', () => {
     expect(hostInjectFromSource('export function apply() {}')).toBeUndefined()
     expect(hostInjectFromSource('export const inject = DEPS')).toMatchObject({ error: expect.stringMatching(/not a literal list or object/u) })
     expect(hostInjectFromSource("export const inject = ['tools', name]")).toMatchObject({ error: expect.stringMatching(/non-literal entry "name"/u) })
+  })
+
+  it('reads what a TypeScript plugin provides and fills, as it reads a JavaScript one', async () => {
+    const dir = join(root, 'ts-plugin')
+    mkdirSync(join(dir, 'lib'), { recursive: true })
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'ts-plugin', version: '1.0.0', exports: { '.': './index.ts' } }))
+    writeFileSync(join(dir, 'index.ts'), "export const inject = ['router']\nexport function apply(ctx) { ctx.provide('timer') }\n")
+    writeFileSync(join(dir, 'lib', 'panel.tsx'), "slots.inject('frame.panel', {})\n")
+    expect(await readServiceContract(dir)).toEqual({ errors: [], contract: { requires: { host: ['router'] }, provides: { host: ['timer'] }, slots: { offers: [], fills: ['frame.panel'] } } })
   })
 
   it('a plugin that imports a host package the app provides still gets its contract (it is not imported)', async () => {

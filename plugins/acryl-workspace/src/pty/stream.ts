@@ -1,17 +1,18 @@
 /**
- * The live terminal stream: one WebSocket per open terminal view.
+ * The live terminal stream: one WebSocket per open terminal view, on the framework's router.
  *
  * Output goes down and keystrokes and size changes go up over one ordered connection, so nothing is
- * polled, nothing is re-sent, and two keystrokes can never arrive swapped. The same-origin loopback rule
- * that guards the HTTP routes guards the upgrade too, and a browser page from another origin is refused
- * (a WebSocket is not covered by the same-origin policy on its own).
+ * polled, nothing is re-sent, and two keystrokes can never arrive swapped. The route is an ordinary router
+ * route: the own-page rule that guards the HTTP routes runs before the upgrade, with the exact `Origin` a
+ * socket must show (a WebSocket is not covered by the same-origin policy on its own), and a refusal is a
+ * plain status before any handshake. The framework's hub owns the sockets: it pings them, ends dead peers,
+ * and closes them with 1001 when the plugin unloads.
  */
 
-import type { IncomingMessage } from 'node:http'
-import type { Duplex } from 'node:stream'
-import { WebSocketServer, type WebSocket } from 'ws'
-import { isSameOriginLoopbackRequest } from 'acryl-loopback-http'
-import { parsePtyClientMessage, type PtyServerMessage } from './contract.ts'
+import { Acryl, type MiddlewareHandler } from 'acrylblends'
+import type { UpgradeWebSocket, WSContext, WSEvents } from 'acrylblends/ws'
+import { failure, ownPageSocket, type ReportError } from '../private-route.ts'
+import { WORKSPACE_PTY_STREAM_PATH, parsePtyClientMessage, type PtyServerMessage } from './contract.ts'
 import type { WorkspacePtyRegistry } from './service.ts'
 
 /** Output is sent in batches this far apart, so a burst of small writes becomes one frame. */
@@ -20,70 +21,60 @@ const BATCH_MS = 4
 const BACKPRESSURE_BYTES = 1024 * 1024
 /** A client this far behind is dropped; it reconnects and resumes from its cursor. */
 const MAX_PENDING_CHARS = 8 * 1024 * 1024
-const PING_MS = 30_000
-const MAX_FRAME_BYTES = 512 * 1024
 
-type ReportError = (operation: string, cause: unknown) => void
-
-export interface WorkspacePtyStream {
-  handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer): void
-  /** Close every open stream (the Host plugin is unloading). */
-  close(): void
+/** A well-formed attach request: the session and the cursor its view already shows. */
+const validAttach: MiddlewareHandler = async (c, next) => {
+  const id = c.req.query('id')
+  const since = c.req.query('since') ?? '0'
+  if (id === undefined || id.length === 0 || !/^\d{1,15}$/.test(since)) return c.json(failure('invalid terminal stream request'), 400)
+  await next()
 }
 
-export function createWorkspacePtyStream(
-  registry: WorkspacePtyRegistry,
-  expectedOrigin: string,
-  reportError: ReportError,
-): WorkspacePtyStream {
-  const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_FRAME_BYTES, perMessageDeflate: false })
-
-  function refuse(socket: Duplex, status: string): void {
-    socket.end(`HTTP/1.1 ${status}\r\nconnection: close\r\ncontent-length: 0\r\n\r\n`)
-  }
-
-  function attach(ws: WebSocket, id: string, since: number): void {
-    const send = (message: PtyServerMessage): void => {
-      if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message))
-    }
-    let pending = ''
-    let pendingCursor = 0
-    let timer: NodeJS.Timeout | undefined
-    const flush = (): void => {
-      timer = undefined
-      if (pending === '') return
-      if (ws.bufferedAmount > BACKPRESSURE_BYTES) {
-        timer = setTimeout(flush, BATCH_MS * 2)
-        return
+/** One open view of session `id`, from cursor `since`: the replay, then live output; its input is written to the session. */
+function attach(registry: WorkspacePtyRegistry, id: string, since: number): WSEvents {
+  let subscription: ReturnType<WorkspacePtyRegistry['subscribe']> | undefined
+  let pending = ''
+  let pendingCursor = 0
+  let timer: NodeJS.Timeout | undefined
+  return {
+    onOpen(_event, ws) {
+      const send = (message: PtyServerMessage): void => {
+        if (ws.readyState === 1) ws.send(JSON.stringify(message))
       }
-      send({ t: 'out', data: pending, cursor: pendingCursor, replace: false })
-      pending = ''
-    }
-    let subscription: ReturnType<WorkspacePtyRegistry['subscribe']>
-    try {
-      subscription = registry.subscribe(id, since, (event) => {
-        if (event.kind === 'data') {
-          pending += event.data
-          pendingCursor = event.cursor
-          if (pending.length > MAX_PENDING_CHARS) { ws.close(1013, 'too slow'); return }
-          timer ??= setTimeout(flush, BATCH_MS)
+      const flush = (): void => {
+        timer = undefined
+        if (pending === '') return
+        if (ws.bufferedAmount > BACKPRESSURE_BYTES) {
+          timer = setTimeout(flush, BATCH_MS * 2)
           return
         }
-        if (timer !== undefined) clearTimeout(timer)
-        flush()
-        send({ t: 'exit', exitCode: event.exitCode, error: event.error })
-      })
-    } catch {
-      ws.close(4404, 'unknown session')
-      return
-    }
-    const { replay } = subscription
-    if (replay.replace || replay.data.length > 0) send({ t: 'out', data: replay.data, cursor: replay.cursor, replace: replay.replace })
-    if (subscription.status !== 'running') send({ t: 'exit', exitCode: subscription.exitCode, error: subscription.error })
-
-    ws.on('message', (raw, isBinary) => {
-      if (isBinary) return
-      const message = parsePtyClientMessage(raw.toString('utf8'))
+        send({ t: 'out', data: pending, cursor: pendingCursor, replace: false })
+        pending = ''
+      }
+      try {
+        subscription = registry.subscribe(id, since, (event) => {
+          if (event.kind === 'data') {
+            pending += event.data
+            pendingCursor = event.cursor
+            if (pending.length > MAX_PENDING_CHARS) { ws.close(1013, 'too slow'); return }
+            timer ??= setTimeout(flush, BATCH_MS)
+            return
+          }
+          if (timer !== undefined) clearTimeout(timer)
+          flush()
+          send({ t: 'exit', exitCode: event.exitCode, error: event.error })
+        })
+      } catch {
+        ws.close(4404, 'unknown session')
+        return
+      }
+      const { replay } = subscription
+      if (replay.replace || replay.data.length > 0) send({ t: 'out', data: replay.data, cursor: replay.cursor, replace: replay.replace })
+      if (subscription.status !== 'running') send({ t: 'exit', exitCode: subscription.exitCode, error: subscription.error })
+    },
+    onMessage(event, ws: WSContext) {
+      if (subscription === undefined) return
+      const message = typeof event.data === 'string' ? parsePtyClientMessage(event.data) : null
       if (message === null) { ws.close(1008, 'invalid message'); return }
       try {
         if (message.t === 'in') registry.write(id, message.data)
@@ -91,34 +82,26 @@ export function createWorkspacePtyStream(
       } catch {
         // The process already exited; the exit message has been or will be sent.
       }
-    })
-    let alive = true
-    ws.on('pong', () => { alive = true })
-    const ping = setInterval(() => {
-      if (!alive) { ws.terminate(); return }
-      alive = false
-      ws.ping()
-    }, PING_MS)
-    ws.on('error', cause => { reportError('terminal stream', cause) })
-    ws.on('close', () => {
-      clearInterval(ping)
+    },
+    onClose() {
       if (timer !== undefined) clearTimeout(timer)
-      subscription.dispose()
-    })
+      subscription?.dispose()
+    },
   }
+}
 
-  return {
-    handleUpgrade(req, socket, head) {
-      if (!isSameOriginLoopbackRequest(req, expectedOrigin, true)) { refuse(socket, '403 Forbidden'); return }
-      const params = new URL(req.url ?? '', 'http://127.0.0.1').searchParams
-      const id = params.get('id')
-      const sinceText = params.get('since') ?? '0'
-      if (id === null || id.length === 0 || !/^\d{1,15}$/.test(sinceText)) { refuse(socket, '400 Bad Request'); return }
-      wss.handleUpgrade(req, socket, head, (ws) => { attach(ws, id, Number(sinceText)) })
-    },
-    close() {
-      for (const client of wss.clients) client.close(1001, 'going away')
-      wss.close()
-    },
-  }
+/**
+ * GET {@link WORKSPACE_PTY_STREAM_PATH}`?id=&since=` upgraded to the session's stream. `upgrade` is the mounting plugin's
+ * `ctx.routerHttp.upgrades()`, so the sockets belong to it; the path must be one the plugin mounted with `upgrade: [path]`.
+ */
+export function ptyStreamRoutes(registry: WorkspacePtyRegistry, upgrade: UpgradeWebSocket, reportError: ReportError): Acryl {
+  return new Acryl().get(
+    WORKSPACE_PTY_STREAM_PATH,
+    ownPageSocket,
+    validAttach,
+    upgrade((c) => {
+      const events = attach(registry, c.req.query('id') ?? '', Number(c.req.query('since') ?? '0'))
+      return { ...events, onError: (event) => { reportError('terminal stream', event instanceof ErrorEvent ? event.error : event) } }
+    }, { textOnly: true, onError: (cause: unknown) => { reportError('terminal stream', cause) } }),
+  )
 }

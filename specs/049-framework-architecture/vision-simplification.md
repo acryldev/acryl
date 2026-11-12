@@ -27,7 +27,7 @@ with an agent built in.
   Cordis          @deepseek-ai/cordis: Context, Loader, lifecycle, injection
 ```
 
-- `@acryl/core` knows nothing about agents: no agent types, no LLM keys, no chat UI, no DSH agent package. A test enforces it (T018).
+- `@acryl/core` knows nothing about agents: no agent types, no LLM keys, no chat UI, no DSH agent package. A test enforces it (T033).
 - The Blend format (`@webboxes/blends-core`: parse, validate, resolve) is a different thing from the runtime core. The v2 chat warns that the
   word "core" must not mean both. It keeps its own name until `@acryl/core` exists, then it is named for what it is (the format).
 - Measured: an app made with `--bare` is already this core. 7 direct dependencies, 17 packages, 32 MB, installs in about 2 seconds. Every plugin
@@ -42,7 +42,7 @@ with an agent built in.
 | Needs | Node, nothing else (no LLM key, no internet) | a model key |
 | Same | the plugins, `blend.yaml`, the storage (section 5), the sharing path | |
 
-One Blend can offer both as profiles (`core`, and `full` extends `core`; T022). An app installed in core mode can get the agent pack later
+One Blend can offer both as profiles (`core`, and `full` extends `core`; T037). An app installed in core mode can get the agent pack later
 without being reinstalled, because the agent is an installable capability and not part of the product's identity (v2 chat, section 6).
 
 ## 4. How everything connects: one chain, one unit
@@ -64,7 +64,7 @@ The unit that moves through every step is the plugin folder and its packed copy.
 - **Registries**: plugins (cordisplugins.github.io: a public GitHub repository with the `cordis-plugin` topic and a release), Blends (the
   workshop registry, a pull-request flow), starters. npm carries only code under `@acryl/*`, never the registry (acryl-namespace D4).
 - **Names**: `acryl` is the one command and forwards to the parts (`acryl new`, `plugin`, `blends`, `update`); `@acryl/core`, `@acryl/blends`,
-  `@acryl/code`, `@acryl/blend-*`, `@acryl/plugin-*` are the parts (M12).
+  `@acryl/code`, `@acryl/blend-*`, `@acryl/plugin-*` are the parts (M13).
 
 ## 5. Decisions
 
@@ -81,7 +81,7 @@ The unit that moves through every step is the plugin folder and its packed copy.
 Each question below is one of the five books' rules turned into a check for a new thing. A change that cannot answer them does not go in.
 
 - **Clean Architecture, the Dependency Rule.** Which layer is it in, and does it depend only downward? Frameworks, the database and the web are
-  details at the edge, behind a service (`appInstance`, the db port). The core never imports the agent pack: the T018 test reads imports, dynamic
+  details at the edge, behind a service (`appInstance`, the db port). The core never imports the agent pack: the T033 test reads imports, dynamic
   imports and the packaged closure.
 - **A Philosophy of Software Design, deep modules.** Does it hide a lot behind a small interface? `acrylRoot` and `home.ts` are the model: one
   function decides where an app's data lives, and eight places ask it. `acryl new shop` is the same idea for people: the long flag list is hidden
@@ -99,7 +99,7 @@ Each question below is one of the five books' rules turned into a check for a ne
   rendering only in `pi-tui`; provider implementations are tree-shakeable subpath exports. One job per package, dependencies only downward, a
   thin composing top. That is the shape to keep here: kernel, core, blends, agent pack, products.
 
-Mechanical guards, so that this is not a matter of taste: the T018 boundary test, `tests/bulkhead.spec.ts` (nobody else reads the home or the
+Mechanical guards, so that this is not a matter of taste: the T033 boundary test, `tests/bulkhead.spec.ts` (nobody else reads the home or the
 environment), the `scripts/lib/bulkhead.test.mjs` allow-list in the framework repo, and a size budget for the core (measured 32 MB, 17 packages).
 A new top-level concept has to replace or merge with an existing one.
 
@@ -107,5 +107,5 @@ A new top-level concept has to replace or merge with an existing one.
 
 Done: the agent-free core exists as the `--bare` app (measured above); the door answers in it; the storage is one home with three parts; the
 short commands (`acryl new`, `plugin`, `blends`, `update`) forward to the existing parts; View source and a Share chooser exist on the Plugins card.
-Not done: the `@acryl/core` package and the T018 test, the `profiles` field (T022), the core docs shipped inside the package, the installed-app
+Not done: the `@acryl/core` package and the T033 test, the `profiles` field (T037), the core docs shipped inside the package, the installed-app
 wiring (`~/.acryl/apps/<id>/source/`), the Registry tab, naming and publishing under `@acryl/*` (each publish needs the owner's explicit go).

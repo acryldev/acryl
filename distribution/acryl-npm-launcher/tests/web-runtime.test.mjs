@@ -4,10 +4,17 @@ import { mkdtempSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test, { afterEach } from 'node:test'
+import { createServer } from 'node:http'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { RELEASE_MANIFEST_NAME } from '../release-contract.js'
 import {
   acquireWebRuntime,
   confirmWebAcquisition,
+  fetchReleaseManifest,
+  manifestUrl,
   selectWebArtifact,
+  webRuntimeCommand,
 } from '../web-runtime.js'
 
 const target = 'darwin-arm64'
@@ -28,7 +35,8 @@ async function extractor(archive, runtimeRoot) {
     assert.deepEqual(readFileSync(archive), contents)
     mkdirSync(join(runtimeRoot, 'runtime', 'bin'), { recursive: true })
     writeFileSync(join(runtimeRoot, 'ready'), 'ready')
-    writeFileSync(join(runtimeRoot, 'runtime', 'bin', 'acryl-web'), 'ready')
+    // The launcher the real archive has on this machine's platform, which the readiness check looks for.
+    writeFileSync(join(runtimeRoot, 'runtime', 'bin', process.platform === 'win32' ? 'acryl-web.cmd' : 'acryl-web'), 'ready')
 }
 
 test('requires explicit confirmation unless --yes was supplied', () => {
@@ -86,4 +94,37 @@ test('requires extracted runtime readiness before committing cache', async () =>
   const root = store()
   await assert.rejects(acquireWebRuntime({ root, version, target, manifest, download: async () => contents, extract: async () => {} }), /readiness check failed/)
   assert.equal(existsSync(join(root, version, target)), false)
+})
+
+test('starts the Web runtime through its launcher, and on Windows runs what the .cmd launcher runs, without cmd.exe', () => {
+  assert.deepEqual(webRuntimeCommand('/w', ['--port', '3000'], { platform: 'darwin' }), { command: join('/w', 'runtime', 'bin', 'acryl-web'), args: ['--port', '3000'] })
+  assert.deepEqual(webRuntimeCommand('/w', ['--port', '3000'], { platform: 'win32' }), { command: join('/w', 'runtime', 'bin', 'node.exe'), args: [join('/w', 'lib', 'bin.js'), '--port', '3000'] })
+  // The .cmd the Web archive ships (scripts/build-web-archive.mjs) must keep running the same thing.
+  const builder = readFileSync(new URL('../../../scripts/build-web-archive.mjs', import.meta.url), 'utf8')
+  assert.ok(builder.includes(String.raw`'@echo off\r\n"%~dp0node.exe" "%~dp0..\\..\\lib\\bin.js" %*\r\n'`))
+})
+
+test('looks for the release manifest under the name the release uploads it with', () => {
+  const workflow = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '.github', 'workflows', 'release-cli.yml'), 'utf8')
+  assert.match(workflow, new RegExp(`path: artifacts/${RELEASE_MANIFEST_NAME.replaceAll('.', '\\.')}\\n`, 'u'))
+  assert.equal(manifestUrl('1.2.3', {}), `https://github.com/acryldev/acryl/releases/download/v1.2.3/${RELEASE_MANIFEST_NAME}`)
+})
+
+// GitHub answers every release download with a redirect to its asset host, so a Web runtime is only reachable through one.
+test('fetches the manifest and the Web archive through the redirects a release download answers with', async () => {
+  const served = { ...manifest, artifacts: [{ ...artifact, location: 'web.tgz', receipt: { ...artifact.receipt, location: 'web.tgz' } }] }
+  const server = createServer((request, response) => {
+    if (request.url === `/download/v${version}/${RELEASE_MANIFEST_NAME}`) response.writeHead(302, { location: '/assets/manifest' }).end()
+    else if (request.url === `/download/v${version}/web.tgz`) response.writeHead(302, { location: '/assets/web' }).end()
+    else if (request.url === '/assets/manifest') response.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify(served))
+    else if (request.url === '/assets/web') response.writeHead(200).end(contents)
+    else response.writeHead(404).end()
+  })
+  await new Promise(done => server.listen(0, '127.0.0.1', done))
+  try {
+    const url = manifestUrl(version, { ACRYL_RELEASE_MANIFEST_URL: `http://127.0.0.1:${String(server.address().port)}/download/v${version}/${RELEASE_MANIFEST_NAME}` })
+    const fetched = await fetchReleaseManifest(url)
+    const result = await acquireWebRuntime({ root: store(), version, target, manifest: fetched, extract: extractor })
+    assert.equal(readFileSync(join(result.root, 'ready'), 'utf8'), 'ready')
+  } finally { await new Promise(done => server.close(done)) }
 })

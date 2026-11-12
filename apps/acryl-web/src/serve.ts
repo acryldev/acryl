@@ -19,7 +19,12 @@
 
 import type {} from '@deepseek-ai/dsh-client-connection'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
+import {
+  announceSelf,
+  createAcrylEngineHost,
+  createWebEngineDefinition,
+  type AppInstance,
+} from 'acryl-harness-runtime'
 
 export interface AcrylWebServeOptions {
   readonly cmdlineArgs?: readonly string[]
@@ -74,13 +79,24 @@ export async function serveWeb(
     await host.dispose()
     return { url, engine }
   }
-  const stopped = new Promise<void>(resolve => {
-    const onSignal = () => resolve()
-    process.once('SIGINT', onSignal)
-    process.once('SIGTERM', onSignal)
-  })
+  // This process serves the app, so it holds the claim and the Registry entry (spec 048 T011): the Registry records the port the server really bound,
+  // and `acryl control list` finds the app whichever launcher started it. A second live app on the same instance is refused before it serves anything.
+  const instance = ctx.get('appInstance' as never) as AppInstance | undefined
+  const announcement = instance === undefined ? undefined : announceSelf(instance, { surface: 'web', port })
+  // `on`, not `once`, until disposal ends: a terminal's Ctrl-C reaches this process and the `acryl` launcher that started it, which passes stop
+  // signals on, so a second signal can arrive while the host disposes, and its default action would end the process before it freed the port.
+  let onSignal = () => {}
+  const stopped = new Promise<void>(resolve => { onSignal = () => { resolve() } })
+  process.on('SIGINT', onSignal)
+  process.on('SIGTERM', onSignal)
   process.stdout.write(`ACRYL web: ${url}\n`)
-  await stopped
-  await host.dispose()
+  try {
+    await stopped
+  } finally {
+    announcement?.release()
+    await host.dispose()
+    process.off('SIGINT', onSignal)
+    process.off('SIGTERM', onSignal)
+  }
   return { url, engine }
 }

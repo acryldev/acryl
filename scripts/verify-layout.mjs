@@ -61,6 +61,7 @@ packages:
   - plugins/acryl-ui
   - plugins/acryl-ui-tui
   - plugins/acryl-mount-anchors
+  - plugins/acryl-command-reply
   - plugins/acryl-shortcuts
   - plugins/acryl-settings
   - plugins/acryl-db-postgres
@@ -277,18 +278,21 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 
 // The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
 // `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
-// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters and `frame.ts`); a plugin whose sole capability is the DSH chat would
+// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters, `frame.ts` and the `acrylChat` service in `client/chat.ts`); a plugin whose sole capability is the DSH chat would
 // also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it. Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
 // One deliberate raise: total went from 133 to 135 when DSH's profile package resolution was ported into the runtime (2026-10-25), because the port
 // subclasses DSH's PluginPackages and routes DSH's own resolution table; it serves only the DSH engine, so it is part of the seam.
-const DSH_IMPORT_CEILING = { total: 135, outsideSeam: 104 }
+// The seam grew by two lines, total 135 to 137 with outside the seam unchanged at 104, for `@acryl/ui`'s `acrylChat` service (spec 049 T002,
+// 2026-10-28): `frame.ts` re-exports DSH's `command/executed` event type and `client/chat.ts` reads DSH's own conversation phase, so a client plugin such
+// as acryl-command-reply reads the chat's phase and posts a composer notice without naming a DSH package.
+const DSH_IMPORT_CEILING = { total: 137, outsideSeam: 104 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^runtime\/acryl-harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
-  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|registry\/.*))$/,
+  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|chat\.ts|registry\/.*))$/,
 ]
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
   const path = resolve(dir, entry.name)
@@ -318,9 +322,9 @@ for (const [key, ceiling] of Object.entries(DSH_IMPORT_CEILING)) {
 // `ctx.routerHttp.mount(prefix)` per plugin); every `register` or `registerUpgrade` call on DSH's `webServer` or ACRYL's `acrylWeb` carrier in shipped
 // source is a route the router does not own. What DSH registers on its own `webServer` (its pages and RPC) is DSH's and lives in the submodule, which
 // is not counted. Tests, docs, build output and scripts are not counted either. Like the DSH import ceiling it only moves down, and a lower count must
-// lower it in the same commit. What remains at 3: the workspace terminal's upgrade (spec 048 T007) and the two delegate lines in `engine-web.ts`
-// that hand the server to plugins (T008).
-const WEB_REGISTRATION_CEILING = 3
+// lower it in the same commit. It reached 0 with spec 048 T007 and T008: the workspace terminal's WebSocket is a router route upgraded by
+// `routerHttp`, and `acrylWeb` carries only the address, so a new call site has nowhere to hide.
+const WEB_REGISTRATION_CEILING = 0
 const WEB_REGISTRATION = /(acrylWeb|webServer|[^a-zA-Z]web)[?]?[.](register|registerUpgrade)[(]/
 const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/|\.spec\.|\.test\./
 let webRegistrations = 0

@@ -2,12 +2,13 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 
 const script = new URL('./install.sh', import.meta.url)
 const text = readFileSync(script, 'utf8')
 
 test('the installer is valid bash', () => {
-  const result = spawnSync('bash', ['-n', script.pathname], { encoding: 'utf8' })
+  const result = spawnSync('bash', ['-n', fileURLToPath(script)], { encoding: 'utf8' })
   assert.equal(result.status, 0, result.stderr)
 })
 

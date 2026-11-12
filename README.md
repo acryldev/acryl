@@ -13,7 +13,7 @@
   <a href="https://github.com/acryldev/acryl">⭐ Star ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
   <a href="https://acryl.dev/docs">Documentation</a> ·
-  <a href="https://github.com/acryldev/acryl/releases/tag/v0.2.5">Download v0.2.5</a> ·
+  <a href="https://github.com/acryldev/acryl/releases/tag/v0.2.6">Download v0.2.6</a> ·
   <a href="https://discord.gg/cY9KXMex69">Discord</a>
 </p>
 
@@ -56,7 +56,7 @@ Claude Code, Codex, OpenCode, Pi, Gemini CLI, DeepSeek Harness agents, ACP-compa
 
 **🖥️ Three surfaces, one brain.** Desktop (Electron), local Web (`acryl web`), and the terminal UI are peers rendering the same runtime — same project model, same plugins, same capabilities. Use whichever fits the moment; the work is the same.
 
-## Install ACRYL v0.2.5
+## Install ACRYL v0.2.6
 
 The three surfaces are deliberately separate installs — installing one never silently installs or starts another.
 
@@ -64,11 +64,11 @@ The three surfaces are deliberately separate installs — installing one never s
 
 | Platform | Desktop download |
 | --- | --- |
-| macOS — Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-mac-arm64-v0.2.5.dmg) |
-| macOS — Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-mac-x64-v0.2.5.dmg) |
-| Windows — x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-win-x64-v0.2.5.exe) |
-| Linux — x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-linux-amd64-v0.2.5.deb) |
-| Linux — arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.5/acryl-desktop-linux-arm64-v0.2.5.deb) |
+| macOS — Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.6/acryl-desktop-mac-arm64-v0.2.6.dmg) |
+| macOS — Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.6/acryl-desktop-mac-x64-v0.2.6.dmg) |
+| Windows — x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.2.6/acryl-desktop-win-x64-v0.2.6.exe) |
+| Linux — x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.6/acryl-desktop-linux-amd64-v0.2.6.deb) |
+| Linux — arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.6/acryl-desktop-linux-arm64-v0.2.6.deb) |
 
 The Desktop app carries the runtime it needs; it does not add `acryl` to your PATH or leave a web server running after exit.
 

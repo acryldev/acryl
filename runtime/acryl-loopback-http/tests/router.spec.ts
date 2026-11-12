@@ -2,7 +2,8 @@ import { createServer, type Server } from 'node:http'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Acryl } from 'acrylblends'
 import { serve } from 'acrylblends/cordis/router-http'
-import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson } from '../src/router.ts'
+import { testWebSocket, upgradeWebSocket } from 'acrylblends/node-server'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, ownPageSocket, privateApi, readJson } from '../src/router.ts'
 
 let server: Server | undefined
 
@@ -15,6 +16,7 @@ async function listen(app: Acryl): Promise<string> {
 }
 
 afterEach(async () => {
+  if (server === undefined) return
   await new Promise<void>((resolve) => {
     server?.closeAllConnections()
     server?.close(() => { resolve() })
@@ -90,5 +92,31 @@ describe('privateApi', () => {
     expect(await plain.json()).toEqual({ error: 'content type must be application/json' })
     expect((await post(undefined)).status).toBe(415)
     expect((await post('Application/JSON; charset=utf-8')).status).toBe(200)
+  })
+})
+
+describe('ownPageSocket', () => {
+  const PORT = 4321
+  const ORIGIN = `http://127.0.0.1:${String(PORT)}`
+  const app = new Acryl().get('/socket', ownPageSocket, upgradeWebSocket(() => ({ onOpen(_event, ws) { ws.send('hello') } }), { onError: () => {} }))
+  /** One upgrade through the rule, as the hub runs it: the socket's peer and local port travel as connection facts. */
+  const upgrade = (headers: Record<string, string>, remoteAddress = '127.0.0.1') => testWebSocket(
+    (request, env) => Promise.resolve(app.fetch(request, Object.assign(env, { connection: { remoteAddress, localPort: PORT } }))),
+    '/socket',
+    { headers: { host: `127.0.0.1:${String(PORT)}`, ...headers }, base: ORIGIN },
+  )
+
+  it('upgrades the own page, which shows its exact Origin', async () => {
+    const accepted = await upgrade({ origin: ORIGIN })
+    expect(accepted.status).toBe(101)
+    expect(accepted.socket?.received).toEqual(['hello'])
+  })
+
+  it('refuses before the handshake what a read would let through, another origin, and another peer', async () => {
+    // A same-origin Referer is enough for a read, never for a socket.
+    expect((await upgrade({ 'sec-fetch-site': 'same-origin', referer: `${ORIGIN}/` })).status).toBe(403)
+    expect((await upgrade({ origin: 'null' })).status).toBe(403)
+    expect((await upgrade({ origin: 'http://evil.example' })).status).toBe(403)
+    expect((await upgrade({ origin: ORIGIN }, '192.168.1.20')).status).toBe(403)
   })
 })

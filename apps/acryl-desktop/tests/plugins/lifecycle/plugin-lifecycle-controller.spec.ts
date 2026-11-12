@@ -9,6 +9,8 @@ import type { DesktopBlendProjection } from '../../../src/profile/desktop-blend.
 
 const roots: string[] = []
 const PACKAGE = 'acryl-development-canvas'
+/** The Loader rows the composition under test has: a stored disable becomes a patch only for one of these. */
+const COMPOSED_ROW_IDS: ReadonlySet<string> = new Set([PACKAGE, 'blend-row', 'market-plugin'])
 const MARKET_PACKAGE = 'cordis-plugin-graph'
 // In the bundle list + node_modules but NOT in cordis.yml - the shape of a
 // just-installed market plugin before a restart. Its patch row id differs from
@@ -173,11 +175,11 @@ describe('PluginLifecycleController', () => {
       const disabled = await controller.setEnabled('include:blend-row', false)
       expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:blend-row'))
         .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([
         { id: 'blend-row', disabled: true },
       ])
       await controller.setEnabled('include:blend-row', true)
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([])
     } finally {
       await ctx.fiber.dispose()
     }
@@ -190,12 +192,12 @@ describe('PluginLifecycleController', () => {
       expect(disabled.action).toBe('disable')
       expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:market-plugin'))
         .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([
         { id: 'market-plugin', disabled: true },
       ])
 
       await controller.setEnabled('include:market-plugin', true)
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([])
     } finally {
       await ctx.fiber.dispose()
     }
@@ -209,7 +211,7 @@ describe('PluginLifecycleController', () => {
 
       await expect(controller.setEnabledByPackageName(MARKET_PACKAGE, false)).resolves.toBe(true)
       expect(controller.statusOfPackage(MARKET_PACKAGE)).toBe('disabled')
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([
         { id: 'market-plugin', disabled: true },
       ])
 
@@ -219,7 +221,7 @@ describe('PluginLifecycleController', () => {
 
       await expect(controller.setEnabledByPackageName(MARKET_PACKAGE, true)).resolves.toBe(true)
       expect(controller.statusOfPackage(MARKET_PACKAGE)).toBe('active')
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([])
 
       // No live entry for this package - the caller must fall back to its
       // own persisted bundle-layer state.
@@ -238,7 +240,7 @@ describe('PluginLifecycleController', () => {
       expect(disabled.snapshot.entries.find(entry => entry.entryId === 'include:acryl-development-canvas'))
         .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount'])
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([{
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([{
         id: 'acryl-development-canvas',
         disabled: true,
       }])
@@ -248,7 +250,7 @@ describe('PluginLifecycleController', () => {
       expect(enabled.snapshot.entries.find(entry => entry.entryId === 'include:acryl-development-canvas'))
         .toEqual(expect.objectContaining({ enabled: true, hostPhase: 'active' }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount', 'mount'])
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([])
     } finally {
       await ctx.fiber.dispose()
     }
@@ -264,7 +266,7 @@ describe('PluginLifecycleController', () => {
         rendererReloadRequired: true,
       }))
       expect(lines(logPath)).toEqual(['mount', 'mount', 'unmount', 'mount'])
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([])
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([])
     } finally {
       await ctx.fiber.dispose()
     }
@@ -380,7 +382,7 @@ describe('PluginLifecycleController', () => {
       await published.setEnabled('include:market-plugin', false)
       expect(controller.snapshot().entries.find(entry => entry.entryId === 'include:market-plugin'))
         .toEqual(expect.objectContaining({ enabled: false, hostPhase: null }))
-      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath })).toEqual([
+      expect(pluginLifecyclePatches({ profileName: 'desktop', statePath }, COMPOSED_ROW_IDS)).toEqual([
         { id: 'acryl-development-canvas', disabled: true },
         { id: 'market-plugin', disabled: true },
       ])

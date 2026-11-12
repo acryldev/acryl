@@ -23,7 +23,7 @@ export interface ServiceContract {
   readonly slots: { readonly offers: readonly string[]; readonly fills: readonly string[] }
 }
 
-const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs'])
+const SOURCE_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.ts', '.mts', '.cts', '.tsx', '.jsx'])
 const SERVICE_NAME = /^[A-Za-z][A-Za-z0-9.\-_]*$/u
 const SIDES: readonly Side[] = ['host', 'client']
 let importCounter = 0

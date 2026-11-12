@@ -27,7 +27,7 @@ import { WORKSPACE_PTY_STREAM_PATH } from './pty/contract.ts'
 import { spawnNodePty } from './pty/node-pty-spawn.ts'
 import { ptyRoutes } from './pty/route.ts'
 import { WorkspacePtyRegistry } from './pty/service.ts'
-import { createWorkspacePtyStream } from './pty/stream.ts'
+import { ptyStreamRoutes } from './pty/stream.ts'
 import { registerChatContext, type SystemPromptContextPort } from './shared-context/chat.ts'
 import { briefRoutes } from './shared-context/route.ts'
 import { SHARED_CONTEXT_SERVICE, SharedContext } from './shared-context/service.ts'
@@ -52,9 +52,8 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /**
- * The routes are served by the router (`router`, `routerHttp`) under {@link WORKSPACE_API_PREFIX}. The loopback Web server is still needed for its
- * port (the address agent hooks report to) and the terminal's WebSocket, which the router does not carry yet. The app instance says where this
- * app keeps its data.
+ * The routes, the terminal's WebSocket among them, are served by the router (`router`, `routerHttp`) under {@link WORKSPACE_API_PREFIX}. The
+ * loopback Web server is still needed for its address (agent hooks report to it). The app instance says where this app keeps its data.
  */
 export const inject = ['acrylWeb', 'appInstance', 'acrylSettings', 'router', 'routerHttp']
 
@@ -72,9 +71,9 @@ export function apply(ctx: Context): void {
       `acryl-workspace: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
     )
   }
-  // The services and the app are built in the effect; the app is mounted after it, so on unload the mount goes first (its requests end and
-  // are waited for) and the PTYs, git and the rest are released after.
-  const built: { api?: Acryl } = {}
+  // The services and their routes are built in the effect; the terminal's sockets are taken and the app mounted after it, so on unload the
+  // mount goes first (its requests end and are waited for), then the terminal sockets close with 1001, then the PTYs, git and the rest go.
+  const built: { routes?: readonly Acryl[]; pty?: WorkspacePtyRegistry } = {}
   ctx.effect(() => {
     // The user's custom agents live in their ACRYL home; the registry asks the catalog what an id means.
     // The registry asks the settings what an id runs; the settings ask the catalog and the registry's own PATH search.
@@ -110,12 +109,6 @@ export function apply(ctx: Context): void {
     })
     const releases: Array<() => void> = []
     try {
-      const ptyStream = createWorkspacePtyStream(workspacePty, rendererOrigin, reportHostError)
-      releases.push(() => { ptyStream.close() })
-      releases.push(ctx.acrylWeb.registerUpgrade({
-        path: WORKSPACE_PTY_STREAM_PATH,
-        handler: (req, socket, head) => { ptyStream.handleUpgrade(req, socket, head) },
-      }))
       // The project list is ACRYL's own: one section of the ACRYL home's settings, released with this plugin so a reloaded plugin registers it again.
       const projects = new ProjectRegistry(ctx.acrylSettings.register(PROJECTS_NAMESPACE, ProjectsSchema))
       // Shared context (spec 043 T009): the generated WORKSPACE.md of every Shared Context workspace stays current, and other plugins can read it.
@@ -147,7 +140,8 @@ export function apply(ctx: Context): void {
       const services: { get(name: string): unknown } = ctx
       // The OS's own folder chooser, for the "+" on Web (a browser page cannot open one that yields a path).
       const pickFolder = singleFlight(() => pickFolderNatively(process.platform))
-      built.api = privateApi(
+      built.pty = workspacePty
+      built.routes = [
         ptyRoutes(workspacePty, reportHostError),
         agentRoutes(catalog, agentSettings, reportHostError),
         agentStatusRoutes(statusToken, agentStatus, reportHostError),
@@ -157,7 +151,7 @@ export function apply(ctx: Context): void {
         filesRoutes(workspaceFiles, reportHostError),
         gitRoutes(workspaceGit, reportHostError),
         pickFolderRoutes(pickFolder, reportHostError),
-      )
+      ]
     } catch (cause) {
       for (const release of releases.reverse()) release()
       void workspaceGit.dispose()
@@ -168,10 +162,11 @@ export function apply(ctx: Context): void {
       await Promise.all([workspacePty.disposeAll(), workspaceGit.dispose()])
     }
   }, 'acryl-workspace: PTY table, git, files, projects and agents')
-  if (built.api === undefined) throw new Error('acryl-workspace: the routes were not built')
+  if (built.routes === undefined || built.pty === undefined) throw new Error('acryl-workspace: the routes were not built')
+  const upgrade = ctx.routerHttp.upgrades()
   // Removing the mount ends the requests still in flight, the project event streams among them.
-  ctx.router.route('/', built.api)
-  ctx.routerHttp.mount(WORKSPACE_API_PREFIX)
+  ctx.router.route('/', privateApi(...built.routes, ptyStreamRoutes(built.pty, upgrade, reportHostError)))
+  ctx.routerHttp.mount(WORKSPACE_API_PREFIX, { upgrade: [WORKSPACE_PTY_STREAM_PATH] })
 }
 
 /** The agent's workspace tools, exported so the runtime can check their schemas against DSH's own compiler. */

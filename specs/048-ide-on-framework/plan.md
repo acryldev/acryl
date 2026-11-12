@@ -357,3 +357,45 @@ scripts) and holds them at `WEB_REGISTRATION_CEILING`, set to 3. Like the DSH im
 serve the route on the router and points at `extending/host-route.md`; below it, it asks for the ceiling to be lowered in the same commit,
 so the number in the script is always the measured one. Its summary line now prints the count. Both failures were run once against a probe
 copy with the ceiling at 4 and at 2. What remains at 3 is T007's terminal upgrade and the two `engine-web.ts` delegate lines (T008).
+
+### Slice 9: the terminal's WebSocket on the router, and `acrylWeb` without registration (T007, T008)
+
+acrylblends 0.11.0 carries WebSocket upgrades on the router (spec 047 T009, Blends): `ctx.routerHttp.mount(prefix, { upgrade: [path] })` claims
+the exact path as one upgrade route of the web server, and `ctx.routerHttp.upgrades()` returns the ported `upgradeWebSocket`, whose sockets belong
+to the plugin that asked.
+
+Cordis mini-design:
+
+1. Capability and boundary: unchanged. The workspace owns its terminal stream; only the transport moves. `pty/stream.ts` exports
+   `ptyStreamRoutes(registry, upgrade, reportError)`, one App with one route, composed into the workspace's `privateApi` with the others.
+2. Provides and consumes: `inject` is unchanged (`acrylWeb` stays for the address agent hooks report to). The stream takes
+   `ctx.routerHttp.upgrades()`; `acryl-control`'s `AcrylWeb` loses `register` and `registerUpgrade` (T008), and `engine-web.ts` delegates
+   only `host` and `port`. Nothing in ACRYL registered through them after T007.
+3. Effects and disposal: the plugin no longer owns a `ws` server, a ping timer or a socket list. The hub pings every socket (30 s, the
+   stream's own interval before) and ends dead peers; on unload the mount goes first, then the plugin's sockets close with 1001 within the
+   hub's grace (each view's `onClose` runs once and releases its subscription and batch timer), then the PTYs, git and the rest. This is
+   the order of before: `upgrades()` is taken after the services' effect, so its disposer runs before theirs.
+4. Configuration and composition: no row changes. `acryl-router-http` now imports `acryl-node-server`'s hub but still injects only
+   `router` and `webServer`, so the `framework-kit` row needs no new row. `ws` is an optional peer of acrylblends; the lock resolves the
+   one acrylblends instance with `ws` 8.22.0 (the workspace's own `ws` moves from 8.21.3 to 8.22.0 so the peer set stays one).
+5. Events and durability: none changed. The wire format (`PtyServerMessage`, `PtyClientMessage`) and the path are the same, so the client
+   is unchanged.
+6. Verification: the stream's tests run on a real loopback socket through the framework's own `UpgradeHub` (replay, resume from a cursor,
+   ordered keystrokes, exit, 1008, 4404, the refusals, and 1001 when the owner unloads); the plugin test runs a real shell through the real
+   `router` and `routerHttp` over a web server that dispatches upgrades by exact path, as DSH's does (output, keystrokes, a reconnect that
+   resumes from its cursor, the refusals, 1001 on unload, one upgrade path per activation across reloads). Live, in isolated homes
+   (`scripts/live-run.mjs`, no model key): on Web a client doing what the page does (the run's token, the page's Origin and cookie) started a
+   shell, got output for its keystrokes, resized it, resumed from its cursor after a reconnect, and was refused for another Origin, no Origin
+   and a malformed request (403, 403, 400) and closed with 4404 for an unknown session; in the Desktop window a terminal tab ran a command
+   and showed the window's size, and after a reload came back with its history and ran the next one.
+
+Answers that changed:
+
+- The upgrade's checks are ordinary middleware in front of the route: `ownPageSocket`, new in `acryl-loopback-http/router`, is the
+  own-page rule plus always the exact `Origin` (the rule the stream kept before: a socket takes keystrokes, so a read's `Referer` is not
+  enough), then the id and cursor check. A refusal is a plain 403 or 400 with `Connection: close` before any handshake, as before.
+- The largest frame the hub accepts is its default, 1 MiB (it was 512 KiB); a bigger frame closes with 1009. A keystroke message is
+  still refused above 256 Ki characters by the message parser (1008), so what a page can send is unchanged.
+- Binary frames never reach the handler (`textOnly`); before, they were dropped in the handler.
+
+Measured: webServer registration call sites 3 -> 0, and `WEB_REGISTRATION_CEILING` 3 -> 0 in the same commit; DSH import lines 135 -> 135.

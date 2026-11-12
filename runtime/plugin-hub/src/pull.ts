@@ -1,6 +1,7 @@
 // Pulling a plugin into the store (spec 044 lifecycle.md, "Pull: the sources"): resolve the source, fetch its tarball, check its sha512, read
 // what it is, and keep it. Installing it into an app is the next layer's job (DSH's `pluginManager.installBundle` on the stored file), after
 // the app checks the service contract; this module never runs a plugin's code and never runs a package manager.
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { parsePluginName } from './name.js'
 import { manifestOfTarball } from './pack.js'
@@ -12,7 +13,8 @@ import { parseVersion } from './version.js'
 /** A release as a git host reports it: its tag and its attached files. */
 export interface ReleaseInfo {
   readonly tag: string
-  readonly assets: readonly { readonly name: string; readonly url: string }[]
+  /** `digest` is what the host publishes for the asset (`sha256:<hex>`), when it does. */
+  readonly assets: readonly { readonly name: string; readonly url: string; readonly digest?: string }[]
 }
 
 /** The git host a `github:` source reads releases from (an HTTP adapter for public repositories, the user's `gh` for private ones). */
@@ -63,6 +65,8 @@ interface Fetched {
   readonly fetchedFrom: string
   /** An integrity the source itself vouches for (npm's `dist.integrity`). */
   readonly vouched?: string
+  /** The host's own digest of the asset, `sha256:<hex>`: what left it is what arrived. */
+  readonly hostDigest?: string
   readonly expectName?: string
   readonly expectVersion?: string
 }
@@ -104,7 +108,7 @@ async function fetchSource(source: PluginSource, ports: PullPorts, label: string
       if (tarballs.length !== 1) throw new PullError(label, `release ${release.tag} of ${source.owner}/${source.repo} has ${tarballs.length} .tgz files; a plugin release attaches exactly one`)
       const asset = tarballs[0]!
       const version = release.tag.replace(/^v/u, '')
-      return { bytes: await releases.download(asset.url), fetchedFrom: asset.url, ...(parseVersion(version) === undefined ? {} : { expectVersion: version }) }
+      return { bytes: await releases.download(asset.url), fetchedFrom: asset.url, ...(asset.digest === undefined ? {} : { hostDigest: asset.digest }), ...(parseVersion(version) === undefined ? {} : { expectVersion: version }) }
     }
     case 'tarball-file':
       try { return { bytes: readFileSync(source.path), fetchedFrom: source.path } } catch (cause) {
@@ -125,6 +129,10 @@ export async function pullPlugin(source: PluginSource, ports: PullPorts, options
     return { stored: fetched, added: false, manifest, fetchedFrom: fetched.path }
   }
   const integrity = integrityOf(fetched.bytes)
+  if (fetched.hostDigest !== undefined) {
+    const arrived = `sha256:${createHash('sha256').update(fetched.bytes).digest('hex')}`
+    if (arrived !== fetched.hostDigest) throw new PullError(label, `the download changed on the way: the host lists ${fetched.hostDigest} and ${arrived} arrived; nothing was installed`)
+  }
   for (const expected of [fetched.vouched, options.expectIntegrity]) {
     if (expected !== undefined && expected !== integrity) throw new PullError(label, `the downloaded file's checksum ${integrity} is not the expected ${expected}; nothing was installed`)
   }

@@ -37,10 +37,7 @@ const harness = vi.hoisted(() => {
       }
     }),
     cjsOriginal,
-    cjsModule: {
-      _resolveFilename: cjsOriginal,
-      _nodeModulePaths: (from: string) => [`${from}/node_modules`],
-    },
+    cjsModule: { _resolveFilename: cjsOriginal },
   }
 })
 
@@ -51,6 +48,7 @@ vi.mock('node:module', () => {
   })
   // The runtime reads registerHooks from the default export (src/module-hooks.ts).
   Object.assign(harness.cjsModule, { registerHooks })
+  // Node's builtins never reach the overlay; the two the tests ask for are enough.
   const isBuiltin = (specifier: string) => ['fs', 'path'].includes(specifier.replace(/^node:/u, ''))
   return { default: harness.cjsModule, registerHooks, isBuiltin }
 })
@@ -69,8 +67,10 @@ vi.mock('../src/package-overlay.ts', () => ({
 const { installProfilePackageResolver } = await import('../src/module-resolution.ts')
 
 const loaderEntryUrl = import.meta.resolve('@deepseek-ai/cordis-plugin-loader')
-const installPackageUrl = 'file:///Applications/DSH.app/Contents/Resources/app.asar/package.json'
-const installEntryUrl = 'file:///Applications/DSH.app/Contents/Resources/app.asar/lib/index.js'
+// Built for the host, like the Profile paths below: a file URL without a drive letter is not a path on Windows.
+const installManifest = resolve('/Applications/DSH.app/Contents/Resources/app.asar/package.json')
+const installPackageUrl = pathToFileURL(installManifest).href
+const installEntryUrl = pathToFileURL(resolve(installManifest, '..', 'lib', 'index.js')).href
 
 function anchors(): Parameters<typeof installProfilePackageResolver>[1] {
   return { binName: 'test-app', installPackageUrl, installEntryUrl, loaderEntryUrl }
@@ -206,10 +206,9 @@ describe('installProfilePackageResolver', () => {
       { filename: resolve('/tmp/another-profile/package.json') },
       false,
     )).toBe('ordinary:@deepseek-ai/dsh-client-modules/package.json')
-    // Not a manifest request: it is resolved from the selected side (next test), never from the parent's own folders.
     expect(resolveFilename(
       '@deepseek-ai/dsh-client-modules/client.js',
-      { filename: resolve('/tmp/another-profile/package.json') },
+      { filename: profileManifest },
       false,
     )).toBe('ordinary:@deepseek-ai/dsh-client-modules/client.js')
 
@@ -217,36 +216,44 @@ describe('installProfilePackageResolver', () => {
     expect(harness.cjsModule._resolveFilename).toBe(harness.cjsOriginal)
   })
 
-  it('resolves bare package requests from the Profile anchor on the side the overlay selects (the patched Loader imports plugins this way)', () => {
+  it('resolves a bare plugin import from the Profile anchor on the overlay-selected side', () => {
+    // dsh-app-boot's root Include resolves every Loader row with the Profile manifest as the CommonJS parent; a fresh Profile
+    // holds no node_modules, so an installation-selected package must be looked up from the installation's own manifest.
     const profileManifest = resolve('/tmp/dsh-profile/package.json')
-    const profileBaseUrl = pathToFileURL(profileManifest).href
-    const installEntry = resolve('/opt/acryl/lib/index.js')
-    harness.sources.set('acryl-desktop', 'install')
-    harness.sources.set('profile-only-plugin', 'profile')
-    installProfilePackageResolver(profileBaseUrl, { ...anchors(), installEntryUrl: pathToFileURL(installEntry).href })
+    harness.sources.set('@deepseek-ai/cordis-plugin-timer', 'install')
+    harness.sources.set('profile-plugin', 'profile')
+    const dispose = installProfilePackageResolver(pathToFileURL(profileManifest).href, anchors())
     const resolveFilename = harness.cjsModule._resolveFilename
     const options = { conditions: new Set(['node', 'import']) }
-    const fromProfile = { filename: profileManifest }
 
-    // The installation wins: the lookup is made as the installation's own entry module, keeping the caller's options.
-    expect(resolveFilename('acryl-desktop/terminal', fromProfile, false, options)).toBe('ordinary:acryl-desktop/terminal')
-    expect(harness.cjsOriginal).toHaveBeenLastCalledWith(
-      'acryl-desktop/terminal',
-      { id: installEntry, filename: installEntry, paths: [`${resolve('/opt/acryl/lib')}/node_modules`] },
-      false,
-      options,
-    )
+    resolveFilename('@deepseek-ai/cordis-plugin-timer', { filename: profileManifest }, false, options)
+    const installCall = harness.cjsOriginal.mock.calls.at(-1)!
+    expect(installCall[1]).toMatchObject({ filename: expect.stringContaining('app.asar') })
+    expect((installCall[1] as { paths: string[] }).paths[0]).toBe(resolve(installManifest, '..', 'node_modules'))
+    expect(installCall[3]).toBe(options)
 
-    // The Profile wins: its own folders are searched, as before.
-    expect(resolveFilename('profile-only-plugin', fromProfile, false, options)).toBe('ordinary:profile-only-plugin')
-    expect(harness.cjsOriginal).toHaveBeenLastCalledWith('profile-only-plugin', fromProfile, false, options)
+    resolveFilename('profile-plugin/lib/index.js', { filename: profileManifest }, false, options)
+    expect(harness.cjsOriginal.mock.calls.at(-1)![1]).toEqual({ filename: profileManifest })
 
-    // Node builtins, relative requests and parents outside the Profile never ask the overlay.
+    // The file the Loader imports next keeps the Profile fallback for a dependency it cannot find beside itself.
+    const pluginFile = resolve('/install/node_modules/third-party/index.js')
+    harness.cjsOriginal.mockImplementationOnce(() => pluginFile)
+    harness.sources.set('third-party', 'install')
+    expect(resolveFilename('third-party', { filename: profileManifest }, false, options)).toBe(pluginFile)
+    const nextResolve = vi.fn((specifier: string, context: { parentURL?: string }) => {
+      if (context.parentURL !== pathToFileURL(profileManifest).href) throw missing(specifier, context.parentURL)
+      return { url: `file:///profile/node_modules/${specifier}/index.js` }
+    })
+    expect(harness.resolve?.('third-party-dependency', { parentURL: pathToFileURL(pluginFile).href }, nextResolve))
+      .toEqual({ url: 'file:///profile/node_modules/third-party-dependency/index.js' })
+
+    // Node builtins, relative requests and parents outside the Profile never consult the overlay.
     harness.overlay.mockClear()
-    resolveFilename('fs', fromProfile, false, options)
-    resolveFilename('./local.js', fromProfile, false, options)
-    resolveFilename('acryl-desktop', { filename: resolve('/tmp/another-profile/package.json') }, false, options)
+    resolveFilename('fs', { filename: profileManifest }, false)
+    resolveFilename('./local.js', { filename: profileManifest }, false)
+    resolveFilename('@deepseek-ai/cordis-plugin-timer', { filename: resolve('/elsewhere/index.js') }, false)
     expect(harness.overlay).not.toHaveBeenCalled()
+    dispose()
   })
 
   it('deregisters hooks only once even if the disposer is reused', () => {

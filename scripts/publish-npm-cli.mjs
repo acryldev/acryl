@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execShim, tarCommand } from './lib/portable-commands.mjs'
 import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -17,6 +18,11 @@ const packOnly = packOnlyIndex !== -1
 const outDir = resolve(packOnly ? (process.argv[packOnlyIndex + 1] ?? '.') : process.env.ACRYL_NPM_OUT_DIR ?? 'release-artifacts/npm')
 const artifactDir = resolve(process.env.ACRYL_CLI_ARTIFACT_DIR ?? join(root, 'release-artifacts'))
 const printManifests = process.argv.includes('--print-manifests')
+// --only <target>: pack that target's runtime and the selector, from that one archive (the npm round trip on one machine, scripts/npm-round-trip.mjs).
+const onlyIndex = process.argv.indexOf('--only')
+const only = onlyIndex === -1 ? undefined : process.argv[onlyIndex + 1]
+if (only !== undefined && !CLI_TARGETS[only]) throw new Error(`publish-npm-cli: --only needs one of ${Object.keys(CLI_TARGETS).join(', ')}`)
+const packedTargets = only === undefined ? Object.keys(CLI_TARGETS) : [only]
 const staging = mkdtempSync(join(tmpdir(), 'acryl-npm-'))
 
 function targetManifest(target) {
@@ -49,16 +55,17 @@ function extractRuntime(target, output) {
   if (!existsSync(archive)) throw new Error(`publish-npm-cli: missing prepared artifact ${archive}; run build-cli-archive first`)
   mkdirSync(output, { recursive: true })
   // windows-x64 ships as .zip (see build-cli-archive.mjs); GNU tar cannot
-  // extract PKZIP archives, so this target requires unzip instead of tar -xf.
-  if (target === 'windows-x64') execFileSync('unzip', ['-q', archive, '-d', output], { stdio: 'inherit' })
-  else execFileSync('tar', ['-xf', archive, '-C', output], { stdio: 'inherit' })
+  // extract PKZIP archives, so this target requires unzip instead of tar -xf,
+  // except on Windows, whose own tar reads both.
+  if (target === 'windows-x64' && process.platform !== 'win32') execFileSync('unzip', ['-q', archive, '-d', output], { stdio: 'inherit' })
+  else execFileSync(tarCommand(), ['-xf', archive, '-C', output], { stdio: 'inherit' })
   const extracted = join(output, `acryl-cli-${target}`)
   if (!existsSync(join(extracted, 'receipt.json'))) throw new Error(`publish-npm-cli: ${archive} has no runtime receipt`)
   return extracted
 }
 
 function pack(directory) {
-  execFileSync('npm', ['pack', '--silent'], { cwd: directory, stdio: 'inherit' })
+  execShim('npm', ['pack', '--silent'], { cwd: directory, stdio: 'inherit' })
   const tarball = readdirSync(directory).find(name => name.endsWith('.tgz'))
   if (!tarball) throw new Error(`publish-npm-cli: npm pack did not produce a tarball for ${directory}`)
   mkdirSync(outDir, { recursive: true })
@@ -68,7 +75,7 @@ function pack(directory) {
 try {
   if (printManifests) {
     console.log(JSON.stringify({ selector: selectorManifest(), targets: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [target, targetManifest(target)])) }))
-  } else for (const target of Object.keys(CLI_TARGETS)) {
+  } else for (const target of packedTargets) {
     const directory = join(staging, targetPackageName(target))
     const runtime = extractRuntime(target, directory)
     // The archive root is the npm package's runtime payload.

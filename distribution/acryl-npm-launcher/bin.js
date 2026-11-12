@@ -1,26 +1,31 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 import { createInterface } from 'node:readline/promises'
 import { stdin, stderr } from 'node:process'
 import { existsSync } from 'node:fs'
 import { forwardCommand } from './forward.js'
-import { runtimeLauncher, targetFor } from './runtime.js'
+import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor } from './runtime.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
-import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact } from './web-runtime.js'
+import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact, webRuntimeCommand } from './web-runtime.js'
 
 const require = createRequire(import.meta.url)
 const selectorVersion = require('./package.json').version
 const args = process.argv.slice(2)
 
-function run(command, commandArgs) {
+function run({ command, args: commandArgs }) {
   const child = spawn(command, commandArgs, { stdio: 'inherit' })
+  const stopForwarding = forwardStopSignals(child)
   child.once('error', cause => {
+    stopForwarding()
     console.error(`acryl: ${cause.message}`)
     process.exitCode = 1
   })
-  child.once('exit', code => { process.exitCode = code ?? 1 })
+  child.once('exit', code => {
+    stopForwarding()
+    process.exitCode = code ?? 1
+  })
 }
 
 async function confirmDownload() {
@@ -67,7 +72,7 @@ async function runWeb(webArgs) {
     throw new Error('Web runtime acquisition requires confirmation. Re-run with: acryl web --yes')
   }
   const result = await acquireWebRuntime({ root: managedWebRoot(), version: selectorVersion, target, manifest })
-  run(join(result.root, 'runtime', 'bin', process.platform === 'win32' ? 'acryl-web.cmd' : 'acryl-web'), forwarded)
+  run(webRuntimeCommand(result.root, forwarded))
 }
 
 // The short commands (acryl new, plugin, blends, update) run the part that owns them (forward.js).
@@ -90,7 +95,7 @@ if (forwarded?.error) {
     process.exitCode = 1
   })
 } else {
-  try { run(runtimeLauncher(), args) } catch (cause) {
+  try { run(runtimeCommand(runtimeLauncher(), args)) } catch (cause) {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
     process.exitCode = 1
   }

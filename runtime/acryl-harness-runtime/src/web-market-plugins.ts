@@ -187,6 +187,10 @@ export class WebLiveActivationService extends Service {
     await this.controller.deactivate(packageName)
   }
 
+  requireModules(owner: string, modules: readonly string[]): Promise<void> {
+    return this.controller.requireModules(owner, modules)
+  }
+
   setEnabled(packageName: string, enabled: boolean): Promise<boolean> {
     return this.controller.setEnabledByPackageName(packageName, enabled)
   }

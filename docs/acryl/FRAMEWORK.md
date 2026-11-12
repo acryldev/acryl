@@ -91,13 +91,14 @@ grown from Blank start on the framework. On Desktop the window loads from the Ho
 the same `acrylblends/cordis/router-http` mount as Web (proved live, spec 047 P7: `examples/acryl-todo` as an app plugin, full CRUD and its page in the Desktop window). A real isolated boot of the IDE Blueprint served `/api/inspect/plugins` (355 plugins listed) and `/api/state`, the Market routes
 through the router, and refused a foreign `Host` with 403.
 
+No ACRYL plugin registers on DSH's `webServer` any more (spec 048, M7): every route is a router route under one `ctx.routerHttp.mount(prefix)`,
+the workspace terminal's WebSocket included (`mount(prefix, { upgrade: [path] })` and `ctx.routerHttp.upgrades()`), and `acrylWeb` carries only
+the server's address. `scripts/verify-layout.mjs` holds the count at 0.
+
 ## What is not done
 
 - The terminal UI composes no `framework-kit` row yet.
 - A Desktop transport without a port (`protocol.handle` onto `router.fetch`): `specs/047-framework-port/plan.md` T014.
 - A terminal command that calls `router.fetch`; the in-process path is proved in tests, not wired into the TUI.
-- Other users of the DSH `webServer`: Desktop's own renderer routes, `acryl-agent-control` (through the `acrylWeb` carrier), plugin
-  admin, support and the sign-in callback. They keep working unchanged and move one at a time (spec 047, Phase 8). `acryl-workspace`
-  moved first: its 24 routes are one router mount, and only its terminal WebSocket is still a webServer upgrade.
 - The inspector's label convention is applied to the router, state and Market registrations, not yet to every plugin.
 - The DOM renderer and page/SSR layers (M6) are decisions for the owner, not built.

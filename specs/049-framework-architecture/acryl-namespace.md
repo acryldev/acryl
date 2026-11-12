@@ -1,4 +1,4 @@
-# One name for every part: `acryl` and `@acryl/*` (milestone M12)
+# One name for every part: `acryl` and `@acryl/*` (milestone M13)
 
 Owner's words (2026-11-10): "here we got ideas to how make all under 1 brand 'acryl' ... use that to create new milestone in specs so
 that we use our npm name 'acryl' as main entry point that will point to acrylblends and any other sub part, like @acryl/blends or
@@ -24,7 +24,7 @@ Recorded by AcrylImplementer. This note proposes; the owner's answers to the que
 - npm `acrylblends` (1.4.x, the framework and its CLI) and `create-acrylblends` (1.4.2) are published, maintainer webboxescom. They come from
   the repository `acrylblends/acrylblends` (`packages/cli`, `packages/create`, private staging package `acrylblends-framework`).
 - `@acryl/core`, `@acryl/blends`, `@acryl/code`, `@acryl/create`, `@acryl/ide` and `@acryl/ui` all answer 404 on npm. A 404 does not say
-  whether the `@acryl` scope (an npm organization) exists and is ours, so that is unverified and is T016. `npm whoami` on this Mac answers
+  whether the `@acryl` scope (an npm organization) exists and is ours, so that is unverified and is T031. `npm whoami` on this Mac answers
   401, so this machine is not signed in to npm.
 - Names inside the repositories today: `acryl-control`, `acryl-harness-runtime`, `acryl-web`, `acryl-desktop` (unscoped, in `acryldev/acryl`);
   `@webboxes/blends-core`, `@webboxes/plugin-hub`, `@webboxes/app-persistence`; in the Blends repository the frame is `acryl-blends-frame`
@@ -33,7 +33,7 @@ Recorded by AcrylImplementer. This note proposes; the owner's answers to the que
   Blend" would be new work in the format, not a rename.
 - The Blank template's `blend.yaml` already has no agent rows, but it does carry the `acryl-door` row. The door is agent-facing (verbs,
   MCP routes), so Blank is "no built-in agent", not yet "provably agent-free". Whether the door still starts without the agent plugin is
-  unchecked and is T018's first finding.
+  unchecked and is T033's first finding.
 
 ## Decisions proposed
 
@@ -47,7 +47,7 @@ becomes `acryl agent` only if the owner answers Q1 that way (this is the open qu
 | Name | What it is | Comes from today |
 | --- | --- | --- |
 | `acryl` | the launcher and the one command | `distribution/acryl-npm-launcher` |
-| `@acryl/core` | the agent-free application runtime: Cordis loader, AppInstance, router, server, state, db, extensions | a package list of existing plugins plus a boundary test (T018), no code moved first |
+| `@acryl/core` | the agent-free application runtime: Cordis loader, AppInstance, router, server, state, db, extensions | a package list of existing plugins plus a boundary test (T033), no code moved first |
 | `@acryl/blends` | the framework apps import (`from '@acryl/blends'`), blend.yaml, lock, resolver, installer | `acrylblends` |
 | `@acryl/create` | scaffolding: `npm create @acryl`, and `npm create acryl` through a small `create-acryl` | `create-acrylblends` |
 | `@acryl/blend-code` | the ACRYL IDE as one Blend: the coding app (registry id `acryl.code`, command `acryl code`), D9 | `acryldev/acryl` apps and the frame |
@@ -67,25 +67,25 @@ package, only a sub-path of `@acryl/blends` that package would have to own. Read
 `@acryl/blend-studio` (the v2 discussion's own list). Core and Full are profiles of one package (D6), not `blend-accounting-core` and
 `blend-accounting-full` as two packages: the discussion itself prefers one package with named profiles.
 
-**D4. npm is not the Blend registry.** npm carries code (`@acryl/*`). Plugins stay on GitHub releases and `cordisplugins.github.io` (M11),
+**D4. npm is not the Blend registry.** npm carries code (`@acryl/*`). Plugins stay on GitHub releases and `cordisplugins.github.io` (M12),
 Blends and starters on the Blends registry. An entry may point at npm, a Git repository or a signed app artifact.
 
 **D5. Dependency direction, enforced by a test.** `@acryl/core` knows nothing of agents. `@acryl/blends` sits on core. The IDE Blend
-(`@acryl/blend-code`, D9) sits on both, like every other Blend. The test (T018) fails when the core package set imports `agent*`, `driver-*`, `openai`, the frame or a DSH agent package, and it
+(`@acryl/blend-code`, D9) sits on both, like every other Blend. The test (T033) fails when the core package set imports `agent*`, `driver-*`, `openai`, the frame or a DSH agent package, and it
 reads the packaged closure, not only the import lines.
 
 **D6. Core and Full editions of one Blend are profiles, not two apps.** One Blend id; `core` is its rows without agents, `full` extends
-`core` with the agent rows. The Registry offers both. This needs a `profiles` field in the Blend format (T022), after D5 holds.
+`core` with the agent rows. The Registry offers both. This needs a `profiles` field in the Blend format (T037), after D5 holds.
 
 **D7. Nothing breaks for people who have the old names.** `acrylblends` and `create-acrylblends` keep working as thin aliases of
 `@acryl/blends` and `@acryl/create` for a long period (ACRYL's own CLI depends on `acrylblends` today). Old and new commands must make the
-same app (T020).
+same app (T035).
 
 **D8. The workshop of 2026-11-20 uses short commands, and nothing else moves before it.** The owner's requirement of 2026-11-11 replaces the
 earlier "commands do not change": the long form (`npm create acrylblends@latest app -- --template blank --desktop -y --install`) is not
-acceptable for participants. T025 makes `npx acryl new my-app` and `cd my-app && npm run dev` the workshop commands, verified on all three
+acceptable for participants. T039 makes `npx acryl new my-app` and `cd my-app && npm run dev` the workshop commands, verified on all three
 systems from local tarballs first; the old commands stay as the fallback. Outward steps (reserving names, publishing `acryl` with the new
-subcommands, `create-acryl`, `@acryl/blends`, `@acryl/create-blends`) each need the owner's explicit go (T016, T020). No repository move before
+subcommands, `create-acryl`, `@acryl/blends`, `@acryl/create-blends`) each need the owner's explicit go (T031, T035). No repository move before
 the workshop.
 
 **D9. The ACRYL IDE is one Blend, the coding one (owner, 2026-11-12).** Owner's words: "acryl IDE https://github.com/acryldev/acryl has to
@@ -108,9 +108,9 @@ the person's own; `@acryl/plugin-*` and the agent pack plug into any of them. Th
 Two views exist. The owner's earlier message: move the framework into `github.com/acryldev/acryl` as `@acryl/blends` and `@acryl/code`.
 The v2 discussion's recommendation: keep it a separate repository but transfer `acrylblends/acrylblends` to `acryldev/blends`, so that the
 framework stays independently releasable and `acryldev/acryl` consumes it by version; one organization, two repositories, the npm package
-is the contract. Either keeps one npm name family. This note does not choose; T021 carries out whichever the owner picks.
+is the contract. Either keeps one npm name family. This note does not choose; T036 carries out whichever the owner picks.
 
-## The short commands (T019, T025)
+## The short commands (T034, T039)
 
 ```
 npx acryl new my-app            blank app in the frame with agents, installed
@@ -125,17 +125,17 @@ Why no `--`: `npm create` is the only form that swallows `--flags` (they need `-
 
 ## Order of work
 
-Phase A, no outward action: decisions (T017), the boundary test (T018), the `acryl` subcommands that forward to the existing CLI (T019), the
-short commands checked from local tarballs on three systems (T025).
-Phase B, after the workshop and each step with the owner's go: names and publishing (T020), repository (T021), editions (T022), registry
-ids (T023), sites and docs (T024).
+Phase A, no outward action: decisions (T032), the boundary test (T033), the `acryl` subcommands that forward to the existing CLI (T034), the
+short commands checked from local tarballs on three systems (T039).
+Phase B, after the workshop and each step with the owner's go: names and publishing (T035), repository (T036), editions (T037), registry
+ids (T038), sites and docs (T041).
 
 ## Questions for the owner
 
 0. Answered 2026-11-11 (owner): `@acryl/core` is a dependency of an app, not source copied into it. The whole picture and the reasons are in
    [vision-simplification.md](./vision-simplification.md); the door as its own package (`@acryl/door`) is proposed there, not yet decided.
 
-1. Answered 2026-11-11: `@acryl` is ours. Still open inside T016: which names may be reserved before 2026-11-20, and the member check once the owner is signed in.
+1. Answered 2026-11-11: `@acryl` is ours. Still open inside T031: which names may be reserved before 2026-11-20, and the member check once the owner is signed in.
 2. One repository or two (`acryldev/acryl` only, or `acryldev/acryl` plus `acryldev/blends`)? The discussion recommends two.
 3. Does the agent CLI the `acryl` package is today become `acryl agent` (recommended in open question 1)?
 4. Blend ids: `com.acryl.crm` (the discussion), `acryl.crm` (the registry today), with the old `acrylblends.` prefix kept as an alias?

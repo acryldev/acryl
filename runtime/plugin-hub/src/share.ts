@@ -25,6 +25,14 @@ export const PLUGIN_LABELS = ['acryl-package', 'cordis-plugin', 'dsh-plugin'] as
 
 export type Visibility = 'private' | 'public'
 
+/**
+ * What the package is to the app that takes it. A `loader-bundle` is mounted as a Loader row, so it names its patch and carries every catalog's label.
+ * A `source-plugin` is loaded from its folder in the app (an acrylblends plugin), so a patch would mean nothing and it is not a DSH bundle.
+ */
+export type PluginKind = 'loader-bundle' | 'source-plugin'
+
+const LABELS: Readonly<Record<PluginKind, readonly string[]>> = { 'loader-bundle': PLUGIN_LABELS, 'source-plugin': ['cordis-plugin'] }
+
 /** The git host, through the user's own login. */
 export interface RepositoryHostPort {
   /** The signed-in user, the default owner. */
@@ -54,6 +62,8 @@ export interface ShareOptions {
   readonly repo?: string
   /** `public` lists it (the labels make catalogs find it); default: the plugin's `acryl.visibility`, else private. */
   readonly visibility?: Visibility
+  /** Default: `loader-bundle`. */
+  readonly kind?: PluginKind
   readonly notes?: string
 }
 
@@ -91,11 +101,11 @@ function writeManifest(folder: string, manifest: Record<string, unknown>): void 
 }
 
 /** The plugin's own package.json, with the labels and its repository; returns what it changed. */
-function prepareManifest(folder: string, owner: string, repo: string, visibility: Visibility): string[] {
+function prepareManifest(folder: string, owner: string, repo: string, visibility: Visibility, labels: readonly string[]): string[] {
   const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')) as Record<string, unknown>
   const changed: string[] = []
   const keywords = Array.isArray(manifest['keywords']) ? manifest['keywords'].filter((word): word is string => typeof word === 'string') : []
-  const missing = PLUGIN_LABELS.filter(label => !keywords.includes(label))
+  const missing = labels.filter(label => !keywords.includes(label))
   if (missing.length > 0) { manifest['keywords'] = [...keywords, ...missing]; changed.push(`keywords +${missing.join(', +')}`) }
   if (repositoryOf(manifest) === undefined) {
     manifest['repository'] = { type: 'git', url: `git+https://github.com/${owner}/${repo}.git` }
@@ -136,12 +146,14 @@ export async function sharePlugin(folder: string, options: ShareOptions, ports: 
   const visibility: Visibility = options.visibility ?? (acryl?.visibility === 'public' ? 'public' : 'private')
   if (visibility === 'public' && typeof before['license'] !== 'string') return refuse('a public plugin needs a "license" in its package.json (for example "MIT")')
 
+  const kind = options.kind ?? 'loader-bundle'
+  const labels = LABELS[kind]
   const contract = await syncServiceContract(folder)
   if (!contract.ok) return refuse(`its service contract cannot be read: ${contract.errors.join('; ')}`)
-  const updatedManifest = [...(contract.written ? ['service contract and slots'] : []), ...prepareManifest(folder, owner, repo, visibility)]
+  const updatedManifest = [...(contract.written ? ['service contract and slots'] : []), ...prepareManifest(folder, owner, repo, visibility, labels)]
 
   const packed = packFolder(folder)
-  const notBundle = bundleProblem(packed)
+  const notBundle = kind === 'loader-bundle' ? bundleProblem(packed) : undefined
   if (notBundle !== undefined) return refuse(notBundle)
   const secrets = secretsIn(packed)
   if (secrets.length > 0) return refuse(`the secret check found ${String(secrets.length)} possible secret(s) in the files that would be shared; nothing was sent`, secrets)
@@ -170,7 +182,7 @@ export async function sharePlugin(folder: string, options: ShareOptions, ports: 
     const notes = options.notes ?? `${packed.name.full} ${packed.version}\n\nTarball: ${packed.fileName}\nIntegrity: ${packed.integrity}\nFiles: ${String(packed.files.length)}`
     const releaseUrl = ports.host.createRelease(owner, repo, tag, `${packed.name.full} ${packed.version}`, notes, asset)
     if (existing !== undefined && existing.visibility === 'private' && visibility === 'public') ports.host.setVisibility(owner, repo, 'public')
-    ports.host.addTopics(owner, repo, PLUGIN_LABELS)
+    ports.host.addTopics(owner, repo, labels)
     ports.store.put(packed.name.full, packed.version, packed.tarball, { from: folder })
     return {
       status: 'shared', owner, repo, url: `https://github.com/${owner}/${repo}`, visibility, created, tag, releaseUrl,

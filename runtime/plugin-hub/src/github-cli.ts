@@ -96,9 +96,9 @@ export function githubReleasesViaGh(): ReleasePort {
         if (/HTTP 404|Not Found/iu.test(result.stderr)) return undefined
         throw new ToolError(`gh api repos/${owner}/${repo}/${path} failed: ${result.stderr.trim().split('\n').at(-1) ?? ''}`)
       }
-      const body = JSON.parse(result.stdout) as { tag_name?: unknown; assets?: { name?: unknown; url?: unknown }[] }
+      const body = JSON.parse(result.stdout) as { tag_name?: unknown; assets?: { name?: unknown; url?: unknown; digest?: unknown }[] }
       if (typeof body.tag_name !== 'string' || !Array.isArray(body.assets)) throw new ToolError(`gh returned an unexpected release for ${owner}/${repo}`)
-      return { tag: body.tag_name, assets: body.assets.flatMap(asset => (typeof asset.name === 'string' && typeof asset.url === 'string' ? [{ name: asset.name, url: asset.url }] : [])) }
+      return { tag: body.tag_name, assets: body.assets.flatMap(asset => (typeof asset.name === 'string' && typeof asset.url === 'string' ? [{ name: asset.name, url: asset.url, ...(typeof asset.digest === 'string' ? { digest: asset.digest } : {}) }] : [])) }
     },
     async download(url) {
       const result = spawnSync('gh', ['api', '-H', 'Accept: application/octet-stream', url], { env: { ...process.env, GH_PROMPT_DISABLED: '1' }, maxBuffer: 64 * 1024 * 1024 })

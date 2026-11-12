@@ -24,7 +24,7 @@ function rowsFor(blueprint: typeof IDE_BLUEPRINT) {
 describe('desktop profile under a Blueprint', () => {
   it('the full product keeps every ACRYL row', () => {
     const rows = rowsFor(IDE_BLUEPRINT)
-    for (const id of ['acryl-workspace', 'acryl-plugin-admin', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-shortcuts', 'acryl-mount-anchors', 'ui-acryl']) {
+    for (const id of ['acryl-workspace', 'acryl-plugin-admin', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-command-reply', 'ui-acryl']) {
       expect(rows.has(id), id).toBe(true)
     }
     expect(rows.get('ui-brand-official')?.disabled).toBe(true)
@@ -34,7 +34,7 @@ describe('desktop profile under a Blueprint', () => {
 
   it('blank keeps the stem cell, swaps the brand row, and leaves the product rows out', () => {
     const rows = rowsFor(withBrand(BLANK_BLUEPRINT, brandIdentity({ name: 'Orbit', accent: '#e8590c' })))
-    for (const id of ['acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'authorization', 'brand']) expect(rows.has(id), id).toBe(true)
+    for (const id of ['acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-command-reply', 'authorization', 'brand']) expect(rows.has(id), id).toBe(true)
     for (const id of ['acryl-workspace', 'acryl-plugin-admin', 'acryl-shortcuts', 'acryl-mount-anchors', 'ui-acryl']) expect(rows.has(id), id).toBe(false)
     expect(rows.get('ui-brand-official')?.disabled).toBe(true)
     expect(rows.get('brand')?.config).toMatchObject({ name: 'Orbit', accent: '#e8590c' })

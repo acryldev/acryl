@@ -1,3 +1,218 @@
+## 2026-11-06 - a plugin's identity and portability are pure policy in blends-core 0.5.0 (spec 049, portable plugins step 1)
+
+A plugin written on Windows must work on macOS after a pull from the registry, and Git for Windows' default line endings broke that: the same plugin with CRLF digests differently, so it can fail its own lock on another machine.
+
+- **The policy** (`f5e3b76409b06bc43f2ae5a8f462e6ed78711c10`): `runtime/blends-core/src/plugin-identity/` holds `digestFiles` and `portabilityIssues`, both pure over plain `{path, bytes, kind}` files, so every rule runs on any one machine. `pluginFiles` is the disk adapter and `digestFolder` is the two together. The digest formula did not change, and a value computed from the old code pins it, so no lock changes.
+- **The rules**: a name Windows reserves, a trailing dot or space, a character Windows refuses, two paths that are one name ignoring case or Unicode form (folders too), a path over 200 characters, a symbolic link, and a carriage return in a text file. A plugin with an issue still has a digest: refusing is the caller's decision.
+- **Published**: `@webboxes/blends-core@0.5.0`, additions only. All 43 entries of the public registry measured clean before anything enforced the rules.
+
+## 2026-10-29 (release) - release 0.2.6: the npm CLI works on Windows, `acryl web` works at all, and the npm round trip is tested on every push
+
+Release 0.2.6 (tag `v0.2.6` on `7b3449278ea45582678801249c2315308bfc0264`) ships everything since 0.2.5 on every surface: CLI and Web archives for four targets, five Desktop installers, npm (`acryl` and its four `acryl-cli-*` packages) and the GitHub release (Latest, 21 assets). Its notes list the user-facing changes.
+
+- **Preparing the release found two defects already shipped in 0.2.5.** I built and packed the CLI from main as the release does and installed it with `npm i -g` in scratch prefixes on macOS and mbpi9win, and installed the published 0.2.5 the same way. (1) Every `acryl` from npm on Windows refused to start ("runtime receipt payload hash mismatch"): the receipt hash named files by `relative(...).replaceAll('\\\\', '/')`, two backslashes in the source, so Windows paths were never normalized, and the `.npmignore`/`.gitignore` exclusion never matched there either, while npm pack strips those files. (2) `acryl web` never worked against a real release: it asked for `release-manifest.json` where the release uploads `acryl-release-manifest.json` (404), and it refused redirects while GitHub answers every release download with a 302. Neither showed up before, because the release smoke runs each archive's own launcher and never npm. `ce5734a21592d09acf21f9fa87cdbbd35951fb7b` fixes both with tests that are red on main, and two stop defects with them: a SIGTERM to `acryl` alone (a supervisor) left the Web runtime orphaned holding its port (the launcher now passes stop signals on, not on Windows, where the console sends Ctrl-C to both and the runtime is in a job that ends with `acryl`), and `acryl-web` listened for SIGINT with `once`, so the second Ctrl-C a terminal plus the forwarded copy deliver ended it before it freed its port and Registry entry.
+- **A third release blocker on main** (not in 0.2.5): the macOS Web archive build refused `fsevents.node`. acrylblends 1.0 declares vitest as an optional peer for its conformance suites, pnpm resolves it because the workspace has vitest, and `pnpm deploy` copied vitest, vite, rolldown, lightningcss and fsevents into the CLI and Web runtimes (about 30 MB per install). `0fb1758b5909b20116ec181b8f43f1a93121d789`: a `.pnpmfile.cjs` hook drops that peer until acrylblends 1.1 (acrylblends `docs/plans/framework-1-1-tickets.md`, "vitest out of acrylblends' production closure (P1)"), and `scripts/production-closure.test.mjs` fails if it comes back.
+- **The npm round trip, on every push** (`33091c9ed36e5a62d1e176623f24198af28a8703`): `scripts/npm-round-trip.mjs` builds this machine's CLI archive, packs it and the selector (`publish-npm-cli.mjs --only`), installs both with `npm install --global` into a scratch prefix, checks `acryl --version`, then `acryl web --yes` against a loopback release that redirects like GitHub, and stops `acryl` alone. CI and the Windows whole-suite job run it. Its first Windows run found `b2f5d8ce4fa98ae097c2d6fd889fbda48e7e8f56`: both archive builders ran the first `tar` on the PATH, which in Git Bash is GNU tar, and GNU tar reads an absolute `C:\` archive path as a remote host; the release only got by on a relative output folder. They use `tarCommand()` now.
+- **Housekeeping** (`530a7d188ab29fd00bc6f5b207e8d74df1ad5d45`): `build-cli-archive.mjs` removes its staging tree (377-567 MB in the system temp folder) in a `finally`; the release-manifest receipt test removes its temporary folder (15 had piled up); `docs/RELEASE-FOUNDATION-HANDOFF.md` describes today's one-tag release (seven packages, four CLI targets).
+- **Dry run and release**: `release-cli.yml` by `workflow_dispatch` on `b2f5d8ce` passed all 13 builds. Version bump `7b3449278ea45582678801249c2315308bfc0264`: the seven packages and the container's default `ACRYL_VERSION`. The tag run passed every gate, published npm and promoted the release. The four target tarballs reached the registry about 10 minutes after the publish job.
+- **Proven after publishing**, `npm install -g acryl@0.2.6` in a scratch HOME and prefix, `acryl web --yes` from the real release, the page answering 200 through its token-to-cookie redirect, `acryl control list` finding it, the stop freeing the port, real homes untouched, scratch removed: macOS arm64 (12 s install, 513 MB; boot 21 s with the download; Ctrl-C and a SIGTERM to `acryl` alone both stop it), z370n Ubuntu x64 (10 s, 520 MB; the same two stops), mbpi9win Windows 10 (69 s, 531 MB; boot 67 s; over ssh, with no console, `taskkill /T /F` ends it and frees the port). The README links moved to 0.2.6 (`84ab88564981bcf71ff753ed5d7b72d49a68520a`, `sync-release-readme.mjs`).
+
+## 2026-10-28 - acrylblends 1.0 is on `latest`, and ACRYL adopts it (spec 049 M10)
+
+Commits: `1ace2620` (the bump), and the docs commit that carries this entry.
+
+- **Bumped:** every package that depends on acrylblends moves to `^1.0.0` (17 manifests). The lock holds one instance with the same peers as 0.11.0
+  (cordis 4.0.4, schemastery 3.18.4, react 18.3.1, vitest 4.1.11, ws 8.22.0), so the 1.0 export cut - App/AppRequest, acryl-base, utils/* and the
+  seven serverless/edge adapters - pulled no dependency changes. All 20 distinct specifiers ACRYL imports resolve in the published package (98 exports),
+  including the four an earlier hand count missed (cordis/state, http-exception, schema-validator, trailing-slash).
+- **The release-age policy needs a temporary entry:** 1.0.0 was published 2026-10-28 19:15 CET, inside the 24 h window, so
+  `minimumReleaseAgeExclude` holds `acrylblends@1.0.0` (in the combined selector form while the lock still named 0.11.0) and the 0.11.0 entry is gone.
+  A later commit removes the 1.0.0 line once the release is older than the window; CI's frozen installs need it until then.
+- **pnpm 11.11.0 note:** its `install --lockfile-only` reports success but leaves the lock unchanged, also with `pnpm update --lockfile-only`. The 11.8.0
+  binary (`~/.cache/node/corepack/v1/pnpm/11.8.0/bin/pnpm.cjs`, with `--no-frozen-lockfile --ignore-scripts
+  --config.manage-package-manager-versions=false`) rewrites it correctly, and `corepack pnpm install --frozen-lockfile` at the repo's 11.11.0 accepts the
+  result. Measured on both the 1.0.0 release candidate bump and this one.
+- **M10 met:** target 2026-10-30 12:00 CET (defined in acrylblends `docs/plans/framework-1-0-readiness.md`); met 2026-10-28 19:15 CET, about 41 h early.
+  Evidence: shasum `145fb2c9745d5b8935f650f3b94500fbb969d4f5`, `latest` and `next` both 1.0.0, 98 exports; Blends' release evidence in
+  `docs/plans/release-evidence-1-0.md`. 1.0.1 follows as a patch with a security default: the agent template's `agent`, `builder` and `extensions` rows
+  are off in production.
+- **Verified:** the full gate under `with-build-lock` and ACRYL's four workflows on the branch's top commit; the reach of the bump is the whole workspace,
+  and the guard confirmed the gate wrote no real home.
+
+## 2026-10-28 (latest) - tests cannot write the real ACRYL homes any more (spec 048 T011 follow-up)
+
+Commits: `bf5841d6` (this change), `e429ed44` (the surface-parity flake, on main, recorded below with what its one timeout turned out to be).
+
+- **Why now:** once a composition root claims the app and announces it (T011), any test that boots one for real writes where the product writes -
+  the running Registry and its run lock under `~/.acryl-instances`, session logs under `~/.acryl*`, engine state under `~/.dsh`. Pointed at the
+  developer's own home, a suite could edit or break the installed app's data and nothing would say so.
+- **Structural, not per spec:** `scripts/testing/isolate-home.ts` runs before any test module in every vitest worker, points `HOME` (and
+  `USERPROFILE`) at a temp folder of that worker, drops the XDG homes, and removes the folder when the worker exits. All 22 vitest configs in the
+  repo load it (the pinned submodule keeps its own). A test that needs a particular home still sets its own afterwards, and
+  `ACRYL_TESTS_KEEP_REAL_HOME=1` opts a debugging session out.
+- **The gate's backstop:** `scripts/real-home-guard.mjs` snapshots every file under `~/.acryl`, `~/.acryl-dev`, `~/.acryl-worktrees`,
+  `~/.acryl-instances` and `~/.dsh`, runs the rest of `check`, and fails naming anything added, removed, resized or rewritten. `check` is now
+  that guard around `check:steps`, so the `node --test` runners, the scaffolder and the packed/tarball gates are covered too, not only vitest.
+- **Running apps are excused, by name:** the development app and the installed app write their own homes all the time, so the guard reads the
+  Registry through the AppInstance family (`registryDir`) and leaves out the home of every app whose pid is alive, printing one line each
+  (`skipped ~/.acryl-dev: app ACRYL Development pid 4711 is running`). `~/.acryl-instances` is always checked, except that those apps' own
+  Registry entries may change; a stale entry (its process gone) excuses nothing, and any other write still fails. Four tests run the real
+  script against a throwaway home: a live app writing its home passes, a home with no live entry fails and is named, a stale entry does not
+  excuse it, and the Registry allows only the live app's own entry.
+- **The first leak CI found (3e373538):** on a clean runner the gate created `~/.acryl-dev/.dsh/.credentials.yaml` and `.dsh/storages/workspace.json`.
+  The writer was `apps/acryl-desktop/scripts/verify-profile-boot.mjs` (and the same trap in `verify-loader-boot.mjs`): both called
+  `applyIsolatedDevHomeDefault()` at import time, before moving HOME into their throwaway folder, so that helper pinned `DSH_HOME` to the developer's
+  real `~/.acryl-dev/.dsh`; the smokes then overrode HOME and ACRYL_HOME but not DSH_HOME, and the engine wrote credentials and workspace state into
+  the real home. Both smokes now remove that call and set `DSH_HOME` inside their own folder with the other two variables. The remaining four
+  packages that ran vitest without a config (`apps/acryl-web`, `runtime/acryl-control`, `runtime/blends-core`, `runtime/app-persistence`) got one with
+  the isolation setup, so no suite runs against the real HOME.
+- **Create-if-missing writes, and where the authority is:** the guard reports a file that is created when absent like any other addition (a test
+  proves it), but a developer machine that already holds the file will never show it, which is exactly how 3e373538 passed locally and failed on
+  CI. The authority for that case is CI's clean home; the local gate catches rewrites, deletions and genuinely new files.
+- **An older app does not announce:** the owner's dev app and the installed 0.2.x app were built before T011, so they write their homes while the
+  Registry knows nothing about them. When a change lands under `~/.acryl`, `~/.acryl-dev` or `~/.dsh`, the failure adds: "An ACRYL app built before
+  905a801c (T011) does not announce itself; if one is running against this home, quit it or run with ACRYL_REAL_HOME_GUARD=off."
+- **Allowed, with its reason:** the bulkhead spec's list of files that may look at the OS home gains the guard: it must know the real homes to
+  prove nothing changed one, it only reads them, and it is not part of any app.
+- **Proven:** a command that writes `~/.acryl-instances/leak.json` under a throwaway home fails the guard and names the file; a clean command
+  exits 0, and the same suite served by `serveWeb` leaves nothing behind either (its claim is withdrawn on dispose - the guard sees lasting
+  changes, the isolation prevents the transient ones). Suites of loopback-http, harness-runtime, desktop (866), workspace (803), sign-in and
+  web-serve pass under the isolated home.
+
+## 2026-10-28 (later) - `acryl control list` finds every running app: the process that serves it announces it (spec 048 T011)
+
+Commits: `d1725c87b528f17c2efb2b48e90b2aa1b5d48bba`.
+
+- **Moved:** the claim and the announcement out of the launcher and into the composition root. `announceSelf` (new,
+  `runtime/acryl-harness-runtime/src/instance/announce-self.ts`) takes the app's run lock and writes the Registry entry with the port the server
+  really bound; `release()` withdraws both. `serveWeb` announces once the Web carrier listens (the `--json` readiness probe does not claim),
+  Desktop's Host plugin announces `ctx.webServer`'s port and releases through an effect, and `runAcrylTui` announces the terminal surface with no
+  port. Before, only `scripts/blank.mjs` announced - with the port it asked for, not the one bound - so `acryl control list` said "no ACRYL app is
+  running" while `pnpm web` or Desktop ran, and an isolated live check could not reach its own app through the door.
+- **Removed:** the launcher's claim. `scripts/blank.mjs` now refuses early from the Registry with the same wording and lets the app's own claim
+  settle a race between two launches, so a stop signal reaches the process that serves the app instead of the one that spawned it.
+- **Found and fixed:** Desktop quits the process without unloading the Loader, so its effect disposer never ran and a stopped Desktop app left
+  its entry in the Registry for a reader to prune (measured in the live run). The announcement now also ends on the process's own `exit` and on
+  the `SIGINT`/`SIGTERM` the launcher handles, registered and removed with the effect. The desktop loader and profile smokes boot a real
+  Desktop root, and a real root now announces - they were writing the machine's real `~/.acryl-instances` during the gate. Both boot inside a
+  throwaway `HOME` now. The desktop plugin's test fixture returned a catch-all stub for every service it did not model, so `appInstance`
+  arrived as a function and the announce threw; it reports no instance now.
+- **Measured:** DSH import lines 135 -> 135; no change to a single registration count (`acrylWeb` is still the address only).
+- **Verified:** full gate; the new `tests/announce-self.spec.ts` (five: the real port in the entry and the lock, an idempotent release, a live
+  second app refused and nothing changed, a dead holder replaced and an older release not clearing a newer claim, a same-process re-announce),
+  plus the instance, bulkhead, web serve, CLI host/run, desktop plugin and launcher script suites. Live with `scripts/live-run.mjs ... --no-key
+  --keep` in an isolated HOME, ACRYL_HOME and Electron user data: Web answered `pinned-... web pid ... port 3292` while it ran and nothing
+  after SIGTERM; Desktop answered `pinned-... desktop pid ... port 3295` while it ran with the Electron process holding that port, and after
+  quitting the command answered "no ACRYL app is running", the port was free and nothing under the real `~/Library/Application Support/ACRYL*`
+  changed. A group kill that reaches the app a second time can still outlive the withdrawal; the Registry drops a dead pid's entry when read,
+  which is what the next `acryl control list` does. The real `~/.acryl-instances` was never written by a gate - watched through a whole run.
+
+## 2026-10-28 - the surface-parity gate composes one runtime, not three (flake under load)
+
+Commit `e429ed4490a20a0e29e5327818d8a01b95efadd0`, on `main`.
+
+- **The failure:** one run of the desktop suite timed out in `tests/surface-parity.spec.ts`, the second of its three tests, under a 120 s bound.
+  DS_Fork3's output showed the file at 326.8 s with that test at 323.7 s, which cannot come from a slow await: the event loop itself was blocked
+  for over 200 s past the timer, inside a second `createAcrylEngineHost` boot that followed the first test's boot and dispose.
+- **The cause the fix removes:** the file booted the whole Web engine once per test - profile resolution, module import, the Loader settling,
+  then dispose and temp-home removal, three times. Under load that boot is what stretches: idle the file took 3.58 s, with three concurrent runs
+  and ten CPU hogs 7.3 s, and inside three concurrent desktop suites the first test alone reached 12.4 s. `composeBoth` is now called once in
+  `beforeAll` and the three tests assert on the shared result: same load 7.3 s -> 4.9 s, idle 3.58 s -> 2.10 s, one boot and one dispose.
+- **Honest limit:** the 200 s stall itself did not reproduce here, and the exact synchronous call inside the second boot is not named. If it
+  recurs, the single boot is now one named wait and the next step is to instrument `resolveWebEngineComposition`'s materialize and
+  `loadProfile` steps, the only synchronous file work on that path.
+
+## 2026-10-28 - M8 met: DSH is one agent among others (spec 046 T028, T029)
+
+Commits, on acrylblends `main`: `8967ee78380b932d1255afe9087e15a656232549` (driver-acp, authored here), `4baf606b09b9506b56ef881b1fe187e4f635cf10`
+(the review fix that ends the agent's whole process group) and `761cfaa18c11d944d1e008e711beb1d66afe46b2` (formatting), merged as
+`d81e1bb2c7c48f1dedfcc38f15e8b8e76b2919a8`. The ACRYL-side change is this entry and the spec rows.
+
+- **Reshaped before it was built** (coordinator, 2026-10-28): not `acryl-driver-dsh` but a generic `driver-acp`, so DSH gets no code of
+  its own. The plugin is an ACP v1 chat driver of the agent panel beside `driver-pty`: an agent is a preset command line, `dsh --profile acp`
+  is the first, `config.agents` adds others. It has no `@deepseek-ai/*` import and finds its command on the `PATH`; an agent that is not
+  installed gets no driver and one log line.
+- **The client is our own**, written from the ACP v1 specification (newline-delimited JSON-RPC 2.0), because the official SDK is 8.3 MB
+  with two required peers, too much for a plugin copied into every app. `provenance.json` records the schema it follows (ACP v1,
+  `@agentclientprotocol/sdk@2.0.2`, Apache-2.0, sha256), vendored unmodified with its license as a test fixture and kept out of packed apps,
+  and `test/conformance.test.ts` checks every message of a session, both ways, against it, including that the session used every message the
+  client speaks. Drift is a failing test, not a broken agent.
+- **What the panel gets:** message chunks as text; each tool call once, when it completes or fails (title, input, result or error); an error
+  for a turn that stops short (refusal, token or request limit) or an agent that ends. Thoughts and plans stay out. One message at a time;
+  Stop sends `session/cancel`; permission requests get the agent's own reject option, or allow with config.
+- **Review found one defect worth the wait:** closing an agent ended the process but not its tool children, and an agent that crashed left its
+  effect behind; the fix ends the whole process group (the tree on Windows) in every path, with a test that starts a tool child process.
+- **The PTY half (T029)** is `driver-pty` in acrylblends (0.10.0). The M8 evidence run has `claude`, `codex` and `pi`, each interactive in
+  its terminal in the app folder, build a route and install it through the door in 19-31 s; the run's table, screenshots and what it found
+  are in `acrylblends docs/plans/pty-driver-evidence.md`, and `scripts/verify-driver-pty.mjs` is the repeatable gate.
+- **Measured:** ACRYL's direct DSH import lines 135 -> 135; the plugin has none. M7's zero `webServer` registrations still hold.
+- **Verified:** 17 plugin tests (among them the ACP v1 conformance check, the tool child process that ends with the agent, and three reloads with one driver each), `biome`, the plugins typecheck, the
+  full acrylblends `pnpm run check` including the packed and tarball gates (no plugin test file ships, so the schema stays in the repo), the
+  branch CI 8/8, and live: the panel gate with the real `dsh` 0.2.1-rc.2 (isolated `HOME` and `DSH_HOME`, the key in the app's environment
+  only) built `/hello` from the panel and installed it through the door, the page reloaded and the process stayed the same; a standalone turn
+  wrote, verified and reported a file in 5 s. Every run ended with its processes gone and the real homes untouched.
+
+## 2026-10-28 - M7 met: no ACRYL plugin registers on DSH's webServer, the terminal's WebSocket included (spec 048 T007, T008)
+
+Commits: `3eba613593f38441fae06e41cd6cca790b8215c3` (M9 parked by the owner, its design kept in `specs/049-framework-architecture/design/m9-hosted-workspace.md`),
+`f01f3da2457f2bea4c89dd7768a0f132bc27969d` (T007, T008), `f8f903db58d90f6b0efed0ed3e94d9b9d6955127` (the isolation gap the live check found), `a09fefc2836fe0d47f6e5cbeeb31778cee7473a2` (the real-terminal test on Windows).
+
+- **Moved:** the workspace terminal's stream is one router route under the workspace prefix, mounted with
+  `routerHttp.mount(prefix, { upgrade: [path] })` and upgraded by `routerHttp.upgrades()` from acrylblends 0.11.0 (spec 047 T009, Blends).
+  The framework's hub owns the sockets: it pings them, ends dead peers and closes them with 1001 when the plugin unloads. The plugin no
+  longer runs a `ws` server of its own. The wire format, the path and the client are unchanged.
+- **Kept:** the trust rule. `ownPageSocket` (new in `acryl-loopback-http/router`) is the own-page rule plus always the exact `Origin`, and a
+  refusal is a plain status before any handshake.
+- **Removed:** `AcrylWeb.register` and `registerUpgrade` (T008). `acrylWeb` is the server's address only; routes go through the router.
+- **Measured:** call sites 3 -> 0, and `WEB_REGISTRATION_CEILING` is 0 in `scripts/verify-layout.mjs`; over M7, 14 -> 0. DSH import lines
+  135 -> 135.
+- **Found and fixed:** an isolated run (`scripts/lib/isolated-run.mjs`) moved HOME but passed the caller's `ZDOTDIR` through, so a live run's
+  terminal loaded the real `~/.zshenv` and `~/.zshrc` and could have written the real history, which the real-home check does not watch.
+  `ZDOTDIR`, `HISTFILE` and the XDG base directories are now dropped (a test fails without it). `scripts/inspect-page.mjs press Enter`
+  sent key code 0, which xterm ignores; named keys now carry their codes. The Windows workflow failed the new real-terminal test: it
+  typed `echo acryl-$((6*7))`, and cmd.exe, the terminal's shell there, prints that as typed. Reproduced through ConPTY on a Windows
+  machine; the test now types a line that makes any shell print `ACRYL_MARK_<n>` without the typed line containing it.
+- **Packages:** every ACRYL package is on acrylblends ^0.11.0, one instance in the lock. The workspace's `ws` moved to 8.22.0 so the
+  framework's optional `ws` peer resolves once.
+- **Verified:** full gate and all four workflows green; live in isolated homes on Web (a scripted page client: a shell's output, resize,
+  reconnect from a cursor, the refusals) and in the Desktop window (a terminal tab before and after a reload, and again after the fix with
+  `ZDOTDIR` unset), each run ending with its ports free and the real homes untouched.
+
+## 2026-10-27 (latest) - the IDE onto the framework, M7: webServer registrations 14 -> 3, and a ratchet that holds them (spec 048 T003-T006, T009, T010, T013)
+
+Commits, in order on `main`: `9c43a4ef992af0fa6a6945fedea92249e978db0c` (one copy of the private-route rules, `acryl-loopback-http/router`),
+`bd0b10303c799dda11133cbf66e463a65319b6c1` (T003), `35921763e3ece10637e1db21d07aca669a889062` (T004), `1b5e5575781b8c9cb7220555e600dad6eebd6b50`
+(the port-retry flake), `22018414409da0eed9d33137f5a699355ba84ac5` (T005), `602b375b6fa61344440f321203cea2397dbdab56` (T006),
+`f612cc60112cc2cfc2cfc12619d577a76ce2b3fb` (T013), `f6538891199a6618b313b041aaeeac4247c31ec4` (T010), `9073312d7afb7803cefa7157ae765fac8c5b8fac` (T009).
+
+ACRYL's own HTTP routes leave DSH's `webServer` for the framework's router: each plugin builds one app and serves it under one
+`ctx.routerHttp.mount(prefix)`. Every slice kept its trust rules and recorded the answers that changed in `specs/048-ide-on-framework/plan.md`.
+
+- **Moved:**
+  - Desktop's own renderer routes, in their own `acryl-desktop/api` row (T003);
+  - the five sign-in routes (T004);
+  - plugin admin's lifecycle and architecture routes, and support's diagnostics download (T006);
+  - plugin-context's startup hold, which now sees a page leave through the request signal (T013).
+  - Capabilities that serve routes declare `needsRouter`, so a Blueprint without the `framework-kit` row is refused.
+- **Not blocking any more:** the terminal's PATH lookup ran the login shell synchronously on every workspace activation (about 1.2 s with
+  zsh). It is now one background process per shell, home and PATH, awaited only by a terminal start (T005).
+- **Taught:** the agent-facing plugin docs and the verified `host-route.basic` example use the router. An installed plugin names the
+  router modules in `dsh.requiresAcrylPackages` and `acrylblends` as a peer, and the install lint refuses `acrylblends` under `dependencies`,
+  which would bring a second framework copy (T010).
+- **Held:** `scripts/verify-layout.mjs` counts the remaining call sites and fails above and below `WEB_REGISTRATION_CEILING` (3), like the DSH
+  import ceiling (T009).
+- **Found and fixed:**
+  - Desktop's port-retry test raced other processes for the next port. The rule is now tested with a fake binder, and the one real-socket
+    test holds both ports itself.
+  - A new dependency on `acrylblends` without `@types/node` 22 made PNPM write a third, peer-keyed copy of acrylblends into the lock; the
+    devDependency keeps one.
+- **Left:** the workspace terminal's `registerUpgrade` and the two `engine-web.ts` delegate lines. They wait on WebSocket upgrades in
+  `acryl-router-http` (spec 047 T009, assigned to Blends); T007 and T008 then take the count and the ceiling to 0 together.
+- **Measured:** call sites 14 -> 3; DSH import lines 135 -> 135.
+- **Verified:** for every commit, the full local gate and CI, Windows, Desktop on Linux and Data green on the exact commit. Isolated live
+  runs (`scripts/live-run.mjs`) for T003 (Desktop from an old profile), T004 and T006 (Web), each ending with its port free and the real homes
+  untouched.
+
 ## 2026-10-27 (later) - M6 on the ACRYL side: the IDE consumes the framework from the published `acrylblends` (spec 049 slice 17)
 
 Commits:

@@ -10,7 +10,6 @@ import {
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
 import {
-  applyIsolatedDevHomeDefault,
   createAcrylEngineHost,
   createDshEngineDefinitionFromComposition,
   createProfileContext,
@@ -20,7 +19,6 @@ import {
 import { DESKTOP_SETTINGS_NAMESPACE } from '../lib/index.js'
 
 // See the matching comment in verify-loader-boot.mjs.
-applyIsolatedDevHomeDefault()
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 import { installProfilePackageResolver } from '../lib/module-resolution.js'
 import { desktopInstallAnchor, prepareDesktopProfile } from '../lib/profile.js'
@@ -30,6 +28,17 @@ const BIN_NAME = 'acryl-desktop-profile-smoke'
 const HOST_SERVICE_PLUGIN_NAME = 'dsh-desktop-host-services-smoke-plugin'
 const HOST_SERVICE_PROBE_KEY = 'desktopHostServiceProbe'
 const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-profile-'))
+// This smoke boots a real Desktop composition, and a Desktop root claims the app it serves and announces it with its port (spec 048 T011): the app home, the
+// run lock and the Registry entry all live under the OS home, so the smoke moves HOME too and writes into its own throwaway folder, never into the
+// developer's ~/.acryl-dev or the machine's real ~/.acryl-instances. `dsh-desktop.port` is fixed by the settings written below, so nothing else depends on
+// the real home.
+const isolatedHome = join(home, 'home')
+mkdirSync(isolatedHome, { recursive: true })
+process.env.HOME = isolatedHome
+process.env.USERPROFILE = isolatedHome
+process.env.ACRYL_HOME = join(home, 'acryl-home')
+// The engine home too: this smoke must not read or write the developer's ~/.acryl-dev/.dsh, and a DSH_HOME inherited from the caller would.
+process.env.DSH_HOME = join(home, 'acryl-home', '.dsh')
 let ctx
 let engineHost
 let releasePackageResolver

@@ -6,7 +6,7 @@
  *   node scripts/inspect-page.mjs [--port 9222] tabs                 the selected worktree's tab strip and the chat on screen
  *   node scripts/inspect-page.mjs [--port 9222] eval '<expression>'  any expression, awaited, printed as JSON
  *   node scripts/inspect-page.mjs [--port 9222] click <x> <y>        a real mouse click at CSS pixels (a user gesture, unlike element.click())
- *   node scripts/inspect-page.mjs [--port 9222] press <key> [meta,shift,alt,ctrl]   a real key press, for example `press . meta,shift`
+ *   node scripts/inspect-page.mjs [--port 9222] press <key> [meta,shift,alt,ctrl]   a real key press, for example `press . meta,shift` or `press Enter`
  *   node scripts/inspect-page.mjs [--port 9222] type <text>          type text into the focused element (click it first)
  *   node scripts/inspect-page.mjs [--port 9222] shot <file.png>      a screenshot
  *

@@ -414,3 +414,79 @@ describe('AcrPluginLifecycleController package-name operations', () => {
     )
   })
 })
+
+describe('AcrPluginLifecycleController module rows (spec 049 T001)', () => {
+  async function moduleHarness() {
+    const root = temporaryRoot()
+    const logPath = join(root, 'modules.log')
+    writeFileSync(join(root, 'store.mjs'), labelledModule('store', logPath))
+    writeFileSync(join(root, 'kv.mjs'), labelledModule('kv', logPath))
+    writeFileSync(join(root, 'broken.mjs'), "export const name = 'broken'\nexport function apply() { throw new Error('broken-module-7') }\n")
+    const ctx = new Context()
+    await ctx.plugin(Loader, { baseUrl: `file://${root}/` })
+    await ctx.loader.await()
+    const warnings: string[] = []
+    const host: PluginLifecycleHost = { isMutable: () => true, async setEnabled() {}, warn: message => warnings.push(message) }
+    const rowsOf = (module: string) => [...ctx.loader.entries()].filter(entry => entry.options.name === module)
+    return { ctx, controller: new AcrPluginLifecycleController(ctx, host), logPath, rowsOf, warnings }
+  }
+
+  it('inserts a missing module row for its first owner, adds no second row for another, and removes it when the last owner leaves', async () => {
+    const h = await moduleHarness()
+    await h.controller.requireModules('plugin-a', ['./store.mjs'])
+    expect(h.rowsOf('./store.mjs').map(entry => [entry.options.id, entry.fiber?.state])).toEqual([['./store.mjs', 2]])
+    await h.controller.requireModules('plugin-b', ['./store.mjs'])
+    // A repeated call for the same owner counts once: its later release still removes the row.
+    await h.controller.requireModules('plugin-a', ['./store.mjs'])
+    expect(h.rowsOf('./store.mjs')).toHaveLength(1)
+
+    await h.controller.requireModules('plugin-a', [])
+    expect(h.rowsOf('./store.mjs')).toHaveLength(1)
+    await h.controller.requireModules('plugin-b', [])
+    expect(h.rowsOf('./store.mjs')).toHaveLength(0)
+    expect(logLines(h.logPath)).toEqual(['store-mount', 'store-unmount'])
+  })
+
+  it('uses a module row that was mounted before and never removes it', async () => {
+    const h = await moduleHarness()
+    await h.ctx.loader.root.create({ id: 'kit-store', name: './store.mjs' } as never)
+    await h.ctx.loader.await()
+    await h.controller.requireModules('plugin-a', ['./store.mjs'])
+    await h.controller.requireModules('plugin-a', [])
+    expect(h.rowsOf('./store.mjs').map(entry => entry.options.id)).toEqual(['kit-store'])
+    expect(logLines(h.logPath)).toEqual(['store-mount'])
+  })
+
+  it('rolls back the rows a failing call inserted, keeps what was there, and names the module', async () => {
+    const h = await moduleHarness()
+    await h.controller.requireModules('plugin-a', ['./kv.mjs'])
+    await expect(h.controller.requireModules('plugin-b', ['./kv.mjs', './store.mjs', './broken.mjs']))
+      .rejects.toThrow(/\.\/broken\.mjs, which plugin-b needs, failed to start: .*broken-module-7/u)
+    expect(h.rowsOf('./store.mjs')).toHaveLength(0)
+    expect(h.rowsOf('./broken.mjs')).toHaveLength(0)
+    // plugin-b's join of the kv row was undone too: plugin-a leaving removes it.
+    expect(h.rowsOf('./kv.mjs')).toHaveLength(1)
+    await h.controller.requireModules('plugin-a', [])
+    expect(h.rowsOf('./kv.mjs')).toHaveLength(0)
+    expect(logLines(h.logPath)).toEqual(['kv-mount', 'store-mount', 'store-unmount', 'kv-unmount'])
+  })
+
+  it('refuses a module whose row is turned off and leaves it off', async () => {
+    const h = await moduleHarness()
+    await h.ctx.loader.root.create({ id: 'kit-store', name: './store.mjs', disabled: true } as never)
+    await h.ctx.loader.await()
+    await expect(h.controller.requireModules('plugin-a', ['./store.mjs'])).rejects.toThrow(/turned off in this app/u)
+    expect(h.rowsOf('./store.mjs').map(entry => [entry.options.id, entry.disabled])).toEqual([['kit-store', true]])
+    expect(logLines(h.logPath)).toEqual([])
+  })
+
+  it('an update that drops a module releases it once the modules still named are mounted', async () => {
+    const h = await moduleHarness()
+    await h.controller.requireModules('plugin-a', ['./store.mjs', './kv.mjs'])
+    await h.controller.requireModules('plugin-a', ['./kv.mjs'])
+    expect([h.rowsOf('./store.mjs').length, h.rowsOf('./kv.mjs').length]).toEqual([0, 1])
+    // A failing update releases nothing.
+    await expect(h.controller.requireModules('plugin-a', ['./broken.mjs'])).rejects.toThrow(/broken-module-7/u)
+    expect(h.rowsOf('./kv.mjs')).toHaveLength(1)
+  })
+})

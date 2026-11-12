@@ -7,7 +7,7 @@
 import type { Acryl } from 'acrylblends'
 import { privateApi as privateRoutes } from 'acryl-loopback-http/router'
 
-export { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+export { INVALID_JSON, jsonBody, ownPage, ownPageSocket, readJson, type ReportError } from 'acryl-loopback-http/router'
 
 /** Every workspace route lives below this path; it is the one prefix the plugin mounts on the Web server. */
 export const WORKSPACE_API_PREFIX = '/api/acryl-workspace'

@@ -15,8 +15,8 @@ test('the main working tree keeps every default', () => temp(dir => {
 test('a worktree gets its own home, port and Electron app name', () => temp(dir => {
   const wt = join(dir, '036-x'); mkdirSync(wt); writeFileSync(join(wt, '.git'), 'gitdir: x\n')
   const env = checkoutIsolation(wt, {}, '/h')
-  assert.equal(env.ACRYL_HOME, '/h/.acryl-worktrees/036-x')
-  assert.equal(env.DSH_HOME, '/h/.acryl-worktrees/036-x/.dsh')
+  assert.equal(env.ACRYL_HOME, join('/h', '.acryl-worktrees', '036-x'))
+  assert.equal(env.DSH_HOME, join('/h', '.acryl-worktrees', '036-x', '.dsh'))
   assert.equal(env.ACRYL_WEB_PORT, '3081')
   assert.equal(env.ACRYL_LOCAL_PRODUCT_NAME, 'ACRYL Development 036-x')
 }))

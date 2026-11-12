@@ -19,7 +19,9 @@ export function apply(ctx) {
 - `package.json`: `acrylblends` under `peerDependencies` (the app provides it; under `dependencies` the install is refused), and
   `"dsh": { "requiresAcrylPackages": ["acrylblends/cordis/router", "acrylblends/cordis/router-http"] }` so an installed plugin resolves the
   app's own copy.
-- The router comes from the app's `framework-kit` row (every built-in Blueprint has it). Without it the plugin is PENDING, not failed.
+- The router comes from the app's `framework-kit` row (every built-in Blueprint has it). In an app without it, the install mounts each module
+  `requiresAcrylPackages` names while the app runs, shares it with any other plugin that names it, and removes it with the last of them;
+  the next start composes it again for as long as such a plugin is installed.
 - Web and desktop only (tui has no web server). A client bundle can `fetch` the route to share state with the host and with other devices.
 - The handler gets a context `c`: `c.req.json()`, `c.req.query('x')`, `c.req.header('origin')`, and answers with `c.json(value, status)`,
   `c.text(...)` or `c.body(...)`. Validate every input; the route is reachable by the page and by any program on the machine unless you

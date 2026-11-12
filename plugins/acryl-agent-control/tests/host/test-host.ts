@@ -1,7 +1,7 @@
 /**
- * The Host as the plugin meets it, on a real loopback socket: a `webServer` with the Host's rule for prefix claims (exact path or below it,
- * longest first), which the real `routerHttp` adapter claims the plugin's prefix on, and an `acrylWeb` that records exact routes and serves
- * WebSocket upgrades. Counts every registration and release, so a test can prove one mount per activation and nothing left behind.
+ * The Host as the plugin meets it, on a real loopback socket: a `webServer` with the Host's rules (exact routes, then prefix claims for the path
+ * or below it, longest first; WebSocket upgrades by exact path), which the real `routerHttp` adapter claims the plugin's prefix on, and the
+ * `acrylWeb` address. Counts every registration and release, so a test can prove one mount per activation and nothing left behind.
  * {@link serveApi} serves route apps alone, composed as the plugin composes them, for the route tests.
  */
 
@@ -19,9 +19,9 @@ type UpgradeHandler = (req: IncomingMessage, socket: Duplex, head: Buffer) => vo
 export interface HostCounts {
   /** Prefixes claimed on `webServer` right now. */
   readonly prefixes: readonly string[]
-  /** Exact routes registered on `acrylWeb` right now. */
+  /** Exact routes registered on `webServer` right now. */
   readonly exact: readonly string[]
-  /** Upgrade paths registered on `acrylWeb` right now. */
+  /** Upgrade paths registered on `webServer` right now. */
   readonly upgrades: readonly string[]
   readonly prefixCalls: number
   readonly exactCalls: number
@@ -69,14 +69,16 @@ export async function testHost(): Promise<TestHost> {
     port,
     origin: `http://127.0.0.1:${String(port)}`,
     webServer: {
-      register: (route: { kind: 'prefix'; path: string; handler: Handler }) => { prefixCalls += 1; return claim(prefixes, route.path, route.handler) },
-    },
-    acrylWeb: {
       host: '127.0.0.1',
       port,
-      register: (route: { path: string; handler: Handler }) => { exactCalls += 1; return claim(exact, route.path, route.handler) },
+      register: (route: { kind: 'exact' | 'prefix'; path: string; handler: Handler }) => {
+        if (route.kind === 'exact') { exactCalls += 1; return claim(exact, route.path, route.handler) }
+        prefixCalls += 1
+        return claim(prefixes, route.path, route.handler)
+      },
       registerUpgrade: (route: { path: string; handler: UpgradeHandler }) => { upgradeCalls += 1; return claim(upgrades, route.path, route.handler) },
     },
+    acrylWeb: { host: '127.0.0.1', port },
     counts: () => ({
       prefixes: [...prefixes.keys()],
       exact: [...exact.keys()],

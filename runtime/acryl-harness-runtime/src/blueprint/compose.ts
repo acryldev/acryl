@@ -65,6 +65,8 @@ const ROWS: readonly RowDeclaration[] = [
   // editor, so this package no longer provides a service of its own (a second provider fails the client boot).
   { id: 'shortcuts', surfaces: ['web', 'desktop'], ...packageRow('acryl-shortcuts') },
   { id: 'mount-anchors', surfaces: ['web', 'desktop'], ...packageRow('acryl-mount-anchors') },
+  // A host command's reply on the start page, where the conversation that would show it is not drawn yet (spec 049 T002).
+  { id: 'command-reply', surfaces: ['web', 'desktop'], ...packageRow('acryl-command-reply') },
   // The three-column app frame a domain plugin claims for its own main UI (`desktop.main`), with the conversation beside it, instead of the stock
   // chat frame (blend-instance-design.md 0a). The IDE composes the same frame through its coding capabilities.
   { id: 'app-shell', surfaces: ['web', 'desktop'], ...packageRow('acryl-app-shell') },

@@ -1,6 +1,6 @@
 # 049 - Where a Blends app keeps its things (the product's storage design)
 
-Status: design, 2026-11-05, for owner review. Supersedes the "in the person's documents" wording of tasks.md T002 (that wording was written by
+Status: design, 2026-11-05, for owner review. Supersedes the "in the person's documents" wording of tasks.md T003 (that wording was written by
 AcrylImplementer; the owner never asked for Documents).
 
 ## The owner's requirement, in their words
@@ -19,7 +19,7 @@ says "An `App` is a self-contained ACRYL application."
 3. "Exists means it is theirs, never touch it" is the only upgrade rule. A new DMG therefore keeps the old state for ever (the owner's test on 2026-11-05) and
    there is no way to start clean, migrate or tell which version wrote the folder.
 4. The OS decides the location (`app.getPath('documents')`) outside `AppInstance`, the one module that is meant to decide where an app keeps anything.
-5. Windows and Linux have not been walked (T007), and the code path for them is the macOS one.
+5. Windows and Linux have not been walked (T008), and the code path for them is the macOS one.
 
 ## The books, applied
 
@@ -78,7 +78,7 @@ moves a folder, which also keeps paths short and legal on Windows (no reserved n
 - No symlinks in the tree (Windows needs privilege to make them); copies use `dereference`. Slugs are lower-case and compared case-insensitively
   (macOS and Windows are, Linux is not); reserved Windows names (CON, PRN, AUX, NUL, COM1-9, LPT1-9) and names ending in a dot or space are refused. Git runs with `core.autocrlf=false` and `core.longpaths=true` for the app's own repository.
 - A conformance test creates a root in a temp folder, runs first start, open, rename, export, import and reset, and writes the resulting tree as a
-  listing; the listing must be identical on every OS. It runs on this Mac and, in T007, on mbpi9win and z370n from the built installers.
+  listing; the listing must be identical on every OS. It runs on this Mac and, in T008, on mbpi9win and z370n from the built installers.
 
 ### The cases: where the program, the source and the data are (owner, 2026-11-11)
 
@@ -92,7 +92,7 @@ user, so nothing a person or an agent makes can live there. The program is one p
 | Dev mode (`acryl new shop`, then `npm run desktop`) | `shop/node_modules/` | `shop/` (`blend.yaml`, `plugins/`, `src/`; git) | `~/.acryl/apps/<id>/data/` |
 
 - The `<id>` of a dev-mode app is stored in its `blend.yaml`, never derived from the folder path, so moving or renaming `shop/` keeps its chats. (Today the
-  id is a digest of the path and the data is `shop/.acrylblends/`: that is what changes, task T026.)
+  id is a digest of the path and the data is `shop/.acrylblends/`: that is what changes, task T040.)
 - Dev mode to installed: export the folder as one `.acrylblend` file and import it (slice 4).
 - Windows paths are `C:\Users\<name>\.acryl\apps\<id>\...`. No per-OS rule anywhere.
 
@@ -126,7 +126,7 @@ a parameter so it is one more branch in one function when it is wanted.
    silently, never deleted); then mbpi9win and z370n from the installers.
 4. The 2026-11-05 failure as a test: install N, build a change, install N+1: the change and the chat remain, and Start over really starts clean.
 
-## Git on a clean machine (open, gates T002's "no git needed")
+## Git on a clean machine (open, gates T003's "no git needed")
 
 Source is a git repository, but a clean Mac without the Command Line Tools has only a `/usr/bin/git` shim that opens an install dialog, and Windows has no git. Export uses `git bundle` (source with full history in one file, data as a second entry). The product therefore needs a bundled git binary per OS or isomorphic-git; the implementer researches both, with sizes, and recommends before slice 5.
 
@@ -138,7 +138,7 @@ Source is a git repository, but a clean Mac without the Command Line Tools has o
 3. The framework resolved from the bundle instead of a copied `node_modules` (the slice that shrinks the app folder; report the size before and after).
 4. The frame pages: name your app, Settings (show, export, import, start over).
 5. Migration runner, the earlier-app import, the update walk.
-6. T007 walks on the other two OSes; tasks.md T002 reworded to this design in the same commit as slice 2.
+6. T008 walks on the other two OSes; tasks.md T003 reworded to this design in the same commit as slice 2.
 
 ## Open for the owner
 

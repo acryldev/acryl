@@ -365,6 +365,24 @@ describe('desktop profile composition', {
     expect(ids.filter(id => id === 'acryl-router' || id === 'acryl-state')).toEqual([])
   })
 
+  it('composes a module a plugin installed into the profile requires, once, so a row the running app mounted for it is there at the next start (spec 049 T001)', () => {
+    const home = temporaryHome()
+    const bundleDir = installBundle(home, 'acryl-probe-kv', '- insert:\n    - id: acryl-probe-kv\n      name: acryl-probe-kv\n')
+    const manifest = JSON.parse(readFileSync(join(bundleDir, 'package.json'), 'utf8')) as Record<string, { requiresAcrylPackages?: string[] }>
+    manifest.dsh = { ...manifest.dsh, requiresAcrylPackages: ['acrylblends/cordis/kv-json', 'acryl-state'] }
+    writeFileSync(join(bundleDir, 'package.json'), JSON.stringify(manifest))
+    const profileManifestPath = join(ensureDesktopProfile(home), 'package.json')
+    const profileManifest = JSON.parse(readFileSync(profileManifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
+    profileManifest.dsh.profile.bundles.push('acryl-probe-kv')
+    writeFileSync(profileManifestPath, JSON.stringify(profileManifest) + '\n')
+
+    const ids = composeEntries([prepareDesktopProfile(undefined, home, 'darwin').patches]).map(row => row.id)
+    expect(ids.filter(id => id === 'acrylblends/cordis/kv-json')).toHaveLength(1)
+    // Already in the framework kit: not a second row, and the old name is read as today's module.
+    expect(ids.filter(id => id === 'acrylblends/cordis/state')).toHaveLength(1)
+    expect(ids.filter(id => id === 'acryl-state')).toEqual([])
+  })
+
   it('inserts the community Market as one canonical row only after explicit selection', () => {
     const home = temporaryHome()
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', 'desktop', undefined, {

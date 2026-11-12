@@ -13,7 +13,7 @@ export { pullPlugin, PullError, type PulledPlugin, type PullOptions, type PullPo
 export { githubReleasesOverHttps, httpsDownload, npmRegistryOverHttps, type Fetch } from './http.js'
 export { createPluginHub, findSourceFolder, missingHostServices, type HubPorts, type InstalledPlugin, type InstallerPort, type InstallOutcome, type PluginHub, type PullResult, type PullStatus, type SaveResult, type UpdateResult } from './hub.js'
 export { checkContractShape, clientInjectFromSource, hostEntryOf, hostInjectFromSource, providedServices, readServiceContract, slotsInSource, syncServiceContract, type ServiceContract, type Side, type SideLists } from './contract.js'
-export { PLUGIN_LABELS, sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult, type Visibility } from './share.js'
+export { PLUGIN_LABELS, type PluginKind, sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult, type Visibility } from './share.js'
 export { firstReleasePort, gitCli, githubCli, githubReleasesViaGh, ToolError } from './github-cli.js'
 export { NPM_REGISTRY, publishToNpm, type NpmPublishOptions, type NpmPublishPort, type NpmPublishResult } from './npm-publish.js'
 export { firstRegistryPort, npmCli, npmRegistryViaCli } from './npm-cli.js'

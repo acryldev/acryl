@@ -10,7 +10,7 @@ import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
-import { applyIsolatedDevHomeDefault, selectInstance } from 'acryl-harness-runtime'
+import { selectInstance } from 'acryl-harness-runtime'
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 
 // Match the isolated `~/.acryl-dev` home `pnpm run dev` (the root
@@ -18,7 +18,6 @@ import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js
 // --filter acryl-desktop run dev`, which this file's own package.json chain
 // invokes without going through the root script - resolves the identical
 // home instead of silently falling back to the packaged-install default.
-applyIsolatedDevHomeDefault()
 import { installProfilePackageResolver } from '../lib/module-resolution.js'
 import { prepareDesktopProfile } from '../lib/profile.js'
 import { createDesktopWebProfile } from '../lib/profile-manager.js'
@@ -33,6 +32,16 @@ const RUNNER_ENVIRONMENT_NAMES = new Set([
   'NPM_CONFIG_DISTURL',
 ])
 const home = mkdtempSync(join(tmpdir(), 'dsh-desktop-loader-'))
+// This smoke boots a real Desktop composition, and a Desktop root claims the app it serves and announces it with its port (spec 048 T011): the Registry
+// entry lives under the OS home, so the smoke moves HOME and the app home into its throwaway folder, never into the developer's ~/.acryl-dev or the
+// machine's real ~/.acryl-instances.
+const isolatedHome = join(home, 'home')
+mkdirSync(isolatedHome, { recursive: true })
+process.env.HOME = isolatedHome
+process.env.USERPROFILE = isolatedHome
+process.env.ACRYL_HOME = join(home, 'acryl-home')
+// The engine home too: this smoke must not read or write the developer's ~/.acryl-dev/.dsh, and a DSH_HOME inherited from the caller would.
+process.env.DSH_HOME = join(home, 'acryl-home', '.dsh')
 let ctx
 let mounted
 let mountedSpec
@@ -178,7 +187,7 @@ try {
         host: '127.0.0.1',
         port: 43120,
         register() { return () => {} },
-        // The terminal stream registers a WebSocket upgrade route; the real server has this method.
+        // routerHttp claims the terminal stream's WebSocket upgrade path through it; the real server has this method.
         registerUpgrade() { return () => {} },
       })
       // `dsh-client-connection`'s own cordis.patch.yml config row spreads
@@ -230,6 +239,19 @@ try {
     console.error('patches count:', prepared.patches.length, JSON.stringify(prepared.patches).slice(0, 2000))
   }
   await runtime.mountScheduled()
+
+  // A row whose module never imported is a broken composition, not a warning: the boot only reports it, and on 2026-10-30 this check
+  // passed on Linux with two rows unimported (acryl-sign-in, the third-party smoke) while on macOS 178 rows failed and Desktop could not start.
+  // Rows waiting on a service the smoke does not provide stay PENDING and are allowed.
+  const unimported = []
+  for (const entry of ctx.loader.entries()) {
+    let disabled = false
+    try { disabled = entry.disabled } catch { disabled = false }
+    if (!disabled && entry.fiber === undefined) unimported.push(`${entry.options.id} (${entry.options.name})`)
+  }
+  if (unimported.length > 0) {
+    throw new Error(`${unimported.length} Loader row(s) failed to import: ${unimported.join(', ')}`)
+  }
 
   const desktopEntry = ctx.loader.resolve('include:desktop-shell')
   const marketEntry = ctx.loader.resolve('include:community-market')

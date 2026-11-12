@@ -42,6 +42,11 @@ export interface LivePluginActivation {
   activate(packageName: string): Promise<void>
   deactivate(packageName: string): Promise<void>
   /**
+   * Make the modules a plugin needs mounted (a module inside a package, such as `acrylblends/cordis/state`) and release the ones it no
+   * longer names; `[]` releases them all. A row inserted here is removed when its last plugin leaves (spec 049 T001).
+   */
+  requireModules(owner: string, modules: readonly string[]): Promise<void>
+  /**
    * Toggle a mounted entry by package name (spec 032 issue-01: the market's
    * Installed tab, which only knows package names, not Loader entry ids).
    * Resolves `false` when the package has no live entry, so the caller falls
@@ -133,6 +138,11 @@ export class PluginLifecycleController {
     return this.view.receipt(await this.lifecycle.deactivate(packageName))
   }
 
+  /** The modules a plugin needs, mounted for it and released when it no longer names them (spec 049 T001). */
+  requireModules(owner: string, modules: readonly string[]): Promise<void> {
+    return this.lifecycle.requireModules(owner, modules)
+  }
+
   /** Restart the fiber of a mounted plugin. Used by the development watcher. */
   async reloadByPackage(packageName: string): Promise<PluginLifecycleReceipt> {
     return this.view.receipt(await this.lifecycle.reloadByPackage(packageName))
@@ -175,6 +185,10 @@ export class LivePluginActivationService extends Service implements LivePluginAc
 
   async deactivate(packageName: string): Promise<void> {
     await this.controller.deactivate(packageName)
+  }
+
+  requireModules(owner: string, modules: readonly string[]): Promise<void> {
+    return this.controller.requireModules(owner, modules)
   }
 
   setEnabled(packageName: string, enabled: boolean): Promise<boolean> {

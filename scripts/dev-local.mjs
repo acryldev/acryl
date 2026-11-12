@@ -3,7 +3,7 @@
 
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, posix, resolve, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { withBuildLock } from './lib/build-lock.mjs'
 import { instanceEnvironment, osHomeDirectory, selectInstance } from './lib/instance-module.mjs'
@@ -27,11 +27,12 @@ export function localUserDataRoot(instance, platform = process.platform, osHome 
   if (platform === 'win32') {
     const appData = environment.APPDATA
     if (typeof appData !== 'string' || appData.length === 0) throw new Error('APPDATA is unavailable; cannot isolate Desktop user data')
-    return join(appData, instance.userDataName)
+    return win32.join(appData, instance.userDataName)
   }
-  if (platform === 'darwin') return join(osHome, 'Library', 'Application Support', instance.userDataName)
+  // Joined as `platform` writes paths, not as the machine running this does, so the answer for a named platform is the same everywhere.
+  if (platform === 'darwin') return posix.join(osHome, 'Library', 'Application Support', instance.userDataName)
   const config = environment.XDG_CONFIG_HOME
-  return join(typeof config === 'string' && config.length > 0 ? config : join(osHome, '.config'), instance.userDataName)
+  return posix.join(typeof config === 'string' && config.length > 0 ? config : posix.join(osHome, '.config'), instance.userDataName)
 }
 
 /**

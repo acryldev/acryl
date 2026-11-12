@@ -117,10 +117,6 @@ The other books under `~/.agents/rules/agent-rules-books/` (Release It!,
 DDIA, PEAA, DDD, implementing DDD, refactoring) are used where a problem
 calls for them, never instead of these five.
 
-The other books under `~/.agents/rules/agent-rules-books/` (Release It!,
-DDIA, PEAA, DDD, implementing DDD, refactoring) are used where a problem
-calls for them, never instead of these five.
-
 Precedence: the constitution, the Cordis coding-agent guide, and the ACRYL
 control-surface design win over this section; this section never overrides a
 documented seam or an owning-package contract. These are coding-style and

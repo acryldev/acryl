@@ -54,7 +54,7 @@ describe('plugin lifecycle state', () => {
   it('treats a missing state file as no overrides', () => {
     const path = statePath()
     expect([...readDisabledPluginLifecycleEntries({ profileName: 'desktop', statePath: path })]).toEqual([])
-    expect(pluginLifecyclePatches({ profileName: 'desktop', statePath: path })).toEqual([])
+    expect(pluginLifecyclePatches({ profileName: 'desktop', statePath: path }, new Set(['acryl-development-canvas']))).toEqual([])
   })
 
   it('persists a managed disable and removes it on enable', async () => {
@@ -70,7 +70,7 @@ describe('plugin lifecycle state', () => {
     expect([...readDisabledPluginLifecycleEntries(bootstrap)]).toEqual([
       'include:acryl-development-canvas',
     ])
-    expect(pluginLifecyclePatches(bootstrap)).toEqual([{
+    expect(pluginLifecyclePatches(bootstrap, new Set(['acryl-development-canvas']))).toEqual([{
       id: 'acryl-development-canvas',
       disabled: true,
     }])
@@ -99,8 +99,8 @@ describe('plugin lifecycle state', () => {
       false,
     )
 
-    expect(pluginLifecyclePatches({ profileName: 'desktop', statePath: path })).toEqual([])
-    expect(pluginLifecyclePatches({ profileName: 'work', statePath: path })).toHaveLength(1)
+    expect(pluginLifecyclePatches({ profileName: 'desktop', statePath: path }, new Set(['acryl-development-canvas']))).toEqual([])
+    expect(pluginLifecyclePatches({ profileName: 'work', statePath: path }, new Set(['acryl-development-canvas']))).toHaveLength(1)
   })
 
   it('keeps any well-formed entry id, drops malformed ones, fails closed on corruption', async () => {
@@ -190,8 +190,33 @@ describe('plugin lifecycle state', () => {
     writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'web', disabledEntries: ['include:extension-context', 'include:other'] }] }))
     const persistence = { profileName: 'web', statePath: path }
     expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:acryl-plugin-context', 'include:other'])
-    expect(pluginLifecyclePatches(persistence)).toEqual([{ id: 'acryl-plugin-context', disabled: true }, { id: 'other', disabled: true }])
+    expect(pluginLifecyclePatches(persistence, new Set(['acryl-plugin-context', 'other']))).toEqual([{ id: 'acryl-plugin-context', disabled: true }, { id: 'other', disabled: true }])
     await setPluginLifecycleEntryEnabled(persistence, 'include:other', true)
     expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:acryl-plugin-context'])
+  })
+
+  it('reads a disabled Development Canvas kept under its old row id as the row by its package name (spec 048 T014)', async () => {
+    // The stored form found in a real dev home: the canvas was turned off while its row id was still `desktop-development-canvas`.
+    const path = statePath()
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'desktop', disabledEntries: ['include:desktop-development-canvas'] }] }))
+    const persistence = { profileName: 'desktop', statePath: path }
+    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:acryl-development-canvas'])
+    expect(pluginLifecyclePatches(persistence, new Set(['acryl-development-canvas']))).toEqual([{ id: 'acryl-development-canvas', disabled: true }])
+    await setPluginLifecycleEntryEnabled(persistence, 'include:other', false)
+    expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:acryl-development-canvas', 'include:other'])
+  })
+
+  it('composes no disable for a row the profile does not have, and keeps it stored for when the plugin comes back (spec 048 T014)', async () => {
+    // The Development Canvas is a Market plugin: a home that disabled it and then uninstalled it booted with
+    // `patch: entry "desktop-development-canvas" not found` on every start.
+    const path = statePath()
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'desktop', disabledEntries: ['include:desktop-development-canvas', 'include:other'] }] }))
+    const persistence = { profileName: 'desktop', statePath: path }
+    expect(pluginLifecyclePatches(persistence, new Set(['other', 'desktop-shell']))).toEqual([{ id: 'other', disabled: true }])
+    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:acryl-development-canvas', 'include:other'])
+    expect(pluginLifecyclePatches(persistence, new Set(['acryl-development-canvas', 'other'])))
+      .toEqual([{ id: 'acryl-development-canvas', disabled: true }, { id: 'other', disabled: true }])
   })
 })
