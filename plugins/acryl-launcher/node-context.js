@@ -36,7 +36,7 @@ export function listAllApps(cwd, home) {
 
 /** An app's own plugins: its plugin folders that the library (plugins/library.lock.json) did not put there. */
 export function listPlugins(cwd, app) {
-  const root = join(cwd, app, 'plugins')
+  const root = join(resolve(cwd, app), 'plugins')   // an app from the list is a whole path, one in this folder a name
   let library = {}
   try { library = JSON.parse(readFileSync(join(root, 'library.lock.json'), 'utf8')).plugins ?? {} } catch {}
   return folders(root).filter(name => !(name in library)).sort().map(name => ({ value: name, label: name }))

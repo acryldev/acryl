@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { addApp, inspectApp, readApps, removeApp, runAppsCommand } from '../index.js'
-import { listAllApps, nodeContext } from '../node-context.js'
+import { listAllApps, listPlugins, nodeContext } from '../node-context.js'
 
 function scratch(run) {
   const root = mkdtempSync(join(tmpdir(), 'acryl-apps-'))
@@ -84,4 +84,11 @@ test('acryl apps lists, adds and removes, and says what to do when it cannot', (
   assert.equal(run('remove', 'shop'), 0)
   assert.equal(run('what'), 2)
   assert.deepEqual(readApps(home), [])
+}))
+
+test('the plugins of an app from the list are found by its whole path', () => scratch(root => {
+  const shop = app(root, 'shop')
+  mkdirSync(join(shop, 'plugins', 'cart'), { recursive: true })
+  assert.deepEqual(listPlugins(join(root, 'elsewhere'), shop).map(plugin => plugin.value), ['cart'])
+  assert.deepEqual(listPlugins(root, 'shop').map(plugin => plugin.value), ['cart'])
 }))
