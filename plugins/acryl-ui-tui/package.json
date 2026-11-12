@@ -8,11 +8,13 @@
   "exports": {
     ".": "./index.js",
     "./package.json": "./package.json",
-    "./palette": "./palette.js"
+    "./palette": "./palette.js",
+    "./scheme": "./scheme.js"
   },
   "files": [
     "index.js",
     "palette.js",
+    "scheme.js",
     "README.md"
   ],
   "peerDependencies": {
@@ -23,8 +25,8 @@
     "permissions": []
   },
   "scripts": {
-    "test": "node --test tests/conformance.test.mjs",
-    "check": "node --test tests/conformance.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "@earendil-works/pi-tui": "1.1.0"

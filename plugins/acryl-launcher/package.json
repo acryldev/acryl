@@ -1,0 +1,25 @@
+{
+  "name": "acryl-launcher",
+  "version": "0.1.0",
+  "description": "The ACRYL launcher's journeys (create an app, install a Blend, pull or share a plugin, update, check this machine, open ACRYL Code) and the session every face walks them with (spec 050)",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./node": "./node-context.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "journeys.js",
+    "session.js",
+    "node-context.js",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --test tests/*.test.mjs"
+  }
+}

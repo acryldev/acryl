@@ -53,6 +53,7 @@ packages:
   - apps/acryl-cli
   - apps/acryl-web
   - apps/acryl-desktop
+  - apps/acryl-launcher-tui
   - plugins/dsh-client-ui-brand-acryl
   - plugins/dsh-community-fabric
   - plugins/cordis-plugin-market
@@ -75,6 +76,7 @@ packages:
   - plugins/acryl-plugin-admin
   - plugins/acryl-support
   - plugins/acryl-agent-control
+  - plugins/acryl-launcher
   - '!deepseek-harness/**'
 
 allowBuilds:

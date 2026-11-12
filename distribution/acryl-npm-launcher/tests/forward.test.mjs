@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import test from 'node:test'
-import { appRoot, CREATE_SPEC, DOOR, forwardCommand, npmExec } from '../forward.js'
+import { appRoot, CREATE_SPEC, DOOR, forwardCommand, launcherCommand, npmExec } from '../forward.js'
 
 const execPath = '/usr/bin/node'
 const base = { env: {}, platform: 'linux', cwd: '/work/shop', execPath, exists: () => false }
@@ -69,4 +69,16 @@ test('outside an app, or with nothing to do, plugin says what to do instead of f
 
 test('every other word keeps its old meaning: acryl, acryl web, acryl desktop are not forwarded', () => {
   for (const argv of [[], ['web'], ['desktop'], ['--help'], ['chat']]) assert.equal(forwardCommand(argv, base), undefined)
+})
+
+test('what the launcher chose runs through this same acryl, or through npm for an app\'s own scripts, in the folder it names', () => {
+  const context = { ...base, cwd: '/work', bin: '/pkg/acryl/bin.js' }
+  assert.deepEqual(launcherCommand({ program: 'acryl', args: ['new', 'shop', 'notes'], cwd: '.' }, context), {
+    command: execPath, args: ['/pkg/acryl/bin.js', 'new', 'shop', 'notes'], cwd: resolve('/work'),
+  })
+  assert.deepEqual(launcherCommand({ program: 'acryl', args: ['plugin', 'pull', 'github:a/b'], cwd: 'shop' }, context), {
+    command: execPath, args: ['/pkg/acryl/bin.js', 'plugin', 'pull', 'github:a/b'], cwd: resolve('/work', 'shop'),
+  })
+  assert.deepEqual(launcherCommand({ program: 'npm', args: ['run', 'dev'], cwd: 'shop' }, context), { command: 'npm', args: ['run', 'dev'], cwd: resolve('/work', 'shop') })
+  assert.match(launcherCommand({ program: 'rm', args: ['-rf', '/'], cwd: '.' }, context).error, /does not run/u)
 })

@@ -111,6 +111,12 @@ test('packs every CLI_TARGETS archive, including the windows-x64 .zip', () => {
       `acryl-${version}.tgz`,
       ...Object.keys(CLI_TARGETS).map(target => `acryl-cli-${target}-${version}.tgz`).sort(),
     ].sort())
+    // The selector carries every file its package.json lists, the bundled launcher (spec 050) among them, and nothing it would have to install.
+    const listed = execFileSync(tarCommand(), ['-tzf', join(outDir, `acryl-${version}.tgz`)], { encoding: 'utf8' }).split(/\r?\n/u).filter(Boolean)
+    const launcherFiles = JSON.parse(readFileSync(new URL('../distribution/acryl-npm-launcher/package.json', import.meta.url), 'utf8')).files
+    for (const file of launcherFiles) assert.ok(listed.includes(`package/${file}`), `the acryl tarball lacks ${file}: ${listed.join(', ')}`)
+    const selectorManifest = JSON.parse(execFileSync(tarCommand(), ['-xzOf', join(outDir, `acryl-${version}.tgz`), 'package/package.json'], { encoding: 'utf8' }))
+    assert.equal(selectorManifest.dependencies, undefined, 'the selector installs nothing besides its optional runtime')
   } finally {
     rmSync(artifactDir, { recursive: true, force: true })
     rmSync(outDir, { recursive: true, force: true })

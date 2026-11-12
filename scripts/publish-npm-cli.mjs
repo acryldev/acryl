@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { bundleLauncher } from '../apps/acryl-launcher-tui/scripts/bundle.mjs'
 import { execShim, tarCommand } from './lib/portable-commands.mjs'
 import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
 
@@ -14,6 +15,7 @@ const selectorPackage = JSON.parse(readFileSync(join(selectorSource, 'package.js
 const version = selectorPackage.version
 // The launcher's own package.json lists what the selector ships; a second list here once left forward.js out of the tarball.
 const selectorFiles = selectorPackage.files.filter(file => file !== 'package.json')
+const LAUNCHER_BUNDLE = 'launcher.js'
 const requestedVersion = process.env.ACRYL_NPM_VERSION ?? version
 if (requestedVersion !== version) throw new Error(`publish-npm-cli: ACRYL_NPM_VERSION (${requestedVersion}) must equal workspace version (${version})`)
 const packOnlyIndex = process.argv.indexOf('--pack-only')
@@ -90,6 +92,8 @@ try {
     const selector = join(staging, 'acryl')
     mkdirSync(selector, { recursive: true })
     for (const file of selectorFiles) {
+      // launcher.js is made, not kept: the terminal launcher (spec 050) bundled into one file with nothing to install.
+      if (file === LAUNCHER_BUNDLE) { await bundleLauncher(join(selector, file)); continue }
       if (!existsSync(join(selectorSource, file))) throw new Error(`publish-npm-cli: the launcher lists ${file} in files but it is missing`)
       cpSync(join(selectorSource, file), join(selector, file))
     }

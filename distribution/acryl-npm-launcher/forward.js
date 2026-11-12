@@ -24,8 +24,12 @@ export const DOOR = join('plugins', 'acryl-door', 'src', 'cli', 'acryl.ts')
  * npm_execpath), else on Windows the npm CLI file that installs next to node.exe, run by node itself; only when neither exists `npm`, and `npm.cmd`
  * through a shell on Windows, as a .cmd file must be.
  */
-export function npmExec({ env, platform, execPath, exists = existsSync }, spec, rest) {
-  const args = ['exec', '--yes', spec, '--', ...rest]
+export function npmExec(context, spec, rest) {
+  return npmCommand(context, ['exec', '--yes', spec, '--', ...rest])
+}
+
+/** npm with these arguments, found as `npmExec` describes. */
+export function npmCommand({ env, platform, execPath, exists = existsSync }, args) {
   const cli = env.npm_execpath
   if (cli && /npm-cli\.c?js$/u.test(basename(cli))) return { command: execPath, args: [cli, ...args] }
   if (platform === 'win32') {
@@ -34,6 +38,17 @@ export function npmExec({ env, platform, execPath, exists = existsSync }, spec, 
     return { command: 'npm.cmd', args, shell: true }
   }
   return { command: 'npm', args }
+}
+
+/**
+ * What the launcher's chosen command runs (spec 050). `acryl ...` runs this same `acryl` again (`bin`, with the Node running it), so the launcher
+ * and the typed command take one path; `npm ...` (an app's own scripts) runs npm. `cwd` is the command's folder, relative to where acryl started.
+ */
+export function launcherCommand({ program, args, cwd: folder }, context) {
+  const cwd = resolve(context.cwd, folder)
+  if (program === 'acryl') return { command: context.execPath, args: [context.bin, ...args], cwd }
+  if (program === 'npm') return { ...npmCommand(context, args), cwd }
+  return { error: `the launcher asked to run ${program}, which acryl does not run` }
 }
 
 /** The app folder that holds this directory: the nearest parent with the door file. */
