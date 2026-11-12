@@ -46,7 +46,7 @@ describe('the ACRYL screen', () => {
     expect(await screen.findByText('apps on this machine')).toBeTruthy()
     const tiles = document.querySelector('.acrylHomeTiles')!
     expect(within(tiles as HTMLElement).getAllByText(/^[0-9]$/u).map(node => node.textContent)).toEqual(['2', '1', '0', '0'])
-    const cards = document.querySelectorAll('.acrylHomeApp')
+    const cards = document.querySelectorAll('.acrylHomeApp:not([data-code])')
     expect(cards).toHaveLength(2)
     expect(within(cards[0] as HTMLElement).getByText('Web')).toBeTruthy()
     expect(within(cards[0] as HTMLElement).getByText(/running/u)).toBeTruthy()
@@ -128,11 +128,11 @@ describe('the ACRYL screen', () => {
     expect(banner.textContent).toContain('npm error code ENOTFOUND')
   })
 
-  it('goes to ACRYL Code and comes back with the ACRYL button, and reads nothing while it is closed', async () => {
+  it('opens ACRYL Code from its card and comes back with the ACRYL button, and reads nothing while it is closed', async () => {
     const api = fake(state([app({})]))
     const visibility = open(api)
     await screen.findByRole('dialog', { name: 'ACRYL' })
-    fireEvent.click(screen.getByRole('button', { name: 'ACRYL Code' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open ACRYL Code' }))
     expect(visibility.isOpen()).toBe(false)
     expect(screen.queryByRole('dialog')).toBeNull()
     const reads = (api.state as ReturnType<typeof vi.fn>).mock.calls.length

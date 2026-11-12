@@ -72,8 +72,6 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         <div className="acrylHomeSep" />
         {nav('health', 'Health')}
         {nav('settings', 'Settings')}
-        <div className="acrylHomeSep" />
-        <button type="button" className="acrylHomeNavItem" onClick={() => { visibility.set(false) }}>ACRYL Code</button>
       </nav>
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}
@@ -85,7 +83,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const done = await act(() => api.create(request)); if (done) setPanel('none'); return done }}
             onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onRemove={id => act(() => api.remove(id))}
-            openExternal={openExternal}
+            openExternal={openExternal} onOpenCode={() => { visibility.set(false) }}
           />
         )}
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
@@ -136,11 +134,15 @@ interface AppsViewProps {
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
   readonly openExternal: (url: string) => void
+  /** Leave this screen for the coding workspace underneath it (ACRYL Code is the IDE in this same window). */
+  readonly onOpenCode: () => void
 }
 
 function AppsView(props: AppsViewProps): ReactNode {
   const shown = visibleApps(props.apps, props.search, props.surface)
   const { current } = props
+  // ACRYL Code (the IDE) is always on this machine and always a Desktop app: it answers the Desktop filter and the words it is named by.
+  const showCode = (props.surface === 'all' || props.surface === 'desktop') && 'acryl code ide'.includes(props.search.trim().toLowerCase())
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div className="acrylHomeTop">
@@ -165,23 +167,31 @@ function AppsView(props: AppsViewProps): ReactNode {
         <div className="acrylHomeTile"><b style={{ color: 'var(--h-cloud)' }}>{props.tiles.cloud}</b><span>on WebBoxes.ai</span></div>
       </div>
       <div className="acrylHomeGroup">Recent</div>
-      {props.apps.length === 0
-        ? <p className="acrylHomeNote">No apps yet. Press + New app to make one, or Add a folder to list one you already have.</p>
-        : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p>
-          : (
-            <div className="acrylHomeApps">
-              {shown.map(app => (
-                <button key={app.id} type="button" className="acrylHomeApp" aria-pressed={app.id === current?.id} onClick={() => { props.onSelect(app.id) }}>
-                  <div className="acrylHomeHead">
-                    <div className="acrylHomeIcon" style={{ background: iconColor(app.id) }}>{initial(app.name)}</div>
-                    <div style={{ minWidth: 0 }}><div className="acrylHomeName">{app.name}</div><div className="acrylHomeMeta">{app.blend === '' ? 'no Blend named' : app.blend}</div></div>
-                  </div>
-                  <div className="acrylHomeRow"><StateLabel app={app} /></div>
-                  <div className="acrylHomeRow"><SurfaceChip surface={app.surface} />{app.madeBy === 'agent' ? <span className="acrylHomePill" data-kind="agent">by agent</span> : null}</div>
-                </button>
-              ))}
+      <div className="acrylHomeApps">
+        {showCode && (
+          <div className="acrylHomeApp" data-code>
+            <div className="acrylHomeHead">
+              <div className="acrylHomeIcon" style={{ background: '#0f766e' }}>C</div>
+              <div style={{ minWidth: 0 }}><div className="acrylHomeName">ACRYL Code</div><div className="acrylHomeMeta">the coding IDE, in this window</div></div>
             </div>
-          )}
+            <div className="acrylHomeRow"><SurfaceChip surface="desktop" /></div>
+            <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-primary onClick={props.onOpenCode}>Open ACRYL Code</button></div>
+          </div>
+        )}
+        {shown.map(app => (
+          <button key={app.id} type="button" className="acrylHomeApp" aria-pressed={app.id === current?.id} onClick={() => { props.onSelect(app.id) }}>
+            <div className="acrylHomeHead">
+              <div className="acrylHomeIcon" style={{ background: iconColor(app.id) }}>{initial(app.name)}</div>
+              <div style={{ minWidth: 0 }}><div className="acrylHomeName">{app.name}</div><div className="acrylHomeMeta">{app.blend === '' ? 'no Blend named' : app.blend}</div></div>
+            </div>
+            <div className="acrylHomeRow"><StateLabel app={app} /></div>
+            <div className="acrylHomeRow"><SurfaceChip surface={app.surface} />{app.madeBy === 'agent' ? <span className="acrylHomePill" data-kind="agent">by agent</span> : null}</div>
+          </button>
+        ))}
+      </div>
+      {props.apps.length === 0
+        ? <p className="acrylHomeNote">No apps of your own yet. Press + New app to make one, or Add a folder to list one you already have.</p>
+        : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p> : null}
       {current === undefined ? null : <Detail app={current} onStart={props.onStart} onStop={props.onStop} onRemove={props.onRemove} openExternal={props.openExternal} />}
     </div>
   )
