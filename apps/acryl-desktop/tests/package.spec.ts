@@ -726,7 +726,7 @@ describe('published package surface', () => {
 
     // Five per-architecture desktop matrix jobs (not one universal build).
     expect(releaseDesktopWorkflow).toContain('os: macos-latest')
-    expect(releaseDesktopWorkflow).toContain('os: macos-14')
+    expect(releaseDesktopWorkflow).toContain('os: macos-15-intel')
     expect(releaseDesktopWorkflow).toContain('os: windows-latest')
     expect(releaseDesktopWorkflow).toContain('os: ubuntu-24.04-arm')
 
