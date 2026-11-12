@@ -106,12 +106,27 @@ adds one wildcard record at Spaceship (`*.box` A `213.47.80.26`); every box name
 Traefik file-provider route for `<id>.box.webboxes.ai` (Traefik's HTTP challenge needs an exact name, not a pattern) and removes it with
 the box; the certificate comes on the first visit and counts against webboxes.ai's own limit.
 
+**Changed again 2026-11-12: `https://<app id>.webboxes.ai`, like Base44.** The owner, pointing at their Base44 app
+`https://wbxai.base44.app`: "but i wanted to make it like base44.com they have shorter url no?", then "so let's drop .box." and "and
+only keep <appID>.webboxes.ai". The app id is a short public name, not the 36-character box id: the box name when it is free across every
+account (box names are unique only inside one account), else the name with a four-letter tail (`notes-k3x9`). Only the server sets it
+(a unique column `webboxes.app_id`; the signed-in user cannot write it). Names webboxes.ai uses or may use (`www`, `api`, `admin`, ...)
+are refused by both the web app and the runner, whose two lists a test keeps equal. The DNS record is `*` A `213.47.80.26` (not `*.box`);
+an explicit record such as `www` always wins over the wildcard, so the site itself is untouched. Sign-in tokens stay bound to the box id,
+never the app id, so a name reused after a box is gone never opens the new box with an old session.
+
+Named and accepted with the change: an app under webboxes.ai can set a cookie for all of `webboxes.ai` from its own page script, which the
+gate cannot strip. The main site's sign-in cookie should therefore move to a `__Host-` name (which no subdomain can set) before apps are
+open to strangers; a separate apps domain would remove the question entirely.
+
 ### W3 in detail (2026-11-12)
 
-1. **One route per box.** Traefik on z370n sends `https://<id>.box.webboxes.ai` to a second runner listener, the box gate (port 7071),
-   with a Let's Encrypt certificate per name (HTTP challenge), from a route file the runner writes when it creates the box.
+1. **One route per box.** Traefik on z370n sends `https://<app id>.webboxes.ai` to a second runner listener, the box gate (port 7071),
+   with a Let's Encrypt certificate per name (HTTP challenge), from a route file the runner writes when it creates the box. Traefik
+   watches only the top of its folder (a file in a subfolder is not reloaded when it changes, checked on z370n), so the runner writes
+   there.
 2. **Entering a box.** Only the signed-in owner of a box gets in. On webboxes.ai, "Open" checks the session and the row, as the preview
-   does today, and redirects to `https://<id>.<suffix>/__webbox/enter?t=<signed>`. The signature is the preview's HMAC scheme (same secret,
+   does today, and redirects to `https://<app id>.webboxes.ai/__webbox/enter?t=<signed>`. The signature is the preview's HMAC scheme (same secret,
    shared with the runner), valid two minutes. The gate checks it, sets a host-only cookie `__Host-webbox` (`Secure`, `HttpOnly`,
    `SameSite=Lax`, 12 hours), and redirects to the app's own launch address (its frame token, read from the box), so the ACRYL frame's own
    sign-in happens on that origin too.
@@ -120,8 +135,8 @@ the box; the certificate comes on the first visit and counts against webboxes.ai
    upgrades WebSockets, and closes an idle stream after 10 minutes instead of cutting every request at 30 seconds.
 4. **What the box checks** is acrylblends 1.5.2's trusted front: the peer is the runner's fixed address, the `Host` is the public host.
 
-Risk named: the home line's address can change; every sslip.io name then breaks until the template is re-pointed. The
-`<appId>.webboxes.ai` names (later, owner) remove that.
+Risk named: the home line's address can change; the one `*` record at Spaceship then needs the new address (the sslip.io names this
+risk was first written for are no longer used).
 
 ## Rules that stay in force
 
