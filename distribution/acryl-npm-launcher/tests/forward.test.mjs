@@ -49,7 +49,7 @@ test('acryl blends and acryl update run the acrylblends command', () => {
 })
 
 test('acryl plugin runs the door of the app this directory is in, from the app folder, whichever folder inside it', () => {
-  const root = '/work/shop'
+  const root = resolve('/work/shop') // appRoot resolves, which adds the drive letter on Windows
   const inApp = { ...base, cwd: join(root, 'plugins', 'clock'), exists: (p) => p === join(root, DOOR) }
   for (const word of ['plugin', 'plugins']) {
     assert.deepEqual(forwardCommand([word, 'publish', 'hello', '--owner', 'x'], inApp), {
@@ -63,7 +63,7 @@ test('acryl plugin runs the door of the app this directory is in, from the app f
 
 test('outside an app, or with nothing to do, plugin says what to do instead of failing obscurely', () => {
   assert.match(forwardCommand(['plugin', 'publish', 'x'], base).error, /inside an app folder/u)
-  const inApp = { ...base, exists: (p) => p === join('/work/shop', DOOR) }
+  const inApp = { ...base, exists: (p) => p === join(resolve('/work/shop'), DOOR) }
   assert.match(forwardCommand(['plugin'], inApp).error, /needs what to do/u)
 })
 
