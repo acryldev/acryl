@@ -6996,3 +6996,15 @@ Owner saw "ACRYL 2.0.17 is available" while ACRYL is 0.2.x. Cause: the update ch
 - **Installer download** now fetches the release asset `acryl-desktop-<mac|win>-<arch>-v<version>.<dmg|exe>` from the matching `v<version>` release; the CPU architecture (arm64 or x64, Windows x64 only) is part of the request. The existing confirmation, save-location, size and DMG/PE validation steps are unchanged.
 - **Tests:** updater and runtime specs updated, new asset-URL cases added; `acryl-desktop` typecheck clean.
 - **Not covered:** Linux (no in-app download, unchanged); no signature or checksum verification of the installer beyond the existing format checks. Not yet tried against a real newer release.
+
+## 2026-11-12 - 050: the launcher in a terminal; the npm selector shipped without forward.js
+
+Commits: `626a352c86b4e3db9136da8b2c991af7d797a937` (publish fix), `af923bc7df073eb2e40ad278320f5dbf19d83efa` (launcher), spec ledger `cc81c6e1a199569d88c6e01095b2fb873191221c`.
+
+Owner: users should not memorize commands or read docs; "acryl TUI mode where user interactively just is offered step by step". On the design page (`specs/050-acryl-launcher/design/launcher.html`): "ok, looks good for now, let's build first version this way".
+
+- **Publish fix first:** the CI of the merge 812333ef failed because `scripts/publish-npm-cli.mjs` kept its own list of the selector's files without `forward.js`; a published `acryl` 0.2.7 would not have started. The script now ships what the launcher's own `package.json` lists, and fails when a listed file is missing.
+- **Launcher:** `plugins/acryl-launcher` (journeys as data, the session state machine, the Node context) and `apps/acryl-launcher-tui` (pi-tui + acryl-ui-tui). A bare `acryl` in a terminal opens it; `acryl code` opens the IDE; without a terminal a bare `acryl` is unchanged. Each journey ends in the `acryl` command it shows, run through the same selector (`launcherCommand`), so the launcher cannot drift from the commands.
+- **Packaging:** the launcher is bundled at pack time into the `acryl` package as `launcher.js` (about 250 KB, Node built-ins only). `npx acryl` still downloads the 454 MB per-OS IDE runtime first; fetching it only for `acryl code` is 050 T009.
+- **Verified:** journeys 8/8, view 4/4 (40-120 columns, both palettes), a pseudo-terminal run of the packed selector (Enter x4 runs `acryl new my-app blank`), selector 31/31, publish 3/3 (the tarball carries every listed file), acryl-ui-tui 11/11, layout gate. Screens checked in a headless xterm at 80x24.
+- **Not yet:** a real `npx acryl` from npm (needs the 0.2.7 release), the Windows Terminal and Ubuntu walks, the "set up a model" journey (no command exists, T010), the desktop face (T004, after the workshop).
