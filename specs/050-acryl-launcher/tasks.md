@@ -19,8 +19,14 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
   Ubuntu.
   State 2026-11-12: `apps/acryl-launcher-tui`, opened by a bare `acryl` in a terminal (D1). tests/pty.test.mjs starts the packed selector
   with the real bundle in a pseudo-terminal, presses Enter four times and checks `acryl new my-app blank` ran (a local stand-in for
-  create-acrylblends, no network); it passes on this Mac and runs in the Linux and Windows CI. Open: the owner walk with a real `npx acryl` on Windows
-  Terminal and Ubuntu once 0.2.7 is published, where the app is made and started for real.
+  create-acrylblends, no network); it passes on this Mac and runs in the Linux and Windows CI.
+  Ubuntu walk 2026-11-12 (z370n, Node 24.14, a scratch home, the published `npx -y acryl@0.2.7` in a pseudo-terminal): the menu shows all
+  eight journeys; Enter on "Create an app", Enter at the name (`my-app`) and the starter (Blank) shows "This runs now: acryl new my-app
+  blank", then makes the app (131 files), installs it (586 packages, about a minute) and starts it at `http://127.0.0.1:3999/?token=...`;
+  Ctrl-C stops it and nothing keeps running. Found on the way and fixed in c7fb29c1: on Node 18 (the Ubuntu default) `acryl` failed with
+  "Invalid regular expression flags"; it now says it needs Node.js 22.19 and how to get it (ships with the next release). Seen, not yet
+  changed: npm's own install output (audit, funding, a deprecation warning) is the noisiest part of the journey for a beginner.
+  Open: the same walk on Windows Terminal.
 - [ ] T004 [desktop] The desktop face with `@acryl/ui` over the same service, per Q3.
   Done when: a Playwright run on the window makes the same app as T003; an app made in either face is listed in the other.
 - [ ] T005 [one file] The desktop launcher builds as one file per OS (DMG for macOS arm64 and x64, NSIS EXE for Windows x64, DEB for Ubuntu
