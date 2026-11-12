@@ -12,6 +12,9 @@ const bold = text => `\x1b[1m${text}\x1b[22m`
 const MENU_ROWS = JOURNEYS.length
 const HOME_ROWS = 12
 
+/** The three kinds of app (spec 050 D10), in the words the desktop screen uses; CLI (TUI) is listed but not yet made. */
+const SURFACE_LABEL = { web: 'Web', desktop: 'Desktop', tui: 'CLI (TUI)' }
+
 /** The rows of the home list after the apps (the mockup's footer: + New app, Blends store, Health), each opening one journey. */
 const ACTIONS = Object.freeze([
   { value: 'journey:create', label: '+ New app', description: 'asks where it goes, suggests ~/ACRYL' },
@@ -54,7 +57,7 @@ export function createLauncherView({ context, theme, requestRender = () => {}, f
   function showHome(selected) {
     const listed = apps()
     const rows = [
-      ...listed.map(app => ({ value: `app:${app.path}`, label: app.id, description: `${app.state}  ${app.blend || 'Blend'}`, detail: app.state === 'missing' ? `${app.path} - the folder is gone` : app.path })),
+      ...listed.map(app => ({ value: `app:${app.path}`, label: app.id, description: `${app.state}  ${SURFACE_LABEL[app.surface] ?? 'Web'}  ${app.blend || 'Blend'}`, detail: app.state === 'missing' ? `${app.path} - the folder is gone` : app.path })),
       ...ACTIONS,
     ]
     list = new SelectList(rows, Math.min(HOME_ROWS, rows.length), listTheme)

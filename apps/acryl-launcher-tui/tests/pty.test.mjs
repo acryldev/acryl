@@ -84,7 +84,7 @@ test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is liste
         if (Date.now() > until) throw new Error(`waited for the app list; the screen shows:\n${plain(again).slice(-2000)}`)
         await new Promise(resolve => setTimeout(resolve, 50))
       }
-      assert.match(plain(again), /my-app +ready +acrylblends\.blank/u)
+      assert.match(plain(again), /my-app +ready +Web +acrylblends\.blank/u)
     } finally { second.kill() }
     // `acryl model set deepseek` over a pipe (a script) stores the key owner-only and never prints it; the status shows only its tail.
     const KEY = 'sk-0123456789abcdef0123456789abcdef'

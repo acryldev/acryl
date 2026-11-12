@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { addApp, inspectApp, readApps, removeApp, runAppsCommand } from '../index.js'
+import { addApp, blendOf, inspectApp, readApps, removeApp, runAppsCommand } from '../index.js'
 import { listAllApps, listPlugins, nodeContext } from '../node-context.js'
 
 function scratch(run) {
@@ -22,7 +22,7 @@ test('an app joins the list once, with its Blend, and the list file is the only 
   assert.deepEqual(readApps(home), [])
   const first = addApp(home, { path: shop }, { now: () => '2026-11-12T10:00:00Z' })
   assert.equal(first.added, true)
-  assert.deepEqual({ ...first.entry }, { id: 'shop', path: shop, blend: 'acrylblends.notes', madeBy: 'person', added: '2026-11-12T10:00:00Z' })
+  assert.deepEqual({ ...first.entry }, { id: 'shop', path: shop, blend: 'acrylblends.notes', madeBy: 'person', surface: 'web', added: '2026-11-12T10:00:00Z' })
   assert.equal(addApp(home, { path: shop }).added, false, 'the same folder is not listed twice')
   assert.equal(readApps(home).length, 1)
   const other = addApp(home, { path: app(join(root, 'elsewhere'), 'shop'), madeBy: 'agent' })
@@ -91,4 +91,24 @@ test('the plugins of an app from the list are found by its whole path', () => sc
   mkdirSync(join(shop, 'plugins', 'cart'), { recursive: true })
   assert.deepEqual(listPlugins(join(root, 'elsewhere'), shop).map(plugin => plugin.value), ['cart'])
   assert.deepEqual(listPlugins(root, 'shop').map(plugin => plugin.value), ['cart'])
+}))
+
+test('an app has a surface: web unless said otherwise, desktop or tui when chosen, and an unknown one is web', () => scratch(root => {
+  const home = join(root, 'home')
+  assert.equal(addApp(home, { path: app(root, 'a') }).entry.surface, 'web')
+  assert.equal(addApp(home, { path: app(root, 'b'), surface: 'desktop' }).entry.surface, 'desktop')
+  assert.equal(addApp(home, { path: app(root, 'c'), surface: 'tui' }).entry.surface, 'tui')
+  assert.equal(addApp(home, { path: app(root, 'd'), surface: 'hologram' }).entry.surface, 'web')
+  assert.deepEqual(readApps(home).map(entry => entry.surface), ['web', 'desktop', 'tui', 'web'])
+  writeFileSync(join(home, 'apps.json'), JSON.stringify({ apps: [{ id: 'old', path: '/x', blend: 'b', madeBy: 'person', added: 't' }] }))
+  assert.equal(readApps(home)[0].surface, 'web', 'a list written before the field existed reads as web')
+}))
+
+test('the Blend of a real manifest is its metadata id, not the id of a row', () => scratch(root => {
+  const folder = join(root, 'shop')
+  mkdirSync(folder, { recursive: true })
+  writeFileSync(join(folder, 'blend.yaml'), '# comment\napiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.shop\n  name: shop\n  version: 0.1.0\nspec:\n  rows:\n    - id: router\n      name: acryl-router\n')
+  assert.equal(blendOf(folder), 'acrylblends.shop')
+  writeFileSync(join(folder, 'blend.yaml'), 'kind: Blueprint\nspec:\n  rows:\n    - id: router\n')
+  assert.equal(blendOf(folder), '', 'a row id is not the Blend')
 }))

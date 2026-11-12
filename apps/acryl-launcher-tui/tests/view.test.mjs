@@ -64,7 +64,7 @@ test('the home screen lists the apps on this machine; Enter opens one, u updates
   const withApps = () => open('dark', { registeredApps: () => [shop, gone] })
   const first = withApps()
   assert.match(first.screen(), /Your apps \(2\)/u)
-  assert.match(first.screen(), /shop {2,}ready {2}acrylblends\.notes/u)
+  assert.match(first.screen(), /shop {2,}ready {2}Web {2}acrylblends\.notes/u)
   assert.match(first.screen(), /│ \/home\/me\/ACRYL\/shop +│/u, 'the highlighted app shows its whole path')
   assert.match(first.screen(), /old {2,}missing/u)
   assert.match(first.screen(), /\+ New app/u)

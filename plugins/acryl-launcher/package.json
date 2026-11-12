@@ -6,13 +6,15 @@
   "private": true,
   "type": "module",
   "main": "./index.js",
+  "types": "./index.d.ts",
   "exports": {
-    ".": "./index.js",
+    ".": { "types": "./index.d.ts", "default": "./index.js" },
     "./node": "./node-context.js",
     "./package.json": "./package.json"
   },
   "files": [
     "index.js",
+    "index.d.ts",
     "journeys.js",
     "session.js",
     "apps-registry.js",
