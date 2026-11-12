@@ -1,0 +1,2 @@
+# Every checkout has the same line endings, on every OS. A plugin's digest counts every byte, so a CRLF checkout would make it a different plugin.
+* text=auto eol=lf

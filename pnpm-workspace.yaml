@@ -1,0 +1,9 @@
+# The ACRYL frame finds its packages in a flat node_modules, as npm lays it out (acrylblends writes this; npm ignores the file).
+nodeLinker: hoisted
+# The frame's packages whose install scripts npm runs too; pnpm stops an install while a build is neither allowed nor denied.
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  '@google/genai': true
+  koffi: true
+  node-pty: true
+  protobufjs: true
