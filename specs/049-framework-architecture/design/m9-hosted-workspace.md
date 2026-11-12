@@ -73,6 +73,28 @@ Each one is verifiable on its own:
 4. **The gate run.** Sign in, create a box from the starter, open its URL, ask its agent for a change, see the agent act on the page
    through the door, and see the change land as a commit. Recorded with the commit, URL and evidence.
 
+## Workshop plan (2026-11-12, target 2026-11-20, times CET)
+
+Facts checked 2026-11-12, read only: `webboxes.ai` resolves to 213.47.80.26, which is z370n's public address (home line, port
+forwarding to Coolify's Traefik `coolify-proxy`). So `<id>.213-47-80-26.sslip.io` reaches the same Traefik with no DNS change.
+z370n has 16 cores, 62 GB memory (42 GB available) and 206 GB free disk: room for about 30 boxes of 1 GB each.
+
+- W1, Fri 2026-11-13 18:00, acrylblends: "behind a trusted front" (C) and binding `0.0.0.0` (D), with tests on both sides of the
+  own-page rule. No outward action.
+- W2, Sat 2026-11-14 18:00, webboxesai: a box template that holds an `acryl new` app, prebuilt with its dependencies in the image
+  so a box starts in seconds; `curl` from the runner gets its page.
+- W3, Sun 2026-11-15 18:00, webboxesai + z370n (needs the owner's go, a Coolify/Traefik change on production): one route for
+  `*.213-47-80-26.sslip.io` to the runner with a certificate per name, the token-to-cookie exchange, the streaming proxy and the
+  forwarded headers (A, B).
+- W4, Mon 2026-11-16 18:00: browser only. Sign in on webboxes.ai, "New app", the box opens on its own address with the ACRYL frame and
+  its agent; the agent changes the app through the door.
+- W5, Tue 2026-11-17 18:00, acryl: `acryl deploy` in a local app folder sends it to a new box and prints its address (`acryl login`
+  once, with a token from the WebBoxes.ai dashboard), and a "Deploy to WebBoxes.ai" step in the launcher.
+- W6, Wed 2026-11-18: the dry run as an attendee, from a browser and from the three systems; Thu 2026-11-19 for fixes.
+
+Risk named: the home line's address can change; every sslip.io name then breaks until the template is re-pointed. The
+`<appId>.webboxes.ai` names (later, owner) remove that.
+
 ## Rules that stay in force
 
 - A push to webboxesai `main` deploys to production, so every push goes through the coordinator first.
