@@ -73,6 +73,22 @@ the need to know them at all.
 6. **Verification**: each journey runs headless against a scratch `ACRYL_HOME`; the TUI is driven by key presses in a pseudo-terminal; the
    desktop face by Playwright on the Electron window; both make the same app, file for file.
 
+## Direction: the launcher as the local app store and control center (owner, 2026-11-12, after D5)
+
+Owner's words: "this launcher can resolve the problem of separation of the application into the fixed part in /Applications/<APP NAME>
+and variable part in .acryl where it's hard to make it easy launchable with default experience as users get used to with normal
+non-self-updatable apps ... with launcher ACRYL it can become kind of a local App-store for all local apps built by acryl platform and
+agents, ad-hoc use cases launchpad, launcher and maintainer, operating Control Center Dashboard".
+
+What this means for the design (recorded, not yet designed in the lavish page):
+
+- The fixed part (`/Applications/ACRYL.app`, the `acryl` command) is one stable thing a person opens as usual. Everything that changes
+  (the apps people and agents make, their plugins, their updates) lives under `~/.acryl`, and the launcher is how a person sees and opens it.
+- The launcher lists every local app made with ACRYL (where it is, its Blend, whether it runs, whether an update waits), opens one with one
+  key or click, and offers its upkeep: update, check, share, remove.
+- It becomes the control center: which apps run, on which address, with which agents; stop and start them.
+- The terminal face and the desktop face both show it (D3: the desktop's first screen). Design first in `design/launcher.html`, then T011.
+
 ## Not in this spec
 
 The web face (WebBoxes) and signing/notarization of the desktop file (049 M11 T005) are separate; this spec only requires that the desktop

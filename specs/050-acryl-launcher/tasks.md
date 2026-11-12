@@ -41,3 +41,8 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
 - [ ] T010 [core] "Set up a model": a command that sets a model provider and key for an app (none exists yet: not in the CLI grammar, the
   acrylblends command or the app door), then its journey.
   Done when: the journey sets a working model for an app made by "create an app" and the command it shows does the same.
+- [ ] T011 [design, then both faces] The launcher as the local app store and control center (owner direction 2026-11-12, spec.md
+      "Direction"): every app made with ACRYL on this machine in one list (path, Blend, running or not, address, update waiting), open with one
+      key, and upkeep from the same place (update, check, share, stop, remove). Needs one registry of local apps under `~/.acryl` that
+      `acryl new` and `acryl deploy` write to. Designed in `design/launcher.html` first, for the owner's review.
+      Done when: the owner approves the design, and in the terminal face an app made by `acryl new` appears in the list and opens from it.
