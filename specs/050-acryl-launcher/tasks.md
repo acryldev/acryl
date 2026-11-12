@@ -63,3 +63,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       p pulls a plugin), "+ New app" asking for the folder (suggests ~/ACRYL, made if missing), `acryl --tui` (the same screen, needs a terminal)
       and `acryl --gui` (opens the installed desktop app, else fetches its installer). Not built yet: running state and the address in the list
       (the launcher runs nothing and records no port), update-waiting, start/stop, deploy, keep (agent apps); the desktop screen (T004).
+- [ ] T012 [desktop] Build the Control Center design (`design/control-center.html`) as the desktop screen (owner 2026-11-12 D10): the list and
+      numbers (apps, running, updates, on WebBoxes.ai), recent cards, the selected app's panel (Open, Stop, Deploy, Share, Open folder), search,
+      + New app (where, name, starter, surface) and Add a folder; each card shows its surface (Web, Desktop) and CLI (TUI) is greyed out with
+      "coming". Runs commands with the Node and npm on the machine and says so when missing (T005 comes after).
+      Done when: the screen opens as the first screen of the desktop app on this Mac in an isolated home, makes an app, lists an app made in the
+      terminal, and matches the design side by side.
+

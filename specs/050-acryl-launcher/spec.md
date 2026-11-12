@@ -117,6 +117,13 @@ file builds and runs unsigned on each OS.
 - D9. Both faces, the terminal list and the desktop screen, are built before the workshop of 2026-11-20 (owner: "we have more than a week").
   This supersedes D2 for the desktop face.
 
+- D10 (owner 2026-11-12, after seeing the Control Center design built as the desktop screen: "this is the ACRYL launcher that we wanted"). The
+  desktop screen is that design. Every app and every Blend has a **surface**, one of three: **Web** (served at an address, opened in a
+  browser or the app window), **Desktop** (a window of its own), and **CLI (TUI)** (the lightest kind: the same Cordis plugins, with a
+  terminal UI in place of a heavy GUI or web page, started in a terminal). The launcher shows the surface on each card and lets the person pick
+  it in "+ New app". **CLI (TUI) is shown greyed out for now** (the owner wants the third kind of app to exist; it is not built): the
+  card, the choice and the filter are there, disabled, with "coming" as the reason. Web and Desktop are the two that work.
+
 ## Packaging (decided while building, 2026-11-12)
 
 - The terminal launcher is bundled at pack time into the `acryl` npm package as one file, `launcher.js` (about 250 KB: the journeys,
