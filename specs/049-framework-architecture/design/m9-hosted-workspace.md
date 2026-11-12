@@ -92,6 +92,14 @@ z370n has 16 cores, 62 GB memory (42 GB available) and 206 GB free disk: room fo
   once, with a token from the WebBoxes.ai dashboard), and a "Deploy to WebBoxes.ai" step in the launcher.
 - W6, Wed 2026-11-18: the dry run as an attendee, from a browser and from the three systems; Thu 2026-11-19 for fixes.
 
+Owner answers of 2026-11-12 for the workshop:
+
+- z370n: "Feel free to update anything you want. This is our development server, Ubuntu ... fully ours, fully by our control, and running
+  in our own network". So W3's Traefik route on z370n is approved.
+- Model key: "i will provide 1 key for all". One workshop DeepSeek key, injected into every box at start as a secret (the existing key file
+  on z370n, read by the runner, never printed).
+- Attendees: 17 signed up (https://luma.com/nvede5nv); z370n's room for about 30 boxes is enough.
+
 Risk named: the home line's address can change; every sslip.io name then breaks until the template is re-pointed. The
 `<appId>.webboxes.ai` names (later, owner) remove that.
 
