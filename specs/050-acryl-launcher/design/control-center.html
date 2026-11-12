@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ACRYL Control Center</title>
+<title>ACRYL Home Screen</title>
 <style>
 :root {
   --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
@@ -134,9 +134,9 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 
 <header style="display:flex;flex-direction:column;gap:14px">
   <div class="eyebrow">Spec 050 · T011 · design for review</div>
-  <h1>ACRYL Control Center: one place for every app on this machine</h1>
-  <p class="lead">The launcher grows into a local app store, launchpad and maintainer for every app made with ACRYL, by people or by their agents. The fixed app in <code>/Applications</code> stays stable; everything that changes lives in <code>~/.acryl</code>, and this screen is how a person sees it, opens it and keeps it healthy.</p>
-  <p class="quote">"with launcher ACRYL it can become kind of a local App-store for all local apps built by acryl platform and agents, ad-hoc use cases launchpad, launcher and maintainer, operating Control Center Dashboard" (owner, 2026-11-12)</p>
+  <h1>ACRYL: one place for every app on this machine</h1>
+  <p class="lead">The launcher grows into a local app store, launchpad and maintainer for every app made with ACRYL, by people or by their agents. The fixed app in <code>/Applications</code> stays stable; everything that changes lives in <code>~/.acryl</code> and in the app folders, and this screen is how a person sees it, opens it and keeps it healthy. The screen is called just "ACRYL": the desktop app is ACRYL, and it launches everything ACRYL can do.</p>
+  <p class="quote">"with launcher ACRYL it can become kind of a local App-store for all local apps built by acryl platform and agents, ad-hoc use cases launchpad, launcher and maintainer, operating Control Center Dashboard" (owner, 2026-11-12). Decided the same day: the screen is just "ACRYL", not "Control Center".</p>
 </header>
 
 <section>
@@ -147,24 +147,24 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       <h3>Fixed <span class="pill off">changes on release only</span></h3>
       <p class="dim" style="margin-top:6px">Opened from the Dock or the Start menu, like any app. Signed, one file to install.</p>
       <div class="tree">/Applications/ACRYL.app
-  the Control Center (first screen, D3)
+  ACRYL itself (first screen, D3)
   the IDE runtime (acryl code)
 
 acryl            the command, same
                  screens in the terminal</div>
     </div>
-    <div class="bridge"><div class="line"></div>Control Center<br>reads and runs</div>
+    <div class="bridge"><div class="line"></div>ACRYL<br>reads and runs</div>
     <div class="card">
       <h3>Changing <span class="pill">grows every day</span></h3>
       <p class="dim" style="margin-top:6px">Everything people and agents make, update and share. One predictable home on every system.</p>
       <div class="tree">~/.acryl/
   apps.json        the list of local apps
-  apps/            apps the Control Center made
+  apps/            small apps and records
   plugins/.store   shared plugins
   runtimes/        IDE and engine versions
   logs/            one folder per running app
-~/work/shop        an app anywhere else,
-                   listed by its path</div>
+~/ACRYL/shop       apps live in a folder you
+                   choose, listed by path</div>
     </div>
   </div>
 </section>
@@ -173,10 +173,10 @@ acryl            the command, same
   <h2>Desktop face</h2>
   <p class="dim">The first screen of the one ACRYL desktop app (decision D3). Click the sections on the left and the app cards: every screen is a mockup with sample apps.</p>
 
-  <div class="win" aria-label="Control Center mockup">
+  <div class="win" aria-label="ACRYL mockup">
     <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>ACRYL</span></div>
     <div class="body">
-      <nav aria-label="Control Center sections">
+      <nav aria-label="ACRYL sections">
         <div class="brand">ACRYL</div>
         <button type="button" data-view="apps" aria-pressed="true">My apps <span class="count">6</span></button>
         <button type="button" data-view="running" aria-pressed="false">Running <span class="count">2</span></button>
@@ -224,7 +224,7 @@ acryl            the command, same
         <!-- DRAFTS -->
         <div class="view" data-name="drafts" hidden>
           <h3>Made by agents</h3>
-          <p class="dim" style="font-size:13.5px">Ad-hoc apps an agent built for one task. They wait here until you keep them (they join My apps) or discard them (the folder moves to the trash).</p>
+          <p class="dim" style="font-size:13.5px">An agent adds an app to ACRYL only when it asks you to keep it; until then it is just a folder wherever you told it to work. Keep adds it to My apps, Discard moves the folder to the trash. Once an app is part of your daily flow, "Move to Applications" turns it into <code>/Applications/&lt;name&gt;</code>.</p>
           <div class="list">
             <div class="li"><div class="icon" style="background:#a16207">I</div><div><b>invoice-split</b> <span class="pill agent">by agent</span><small>"split this month's invoices by client" · from the chat in shop · 2 h ago · 3 plugins</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
             <div class="li"><div class="icon" style="background:#a16207">T</div><div><b>trip-planner</b> <span class="pill agent">by agent</span><small>"plan the Vienna workshop logistics" · from ACRYL Code · yesterday · 1 plugin</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
@@ -277,7 +277,7 @@ acryl            the command, same
         <div class="view" data-name="settings" hidden>
           <h3>Settings</h3>
           <div class="kv" style="grid-template-columns:200px minmax(0,1fr)">
-            <dt>Where new apps go</dt><dd>~/.acryl/apps</dd>
+            <dt>Where new apps go</dt><dd>asks each time, suggests ~/ACRYL</dd>
             <dt>Open apps in</dt><dd>their own window</dd>
             <dt>On quit</dt><dd>stop the apps it started</dd>
             <dt>Model provider</dt><dd>DeepSeek (shared by every app)</dd>
@@ -314,7 +314,7 @@ acryl            the command, same
 <section>
   <h2>How the list stays true</h2>
   <div class="flow">
-    <div class="card"><h3>Made</h3><p class="dim" style="font-size:13.5px"><code>acryl new</code>, the store, and an agent that builds an app each add one line to <code>~/.acryl/apps.json</code>: id, path, Blend, who made it.</p></div>
+    <div class="card"><h3>Made</h3><p class="dim" style="font-size:13.5px"><code>acryl new</code>, the store, and an agent that builds an app add one line to <code>~/.acryl/apps.json</code>: id, path, Blend, who made it. An agent adds its line only when it asks to keep the app.</p></div>
     <div class="card"><h3>Found</h3><p class="dim" style="font-size:13.5px">"Add a folder" adds any folder with a <code>blend.yaml</code>. Nothing scans the disk by itself.</p></div>
     <div class="card"><h3>Checked</h3><p class="dim" style="font-size:13.5px">On open, each entry is checked: folder still there, running or not (its port), update waiting (registry index).</p></div>
     <div class="card"><h3>Acted on</h3><p class="dim" style="font-size:13.5px">Every button runs an existing command (<code>npm run dev</code>, <code>acryl update</code>, <code>acryl deploy</code>, <code>plugin publish</code>), shown before it runs.</p></div>
@@ -322,48 +322,12 @@ acryl            the command, same
 </section>
 
 <section>
-  <h2>Questions for you</h2>
-  <p class="dim">Pick an answer and press "Send this answer" under each question; nothing is sent until you do.</p>
+  <h2>Decided (owner, 2026-11-12)</h2>
   <div class="grid2">
-
-    <form class="card q" data-lavish-question="cc-name" onsubmit="return sendAnswer(event,'cc-name','What should the screen be called')">
-      <fieldset><legend>1. What is the screen called?</legend>
-        <label><input type="radio" name="answer" value="Control Center"><span>Control Center<small>your words; says "operate and maintain"</small></span></label>
-        <label><input type="radio" name="answer" value="Launchpad"><span>Launchpad<small>says "open things"; Apple uses the word</small></span></label>
-        <label><input type="radio" name="answer" value="ACRYL Home"><span>ACRYL Home<small>the start screen, plain</small></span></label>
-      </fieldset>
-      <textarea name="note" placeholder="Anything else (optional)"></textarea>
-      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
-    </form>
-
-    <form class="card q" data-lavish-question="agent-apps" onsubmit="return sendAnswer(event,'agent-apps','How apps made by agents appear')">
-      <fieldset><legend>2. Apps an agent makes on its own</legend>
-        <label><input type="radio" name="answer" value="Made by agents, keep or discard"><span>Listed under "Made by agents" until kept or discarded<small>as in the mockup; nothing gets lost, nothing clutters My apps</small></span></label>
-        <label><input type="radio" name="answer" value="Straight into My apps"><span>Straight into My apps<small>simplest; the list grows fast</small></span></label>
-        <label><input type="radio" name="answer" value="Only when the agent asks"><span>Only when the agent asks to keep it<small>quietest; a forgotten one stays a folder</small></span></label>
-      </fieldset>
-      <textarea name="note" placeholder="Anything else (optional)"></textarea>
-      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
-    </form>
-
-    <form class="card q" data-lavish-question="where-apps" onsubmit="return sendAnswer(event,'where-apps','Where new apps are made')">
-      <fieldset><legend>3. Where does "+ New app" put the folder?</legend>
-        <label><input type="radio" name="answer" value="~/.acryl/apps"><span><code>~/.acryl/apps/&lt;name&gt;</code><small>one predictable home, like everything else</small></span></label>
-        <label><input type="radio" name="answer" value="Ask each time"><span>Ask each time, default <code>~/Documents/ACRYL</code><small>easier to find in Finder and Explorer</small></span></label>
-      </fieldset>
-      <textarea name="note" placeholder="Anything else (optional)"></textarea>
-      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
-    </form>
-
-    <form class="card q" data-lavish-question="when" onsubmit="return sendAnswer(event,'when','When to build it')">
-      <fieldset><legend>4. When is it built?</legend>
-        <label><input type="radio" name="answer" value="Terminal list before 20.11, desktop after"><span>The terminal list before 20.11, the desktop screen after<small>fits D2; the workshop already gets "My apps" in <code>acryl</code></small></span></label>
-        <label><input type="radio" name="answer" value="All after 20.11"><span>All of it after the workshop<small>keeps the week for WebBoxes.ai and the walks</small></span></label>
-      </fieldset>
-      <textarea name="note" placeholder="Anything else (optional)"></textarea>
-      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
-    </form>
-
+    <div class="card"><h3>The screen is called "ACRYL"</h3><p class="dim" style="font-size:13.5px">It is the desktop app ACRYL, which launches everything ACRYL can do. On acryl.dev the page is laid out like the install pages of Hermes and OpenClaw (hermes-agent.nousresearch.com/#install, openclaw.ai/install).</p></div>
+    <div class="card"><h3>Agent apps: only when the agent asks</h3><p class="dim" style="font-size:13.5px">The user first chooses where an app lives; the default is a folder in the home folder (<code>~/ACRYL</code>). When an app joins the daily flow it can be moved to <code>/Applications/&lt;name&gt;</code>.</p></div>
+    <div class="card"><h3>New apps: ask each time</h3><p class="dim" style="font-size:13.5px">The question suggests <code>~/ACRYL</code>, a visible folder (the hidden <code>~/.acryl</code> keeps ACRYL's own records). The user can type any other place.</p></div>
+    <div class="card"><h3>All of it before 20.11</h3><p class="dim" style="font-size:13.5px">Terminal list and desktop screen both: "we have more than a week, come on!".</p></div>
   </div>
 </section>
 
@@ -371,12 +335,12 @@ acryl            the command, same
 
 <script>
 const APPS = [
-  { id: 'shop', name: 'shop', color: '#3652D9', blend: 'acryl.notes 1.3.0', state: 'run', where: '127.0.0.1:3080', path: '~/.acryl/apps/shop', by: 'you, 3 days ago', note: '' },
+  { id: 'shop', name: 'shop', color: '#3652D9', blend: 'acryl.notes 1.3.0', state: 'run', where: '127.0.0.1:3080', path: '~/ACRYL/shop', by: 'you, 3 days ago', note: '' },
   { id: 'code', name: 'ACRYL Code', color: '#0f766e', blend: 'acryl.code 0.2.7', state: 'run', where: '127.0.0.1:3010', path: 'the IDE, inside ACRYL.app', by: 'ACRYL', note: '' },
   { id: 'crm', name: 'crm', color: '#be123c', blend: 'acryl.crm 1.5.1', state: 'stop', where: '', path: '~/work/crm', by: 'you, last week', note: 'update', },
-  { id: 'todo', name: 'todo-demo', color: '#0369A1', blend: 'acryl.todo 1.0.0', state: 'cloud', where: 'a1b2.213-47-80-26.sslip.io', path: '~/.acryl/apps/todo-demo', by: 'you, today', note: '' },
-  { id: 'inv', name: 'invoice-split', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/.acryl/apps/invoice-split', by: 'agent in shop, 2 h ago', note: 'agent' },
-  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/.acryl/apps/trip-planner', by: 'agent in ACRYL Code, yesterday', note: 'agent' },
+  { id: 'todo', name: 'todo-demo', color: '#0369A1', blend: 'acryl.todo 1.0.0', state: 'cloud', where: 'a1b2.213-47-80-26.sslip.io', path: '~/ACRYL/todo-demo', by: 'you, today', note: '' },
+  { id: 'inv', name: 'invoice-split', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/ACRYL/invoice-split', by: 'agent in shop, 2 h ago', note: 'agent' },
+  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/ACRYL/trip-planner', by: 'agent in ACRYL Code, yesterday', note: 'agent' },
 ]
 const STATE = { run: ['run', 'running'], stop: ['stop', 'stopped'], cloud: ['cloud', 'on WebBoxes.ai'] }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
@@ -403,9 +367,9 @@ function renderDetail() {
   const extra = a.note === 'agent' ? '<button type="button" class="btn">Keep</button><button type="button" class="btn">Discard</button>' : ''
   const upd = a.note === 'update' ? '<button type="button" class="btn">Update to 1.6.0</button>' : ''
   document.getElementById('detail').innerHTML = `
-    <div class="toprow"><h3>${esc(a.name)}</h3><div class="acts">${main}${upd}${extra}<button type="button" class="btn">Deploy to WebBoxes.ai</button><button type="button" class="btn">Share</button><button type="button" class="btn">Open folder</button><button type="button" class="btn">...</button></div></div>
+    <div class="toprow"><h3>${esc(a.name)}</h3><div class="acts">${main}${upd}${extra}<button type="button" class="btn">Deploy to WebBoxes.ai</button><button type="button" class="btn">Share</button><button type="button" class="btn">Move to Applications</button><button type="button" class="btn">Open folder</button><button type="button" class="btn">...</button></div></div>
     <dl class="kv"><dt>Blend</dt><dd>${esc(a.blend)}</dd><dt>Folder</dt><dd>${esc(a.path)}</dd><dt>Made by</dt><dd>${esc(a.by)}</dd><dt>Address</dt><dd>${esc(a.where || 'not running')}</dd>
-    <dt>Runs</dt><dd>${a.state === 'run' ? 'npm run dev (started by the Control Center)' : a.state === 'cloud' ? 'on WebBoxes.ai, box a1b2' : 'cd ' + esc(a.path) + ' && npm run dev'}</dd></dl>`
+    <dt>Runs</dt><dd>${a.state === 'run' ? 'npm run dev (started by ACRYL)' : a.state === 'cloud' ? 'on WebBoxes.ai, box a1b2' : 'cd ' + esc(a.path) + ' && npm run dev'}</dd></dl>`
 }
 
 document.querySelectorAll('nav button[data-view]').forEach(b => b.addEventListener('click', () => {
@@ -423,7 +387,7 @@ function sendAnswer(event, key, topic) {
   if (!answer) { status.style.color = 'var(--warning)'; status.textContent = 'Pick an answer first.'; return false }
   const text = `${topic}: ${answer}${note ? ' (' + note + ')' : ''}`
   if (window.lavish && typeof window.lavish.queuePrompt === 'function') {
-    window.lavish.queuePrompt(`Control Center design answer. ${text}`, { tag: 'choice', text, element: form, queueKey: key, data: { question: key, answer, note } })
+    window.lavish.queuePrompt(`ACRYL design answer. ${text}`, { tag: 'choice', text, element: form, queueKey: key, data: { question: key, answer, note } })
     status.style.color = 'var(--success)'; status.textContent = 'Queued. Press "Send to Agent" when you are done.'
   } else {
     status.style.color = 'var(--dim)'; status.textContent = 'Not in a review session: tell the agent "' + text + '".'

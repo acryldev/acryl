@@ -1,6 +1,6 @@
 # Spec 050 - The ACRYL launcher: every step offered, in the terminal and on the desktop
 
-Status (2026-11-12): design, for the owner's review. The design page is [`design/launcher.html`](design/launcher.html) (reviewed with
+Status (2026-11-12): terminal face built; the app-list design (`design/control-center.html`) answered by the owner (D6-D9). The design page is [`design/launcher.html`](design/launcher.html) (reviewed with
 lavish-axi). Nothing is built yet. Tasks: [`tasks.md`](tasks.md).
 
 ## The owner's words (2026-11-12)
@@ -105,6 +105,17 @@ file builds and runs unsigned on each OS.
   to the acrylblends package, the IDE is the Blend `acryl.code`, 049 D9).
 - D5 (owner, 2026-11-12). `acryl` is the one central tool for everything (making apps, launching, servicing), TUI and tool in one
   easy-to-remember name, the way `hermes` is for its platform. Owner's go for release 0.2.7 so `npx acryl` shows the launcher.
+
+- D6 (owner, 2026-11-12, on `design/control-center.html`). The screen is called just "ACRYL": the desktop app ACRYL, which launches
+  everything ACRYL can do. On acryl.dev it is presented like the install pages of Hermes and OpenClaw
+  (hermes-agent.nousresearch.com/#install, openclaw.ai/install). Not "Control Center", not "ACRYL Home".
+- D7. An app an agent makes joins the list only when the agent asks to keep it. The user first chooses where it lives (default a folder in
+  the home folder, `~/ACRYL`); when it becomes part of the daily flow it can be moved to `/Applications/<name>`.
+- D8. "+ New app" asks where each time and suggests `~/ACRYL` (a visible folder). The hidden `~/.acryl` keeps ACRYL's own records (the list
+  `apps.json`, shared plugins, runtimes, logs), not the apps. The owner wrote "~/acryl or ~/ACRYL"; `~/ACRYL` is the suggestion until they
+  say otherwise.
+- D9. Both faces, the terminal list and the desktop screen, are built before the workshop of 2026-11-20 (owner: "we have more than a week").
+  This supersedes D2 for the desktop face.
 
 ## Packaging (decided while building, 2026-11-12)
 

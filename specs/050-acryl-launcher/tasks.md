@@ -52,3 +52,5 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       key, and upkeep from the same place (update, check, share, stop, remove). Needs one registry of local apps under `~/.acryl` that
       `acryl new` and `acryl deploy` write to. Designed in `design/launcher.html` first, for the owner's review.
       Done when: the owner approves the design, and in the terminal face an app made by `acryl new` appears in the list and opens from it.
+      State 2026-11-12: design in `design/control-center.html`, answered by the owner (spec.md D6-D9). Build order: the registry
+      `~/.acryl/apps.json` and the list in the terminal face first, then the desktop screen, both before the workshop of 2026-11-20.
