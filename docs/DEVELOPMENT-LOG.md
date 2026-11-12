@@ -1,3 +1,13 @@
+## 2026-11-12 - the ACRYL app screen in the terminal: a list of local apps, `acryl apps`, `acryl --tui`, `acryl --gui` (spec 050 T011)
+
+The owner asked for the launcher as the local app store and control center, with one screen called ACRYL in the terminal and on the desktop. The terminal half is built; the desktop screen is the next slice.
+
+- **The list** (`8dac20b965ccc5335930b1e53482fd31b7572d13`): `~/.acryl/apps.json` is the only state (`plugins/acryl-launcher/apps-registry.js`: id, path, Blend, who made it, when). Nothing scans the disk; an app is listed because `acryl new` made it (the selector adds it when the command ends, even after Ctrl-C), someone ran `acryl apps add <folder>`, or the launcher's "Add an app folder" did. Whether a folder is still there is read when the list is shown, never stored. The home folder is a parameter: only the selector (`distribution/acryl-npm-launcher/cli.js`) chooses `~/.acryl` and `~/ACRYL`, so the bulkhead rule holds.
+- **The screen**: a bare `acryl` in a terminal and `acryl --tui` open the home screen: the apps with state and Blend, then + New app, Blends store, Add an app folder, Health, ACRYL Code, All things to do. Enter opens an app, `u` updates it, `p` pulls a plugin into it; the command is shown before it runs. "+ New app" now asks for the folder first and suggests `~/ACRYL`, made if missing.
+- **`acryl --gui`** opens the installed desktop app (`desktop-open.js`: /Applications/ACRYL.app, %LOCALAPPDATA%\Programs\ACRYL\ACRYL.exe, /opt/ACRYL/acryl-desktop) and otherwise fetches the installer for this version.
+- **Not built yet**: running state and address in the list (the launcher runs nothing and records no port), update-waiting, start/stop, deploy, keep for agent apps, and the desktop screen (spec 050 T004).
+- **Proven**: the launcher, TUI and selector test suites; a pseudo-terminal run with a scratch HOME makes an app in `~/ACRYL`, finds it in `apps.json`, lists it with `acryl apps` and shows it on `acryl --tui`.
+
 ## 2026-11-06 - a plugin's identity and portability are pure policy in blends-core 0.5.0 (spec 049, portable plugins step 1)
 
 A plugin written on Windows must work on macOS after a pull from the registry, and Git for Windows' default line endings broke that: the same plugin with CRLF digests differently, so it can fail its own lock on another machine.
