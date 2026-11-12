@@ -100,10 +100,16 @@ Owner answers of 2026-11-12 for the workshop:
   on z370n, read by the runner, never printed).
 - Attendees: 17 signed up (https://luma.com/nvede5nv); z370n's room for about 30 boxes is enough.
 
+**Changed 2026-11-12, same day: `<id>.box.webboxes.ai` instead of sslip.io.** sslip.io is not on the Public Suffix List (checked
+against publicsuffix.org), so every sslip.io certificate in the world shares Let's Encrypt's 50 a week and a box would get none. The owner
+adds one wildcard record at Spaceship (`*.box` A `213.47.80.26`); every box name then resolves by itself. Per box, the runner writes one
+Traefik file-provider route for `<id>.box.webboxes.ai` (Traefik's HTTP challenge needs an exact name, not a pattern) and removes it with
+the box; the certificate comes on the first visit and counts against webboxes.ai's own limit.
+
 ### W3 in detail (2026-11-12)
 
-1. **One route.** Traefik on z370n sends every `https://<id>.213-47-80-26.sslip.io` request to a second runner listener, the box gate
-   (port 7071), with a Let's Encrypt certificate per name (HTTP challenge; sslip.io answers with the public address).
+1. **One route per box.** Traefik on z370n sends `https://<id>.box.webboxes.ai` to a second runner listener, the box gate (port 7071),
+   with a Let's Encrypt certificate per name (HTTP challenge), from a route file the runner writes when it creates the box.
 2. **Entering a box.** Only the signed-in owner of a box gets in. On webboxes.ai, "Open" checks the session and the row, as the preview
    does today, and redirects to `https://<id>.<suffix>/__webbox/enter?t=<signed>`. The signature is the preview's HMAC scheme (same secret,
    shared with the runner), valid two minutes. The gate checks it, sets a host-only cookie `__Host-webbox` (`Secure`, `HttpOnly`,
