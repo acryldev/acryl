@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL Launcher</title>
+<style>
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --secondary: #0369A1; --success: #047857; --warning: #B45309; --error: #DC2626;
+  --term-bg: #0b0b0d; --term-text: #e8e8ea; --term-dim: #8b8b93; --term-primary: #4F6BFE; --term-success: #34D399; --term-warning: #FBBF24; --term-sel: rgba(79,107,254,.22);
+  --win-bar: #e4e4ea;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --warning: #FBBF24; --error: #F87171;
+  --win-bar: #222226; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --warning: #FBBF24; --error: #F87171;
+  --win-bar: #222226; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 44px; }
+h1 { font-size: 34px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 72ch; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.quote { border-left: 3px solid var(--primary); padding: 4px 0 4px 16px; color: var(--dim); font-style: italic; max-width: 80ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.grid2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.dim { color: var(--dim); }
+.tag { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); }
+.before, .after { display: flex; flex-direction: column; gap: 10px; }
+.before pre, .after pre { margin: 0; background: var(--surface-2); border-radius: 8px; padding: 12px; font: 12.5px/1.6 var(--mono); overflow-x: auto; }
+.bad { color: var(--error); } .good { color: var(--success); }
+.journey { display: flex; flex-direction: column; gap: 6px; }
+.journey .cmd { font: 12px/1.4 var(--mono); color: var(--dim); overflow-wrap: anywhere; }
+
+/* step switcher */
+.steps { display: flex; flex-wrap: wrap; gap: 8px; }
+.steps button { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 99px; cursor: pointer; }
+.steps button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* terminal mock */
+.term { background: var(--term-bg); color: var(--term-text); border-radius: 12px; border: 1px solid #2a2a2f; overflow: hidden; min-width: 0; }
+.term .bar { display: flex; gap: 6px; align-items: center; padding: 9px 12px; background: #18181b; border-bottom: 1px solid #2a2a2f; font: 12px var(--mono); color: var(--term-dim); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #3a3a40; }
+.term .screen { font: 13px/1.6 var(--mono); padding: 16px 18px 18px; min-height: 360px; overflow-x: auto; white-space: pre; }
+.t-p { color: var(--term-primary); } .t-d { color: var(--term-dim); } .t-s { color: var(--term-success); } .t-w { color: var(--term-warning); }
+.t-sel { background: var(--term-sel); color: #fff; display: inline-block; min-width: 46ch; }
+.t-box { color: #3a3a46; }
+
+/* desktop mock */
+.win { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; box-shadow: 0 12px 30px -18px rgba(0,0,0,.35); }
+.win .bar { display: flex; gap: 6px; align-items: center; padding: 9px 12px; background: var(--win-bar); font: 12px var(--sans); color: var(--dim); }
+.win .bar span { margin-left: 8px; }
+.win .body { display: grid; grid-template-columns: 170px minmax(0,1fr); min-height: 360px; }
+.win nav { border-right: 1px solid var(--border); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; background: var(--surface-2); }
+.win nav div { padding: 6px 10px; border-radius: 6px; color: var(--dim); }
+.win nav div.on { background: var(--primary-dim); color: var(--primary); font-weight: 600; }
+.win main { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.win .crumbs { font-size: 12px; color: var(--dim); }
+.opt { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.opt.on { border-color: var(--primary); background: var(--primary-dim); }
+.opt .r { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--dim); margin-top: 3px; flex: none; }
+.opt.on .r { border-color: var(--primary); box-shadow: inset 0 0 0 3px var(--surface); background: var(--primary); }
+.opt small { display: block; color: var(--dim); font-size: 12.5px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.field .box { border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: 14px var(--mono); background: var(--bg); }
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: auto; flex-wrap: wrap; }
+.btn { font: 600 13px var(--sans); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.progress { height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--primary); }
+.log { font: 12px/1.6 var(--mono); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; color: var(--dim); white-space: pre-wrap; }
+.learn { border: 1px dashed var(--primary); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.learn code { background: transparent; padding: 0; }
+
+/* diagram */
+.fig { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow-x: auto; }
+.fig svg { width: 100%; min-width: 640px; height: auto; display: block; }
+.fig text { font-family: var(--sans); font-size: 13px; fill: var(--text); }
+.fig .small { font-size: 11.5px; fill: var(--dim); }
+.fig .node { fill: var(--surface-2); stroke: var(--border); }
+.fig .core { fill: var(--primary-dim); stroke: var(--primary); }
+.fig .edge { stroke: var(--dim); stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.tablewrap { overflow-x: auto; }
+
+form.q { display: flex; flex-direction: column; gap: 10px; }
+form.q label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+form.q label:has(input:checked) { border-color: var(--primary); background: var(--primary-dim); }
+form.q input[type=radio] { margin-top: 4px; accent-color: var(--primary); }
+form.q textarea { font: 14px var(--sans); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); min-height: 52px; }
+form.q button { align-self: flex-start; }
+.rec { font: 600 11px var(--mono); color: var(--success); margin-left: 6px; }
+ol.plan { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 640px) { .win .body { grid-template-columns: 1fr; } .win nav { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); } h1 { font-size: 27px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <span class="eyebrow">Spec 050 · design for review · 2026-11-12</span>
+  <h1>The ACRYL launcher: nothing to memorize</h1>
+  <p class="lead">One list of things a person can do with ACRYL, offered step by step. The same steps in the terminal (<code>npx acryl</code>) and in a desktop app you download as one file. Every step runs a command that already exists, and shows that command at the end.</p>
+  <p class="quote">"user interactively just is offered step by step interaction to choose what to do instead of memorizing commands ... users just download this binary exe/deb/DMG and nothing more ... or they run single npm command to invoke TUI mode" (owner, 2026-11-12)</p>
+</header>
+
+<section id="before-after">
+  <span class="eyebrow">Why</span>
+  <h2>Today a person needs the commands; with the launcher they need one</h2>
+  <div class="grid2">
+    <div class="card before">
+      <h3><span class="bad">Today</span>: six commands from the guide</h3>
+      <pre>npm create acrylblends@latest my-app agent -- --desktop
+cd my-app && npm install
+npm run dev            <span class="dim"># or: npm run desktop</span>
+npm run acryl -- plugin pull github:ana/clock@1.0.0@sha256:…
+npx acrylblends upgrade
+npx acrylblends open   <span class="dim"># the address again</span></pre>
+      <p class="dim">The Sentry talk (2026-11-11): "it looked complicated to the audience".</p>
+    </div>
+    <div class="card after">
+      <h3><span class="good">With the launcher</span>: one command, or one download</h3>
+      <pre>npx acryl
+<span class="dim">  ❯ Create an app      Enter
+    Starter: Blank     Enter
+    Name: my-app       Enter   → the app opens in the frame</span></pre>
+      <p class="dim">Or download <b>ACRYL</b> (DMG, EXE, DEB), open it, press <b>Create an app</b>. No Node, npm or terminal.</p>
+    </div>
+  </div>
+</section>
+
+<section id="journeys">
+  <span class="eyebrow">What the launcher offers</span>
+  <h2>Nine things to do, each ending with the command that does it</h2>
+  <div class="grid">
+    <div class="card journey"><h3>Create an app</h3><p class="dim">Blank, a starter (notes, chat, todo, agent) or a Blend from the registry; opens in the frame.</p><span class="cmd">acryl new my-app notes</span></div>
+    <div class="card journey"><h3>Open an app</h3><p class="dim">Your apps in <code>~/.acryl/apps</code>, in the browser or its own window.</p><span class="cmd">cd my-app && npm run dev</span></div>
+    <div class="card journey"><h3>Install a Blend</h3><p class="dim">Pick from the registry (CRM, notes, the ACRYL IDE as <code>acryl.code</code>).</p><span class="cmd">acryl install acryl.crm <span title="049 M13 T034 names it; not built yet">(new)</span></span></div>
+    <div class="card journey"><h3>Pull a plugin</h3><p class="dim">From a person's GitHub or the plugin registry, digest checked, into a chosen app.</p><span class="cmd">acryl plugin pull github:ana/clock</span></div>
+    <div class="card journey"><h3>Share a plugin</h3><p class="dim">Publish one of your app's plugins so others can pull it.</p><span class="cmd">acryl plugin publish clock</span></div>
+    <div class="card journey"><h3>Set up a model</h3><p class="dim">DeepSeek key, Claude or ChatGPT sign-in; kept in the app's own store.</p><span class="cmd">(Settings › Models)</span></div>
+    <div class="card journey"><h3>Update</h3><p class="dim">ACRYL itself, or an app to the current release, with a preview first.</p><span class="cmd">acryl update</span></div>
+    <div class="card journey"><h3>Check this machine</h3><p class="dim">Node, git, ports, disk; each problem with its fix.</p><span class="cmd">acryl blends preflight</span></div>
+    <div class="card journey"><h3>Open ACRYL Code</h3><p class="dim">The IDE, which is one Blend (049 D9).</p><span class="cmd">acryl code</span></div>
+  </div>
+</section>
+
+<section id="faces">
+  <span class="eyebrow">The two faces, one flow</span>
+  <h2>"Create an app", step by step, in the terminal and on the desktop</h2>
+  <p class="dim">Pick a step; both faces show the same step. Arrows and Enter in the terminal, clicks on the desktop. Esc goes back, nothing runs before the confirm step.</p>
+  <div class="steps" role="group" aria-label="Step">
+    <button type="button" aria-pressed="true" data-step="0">1 · What to do</button>
+    <button type="button" aria-pressed="false" data-step="1">2 · Starter</button>
+    <button type="button" aria-pressed="false" data-step="2">3 · Name and place</button>
+    <button type="button" aria-pressed="false" data-step="3">4 · Making it</button>
+    <button type="button" aria-pressed="false" data-step="4">5 · Done</button>
+  </div>
+  <div class="grid2">
+    <div class="term" id="term"><div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>Terminal · npx acryl</span></div><div class="screen" id="term-screen"></div></div>
+    <div class="win" id="win"><div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>ACRYL</span></div>
+      <div class="body"><nav id="win-nav"></nav><main id="win-main"></main></div></div>
+  </div>
+  <p class="dim">Terminal face: <code>@earendil-works/pi-tui</code> and <code>acryl-ui-tui</code>, which the ACRYL CLI already uses. Desktop face: <code>@acryl/ui</code>. Both libraries implement one component contract (<code>plugins/acryl-ui/contracts/components.json</code>: Card, SelectField, RadioGroup, Input, SecretField, Progress, Alert …), so a step is drawn with the same component on both.</p>
+</section>
+
+<section id="architecture">
+  <span class="eyebrow">How it is built</span>
+  <h2>One service holds the steps; the faces only draw them</h2>
+  <div class="fig">
+    <svg viewBox="0 0 900 330" role="img" aria-labelledby="arch-t">
+      <title id="arch-t">Launcher architecture</title>
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color:var(--dim)"/></marker></defs>
+      <g id="n-term"><title>Terminal face</title><rect class="node" x="20" y="30" width="200" height="74" rx="10"/><text x="36" y="58">Terminal face</text><text class="small" x="36" y="80">npx acryl · pi-tui + acryl-ui-tui</text></g>
+      <g id="n-desk"><title>Desktop face</title><rect class="node" x="20" y="130" width="200" height="74" rx="10"/><text x="36" y="158">Desktop face</text><text class="small" x="36" y="180">DMG · EXE · DEB · @acryl/ui</text></g>
+      <g id="n-web"><title>Later: web face</title><rect class="node" x="20" y="230" width="200" height="74" rx="10" stroke-dasharray="5 4"/><text x="36" y="258">Web face (later)</text><text class="small" x="36" y="280">WebBoxes, same service</text></g>
+      <g id="n-svc"><title>launcher service</title><rect class="core" x="320" y="95" width="230" height="140" rx="12"/><text x="338" y="124" style="font-weight:600">acryl-launcher</text><text class="small" x="338" y="146">provides launcher</text><text class="small" x="338" y="170">journeys() · start(id)</text><text class="small" x="338" y="190">answer(step, value) · cancel()</text><text class="small" x="338" y="210">events: progress, output, done</text></g>
+      <g id="n-cmds"><title>Existing commands</title><rect class="node" x="650" y="30" width="230" height="140" rx="10"/><text x="666" y="58">What already exists</text><text class="small" x="666" y="82">create-acrylblends / acryl new</text><text class="small" x="666" y="102">the app's door: plugin pull, publish</text><text class="small" x="666" y="122">acrylblends upgrade, preflight</text><text class="small" x="666" y="142">the Blends and plugin registries</text></g>
+      <g id="n-home"><title>App home</title><rect class="node" x="650" y="200" width="230" height="84" rx="10"/><text x="666" y="228">~/.acryl/apps/&lt;id&gt;</text><text class="small" x="666" y="250">the one list of apps, read through</text><text class="small" x="666" y="268">appInstance; no second list</text></g>
+      <path class="edge" d="M220 67 C 270 67, 280 140, 318 150"/>
+      <path class="edge" d="M220 167 L 318 167"/>
+      <path class="edge" d="M220 267 C 270 267, 280 200, 318 190" stroke-dasharray="5 4"/>
+      <path class="edge" d="M550 140 C 600 140, 600 100, 648 100"/>
+      <path class="edge" d="M550 195 C 600 195, 600 242, 648 242"/>
+    </svg>
+  </div>
+  <div class="grid">
+    <div class="card"><h3>Clean Architecture</h3><p class="dim">The dependency rule: steps and their state live in the runtime service; a face holds no step, rule or command line.</p></div>
+    <div class="card"><h3>Philosophy of Software Design</h3><p class="dim">A deep module: four calls and events for every face; spawning, npm, registries and keys stay behind it.</p></div>
+    <div class="card"><h3>DDD Distilled</h3><p class="dim">The screen speaks the product's words: app, Blend, plugin, model. Never profile, row or fiber.</p></div>
+    <div class="card"><h3>Pragmatic Programmer</h3><p class="dim">DRY: the command shown at the end comes from the same data that runs the step, so it can't drift.</p></div>
+  </div>
+</section>
+
+<section id="distribution">
+  <span class="eyebrow">How people get it</span>
+  <h2>One command, or one file</h2>
+  <div class="tablewrap card" style="padding:0 6px">
+    <table>
+      <thead><tr><th>Way in</th><th>What the person does</th><th>What they need first</th></tr></thead>
+      <tbody>
+        <tr><td><b>Terminal</b></td><td><code>npx acryl</code></td><td>Node 22+ (the launcher's check offers the install link if missing)</td></tr>
+        <tr><td><b>macOS</b></td><td>download <code>ACRYL.dmg</code>, drag to Applications, open</td><td>nothing: the app carries its own Node (Electron's)</td></tr>
+        <tr><td><b>Windows</b></td><td>download <code>ACRYL-Setup.exe</code>, run</td><td>nothing</td></tr>
+        <tr><td><b>Ubuntu</b></td><td>download <code>acryl.deb</code>, <code>sudo apt install ./acryl.deb</code></td><td>nothing</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="dim">Open item carried from the app-storage note: git on a clean machine. Pulling plugins and versions need git; the desktop file either carries a git or the "Check this machine" step installs it.</p>
+</section>
+
+<section id="references">
+  <span class="eyebrow">What we take from others</span>
+  <h2>OpenClaw and Hermes, and what changes for ACRYL</h2>
+  <div class="tablewrap card" style="padding:0 6px">
+    <table>
+      <thead><tr><th>Idea</th><th>Where we saw it</th><th>In the ACRYL launcher</th></tr></thead>
+      <tbody>
+        <tr><td>Quick start by default, manual for everything</td><td><code>openclaw onboard</code> (quickstart vs manual)</td><td>Enter, Enter, Enter makes a Blank app in the frame; "More options" opens every flag</td></tr>
+        <tr><td>Running it again never overwrites</td><td>OpenClaw: keep, review or reset</td><td>finds your apps in <code>~/.acryl/apps</code> and offers Open first</td></tr>
+        <tr><td>Scripts skip the questions</td><td>OpenClaw <code>--non-interactive</code></td><td>every step has a flag; no terminal (CI, pipes) means no questions</td></tr>
+        <tr><td>Setup starts with the model</td><td><code>hermes setup</code></td><td>"Set up a model" is offered once, after the first app, not before it</td></tr>
+        <tr><td>The desktop app shares the CLI's state</td><td>Hermes desktop app</td><td>both faces read the same service and the same <code>~/.acryl</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="dim">Read from their documentation on 2026-11-12, not run here.</p>
+</section>
+
+<section id="plan">
+  <span class="eyebrow">Plan</span>
+  <h2>Seven tasks, design first</h2>
+  <ol class="plan">
+    <li><b>T001</b> You review this page and answer the three questions below.</li>
+    <li><b>T002</b> The journey model as the <code>acryl-launcher</code> Cordis plugin; each journey tested headless, making the same app as <code>acryl new</code>, file for file.</li>
+    <li><b>T003</b> The terminal face; a pseudo-terminal test makes an app with Enter only, on macOS, Windows and Ubuntu.</li>
+    <li><b>T004</b> The desktop face; a Playwright run makes the same app; an app made in one face is listed in the other.</li>
+    <li><b>T005</b> One file per OS (DMG, EXE, DEB) that installs and creates an app with nothing preinstalled.</li>
+    <li><b>T006</b> The guide, READMEs and acryl.dev start with "run <code>npx acryl</code>" or "download ACRYL".</li>
+    <li><b>T007</b> Your walk on each OS, both faces, without opening the docs.</li>
+  </ol>
+  <div class="grid">
+    <div class="card"><h3>Risk: two places for one rule</h3><p class="dim">If a face starts building command lines, the faces drift apart. Guard: a test fails when a face file spawns a process.</p></div>
+    <div class="card"><h3>Risk: download size</h3><p class="dim">The desktop file carries Electron and Node (the ACRYL Desktop DMG today is about 0.7 GB installed). A launcher-only build can be far smaller if the frame is fetched on first create.</p></div>
+    <div class="card"><h3>Risk: <code>acryl</code> changes meaning</h3><p class="dim">Today bare <code>acryl</code> starts the IDE's terminal client. Question 1 decides; scripts keep working because a pipe never gets the launcher.</p></div>
+  </div>
+</section>
+
+<section id="questions">
+  <span class="eyebrow">Your decisions</span>
+  <h2>Three questions</h2>
+  <div class="grid2">
+    <form class="card q" data-lavish-question="q1-bare-acryl" onsubmit="event.preventDefault(); queueAnswer(this, 'Q1, what bare acryl opens');">
+      <h3>Q1 · What does <code>acryl</code> with no arguments open in a terminal?</h3>
+      <label><input type="radio" name="answer" value="The launcher; acryl code opens the IDE's terminal client" checked><span>The launcher; <code>acryl code</code> opens the IDE <span class="rec">recommended</span><br><span class="dim">Matches D9: the IDE is one Blend. New people get the guide.</span></span></label>
+      <label><input type="radio" name="answer" value="The IDE as today; acryl start opens the launcher"><span>The IDE as today; <code>acryl start</code> opens the launcher<br><span class="dim">No change for current users, one more word to learn.</span></span></label>
+      <textarea name="note" placeholder="Anything to add (optional)"></textarea>
+      <button class="btn primary" type="submit">Queue this answer</button>
+    </form>
+    <form class="card q" data-lavish-question="q2-workshop" onsubmit="event.preventDefault(); queueAnswer(this, 'Q2, what ships before the 2026-11-20 workshop');">
+      <h3>Q2 · Before the workshop of 20.11?</h3>
+      <label><input type="radio" name="answer" value="The terminal face only; the desktop file after the workshop" checked><span>The terminal face only <span class="rec">recommended</span><br><span class="dim">About two days; attendees type <code>npx acryl</code>. The one-file desktop needs the per-OS builds and walks.</span></span></label>
+      <label><input type="radio" name="answer" value="Both faces before the workshop"><span>Both faces<br><span class="dim">Tight: the three desktop files and their walks compete with the guide and the group-cycle rehearsal.</span></span></label>
+      <label><input type="radio" name="answer" value="Neither; the workshop uses the commands, the launcher comes after"><span>Neither; it comes after<br><span class="dim">The workshop keeps <code>npx acryl new my-app</code>.</span></span></label>
+      <textarea name="note" placeholder="Anything to add (optional)"></textarea>
+      <button class="btn primary" type="submit">Queue this answer</button>
+    </form>
+    <form class="card q" data-lavish-question="q3-desktop" onsubmit="event.preventDefault(); queueAnswer(this, 'Q3, which desktop app hosts the launcher');">
+      <h3>Q3 · Which desktop app is the launcher?</h3>
+      <label><input type="radio" name="answer" value="The first screen of the Blends desktop app (one download for everything)" checked><span>The first screen of the one ACRYL desktop app <span class="rec">recommended</span><br><span class="dim">One download: the launcher, and each app opens in its own window from it.</span></span></label>
+      <label><input type="radio" name="answer" value="A separate small launcher app that installs and opens the others"><span>A separate small launcher app<br><span class="dim">Smaller download; a second app to sign, update and explain.</span></span></label>
+      <textarea name="note" placeholder="Anything to add (optional)"></textarea>
+      <button class="btn primary" type="submit">Queue this answer</button>
+    </form>
+  </div>
+</section>
+
+</div>
+
+<script>
+const STEPS = [
+  { title: 'What would you like to do?', items: ['Create an app', 'Open an app', 'Install a Blend', 'Pull a plugin', 'Share a plugin', 'Set up a model', 'Update', 'Check this machine', 'Open ACRYL Code'], sel: 0,
+    hint: '↑↓ choose · Enter next · q quit' },
+  { title: 'Create an app · which starter?', opts: [['Blank', 'an empty app in the frame, with chat and agents'], ['Notes', 'multi-user notes on the database'], ['Chat', 'a chat app that streams answers'], ['To-do', 'a to-do list'], ['From the registry…', 'CRM, the ACRYL IDE (acryl.code) and more']], sel: 0,
+    hint: '↑↓ choose · Enter next · Esc back' },
+  { title: 'Create an app · name and place', fields: [['Name', 'my-app'], ['Folder', '~/my-app'], ['Open it in', 'the browser   (or: its own window)']],
+    hint: 'Tab next field · Enter create · Esc back' },
+  { title: 'Creating my-app', progress: 64, log: ['✓ made my-app from the Blank starter', '✓ put it in the ACRYL frame', '… installing packages (npm)          38s'],
+    hint: 'Ctrl-C cancel' },
+  { title: 'my-app is running', done: true, log: ['✓ installed', '✓ started: http://127.0.0.1:3577 (opened in your browser)'],
+    learn: 'Next time, the same in one line:  acryl new my-app', hint: 'Enter back to the list · q quit' },
+]
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+function term(i) {
+  const s = STEPS[i], out = []
+  out.push('<span class="t-p">◆ ACRYL</span>  <span class="t-d">' + esc(s.title) + '</span>', '')
+  if (s.items) s.items.forEach((t, k) => out.push(k === s.sel ? '<span class="t-sel"> ❯ ' + esc(t) + '</span>' : '   ' + esc(t)))
+  if (s.opts) s.opts.forEach(([t, d], k) => out.push((k === s.sel ? '<span class="t-sel"> ● ' : '   ○ ') + esc(t.padEnd(20)) + '<span class="t-d">' + esc(d) + '</span>' + (k === s.sel ? '</span>' : '')))
+  if (s.fields) s.fields.forEach(([l, v], k) => { out.push('<span class="t-d">' + esc(l) + '</span>'); out.push((k === 0 ? '<span class="t-p">┃ </span>' : '<span class="t-box">┃ </span>') + esc(v)); out.push('') })
+  if (s.progress !== undefined) { const n = Math.round(s.progress / 4); out.push('<span class="t-p">' + '█'.repeat(n) + '</span><span class="t-box">' + '░'.repeat(25 - n) + '</span> ' + s.progress + '%', '') }
+  if (s.log) s.log.forEach((l) => out.push(l.startsWith('✓') ? '<span class="t-s">' + esc(l) + '</span>' : '<span class="t-d">' + esc(l) + '</span>'))
+  if (s.learn) out.push('', '<span class="t-w">💡 ' + esc(s.learn) + '</span>')
+  out.push('', '<span class="t-d">' + esc(s.hint) + '</span>')
+  document.getElementById('term-screen').innerHTML = out.join('\n')
+}
+function win(i) {
+  const s = STEPS[i]
+  document.getElementById('win-nav').innerHTML = STEPS[0].items.map((t, k) => '<div class="' + (k === 0 ? 'on' : '') + '">' + esc(t) + '</div>').join('')
+  let h = '<div class="crumbs">' + (i === 0 ? 'Home' : 'Create an app › step ' + i + ' of 4') + '</div><h3 style="font-size:18px">' + esc(s.title) + '</h3>'
+  if (s.items) h += '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px">' + s.items.slice(0, 6).map((t, k) => '<div class="opt' + (k === s.sel ? ' on' : '') + '">' + esc(t) + '</div>').join('') + '</div>'
+  if (s.opts) h += s.opts.map(([t, d], k) => '<div class="opt' + (k === s.sel ? ' on' : '') + '"><i class="r"></i><div>' + esc(t) + '<small>' + esc(d) + '</small></div></div>').join('')
+  if (s.fields) h += s.fields.map(([l, v]) => '<div class="field">' + esc(l) + '<div class="box">' + esc(v) + '</div></div>').join('')
+  if (s.progress !== undefined) h += '<div class="progress"><i style="width:' + s.progress + '%"></i></div>'
+  if (s.log) h += '<div class="log">' + s.log.map(esc).join('\n') + '</div>'
+  if (s.learn) h += '<div class="learn">In a terminal, the same in one line: <code>acryl new my-app</code></div>'
+  const primary = i === 0 ? 'Next' : i === 2 ? 'Create' : i === 3 ? 'Cancel' : i === 4 ? 'Open my-app' : 'Next'
+  h += '<div class="actions">' + (i > 0 && i < 3 ? '<span class="btn">Back</span>' : '') + '<span class="btn' + (i === 3 ? '' : ' primary') + '">' + primary + '</span></div>'
+  document.getElementById('win-main').innerHTML = h
+}
+function show(i) {
+  document.querySelectorAll('.steps button').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.step) === i)))
+  term(i); win(i)
+}
+document.querySelectorAll('.steps button').forEach((b) => b.addEventListener('click', () => show(Number(b.dataset.step))))
+show(0)
+function queueAnswer(form, question) {
+  const data = new FormData(form)
+  const answer = data.get('answer'), note = (data.get('note') || '').trim()
+  if (!answer) return
+  const text = question + ': ' + answer + (note ? ' (note: ' + note + ')' : '')
+  if (window.lavish?.queuePrompt) window.lavish.queuePrompt('Spec 050 decision. ' + text, { tag: 'choice', text, element: form, queueKey: form.dataset.lavishQuestion, data: { question, answer, note } })
+}
+</script>
+</body>
+</html>
