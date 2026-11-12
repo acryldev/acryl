@@ -39,6 +39,7 @@ packages:
   - plugins/acryl-support
   - plugins/acryl-agent-control
   - plugins/acryl-launcher
+  - plugins/acryl-launcher-desktop
   - '!deepseek-harness/**'
 
 allowBuilds:

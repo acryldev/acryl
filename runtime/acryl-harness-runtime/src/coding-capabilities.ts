@@ -30,6 +30,7 @@ export type AcrylCodingCapabilityId =
   | 'workspace'
   | 'plugin-admin'
   | 'sign-in'
+  | 'launcher-screen'
   | 'account-callback'
   | 'support'
   | 'agent-control-ui'
@@ -194,6 +195,18 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     needsRouter: true,
     loaderPatches: [
       { insert: [{ id: 'acryl-sign-in', name: 'acryl-sign-in' }] },
+    ],
+  },
+  {
+    // The ACRYL screen (spec 050 T012): every app made with ACRYL on this machine, with New app, Add a folder, Start and Stop. A full-window layer over the
+    // workspace in the frame's `shell.overlay` seat, open when the desktop app starts; the Host half lists, makes, starts and stops apps through the machine's
+    // Node and npm. On Web and Desktop alike (surface sharing, spec 040); the terminal has its own screen (`acryl-launcher-tui`) over the same list.
+    id: 'launcher-screen',
+    surfaces: ['desktop', 'web'],
+    requiresPackages: ['acryl-launcher-desktop'],
+    needsRouter: true,
+    loaderPatches: [
+      { insert: [{ id: 'acryl-launcher-desktop', name: 'acryl-launcher-desktop' }] },
     ],
   },
   {

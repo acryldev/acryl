@@ -202,6 +202,7 @@
     "acryl-plugin-hub": "workspace:*",
     "acryl-settings": "workspace:*",
     "acryl-shortcuts": "workspace:*",
+    "acryl-launcher-desktop": "workspace:*",
     "acryl-sign-in": "workspace:*",
     "acryl-support": "workspace:*",
     "acryl-system-prompt": "workspace:*",

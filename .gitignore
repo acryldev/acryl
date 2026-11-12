@@ -31,6 +31,7 @@ plugins/acryl-command-reply/lib/
 plugins/acryl-shortcuts/lib/
 plugins/acryl-settings/lib/
 plugins/acryl-sign-in/lib/
+plugins/acryl-launcher-desktop/lib/
 plugins/acryl-workspace/lib/
 plugins/acryl-plugin-admin/lib/
 plugins/acryl-support/lib/
