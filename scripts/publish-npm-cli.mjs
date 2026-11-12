@@ -10,7 +10,10 @@ import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const selectorSource = join(root, 'distribution', 'acryl-npm-launcher')
-const version = JSON.parse(readFileSync(join(selectorSource, 'package.json'), 'utf8')).version
+const selectorPackage = JSON.parse(readFileSync(join(selectorSource, 'package.json'), 'utf8'))
+const version = selectorPackage.version
+// The launcher's own package.json lists what the selector ships; a second list here once left forward.js out of the tarball.
+const selectorFiles = selectorPackage.files.filter(file => file !== 'package.json')
 const requestedVersion = process.env.ACRYL_NPM_VERSION ?? version
 if (requestedVersion !== version) throw new Error(`publish-npm-cli: ACRYL_NPM_VERSION (${requestedVersion}) must equal workspace version (${version})`)
 const packOnlyIndex = process.argv.indexOf('--pack-only')
@@ -36,7 +39,7 @@ function targetManifest(target) {
 function selectorManifest() {
   return {
     name: 'acryl', version, private: false, type: 'module', bin: { acryl: './bin.js' },
-    files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js', 'README.md'],
+    files: selectorFiles,
     optionalDependencies: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [targetPackageName(target), version])),
     engines: { node: '>=22.19.0 || >=24.0.0' },
     description: 'A persistent, agent-agnostic coding environment. Keep your context, change your agent.',
@@ -86,8 +89,9 @@ try {
   if (!printManifests) {
     const selector = join(staging, 'acryl')
     mkdirSync(selector, { recursive: true })
-    for (const file of ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js', 'README.md']) {
-      if (existsSync(join(selectorSource, file))) cpSync(join(selectorSource, file), join(selector, file))
+    for (const file of selectorFiles) {
+      if (!existsSync(join(selectorSource, file))) throw new Error(`publish-npm-cli: the launcher lists ${file} in files but it is missing`)
+      cpSync(join(selectorSource, file), join(selector, file))
     }
     writeFileSync(join(selector, 'package.json'), `${JSON.stringify(selectorManifest(), null, 2)}\n`)
     pack(selector)

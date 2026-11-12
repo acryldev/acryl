@@ -38,7 +38,9 @@ test('clean local tarball global install launches the prepared target TUI withou
   const prefix = join(directory, 'prefix')
   const target = targetForNode({ platform: process.platform, arch: process.arch })
   const packageName = targetPackageName(target)
-  const version = JSON.parse(readFileSync(new URL('../distribution/acryl-npm-launcher/package.json', import.meta.url), 'utf8')).version
+  const launcherPackage = JSON.parse(readFileSync(new URL('../distribution/acryl-npm-launcher/package.json', import.meta.url), 'utf8'))
+  const { version } = launcherPackage
+  const launcherFiles = launcherPackage.files
   const runtime = join(directory, packageName, 'runtime')
   const launcher = join(runtime, 'bin', process.platform === 'win32' ? 'acryl.cmd' : 'acryl')
   try {
@@ -60,7 +62,7 @@ test('clean local tarball global install launches the prepared target TUI withou
     cpSync(new URL('../distribution/acryl-npm-launcher', import.meta.url), selector, { recursive: true })
     writeFileSync(join(selector, 'package.json'), JSON.stringify({
       name: 'acryl', version, type: 'module', bin: { acryl: './bin.js' },
-      files: ['bin.js', 'runtime.js', 'release-contract.js', 'web-runtime.js', 'desktop-runtime.js'], optionalDependencies: { [packageName]: version },
+      files: launcherFiles, optionalDependencies: { [packageName]: version },
     }))
     const selectorTarball = pack(selector)
 
