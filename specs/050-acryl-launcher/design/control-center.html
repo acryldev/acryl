@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en" data-lavish-annotate="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL Control Center</title>
+<style>
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --secondary: #0369A1; --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12);
+  --term-bg: #0b0b0d; --term-text: #e8e8ea; --term-dim: #8b8b93; --term-primary: #4F6BFE; --term-success: #34D399; --term-warning: #FBBF24; --term-sel: rgba(79,107,254,.22);
+  --win-bar: #e4e4ea;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1160px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 44px; }
+h1 { font-size: 34px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: 22px; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 74ch; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.quote { border-left: 3px solid var(--primary); padding: 4px 0 4px 16px; color: var(--dim); font-style: italic; max-width: 84ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.dim { color: var(--dim); }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+/* fixed vs changing */
+.split { display: grid; grid-template-columns: minmax(0,1fr) 120px minmax(0,1fr); gap: 0; align-items: stretch; }
+.split .card h3 { display: flex; gap: 8px; align-items: center; }
+.split .bridge { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: 600 12px var(--mono); color: var(--primary); text-align: center; padding: 8px; }
+.split .bridge .line { width: 100%; height: 2px; background: var(--primary); position: relative; }
+.split .bridge .line::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left-color: var(--primary); }
+.tree { font: 12.5px/1.75 var(--mono); margin: 10px 0 0; padding: 12px; background: var(--surface-2); border-radius: 8px; overflow-x: auto; white-space: pre; }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.agent { background: var(--agent-dim); color: var(--agent); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } .split .bridge { padding: 14px; } .split .bridge .line { width: 2px; height: 24px; } .split .bridge .line::after { right: -5px; top: auto; bottom: -2px; border-left-color: transparent; border-top-color: var(--primary); } }
+
+/* desktop window */
+.win { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; box-shadow: 0 16px 40px -22px rgba(0,0,0,.4); }
+.win .bar { display: flex; gap: 6px; align-items: center; padding: 9px 12px; background: var(--win-bar); font: 12px var(--sans); color: var(--dim); }
+.win .bar span { margin-left: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #c9c9d1; flex: none; }
+.win .body { display: grid; grid-template-columns: 196px minmax(0,1fr); min-height: 560px; }
+.win nav { border-right: 1px solid var(--border); padding: 14px 8px; display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; background: var(--surface-2); }
+.win nav .brand { font: 700 14px var(--sans); padding: 2px 10px 12px; letter-spacing: .02em; }
+.win nav button { all: unset; cursor: pointer; padding: 7px 10px; border-radius: 7px; color: var(--dim); display: flex; justify-content: space-between; align-items: center; }
+.win nav button:hover { color: var(--text); }
+.win nav button[aria-pressed="true"] { background: var(--primary-dim); color: var(--primary); font-weight: 600; }
+.win nav button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.win nav .count { font: 600 11px var(--mono); }
+.win nav .sep { height: 1px; background: var(--border); margin: 8px 6px; }
+.win main { padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.toprow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.search { flex: 1 1 260px; border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; font: 14px var(--sans); color: var(--dim); background: var(--bg); min-width: 0; }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.tile { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--bg); }
+.tile b { display: block; font-size: 24px; line-height: 1.1; }
+.tile span { font-size: 12.5px; color: var(--dim); }
+.apps { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); }
+.app { border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.app:hover, .app[aria-pressed="true"] { border-color: var(--primary); }
+.app[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--primary-dim); }
+.app .head { display: flex; gap: 10px; align-items: center; }
+.icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; font: 700 15px var(--sans); color: #fff; flex: none; }
+.app .name { font-weight: 650; }
+.app .meta { font: 12px var(--mono); color: var(--dim); overflow-wrap: anywhere; }
+.app .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.state { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; }
+.state i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.state.run i { background: var(--success); } .state.stop i { background: #a1a1aa; } .state.cloud i { background: var(--secondary); }
+.groupt { font: 600 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+.detail { border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+.detail .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.kv { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 4px 12px; font-size: 13px; }
+.kv dt { color: var(--dim); } .kv dd { margin: 0; font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.list .li { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 11px 14px; border-top: 1px solid var(--border); background: var(--surface); }
+.list .li:first-child { border-top: 0; }
+.list .li small { display: block; color: var(--dim); font-size: 12.5px; }
+.view[hidden] { display: none !important; }
+@media (max-width: 760px) { .win .body { grid-template-columns: 1fr; } .win nav { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); } .win nav .brand, .win nav .sep { display: none; } }
+
+/* terminal */
+.term { background: var(--term-bg); color: var(--term-text); border-radius: 12px; border: 1px solid #2a2a2f; overflow: hidden; min-width: 0; }
+.term .bar { display: flex; gap: 6px; align-items: center; padding: 9px 12px; background: #18181b; border-bottom: 1px solid #2a2a2f; font: 12px var(--mono); color: var(--term-dim); }
+.term .bar .dot { background: #3a3a40; }
+.term .screen { font: 13px/1.6 var(--mono); padding: 16px 18px 18px; overflow-x: auto; white-space: pre; }
+.t-p { color: var(--term-primary); } .t-d { color: var(--term-dim); } .t-s { color: var(--term-success); } .t-w { color: var(--term-warning); }
+.t-sel { background: var(--term-sel); color: #fff; }
+
+/* questions */
+.q { display: flex; flex-direction: column; gap: 10px; }
+.q fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.q legend { font-weight: 650; margin-bottom: 6px; }
+.q label { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; cursor: pointer; font-size: 14px; }
+.q label:has(input:checked) { border-color: var(--primary); background: var(--primary-dim); }
+.q label small { display: block; color: var(--dim); font-size: 12.5px; }
+.q input[type=radio] { margin-top: 4px; accent-color: var(--primary); }
+.q textarea { width: 100%; min-height: 64px; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: 14px var(--sans); background: var(--bg); color: var(--text); }
+.q .send { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.q .status { font-size: 12.5px; color: var(--success); }
+.flow { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); counter-reset: f; }
+.flow .card { position: relative; padding-top: 30px; }
+.flow .card::before { counter-increment: f; content: counter(f); position: absolute; top: 10px; left: 18px; font: 700 12px var(--mono); color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <div class="eyebrow">Spec 050 · T011 · design for review</div>
+  <h1>ACRYL Control Center: one place for every app on this machine</h1>
+  <p class="lead">The launcher grows into a local app store, launchpad and maintainer for every app made with ACRYL, by people or by their agents. The fixed app in <code>/Applications</code> stays stable; everything that changes lives in <code>~/.acryl</code>, and this screen is how a person sees it, opens it and keeps it healthy.</p>
+  <p class="quote">"with launcher ACRYL it can become kind of a local App-store for all local apps built by acryl platform and agents, ad-hoc use cases launchpad, launcher and maintainer, operating Control Center Dashboard" (owner, 2026-11-12)</p>
+</header>
+
+<section>
+  <h2>The problem it solves</h2>
+  <p class="dim">A normal app is one thing in <code>/Applications</code> that never changes by itself. ACRYL is split in two: a fixed part that rarely changes, and a changing part that grows every day as people and agents make apps. Without a front door for the changing part, people do not know what they have or how to open it.</p>
+  <div class="split">
+    <div class="card">
+      <h3>Fixed <span class="pill off">changes on release only</span></h3>
+      <p class="dim" style="margin-top:6px">Opened from the Dock or the Start menu, like any app. Signed, one file to install.</p>
+      <div class="tree">/Applications/ACRYL.app
+  the Control Center (first screen, D3)
+  the IDE runtime (acryl code)
+
+acryl            the command, same
+                 screens in the terminal</div>
+    </div>
+    <div class="bridge"><div class="line"></div>Control Center<br>reads and runs</div>
+    <div class="card">
+      <h3>Changing <span class="pill">grows every day</span></h3>
+      <p class="dim" style="margin-top:6px">Everything people and agents make, update and share. One predictable home on every system.</p>
+      <div class="tree">~/.acryl/
+  apps.json        the list of local apps
+  apps/            apps the Control Center made
+  plugins/.store   shared plugins
+  runtimes/        IDE and engine versions
+  logs/            one folder per running app
+~/work/shop        an app anywhere else,
+                   listed by its path</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Desktop face</h2>
+  <p class="dim">The first screen of the one ACRYL desktop app (decision D3). Click the sections on the left and the app cards: every screen is a mockup with sample apps.</p>
+
+  <div class="win" aria-label="Control Center mockup">
+    <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><span>ACRYL</span></div>
+    <div class="body">
+      <nav aria-label="Control Center sections">
+        <div class="brand">ACRYL</div>
+        <button type="button" data-view="apps" aria-pressed="true">My apps <span class="count">6</span></button>
+        <button type="button" data-view="running" aria-pressed="false">Running <span class="count">2</span></button>
+        <button type="button" data-view="drafts" aria-pressed="false">Made by agents <span class="count">2</span></button>
+        <button type="button" data-view="updates" aria-pressed="false">Updates <span class="count">2</span></button>
+        <div class="sep"></div>
+        <button type="button" data-view="store" aria-pressed="false">Blends store <span class="count">47</span></button>
+        <button type="button" data-view="cloud" aria-pressed="false">WebBoxes.ai <span class="count">1</span></button>
+        <div class="sep"></div>
+        <button type="button" data-view="health" aria-pressed="false">Health</button>
+        <button type="button" data-view="settings" aria-pressed="false">Settings</button>
+      </nav>
+      <main>
+
+        <!-- MY APPS -->
+        <div class="view" data-name="apps">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="toprow">
+              <div class="search">Search apps, Blends, folders...</div>
+              <button type="button" class="btn primary">+ New app</button>
+              <button type="button" class="btn">Add a folder</button>
+            </div>
+            <div class="tiles">
+              <div class="tile"><b>6</b><span>apps on this Mac</span></div>
+              <div class="tile"><b style="color:var(--success)">2</b><span>running now</span></div>
+              <div class="tile"><b style="color:var(--warning)">2</b><span>updates waiting</span></div>
+              <div class="tile"><b style="color:var(--secondary)">1</b><span>on WebBoxes.ai</span></div>
+            </div>
+            <div class="groupt">Recent</div>
+            <div class="apps" id="apps"></div>
+            <div class="detail" id="detail" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- RUNNING -->
+        <div class="view" data-name="running" hidden>
+          <h3>Running now</h3>
+          <div class="list">
+            <div class="li"><div class="icon" style="background:#3652D9">S</div><div><b>shop</b><small>http://127.0.0.1:3080 · agent: DeepSeek, idle · 214 MB · up 2 h</small></div><div class="row" style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small">Logs</button><button type="button" class="btn small">Stop</button></div></div>
+            <div class="li"><div class="icon" style="background:#0f766e">C</div><div><b>ACRYL Code</b><small>the IDE · http://127.0.0.1:3010 · 2 agents working · 612 MB · up 35 min</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small">Logs</button><button type="button" class="btn small">Stop</button></div></div>
+          </div>
+          <p class="dim" style="font-size:13px">One list of what runs, on which address, with which agents, and what it costs in memory. Stop all on quit is a setting.</p>
+        </div>
+
+        <!-- DRAFTS -->
+        <div class="view" data-name="drafts" hidden>
+          <h3>Made by agents</h3>
+          <p class="dim" style="font-size:13.5px">Ad-hoc apps an agent built for one task. They wait here until you keep them (they join My apps) or discard them (the folder moves to the trash).</p>
+          <div class="list">
+            <div class="li"><div class="icon" style="background:#a16207">I</div><div><b>invoice-split</b> <span class="pill agent">by agent</span><small>"split this month's invoices by client" · from the chat in shop · 2 h ago · 3 plugins</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
+            <div class="li"><div class="icon" style="background:#a16207">T</div><div><b>trip-planner</b> <span class="pill agent">by agent</span><small>"plan the Vienna workshop logistics" · from ACRYL Code · yesterday · 1 plugin</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
+          </div>
+        </div>
+
+        <!-- UPDATES -->
+        <div class="view" data-name="updates" hidden>
+          <div class="toprow"><h3>Updates</h3><button type="button" class="btn primary">Update all</button></div>
+          <div class="list">
+            <div class="li"><div class="icon" style="background:#be123c">C</div><div><b>crm</b><small>Blend acryl.crm 1.5.1 → 1.6.0 · 2 plugins change · your own plugins are kept</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">What changes</button><button type="button" class="btn small primary">Update</button></div></div>
+            <div class="li"><div class="icon" style="background:#334155">A</div><div><b>ACRYL itself</b><small>0.2.7 → 0.2.8 · the fixed part, from the release page; apps are not touched</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Notes</button><button type="button" class="btn small primary">Update</button></div></div>
+          </div>
+          <p class="dim" style="font-size:13px">Each update runs the existing <code>acryl update</code> in the app's folder after a check, and a failed check keeps the old version.</p>
+        </div>
+
+        <!-- STORE -->
+        <div class="view" data-name="store" hidden>
+          <div class="toprow"><div class="search">Search 47 Blends: notes, crm, shop, chat, todo...</div></div>
+          <div class="apps">
+            <div class="app" role="group"><div class="head"><div class="icon" style="background:#0f766e">N</div><div><div class="name">Notes</div><div class="meta">acryl.notes · 1.3.0</div></div></div><div class="dim" style="font-size:13px">Notes with an agent that files and links them.</div><div class="row"><button type="button" class="btn small primary">Make my app</button><span class="pill ok">official</span></div></div>
+            <div class="app" role="group"><div class="head"><div class="icon" style="background:#be123c">C</div><div><div class="name">CRM</div><div class="meta">acryl.crm · 1.6.0</div></div></div><div class="dim" style="font-size:13px">Contacts, deals and follow-ups the agent keeps up to date.</div><div class="row"><button type="button" class="btn small">Installed</button><span class="pill ok">official</span></div></div>
+            <div class="app" role="group"><div class="head"><div class="icon" style="background:#7c2d12">W</div><div><div class="name">Workshop hello</div><div class="meta">workshop.alex.hello · 0.1.0</div></div></div><div class="dim" style="font-size:13px">Shared by an attendee on 20.11.</div><div class="row"><button type="button" class="btn small primary">Make my app</button><span class="pill">community</span></div></div>
+          </div>
+          <p class="dim" style="font-size:13px">"Make my app" runs <code>acryl new &lt;name&gt; --from &lt;id&gt;</code>; single plugins are pulled into an app from its card.</p>
+        </div>
+
+        <!-- CLOUD -->
+        <div class="view" data-name="cloud" hidden>
+          <h3>On WebBoxes.ai</h3>
+          <div class="list">
+            <div class="li"><div class="icon" style="background:#0369A1">T</div><div><b>todo-demo</b> <span class="pill">cloud</span><small>https://a1b2.213-47-80-26.sslip.io · deployed from ~/.acryl/apps/todo-demo · 12 min ago</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small">Edit in the cloud</button><button type="button" class="btn small primary">Deploy again</button></div></div>
+          </div>
+          <p class="dim" style="font-size:13px">Any app card has "Deploy to WebBoxes.ai" (<code>acryl deploy</code>, spec 049 M9 W5). The address and the last deploy show here.</p>
+        </div>
+
+        <!-- HEALTH -->
+        <div class="view" data-name="health" hidden>
+          <h3>Health</h3>
+          <div class="list">
+            <div class="li"><div class="icon" style="background:var(--success)">✓</div><div><b>Node 24.19.0</b><small>found on this Mac</small></div><span class="pill ok">ok</span></div>
+            <div class="li"><div class="icon" style="background:var(--success)">✓</div><div><b>Model key</b><small>DeepSeek, saved once for every app</small></div><span class="pill ok">ok</span></div>
+            <div class="li"><div class="icon" style="background:var(--warning)">!</div><div><b>Disk</b><small>~/.acryl uses 3.1 GB; 2 old runtimes can go (1.2 GB)</small></div><button type="button" class="btn small">Clean up</button></div>
+            <div class="li"><div class="icon" style="background:var(--warning)">!</div><div><b>notes-old</b><small>the folder ~/Desktop/notes-old is gone; keep it in the list?</small></div><button type="button" class="btn small">Remove from list</button></div>
+          </div>
+          <p class="dim" style="font-size:13px">The same checks as <code>acryl blends preflight</code>, for every app at once.</p>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="view" data-name="settings" hidden>
+          <h3>Settings</h3>
+          <div class="kv" style="grid-template-columns:200px minmax(0,1fr)">
+            <dt>Where new apps go</dt><dd>~/.acryl/apps</dd>
+            <dt>Open apps in</dt><dd>their own window</dd>
+            <dt>On quit</dt><dd>stop the apps it started</dd>
+            <dt>Model provider</dt><dd>DeepSeek (shared by every app)</dd>
+            <dt>WebBoxes.ai account</dt><dd>signed in as alex</dd>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Terminal face: the same list</h2>
+  <p class="dim">A bare <code>acryl</code> in a terminal (decision D1) opens this first. Same journeys as the desktop; the faces hold no steps of their own.</p>
+  <div class="term">
+    <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>&nbsp; acryl</div>
+<div class="screen"><span class="t-p">ACRYL</span>  <span class="t-d">6 apps · 2 running · 2 updates · 1 on WebBoxes.ai</span>
+
+<span class="t-d">  APP              STATE                    BLEND           </span>
+<span class="t-sel">› shop             <span class="t-s">● running</span>  127.0.0.1:3080   acryl.notes     </span>
+  ACRYL Code       <span class="t-s">● running</span>  127.0.0.1:3010   acryl.code
+  crm              ○ stopped                acryl.crm   <span class="t-w">update 1.6.0</span>
+  todo-demo        <span class="t-p">◆ cloud</span>    a1b2.…sslip.io   acryl.todo
+  invoice-split    ○ stopped  <span class="t-w">by agent</span>      blank       <span class="t-w">keep?</span>
+  trip-planner     ○ stopped  <span class="t-w">by agent</span>      blank       <span class="t-w">keep?</span>
+
+<span class="t-d">  + New app    Blends store    Updates    Health</span>
+
+<span class="t-d">↑↓ choose · enter open · s start/stop · u update · d deploy · k keep · / search · esc quit</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>How the list stays true</h2>
+  <div class="flow">
+    <div class="card"><h3>Made</h3><p class="dim" style="font-size:13.5px"><code>acryl new</code>, the store, and an agent that builds an app each add one line to <code>~/.acryl/apps.json</code>: id, path, Blend, who made it.</p></div>
+    <div class="card"><h3>Found</h3><p class="dim" style="font-size:13.5px">"Add a folder" adds any folder with a <code>blend.yaml</code>. Nothing scans the disk by itself.</p></div>
+    <div class="card"><h3>Checked</h3><p class="dim" style="font-size:13.5px">On open, each entry is checked: folder still there, running or not (its port), update waiting (registry index).</p></div>
+    <div class="card"><h3>Acted on</h3><p class="dim" style="font-size:13.5px">Every button runs an existing command (<code>npm run dev</code>, <code>acryl update</code>, <code>acryl deploy</code>, <code>plugin publish</code>), shown before it runs.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Questions for you</h2>
+  <p class="dim">Pick an answer and press "Send this answer" under each question; nothing is sent until you do.</p>
+  <div class="grid2">
+
+    <form class="card q" data-lavish-question="cc-name" onsubmit="return sendAnswer(event,'cc-name','What should the screen be called')">
+      <fieldset><legend>1. What is the screen called?</legend>
+        <label><input type="radio" name="answer" value="Control Center"><span>Control Center<small>your words; says "operate and maintain"</small></span></label>
+        <label><input type="radio" name="answer" value="Launchpad"><span>Launchpad<small>says "open things"; Apple uses the word</small></span></label>
+        <label><input type="radio" name="answer" value="ACRYL Home"><span>ACRYL Home<small>the start screen, plain</small></span></label>
+      </fieldset>
+      <textarea name="note" placeholder="Anything else (optional)"></textarea>
+      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
+    </form>
+
+    <form class="card q" data-lavish-question="agent-apps" onsubmit="return sendAnswer(event,'agent-apps','How apps made by agents appear')">
+      <fieldset><legend>2. Apps an agent makes on its own</legend>
+        <label><input type="radio" name="answer" value="Made by agents, keep or discard"><span>Listed under "Made by agents" until kept or discarded<small>as in the mockup; nothing gets lost, nothing clutters My apps</small></span></label>
+        <label><input type="radio" name="answer" value="Straight into My apps"><span>Straight into My apps<small>simplest; the list grows fast</small></span></label>
+        <label><input type="radio" name="answer" value="Only when the agent asks"><span>Only when the agent asks to keep it<small>quietest; a forgotten one stays a folder</small></span></label>
+      </fieldset>
+      <textarea name="note" placeholder="Anything else (optional)"></textarea>
+      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
+    </form>
+
+    <form class="card q" data-lavish-question="where-apps" onsubmit="return sendAnswer(event,'where-apps','Where new apps are made')">
+      <fieldset><legend>3. Where does "+ New app" put the folder?</legend>
+        <label><input type="radio" name="answer" value="~/.acryl/apps"><span><code>~/.acryl/apps/&lt;name&gt;</code><small>one predictable home, like everything else</small></span></label>
+        <label><input type="radio" name="answer" value="Ask each time"><span>Ask each time, default <code>~/Documents/ACRYL</code><small>easier to find in Finder and Explorer</small></span></label>
+      </fieldset>
+      <textarea name="note" placeholder="Anything else (optional)"></textarea>
+      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
+    </form>
+
+    <form class="card q" data-lavish-question="when" onsubmit="return sendAnswer(event,'when','When to build it')">
+      <fieldset><legend>4. When is it built?</legend>
+        <label><input type="radio" name="answer" value="Terminal list before 20.11, desktop after"><span>The terminal list before 20.11, the desktop screen after<small>fits D2; the workshop already gets "My apps" in <code>acryl</code></small></span></label>
+        <label><input type="radio" name="answer" value="All after 20.11"><span>All of it after the workshop<small>keeps the week for WebBoxes.ai and the walks</small></span></label>
+      </fieldset>
+      <textarea name="note" placeholder="Anything else (optional)"></textarea>
+      <div class="send"><button type="submit" class="btn primary">Send this answer</button><span class="status" role="status"></span></div>
+    </form>
+
+  </div>
+</section>
+
+</div>
+
+<script>
+const APPS = [
+  { id: 'shop', name: 'shop', color: '#3652D9', blend: 'acryl.notes 1.3.0', state: 'run', where: '127.0.0.1:3080', path: '~/.acryl/apps/shop', by: 'you, 3 days ago', note: '' },
+  { id: 'code', name: 'ACRYL Code', color: '#0f766e', blend: 'acryl.code 0.2.7', state: 'run', where: '127.0.0.1:3010', path: 'the IDE, inside ACRYL.app', by: 'ACRYL', note: '' },
+  { id: 'crm', name: 'crm', color: '#be123c', blend: 'acryl.crm 1.5.1', state: 'stop', where: '', path: '~/work/crm', by: 'you, last week', note: 'update', },
+  { id: 'todo', name: 'todo-demo', color: '#0369A1', blend: 'acryl.todo 1.0.0', state: 'cloud', where: 'a1b2.213-47-80-26.sslip.io', path: '~/.acryl/apps/todo-demo', by: 'you, today', note: '' },
+  { id: 'inv', name: 'invoice-split', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/.acryl/apps/invoice-split', by: 'agent in shop, 2 h ago', note: 'agent' },
+  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', state: 'stop', where: '', path: '~/.acryl/apps/trip-planner', by: 'agent in ACRYL Code, yesterday', note: 'agent' },
+]
+const STATE = { run: ['run', 'running'], stop: ['stop', 'stopped'], cloud: ['cloud', 'on WebBoxes.ai'] }
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+let selected = 'shop'
+
+function renderApps() {
+  const box = document.getElementById('apps')
+  box.innerHTML = APPS.map(a => {
+    const [cls, label] = STATE[a.state]
+    const badges = (a.note === 'update' ? '<span class="pill warn">update 1.6.0</span>' : '') + (a.note === 'agent' ? '<span class="pill agent">by agent</span>' : '')
+    return `<button type="button" class="app" data-id="${a.id}" aria-pressed="${a.id === selected}">
+      <div class="head"><div class="icon" style="background:${a.color}">${esc(a.name[0].toUpperCase())}</div><div style="min-width:0"><div class="name">${esc(a.name)}</div><div class="meta">${esc(a.blend)}</div></div></div>
+      <div class="row"><span class="state ${cls}"><i></i>${label}${a.where ? ' · <span class="mono" style="font-size:12px">' + esc(a.where) + '</span>' : ''}</span></div>
+      <div class="row">${badges}</div></button>`
+  }).join('')
+  box.querySelectorAll('.app').forEach(el => el.addEventListener('click', () => { selected = el.dataset.id; renderApps(); renderDetail() }))
+}
+
+function renderDetail() {
+  const a = APPS.find(x => x.id === selected)
+  const main = a.state === 'run' ? '<button type="button" class="btn primary">Open</button><button type="button" class="btn">Stop</button>'
+    : a.state === 'cloud' ? '<button type="button" class="btn primary">Open</button><button type="button" class="btn">Edit in the cloud</button>'
+    : '<button type="button" class="btn primary">Start</button>'
+  const extra = a.note === 'agent' ? '<button type="button" class="btn">Keep</button><button type="button" class="btn">Discard</button>' : ''
+  const upd = a.note === 'update' ? '<button type="button" class="btn">Update to 1.6.0</button>' : ''
+  document.getElementById('detail').innerHTML = `
+    <div class="toprow"><h3>${esc(a.name)}</h3><div class="acts">${main}${upd}${extra}<button type="button" class="btn">Deploy to WebBoxes.ai</button><button type="button" class="btn">Share</button><button type="button" class="btn">Open folder</button><button type="button" class="btn">...</button></div></div>
+    <dl class="kv"><dt>Blend</dt><dd>${esc(a.blend)}</dd><dt>Folder</dt><dd>${esc(a.path)}</dd><dt>Made by</dt><dd>${esc(a.by)}</dd><dt>Address</dt><dd>${esc(a.where || 'not running')}</dd>
+    <dt>Runs</dt><dd>${a.state === 'run' ? 'npm run dev (started by the Control Center)' : a.state === 'cloud' ? 'on WebBoxes.ai, box a1b2' : 'cd ' + esc(a.path) + ' && npm run dev'}</dd></dl>`
+}
+
+document.querySelectorAll('nav button[data-view]').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x === b)))
+  document.querySelectorAll('.view').forEach(v => { v.hidden = v.dataset.name !== b.dataset.view })
+}))
+
+function sendAnswer(event, key, topic) {
+  event.preventDefault()
+  const form = event.currentTarget
+  const data = new FormData(form)
+  const answer = data.get('answer')
+  const note = String(data.get('note') || '').trim()
+  const status = form.querySelector('.status')
+  if (!answer) { status.style.color = 'var(--warning)'; status.textContent = 'Pick an answer first.'; return false }
+  const text = `${topic}: ${answer}${note ? ' (' + note + ')' : ''}`
+  if (window.lavish && typeof window.lavish.queuePrompt === 'function') {
+    window.lavish.queuePrompt(`Control Center design answer. ${text}`, { tag: 'choice', text, element: form, queueKey: key, data: { question: key, answer, note } })
+    status.style.color = 'var(--success)'; status.textContent = 'Queued. Press "Send to Agent" when you are done.'
+  } else {
+    status.style.color = 'var(--dim)'; status.textContent = 'Not in a review session: tell the agent "' + text + '".'
+  }
+  return false
+}
+
+renderApps(); renderDetail()
+</script>
+</body>
+</html>
