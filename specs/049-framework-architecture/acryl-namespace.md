@@ -50,7 +50,7 @@ becomes `acryl agent` only if the owner answers Q1 that way (this is the open qu
 | `@acryl/core` | the agent-free application runtime: Cordis loader, AppInstance, router, server, state, db, extensions | a package list of existing plugins plus a boundary test (T018), no code moved first |
 | `@acryl/blends` | the framework apps import (`from '@acryl/blends'`), blend.yaml, lock, resolver, installer | `acrylblends` |
 | `@acryl/create` | scaffolding: `npm create @acryl`, and `npm create acryl` through a small `create-acryl` | `create-acrylblends` |
-| `@acryl/code` | the IDE (the product the Blends frame and the agents make up) | `acryldev/acryl` apps and the frame |
+| `@acryl/blend-code` | the ACRYL IDE as one Blend: the coding app (registry id `acryl.code`, command `acryl code`), D9 | `acryldev/acryl` apps and the frame |
 | `@acryl/ui` | the shared components | `@acryl/ui` in the Blends repository, unpublished |
 | `@acryl/plugin-*` | official Cordis plugins, only where one has its own consumer | `plugins/` of the Blends repository |
 
@@ -70,8 +70,8 @@ package, only a sub-path of `@acryl/blends` that package would have to own. Read
 **D4. npm is not the Blend registry.** npm carries code (`@acryl/*`). Plugins stay on GitHub releases and `cordisplugins.github.io` (M11),
 Blends and starters on the Blends registry. An entry may point at npm, a Git repository or a signed app artifact.
 
-**D5. Dependency direction, enforced by a test.** `@acryl/core` knows nothing of agents. `@acryl/blends` sits on core. `@acryl/code` sits on
-both. The test (T018) fails when the core package set imports `agent*`, `driver-*`, `openai`, the frame or a DSH agent package, and it
+**D5. Dependency direction, enforced by a test.** `@acryl/core` knows nothing of agents. `@acryl/blends` sits on core. The IDE Blend
+(`@acryl/blend-code`, D9) sits on both, like every other Blend. The test (T018) fails when the core package set imports `agent*`, `driver-*`, `openai`, the frame or a DSH agent package, and it
 reads the packaged closure, not only the import lines.
 
 **D6. Core and Full editions of one Blend are profiles, not two apps.** One Blend id; `core` is its rows without agents, `full` extends
@@ -87,6 +87,21 @@ acceptable for participants. T025 makes `npx acryl new my-app` and `cd my-app &&
 systems from local tarballs first; the old commands stay as the fallback. Outward steps (reserving names, publishing `acryl` with the new
 subcommands, `create-acryl`, `@acryl/blends`, `@acryl/create-blends`) each need the owner's explicit go (T016, T020). No repository move before
 the workshop.
+
+**D9. The ACRYL IDE is one Blend, the coding one (owner, 2026-11-12).** Owner's words: "acryl IDE https://github.com/acryldev/acryl has to
+be just one of the BLENDs for coding as agentic IDE Acryl Blends app". So the IDE is not a separate product layer above Blends: it is an app
+built on `@acryl/blends` like the CRM, with the same blend.yaml, registry entry, Core/Full profiles and plugin pull. Names, following D3:
+
+| What | Name | Why this one |
+| --- | --- | --- |
+| registry id | `acryl.code` | the stable id every Blend has (`acryl.crm`, `acryl.notes`) |
+| npm package, if it ships as one | `@acryl/blend-code` | the `@acryl/blend-*` family; `@acryl/blends/code` cannot be its own package (D3): only a sub-path of the framework, which would put the IDE into every app's install |
+| command | `acryl code` (open it), `acryl new my-ide code` (make one) | the same `acryl new <dir> <starter>` line as every Blend |
+
+`@acryl/code` is no longer a layer of its own; it is not published unless it becomes a short alias of `@acryl/blend-code`. The stack reads:
+`@acryl/core` (agent-free runtime), `@acryl/blends` (the framework), then the Blends: `acryl.code` the IDE, `acryl.crm`, `acryl.notes`, and
+the person's own; `@acryl/plugin-*` and the agent pack plug into any of them. This is the direction already taken on 2026-10-23 and
+2026-10-30 (the IDE ported into the framework, DSH one chat driver), now with its name. Not before the workshop (D8).
 
 ## Repository ownership (open, Q2)
 
