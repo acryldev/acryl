@@ -84,6 +84,11 @@ file builds and runs unsigned on each OS.
   pipe) a bare `acryl` keeps opening the IDE as before, so nothing that scripts it breaks.
 - D2 (was Q2). The terminal face ships before the workshop of 2026-11-20; the desktop face after it.
 - D3 (was Q3). The desktop launcher is the first screen of the one ACRYL desktop app, not a second app.
+- D4 (owner, 2026-11-12, later the same day). The workshop of 2026-11-20 teaches `acryl new`, not `acrylblends`. Owner: "This should be
+  acryl new - but keep in mind our latest discussion how we simplify things" (049 M12: `acryl` is the entry point, `@acryl/blends` points
+  to the acrylblends package, the IDE is the Blend `acryl.code`, 049 D9).
+- D5 (owner, 2026-11-12). `acryl` is the one central tool for everything (making apps, launching, servicing), TUI and tool in one
+  easy-to-remember name, the way `hermes` is for its platform. Owner's go for release 0.2.7 so `npx acryl` shows the launcher.
 
 ## Packaging (decided while building, 2026-11-12)
 
