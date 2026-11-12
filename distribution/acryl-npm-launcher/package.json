@@ -8,6 +8,8 @@
   },
   "files": [
     "bin.js",
+    "cli.js",
+    "node-version.js",
     "forward.js",
     "launcher.js",
     "runtime.js",

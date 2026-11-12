@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { bundleLauncher } from '../apps/acryl-launcher-tui/scripts/bundle.mjs'
 import { execShim, tarCommand } from './lib/portable-commands.mjs'
 import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
+import { MINIMUM as MINIMUM_NODE } from '../distribution/acryl-npm-launcher/node-version.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const selectorSource = join(root, 'distribution', 'acryl-npm-launcher')
@@ -43,7 +44,8 @@ function selectorManifest() {
     name: 'acryl', version, private: false, type: 'module', bin: { acryl: './bin.js' },
     files: selectorFiles,
     optionalDependencies: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [targetPackageName(target), version])),
-    engines: { node: '>=22.19.0 || >=24.0.0' },
+    // The same minimum bin.js checks before anything loads (distribution/acryl-npm-launcher/node-version.js).
+    engines: { node: `>=${MINIMUM_NODE}` },
     description: 'A persistent, agent-agnostic coding environment. Keep your context, change your agent.',
     keywords: ['ai', 'coding-agent', 'agent', 'agentic-development', 'cli', 'tui', 'developer-tools', 'context', 'agent-context', 'multi-agent', 'cordis', 'deepseek-harness'],
     homepage: 'https://acryl.dev', repository: 'github:acryldev/acryl', license: 'MIT',
