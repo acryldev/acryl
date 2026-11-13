@@ -56,12 +56,14 @@ export function apply(ctx: ClientContext): void {
     locale: SIGN_IN_LOCALE_NAMESPACE,
     inject: () => ({ ...injected, modelsSection: () => ctx.slots.entries('settings.section').find(entry => entry.options.id === 'models') }),
   }, ConnectChoice))
-  // The upstream preview notice is not ACRYL's: reusing its id replaces that entry with one that ends its step at once (it is registered by DeepSeek's
-  // models plugin outside the desktop shell, so every browser window, including a generated app's, would show it).
+  // The upstream preview notice is not ACRYL's: reusing its id shadows that entry with one that ends its step at once (it is registered by DeepSeek's
+  // models plugin outside the desktop shell, so every browser window, including a generated app's, would show it). A list slot refuses a second entry
+  // with the same id at the same priority, so whichever plugin registered second would fail to activate; a lower priority shadows it in either order.
   ctx.slots.inject('settings.onboarding', () => ctx.slots.register({
     name: 'settings.onboarding',
     id: 'welcome-notice',
     order: -100,
+    priority: -1,
     inject: () => ({}),
   }, SkipPreviewNotice))
 }
