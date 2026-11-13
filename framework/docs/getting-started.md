@@ -78,7 +78,7 @@ public remote. Nothing is committed when it refuses.
 | `src/app.ts` | the registry of plugins your code provides; mounts the manifest |
 | `src/routes.ts` | your own plugin |
 | `plugins/` | every plugin of the app: copied from the library (listed in `plugins/library.json`) or written by you or the agent; all yours to edit |
-| `.acrylblends/` | the app's data: settings, installed-extension state, the extension ledger, task records (not committed) |
+| `.acryl/` | the app's own state, such as its id (`app.json`) and the door's address (not committed); the id names the app's data folder, `~/.acryl/apps/<id>/data/`: settings, installed-extension state, the extension ledger, task records |
 
 Set `ACRYLBLENDS_HOME` to keep the data elsewhere and `ACRYLBLENDS_PORT` to choose the first port tried (`0` for any free port).
 Nothing else reads the environment.

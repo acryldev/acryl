@@ -18,7 +18,7 @@ Experimental means: it works and is gated, its interface may still change in a m
 
 ## The `agent` template in production
 
-The `agent` template mounts an agent behind `POST /ask` that spends the model key and can write plugins into the running app (`builder`) and install them (`extensions`, with `POST /extensions/approve` deciding installs). **None of that is behind a login.** Since 1.0.1, with `NODE_ENV=production` the template leaves the `agent` and `builder` rows out, along with the door: `/ask`, `/extensions*` and `/tasks*` are not mounted, and the page and `GET /health` stay. 1.0.0 left them mounted. **What the agent built is still served**: 1.0.1 to 1.0.6 also left the `extensions` row out, so an app whose pages were extensions (the workshop's board) lost them in production. Since 1.0.7 the row starts again, read-only: the extension folders of `plugins/` (what the agent installed in development, committed with the app) are loaded once from where they are, nothing can be installed, updated, removed or approved while the app runs, and the start prints one line, `extensions (read-only): board, notes` (or `extensions: none found in plugins/`). If `.acrylblends/extensions.json` records an extension that `plugins/` has no folder for, a `WARNING` names it: commit its folder, or install it again in development.
+The `agent` template mounts an agent behind `POST /ask` that spends the model key and can write plugins into the running app (`builder`) and install them (`extensions`, with `POST /extensions/approve` deciding installs). **None of that is behind a login.** Since 1.0.1, with `NODE_ENV=production` the template leaves the `agent` and `builder` rows out, along with the door: `/ask`, `/extensions*` and `/tasks*` are not mounted, and the page and `GET /health` stay. 1.0.0 left them mounted. **What the agent built is still served**: 1.0.1 to 1.0.6 also left the `extensions` row out, so an app whose pages were extensions (the workshop's board) lost them in production. Since 1.0.7 the row starts again, read-only: the extension folders of `plugins/` (what the agent installed in development, committed with the app) are loaded once from where they are, nothing can be installed, updated, removed or approved while the app runs, and the start prints one line, `extensions (read-only): board, notes` (or `extensions: none found in plugins/`). If `extensions.json` in the app's data folder records an extension that `plugins/` has no folder for, a `WARNING` names it: commit its folder, or install it again in development.
 
 - To keep a row anyway, name it: `ACRYL_PRODUCTION_KEEP=agent,builder,extensions` (a comma list; naming `extensions` keeps the live install, not just the read-only start). Each row kept prints a `WARNING` line at start saying what it gives a visitor. Put your own login in front before you do.
 - **An app made by 1.0.0 keeps its own `src/app.ts` and `src/routes.ts`**, which `acrylblends upgrade` never touches (they are your files). Until you change them: deploy with the `agent`, `builder` and `extensions` rows set to `disabled: true` in `blend.yaml`, or start from another template, or copy the new `src/app.ts` and `src/routes.ts` of a fresh `acrylblends init my-app --template agent` over yours.
@@ -62,9 +62,13 @@ A server made from a template listens on `127.0.0.1` and starts looking for a fr
 ```sh
 npm ci --omit=dev
 NODE_ENV=production HOST=0.0.0.0 PORT=3299 npm start
-# app listening on http://0.0.0.0:3299 (data in /srv/app/.acrylblends; ...)
+# app listening on http://0.0.0.0:3299 (data in /home/app/.acryl/apps/app-3f9c/data; ...)
 curl http://127.0.0.1:3299/health
 ```
+
+The data is in `~/.acryl/apps/<id>/data` of the user that runs the app, and the `<id>` is kept in the app folder's `.acryl/app.json`, which git ignores: a
+deploy into a fresh clone gets a new id and an empty data folder. On a server, set `ACRYLBLENDS_HOME` to a fixed folder (the `agent` template's Dockerfile
+sets `/data`).
 
 Putting the app on `0.0.0.0` makes it reachable by anyone who can reach the machine: put the login or the proxy in front first (see the checklist below).
 
