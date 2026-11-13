@@ -42,4 +42,21 @@ export default defineConfig([
       intro: 'var module = { exports: {} }; var exports = module.exports;',
     },
   },
+  {
+    // The launcher as a page of its own (T016): one self-contained browser file, React included.
+    name: `${PACKAGE_NAME}/page`,
+    entry: { page: 'src/page/main.tsx' },
+    tsconfig: 'tsconfig.client.json',
+    outDir: 'lib',
+    format: 'iife',
+    platform: 'browser',
+    target: 'es2022',
+    fixedExtension: false,
+    dts: false,
+    clean: false,
+    sourcemap: false,
+    minify: true,
+    noExternal: () => true,
+    outputOptions: { entryFileNames: 'page.js' },
+  },
 ])

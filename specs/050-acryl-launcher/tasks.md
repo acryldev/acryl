@@ -139,5 +139,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       Blends frame, whose left panel (branches, versions) can be hidden for it and whose right panel is the Blends one; (4) `acryl` and the desktop app open that
       Blend as the first screen. The docked Assistant (T013) is then removed. Open question for the plan: Desktop shows the frame page in its window, as the IDE Blend
       (`acryl.ade`) does.
+      State 2026-11-13 (spike, scratch app from `create-acrylblends blank`): step (1) and (2) proven. The page bundle (`plugins/acryl-launcher-desktop/src/page/main.tsx`) is
+      served at the app's `/`, the host half runs as an app plugin (folder `plugins/acryl-launcher-host/` with a `blend.yaml` row of the same name above `extensions`;
+      the folder name must equal the exported `name`), and the Blends frame shows the launcher as its canvas with the Blends right panel (Chat, Claude Code, Codex, Pi,
+      Terminal, Files, Git, Browser in its "+" menu). Left: ship it as a Blend `acryl.launcher` instead of a hand-made folder, hide the frame's left panel, make
+      `acryl`/Desktop open it, then remove the docked Assistant.
       Done when: on this Mac the first screen of Desktop is the launcher in the frame, the right panel's Claude, Codex and Pi start in the apps folder and can use the
       launcher's tools, and Web shows the same.
