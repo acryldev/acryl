@@ -133,6 +133,13 @@ file builds and runs unsigned on each OS.
   colours and gradients (Space Grotesk and JetBrains Mono, near-black page, square corners, 1px borders, the 64px grid pattern). The screen carries
   both as skins and the owner picks one in Settings; the choice is remembered. Ticket T014.
 
+- D13 (owner 2026-11-13, after seeing the docked Assistant: "actually acryl blends suits better, as it has right what we need"; "make sure we have agent chat and
+  claude, codex, pi working there, same as in ACRYL blends"; "we can drop the redundant file viewer and browser"). The right panel the launcher should have is
+  **the Blends frame's**: the agent chat, Claude Code, Codex and Pi as they are (TUIs in a PTY), and a terminal, with no browser (the canvas is the browser) and no
+  file viewer for this screen. That panel is part of the Blends frame page (`ide/acryl-blends-frame`, acrylblends repository), so the way to have it is to run the
+  launcher **inside the Blends frame** as the canvas of an app. Until then the launcher has its own docked Assistant (a Claude agent with the launcher's tools), and
+  the IDE's Files, Changes and Browser panel is no longer offered from the screen. Ticket T016.
+
 ## Packaging (decided while building, 2026-11-12)
 
 - The terminal launcher is bundled at pack time into the `acryl` npm package as one file, `launcher.js` (about 250 KB: the journeys,

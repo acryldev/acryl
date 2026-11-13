@@ -132,3 +132,12 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       app's `webServer` that drops the page's icon links and adds the Acrylblends mark (`acrylblends.github.io/public/favicon.png`, 64 px, embedded as a data
       URL), then a frame package release (`@acrylblends/blends-frame` 0.1.3) and an `acrylblends` CLI release that pins it (see the release notes of 1.5.3).
       Done when: a new app's tab shows the Acrylblends mark and the served page has no DeepSeek icon link.
+- [ ] T016 [desktop, blends] The launcher in the Blends frame, so its right panel is the Blends one (owner 2026-11-13, spec.md D13): chat, Claude Code, Codex and Pi,
+      a terminal, no browser, no file viewer. Plan: (1) the launcher screen as a standalone page (a small `main.tsx` over `LauncherScreen`, bundled to one browser file,
+      served by the app at its page route); (2) its Host half (`LauncherService`, the routes, the nine tools) as plugins of a Blend `acryl.launcher` (the host
+      plugin already uses `acrylblends` and `acryl-loopback-http`, which a Blends app has; `appInstance` is the one service to supply); (3) the app opened in the
+      Blends frame, whose left panel (branches, versions) can be hidden for it and whose right panel is the Blends one; (4) `acryl` and the desktop app open that
+      Blend as the first screen. The docked Assistant (T013) is then removed. Open question for the plan: Desktop shows the frame page in its window, as the IDE Blend
+      (`acryl.ade`) does.
+      Done when: on this Mac the first screen of Desktop is the launcher in the frame, the right panel's Claude, Codex and Pi start in the apps folder and can use the
+      launcher's tools, and Web shows the same.

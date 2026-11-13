@@ -7,7 +7,8 @@ import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppR
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
-import { askAssistant, assistantWidth, openRightPanel, rightPanelWidth } from './right-panel.ts'
+import { readRail, saveRail } from './skin.ts'
+import { askAssistant, assistantWidth } from './assistant.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
 import type { LauncherVisibility } from './store.ts'
 
@@ -38,6 +39,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   const [dark, setDark] = useState(true)
   const [panelWidth, setPanelWidth] = useState(0)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const [rail, setRail] = useState<boolean>(() => readRail())
 
   // The list is read again every two seconds while the screen is open: an app starting or ending shows without a click.
   useEffect(() => {
@@ -59,13 +61,13 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
     return () => { style.remove() }
   }, [skin])
 
-  // The IDE's right panel (the assistant: terminals with Claude, Codex, Files, Changes) stays visible beside the screen: the screen stops where it starts.
+  // The assistant column (acryl-agent-control's AssistantPane) stays visible beside the screen: the screen stops where it starts.
   useEffect(() => {
     if (!open) return undefined
     const measure = (): void => {
       const assistant = assistantWidth()
       setAssistantOpen(assistant > 0)
-      setPanelWidth(Math.max(rightPanelWidth(), assistant))
+      setPanelWidth(assistant)
     }
     measure()
     const timer = setInterval(measure, 400)
@@ -91,15 +93,15 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   const tiles = tilesOf(apps)
   const current = apps.find(app => app.id === selected) ?? apps[0]
   const nav = (id: View, label: string, count?: number): ReactNode => (
-    <button type="button" className="acrylHomeNavItem" aria-current={view === id ? 'page' : undefined} onClick={() => { setView(id) }}>
-      {label}{count === undefined ? null : <span className="acrylHomeCount">{count}</span>}
+    <button type="button" className="acrylHomeNavItem" title={label} aria-current={view === id ? 'page' : undefined} onClick={() => { setView(id) }}>
+      <span className="acrylHomeGlyph" aria-hidden="true">{label.slice(0, 1)}</span><span className="acrylHomeLabel">{label}</span>{count === undefined ? null : <span className="acrylHomeCount">{count}</span>}
     </button>
   )
 
   return (
-    <div className="acrylHome" role="dialog" aria-label="ACRYL" data-skin={skin} data-tone={dark ? 'dark' : 'light'} style={panelWidth > 0 ? { right: panelWidth } : undefined}>
+    <div className="acrylHome" role="dialog" aria-label="ACRYL" data-skin={skin} data-tone={dark ? 'dark' : 'light'} data-nav={rail ? 'rail' : 'full'} style={panelWidth > 0 ? { right: panelWidth } : undefined}>
       <nav className="acrylHomeNav" aria-label="ACRYL sections">
-        <div className="acrylHomeBrand">ACRYL</div>
+        <div className="acrylHomeBrand"><span className="acrylHomeLabel">ACRYL</span><button type="button" className="acrylHomeRailToggle" aria-label={rail ? 'Expand the sidebar' : 'Collapse the sidebar'} title={rail ? 'Expand the sidebar' : 'Collapse the sidebar'} onClick={() => { setRail(!rail); saveRail(!rail) }}>{rail ? '»' : '«'}</button></div>
         {nav('apps', 'My apps', tiles.apps)}
         {nav('running', 'Running', tiles.running)}
         {nav('drafts', 'Made by agents', apps.filter(app => app.madeBy === 'agent').length)}
@@ -111,8 +113,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         {nav('health', 'Health')}
         {nav('settings', 'Settings')}
         <div className="acrylHomeSep" />
-        <button type="button" className="acrylHomeNavItem" aria-pressed={assistantOpen} title="Ask Claude to use the launcher for you: it can make apps, pull Blends and plugins, start and stop them, and answer how to use this screen" onClick={() => { if (assistantOpen) { askAssistant({ open: false }); return } api.assistantFolder().then((cwd) => { askAssistant({ open: true, cwd }) }, (cause: unknown) => { setProblem(message(cause)); askAssistant({ open: true }) }) }}>Assistant{assistantOpen ? <span className="acrylHomeCount">open</span> : null}</button>
-        <button type="button" className="acrylHomeNavItem" title="Open the IDE's right panel beside this screen: terminals where Codex or any CLI agent runs, Files, Changes" onClick={() => { openRightPanel() }}>Agent terminals</button>
+        <button type="button" className="acrylHomeNavItem" aria-pressed={assistantOpen} title="Ask Claude to use the launcher for you: it can make apps, pull Blends and plugins, start and stop them, and answer how to use this screen" onClick={() => { if (assistantOpen) { askAssistant({ open: false }); return } api.assistantFolder().then((cwd) => { askAssistant({ open: true, cwd }) }, (cause: unknown) => { setProblem(message(cause)); askAssistant({ open: true }) }) }}><span className="acrylHomeGlyph" aria-hidden="true">A</span><span className="acrylHomeLabel">Assistant</span>{assistantOpen ? <span className="acrylHomeCount">open</span> : null}</button>
       </nav>
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}

@@ -131,6 +131,18 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHome[data-skin="site"] .acrylHomeChoice input { accent-color: var(--h-text); }
 .acrylHome[data-skin="site"] .acrylHomePanelTop h3 { font-weight: 500; letter-spacing: -.01em; }
 .acrylHome[data-skin="site"] .acrylHomeIcon { font-family: var(--h-mono); font-weight: 500; }
+/* The sidebar collapsed to a rail: a letter for each place, never gone. */
+.acrylHomeGlyph { display: none; flex: none; width: 24px; height: 24px; place-items: center; border-radius: 7px; background: var(--h-fill2); font-size: 12px; font-weight: 600; }
+.acrylHomeBrand { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.acrylHomeRailToggle { padding: 0 6px; border: 0; border-radius: 6px; background: none; color: var(--h-dim); font: 600 14px/22px inherit; cursor: pointer; }
+.acrylHomeRailToggle:hover { background: var(--h-fill); color: var(--h-text); }
+.acrylHome[data-nav="rail"] { grid-template-columns: 60px minmax(0, 1fr); }
+.acrylHome[data-nav="rail"] .acrylHomeNav { padding-inline: 8px; }
+.acrylHome[data-nav="rail"] .acrylHomeBrand { flex-direction: column; padding: 0 0 12px; }
+.acrylHome[data-nav="rail"] .acrylHomeBrand .acrylHomeLabel, .acrylHome[data-nav="rail"] .acrylHomeNavItem .acrylHomeLabel, .acrylHome[data-nav="rail"] .acrylHomeNavItem .acrylHomeCount { display: none; }
+.acrylHome[data-nav="rail"] .acrylHomeGlyph { display: grid; }
+.acrylHome[data-nav="rail"] .acrylHomeNavItem { justify-content: center; padding: 0; }
+.acrylHome[data-nav="rail"] .acrylHomeSep { margin-inline: 4px; }
 @media (max-width: 760px) { .acrylHome { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .acrylHomeNav { flex-direction: row; flex-wrap: wrap; padding-top: 14px; border-right: 0; border-bottom: 1px solid var(--h-border); } .acrylHomeBrand, .acrylHomeSep { display: none; } .acrylHomeMain { padding: 20px 16px; } }
 `
 

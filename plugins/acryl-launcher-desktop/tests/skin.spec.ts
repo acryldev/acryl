@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isDarkColor, readSkin, saveSkin, SKIN_KEY } from '../src/client/skin.ts'
+import { isDarkColor, RAIL_KEY, readRail, readSkin, saveRail, saveSkin, SKIN_KEY } from '../src/client/skin.ts'
 
 const store = (initial?: string) => {
   const data = new Map<string, string>(initial === undefined ? [] : [[SKIN_KEY, initial]])
@@ -30,5 +30,17 @@ describe('isDarkColor', () => {
     expect(isDarkColor('rgba(255,255,255,.9)')).toBe(false)
     expect(isDarkColor('var(--x)')).toBeUndefined()
     expect(isDarkColor(undefined)).toBeUndefined()
+  })
+})
+
+describe('the sidebar rail choice', () => {
+  it('is expanded unless it was collapsed, is remembered, and survives a store that refuses', () => {
+    const memory = { data: new Map<string, string>(), getItem(key: string) { return this.data.get(key) ?? null }, setItem(key: string, value: string) { this.data.set(key, value) } }
+    expect(readRail(memory)).toBe(false)
+    saveRail(true, memory)
+    expect(memory.data.get(RAIL_KEY)).toBe('1')
+    expect(readRail(memory)).toBe(true)
+    expect(readRail({ getItem: () => { throw new Error('blocked') } })).toBe(false)
+    expect(() => { saveRail(true, { setItem: () => { throw new Error('quota') } }) }).not.toThrow()
   })
 })

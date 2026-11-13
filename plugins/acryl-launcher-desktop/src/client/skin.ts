@@ -46,3 +46,14 @@ export function isDarkColor(color: string | undefined): boolean | undefined {
   const [red = 0, green = 0, blue = 0] = channels
   return (0.2126 * red + 0.7152 * green + 0.0722 * blue) < 128
 }
+
+export const RAIL_KEY = 'acryl-launcher-nav-rail'
+
+/** Whether the sidebar is collapsed to its narrow rail (remembered); expanded when nothing is remembered or storage is unavailable. */
+export function readRail(storage?: Pick<Storage, 'getItem'>): boolean {
+  try { return (storage ?? globalThis.localStorage).getItem(RAIL_KEY) === '1' } catch { return false }
+}
+
+export function saveRail(rail: boolean, storage?: Pick<Storage, 'setItem'>): void {
+  try { (storage ?? globalThis.localStorage).setItem(RAIL_KEY, rail ? '1' : '0') } catch { /* not remembered */ }
+}
