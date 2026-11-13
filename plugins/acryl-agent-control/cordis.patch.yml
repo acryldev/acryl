@@ -1,3 +1,6 @@
 - insert:
     - id: acryl-agent-control
       name: acryl-agent-control
+      # The loopback gateway on (secret-gated, this machine only): the assistant's Claude agent reaches ACRYL's tools, the launcher's among them, through it.
+      config:
+        online: true

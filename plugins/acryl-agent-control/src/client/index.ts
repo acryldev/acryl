@@ -13,6 +13,7 @@ import { PageChannel, UiDriver, UserInputClock } from 'acrylblends/door/page'
 import { createAuditApi } from './audit-api.ts'
 import { AuditSection } from './AuditSection.tsx'
 import { AgentDrivingIndicator } from './Indicator.tsx'
+import { AssistantPane } from './AssistantPane.tsx'
 import { en, zh, type AgentControlLocaleKey } from './locales.ts'
 import { installIndicatorStyles } from './styles.ts'
 import { createWorkersApi } from './worker-tab/workers-api.ts'
@@ -83,6 +84,14 @@ export function apply(ctx: ClientContext): void {
     }), 'acryl-agent-control: Claude worker tab type')
   })
 
+  // The assistant column: closed until a screen asks for it with the `acryl:assistant` window event (the launcher's Assistant button does).
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({
+    name: 'shell.overlay',
+    id: 'acryl-assistant-pane',
+    order: 900,
+    inject: () => ({ api: workersApi }),
+  }, AssistantPane))
+
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
     id: 'acryl-agent-control-indicator',
@@ -93,3 +102,4 @@ export function apply(ctx: ClientContext): void {
 
 export { PageChannel, UiDriver } from 'acrylblends/door/page'
 export { AgentDrivingIndicator } from './Indicator.tsx'
+export { ASSISTANT_EVENT, type AssistantRequest } from './AssistantPane.tsx'

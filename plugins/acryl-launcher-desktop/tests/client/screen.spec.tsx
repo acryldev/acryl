@@ -209,22 +209,34 @@ describe('the plugins of a running app', () => {
 })
 
 describe('the assistant', () => {
-  it('opens the IDE\'s right panel beside the screen from the Assistant button, and the screen stops where the panel starts', async () => {
+  it('asks the assistant column to open (with the apps folder) and to close, and the screen stops where the column starts', async () => {
+    const asked: Array<{ open: boolean, cwd?: string }> = []
+    const onAsk = (event: Event): void => { asked.push((event as CustomEvent<{ open: boolean, cwd?: string }>).detail) }
+    window.addEventListener('acryl:assistant', onAsk)
+    open(fake(state([])))
+    fireEvent.click(await screen.findByRole('button', { name: /^Assistant/u }))
+    expect(asked).toEqual([{ open: true, cwd: '/h/ACRYL' }])
+    const pane = document.createElement('aside')
+    pane.setAttribute('data-acryl-assistant', 'open')
+    pane.getBoundingClientRect = () => ({ left: window.innerWidth - 440, width: 440, right: window.innerWidth, top: 0, bottom: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) })
+    document.body.appendChild(pane)
+    await waitFor(() => { expect((screen.getByRole('dialog', { name: 'ACRYL' }) as HTMLElement).style.right).toBe('440px') }, { timeout: 2000 })
+    fireEvent.click(screen.getByRole('button', { name: /^Assistant/u }))
+    expect(asked.at(-1)).toEqual({ open: false })
+    pane.remove()
+    window.removeEventListener('acryl:assistant', onAsk)
+  })
+
+  it('opens the IDE\'s right panel from Agent terminals, for Codex and other CLI agents', async () => {
     const pressed = vi.fn()
     const show = document.createElement('button')
     show.setAttribute('aria-label', 'Show right panel')
     show.addEventListener('click', pressed)
     document.body.appendChild(show)
     open(fake(state([])))
-    fireEvent.click(await screen.findByRole('button', { name: /Assistant/u }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Agent terminals' }))
     expect(pressed).toHaveBeenCalledTimes(1)
     show.remove()
-    const seat = document.createElement('aside')
-    seat.setAttribute('data-acryl-slot', 'rightbar')
-    seat.getBoundingClientRect = () => ({ left: window.innerWidth - 420, width: 420, right: window.innerWidth, top: 0, bottom: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) })
-    document.body.appendChild(seat)
-    await waitFor(() => { expect((screen.getByRole('dialog', { name: 'ACRYL' }) as HTMLElement).style.right).toBe('420px') }, { timeout: 2000 })
-    seat.remove()
   })
 })
 

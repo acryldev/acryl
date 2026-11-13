@@ -7,7 +7,7 @@ import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppR
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
-import { openRightPanel, rightPanelWidth } from './right-panel.ts'
+import { askAssistant, assistantWidth, openRightPanel, rightPanelWidth } from './right-panel.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
 import type { LauncherVisibility } from './store.ts'
 
@@ -37,6 +37,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   const [skin, setSkin] = useState<Skin>(() => readSkin())
   const [dark, setDark] = useState(true)
   const [panelWidth, setPanelWidth] = useState(0)
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   // The list is read again every two seconds while the screen is open: an app starting or ending shows without a click.
   useEffect(() => {
@@ -61,7 +62,11 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   // The IDE's right panel (the assistant: terminals with Claude, Codex, Files, Changes) stays visible beside the screen: the screen stops where it starts.
   useEffect(() => {
     if (!open) return undefined
-    const measure = (): void => { setPanelWidth(rightPanelWidth()) }
+    const measure = (): void => {
+      const assistant = assistantWidth()
+      setAssistantOpen(assistant > 0)
+      setPanelWidth(Math.max(rightPanelWidth(), assistant))
+    }
     measure()
     const timer = setInterval(measure, 400)
     window.addEventListener('resize', measure)
@@ -106,7 +111,8 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         {nav('health', 'Health')}
         {nav('settings', 'Settings')}
         <div className="acrylHomeSep" />
-        <button type="button" className="acrylHomeNavItem" aria-pressed={panelWidth > 0} title="Open the right panel beside this screen: terminals with Claude or Codex, Files, Changes" onClick={() => { openRightPanel() }}>Assistant{panelWidth > 0 ? <span className="acrylHomeCount">open</span> : null}</button>
+        <button type="button" className="acrylHomeNavItem" aria-pressed={assistantOpen} title="Ask Claude to use the launcher for you: it can make apps, pull Blends and plugins, start and stop them, and answer how to use this screen" onClick={() => { askAssistant(assistantOpen ? { open: false } : { open: true, ...state === undefined ? {} : { cwd: state.appsFolder } }) }}>Assistant{assistantOpen ? <span className="acrylHomeCount">open</span> : null}</button>
+        <button type="button" className="acrylHomeNavItem" title="Open the IDE's right panel beside this screen: terminals where Codex or any CLI agent runs, Files, Changes" onClick={() => { openRightPanel() }}>Agent terminals</button>
       </nav>
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}

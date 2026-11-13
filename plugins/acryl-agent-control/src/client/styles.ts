@@ -17,6 +17,12 @@ const CSS = `
 .dshAgentControlTable th, .dshAgentControlTable td { padding: 4px 8px; border-bottom: 1px solid var(--dsw-alias-border-l2); text-align: left; vertical-align: top; }
 .dshAgentControlTable tr[data-outcome="refused"] td:last-child { color: #f59e0b; }
 .dshAgentControlTable tr[data-outcome="failed"] td:last-child { color: #f87171; }
+.acrylAssistant { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2147482500; display: flex; flex-direction: column; width: min(460px, 100vw); border-left: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-label-primary); box-shadow: -12px 0 32px -18px rgba(0,0,0,.6); }
+.acrylAssistantHead { display: flex; align-items: center; gap: 10px; padding: 38px 14px 10px; border-bottom: 1px solid var(--dsw-alias-border-l1); font: 13px/20px -apple-system, system-ui, sans-serif; }
+.acrylAssistantHead span { flex: 1; min-width: 0; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.acrylAssistantHead button { padding: 3px 11px; border: 1px solid rgba(127,127,127,.35); border-radius: 99px; background: transparent; color: inherit; font: 600 12px -apple-system, system-ui, sans-serif; cursor: pointer; }
+.acrylAssistantBody { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow-y: auto; }
+.acrylAssistantBody .acrylWorker { max-width: none; padding: 14px; }
 .acrylWorker { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; width: 100%; max-width: 860px; margin: 0 auto; padding: 20px 24px; box-sizing: border-box; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .acrylWorkerIntro { margin: 0; color: var(--dsw-alias-label-secondary); }
 .acrylWorker input, .acrylWorker textarea { box-sizing: border-box; width: 100%; padding: 8px 10px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; outline: none; resize: vertical; }

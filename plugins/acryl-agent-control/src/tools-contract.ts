@@ -19,6 +19,16 @@ export const DEFAULT_EXPOSED_TOOLS: readonly string[] = [
   'acryl_plugin_set_enabled',
   // Read-only: a shared-context workspace's projects and brief (acryl-workspace, spec 043 T011).
   'acryl_workspace_context',
+  // The launcher (acryl-launcher-desktop, spec 050 T013): list, make, start and stop apps, pull a Blend or a plugin, and prepare (never send) a publish.
+  'acryl_launcher_help',
+  'acryl_launcher_apps',
+  'acryl_launcher_blends',
+  'acryl_launcher_new_app',
+  'acryl_launcher_start_app',
+  'acryl_launcher_stop_app',
+  'acryl_launcher_plugins',
+  'acryl_launcher_pull_plugin',
+  'acryl_launcher_publish_plan',
 ]
 
 export interface GatewayTool {
