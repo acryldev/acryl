@@ -10,5 +10,7 @@ export default defineConfig({
       '@deepseek-ai/dsh-client-ui-conversation/client': fileURLToPath(new URL('../../deepseek-harness/packages/client/ui-conversation/src/client/contract/snapshot.ts', import.meta.url)),
     },
   },
-  test: { setupFiles: ['../../scripts/testing/isolate-home.ts'], include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx'] },
+  test: {
+    // The Intel macOS and Windows runners are several times slower than Linux: a runtime that boots in 1 s there can take over 5 s (v0.2.8 release runs).
+    testTimeout: process.platform === 'linux' ? 5_000 : 30_000, setupFiles: ['../../scripts/testing/isolate-home.ts'], include: ['tests/**/*.spec.ts', 'tests/**/*.spec.tsx'] },
 })
