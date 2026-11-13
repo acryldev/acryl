@@ -3,8 +3,8 @@ import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
-  SURFACES, type NewAppRequest, type Surface,
+  LAUNCHER_ADD_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  SURFACES, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
 } from './contract.ts'
 import { RegistryUnavailable } from './registry.ts'
 import { LauncherRefusal, type LauncherService } from './service.ts'
@@ -34,6 +34,36 @@ function parseNew(value: unknown): NewAppRequest | undefined {
   return { where, name, surface, ...starter === undefined ? {} : { starter }, ...blend === undefined ? {} : { blend } }
 }
 
+const optional = (value: unknown): string | undefined | null => value === undefined ? undefined : text(value) ?? null
+
+function parsePublishPlan(value: unknown): PublishPlanRequest | undefined {
+  const body = record(value)
+  if (body === undefined || !onlyKeys(body, ['id', 'plugin', 'owner', 'license'])) return undefined
+  const id = text(body.id)
+  const plugin = text(body.plugin)
+  const owner = optional(body.owner)
+  const license = optional(body.license)
+  if (id === undefined || plugin === undefined || owner === null || license === null) return undefined
+  return { id, plugin, ...owner === undefined ? {} : { owner }, ...license === undefined ? {} : { license } }
+}
+
+function parsePlan(value: unknown): PublishPlanView | undefined {
+  const plan = record(value)
+  if (plan === undefined || !Array.isArray(plan.files) || !plan.files.every(file => typeof file === 'string')) return undefined
+  const fields = ['owner', 'repo', 'version', 'visibility', 'license', 'integrity', 'digest', 'pullLine'] as const
+  if (!fields.every(field => typeof plan[field] === 'string') || typeof plan.createsRepository !== 'boolean') return undefined
+  return plan as unknown as PublishPlanView
+}
+
+function parsePublish(value: unknown): PublishRequest | undefined {
+  const body = record(value)
+  if (body === undefined) return undefined
+  const { plan, ...rest } = body
+  const request = parsePublishPlan(rest)
+  const confirmed = parsePlan(plan)
+  return request === undefined || confirmed === undefined ? undefined : { ...request, plan: confirmed }
+}
+
 export function launcherRoutes(service: LauncherService, report: ReportError = () => {}): Acryl {
   const app = new Acryl()
   app.get(LAUNCHER_STATE_PATH, ownPage, (c) => c.json(service.state()))
@@ -55,6 +85,32 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
       return c.json(error('the launcher is unavailable'), 500)
     }
   })
+
+  /** A question or an action on a running app's door: same-origin JSON in, the answer out. A refusal is 409 with its reason. */
+  const ask = <T>(path: string, parse: (value: unknown) => T | undefined, run: (request: T) => Promise<unknown>, operation: string): void => {
+    app.post(path, ownPage, jsonContent, jsonBody(), async (c) => {
+      const value = await readJson(c)
+      if (value === INVALID_JSON) return c.json(error('invalid JSON request'), 400)
+      const request = parse(value)
+      if (request === undefined) return c.json(error(`invalid ${operation} request`), 400)
+      try {
+        return c.json(await run(request))
+      } catch (cause) {
+        if (cause instanceof LauncherRefusal) return c.json(error(cause.message), 409)
+        report(operation, cause)
+        return c.json(error('the launcher is unavailable'), 500)
+      }
+    })
+  }
+  ask(LAUNCHER_PLUGINS_PATH, parseOne('id'), async id => ({ plugins: await service.plugins(id) }), 'list plugins')
+  ask(LAUNCHER_PLUGIN_PULL_PATH, (value) => {
+    const body = record(value)
+    const id = body === undefined || !onlyKeys(body, ['id', 'source']) ? undefined : text(body.id)
+    const source = body === undefined ? undefined : text(body.source)
+    return id === undefined || source === undefined ? undefined : { id, source }
+  }, request => service.pullPlugin(request.id, request.source), 'pull a plugin')
+  ask(LAUNCHER_PUBLISH_PLAN_PATH, parsePublishPlan, request => service.publishPlan(request), 'plan a publish')
+  ask(LAUNCHER_PUBLISH_PATH, parsePublish, request => service.publish(request), 'publish a plugin')
 
   /** A change: same-origin JSON in, the new state out. A refusal is 409 with its reason; anything else is reported and 500. */
   const change = <T>(path: string, parse: (value: unknown) => T | undefined, run: (request: T) => void, operation: string): void => {

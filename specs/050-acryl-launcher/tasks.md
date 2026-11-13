@@ -84,4 +84,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       desktop` and opened its own Electron window, the card showing running. The first-run popup now renders Settings > Models itself (DeepSeek key, third-party
       provider, custom API, account sign-in) with "More providers in Settings" and Later. The screen uses the ACRYL IDE's fonts, pill buttons and tokens, with
       colour for contrast, and the store is a card grid.
+      Plugins from the screen (owner, 3 hours before a meeting, 2026-11-13): a running app's panel lists its plugins (made in the app, or pulled with their
+      source and author), pulls one from a registry source (`github:owner/repo@version`) and shares one made in the app: the app's own publish plan is shown
+      (account, repository, version, license, files, the line a friend pulls it with) and nothing is sent until the person clicks yes (the screen sends
+      the door's `publish-confirmed` with the plan they read, as the terminal's prompt does). Seen live on this Mac: a plugin pulled from inboxxobni's
+      registry repository, a plugin pushed to inboxxobni/acrylblends-demo-hello v0.1.0 (public repository and release confirmed on GitHub); the app's refusal
+      (a test plugin in an old tool shape) is shown in its own words.
 

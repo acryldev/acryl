@@ -1,7 +1,8 @@
 /** Same-origin browser client for the launcher routes (`../contract.ts`). */
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
-  type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type StateResponse,
+  LAUNCHER_ADD_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type PluginPullResponse, type PluginsResponse, type PluginView, type PublishPlanRequest, type PublishPlanView,
+  type PublishRequest, type PublishResponse, type StateResponse,
 } from '../contract.ts'
 
 export interface HealthResponse extends HealthView {
@@ -19,6 +20,13 @@ export interface LauncherApi {
   create(request: NewAppRequest): Promise<StateResponse>
   start(id: string): Promise<StateResponse>
   stop(id: string): Promise<StateResponse>
+  /** The plugins of a running app; rejects with the reason in words (for example that the app is not running). */
+  plugins(id: string): Promise<readonly PluginView[]>
+  pullPlugin(id: string, source: string): Promise<PluginPullResponse>
+  /** What publishing a plugin would send; sends nothing. */
+  publishPlan(request: PublishPlanRequest): Promise<PublishPlanView>
+  /** The person's yes to the plan they read. */
+  publish(request: PublishRequest): Promise<PublishResponse>
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -42,6 +50,11 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
     if (!response.ok) throw await failure(response)
     return await response.json() as StateResponse
   }
+  const send = async <T>(path: string, body: unknown): Promise<T> => {
+    const response = await fetchImpl(path, { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    if (!response.ok) throw await failure(response)
+    return await response.json() as T
+  }
   return {
     state: () => get<StateResponse>(LAUNCHER_STATE_PATH),
     health: () => get<HealthResponse>(LAUNCHER_HEALTH_PATH),
@@ -51,5 +64,9 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
     create: request => post(LAUNCHER_NEW_PATH, request),
     start: id => post(LAUNCHER_START_PATH, { id }),
     stop: id => post(LAUNCHER_STOP_PATH, { id }),
+    plugins: async id => (await send<PluginsResponse>(LAUNCHER_PLUGINS_PATH, { id })).plugins,
+    pullPlugin: (id, source) => send<PluginPullResponse>(LAUNCHER_PLUGIN_PULL_PATH, { id, source }),
+    publishPlan: request => send<PublishPlanView>(LAUNCHER_PUBLISH_PLAN_PATH, request),
+    publish: request => send<PublishResponse>(LAUNCHER_PUBLISH_PATH, request),
   }
 }

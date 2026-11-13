@@ -20,10 +20,18 @@ const BLENDS = [
   { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary' },
 ]
 
+const PLUGINS = [
+  { name: 'hello', version: 'e4bc', state: 'active' },
+  { name: 'pomodoro', version: '6388', state: 'active', pulledFrom: 'github:a/b@0.1.0', author: 'a' },
+]
+const PLAN = { owner: 'o', repo: 'demo', version: '0.1.0', visibility: 'public', license: 'MIT', createsRepository: true, files: ['index.ts'], integrity: 'sha512-x', digest: 'abc', pullLine: 'npm run acryl -- plugin pull github:o/demo@0.1.0@sha256:abc' }
+
 function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): LauncherApi {
   return {
     state: vi.fn(async () => initial),
     blends: vi.fn(async () => BLENDS),
+    plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
+    publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
     add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial),
     ...over,
@@ -155,6 +163,48 @@ describe('the ACRYL screen', () => {
     expect(screen.getByText(/saved once for every app \(sk-\.\.\.6789\)/u)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'WebBoxes.ai' }))
     expect(screen.getByText(/Deploying an app to WebBoxes.ai from its card is coming/u)).toBeTruthy()
+  })
+})
+
+describe('the plugins of a running app', () => {
+  const running = app({ id: 'shop', state: 'running', address: 'http://127.0.0.1:3101/' })
+
+  it('lists them, marks the pulled one, and pulls a source the person types', async () => {
+    const api = fake(state([running]))
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: /shop/u }))
+    expect(await screen.findByText('hello')).toBeTruthy()
+    expect(screen.getByText(/pulled from github:a\/b@0.1.0 · by a/u)).toBeTruthy()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Plugin to pull' }), { target: { value: 'github:o/p@0.2.0' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Pull a plugin' }))
+    await waitFor(() => { expect(api.pullPlugin).toHaveBeenCalledWith('shop', 'github:o/p@0.2.0') })
+    expect(await screen.findByText('Pulled github:o/p@0.2.0.')).toBeTruthy()
+  })
+
+  it('shows what would be sent and sends it only on the person\'s yes', async () => {
+    const api = fake(state([running]))
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: /shop/u }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Share plugin' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'GitHub account' }), { target: { value: 'o' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review what would be sent' }))
+    expect(await screen.findByText('Nothing has been sent. It is sent only when you say yes.')).toBeTruthy()
+    expect(api.publishPlan).toHaveBeenCalledWith({ id: 'shop', plugin: 'hello', owner: 'o' })
+    expect(api.publish).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, publish o/demo' }))
+    await waitFor(() => { expect(api.publish).toHaveBeenCalledWith({ id: 'shop', plugin: 'hello', owner: 'o', plan: PLAN }) })
+    expect(await screen.findByText(/releases\/tag\/v0.1.0/u)).toBeTruthy()
+  })
+
+  it('says why when the app cannot list its plugins, and shows no plugin tools for an app that is stopped', async () => {
+    const api = fake(state([running, app({ id: 'crm', name: 'crm' })]), { plugins: vi.fn(async () => { throw new Error('the app is not running: start it from this screen, then try again') }) })
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: /shop/u }))
+    expect((await screen.findByRole('alert')).textContent).toContain('the app is not running')
+    cleanup()
+    open(fake(state([app({ id: 'crm', name: 'crm' })])))
+    fireEvent.click(await screen.findByRole('button', { name: /crm/u }))
+    expect(await screen.findByText(/Start the app to pull plugins into it/u)).toBeTruthy()
   })
 })
 

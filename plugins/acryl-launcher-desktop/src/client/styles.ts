@@ -26,6 +26,7 @@ const CSS = `
 .acrylHomeTop { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .acrylHomeSearch, .acrylHomeInput { height: 36px; padding: 0 12px; border: 1px solid var(--h-border); border-radius: 10px; background: var(--h-fill); color: inherit; font: inherit; }
 .acrylHomeSearch { flex: 1 1 240px; min-width: 0; }
+.acrylHomeSection { display: flex; flex-direction: column; gap: 10px; }
 .acrylHomeForm > .acrylHomeSearch { flex: none; max-width: 420px; }
 .acrylHomeSearch:focus, .acrylHomeInput:focus { outline: 0; border-color: var(--h-accent); }
 .acrylHomeInput[data-mono] { font: 13px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }

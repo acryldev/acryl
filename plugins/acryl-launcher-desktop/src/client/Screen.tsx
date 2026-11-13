@@ -3,7 +3,7 @@
  * lists and sends what a person asks for; the rules (what an app is, what a name may be, how an app starts) are the Host's.
  */
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppRequest, type StateResponse, type Surface } from '../contract.ts'
+import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import type { LauncherVisibility } from './store.ts'
@@ -78,7 +78,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         {state?.job == null ? null : <JobBanner job={state.job} />}
         {view === 'apps' && (
           <AppsView
-            apps={apps} tiles={tiles} current={current} search={search} surface={surface} panel={panel} state={state}
+            api={api} apps={apps} tiles={tiles} current={current} search={search} surface={surface} panel={panel} state={state}
             onSearch={setSearch} onSurface={setSurface} onPanel={setPanel} onSelect={setSelected}
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const done = await act(() => api.create(request)); if (done) setPanel('none'); return done }}
@@ -117,6 +117,7 @@ function SurfaceChip({ surface }: { surface: Surface }): ReactNode {
 }
 
 interface AppsViewProps {
+  readonly api: LauncherApi
   readonly apps: readonly AppView[]
   readonly tiles: ReturnType<typeof tilesOf>
   readonly current: AppView | undefined
@@ -192,12 +193,12 @@ function AppsView(props: AppsViewProps): ReactNode {
       {props.apps.length === 0
         ? <p className="acrylHomeNote">No apps of your own yet. Press + New app to make one, or Add a folder to list one you already have.</p>
         : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p> : null}
-      {current === undefined ? null : <Detail app={current} onStart={props.onStart} onStop={props.onStop} onRemove={props.onRemove} openExternal={props.openExternal} />}
+      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onStop={props.onStop} onRemove={props.onRemove} openExternal={props.openExternal} />}
     </div>
   )
 }
 
-function Detail({ app, onStart, onStop, onRemove, openExternal }: { app: AppView, onStart: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
+function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const running = app.state === 'running' || app.state === 'starting'
   return (
     <div className="acrylHomePanel" aria-live="polite">
@@ -221,7 +222,109 @@ function Detail({ app, onStart, onStop, onRemove, openExternal }: { app: AppView
         <dt>Address</dt><dd>{app.address === undefined ? 'not running' : app.address.replace(/\?.*$/u, '')}</dd>
         <dt>Runs</dt><dd>{runsLine(app)}</dd>
       </dl>
+      {running ? <PluginsPanel api={api} app={app} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
       {app.failure === undefined ? null : <p className="acrylHomeNote" data-error>It stopped on its own:{'\n'}{app.failure}</p>}
+    </div>
+  )
+}
+
+/** The plugins of a running app: what it has, pulling one from a registry, and sharing one made here (the app's plan, then the person's yes). */
+function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNode {
+  const [plugins, setPlugins] = useState<readonly PluginView[] | undefined>(undefined)
+  const [source, setSource] = useState('')
+  const [sharing, setSharing] = useState<string | undefined>(undefined)
+  const [owner, setOwner] = useState('')
+  const [plan, setPlan] = useState<PublishPlanView | undefined>(undefined)
+  const [done, setDone] = useState<PublishResponse | undefined>(undefined)
+  const [note, setNote] = useState<{ text: string, error: boolean } | undefined>(undefined)
+  const [busy, setBusy] = useState(false)
+  const ready = app.state === 'running'
+
+  const run = async (work: () => Promise<void>): Promise<void> => {
+    setBusy(true)
+    setNote(undefined)
+    try { await work() } catch (cause) { setNote({ text: message(cause), error: true }) } finally { setBusy(false) }
+  }
+
+  // The list is asked for when the app is running (its door answers then), and again when the app changes.
+  useEffect(() => {
+    if (!ready) return undefined
+    let live = true
+    setPlugins(undefined)
+    api.plugins(app.id).then((list) => { if (live) setPlugins(list) }, (cause: unknown) => { if (live) setNote({ text: message(cause), error: true }) })
+    return () => { live = false }
+  }, [api, app.id, ready])
+
+  const owned = (plugins ?? []).filter(plugin => plugin.pulledFrom === undefined)
+  const pulled = (plugins ?? []).filter(plugin => plugin.pulledFrom !== undefined)
+  const owner_ = owner.trim() === '' ? {} : { owner: owner.trim() }
+  return (
+    <div className="acrylHomeSection">
+      <div className="acrylHomeGroup">Plugins</div>
+      {!ready ? <p className="acrylHomeNote">The app is starting; its plugins show when it is up.</p> : null}
+      {ready && plugins === undefined && note === undefined ? <p className="acrylHomeNote">Reading the app's plugins...</p> : null}
+      {plugins !== undefined && plugins.length === 0 ? <p className="acrylHomeNote">This app has no plugins of its own yet.</p> : null}
+      {owned.length + pulled.length > 0 ? (
+        <div className="acrylHomeList">
+          {[...owned, ...pulled].map(plugin => (
+            <div className="acrylHomeItem" key={plugin.name} data-plain>
+              <div className="acrylHomeIcon" style={{ background: iconColor(plugin.name) }}>{initial(plugin.name)}</div>
+              <div><b>{plugin.name}</b><small>{plugin.pulledFrom === undefined ? `made in this app · ${plugin.state}` : `pulled from ${plugin.pulledFrom}${plugin.author === undefined ? '' : ` · by ${plugin.author}`}`}</small></div>
+              <div className="acrylHomeActs">
+                {plugin.pulledFrom === undefined
+                  ? <button type="button" className="acrylHomeBtn" data-small disabled={busy} onClick={() => { setSharing(plugin.name); setPlan(undefined); setDone(undefined); setNote(undefined) }}>Share plugin</button>
+                  : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <form className="acrylHomeRow" onSubmit={(event) => {
+        event.preventDefault()
+        void run(async () => {
+          const result = await api.pullPlugin(app.id, source.trim())
+          setPlugins(result.plugins)
+          setSource('')
+          setNote({ text: `Pulled ${source.trim()}.`, error: false })
+        })
+      }}>
+        <input className="acrylHomeInput" data-mono style={{ flex: '1 1 280px' }} value={source} placeholder="github:owner/repo@version" aria-label="Plugin to pull" disabled={!ready} onChange={(event) => { setSource(event.target.value) }} />
+        <button type="submit" className="acrylHomeBtn" data-primary disabled={busy || !ready || source.trim() === ''}>Pull a plugin</button>
+      </form>
+      {sharing === undefined ? null : (
+        <div className="acrylHomePanel" role="group" aria-label={`Share ${sharing}`}>
+          <div className="acrylHomePanelTop"><h3>Share {sharing}</h3><button type="button" className="acrylHomeBtn" data-small onClick={() => { setSharing(undefined); setPlan(undefined); setDone(undefined) }}>Close</button></div>
+          {done !== undefined ? (
+            <>
+              <p className="acrylHomeNote">Published: <span className="acrylHomeMeta">{done.releaseUrl}</span></p>
+              <p className="acrylHomeNote">A friend gets exactly these bytes with <span className="acrylHomeMeta">{done.pullLine}</span></p>
+            </>
+          ) : plan === undefined ? (
+            <form className="acrylHomeRow" onSubmit={(event) => {
+              event.preventDefault()
+              void run(async () => { setPlan(await api.publishPlan({ id: app.id, plugin: sharing, ...owner_ })) })
+            }}>
+              <input className="acrylHomeInput" style={{ flex: '1 1 240px' }} value={owner} placeholder="GitHub account (blank: yours)" aria-label="GitHub account" onChange={(event) => { setOwner(event.target.value) }} />
+              <button type="submit" className="acrylHomeBtn" data-primary disabled={busy}>Review what would be sent</button>
+            </form>
+          ) : (
+            <>
+              <dl className="acrylHomeKv">
+                <dt>Repository</dt><dd>{plan.owner}/{plan.repo}{plan.createsRepository ? ' (a new repository)' : ''}</dd>
+                <dt>Version</dt><dd>{plan.version} · {plan.visibility} · {plan.license}</dd>
+                <dt>Files</dt><dd>{plan.files.join(', ')}</dd>
+                <dt>A friend pulls it with</dt><dd>{plan.pullLine}</dd>
+              </dl>
+              <p className="acrylHomeNote">Nothing has been sent. It is sent only when you say yes.</p>
+              <div className="acrylHomeActs">
+                <button type="button" className="acrylHomeBtn" data-primary disabled={busy} onClick={() => { void run(async () => { setDone(await api.publish({ id: app.id, plugin: sharing, ...owner_, plan })) }) }}>Yes, publish {plan.owner}/{plan.repo}</button>
+                <button type="button" className="acrylHomeBtn" disabled={busy} onClick={() => { setPlan(undefined) }}>Not yet</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      {note === undefined ? null : <p className="acrylHomeNote" data-error={note.error ? '' : undefined} role={note.error ? 'alert' : 'status'}>{note.text}</p>}
     </div>
   )
 }

@@ -10,6 +10,10 @@ export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
 export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
+export const LAUNCHER_PLUGINS_PATH = `${LAUNCHER_API_PREFIX}/plugins`
+export const LAUNCHER_PLUGIN_PULL_PATH = `${LAUNCHER_API_PREFIX}/plugin-pull`
+export const LAUNCHER_PUBLISH_PLAN_PATH = `${LAUNCHER_API_PREFIX}/publish-plan`
+export const LAUNCHER_PUBLISH_PATH = `${LAUNCHER_API_PREFIX}/publish`
 
 /** The three kinds of app (spec 050 D10): a web app, a desktop window, and the lightest, a terminal app, which is listed but not yet made. */
 export type Surface = 'web' | 'desktop' | 'tui'
@@ -92,3 +96,61 @@ export interface NewAppRequest {
   readonly blend?: string
   readonly surface: Surface
 }
+
+/** A plugin of a running app, as the app's door lists it: one the app's own people made, or one pulled from a registry (`pulledFrom`). */
+export interface PluginView {
+  readonly name: string
+  readonly version: string
+  readonly state: string
+  /** `github:owner/repo@version` when it was pulled; absent for a plugin made in the app (the ones that can be shared). */
+  readonly pulledFrom?: string
+  readonly author?: string
+}
+
+export interface PluginsResponse {
+  readonly plugins: readonly PluginView[]
+}
+
+/** What pulling a plugin did, in the door's words. */
+export interface PluginPullResponse {
+  readonly text: string
+  readonly plugins: readonly PluginView[]
+}
+
+/** What publishing a plugin would send, read without sending anything: the person reads this before saying yes. */
+export interface PublishPlanView {
+  readonly owner: string
+  readonly repo: string
+  readonly version: string
+  readonly visibility: string
+  readonly license: string
+  readonly createsRepository: boolean
+  readonly files: readonly string[]
+  readonly integrity: string
+  readonly digest: string
+  /** The line a friend pulls it with. */
+  readonly pullLine: string
+}
+
+export interface PublishPlanRequest {
+  readonly id: string
+  readonly plugin: string
+  /** The account that owns the repository; absent means the signed-in one. */
+  readonly owner?: string
+  readonly license?: string
+}
+
+/** The person's yes: the plan they read, sent back as it was. */
+export interface PublishRequest extends PublishPlanRequest {
+  readonly plan: PublishPlanView
+}
+
+export interface PublishResponse {
+  readonly releaseUrl: string
+  readonly pullLine: string
+}
+
+/** A plugin name, a GitHub account and a license id as the door takes them: nothing that could read as an option or a path. */
+export const PLUGIN_NAME = /^[a-z0-9][a-z0-9._-]{0,127}$/u
+export const ACCOUNT_NAME = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/u
+export const LICENSE_ID = /^[A-Za-z0-9][A-Za-z0-9.+-]{0,39}$/u

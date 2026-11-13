@@ -8,8 +8,11 @@ import {
   addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, inspectApp, maskKey, modelEnv, readApps, readModelKey, removeApp, STARTERS, whereProblem,
   type AppEntry,
 } from 'acryl-launcher'
-import type { AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, StateResponse, Surface } from './contract.ts'
-import { BLEND_ID, MAKEABLE_SURFACES } from './contract.ts'
+import type {
+  AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
+} from './contract.ts'
+import { ACCOUNT_NAME, BLEND_ID, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
+import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
 import { appEnvironment, type Run, type Runner } from './runner.ts'
 
 /** A request the service cannot honour, in a sentence a person can act on. The route answers it as 409. */
@@ -27,6 +30,8 @@ export interface LauncherPorts {
   readonly makeFolder: (path: string) => void
   /** The Blends in the public registry; rejects (`RegistryUnavailable`) when it cannot be read. */
   readonly blends: () => Promise<readonly BlendView[]>
+  /** The running apps' doors: what lists, pulls and publishes their plugins. */
+  readonly door: Door
 }
 
 /** The address an app prints, with the token it needs: `http://127.0.0.1:3999/?token=...`. */
@@ -167,6 +172,78 @@ export class LauncherService {
     const list = await this.#ports.blends()
     this.#blends = { at: Date.now(), list }
     return list
+  }
+
+  #entry(id: string): AppEntry {
+    const entry = readApps(this.#ports.home).find(app => app.id === id)
+    if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
+    return entry
+  }
+
+  /** A door call, with "the app is not running" and a refusal as the sentence a person can act on. */
+  async #door(id: string, run: (door: Door, folder: string) => Promise<DoorAnswer>): Promise<DoorAnswer> {
+    const entry = this.#entry(id)
+    let answer: DoorAnswer
+    try {
+      answer = await run(this.#ports.door, entry.path)
+    } catch (cause) {
+      if (cause instanceof DoorUnavailable) throw new LauncherRefusal(cause.message)
+      throw cause
+    }
+    if (!answer.ok) throw new LauncherRefusal(answer.message ?? 'the app refused')
+    return answer
+  }
+
+  /** The plugins of a running app: the ones its people made (shareable) and the ones pulled from a registry. */
+  async plugins(id: string): Promise<readonly PluginView[]> {
+    const answer = await this.#door(id, (door, folder) => door.call(folder, 'plugin-list', {}))
+    const list = Array.isArray(answer.value) ? answer.value as Array<Record<string, unknown>> : []
+    return list.filter(plugin => typeof plugin.name === 'string').map(plugin => ({
+      name: String(plugin.name), version: typeof plugin.version === 'string' ? plugin.version : '', state: typeof plugin.state === 'string' ? plugin.state : '',
+      ...typeof plugin.pulledFrom === 'string' ? { pulledFrom: plugin.pulledFrom } : {},
+      ...typeof plugin.author === 'string' ? { author: plugin.author } : {},
+    }))
+  }
+
+  /** Pull a plugin into a running app from a registry source (`github:owner/repo@version`), the way `acryl plugin pull` does. */
+  async pullPlugin(id: string, source: string): Promise<PluginPullResponse> {
+    if (source.trim() === '' || source.startsWith('-') || source.length > 1024) throw new LauncherRefusal('say where the plugin is, for example github:someone/pomodoro@0.1.0')
+    const answer = await this.#door(id, (door, folder) => door.call(folder, 'plugin-pull', { source: source.trim() }))
+    return { text: answer.text ?? 'Pulled.', plugins: await this.plugins(id) }
+  }
+
+  #checkPublish(request: PublishPlanRequest): void {
+    if (!PLUGIN_NAME.test(request.plugin)) throw new LauncherRefusal(`"${request.plugin}" is not a plugin name`)
+    if (request.owner !== undefined && !ACCOUNT_NAME.test(request.owner)) throw new LauncherRefusal(`"${request.owner}" is not a GitHub account name`)
+    if (request.license !== undefined && !LICENSE_ID.test(request.license)) throw new LauncherRefusal(`"${request.license}" is not a license id`)
+  }
+
+  #options(request: PublishPlanRequest): Record<string, unknown> {
+    return { ...request.owner === undefined ? {} : { owner: request.owner }, ...request.license === undefined ? {} : { license: request.license } }
+  }
+
+  /** What publishing a plugin would send (the account, repository, version, license and files). Sends nothing. */
+  async publishPlan(request: PublishPlanRequest): Promise<PublishPlanView> {
+    this.#checkPublish(request)
+    const answer = await this.#door(request.id, (door, folder) => door.call(folder, 'plugin-publish', { name: request.plugin, ...this.#options(request) }))
+    const plan = answer.value as Partial<PublishPlanView> | null
+    if (plan === null || typeof plan !== 'object' || typeof plan.owner !== 'string' || typeof plan.repo !== 'string' || typeof plan.version !== 'string') {
+      throw new LauncherRefusal('the app did not give a publish plan')
+    }
+    return {
+      owner: plan.owner, repo: plan.repo, version: plan.version, visibility: String(plan.visibility ?? ''), license: String(plan.license ?? ''),
+      createsRepository: plan.createsRepository === true, files: Array.isArray(plan.files) ? plan.files.map(String) : [],
+      integrity: String(plan.integrity ?? ''), digest: String(plan.digest ?? ''), pullLine: String(plan.pullLine ?? ''),
+    }
+  }
+
+  /** The person's yes: publish exactly the plan they read. The app sends it only if the plugin still matches that plan. */
+  async publish(request: PublishRequest): Promise<PublishResponse> {
+    this.#checkPublish(request)
+    const answer = await this.#door(request.id, (door, folder) => door.confirmPublish(folder, { name: request.plugin, ...this.#options(request), confirm: request.plan }))
+    const result = answer.value as { ok?: boolean, releaseUrl?: string, pullLine?: string, reason?: string, next?: string } | null
+    if (result?.ok !== true) throw new LauncherRefusal(`Not published: ${result?.reason ?? 'the app did not answer'}${result?.next === undefined ? '' : `. ${result.next}`}`)
+    return { releaseUrl: result.releaseUrl ?? '', pullLine: result.pullLine ?? '' }
   }
 
   async health(probe: Runner = this.#ports.runner): Promise<HealthView> {

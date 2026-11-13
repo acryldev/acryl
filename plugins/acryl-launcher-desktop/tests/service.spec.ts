@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { addApp, saveModelKey } from 'acryl-launcher'
 import { LauncherRefusal, LauncherService } from '../src/service.ts'
 import { appEnvironment, type Command, type Run } from '../src/runner.ts'
+import { DoorUnavailable, type Door, type DoorAnswer } from '../src/door.ts'
 
 interface FakeRun extends Run {
   readonly command: Command
@@ -24,6 +25,12 @@ function setup() {
   const appsFolder = join(root, 'ACRYL')
   const runs: FakeRun[] = []
   const registry = { calls: 0 }
+  const doorCalls: Array<{ folder: string, verb: string, args: unknown }> = []
+  const doorAnswers = new Map<string, DoorAnswer | Error>()
+  const door: Door = {
+    call: async (folder, verb, args) => { doorCalls.push({ folder, verb, args }); const answer = doorAnswers.get(verb) ?? { ok: true }; if (answer instanceof Error) throw answer; return answer },
+    confirmPublish: async (folder, body) => { doorCalls.push({ folder, verb: 'publish-confirmed', args: body }); const answer = doorAnswers.get('publish-confirmed') ?? { ok: true }; if (answer instanceof Error) throw answer; return answer },
+  }
   const service = new LauncherService({
     home, appsFolder,
     runner: (command) => {
@@ -43,6 +50,7 @@ function setup() {
     environment: () => ({ PATH: '/usr/bin', ACRYL_HOME: '/the/desktop/home', DSH_HOME: '/x', ELECTRON_RUN_AS_NODE: '1', HOME: '/h' }),
     exists: path => existsSync(path),
     makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
+    door,
     blends: async () => { registry.calls += 1; return [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' }] },
   })
   const makeApp = (name: string, surface: 'web' | 'desktop' | 'tui' = 'web', installed = true): string => {
@@ -52,7 +60,7 @@ function setup() {
     addApp(home, { path: folder, surface })
     return folder
   }
-  return { root, home, appsFolder, runs, service, makeApp, registry }
+  return { root, home, appsFolder, runs, service, makeApp, registry, doorCalls, doorAnswers }
 }
 
 describe('the list', () => {
@@ -288,5 +296,62 @@ describe('what a started app inherits', () => {
     const env = appEnvironment({ PATH: '/usr/bin:/bin', ACRYL_HOME: 'x', DSH_HOME: 'y', ELECTRON_RUN_AS_NODE: '1', npm_config_x: 'z', PORT: '1', KEEP: 'me' }, 'darwin')
     expect(env).toEqual({ PATH: '/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin', KEEP: 'me' })
     expect(appEnvironment({ PATH: 'C:\\x' }, 'win32')).toEqual({ PATH: 'C:\\x' })
+  })
+})
+
+describe('plugins of a running app', () => {
+  const plan = { owner: 'inboxxobni', repo: 'demo', version: '0.1.0', visibility: 'public', license: 'MIT', createsRepository: true, files: ['index.ts'], integrity: 'sha512-x', digest: 'abc', pullLine: 'npm run acryl -- plugin pull github:inboxxobni/demo@0.1.0@sha256:abc' }
+
+  it('lists what the app\'s door lists, naming the pulled ones, and says so when the app is not running', async () => {
+    const { service, makeApp, doorCalls, doorAnswers } = setup()
+    const folder = makeApp('shop')
+    doorAnswers.set('plugin-list', { ok: true, value: [{ name: 'hello', version: 'e4bc', state: 'active' }, { name: 'pomodoro', version: '6388', state: 'active', pulledFrom: 'github:a/b@0.1.0', author: 'a' }, { nope: 1 }] })
+    expect(await service.plugins('shop')).toEqual([
+      { name: 'hello', version: 'e4bc', state: 'active' },
+      { name: 'pomodoro', version: '6388', state: 'active', pulledFrom: 'github:a/b@0.1.0', author: 'a' },
+    ])
+    expect(doorCalls[0]).toEqual({ folder, verb: 'plugin-list', args: {} })
+    doorAnswers.set('plugin-list', new DoorUnavailable('the app is not running: start it from this screen, then try again'))
+    await expect(service.plugins('shop')).rejects.toThrow(LauncherRefusal)
+    await expect(service.plugins('nope')).rejects.toThrow(/no app "nope"/u)
+  })
+
+  it('pulls from a source through the door, refuses a source that could read as an option, and relays the door\'s refusal', async () => {
+    const { service, makeApp, doorCalls, doorAnswers } = setup()
+    makeApp('shop')
+    doorAnswers.set('plugin-pull', { ok: true, text: 'installed pomodoro' })
+    doorAnswers.set('plugin-list', { ok: true, value: [{ name: 'pomodoro', version: '1', state: 'active', pulledFrom: 'github:a/b@0.1.0' }] })
+    const result = await service.pullPlugin('shop', ' github:a/b@0.1.0 ')
+    expect(result.text).toBe('installed pomodoro')
+    expect(result.plugins).toHaveLength(1)
+    expect(doorCalls.find(call => call.verb === 'plugin-pull')?.args).toEqual({ source: 'github:a/b@0.1.0' })
+    await expect(service.pullPlugin('shop', '--force')).rejects.toThrow(/say where the plugin is/u)
+    doorAnswers.set('plugin-pull', { ok: false, code: 'refused', message: 'a/b has no release v9. nothing was installed.' })
+    await expect(service.pullPlugin('shop', 'github:a/b@9')).rejects.toThrow('has no release v9')
+  })
+
+  it('reads the publish plan without sending anything, then sends only the plan the person confirmed', async () => {
+    const { service, makeApp, doorCalls, doorAnswers } = setup()
+    makeApp('shop')
+    doorAnswers.set('plugin-publish', { ok: true, value: plan })
+    expect(await service.publishPlan({ id: 'shop', plugin: 'demo', owner: 'inboxxobni' })).toEqual(plan)
+    expect(doorCalls.at(-1)).toMatchObject({ verb: 'plugin-publish', args: { name: 'demo', owner: 'inboxxobni' } })
+    expect(doorCalls.some(call => call.verb === 'publish-confirmed')).toBe(false)
+
+    doorAnswers.set('publish-confirmed', { ok: true, value: { ok: true, releaseUrl: 'https://github.com/inboxxobni/demo/releases/tag/v0.1.0', pullLine: plan.pullLine } })
+    expect(await service.publish({ id: 'shop', plugin: 'demo', owner: 'inboxxobni', plan })).toEqual({ releaseUrl: 'https://github.com/inboxxobni/demo/releases/tag/v0.1.0', pullLine: plan.pullLine })
+    expect(doorCalls.at(-1)).toMatchObject({ verb: 'publish-confirmed', args: { name: 'demo', owner: 'inboxxobni', confirm: plan } })
+
+    doorAnswers.set('publish-confirmed', { ok: true, value: { ok: false, reason: 'this plugin\'s publish changed since you confirmed it', next: 'review it again' } })
+    await expect(service.publish({ id: 'shop', plugin: 'demo', plan })).rejects.toThrow('Not published: this plugin\'s publish changed since you confirmed it. review it again')
+  })
+
+  it('refuses a plugin name, account or license that is not one, before the door is asked', async () => {
+    const { service, makeApp, doorCalls } = setup()
+    makeApp('shop')
+    await expect(service.publishPlan({ id: 'shop', plugin: '../x' })).rejects.toThrow(/not a plugin name/u)
+    await expect(service.publishPlan({ id: 'shop', plugin: 'demo', owner: '-rf' })).rejects.toThrow(/not a GitHub account/u)
+    await expect(service.publishPlan({ id: 'shop', plugin: 'demo', license: 'x y' })).rejects.toThrow(/not a license/u)
+    expect(doorCalls).toHaveLength(0)
   })
 })
