@@ -51,7 +51,7 @@ app made by the previous release upgraded and opened by the frame.
 
 - **The frame is the product.** The point is not "an app with a chat sidebar"; it is that ACRYL's IDE hosts the app you are building: the app is
   the page in the middle, its folder is the workspace, and the agents work in that folder.
-- **Settings > Models is the key's home.** The key goes to the frame's own credentials store, never the app folder or `.acrylblends` files. The
+- **Settings > Models is the key's home.** The key goes to the frame's own credentials store in the app's data folder (`~/.acryl/apps/<id>/data/`), never the app folder. The
   first-run card writes the same store; either path is fine.
 - **The loop is stop, start, look.** A source change needs `npm run dev` again; the port is stable per app, so the frame reconnects on the same
   address and the app's tab is still there. If a chat tab comes to the front after the restart, press the `my-app` tab.
@@ -85,9 +85,11 @@ of Visual Studio Build Tools for the terminal package; the preflight notes it.
 
 ## Resetting between sessions
 
-Everything a person makes lives inside their app folder and `~/acryl-workshop`. To reset a machine, delete the app folders and copy the prepared one
-back; nothing is installed globally except the agent, `gh` and Node. An app's data lives in its `.acrylblends/` (gitignored); the model key lives in
-that home's credentials store, so a fresh copy starts without it.
+Everything a person makes lives inside their app folder, its data folder in `~/.acryl/apps/` and `~/acryl-workshop`. To reset a machine, delete the app
+folders and their data folders, and copy the prepared one back without its `.acryl/` folder; nothing is installed globally except the agent, `gh` and Node.
+An app's data, the model key's credentials store included, lives in `~/.acryl/apps/<id>/data/`, outside the app folder. The `<id>` is written once into
+the app folder's `.acryl/app.json` (gitignored): a copy that keeps that file shares the original's data and key, and a copy without it gets its own id
+and an empty data folder.
 
 ## What is still open
 

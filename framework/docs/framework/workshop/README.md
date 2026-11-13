@@ -238,7 +238,7 @@ today answers "everything is up to date" too. An app from a release **before 0.7
 folder that release did not write); the upgrade says so instead of touching it.
 
 **Stuck?** "is not the previous release's scaffold" means you edited a generated file: run with `--diff` to see it, save your version aside, and
-run again (or `--force`; the app's versions are backed up under `.acrylblends/upgrade-backup/`).
+run again (or `--force`; the app's versions are backed up under `.acryl/upgrade-backup/`).
 
 ## 7. Publish it as a starter (10 minutes, take-home)
 

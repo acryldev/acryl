@@ -24,8 +24,8 @@ against a real Cordis context, including disposal.
 ## instance
 
 Where the app keeps things, decided once. `selectInstance({ projectRoot, env })` is the only code that reads the
-environment; it returns a frozen `AppInstance` with `root` (the project folder), `home` (`<project>/.acrylblends`, or
-`ACRYLBLENDS_HOME`), and a port preference: a stable port per app in 3100-3999 that moves to the next free one, or
+environment; it returns a frozen `AppInstance` with `root` (the project folder), `home` (`~/.acryl/apps/<id>/data`, the id kept in
+`<project>/.acryl/app.json`, or `ACRYLBLENDS_HOME`), and a port preference: a stable port per app in 3100-3999 that moves to the next free one, or
 `ACRYLBLENDS_PORT`. Two folders with the same name are different apps. Mount it first: `root.plugin(instance, chosen)`.
 
 ## The framework plugins
@@ -169,7 +169,7 @@ for each agent whose command is on the machine.
 ## desktop
 
 An Electron window on the app's own server. `acrylblends init my-app --desktop` (or `acrylblends add desktop` in an existing app) adds `plugins/desktop`, `electron` as a development
-dependency and the script `npm run desktop`. `npm run desktop` picks the app's instance as `npm run dev` does, keeps Electron's user data inside the app's own home (`.acrylblends/electron`,
+dependency and the script `npm run desktop`. `npm run desktop` picks the app's instance as `npm run dev` does, keeps Electron's user data in the app's data folder (`~/.acryl/apps/<id>/data/electron`,
 never the user's application-data folder), starts `createApp` in the Electron main process, opens one window with a locked-down renderer (context isolation, no Node, sandbox) on the app's address
 (`/todo` for the todo template: `acrylblends.desktopPath` in `package.json`), keeps navigation on the app's own origin (other links open in the system browser), and ends the process when the window
 closes, after the server stopped. A second launch of the same app focuses the first. The app's own code never imports `electron`; only `plugins/desktop` does. `user-data.ts` and `shutdown.ts` came

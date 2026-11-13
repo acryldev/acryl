@@ -23,7 +23,7 @@ In a Blend app, the same two commands (`npx acrylblends add desktop`, `npm insta
 
 - `plugins/desktop-web/` (a plain app) or `plugins/desktop/` (a Blend app): the window code. Only this folder imports `electron`; the app's own code never does.
 - `electron` as a development dependency (pinned to 44.9.3) and the script `npm run desktop`.
-- `.acrylblends/` in `.gitignore`: Electron's user data (window state, cache, logs) lives in `.acrylblends/electron` inside the app's own folder, never in the user's application-data folder.
+- Electron's user data (window state, cache, logs) lives under `~/.acryl/apps/<id>/` (`data/electron` for a Blend app, `cache/electron` for a plain one), outside the app folder and never in the user's application-data folder.
 
 ## What `npm run desktop` does
 
@@ -39,7 +39,7 @@ projects and sessions, the right panel with Files, Changes and Review, Settings,
 same frame the browser shows; the desktop builds nothing of its own.
 
 1. When the frame already runs for this folder (`npm run dev` in another terminal), the window attaches to it: it reads the address the host keeps in
-   `.acrylblends/frame-url.json` (owner-only, with the launch token) and opens it. Closing the window leaves that host running.
+   `frame-url.json` in the app's data folder, `~/.acryl/apps/<id>/data/` (owner-only, with the launch token), and opens it. Closing the window leaves that host running.
 2. Otherwise the window starts the host itself, exactly as `npm run dev` does (the same npm and Node that ran `npm run desktop`; the host never runs inside
    Electron), and opens the address it prints. Closing the window stops that host and everything it started, including its terminals, so its port is free
    again. Ctrl-C in the terminal does the same: Electron runs in a process group of its own, and `npm run desktop` passes it exactly one signal (a second
