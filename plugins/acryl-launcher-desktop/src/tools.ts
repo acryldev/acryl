@@ -39,8 +39,9 @@ const describeApp = (app: AppView): Record<string, unknown> => ({
 })
 
 const text = (value: string) => [{ type: 'text' as const, text: value }]
-const json = (value: unknown) => text(JSON.stringify(value, null, 2))
-const ANY = { type: 'object' } as const
+/** Every tool's value is the text an agent reads (JSON where it is data): a typed object output would need a schema per tool and gains nothing here. */
+const asText = (value: unknown): string => JSON.stringify(value, null, 2)
+const STRING = { type: 'string' } as const
 
 /** The tool definitions over one service; separate from registering them so a test can call each. */
 export function launcherTools(service: LauncherService): readonly AcrylToolDefinition[] {
@@ -49,29 +50,29 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
       name: 'acryl_launcher_help',
       description: 'How to use the ACRYL launcher and where to find what: its screens, buttons and the other launcher tools. Call it first when asked about the launcher.',
       parameters: {},
-      output: { schema: { type: 'string' }, render: (_args, value: string) => text(value) },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
       execute: () => LAUNCHER_HELP,
     }),
     defineAcrylTool({
       name: 'acryl_launcher_apps',
       description: 'The apps in the launcher\'s list: id, folder, Blend, surface (web or desktop), state (running, starting, stopped, missing) and address when running; and the app being made, if any.',
       parameters: {},
-      output: { schema: ANY, render: (_args, value: { apps: unknown[], making: unknown }) => json(value) },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
       execute: () => {
         const state = service.state()
-        return { apps: state.apps.map(describeApp), making: state.job, newAppsGoIn: state.appsFolder }
+        return asText({ apps: state.apps.map(describeApp), making: state.job, newAppsGoIn: state.appsFolder })
       },
     }),
     defineAcrylTool({
       name: 'acryl_launcher_blends',
       description: 'Blends in the public registry that an app can be made from (id, name, category, description). Give a query to narrow it; at most 25 are returned.',
       parameters: { query: { type: 'string', description: 'words to look for in the name, id, category or description' } },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
       execute: async (args) => {
         const needle = (args.query ?? '').trim().toLowerCase()
         const all = await service.blends()
         const found = all.filter(blend => needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle))
-        return { total: found.length, blends: found.slice(0, 25).map(blend => ({ id: blend.id, name: blend.name, category: blend.category, description: blend.description })) }
+        return asText({ total: found.length, blends: found.slice(0, 25).map(blend => ({ id: blend.id, name: blend.name, category: blend.category, description: blend.description })) })
       },
     }),
     defineAcrylTool({
@@ -84,35 +85,35 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
         surface: { type: 'string', description: 'web (default) or desktop' },
         where: { type: 'string', description: 'the folder to make it in; default the launcher\'s apps folder' },
       },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
       execute: (args) => {
         const surface = args.surface === 'desktop' ? 'desktop' : args.surface === undefined || args.surface === 'web' ? 'web' : undefined
         if (surface === undefined) throw new Error('surface must be web or desktop')
         const where = args.where ?? service.state().appsFolder
         service.create({ where, name: args.name, surface, ...args.blend === undefined ? { starter: args.starter ?? 'blank' } : { blend: args.blend, ...args.starter === undefined ? {} : { starter: args.starter } } })
-        return { making: args.name, where, note: 'It is being made and installed (about a minute), then started. Call acryl_launcher_apps to watch.' }
+        return asText({ making: args.name, where, note: 'It is being made and installed (about a minute), then started. Call acryl_launcher_apps to watch.' })
       },
     }),
     defineAcrylTool({
       name: 'acryl_launcher_start_app',
       description: 'Start an app from the launcher\'s list (a desktop app opens its own window); installs its dependencies first if it has none.',
       parameters: { app: { type: 'string', required: true, description: 'the app\'s id from acryl_launcher_apps' } },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
-      execute: (args) => { service.start(args.app); return { starting: args.app } },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: (args) => { service.start(args.app); return asText({ starting: args.app }) },
     }),
     defineAcrylTool({
       name: 'acryl_launcher_stop_app',
       description: 'Stop an app the launcher started.',
       parameters: { app: { type: 'string', required: true, description: 'the app\'s id from acryl_launcher_apps' } },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
-      execute: (args) => { service.stop(args.app); return { stopped: args.app } },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: (args) => { service.stop(args.app); return asText({ stopped: args.app }) },
     }),
     defineAcrylTool({
       name: 'acryl_launcher_plugins',
       description: 'The plugins of a RUNNING app: the ones made in it (shareable) and the ones pulled from a registry, with their source.',
       parameters: { app: { type: 'string', required: true, description: 'the app\'s id' } },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
-      execute: async (args) => ({ plugins: await service.plugins(args.app) }),
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: async (args) => asText({ plugins: await service.plugins(args.app) }),
     }),
     defineAcrylTool({
       name: 'acryl_launcher_pull_plugin',
@@ -121,8 +122,8 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
         app: { type: 'string', required: true, description: 'the app\'s id' },
         source: { type: 'string', required: true, description: 'github:owner/repo@version' },
       },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
-      execute: async (args) => service.pullPlugin(args.app, args.source),
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: async (args) => asText(await service.pullPlugin(args.app, args.source)),
     }),
     defineAcrylTool({
       name: 'acryl_launcher_publish_plan',
@@ -132,8 +133,8 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
         plugin: { type: 'string', required: true, description: 'a plugin made in the app' },
         owner: { type: 'string', description: 'the GitHub account that would own the repository; default the signed-in one' },
       },
-      output: { schema: ANY, render: (_args, value: unknown) => json(value) },
-      execute: async (args) => ({ plan: await service.publishPlan({ id: args.app, plugin: args.plugin, ...args.owner === undefined ? {} : { owner: args.owner } }), nextStep: 'Nothing was sent. Tell the person to press Share plugin on the app\'s card and confirm.' }),
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: async (args) => asText({ plan: await service.publishPlan({ id: args.app, plugin: args.plugin, ...args.owner === undefined ? {} : { owner: args.owner } }), nextStep: 'Nothing was sent. Tell the person to press Share plugin on the app\'s card and confirm.' }),
     }),
   ]
 }

@@ -111,7 +111,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         {nav('health', 'Health')}
         {nav('settings', 'Settings')}
         <div className="acrylHomeSep" />
-        <button type="button" className="acrylHomeNavItem" aria-pressed={assistantOpen} title="Ask Claude to use the launcher for you: it can make apps, pull Blends and plugins, start and stop them, and answer how to use this screen" onClick={() => { askAssistant(assistantOpen ? { open: false } : { open: true, ...state === undefined ? {} : { cwd: state.appsFolder } }) }}>Assistant{assistantOpen ? <span className="acrylHomeCount">open</span> : null}</button>
+        <button type="button" className="acrylHomeNavItem" aria-pressed={assistantOpen} title="Ask Claude to use the launcher for you: it can make apps, pull Blends and plugins, start and stop them, and answer how to use this screen" onClick={() => { if (assistantOpen) { askAssistant({ open: false }); return } api.assistantFolder().then((cwd) => { askAssistant({ open: true, cwd }) }, (cause: unknown) => { setProblem(message(cause)); askAssistant({ open: true }) }) }}>Assistant{assistantOpen ? <span className="acrylHomeCount">open</span> : null}</button>
         <button type="button" className="acrylHomeNavItem" title="Open the IDE's right panel beside this screen: terminals where Codex or any CLI agent runs, Files, Changes" onClick={() => { openRightPanel() }}>Agent terminals</button>
       </nav>
       <main className="acrylHomeMain">

@@ -10,6 +10,7 @@ export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
 export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
+export const LAUNCHER_ASSISTANT_FOLDER_PATH = `${LAUNCHER_API_PREFIX}/assistant-folder`
 export const LAUNCHER_PLUGINS_PATH = `${LAUNCHER_API_PREFIX}/plugins`
 export const LAUNCHER_PLUGIN_PULL_PATH = `${LAUNCHER_API_PREFIX}/plugin-pull`
 export const LAUNCHER_PUBLISH_PLAN_PATH = `${LAUNCHER_API_PREFIX}/publish-plan`
@@ -154,3 +155,8 @@ export interface PublishResponse {
 export const PLUGIN_NAME = /^[a-z0-9][a-z0-9._-]{0,127}$/u
 export const ACCOUNT_NAME = /^[A-Za-z0-9][A-Za-z0-9-]{0,38}$/u
 export const LICENSE_ID = /^[A-Za-z0-9][A-Za-z0-9.+-]{0,39}$/u
+
+/** The folder the assistant's agent works in: the apps folder, made if it was not there yet. */
+export interface AssistantFolderResponse {
+  readonly folder: string
+}

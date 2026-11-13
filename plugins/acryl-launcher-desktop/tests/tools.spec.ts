@@ -60,14 +60,14 @@ describe('the launcher tools', () => {
     const { tool, app } = setup()
     expect(await tool('acryl_launcher_help')()).toContain('+ New app')
     app('shop')
-    const listed = await tool('acryl_launcher_apps')() as { apps: Array<Record<string, unknown>>, newAppsGoIn: string }
+    const listed = JSON.parse(await tool('acryl_launcher_apps')() as string) as { apps: Array<Record<string, unknown>>, newAppsGoIn: string }
     expect(listed.apps[0]).toMatchObject({ id: 'shop', state: 'stopped', surface: 'web' })
     expect(JSON.stringify(listed)).not.toContain('token')
   })
 
   it('search the registry, make an app from a starter or a Blend, and start and stop one', async () => {
     const { tool, commands, app } = setup()
-    expect((await tool('acryl_launcher_blends')({ query: 'invoice' }) as { blends: Array<{ id: string }> }).blends.map(blend => blend.id)).toEqual(['acrylblends.accounting'])
+    expect((JSON.parse(await tool('acryl_launcher_blends')({ query: 'invoice' }) as string) as { blends: Array<{ id: string }> }).blends.map(blend => blend.id)).toEqual(['acrylblends.accounting'])
     await tool('acryl_launcher_new_app')({ name: 'demo' })
     expect(commands[0]?.args).toEqual(['exec', '--yes', 'create-acrylblends@latest', '--', 'demo', 'blank'])
     await expect(tool('acryl_launcher_new_app')({ name: 'second', blend: 'acrylblends.notes', surface: 'desktop' })).rejects.toThrow(/still being made/u)
@@ -81,9 +81,9 @@ describe('the launcher tools', () => {
   it('list and pull plugins of a running app, and only prepare a publish: nothing is confirmed', async () => {
     const { tool, app, calls } = setup()
     app('shop')
-    expect(await tool('acryl_launcher_plugins')({ app: 'shop' })).toEqual({ plugins: [{ name: 'hello', version: '1', state: 'active' }] })
+    expect(JSON.parse(await tool('acryl_launcher_plugins')({ app: 'shop' }) as string)).toEqual({ plugins: [{ name: 'hello', version: '1', state: 'active' }] })
     await tool('acryl_launcher_pull_plugin')({ app: 'shop', source: 'github:a/b@0.1.0' })
-    const result = await tool('acryl_launcher_publish_plan')({ app: 'shop', plugin: 'hello', owner: 'o' }) as { plan: unknown, nextStep: string }
+    const result = JSON.parse(await tool('acryl_launcher_publish_plan')({ app: 'shop', plugin: 'hello', owner: 'o' }) as string) as { plan: unknown, nextStep: string }
     expect(result.plan).toEqual(PLAN)
     expect(result.nextStep).toContain('press Share plugin')
     expect(calls.map(call => call.verb)).toEqual(['plugin-list', 'plugin-pull', 'plugin-list', 'plugin-publish'])

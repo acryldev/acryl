@@ -242,7 +242,9 @@ export const ACRYL_CODING_CAPABILITIES: readonly AcrylCodingCapability[] = [
     requiresPackages: ['acryl-agent-control'],
     needsRouter: true,
     loaderPatches: [
-      { insert: [{ id: 'acryl-agent-control', name: 'acryl-agent-control' }] },
+      // `online`: the loopback gateway (secret-gated, this machine only) on, so the assistant's Claude agent and an outside CLI agent reach ACRYL's tools,
+      // the launcher's among them (spec 050 T013). Every click, type and key press of the window driver is still approved per call.
+      { insert: [{ id: 'acryl-agent-control', name: 'acryl-agent-control', config: { online: true } }] },
     ],
   },
   {

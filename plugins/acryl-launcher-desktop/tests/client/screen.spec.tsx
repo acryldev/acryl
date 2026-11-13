@@ -30,7 +30,7 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
   return {
     state: vi.fn(async () => initial),
     blends: vi.fn(async () => BLENDS),
-    plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
+    assistantFolder: vi.fn(async () => '/h/ACRYL'), plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
     add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial),
@@ -215,7 +215,7 @@ describe('the assistant', () => {
     window.addEventListener('acryl:assistant', onAsk)
     open(fake(state([])))
     fireEvent.click(await screen.findByRole('button', { name: /^Assistant/u }))
-    expect(asked).toEqual([{ open: true, cwd: '/h/ACRYL' }])
+    await waitFor(() => { expect(asked).toEqual([{ open: true, cwd: '/h/ACRYL' }]) })
     const pane = document.createElement('aside')
     pane.setAttribute('data-acryl-assistant', 'open')
     pane.getBoundingClientRect = () => ({ left: window.innerWidth - 440, width: 440, right: window.innerWidth, top: 0, bottom: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) })

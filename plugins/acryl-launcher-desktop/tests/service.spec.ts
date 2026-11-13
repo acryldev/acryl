@@ -355,3 +355,13 @@ describe('plugins of a running app', () => {
     expect(doorCalls).toHaveLength(0)
   })
 })
+
+describe('the assistant\'s folder', () => {
+  it('is the apps folder, made when it was not there', () => {
+    const { service, appsFolder } = setup()
+    expect(existsSync(appsFolder)).toBe(false)
+    expect(service.assistantFolder()).toBe(appsFolder)
+    expect(existsSync(appsFolder)).toBe(true)
+    expect(service.assistantFolder()).toBe(appsFolder)
+  })
+})

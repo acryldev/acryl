@@ -174,6 +174,12 @@ export class LauncherService {
     return list
   }
 
+  /** The apps folder, made when it is not there yet: the assistant's agent works in it, and a folder that does not exist cannot be worked in. */
+  assistantFolder(): string {
+    this.#ports.makeFolder(this.#ports.appsFolder)
+    return this.#ports.appsFolder
+  }
+
   #entry(id: string): AppEntry {
     const entry = readApps(this.#ports.home).find(app => app.id === id)
     if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
