@@ -1,6 +1,6 @@
 # ACRYL ADE
 
-**ACRYL ADE**, the Agent Development Environment: the ACRYL IDE (<https://github.com/acryldev/acryl>) as one Blend. Registry id `acryl.ade`.
+**ACRYL ADE**, the Agent Development Environment: the ACRYL IDE (<https://github.com/acryldev/acryl>) as one Blend. Registry id `acryl.ade`. Source: <https://github.com/acrylblends/05-acryl-ade>. Page: <https://acrylblends.github.io/blends/ai/ade/acryl.ade>.
 
 It opens the IDE's workbench, ported into the Blends framework as `@acrylblends/workspace`:
 
@@ -15,6 +15,13 @@ The chat is the same agent ACRYL IDE runs, with its shell, file tools and jobs. 
 ```bash
 npm create acrylblends@latest my-ade -- --from acryl.ade
 cd my-ade && npm run dev
+```
+
+Or run it straight from this repository, <https://github.com/acrylblends/05-acryl-ade>:
+
+```bash
+git clone https://github.com/acrylblends/05-acryl-ade.git
+cd 05-acryl-ade && npm install && npm run dev
 ```
 
 The first screen asks for a model key (Settings > Models). Add a project with the `+` next to Projects.
