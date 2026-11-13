@@ -22,7 +22,7 @@
  * file trusted the pattern.
  */
 
-import { applyWebFavicon } from './web-favicon.ts'
+import { brandWebIndex } from './web-favicon.ts'
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire, findPackageJSON } from 'node:module'
 import { basename, dirname, join } from 'node:path'
@@ -106,6 +106,8 @@ export interface DshEngineComposition {
   readonly surface: string
   /** The product name the page title carries (the Blueprint's brand); defaults to `ACRYL`. */
   readonly productName?: string
+  /** The stock ACRYL brand (not a Blueprint's own): the served page wears the ACRYL icon. */
+  readonly stockBrand?: boolean
   /** The app this composition belongs to; provided to plugins as the `appInstance` service. Chosen by the surface's composition root. */
   readonly instance?: AppInstance
   /** File URL of the surface's own `package.json` (where ACRYL-owned workspace packages resolve from); provided to plugins
@@ -197,10 +199,6 @@ export function createProfileContext(
  */
 export function createProfileRuntimeResolution(profile: Profile, installAnchor: string = dshInstallAnchor): Promise<RuntimeResolution> {
   return createRuntimeResolution({ installAnchor, profile })
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/[&<>"']/gu, character => `&#${String(character.charCodeAt(0))};`)
 }
 
 /**
@@ -321,14 +319,8 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   ctx.inject(['tools'], toolsCtx => { provideAcrylTools(toolsCtx) })
   if (composition.surface === 'web') {
     ctx.inject(['webServer'], webServerCtx => {
-      const title = composition.productName ?? 'ACRYL'
-      const disposeTap = webServerCtx.webServer.tapIndex(
-        // A custom brand ships its own favicon (acryl-brand); only the stock ACRYL brand gets the ACRYL logo.
-        html => {
-          const titled = html.replace(/<title>[^<]*<\/title>/i, () => `<title>${escapeHtml(title)}</title>`)
-          return composition.productName === undefined ? applyWebFavicon(titled) : titled
-        },
-      )
+      // A custom brand ships its own favicon (acryl-brand); only the stock ACRYL brand gets the ACRYL logo (`productName` is always set, so it cannot tell).
+      const disposeTap = webServerCtx.webServer.tapIndex(html => brandWebIndex(html, composition))
       ctx.effect(() => disposeTap)
     })
     // Web's own desktopPlugins/livePluginActivation (spec 034 T006) - mounted
@@ -780,7 +772,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     profileName,
     statePath: resolvePluginLifecycleStatePath(),
   }, rowIdsOf(patches)))
-  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL' }
+  return { rootConfig, patches, surface: 'web', instance, installPackageUrl, runtimeResolution: await createProfileRuntimeResolution(profile), profileContext: createProfileContext(profile, { home: instance.dshHome, instance, overlays: acrylAdditions(patches, { layerPatches: profileLayerPatches.length, userPatches: profile.patches.length, composedBeforeLater }) }), productName: blueprint.brand.kind === 'custom' ? blueprint.brand.identity.name : 'ACRYL', stockBrand: blueprint.brand.kind === 'acryl' }
 }
 
 /** The Loader row ids a list of patches composes, for overrides that apply only to rows that exist. */

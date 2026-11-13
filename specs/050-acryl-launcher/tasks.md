@@ -112,3 +112,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       copied once and named in `styles.ts`, not read live.
       Done when: Settings > Look switches the whole screen between the two without a reload, both themes (light and dark) read well, and the screen
       side by side with acryl.dev shows the same fonts and colours.
+- [ ] T015 [blends] The tab icon of an app made with "+ New app" (owner 2026-11-13, a screenshot of a tab wearing DeepSeek's whale: "remove it and replace with
+      Acryl favicon or Acrylblends favicon"). ACRYL's own web face is fixed (`brandWebIndex` in `runtime/acryl-harness-runtime/src/web-favicon.ts`: it keyed on
+      `productName === undefined`, which is never true, so the swap never ran). An app made with `create-acrylblends` still serves `/favicon.svg` from
+      `@deepseek-ai/dsh-web-frontend`. Fix in the Blends-owned frame host (`ide/acryl-blends-frame/src/index.ts`, acrylblends repository): a `tapIndex` on the
+      app's `webServer` that drops the page's icon links and adds the Acrylblends mark (`acrylblends.github.io/public/favicon.png`, 64 px, embedded as a data
+      URL), then a frame package release (`@acrylblends/blends-frame` 0.1.3) and an `acrylblends` CLI release that pins it (see the release notes of 1.5.3).
+      Done when: a new app's tab shows the Acrylblends mark and the served page has no DeepSeek icon link.
