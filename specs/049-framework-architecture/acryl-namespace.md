@@ -1,5 +1,7 @@
 # One name for every part: `acryl` and `@acryl/*` (milestone M13)
 
+> Renamed 2026-11-13 (owner): the IDE is called ADE (agentic development environment). Read `acryl code` as `acryl ade`, `@acryl/blend-code` as the ADE Blend and the registry id `acryl.code` as `acryl.ade`; `acryl code` still works as an alias. The text below is kept as decided on 2026-11-10.
+
 Owner's words (2026-11-10): "here we got ideas to how make all under 1 brand 'acryl' ... use that to create new milestone in specs so
 that we use our npm name 'acryl' as main entry point that will point to acrylblends and any other sub part, like @acryl/blends or
 @acryl/core etc."
