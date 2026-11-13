@@ -108,6 +108,15 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       (the `rightbar` seat of `acryl-app-shell`: Files, Changes, Review, Checks, Comments, and terminals where Claude, Codex or any CLI agent runs) beside the
       launcher; the screen leaves that column uncovered (`src/client/right-panel.ts`). Seen live on Web. Not built yet: the agent operating the launcher's own
       page through the door (`look`, `act`), the launcher prompt section, and the no-model-yet message.
+      State 2026-11-13 (second slice, owner: "wire to acryl-control, right side pane with agents"): (1) nine tools `acryl_launcher_help`, `_apps`, `_blends`,
+      `_new_app`, `_start_app`, `_stop_app`, `_plugins`, `_pull_plugin`, `_publish_plan` (`plugins/acryl-launcher-desktop/src/tools.ts`) over the screen's own service,
+      registered in `acrylTools` (the DSH chat has them) and on the gateway's default allowlist (`acryl-agent-control`), where Claude Code and Codex reach them over
+      MCP or plain JSON; a publish only prepares the plan, the person's click is the yes. (2) The gateway is on in the shared `agent-control-ui` capability
+      (`runtime/acryl-harness-runtime/src/coding-capabilities.ts`, `online: true`: loopback, secret-gated). (3) The Assistant button opens a docked column
+      (`AssistantPane` in `acryl-agent-control`, asked for by the `acryl:assistant` window event) with the Claude worker, which starts with the gateway's MCP
+      config; "Agent terminals" opens the IDE's right panel for Codex and other CLI agents. Seen live on Web with the real `claude` CLI: asked "make a blank web app
+      called demo-from-claude", the agent called the tool, the launcher showed it being made and listed the app. The help tool is the launcher's self-knowledge; a
+      prompt section for the DSH chat and the door's `look`/`act` on the launcher page remain.
 - [ ] T014 [desktop] The launcher's two skins (owner 2026-11-13, spec.md D12): "use either like in our current website acryl.dev fonts, colors
       gradients" and "same style as we have in ACRYL IDE". Skin one is ACRYL ADE's (built); skin two is acryl.dev's: Space Grotesk and JetBrains Mono
       (the same files the site ships, OFL, embedded so the screen works offline), the site's near-black `#171717` page, `#202020` cards, `#f7f7f5` text,
