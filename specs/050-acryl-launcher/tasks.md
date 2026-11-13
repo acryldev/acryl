@@ -104,6 +104,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       (5) a model must be connected first (the first-run popup, `acryl model`): without one the panel says so and opens Settings > Models.
       Done when: on this Mac, with a DeepSeek key, a person types "make me a blank web app called demo" in the panel and the launcher makes it, lists it
       and starts it by itself, and "where do I pull a plugin?" is answered with the screen it is on; the same in the Desktop window.
+      State 2026-11-13 (first slice, the owner asked why the panel was not there): an **Assistant** button in the screen's nav opens the ACRYL IDE's own right panel
+      (the `rightbar` seat of `acryl-app-shell`: Files, Changes, Review, Checks, Comments, and terminals where Claude, Codex or any CLI agent runs) beside the
+      launcher; the screen leaves that column uncovered (`src/client/right-panel.ts`). Seen live on Web. Not built yet: the agent operating the launcher's own
+      page through the door (`look`, `act`), the launcher prompt section, and the no-model-yet message.
 - [ ] T014 [desktop] The launcher's two skins (owner 2026-11-13, spec.md D12): "use either like in our current website acryl.dev fonts, colors
       gradients" and "same style as we have in ACRYL IDE". Skin one is ACRYL ADE's (built); skin two is acryl.dev's: Space Grotesk and JetBrains Mono
       (the same files the site ships, OFL, embedded so the screen works offline), the site's near-black `#171717` page, `#202020` cards, `#f7f7f5` text,

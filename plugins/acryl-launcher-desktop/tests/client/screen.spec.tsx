@@ -208,6 +208,26 @@ describe('the plugins of a running app', () => {
   })
 })
 
+describe('the assistant', () => {
+  it('opens the IDE\'s right panel beside the screen from the Assistant button, and the screen stops where the panel starts', async () => {
+    const pressed = vi.fn()
+    const show = document.createElement('button')
+    show.setAttribute('aria-label', 'Show right panel')
+    show.addEventListener('click', pressed)
+    document.body.appendChild(show)
+    open(fake(state([])))
+    fireEvent.click(await screen.findByRole('button', { name: /Assistant/u }))
+    expect(pressed).toHaveBeenCalledTimes(1)
+    show.remove()
+    const seat = document.createElement('aside')
+    seat.setAttribute('data-acryl-slot', 'rightbar')
+    seat.getBoundingClientRect = () => ({ left: window.innerWidth - 420, width: 420, right: window.innerWidth, top: 0, bottom: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) })
+    document.body.appendChild(seat)
+    await waitFor(() => { expect((screen.getByRole('dialog', { name: 'ACRYL' }) as HTMLElement).style.right).toBe('420px') }, { timeout: 2000 })
+    seat.remove()
+  })
+})
+
 describe('the look', () => {
   it('switches the whole screen between ACRYL ADE and acryl.dev in Settings, adds the site fonts only for that skin, and remembers the choice', async () => {
     localStorage.clear()
