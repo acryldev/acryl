@@ -51,6 +51,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
+    "acryl-control": "workspace:*",
     "acryl-launcher": "workspace:*",
     "acryl-loopback-http": "workspace:*",
     "acrylblends": "^1.0.0"

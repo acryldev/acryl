@@ -2476,6 +2476,9 @@ importers:
 
   plugins/acryl-launcher-desktop:
     dependencies:
+      acryl-control:
+        specifier: workspace:*
+        version: link:../../runtime/acryl-control
       acryl-launcher:
         specifier: workspace:*
         version: link:../acryl-launcher

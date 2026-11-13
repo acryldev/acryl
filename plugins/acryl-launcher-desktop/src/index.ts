@@ -11,6 +11,7 @@ import type {} from 'acrylblends/cordis/router-http'
 import { LAUNCHER_API_PREFIX } from './contract.ts'
 import { fileDoor } from './door.ts'
 import { readBlends } from './registry.ts'
+import { registerLauncherTools } from './tools.ts'
 import { launcherRoutes } from './route.ts'
 import { spawnRunner } from './runner.ts'
 import { LauncherService } from './service.ts'
@@ -49,6 +50,10 @@ export function apply(ctx: Context): void {
   }
   // Every process this plugin started goes with it, whether it unloads or the app quits.
   ctx.effect(() => () => { service.stopAll() }, 'acryl-launcher-desktop: apps it started')
+  // The launcher as tools, for the DSH chat and, through acryl-agent-control's gateway, for Claude Code and Codex. Optional: with no tool registry nothing is lost.
+  ctx.inject(['acrylTools'], (child) => {
+    child.effect(() => registerLauncherTools(child, service), 'acryl-launcher-desktop: launcher tools')
+  })
   ctx.router.route('/', launcherRoutes(service, report))
   ctx.routerHttp.mount(LAUNCHER_API_PREFIX)
 }
