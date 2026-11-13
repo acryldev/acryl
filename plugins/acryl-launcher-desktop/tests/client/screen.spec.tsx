@@ -208,6 +208,28 @@ describe('the plugins of a running app', () => {
   })
 })
 
+describe('the look', () => {
+  it('switches the whole screen between ACRYL ADE and acryl.dev in Settings, adds the site fonts only for that skin, and remembers the choice', async () => {
+    localStorage.clear()
+    open(fake(state([])))
+    const root = await screen.findByRole('dialog', { name: 'ACRYL' })
+    expect(root.getAttribute('data-skin')).toBe('ade')
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    fireEvent.click(screen.getByRole('radio', { name: /acryl\.dev/u }))
+    expect(root.getAttribute('data-skin')).toBe('site')
+    expect(document.getElementById('acryl-launcher-site-fonts')?.textContent).toContain('Space Grotesk Variable')
+    expect(localStorage.getItem('acryl-launcher-skin')).toBe('site')
+    fireEvent.click(screen.getByRole('radio', { name: /ACRYL ADE/u }))
+    expect(root.getAttribute('data-skin')).toBe('ade')
+    expect(document.getElementById('acryl-launcher-site-fonts')).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: /acryl\.dev/u }))
+    cleanup()
+    open(fake(state([])))
+    expect((await screen.findByRole('dialog', { name: 'ACRYL' })).getAttribute('data-skin')).toBe('site')
+    localStorage.clear()
+  })
+})
+
 describe('the Blends store', () => {
   it('lists the registry, searches it, and makes an app from a chosen Blend with its name filled in', async () => {
     const api = fake(state([]))

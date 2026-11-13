@@ -96,6 +96,41 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHomeJob { max-width: 680px; padding: 12px 16px; border: 1px solid var(--h-border); border-radius: 12px; background: var(--h-surface); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .acrylHomeBack { position: fixed; top: 6px; right: 76px; z-index: 2147482000; padding: 3px 10px; border: 1px solid var(--h-line, rgba(127,127,127,.35)); border-radius: 99px; background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-label-primary, #18181b); font: 600 12px -apple-system, system-ui, "Segoe UI", sans-serif; cursor: pointer; }
 .acrylHomeBack:hover { border-color: #4d6bfe; color: #4d6bfe; }
+/* The acryl.dev skin (spec 050 D12): the website's tokens (src/styles.css of acryldev.github.io, copied 2026-11-13, not read live) on the same markup. */
+.acrylHome[data-skin="site"] { --h-bg: #171717; --h-text: #f7f7f5; --h-surface: #202020; --h-fill: #292929; --h-fill2: #333333; --h-dim: #b0b0ab; --h-border: rgba(255,255,255,.16); --h-line: rgba(255,255,255,.28);
+  --h-accent: #f7f7f5; --h-accent-dim: rgba(247,247,245,.1); --h-invert: #171717; --h-grid: rgba(255,255,255,.05); --h-sans: 'Space Grotesk Variable', 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; --h-mono: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: var(--h-sans); }
+.acrylHome[data-skin="site"][data-tone="light"] { --h-bg: #ffffff; --h-text: #171717; --h-surface: #ffffff; --h-fill: #f4f4f2; --h-fill2: #e9e9e6; --h-dim: #70706c; --h-border: #ddddda; --h-line: #bdbdb8; --h-accent: #171717; --h-accent-dim: rgba(23,23,23,.08); --h-invert: #ffffff; --h-grid: rgba(23,23,23,.06); }
+.acrylHome[data-skin="site"] :is(.acrylHomeBtn, .acrylHomeChip, .acrylHomeNavItem, .acrylHomeGroup, .acrylHomePill, .acrylHomeCount, .acrylHomeMeta, .acrylHomeField > span, .acrylHomeTile span, .acrylHomeInput[data-mono]) { font-family: var(--h-mono); }
+.acrylHome[data-skin="site"] :is(.acrylHomeBtn, .acrylHomeChip, .acrylHomeNavItem, .acrylHomeGroup, .acrylHomePill, .acrylHomeField > span) { text-transform: uppercase; letter-spacing: .11em; }
+.acrylHome[data-skin="site"] :is(.acrylHomeNav, .acrylHomeMain, .acrylHomeApp, .acrylHomeTile, .acrylHomePanel, .acrylHomeList, .acrylHomeJob, .acrylHomeChoice, .acrylHomeIcon, .acrylHomeInput, .acrylHomeSearch, .acrylHomeBtn, .acrylHomeChip, .acrylHomeNavItem, .acrylHomePill) { border-radius: 0; }
+.acrylHome[data-skin="site"] .acrylHomeMain { background-image: linear-gradient(to right, var(--h-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--h-grid) 1px, transparent 1px); background-size: 64px 64px; background-position: -1px -1px; }
+.acrylHome[data-skin="site"] .acrylHomeBrand { font-size: 12px; font-weight: 650; letter-spacing: .31em; text-transform: uppercase; }
+.acrylHome[data-skin="site"] .acrylHomeNavItem { height: 34px; font-size: 10px; letter-spacing: .1em; border-left: 2px solid transparent; }
+.acrylHome[data-skin="site"] .acrylHomeNavItem[aria-current="page"] { border-left-color: var(--h-text); background: var(--h-fill); color: var(--h-text); font-weight: 500; }
+.acrylHome[data-skin="site"] .acrylHomeBtn { height: 34px; padding: 0 14px; border: 1px solid var(--h-border); background: transparent; color: var(--h-text); font-size: 9px; font-weight: 500; transition: background .16s ease, color .16s ease, border-color .16s ease; }
+.acrylHome[data-skin="site"] .acrylHomeBtn:hover:not(:disabled) { border-color: var(--h-text); background: transparent; color: var(--h-text); }
+.acrylHome[data-skin="site"] .acrylHomeBtn[data-small] { height: 28px; padding: 0 10px; font-size: 9px; }
+.acrylHome[data-skin="site"] .acrylHomeBtn[data-primary] { border-color: var(--h-text); background: var(--h-text); color: var(--h-invert); }
+.acrylHome[data-skin="site"] .acrylHomeBtn[data-primary]:hover:not(:disabled) { background: var(--h-bg); color: var(--h-text); opacity: 1; }
+.acrylHome[data-skin="site"] .acrylHomeChip { height: 26px; padding: 0 12px; font-size: 9px; }
+.acrylHome[data-skin="site"] .acrylHomeChip[aria-pressed="true"] { border-color: var(--h-text); background: var(--h-text); color: var(--h-invert); }
+.acrylHome[data-skin="site"] .acrylHomeChip:hover:not(:disabled) { border-color: var(--h-text); }
+.acrylHome[data-skin="site"] :is(.acrylHomeSearch, .acrylHomeInput) { background: var(--h-bg); font-family: var(--h-sans); }
+.acrylHome[data-skin="site"] .acrylHomeInput[data-mono] { font-family: var(--h-mono); font-size: 12px; }
+.acrylHome[data-skin="site"] :is(.acrylHomeSearch, .acrylHomeInput):focus { border-color: var(--h-text); }
+.acrylHome[data-skin="site"] :is(.acrylHomeApp, .acrylHomeTile, .acrylHomePanel, .acrylHomeJob, .acrylHomeItem) { background: var(--h-surface); }
+.acrylHome[data-skin="site"] .acrylHomeApp[aria-pressed="true"] { box-shadow: none; border-color: var(--h-text); }
+.acrylHome[data-skin="site"] .acrylHomeApp:hover { border-color: var(--h-line); }
+.acrylHome[data-skin="site"] .acrylHomeTile b { font-size: 26px; font-weight: 500; }
+.acrylHome[data-skin="site"] .acrylHomeTile span { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.acrylHome[data-skin="site"] .acrylHomeGroup { font-size: 10px; font-weight: 500; letter-spacing: .16em; }
+.acrylHome[data-skin="site"] .acrylHomePill { height: 20px; border: 1px solid var(--h-border); background: transparent; color: var(--h-dim); font-size: 9px; }
+.acrylHome[data-skin="site"] .acrylHomePill[data-kind="agent"] { border-color: var(--h-warn); color: var(--h-warn); }
+.acrylHome[data-skin="site"] .acrylHomeChoice:has(input:checked) { border-color: var(--h-text); background: var(--h-fill); }
+.acrylHome[data-skin="site"] .acrylHomeChoice input { accent-color: var(--h-text); }
+.acrylHome[data-skin="site"] .acrylHomePanelTop h3 { font-weight: 500; letter-spacing: -.01em; }
+.acrylHome[data-skin="site"] .acrylHomeIcon { font-family: var(--h-mono); font-weight: 500; }
 @media (max-width: 760px) { .acrylHome { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .acrylHomeNav { flex-direction: row; flex-wrap: wrap; padding-top: 14px; border-right: 0; border-bottom: 1px solid var(--h-border); } .acrylHomeBrand, .acrylHomeSep { display: none; } .acrylHomeMain { padding: 20px 16px; } }
 `
 

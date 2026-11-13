@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode 
 import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
+import { SITE_FONT_FACES } from './fonts.ts'
+import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
 import type { LauncherVisibility } from './store.ts'
 
 export interface LauncherScreenProps {
@@ -31,6 +33,8 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   const [selected, setSelected] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')
   const [surface, setSurface] = useState<SurfaceFilter>('all')
+  const [skin, setSkin] = useState<Skin>(() => readSkin())
+  const [dark, setDark] = useState(true)
 
   // The list is read again every two seconds while the screen is open: an app starting or ending shows without a click.
   useEffect(() => {
@@ -41,6 +45,23 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
     const timer = setInterval(read, POLL_MS)
     return () => { live = false; clearInterval(timer) }
   }, [api, open])
+
+  // The acryl.dev skin carries its own typefaces (embedded, so it works offline): added while that skin is shown, removed after.
+  useEffect(() => {
+    if (skin !== 'site') return undefined
+    const style = document.createElement('style')
+    style.id = 'acryl-launcher-site-fonts'
+    style.textContent = SITE_FONT_FACES
+    document.head.appendChild(style)
+    return () => { style.remove() }
+  }, [skin])
+
+  // Light or dark follows the page's own theme (the token the rest of the screen already uses), and again when the screen is opened.
+  useEffect(() => {
+    if (!open) return
+    const token = getComputedStyle(document.documentElement).getPropertyValue('--dsw-alias-bg-base')
+    setDark(isDarkColor(token) ?? window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true)
+  }, [open])
 
   /** A change: send it, show the list it answers with, or the reason it was refused. */
   const act = useCallback(async (run: () => Promise<StateResponse>): Promise<boolean> => {
@@ -59,7 +80,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   )
 
   return (
-    <div className="acrylHome" role="dialog" aria-label="ACRYL">
+    <div className="acrylHome" role="dialog" aria-label="ACRYL" data-skin={skin} data-tone={dark ? 'dark' : 'light'}>
       <nav className="acrylHomeNav" aria-label="ACRYL sections">
         <div className="acrylHomeBrand">ACRYL</div>
         {nav('apps', 'My apps', tiles.apps)}
@@ -92,7 +113,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         {view === 'store' && <StoreView api={api} state={state} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
         {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Deploying an app to WebBoxes.ai from its card is coming (`acryl deploy`). Nothing of yours is there yet." />}
         {view === 'health' && <HealthView api={api} />}
-        {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} />}
+        {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} skin={skin} onSkin={(next) => { setSkin(next); saveSkin(next) }} />}
       </main>
     </div>
   )
@@ -484,7 +505,7 @@ function HealthView({ api }: { api: LauncherApi }): ReactNode {
   )
 }
 
-function SettingsView({ api, appsFolder }: { api: LauncherApi, appsFolder: string }): ReactNode {
+function SettingsView({ api, appsFolder, skin, onSkin }: { api: LauncherApi, appsFolder: string, skin: Skin, onSkin: (skin: Skin) => void }): ReactNode {
   const [health, setHealth] = useState<HealthResponse | undefined>(undefined)
   useEffect(() => {
     let live = true
@@ -501,6 +522,17 @@ function SettingsView({ api, appsFolder }: { api: LauncherApi, appsFolder: strin
         <dt>On quit</dt><dd>stops the apps it started</dd>
       </dl>
       <p className="acrylHomeNote">These are shown, not edited, here yet. `acryl model` sets the model key.</p>
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="acrylHomeField"><span>Look</span></legend>
+        <div className="acrylHomeChoices">
+          {SKINS.map(kind => (
+            <label key={kind} className="acrylHomeChoice">
+              <input type="radio" name="skin" checked={skin === kind} onChange={() => { onSkin(kind) }} />
+              <span>{SKIN_LABEL[kind]}<small>{SKIN_NOTE[kind]}</small></span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
     </section>
   )
 }
