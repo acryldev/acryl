@@ -40,6 +40,23 @@ function mount(signIn: SignInApi, extra: { openExternal?: (url: string) => void 
 }
 
 describe('SignInCard', () => {
+  it('names ChatGPT from the legacy OpenAI route when the catalog gives openai only an API key', async () => {
+    const legacyCatalog = {
+      signedIn: false,
+      providers: [
+        { key: 'llm-pi-ai/anthropic', label: 'Anthropic', methods: [{ id: 'oauth', label: 'Anthropic (Claude Pro/Max)' }], configured: false },
+        { key: 'llm-pi-ai/openai', label: 'OpenAI', methods: [{ id: 'api-key', label: 'OpenAI API key' }], configured: false },
+        { key: 'llm-pi-ai/openai-codex', label: 'OpenAI Codex', methods: [{ id: 'oauth', label: 'OpenAI (ChatGPT Plus/Pro)' }], configured: false },
+      ],
+    }
+    mount(api({ providers: vi.fn(async () => legacyCatalog) }))
+    await screen.findByText('Claude')
+    expect(screen.getByText('ChatGPT')).toBeTruthy()
+    expect(screen.getByText('OpenAI, ChatGPT Plus or Pro')).toBeTruthy()
+    // The promoted legacy route is a featured row, not a duplicate under "Other providers"; this catalog has no others left.
+    expect(screen.queryByRole('combobox')).toBeNull()
+  })
+
   it('names Claude and ChatGPT first, DeepSeek next, other OAuth providers in a list, and leaves API-key-only providers out', async () => {
     mount(api())
     await screen.findByText('Claude')

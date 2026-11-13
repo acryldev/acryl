@@ -26,12 +26,13 @@ export type SignInCardProps = PropsRuntime<'settings.models.footer'> & SignInCar
 
 /**
  * Flow providers named first, with the names people know them by; the rest go under "Other providers". ChatGPT is the
- * `openai` route since pi-ai 1.x ("Sign in with ChatGPT"); `openai-codex` is its legacy route and stays in the list.
+ * `openai` route since pi-ai 1.x ("Sign in with ChatGPT"); catalogs that still give `openai` only an API key (DSH
+ * 0.2.0-rc.2's among them) carry the same ChatGPT sign-in on its legacy `openai-codex` route, which is named here instead.
  */
 const FEATURED = [
-  { key: 'llm-pi-ai/anthropic', name: 'claude', via: 'claudeVia' },
-  { key: 'llm-pi-ai/openai', name: 'chatgpt', via: 'chatgptVia' },
-  { key: 'deepseek-account-platform/default', name: 'deepseek', via: 'deepseekVia' },
+  { keys: ['llm-pi-ai/anthropic'], name: 'claude', via: 'claudeVia' },
+  { keys: ['llm-pi-ai/openai', 'llm-pi-ai/openai-codex'], name: 'chatgpt', via: 'chatgptVia' },
+  { keys: ['deepseek-account-platform/default'], name: 'deepseek', via: 'deepseekVia' },
 ] as const
 
 const POLL_MS = 700
@@ -156,10 +157,13 @@ export function SignInCard({ api, openExternal, copy, language, t }: SignInCardC
 
   const list = providers.status === 'ready' ? providers.list : []
   const featured = FEATURED.flatMap(item => {
-    const provider = list.find(candidate => candidate.key === item.key)
+    // The first route in the list the catalog actually offers with an OAuth flow: `openai` when it signs in with ChatGPT, its
+    // legacy `openai-codex` when that is where this catalog puts the flow.
+    const provider = item.keys.map(key => list.find(candidate => candidate.key === key)).find(candidate => candidate !== undefined)
     return provider === undefined ? [] : [{ provider, name: t(item.name), via: t(item.via) }]
   })
-  const others = list.filter(provider => !FEATURED.some(item => item.key === provider.key))
+  const featuredKeys = new Set(featured.map(item => item.provider.key))
+  const others = list.filter(provider => !featuredKeys.has(provider.key))
   const chosen = others.find(provider => provider.key === other)
 
   return (
