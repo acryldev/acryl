@@ -106,7 +106,7 @@ async function openLauncher() {
   const { runLauncher } = await loadLauncher()
   const chosen = await runLauncher({ home: ACRYL_HOME, appsFolder: APPS_FOLDER })
   if (!chosen) return
-  const target = launcherCommand(chosen.command, {
+  const target = launcherCommand(await desktopWhenListed(chosen.command), {
     env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, bin: fileURLToPath(new URL('./bin.js', import.meta.url)), exists: existsSync,
   })
   if (target.error) throw new Error(target.error)
@@ -121,6 +121,20 @@ async function openLauncher() {
     process.exitCode = code ?? 1
     void listCreatedApp(chosen.command.args, target.cwd)
   })
+}
+
+/**
+ * "Open an app" runs `npm run dev`, which serves the app to a browser. An app the list records as a Desktop app (made from the desktop or web screen with that
+ * surface) is opened the way that screen opens it: `npm run desktop`, which starts the same app in its own window.
+ */
+async function desktopWhenListed(command) {
+  if (command.program !== 'npm' || command.args.join(' ') !== 'run dev') return command
+  try {
+    const { readApps } = await loadLauncher()
+    const folder = resolve(process.cwd(), command.cwd)
+    const app = readApps(ACRYL_HOME).find(entry => resolve(entry.path) === folder)
+    return app?.surface === 'desktop' ? { ...command, args: ['run', 'desktop'] } : command
+  } catch { return command } // the list is a convenience: without it the app starts in the browser as before
 }
 
 /** `acryl --gui`: open the installed ACRYL desktop app; when none is installed, fetch the installer for this version and open that. */

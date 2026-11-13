@@ -74,5 +74,7 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       search, + New app, Add a folder, surface chips (CLI (TUI) greyed "coming"), the four numbers, cards and the selected app's panel; an app made
       through its route (`create-acrylblends` with the machine's npm) was listed, started with `npm run dev` and shown running with its address.
       Each app has a surface in `apps.json`; the terminal list shows it too. Not built (disabled with "coming" or a sentence): updates waiting,
-      Deploy to WebBoxes.ai, Share, Open folder, Keep and Discard; "+ New app" in the terminal does not yet ask for the surface.
+      Deploy to WebBoxes.ai, Share, Open folder, Keep and Discard. A Desktop app starts with `npm run desktop` (own window) from the screen and from the
+      terminal's "Open an app" (2026-11-13); "+ New app" in the terminal stays Enter-only and makes a Web app (the surface is chosen on the screen, so the
+      terminal journey keeps its three answers).
 
