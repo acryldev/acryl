@@ -48,11 +48,13 @@ export function apply(ctx: ClientContext): void {
     locale: SIGN_IN_LOCALE_NAMESPACE,
     inject: () => injected,
   }, SignInCard))
-  // The first-run dialog asks this seat before its key box: DeepSeek key first, an account sign-in here, or Settings > Models.
+  // The first-run dialog asks this seat before its key box. It shows Settings > Models itself (the section the Settings window renders: the DeepSeek key,
+  // third-party providers, a custom API, and the account sign-in at its foot) and a button that opens Settings for the rest. The section is read from the
+  // ledger when the popup opens, because it is registered by another plugin.
   ctx.slots.inject('settings.models.sign-in', () => ctx.slots.register({
     name: 'settings.models.sign-in',
     locale: SIGN_IN_LOCALE_NAMESPACE,
-    inject: () => injected,
+    inject: () => ({ ...injected, modelsSection: () => ctx.slots.entries('settings.section').find(entry => entry.options.id === 'models') }),
   }, ConnectChoice))
   // The upstream preview notice is not ACRYL's: reusing its id replaces that entry with one that ends its step at once (it is registered by DeepSeek's
   // models plugin outside the desktop shell, so every browser window, including a generated app's, would show it).

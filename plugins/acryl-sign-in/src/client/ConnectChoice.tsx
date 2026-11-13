@@ -1,51 +1,42 @@
 /**
- * The first-run step before the API key box: how to connect a model. DeepSeek (the default provider) with an API key comes first; an account
- * sign-in (Claude, ChatGPT, DeepSeek account) runs right here through the same card Settings > Models shows; and a button opens Settings > Models for
- * everything else. It fills the `settings.models.sign-in` seat the first-run dialog renders before its key editor.
+ * The first-run step: connect a model. It shows Settings > Models itself (the DeepSeek key, third-party providers, a custom model API, and the account
+ * sign-in at its foot), so everything can be done right here, and a button opens Settings for the rest. It fills the `settings.models.sign-in` seat the
+ * first-run dialog renders before its own key editor; saving a credential makes a provider ready, which ends the step by itself.
  */
-import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@acryl/ui/frame'
+import { ModelsPane, type RegisteredSection } from './ModelsPane.tsx'
 import { openModelsSettings } from './open-settings.ts'
 import { SignInCard, type SignInCardInjected } from './SignInCard.tsx'
 
 export interface ConnectChoiceOwner {
   /** Ends the step without a credential (the first-run dialog goes away). */
   readonly complete: () => void
-  /** Moves on to the dialog's own DeepSeek key box. */
+  /** Moves on to the dialog's own DeepSeek key box (not used: the Models section has the key box). */
   readonly useApiKey: () => void
 }
 
-export type ConnectChoiceProps = ConnectChoiceOwner & PropsLocale<'acryl.sign-in'> & InjectFace<SignInCardInjected>
+export interface ConnectChoiceInjected extends SignInCardInjected {
+  /** The Models section as the Settings window renders it, or undefined when the models plugin is not composed. */
+  readonly modelsSection: () => RegisteredSection | undefined
+}
 
-export function ConnectChoice({ complete, useApiKey, api, openExternal, copy, language, t }: ConnectChoiceProps): ReactNode {
-  const [account, setAccount] = useState(false)
-  const choice = (title: string, text: string, action: string, onClick: () => void, badge?: string): ReactNode => (
-    <div className="acrylConnectRow">
-      <div className="acrylConnectText"><strong>{title}{badge === undefined ? null : <span className="acrylConnectBadge">{badge}</span>}</strong><span>{text}</span></div>
-      <button type="button" className="acrylSignInButton" data-primary={badge === undefined ? undefined : ''} onClick={onClick}>{action}</button>
-    </div>
-  )
+export type ConnectChoiceProps = ConnectChoiceOwner & PropsLocale<'acryl.sign-in'> & InjectFace<ConnectChoiceInjected>
+
+export function ConnectChoice({ complete, api, openExternal, copy, language, modelsSection, t }: ConnectChoiceProps): ReactNode {
   return (
     <div className="acrylConnectBackdrop">
       <div className="acrylConnect" role="dialog" aria-modal="true" aria-label={t('connectTitle')}>
         <h2 className="acrylConnectTitle">{t('connectTitle')}</h2>
         <p className="acrylSignInText">{t('connectIntro')}</p>
-        {account
-          ? (
-            <>
-              <SignInCard api={api} openExternal={openExternal} copy={copy} language={language} t={t} />
-              <div className="acrylSignInActions"><button type="button" className="acrylSignInButton" onClick={() => { setAccount(false) }}>{t('connectBack')}</button></div>
-            </>
-          )
-          : (
-            <>
-              {choice(t('connectKey'), t('connectKeyText'), t('connectKeyAction'), useApiKey, t('connectDefault'))}
-              {choice(t('connectAccount'), t('connectAccountText'), t('connectAccountAction'), () => { setAccount(true) })}
-              {choice(t('connectSettings'), t('connectSettingsText'), t('connectSettingsAction'), () => { complete(); openModelsSettings() })}
-              <div className="acrylSignInActions"><button type="button" className="acrylSignInButton" onClick={complete}>{t('connectLater')}</button></div>
-            </>
-          )}
+        <div className="acrylConnectModels">
+          <ModelsPane section={modelsSection()} footer={<SignInCard api={api} openExternal={openExternal} copy={copy} language={language} t={t} />} />
+        </div>
+        <div className="acrylConnectFoot">
+          <button type="button" className="acrylSignInButton" onClick={() => { complete(); openModelsSettings() }}>{t('connectSettingsAction')}</button>
+          <button type="button" className="acrylSignInButton" onClick={complete}>{t('connectLater')}</button>
+        </div>
+        <span className="acrylConnectHint">{t('connectSettingsText')}</span>
       </div>
     </div>
   )
