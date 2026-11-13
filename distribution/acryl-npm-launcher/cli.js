@@ -189,7 +189,8 @@ if (forwarded?.error) {
   if (!stdin.isTTY || !process.stdout.isTTY) fail(new Error('acryl --tui needs a terminal; to open the app window instead run: acryl --gui'))
   else if (!existsSync(LAUNCHER)) fail(new Error('the terminal screen is not part of this install; install acryl from npm'))
   else openLauncher().catch(fail)
-} else if (args[0] === 'web') {
+} else if (args[0] === 'web' || args[0] === '--web') {
+  // `acryl --web` is the third launcher flag beside `--tui` and `--gui`: the same ACRYL screen, served to a browser.
   runWeb(args.slice(1)).catch(cause => {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
     process.exitCode = 1

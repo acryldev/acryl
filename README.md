@@ -91,7 +91,7 @@ acryl
 ### Local Web surface
 
 ```bash
-acryl web
+acryl --web      # the same as: acryl web
 ```
 
 Starts a local web runtime, prints its URL, and serves until you stop it. It is not a hosted cloud service.

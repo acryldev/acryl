@@ -19,8 +19,11 @@ npm install -g acryl
 ## Run
 
 ```bash
-acryl           # terminal client (default)
-acryl web       # serve the local ACRYL web runtime
+acryl           # the ACRYL app screen in this terminal (same as --tui)
+acryl --tui     # the ACRYL app screen in this terminal
+acryl --gui     # the ACRYL desktop app (Electron); fetched once if it is not installed
+acryl --web     # the ACRYL app screen in your browser (same as: acryl web)
+acryl code      # ACRYL Code, the coding IDE
 ```
 
 A standalone Desktop application is distributed separately.
