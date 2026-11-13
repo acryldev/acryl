@@ -19,10 +19,10 @@ export interface SignInCardInjected {
   readonly language: () => string | undefined
 }
 
-export type SignInCardProps =
-  PropsRuntime<'settings.models.footer'>
-  & PropsLocale<'acryl.sign-in'>
-  & InjectFace<SignInCardInjected>
+/** What the card itself needs: its injected ports and the dictionary. The Models footer seat and the first-run step both supply it. */
+export type SignInCardCoreProps = PropsLocale<'acryl.sign-in'> & InjectFace<SignInCardInjected>
+
+export type SignInCardProps = PropsRuntime<'settings.models.footer'> & SignInCardCoreProps
 
 /**
  * Flow providers named first, with the names people know them by; the rest go under "Other providers". ChatGPT is the
@@ -48,7 +48,7 @@ type Active =
 const message = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
 const oauthOf = (provider: SignInProviderView): string | undefined => provider.methods.find(method => method.id === 'oauth')?.id
 
-export function SignInCard({ api, openExternal, copy, language, t }: SignInCardProps) {
+export function SignInCard({ api, openExternal, copy, language, t }: SignInCardCoreProps) {
   const [providers, setProviders] = useState<Providers>({ status: 'loading' })
   const [active, setActive] = useState<Active>({ kind: 'none' })
   const [other, setOther] = useState('')

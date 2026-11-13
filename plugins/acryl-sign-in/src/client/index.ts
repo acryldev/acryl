@@ -7,7 +7,9 @@
 import type {} from '@acryl/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { en, zh, type SignInLocaleKey } from './locales.ts'
+import { ConnectChoice } from './ConnectChoice.tsx'
 import { SignInCard, type SignInCardInjected } from './SignInCard.tsx'
+import { SkipPreviewNotice } from './SkipPreviewNotice.tsx'
 import { createSignInApi } from './sign-in-api.ts'
 import { installSignInStyles } from './styles.ts'
 
@@ -46,6 +48,20 @@ export function apply(ctx: ClientContext): void {
     locale: SIGN_IN_LOCALE_NAMESPACE,
     inject: () => injected,
   }, SignInCard))
+  // The first-run dialog asks this seat before its key box: DeepSeek key first, an account sign-in here, or Settings > Models.
+  ctx.slots.inject('settings.models.sign-in', () => ctx.slots.register({
+    name: 'settings.models.sign-in',
+    locale: SIGN_IN_LOCALE_NAMESPACE,
+    inject: () => injected,
+  }, ConnectChoice))
+  // The upstream preview notice is not ACRYL's: reusing its id replaces that entry with one that ends its step at once (it is registered by DeepSeek's
+  // models plugin outside the desktop shell, so every browser window, including a generated app's, would show it).
+  ctx.slots.inject('settings.onboarding', () => ctx.slots.register({
+    name: 'settings.onboarding',
+    id: 'welcome-notice',
+    order: -100,
+    inject: () => ({}),
+  }, SkipPreviewNotice))
 }
 
 export { SignInCard } from './SignInCard.tsx'

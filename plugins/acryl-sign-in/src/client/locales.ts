@@ -5,6 +5,8 @@ export type SignInLocaleKey =
   | 'claude' | 'claudeVia' | 'chatgpt' | 'chatgptVia' | 'deepseek' | 'deepseekVia'
   | 'browserTitle' | 'browserText' | 'openPage' | 'copyLink' | 'copied' | 'working' | 'continue' | 'cancel'
   | 'failed' | 'tryAgain' | 'done' | 'unavailable'
+  | 'connectTitle' | 'connectIntro' | 'connectKey' | 'connectKeyText' | 'connectKeyAction' | 'connectAccount' | 'connectAccountText' | 'connectAccountAction'
+  | 'connectSettings' | 'connectSettingsText' | 'connectSettingsAction' | 'connectBack' | 'connectLater' | 'connectDefault'
 
 export const en: Record<SignInLocaleKey, string> = {
   heading: 'Sign in with an account',
@@ -32,6 +34,20 @@ export const en: Record<SignInLocaleKey, string> = {
   tryAgain: 'Try again',
   done: 'Signed in. New chats use this provider when the current default cannot answer.',
   unavailable: 'Account sign-in is not available right now.',
+  connectTitle: 'Connect a model to get started',
+  connectIntro: 'ACRYL needs a model to work with. Choose how to connect one; you can change it any time in Settings > Models.',
+  connectKey: 'DeepSeek API key',
+  connectKeyText: 'The default. Paste a key from platform.deepseek.com; it stays on this machine.',
+  connectKeyAction: 'Enter a key',
+  connectAccount: 'Sign in with an account',
+  connectAccountText: 'Use your Claude, ChatGPT or DeepSeek subscription instead of a key.',
+  connectAccountAction: 'Choose an account',
+  connectSettings: 'Settings > Models',
+  connectSettingsText: 'Every provider, API keys and account sign-ins, in one place.',
+  connectSettingsAction: 'Open Settings',
+  connectBack: 'Back',
+  connectLater: 'Later',
+  connectDefault: 'default',
 }
 
 export const zh: Record<SignInLocaleKey, string> = {
@@ -60,4 +76,18 @@ export const zh: Record<SignInLocaleKey, string> = {
   tryAgain: '重试',
   done: '已登录。当前默认模型不可用时，新对话将使用此提供方。',
   unavailable: '当前无法使用账号登录。',
+  connectTitle: '连接模型以开始使用',
+  connectIntro: 'ACRYL 需要一个模型才能工作。选择连接方式；之后可随时在设置 > 模型中更改。',
+  connectKey: 'DeepSeek API 密钥',
+  connectKeyText: '默认方式。粘贴来自 platform.deepseek.com 的密钥，它只保存在本机。',
+  connectKeyAction: '输入密钥',
+  connectAccount: '使用账号登录',
+  connectAccountText: '使用你的 Claude、ChatGPT 或 DeepSeek 订阅，而不是密钥。',
+  connectAccountAction: '选择账号',
+  connectSettings: '设置 > 模型',
+  connectSettingsText: '所有提供方、API 密钥和账号登录集中在一处。',
+  connectSettingsAction: '打开设置',
+  connectBack: '返回',
+  connectLater: '稍后',
+  connectDefault: '默认',
 }
