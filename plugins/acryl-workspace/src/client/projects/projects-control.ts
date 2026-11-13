@@ -179,7 +179,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
   }
 
   const chatOn = (): boolean => deps.chatAvailable?.() ?? true
-  const chatOff = fail('The DeepSeek Harness chat is switched off.')
+  const chatOff = fail('The chat is switched off.')
 
   return {
     get chatAvailable() { return chatOn() },

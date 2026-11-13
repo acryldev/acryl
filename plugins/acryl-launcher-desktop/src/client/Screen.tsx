@@ -205,7 +205,7 @@ function Detail({ app, onStart, onStop, onRemove, openExternal }: { app: AppView
         <h3>{app.name}</h3>
         <div className="acrylHomeActs">
           {running
-            ? <><button type="button" className="acrylHomeBtn" data-primary disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open</button><button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
+            ? <>{app.surface === 'desktop' ? null : <button type="button" className="acrylHomeBtn" data-primary disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open</button>}<button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
             : <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing'} onClick={() => { void onStart(app.id) }}>Start</button>}
           <button type="button" className="acrylHomeBtn" disabled title="coming: acryl deploy">Deploy to WebBoxes.ai</button>
           <button type="button" className="acrylHomeBtn" disabled title="coming">Share</button>

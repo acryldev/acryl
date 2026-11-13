@@ -91,14 +91,17 @@ export class LauncherService {
     if (!removeApp(this.#ports.home, id)) throw new LauncherRefusal(`there is no app "${id}" in the list`)
   }
 
-  /** Start an app the way the terminal's "Open an app" does: `npm run dev` in its folder, with the saved model key. */
+  /**
+   * Start an app the way the terminal's "Open an app" does, with the saved model key: a Web app with `npm run dev` in its folder (its address opens in the
+   * browser), a Desktop app with `npm run desktop`, which starts the same app and opens it in its own window (Electron is fetched the first time).
+   */
   start(id: string): void {
     const entry = readApps(this.#ports.home).find(app => app.id === id)
     if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
     if (inspectApp(entry).state === 'missing') throw new LauncherRefusal(`the folder ${entry.path} is gone: remove it from the list, or put it back`)
     if (this.#started.has(id)) return
     this.#failures.delete(id)
-    const run = this.#ports.runner({ program: 'npm', args: ['run', 'dev'], cwd: entry.path, env: this.#environment() })
+    const run = this.#ports.runner({ program: 'npm', args: ['run', entry.surface === 'desktop' ? 'desktop' : 'dev'], cwd: entry.path, env: this.#environment() })
     this.#watch(id, run, undefined)
   }
 

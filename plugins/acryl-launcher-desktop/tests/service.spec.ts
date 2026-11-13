@@ -167,6 +167,12 @@ describe('+ New app', () => {
     expect(runs[0]?.stopped).toBe(true)
   })
 
+  it('starts a Desktop app with npm run desktop, so it opens in its own window', () => {
+    const { service, makeApp, runs } = setup()
+    const crm = makeApp('crm', 'desktop')
+    service.start('crm')
+    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['run', 'desktop'], cwd: crm })
+  })
   it('counts a clean end with the app listed as made, and starts the app', () => {
     const { service, runs, root } = setup()
     const where = join(root, 'ACRYL')
