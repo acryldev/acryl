@@ -23,6 +23,7 @@ function setup() {
   const home = join(root, '.acryl')
   const appsFolder = join(root, 'ACRYL')
   const runs: FakeRun[] = []
+  const registry = { calls: 0 }
   const service = new LauncherService({
     home, appsFolder,
     runner: (command) => {
@@ -42,15 +43,16 @@ function setup() {
     environment: () => ({ PATH: '/usr/bin', ACRYL_HOME: '/the/desktop/home', DSH_HOME: '/x', ELECTRON_RUN_AS_NODE: '1', HOME: '/h' }),
     exists: path => existsSync(path),
     makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
+    blends: async () => { registry.calls += 1; return [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' }] },
   })
-  const makeApp = (name: string, surface: 'web' | 'desktop' | 'tui' = 'web'): string => {
+  const makeApp = (name: string, surface: 'web' | 'desktop' | 'tui' = 'web', installed = true): string => {
     const folder = join(root, 'ACRYL', name)
-    mkdirSync(folder, { recursive: true })
+    mkdirSync(installed ? join(folder, 'node_modules') : folder, { recursive: true })
     writeFileSync(join(folder, 'blend.yaml'), 'id: acrylblends.notes\n')
     addApp(home, { path: folder, surface })
     return folder
   }
-  return { root, home, appsFolder, runs, service, makeApp }
+  return { root, home, appsFolder, runs, service, makeApp, registry }
 }
 
 describe('the list', () => {
@@ -167,17 +169,85 @@ describe('+ New app', () => {
     expect(runs[0]?.stopped).toBe(true)
   })
 
+  it('installs the dependencies of an app that has none before starting it, shows it as starting, and keeps npm\'s words when that fails', () => {
+    const { service, makeApp, runs } = setup()
+    const folder = makeApp('crm', 'desktop', false)
+    service.start('crm')
+    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['install'], cwd: folder })
+    expect(service.state().apps[0]).toMatchObject({ state: 'starting' })
+    mkdirSync(join(folder, 'node_modules'))
+    runs[0]!.end(0)
+    expect(runs[1]?.command).toMatchObject({ program: 'npm', args: ['run', 'desktop'], cwd: folder })
+    const { service: other, makeApp: another, runs: otherRuns } = setup()
+    another('shop', 'web', false)
+    other.start('shop')
+    otherRuns[0]!.say('npm error code ENOTFOUND\n')
+    otherRuns[0]!.end(1)
+    expect(other.state().apps[0]).toMatchObject({ state: 'stopped', failure: 'npm error code ENOTFOUND' })
+    expect(otherRuns).toHaveLength(1)
+  })
+
   it('starts a Desktop app with npm run desktop, so it opens in its own window', () => {
     const { service, makeApp, runs } = setup()
     const crm = makeApp('crm', 'desktop')
     service.start('crm')
     expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['run', 'desktop'], cwd: crm })
   })
+  it('makes an app from a registry Blend with acryl new --from, and refuses both a starter and a Blend, or an id that could read as an option', () => {
+    const { service, runs, root } = setup()
+    const where = join(root, 'ACRYL')
+    expect(() => { service.create({ where, name: 'notes', starter: 'blank', blend: 'acrylblends.notes', surface: 'web' }) }).toThrow(/starter or a Blend, not both/u)
+    expect(() => { service.create({ where, name: 'notes', surface: 'web' }) }).toThrow(/starter or a Blend, not both/u)
+    expect(() => { service.create({ where, name: 'notes', blend: '--yes', surface: 'web' }) }).toThrow(/not a Blend id/u)
+    expect(runs).toHaveLength(0)
+    service.create({ where, name: 'notes', blend: 'acrylblends.notes', surface: 'desktop' })
+    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'notes', '--from', 'acrylblends.notes'], cwd: where })
+    expect(service.state().job?.line).toBe(`cd ${where} && acryl new notes --from acrylblends.notes`)
+  })
+
+  it('reads the registry once a minute, not on every look at the store', async () => {
+    const { service, registry } = setup()
+    expect((await service.blends()).map(blend => blend.id)).toEqual(['acrylblends.notes'])
+    await service.blends()
+    expect(registry.calls).toBe(1)
+  })
+
+  it('installs the dependencies of an app that arrives without them (a Blend from the registry), then starts it', () => {
+    const { service, runs, root } = setup()
+    const where = join(root, 'ACRYL')
+    service.create({ where, name: 'notes', blend: 'acrylblends.notes', surface: 'desktop' })
+    mkdirSync(join(where, 'notes'), { recursive: true })
+    writeFileSync(join(where, 'notes', 'blend.yaml'), 'id: acrylblends.notes\n')
+    runs[0]!.say('Next:\n  npm install\n')
+    runs[0]!.end(0)
+    expect(runs[1]?.command).toMatchObject({ program: 'npm', args: ['install'], cwd: join(where, 'notes') })
+    expect(service.state().job).toMatchObject({ status: 'running', message: expect.stringContaining('Installing') })
+    mkdirSync(join(where, 'notes', 'node_modules'))
+    runs[1]!.end(0)
+    expect(service.state().job?.status).toBe('done')
+    expect(service.state().job?.message).toBeUndefined()
+    expect(runs[2]?.command).toMatchObject({ program: 'npm', args: ['run', 'desktop'], cwd: join(where, 'notes') })
+  })
+
+  it('says why an install failed, in the words npm printed, and does not start the app', () => {
+    const { service, runs, root } = setup()
+    const where = join(root, 'ACRYL')
+    service.create({ where, name: 'notes', blend: 'acrylblends.notes', surface: 'web' })
+    mkdirSync(join(where, 'notes'), { recursive: true })
+    writeFileSync(join(where, 'notes', 'blend.yaml'), 'id: acrylblends.notes\n')
+    runs[0]!.say('created notes\n')
+    runs[0]!.end(0)
+    runs[1]!.say('npm error code ENOTFOUND\n')
+    runs[1]!.end(1)
+    expect(service.state().job).toMatchObject({ status: 'failed', message: 'npm error code ENOTFOUND' })
+    expect(runs).toHaveLength(2)
+  })
+
   it('counts a clean end with the app listed as made, and starts the app', () => {
     const { service, runs, root } = setup()
     const where = join(root, 'ACRYL')
     service.create({ where, name: 'shop', starter: 'blank', surface: 'web' })
-    mkdirSync(join(where, 'shop'), { recursive: true })
+    mkdirSync(join(where, 'shop', 'node_modules'), { recursive: true })
     writeFileSync(join(where, 'shop', 'blend.yaml'), 'metadata:\n  id: acrylblends.shop\n')
     runs[0]!.say('Next:\ncd shop\nnpm run dev\n')
     runs[0]!.end(0)
@@ -190,7 +260,7 @@ describe('+ New app', () => {
   it('refuses a bad name, an existing folder, a second job, an unknown starter and the surface that is coming', () => {
     const { service, runs, root, makeApp } = setup()
     const where = join(root, 'ACRYL')
-    const ask = (over: Partial<{ where: string, name: string, starter: string, surface: 'web' | 'desktop' | 'tui' }>) => () => { service.create({ where, name: 'shop', starter: 'blank', surface: 'web', ...over }) }
+    const ask = (over: Partial<{ where: string, name: string, starter: string, blend: string, surface: 'web' | 'desktop' | 'tui' }>) => () => { service.create({ where, name: 'shop', starter: 'blank', surface: 'web', ...over }) }
     expect(ask({ name: 'My App' })).toThrow(/lower case letters, digits and dashes/u)
     expect(ask({ where: '~/ACRYL' })).toThrow(/whole folder path/u)
     expect(ask({ starter: 'nope' })).toThrow(/no starter/u)

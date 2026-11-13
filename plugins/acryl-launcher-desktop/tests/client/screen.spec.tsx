@@ -15,9 +15,15 @@ const app = (over: Partial<AppView>): AppView => ({ id: 'shop', name: 'shop', pa
 const STARTERS = [{ value: 'blank', label: 'Blank', description: 'the smallest app' }, { value: 'notes', label: 'Notes', description: 'a multi-user notes app' }]
 const state = (apps: AppView[], job: StateResponse['job'] = null): StateResponse => ({ apps, appsFolder: '/h/ACRYL', starters: STARTERS, job })
 
+const BLENDS = [
+  { id: 'acrylblends.notes-desktop', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' },
+  { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary' },
+]
+
 function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): LauncherApi {
   return {
     state: vi.fn(async () => initial),
+    blends: vi.fn(async () => BLENDS),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
     add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial),
     ...over,
@@ -149,6 +155,34 @@ describe('the ACRYL screen', () => {
     expect(screen.getByText(/saved once for every app \(sk-\.\.\.6789\)/u)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'WebBoxes.ai' }))
     expect(screen.getByText(/Deploying an app to WebBoxes.ai from its card is coming/u)).toBeTruthy()
+  })
+})
+
+describe('the Blends store', () => {
+  it('lists the registry, searches it, and makes an app from a chosen Blend with its name filled in', async () => {
+    const api = fake(state([]))
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    expect(await screen.findByText('Accounting')).toBeTruthy()
+    expect(screen.getByText('Notes')).toBeTruthy()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search Blends' }), { target: { value: 'vat' } })
+    expect(screen.queryByText('Notes')).toBeNull()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search Blends' }), { target: { value: '' } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Make an app' })[0]!)
+    expect((await screen.findByRole('textbox', { name: 'Name' }) as HTMLInputElement).value).toBe('notes-desktop')
+    expect(screen.getByText(/acryl new notes-desktop --from acrylblends.notes-desktop/u)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Make it' }))
+    await waitFor(() => { expect(api.create).toHaveBeenCalledWith({ where: '/h/ACRYL', name: 'notes-desktop', surface: 'web', blend: 'acrylblends.notes-desktop' }) })
+  })
+
+  it('says why the registry could not be read and tries again', async () => {
+    let attempts = 0
+    const api = fake(state([]), { blends: vi.fn(async () => { attempts += 1; if (attempts === 1) throw new Error('The registry could not be read. Check the network and try again.'); return BLENDS }) })
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('The registry could not be read')
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('Accounting')).toBeTruthy()
   })
 })
 

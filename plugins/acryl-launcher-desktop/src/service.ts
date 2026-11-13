@@ -8,8 +8,8 @@ import {
   addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, inspectApp, maskKey, modelEnv, readApps, readModelKey, removeApp, STARTERS, whereProblem,
   type AppEntry,
 } from 'acryl-launcher'
-import type { AppRunState, AppView, HealthView, JobView, NewAppRequest, StateResponse, Surface } from './contract.ts'
-import { MAKEABLE_SURFACES } from './contract.ts'
+import type { AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, StateResponse, Surface } from './contract.ts'
+import { BLEND_ID, MAKEABLE_SURFACES } from './contract.ts'
 import { appEnvironment, type Run, type Runner } from './runner.ts'
 
 /** A request the service cannot honour, in a sentence a person can act on. The route answers it as 409. */
@@ -25,11 +25,14 @@ export interface LauncherPorts {
   readonly environment: () => Readonly<Record<string, string | undefined>>
   readonly exists: (path: string) => boolean
   readonly makeFolder: (path: string) => void
+  /** The Blends in the public registry; rejects (`RegistryUnavailable`) when it cannot be read. */
+  readonly blends: () => Promise<readonly BlendView[]>
 }
 
 /** The address an app prints, with the token it needs: `http://127.0.0.1:3999/?token=...`. */
 const ADDRESS = /https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):\d+[^\s'")\]]*/u
 const TAIL_LINES = 6
+const BLENDS_FRESH_MS = 60_000
 /** The package `acryl new` runs (`distribution/acryl-npm-launcher/forward.js` CREATE_SPEC). */
 const CREATE_SPEC = 'create-acrylblends@latest'
 const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]/gu
@@ -42,7 +45,8 @@ interface Job {
   readonly line: string
   status: JobView['status']
   message?: string
-  readonly run: Run
+  /** The process the job is on now: the command that makes the app, then, for an app that arrives without its dependencies, `npm install`. */
+  run: Run
 }
 
 interface Started {
@@ -57,6 +61,7 @@ export class LauncherService {
   /** Why an app last ended without being stopped, until it is started again. */
   readonly #failures = new Map<string, string>()
   #job: Job | undefined
+  #blends: { at: number, list: readonly BlendView[] } | undefined
 
   constructor(ports: LauncherPorts) { this.#ports = ports }
 
@@ -101,8 +106,24 @@ export class LauncherService {
     if (inspectApp(entry).state === 'missing') throw new LauncherRefusal(`the folder ${entry.path} is gone: remove it from the list, or put it back`)
     if (this.#started.has(id)) return
     this.#failures.delete(id)
+    // An app whose dependencies are not installed (one pulled from the registry in a terminal, or copied) cannot run: install them first, shown as "starting".
+    if (!this.#ports.exists(join(entry.path, 'node_modules'))) { this.#installThenStart(id, entry.path); return }
     const run = this.#ports.runner({ program: 'npm', args: ['run', entry.surface === 'desktop' ? 'desktop' : 'dev'], cwd: entry.path, env: this.#environment() })
     this.#watch(id, run, undefined)
+  }
+
+  #installThenStart(id: string, folder: string): void {
+    const run = this.#ports.runner({ program: 'npm', args: ['install'], cwd: folder, env: this.#environment() })
+    const started: Started = { run, address: undefined, output: '' }
+    this.#started.set(id, started)
+    run.onOutput((text) => { started.output = tail(`${started.output}${text}`) })
+    run.onEnd((end) => {
+      if (this.#started.get(id) !== started) return
+      this.#started.delete(id)
+      if (end.notFound) this.#failures.set(id, 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.')
+      else if (end.code === 0) { try { this.start(id) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) } }
+      else if (end.code !== null) this.#failures.set(id, started.output === '' ? (end.error ?? 'npm install ended before the app could run.') : started.output)
+    })
   }
 
   stop(id: string): void {
@@ -122,19 +143,30 @@ export class LauncherService {
     if (this.#job?.status === 'running') throw new LauncherRefusal(`${this.#job.name} is still being made: wait for it to finish`)
     const problem = whereProblem(request.where) ?? (APP_NAME.test(request.name) ? undefined : appNameProblem(request.name, this.#ports))
     if (problem !== undefined) throw new LauncherRefusal(problem)
-    if (!STARTERS.some(starter => starter.value === request.starter)) throw new LauncherRefusal(`there is no starter "${request.starter}"`)
+    if ((request.starter === undefined) === (request.blend === undefined)) throw new LauncherRefusal('choose a starter or a Blend, not both')
+    if (request.starter !== undefined && !STARTERS.some(starter => starter.value === request.starter)) throw new LauncherRefusal(`there is no starter "${request.starter}"`)
+    if (request.blend !== undefined && !BLEND_ID.test(request.blend)) throw new LauncherRefusal(`"${request.blend}" is not a Blend id (for example acrylblends.notes)`)
     if (!MAKEABLE_SURFACES.includes(request.surface)) throw new LauncherRefusal('CLI (TUI) apps are coming: choose Web or Desktop')
     const folder = join(request.where, request.name)
     if (this.#ports.exists(folder)) throw new LauncherRefusal(`there is already a folder named ${request.name} in ${request.where}`)
     this.#ports.makeFolder(request.where)
     // What `acryl new` forwards to (the selector's `npm exec --yes create-acrylblends@latest -- <args>`), run directly so this screen does not depend on which
     // `acryl` release is installed; the line shown is the one a person types.
-    const args = ['exec', '--yes', CREATE_SPEC, '--', request.name, request.starter]
-    const line = `cd ${request.where} && acryl new ${request.name} ${request.starter}`
+    const source = request.blend === undefined ? [request.starter ?? ''] : ['--from', request.blend]
+    const args = ['exec', '--yes', CREATE_SPEC, '--', request.name, ...source]
+    const line = `cd ${request.where} && acryl new ${request.name} ${source.join(' ')}`
     const run = this.#ports.runner({ program: 'npm', args, cwd: request.where, env: this.#environment() })
     const job: Job = { name: request.name, line, status: 'running', run }
     this.#job = job
     this.#watch(undefined, run, { folder, surface: request.surface, job })
+  }
+
+  /** The registry's Blends, read again at most once a minute: the store is opened and closed often, and the registry is a public file. */
+  async blends(): Promise<readonly BlendView[]> {
+    if (this.#blends !== undefined && Date.now() - this.#blends.at < BLENDS_FRESH_MS) return this.#blends.list
+    const list = await this.#ports.blends()
+    this.#blends = { at: Date.now(), list }
+    return list
   }
 
   async health(probe: Runner = this.#ports.runner): Promise<HealthView> {
@@ -189,11 +221,34 @@ export class LauncherService {
         // `create-acrylblends` installs the app and ends cleanly without starting it: a clean end with the app listed is "made", and the app is started
         // the way the walk of the terminal ends ("makes an app and runs it").
         if (end.code === 0 && appId !== undefined) {
-          making.job.status = 'done'
-          try { this.start(appId) } catch (cause) { this.#failures.set(appId, cause instanceof Error ? cause.message : String(cause)) }
+          // An app made from a registry Blend arrives without its dependencies (`acryl new --from` prints "npm install" as the next step; a starter installs
+          // itself): install them here, so what is started can run.
+          if (this.#ports.exists(join(making.folder, 'node_modules'))) this.#finish(appId, making.job)
+          else this.#install(appId, making.folder, making.job)
         } else making.job.status = 'failed'
       }
       if (making !== undefined && making.job.status === 'failed' && making.job.message === undefined) making.job.message = started.output === '' ? (end.error ?? 'The command ended before the app was made.') : started.output
+    })
+  }
+
+  /** The job's last step: the app is made, so it is started (a Desktop app opens its window). */
+  #finish(appId: string, job: Job): void {
+    job.status = 'done'
+    delete job.message
+    try { this.start(appId) } catch (cause) { this.#failures.set(appId, cause instanceof Error ? cause.message : String(cause)) }
+  }
+
+  /** `npm install` in the new app's folder, as the job's second step; the job is still running while it does, and says so. */
+  #install(appId: string, folder: string, job: Job): void {
+    job.message = 'Installing its dependencies (about a minute).'
+    const run = this.#ports.runner({ program: 'npm', args: ['install'], cwd: folder, env: this.#environment() })
+    job.run = run
+    let output = ''
+    run.onOutput((text) => { output = tail(`${output}${text}`) })
+    run.onEnd((end) => {
+      if (job.run !== run) return
+      if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.' } else if (end.code === 0) this.#finish(appId, job)
+      else { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'npm install ended before the app could run.') : output }
     })
   }
 

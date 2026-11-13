@@ -3,9 +3,9 @@
  * lists and sends what a person asks for; the rules (what an app is, what a name may be, how an app starts) are the Host's.
  */
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { MAKEABLE_SURFACES, SURFACES, type AppView, type StateResponse, type Surface } from '../contract.ts'
+import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppRequest, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
-import { iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
+import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import type { LauncherVisibility } from './store.ts'
 
 export interface LauncherScreenProps {
@@ -89,7 +89,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
         {view === 'updates' && <Empty title="Updates" text="Updates are not checked from this screen yet. In a terminal, `acryl update` in an app's folder updates it after a check, and a failed check keeps the old version." />}
-        {view === 'store' && <Empty title="Blends store" text="Every Blend is listed at acrylblends.github.io/blends. To make an app from one, use + New app here, or `acryl new <name> --from <id>` in a terminal." />}
+        {view === 'store' && <StoreView api={api} state={state} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
         {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Deploying an app to WebBoxes.ai from its card is coming (`acryl deploy`). Nothing of yours is there yet." />}
         {view === 'health' && <HealthView api={api} />}
         {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} />}
@@ -99,7 +99,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
 }
 
 function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNode {
-  const head = job.status === 'running' ? `Making ${job.name} (this installs it, about a minute)` : job.status === 'done' ? `${job.name} is made and started` : `${job.name} could not be made`
+  const head = job.status === 'running' ? `Making ${job.name} (this installs it, about a minute)` : job.status === 'done' ? `${job.name} is made` : `${job.name} could not be made`
   return <div className="acrylHomeJob" role="status"><b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{job.message === undefined ? null : `\n${job.message}`}</div>
 }
 
@@ -129,7 +129,7 @@ interface AppsViewProps {
   readonly onPanel: (value: Panel) => void
   readonly onSelect: (id: string) => void
   readonly onAdd: (path: string) => Promise<boolean>
-  readonly onCreate: (request: { where: string, name: string, starter: string, surface: Surface }) => Promise<boolean>
+  readonly onCreate: (request: NewAppRequest) => Promise<boolean>
   readonly onStart: (id: string) => Promise<boolean>
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
@@ -162,9 +162,9 @@ function AppsView(props: AppsViewProps): ReactNode {
       </div>
       <div className="acrylHomeTiles">
         <div className="acrylHomeTile"><b>{props.tiles.apps}</b><span>apps on this machine</span></div>
-        <div className="acrylHomeTile"><b style={{ color: 'var(--h-ok)' }}>{props.tiles.running}</b><span>running now</span></div>
-        <div className="acrylHomeTile"><b style={{ color: 'var(--h-warn)' }}>{props.tiles.updates}</b><span>updates waiting</span></div>
-        <div className="acrylHomeTile"><b style={{ color: 'var(--h-cloud)' }}>{props.tiles.cloud}</b><span>on WebBoxes.ai</span></div>
+        <div className="acrylHomeTile" data-tone="ok"><b>{props.tiles.running}</b><span>running now</span></div>
+        <div className="acrylHomeTile" data-tone="warn"><b>{props.tiles.updates}</b><span>updates waiting</span></div>
+        <div className="acrylHomeTile" data-tone="cloud"><b>{props.tiles.cloud}</b><span>on WebBoxes.ai</span></div>
       </div>
       <div className="acrylHomeGroup">Recent</div>
       <div className="acrylHomeApps">
@@ -226,26 +226,26 @@ function Detail({ app, onStart, onStop, onRemove, openExternal }: { app: AppView
   )
 }
 
-function NewAppForm({ state, onCreate, onCancel }: { state: StateResponse, onCreate: (request: { where: string, name: string, starter: string, surface: Surface }) => Promise<boolean>, onCancel: () => void }): ReactNode {
+function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse, blend?: BlendView, onCreate: (request: NewAppRequest) => Promise<boolean>, onCancel: () => void }): ReactNode {
   const [where, setWhere] = useState(state.appsFolder)
-  const [name, setName] = useState('')
+  const [name, setName] = useState(blend === undefined ? '' : blendAppName(blend.id))
   const [starter, setStarter] = useState(state.starters[0]?.value ?? 'blank')
   const [surface, setSurface] = useState<Surface>('web')
   const [busy, setBusy] = useState(false)
-  const line = `cd ${where} && acryl new ${name === '' ? '<name>' : name} ${starter}`
+  const line = `cd ${where} && acryl new ${name === '' ? '<name>' : name} ${blend === undefined ? starter : `--from ${blend.id}`}`
   return (
-    <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); setBusy(true); void onCreate({ where, name, starter, surface }).finally(() => { setBusy(false) }) }}>
-      <div className="acrylHomePanelTop"><h3>New app</h3></div>
-      <label className="acrylHomeField"><span>Where does it go?</span><input className="acrylHomeInput" value={where} onChange={(event) => { setWhere(event.target.value) }} aria-label="Where does it go" /></label>
+    <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); setBusy(true); void onCreate({ where, name, surface, ...blend === undefined ? { starter } : { blend: blend.id } }).finally(() => { setBusy(false) }) }}>
+      <div className="acrylHomePanelTop"><h3>{blend === undefined ? 'New app' : `New app from ${blend.name}`}</h3></div>
+      <label className="acrylHomeField"><span>Where does it go?</span><input className="acrylHomeInput" data-mono value={where} onChange={(event) => { setWhere(event.target.value) }} aria-label="Where does it go" /></label>
       <label className="acrylHomeField"><span>Name</span><input className="acrylHomeInput" value={name} placeholder="my-app" autoFocus onChange={(event) => { setName(event.target.value) }} aria-label="Name" /></label>
-      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+      {blend !== undefined ? <p className="acrylHomeNote">{blend.description}</p> : <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="acrylHomeField"><span>Starter</span></legend>
         <div className="acrylHomeChoices">
           {state.starters.map(entry => (
             <label key={entry.value} className="acrylHomeChoice"><input type="radio" name="starter" checked={starter === entry.value} onChange={() => { setStarter(entry.value) }} /><span>{entry.label}<small>{entry.description}</small></span></label>
           ))}
         </div>
-      </fieldset>
+      </fieldset>}
       <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="acrylHomeField"><span>Surface</span></legend>
         <div className="acrylHomeChoices">
@@ -266,12 +266,55 @@ function NewAppForm({ state, onCreate, onCancel }: { state: StateResponse, onCre
   )
 }
 
+/** The public registry's Blends, read when the store opens; "Make an app" opens the New app form for the chosen one. */
+function StoreView({ api, state, onCreate }: { api: LauncherApi, state: StateResponse | undefined, onCreate: (request: NewAppRequest) => Promise<boolean> }): ReactNode {
+  const [blends, setBlends] = useState<readonly BlendView[] | undefined>(undefined)
+  const [failed, setFailed] = useState<string | undefined>(undefined)
+  const [search, setSearch] = useState('')
+  const [chosen, setChosen] = useState<BlendView | undefined>(undefined)
+  const [attempt, setAttempt] = useState(0)
+  useEffect(() => {
+    let live = true
+    setFailed(undefined)
+    api.blends().then((list) => { if (live) setBlends(list) }, (cause: unknown) => { if (live) setFailed(message(cause)) })
+    return () => { live = false }
+  }, [api, attempt])
+  const needle = search.trim().toLowerCase()
+  const shown = (blends ?? []).filter(blend => needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle))
+  return (
+    <section className="acrylHomeForm">
+      <h3 style={{ margin: 0 }}>Blends store</h3>
+      <p className="acrylHomeNote">Ready-made apps from the public registry (acrylblends.github.io/blends). Making one is the same as <span className="acrylHomeMeta">acryl new &lt;name&gt; --from &lt;id&gt;</span>.</p>
+      {chosen !== undefined && state !== undefined ? <NewAppForm key={chosen.id} state={state} blend={chosen} onCreate={onCreate} onCancel={() => { setChosen(undefined) }} /> : null}
+      <input className="acrylHomeSearch" type="search" value={search} placeholder="Search Blends..." aria-label="Search Blends" onChange={(event) => { setSearch(event.target.value) }} />
+      {failed !== undefined ? <p className="acrylHomeNote" data-error role="alert">{failed} <button type="button" className="acrylHomeBtn" data-small onClick={() => { setAttempt(attempt + 1) }}>Try again</button></p> : null}
+      {blends === undefined && failed === undefined ? <p className="acrylHomeNote">Reading the registry...</p> : null}
+      {blends !== undefined && shown.length === 0 ? <p className="acrylHomeNote">No Blend matches.</p> : null}
+      <div className="acrylHomeCards">
+        {shown.map(blend => (
+          <div className="acrylHomeApp" key={blend.id}>
+            <div className="acrylHomeHead">
+              <div className="acrylHomeIcon" style={{ background: iconColor(blend.id) }}>{initial(blend.name)}</div>
+              <div style={{ minWidth: 0 }}><div className="acrylHomeName">{blend.name}</div><div className="acrylHomeMeta">{blend.id}</div></div>
+            </div>
+            <p className="acrylHomeDesc">{blend.description}</p>
+            <div className="acrylHomeCardFoot">
+              <div className="acrylHomeRow">{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
+              <button type="button" className="acrylHomeBtn" data-small data-primary disabled={state === undefined} onClick={() => { setChosen(blend) }}>Make an app</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function AddFolderForm({ onAdd, onCancel }: { onAdd: (path: string) => Promise<boolean>, onCancel: () => void }): ReactNode {
   const [path, setPath] = useState('')
   return (
     <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); void onAdd(path) }}>
       <div className="acrylHomePanelTop"><h3>Add a folder</h3></div>
-      <label className="acrylHomeField"><span>The folder of an ACRYL app (it has a blend.yaml)</span><input className="acrylHomeInput" value={path} autoFocus placeholder="/Users/you/work/crm" onChange={(event) => { setPath(event.target.value) }} aria-label="Folder" /></label>
+      <label className="acrylHomeField"><span>The folder of an ACRYL app (it has a blend.yaml)</span><input className="acrylHomeInput" data-mono value={path} autoFocus placeholder="/Users/you/work/crm" onChange={(event) => { setPath(event.target.value) }} aria-label="Folder" /></label>
       <p className="acrylHomeNote">Same as typing <span className="acrylHomeMeta">acryl apps add {path === '' ? '<folder>' : path}</span>. Nothing scans the disk by itself.</p>
       <div className="acrylHomeActs"><button type="submit" className="acrylHomeBtn" data-primary disabled={path.trim() === ''}>Add it</button><button type="button" className="acrylHomeBtn" onClick={onCancel}>Cancel</button></div>
     </form>

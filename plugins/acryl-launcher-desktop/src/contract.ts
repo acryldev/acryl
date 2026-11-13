@@ -9,6 +9,7 @@ export const LAUNCHER_REMOVE_PATH = `${LAUNCHER_API_PREFIX}/remove`
 export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
+export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
 
 /** The three kinds of app (spec 050 D10): a web app, a desktop window, and the lightest, a terminal app, which is listed but not yet made. */
 export type Surface = 'web' | 'desktop' | 'tui'
@@ -66,9 +67,28 @@ export interface HealthView {
   readonly home: string
 }
 
+/** A Blend in the public registry (acrylblends.github.io/registry/index.json) that `acryl new --from <id>` can make an app from. */
+export interface BlendView {
+  /** `acrylblends.notes`: what `--from` takes. */
+  readonly id: string
+  readonly name: string
+  readonly version: string
+  readonly category: string
+  readonly description: string
+}
+
+export interface BlendsResponse {
+  readonly blends: readonly BlendView[]
+}
+
+/** A Blend id as `acryl new --from` takes it: it starts with a letter or digit, so it can never read as an option. */
+export const BLEND_ID = /^[a-z0-9][a-z0-9._-]{0,127}$/u
+
+/** The app to make: from a starter (`acryl new <name> <starter>`) or from a registry Blend (`acryl new <name> --from <id>`), never both. */
 export interface NewAppRequest {
   readonly where: string
   readonly name: string
-  readonly starter: string
+  readonly starter?: string
+  readonly blend?: string
   readonly surface: Surface
 }

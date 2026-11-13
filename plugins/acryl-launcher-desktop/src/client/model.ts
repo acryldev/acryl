@@ -43,4 +43,7 @@ export function iconColor(id: string): string {
 export const initial = (name: string): string => (name.trim()[0] ?? '?').toUpperCase()
 
 /** The line a person types to start the app in a terminal: shown on the card's panel as "Runs". */
-export const runsLine = (app: AppView): string => `cd ${app.path} && npm run dev`
+export const runsLine = (app: AppView): string => `cd ${app.path} && npm run ${app.surface === 'desktop' ? 'desktop' : 'dev'}`
+
+/** A name for an app made from a registry id: its last part (`acrylblends.notes-desktop` gives `notes-desktop`), the same rule as the terminal's. */
+export const blendAppName = (id: string): string => id.split('.').at(-1)?.replace(/[^a-z0-9-]/gu, '-').replace(/^[^a-z]+/u, '') || 'my-app'

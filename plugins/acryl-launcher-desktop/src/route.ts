@@ -3,9 +3,10 @@ import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
   SURFACES, type NewAppRequest, type Surface,
 } from './contract.ts'
+import { RegistryUnavailable } from './registry.ts'
 import { LauncherRefusal, type LauncherService } from './service.ts'
 
 const MAX_FIELD = 1024
@@ -23,12 +24,14 @@ function parseOne(field: string) {
 
 function parseNew(value: unknown): NewAppRequest | undefined {
   const body = record(value)
-  if (body === undefined || !onlyKeys(body, ['where', 'name', 'starter', 'surface'])) return undefined
+  if (body === undefined || !onlyKeys(body, ['where', 'name', 'starter', 'blend', 'surface'])) return undefined
   const where = text(body.where)
   const name = text(body.name)
   const starter = text(body.starter)
+  const blend = text(body.blend)
   const surface = SURFACES.find((known): known is Surface => known === body.surface)
-  return where === undefined || name === undefined || starter === undefined || surface === undefined ? undefined : { where, name, starter, surface }
+  if (where === undefined || name === undefined || surface === undefined || (starter === undefined) === (blend === undefined)) return undefined
+  return { where, name, surface, ...starter === undefined ? {} : { starter }, ...blend === undefined ? {} : { blend } }
 }
 
 export function launcherRoutes(service: LauncherService, report: ReportError = () => {}): Acryl {
@@ -39,6 +42,16 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
       return c.json({ ...await service.health(), keyMask: service.maskedModelKey() ?? null })
     } catch (cause) {
       report('check this machine', cause)
+      return c.json(error('the launcher is unavailable'), 500)
+    }
+  })
+
+  app.get(LAUNCHER_BLENDS_PATH, ownPage, async (c) => {
+    try {
+      return c.json({ blends: await service.blends() })
+    } catch (cause) {
+      if (cause instanceof RegistryUnavailable) return c.json(error(cause.message), 502)
+      report('read the registry', cause)
       return c.json(error('the launcher is unavailable'), 500)
     }
   })

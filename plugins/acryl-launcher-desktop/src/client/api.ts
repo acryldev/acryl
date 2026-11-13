@@ -1,7 +1,7 @@
 /** Same-origin browser client for the launcher routes (`../contract.ts`). */
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
-  type HealthView, type NewAppRequest, type StateResponse,
+  LAUNCHER_ADD_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type StateResponse,
 } from '../contract.ts'
 
 export interface HealthResponse extends HealthView {
@@ -12,6 +12,8 @@ export interface HealthResponse extends HealthView {
 export interface LauncherApi {
   state(): Promise<StateResponse>
   health(): Promise<HealthResponse>
+  /** The registry's Blends; rejects with the reason in words when it cannot be read. */
+  blends(): Promise<readonly BlendView[]>
   add(path: string): Promise<StateResponse>
   remove(id: string): Promise<StateResponse>
   create(request: NewAppRequest): Promise<StateResponse>
@@ -43,6 +45,7 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
   return {
     state: () => get<StateResponse>(LAUNCHER_STATE_PATH),
     health: () => get<HealthResponse>(LAUNCHER_HEALTH_PATH),
+    blends: async () => (await get<BlendsResponse>(LAUNCHER_BLENDS_PATH)).blends,
     add: path => post(LAUNCHER_ADD_PATH, { path }),
     remove: id => post(LAUNCHER_REMOVE_PATH, { id }),
     create: request => post(LAUNCHER_NEW_PATH, request),

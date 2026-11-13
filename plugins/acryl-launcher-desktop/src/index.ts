@@ -9,6 +9,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acrylblends/cordis/router'
 import type {} from 'acrylblends/cordis/router-http'
 import { LAUNCHER_API_PREFIX } from './contract.ts'
+import { readBlends } from './registry.ts'
 import { launcherRoutes } from './route.ts'
 import { spawnRunner } from './runner.ts'
 import { LauncherService } from './service.ts'
@@ -39,6 +40,7 @@ export function apply(ctx: Context): void {
     environment: () => process.env,
     exists: path => existsSync(path),
     makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
+    blends: () => readBlends(),
   })
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`acryl-launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)

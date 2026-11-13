@@ -77,4 +77,11 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       Deploy to WebBoxes.ai, Share, Open folder, Keep and Discard. A Desktop app starts with `npm run desktop` (own window) from the screen and from the
       terminal's "Open an app" (2026-11-13); "+ New app" in the terminal stays Enter-only and makes a Web app (the surface is chosen on the screen, so the
       terminal journey keeps its three answers).
+      2026-11-13 (owner: "desktop should also be working", "pulling from registry acrylblends", the first-run popup, the look): the Blends store view lists the
+      public registry (acrylblends.github.io/registry/index.json, 49 Blends, searchable) and "Make an app" runs `acryl new <name> --from <id>` in the chosen
+      folder; an app that arrives without its dependencies (a registry Blend does) gets `npm install` first, from the screen's making step and from Start,
+      shown as "making" / "starting". Seen live in an isolated home: a Desktop app from the registry (CSV Explorer) installed, started with `npm run
+      desktop` and opened its own Electron window, the card showing running. The first-run popup now renders Settings > Models itself (DeepSeek key, third-party
+      provider, custom API, account sign-in) with "More providers in Settings" and Later. The screen uses the ACRYL IDE's fonts, pill buttons and tokens, with
+      colour for contrast, and the store is a card grid.
 
