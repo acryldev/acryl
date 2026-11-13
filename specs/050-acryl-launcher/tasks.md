@@ -90,4 +90,25 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       the door's `publish-confirmed` with the plan they read, as the terminal's prompt does). Seen live on this Mac: a plugin pulled from inboxxobni's
       registry repository, a plugin pushed to inboxxobni/acrylblends-demo-hello v0.1.0 (public repository and release confirmed on GitHub); the app's refusal
       (a test plugin in an old tool shape) is shown in its own words.
-
+- [ ] T013 [desktop, both faces later] An assistant panel in the launcher (owner 2026-11-13, spec.md D11): "just right panel with agents where we can ask
+      chat or agent claude/codex to use acryl-control and actually click around and control the app and make instantiation, or ask questions how to use
+      ACRYL launcher, where to find what - that'd be super useful. Just take our already existing right panel from ACRYLBLENDS or ACRYL IDE."
+      Reuse, do not rebuild: the panel is the Blends frame's right panel (`ide/acryl-blends-frame`, `BlendsFrame.tsx`, the `acrylBlendsRight` seat, in the
+      acrylblends repository) with its `agent-panel` plugin, or ACRYL ADE's right sidebar (`plugins/acryl-workspace`) with the chat of the DSH client
+      plugins; the agents come from `runtime/acryl-control/src/agent/providers` (`claude`, `codex`, `acp`, `dsh-native`); what lets an agent operate a
+      page is the app's door (`plugins/acryl-door` in an app: `look`, `act click|type|press`, `tool call`), mounted for the launcher's own page.
+      Needs: (1) the panel mounted in the launcher screen's `shell.overlay` seat (or a seat beside it) on Web and Desktop, collapsible, closed by
+      default; (2) an assistant that knows the launcher: a prompt section naming the screens (My apps, Running, Blends store, Health, Settings), the
+      commands and where each thing is, in the way `acryl-system-prompt` gives the IDE agent its self-knowledge; (3) the launcher's page operable by the
+      door (a person can watch the agent click); (4) outward actions (publish a plugin, deploy) still wait for the person's own click, never the agent's;
+      (5) a model must be connected first (the first-run popup, `acryl model`): without one the panel says so and opens Settings > Models.
+      Done when: on this Mac, with a DeepSeek key, a person types "make me a blank web app called demo" in the panel and the launcher makes it, lists it
+      and starts it by itself, and "where do I pull a plugin?" is answered with the screen it is on; the same in the Desktop window.
+- [ ] T014 [desktop] The launcher's two skins (owner 2026-11-13, spec.md D12): "use either like in our current website acryl.dev fonts, colors
+      gradients" and "same style as we have in ACRYL IDE". Skin one is ACRYL ADE's (built); skin two is acryl.dev's: Space Grotesk and JetBrains Mono
+      (the same files the site ships, OFL, embedded so the screen works offline), the site's near-black `#171717` page, `#202020` cards, `#f7f7f5` text,
+      square corners, 1px `rgba(255,255,255,.16)` borders, JetBrains Mono uppercase eyebrows, inverted buttons and the 64px grid pattern as the only
+      gradient. A Settings row picks the skin and the screen remembers it. The site is being restructured by another session (fork6), so the tokens are
+      copied once and named in `styles.ts`, not read live.
+      Done when: Settings > Look switches the whole screen between the two without a reload, both themes (light and dark) read well, and the screen
+      side by side with acryl.dev shows the same fonts and colours.

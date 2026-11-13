@@ -124,6 +124,15 @@ file builds and runs unsigned on each OS.
   it in "+ New app". **CLI (TUI) is shown greyed out for now** (the owner wants the third kind of app to exist; it is not built): the
   card, the choice and the filter are there, disabled, with "coming" as the reason. Web and Desktop are the two that work.
 
+- D11 (owner 2026-11-13). The launcher gets an **assistant in a right panel**: the panel the ACRYL Blends frame and ACRYL ADE already have (agents,
+  chat, the agent of the person's choice: Claude, Codex or the DeepSeek chat), not a new one. The assistant does two jobs: it answers how to use the
+  launcher and where to find what, and it **operates the launcher through `acryl-control`**: clicks around the screen, makes an app, pulls a Blend or
+  a plugin, starts and stops apps, the way the app's door (`look`, `act`) lets an agent operate a running app. Anything outward (publish, deploy)
+  stays the person's click, as the door already requires. Ticket T013.
+- D12 (owner 2026-11-13). The launcher's look follows the owner's two references: ACRYL ADE's fonts and shapes (built, 2026-11-13) and acryl.dev's fonts,
+  colours and gradients (Space Grotesk and JetBrains Mono, near-black page, square corners, 1px borders, the 64px grid pattern). The screen carries
+  both as skins and the owner picks one in Settings; the choice is remembered. Ticket T014.
+
 ## Packaging (decided while building, 2026-11-12)
 
 - The terminal launcher is bundled at pack time into the `acryl` npm package as one file, `launcher.js` (about 250 KB: the journeys,
