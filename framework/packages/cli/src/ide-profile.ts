@@ -732,7 +732,17 @@ function hostScriptOf(profile: string, frameModule: string): string {
     '  }',
     '  await ctx.fiber.dispose()',
     '} else {',
-    "  for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { void ctx.fiber.dispose() })",
+    // A terminal's Ctrl-C reaches the host and npm, and npm passes it on: two signals. With `once`, the second found no listener and Node's
+    // default ended the host before dispose() was done, leaving .acryl/door.json and the plugins' cleanup behind. One signal, ever, and a bounded
+    // stop, as the window has (desktop/launch.ts, DESKTOP_SHUTDOWN_TIMEOUT_MS): a full dispose took about 14 s on Small CRM.
+    '  let stopping = false',
+    "  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {",
+    '    if (stopping) return',
+    '    stopping = true',
+    "    console.log('acrylblends host: stopping')",
+    "    setTimeout(() => { console.warn('acrylblends host: not stopped after 5 s, leaving now'); process.exit(1) }, 5_000).unref()",
+    '    void ctx.fiber.dispose()',
+    '  })',
     '}',
     '',
   ].join('\n')

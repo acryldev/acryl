@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { spawn } from 'node:child_process'
+import { once } from 'node:events'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'vitest'
@@ -201,6 +203,39 @@ test("the launcher listens on the app's own stable port, so a restart keeps the 
   assert.match(plan.hostScript, /const port = String\(chosen\.port\.start\)/u)
   assert.doesNotMatch(plan.hostScript, /process\.env\.ACRYLBLENDS_HOME/u)
   assert.doesNotMatch(plan.hostScript, /ACRYLBLENDS_PORT \?\? '0'/u)
+})
+
+test('a Ctrl-C that reaches the host twice (the terminal, then npm) still lets the host finish stopping', {
+  skip: process.platform === 'win32',
+}, async () => {
+  const { hostScript } = ideProfilePlan(input)
+  // The stop block is the last branch of the launcher: what runs when no self-check was asked for.
+  const start = hostScript.lastIndexOf('} else {\n') + '} else {\n'.length
+  const dir = folder()
+  const disposed = join(dir, 'disposed')
+  const host = join(dir, 'host.mjs')
+  // The launcher's own stop block, on a host whose dispose() takes a while, as the real one does.
+  writeFileSync(
+    host,
+    [
+      "import { writeFileSync } from 'node:fs'",
+      'const running = setInterval(() => {}, 1000)',
+      `const ctx = { fiber: { dispose: () => new Promise((done) => setTimeout(() => { writeFileSync(${JSON.stringify(disposed)}, ''); clearInterval(running); done() }, 300)) } }`,
+      hostScript.slice(start, hostScript.indexOf('\n}', start)),
+      "console.log('ready')",
+    ].join('\n'),
+  )
+  const child = spawn(process.execPath, [host], { stdio: ['ignore', 'pipe', 'inherit'] })
+  await once(child.stdout, 'data')
+  child.kill('SIGINT')
+  // npm passes its own copy on a moment later, after the host's listener has run; two at once would arrive as one.
+  await new Promise((done) => setTimeout(done, 50))
+  child.kill('SIGINT')
+  const [code, signal] = await once(child, 'exit')
+  assert.deepEqual(
+    { code, signal, disposed: existsSync(disposed) },
+    { code: 0, signal: null, disposed: true },
+  )
 })
 
 test("the launcher installs the app's generation hook before DSH or any row of the app loads, so the app's code can be loaded again", () => {
