@@ -12,7 +12,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const pkg = join(root, 'plugins/acryl-launcher-desktop')
@@ -92,6 +92,17 @@ for (let waited = 0; waited < 180_000 && url === undefined; waited += 1000) {
 if (url === undefined) { console.error(`launcher blend: the app did not start, see ${log}`); process.exit(1) }
 console.log(`launcher blend: ${url}`)
 
+// The window is the ACRYL app's own Electron, named ACRYL on a Mac the way `pnpm desktop` names it (a renamed, re-signed copy of Electron.app).
 const electron = createRequire(join(root, 'apps/acryl-desktop/package.json'))('electron')
-const window = spawnSync(electron, [`--user-data-dir=${join(app, '.acryl-window')}`, join(pkg, 'blend')], { stdio: 'inherit', env: { ...process.env, LAUNCHER_URL: url } })
+let executable = electron
+let cleanup = async () => {}
+if (process.platform === 'darwin') {
+  const { prepareDarwinDevelopmentBundle } = await import(pathToFileURL(join(root, 'apps/acryl-desktop/scripts/launch-dev.mjs')).href)
+  const bundle = await prepareDarwinDevelopmentBundle(electron)
+  executable = bundle.executable
+  cleanup = bundle.cleanup
+}
+const icon = join(root, 'apps/acryl-desktop/build/app-icon.png')
+const window = spawnSync(executable, [`--user-data-dir=${join(app, '.acryl-window')}`, join(pkg, 'blend')], { stdio: 'inherit', env: { ...process.env, LAUNCHER_URL: url, LAUNCHER_ICON: icon } })
+await cleanup()
 process.exit(window.status ?? 0)

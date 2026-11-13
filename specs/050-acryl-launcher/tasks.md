@@ -144,5 +144,11 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       the folder name must equal the exported `name`), and the Blends frame shows the launcher as its canvas with the Blends right panel (Chat, Claude Code, Codex, Pi,
       Terminal, Files, Git, Browser in its "+" menu). Left: ship it as a Blend `acryl.launcher` instead of a hand-made folder, hide the frame's left panel, make
       `acryl`/Desktop open it, then remove the docked Assistant.
+      State 2026-11-13 evening: runnable from main. `corepack pnpm launcher gui` (alias `blend`, scripts/launcher-blend.mjs) makes the Blends app once in
+      `~/.acryl/launcher` with `create-acrylblends`, copies the launcher into it (page bundle, Host half from `plugins/acryl-launcher-desktop/blend/host` plus the
+      shared `src`, the page route, the `blend.yaml` row) and opens it in a window named ACRYL (the Desktop dev bundle rename) with the frame's left panel hidden
+      and its right panel open. Light/dark follows the frame; the acryl.dev look is the default. The docked Assistant (T013's AssistantPane and the launcher's
+      Assistant button) is removed. Seen: Claude Code starts from the right panel's "+" in the launcher app's folder. Left: the installed `acryl --gui` and
+      Desktop's first screen still open the old overlay; ship the app as the Blend `acryl.launcher` instead of the copy step.
       Done when: on this Mac the first screen of Desktop is the launcher in the frame, the right panel's Claude, Codex and Pi start in the apps folder and can use the
       launcher's tools, and Web shows the same.

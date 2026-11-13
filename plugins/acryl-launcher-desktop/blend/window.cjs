@@ -1,3 +1,7 @@
+/**
+ * The window `pnpm launcher blend` opens on the launcher's Blends app (spec 050 T016): the frame's page with its left panel (branches, versions) hidden and its
+ * right panel (chat, Claude Code, Codex, Pi) open. The page's title never replaces ACRYL.
+ */
 const { app, BrowserWindow, shell } = require('electron')
 const url = process.env.LAUNCHER_URL
 app.setName('ACRYL')
@@ -12,7 +16,8 @@ const TIDY = `(() => {
   if (right && !window.__rightTried && !visible(/History/, 'button')) { window.__rightTried = true; right.click() }
 })()`
 app.whenReady().then(() => {
-  const w = new BrowserWindow({ width: 1500, height: 940, title: 'ACRYL', backgroundColor: '#141416' })
+  if (process.env.LAUNCHER_ICON && app.dock) app.dock.setIcon(process.env.LAUNCHER_ICON)
+  const w = new BrowserWindow({ width: 1500, height: 940, title: 'ACRYL', backgroundColor: '#141416', icon: process.env.LAUNCHER_ICON })
   w.webContents.setWindowOpenHandler(({ url: u }) => { shell.openExternal(u); return { action: 'deny' } })
   w.on('page-title-updated', e => e.preventDefault())
   w.webContents.on('did-finish-load', () => { w.webContents.insertCSS(CSS).catch(() => {}) })

@@ -21,7 +21,7 @@ if (!FACES.includes(face)) {
   process.exit(2)
 }
 
-if (face === 'blend') process.exit(spawnSync('node', ['scripts/launcher-blend.mjs'], { cwd: root, stdio: 'inherit' }).status ?? 0)
+if (face === 'blend' || face === 'gui') process.exit(spawnSync('node', ['scripts/launcher-blend.mjs'], { cwd: root, stdio: 'inherit' }).status ?? 0)
 
 const run = (command, args, options = {}) => spawnSync(command, args, { cwd: root, stdio: 'inherit', ...options })
 const built = run('node', ['scripts/with-build-lock.mjs', 'corepack', 'pnpm', '--filter', 'acryl-launcher-desktop', '--filter', 'acryl-sign-in', 'run', 'build'], { stdio: ['ignore', 'ignore', 'inherit'] })

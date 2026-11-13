@@ -208,25 +208,7 @@ describe('the plugins of a running app', () => {
   })
 })
 
-describe('the assistant', () => {
-  it('asks the assistant column to open (with the apps folder) and to close, and the screen stops where the column starts', async () => {
-    const asked: Array<{ open: boolean, cwd?: string }> = []
-    const onAsk = (event: Event): void => { asked.push((event as CustomEvent<{ open: boolean, cwd?: string }>).detail) }
-    window.addEventListener('acryl:assistant', onAsk)
-    open(fake(state([])))
-    fireEvent.click(await screen.findByRole('button', { name: /^Assistant/u }))
-    await waitFor(() => { expect(asked).toEqual([{ open: true, cwd: '/h/ACRYL' }]) })
-    const pane = document.createElement('aside')
-    pane.setAttribute('data-acryl-assistant', 'open')
-    pane.getBoundingClientRect = () => ({ left: window.innerWidth - 440, width: 440, right: window.innerWidth, top: 0, bottom: 0, height: 0, x: 0, y: 0, toJSON: () => ({}) })
-    document.body.appendChild(pane)
-    await waitFor(() => { expect((screen.getByRole('dialog', { name: 'ACRYL' }) as HTMLElement).style.right).toBe('440px') }, { timeout: 2000 })
-    fireEvent.click(screen.getByRole('button', { name: /^Assistant/u }))
-    expect(asked.at(-1)).toEqual({ open: false })
-    pane.remove()
-    window.removeEventListener('acryl:assistant', onAsk)
-  })
-
+describe('the sidebar', () => {
   it('collapses the sidebar to a rail that stays on screen, and remembers it', async () => {
     localStorage.clear()
     open(fake(state([])))

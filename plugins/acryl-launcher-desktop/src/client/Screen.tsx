@@ -8,7 +8,6 @@ import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
 import { readRail, saveRail } from './skin.ts'
-import { askAssistant, assistantWidth } from './assistant.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
 import type { LauncherVisibility } from './store.ts'
 
@@ -37,8 +36,6 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   const [surface, setSurface] = useState<SurfaceFilter>('all')
   const [skin, setSkin] = useState<Skin>(() => readSkin())
   const [dark, setDark] = useState(true)
-  const [panelWidth, setPanelWidth] = useState(0)
-  const [assistantOpen, setAssistantOpen] = useState(false)
   const [rail, setRail] = useState<boolean>(() => readRail())
 
   // The list is read again every two seconds while the screen is open: an app starting or ending shows without a click.
@@ -61,19 +58,6 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
     return () => { style.remove() }
   }, [skin])
 
-  // The assistant column (acryl-agent-control's AssistantPane) stays visible beside the screen: the screen stops where it starts.
-  useEffect(() => {
-    if (!open) return undefined
-    const measure = (): void => {
-      const assistant = assistantWidth()
-      setAssistantOpen(assistant > 0)
-      setPanelWidth(assistant)
-    }
-    measure()
-    const timer = setInterval(measure, 400)
-    window.addEventListener('resize', measure)
-    return () => { clearInterval(timer); window.removeEventListener('resize', measure) }
-  }, [open])
 
   // Light or dark follows the page's own theme (the token the rest of the screen already uses), and again when the screen is opened.
   useEffect(() => {
@@ -99,7 +83,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
   )
 
   return (
-    <div className="acrylHome" role="dialog" aria-label="ACRYL" data-skin={skin} data-tone={dark ? 'dark' : 'light'} data-nav={rail ? 'rail' : 'full'} style={panelWidth > 0 ? { right: panelWidth } : undefined}>
+    <div className="acrylHome" role="dialog" aria-label="ACRYL" data-skin={skin} data-tone={dark ? 'dark' : 'light'} data-nav={rail ? 'rail' : 'full'}>
       <nav className="acrylHomeNav" aria-label="ACRYL sections">
         <div className="acrylHomeBrand"><span className="acrylHomeLabel">ACRYL</span><button type="button" className="acrylHomeRailToggle" aria-label={rail ? 'Expand the sidebar' : 'Collapse the sidebar'} title={rail ? 'Expand the sidebar' : 'Collapse the sidebar'} onClick={() => { setRail(!rail); saveRail(!rail) }}>{rail ? '»' : '«'}</button></div>
         {nav('apps', 'My apps', tiles.apps)}
@@ -112,8 +96,6 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
         <div className="acrylHomeSep" />
         {nav('health', 'Health')}
         {nav('settings', 'Settings')}
-        <div className="acrylHomeSep" />
-        <button type="button" className="acrylHomeNavItem" aria-pressed={assistantOpen} title="Ask Claude to use the launcher for you: it can make apps, pull Blends and plugins, start and stop them, and answer how to use this screen" onClick={() => { if (assistantOpen) { askAssistant({ open: false }); return } api.assistantFolder().then((cwd) => { askAssistant({ open: true, cwd }) }, (cause: unknown) => { setProblem(message(cause)); askAssistant({ open: true }) }) }}><span className="acrylHomeGlyph" aria-hidden="true">A</span><span className="acrylHomeLabel">Assistant</span>{assistantOpen ? <span className="acrylHomeCount">open</span> : null}</button>
       </nav>
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}
