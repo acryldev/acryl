@@ -206,8 +206,9 @@ if (forwarded?.error) {
     process.exitCode = 1
   })
 } else {
-  // `acryl code` is ACRYL Code, the IDE (spec 050 Q1); with no terminal, or no launcher, a bare `acryl` keeps opening it as before.
-  const ideArgs = args[0] === 'code' ? args.slice(1) : args
+  // `acryl ade` is ACRYL ADE, the agentic development environment (spec 050 Q1); `acryl code` is its earlier name and still works. With no terminal, or no
+  // launcher, a bare `acryl` keeps opening it as before.
+  const ideArgs = args[0] === 'ade' || args[0] === 'code' ? args.slice(1) : args
   try { run(runtimeCommand(runtimeLauncher(), ideArgs)) } catch (cause) {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
     process.exitCode = 1

@@ -33,7 +33,7 @@ test('every journey ends in the command that is shown, with Enter-only defaults 
     add: [['shop'], 'acryl apps add shop'],
     model: [[], 'acryl model set deepseek'],
     check: [[], 'acryl blends preflight'],
-    code: [[], 'acryl code'],
+    ade: [[], 'acryl ade'],
   }
   assert.deepEqual(JOURNEYS.map(entry => entry.id).sort(), Object.keys(expected).sort(), 'a journey without a test, or a test without a journey')
   for (const [id, [answers, line]] of Object.entries(expected)) {

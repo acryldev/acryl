@@ -152,13 +152,13 @@ npx acrylblends open   <span class="dim"># the address again</span></pre>
   <div class="grid">
     <div class="card journey"><h3>Create an app</h3><p class="dim">Blank, a starter (notes, chat, todo, agent) or a Blend from the registry; opens in the frame.</p><span class="cmd">acryl new my-app notes</span></div>
     <div class="card journey"><h3>Open an app</h3><p class="dim">Your apps in <code>~/.acryl/apps</code>, in the browser or its own window.</p><span class="cmd">cd my-app && npm run dev</span></div>
-    <div class="card journey"><h3>Install a Blend</h3><p class="dim">Pick from the registry (CRM, notes, the ACRYL IDE as <code>acryl.code</code>).</p><span class="cmd">acryl install acryl.crm <span title="049 M13 T034 names it; not built yet">(new)</span></span></div>
+    <div class="card journey"><h3>Install a Blend</h3><p class="dim">Pick from the registry (CRM, notes, the ACRYL IDE as <code>acryl.ade</code>).</p><span class="cmd">acryl install acryl.crm <span title="049 M13 T034 names it; not built yet">(new)</span></span></div>
     <div class="card journey"><h3>Pull a plugin</h3><p class="dim">From a person's GitHub or the plugin registry, digest checked, into a chosen app.</p><span class="cmd">acryl plugin pull github:ana/clock</span></div>
     <div class="card journey"><h3>Share a plugin</h3><p class="dim">Publish one of your app's plugins so others can pull it.</p><span class="cmd">acryl plugin publish clock</span></div>
     <div class="card journey"><h3>Set up a model</h3><p class="dim">DeepSeek key, Claude or ChatGPT sign-in; kept in the app's own store.</p><span class="cmd">(Settings › Models)</span></div>
     <div class="card journey"><h3>Update</h3><p class="dim">ACRYL itself, or an app to the current release, with a preview first.</p><span class="cmd">acryl update</span></div>
     <div class="card journey"><h3>Check this machine</h3><p class="dim">Node, git, ports, disk; each problem with its fix.</p><span class="cmd">acryl blends preflight</span></div>
-    <div class="card journey"><h3>Open ACRYL Code</h3><p class="dim">The IDE, which is one Blend (049 D9).</p><span class="cmd">acryl code</span></div>
+    <div class="card journey"><h3>Open ACRYL ADE</h3><p class="dim">The IDE, which is one Blend (049 D9).</p><span class="cmd">acryl ade</span></div>
   </div>
 </section>
 
@@ -269,7 +269,7 @@ npx acrylblends open   <span class="dim"># the address again</span></pre>
   <div class="grid2">
     <form class="card q" data-lavish-question="q1-bare-acryl" onsubmit="event.preventDefault(); queueAnswer(this, 'Q1, what bare acryl opens');">
       <h3>Q1 · What does <code>acryl</code> with no arguments open in a terminal?</h3>
-      <label><input type="radio" name="answer" value="The launcher; acryl code opens the IDE's terminal client" checked><span>The launcher; <code>acryl code</code> opens the IDE <span class="rec">recommended</span><br><span class="dim">Matches D9: the IDE is one Blend. New people get the guide.</span></span></label>
+      <label><input type="radio" name="answer" value="The launcher; acryl ade opens the IDE's terminal client" checked><span>The launcher; <code>acryl ade</code> opens the IDE <span class="rec">recommended</span><br><span class="dim">Matches D9: the IDE is one Blend. New people get the guide.</span></span></label>
       <label><input type="radio" name="answer" value="The IDE as today; acryl start opens the launcher"><span>The IDE as today; <code>acryl start</code> opens the launcher<br><span class="dim">No change for current users, one more word to learn.</span></span></label>
       <textarea name="note" placeholder="Anything to add (optional)"></textarea>
       <button class="btn primary" type="submit">Queue this answer</button>
@@ -296,9 +296,9 @@ npx acrylblends open   <span class="dim"># the address again</span></pre>
 
 <script>
 const STEPS = [
-  { title: 'What would you like to do?', items: ['Create an app', 'Open an app', 'Install a Blend', 'Pull a plugin', 'Share a plugin', 'Set up a model', 'Update', 'Check this machine', 'Open ACRYL Code'], sel: 0,
+  { title: 'What would you like to do?', items: ['Create an app', 'Open an app', 'Install a Blend', 'Pull a plugin', 'Share a plugin', 'Set up a model', 'Update', 'Check this machine', 'Open ACRYL ADE'], sel: 0,
     hint: '↑↓ choose · Enter next · q quit' },
-  { title: 'Create an app · which starter?', opts: [['Blank', 'an empty app in the frame, with chat and agents'], ['Notes', 'multi-user notes on the database'], ['Chat', 'a chat app that streams answers'], ['To-do', 'a to-do list'], ['From the registry…', 'CRM, the ACRYL IDE (acryl.code) and more']], sel: 0,
+  { title: 'Create an app · which starter?', opts: [['Blank', 'an empty app in the frame, with chat and agents'], ['Notes', 'multi-user notes on the database'], ['Chat', 'a chat app that streams answers'], ['To-do', 'a to-do list'], ['From the registry…', 'CRM, the ACRYL IDE (acryl.ade) and more']], sel: 0,
     hint: '↑↓ choose · Enter next · Esc back' },
   { title: 'Create an app · name and place', fields: [['Name', 'my-app'], ['Folder', '~/my-app'], ['Open it in', 'the browser   (or: its own window)']],
     hint: 'Tab next field · Enter create · Esc back' },

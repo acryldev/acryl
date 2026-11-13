@@ -148,7 +148,7 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
       <p class="dim" style="margin-top:6px">Opened from the Dock or the Start menu, like any app. Signed, one file to install.</p>
       <div class="tree">/Applications/ACRYL.app
   ACRYL itself (first screen, D3)
-  the IDE runtime (acryl code)
+  the IDE runtime (acryl ade)
 
 acryl            the command, same
                  screens in the terminal</div>
@@ -219,7 +219,7 @@ acryl            the command, same
           <h3>Running now</h3>
           <div class="list">
             <div class="li"><div class="icon" style="background:#3652D9">S</div><div><b>shop</b><small>http://127.0.0.1:3080 · agent: DeepSeek, idle · 214 MB · up 2 h</small></div><div class="row" style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small">Logs</button><button type="button" class="btn small">Stop</button></div></div>
-            <div class="li"><div class="icon" style="background:#0f766e">C</div><div><b>ACRYL Code</b><small>the IDE · http://127.0.0.1:3010 · 2 agents working · 612 MB · up 35 min</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small">Logs</button><button type="button" class="btn small">Stop</button></div></div>
+            <div class="li"><div class="icon" style="background:#0f766e">C</div><div><b>ACRYL ADE</b><small>the IDE · http://127.0.0.1:3010 · 2 agents working · 612 MB · up 35 min</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small">Logs</button><button type="button" class="btn small">Stop</button></div></div>
           </div>
           <p class="dim" style="font-size:13px">One list of what runs, on which address, with which agents, and what it costs in memory. Stop all on quit is a setting.</p>
         </div>
@@ -230,7 +230,7 @@ acryl            the command, same
           <p class="dim" style="font-size:13.5px">An agent adds an app to ACRYL only when it asks you to keep it; until then it is just a folder wherever you told it to work. Keep adds it to My apps, Discard moves the folder to the trash. Once an app is part of your daily flow, "Move to Applications" turns it into <code>/Applications/&lt;name&gt;</code>.</p>
           <div class="list">
             <div class="li"><div class="icon" style="background:#a16207">I</div><div><b>invoice-split</b> <span class="pill agent">by agent</span><small>"split this month's invoices by client" · from the chat in shop · 2 h ago · 3 plugins</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
-            <div class="li"><div class="icon" style="background:#a16207">T</div><div><b>trip-planner</b> <span class="pill agent">by agent</span><small>"plan the Vienna workshop logistics" · from ACRYL Code · yesterday · 1 plugin</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
+            <div class="li"><div class="icon" style="background:#a16207">T</div><div><b>trip-planner</b> <span class="pill agent">by agent</span><small>"plan the Vienna workshop logistics" · from ACRYL ADE · yesterday · 1 plugin</small></div><div style="display:flex;gap:6px"><button type="button" class="btn small">Open</button><button type="button" class="btn small primary">Keep</button><button type="button" class="btn small">Discard</button></div></div>
           </div>
         </div>
 
@@ -302,7 +302,7 @@ acryl            the command, same
 
 <span class="t-d">  APP              STATE                    BLEND           </span>
 <span class="t-sel">› shop             <span class="t-s">● running</span>  127.0.0.1:3080   acryl.notes     </span>
-  ACRYL Code       <span class="t-s">● running</span>  127.0.0.1:3010   acryl.code
+  ACRYL ADE       <span class="t-s">● running</span>  127.0.0.1:3010   acryl.ade
   crm              ○ stopped                acryl.crm   <span class="t-w">update 1.6.0</span>
   todo-demo        <span class="t-p">◆ cloud</span>    a1b2.…sslip.io   acryl.todo
   invoice-split    ○ stopped  <span class="t-w">by agent</span>      blank       <span class="t-w">keep?</span>
@@ -339,11 +339,11 @@ acryl            the command, same
 <script>
 const APPS = [
   { id: 'shop', name: 'shop', color: '#3652D9', blend: 'acryl.notes 1.3.0', surface: 'web', state: 'run', where: '127.0.0.1:3080', path: '~/ACRYL/shop', by: 'you, 3 days ago', note: '' },
-  { id: 'code', name: 'ACRYL Code', color: '#0f766e', blend: 'acryl.code 0.2.7', surface: 'desktop', state: 'run', where: '127.0.0.1:3010', path: 'the IDE, inside ACRYL.app', by: 'ACRYL', note: '' },
+  { id: 'code', name: 'ACRYL ADE', color: '#0f766e', blend: 'acryl.ade 0.2.7', surface: 'desktop', state: 'run', where: '127.0.0.1:3010', path: 'the IDE, inside ACRYL.app', by: 'ACRYL', note: '' },
   { id: 'crm', name: 'crm', color: '#be123c', blend: 'acryl.crm 1.5.1', surface: 'web', state: 'stop', where: '', path: '~/work/crm', by: 'you, last week', note: 'update', },
   { id: 'todo', name: 'todo-demo', color: '#0369A1', blend: 'acryl.todo 1.0.0', surface: 'web', state: 'cloud', where: 'a1b2.213-47-80-26.sslip.io', path: '~/ACRYL/todo-demo', by: 'you, today', note: '' },
   { id: 'inv', name: 'invoice-split', color: '#a16207', blend: 'blank', surface: 'tui', state: 'stop', where: '', path: '~/ACRYL/invoice-split', by: 'agent in shop, 2 h ago', note: 'agent' },
-  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', surface: 'web', state: 'stop', where: '', path: '~/ACRYL/trip-planner', by: 'agent in ACRYL Code, yesterday', note: 'agent' },
+  { id: 'trip', name: 'trip-planner', color: '#a16207', blend: 'blank', surface: 'web', state: 'stop', where: '', path: '~/ACRYL/trip-planner', by: 'agent in ACRYL ADE, yesterday', note: 'agent' },
 ]
 const SURFACE = { web: 'Web', desktop: 'Desktop', tui: 'CLI (TUI)' }
 const STATE = { run: ['run', 'running'], stop: ['stop', 'stopped'], cloud: ['cloud', 'on WebBoxes.ai'] }

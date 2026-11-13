@@ -23,7 +23,7 @@ acryl           # the ACRYL app screen in this terminal (same as --tui)
 acryl --tui     # the ACRYL app screen in this terminal
 acryl --gui     # the ACRYL desktop app (Electron); fetched once if it is not installed
 acryl --web     # the ACRYL app screen in your browser (same as: acryl web)
-acryl code      # ACRYL Code, the coding IDE
+acryl ade       # ACRYL ADE, the agentic development environment
 ```
 
 A standalone Desktop application is distributed separately.

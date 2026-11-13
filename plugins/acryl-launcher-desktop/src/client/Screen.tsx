@@ -134,15 +134,15 @@ interface AppsViewProps {
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
   readonly openExternal: (url: string) => void
-  /** Leave this screen for the coding workspace underneath it (ACRYL Code is the IDE in this same window). */
+  /** Leave this screen for the coding workspace underneath it (ACRYL ADE is the agentic development environment, in this same window). */
   readonly onOpenCode: () => void
 }
 
 function AppsView(props: AppsViewProps): ReactNode {
   const shown = visibleApps(props.apps, props.search, props.surface)
   const { current } = props
-  // ACRYL Code (the IDE) is always on this machine and always a Desktop app: it answers the Desktop filter and the words it is named by.
-  const showCode = (props.surface === 'all' || props.surface === 'desktop') && 'acryl code ide'.includes(props.search.trim().toLowerCase())
+  // ACRYL ADE is always on this machine and always a Desktop app: it answers the Desktop filter and the words it is named by.
+  const showCode = (props.surface === 'all' || props.surface === 'desktop') && 'acryl ade agentic development environment code ide'.includes(props.search.trim().toLowerCase())
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div className="acrylHomeTop">
@@ -172,10 +172,10 @@ function AppsView(props: AppsViewProps): ReactNode {
           <div className="acrylHomeApp" data-code>
             <div className="acrylHomeHead">
               <div className="acrylHomeIcon" style={{ background: '#0f766e' }}>C</div>
-              <div style={{ minWidth: 0 }}><div className="acrylHomeName">ACRYL Code</div><div className="acrylHomeMeta">the coding IDE, in this window</div></div>
+              <div style={{ minWidth: 0 }}><div className="acrylHomeName">ACRYL ADE</div><div className="acrylHomeMeta">the agentic development environment, in this window</div></div>
             </div>
             <div className="acrylHomeRow"><SurfaceChip surface="desktop" /></div>
-            <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-primary onClick={props.onOpenCode}>Open ACRYL Code</button></div>
+            <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-primary onClick={props.onOpenCode}>Open ACRYL ADE</button></div>
           </div>
         )}
         {shown.map(app => (

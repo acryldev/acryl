@@ -140,11 +140,11 @@ export const JOURNEYS = Object.freeze([
     command: () => acryl(['blends', 'preflight']),
   },
   {
-    id: 'code',
-    title: 'Open ACRYL Code',
-    summary: 'the coding IDE, in this terminal',
+    id: 'ade',
+    title: 'Open ACRYL ADE',
+    summary: 'the agentic development environment, in this terminal',
     steps: [],
-    command: () => acryl(['code']),
+    command: () => acryl(['ade']),
   },
 ])
 

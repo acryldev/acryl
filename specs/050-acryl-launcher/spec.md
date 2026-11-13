@@ -25,7 +25,7 @@ the need to know them at all.
 **One launcher, two faces, one list of things to do.**
 
 1. **The things to do (journeys)** are data, written once: create an app, open or run an app, install a Blend from the registry, pull a
-   plugin, share a plugin, set up a model, update, check this machine (preflight), open ACRYL Code. (First version: all but "set up a
+   plugin, share a plugin, set up a model, update, check this machine (preflight), open ACRYL ADE. (First version: all but "set up a
    model", which has no command yet; it is T010.) Each journey is a short list of steps
    (choose, type, confirm, run, done). Its last step always shows the one command that does the same thing, so a person learns the
    commands by using the launcher and never has to look them up.
@@ -96,13 +96,13 @@ file builds and runs unsigned on each OS.
 
 ## Decisions (owner, 2026-11-12, on the design page: "ok, looks good for now, let's build first version this way")
 
-- D1 (was Q1). A bare `acryl` in a terminal opens the launcher; `acryl code` opens ACRYL Code (the IDE). Without a terminal (a script, a
+- D1 (was Q1). A bare `acryl` in a terminal opens the launcher; `acryl ade` opens ACRYL ADE (the IDE). Without a terminal (a script, a
   pipe) a bare `acryl` keeps opening the IDE as before, so nothing that scripts it breaks.
 - D2 (was Q2). The terminal face ships before the workshop of 2026-11-20; the desktop face after it.
 - D3 (was Q3). The desktop launcher is the first screen of the one ACRYL desktop app, not a second app.
 - D4 (owner, 2026-11-12, later the same day). The workshop of 2026-11-20 teaches `acryl new`, not `acrylblends`. Owner: "This should be
   acryl new - but keep in mind our latest discussion how we simplify things" (049 M12: `acryl` is the entry point, `@acryl/blends` points
-  to the acrylblends package, the IDE is the Blend `acryl.code`, 049 D9).
+  to the acrylblends package, the IDE is the Blend `acryl.ade`, 049 D9).
 - D5 (owner, 2026-11-12). `acryl` is the one central tool for everything (making apps, launching, servicing), TUI and tool in one
   easy-to-remember name, the way `hermes` is for its platform. Owner's go for release 0.2.7 so `npx acryl` shows the launcher.
 
@@ -132,7 +132,7 @@ file builds and runs unsigned on each OS.
 - What the launcher chose runs through the same `acryl` (`launcherCommand` in `distribution/acryl-npm-launcher/forward.js`), so a journey and
   the typed command take one path.
 - The `acryl` package still depends on the 454 MB per-OS IDE runtime (`acryl-cli-<os>-<cpu>`, an optional dependency), so `npx acryl` still
-  downloads it before the launcher shows. Fetching that runtime only when `acryl code` is chosen, like `acryl web`, is T009; until it lands the
+  downloads it before the launcher shows. Fetching that runtime only when `acryl ade` is chosen, like `acryl web`, is T009; until it lands the
   launcher is light to run but not yet light to download.
 
 ## Where the code is
@@ -150,7 +150,7 @@ which has no Cordis host, and uses the session directly. Both faces walk the sam
 Changed from the first draft of this section, which waited for the one-file desktop's own Node (T005): the owner asked on 2026-11-12 for the screen now, so it runs commands with the Node and npm on the machine, says plainly when they are missing, and T005 comes after.
 
 1. **Capability and boundary.** One package, `plugins/acryl-launcher-desktop`, with a Host half and a client half: a Host that reads the list and runs commands (`LauncherService`, ports for the process runner, the folders and the environment, so the rules are tested with a fake runner), and a client plugin that draws the Control Center design. The list, the registry and the model key stay in `plugins/acryl-launcher` (written once, read by the terminal too); this package draws and runs. The journeys' step logic is not repeated: the screen's "+ New app" form asks the same questions (folder, name, starter) and the Host applies the same name and folder rules (`appNameProblem`, `whereProblem`) from `acryl-launcher`.
-2. **Provides and consumes.** Host: hard `inject` of `router`, `routerHttp` and `appInstance`; provides routes under `/api/acryl-launcher` (`GET state`, `GET health`, `POST add`, `remove`, `new`, `start`, `stop`), all behind the app's own page rules (`ownPage`, exact `Origin` for a change, small JSON body). Client: consumes `slots`. It registers one entry in the frame's `shell.overlay` seat (a list seat in the root slot of `acryl-app-shell`): a full-window layer over the workspace, open when the app starts, closed by "ACRYL Code" in its left list, reopened by the small ACRYL button. It does not claim `desktop.main`, so the workspace is untouched. Composed on Web and Desktop alike (the repo's surface-sharing rule); the terminal has its own screen.
+2. **Provides and consumes.** Host: hard `inject` of `router`, `routerHttp` and `appInstance`; provides routes under `/api/acryl-launcher` (`GET state`, `GET health`, `POST add`, `remove`, `new`, `start`, `stop`), all behind the app's own page rules (`ownPage`, exact `Origin` for a change, small JSON body). Client: consumes `slots`. It registers one entry in the frame's `shell.overlay` seat (a list seat in the root slot of `acryl-app-shell`): a full-window layer over the workspace, open when the app starts, closed by "ACRYL ADE" in its left list, reopened by the small ACRYL button. It does not claim `desktop.main`, so the workspace is untouched. Composed on Web and Desktop alike (the repo's surface-sharing rule); the terminal has its own screen.
 3. **Effects and disposal.** The Host's resources are the processes it starts (`npm run dev` for an app; `npx -y acryl new` for a new one, which goes on to install and start the app, so that process becomes the app's). One effect owns them all: its disposer stops every started process tree (a process group on Unix, `taskkill /t` on Windows), so an unload or the app quitting leaves none. The routes are mounted once under one prefix and leave with the plugin. The client's styles and slot entry are each one effect; the two-second list read is owned by the open screen and stops when it closes.
 4. **Configuration and composition.** No configuration. Loader row `acryl-launcher-desktop` (the row id equals the package name), composed by the capability row `launcher-screen` in `runtime/acryl-harness-runtime/src/coding-capabilities.ts` for both Web and Desktop. The list is `<appInstance.home>/apps.json`, the same file the terminal reads (the instance's home, so an isolated run has its own list and the installed app's list is `~/.acryl/apps.json`); the suggested folder for new apps is `ACRYL` beside the home (`~/ACRYL`). A started app does not inherit the app's own `ACRYL_*`, `DSH_*`, `ELECTRON_*`, `npm_*` or `PORT` keys, and gets the saved model key as `DEEPSEEK_API_KEY`.
 5. **Events and durability.** The list file is the only durable state. Running state is held in memory (the launcher records no port): an app is running when this Host started it and it has not ended. An app started in a terminal is not shown as running; that is a limit to say, not hide.

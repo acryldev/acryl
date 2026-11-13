@@ -42,8 +42,8 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
   (apps/acryl-cli/src/tui/theme.ts resolvePaletteMode, themeDetection.ts schemeOfBackground), once acryl-ui-tui ships types.
   Done when: the rules exist once and the CLI theme tests pass against them.
 - [ ] T009 [packaging] `npx acryl` downloads only the selector and the launcher: the 454 MB IDE runtime (`acryl-cli-<os>-<cpu>`) stops being an
-  optional dependency and is fetched and verified when `acryl code` is chosen, the way `acryl web` fetches the Web runtime.
-  Done when: `npx acryl` on a fresh machine shows the launcher after downloading under 1 MB; `acryl code` then fetches the runtime once.
+  optional dependency and is fetched and verified when `acryl ade` is chosen, the way `acryl web` fetches the Web runtime.
+  Done when: `npx acryl` on a fresh machine shows the launcher after downloading under 1 MB; `acryl ade` then fetches the runtime once.
 - [x] T010 [core] "Set up a model": a command that sets a model provider and key for an app (none exists yet: not in the CLI grammar, the
   acrylblends command or the app door), then its journey.
   Done when: the journey sets a working model for an app made by "create an app" and the command it shows does the same.
@@ -59,7 +59,7 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       `~/.acryl/apps.json` and the list in the terminal face first, then the desktop screen, both before the workshop of 2026-11-20.
       Built 2026-11-12 (terminal face): the list `~/.acryl/apps.json` (plugins/acryl-launcher/apps-registry.js), `acryl apps` / `acryl apps add <folder>` /
       `acryl apps remove <id>`, an app made by `acryl new` (direct or from the launcher) listed when the command ends, the ACRYL home screen
-      (apps with state and Blend, then + New app, Blends store, Add an app folder, Health, ACRYL Code, All things to do; Enter opens, u updates,
+      (apps with state and Blend, then + New app, Blends store, Add an app folder, Health, ACRYL ADE, All things to do; Enter opens, u updates,
       p pulls a plugin), "+ New app" asking for the folder (suggests ~/ACRYL, made if missing), `acryl --tui` (the same screen, needs a terminal)
       and `acryl --gui` (opens the installed desktop app, else fetches its installer). Not built yet: running state and the address in the list
       (the launcher runs nothing and records no port), update-waiting, start/stop, deploy, keep (agent apps); the desktop screen (T004).

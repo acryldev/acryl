@@ -1,6 +1,6 @@
 /**
  * Cordis Client plugin: the ACRYL screen, the first screen of the desktop app (spec 050 T012). It registers one entry in the frame's `shell.overlay`
- * seat: a full-window layer over the workspace, open when the app starts, closed by "ACRYL Code" and reopened by the small ACRYL button. It owns its
+ * seat: a full-window layer over the workspace, open when the app starts, closed by the "ACRYL ADE" card and reopened by the small ACRYL button. It owns its
  * styles inside one effect and talks to its Host half over the private same-origin routes.
  */
 import type {} from '@acryl/ui/frame'

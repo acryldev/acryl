@@ -1,7 +1,7 @@
 {
   "name": "acryl-launcher",
   "version": "0.1.0",
-  "description": "The ACRYL launcher's journeys (create an app, install a Blend, pull or share a plugin, update, check this machine, open ACRYL Code) and the session every face walks them with (spec 050)",
+  "description": "The ACRYL launcher's journeys (create an app, install a Blend, pull or share a plugin, update, check this machine, open ACRYL ADE) and the session every face walks them with (spec 050)",
   "license": "MIT",
   "private": true,
   "type": "module",
