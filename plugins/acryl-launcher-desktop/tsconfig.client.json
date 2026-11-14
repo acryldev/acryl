@@ -8,5 +8,5 @@
     "types": ["react"]
   },
   "exclude": [],
-  "include": ["src/client/**/*.ts", "src/client/**/*.tsx"]
+  "include": ["src/client/**/*.ts", "src/client/**/*.tsx", "src/page/**/*.ts", "src/page/**/*.tsx"]
 }

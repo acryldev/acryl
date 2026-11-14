@@ -8,6 +8,7 @@ import { LauncherScreen } from '../client/Screen.tsx'
 import { SKIN_KEY } from '../client/skin.ts'
 import { LauncherVisibility } from '../client/store.ts'
 import { installLauncherStyles } from '../client/styles.ts'
+import { keepFramePanels } from './frame-panels.ts'
 
 /** A host that mounts the launcher's routes under a prefix (a Blends app mounts its plugins under /app) says so on the element: `data-base="/app"`. */
 const base = (): string => document.getElementById('acryl-launcher')?.dataset.base ?? ''
@@ -53,5 +54,7 @@ function render(): void {
 
 render()
 const body = frameBody()
-if (body !== undefined) new MutationObserver(render).observe(body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] })
-else window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render)
+if (body !== undefined) {
+  new MutationObserver(render).observe(body, { attributes: true, attributeFilter: ['data-ds-dark-theme'] })
+  keepFramePanels(body.ownerDocument)
+} else window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render)
