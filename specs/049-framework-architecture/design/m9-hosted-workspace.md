@@ -154,3 +154,25 @@ risk was first written for are no longer used).
   model key (BYOK), not `@webboxes/agent`.
 - **Q3 (moot while parked).** The order of the Blends trusted-front slice against spec 047 T009 (upgrades). T009 shipped in
   acrylblends 0.11.0, so the trusted-front slice is free whenever M9 resumes.
+
+## Many apps on one server: sleep and wake (owner 2026-11-14)
+
+Owner: "if we create too many redundant containers it consumes the server resources quickly; we need to be able to hibernate, stop, relaunch",
+and "full acryl blends in `<appID>.webboxes.ai`".
+
+Measured 2026-11-14 on z370n (a probe box from the image, with the runner's own hardening, removed afterwards): the image is 796 MB once for all
+boxes; one running box with the full frame idles at 332 MB of memory and 24 processes; its limit is 1.5 GB. The server has 42 GB free, so about
+100 boxes can idle at once, about 28 if each used its whole limit. A stopped box costs no memory and no processor, only its volume on disk.
+
+What exists: one container per app, the runner's `start` and `stop`, and the box's files on a volume that outlives the container. Nothing stops a
+box by itself and nothing starts it when someone visits.
+
+To build, in this order:
+
+1. **Sleep when idle.** The gate already sees every request to a box: it records the last one, and the runner stops a box after 30 minutes with
+   no request and no agent run in progress. State `sleeping` in the database, distinct from `stopped` (which the person chose).
+2. **Wake on visit.** A request for a sleeping box starts its container and holds a "Waking your app" page until the app answers (measured start
+   about 10 seconds), then goes on to the app. The entry link from webboxes.ai does the same.
+3. **A limit per account** on boxes running at once (workshop: 1), so one person cannot fill the server.
+4. **Later, only if needed:** one shared read-only copy of the app's `node_modules` for boxes made from the same release (saves disk, about
+   500 MB a box), and freezing a box's memory to disk for an instant wake. Not for the workshop.
