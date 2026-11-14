@@ -152,3 +152,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       Desktop's first screen still open the old overlay; ship the app as the Blend `acryl.launcher` instead of the copy step.
       Done when: on this Mac the first screen of Desktop is the launcher in the frame, the right panel's Claude, Codex and Pi start in the apps folder and can use the
       launcher's tools, and Web shows the same.
+- [ ] T017 [blends] Bring the Blends templates to the current frame (owner 2026-11-14: "a lot of our blends templates have still Old version of left panel right
+      panel"): after the launcher's final look and full function are done, refactor every registry template (acrylblends.github.io/registry, 55 entries) to
+      the current left and right panels, ready for the 2026-11-20 workshop, where people pull and push Blends and Cordis plugins.
+      Done when: every template made from the registry opens with the current frame's panels, and the pull / push cycle for a Blend and for a Cordis plugin
+      works from the launcher.
+- [ ] T018 [cli] `acryl new <dir> --from <registry id>` works from the published CLI (seen 2026-11-14: `acryl` 0.2.4 refuses "acryl new needs the ACRYL
+      framework checkout", so the registry's `acryl.music` could only be made from the checkout's CLI).
