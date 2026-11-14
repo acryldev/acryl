@@ -9,7 +9,7 @@
  * The launcher lists and makes apps in `~/.acryl` (`ACRYL_LAUNCHER_HOME` moves it), the same home the ACRYL app uses.
  */
 import { spawn, spawnSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -20,6 +20,20 @@ const userHome = process.env.HOME ?? process.env.USERPROFILE
 if (!userHome) { console.error('launcher blend: no HOME'); process.exit(2) }
 const launcherHome = process.env.ACRYL_LAUNCHER_HOME ?? join(userHome, '.acryl')
 const app = process.env.ACRYL_LAUNCHER_APP ?? join(launcherHome, 'launcher')
+
+const electron = createRequire(join(root, 'apps/acryl-desktop/package.json'))('electron')
+const windowArgs = [`--user-data-dir=${join(app, '.acryl-window')}`, join(pkg, 'blend')]
+
+// One launcher per app: a second start brings the open window forward (the window holds Electron's single-instance lock for its user-data folder) and
+// starts nothing else. Two copies used to run a second server on the same app, and the second window process had no window to close, so it never stopped.
+const lock = join(app, '.acryl-launcher.pid')
+const holder = existsSync(lock) ? Number(readFileSync(lock, 'utf8')) : 0
+const alive = pid => { try { return pid > 0 && (process.kill(pid, 0), true) } catch { return false } }
+if (alive(holder)) {
+  console.log(`launcher blend: already open (process ${holder}); bringing its window forward`)
+  spawnSync(electron, windowArgs, { stdio: 'ignore', timeout: 30_000 })
+  process.exit(0)
+}
 
 const run = (command, args, options = {}) => {
   const result = spawnSync(command, args, { stdio: 'inherit', ...options })
@@ -72,17 +86,34 @@ if (!blend.includes('acryl-launcher-host')) {
 // The window's own files and the app's log are not the app's.
 const ignore = join(app, '.gitignore')
 const ignored = existsSync(ignore) ? readFileSync(ignore, 'utf8') : ''
-if (!ignored.includes('.acryl-window/')) writeFileSync(ignore, `${ignored}${ignored.endsWith('\n') || ignored === '' ? '' : '\n'}.acryl-window/\n.acryl-launcher.log\n`)
+const missing = ['.acryl-window/', '.acryl-launcher.log', '.acryl-launcher.pid'].filter(entry => !ignored.split('\n').includes(entry))
+if (missing.length > 0) writeFileSync(ignore, `${ignored}${ignored.endsWith('\n') || ignored === '' ? '' : '\n'}${missing.join('\n')}\n`)
 // Saved, so the frame shows the app as saved rather than every copied file as a change.
 spawnSync('git', ['add', '-A'], { cwd: app })
 spawnSync('git', ['commit', '-qm', 'ACRYL launcher'], { cwd: app })
 
 console.log('launcher blend: starting the app')
+writeFileSync(lock, String(process.pid))
 const log = join(app, '.acryl-launcher.log')
 const server = spawn('npm', ['run', 'dev'], { cwd: app, detached: true, stdio: ['ignore', openSync(log, 'w'), openSync(log, 'a')], env: { ...process.env, ACRYL_LAUNCHER_HOME: launcherHome } })
-const stop = () => { try { process.kill(-server.pid, 'SIGTERM') } catch { /* already gone */ } }
+let window
+let windowExited
+const stop = () => {
+  try { process.kill(-server.pid, 'SIGTERM') } catch { /* already gone */ }
+  try { window?.kill('SIGKILL') } catch { /* already gone */ }
+  try { if (readFileSync(lock, 'utf8') === String(process.pid)) rmSync(lock) } catch { /* already gone */ }
+}
 process.on('exit', stop)
-for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => { stop(); process.exit(130) })
+// A stop signal asks the window to close, and closes it by force if it has not within three seconds (a window that hangs while starting never answers).
+const shutdown = async () => {
+  if (window !== undefined) {
+    window.kill('SIGTERM')
+    await Promise.race([windowExited, new Promise(done => setTimeout(done, 3000))])
+  }
+  try { await cleanup() } catch { /* the renamed Electron copy is not made yet */ }
+  process.exit(130)
+}
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => { void shutdown() })
 
 let url
 for (let waited = 0; waited < 180_000 && url === undefined; waited += 1000) {
@@ -93,7 +124,6 @@ if (url === undefined) { console.error(`launcher blend: the app did not start, s
 console.log(`launcher blend: ${url}`)
 
 // The window is the ACRYL app's own Electron, named ACRYL on a Mac the way `pnpm desktop` names it (a renamed, re-signed copy of Electron.app).
-const electron = createRequire(join(root, 'apps/acryl-desktop/package.json'))('electron')
 let executable = electron
 let cleanup = async () => {}
 if (process.platform === 'darwin') {
@@ -103,6 +133,10 @@ if (process.platform === 'darwin') {
   cleanup = bundle.cleanup
 }
 const icon = join(root, 'apps/acryl-desktop/build/app-icon.png')
-const window = spawnSync(executable, [`--user-data-dir=${join(app, '.acryl-window')}`, join(pkg, 'blend')], { stdio: 'inherit', env: { ...process.env, LAUNCHER_URL: url, LAUNCHER_ICON: icon } })
+// Waited on without blocking, so Ctrl+C or a stop signal still reaches this script and stops the window and the app with it.
+window = spawn(executable, windowArgs, { stdio: 'inherit', env: { ...process.env, LAUNCHER_URL: url, LAUNCHER_ICON: icon } })
+windowExited = new Promise(done => window.on('exit', code => done(code ?? 0)))
+const status = await windowExited
+window = undefined
 await cleanup()
-process.exit(window.status ?? 0)
+process.exit(status)
