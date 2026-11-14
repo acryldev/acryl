@@ -1,8 +1,9 @@
 /**
  * `npm run share [-- --owner <account>]`: show what sharing this app would send, and ask. Only a plain yes at the terminal sends it.
  *   --json             print the plan as JSON and send nothing (what a program, or an agent, reads)
- *   --confirm <plan>   send exactly this plan (the JSON `--json` printed), and nothing when the app no longer matches it: for a person's own
- *                      surface that showed them the plan and took their yes (the ACRYL launcher's Share)
+ *   --confirm <plan>   send exactly this plan (the JSON `--json` printed, as it is or base64url-encoded so no shell can change it), and nothing when
+ *                      the app no longer matches it: for a person's own surface that showed them the plan and took their yes (the ACRYL
+ *                      launcher's Share)
  * Exits 1 when the share was refused.
  */
 import { realpathSync } from 'node:fs'
@@ -30,6 +31,18 @@ const isPlan = (value: unknown): value is SharePlan =>
   ((value as SharePlan).visibility === 'private' || (value as SharePlan).visibility === 'public') &&
   typeof (value as SharePlan).changes === 'number'
 
+/** The plan a program hands back: JSON, or the same JSON base64url-encoded. */
+function readPlan(text: string): unknown {
+  for (const candidate of [text, Buffer.from(text, 'base64url').toString('utf8')]) {
+    try {
+      return JSON.parse(candidate)
+    } catch {
+      // not this form
+    }
+  }
+  return undefined
+}
+
 async function main(argv: readonly string[]): Promise<number> {
   const appRoot = fileURLToPath(new URL('../..', import.meta.url))
   const { values } = parseArgs({
@@ -39,12 +52,7 @@ async function main(argv: readonly string[]): Promise<number> {
   })
   const options = values.owner === undefined ? {} : { owner: values.owner }
   if (values.confirm !== undefined) {
-    let confirmed: unknown
-    try {
-      confirmed = JSON.parse(values.confirm)
-    } catch {
-      confirmed = undefined
-    }
+    const confirmed = readPlan(values.confirm)
     if (!isPlan(confirmed)) {
       console.error('not shared: --confirm takes the plan that --json printed')
       return 1

@@ -208,6 +208,14 @@ test('npm run share --json prints the plan of a real folder and sends nothing; a
     assert.equal(plan.repository, 'https://example.invalid/me/shop.git')
     assert.equal(plan.create, false)
     assert.throws(() => run(['--confirm', '{"nope":1}']))
+    // The plan handed back base64url-encoded is read as the same plan; this one no longer matches the app (a file changed), so nothing is sent.
+    writeFileSync(join(dir, 'note.txt'), 'x')
+    const stale = Buffer.from(JSON.stringify({ ...plan, changes: 0 }), 'utf8').toString('base64url')
+    assert.throws(
+      () => run(['--confirm', stale, '--json']),
+      (error: { stdout?: string }) =>
+        /the app changed since this plan was shown/u.test(error.stdout ?? ''),
+    )
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
