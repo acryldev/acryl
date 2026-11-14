@@ -176,3 +176,23 @@ To build, in this order:
 3. **A limit per account** on boxes running at once (workshop: 1), so one person cannot fill the server.
 4. **Later, only if needed:** one shared read-only copy of the app's `node_modules` for boxes made from the same release (saves disk, about
    500 MB a box), and freezing a box's memory to disk for an instant wake. Not for the workshop.
+
+## One container per account, many apps inside (owner 2026-11-14)
+
+Owner: "can we re-use resources and just make 1 docker container per account, and [in that] 1 container we have then many acryl blends per
+1 client".
+
+Yes, and it is the same shape as a person's own computer: the account's container is their machine in the cloud, the ACRYL launcher
+(spec 050) is its first screen, and it makes, starts and stops that person's apps there, as it does on a desktop.
+
+- What it saves: disk (one container, one volume, and the apps of one account can share one copy of their dependencies) and idle memory
+  (only the apps the person has open run; the launcher stops the rest). It does not make a running app cheaper: the memory is the app's Node
+  process (332 MB idle with the frame, measured), not the container, whose own cost is close to nothing.
+- What it costs: the launcher is itself one frame app, so one more process per awake account (not measured in a box). Apps of one account
+  are no longer separated from each other; accounts still are. That is acceptable, since they have one owner.
+- What changes: the gate maps `<app id>.webboxes.ai` to (account container, the app's port) instead of to one container; the launcher tells
+  the runner each app's port; sleep and wake apply to the account's container, and the launcher stops idle apps inside it; the memory limit
+  is per account, which is also the natural thing to sell (a plan = how much runs at once).
+- Order: the workshop of 2026-11-20 uses what is written and tested (one box per app; with one app per attendee that is one container per
+  account already). The account container with the launcher comes after, as the next step of this milestone.
+- Not measured: a published app for visitors (no frame, `npm start`) should need far less memory than 332 MB.
