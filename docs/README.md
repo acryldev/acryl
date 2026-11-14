@@ -78,6 +78,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.3](release-notes/create-1.5.3.md) - asks for acrylblends 1.5.3
 - [Release notes acrylblends 1.5.4](release-notes/acrylblends-1.5.4.md) - `acrylblends add plugin-share` mounts it, so an app made from a registry starter can pull, list and publish plugins
 - [Release notes create-acrylblends 1.5.4](release-notes/create-1.5.4.md) - asks for acrylblends 1.5.4; a registry starter without sharing gets it
+- [Release notes acrylblends 1.5.5](release-notes/acrylblends-1.5.5.md) - `npm run share`: an app gets a repository of its own on GitHub and is pushed there, after a person confirms the plan (`@acrylblends/blends-frame` 0.1.3)
+- [Release notes create-acrylblends 1.5.5](release-notes/create-1.5.5.md) - asks for acrylblends 1.5.5
 - [Release notes acrylblends 1.5.2](release-notes/acrylblends-1.5.2.md) - an app can run behind a hosting front such as a WebBoxes.ai box (`ACRYL_PUBLIC_ORIGIN`, `ACRYL_TRUSTED_PROXY`, `ACRYLBLENDS_HOST`)
 - [Release notes create-acrylblends 1.5.2](release-notes/create-1.5.2.md) - asks for acrylblends 1.5.2
 - [Release notes acrylblends 1.5.1](release-notes/acrylblends-1.5.1.md) - pnpm installs and runs an app in the frame (`pnpm-workspace.yaml` written by init and upgrade); an app made with 1.4 starts on Linux with Node 22 and later
