@@ -485,6 +485,17 @@
         "notes": "fb43a1c5f3b4",
         "todo": "164274ffcf7f"
       }
+    },
+    {
+      "version": "1.5.4",
+      "layouts": {
+        "agent": "46c6eadf9230",
+        "blank": "a53d41e6ef42",
+        "chat": "d4464dfb3b04",
+        "nodejs": "a6a340b4d3a6",
+        "notes": "fb43a1c5f3b4",
+        "todo": "164274ffcf7f"
+      }
     }
   ],
   "templates": {
