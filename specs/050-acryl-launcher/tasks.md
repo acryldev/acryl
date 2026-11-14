@@ -150,6 +150,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       and its right panel open. Light/dark follows the frame; the acryl.dev look is the default. The docked Assistant (T013's AssistantPane and the launcher's
       Assistant button) is removed. Seen: Claude Code starts from the right panel's "+" in the launcher app's folder. Left: the installed `acryl --gui` and
       Desktop's first screen still open the old overlay; ship the app as the Blend `acryl.launcher` instead of the copy step.
+      2026-11-14 (ac99e246): the window is the Blends app's own `npm run desktop` (one window per app, its server started or joined and stopped on close,
+      window data in the app), named ACRYL with ACRYL's icon; the page closes the frame's left panel and opens the right one itself, so a browser shows the same.
+      The launcher app is 547 MB with its node_modules, too big for the Desktop installer (600 MB budget): Desktop's first screen has to make it on first
+      start (as `pnpm launcher gui` does) or the launcher ships as a Blends product of its own.
       Done when: on this Mac the first screen of Desktop is the launcher in the frame, the right panel's Claude, Codex and Pi start in the apps folder and can use the
       launcher's tools, and Web shows the same.
 - [ ] T017 [blends] Bring the Blends templates to the current frame (owner 2026-11-14: "a lot of our blends templates have still Old version of left panel right
