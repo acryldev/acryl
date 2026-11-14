@@ -7,7 +7,7 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 9081 chars (about 2671 tokens), tool definitions 27586 chars (about 8114 tokens), 47 tools.
+Total: system prompt 9081 chars (about 2671 tokens), tool definitions 31110 chars (about 9150 tokens), 56 tools.
 
 ### System prompt by section
 
@@ -47,12 +47,14 @@ Total: system prompt 9081 chars (about 2671 tokens), tool definitions 27586 char
 | `update_goal` | 984 | 289 |
 | `subagent` | 974 | 286 |
 | `todo_write` | 856 | 252 |
+| `acryl_launcher_new_app` | 841 | 247 |
 | `write` | 799 | 235 |
 | `present` | 777 | 229 |
 | `glob` | 750 | 221 |
 | `grep` | 702 | 206 |
 | `list_agents` | 661 | 194 |
 | `acryl_plugins` | 656 | 193 |
+| `acryl_launcher_publish_plan` | 616 | 181 |
 | `job_output` | 615 | 181 |
 | `create_goal` | 577 | 170 |
 | `acryl_install_plugin` | 550 | 162 |
@@ -65,19 +67,26 @@ Total: system prompt 9081 chars (about 2671 tokens), tool definitions 27586 char
 | `acryl_plugin_lookup` | 424 | 125 |
 | `acryl_prepare_publish` | 408 | 120 |
 | `read_image` | 389 | 114 |
+| `acryl_launcher_pull_plugin` | 385 | 113 |
 | `acryl_workspace_create` | 379 | 111 |
 | `job_kill` | 370 | 109 |
-| `acryl_list_plugins` | 345 | 101 |
+| `acryl_launcher_blends` | 341 | 100 |
+| `acryl_list_plugins` | 340 | 100 |
 | `acryl_plugin_set_enabled` | 332 | 98 |
 | `skill` | 332 | 98 |
 | `web_search` | 323 | 95 |
+| `acryl_launcher_start_app` | 318 | 94 |
 | `ui_press` | 314 | 92 |
 | `acryl_remove_plugin` | 313 | 92 |
 | `ui_snapshot` | 306 | 90 |
 | `ui_wait` | 294 | 86 |
 | `ui_select` | 292 | 86 |
+| `acryl_launcher_plugins` | 285 | 84 |
 | `ui_scroll` | 275 | 81 |
+| `acryl_launcher_apps` | 273 | 80 |
+| `acryl_launcher_help` | 243 | 71 |
 | `web_fetch` | 242 | 71 |
+| `acryl_launcher_stop_app` | 227 | 67 |
 | `ui_click` | 226 | 66 |
 | `acryl_workspace_add_project` | 211 | 62 |
 | `acryl_workspace_context` | 211 | 62 |
@@ -89,7 +98,7 @@ Total: system prompt 9081 chars (about 2671 tokens), tool definitions 27586 char
 
 ## cli (terminal engine)
 
-Total: system prompt 5428 chars (about 1596 tokens), tool definitions 21630 chars (about 6362 tokens), 31 tools.
+Total: system prompt 5428 chars (about 1596 tokens), tool definitions 21625 chars (about 6360 tokens), 31 tools.
 
 ### System prompt by section
 
@@ -138,7 +147,7 @@ Total: system prompt 5428 chars (about 1596 tokens), tool definitions 21630 char
 | `acryl_prepare_publish` | 408 | 120 |
 | `read_image` | 389 | 114 |
 | `job_kill` | 370 | 109 |
-| `acryl_list_plugins` | 345 | 101 |
+| `acryl_list_plugins` | 340 | 100 |
 | `skill` | 332 | 98 |
 | `web_search` | 323 | 95 |
 | `acryl_remove_plugin` | 313 | 92 |

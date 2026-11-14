@@ -1,6 +1,6 @@
 # Current system prompt: web
 
-<!-- Generated on 2026-10-16 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
+<!-- Generated on 2026-11-14 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
 
 What the model receives on the first turn of a new session on the web surface (standard preset), after path scrubbing.
 Temporary paths are shown as `<workspace>`, `<dsh-home>` and `<acryl-repo>`. The tool list follows the system prompt.
@@ -83,7 +83,7 @@ ACRYL plugin docs: <acryl-repo>/plugins/acryl-plugin-context. Read only when the
 </acryl_plugin_docs>
 
 <harness_source>
-The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pnpm/@deepseek-ai+dsh-web-app@0.2.0-rc.2_patch_hash=ca942e3889e800daea793bee8e8e12110dd841b8_02fb9552bf35c190eacf3765ba73dc56/. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.
+The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pnpm/@deepseek-ai+dsh-web-app@0.2.0-rc.2_patch_hash=ca942e3889e800daea793bee8e8e12110dd841b8_fb7b91819b2b1bddc3f56851f15b027d/. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.
 </harness_source>
 
 <app_web-surface>
@@ -95,12 +95,21 @@ Your working directory is <workspace>.
 </cwd>
 ```
 
-## Tools (47)
+## Tools (56)
 
 | Tool | Description (first line) |
 | --- | --- |
 | `acryl_install_plugin` | Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart), or UPDATE it if it is already installed. Checks the package  |
-| `acryl_list_plugins` | List every plugin installed in the active ACRYL profile with its origin: "local" (built here; has a source folder you can edit, and a scope) or "registry" (inst |
+| `acryl_launcher_apps` | The apps in the launcher's list: id, folder, Blend, surface (web or desktop), state (running, starting, stopped, missing) and address when running; and the app  |
+| `acryl_launcher_blends` | Blends in the public registry that an app can be made from (id, name, category, description). Give a query to narrow it; at most 25 are returned. |
+| `acryl_launcher_help` | How to use the ACRYL launcher and where to find what: its screens, buttons and the other launcher tools. Call it first when asked about the launcher. |
+| `acryl_launcher_new_app` | Make a new app, as the launcher's + New app does: from a starter (blank, nodejs, notes, chat, todo, agent) or from a registry Blend id (acrylblends_launcher_ble |
+| `acryl_launcher_plugins` | The plugins of a RUNNING app: the ones made in it (shareable) and the ones pulled from a registry, with their source. |
+| `acryl_launcher_publish_plan` | Prepare publishing a plugin made in a RUNNING app: what would be sent (account, repository, version, license, files) and the line a friend pulls it with. Sends  |
+| `acryl_launcher_pull_plugin` | Pull a plugin from a registry source into a RUNNING app, as the launcher's Pull a plugin does. The source is github:owner/repo@version. |
+| `acryl_launcher_start_app` | Start an app from the launcher's list (a desktop app opens its own window); installs its dependencies first if it has none. |
+| `acryl_launcher_stop_app` | Stop an app the launcher started. |
+| `acryl_list_plugins` | List every plugin installed in the active ACRYL profile with its origin: "local" (built here; a source folder you can edit, a scope), or "pulled"/"registry" (fr |
 | `acryl_plugin_list` | List the ACRYL plugins with their entry id, whether each is on, its state, and whether you may change it. |
 | `acryl_plugin_lookup` | Find the ACRYL plugin docs and verified examples for a topic (for example "sidebar tab", "accent color", "a tool", "hook the prompt"). Returns absolute paths to |
 | `acryl_plugin_set_enabled` | Switch a plugin on or off by entry id (from acryl_plugin_list). The user approves each change. Core plugins and Agent Control cannot be changed. |
