@@ -15,6 +15,8 @@ export const LAUNCHER_PLUGINS_PATH = `${LAUNCHER_API_PREFIX}/plugins`
 export const LAUNCHER_PLUGIN_PULL_PATH = `${LAUNCHER_API_PREFIX}/plugin-pull`
 export const LAUNCHER_PUBLISH_PLAN_PATH = `${LAUNCHER_API_PREFIX}/publish-plan`
 export const LAUNCHER_PUBLISH_PATH = `${LAUNCHER_API_PREFIX}/publish`
+export const LAUNCHER_SHARE_PLAN_PATH = `${LAUNCHER_API_PREFIX}/share-plan`
+export const LAUNCHER_SHARE_PATH = `${LAUNCHER_API_PREFIX}/share`
 
 /** The three kinds of app (spec 050 D10): a web app, a desktop window, and the lightest, a terminal app, which is listed but not yet made. */
 export type Surface = 'web' | 'desktop' | 'tui'
@@ -149,6 +151,33 @@ export interface PublishRequest extends PublishPlanRequest {
 export interface PublishResponse {
   readonly releaseUrl: string
   readonly pullLine: string
+}
+
+/** What sharing a whole app would send, in the app's own words (`npm run share -- --json`): the person reads this before saying yes. */
+export interface AppSharePlanView {
+  /** `owner/name` for a repository the share creates, or the address of the remote the app already has. */
+  readonly repository: string
+  readonly create: boolean
+  readonly visibility: 'private' | 'public'
+  /** Files changed since the app's last save; the share saves them first. */
+  readonly changes: number
+}
+
+export interface AppSharePlanRequest {
+  readonly id: string
+  /** The account that owns a new repository; absent means the signed-in one. */
+  readonly owner?: string
+}
+
+/** The person's yes: the plan they read, sent back as it was. */
+export interface AppShareRequest extends AppSharePlanRequest {
+  readonly plan: AppSharePlanView
+}
+
+export interface AppShareResponse {
+  /** The remote the app now pushes to. */
+  readonly remote: string
+  readonly created: boolean
 }
 
 /** A plugin name, a GitHub account and a license id as the door takes them: nothing that could read as an option or a path. */

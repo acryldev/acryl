@@ -3,8 +3,8 @@ import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
-  SURFACES, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
+  LAUNCHER_ADD_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  SURFACES, type AppSharePlanRequest, type AppSharePlanView, type AppShareRequest, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
 } from './contract.ts'
 import { RegistryUnavailable } from './registry.ts'
 import { LauncherRefusal, type LauncherService } from './service.ts'
@@ -64,6 +64,28 @@ function parsePublish(value: unknown): PublishRequest | undefined {
   return request === undefined || confirmed === undefined ? undefined : { ...request, plan: confirmed }
 }
 
+function parseSharePlan(value: unknown): AppSharePlanRequest | undefined {
+  const body = record(value)
+  if (body === undefined || !onlyKeys(body, ['id', 'owner'])) return undefined
+  const id = text(body.id)
+  const owner = optional(body.owner)
+  return id === undefined || owner === null ? undefined : { id, ...owner === undefined ? {} : { owner } }
+}
+
+function parseShare(value: unknown): AppShareRequest | undefined {
+  const body = record(value)
+  if (body === undefined) return undefined
+  const { plan, ...rest } = body
+  const request = parseSharePlan(rest)
+  const read = record(plan)
+  if (request === undefined || read === undefined || !onlyKeys(read, ['repository', 'create', 'visibility', 'changes'])) return undefined
+  const repository = text(read.repository)
+  if (repository === undefined || typeof read.create !== 'boolean' || (read.visibility !== 'private' && read.visibility !== 'public')) return undefined
+  if (typeof read.changes !== 'number' || !Number.isSafeInteger(read.changes) || read.changes < 0) return undefined
+  const confirmed: AppSharePlanView = { repository, create: read.create, visibility: read.visibility, changes: read.changes }
+  return { ...request, plan: confirmed }
+}
+
 export function launcherRoutes(service: LauncherService, report: ReportError = () => {}): Acryl {
   const app = new Acryl()
   app.get(LAUNCHER_STATE_PATH, ownPage, (c) => c.json(service.state()))
@@ -112,6 +134,8 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
   }, request => service.pullPlugin(request.id, request.source), 'pull a plugin')
   ask(LAUNCHER_PUBLISH_PLAN_PATH, parsePublishPlan, request => service.publishPlan(request), 'plan a publish')
   ask(LAUNCHER_PUBLISH_PATH, parsePublish, request => service.publish(request), 'publish a plugin')
+  ask(LAUNCHER_SHARE_PLAN_PATH, parseSharePlan, request => service.sharePlan(request), 'plan a share')
+  ask(LAUNCHER_SHARE_PATH, parseShare, request => service.share(request), 'share an app')
 
   /** A change: same-origin JSON in, the new state out. A refusal is 409 with its reason; anything else is reported and 500. */
   const change = <T>(path: string, parse: (value: unknown) => T | undefined, run: (request: T) => void, operation: string): void => {

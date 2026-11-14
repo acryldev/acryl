@@ -3,7 +3,7 @@
  * lists and sends what a person asks for; the rules (what an app is, what a name may be, how an app starts) are the Host's.
  */
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { MAKEABLE_SURFACES, SURFACES, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
+import { MAKEABLE_SURFACES, SURFACES, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
@@ -224,6 +224,9 @@ function AppsView(props: AppsViewProps): ReactNode {
 
 function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const running = app.state === 'running' || app.state === 'starting'
+  const [sharing, setSharing] = useState(false)
+  // Another app's detail starts with its share closed.
+  useEffect(() => { setSharing(false) }, [app.id])
   return (
     <div className="acrylHomePanel" aria-live="polite">
       <div className="acrylHomePanelTop">
@@ -233,7 +236,7 @@ function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: La
             ? <>{app.surface === 'desktop' ? null : <button type="button" className="acrylHomeBtn" data-primary disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open</button>}<button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
             : <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing'} onClick={() => { void onStart(app.id) }}>Start</button>}
           <button type="button" className="acrylHomeBtn" disabled title="coming: acryl deploy">Deploy to WebBoxes.ai</button>
-          <button type="button" className="acrylHomeBtn" disabled title="coming">Share</button>
+          <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
           <button type="button" className="acrylHomeBtn" disabled title="coming">Open folder</button>
           <button type="button" className="acrylHomeBtn" onClick={() => { void onRemove(app.id) }} title="Takes it off this list; the folder stays">Remove from list</button>
         </div>
@@ -246,8 +249,57 @@ function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: La
         <dt>Address</dt><dd>{app.address === undefined ? 'not running' : app.address.replace(/\?.*$/u, '')}</dd>
         <dt>Runs</dt><dd>{runsLine(app)}</dd>
       </dl>
+      {sharing ? <SharePanel key={app.id} api={api} app={app} onClose={() => { setSharing(false) }} /> : null}
       {running ? <PluginsPanel api={api} app={app} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
       {app.failure === undefined ? null : <p className="acrylHomeNote" data-error>It stopped on its own:{'\n'}{app.failure}</p>}
+    </div>
+  )
+}
+
+/** Where a remote lives on the web, for a person to read: `https://github.com/me/shop.git` is `github.com/me/shop`. */
+const remoteLabel = (remote: string): string => remote.replace(/^https?:\/\//u, '').replace(/\.git$/u, '')
+
+/** Share a whole app: the app's own plan (which repository, how visible, what is saved first), then the person's yes. The app need not be running. */
+function SharePanel({ api, app, onClose }: { api: LauncherApi, app: AppView, onClose: () => void }): ReactNode {
+  const [owner, setOwner] = useState('')
+  const [plan, setPlan] = useState<AppSharePlanView | undefined>(undefined)
+  const [done, setDone] = useState<AppShareResponse | undefined>(undefined)
+  const [note, setNote] = useState<string | undefined>(undefined)
+  const [busy, setBusy] = useState(false)
+  const run = async (work: () => Promise<void>): Promise<void> => {
+    setBusy(true)
+    setNote(undefined)
+    try { await work() } catch (cause) { setNote(message(cause)) } finally { setBusy(false) }
+  }
+  const owner_ = owner.trim() === '' ? {} : { owner: owner.trim() }
+  return (
+    <div className="acrylHomePanel" role="group" aria-label={`Share ${app.name}`}>
+      <div className="acrylHomePanelTop"><h3>Share {app.name}</h3><button type="button" className="acrylHomeBtn" data-small onClick={onClose}>Close</button></div>
+      {done !== undefined ? (
+        <p className="acrylHomeNote" role="status">Shared to <span className="acrylHomeMeta">{remoteLabel(done.remote)}</span>{done.created ? ' (a new repository)' : ''}. Someone you give access makes their own copy with <span className="acrylHomeMeta">git clone {done.remote}</span></p>
+      ) : plan === undefined ? (
+        <form className="acrylHomeRow" onSubmit={(event) => {
+          event.preventDefault()
+          void run(async () => { setPlan(await api.sharePlan({ id: app.id, ...owner_ })) })
+        }}>
+          <input className="acrylHomeInput" style={{ flex: '1 1 240px' }} value={owner} placeholder="GitHub account (blank: yours)" aria-label="GitHub account" onChange={(event) => { setOwner(event.target.value) }} />
+          <button type="submit" className="acrylHomeBtn" data-primary disabled={busy}>Review what would be sent</button>
+        </form>
+      ) : (
+        <>
+          <dl className="acrylHomeKv">
+            <dt>Repository</dt><dd>{remoteLabel(plan.create ? `github.com/${plan.repository}` : plan.repository)}{plan.create ? ' (a new repository)' : ''}</dd>
+            <dt>Who can see it</dt><dd>{plan.visibility === 'private' ? 'Only you and people you invite (private)' : 'Anyone (public)'}</dd>
+            <dt>What is sent</dt><dd>{plan.changes === 0 ? 'The versions saved so far' : `${String(plan.changes)} changed ${plan.changes === 1 ? 'file is' : 'files are'} saved first, then every saved version`}</dd>
+          </dl>
+          <p className="acrylHomeNote">Nothing has been sent. It is sent only when you say yes.</p>
+          <div className="acrylHomeActs">
+            <button type="button" className="acrylHomeBtn" data-primary disabled={busy} onClick={() => { void run(async () => { setDone(await api.share({ id: app.id, ...owner_, plan })) }) }}>Yes, share {app.name}</button>
+            <button type="button" className="acrylHomeBtn" disabled={busy} onClick={() => { setPlan(undefined) }}>Not yet</button>
+          </div>
+        </>
+      )}
+      {note === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{note}</p>}
     </div>
   )
 }

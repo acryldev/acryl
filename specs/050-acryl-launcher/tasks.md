@@ -166,5 +166,19 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       current) has no `plugin-share`: `plugin list` and `plugin pull` are refused. `acrylblends add plugin-share` copies the folder but leaves the table and
       the row to the person. Fix in the acrylblends repository: making an app from a registry template brings its table and rows to the current base
       (or `add` wires what it adds), then the registry entries are regenerated and each is checked by making it, starting it and running `plugin list`.
+      Fixed 2026-11-14 in acrylblends 1.5.4 and create-acrylblends 1.5.4 (acrylblends fb1f029c, b7a5e8c3; on npm, tagged): `acrylblends add
+      plugin-share` mounts it (row, import, registry entry), and `create-acrylblends --from <id>` adds it to a registry starter that has none. Checked on
+      Small CRM: `plugin list` and `plugin pull github:inboxxobni/hello-cycle@0.1.0` work; a fresh app made with the published 1.5.4 has the row and the
+      entry. Still open: a check that makes every one of the 55 entries, starts it and lists its plugins (only Small CRM was walked), and the owner's
+      remark about old left and right panels, which I have not reproduced (an app made today gets the current frame through `upgrade`): needs the name of
+      one template that shows it.
 - [ ] T018 [cli] `acryl new <dir> --from <registry id>` works from the published CLI (seen 2026-11-14: `acryl` 0.2.4 refuses "acryl new needs the ACRYL
       framework checkout", so the registry's `acryl.music` could only be made from the checkout's CLI).
+- [x] T019 [share] Share a whole app from its card (architecture-review-2026-11-14.md, plan item 2). The app's own command does it: `npm run share`
+      (acrylblends `plugins/save/share.ts` and `share-cli.ts`, commits eee8a9b4 and dd63703c on acrylblends main, in the release after 1.5.4): the plan
+      (`--json`: repository, new or existing, visibility, changed files) sends nothing; `--confirm <plan>` sends exactly that plan and nothing when the
+      app changed since. The launcher's "Share" button (`plugins/acryl-launcher-desktop/src/client/Screen.tsx` SharePanel, `src/service.ts` sharePlan and
+      share, routes `share-plan` and `share`) shows the plan and sends on the person's yes; the app need not be running. An app made before the command
+      is told to run `npx acrylblends@latest upgrade`. Walked for real 2026-11-14 through the launcher's routes on a scratch home: a private repository
+      `inboxxobni/crm` was created, saved to and pushed to; a stale plan was refused. Not looked at in a browser (the browser extension was not connected);
+      the screen is covered by its component test.

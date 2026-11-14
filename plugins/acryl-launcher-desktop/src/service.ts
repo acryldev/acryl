@@ -9,7 +9,7 @@ import {
   type AppEntry,
 } from 'acryl-launcher'
 import type {
-  AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
+  AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
 } from './contract.ts'
 import { ACCOUNT_NAME, BLEND_ID, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
@@ -40,6 +40,8 @@ const TAIL_LINES = 6
 const BLENDS_FRESH_MS = 60_000
 /** The package `acryl new` runs (`distribution/acryl-npm-launcher/forward.js` CREATE_SPEC). */
 const CREATE_SPEC = 'create-acrylblends@latest'
+/** The app's own share command, from its folder (the `save` plugin of acrylblends). */
+const SHARE_COMMAND = join('plugins', 'save', 'share-cli.ts')
 const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]/gu
 
 const tail = (text: string): string => text.replace(ANSI, '').split(/\r?\n/u).map(line => line.trim()).filter(line => line !== '').slice(-TAIL_LINES).join('\n')
@@ -250,6 +252,48 @@ export class LauncherService {
     const result = answer.value as { ok?: boolean, releaseUrl?: string, pullLine?: string, reason?: string, next?: string } | null
     if (result?.ok !== true) throw new LauncherRefusal(`Not published: ${result?.reason ?? 'the app did not answer'}${result?.next === undefined ? '' : `. ${result.next}`}`)
     return { releaseUrl: result.releaseUrl ?? '', pullLine: result.pullLine ?? '' }
+  }
+
+  /**
+   * The app's own share command (`plugins/save/share-cli.ts`, acrylblends 1.5.5), run in its folder: it prints one JSON line, the plan or the result.
+   * The app need not be running. An app made before that command has none, and is told how to get it.
+   */
+  async #shareCommand(request: AppSharePlanRequest, confirm: AppSharePlanView | undefined): Promise<Record<string, unknown>> {
+    const entry = this.#entry(request.id)
+    if (request.owner !== undefined && !ACCOUNT_NAME.test(request.owner)) throw new LauncherRefusal(`"${request.owner}" is not a GitHub account name`)
+    if (!this.#ports.exists(join(entry.path, SHARE_COMMAND))) {
+      throw new LauncherRefusal(`This app was made before apps could share themselves. In ${entry.path} run "npx acrylblends@latest upgrade", then try again.`)
+    }
+    // The plan goes back base64url-encoded: on Windows the command starts through a shell, which would take JSON's quotes.
+    const args = [SHARE_COMMAND, '--json', ...request.owner === undefined ? [] : ['--owner', request.owner], ...confirm === undefined ? [] : ['--confirm', Buffer.from(JSON.stringify(confirm), 'utf8').toString('base64url')]]
+    const run = this.#ports.runner({ program: 'node', args, cwd: entry.path, env: this.#environment() })
+    let output = ''
+    run.onOutput((text) => { output += text })
+    const end = await new Promise<{ code: number | null, notFound: boolean, error?: string }>((resolve) => { run.onEnd(resolve) })
+    if (end.notFound) throw new LauncherRefusal('Node.js was not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.')
+    const line = output.split(/\r?\n/u).map(text => text.trim()).findLast(text => text.startsWith('{'))
+    let answer: unknown
+    try { answer = line === undefined ? undefined : JSON.parse(line) } catch { answer = undefined }
+    if (answer === null || typeof answer !== 'object') throw new LauncherRefusal(tail(output) === '' ? 'the app did not answer' : tail(output))
+    const value = answer as Record<string, unknown>
+    if (value.ok === false) throw new LauncherRefusal(`Not shared: ${typeof value.reason === 'string' ? value.reason : 'the app refused'}`)
+    return value
+  }
+
+  /** What sharing the app would send: the repository (a new one, or the remote it has), its visibility and how many changed files are saved first. Sends nothing. */
+  async sharePlan(request: AppSharePlanRequest): Promise<AppSharePlanView> {
+    const plan = await this.#shareCommand(request, undefined)
+    if (typeof plan.repository !== 'string' || typeof plan.create !== 'boolean' || (plan.visibility !== 'private' && plan.visibility !== 'public') || typeof plan.changes !== 'number') {
+      throw new LauncherRefusal('the app did not give a share plan')
+    }
+    return { repository: plan.repository, create: plan.create, visibility: plan.visibility, changes: plan.changes }
+  }
+
+  /** The person's yes: share exactly the plan they read. The app sends it only if it still matches that plan. */
+  async share(request: AppShareRequest): Promise<AppShareResponse> {
+    const result = await this.#shareCommand(request, request.plan)
+    if (result.ok !== true || typeof result.remote !== 'string') throw new LauncherRefusal('Not shared: the app did not answer')
+    return { remote: result.remote, created: result.created === true }
   }
 
   async health(probe: Runner = this.#ports.runner): Promise<HealthView> {

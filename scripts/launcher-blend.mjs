@@ -9,6 +9,7 @@
  *   3. opens it with the app's own `npm run desktop`, the Blends desktop window: it starts the app's server or joins the one running, keeps one window per app
  *      (a second start brings it forward), keeps its window data in the app, and stops the server when the window closes. The page itself closes the frame's left
  *      panel and opens the right one (`src/page/frame-panels.ts`), so the browser shows the same.
+ * `--web` starts the same app for the browser (`npm run dev`, which prints its address) instead of the window.
  * The launcher lists and makes apps in `~/.acryl` (`ACRYL_LAUNCHER_HOME` moves it), the same home the ACRYL app uses.
  */
 import { spawn, spawnSync } from 'node:child_process'
@@ -84,8 +85,10 @@ put(join(app, 'assets/icon.png'), readFileSync(join(root, 'apps/acryl-desktop/bu
 spawnSync('git', ['add', '-A'], { cwd: app })
 spawnSync('git', ['commit', '-qm', 'ACRYL launcher'], { cwd: app })
 
-console.log('launcher blend: opening the window (npm run desktop)')
+// `--web`: the same launcher in the browser (the app's `npm run dev` prints its address) instead of the desktop window.
+const face = process.argv.includes('--web') ? 'dev' : 'desktop'
+console.log(face === 'dev' ? 'launcher blend: starting it for the browser (npm run dev); its address is printed below' : 'launcher blend: opening the window (npm run desktop)')
 // npm run desktop passes Ctrl+C and stop signals to the window, which stops the app's server as it closes.
-const desktop = spawn(npm, ['run', 'desktop'], { cwd: app, stdio: 'inherit', shell: process.platform === 'win32', env: { ...process.env, ACRYL_LAUNCHER_HOME: launcherHome } })
+const desktop = spawn(npm, ['run', face], { cwd: app, stdio: 'inherit', shell: process.platform === 'win32', env: { ...process.env, ACRYL_LAUNCHER_HOME: launcherHome } })
 desktop.on('exit', (code, signal) => process.exit(code ?? (signal === null ? 0 : 1)))
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => { /* npm and the window end on the same signal; this waits for them */ })

@@ -1,7 +1,7 @@
 /** Same-origin browser client for the launcher routes (`../contract.ts`). */
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
-  type AssistantFolderResponse, type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type PluginPullResponse, type PluginsResponse, type PluginView, type PublishPlanRequest, type PublishPlanView,
+  LAUNCHER_ADD_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  type AppSharePlanRequest, type AppSharePlanView, type AppShareRequest, type AppShareResponse, type AssistantFolderResponse, type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type PluginPullResponse, type PluginsResponse, type PluginView, type PublishPlanRequest, type PublishPlanView,
   type PublishRequest, type PublishResponse, type StateResponse,
 } from '../contract.ts'
 
@@ -29,6 +29,10 @@ export interface LauncherApi {
   publishPlan(request: PublishPlanRequest): Promise<PublishPlanView>
   /** The person's yes to the plan they read. */
   publish(request: PublishRequest): Promise<PublishResponse>
+  /** What sharing a whole app would send (its repository, visibility, changed files); sends nothing. */
+  sharePlan(request: AppSharePlanRequest): Promise<AppSharePlanView>
+  /** The person's yes to the share plan they read. */
+  share(request: AppShareRequest): Promise<AppShareResponse>
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -71,5 +75,7 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
     pullPlugin: (id, source) => send<PluginPullResponse>(LAUNCHER_PLUGIN_PULL_PATH, { id, source }),
     publishPlan: request => send<PublishPlanView>(LAUNCHER_PUBLISH_PLAN_PATH, request),
     publish: request => send<PublishResponse>(LAUNCHER_PUBLISH_PATH, request),
+    sharePlan: request => send<AppSharePlanView>(LAUNCHER_SHARE_PLAN_PATH, request),
+    share: request => send<AppShareResponse>(LAUNCHER_SHARE_PATH, request),
   }
 }

@@ -346,6 +346,39 @@ describe('plugins of a running app', () => {
     await expect(service.publish({ id: 'shop', plugin: 'demo', plan })).rejects.toThrow('Not published: this plugin\'s publish changed since you confirmed it. review it again')
   })
 
+  it('shares a whole app through the app\'s own command: the plan sends nothing, the yes hands that plan back, a refusal is said in words', async () => {
+    const { service, makeApp, runs } = setup()
+    const folder = makeApp('shop')
+    await expect(service.sharePlan({ id: 'shop' })).rejects.toThrow(/made before apps could share themselves.*npx acrylblends@latest upgrade/u)
+    expect(runs).toHaveLength(0)
+    mkdirSync(join(folder, 'plugins', 'save'), { recursive: true })
+    writeFileSync(join(folder, 'plugins', 'save', 'share-cli.ts'), '')
+    await expect(service.sharePlan({ id: 'shop', owner: '--force' })).rejects.toThrow('is not a GitHub account name')
+
+    const sharePlan = { repository: 'inboxxobni/shop', create: true, visibility: 'private' as const, changes: 2 }
+    const asked = service.sharePlan({ id: 'shop', owner: 'inboxxobni' })
+    await Promise.resolve()
+    expect(runs.at(-1)?.command).toMatchObject({ program: 'node', args: [join('plugins', 'save', 'share-cli.ts'), '--json', '--owner', 'inboxxobni'], cwd: folder })
+    runs.at(-1)?.say(`${JSON.stringify(sharePlan)}\n`)
+    runs.at(-1)?.end(0)
+    expect(await asked).toEqual(sharePlan)
+
+    const sent = service.share({ id: 'shop', owner: 'inboxxobni', plan: sharePlan })
+    await Promise.resolve()
+    const confirm = runs.at(-1)?.command.args.at(-1) ?? ''
+    expect(runs.at(-1)?.command.args.slice(0, -1)).toEqual([join('plugins', 'save', 'share-cli.ts'), '--json', '--owner', 'inboxxobni', '--confirm'])
+    expect(JSON.parse(Buffer.from(confirm, 'base64url').toString('utf8'))).toEqual(sharePlan)
+    runs.at(-1)?.say('{"ok":true,"remote":"https://github.com/inboxxobni/shop.git","created":true,"commit":"abc"}\n')
+    runs.at(-1)?.end(0)
+    expect(await sent).toEqual({ remote: 'https://github.com/inboxxobni/shop.git', created: true })
+
+    const refused = service.share({ id: 'shop', plan: sharePlan })
+    await Promise.resolve()
+    runs.at(-1)?.say('{"ok":false,"reason":"the app changed since this plan was shown, so nothing was sent. Read the new plan and confirm it"}\n')
+    runs.at(-1)?.end(1)
+    await expect(refused).rejects.toThrow('Not shared: the app changed since this plan was shown')
+  })
+
   it('refuses a plugin name, account or license that is not one, before the door is asked', async () => {
     const { service, makeApp, doorCalls } = setup()
     makeApp('shop')

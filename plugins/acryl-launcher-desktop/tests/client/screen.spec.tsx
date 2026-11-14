@@ -25,12 +25,14 @@ const PLUGINS = [
   { name: 'pomodoro', version: '6388', state: 'active', pulledFrom: 'github:a/b@0.1.0', author: 'a' },
 ]
 const PLAN = { owner: 'o', repo: 'demo', version: '0.1.0', visibility: 'public', license: 'MIT', createsRepository: true, files: ['index.ts'], integrity: 'sha512-x', digest: 'abc', pullLine: 'npm run acryl -- plugin pull github:o/demo@0.1.0@sha256:abc' }
+const SHARE_PLAN = { repository: 'o/shop', create: true, visibility: 'private' as const, changes: 2 }
 
 function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): LauncherApi {
   return {
     state: vi.fn(async () => initial),
     blends: vi.fn(async () => BLENDS),
     assistantFolder: vi.fn(async () => '/h/ACRYL'), plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
+    sharePlan: vi.fn(async () => SHARE_PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/o/shop.git', created: true })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
     add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial),
@@ -79,7 +81,7 @@ describe('the ACRYL screen', () => {
     const filter = await screen.findByRole('button', { name: /CLI \(TUI\) \(coming\)/u })
     expect((filter as HTMLButtonElement).disabled).toBe(true)
     expect((screen.getByRole('button', { name: 'Deploy to WebBoxes.ai' }) as HTMLButtonElement).disabled).toBe(true)
-    expect((screen.getByRole('button', { name: 'Share' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Open folder' }) as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: '+ New app' }))
     const radio = screen.getByRole('radio', { name: /CLI \(TUI\) \(coming\)/u }) as HTMLInputElement
     expect(radio.disabled).toBe(true)
@@ -194,6 +196,30 @@ describe('the plugins of a running app', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Yes, publish o/demo' }))
     await waitFor(() => { expect(api.publish).toHaveBeenCalledWith({ id: 'shop', plugin: 'hello', owner: 'o', plan: PLAN }) })
     expect(await screen.findByText(/releases\/tag\/v0.1.0/u)).toBeTruthy()
+  })
+
+  it('shares a whole app that is not running: the plan first, sent only on the person\'s yes, and a refusal is shown', async () => {
+    const api = fake(state([app({})]))
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'GitHub account' }), { target: { value: 'o' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review what would be sent' }))
+    expect(await screen.findByText('github.com/o/shop (a new repository)')).toBeTruthy()
+    expect(screen.getByText('Only you and people you invite (private)')).toBeTruthy()
+    expect(screen.getByText('2 changed files are saved first, then every saved version')).toBeTruthy()
+    expect(api.sharePlan).toHaveBeenCalledWith({ id: 'shop', owner: 'o' })
+    expect(api.share).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, share shop' }))
+    await waitFor(() => { expect(api.share).toHaveBeenCalledWith({ id: 'shop', owner: 'o', plan: SHARE_PLAN }) })
+    expect(await screen.findByText('git clone https://github.com/o/shop.git')).toBeTruthy()
+  })
+
+  it('says in words why an app cannot be shared', async () => {
+    const api = fake(state([app({})]), { sharePlan: vi.fn(async () => { throw new Error('Not shared: you are not signed in to GitHub on this computer') }) })
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review what would be sent' }))
+    expect((await screen.findByRole('alert')).textContent).toBe('Not shared: you are not signed in to GitHub on this computer')
   })
 
   it('says why when the app cannot list its plugins, and shows no plugin tools for an app that is stopped', async () => {
