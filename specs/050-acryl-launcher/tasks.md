@@ -161,5 +161,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       the current left and right panels, ready for the 2026-11-20 workshop, where people pull and push Blends and Cordis plugins.
       Done when: every template made from the registry opens with the current frame's panels, and the pull / push cycle for a Blend and for a Cordis plugin
       works from the launcher.
+      Cause found 2026-11-14 (architecture-review-2026-11-14.md, finding 2): an app's plugin table (`src/app.ts`) and its `blend.yaml` rows are template
+      files. `acrylblends upgrade` brings the copied library plugins up to date but not that table, so Small CRM (made today from the registry, library
+      current) has no `plugin-share`: `plugin list` and `plugin pull` are refused. `acrylblends add plugin-share` copies the folder but leaves the table and
+      the row to the person. Fix in the acrylblends repository: making an app from a registry template brings its table and rows to the current base
+      (or `add` wires what it adds), then the registry entries are regenerated and each is checked by making it, starting it and running `plugin list`.
 - [ ] T018 [cli] `acryl new <dir> --from <registry id>` works from the published CLI (seen 2026-11-14: `acryl` 0.2.4 refuses "acryl new needs the ACRYL
       framework checkout", so the registry's `acryl.music` could only be made from the checkout's CLI).
