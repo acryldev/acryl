@@ -79,11 +79,21 @@ function ghApiWrites(args: readonly string[]): boolean {
 /** A rehearsal that sends nothing: `git push --dry-run` (or `-n`), `npm publish --dry-run`. */
 const rehearses = (args: readonly string[], short?: string): boolean => args.some(word => word === '--dry-run' || (short !== undefined && word === short))
 
+/** The app's share command told to send (`--confirm`), through a package manager's `run share` or `node plugins/save/share-cli.ts`. Without `--confirm` it only shows the plan. */
+function sharesConfirmed(name: string, args: readonly string[]): boolean {
+  if (!args.some(word => word === '--confirm' || word.startsWith('--confirm='))) return false
+  if (args.some(word => /(?:^|[\\/])share-cli\.[cm]?[jt]s$/u.test(word))) return true
+  const plain = args.filter(word => !word.startsWith('-'))
+  return PACKAGE_MANAGERS.has(name) && (plain[0] === 'share' || (plain[0] === 'run' && plain[1] === 'share'))
+}
+
 /** What one simple command sends out, as the person would name it; undefined when it sends nothing. */
 function outwardOf(words: readonly string[]): string | undefined {
   const [first, ...args] = fromProgram(words)
   if (first === undefined) return undefined
   const name = program(first)
+  // The app's own share with the yes already given (`npm run share -- --confirm <plan>`, or its file run directly): it creates a repository and pushes.
+  if (sharesConfirmed(name, args)) return 'share the app'
   if (name === 'git') return gitSubcommand(args) === 'push' && !rehearses(args, '-n') ? 'git push' : undefined
   if (name === 'gh') {
     const [group, verb] = args.filter(word => !word.startsWith('-'))

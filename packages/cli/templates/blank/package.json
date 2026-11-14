@@ -18,6 +18,7 @@
     "lock": "node plugins/manifest/lock.ts",
     "snapshot": "node plugins/manifest/snapshot.ts",
     "save": "node plugins/save/cli.ts",
+    "share": "node plugins/save/share-cli.ts",
     "upgrade": "node plugins/manifest/upgrade-cli.ts"
   },
   "dependencies": {

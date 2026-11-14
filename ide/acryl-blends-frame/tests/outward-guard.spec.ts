@@ -15,6 +15,11 @@ describe('what a shell command sends out of the machine', () => {
     expect(outwardAction('gh api repos/ana/notes/topics -f names[]=x')).toBe('gh api (a write)')
     expect(outwardAction('npm publish --access public')).toBe('npm publish')
     expect(outwardAction('pnpm publish')).toBe('pnpm publish')
+    // The app's own share with the yes given; the plan alone sends nothing.
+    expect(outwardAction('npm run share -- --confirm \'{"repository":"me/shop"}\'')).toBe('share the app')
+    expect(outwardAction('node plugins/save/share-cli.ts --confirm {}')).toBe('share the app')
+    expect(outwardAction('npm run share -- --json')).toBeUndefined()
+    expect(outwardAction('npm run share')).toBeUndefined()
     expect(outwardAction('npx npm dist-tag add x@1 latest')).toBe('npm dist-tag')
   })
 
