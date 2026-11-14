@@ -55,6 +55,9 @@ const parse = (argv: readonly string[]) =>
     options: { dir: { type: 'string' }, suite: { type: 'boolean' } },
   })
 
+/** The plugins whose rows only the agent template has. */
+const AGENT_ROWS = ['agent-panel', 'driver-pty', 'driver-acp']
+
 const present = (appDir: string, name: string) => existsSync(join(pluginsFolder(appDir).dir, name))
 
 /**
@@ -124,7 +127,7 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
       io.stderr.write(
         `error: ${plugin.name} needs the ${missing.map((row) => `\`${row}\``).join(' and ')} ${missing.length === 1 ? 'row' : 'rows'} in blend.yaml, and this app has ${describeRows(appDir)}. ` +
           `${plugin.name === 'driver-pty' ? 'Add agent-panel first (acrylblends add agent-panel driver-pty), which needs the agent template. ' : ''}` +
-          `The rows come with the agent template: start from it (npm create acrylblends@latest my-app agent) and add ${plugin.name} there. Nothing was changed.\n`,
+          `${AGENT_ROWS.includes(plugin.name) ? `The rows come with the agent template: start from it (npm create acrylblends@latest my-app agent) and add ${plugin.name} there. ` : ''}Nothing was changed.\n`,
       )
       return 1
     }

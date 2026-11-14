@@ -365,6 +365,16 @@ export function startRepository(directory: string): void {
   run([...identity, 'commit', '-q', '-m', 'Initial commit from acrylblends'])
 }
 
+/** An app with the extensions row (what plugin-share installs through) and no plugin-share row: a starter older than sharing. */
+export function lacksPluginShare(directory: string): boolean {
+  const file = join(directory, 'blend.yaml')
+  if (!existsSync(file)) return false
+  const names = [...readFileSync(file, 'utf8').matchAll(/^ *name: ?(\S+)\r?$/gmu)].map(
+    (match) => match[1],
+  )
+  return names.includes('extensions') && !names.includes('plugin-share')
+}
+
 /** The registry `--registry` names. */
 function openNamedRegistry(name: string, cwd: string, reading: RegistryReading) {
   const source = parseRegistrySource(name, cwd)
@@ -455,7 +465,13 @@ async function createFromSource(
     if (options.desktop) {
       const framework = (args: string[]) =>
         io.run(process.execPath, [acrylblendsBin(), ...args, '--dir', target], io.cwd)
-      if ((await framework(['add', 'desktop'])) !== 0 || (await framework(['upgrade'])) !== 0) {
+      // A starter made before sharing has no plugin-share row, so pull, list and publish would be refused in the new app: it gets the plugin now, mounted.
+      const share = lacksPluginShare(target) ? await framework(['add', 'plugin-share']) : 0
+      if (
+        (await framework(['add', 'desktop'])) !== 0 ||
+        share !== 0 ||
+        (await framework(['upgrade'])) !== 0
+      ) {
         io.stderr.write(
           `error: ${directory} was made, but putting it in the ACRYL frame failed (see above); it runs on its own with ${'`npm start`'}\n`,
         )

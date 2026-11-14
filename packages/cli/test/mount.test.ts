@@ -65,3 +65,28 @@ describe('a Blend written with CRLF', () => {
     })
   }
 })
+
+describe('plugin-share, for an app made from a starter older than sharing', () => {
+  const share = MOUNTED.find((plugin) => plugin.name === 'plugin-share')
+  if (share === undefined) throw new Error('plugin-share is not a mounted plugin')
+
+  it('gets its row after extensions and a named import, since the plugin is an export of its entry', () => {
+    const dir = app('\n')
+    const result = mount(dir, share)
+    expect(result.done, result.note).toBe(true)
+    expect(readFileSync(join(dir, 'blend.yaml'), 'utf8')).toContain(
+      '    - id: extensions\n      name: extensions\n    - id: plugin-share\n      name: plugin-share\n    - id: routes',
+    )
+    const source = readFileSync(join(dir, 'src', 'app.ts'), 'utf8')
+    expect(source).toContain("import { pluginShare } from '../plugins/plugin-share/index.ts'\n")
+    expect(source).toContain("export const registry = {\n  'plugin-share': pluginShare,\n")
+  })
+
+  it('is left alone in an app that already has it', () => {
+    const dir = app('\n')
+    mount(dir, share)
+    const before = readFileSync(join(dir, 'src', 'app.ts'), 'utf8')
+    expect(mount(dir, share).done).toBe(true)
+    expect(readFileSync(join(dir, 'src', 'app.ts'), 'utf8')).toBe(before)
+  })
+})

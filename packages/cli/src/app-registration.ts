@@ -4,7 +4,9 @@
  * keeps them on the new file it writes, and reports only the owner's other lines.
  */
 
-import { MOUNTED, type Mounted } from './mount.ts'
+import { MOUNTED, type Mounted, registrationImport } from './mount.ts'
+
+export { registrationImport }
 
 /** One registration line the framework wrote into `src/app.ts`. */
 export interface AppRegistration {
@@ -16,11 +18,6 @@ export interface AppRegistration {
 
 const eolOf = (text: string): string => (text.includes('\r\n') ? '\r\n' : '\n')
 
-/** The import line `mount` writes for one plugin. */
-export function registrationImport(plugin: Mounted): string {
-  return `import * as ${plugin.local} from '../plugins/${plugin.name}/${plugin.entry ?? 'index.ts'}'`
-}
-
 /** The registry entry line `mount` writes for one plugin (its indent and comma included). */
 export function registrationEntry(plugin: Mounted): string {
   return `  '${plugin.name}': ${plugin.local},`
@@ -31,10 +28,11 @@ function registrations(text: string, mounted: readonly Mounted[]): AppRegistrati
   const found: AppRegistration[] = []
   for (const raw of text.split('\n')) {
     const line = raw.endsWith('\r') ? raw.slice(0, -1) : raw
-    const importMatch = /^import \* as (\w+) from '\.\.\/plugins\/([^/]+)\/([^']+)'$/u.exec(line)
+    const importMatch =
+      /^import (?:\* as \w+|\{ \w+ \}) from '\.\.\/plugins\/([^/]+)\/[^']+'$/u.exec(line)
     if (importMatch !== null) {
       const plugin = mounted.find(
-        (candidate) => candidate.name === importMatch[2] && candidate.local === importMatch[1],
+        (candidate) => candidate.name === importMatch[1] && registrationImport(candidate) === line,
       )
       if (plugin !== undefined) found.push({ plugin, kind: 'import', line })
       continue

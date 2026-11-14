@@ -16,6 +16,8 @@ export interface Mounted {
   readonly row?: string
   /** Its entry file inside the plugin's folder (`index.ts`, or `src/index.ts` for the plugins that keep their source in `src/`). */
   readonly entry?: string
+  /** The plugin is a named export of its entry (`import { pluginShare }`), not the module itself (`import * as panel`). */
+  readonly named?: boolean
 }
 
 export const MOUNTED: readonly Mounted[] = [
@@ -24,7 +26,21 @@ export const MOUNTED: readonly Mounted[] = [
   { name: 'driver-acp', local: 'driverAcp', needs: ['agent-panel'], after: 'agent-panel' },
   { name: 'feedback', local: 'feedback', needs: ['acryl-router'] },
   { name: 'showcase', local: 'showcase', needs: ['plugin-share'], after: 'plugin-share' },
+  // Sharing (pull, publish): every template has it since 1.3, and an app made from an older starter gets it with `add plugin-share`.
+  {
+    name: 'plugin-share',
+    local: 'pluginShare',
+    named: true,
+    needs: ['extensions'],
+    after: 'extensions',
+  },
 ]
+
+/** The import line `mount` writes into `src/app.ts` for one plugin. */
+export function registrationImport(plugin: Mounted): string {
+  const binding = plugin.named === true ? `{ ${plugin.local} }` : `* as ${plugin.local}`
+  return `import ${binding} from '../plugins/${plugin.name}/${plugin.entry ?? 'index.ts'}'`
+}
 
 /** A row, in either line ending: a file edited on Windows (or checked out with core.autocrlf) is still a Blend. */
 const ROW = /^( *)- id: ?(\S+)\r?\n\1 {2}name: ?(\S+)\r?\n/gmu
@@ -98,8 +114,7 @@ export function mount(appDir: string, plugin: Mounted): MountResult {
       // The registry as the templates write it: one entry per line, or all on one line (`{ 'acryl-router': router, routes }`).
       const table = /^export const registry = \{(\r?\n)/mu.exec(text)
       if (last && table) {
-        const file = plugin.entry ?? 'index.ts'
-        const line = `import * as ${plugin.local} from '../plugins/${plugin.name}/${file}'${eol}`
+        const line = `${registrationImport(plugin)}${eol}`
         const at = table.index + table[0].length
         text =
           text.slice(0, at) +
@@ -111,7 +126,7 @@ export function mount(appDir: string, plugin: Mounted): MountResult {
         done.push(`src/app.ts (registered as ${plugin.local})`)
       } else
         failed.push(
-          `src/app.ts: import it as \`${plugin.local}\` from '../plugins/${plugin.name}/${plugin.entry ?? 'index.ts'}' and add \`${entry}\` to the registry`,
+          `src/app.ts: add the line \`${registrationImport(plugin)}\` and add \`${entry}\` to the registry`,
         )
     }
   } else failed.push(`src/app.ts: not found; register ${entry(plugin)} in the app's registry`)

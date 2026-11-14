@@ -674,6 +674,9 @@ export const pluginShare = {
   name: 'plugin-share',
   inject: ['extensions', 'appInstance'],
   apply(ctx: Context, config: PluginShareConfig) {
+    // A pull runs a stranger's code and a publish leaves the machine: development only. The templates' src/app.ts leaves the row out in production; an
+    // app whose src/app.ts is older than that line is covered here.
+    if (process.env.NODE_ENV === 'production') return
     new PluginShare(ctx, config ?? {})
   },
 }
