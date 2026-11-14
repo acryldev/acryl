@@ -1,43 +1,48 @@
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
-import { resolveDesktopUserDataOverride } from '../../src/shell/desktop-user-data.ts'
+import { afterEach, describe, expect, it } from 'vitest'
+import { carryLegacyUserData, legacyUserDataDirectory, resolveDesktopUserData } from '../../src/shell/desktop-user-data.ts'
 
-const appData = '/Users/someone/Library/Application Support'
+const instance = { userDataDir: '/Users/someone/.acryl/desktop-data' }
 
-describe('resolveDesktopUserDataOverride', () => {
-  it('returns undefined when the env var is missing or blank', () => {
-    expect(resolveDesktopUserDataOverride({})).toBeUndefined()
-    expect(resolveDesktopUserDataOverride({ DSH_DESKTOP_USER_DATA: '' })).toBeUndefined()
-    expect(resolveDesktopUserDataOverride({ DSH_DESKTOP_USER_DATA: '   ' })).toBeUndefined()
-  })
-
-  it('never asks for the application-data folder when an explicit override is given (Electron throws for it on Windows under a redirected profile)', () => {
-    const appData = () => { throw new Error("Failed to get 'appData' path") }
-    expect(resolveDesktopUserDataOverride({ DSH_DESKTOP_USER_DATA: '/tmp/dsh-desktop-acryl' }, { appData, userDataName: 'ACRYL-x', productName: 'ACRYL' })).toBe(resolve('/tmp/dsh-desktop-acryl'))
-    expect(resolveDesktopUserDataOverride({}, { appData, userDataName: 'ACRYL', productName: 'ACRYL' })).toBeUndefined()
-  })
-
-  it('resolves an absolute isolated user-data directory', () => {
-    expect(resolveDesktopUserDataOverride({
-      DSH_DESKTOP_USER_DATA: '/tmp/dsh-desktop-acryl',
-    })).toBe(resolve('/tmp/dsh-desktop-acryl'))
-  })
-
-  it('leaves the default instance alone: its folder is already named after the product', () => {
-    expect(resolveDesktopUserDataOverride({}, { appData: () => appData, userDataName: 'ACRYL', productName: 'ACRYL' })).toBeUndefined()
-  })
-
-  it('gives an instance with its own user-data name a folder of its own, so it cannot share the installed app\'s data', () => {
-    expect(resolveDesktopUserDataOverride({}, { appData: () => appData, userDataName: 'ACRYL-live-check', productName: 'ACRYL' }))
-      .toBe(join(appData, 'ACRYL-live-check'))
-    expect(resolveDesktopUserDataOverride({}, { appData: () => appData, userDataName: 'ACRYL Development harness-latest-2026-10', productName: 'ACRYL' }))
-      .toBe(join(appData, 'ACRYL Development harness-latest-2026-10'))
+describe('resolveDesktopUserData', () => {
+  it('is the instance folder inside its home when the override is missing or blank', () => {
+    expect(resolveDesktopUserData({}, instance)).toBe(instance.userDataDir)
+    expect(resolveDesktopUserData({ DSH_DESKTOP_USER_DATA: '' }, instance)).toBe(instance.userDataDir)
+    expect(resolveDesktopUserData({ DSH_DESKTOP_USER_DATA: '   ' }, instance)).toBe(instance.userDataDir)
   })
 
   it('lets an explicit override win over the instance folder', () => {
-    expect(resolveDesktopUserDataOverride(
-      { DSH_DESKTOP_USER_DATA: '/tmp/explicit' },
-      { appData: () => appData, userDataName: 'ACRYL-live-check', productName: 'ACRYL' },
-    )).toBe(resolve('/tmp/explicit'))
+    expect(resolveDesktopUserData({ DSH_DESKTOP_USER_DATA: '/tmp/explicit' }, instance)).toBe(resolve('/tmp/explicit'))
+  })
+})
+
+describe('carryLegacyUserData', () => {
+  const roots: string[] = []
+  afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }) })
+  const scratch = (): string => { const root = mkdtempSync(join(tmpdir(), 'acryl-user-data-')); roots.push(root); return root }
+
+  it('copies the old OS-folder data into the home once, without the process locks, and leaves the old folder in place', () => {
+    const root = scratch()
+    const legacy = legacyUserDataDirectory(join(root, 'Application Support'), 'ACRYL')
+    mkdirSync(join(legacy, 'Local Storage'), { recursive: true })
+    writeFileSync(join(legacy, 'Local Storage', 'state'), 'kept')
+    writeFileSync(join(legacy, 'SingletonLock'), 'held')
+    const target = join(root, '.acryl', 'desktop-data')
+    expect(carryLegacyUserData(target, legacy)).toBe(legacy)
+    expect(readFileSync(join(target, 'Local Storage', 'state'), 'utf8')).toBe('kept')
+    expect(existsSync(join(target, 'SingletonLock'))).toBe(false)
+    expect(existsSync(join(legacy, 'Local Storage', 'state'))).toBe(true)
+    writeFileSync(join(legacy, 'Local Storage', 'state'), 'newer in the old folder')
+    expect(carryLegacyUserData(target, legacy)).toBeUndefined()
+    expect(readFileSync(join(target, 'Local Storage', 'state'), 'utf8')).toBe('kept')
+  })
+
+  it('does nothing without an old folder', () => {
+    const root = scratch()
+    expect(carryLegacyUserData(join(root, 'target'), join(root, 'missing'))).toBeUndefined()
+    expect(carryLegacyUserData(join(root, 'target'), undefined)).toBeUndefined()
+    expect(existsSync(join(root, 'target'))).toBe(false)
   })
 })

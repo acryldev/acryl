@@ -1,38 +1,46 @@
-/** Electron user-data location for isolated local launches: an explicit override, else the selected app instance's own folder. */
+/** Electron user-data location: an explicit override, else the selected app instance's own folder inside its home. */
 
-import { join, resolve } from 'node:path'
+import { cpSync, existsSync } from 'node:fs'
+import { basename, join, resolve } from 'node:path'
 
 /** Env var consumed by the Electron bootstrap before the single-instance lock. */
 export const DSH_DESKTOP_USER_DATA_ENV = 'DSH_DESKTOP_USER_DATA'
 
-/** What the selected app instance says about where its Electron user data lives (see `AppInstance.userDataName`). */
+/** What the selected app instance says about where its Electron user data lives (see `AppInstance.userDataDir`). */
 export interface InstanceUserData {
-  /**
-   * The platform's application-data folder (`app.getPath('appData')`). A function because it is asked only when it is needed: Electron throws for it on
-   * Windows when the user profile is redirected (an isolated run moves USERPROFILE), and an explicit `DSH_DESKTOP_USER_DATA` makes it unnecessary.
-   */
-  readonly appData: () => string
-  /** The instance's user-data folder name. */
-  readonly userDataName: string
-  /** The name Electron would otherwise derive the folder from. */
-  readonly productName: string
+  /** The instance's user-data folder, inside its home. */
+  readonly userDataDir: string
 }
 
 /**
- * Resolve a launch-time user-data directory from the environment.
+ * Resolve the user-data directory for this launch.
  * An explicit `DSH_DESKTOP_USER_DATA` wins; empty or whitespace-only values are treated as unset so a blank override never points Electron at the
- * current working directory. Without one, an instance whose `userDataName` differs from the product name (a worktree, the development app, a launch
- * with `ACRYL_LOCAL_PRODUCT_NAME`) gets its own folder under the application-data folder, so it never shares window state, logs, crash evidence or
- * the single-instance lock with the installed app. The default instance names its folder after the product, so it is left alone.
+ * current working directory. Otherwise it is the instance's own folder inside its home (`~/.acryl/desktop-data` for the installed app), so two apps never
+ * share window state, logs, crash evidence or the single-instance lock, and nothing lands in an OS application-data folder.
  * @param env - process environment, injected in tests.
- * @param instance - the selected instance's user-data facts, when the caller has them.
+ * @param instance - the selected instance's user-data facts.
  */
-export function resolveDesktopUserDataOverride(
-  env: Record<string, string | undefined> = process.env,
-  instance?: InstanceUserData,
-): string | undefined {
+export function resolveDesktopUserData(env: Record<string, string | undefined>, instance: InstanceUserData): string {
   const raw = env[DSH_DESKTOP_USER_DATA_ENV]
   if (raw !== undefined && raw.trim().length > 0) return resolve(raw)
-  if (instance === undefined || instance.userDataName === instance.productName) return undefined
-  return join(instance.appData(), instance.userDataName)
+  return instance.userDataDir
+}
+
+/** Chromium's per-folder process locks: never carried over, or the new folder would look held by the old app. */
+const PROCESS_LOCKS = new Set(['SingletonLock', 'SingletonSocket', 'SingletonCookie', 'lockfile'])
+
+/**
+ * Carry the user data an earlier version kept in the OS application-data folder (`<appData>/<userDataName>`) into the home, once: only when the new folder
+ * does not exist yet. It is copied, not moved, so an older ACRYL still installed keeps working.
+ * @returns the folder it copied from, or undefined when there was nothing to carry.
+ */
+export function carryLegacyUserData(target: string, legacy: string | undefined): string | undefined {
+  if (legacy === undefined || existsSync(target) || !existsSync(legacy)) return undefined
+  cpSync(legacy, target, { recursive: true, filter: source => !PROCESS_LOCKS.has(basename(source)) })
+  return legacy
+}
+
+/** The folder an earlier version used: Electron's application-data root plus the instance's user-data name. */
+export function legacyUserDataDirectory(appData: string, userDataName: string): string {
+  return join(appData, userDataName)
 }

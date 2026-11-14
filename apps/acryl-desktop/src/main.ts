@@ -110,7 +110,7 @@ import {
 } from './workspaces/windows-volume-diagnostics.ts'
 import type { RendererBootReport } from './startup/renderer-boot-contract.ts'
 import { desktopLocaleFromLanguageTag } from './shell/tray-locale.ts'
-import { resolveDesktopUserDataOverride } from './shell/desktop-user-data.ts'
+import { carryLegacyUserData, legacyUserDataDirectory, resolveDesktopUserData } from './shell/desktop-user-data.ts'
 import { resolveProductName } from './shell/product-name.ts'
 
 const BIN_NAME = 'acryl-desktop'
@@ -1199,15 +1199,18 @@ async function start(): Promise<void> {
 }
 
 function applyIsolatedUserData(): void {
-  const override = resolveDesktopUserDataOverride(process.env, {
-    appData: () => app.getPath('appData'),
-    userDataName: selectInstance().userDataName,
-    productName: PRODUCT_NAME,
-  })
-  if (override === undefined) return
-  mkdirSync(override, { recursive: true, mode: 0o700 })
-  app.setPath('userData', override)
-  process.stderr.write(`${BIN_NAME}: isolated userData ${override}\n`)
+  const instance = selectInstance()
+  const userData = resolveDesktopUserData(process.env, instance)
+  if (userData === instance.userDataDir) {
+    // Electron throws for appData on Windows when the user profile is redirected; then there is no earlier folder to carry.
+    let legacy: string | undefined
+    try { legacy = legacyUserDataDirectory(app.getPath('appData'), instance.userDataName) } catch { legacy = undefined }
+    const carried = carryLegacyUserData(userData, legacy)
+    if (carried !== undefined) process.stderr.write(`${BIN_NAME}: carried user data from ${carried}\n`)
+  }
+  mkdirSync(userData, { recursive: true, mode: 0o700 })
+  app.setPath('userData', userData)
+  process.stderr.write(`${BIN_NAME}: userData ${userData}\n`)
 }
 
 async function run(): Promise<void> {

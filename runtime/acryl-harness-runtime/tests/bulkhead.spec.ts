@@ -116,7 +116,7 @@ describe('bulkhead behavior', () => {
     const music = await bootApp(app('music-editor', 'Music Editor'))
     const social = await bootApp(app('social-machine', 'Social Machine'))
     try {
-      for (const key of ['home', 'dshHome', 'userDataName', 'runLockFile', 'projectScope'] as const) {
+      for (const key of ['home', 'dshHome', 'userDataName', 'userDataDir', 'runLockFile', 'projectScope'] as const) {
         expect(music.instance[key], key).not.toBe(social.instance[key])
       }
       expect(music.port).not.toBe(social.port)

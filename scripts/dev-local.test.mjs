@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { ensureLocalAdvancedMode, localDesktopInstance, localUserDataRoot } from './dev-local.mjs'
+import { ensureLocalAdvancedMode, localDesktopInstance } from './dev-local.mjs'
 
 const temp = run => { const dir = mkdtempSync(join(tmpdir(), 'dev-local-')); try { return run(dir) } finally { rmSync(dir, { recursive: true, force: true }) } }
 
@@ -12,24 +12,24 @@ test('the main checkout runs the isolated development app, never the installed a
   const instance = localDesktopInstance({}, '/Users/example', join(dir, 'acryl'))
   assert.equal(instance.kind, 'development')
   assert.equal(instance.dshHome, join('/Users/example', '.acryl-dev', '.dsh'))
-  assert.equal(localUserDataRoot(instance, 'darwin', '/Users/example', {}), '/Users/example/Library/Application Support/ACRYL Development')
+  assert.equal(instance.userDataDir, join('/Users/example', '.acryl-dev', 'desktop-data'))
 }))
 
-test('Windows keeps user data under APPDATA and refuses without it', () => {
-  const instance = localDesktopInstance({}, 'C:\\Users\\example', '/nowhere')
-  assert.equal(localUserDataRoot(instance, 'win32', 'C:\\Users\\example', { APPDATA: 'C:\\Users\\example\\AppData\\Roaming' }), 'C:\\Users\\example\\AppData\\Roaming\\ACRYL Development')
-  assert.throws(() => localUserDataRoot(instance, 'win32', 'C:\\Users\\example', {}), /APPDATA/)
+test('Electron user data stays inside the home on Windows too, never under APPDATA', () => {
+  const instance = localDesktopInstance({ APPDATA: 'C:\\Users\\example\\AppData\\Roaming' }, 'C:\\Users\\example', '/nowhere')
+  assert.equal(instance.userDataDir, join(instance.home, 'desktop-data'))
 })
 
 test('a worktree checkout and an app each get their own home and Electron user data', () => temp(dir => {
   const wt = join(dir, '036-x'); mkdirSync(wt); writeFileSync(join(wt, '.git'), 'gitdir: x\n')
   const worktree = localDesktopInstance({}, '/h', wt)
   assert.equal(worktree.home, join('/h', '.acryl-worktrees', '036-x'))
-  assert.equal(localUserDataRoot(worktree, 'darwin', '/h', {}), '/h/Library/Application Support/ACRYL Development 036-x')
+  assert.equal(worktree.userDataDir, join('/h', '.acryl-worktrees', '036-x', 'desktop-data'))
   const app = join(dir, 'orbit'); mkdirSync(app); writeFileSync(join(app, 'blend.yaml'), 'x')
   const pinned = localDesktopInstance({ ACRYL_HOME: app }, '/h', wt)
   assert.equal(pinned.kind, 'app')
   assert.match(pinned.userDataName, /^ACRYL orbit-[0-9a-f]{4}$/u)
+  assert.equal(pinned.userDataDir, join(pinned.home, 'desktop-data'))
 }))
 
 test('seeds advanced mode so Development Canvas can mount', () => temp(home => {

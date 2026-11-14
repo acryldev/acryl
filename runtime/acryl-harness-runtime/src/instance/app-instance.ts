@@ -36,8 +36,13 @@ export interface AppInstance {
    * names a browser reaches it by (a proxy's public host). Non-loopback names must be listed, or DSH's connection refuses the request.
    */
   readonly webAccess: WebAccess
-  /** Electron's product and user-data folder name: separates window state, storage and the single-instance lock. */
+  /** Electron's product name for this instance, and the name of its user-data folder before it moved into the home (read once, to carry that data over). */
   readonly userDataName: string
+  /**
+   * Electron's user data (window state, storage, logs, crash evidence, the single-instance lock), inside the app's own home like everything else it keeps,
+   * never in an OS application-data folder: one predictable place on every OS (`~/.acryl/desktop-data` for the installed app).
+   */
+  readonly userDataDir: string
   /** Namespace for folders this app writes inside a project it opens; undefined keeps the classic shared locations. */
   readonly projectScope?: string
   /**
@@ -67,6 +72,7 @@ export const APP_PORT_BASE = 3100
 export const APP_PORT_SPAN = 900
 export const APP_DEFINITION_FILE = 'blend.yaml'
 export const RUN_LOCK_FILE = 'instance.json'
+export const USER_DATA_DIR_NAME = 'desktop-data'
 export const ENGINE_DIR_NAME = '.dsh'
 export const DEFAULT_HOME_DIR_NAME = '.acryl'
 export const DEVELOPMENT_HOME_DIR_NAME = '.acryl-dev'
@@ -123,6 +129,7 @@ function family(input: {
     webPort: Object.freeze({ ...input.webPort }),
     webAccess: LOOPBACK_ACCESS,
     userDataName: input.userDataName,
+    userDataDir: join(input.home, USER_DATA_DIR_NAME),
     ...(input.projectScope === undefined ? {} : { projectScope: input.projectScope }),
     ...(input.kind === 'default' ? {} : { documentsDirectory: join(input.home, 'documents') }),
     ...(input.definitionFile === undefined ? {} : { definitionFile: input.definitionFile }),

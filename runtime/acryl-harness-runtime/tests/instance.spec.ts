@@ -38,7 +38,7 @@ const app = (root: string, name: string): string => { const dir = join(root, nam
  * Every resource of a family that another app must never share. The Web port is not one: an app's port is a first try spread over the app range,
  * and it scans to the next free one, so two apps whose ids hash to the same start still run side by side (checked separately below).
  */
-const footprint = (instance: AppInstance): string[] => [instance.home, instance.dshHome, instance.userDataName, instance.runLockFile, instance.projectScope ?? '(shared)']
+const footprint = (instance: AppInstance): string[] => [instance.home, instance.dshHome, instance.userDataName, instance.userDataDir, instance.runLockFile, instance.projectScope ?? '(shared)']
 
 describe('the families', () => {
   it('two apps share nothing, even when their folders have the same name', () => {

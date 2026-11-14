@@ -1,6 +1,6 @@
 import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import AdmZip from 'adm-zip'
 import {
@@ -46,11 +46,10 @@ describe('desktop npm launcher', () => {
     expect(DESKTOP_CLI_HELP).toContain('--export-diagnostics')
   })
 
-  it('resolves the packaged Desktop user-data directory without Electron', () => {
-    expect(defaultDesktopUserDataDirectory('win32', { APPDATA: 'C:\\Users\\Example\\AppData\\Roaming' }, 'ignored'))
-      .toBe('C:\\Users\\Example\\AppData\\Roaming\\ACRYL')
-    expect(defaultDesktopUserDataDirectory('darwin', {}, '/Users/example'))
-      .toBe('/Users/example/Library/Application Support/ACRYL')
+  it('resolves the packaged Desktop user-data directory without Electron: inside ~/.acryl on every OS, never an OS application-data folder', () => {
+    expect(defaultDesktopUserDataDirectory({}, '/Users/example')).toBe(join('/Users/example', '.acryl', 'desktop-data'))
+    expect(defaultDesktopUserDataDirectory({ APPDATA: 'C:\\Users\\Example\\AppData\\Roaming' }, '/home/example')).toBe(join('/home/example', '.acryl', 'desktop-data'))
+    expect(defaultDesktopUserDataDirectory({ DSH_DESKTOP_USER_DATA: '/tmp/explicit' }, '/Users/example')).toBe(resolve('/tmp/explicit'))
   })
 
   it('exports diagnostics without launching Electron', async () => {

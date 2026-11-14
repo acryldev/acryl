@@ -30,7 +30,7 @@ of them fell back to the one shared `~/.acryl` when nothing was set. Any code pa
 ## The module
 
 `AppInstance` is the family one app owns: `home` (the ACRYL home), `dshHome` (the engine home the pinned harness reads), `webPort` (start, and whether to take
-the next free one), `userDataName` (Electron user data, window state, single-instance lock), `projectScope` (namespace for folders its builder writes in a
+the next free one), `userDataDir` (Electron user data, window state, single-instance lock: `<home>/desktop-data`, never an OS application-data folder; an earlier `<appData>/<userDataName>` is copied in once), `projectScope` (namespace for folders its builder writes in a
 project), `definitionFile` (`blend.yaml`), `runLockFile`.
 
 | Factory | When | Home | Port | Electron user data |

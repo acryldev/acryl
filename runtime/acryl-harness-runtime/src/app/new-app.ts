@@ -7,6 +7,7 @@
  *   <app>/AGENTS.md     the conventions, read by the agent inside at the start of every session            commit
  *   <app>/bin/acryl     start it: bin/acryl web | desktop | cli
  *   <app>/.dsh/         what the runtime keeps (sessions, settings, profile)                                ignored
+ *   <app>/desktop-data/ the desktop window's own data (window state, storage, logs, crash evidence)          ignored
  *
  * The app folder is the app's ACRYL home, so an app is self-contained like a container: it can be copied, committed, run beside any other app and deleted
  * without touching anything else. It is the user's project from the first second: nothing in it is ACRYL-branded, it gets its own git repository, and its
@@ -81,7 +82,7 @@ export function planNewApp(dir: string, options: NewAppOptions): PlannedApp {
     'AGENTS.md': agentsMd(title),
     'bin/acryl': `#!/usr/bin/env bash\n# Start ${title}:  bin/acryl web | desktop | cli   (flags: --port 3105)\nset -euo pipefail\napp="$(cd "$(dirname "$0")/.." && pwd)"\nexec node ${JSON.stringify(options.launcher)} "\${1:-web}" --dir "$app" "\${@:2}"\n`,
     // The plugin store (`plugins/.store/`) is runtime data like `.dsh/`: pulled plugins are reproduced from the Blend's lock; the app's own plugins beside it are committed.
-    '.gitignore': `# what the runtime keeps for this app\n.dsh/\ninstance.json\n${APP_PLUGINS_DIR}/${STORE_FOLDER}/\n`,
+    '.gitignore': `# what the runtime keeps for this app\n.dsh/\ninstance.json\ndesktop-data/\n${APP_PLUGINS_DIR}/${STORE_FOLDER}/\n`,
     '.github/workflows/app.yml': appWorkflow(title),
     'README.md': `# ${title}
 

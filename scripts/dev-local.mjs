@@ -3,7 +3,7 @@
 
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, posix, resolve, win32 } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { withBuildLock } from './lib/build-lock.mjs'
 import { instanceEnvironment, osHomeDirectory, selectInstance } from './lib/instance-module.mjs'
@@ -17,22 +17,6 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
  */
 export function localDesktopInstance(environment = process.env, osHome = osHomeDirectory(), checkout = repoRoot) {
   return selectInstance({ env: environment, osHome, checkout, development: true })
-}
-
-/**
- * Where Electron keeps this instance's user data: the platform's application-data root plus the instance's own user-data name, so the window state,
- * storage and single-instance lock of two apps never meet.
- */
-export function localUserDataRoot(instance, platform = process.platform, osHome = osHomeDirectory(), environment = process.env) {
-  if (platform === 'win32') {
-    const appData = environment.APPDATA
-    if (typeof appData !== 'string' || appData.length === 0) throw new Error('APPDATA is unavailable; cannot isolate Desktop user data')
-    return win32.join(appData, instance.userDataName)
-  }
-  // Joined as `platform` writes paths, not as the machine running this does, so the answer for a named platform is the same everywhere.
-  if (platform === 'darwin') return posix.join(osHome, 'Library', 'Application Support', instance.userDataName)
-  const config = environment.XDG_CONFIG_HOME
-  return posix.join(typeof config === 'string' && config.length > 0 ? config : posix.join(osHome, '.config'), instance.userDataName)
 }
 
 /**
@@ -81,15 +65,15 @@ function runPnpm(args, env) {
 export async function runDevLocal(argv = process.argv.slice(2), environment = process.env) {
   const skipBuild = argv.includes('--skip-build')
   const instance = localDesktopInstance(environment)
-  const userData = localUserDataRoot(instance, process.platform, osHomeDirectory(), environment)
+  // Electron's user data lives inside the instance's own home (the Desktop main process carries an older OS-folder copy over once).
+  const userData = instance.userDataDir
   mkdirSync(instance.dshHome, { recursive: true, mode: 0o700 })
-  mkdirSync(userData, { recursive: true, mode: 0o700 })
   // The development app starts in advanced mode so Development Canvas is visible; an app keeps its own defaults.
   const mode = instance.kind === 'development' || instance.kind === 'worktree' ? ensureLocalAdvancedMode(instance.dshHome) : 'app-default'
   process.stdout.write(`dev:local app=${instance.id} (${instance.kind}) home=${instance.home}\n`)
   process.stdout.write(`dev:local userData=${userData}\n`)
   process.stdout.write(`dev:local desktop mode=${mode}\n`)
-  const env = { ...environment, ...instanceEnvironment(instance), DSH_DESKTOP_USER_DATA: userData }
+  const env = { ...environment, ...instanceEnvironment(instance) }
   if (!skipBuild) {
     // The market and what it is built from, in dependency order (it needs `acryl-settings` built first); a bare `--filter cordis-plugin-market` failed
     // on a fresh checkout with "Cannot find module 'acryl-settings'", because nothing before it had built that package.
