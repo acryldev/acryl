@@ -31,8 +31,9 @@ repository), not recalled. What was not checked is listed at the end.
   `scripts/blank.mjs` (registry runtime `acryl`).
 - **ACRYL Blends** (acrylblends repository): `create-acrylblends`, the frame, its own desktop window (`plugins/desktop`), its own door
   (`npm run acryl`), registry runtime `acrylblends`.
-- **WebBoxes.ai**: a third runtime (plain Node starters in Docker) and a third agent (`@webboxes/agent`, a 25-step loop with four tools). No ACRYL and
-  no Blends frame run there.
+- **WebBoxes.ai**: on its `main` and on the server, a third runtime (plain Node starters in Docker) and a third agent (`@webboxes/agent`, a 25-step
+  loop with four tools). No ACRYL and no Blends frame run there yet. **Corrected the same day:** the fix is already written and not deployed, see
+  "WebBoxes.ai: what exists" below.
 
 Cost seen today: two desktop shells, two commands named `acryl` that do different things (the npm `acryl` and an app's `npm run acryl`), two app
 formats in one registry (one of which the published CLI cannot make), and a cloud that cannot run either. Every feature is paid for two or three times
@@ -126,9 +127,27 @@ pulled plugins.
 
 Findings 1, 2 (the structural part), 3, 4 and 5 are the after-workshop architecture work, in that order of value.
 
+## WebBoxes.ai: what exists (correction, 2026-11-14 evening)
+
+The first version of this review read only webboxesai `main` and said nothing runs a Blends app there. That missed a branch. Seen today:
+
+- Branch `m9-acryl-box` of webboxesai (worktree `webboxesai.worktrees/m9-acryl-box`, 7 commits of 2026-11-12, not merged, not pushed to `main`):
+  a box image `webbox-acryl:1` that holds an app made by `create-acrylblends` and starts it with `npm run dev` (the full Blends frame with its
+  agents), a second runner listener (the box gate) that turns a signed link from webboxes.ai into a session cookie on
+  `https://<app id>.webboxes.ai`, one Traefik route file per box, the one workshop model key, the web app's "Open app" panel and a database
+  migration. This is the design in `specs/049-framework-architecture/design/m9-hosted-workspace.md` (steps W2 and W3).
+- acrylblends 1.5.2 already has the app side (step W1): the frame accepts its page through a trusted front (`ACRYL_PUBLIC_ORIGIN`,
+  `ACRYL_TRUSTED_PROXY`).
+- DNS: `*.webboxes.ai` resolves to the server (213.47.80.26), so the owner's wildcard record is in place.
+- The server (z370n), read only: the runner image is 2 days old, there is no `webbox-acryl` image and nothing listens on the gate's port 7071.
+  So none of the branch is deployed.
+
+What is left is deployment and the gate run, not design: build the image and the runner on the server, apply the migration, merge the branch (a
+push to `main` deploys the web app), then walk it in a browser. After that, `acryl deploy` and the launcher's "Deploy to WebBoxes.ai" (step W5).
+
 ## Not checked
 
 - A real plugin publish and a real Blend share today (outward actions; the plan path works).
 - The launcher's Plugins screen by hand (the API under it was walked).
-- WebBoxes production (z370n) live: read from the repository and the 2026-10-17 runbook only.
+- WebBoxes production: the web app itself was not opened; the server was read with `docker images`, `docker ps` and the listening ports only.
 - Windows and Linux for anything in this document.
