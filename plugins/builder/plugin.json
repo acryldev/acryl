@@ -7,7 +7,7 @@
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.0"
+    "@webboxes/plugin-hub": "0.2.2"
   },
   "mount": "mount it after agent and extensions: root.plugin(builder, { dir: join(root, 'plugins') }); dir must be an extensions source"
 }
