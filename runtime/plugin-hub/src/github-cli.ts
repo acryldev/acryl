@@ -69,7 +69,7 @@ export function githubCli(): RepositoryHostPort {
  * git reaches GitHub through the same `gh` login the publish already checked: a person whose `gh auth login` chose SSH, or who never ran
  * `gh auth setup-git`, has no HTTPS credential for git, and the push failed after the repository was already created.
  */
-export const GH_CREDENTIALS = ['-c', 'credential.helper=', '-c', 'credential.helper=!gh auth git-credential'] as const
+export const GH_CREDENTIALS = ['-c', 'credential.https://github.com.helper=', '-c', 'credential.https://github.com.helper=!gh auth git-credential'] as const
 
 export function gitCli(): PublishGitPort {
   return {

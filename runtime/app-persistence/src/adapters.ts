@@ -23,6 +23,12 @@ function must(command: string, args: readonly string[], cwd: string): string {
   return result.stdout
 }
 
+/**
+ * A push to GitHub authenticates through the person's gh login, which sharing already requires: one whose `gh auth login` chose SSH, or who never
+ * ran `gh auth setup-git`, has no HTTPS credential for git. Scoped to github.com, so a remote on another host keeps the person's own helpers.
+ */
+export const GITHUB_VIA_GH = ['-c', 'credential.https://github.com.helper=', '-c', 'credential.https://github.com.helper=!gh auth git-credential'] as const
+
 export function gitCli(appDir: string): GitPort {
   return {
     isRepository: () => run('git', ['rev-parse', '--is-inside-work-tree'], appDir).status === 0 && must('git', ['rev-parse', '--show-toplevel'], appDir).trim() !== '',
@@ -41,7 +47,7 @@ export function gitCli(appDir: string): GitPort {
     addRemote: (url, name = 'origin') => { must('git', ['remote', 'add', name, url], appDir) },
     push: () => {
       const branch = must('git', ['rev-parse', '--abbrev-ref', 'HEAD'], appDir).trim()
-      must('git', ['push', '--quiet', '--set-upstream', 'origin', branch], appDir)
+      must('git', [...GITHUB_VIA_GH, 'push', '--quiet', '--set-upstream', 'origin', branch], appDir)
     },
   }
 }
