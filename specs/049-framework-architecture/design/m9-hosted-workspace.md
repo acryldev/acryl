@@ -234,8 +234,14 @@ The shape:
   production instance. Unsaved work is never published. Rolling back is publishing an older version.
 - **Data is separate.** The edit box's data is test data; the production instance keeps its own data volume, which a publish never
   touches. (An app whose data shape changed needs a migration; out of scope here, named so nobody is surprised.)
-- **Addresses.** Production takes the app id (`https://<app id>.webboxes.ai`), since that is the address people share; the edit box moves
-  to `https://<app id>--edit.webboxes.ai` (one level, so the existing certificate route per name still works). To be confirmed by the owner.
+- **One address, the mode decided by who asks (owner 2026-11-16).** Both instances answer at `https://<app id>.webboxes.ai`; there is
+  no `--edit` address ("creates complication"). The gate already knows the owner: WebBoxes.ai checks the signed-in user and the box's
+  row (the makerkit account and membership it is built on) and the gate keeps that as its session cookie (`ops/webbox-runner/gate.ts`).
+  So per request: a live owner session goes to the edit box; anyone else is an external visitor and goes to the production instance
+  (to "not published yet" when there is none). The owner looks at production through a switch, `/__webbox/view?mode=public` and
+  `mode=edit`, which sets a second gate cookie the gate reads before routing; WebBoxes.ai links both ("Open editor", "Open public view").
+  Known cost of one address: the browser keeps one set of cookies and storage for both instances, so an owner signed in to the app in
+  edit mode is not signed in to it in public view, and the reverse; each instance simply does not know the other's session.
 - **The gate.** A production route has no cookie check and wakes on any request; it needs a per-address request limit so a visitor
   cannot keep a box awake or flood it. The edit route is unchanged.
 - **What it sells.** A plan is how many apps are published and how much edit time runs at once: edit boxes sleep after 30 minutes,
@@ -246,9 +252,11 @@ Slices, each verifiable alone:
 1. The runner starts a `production` instance from a given commit of an edit box: `npm ci --omit=dev`, `NODE_ENV=production`, the start
    script without npm, memory limit 256 MB, own data volume. Verify: the page answers, the door's routes answer 404, memory read from
    `docker stats`.
-2. The gate serves it without the cookie, wakes it on a visit, and limits requests per address.
+2. The gate routes by session: owner to the edit box, anyone else to production (wakes it on a visit, limits requests per address);
+   the view switch for the owner.
 3. WebBoxes.ai: a Publish button on the workspace page with the version it will publish, the public link, Unpublish.
 4. acrylblends: the build step, measured before and after.
 
-Questions for the owner: the two addresses above; whether visitors of a published app may sign in to it (the app's own sign-in plugin
-exists) or published apps are public pages only at first.
+Answered by the owner 2026-11-16: one address with the mode decided by the owner's session (above); visitors may sign in to a
+published app ("events apps, user auth apps"), so production runs the app's own sign-in plugin with its accounts in the production data
+volume, and the gate passes the app's cookies through untouched as it does today.
