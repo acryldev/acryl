@@ -196,3 +196,59 @@ Yes, and it is the same shape as a person's own computer: the account's containe
 - Order: the workshop of 2026-11-20 uses what is written and tested (one box per app; with one app per attendee that is one container per
   account already). The account container with the launcher comes after, as the next step of this milestone.
 - Not measured: a published app for visitors (no frame, `npm start`) should need far less memory than 332 MB.
+
+## Edit mode and production mode (owner 2026-11-16)
+
+Owner: "clients edit, then publish to production, and production instance is lightweight then right? Then we need to design the editing
+mode and production mode in webboxes.ai for acryl blends apps".
+
+Measured on z370n 2026-11-16, the Blank app made with create-acrylblends 1.5.5, idle:
+
+| What runs | Memory |
+|---|---|
+| Edit mode as deployed until today (`npm run dev`: the frame, the agents' panel) | 271 MB (Node 209 MB + the npm process 82 MB) |
+| The app alone (`npm start`, `NODE_ENV=production`) | 283 MB (Node 172 MB + the npm process 97 MB) |
+| The app alone, started without npm | Node 166 MB, of which the app's own data is 38 MB |
+
+So the earlier note above ("a published app should need far less memory") is wrong as the app stands: the app alone is not lighter than
+the frame at rest. What the 166 MB is: 38 MB of the app's data; the rest is code, mostly the TypeScript compiler, which every app loads at
+run time to compile its `.tsx` files (`plugins/acryl-node-server/src/register.ts`), and the 309 `.ts` files Node strips on load. The npm
+process around the app cost 80 to 97 MB in every box for nothing; the box image starts the app without it since webboxesai `0801dde`.
+
+Where production mode really saves:
+
+1. **No agents.** An idle frame is cheap; a working agent is not (Claude Code, Codex and Pi are each a process of several hundred MB, and
+   they use CPU). Edit mode needs the 1.5 GB limit; production mode can live under 256 MB.
+2. **Nothing to attack.** The door, plugin install and pull, the terminal and the file tools are off when `NODE_ENV=production` (the app's
+   own rule), so a published app can be open to visitors without the owner's cookie.
+3. **A build step (not built, not measured).** Compile the app once when it is published (`.ts` and `.tsx` to `.js`), so the published
+   app loads no compiler. Expected well under 100 MB; to be measured before it is promised. This is framework work in acrylblends.
+4. **Sleep.** Both modes sleep when idle, as built (30 minutes). A published app wakes on any visitor, an edit box only for its owner.
+
+The shape:
+
+- **One app, two instances.** The edit box is what exists today: `https://<app id>.webboxes.ai` behind the owner's cookie, with the
+  frame and agents. Publish makes a second, production instance of the same app at its public address, open to visitors.
+- **Publish = a version.** The owner presses Publish in WebBoxes.ai (or in the frame, later): the runner takes the edit box's current
+  saved version (a git commit; the frame's "Save point" already makes one), copies that tree to the production volume, and restarts the
+  production instance. Unsaved work is never published. Rolling back is publishing an older version.
+- **Data is separate.** The edit box's data is test data; the production instance keeps its own data volume, which a publish never
+  touches. (An app whose data shape changed needs a migration; out of scope here, named so nobody is surprised.)
+- **Addresses.** Production takes the app id (`https://<app id>.webboxes.ai`), since that is the address people share; the edit box moves
+  to `https://<app id>--edit.webboxes.ai` (one level, so the existing certificate route per name still works). To be confirmed by the owner.
+- **The gate.** A production route has no cookie check and wakes on any request; it needs a per-address request limit so a visitor
+  cannot keep a box awake or flood it. The edit route is unchanged.
+- **What it sells.** A plan is how many apps are published and how much edit time runs at once: edit boxes sleep after 30 minutes,
+  so few run together.
+
+Slices, each verifiable alone:
+
+1. The runner starts a `production` instance from a given commit of an edit box: `npm ci --omit=dev`, `NODE_ENV=production`, the start
+   script without npm, memory limit 256 MB, own data volume. Verify: the page answers, the door's routes answer 404, memory read from
+   `docker stats`.
+2. The gate serves it without the cookie, wakes it on a visit, and limits requests per address.
+3. WebBoxes.ai: a Publish button on the workspace page with the version it will publish, the public link, Unpublish.
+4. acrylblends: the build step, measured before and after.
+
+Questions for the owner: the two addresses above; whether visitors of a published app may sign in to it (the app's own sign-in plugin
+exists) or published apps are public pages only at first.
