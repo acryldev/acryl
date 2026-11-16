@@ -12,6 +12,7 @@ export function removeApp(home: string, id: string): boolean
 export function inspectApp(entry: AppEntry): { readonly state: 'ready' | 'missing' }
 export function blendOf(folder: string): string
 export function whereProblem(folder: string): string | undefined
+export const ORCAROUTER_REFERRAL_URL: string
 export function readModelKey(home: string, provider?: string): string | undefined
 export const maskKey: (key: string) => string
 export function modelEnv(home: string, env?: Record<string, string | undefined>): Record<string, string | undefined>

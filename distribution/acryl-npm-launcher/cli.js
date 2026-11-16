@@ -158,7 +158,7 @@ async function appEnvironment() {
   } catch { return process.env }
 }
 
-/** `acryl model [set deepseek | clear]`: the machine's model key, asked for without echo and never in an argument. */
+/** `acryl model [set deepseek | set orcarouter | clear [provider]]`: the machine's model key, asked for without echo and never in an argument. */
 async function runModel(modelArgs) {
   if (!existsSync(LAUNCHER)) throw new Error('the launcher is not part of this install; install acryl from npm')
   const { runModelCommand } = await loadLauncher()
