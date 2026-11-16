@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'vitest'
+import { parse } from 'yaml'
 import {
   AGENT_PRESET_ID,
   AGENT_PRESET_ROWS,
@@ -141,8 +142,25 @@ test("the overlay keeps the first chat's workspace in the app's own data home", 
 test("the overlay gives the chat driver's connection our trust fact, not DSH's web runtime", () => {
   assert.match(
     ideProfilePlan(input).overlay,
-    /- id: connection\n {2}inject: \[\]\n {2}config:\n {4}trustedHosts: \['127\.0\.0\.1'\]/u,
+    // The public host of a hosted app (ACRYL_PUBLIC_ORIGIN) is trusted beside the loopback, read when the row is composed.
+    /- id: connection\n {2}inject: \[\]\n {2}config:\n {4}trustedHosts: !!js "\['127\.0\.0\.1', \.\.\.\(process\.env\.ACRYL_PUBLIC_ORIGIN \? \[new URL\(process\.env\.ACRYL_PUBLIC_ORIGIN\)\.host\] : \[\]\)\]"\n/u,
   )
+})
+
+test('the overlay parses, and the trusted hosts are one expression the loader evaluates, which names the public host when one is set', () => {
+  const js = { tag: 'tag:yaml.org,2002:js', resolve: (source: string) => ({ js: source }) }
+  const rows = parse(ideProfilePlan(input).overlay, { customTags: [js] }) as Array<{
+    id: string
+    config?: { trustedHosts?: { js: string } }
+  }>
+  const source = rows.find((row) => row.id === 'connection')?.config?.trustedHosts?.js
+  assert.equal(typeof source, 'string')
+  const hosts = (origin: string | undefined) =>
+    new Function('process', `return ${String(source)}`)({
+      env: origin === undefined ? {} : { ACRYL_PUBLIC_ORIGIN: origin },
+    })
+  assert.deepEqual(hosts(undefined), ['127.0.0.1'])
+  assert.deepEqual(hosts('https://my-app.webboxes.ai'), ['127.0.0.1', 'my-app.webboxes.ai'])
 })
 
 test("the manifest carries the DSH pin, the framework, the frame packages, and keeps the app's own keys", () => {

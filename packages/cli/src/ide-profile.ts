@@ -771,7 +771,15 @@ function overlayOf(
   }
   // The chat driver's connection registers node routes on the framework's webServer port; it needs no DSH web runtime, so the row's
   // webRuntime inject and its expression are replaced by the one fact it needs here: which hosts the remote may trust.
-  lines.push('- id: connection', '  inject: []', '  config:', "    trustedHosts: ['127.0.0.1']")
+  // An app served behind a proxy under a public name (ACRYL_PUBLIC_ORIGIN, a hosted box) trusts that one host too: without it every
+  // /api call that arrives with the public Host is refused (403), so Settings > Models and the chat cannot load. Sign-in still applies.
+  lines.push(
+    '- id: connection',
+    '  inject: []',
+    '  config:',
+    // Quoted: a bare `[` would start a YAML list, not the expression the loader evaluates.
+    `    trustedHosts: !!js "['127.0.0.1', ...(process.env.ACRYL_PUBLIC_ORIGIN ? [new URL(process.env.ACRYL_PUBLIC_ORIGIN).host] : [])]"`,
+  )
   // The chat's first workspace lives in the app's own data home, not the user's Documents: the workspace controller creates the
   // default workspace under this directory, so a first chat is inside the app folder (which the workspace registers as its first
   // project) and a test run never writes into a real home.
