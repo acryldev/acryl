@@ -65,9 +65,15 @@ export function githubCli(): RepositoryHostPort {
   }
 }
 
+/**
+ * git reaches GitHub through the same `gh` login the publish already checked: a person whose `gh auth login` chose SSH, or who never ran
+ * `gh auth setup-git`, has no HTTPS credential for git, and the push failed after the repository was already created.
+ */
+export const GH_CREDENTIALS = ['-c', 'credential.helper=', '-c', 'credential.helper=!gh auth git-credential'] as const
+
 export function gitCli(): PublishGitPort {
   return {
-    clone(url, dir) { must('git', ['clone', '--quiet', url, dir]) },
+    clone(url, dir) { must('git', [...GH_CREDENTIALS, 'clone', '--quiet', url, dir]) },
     commitAll(dir, message) {
       must('git', ['add', '--all', '.'], dir)
       if (run('git', ['diff', '--cached', '--quiet'], dir).status === 0) return false
@@ -77,8 +83,8 @@ export function gitCli(): PublishGitPort {
     tag(dir, tag, message) { must('git', ['tag', '-a', tag, '-m', message], dir) },
     push(dir, tag, fallbackBranch) {
       const branch = run('git', ['symbolic-ref', '--short', 'HEAD'], dir).stdout.trim() || fallbackBranch
-      must('git', ['push', '--quiet', 'origin', `HEAD:refs/heads/${branch}`], dir)
-      must('git', ['push', '--quiet', 'origin', `refs/tags/${tag}`], dir)
+      must('git', [...GH_CREDENTIALS, 'push', '--quiet', 'origin', `HEAD:refs/heads/${branch}`], dir)
+      must('git', [...GH_CREDENTIALS, 'push', '--quiet', 'origin', `refs/tags/${tag}`], dir)
     },
   }
 }
