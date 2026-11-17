@@ -85,6 +85,25 @@ put(join(app, 'assets/icon.png'), readFileSync(join(root, 'apps/acryl-desktop/bu
 spawnSync('git', ['add', '-A'], { cwd: app })
 spawnSync('git', ['commit', '-qm', 'ACRYL launcher'], { cwd: app })
 
+// `--no-start`: only make the app (how the Blend `acryl.launcher`, acrylblends/63-acryl-launcher, is made for the registry; spec 050 D14, T024).
+if (process.argv.includes('--no-start')) {
+  // Its registry identity: `acryl --gui` and `acryl --web` make it with `--from acryl.launcher`.
+  const metadata = /^metadata:\n(?: {2}.*\n)+/mu
+  const current = readFileSync(blendFile, 'utf8')
+  if (!metadata.test(current)) { console.error(`launcher blend: ${blendFile} has no metadata block; the Blends template changed`); process.exit(1) }
+  put(blendFile, current.replace(metadata, [
+    'metadata:', '  id: acryl.launcher', '  name: "ACRYL"', '  version: 0.1.0', '  category: desktop',
+    '  description: "The ACRYL launcher: your apps, new apps from a starter or a Blend, plugins to pull and share, in a window or the browser, with the Blends agents on the right."',
+    '  license: MIT', '  visibility: public', '',
+  ].join('\n')))
+  put(join(app, 'acryl.template.json'), `${JSON.stringify({ name: 'ACRYL', description: 'The ACRYL launcher, the control center of your ACRYL apps.', plugins: [] }, null, 2)}\n`)
+  put(join(app, 'README.md'), launcherReadme())
+  spawnSync('git', ['add', '-A'], { cwd: app })
+  spawnSync('git', ['commit', '-qm', 'ACRYL launcher: registry identity'], { cwd: app })
+  console.log(`launcher blend: made in ${app}`)
+  process.exit(0)
+}
+
 // `--web`: the same launcher in the browser (the app's `npm run dev` prints its address) instead of the desktop window.
 const face = process.argv.includes('--web') ? 'dev' : 'desktop'
 console.log(face === 'dev' ? 'launcher blend: starting it for the browser (npm run dev); its address is printed below' : 'launcher blend: opening the window (npm run desktop)')
@@ -92,3 +111,35 @@ console.log(face === 'dev' ? 'launcher blend: starting it for the browser (npm r
 const desktop = spawn(npm, ['run', face], { cwd: app, stdio: 'inherit', shell: process.platform === 'win32', env: { ...process.env, ACRYL_LAUNCHER_HOME: launcherHome } })
 desktop.on('exit', (code, signal) => process.exit(code ?? (signal === null ? 0 : 1)))
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => { /* npm and the window end on the same signal; this waits for them */ })
+
+/** The README of the Blend `acryl.launcher` (acrylblends/63-acryl-launcher); made here, edited here. */
+function launcherReadme() {
+  return `# ACRYL
+
+The ACRYL launcher as a Blend: the control center of your ACRYL apps. Registry id \`acryl.launcher\`. Source:
+<https://github.com/acrylblends/63-acryl-launcher>, made from <https://github.com/acryldev/acryl> (\`scripts/launcher-blend.mjs --no-start\`).
+
+- your apps, with their surface (web or desktop), started and stopped from one list;
+- a new app from a starter or from a Blend of the registry;
+- plugins to pull into an app and to share from it;
+- the Blends right panel: chat, Claude Code, Codex, Pi and a terminal.
+
+## Start
+
+\`\`\`bash
+npx acryl --gui    # in its own window
+npx acryl --web    # in your browser
+\`\`\`
+
+The first start makes it in \`~/.acryl/launcher\` and installs it (about a minute). Or run it from a clone:
+
+\`\`\`bash
+git clone https://github.com/acrylblends/63-acryl-launcher.git
+cd 63-acryl-launcher && npm install && npm run desktop
+\`\`\`
+
+\`npm run dev\` serves it to a browser instead. The apps it lists live in \`~/.acryl/apps.json\`; new apps are suggested in \`~/ACRYL\`.
+
+MIT licence.
+`
+}
