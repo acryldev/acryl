@@ -35,7 +35,7 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
     sharePlan: vi.fn(async () => SHARE_PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/o/shop.git', created: true })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
-    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial),
+    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial),
     ...over,
   }
 }
