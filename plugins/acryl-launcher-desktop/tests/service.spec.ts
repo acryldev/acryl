@@ -246,6 +246,11 @@ describe('+ New app', () => {
     runs[0]!.end(0)
     expect(runs[1]?.command).toMatchObject({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: join(where, 'notes') })
     expect(service.state().job).toMatchObject({ status: 'running', step: expect.stringContaining('installing its dependencies') })
+    // Output arrives in chunks: a line that ended stays its own line when the next chunk comes, and a half line is finished by the next chunk.
+    runs[1]!.say('npm http fetch GET 200 a\n')
+    runs[1]!.say('npm http fetch GET 200 b\nnpm http fe')
+    runs[1]!.say('tch GET 200 c\n')
+    expect(service.state().job?.output).toBe('npm http fetch GET 200 a\nnpm http fetch GET 200 b\nnpm http fetch GET 200 c')
     mkdirSync(join(where, 'notes', 'node_modules'))
     runs[1]!.end(0)
     expect(service.state().job?.status).toBe('done')
