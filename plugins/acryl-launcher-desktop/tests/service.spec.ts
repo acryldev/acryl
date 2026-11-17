@@ -309,7 +309,7 @@ describe('+ New app', () => {
 
 describe('what a started app inherits', () => {
   it('drops the desktop app\'s own keys, and adds where Node usually lives to a short PATH on Unix', () => {
-    const env = appEnvironment({ PATH: '/usr/bin:/bin', ACRYL_HOME: 'x', DSH_HOME: 'y', ELECTRON_RUN_AS_NODE: '1', npm_config_x: 'z', PORT: '1', KEEP: 'me' }, 'darwin')
+    const env = appEnvironment({ PATH: '/usr/bin:/bin', ACRYL_HOME: 'x', ACRYLBLENDS_HOME: 'h', ACRYLBLENDS_ROOT: 'r', ACRYLBLENDS_PORT: '3430', DSH_HOME: 'y', ELECTRON_RUN_AS_NODE: '1', npm_config_x: 'z', PORT: '1', KEEP: 'me' }, 'darwin')
     expect(env).toEqual({ PATH: '/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin', KEEP: 'me' })
     expect(appEnvironment({ PATH: 'C:\\x' }, 'win32')).toEqual({ PATH: 'C:\\x' })
   })
