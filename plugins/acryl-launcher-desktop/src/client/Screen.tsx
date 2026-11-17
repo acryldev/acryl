@@ -125,8 +125,20 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
 }
 
 function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNode {
-  const head = job.status === 'running' ? `Making ${job.name} (this installs it, about a minute)` : job.status === 'done' ? `${job.name} is made` : `${job.name} could not be made`
-  return <div className="acrylHomeJob" role="status"><b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{job.message === undefined ? null : `\n${job.message}`}</div>
+  const head = job.status === 'running' ? `Making ${job.name} · ${elapsed(job.since)}` : job.status === 'done' ? `${job.name} is made` : `${job.name} could not be made`
+  return (
+    <div className="acrylHomeJob" role="status">
+      <b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{'\n'}{job.status === 'failed' ? null : job.step}
+      {job.message === undefined ? null : `\n${job.message}`}
+      {job.status === 'running' ? <pre className="acrylHomeLog">{job.output === '' ? 'Waiting for its first output...' : job.output}</pre> : null}
+    </div>
+  )
+}
+
+/** "42s" or "2m 05s" since a moment; the screen re-renders on every state poll, so it counts up. */
+function elapsed(since: number): string {
+  const seconds = Math.max(0, Math.round((Date.now() - since) / 1000))
+  return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`
 }
 
 function Empty({ title, text }: { title: string, text: string }): ReactNode {
@@ -240,7 +252,7 @@ function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: La
         <h3>{app.name}</h3>
         <div className="acrylHomeActs">
           {running
-            ? <>{app.surface === 'desktop' ? null : <button type="button" className="acrylHomeBtn" data-primary disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open</button>}<button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
+            ? <><button type="button" className="acrylHomeBtn" data-primary={app.surface === 'desktop' ? undefined : ''} disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open in the browser</button><button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
             : <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing'} onClick={() => { void onStart(app.id) }}>Start</button>}
           <button type="button" className="acrylHomeBtn" disabled title="coming: acryl deploy">Deploy to WebBoxes.ai</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
@@ -253,9 +265,10 @@ function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: La
         <dt>Surface</dt><dd>{SURFACE_LABEL[app.surface]}</dd>
         <dt>Folder</dt><dd>{app.path}</dd>
         <dt>Made by</dt><dd>{app.madeBy === 'agent' ? 'an agent' : 'you'}</dd>
-        <dt>Address</dt><dd>{app.address === undefined ? 'not running' : app.address.replace(/\?.*$/u, '')}</dd>
+        <dt>Address</dt><dd>{app.address === undefined ? (app.state === 'starting' ? 'starting...' : 'not running') : <a href={app.address} title="The address with its access token" onClick={(event) => { event.preventDefault(); if (app.address !== undefined) openExternal(app.address) }}>{app.address}</a>}</dd>
         <dt>Runs</dt><dd>{runsLine(app)}</dd>
       </dl>
+      {app.state === 'starting' ? <><p className="acrylHomeNote" role="status">Starting {app.name}: {app.output === undefined ? 'waiting for its first output.' : 'what it prints, live:'}</p>{app.output === undefined ? null : <pre className="acrylHomeLog">{app.output}</pre>}</> : null}
       {sharing ? <SharePanel key={app.id} api={api} app={app} onClose={() => { setSharing(false) }} /> : null}
       {running ? <PluginsPanel api={api} app={app} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
       {app.failure === undefined ? null : <p className="acrylHomeNote" data-error>It stopped on its own:{'\n'}{app.failure}</p>}

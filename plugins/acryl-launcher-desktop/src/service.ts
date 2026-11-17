@@ -36,7 +36,7 @@ export interface LauncherPorts {
 
 /** The address an app prints, with the token it needs: `http://127.0.0.1:3999/?token=...`. */
 const ADDRESS = /https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):\d+[^\s'")\]]*/u
-const TAIL_LINES = 6
+const TAIL_LINES = 12
 const BLENDS_FRESH_MS = 60_000
 /** The package `acryl new` runs (`distribution/acryl-npm-launcher/forward.js` CREATE_SPEC). */
 const CREATE_SPEC = 'create-acrylblends@latest'
@@ -54,6 +54,9 @@ interface Job {
   readonly name: string
   readonly line: string
   status: JobView['status']
+  step: string
+  readonly since: number
+  output: string
   message?: string
   /** The process the job is on now: the command that makes the app, then, for an app that arrives without its dependencies, `npm install`. */
   run: Run
@@ -77,7 +80,8 @@ export class LauncherService {
 
   state(): StateResponse {
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
-    const job = this.#job === undefined ? null : { name: this.#job.name, line: this.#job.line, status: this.#job.status, ...this.#job.message === undefined ? {} : { message: this.#job.message } }
+    const at = this.#job
+    const job = at === undefined ? null : { name: at.name, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output, ...at.message === undefined ? {} : { message: at.message } }
     return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job }
   }
 
@@ -89,6 +93,7 @@ export class LauncherService {
     return {
       id: entry.id, name: basename(entry.path), path: entry.path, blend: entry.blend === '' ? blendOf(entry.path) : entry.blend, madeBy: entry.madeBy, surface: entry.surface, state,
       ...started?.address === undefined ? {} : { address: started.address },
+      ...started === undefined || started.address !== undefined || started.output === '' ? {} : { output: started.output },
       ...failure === undefined || state !== 'stopped' ? {} : { failure },
     }
   }
@@ -123,7 +128,7 @@ export class LauncherService {
   }
 
   #installThenStart(id: string, folder: string, surface: Surface | undefined): void {
-    const run = this.#ports.runner({ program: 'npm', args: ['install'], cwd: folder, env: this.#environment() })
+    const run = this.#ports.runner({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: folder, env: this.#environment() })
     const started: Started = { run, address: undefined, output: '' }
     this.#started.set(id, started)
     run.onOutput((text) => { started.output = tail(`${started.output}${text}`) })
@@ -176,7 +181,7 @@ export class LauncherService {
     const args = ['exec', '--yes', CREATE_SPEC, '--', request.name, ...source]
     const line = `cd ${request.where} && acryl new ${request.name} ${source.join(' ')}`
     const run = this.#ports.runner({ program: 'npm', args, cwd: request.where, env: this.#environment() })
-    const job: Job = { name: request.name, line, status: 'running', run }
+    const job: Job = { name: request.name, line, status: 'running', run, step: `Step 1 of 3: getting ${request.name} (${CREATE_SPEC}). Next: installing its dependencies, then starting it.`, since: Date.now(), output: '' }
     this.#job = job
     this.#watch(undefined, run, { folder, surface: request.surface, job })
   }
@@ -342,6 +347,7 @@ export class LauncherService {
     if (appId !== undefined) this.#started.set(appId, started)
     run.onOutput((text) => {
       started.output = tail(`${started.output}${text}`)
+      if (making !== undefined && making.job.run === run) making.job.output = started.output
       started.address ??= ADDRESS.exec(text)?.[0]
       if (making !== undefined && appId === undefined && this.#ports.exists(join(making.folder, APP_MARKER))) {
         const listed = addApp(this.#ports.home, { path: making.folder, surface: making.surface }).entry
@@ -374,17 +380,21 @@ export class LauncherService {
   /** The job's last step: the app is made, so it is started (a Desktop app opens its window). */
   #finish(appId: string, job: Job): void {
     job.status = 'done'
+    job.step = `Made. Starting ${job.name} now: its progress shows on its card below.`
+    job.output = ''
     delete job.message
     try { this.start(appId) } catch (cause) { this.#failures.set(appId, cause instanceof Error ? cause.message : String(cause)) }
   }
 
   /** `npm install` in the new app's folder, as the job's second step; the job is still running while it does, and says so. */
   #install(appId: string, folder: string, job: Job): void {
-    job.message = 'Installing its dependencies (about a minute).'
-    const run = this.#ports.runner({ program: 'npm', args: ['install'], cwd: folder, env: this.#environment() })
+    job.step = 'Step 2 of 3: installing its dependencies (npm install, about a minute). Next: starting it.'
+    job.output = ''
+    // `--loglevel http` makes npm print each download, so the screen shows it working instead of a silent minute.
+    const run = this.#ports.runner({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: folder, env: this.#environment() })
     job.run = run
     let output = ''
-    run.onOutput((text) => { output = tail(`${output}${text}`) })
+    run.onOutput((text) => { output = tail(`${output}${text}`); job.output = output })
     run.onEnd((end) => {
       if (job.run !== run) return
       if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.' } else if (end.code === 0) this.#finish(appId, job)

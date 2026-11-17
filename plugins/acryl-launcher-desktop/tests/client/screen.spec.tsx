@@ -70,7 +70,8 @@ describe('the ACRYL screen', () => {
     expect(within(cards[1] as HTMLElement).getByText('by agent')).toBeTruthy()
     // The address shows without its token.
     expect(document.body.textContent).toContain('http://127.0.0.1:3101/')
-    expect(document.body.textContent).not.toContain('token=t')
+    // The card shows the plain address; the detail's Address is the full link with its token, since the bare address is refused.
+    expect(screen.getByRole('link', { name: 'http://127.0.0.1:3101/?token=t' })).toBeTruthy()
     fireEvent.click(cards[1] as HTMLElement)
     expect(document.querySelector('.acrylHomePanel dd')?.textContent).toBe('acrylblends.notes')
     expect(document.body.textContent).toContain('/h/work/crm')
@@ -131,17 +132,25 @@ describe('the ACRYL screen', () => {
     cleanup()
     const stop = vi.fn(async () => state([app({})]))
     open(fake(state([app({ state: 'running', address: 'http://127.0.0.1:3101/?token=t' })]), { stop }), new LauncherVisibility(true), url => opened.push(url))
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open in the browser' }))
     expect(opened).toEqual(['http://127.0.0.1:3101/?token=t'])
     fireEvent.click(screen.getByRole('button', { name: 'Stop' }))
     await waitFor(() => { expect(stop).toHaveBeenCalledWith('shop') })
   })
 
   it('says what is being made, and why it failed', async () => {
-    open(fake(state([], { name: 'shop', line: 'cd /h/ACRYL && acryl new shop blank', status: 'failed', message: 'npm error code ENOTFOUND' })))
+    open(fake(state([], { name: 'shop', line: 'cd /h/ACRYL && acryl new shop blank', status: 'failed', step: 'Step 1 of 3', since: 0, output: '', message: 'npm error code ENOTFOUND' })))
     const banner = await screen.findByRole('status')
     expect(banner.textContent).toContain('shop could not be made')
     expect(banner.textContent).toContain('npm error code ENOTFOUND')
+  })
+
+  it('shows the step, what comes next and the live output while making', async () => {
+    open(fake(state([], { name: 'shop', line: 'acryl new shop', status: 'running', step: 'Step 2 of 3: installing its dependencies. Next: starting it.', since: Date.now(), output: 'npm http fetch GET 200 https://registry.npmjs.org/hono' })))
+    const banner = await screen.findByRole('status')
+    expect(banner.textContent).toContain('Step 2 of 3')
+    expect(banner.textContent).toContain('Next: starting it')
+    expect(banner.textContent).toContain('npm http fetch GET 200')
   })
 
   it('opens ACRYL ADE from its card and comes back with the ACRYL button, and reads nothing while it is closed', async () => {

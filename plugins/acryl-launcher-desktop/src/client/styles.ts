@@ -93,6 +93,7 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHomeChoice[data-disabled] { opacity: .5; cursor: default; }
 .acrylHomeChoice small { display: block; color: var(--h-dim); font-size: 12px; line-height: 18px; }
 .acrylHomeChoice input { margin-top: 3px; accent-color: var(--h-accent); }
+.acrylHomeLog { margin: 8px 0 0; max-height: 220px; overflow: auto; padding: 8px 10px; border: 1px solid var(--h-border); background: var(--h-bg, transparent); color: var(--h-dim); font: 12px/18px ui-monospace, "SF Mono", Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .acrylHomeJob { max-width: 680px; padding: 12px 16px; border: 1px solid var(--h-border); border-radius: 12px; background: var(--h-surface); font-size: 13px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .acrylHomeBack { position: fixed; top: 6px; right: 76px; z-index: 2147482000; padding: 3px 10px; border: 1px solid var(--h-line, rgba(127,127,127,.35)); border-radius: 99px; background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-label-primary, #18181b); font: 600 12px -apple-system, system-ui, "Segoe UI", sans-serif; cursor: pointer; }
 .acrylHomeBack:hover { border-color: #4d6bfe; color: #4d6bfe; }
