@@ -11,6 +11,28 @@ the same folder the frame shows, and every change you or an agent makes is one r
 This guide is for **acrylblends 1.3.0 or newer**; `npm create acrylblends@latest` gives you that. An app you made with an older release gets the
 frame with the upgrade in block 6.
 
+## The fastest start: ACRYL Control Center
+
+ACRYL Control Center lists your apps, makes new ones and starts them. Download it for your machine:
+
+| | Apple Silicon / ARM | Intel / x64 |
+| --- | --- | --- |
+| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-x64.dmg) |
+| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-x64.deb) |
+
+The apps are not signed yet: on macOS the first start is right-click > Open; on Windows SmartScreen may ask, More info > Run anyway; on Linux
+`sudo apt install ./ACRYL-Control-Center-linux-x64.deb`. Or, with Node.js installed, start it without a download:
+
+```sh
+npx acryl --web    # in your browser
+npx acryl --gui    # in its own window
+```
+
+Press **+ New app**, give it a name, pick a starter (Blank, Node.js, Notes, Chat, To-do, Agent) and Web or Desktop, then **Make it**: Control
+Center makes the app in `~/ACRYL/<name>`, installs it (about a minute) and starts it. The blocks below do the same with commands, and show
+what is inside.
+
 ## 0. Before you start (10 minutes)
 
 Run this first. It checks everything below and prints one line per check, with the exact command for anything missing:
