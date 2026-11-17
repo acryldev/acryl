@@ -21,7 +21,7 @@ test('the generated frame row becomes the workbench row, and nothing else change
     swapped,
     generated.replace(
       "    - id: acryl-blends-frame\n      name: '@acrylblends/blends-frame'\n      config:\n        appPage: /app\n",
-      "    - id: acryl-workspace\n      name: '@acrylblends/workspace'\n",
+      "    - id: acryl-workspace\n      name: '@acrylblends/workspace'\n      config:\n        openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n",
     ),
   )
   assert.equal(withWorkbenchRoot(swapped), swapped)
@@ -33,9 +33,16 @@ test('a desktop product names the frame by its source name, and gets the workben
     withWorkbenchRoot(packed),
     packed.replace(
       '    - id: acryl-blends-frame\n      name: acryl-blends-frame\n      config:\n        appPage: /app\n',
-      '    - id: acryl-workspace\n      name: acryl-workspace\n',
+      '    - id: acryl-workspace\n      name: acryl-workspace\n      config:\n        openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n',
     ),
   )
+})
+
+test('a workbench row written before openFolder gets it, once', () => {
+  const old = "    - id: acryl-workspace\n      name: '@acrylblends/workspace'\n    - id: next\n"
+  const once = withWorkbenchRoot(old)
+  assert.equal(once, "    - id: acryl-workspace\n      name: '@acrylblends/workspace'\n      config:\n        openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n    - id: next\n")
+  assert.equal(withWorkbenchRoot(once), once)
 })
 
 test('the app as shipped mounts the workbench at the root', () => {

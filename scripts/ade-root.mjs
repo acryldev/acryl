@@ -13,9 +13,11 @@ const file = fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))
  */
 export function withWorkbenchRoot(text) {
   return text.replace(
-    /^( +)- id: acryl-blends-frame\n\1  name: ('@acrylblends\/blends-frame'|acryl-blends-frame)\n(?:\1  config:\n(?:\1    .*\n)*)?/mu,
-    (_match, indent, name) =>
-      `${indent}- id: acryl-workspace\n${indent}  name: ${name === 'acryl-blends-frame' ? 'acryl-workspace' : "'@acrylblends/workspace'"}\n`,
+    /^( +)- id: (acryl-blends-frame|acryl-workspace)\n\1  name: ('@acrylblends\/blends-frame'|acryl-blends-frame|'@acrylblends\/workspace'|acryl-workspace)\n(?:\1  config:\n(?:\1    .*\n)*)?/mu,
+    (_match, indent, _id, name) =>
+      `${indent}- id: acryl-workspace\n${indent}  name: ${name.startsWith("'") ? "'@acrylblends/workspace'" : 'acryl-workspace'}\n` +
+      // `acryl ade` started in a folder passes it here: the workbench opens on that project.
+      `${indent}  config:\n${indent}    openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n`,
   )
 }
 
