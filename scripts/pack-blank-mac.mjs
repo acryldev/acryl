@@ -452,7 +452,8 @@ const program = [
 ]
 writeFileSync(
   join(app, 'product.json'),
-  `${JSON.stringify({ product: PRODUCT, appName: APP_NAME, program }, null, 2)}\n`,
+  // A product made from a Blend (--from) is that finished app under its own name; only Blank's first app is the person's to name.
+  `${JSON.stringify({ product: PRODUCT, appName: APP_NAME, program, ...(from === undefined ? {} : { named: true }) }, null, 2)}\n`,
 )
 log(`the Program: ${program.join(', ')}`)
 

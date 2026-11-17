@@ -209,7 +209,13 @@ test('a product that is one Blend makes its first app from the Blend in its bund
   writeFileSync(join(seed, 'plugins', 'acryl-router', 'index.ts'), 'export const copy = 1\n')
   writeFileSync(join(seed, 'blend.yaml'), 'kind: Blueprint\n')
   writeFileSync(join(seed, 'template-git', 'HEAD'), 'ref: refs/heads/main\n')
-  const product = { product: 'Cloud Costs', appName: 'Cloud Costs', program: PROGRAM, seed: 'seed' }
+  const product = {
+    product: 'Cloud Costs',
+    appName: 'Cloud Costs',
+    program: PROGRAM,
+    seed: 'seed',
+    named: true as const,
+  }
   const storage = openProductStorage({ writtenBy: '1.0.0', env: {}, home: scratch() })
   const app = openProductApp(storage, product, root, () => {})
   // A product that is one Blend is a finished app under its own name: the first start does not ask for one.

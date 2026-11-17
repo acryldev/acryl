@@ -30,6 +30,8 @@ export interface Product {
    * `/`-separated, relative, no `.` or `..` segment. Absent in a product that ships the starting app as its own tree (the Blank product).
    */
   readonly seed?: string
+  /** The first app's name is the product's own, final (a finished Blend: ACRYL Control Center, ACRYL ADE): the first start does not ask for one. Absent in the Blank product. */
+  readonly named?: true
 }
 
 export const PRODUCT_FILE = 'product.json'
@@ -39,11 +41,12 @@ export function readProduct(bundle: string): Product | undefined {
   try {
     const value: unknown = JSON.parse(readFileSync(join(bundle, PRODUCT_FILE), 'utf8'))
     if (value === null || typeof value !== 'object') return undefined
-    const { product, appName, program, seed } = value as {
+    const { product, appName, program, seed, named } = value as {
       product?: unknown
       appName?: unknown
       program?: unknown
       seed?: unknown
+      named?: unknown
     }
     if (typeof product !== 'string' || product.trim() === '') return undefined
     return {
@@ -54,6 +57,7 @@ export function readProduct(bundle: string): Product | undefined {
         ? program.filter((path): path is string => isProgramPath(path))
         : [],
       ...(isProgramPath(seed) ? { seed: seed.replace(/\/$/u, '') } : {}),
+      ...(named === true ? { named: true as const } : {}),
     }
   } catch {
     return undefined

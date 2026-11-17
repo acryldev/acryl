@@ -267,3 +267,17 @@ test('product.json: a Program path that leaves the tree is ignored, never follow
     program: ['node_modules/', 'ok.yml'],
   })
 })
+
+test('product.json: named is read only as true; a finished Blend product says it, the Blank product leaves it out', () => {
+  const bundle = join(scratch, 'named')
+  write(
+    join(bundle, 'product.json'),
+    JSON.stringify({ product: 'ACRYL ADE', program: [], named: true }),
+  )
+  assert.equal(readProduct(bundle)?.named, true)
+  write(
+    join(bundle, 'product.json'),
+    JSON.stringify({ product: 'ACRYL Blends', program: [], named: 'yes' }),
+  )
+  assert.equal(readProduct(bundle)?.named, undefined)
+})
