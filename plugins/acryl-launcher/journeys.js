@@ -13,6 +13,13 @@ export const STARTERS = Object.freeze([
   { value: 'agent', label: 'Agent', description: 'the blank app with an agent that builds plugins into the running app' },
 ])
 
+/** Where `acryl ade` opens ACRYL ADE (spec 050 D14); the first run makes it in ~/.acryl/ade. */
+export const ADE_SURFACES = Object.freeze([
+  { value: 'web', label: 'Browser', description: 'ACRYL ADE in your browser (the first run installs it, about a minute)' },
+  { value: 'gui', label: 'Window', description: 'ACRYL ADE in its own desktop window' },
+  { value: 'tui', label: 'Terminal', description: 'the ACRYL coding agent in this terminal (a one-time download of about 450 MB)' },
+])
+
 /** The rule create-acrylblends applies to a new app's name. */
 export const APP_NAME = /^[a-z][a-z0-9-]*$/u
 
@@ -142,9 +149,9 @@ export const JOURNEYS = Object.freeze([
   {
     id: 'ade',
     title: 'Open ACRYL ADE',
-    summary: 'the agentic development environment, in this terminal',
-    steps: [],
-    command: () => acryl(['ade']),
+    summary: 'the agent development environment: browser, window or terminal',
+    steps: [choose('surface', 'Open it in', () => ADE_SURFACES)],
+    command: answers => acryl(answers.surface === 'web' ? ['ade'] : ['ade', `--${answers.surface}`]),
   },
 ])
 

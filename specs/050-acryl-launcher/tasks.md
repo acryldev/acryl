@@ -182,3 +182,15 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       is told to run `npx acrylblends@latest upgrade`. Walked for real 2026-11-14 through the launcher's routes on a scratch home: a private repository
       `inboxxobni/crm` was created, saved to and pushed to; a stale plan was refused. Not looked at in a browser (the browser extension was not connected);
       the screen is covered by its component test.
+- [ ] T020 [cli] D14 the one entry point. Slice 1 (selector): no runtime in `npx acryl`; `acryl ade [--web|--gui|--tui]` with ADE kept in
+      `~/.acryl/ade`; the terminal agent installed on first use; the launcher's "Open ACRYL ADE" asks browser, window or terminal. Walked 2026-11-17 on
+      a packed 0.2.8 selector in an empty home: install 89 KB; `acryl ade` made, installed and served ADE in 88 s; `acryl ade --gui` opened its window
+      (the first run fetched Electron, about 4 min). Not walked: `--tui` (the runtime download), Windows.
+- [ ] T021 [ade] ADE's Settings does nothing ("Settings is not available in this window", seen by the owner 2026-11-17): the workbench root renders no
+      DSH Settings trigger and no `settings` panel (checked on the page: no `button[aria-haspopup=dialog]`), so `projects-control.ts` openSettings and the
+      model dialog's Settings both fail. The model key still goes in through the model dialog and `acryl model set deepseek`.
+- [ ] T022 [ade] `acryl ade` should open on the folder it was started in; today ADE's only project is its own install folder (`~/.acryl/ade`), and the
+      window and tab are titled `ade`.
+- [ ] T023 [ade, release] A prebuilt ADE per OS (a GitHub release of acrylblends/05-acryl-ade with the installed app), so the first `acryl ade` is one
+      download instead of `npm install` (529 MB of node_modules, 74 to 88 s on a fast line).
+- [ ] T024 [blends] The window and browser launcher as a published Blend, opened by `acryl --gui` and `acryl --web` (D14).

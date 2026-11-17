@@ -10,12 +10,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createdAppName, forwardCommand, launcherCommand } from './forward.js'
 import { installedDesktop } from './desktop-open.js'
 import { readSecret } from './secret-input.js'
-import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor } from './runtime.js'
+import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor, targetPackageName } from './runtime.js'
+import { MANAGED, managedSteps, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact, webRuntimeCommand } from './web-runtime.js'
 
 const require = createRequire(import.meta.url)
 const selectorVersion = require('./package.json').version
+/** The release the prepared runtimes (terminal agent, old Web, desktop installer) come from; it moves only when they are rebuilt (spec 050 D14). */
+const runtimeVersion = require('./package.json').acrylRuntime ?? selectorVersion
 const args = process.argv.slice(2)
 
 function run({ command, args: commandArgs }) {
@@ -51,7 +54,7 @@ function openInstaller(path) {
 async function runDesktop(desktopArgs) {
   const noOpen = desktopArgs.includes('--no-open')
   const result = await acquireDesktopInstaller({
-    version: selectorVersion,
+    version: runtimeVersion,
     ...(noOpen ? {} : { open: openInstaller }),
   })
   console.log(`ACRYL desktop installer ${result.version}: ${result.path}`)
@@ -62,20 +65,14 @@ async function runWeb(webArgs) {
   const yes = webArgs.includes('--yes') || webArgs.includes('-y')
   const forwarded = webArgs.filter(arg => arg !== '--yes' && arg !== '-y')
   const target = targetFor({ platform: process.platform, arch: process.arch })
-  const root = join(managedWebRoot(), selectorVersion, target)
-  let launcher
-  try { launcher = runtimeLauncher({ require, platform: process.platform, arch: process.arch }) } catch (cause) {
-    throw new Error(`matching CLI runtime is unavailable: ${cause instanceof Error ? cause.message : String(cause)}`)
-  }
-  // The CLI runtime is resolved first so a partial/broken selector never downloads Web.
-  void launcher
-  const manifest = await fetchReleaseManifest(manifestUrl(selectorVersion))
-  const artifact = selectWebArtifact(manifest, { version: selectorVersion, target })
-  const cached = hasVerifiedWebRuntime(root, { version: selectorVersion, target, sha256: artifact.sha256 })
+  const root = join(managedWebRoot(), runtimeVersion, target)
+  const manifest = await fetchReleaseManifest(manifestUrl(runtimeVersion))
+  const artifact = selectWebArtifact(manifest, { version: runtimeVersion, target })
+  const cached = hasVerifiedWebRuntime(root, { version: runtimeVersion, target, sha256: artifact.sha256 })
   if (!cached && !yes && !(await confirmDownload())) {
     throw new Error('Web runtime acquisition requires confirmation. Re-run with: acryl web --yes')
   }
-  const result = await acquireWebRuntime({ root: managedWebRoot(), version: selectorVersion, target, manifest })
+  const result = await acquireWebRuntime({ root: managedWebRoot(), version: runtimeVersion, target, manifest })
   run(webRuntimeCommand(result.root, forwarded))
 }
 
@@ -174,6 +171,60 @@ async function runApps(appsArgs) {
   process.exitCode = runAppsCommand(appsArgs, { home: ACRYL_HOME, cwd: process.cwd(), out: line => console.log(line), err: line => console.error(line) })
 }
 
+const context = () => ({ env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, exists: existsSync })
+
+/** Run each step in turn, its label first; the exit code of the first that fails, else 0. */
+async function runSteps(steps, env) {
+  for (const step of steps) {
+    console.log(`acryl: ${step.label}`)
+    const code = await new Promise(done => {
+      const child = spawn(step.command, step.args, { stdio: 'inherit', cwd: step.cwd, shell: step.shell === true, env })
+      const stopForwarding = forwardStopSignals(child)
+      child.once('error', cause => { stopForwarding(); console.error(`acryl: ${cause.message}`); done(1) })
+      child.once('exit', exitCode => { stopForwarding(); done(exitCode ?? 1) })
+    })
+    if (code !== 0) return code
+  }
+  return 0
+}
+
+/** `acryl ade [--web | --gui | --tui]`: ACRYL ADE, kept in ~/.acryl/ade, made and installed on first use. */
+async function openAde(adeArgs) {
+  const chosen = surfaceFrom(adeArgs)
+  if (chosen.error) throw new Error(chosen.error)
+  if (chosen.surface === 'tui') return openTerminalAgent(chosen.rest)
+  mkdirSync(ACRYL_HOME, { recursive: true })
+  process.exitCode = await runSteps(managedSteps(MANAGED.ade, chosen.surface, { home: ACRYL_HOME, context: context() }), await appEnvironment())
+}
+
+/** The terminal runtime: beside the selector (an install that still carries it), else the one acryl installed in ~/.acryl/runtime. */
+function terminalRuntime() {
+  try { return runtimeLauncher({ require, version: runtimeVersion }) } catch { /* not beside the selector: look in ~/.acryl */ }
+  return runtimeLauncher({ require: createRequire(join(runtimePrefix(ACRYL_HOME, runtimeVersion), 'package.json')), version: runtimeVersion })
+}
+
+async function confirmRuntimeDownload() {
+  if (!stdin.isTTY || !stderr.isTTY) return false
+  const prompt = createInterface({ input: stdin, output: stderr })
+  try {
+    return (await prompt.question(`The ACRYL terminal agent ${runtimeVersion} is a one-time download of about 450 MB into ${join(ACRYL_HOME, 'runtime')}. Continue? [y/N] `)).trim().toLowerCase() === 'y'
+  } finally { prompt.close() }
+}
+
+/** The ACRYL terminal coding agent with these words; downloaded on first use, after the person says yes. */
+async function openTerminalAgent(agentArgs) {
+  let launcher
+  try { launcher = terminalRuntime() } catch {
+    if (!(await confirmRuntimeDownload())) throw new Error('the terminal agent is not downloaded yet; run acryl ade --tui in a terminal and answer y')
+    mkdirSync(ACRYL_HOME, { recursive: true })
+    const packageName = targetPackageName(targetFor({ platform: process.platform, arch: process.arch }))
+    const code = await runSteps([runtimeInstallStep({ home: ACRYL_HOME, version: runtimeVersion, packageName, context: context() })], process.env)
+    if (code !== 0) throw new Error(`the download of ${packageName}@${runtimeVersion} failed (exit ${code})`)
+    launcher = terminalRuntime()
+  }
+  run(runtimeCommand(launcher, agentArgs))
+}
+
 const fail = cause => {
   console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
   process.exitCode = 1
@@ -219,12 +270,10 @@ if (forwarded?.error) {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
     process.exitCode = 1
   })
+} else if (args[0] === 'ade' || args[0] === 'code') {
+  // `acryl ade` is ACRYL ADE (spec 050 D14): the Blend in the browser, `--gui` in a window, `--tui` the terminal agent. `acryl code` is its earlier name.
+  openAde(args.slice(1)).catch(fail)
 } else {
-  // `acryl ade` is ACRYL ADE, the agentic development environment (spec 050 Q1); `acryl code` is its earlier name and still works. With no terminal, or no
-  // launcher, a bare `acryl` keeps opening it as before.
-  const ideArgs = args[0] === 'ade' || args[0] === 'code' ? args.slice(1) : args
-  try { run(runtimeCommand(runtimeLauncher(), ideArgs)) } catch (cause) {
-    console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
-    process.exitCode = 1
-  }
+  // Any other words (`acryl -p "..."`), or a bare `acryl` with no terminal: the terminal agent, as before.
+  openTerminalAgent(args).catch(fail)
 }

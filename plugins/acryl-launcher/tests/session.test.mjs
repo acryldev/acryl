@@ -33,7 +33,7 @@ test('every journey ends in the command that is shown, with Enter-only defaults 
     add: [['shop'], 'acryl apps add shop'],
     model: [[], 'acryl model set deepseek'],
     check: [[], 'acryl blends preflight'],
-    ade: [[], 'acryl ade'],
+    ade: [['web'], 'acryl ade'],
   }
   assert.deepEqual(JOURNEYS.map(entry => entry.id).sort(), Object.keys(expected).sort(), 'a journey without a test, or a test without a journey')
   for (const [id, [answers, line]] of Object.entries(expected)) {
@@ -157,4 +157,10 @@ test('the registry list keeps only Blends acryl new can make, and is empty when 
   assert.deepEqual(blends.map(blend => blend.value), ['acrylblends.agent', 'acrylblends.notes-desktop'])
   assert.deepEqual(await listBlends({ fetch: async () => { throw new Error('offline') } }), [])
   assert.deepEqual(await listBlends({ fetch: async () => ({ ok: false }) }), [])
+})
+
+test('Open ACRYL ADE runs acryl ade on the surface picked: the browser, --gui or --tui', async () => {
+  for (const [surface, line] of [['web', 'acryl ade'], ['gui', 'acryl ade --gui'], ['tui', 'acryl ade --tui']]) {
+    assert.equal((await walk('ade', [surface])).line, line)
+  }
 })

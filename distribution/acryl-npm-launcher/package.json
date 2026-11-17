@@ -2,6 +2,7 @@
   "name": "acryl",
   "version": "0.2.8",
   "private": true,
+  "acrylRuntime": "0.2.7",
   "type": "module",
   "bin": {
     "acryl": "./bin.js"
@@ -14,6 +15,7 @@
     "node-version.js",
     "forward.js",
     "launcher.js",
+    "managed.js",
     "runtime.js",
     "release-contract.js",
     "web-runtime.js",

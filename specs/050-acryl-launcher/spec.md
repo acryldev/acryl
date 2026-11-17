@@ -140,6 +140,16 @@ file builds and runs unsigned on each OS.
   launcher **inside the Blends frame** as the canvas of an app. Until then the launcher has its own docked Assistant (a Claude agent with the launcher's tools), and
   the IDE's Files, Changes and Browser panel is no longer offered from the screen. Ticket T016.
 
+- D14 (owner 2026-11-17: "make acryl default CLI tool entry point for everything for acryl platform ... tui launcher that can offer to launch desktop
+  or web launcher ... for acryl coding agent ... methods for 3 surfaces via command ... keep in mind it's now a BLEND APP ... for most used ones like
+  ACRYL IDE we need to create release to quickly pull built image"; answers the same day). `npx acryl` downloads the selector and the launcher only
+  (about 90 KB). ACRYL ADE is the Blend `acryl.ade`: `acryl ade` opens it in the browser, `acryl ade --gui` in a window, `acryl ade --tui` the
+  existing terminal coding agent, whose runtime (about 450 MB) is installed into `~/.acryl/runtime/<version>` on first use after a yes (owner: "Old TUI
+  agent, on demand"). ADE itself is kept in `~/.acryl/ade`, made from the registry and installed on first use. The window and browser launcher is
+  published as a Blend and opened by `acryl --gui` and `acryl --web` the same way (owner: "Publish it as a Blend"). The selector records the release its
+  prepared runtimes come from (`acrylRuntime` in `distribution/acryl-npm-launcher/package.json`), so a release that changes only the launcher
+  (`scripts/publish-npm-cli.mjs --selector-only`) needs no new runtimes.
+
 ## Packaging (decided while building, 2026-11-12)
 
 - The terminal launcher is bundled at pack time into the `acryl` npm package as one file, `launcher.js` (about 250 KB: the journeys,

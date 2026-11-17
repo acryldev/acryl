@@ -28,7 +28,10 @@ const printManifests = process.argv.includes('--print-manifests')
 const onlyIndex = process.argv.indexOf('--only')
 const only = onlyIndex === -1 ? undefined : process.argv[onlyIndex + 1]
 if (only !== undefined && !CLI_TARGETS[only]) throw new Error(`publish-npm-cli: --only needs one of ${Object.keys(CLI_TARGETS).join(', ')}`)
-const packedTargets = only === undefined ? Object.keys(CLI_TARGETS) : [only]
+// --selector-only: pack the selector alone, for a release that changes only the launcher (its runtimes stay those of `acrylRuntime`).
+const selectorOnly = process.argv.includes('--selector-only')
+if (selectorOnly && !/^\d+\.\d+\.\d+$/u.test(selectorPackage.acrylRuntime ?? '')) throw new Error('publish-npm-cli: --selector-only needs acrylRuntime (the last full release) in distribution/acryl-npm-launcher/package.json')
+const packedTargets = selectorOnly ? [] : only === undefined ? Object.keys(CLI_TARGETS) : [only]
 const staging = mkdtempSync(join(tmpdir(), 'acryl-npm-'))
 
 function targetManifest(target) {
@@ -43,7 +46,10 @@ function selectorManifest() {
   return {
     name: 'acryl', version, private: false, type: 'module', bin: { acryl: './bin.js' },
     files: selectorFiles,
-    optionalDependencies: Object.fromEntries(Object.keys(CLI_TARGETS).map(target => [targetPackageName(target), version])),
+    // No runtime dependency: `npx acryl` downloads only the selector and the launcher. The terminal agent's runtime (`acryl-cli-<target>`, about
+    // 450 MB) is installed into ~/.acryl/runtime the first time someone opens it (spec 050 D14, T009). A full release ships both at one version; a
+    // selector-only release (--selector-only) keeps pointing at the last full one.
+    acrylRuntime: selectorOnly ? selectorPackage.acrylRuntime : version,
     // The same minimum bin.js checks before anything loads (distribution/acryl-npm-launcher/node-version.js).
     engines: { node: `>=${MINIMUM_NODE}` },
     description: 'A persistent, agent-agnostic coding environment. Keep your context, change your agent.',
