@@ -26,8 +26,10 @@
       name: '@acrylblends/app-shell'
     - id: acryl-versions
       name: '@acrylblends/versions'
-    - id: acryl-workspace
-      name: '@acrylblends/workspace'
+    - id: acryl-blends-frame
+      name: '@acrylblends/blends-frame'
+      config:
+        appPage: /app
     - id: acryl-plugin-admin
       name: '@acrylblends/plugin-admin'
     - id: acryl-system-prompt
@@ -43,7 +45,7 @@
 - id: connection
   inject: []
   config:
-    trustedHosts: ['127.0.0.1']
+    trustedHosts: !!js "['127.0.0.1', ...(process.env.ACRYL_PUBLIC_ORIGIN ? [new URL(process.env.ACRYL_PUBLIC_ORIGIN).host] : [])]"
 - id: workspace-controller
   config:
     documentsDirectory: !!js process.env.DSH_HOME

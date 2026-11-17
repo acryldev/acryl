@@ -109,9 +109,17 @@ export function openProductApp(
     log(`product: making the app "${product.appName}" from the bundled app (first start, one time)`)
     // A product that is one Blend carries it in a folder of its bundle; the Blank product's starting app is the bundle's own tree.
     const from = product.seed === undefined ? bundle : join(bundle, product.seed)
-    app = storage.create(product.appName, (source) => {
-      seedSource(from, source, product.program)
-    })
+    // A product that is one finished Blend (ACRYL Control Center, ACRYL ADE) has its name: only the Blank product asks for one (product.json `named`).
+    app = storage.create(
+      product.appName,
+      (source) => {
+        seedSource(from, source, product.program)
+      },
+      { named: product.named === true },
+    )
+  } else if (product.named === true && app.named !== true) {
+    // An app a named product made before it carried the mark (ACRYL Control Center 0.1.0-0.1.3): keep its name and stop asking.
+    app = storage.rename(app.id, app.name)
   }
   return storage.open(app.id)
 }

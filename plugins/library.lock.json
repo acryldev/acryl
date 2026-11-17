@@ -2,7 +2,7 @@
   "version": 1,
   "plugins": {
     "acryl-door": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "LICENSE": "b84342464fb19baab24f",
         "src/cli/acryl.ts": "5fd10a53c3f00728625f",
@@ -11,7 +11,7 @@
         "src/host/channel.ts": "1152afb1155be64f4707",
         "src/host/chat-tools.ts": "6bd12694b28b34b92b12",
         "src/host/door-file.ts": "bd02e76eba5e1f14bffe",
-        "src/host/door.ts": "be06dbd481547c10596b",
+        "src/host/door.ts": "7379a74db8c78ccee3a7",
         "src/host/http.ts": "e894092402938071b346",
         "src/host/mcp-routes.ts": "d139b336307d391d0696",
         "src/host/operator-routes.ts": "474e20dc429e546b852f",
@@ -42,7 +42,7 @@
       }
     },
     "acryl-node-server": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "LICENSE": "97e21f62916eb3787f2d",
         "src/adapter/conninfo.ts": "10eaa407ab6767842ec0",
@@ -73,14 +73,14 @@
       }
     },
     "acryl-page": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "src/favicon.ts": "e5b35a649cf2822b4f8e",
         "src/index.ts": "de414dae653ad5edee0b"
       }
     },
     "acryl-router": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "LICENSE": "fcf95a3a9e661936ca61",
         "src/browser/client.ts": "02d59cb4bbc4a494831e",
@@ -281,13 +281,13 @@
       }
     },
     "acryl-web-server": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "src/index.ts": "25e9ad47a238ebdebeb0"
       }
     },
     "desktop": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "app-page.ts": "d2cdc61a92d89138ea8a",
         "assets/acrylblends-logo.png": "c86abd74d8fbeedf8cc9",
@@ -301,14 +301,14 @@
         "main.ts": "229423928fa2c7fbfa58",
         "menu.ts": "9b88cda709178fffc66d",
         "preload.cjs": "c7de936c2213786f2b00",
-        "product.ts": "39d98aa96ae1ce8b040f",
+        "product.ts": "822b291f9c3d3766637a",
         "shutdown.ts": "a4d94f8a92081af96251",
         "user-data.ts": "9a79f5f8b0593085cd6f",
         "window.ts": "6946f304e1df9831d953"
       }
     },
     "extensions": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "index.ts": "3684f4523eadc364e3fa",
         "ledger.ts": "2af8407a66e314b9bbbb",
@@ -319,18 +319,18 @@
       }
     },
     "instance": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "archive.ts": "10dd2970bd9f90978bec",
         "bundle-overlay.ts": "1665d1f8e52fa300b9cc",
-        "bundle.ts": "f4ed0655897b2f04b6b9",
+        "bundle.ts": "be682206c3787bfd523a",
         "home.ts": "cf12de35b3e765b76d40",
         "index.ts": "15891f705ad2372c6327",
-        "storage.ts": "4e624086533815b07c2b"
+        "storage.ts": "03eb84e623d08bb64022"
       }
     },
     "manifest": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "app-plugins.ts": "9066deec796c90af1a4f",
         "index.ts": "d8ab43c9964c46454e05",
@@ -341,10 +341,10 @@
       }
     },
     "plugin-share": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "README.md": "be16e30e23bd5ba031d3",
-        "index.ts": "9b90d01fe4d41b20e743",
+        "index.ts": "b112847a68f6d3acffe5",
         "package.ts": "4659bc3aafdce32d031c",
         "publish.ts": "26aed5dfdd2be96e8cae",
         "pull-check.ts": "5516b2908b4c35c49720",
@@ -353,17 +353,19 @@
       }
     },
     "sandbox": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "index.ts": "c1c60f42d30c0417a6fc",
         "runner.mjs": "6437184989f4848075ba"
       }
     },
     "save": {
-      "from": "1.5.2",
+      "from": "1.5.8",
       "files": {
         "cli.ts": "fccad83af5a41bde542b",
-        "index.ts": "48f96cde6c73e781e3e6"
+        "index.ts": "48f96cde6c73e781e3e6",
+        "share-cli.ts": "2201fe37cbbc5d167e17",
+        "share.ts": "458a795e3298eb69eb82"
       }
     }
   }
