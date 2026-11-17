@@ -197,10 +197,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       installers (macOS dmg, Windows exe, Linux deb; arm64 and x64), built by its Release workflow on a `v*` tag, linked from its README and its Blend page; the
       Windows x64 installer installed and opened with Settings working. Left: `acryl ade` still makes ADE from source rather than taking the download; the macOS
       and Linux builds from CI not launched; Windows arm64 not run.
-- [ ] T024 [blends] The window and browser launcher as a published Blend, opened by `acryl --gui` and `acryl --web` (D14). Done: acrylblends/63-acryl-launcher,
-      registry entry `acryl.launcher` (made and run from the registry 2026-11-17), the ADE card opens ADE in a window or the browser (made in `<home>/ade` on first
+- [ ] T024 [blends] The window and browser launcher as a published Blend, opened by `acryl --gui` and `acryl --web` (D14). Done: acrylblends/63-acryl-control-center (renamed
+      ACRYL Control Center 2026-11-17, release v0.1.0 with six installers), registry entry `acryl.control-center` (made and run from the registry 2026-11-17), the ADE card opens ADE in a window or the browser (made in `<home>/ade` on first
       use, walked: made, installed, served, Settings opens), selector routes `--gui`/`--web` to it. Left: the window is named after the folder (`launcher`), not
-      ACRYL, because create renames the package; `npx acryl --gui` not yet walked from npm.
+      ACRYL Control Center, because create renames the package; `npx acryl --web` walked from npm 0.2.10 (made in ~/.acryl/control-center, served), `--gui` not yet.
 - [ ] T025 [blends, registry] create-acrylblends 1.5.6 cannot finish a Blend whose `src/app.ts` has its own registrations: the frame step's library upgrade
       refuses ("src/app.ts ... is not the previous release's scaffold"). Registry entries acrylblends.agent, acrylblends.chat, acrylblends.notes-desktop fail
       (`acryl new --from` them leaves an unframed app), and the registry site's "Every app starter can be created" check is red since 2026-11-17. agent also
