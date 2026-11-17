@@ -135,9 +135,18 @@ export const realFetchers: Fetchers = {
   },
 }
 
+/**
+ * Windows' own tar (bsdtar, in every Windows 10 and 11). A bare `tar` there can be Git's GNU tar, first on PATH when Git's Unix tools are
+ * installed, which reads `C:\...` as host `C` and fails on every archive.
+ */
+export function tarCommand(platform: NodeJS.Platform = process.platform, systemRoot = process.env.SystemRoot): string {
+  return platform === 'win32' ? join(systemRoot ?? 'C:\\Windows', 'System32', 'tar.exe') : 'tar'
+}
+
 /** Unpack a tarball into `dir`, dropping its single top folder; refuses links, paths that leave the folder, and archives over `limits`. */
 function extract(tarball: string, dir: string, limits: Limits): void {
-  const list = spawnSync('tar', ['-tzf', tarball], {
+  const tar = tarCommand()
+  const list = spawnSync(tar, ['-tzf', tarball], {
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
   })
@@ -149,7 +158,7 @@ function extract(tarball: string, dir: string, limits: Limits): void {
     if (entry.startsWith('/') || entry.split('/').includes('..'))
       throw new SourceError(`the archive holds a path that leaves its folder: ${entry}`)
   mkdirSync(dir, { recursive: true })
-  const run = spawnSync('tar', ['-xzf', tarball, '-C', dir, '--strip-components=1'], {
+  const run = spawnSync(tar, ['-xzf', tarball, '-C', dir, '--strip-components=1'], {
     encoding: 'utf8',
   })
   if (run.status !== 0) throw new SourceError(`could not unpack ${tarball}: ${run.stderr.trim()}`)

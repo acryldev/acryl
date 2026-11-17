@@ -14,7 +14,7 @@ import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { writeArchives } from '../../../workshop-registry/scripts/registry-archives.mjs'
 import { type Io, runCreate, TEMPLATE_MANIFEST } from '../src/index'
-import { type Fetchers, parseSource, realFetchers, SourceError } from '../src/source'
+import { type Fetchers, parseSource, realFetchers, SourceError, tarCommand } from '../src/source'
 
 const scratch = mkdtempSync(join(tmpdir(), 'create-source-test-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
@@ -746,5 +746,14 @@ describe('a GitHub address pasted from the browser', () => {
       parseSource('github:acme/starter#v2', scratch),
     )
     expect(parseSource('https://example.com/acme/starter', scratch)).toBeUndefined()
+  })
+})
+
+describe('tarCommand', () => {
+  it("is Windows' own tar on Windows, so Git's GNU tar first on PATH cannot read C:\\ as a host", () => {
+    expect(tarCommand('win32', 'C:\\Windows')).toBe(join('C:\\Windows', 'System32', 'tar.exe'))
+    expect(tarCommand('win32', undefined)).toBe(join('C:\\Windows', 'System32', 'tar.exe'))
+    expect(tarCommand('linux')).toBe('tar')
+    expect(tarCommand('darwin')).toBe('tar')
   })
 })
