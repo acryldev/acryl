@@ -143,6 +143,8 @@ test('the first start makes one app in the product’s root, never in Documents;
   assert.equal(lines.length, 1)
   assert.equal(storageIn(home).apps().length, 1)
   assert.ok(storageIn(home).apps()[0]?.lastOpened !== undefined)
+  // The Blank product's app is the person's to name: the first start asks.
+  assert.equal(storageIn(home).apps()[0]?.named, undefined)
 })
 
 test('nothing the product writes names the bundle: no file under its root holds the bundle’s path, so a moved or updated bundle opens every app', () => {
@@ -208,12 +210,10 @@ test('a product that is one Blend makes its first app from the Blend in its bund
   writeFileSync(join(seed, 'blend.yaml'), 'kind: Blueprint\n')
   writeFileSync(join(seed, 'template-git', 'HEAD'), 'ref: refs/heads/main\n')
   const product = { product: 'Cloud Costs', appName: 'Cloud Costs', program: PROGRAM, seed: 'seed' }
-  const app = openProductApp(
-    openProductStorage({ writtenBy: '1.0.0', env: {}, home: scratch() }),
-    product,
-    root,
-    () => {},
-  )
+  const storage = openProductStorage({ writtenBy: '1.0.0', env: {}, home: scratch() })
+  const app = openProductApp(storage, product, root, () => {})
+  // A product that is one Blend is a finished app under its own name: the first start does not ask for one.
+  assert.equal(storage.app(app.id).named, true)
   assert.equal(
     readFileSync(join(app.root, 'plugins', 'finops', 'index.ts'), 'utf8'),
     'export const finops = 1\n',
