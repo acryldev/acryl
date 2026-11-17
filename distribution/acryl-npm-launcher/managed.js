@@ -1,5 +1,5 @@
 // What `acryl` keeps for itself in ~/.acryl and starts on a surface (spec 050 D14):
-//   - Blend apps it owns: the ACRYL launcher (`acryl --gui`, `acryl --web`) and ACRYL ADE (`acryl ade`), each made once from the Blends registry, installed, then started in the browser or a window;
+//   - Blend apps it owns: ACRYL Control Center (`acryl --gui`, `acryl --web`) and ACRYL ADE (`acryl ade`), each made once from the Blends registry, installed, then started in the browser or a window;
 //   - the terminal coding agent (`acryl ade --tui`), the prepared CLI runtime, installed on first use instead of with every `npx acryl`.
 // The functions here only decide what to run; cli.js runs it. Nothing here touches the network or the disk except `exists`.
 import { existsSync } from 'node:fs'
@@ -9,7 +9,7 @@ import { CREATE_SPEC, npmCommand, npmExec } from './forward.js'
 /** The apps acryl keeps in its own home: registry id, folder under ~/.acryl, name a person reads. */
 export const MANAGED = Object.freeze({
   ade: Object.freeze({ id: 'acryl.ade', folder: 'ade', title: 'ACRYL ADE' }),
-  launcher: Object.freeze({ id: 'acryl.launcher', folder: 'launcher', title: 'the ACRYL launcher' }),
+  launcher: Object.freeze({ id: 'acryl.control-center', folder: 'control-center', title: 'ACRYL Control Center' }),
 })
 
 /** The surfaces a managed Blend opens on, and the app script that opens it there. */

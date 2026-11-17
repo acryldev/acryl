@@ -151,7 +151,7 @@ async function runSteps(steps, env) {
   return 0
 }
 
-/** `acryl --gui` / `acryl --web`: the ACRYL launcher, the Blend acryl.launcher kept in ~/.acryl/launcher, in a window or the browser; made and installed on first use. */
+/** `acryl --gui` / `acryl --web`: ACRYL Control Center, the Blend acryl.control-center kept in ~/.acryl/control-center, in a window or the browser; made and installed on first use. */
 async function openLauncherBlend(surface) {
   mkdirSync(ACRYL_HOME, { recursive: true })
   process.exitCode = await runSteps(managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context() }), await appEnvironment())
@@ -221,7 +221,7 @@ if (forwarded?.error) {
 } else if (args[0] === 'apps') {
   runApps(args.slice(1)).catch(fail)
 } else if (args[0] === '--gui' || args[0] === '--web' || args[0] === 'web') {
-  // `acryl --gui` and `acryl --web`: the ACRYL launcher (spec 050 T024), the same Blend in its own window or in the browser.
+  // `acryl --gui` and `acryl --web`: ACRYL Control Center (spec 050 T024), the same Blend in its own window or in the browser.
   const extra = args.slice(1)
   if (extra.length > 0) fail(new Error(`acryl ${args[0]} takes no other words (${extra.join(' ')})`))
   else openLauncherBlend(args[0] === '--gui' ? 'gui' : 'web').catch(fail)

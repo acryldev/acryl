@@ -3,7 +3,7 @@
  * `pnpm launcher gui` (alias `blend`): the ACRYL launcher inside the Blends frame (spec 050 T016), in a desktop window. Nothing is rebuilt from scratch: the frame,
  * its right panel (chat, Claude Code, Codex, Pi, terminal), its theme and its desktop window are a Blends app made by `create-acrylblends`; the launcher is its canvas.
  *   1. builds the launcher's page bundle (`plugins/acryl-launcher-desktop/lib/page.js`);
- *   2. makes the Blends app once, in `~/.acryl/launcher` (`ACRYL_LAUNCHER_APP` moves it), and on every run brings the launcher in it up to date: the page, the Host
+ *   2. makes the Blends app once, in `~/.acryl/control-center` (`ACRYL_LAUNCHER_APP` moves it), and on every run brings the launcher in it up to date: the page, the Host
  *      half (`blend/host` with the shared `src` sources and `plugins/acryl-launcher`), the page route and the app's `blend.yaml` row (a file is written only when it
  *      changed, so a launcher already open is not reloaded for nothing);
  *   3. opens it with the app's own `npm run desktop`, the Blends desktop window: it starts the app's server or joins the one running, keeps one window per app
@@ -22,7 +22,7 @@ const pkg = join(root, 'plugins/acryl-launcher-desktop')
 const userHome = process.env.HOME ?? process.env.USERPROFILE
 if (!userHome) { console.error('launcher blend: no HOME'); process.exit(2) }
 const launcherHome = process.env.ACRYL_LAUNCHER_HOME ?? join(userHome, '.acryl')
-const app = process.env.ACRYL_LAUNCHER_APP ?? join(launcherHome, 'launcher')
+const app = process.env.ACRYL_LAUNCHER_APP ?? join(launcherHome, 'control-center')
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
 const run = (command, args, options = {}) => {
@@ -85,18 +85,18 @@ put(join(app, 'assets/icon.png'), readFileSync(join(root, 'apps/acryl-desktop/bu
 spawnSync('git', ['add', '-A'], { cwd: app })
 spawnSync('git', ['commit', '-qm', 'ACRYL launcher'], { cwd: app })
 
-// `--no-start`: only make the app (how the Blend `acryl.launcher`, acrylblends/63-acryl-launcher, is made for the registry; spec 050 D14, T024).
+// `--no-start`: only make the app (how the Blend `acryl.control-center`, acrylblends/63-acryl-control-center, is made for the registry; spec 050 D14, T024).
 if (process.argv.includes('--no-start')) {
-  // Its registry identity: `acryl --gui` and `acryl --web` make it with `--from acryl.launcher`.
+  // Its registry identity: `acryl --gui` and `acryl --web` make it with `--from acryl.control-center`.
   const metadata = /^metadata:\n(?: {2}.*\n)+/mu
   const current = readFileSync(blendFile, 'utf8')
   if (!metadata.test(current)) { console.error(`launcher blend: ${blendFile} has no metadata block; the Blends template changed`); process.exit(1) }
   put(blendFile, current.replace(metadata, [
-    'metadata:', '  id: acryl.launcher', '  name: "ACRYL"', '  version: 0.1.0', '  category: desktop',
-    '  description: "The ACRYL launcher: your apps, new apps from a starter or a Blend, plugins to pull and share, in a window or the browser, with the Blends agents on the right."',
+    'metadata:', '  id: acryl.control-center', '  name: "ACRYL Control Center"', '  version: 0.1.0', '  category: desktop',
+    '  description: "ACRYL Control Center: your apps, new apps from a starter or a Blend, plugins to pull and share, in a window or the browser, with the Blends agents on the right."',
     '  license: MIT', '  visibility: public', '',
   ].join('\n')))
-  put(join(app, 'acryl.template.json'), `${JSON.stringify({ name: 'ACRYL', description: 'The ACRYL launcher, the control center of your ACRYL apps.', plugins: [] }, null, 2)}\n`)
+  put(join(app, 'acryl.template.json'), `${JSON.stringify({ name: 'ACRYL Control Center', description: 'ACRYL Control Center, the control center of your ACRYL apps.', plugins: [] }, null, 2)}\n`)
   put(join(app, 'README.md'), launcherReadme())
   spawnSync('git', ['add', '-A'], { cwd: app })
   spawnSync('git', ['commit', '-qm', 'ACRYL launcher: registry identity'], { cwd: app })
@@ -112,30 +112,43 @@ const desktop = spawn(npm, ['run', face], { cwd: app, stdio: 'inherit', shell: p
 desktop.on('exit', (code, signal) => process.exit(code ?? (signal === null ? 0 : 1)))
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => { /* npm and the window end on the same signal; this waits for them */ })
 
-/** The README of the Blend `acryl.launcher` (acrylblends/63-acryl-launcher); made here, edited here. */
+/** The README of the Blend `acryl.control-center` (acrylblends/63-acryl-control-center); made here, edited here. */
 function launcherReadme() {
-  return `# ACRYL
+  return `# ACRYL Control Center
 
-The ACRYL launcher as a Blend: the control center of your ACRYL apps. Registry id \`acryl.launcher\`. Source:
-<https://github.com/acrylblends/63-acryl-launcher>, made from <https://github.com/acryldev/acryl> (\`scripts/launcher-blend.mjs --no-start\`).
+**ACRYL Control Center** as a Blend: the control center of your ACRYL apps. Registry id \`acryl.control-center\`. Source:
+<https://github.com/acrylblends/63-acryl-control-center>, made from <https://github.com/acryldev/acryl> (\`scripts/launcher-blend.mjs --no-start\`).
 
 - your apps, with their surface (web or desktop), started and stopped from one list;
 - a new app from a starter or from a Blend of the registry;
 - plugins to pull into an app and to share from it;
 - the Blends right panel: chat, Claude Code, Codex, Pi and a terminal.
 
-## Start
+## Download
+
+The app, ready to install (the latest release, <https://github.com/acrylblends/63-acryl-control-center/releases/latest>):
+
+| | Apple Silicon / ARM | Intel / x64 |
+|---|---|---|
+| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-x64.dmg) |
+| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-x64.deb) |
+
+The apps are not signed yet. macOS: the first start is right-click > Open. Windows: SmartScreen may ask, More info > Run anyway.
+Linux: \`sudo apt install ./ACRYL-Control-Center-linux-x64.deb\`. On Windows and Linux it uses the git on your machine.
+
+## Start with the \`acryl\` command
 
 \`\`\`bash
 npx acryl --gui    # in its own window
 npx acryl --web    # in your browser
 \`\`\`
 
-The first start makes it in \`~/.acryl/launcher\` and installs it (about a minute). Or run it from a clone:
+The first start makes it in \`~/.acryl/control-center\` and installs it (about a minute). Or run it from a clone:
 
 \`\`\`bash
-git clone https://github.com/acrylblends/63-acryl-launcher.git
-cd 63-acryl-launcher && npm install && npm run desktop
+git clone https://github.com/acrylblends/63-acryl-control-center.git
+cd 63-acryl-control-center && npm install && npm run desktop
 \`\`\`
 
 \`npm run dev\` serves it to a browser instead. The apps it lists live in \`~/.acryl/apps.json\`; new apps are suggested in \`~/ACRYL\`.

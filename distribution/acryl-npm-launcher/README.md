@@ -21,14 +21,14 @@ npm install -g acryl
 ```bash
 acryl           # the ACRYL app screen in this terminal (same as --tui)
 acryl --tui     # the ACRYL app screen in this terminal
-acryl --gui     # the ACRYL launcher in its own window
-acryl --web     # the ACRYL launcher in your browser
+acryl --gui     # ACRYL Control Center in its own window
+acryl --web     # ACRYL Control Center in your browser
 acryl ade       # ACRYL ADE, the agent development environment, in your browser
 acryl ade --gui # ACRYL ADE in its own window
 acryl ade --tui # the ACRYL coding agent in this terminal
 ```
 
-`npx acryl` downloads only this small package. The launcher and ACRYL ADE are Blends, made and installed in `~/.acryl/launcher` and
+`npx acryl` downloads only this small package. ACRYL Control Center and ACRYL ADE are Blends, made and installed in `~/.acryl/control-center` and
 `~/.acryl/ade` the first time you open them (about a minute each); the terminal coding agent is a one-time download of about 450 MB into `~/.acryl/runtime`, asked for the first time you open it.
 
 A standalone Desktop application is distributed separately.
