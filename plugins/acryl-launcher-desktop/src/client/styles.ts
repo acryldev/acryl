@@ -143,7 +143,11 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHome[data-nav="rail"] .acrylHomeGlyph { display: grid; }
 .acrylHome[data-nav="rail"] .acrylHomeNavItem { justify-content: center; padding: 0; }
 .acrylHome[data-nav="rail"] .acrylHomeSep { margin-inline: 4px; }
-@media (max-width: 760px) { .acrylHome { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .acrylHomeNav { flex-direction: row; flex-wrap: wrap; padding-top: 14px; border-right: 0; border-bottom: 1px solid var(--h-border); } .acrylHomeBrand, .acrylHomeSep { display: none; } .acrylHomeMain { padding: 20px 16px; } }
+/* A desktop window beside the chat panel keeps the whole sidebar (its default 1100px leaves this pane about 690px); a narrower pane keeps it on the left as the
+   rail; only a phone-width pane stacks it on top. */
+@media (max-width: 760px) { .acrylHomeMain { padding: 20px 16px; } }
+@media (min-width: 481px) and (max-width: 600px) { .acrylHome { grid-template-columns: 60px minmax(0, 1fr); } .acrylHomeNav { padding-inline: 8px; } .acrylHomeBrand { flex-direction: column; padding: 0 0 12px; } .acrylHomeBrand .acrylHomeLabel, .acrylHomeNavItem .acrylHomeLabel, .acrylHomeNavItem .acrylHomeCount, .acrylHomeRailToggle { display: none; } .acrylHomeGlyph { display: grid; } .acrylHomeNavItem { justify-content: center; padding: 0; } .acrylHomeSep { margin-inline: 4px; } .acrylHomeMain { padding: 20px 16px; } }
+@media (max-width: 480px) { .acrylHome { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .acrylHomeNav { flex-direction: row; flex-wrap: wrap; padding-top: 14px; border-right: 0; border-bottom: 1px solid var(--h-border); } .acrylHomeBrand, .acrylHomeSep { display: none; } .acrylHomeMain { padding: 20px 16px; } }
 `
 
 /** @returns disposer, for one owning `ctx.effect`. */
