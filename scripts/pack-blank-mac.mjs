@@ -20,6 +20,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
   statSync,
@@ -34,7 +35,21 @@ const option = (name, fallback) => {
   const at = args.indexOf(name)
   return at === -1 ? fallback : args[at + 1]
 }
-const arch = option('--arch', 'arm64')
+/**
+ * The product is built on the OS it is for (each release runner builds its own): a DMG on macOS, an NSIS installer on Windows, a Debian package on
+ * Linux. Native packages (node-pty, sharp) are installed for this machine, so building for another OS would ship the wrong ones.
+ */
+const PLATFORMS = { darwin: 'mac', win32: 'win', linux: 'linux' }
+const platform = PLATFORMS[process.platform]
+if (platform === undefined) throw new Error(`pack-blank-mac: no product for ${process.platform}`)
+const win = process.platform === 'win32'
+const arch = option('--arch', process.arch)
+/** npm on Windows is a .cmd, which Node starts only through a shell, and a shell would read a range's `>` as a redirection: run npm's own script. */
+const NPM_CLI = join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
+const npm = (npmArgs, options) =>
+  win
+    ? spawnSync(process.execPath, [NPM_CLI, ...npmArgs], options)
+    : spawnSync('npm', npmArgs, options)
 /**
  * A blueprint from the registry instead of Blank (`--from acrylblends.small-crm`): the product is that app, made as `npm create acrylblends --from` makes it
  * (in the frame), under its own name (`--product`, else the first heading of its README).
@@ -47,8 +62,8 @@ const slug =
     : /^[./\\]|^[a-z]:/iu.test(from)
       ? basename(resolve(from)).replace(/^\d+-/u, '')
       : from.replace(/^[^.]+\./u, '')
-const out = resolve(option('--out', join(root, 'dist', `${slug}-mac`)))
-const work = join(root, 'dist', `${slug}-mac-work`)
+const out = resolve(option('--out', join(root, 'dist', `${slug}-${platform}`)))
+const work = join(root, 'dist', `${slug}-${platform}-work`)
 const app = join(work, from === undefined ? 'app' : slug)
 const log = (line) => console.log(`pack-blank-mac: ${line}`)
 
@@ -221,7 +236,7 @@ log(`scaffolded ${app}`)
 const scaffoldManifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
 
 // 2. Its packages, as npm installs them.
-const install = spawnSync('npm', ['install', '--no-audit', '--no-fund', '--loglevel=error'], {
+const install = npm(['install', '--no-audit', '--no-fund', '--loglevel=error'], {
   cwd: app,
   stdio: 'inherit',
 })
@@ -229,16 +244,16 @@ if (install.status !== 0) throw new Error(`npm install failed (${String(install.
 // The app's own step before its window opens (ACRYL ADE swaps the frame's root row for its workbench there). A product never runs `npm run desktop`,
 // so the step runs here, once, and the bundle ships what it made.
 if (scaffoldManifest.scripts?.predesktop !== undefined) {
-  const before = spawnSync('npm', ['run', 'predesktop', '--loglevel=error'], { cwd: app, stdio: 'inherit' })
+  const before = npm(['run', 'predesktop', '--loglevel=error'], { cwd: app, stdio: 'inherit' })
   if (before.status !== 0) throw new Error(`npm run predesktop failed (${String(before.status)})`)
-  log('ran the app\'s predesktop step')
+  log("ran the app's predesktop step")
 }
 
 // 3. npm links the workspace packages (file: specs) instead of copying them, and those links point at this checkout: a bundle must carry the files.
 const materialize = (path) => {
-  const target = execFileSync('readlink', [path], { encoding: 'utf8' }).trim()
+  const target = realpathSync(path)
   rmSync(path, { recursive: true, force: true })
-  cpSync(resolve(dirname(path), target), path, { recursive: true, dereference: true })
+  cpSync(target, path, { recursive: true, dereference: true })
 }
 const modules = join(app, 'node_modules')
 const materialized = []
@@ -301,8 +316,7 @@ for (let round = 1; round <= 4; round += 1) {
   if (missing.size === 0) break
   const specs = [...missing].map(([dependency, range]) => `${dependency}@${range}`)
   log(`round ${String(round)}: installing ${String(specs.length)} dependencies the app was missing`)
-  const extra = spawnSync(
-    'npm',
+  const extra = npm(
     ['install', '--save-exact', '--no-audit', '--no-fund', '--loglevel=error', ...specs],
     { cwd: app, stdio: 'inherit' },
   )
@@ -385,13 +399,31 @@ manifest.build = {
     icon: undefined,
   },
   dmg: { title: PRODUCT },
-  afterPack: join(work, 'seal-bundle.cjs'),
+  win: { target: [{ target: 'nsis', arch: [arch] }] },
+  // Per user, no administrator: the installer asks where, and the app's home is the person's own data folder (plugins/instance/storage.ts).
+  nsis: {
+    oneClick: false,
+    perMachine: false,
+    allowToChangeInstallationDirectory: true,
+  },
+  linux: {
+    target: [{ target: 'deb', arch: [arch] }],
+    category: 'Development',
+    maintainer: 'ACRYL Blends <build@acrylblends.dev>',
+  },
+  ...(platform === 'mac' ? { afterPack: join(work, 'seal-bundle.cjs') } : {}),
 }
+// A Debian package names its maintainer and the app's home page; electron-builder reads both from the manifest.
+manifest.author ??= { name: 'ACRYL Blends', email: 'build@acrylblends.dev' }
+manifest.homepage ??= 'https://acrylblends.github.io'
 // 4a. The product's own git (app-storage.md, "Git on a clean machine"): a clean Mac has only the shim that asks to install the Command Line Tools, and
 // versions, export, the terminals and the agents all run `git`. It lies beside the app in Resources/git, and the desktop shell puts it first on the
 // frame host's PATH (plugins/desktop/git.ts).
-const gitDir = await productGit(arch)
-manifest.build.extraResources = [{ from: gitDir, to: 'git' }]
+// shortcut: git ships with the macOS product only; Windows and Linux use the machine's git (dugite-native has builds for both, add them when the desktop
+// shell's git.ts finds a Windows git.exe).
+if (platform === 'mac')
+  manifest.build.extraResources = [{ from: await productGit(arch), to: 'git' }]
+else log(`no bundled git on ${platform}: the app uses the git on the machine`)
 writeFileSync(join(app, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`)
 // The product's root in the OS per-user data folder is named after it; the first app the person gets is called Blank until they name it. The Program is
 // what stays in the bundle and is served from there (plugins/instance/bundle.ts): the packages, the generated host and its composition, and every
@@ -516,25 +548,40 @@ if (existsSync(join(app, '.git')))
 
 // 5. Package it. The builder is not a dependency of this repo yet; a checkout of ACRYL has one, and npx fetches one otherwise.
 const builder = process.env.ELECTRON_BUILDER
-const command = builder === undefined ? 'npx' : process.execPath
-const builderArgs =
-  builder !== undefined
-    ? [builder, '--mac', 'dmg', `--${arch}`, '--publish', 'never']
-    : ['--yes', 'electron-builder@26.15.7', '--mac', 'dmg', `--${arch}`, '--publish', 'never']
+const KIND = { mac: 'dmg', win: 'nsis', linux: 'deb' }[platform]
+const EXTENSION = { mac: '.dmg', win: '.exe', linux: '.deb' }[platform]
+const targetArgs = [`--${platform}`, KIND, `--${arch}`, '--publish', 'never']
 log(`packaging with ${builder ?? 'npx electron-builder@26.15.7'}`)
-const pack = spawnSync(command, builderArgs, {
-  cwd: app,
-  stdio: 'inherit',
-  env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' },
-})
+const pack =
+  builder !== undefined
+    ? spawnSync(process.execPath, [builder, ...targetArgs], {
+        cwd: app,
+        stdio: 'inherit',
+        env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' },
+      })
+    : npm(
+        [
+          'exec',
+          '--yes',
+          '--package=electron-builder@26.15.7',
+          '--',
+          'electron-builder',
+          ...targetArgs,
+        ],
+        {
+          cwd: app,
+          stdio: 'inherit',
+          env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' },
+        },
+      )
 if (pack.status !== 0) throw new Error(`electron-builder failed (${String(pack.status)})`)
 
-// 6. The DMG, under the name the person is given.
-const produced = readdirSync(join(app, 'dist')).filter((file) => file.endsWith('.dmg'))
-if (produced.length === 0) throw new Error('electron-builder wrote no .dmg')
+// 6. The installer, under the name the person is given.
+const produced = readdirSync(join(app, 'dist')).filter((file) => file.endsWith(EXTENSION))
+if (produced.length === 0) throw new Error(`electron-builder wrote no ${EXTENSION}`)
 mkdirSync(out, { recursive: true })
 for (const file of readdirSync(out))
-  if (file.endsWith('.dmg')) rmSync(join(out, file), { force: true })
-const target = join(out, `${FILE_NAME}-${arch}.dmg`)
+  if (file.endsWith(EXTENSION)) rmSync(join(out, file), { force: true })
+const target = join(out, `${FILE_NAME}-${platform}-${arch}${EXTENSION}`)
 cpSync(join(app, 'dist', produced[0]), target)
 log(`done: ${target} (${String(Math.round(statSync(target).size / 1024 / 1024))} MB)`)

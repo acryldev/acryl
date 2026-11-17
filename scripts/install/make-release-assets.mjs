@@ -39,7 +39,7 @@ const sha256 = (file) => createHash('sha256').update(readFileSync(file)).digest(
 rmSync(out, { recursive: true, force: true })
 mkdirSync(out, { recursive: true })
 
-const dmg = join(root, 'dist', 'blank-mac', 'ACRYL-Blends-Blank-arm64.dmg')
+const dmg = join(root, 'dist', 'blank-mac', 'ACRYL-Blends-Blank-mac-arm64.dmg')
 const linux = join(root, 'dist', 'engine-linux-x64')
 const windows = join(root, 'dist', 'engine-win32-x64')
 const built = []
