@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createdAppName, forwardCommand, launcherCommand } from './forward.js'
 import { readSecret } from './secret-input.js'
 import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor, targetPackageName } from './runtime.js'
-import { MANAGED, managedSteps, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
+import { MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 
 const require = createRequire(import.meta.url)
@@ -163,7 +163,8 @@ async function openAde(adeArgs) {
   if (chosen.error) throw new Error(chosen.error)
   if (chosen.surface === 'tui') return openTerminalAgent(chosen.rest)
   mkdirSync(ACRYL_HOME, { recursive: true })
-  process.exitCode = await runSteps(managedSteps(MANAGED.ade, chosen.surface, { home: ACRYL_HOME, context: context() }), await appEnvironment())
+  const env = { ...(await appEnvironment()), ...openFolderEnv(process.cwd(), { userHome: homedir(), acrylHome: ACRYL_HOME }) }
+  process.exitCode = await runSteps(managedSteps(MANAGED.ade, chosen.surface, { home: ACRYL_HOME, context: context() }), env)
 }
 
 /** The terminal runtime: beside the selector (an install that still carries it), else the one acryl installed in ~/.acryl/runtime. */

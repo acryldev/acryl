@@ -3,7 +3,7 @@
 //   - the terminal coding agent (`acryl ade --tui`), the prepared CLI runtime, installed on first use instead of with every `npx acryl`.
 // The functions here only decide what to run; cli.js runs it. Nothing here touches the network or the disk except `exists`.
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, relative, isAbsolute } from 'node:path'
 import { CREATE_SPEC, npmCommand, npmExec } from './forward.js'
 
 /** The apps acryl keeps in its own home: registry id, folder under ~/.acryl, name a person reads. */
@@ -47,6 +47,15 @@ export function managedSteps(app, surface, { home, context, exists = existsSync 
   }
   steps.push({ label: `starting ${app.title}`, ...npmCommand(context, ['run', SURFACES[surface]]), cwd: folder })
   return steps
+}
+
+/**
+ * `acryl ade` opens on the folder it was started in (spec 050 T022): ADE reads ACRYL_OPEN_FOLDER into its workbench's project list. Not the person's
+ * home (the whole home as one project) and not ACRYL's own home (ADE's install folder is already its own first project).
+ */
+export function openFolderEnv(cwd, { userHome, acrylHome }) {
+  const inside = (folder) => { const path = relative(folder, cwd); return path === '' || (!path.startsWith('..') && !isAbsolute(path)) }
+  return cwd === userHome || inside(acrylHome) ? {} : { ACRYL_OPEN_FOLDER: cwd }
 }
 
 /** Where the terminal agent's runtime of this version is installed on first use. */

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import test from 'node:test'
 import { CREATE_SPEC } from '../forward.js'
-import { MANAGED, managedSteps, runtimeInstallStep, runtimePrefix, surfaceFrom } from '../managed.js'
+import { MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from '../managed.js'
 
 const context = { env: {}, platform: 'linux', cwd: '/work', execPath: '/usr/bin/node', exists: () => false }
 const home = '/u/.acryl'
@@ -58,4 +58,13 @@ test('the terminal agent installs into ~/.acryl/runtime/<version>, never beside 
   const step = runtimeInstallStep({ home, version: '0.2.7', packageName: 'acryl-cli-linux-x64', context })
   assert.equal(runtimePrefix(home, '0.2.7'), join(home, 'runtime', '0.2.7'))
   assert.deepEqual(step.args, ['install', '--prefix', join(home, 'runtime', '0.2.7'), '--no-save', '--no-audit', '--no-fund', 'acryl-cli-linux-x64@0.2.7'])
+})
+
+test('acryl ade passes the folder it was started in, but not the home or ACRYL\'s own folder', () => {
+  const homes = { userHome: '/u', acrylHome: '/u/.acryl' }
+  assert.deepEqual(openFolderEnv('/u/code/shop', homes), { ACRYL_OPEN_FOLDER: '/u/code/shop' })
+  assert.deepEqual(openFolderEnv('/u', homes), {})
+  assert.deepEqual(openFolderEnv('/u/.acryl', homes), {})
+  assert.deepEqual(openFolderEnv('/u/.acryl/ade', homes), {})
+  assert.deepEqual(openFolderEnv('/u/.acryl-notes', homes), { ACRYL_OPEN_FOLDER: '/u/.acryl-notes' })
 })
