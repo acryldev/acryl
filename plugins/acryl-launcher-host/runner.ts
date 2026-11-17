@@ -23,7 +23,7 @@ export interface Command {
 export type Runner = (command: Command) => Run
 
 /** Keys the desktop app set for itself; a started app must choose its own (a shared one would put the new app in this app's home and port). */
-const OWN_KEYS = /^(ACRYL_|DSH_|ELECTRON_|npm_|PORT$)/u
+const OWN_KEYS = /^(ACRYL_|ACRYLBLENDS_|DSH_|ELECTRON_|npm_|PORT$|WATCH_REPORT_DEPENDENCIES$)/u
 
 /** The environment a started app gets: this process's, without the keys above, plus the places Node usually lives (a Dock launch has a short PATH). */
 export function appEnvironment(base: Readonly<Record<string, string | undefined>>, platform: NodeJS.Platform = process.platform): Record<string, string | undefined> {
