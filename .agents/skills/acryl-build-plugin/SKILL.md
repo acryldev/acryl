@@ -1,6 +1,6 @@
 ---
 name: acryl-build-plugin
-description: Use when the person asks for a new feature, widget, page, tool, list or integration in acryl-launcher (build a plugin). The workflow from reading the docs to a feature that is on the page and checked.
+description: Use when the person asks for a new feature, widget, page, tool, list or integration in acryl-control-center (build a plugin). The workflow from reading the docs to a feature that is on the page and checked.
 ---
 # Build a feature as a plugin
 

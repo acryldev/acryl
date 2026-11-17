@@ -1,4 +1,4 @@
-# acryl-launcher
+# acryl-control-center
 
 A Cordis app on the ACRYL framework: TypeScript that Node 22.19 or newer runs directly (no build step; erasable syntax only, so no enums and no
 parameter properties). Every part of it is a Cordis plugin.

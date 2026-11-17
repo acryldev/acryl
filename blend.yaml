@@ -3,11 +3,11 @@
 apiVersion: blends.acryl.dev/v1alpha1
 kind: Blueprint
 metadata:
-  id: acryl.launcher
-  name: "ACRYL"
+  id: acryl.control-center
+  name: "ACRYL Control Center"
   version: 0.1.0
   category: desktop
-  description: "The ACRYL launcher: your apps, new apps from a starter or a Blend, plugins to pull and share, in a window or the browser, with the Blends agents on the right."
+  description: "ACRYL Control Center: your apps, new apps from a starter or a Blend, plugins to pull and share, in a window or the browser, with the Blends agents on the right."
   license: MIT
   visibility: public
 spec:

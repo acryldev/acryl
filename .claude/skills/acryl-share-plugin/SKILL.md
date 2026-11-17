@@ -1,6 +1,6 @@
 ---
 name: acryl-share-plugin
-description: Use when the person wants to share, publish or version a plugin of acryl-launcher, save or restore a version of the app, or make a blueprint of it.
+description: Use when the person wants to share, publish or version a plugin of acryl-control-center, save or restore a version of the app, or make a blueprint of it.
 ---
 # Share a plugin, versions and blueprints
 

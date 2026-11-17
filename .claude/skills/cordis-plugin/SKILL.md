@@ -1,6 +1,6 @@
 ---
 name: cordis-plugin
-description: Add a Cordis plugin to acryl-launcher - a plugins/<name>/ folder with name, inject, apply and an optional check, its routes as an Acryl app, how its blend.yaml row mounts it, and how to verify it. Use when a feature should be its own plugin, or when asked to extend the app.
+description: Add a Cordis plugin to acryl-control-center - a plugins/<name>/ folder with name, inject, apply and an optional check, its routes as an Acryl app, how its blend.yaml row mounts it, and how to verify it. Use when a feature should be its own plugin, or when asked to extend the app.
 ---
 
 # Adding a Cordis plugin
