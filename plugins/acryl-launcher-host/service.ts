@@ -47,7 +47,11 @@ const ADE_BLEND = 'acryl.ade'
 const ADE_FOLDER = 'ade'
 const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]/gu
 
-const tail = (text: string): string => text.replace(ANSI, '').split(/\r?\n/u).map(line => line.trim()).filter(line => line !== '').slice(-TAIL_LINES).join('\n')
+// A finished last line keeps its newline, so the next chunk starts a line of its own instead of running on ("...needsnpm http fetch").
+const tail = (text: string): string => {
+  const lines = text.replace(ANSI, '').split(/\r?\n/u).map(line => line.trim()).filter(line => line !== '').slice(-TAIL_LINES).join('\n')
+  return lines !== '' && /\n\s*$/u.test(text) ? `${lines}\n` : lines
+}
 
 /** The job as this service changes it; `JobView` is what the screen is told. */
 interface Job {
@@ -81,7 +85,7 @@ export class LauncherService {
   state(): StateResponse {
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
     const at = this.#job
-    const job = at === undefined ? null : { name: at.name, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output, ...at.message === undefined ? {} : { message: at.message } }
+    const job = at === undefined ? null : { name: at.name, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message } }
     return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job }
   }
 
@@ -93,7 +97,7 @@ export class LauncherService {
     return {
       id: entry.id, name: basename(entry.path), path: entry.path, blend: entry.blend === '' ? blendOf(entry.path) : entry.blend, madeBy: entry.madeBy, surface: entry.surface, state,
       ...started?.address === undefined ? {} : { address: started.address },
-      ...started === undefined || started.address !== undefined || started.output === '' ? {} : { output: started.output },
+      ...started === undefined || started.address !== undefined || started.output === '' ? {} : { output: started.output.trimEnd() },
       ...failure === undefined || state !== 'stopped' ? {} : { failure },
     }
   }
@@ -137,7 +141,7 @@ export class LauncherService {
       this.#started.delete(id)
       if (end.notFound) this.#failures.set(id, 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.')
       else if (end.code === 0) { try { this.start(id, surface) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) } }
-      else if (end.code !== null) this.#failures.set(id, started.output === '' ? (end.error ?? 'npm install ended before the app could run.') : started.output)
+      else if (end.code !== null) this.#failures.set(id, started.output === '' ? (end.error ?? 'npm install ended before the app could run.') : started.output.trimEnd())
     })
   }
 
@@ -364,7 +368,7 @@ export class LauncherService {
       if (appId !== undefined && this.#started.get(appId) === started) {
         this.#started.delete(appId)
         // An app that ends after being stopped on purpose is not a failure; one that ends on its own with a non-zero code is.
-        if (end.code !== 0 && end.code !== null && !end.notFound) this.#failures.set(appId, started.output)
+        if (end.code !== 0 && end.code !== null && !end.notFound) this.#failures.set(appId, started.output.trimEnd())
       }
       if (end.notFound) this.#note(making, 'failed', 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.', id)
       else if (making !== undefined && making.job.status === 'running') {
@@ -377,7 +381,7 @@ export class LauncherService {
           else this.#install(appId, making.folder, making.job)
         } else making.job.status = 'failed'
       }
-      if (making !== undefined && making.job.status === 'failed' && making.job.message === undefined) making.job.message = started.output === '' ? (end.error ?? 'The command ended before the app was made.') : started.output
+      if (making !== undefined && making.job.status === 'failed' && making.job.message === undefined) making.job.message = started.output === '' ? (end.error ?? 'The command ended before the app was made.') : started.output.trimEnd()
     })
   }
 
@@ -402,7 +406,7 @@ export class LauncherService {
     run.onEnd((end) => {
       if (job.run !== run) return
       if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.' } else if (end.code === 0) this.#finish(appId, job)
-      else { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'npm install ended before the app could run.') : output }
+      else { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'npm install ended before the app could run.') : output.trimEnd() }
     })
   }
 
