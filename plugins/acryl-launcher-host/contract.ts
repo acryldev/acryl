@@ -40,6 +40,8 @@ export interface AppView {
   readonly state: AppRunState
   /** Where a running web app answers, with the token it printed. */
   readonly address?: string
+  /** While the app is starting: the last lines it printed, live. */
+  readonly output?: string
   /** Why the app stopped on its own, when it did (the last lines it printed). */
   readonly failure?: string
 }
@@ -56,6 +58,12 @@ export interface JobView {
   /** The line a person types to do the same. */
   readonly line: string
   readonly status: 'running' | 'done' | 'failed'
+  /** Which step it is on and what comes next, e.g. "Step 2 of 3: installing its dependencies (npm install). Next: starting it." */
+  readonly step: string
+  /** When the job began (ms since epoch), so the screen can show how long it has run. */
+  readonly since: number
+  /** The last lines the current step printed, live. */
+  readonly output: string
   readonly message?: string
 }
 
