@@ -543,8 +543,9 @@ execFileSync(
 // The scaffold's repository travels as `template-git` (the packager drops `.git`), with that commit in it.
 if (existsSync(join(app, '.git')))
   rmSync(join(app, 'template-git'), { recursive: true, force: true })
+// shortcut: the filter keeps Node on its JavaScript copy; its native copy (Node 24.22 on macOS runners) fails here with ENOENT on template-git/objects.
 if (existsSync(join(app, '.git')))
-  cpSync(join(app, '.git'), join(app, 'template-git'), { recursive: true })
+  cpSync(join(app, '.git'), join(app, 'template-git'), { recursive: true, filter: () => true })
 
 // 5. Package it. The builder is not a dependency of this repo yet; a checkout of ACRYL has one, and npx fetches one otherwise.
 const builder = process.env.ELECTRON_BUILDER
