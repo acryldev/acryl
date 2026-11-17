@@ -8,10 +8,10 @@ The sections after "Release procedure" below are the history of the first releas
 ## Remaining verification
 
 1. **npm round trip** - `scripts/npm-round-trip.mjs` packs this machine's CLI target and the selector, installs them with
-   `npm install --global` into a scratch prefix, and runs `acryl --version` and `acryl web --yes` through a release-style redirect. CI (Linux)
-   and the Windows workflow run it on every change; 0.2.5 shipped a Windows selector that could not start its runtime and an `acryl web` that
-   could not find its release, because the release smoke runs each archive's launcher, never npm.
-2. **After publishing** - a clean `npm install -g acryl` with `acryl --version`, `acryl web --yes` and `acryl control list` on macOS, Windows
+   `npm install --global` into a scratch prefix, and runs `acryl --version`. CI (Linux) and the Windows workflow run it on every change; 0.2.5
+   shipped a Windows selector that could not start its runtime, because the release smoke runs each archive's launcher, never npm. (`acryl --web`
+   and `--gui` now make the launcher Blend instead of downloading a Web runtime, spec 050 T024.)
+2. **After publishing** - a clean `npm install -g acryl` with `acryl --version`, `acryl --web` and `acryl control list` on macOS, Windows
    and Linux.
 
 ## Verified deliverables (goal's completion list)

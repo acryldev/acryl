@@ -1,6 +1,6 @@
 {
   "name": "acryl",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "private": true,
   "acrylRuntime": "0.2.7",
   "type": "module",
@@ -10,7 +10,6 @@
   "files": [
     "bin.js",
     "cli.js",
-    "desktop-open.js",
     "secret-input.js",
     "node-version.js",
     "forward.js",
@@ -18,7 +17,6 @@
     "managed.js",
     "runtime.js",
     "release-contract.js",
-    "web-runtime.js",
     "desktop-runtime.js",
     "package.json",
     "README.md"

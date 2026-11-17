@@ -186,11 +186,19 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       `~/.acryl/ade`; the terminal agent installed on first use; the launcher's "Open ACRYL ADE" asks browser, window or terminal. Walked 2026-11-17 on
       a packed 0.2.8 selector in an empty home: install 89 KB; `acryl ade` made, installed and served ADE in 88 s; `acryl ade --gui` opened its window
       (the first run fetched Electron, about 4 min). Not walked: `--tui` (the runtime download), Windows.
-- [ ] T021 [ade] ADE's Settings does nothing ("Settings is not available in this window", seen by the owner 2026-11-17): the workbench root renders no
-      DSH Settings trigger and no `settings` panel (checked on the page: no `button[aria-haspopup=dialog]`), so `projects-control.ts` openSettings and the
-      model dialog's Settings both fail. The model key still goes in through the model dialog and `acryl model set deepseek`.
+- [x] T021 [ade] ADE's Settings does nothing ("Settings is not available in this window", seen by the owner 2026-11-17): the workbench root rendered no
+      DSH Settings trigger. Fixed in `@acrylblends/app-shell` 0.1.1 (acrylblends f7aeda9b): the shell fills `settings.launcher` with a hidden fallback
+      trigger and draws `sidebar.settings`; the Blends frame's gear still wins. Walked 2026-11-17 on a fresh `create-acrylblends --from acryl.ade` +
+      `npm install` (Settings opens) and on a Blank Blend (one gear, Settings opens).
 - [ ] T022 [ade] `acryl ade` should open on the folder it was started in; today ADE's only project is its own install folder (`~/.acryl/ade`), and the
       window and tab are titled `ade`.
 - [ ] T023 [ade, release] A prebuilt ADE per OS (a GitHub release of acrylblends/05-acryl-ade with the installed app), so the first `acryl ade` is one
       download instead of `npm install` (529 MB of node_modules, 74 to 88 s on a fast line).
-- [ ] T024 [blends] The window and browser launcher as a published Blend, opened by `acryl --gui` and `acryl --web` (D14).
+- [ ] T024 [blends] The window and browser launcher as a published Blend, opened by `acryl --gui` and `acryl --web` (D14). Done: acrylblends/63-acryl-launcher,
+      registry entry `acryl.launcher` (made and run from the registry 2026-11-17), the ADE card opens ADE in a window or the browser (made in `<home>/ade` on first
+      use, walked: made, installed, served, Settings opens), selector routes `--gui`/`--web` to it. Left: the window is named after the folder (`launcher`), not
+      ACRYL, because create renames the package; `npx acryl --gui` not yet walked from npm.
+- [ ] T025 [blends, registry] create-acrylblends 1.5.6 cannot finish a Blend whose `src/app.ts` has its own registrations: the frame step's library upgrade
+      refuses ("src/app.ts ... is not the previous release's scaffold"). Registry entries acrylblends.agent, acrylblends.chat, acrylblends.notes-desktop fail
+      (`acryl new --from` them leaves an unframed app), and the registry site's "Every app starter can be created" check is red since 2026-11-17. agent also
+      carries a stale `plugins/plugin-share` with no row, which the frame step's `add plugin-share` refuses. Owner of the fix: the acrylblends upgrade step.

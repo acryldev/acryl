@@ -8,12 +8,10 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createdAppName, forwardCommand, launcherCommand } from './forward.js'
-import { installedDesktop } from './desktop-open.js'
 import { readSecret } from './secret-input.js'
 import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor, targetPackageName } from './runtime.js'
 import { MANAGED, managedSteps, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
-import { acquireWebRuntime, fetchReleaseManifest, hasVerifiedWebRuntime, manifestUrl, managedWebRoot, selectWebArtifact, webRuntimeCommand } from './web-runtime.js'
 
 const require = createRequire(import.meta.url)
 const selectorVersion = require('./package.json').version
@@ -35,14 +33,6 @@ function run({ command, args: commandArgs }) {
   })
 }
 
-async function confirmDownload() {
-  if (!stdin.isTTY || !stderr.isTTY) return false
-  const prompt = createInterface({ input: stdin, output: stderr })
-  try {
-    return (await prompt.question('ACRYL Web will download a verified matching runtime. Continue? [y/N] ')).trim().toLowerCase() === 'y'
-  } finally { prompt.close() }
-}
-
 function openInstaller(path) {
   const opener = process.platform === 'darwin' ? ['open', [path]]
     : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', path]]
@@ -59,21 +49,6 @@ async function runDesktop(desktopArgs) {
   })
   console.log(`ACRYL desktop installer ${result.version}: ${result.path}`)
   if (noOpen) console.log('use --no-open to download without launching')
-}
-
-async function runWeb(webArgs) {
-  const yes = webArgs.includes('--yes') || webArgs.includes('-y')
-  const forwarded = webArgs.filter(arg => arg !== '--yes' && arg !== '-y')
-  const target = targetFor({ platform: process.platform, arch: process.arch })
-  const root = join(managedWebRoot(), runtimeVersion, target)
-  const manifest = await fetchReleaseManifest(manifestUrl(runtimeVersion))
-  const artifact = selectWebArtifact(manifest, { version: runtimeVersion, target })
-  const cached = hasVerifiedWebRuntime(root, { version: runtimeVersion, target, sha256: artifact.sha256 })
-  if (!cached && !yes && !(await confirmDownload())) {
-    throw new Error('Web runtime acquisition requires confirmation. Re-run with: acryl web --yes')
-  }
-  const result = await acquireWebRuntime({ root: managedWebRoot(), version: runtimeVersion, target, manifest })
-  run(webRuntimeCommand(result.root, forwarded))
 }
 
 /** The launcher (spec 050), bundled into this package as one file at pack time (apps/acryl-launcher-tui/scripts/bundle.mjs). */
@@ -134,18 +109,6 @@ async function desktopWhenListed(command) {
   } catch { return command } // the list is a convenience: without it the app starts in the browser as before
 }
 
-/** `acryl --gui`: open the installed ACRYL desktop app; when none is installed, fetch the installer for this version and open that. */
-async function openDesktop() {
-  const installed = installedDesktop({ platform: process.platform, env: process.env, home: homedir(), exists: existsSync })
-  if (installed === undefined) {
-    console.log('ACRYL desktop is not installed on this machine yet: fetching the installer.')
-    return runDesktop([])
-  }
-  const child = spawn(installed.command, installed.args, { stdio: 'ignore', detached: true })
-  child.once('error', cause => { console.error(`acryl: could not open ${installed.command}: ${cause.message}`); process.exitCode = 1 })
-  child.unref()
-}
-
 /** The environment an app the `acryl` command starts gets: this one, plus the stored model key when the environment names none (acryl model). */
 async function appEnvironment() {
   if (!existsSync(LAUNCHER)) return process.env
@@ -186,6 +149,12 @@ async function runSteps(steps, env) {
     if (code !== 0) return code
   }
   return 0
+}
+
+/** `acryl --gui` / `acryl --web`: the ACRYL launcher, the Blend acryl.launcher kept in ~/.acryl/launcher, in a window or the browser; made and installed on first use. */
+async function openLauncherBlend(surface) {
+  mkdirSync(ACRYL_HOME, { recursive: true })
+  process.exitCode = await runSteps(managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context() }), await appEnvironment())
 }
 
 /** `acryl ade [--web | --gui | --tui]`: ACRYL ADE, kept in ~/.acryl/ade, made and installed on first use. */
@@ -244,22 +213,22 @@ if (forwarded?.error) {
       void listCreatedApp(args, forwarded.cwd ?? process.cwd())
     })
   }, fail)
+} else if (args.length === 1 && (args[0] === '--version' || args[0] === '-v')) {
+  // The selector's own version: it is what `npx acryl` installed, and it answers without the terminal agent.
+  console.log(selectorVersion)
 } else if (args[0] === 'model') {
   runModel(args.slice(1)).catch(fail)
 } else if (args[0] === 'apps') {
   runApps(args.slice(1)).catch(fail)
-} else if (args[0] === '--gui') {
-  openDesktop().catch(fail)
+} else if (args[0] === '--gui' || args[0] === '--web' || args[0] === 'web') {
+  // `acryl --gui` and `acryl --web`: the ACRYL launcher (spec 050 T024), the same Blend in its own window or in the browser.
+  const extra = args.slice(1)
+  if (extra.length > 0) fail(new Error(`acryl ${args[0]} takes no other words (${extra.join(' ')})`))
+  else openLauncherBlend(args[0] === '--gui' ? 'gui' : 'web').catch(fail)
 } else if (args[0] === '--tui') {
   if (!stdin.isTTY || !process.stdout.isTTY) fail(new Error('acryl --tui needs a terminal; to open the app window instead run: acryl --gui'))
   else if (!existsSync(LAUNCHER)) fail(new Error('the terminal screen is not part of this install; install acryl from npm'))
   else openLauncher().catch(fail)
-} else if (args[0] === 'web' || args[0] === '--web') {
-  // `acryl --web` is the third launcher flag beside `--tui` and `--gui`: the same ACRYL screen, served to a browser.
-  runWeb(args.slice(1)).catch(cause => {
-    console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
-    process.exitCode = 1
-  })
 } else if (args[0] === 'desktop') {
   runDesktop(args.slice(1)).catch(cause => {
     console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)

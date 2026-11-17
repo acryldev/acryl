@@ -40,6 +40,15 @@ test('an install cut short (no npm lockfile in node_modules) is done again', () 
   assert.deepEqual(managedSteps(MANAGED.ade, 'web', { home, context, exists: made }).map(step => step.args[0]), ['install', 'run'])
 })
 
+test('acryl --gui and --web make the launcher Blend in ~/.acryl/launcher once, then open it in a window or the browser', () => {
+  const launcher = join(home, 'launcher')
+  const steps = managedSteps(MANAGED.launcher, 'gui', { home, context, exists: () => false })
+  assert.deepEqual(steps[0].args.slice(-4), ['launcher', '--from', 'acryl.launcher', '--no-start'])
+  assert.deepEqual(steps.map(step => step.cwd), [home, launcher, launcher])
+  assert.deepEqual(steps[2].args, ['run', 'desktop'])
+  assert.deepEqual(managedSteps(MANAGED.launcher, 'web', { home, context, exists: () => true }).map(step => step.args), [['run', 'dev']])
+})
+
 test('ACRYL_CREATE pins the create package, as for acryl new', () => {
   const [create] = managedSteps(MANAGED.ade, 'web', { home, context: { ...context, env: { ACRYL_CREATE: 'file:/x.tgz' } }, exists: () => false })
   assert.equal(create.args[2], 'file:/x.tgz')
