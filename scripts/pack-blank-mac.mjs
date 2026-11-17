@@ -27,7 +27,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -200,7 +200,7 @@ if (stale.length > 0)
 // 1. A Blank app with the desktop shell, made by this checkout's CLI, exactly as a person would make one.
 rmSync(work, { recursive: true, force: true })
 mkdirSync(work, { recursive: true })
-const { frameSpecsEnv } = await import(join(root, 'scripts/lib/ide-specs.mjs'))
+const { frameSpecsEnv } = await import(pathToFileURL(join(root, 'scripts/lib/ide-specs.mjs')).href)
 const cliVersion = JSON.parse(readFileSync(join(root, 'packages/cli/package.json'), 'utf8')).version
 const init = spawnSync(
   process.execPath,
