@@ -201,7 +201,11 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
       ACRYL Control Center 2026-11-17, release v0.1.0 with six installers), registry entry `acryl.control-center` (made and run from the registry 2026-11-17), the ADE card opens ADE in a window or the browser (made in `<home>/ade` on first
       use, walked: made, installed, served, Settings opens), selector routes `--gui`/`--web` to it. Left: the window is named after the folder (`launcher`), not
       ACRYL Control Center, because create renames the package; `npx acryl --web` walked from npm 0.2.10 (made in ~/.acryl/control-center, served), `--gui` not yet.
-- [ ] T025 [blends, registry] create-acrylblends 1.5.6 cannot finish a Blend whose `src/app.ts` has its own registrations: the frame step's library upgrade
+- [x] T025 [blends, registry] create-acrylblends 1.5.6 cannot finish a Blend whose `src/app.ts` has its own registrations: the frame step's library upgrade
       refuses ("src/app.ts ... is not the previous release's scaffold"). Registry entries acrylblends.agent, acrylblends.chat, acrylblends.notes-desktop fail
       (`acryl new --from` them leaves an unframed app), and the registry site's "Every app starter can be created" check is red since 2026-11-17. agent also
       carries a stale `plugins/plugin-share` with no row, which the frame step's `add plugin-share` refuses. Owner of the fix: the acrylblends upgrade step.
+
+      Done 2026-11-17 (acrylblends 666f3eaa, released as acrylblends and create-acrylblends 1.5.7): create runs `upgrade` before it mounts
+      plugin-share; `add` mounts a plugin whose folder is there without its row; upgrade's frame step no longer copies plugin-share twice; the
+      registry's acrylblends.agent lost its stale plugins/plugin-share. Walked from npm 1.5.7: chat, agent and notes-desktop are made in the frame.
