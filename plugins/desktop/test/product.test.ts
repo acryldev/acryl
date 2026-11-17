@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -252,4 +253,47 @@ test('the marker names a seed folder only as a relative path inside the bundle',
     writeFileSync(join(root, 'product.json'), JSON.stringify({ product: 'P', seed }))
     assert.equal(readProduct(root)?.seed, expected, seed)
   }
+})
+
+test('a named product updated to a new build copies the new build over its app, once, and keeps its data and history; the Blank product never does', () => {
+  const root = scratch()
+  bundle(root)
+  const seed = join(root, 'seed')
+  mkdirSync(join(seed, 'plugins', 'launcher'), { recursive: true })
+  mkdirSync(join(seed, 'template-git'), { recursive: true })
+  writeFileSync(join(seed, 'plugins', 'launcher', 'service.ts'), 'export const v = 1\n')
+  writeFileSync(join(seed, 'template-git', 'HEAD'), 'ref: refs/heads/main\n')
+  const product = { product: 'Control', appName: 'Control', program: PROGRAM, seed: 'seed', named: true as const, build: 'b1' }
+  const home = scratch()
+  const lines: string[] = []
+  const first = openProductApp(openProductStorage({ writtenBy: '1.0.0', env: {}, home }), product, root, (line) => lines.push(line))
+  writeFileSync(join(first.home, 'chats.json'), '[1]\n')
+  writeFileSync(join(first.root, '.git', 'HEAD'), 'ref: refs/heads/mine\n')
+
+  // The same build: nothing is copied.
+  openProductApp(openProductStorage({ writtenBy: '1.0.0', env: {}, home }), product, root, (line) => lines.push(line))
+  assert.equal(lines.filter((line) => line.includes('updating')).length, 0)
+
+  // The update: build 2's file arrives; the data and the repository stay.
+  writeFileSync(join(seed, 'plugins', 'launcher', 'service.ts'), 'export const v = 2\n')
+  const updated = openProductApp(openProductStorage({ writtenBy: '1.0.0', env: {}, home }), { ...product, build: 'b2' }, root, (line) => lines.push(line))
+  assert.equal(updated.id, first.id)
+  assert.equal(readFileSync(join(updated.root, 'plugins', 'launcher', 'service.ts'), 'utf8'), 'export const v = 2\n')
+  assert.equal(readFileSync(join(updated.home, 'chats.json'), 'utf8'), '[1]\n')
+  assert.equal(readFileSync(join(updated.root, '.git', 'HEAD'), 'utf8'), 'ref: refs/heads/mine\n')
+  assert.equal(lines.filter((line) => line.includes('updating')).length, 1)
+
+  // An app from before builds were recorded is updated once.
+  rmSync(join(updated.home, 'product-build'))
+  writeFileSync(join(updated.root, 'plugins', 'launcher', 'service.ts'), 'stale\n')
+  openProductApp(openProductStorage({ writtenBy: '1.0.0', env: {}, home }), { ...product, build: 'b2' }, root, () => {})
+  assert.equal(readFileSync(join(updated.root, 'plugins', 'launcher', 'service.ts'), 'utf8'), 'export const v = 2\n')
+
+  // The Blank product's source is the person's: a build mark never copies over it.
+  const blankHome = scratch()
+  const blank = { product: 'Blank', appName: 'Blank', program: PROGRAM, build: 'b1' }
+  const mine = openProductApp(openProductStorage({ writtenBy: '1.0.0', env: {}, home: blankHome }), blank, root, () => {})
+  writeFileSync(join(mine.root, 'src', 'app.ts'), 'export const mine = 1\n')
+  openProductApp(openProductStorage({ writtenBy: '1.0.0', env: {}, home: blankHome }), { ...blank, build: 'b2' }, root, () => {})
+  assert.equal(readFileSync(join(mine.root, 'src', 'app.ts'), 'utf8'), 'export const mine = 1\n')
 })

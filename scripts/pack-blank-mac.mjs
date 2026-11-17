@@ -55,6 +55,13 @@ const npm = (npmArgs, options) =>
  * (in the frame), under its own name (`--product`, else the first heading of its README).
  */
 const from = option('--from', undefined)
+/** Which build this product is (product.json `build`): the Blend folder's commit when it is a checkout, else the moment of packing. A started app compares it with the build its copy was made from. */
+const productBuild = () => {
+  try {
+    if (from !== undefined && existsSync(from)) return execFileSync('git', ['-C', from, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  } catch {}
+  return new Date().toISOString()
+}
 // A folder (`--from ./05-acryl-ade`, a Blend's own checkout in its release workflow) is named by its folder, a registry id by its last part.
 const slug =
   from === undefined
@@ -453,7 +460,7 @@ const program = [
 writeFileSync(
   join(app, 'product.json'),
   // A product made from a Blend (--from) is that finished app under its own name; only Blank's first app is the person's to name.
-  `${JSON.stringify({ product: PRODUCT, appName: APP_NAME, program, ...(from === undefined ? {} : { named: true }) }, null, 2)}\n`,
+  `${JSON.stringify({ product: PRODUCT, appName: APP_NAME, program, ...(from === undefined ? {} : { named: true, build: productBuild() }) }, null, 2)}\n`,
 )
 log(`the Program: ${program.join(', ')}`)
 
