@@ -78,6 +78,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.3](release-notes/create-1.5.3.md) - asks for acrylblends 1.5.3
 - [Release notes acrylblends 1.5.4](release-notes/acrylblends-1.5.4.md) - `acrylblends add plugin-share` mounts it, so an app made from a registry starter can pull, list and publish plugins
 - [Release notes create-acrylblends 1.5.4](release-notes/create-1.5.4.md) - asks for acrylblends 1.5.4; a registry starter without sharing gets it
+- [Release notes acrylblends 1.5.9](release-notes/acrylblends-1.5.9.md) - the workbench opens on a folder it is given (`acryl ade` in a project); @acrylblends/workspace 0.1.1
+- [Release notes create-acrylblends 1.5.9](release-notes/create-1.5.9.md) - asks for acrylblends 1.5.9
 - [Release notes acrylblends 1.5.8](release-notes/acrylblends-1.5.8.md) - a packed Blend product does not ask for a name, also for an app it made before
 - [Release notes create-acrylblends 1.5.8](release-notes/create-1.5.8.md) - asks for acrylblends 1.5.8
 - [Release notes acrylblends 1.5.7](release-notes/acrylblends-1.5.7.md) - every registry Blend can be made in the frame again; a packed Blend product does not ask for a name
