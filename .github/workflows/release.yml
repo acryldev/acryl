@@ -78,4 +78,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           ls -la out
+          # A release made by hand from a run's artifacts gets this run's files instead.
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --clobber
+            exit 0
+          fi
           gh release create "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --title "ACRYL ADE $GITHUB_REF_NAME" --notes "ACRYL ADE $GITHUB_REF_NAME, ready to install. macOS: open the .dmg (Apple Silicon: arm64, Intel: x64); the app is not signed yet, so the first start is right-click > Open. Windows: run the -win- .exe (arm64 or x64); SmartScreen may ask, More info > Run anyway. Linux: sudo apt install ./ACRYL-ADE-linux-<arch>.deb. Windows and Linux use the git on your machine."
