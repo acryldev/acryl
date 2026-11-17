@@ -6,11 +6,16 @@ import { fileURLToPath } from 'node:url'
 
 const file = fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))
 
-/** The overlay with the frame's root row replaced by the workbench's; `text` unchanged when it already mounts the workbench. */
+/**
+ * The overlay with the frame's root row replaced by the workbench's; `text` unchanged when it already mounts the workbench. The frame is named
+ * `'@acrylblends/blends-frame'` in an app made from npm, and `acryl-blends-frame` in one a desktop product is packed from (the packer installs the
+ * framework's packages under their source names); the workbench gets the same form of name.
+ */
 export function withWorkbenchRoot(text) {
   return text.replace(
-    /^( +)- id: acryl-blends-frame\n\1  name: '@acrylblends\/blends-frame'\n(?:\1  config:\n(?:\1    .*\n)*)?/mu,
-    (_match, indent) => `${indent}- id: acryl-workspace\n${indent}  name: '@acrylblends/workspace'\n`,
+    /^( +)- id: acryl-blends-frame\n\1  name: ('@acrylblends\/blends-frame'|acryl-blends-frame)\n(?:\1  config:\n(?:\1    .*\n)*)?/mu,
+    (_match, indent, name) =>
+      `${indent}- id: acryl-workspace\n${indent}  name: ${name === 'acryl-blends-frame' ? 'acryl-workspace' : "'@acrylblends/workspace'"}\n`,
   )
 }
 
@@ -18,7 +23,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const before = readFileSync(file, 'utf8')
   const after = withWorkbenchRoot(before)
   if (after !== before) writeFileSync(file, after)
-  if (!after.includes("'@acrylblends/workspace'")) {
+  if (!/name: (?:'@acrylblends\/workspace'|acryl-workspace)$/mu.test(after)) {
     console.error('ade-root: cordis.patch.yml mounts neither the Blends frame nor the workbench; run `npx acrylblends upgrade` and try again')
     process.exit(1)
   }

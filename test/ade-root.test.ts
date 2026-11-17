@@ -27,6 +27,17 @@ test('the generated frame row becomes the workbench row, and nothing else change
   assert.equal(withWorkbenchRoot(swapped), swapped)
 })
 
+test('a desktop product names the frame by its source name, and gets the workbench by its source name', () => {
+  const packed = generated.replaceAll("'@acrylblends/blends-frame'", 'acryl-blends-frame')
+  assert.equal(
+    withWorkbenchRoot(packed),
+    packed.replace(
+      '    - id: acryl-blends-frame\n      name: acryl-blends-frame\n      config:\n        appPage: /app\n',
+      '    - id: acryl-workspace\n      name: acryl-workspace\n',
+    ),
+  )
+})
+
 test('the app as shipped mounts the workbench at the root', () => {
   const overlay = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
   assert.match(withWorkbenchRoot(overlay), /- id: acryl-workspace\n +name: '@acrylblends\/workspace'/u)
