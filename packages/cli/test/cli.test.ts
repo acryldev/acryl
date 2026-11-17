@@ -536,6 +536,28 @@ describe('add and plugins', () => {
     expect(nowhere.err()).toContain('is not an app')
   })
 
+  it('mounts plugin-share when its folder is there without its row (an upgrade brought it), and refuses it once it is mounted', async () => {
+    expect(await runCli(['init', 'unrowed', '-y'], fakeIo().io)).toBe(0)
+    const dir = join(scratch, 'unrowed')
+    const manifest = join(dir, 'blend.yaml')
+    const rowed = readFileSync(manifest, 'utf8')
+    expect(rowed).toContain('name: plugin-share')
+    writeFileSync(
+      manifest,
+      rowed.replace(/^ *- id: plugin-share\r?\n *name: plugin-share\r?\n/mu, ''),
+    )
+    expect(readFileSync(manifest, 'utf8')).not.toContain('name: plugin-share')
+    const first = fakeIo()
+    expect(await runCli(['add', 'plugin-share', '--dir', dir], first.io)).toBe(0)
+    expect(first.out()).toContain('plugin-share: mounted in blend.yaml (row plugin-share)')
+    const names = (text: string) =>
+      [...text.matchAll(/^ *name: ?(\S+)\r?$/gmu)].map((match) => match[1])
+    expect(names(readFileSync(manifest, 'utf8'))).toEqual(names(rowed))
+    const again = fakeIo()
+    expect(await runCli(['add', 'plugin-share', '--dir', dir], again.io)).toBe(1)
+    expect(again.err()).toContain('already has plugins/plugin-share')
+  })
+
   it('records library copies in plugins/library.json, and keeps copying into src/plugins for an app that still has the old layout', async () => {
     expect(await runCli(['init', 'grows2', '-y'], fakeIo().io)).toBe(0)
     const dir = join(scratch, 'grows2')

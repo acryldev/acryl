@@ -105,7 +105,25 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
     .map((name) => (name === 'kv' ? 'acryl-kv-json' : name))
     .map((name) => (name === 'desktop' && plain ? 'desktop-web' : name))
   if (names.length === 0) return 0
-  const already = options.suite ? [] : names.filter((name) => present(appDir, name))
+  // A plugin `add` mounts whose folder is already there without its row (an upgrade brought the folder, or an older starter left it): only the row is
+  // missing, so it is mounted, and nothing is copied over the folder.
+  const rows = rowNames(appDir) ?? []
+  const unmounted = options.suite
+    ? []
+    : MOUNTED.filter(
+        (plugin) =>
+          names.includes(plugin.name) &&
+          present(appDir, plugin.name) &&
+          !rows.includes(plugin.name),
+      )
+  for (const plugin of unmounted) {
+    const result = mount(appDir, plugin)
+    io.stdout.write(`${plugin.name}: ${result.note}\n`)
+    if (!result.done) return 1
+  }
+  const remaining = names.filter((name) => !unmounted.some((plugin) => plugin.name === name))
+  if (remaining.length === 0) return 0
+  const already = options.suite ? [] : remaining.filter((name) => present(appDir, name))
   if (already.length > 0) {
     io.stderr.write(
       `error: the app already has ${already
@@ -120,9 +138,9 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
     return 1
   }
   // The agent panel and the PTY driver cannot run without the rows of the agent template: refuse before anything is copied, and say exactly what is missing.
-  const mounting = MOUNTED.filter((plugin) => names.includes(plugin.name))
+  const mounting = MOUNTED.filter((plugin) => remaining.includes(plugin.name))
   for (const plugin of mounting) {
-    const missing = missingRows(appDir, plugin, names)
+    const missing = missingRows(appDir, plugin, remaining)
     if (missing.length > 0) {
       io.stderr.write(
         `error: ${plugin.name} needs the ${missing.map((row) => `\`${row}\``).join(' and ')} ${missing.length === 1 ? 'row' : 'rows'} in blend.yaml, and this app has ${describeRows(appDir)}. ` +
@@ -132,7 +150,7 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
       return 1
     }
   }
-  const toCopy: LibraryPlugin[] = closure(names, readLibrary()).filter(
+  const toCopy: LibraryPlugin[] = closure(remaining, readLibrary()).filter(
     (plugin) => !present(appDir, plugin.name),
   )
   const addedDependencies: string[] = []
@@ -156,13 +174,13 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
       )
   }
   if (options.suite) {
-    const refused = copySuites(names, appDir, addedDependencies, io)
+    const refused = copySuites(remaining, appDir, addedDependencies, io)
     if (refused !== 0) return refused
   }
   io.stdout.write(`added ${toCopy.map((plugin) => plugin.name).join(', ')} to ${appDir}\n`)
   if (addedDependencies.length > 0)
     io.stdout.write(`dependencies to install: ${addedDependencies.join(', ')} (run npm install)\n`)
-  for (const plugin of toCopy.filter((plugin) => names.includes(plugin.name))) {
+  for (const plugin of toCopy.filter((plugin) => remaining.includes(plugin.name))) {
     const mounted = MOUNTED.find((candidate) => candidate.name === plugin.name)
     const result = mounted ? mount(appDir, mounted) : undefined
     io.stdout.write(

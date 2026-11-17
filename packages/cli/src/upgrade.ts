@@ -611,7 +611,8 @@ export async function upgrade(options: UpgradeOptions, io: Io): Promise<number> 
       }
       for (const plugin of frame.addedPlugins) {
         const known = library.get(plugin)
-        if (known === undefined) continue
+        // A plugin the library step above just copied (a plugin of the app requires it too) is there already, with its dependencies.
+        if (known === undefined || existsSync(join(folder.dir, plugin))) continue
         copyPlugin(known, appDir)
         if (known.imports) mergeImports(appDir, known.imports, 'plugins')
         addedDependencies.push(...mergeDependencies(appDir, known.dependencies))

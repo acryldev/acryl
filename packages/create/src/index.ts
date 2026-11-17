@@ -465,12 +465,12 @@ async function createFromSource(
     if (options.desktop) {
       const framework = (args: string[]) =>
         io.run(process.execPath, [acrylblendsBin(), ...args, '--dir', target], io.cwd)
-      // A starter made before sharing has no plugin-share row, so pull, list and publish would be refused in the new app: it gets the plugin now, mounted.
-      const share = lacksPluginShare(target) ? await framework(['add', 'plugin-share']) : 0
+      // The upgrade runs on the starter as it was published, before anything here edits src/app.ts: it recognizes a released scaffold only unedited.
+      // A starter made before sharing has no plugin-share row, so pull, list and publish would be refused in the new app: it gets the plugin last, mounted.
       if (
         (await framework(['add', 'desktop'])) !== 0 ||
-        share !== 0 ||
-        (await framework(['upgrade'])) !== 0
+        (await framework(['upgrade'])) !== 0 ||
+        (lacksPluginShare(target) && (await framework(['add', 'plugin-share'])) !== 0)
       ) {
         io.stderr.write(
           `error: ${directory} was made, but putting it in the ACRYL frame failed (see above); it runs on its own with ${'`npm start`'}\n`,
