@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { PropsRenderSlots, PropsRuntime } from '@acryl/ui/frame'
 import type {} from './contracts.ts'
 import type { ShellPlatform } from './environment.ts'
@@ -21,7 +22,7 @@ export interface AdvancedFrameInjected {
 
 /** Full advanced root slot props. */
 export type AdvancedFrameProps = PropsRuntime<'root'>
-  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'main' | 'rightbar' | 'shell.overlay' | 'shell.leading'>
+  & PropsRenderSlots<'desktop.main' | 'desktop.sidebar' | 'sidebar' | 'main' | 'rightbar' | 'shell.overlay' | 'shell.leading' | 'sidebar.settings'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
@@ -108,6 +109,7 @@ export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, render
             renderUpstream: () => renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth }),
             onToggleCollapse: () => { layout.toggleSidebar() },
           })}
+          <div className="dshDesktopSettingsHost">{renderSlot('sidebar.settings', { wide: false })}</div>
         </div>
       </aside>
       <main className="dshDesktopConversationSurface" data-acryl-slot="desktop.main">

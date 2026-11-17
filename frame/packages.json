@@ -23,7 +23,7 @@
     },
     "acryl-app-shell": {
       "name": "app-shell",
-      "version": "0.1.0"
+      "version": "0.1.1"
     },
     "acryl-workspace": {
       "name": "workspace",
