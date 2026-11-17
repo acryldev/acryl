@@ -117,6 +117,9 @@ export function openProductApp(
       },
       { named: product.named === true },
     )
+  } else if (product.named === true && app.named !== true) {
+    // An app a named product made before it carried the mark (ACRYL Control Center 0.1.0-0.1.3): keep its name and stop asking.
+    app = storage.rename(app.id, app.name)
   }
   return storage.open(app.id)
 }

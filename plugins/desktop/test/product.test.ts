@@ -220,6 +220,15 @@ test('a product that is one Blend makes its first app from the Blend in its bund
   const app = openProductApp(storage, product, root, () => {})
   // A product that is one Blend is a finished app under its own name: the first start does not ask for one.
   assert.equal(storage.app(app.id).named, true)
+  // An app this product made before it carried the mark is marked on the next start, under the name it has.
+  const home2 = scratch()
+  const storage2 = openProductStorage({ writtenBy: '1.0.0', env: {}, home: home2 })
+  const earlier = openProductApp(storage2, { ...product, named: undefined }, root, () => {})
+  assert.equal(storage2.app(earlier.id).named, undefined)
+  const again = openProductApp(storage2, product, root, () => {})
+  assert.equal(again.id, earlier.id)
+  assert.equal(storage2.app(earlier.id).named, true)
+  assert.equal(storage2.app(earlier.id).name, 'Cloud Costs')
   assert.equal(
     readFileSync(join(app.root, 'plugins', 'finops', 'index.ts'), 'utf8'),
     'export const finops = 1\n',
