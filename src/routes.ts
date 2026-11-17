@@ -47,7 +47,7 @@ const homePage = (name: string, widgets: string): string => `<!doctype html>
   </body>
 </html>`
 
-const launcherPage = (): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ACRYL</title><style>html,body{margin:0;background:#151517}</style></head><body><div id="acryl-control-center" data-base="/app"></div><script src="./launcher.js"></script></body></html>`
+const launcherPage = (): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ACRYL Control Center</title><style>html,body{margin:0;background:#151517}</style></head><body><div id="acryl-launcher" data-base="/app"></div><script src="/app/launcher.js"></script></body></html>`
 
 /**
  * The app's own pages and routes, mountable at any prefix: the standalone server mounts it at the root, the frame host at {@link FRAME_MOUNT_PREFIX}.
