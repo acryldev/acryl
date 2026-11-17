@@ -6,7 +6,7 @@
  * and is served from there (plugins/instance/bundle.ts), so an update replaces it for every app.
  */
 
-import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { inProgram, type Product } from '../instance/bundle.ts'
 import type { AppInstance } from '../instance/index.ts'
@@ -68,7 +68,7 @@ function ignoreProductFiles(source: string): void {
  * @param source - the new app's source folder.
  * @param program - the Program's paths (product.json), which stay in the bundle.
  */
-export function seedSource(bundle: string, source: string, program: readonly string[]): void {
+export function seedSource(bundle: string, source: string, program: readonly string[], refresh = false): void {
   cpSync(bundle, source, {
     recursive: true,
     dereference: true,
@@ -85,7 +85,8 @@ export function seedSource(bundle: string, source: string, program: readonly str
     },
   })
   const templateGit = join(bundle, 'template-git')
-  if (existsSync(templateGit))
+  // A refresh keeps the source's own history: the new build's files arrive as changes in it, never as a replaced repository.
+  if (!refresh && existsSync(templateGit))
     cpSync(templateGit, join(source, '.git'), { recursive: true, force: true })
   for (const { carrier, file } of CARRIED) {
     const from = join(bundle, carrier)
@@ -105,6 +106,7 @@ export function openProductApp(
   log: (line: string) => void = console.log,
 ): AppInstance {
   let app = storage.last()
+  const created = app === undefined
   if (app === undefined) {
     log(`product: making the app "${product.appName}" from the bundled app (first start, one time)`)
     // A product that is one Blend carries it in a folder of its bundle; the Blank product's starting app is the bundle's own tree.
@@ -121,5 +123,28 @@ export function openProductApp(
     // An app a named product made before it carried the mark (ACRYL Control Center 0.1.0-0.1.3): keep its name and stop asking.
     app = storage.rename(app.id, app.name)
   }
-  return storage.open(app.id)
+  const opened = storage.open(app.id)
+  if (product.named === true && product.build !== undefined) refreshFinishedApp(opened, product, bundle, created, log)
+  return opened
+}
+
+/** The file in a named product's app data that says which build its source was made from. */
+export const PRODUCT_BUILD_FILE = 'product-build'
+
+/**
+ * A named product (a finished Blend: ACRYL Control Center, ACRYL ADE) ships its own plugins in the source half: without this, an app made by build 1 kept
+ * build 1's code forever and no update reached the screen. When the source was made from another build, this build's files are copied over it (the
+ * person's data lives in `data/`, never here). An app made before builds were recorded has no record, and is refreshed once.
+ */
+function refreshFinishedApp(app: AppInstance, product: Product, bundle: string, created: boolean, log: (line: string) => void): void {
+  const record = join(app.home, PRODUCT_BUILD_FILE)
+  const made = existsSync(record) ? readFileSync(record, 'utf8').trim() : undefined
+  if (made === product.build) return
+  if (!created) {
+    log(`product: updating "${app.name}" to build ${product.build} (it was made from ${made ?? 'an earlier build'})`)
+    const from = product.seed === undefined ? bundle : join(bundle, product.seed)
+    seedSource(from, app.root, product.program, true)
+  }
+  mkdirSync(app.home, { recursive: true })
+  writeFileSync(record, `${product.build}\n`)
 }
