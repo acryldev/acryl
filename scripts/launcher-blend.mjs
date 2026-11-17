@@ -64,7 +64,7 @@ const routes = readFileSync(routesFile, 'utf8')
 if (!routes.includes('launcherPage')) {
   const patched = routes
     .replace("import type { Context }", "import { readFileSync } from 'node:fs'\nimport type { Context }")
-    .replace('/**\n * The app\'s own pages and routes', 'const launcherPage = (): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ACRYL</title><style>html,body{margin:0;background:#151517}</style></head><body><div id="acryl-launcher" data-base="/app"></div><script src="./launcher.js"></script></body></html>`\n\n/**\n * The app\'s own pages and routes')
+    .replace('/**\n * The app\'s own pages and routes', 'const launcherPage = (): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ACRYL Control Center</title><style>html,body{margin:0;background:#151517}</style></head><body><div id="acryl-launcher" data-base="/app"></div><script src="/app/launcher.js"></script></body></html>`\n\n/**\n * The app\'s own pages and routes')
     .replace(".get('/', async (c) =>", ".get('/', (c) => c.html(launcherPage()))\n      .get('/launcher.js', (c) => c.body(readFileSync(new URL('../public/launcher.js', import.meta.url)), 200, { 'content-type': 'text/javascript; charset=utf-8' }))\n      // The template's own first screen, kept at /home.\n      .get('/home', async (c) =>")
   if (!patched.includes('launcherPage()')) { console.error(`launcher blend: ${routesFile} is not the shape this script knows; the Blends template changed`); process.exit(1) }
   put(routesFile, patched)
