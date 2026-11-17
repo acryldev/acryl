@@ -16,7 +16,7 @@ const { selectInstance } = await import(new URL('../plugins/instance/index.ts', 
 const chosen = selectInstance({ projectRoot: frameworkRoot, env: process.env })
 const appRoot = chosen.root
 const home = chosen.home
-const profileName = 'acrylblends-acryl-control-center'
+const profileName = 'acrylblends-acryl'
 // The page and its tab are named for the app: the package's name, as the frame's header says it, else the folder's.
 const appTitle = (() => {
   try {
@@ -435,7 +435,7 @@ const profileContext = {
 const layers = [compositionLayer, settingsLayer]
 let ctx
 try {
-  ctx = await boot('acrylblends-acryl-control-center', join(frameworkRoot, 'cordis.yml'), layers.flat(), (hostContext) => {
+  ctx = await boot('acrylblends-acryl', join(frameworkRoot, 'cordis.yml'), layers.flat(), (hostContext) => {
     hostContext.provide('profileContext', profileContext)
   }, pathToFileURL(join(appRoot, 'package.json')).href)
 } catch (error) {

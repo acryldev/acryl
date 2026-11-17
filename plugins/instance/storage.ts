@@ -310,8 +310,8 @@ export interface AppStorage {
   apps(): RegisteredApp[]
   /** The app opened last, else the one made last, or undefined while the product holds none. */
   last(): RegisteredApp | undefined
-  /** Make an app named `name`; `seed` fills its empty source folder (the product's starting app). */
-  create(name: string, seed: (source: string) => void): RegisteredApp
+  /** Make an app named `name`; `seed` fills its empty source folder (the product's starting app). `named`: the name is final, the first start does not ask. */
+  create(name: string, seed: (source: string) => void, options?: { named?: boolean }): RegisteredApp
   /** Open app `id`: it is recorded as opened now, and its instance is returned (source the project root, data its home and the engine's). */
   open(id: string): AppInstance
   /** One app's entry. */
@@ -371,7 +371,11 @@ export function openProductStorage(options: {
         (latest, app) => (latest === undefined || opened(app) >= opened(latest) ? app : latest),
         undefined,
       ),
-    create: (name, seed) => createApp(root, name, { seed: (folders) => seed(folders.source) }),
+    create: (name, seed, options) =>
+      createApp(root, name, {
+        seed: (folders) => seed(folders.source),
+        named: options?.named === true,
+      }),
     open(id) {
       const app = findApp(root, id)
       touchApp(root, id)
