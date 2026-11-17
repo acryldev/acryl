@@ -1,4 +1,6 @@
-// The list of ACRYL apps on this machine (spec 050 D6-D8): one file, `<home>/apps.json`, where <home> is ACRYL's own hidden folder (~/.acryl).
+// The list of ACRYL apps on this machine (spec 050 D6-D8): one file, `<home>/control-center-apps.json`, where <home> is ACRYL's own hidden folder (~/.acryl).
+// Not `<home>/apps.json`: that is the framework's record of the installed products (the instance storage), and the two overwrote each other - a
+// restart of Control Center then lost the list and made a new Control Center. A list written there before this file existed is read once and moved here.
 // An entry is { id, path, blend, madeBy, surface, added }: where the app lives, which Blend it is, who made it ('person' or 'agent') and which surface it
 // has (spec 050 D10: 'web', 'desktop', or 'tui', the lightest kind, listed but not yet made). Nothing scans the
 // disk: an app is in the list because `acryl new` made it, an agent asked to keep it, or the person added its folder. The file is the only
@@ -9,7 +11,9 @@ import { basename, join, resolve } from 'node:path'
 
 /** What makes a folder an app: the Blend manifest create-acrylblends writes at its root. */
 export const APP_MARKER = 'blend.yaml'
-export const REGISTRY_FILE = 'apps.json'
+export const REGISTRY_FILE = 'control-center-apps.json'
+/** Where the list was kept before it had a file of its own; shared with the framework's instance storage, so only entries with a `path` are ours. */
+const LEGACY_FILE = 'apps.json'
 
 const MADE_BY = Object.freeze(['person', 'agent'])
 /** The three kinds of app (spec 050 D10). An entry without one is a web app, which is what every app made before the field existed is. */
@@ -31,7 +35,8 @@ const valid = entry => entry && typeof entry.id === 'string' && typeof entry.pat
 /** Every app in the list, oldest first; an empty list when the file is missing or not readable as a list (a broken file never stops the launcher). */
 export function readApps(home) {
   try {
-    const parsed = JSON.parse(readFileSync(join(home, REGISTRY_FILE), 'utf8'))
+    const own = join(home, REGISTRY_FILE)
+    const parsed = JSON.parse(readFileSync(existsSync(own) ? own : join(home, LEGACY_FILE), 'utf8'))
     return (Array.isArray(parsed?.apps) ? parsed.apps : []).filter(valid).map(entry => Object.freeze({
       id: entry.id, path: entry.path, blend: entry.blend ?? '', madeBy: MADE_BY.includes(entry.madeBy) ? entry.madeBy : 'person',
       surface: SURFACES.includes(entry.surface) ? entry.surface : 'web', added: entry.added ?? '',
