@@ -180,8 +180,12 @@ export class LauncherService {
     const source = request.blend === undefined ? [request.starter ?? ''] : ['--from', request.blend]
     const args = ['exec', '--yes', CREATE_SPEC, '--', request.name, ...source]
     const line = `cd ${request.where} && acryl new ${request.name} ${source.join(' ')}`
-    const run = this.#ports.runner({ program: 'npm', args, cwd: request.where, env: this.#environment() })
-    const job: Job = { name: request.name, line, status: 'running', run, step: `Step 1 of 3: getting ${request.name} (${CREATE_SPEC}). Next: installing its dependencies, then starting it.`, since: Date.now(), output: '' }
+    // npm_config_loglevel reaches the install a starter runs inside create-acrylblends too, so its minute shows each download instead of one still line.
+    const run = this.#ports.runner({ program: 'npm', args, cwd: request.where, env: { ...this.#environment(), npm_config_loglevel: 'http' } })
+    const step = request.blend === undefined
+      ? `Step 1 of 2: getting ${request.name} and installing its dependencies (${CREATE_SPEC}, about a minute). Next: starting it.`
+      : `Step 1 of 3: getting ${request.name} (${CREATE_SPEC}). Next: installing its dependencies, then starting it.`
+    const job: Job = { name: request.name, line, status: 'running', run, step, since: Date.now(), output: '' }
     this.#job = job
     this.#watch(undefined, run, { folder, surface: request.surface, job })
   }

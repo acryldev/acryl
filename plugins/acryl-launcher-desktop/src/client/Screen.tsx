@@ -333,13 +333,15 @@ function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNo
   const [plan, setPlan] = useState<PublishPlanView | undefined>(undefined)
   const [done, setDone] = useState<PublishResponse | undefined>(undefined)
   const [note, setNote] = useState<{ text: string, error: boolean } | undefined>(undefined)
-  const [busy, setBusy] = useState(false)
+  const [doing, setDoing] = useState<string | undefined>(undefined)
+  const busy = doing !== undefined
   const ready = app.state === 'running'
 
-  const run = async (work: () => Promise<void>): Promise<void> => {
-    setBusy(true)
+  /** `what` is said while it runs (a pull or a publish takes 5 to 20 seconds), so the screen never just sits there. */
+  const run = async (what: string, work: () => Promise<void>): Promise<void> => {
+    setDoing(what)
     setNote(undefined)
-    try { await work() } catch (cause) { setNote({ text: message(cause), error: true }) } finally { setBusy(false) }
+    try { await work() } catch (cause) { setNote({ text: message(cause), error: true }) } finally { setDoing(undefined) }
   }
 
   // The list is asked for when the app is running (its door answers then), and again when the app changes.
@@ -377,7 +379,7 @@ function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNo
       ) : null}
       <form className="acrylHomeRow" onSubmit={(event) => {
         event.preventDefault()
-        void run(async () => {
+        void run(`Pulling ${source.trim()}: downloading it, checking its digest and installing it into ${app.name}...`, async () => {
           const result = await api.pullPlugin(app.id, source.trim())
           setPlugins(result.plugins)
           setSource('')
@@ -398,7 +400,7 @@ function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNo
           ) : plan === undefined ? (
             <form className="acrylHomeRow" onSubmit={(event) => {
               event.preventDefault()
-              void run(async () => { setPlan(await api.publishPlan({ id: app.id, plugin: sharing, ...owner_ })) })
+              void run(`Reading what publishing ${sharing} would send...`, async () => { setPlan(await api.publishPlan({ id: app.id, plugin: sharing, ...owner_ })) })
             }}>
               <input className="acrylHomeInput" style={{ flex: '1 1 240px' }} value={owner} placeholder="GitHub account (blank: yours)" aria-label="GitHub account" onChange={(event) => { setOwner(event.target.value) }} />
               <button type="submit" className="acrylHomeBtn" data-primary disabled={busy}>Review what would be sent</button>
@@ -413,13 +415,14 @@ function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNo
               </dl>
               <p className="acrylHomeNote">Nothing has been sent. It is sent only when you say yes.</p>
               <div className="acrylHomeActs">
-                <button type="button" className="acrylHomeBtn" data-primary disabled={busy} onClick={() => { void run(async () => { setDone(await api.publish({ id: app.id, plugin: sharing, ...owner_, plan })) }) }}>Yes, publish {plan.owner}/{plan.repo}</button>
+                <button type="button" className="acrylHomeBtn" data-primary disabled={busy} onClick={() => { void run(`Publishing ${plan.owner}/${plan.repo} ${plan.version}: ${plan.createsRepository ? 'making the repository, ' : ''}pushing the files and making the release...`, async () => { setDone(await api.publish({ id: app.id, plugin: sharing, ...owner_, plan })) }) }}>Yes, publish {plan.owner}/{plan.repo}</button>
                 <button type="button" className="acrylHomeBtn" disabled={busy} onClick={() => { setPlan(undefined) }}>Not yet</button>
               </div>
             </>
           )}
         </div>
       )}
+      {doing === undefined ? null : <p className="acrylHomeNote" role="status">{doing}</p>}
       {note === undefined ? null : <p className="acrylHomeNote" data-error={note.error ? '' : undefined} role={note.error ? 'alert' : 'status'}>{note.text}</p>}
     </div>
   )
