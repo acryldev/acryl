@@ -19,18 +19,6 @@ import { LauncherService } from './service.ts'
 
 export const name = 'acryl-launcher-host'
 
-/** The part of the runtime's `appInstance` service ACRYL plugins read (every plugin declares exactly this shape, so the augmentations agree). */
-interface AppInstanceService {
-  readonly home: string
-  readonly dshHome: string
-}
-
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    appInstance: AppInstanceService
-  }
-}
-
 export const inject = ['router', 'routerHttp']
 
 export function apply(ctx: Context): void {
