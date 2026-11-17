@@ -193,7 +193,10 @@ Design first: the owner reviewed `design/launcher.html` and answered Q1-Q3 on 20
 - [ ] T022 [ade] `acryl ade` should open on the folder it was started in; today ADE's only project is its own install folder (`~/.acryl/ade`), and the
       window and tab are titled `ade`.
 - [ ] T023 [ade, release] A prebuilt ADE per OS (a GitHub release of acrylblends/05-acryl-ade with the installed app), so the first `acryl ade` is one
-      download instead of `npm install` (529 MB of node_modules, 74 to 88 s on a fast line).
+      download instead of `npm install` (529 MB of node_modules, 74 to 88 s on a fast line). Done 2026-11-17: release v0.1.0 of acrylblends/05-acryl-ade with six
+      installers (macOS dmg, Windows exe, Linux deb; arm64 and x64), built by its Release workflow on a `v*` tag, linked from its README and its Blend page; the
+      Windows x64 installer installed and opened with Settings working. Left: `acryl ade` still makes ADE from source rather than taking the download; the macOS
+      and Linux builds from CI not launched; Windows arm64 not run.
 - [ ] T024 [blends] The window and browser launcher as a published Blend, opened by `acryl --gui` and `acryl --web` (D14). Done: acrylblends/63-acryl-launcher,
       registry entry `acryl.launcher` (made and run from the registry 2026-11-17), the ADE card opens ADE in a window or the browser (made in `<home>/ade` on first
       use, walked: made, installed, served, Settings opens), selector routes `--gui`/`--web` to it. Left: the window is named after the folder (`launcher`), not
