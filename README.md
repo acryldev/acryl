@@ -10,7 +10,22 @@ It opens the IDE's workbench, ported into the Blends framework as `@acrylblends/
 
 The chat is the same agent ACRYL IDE runs, with its shell, file tools and jobs. Claude Code, Codex or any other terminal agent runs in a terminal tab beside it.
 
-## Start
+## Download
+
+The app, ready to install (the latest release, <https://github.com/acrylblends/05-acryl-ade/releases/latest>):
+
+| | Apple Silicon / ARM | Intel / x64 |
+|---|---|---|
+| macOS | [ACRYL-ADE-mac-arm64.dmg](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-mac-arm64.dmg) | [ACRYL-ADE-mac-x64.dmg](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-mac-x64.dmg) |
+| Windows | [ACRYL-ADE-win-arm64.exe](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-win-arm64.exe) | [ACRYL-ADE-win-x64.exe](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-ADE-linux-arm64.deb](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-linux-arm64.deb) | [ACRYL-ADE-linux-x64.deb](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-linux-x64.deb) |
+
+The apps are not signed yet. macOS: the first start is right-click > Open. Windows: SmartScreen may ask, More info > Run anyway.
+Linux: `sudo apt install ./ACRYL-ADE-linux-x64.deb`. On Windows and Linux ACRYL ADE uses the git on your machine.
+
+Or with the `acryl` command, which makes and runs it from source in `~/.acryl/ade`: `npx acryl ade` (browser) or `npx acryl ade --gui` (window).
+
+## Start from source
 
 ```bash
 npm create acrylblends@latest my-ade -- --from acryl.ade
