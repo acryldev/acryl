@@ -28,7 +28,7 @@ test('an app joins the list once, with its Blend, and the list file is the only 
   const other = addApp(home, { path: app(join(root, 'elsewhere'), 'shop'), madeBy: 'agent' })
   assert.equal(other.entry.id, 'shop-2', 'two folders named alike get different ids')
   assert.equal(other.entry.madeBy, 'agent')
-  assert.equal(JSON.parse(readFileSync(join(home, 'apps.json'), 'utf8')).apps.length, 2)
+  assert.equal(JSON.parse(readFileSync(join(home, 'control-center-apps.json'), 'utf8')).apps.length, 2)
   assert.equal(removeApp(home, 'shop'), true)
   assert.equal(removeApp(home, 'shop'), false)
   assert.deepEqual(readApps(home).map(entry => entry.id), ['shop-2'])
@@ -39,7 +39,7 @@ test('a folder without blend.yaml is not an app; a broken list file is an empty 
   mkdirSync(join(root, 'plain'))
   assert.throws(() => addApp(home, { path: join(root, 'plain') }), /not an ACRYL app: it has no blend\.yaml/u)
   mkdirSync(home)
-  writeFileSync(join(home, 'apps.json'), '{ not json')
+  writeFileSync(join(home, 'control-center-apps.json'), '{ not json')
   assert.deepEqual(readApps(home), [])
 }))
 
@@ -111,4 +111,18 @@ test('the Blend of a real manifest is its metadata id, not the id of a row', () 
   assert.equal(blendOf(folder), 'acrylblends.shop')
   writeFileSync(join(folder, 'blend.yaml'), 'kind: Blueprint\nspec:\n  rows:\n    - id: router\n')
   assert.equal(blendOf(folder), '', 'a row id is not the Blend')
+}))
+
+test('the list has its own file: the framework rewriting apps.json does not lose it, and a list kept in apps.json before is moved over', () => scratch(root => {
+  const home = join(root, 'home')
+  mkdirSync(home, { recursive: true })
+  const folder = join(root, 'csv'); mkdirSync(folder); writeFileSync(join(folder, 'blend.yaml'), 'metadata:\n  id: acrylblends.csv-explorer\n')
+  // What AION had: the launcher's entry in apps.json, beside nothing of the framework's.
+  writeFileSync(join(home, 'apps.json'), JSON.stringify({ apps: [{ id: 'csv', path: folder, blend: 'acrylblends.csv-explorer', madeBy: 'person', surface: 'desktop', added: 't' }] }))
+  assert.deepEqual(readApps(home).map(app => app.id), ['csv'])
+  const other = join(root, 'other'); mkdirSync(other); writeFileSync(join(other, 'blend.yaml'), 'name: other\n')
+  addApp(home, { path: other })
+  // The framework restarts and writes only its own record into apps.json.
+  writeFileSync(join(home, 'apps.json'), JSON.stringify({ apps: [{ id: 'acryl-control-center-7234', name: 'ACRYL Control Center', created: 't' }] }))
+  assert.deepEqual(readApps(home).map(app => app.id), ['csv', 'other'])
 }))
