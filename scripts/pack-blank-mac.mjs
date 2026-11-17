@@ -25,7 +25,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -40,7 +40,13 @@ const arch = option('--arch', 'arm64')
  * (in the frame), under its own name (`--product`, else the first heading of its README).
  */
 const from = option('--from', undefined)
-const slug = from === undefined ? 'blank' : from.replace(/^[^.]+\./u, '')
+// A folder (`--from ./05-acryl-ade`, a Blend's own checkout in its release workflow) is named by its folder, a registry id by its last part.
+const slug =
+  from === undefined
+    ? 'blank'
+    : /^[./\\]|^[a-z]:/iu.test(from)
+      ? basename(resolve(from)).replace(/^\d+-/u, '')
+      : from.replace(/^[^.]+\./u, '')
 const out = resolve(option('--out', join(root, 'dist', `${slug}-mac`)))
 const work = join(root, 'dist', `${slug}-mac-work`)
 const app = join(work, from === undefined ? 'app' : slug)
@@ -220,6 +226,13 @@ const install = spawnSync('npm', ['install', '--no-audit', '--no-fund', '--logle
   stdio: 'inherit',
 })
 if (install.status !== 0) throw new Error(`npm install failed (${String(install.status)})`)
+// The app's own step before its window opens (ACRYL ADE swaps the frame's root row for its workbench there). A product never runs `npm run desktop`,
+// so the step runs here, once, and the bundle ships what it made.
+if (scaffoldManifest.scripts?.predesktop !== undefined) {
+  const before = spawnSync('npm', ['run', 'predesktop', '--loglevel=error'], { cwd: app, stdio: 'inherit' })
+  if (before.status !== 0) throw new Error(`npm run predesktop failed (${String(before.status)})`)
+  log('ran the app\'s predesktop step')
+}
 
 // 3. npm links the workspace packages (file: specs) instead of copying them, and those links point at this checkout: a bundle must carry the files.
 const materialize = (path) => {
