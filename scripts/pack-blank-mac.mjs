@@ -64,6 +64,16 @@ const slug =
       : from.replace(/^[^.]+\./u, '')
 const out = resolve(option('--out', join(root, 'dist', `${slug}-${platform}`)))
 const work = join(root, 'dist', `${slug}-${platform}-work`)
+// Every git this script starts (create's first commit, the frame's) runs without git's background maintenance: a detached `git maintenance run --auto`
+// writes into .git (objects/maintenance.lock) while step 6 copies it, and the copy fails with ENOENT (macOS runner, ACRYL ADE v0.1.1).
+const gitConfigAt = Number(process.env.GIT_CONFIG_COUNT ?? 0)
+Object.assign(process.env, {
+  GIT_CONFIG_COUNT: String(gitConfigAt + 2),
+  [`GIT_CONFIG_KEY_${gitConfigAt}`]: 'maintenance.auto',
+  [`GIT_CONFIG_VALUE_${gitConfigAt}`]: 'false',
+  [`GIT_CONFIG_KEY_${gitConfigAt + 1}`]: 'gc.auto',
+  [`GIT_CONFIG_VALUE_${gitConfigAt + 1}`]: '0',
+})
 const app = join(work, from === undefined ? 'app' : slug)
 const log = (line) => console.log(`pack-blank-mac: ${line}`)
 
