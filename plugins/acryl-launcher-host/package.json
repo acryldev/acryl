@@ -1,0 +1,33 @@
+{
+  "name": "acryl-launcher-host",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./package.json": "./package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.4"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./index.ts"
+      ]
+    },
+    "requires": {
+      "host": [
+        "router",
+        "routerHttp"
+      ]
+    },
+    "provides": {
+      "host": []
+    },
+    "slots": {
+      "offers": [],
+      "fills": []
+    }
+  }
+}
