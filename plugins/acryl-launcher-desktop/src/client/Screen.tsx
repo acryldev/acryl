@@ -16,6 +16,8 @@ export interface LauncherScreenProps {
   readonly visibility: LauncherVisibility
   /** Desktop hands a web address opened by the window to the system browser. */
   readonly openExternal: (url: string) => void
+  /** The ACRYL app: ACRYL ADE is the workspace under this screen, in the same window. Elsewhere (the launcher Blend) it is its own app, opened through the Host. */
+  readonly adeUnderneath?: boolean
 }
 
 type View = 'apps' | 'running' | 'drafts' | 'updates' | 'store' | 'cloud' | 'health' | 'settings'
@@ -25,7 +27,7 @@ type Panel = 'none' | 'new' | 'add'
 const POLL_MS = 2000
 const message = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
 
-export function LauncherScreen({ api, visibility, openExternal }: LauncherScreenProps): ReactNode {
+export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = true }: LauncherScreenProps): ReactNode {
   const open = useSyncExternalStore(visibility.subscribe, visibility.isOpen)
   const [state, setState] = useState<StateResponse | undefined>(undefined)
   const [problem, setProblem] = useState<string | undefined>(undefined)
@@ -107,7 +109,7 @@ export function LauncherScreen({ api, visibility, openExternal }: LauncherScreen
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const done = await act(() => api.create(request)); if (done) setPanel('none'); return done }}
             onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onRemove={id => act(() => api.remove(id))}
-            openExternal={openExternal} onOpenCode={() => { visibility.set(false) }}
+            openExternal={openExternal} adeUnderneath={adeUnderneath} onOpenCode={() => { visibility.set(false) }} onOpenAde={surface => { void act(() => api.openAde(surface)) }}
           />
         )}
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
@@ -161,13 +163,16 @@ interface AppsViewProps {
   readonly openExternal: (url: string) => void
   /** Leave this screen for the coding workspace underneath it (ACRYL ADE is the agentic development environment, in this same window). */
   readonly onOpenCode: () => void
+  readonly adeUnderneath: boolean
+  /** Start ACRYL ADE as its own app, in a window or the browser (made the first time). */
+  readonly onOpenAde: (surface: 'web' | 'desktop') => void
 }
 
 function AppsView(props: AppsViewProps): ReactNode {
   const shown = visibleApps(props.apps, props.search, props.surface)
   const { current } = props
   // ACRYL ADE is always on this machine and always a Desktop app: it answers the Desktop filter and the words it is named by.
-  const showCode = (props.surface === 'all' || props.surface === 'desktop') && 'acryl ade agentic development environment code ide'.includes(props.search.trim().toLowerCase())
+  const showCode = (props.surface === 'all' || props.surface === 'desktop' || (!props.adeUnderneath && props.surface === 'web')) && 'acryl ade agentic development environment code ide'.includes(props.search.trim().toLowerCase())
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div className="acrylHomeTop">
@@ -196,11 +201,13 @@ function AppsView(props: AppsViewProps): ReactNode {
         {showCode && (
           <div className="acrylHomeApp" data-code>
             <div className="acrylHomeHead">
-              <div className="acrylHomeIcon" style={{ background: '#0f766e' }}>C</div>
-              <div style={{ minWidth: 0 }}><div className="acrylHomeName">ACRYL ADE</div><div className="acrylHomeMeta">the agentic development environment, in this window</div></div>
+              <div className="acrylHomeIcon" style={{ background: '#0f766e' }}>A</div>
+              <div style={{ minWidth: 0 }}><div className="acrylHomeName">ACRYL ADE</div><div className="acrylHomeMeta">{props.adeUnderneath ? 'the agentic development environment, in this window' : 'the agentic development environment'}</div></div>
             </div>
-            <div className="acrylHomeRow"><SurfaceChip surface="desktop" /></div>
-            <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-primary onClick={props.onOpenCode}>Open ACRYL ADE</button></div>
+            <div className="acrylHomeRow"><SurfaceChip surface="desktop" />{props.adeUnderneath ? null : <SurfaceChip surface="web" />}</div>
+            {props.adeUnderneath
+              ? <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-primary onClick={props.onOpenCode}>Open ACRYL ADE</button></div>
+              : <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-primary onClick={() => { props.onOpenAde('desktop') }}>Open in a window</button><button type="button" className="acrylHomeBtn" onClick={() => { props.onOpenAde('web') }}>Open in the browser</button></div>}
           </div>
         )}
         {shown.map(app => (

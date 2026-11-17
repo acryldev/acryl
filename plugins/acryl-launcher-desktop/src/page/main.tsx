@@ -48,6 +48,7 @@ function render(): void {
       api={api}
       visibility={visibility}
       openExternal={(url) => { window.open(url, '_blank', 'noopener,noreferrer') }}
+      adeUnderneath={false}
     />,
   )
 }

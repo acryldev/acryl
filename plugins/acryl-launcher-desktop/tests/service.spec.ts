@@ -213,6 +213,22 @@ describe('+ New app', () => {
     expect(service.state().job?.line).toBe(`cd ${where} && acryl new notes --from acrylblends.notes`)
   })
 
+  it('opens ACRYL ADE from <home>/ade: made from the registry the first time, then started on the surface asked for', () => {
+    const { service, runs, home } = setup()
+    service.openAde('web')
+    expect(runs[0]?.command).toMatchObject({ args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'ade', '--from', 'acryl.ade'], cwd: home })
+    const ade = join(home, 'ade')
+    mkdirSync(join(ade, 'node_modules'), { recursive: true })
+    writeFileSync(join(ade, 'blend.yaml'), 'metadata:\n  id: acryl.ade\n')
+    runs[0]!.say('made\n')
+    runs[0]!.end(0)
+    expect(runs[1]?.command).toMatchObject({ args: ['run', 'dev'], cwd: ade })
+    runs[1]!.stop()
+    service.openAde('desktop')
+    expect(runs[2]?.command).toMatchObject({ args: ['run', 'desktop'], cwd: ade })
+    expect(service.state().apps.map(app => app.blend)).toEqual(['acryl.ade'])
+  })
+
   it('reads the registry once a minute, not on every look at the store', async () => {
     const { service, registry } = setup()
     expect((await service.blends()).map(blend => blend.id)).toEqual(['acrylblends.notes'])

@@ -5,6 +5,7 @@
  * Capability boundary: the list and what runs on this machine (one service, `LauncherService`); the drawing is the Client half.
  */
 import { existsSync, mkdirSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acrylblends/cordis/router'
@@ -33,8 +34,8 @@ declare module '@deepseek-ai/cordis' {
 export const inject = ['router', 'routerHttp']
 
 export function apply(ctx: Context): void {
-  // The ACRYL home this launcher lists and makes apps in, given by `pnpm launcher blend` (the home's own selector is in the ACRYL app, not in a Blend).
-  const home = process.env['ACRYL_LAUNCHER_HOME'] ?? join(process.cwd(), '.acryl-launcher-home')
+  // The ACRYL home this launcher lists and makes apps in: `~/.acryl`, the one home of every ACRYL app; `ACRYL_LAUNCHER_HOME` moves it (tests, `pnpm launcher blend`).
+  const home = process.env['ACRYL_LAUNCHER_HOME'] ?? join(homedir(), '.acryl')
   const service = new LauncherService({
     home,
     // The visible folder next to ACRYL's hidden home (`~/.acryl` and `~/ACRYL`): the home's parent, never a looked-up user folder.

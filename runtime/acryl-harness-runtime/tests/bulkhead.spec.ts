@@ -27,6 +27,7 @@ const ROOTS = ['runtime', 'apps', 'plugins', 'scripts']
 const ALLOWED: Readonly<Record<string, string>> = {
   'runtime/acryl-harness-runtime/src/instance/select.ts': 'the selector: the one place an app instance is chosen',
   'plugins/acryl-workspace/src/pty/service.ts': 'a terminal starts in the user\'s own home folder when the cwd is gone; not ACRYL state',
+  'plugins/acryl-launcher-desktop/blend/host/index.ts': 'the launcher Blend runs outside ACRYL\'s runtime (no appInstance); its home is ~/.acryl, the one home of every ACRYL app',
   'scripts/graft-deepscan.mjs': 'a repository indexing tool; not part of any app',
   'scripts/real-home-guard.mjs': 'the gate\'s auditor: it must know the OS user\'s real homes to prove no test changed one; it only reads them, and it is not part of any app',
 }

@@ -9,6 +9,8 @@ export const LAUNCHER_REMOVE_PATH = `${LAUNCHER_API_PREFIX}/remove`
 export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
+/** Open ACRYL ADE (the Blend `acryl.ade` in `<home>/ade`, the folder `acryl ade` uses), made on first use, in a window or the browser. */
+export const LAUNCHER_ADE_PATH = `${LAUNCHER_API_PREFIX}/ade`
 export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
 export const LAUNCHER_ASSISTANT_FOLDER_PATH = `${LAUNCHER_API_PREFIX}/assistant-folder`
 export const LAUNCHER_PLUGINS_PATH = `${LAUNCHER_API_PREFIX}/plugins`

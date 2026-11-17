@@ -42,6 +42,9 @@ const BLENDS_FRESH_MS = 60_000
 const CREATE_SPEC = 'create-acrylblends@latest'
 /** The app's own share command, from its folder (the `save` plugin of acrylblends). */
 const SHARE_COMMAND = join('plugins', 'save', 'share-cli.ts')
+/** ACRYL ADE: the Blend and the folder in the home that `acryl ade` makes and opens (`distribution/acryl-npm-launcher/managed.js` MANAGED.ade). */
+const ADE_BLEND = 'acryl.ade'
+const ADE_FOLDER = 'ade'
 const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]/gu
 
 const tail = (text: string): string => text.replace(ANSI, '').split(/\r?\n/u).map(line => line.trim()).filter(line => line !== '').slice(-TAIL_LINES).join('\n')
@@ -107,19 +110,19 @@ export class LauncherService {
    * Start an app the way the terminal's "Open an app" does, with the saved model key: a Web app with `npm run dev` in its folder (its address opens in the
    * browser), a Desktop app with `npm run desktop`, which starts the same app and opens it in its own window (Electron is fetched the first time).
    */
-  start(id: string): void {
+  start(id: string, surface?: Surface): void {
     const entry = readApps(this.#ports.home).find(app => app.id === id)
     if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
     if (inspectApp(entry).state === 'missing') throw new LauncherRefusal(`the folder ${entry.path} is gone: remove it from the list, or put it back`)
     if (this.#started.has(id)) return
     this.#failures.delete(id)
     // An app whose dependencies are not installed (one pulled from the registry in a terminal, or copied) cannot run: install them first, shown as "starting".
-    if (!this.#ports.exists(join(entry.path, 'node_modules'))) { this.#installThenStart(id, entry.path); return }
-    const run = this.#ports.runner({ program: 'npm', args: ['run', entry.surface === 'desktop' ? 'desktop' : 'dev'], cwd: entry.path, env: this.#environment() })
+    if (!this.#ports.exists(join(entry.path, 'node_modules'))) { this.#installThenStart(id, entry.path, surface); return }
+    const run = this.#ports.runner({ program: 'npm', args: ['run', (surface ?? entry.surface) === 'desktop' ? 'desktop' : 'dev'], cwd: entry.path, env: this.#environment() })
     this.#watch(id, run, undefined)
   }
 
-  #installThenStart(id: string, folder: string): void {
+  #installThenStart(id: string, folder: string, surface: Surface | undefined): void {
     const run = this.#ports.runner({ program: 'npm', args: ['install'], cwd: folder, env: this.#environment() })
     const started: Started = { run, address: undefined, output: '' }
     this.#started.set(id, started)
@@ -128,9 +131,19 @@ export class LauncherService {
       if (this.#started.get(id) !== started) return
       this.#started.delete(id)
       if (end.notFound) this.#failures.set(id, 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.')
-      else if (end.code === 0) { try { this.start(id) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) } }
+      else if (end.code === 0) { try { this.start(id, surface) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) } }
       else if (end.code !== null) this.#failures.set(id, started.output === '' ? (end.error ?? 'npm install ended before the app could run.') : started.output)
     })
+  }
+
+  /**
+   * ACRYL ADE, the way `acryl ade` (`--gui`) opens it: the Blend `acryl.ade` in `<home>/ade`, made from the registry the first time (listed, installed and
+   * started as any app made here is), then started in a window or the browser. Already running, it is left as it is.
+   */
+  openAde(surface: 'web' | 'desktop'): void {
+    const folder = join(this.#ports.home, ADE_FOLDER)
+    if (!this.#ports.exists(join(folder, APP_MARKER))) { this.create({ name: ADE_FOLDER, where: this.#ports.home, blend: ADE_BLEND, surface }); return }
+    this.start(addApp(this.#ports.home, { path: folder, surface }).entry.id, surface)
   }
 
   stop(id: string): void {
