@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { CASCADE_STEP, cascade, WINDOW_SIZE, windowOptions, windowSize } from '../window.ts'
+import { CASCADE_STEP, cascade, windowOptions, windowSize } from '../window.ts'
 
 const work = { x: 0, y: 25, width: 1920, height: 1055 }
 const size = { width: 1100, height: 760 }

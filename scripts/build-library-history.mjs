@@ -102,4 +102,12 @@ const order = (a, b) =>
   core(a).reduce((d, n, i) => d || n - core(b)[i], 0) ||
   Number(!a.includes('-')) - Number(!b.includes('-'))
 writeFileSync(versionsFile, `${JSON.stringify([...covered].sort(order))}\n`)
+// In the repository's own format, so the lint step of the check passes on what this wrote.
+const formatted = spawnSync(
+  join(root, 'node_modules', '.bin', 'biome'),
+  ['format', '--write', target, versionsFile],
+  { stdio: 'inherit' },
+)
+if (formatted.status !== 0)
+  console.error('build-library-history: biome format failed; run pnpm run format')
 console.log(`build-library-history: wrote ${target}`)
