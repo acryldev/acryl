@@ -367,8 +367,10 @@ export class LauncherService {
     run.onEnd((end) => {
       if (appId !== undefined && this.#started.get(appId) === started) {
         this.#started.delete(appId)
-        // An app that ends after being stopped on purpose is not a failure; one that ends on its own with a non-zero code is.
-        if (end.code !== 0 && end.code !== null && !end.notFound) this.#failures.set(appId, started.output.trimEnd())
+        // An app that ends after being stopped on purpose is not a failure; one that ends on its own with a non-zero code is. A Desktop app that was up
+        // ends when its window is closed, the normal way to stop it: that is not a failure either (it showed "It stopped on its own" with its start log).
+        const closed = started.address !== undefined && readApps(this.#ports.home).find(entry => entry.id === appId)?.surface === 'desktop'
+        if (end.code !== 0 && end.code !== null && !end.notFound && !closed) this.#failures.set(appId, started.output.trimEnd())
       }
       if (end.notFound) this.#note(making, 'failed', 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.', id)
       else if (making !== undefined && making.job.status === 'running') {
