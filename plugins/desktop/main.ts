@@ -96,8 +96,12 @@ function startPath(): string {
 }
 
 /** Electron's user-data folder: an explicit DSH_DESKTOP_USER_DATA, else the product's own (beside its apps), else a folder inside the app's own home. */
+// One folder per product: Electron lets one process own a user-data folder, so a shared one made ACRYL ADE quit as a second ACRYL Control Center.
 const userData =
-  resolveDesktopUserDataOverride(process.env) ?? storage?.electron ?? join(chosen.home, 'electron')
+  resolveDesktopUserDataOverride(process.env) ??
+  (storage === undefined || product === undefined
+    ? join(chosen.home, 'electron')
+    : join(storage.electron, product.appName))
 mkdirSync(userData, { recursive: true, mode: 0o700 })
 app.setPath('userData', userData)
 // A packed product is named by its marker (the menu's About and Quit, the Dock): its source's package is named after the folder it was packed from.
