@@ -117,7 +117,9 @@ export function entriesForWorktree(
   // leaves a session behind, so a busy folder collects dozens, and listing them all read as dozens of open chats nobody closed.
   const openTabs = new Set(tiles.flatMap(tile => tile.kind === 'chat' && tile.chatSessionId !== undefined ? [tile.chatSessionId] : []))
   const ownChats: WorktreeSessionEntry[] = chats
-    .filter(chat => chat.cwd !== undefined && owningWorktree(repos, chat.cwd) === path)
+    // A session restored from the Host's list can arrive before its summary carries a cwd; its open tab in this tab set is
+    // then the one thing that places it, so the left pane lists it where the person is already looking at it.
+    .filter(chat => chat.cwd === undefined ? openTabs.has(chat.id) : owningWorktree(repos, chat.cwd) === path)
     .map((chat) => {
       const selected = chat.id === active?.chatSessionId
       const open = openTabs.has(chat.id) || chat.running || selected

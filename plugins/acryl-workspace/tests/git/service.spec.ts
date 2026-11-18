@@ -323,6 +323,9 @@ describe('disposal', () => {
 
     await svc.dispose()
     await pending
+    // `close` proves Node let go of the child; a loaded macOS runner can still list the just-killed process in `ps`
+    // for a moment, so liveness is waited for, bounded, instead of sampled once at the instant disposal resolves.
+    for (let waited = 0; waited < 200 && isRunning(pid); waited += 1) await new Promise(r => setTimeout(r, 10))
     expect(isRunning(pid)).toBe(false)
     await expect(svc.repo(main)).rejects.toBeInstanceOf(WorkspaceGitError)
   })

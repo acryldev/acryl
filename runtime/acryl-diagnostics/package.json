@@ -47,6 +47,6 @@
     "adm-zip": "0.6.1"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.4"
+    "@deepseek-ai/cordis": "^4.0.4"
   }
 }

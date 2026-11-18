@@ -4,7 +4,7 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from '../src/client/Brand.tsx'
 import { apply, inject } from '../src/client/index.ts'
 import { FOOTER_ACTIONS_LAYOUT_CSS, installFooterActionsLayout } from '../src/client/footer-actions-layout.ts'
-import { brandTitleText, installDocumentTitleBrand } from '../src/client/document-title.ts'
+import { brandTitleText, installDocumentTitleBrand, pageProductTitle } from '../src/client/document-title.ts'
 
 describe('ACRYL brand plugin', () => {
   it('renders the sidebar mark/name and hero mark with the ACRYL identity', () => {
@@ -72,6 +72,12 @@ describe('ACRYL brand plugin', () => {
     expect(doc.title).toBe('Some session \u2014 ACRYL')
     dispose()
     expect(disconnected).toBe(true)
+    // A page that names its app: the tab says the app's name.
+    const meta = (content: string) => ({ querySelector: () => ({ getAttribute: () => content }) })
+    expect(pageProductTitle(meta('shop'))).toBe('shop')
+    expect(pageProductTitle(meta('  '))).toBe('ACRYL')
+    expect(pageProductTitle(undefined)).toBe('ACRYL')
+    expect(brandTitleText('Chat \u2014 DeepSeek Harness', 'shop')).toBe('Chat \u2014 shop')
     // No DOM: a no-op, never a throw.
     expect(() => installDocumentTitleBrand(undefined, undefined)()).not.toThrow()
   })

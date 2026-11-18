@@ -1,6 +1,6 @@
 {
   "name": "acryl-workspace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ACRYL's first-party workspace shell (spec 040-agentic-multiplexer-ade): a worktree-aware sidebar, a tile-based main canvas (chat/terminal/file/browser/diff/kanban/doc), and a git-aware details panel, required in advanced desktop mode",
   "license": "MIT",
   "repository": {
@@ -24,7 +24,11 @@
       "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./ui": {
+      "types": "./lib/types/client/ui.d.ts",
+      "default": "./lib/ui.js"
+    }
   },
   "dsh": {
     "bundle": {
@@ -73,7 +77,6 @@
     "acryl-control": "workspace:*",
     "acryl-loopback-http": "workspace:*",
     "acryl-settings": "workspace:*",
-    "acrylblends": "^1.0.0",
     "codemirror": "6.0.2",
     "node-pty": "1.2.0-beta.15",
     "ws": "8.22.0"
@@ -87,6 +90,7 @@
     "@deepseek-ai/dsh-client-ui-session": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
     "@deepseek-ai/dsh-session": "0.2.0-rc.2",
+    "acrylblends": "^1.0.0",
     "react": "18.3.1"
   },
   "devDependencies": {

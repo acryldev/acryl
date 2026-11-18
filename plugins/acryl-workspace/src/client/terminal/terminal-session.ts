@@ -32,6 +32,14 @@ export interface TerminalSessionOptions {
   readonly onTitle?: (terminalId: string, title: string) => void
   readonly createSocket?: StreamSocketFactory
   readonly urlFor?: (id: string, cursor: number) => string
+  /** The screen's colours and type size, for a root owner with its own palette; the workspace's when left out. */
+  readonly appearance?: TerminalAppearance
+}
+
+export interface TerminalAppearance {
+  readonly background: string
+  readonly foreground: string
+  readonly fontSize?: number
 }
 
 export class TerminalSession {
@@ -62,16 +70,16 @@ export class TerminalSession {
       cursorBlink: true,
       convertEol: false,
       fontFamily: FONT_FAMILY,
-      fontSize: 13,
+      fontSize: options.appearance?.fontSize ?? 13,
       // 1.0 keeps box-drawing lines continuous between rows, which every TUI relies on.
       lineHeight: 1,
       scrollback: 10_000,
       macOptionIsMeta: true,
       scrollOnUserInput: true,
       theme: {
-        background: '#0b0d12',
-        foreground: '#d7e0ea',
-        cursor: '#d7e0ea',
+        background: options.appearance?.background ?? '#0b0d12',
+        foreground: options.appearance?.foreground ?? '#d7e0ea',
+        cursor: options.appearance?.foreground ?? '#d7e0ea',
         selectionBackground: '#334155',
       },
     })

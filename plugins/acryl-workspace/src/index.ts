@@ -1,6 +1,7 @@
 /** Cordis Host plugin: ACRYL Workspace PTY table and loopback routes. */
 
 import { randomBytes } from 'node:crypto'
+import { basename } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-control'
 import type { Acryl } from 'acrylblends'
@@ -52,6 +53,16 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /**
+ * The row's config, written by the generated overlay when the frame hosts an app: where the app's own page is served (`/app`). The page opens it in a
+ * browser tile on first run, so the person starts at the app they are building rather than an empty canvas.
+ */
+export interface WorkspaceConfig {
+  readonly appPage?: string
+  /** A folder to open on: added to the projects shown at start (`acryl ade` passes the folder it was started in). Not a folder: ignored. */
+  readonly openFolder?: string
+}
+
+/**
  * The routes, the terminal's WebSocket among them, are served by the router (`router`, `routerHttp`) under {@link WORKSPACE_API_PREFIX}. The
  * loopback Web server is still needed for its address (agent hooks report to it). The app instance says where this app keeps its data.
  */
@@ -61,10 +72,11 @@ export const inject = ['acrylWeb', 'appInstance', 'acrylSettings', 'router', 'ro
  * Activate the workspace's Host half: its services and their routes. Disabling the Loader row unmounts the routes and kills leftover PTY sessions.
  * @param ctx - Host context for this generation.
  */
-export function apply(ctx: Context): void {
+export function apply(ctx: Context, config: WorkspaceConfig = {}): void {
   if (ctx.acrylWeb.host !== '127.0.0.1') {
     throw new Error('acryl-workspace: requires a loopback Web server')
   }
+  const appPage = typeof config.appPage === 'string' && config.appPage.startsWith('/') ? config.appPage : undefined
   const rendererOrigin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const reportHostError = (operation: string, cause: unknown): void => {
     ctx.logger.error(
@@ -111,6 +123,14 @@ export function apply(ctx: Context): void {
     try {
       // The project list is ACRYL's own: one section of the ACRYL home's settings, released with this plugin so a reloaded plugin registers it again.
       const projects = new ProjectRegistry(ctx.acrylSettings.register(PROJECTS_NAMESPACE, ProjectsSchema))
+      // The app itself is the first project: its own folder, so the left pane has a place for the first chats and the agent works where
+      // the app lives. Added once, only while the list is empty; removing it later stays the person's choice and is not undone here.
+      const appRoot = (ctx.appInstance as { readonly root?: unknown }).root
+      // The folder the app was started on (`acryl ade` in a project) is the one asked for: it is added, and on a first start instead of the app's own.
+      const openFolder = typeof config.openFolder === 'string' && config.openFolder !== '' ? config.openFolder : undefined
+      const first = openFolder ?? (typeof appRoot === 'string' && projects.view().paths.length === 0 ? appRoot : undefined)
+      if (first !== undefined)
+        void projects.add(first).catch(cause => { reportHostError(`add ${first} as a project`, cause) })
       // Shared context (spec 043 T009): the generated WORKSPACE.md of every Shared Context workspace stays current, and other plugins can read it.
       const shared = new SharedContext({ registry: projects, home: ctx.appInstance.home })
       sharedContext = shared
@@ -145,7 +165,11 @@ export function apply(ctx: Context): void {
         ptyRoutes(workspacePty, reportHostError),
         agentRoutes(catalog, agentSettings, reportHostError),
         agentStatusRoutes(statusToken, agentStatus, reportHostError),
-        capabilityRoutes(() => ({ chat: services.get('agents') !== undefined })),
+        capabilityRoutes(() => ({
+          chat: services.get('agents') !== undefined,
+          ...(appPage === undefined ? {} : { appPage }),
+          ...(typeof appRoot === 'string' ? { appRoot, appName: basename(appRoot) } : {}),
+        })),
         projectRoutes(projects, keepAlive, reportHostError),
         briefRoutes(shared),
         filesRoutes(workspaceFiles, reportHostError),

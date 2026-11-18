@@ -15,6 +15,8 @@ import { dockShellHooks } from './dock/dock-hooks.tsx'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
 import { ChatSelection } from './chat/chat-selection.ts'
 import type { MainViewNavigation } from './sessions/main-session.ts'
+import { ModelConnectControl, type ModelCredentialsPort, type ModelLlmPort, type ModelSessionPort } from './models/model-connect.ts'
+import { openSettingsSection, setSettingsPanelOpener, startOpenSettingsListener } from './settings/open-settings.ts'
 import { createWorkspaceFilesApi } from './files/files-api.ts'
 import { filesTabPlugin } from './files/files-tab.ts'
 import { changesTabPlugin } from './changes/changes-tab.ts'
@@ -26,7 +28,8 @@ import { commentsTabPlugin } from './comments/comments-tab.ts'
 import { listTerminalTargets } from './comments/terminal-targets.ts'
 import { browserClipboard } from './comments/use-comments.ts'
 import { WorkspaceState } from './canvas/state.ts'
-import { WorkspaceGroups } from './canvas/groups.ts'
+import { GLOBAL_GROUP, WorkspaceGroups } from './canvas/groups.ts'
+import { frameSessionBannerFrom, probeAdmittedSession } from './connection/session-banner.ts'
 import { browserStorage, parseSavedWorkspace, STORAGE_KEY } from './canvas/persistence.ts'
 import { startWorkspacePersistence } from './canvas/persist.ts'
 import { createWebFolderPicker } from './projects/web-folder-picker.ts'
@@ -91,17 +94,96 @@ export function apply(ctx: ClientContext): void {
   // What the Host composition offers (the DSH chat may be off). Everything that depends on it is registered once it is known; until then the
   // page shows the stock frame for the instant it takes, and an unreachable Host means "everything", as before.
   let capabilities = DEFAULT_WORKSPACE_CAPABILITIES
-  const capabilitiesLoaded = loadWorkspaceCapabilities().then((loaded) => { capabilities = loaded })
-  const groups = new WorkspaceGroups(() => new WorkspaceState({ chat: capabilities.chat }), saved?.groups)
+  const capabilitiesLoaded = loadWorkspaceCapabilities().then((loaded) => { capabilities = loaded; return loaded })
+  // The session banner: if the browser's session ends, the retry loop cannot recover it, so the page names the way back in instead of spinning.
+  const frameSession = frameSessionBannerFrom(ctx, signal => probeAdmittedSession(signal))
+  ctx.effect(() => () => frameSession.dispose(), 'acryl-workspace: the frame session banner')
+  // A new browser tab opens at the app's own page when the Host serves one, else empty.
+  const browserHome = (): string | undefined => {
+    if (capabilities.appPage === undefined) return undefined
+    try {
+      return new URL(capabilities.appPage, window.location.origin).href
+    } catch {
+      return undefined
+    }
+  }
+  const groups = new WorkspaceGroups(() => new WorkspaceState({ chat: capabilities.chat, browserHome }), saved?.groups)
   if (saved !== undefined) shell.setMode(saved.mode)
   // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).
   const terminalStack = advanced ? createTerminalStack(ctx, storage, shell) : undefined
   const frame = advanced ? applyAdvancedShell(ctx, environment, dockShellHooks(terminalStack?.host)) : undefined
   ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
+  // First run under a Host that serves an app: open the app's own page in the canvas and select the app's folder, so the app and its chats share one tab
+  // set. A Host without an app (ACRYL Web, Desktop) advertises no page and keeps the empty canvas; a saved workspace means a previous run already chose
+  // its tabs, and nothing is added to them.
+  if (advanced && saved === undefined) {
+    ctx.effect(() => {
+      let cancelled = false
+      let stop: (() => void) | undefined
+      let interacted = false
+      const markInteraction = () => {
+        interacted = true
+      }
+      void capabilitiesLoaded.then((loaded) => {
+        if (cancelled || loaded.appPage === undefined) return
+        let url: string
+        try {
+          url = new URL(loaded.appPage, window.location.origin).href
+        } catch {
+          return
+        }
+        if (loaded.appRoot !== undefined) shell.select(loaded.appRoot)
+        const state = groups.stateFor(loaded.appRoot ?? GLOBAL_GROUP)
+        if (state.getSnapshot().tiles.some((tile) => tile.kind === 'browser' && tile.url === url)) return
+        const tile = state.addTile('browser', { url, ...(loaded.appName === undefined ? {} : { title: loaded.appName }) })
+        if (tile === undefined) return
+        // The chat binds its session a moment later and focuses its tab. On first run the app's page keeps the focus, so the person starts at the app; the
+        // chat stays open in the same tab set, one click away. Only the bootstrap's focus, before the person has touched the page, is taken back: a chat
+        // the person opens or selects keeps the focus.
+        window.addEventListener('pointerdown', markInteraction, { capture: true, once: true })
+        window.addEventListener('keydown', markInteraction, { capture: true, once: true })
+        let lastActive = state.getSnapshot().activeId
+        stop = state.subscribe(() => {
+          const snapshot = state.getSnapshot()
+          const active = snapshot.activeId
+          const stole =
+            !interacted &&
+            lastActive === tile.id &&
+            snapshot.tiles.some((entry) => entry.id === active && entry.kind === 'chat')
+          lastActive = active
+          if (stole) {
+            state.selectTile(tile.id)
+            lastActive = tile.id
+          }
+        })
+      })
+      return () => {
+        cancelled = true
+        stop?.()
+        window.removeEventListener('pointerdown', markInteraction, { capture: true })
+        window.removeEventListener('keydown', markInteraction, { capture: true })
+      }
+    }, 'acryl-workspace: the app page on first run')
+  }
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
   ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
   const comments = new CommentStore(parseSavedComments(storage?.getItem(COMMENTS_STORAGE_KEY) ?? null))
   ctx.effect(() => startCommentPersistence(comments, storage), 'acryl-workspace: save line comments')
+  // The desktop shell's Settings... menu item (Cmd/Ctrl+,) sends a window event; it opens the same Settings as the left panel's button.
+  ctx.effect(() => startOpenSettingsListener(window), 'acryl-workspace: Settings from the desktop menu')
+  // The frame's page has no DSH sidebar trigger: Settings opens through the layout service's keyed panel instead (the same panel).
+  ctx.inject(['layout'], (inner) => {
+    const layout = inner.get('layout') as unknown as { selectPanel?: (id: string) => void } | undefined
+    if (layout?.selectPanel === undefined) return () => {}
+    setSettingsPanelOpener(() => {
+      try {
+        layout.selectPanel?.('settings')
+      } catch {
+        // The settings panel row is not registered in this host yet; the caller's notice covers it.
+      }
+    })
+    return () => { setSettingsPanelOpener(undefined) }
+  })
   const agent = createAgentBridge(() => ctx.get('sessions'))
   // DSH's session navigation (`dsh-client-ui-workspace`), looked up when a chat is opened: ACRYL does not import that package (the
   // frame facade stays as it is), so the service is read by name through the narrow port `main-session.ts` declares.
@@ -109,6 +191,27 @@ export function apply(ctx: ClientContext): void {
   // The one owner of which chat is shown and which tab and worktree show it; follows DSH's sessions service as it comes and goes.
   const chats = new ChatSelection({ groups, shell, getSessions: () => ctx.get('sessions'), getNavigation, showTabs: () => { upstreamPanels.close() } })
   ctx.inject(['sessions'], child => { child.effect(() => chats.watch(child.sessions), 'acryl-workspace: tabs follow the shown chat') })
+  // First-run model setup. The faces are DSH's own Remote namespaces; they are read inside a child fiber that declares them,
+  // because a Cordis context refuses an undeclared service property. A composition without them simply never shows the card.
+  // The key is written through the Host's credentials Remote, so DeepSeek Harness stores it under its home (the same store
+  // Settings > Models uses).
+  let remoteFaces: { credentials?: ModelCredentialsPort; llm?: ModelLlmPort; session?: ModelSessionPort } | undefined
+  const connectModel = new ModelConnectControl({
+    getCredentials: () => remoteFaces?.credentials,
+    getLlm: () => remoteFaces?.llm,
+    getSession: () => remoteFaces?.session,
+    storage,
+    openSettings: () => { openSettingsSection('models') },
+  })
+  // The readiness check waits for the Host's Remote faces: reading them at apply time (very early in the page) found them absent
+  // and left the card hidden for good. A composition without them simply never shows the card.
+  ctx.inject(['remote', 'remote.credentials', 'remote.llm', 'remote.session'], child => {
+    remoteFaces = (child as unknown as {
+      remote: { credentials: ModelCredentialsPort; llm: ModelLlmPort; session: ModelSessionPort }
+    }).remote
+    child.effect(() => connectModel.start(), 'acryl-workspace: model connection')
+    child.effect(() => () => { remoteFaces = undefined }, 'acryl-workspace: model connection cleanup')
+  })
   const rightPanel = {
     toggle(): void {
       try {
@@ -209,7 +312,7 @@ export function apply(ctx: ClientContext): void {
           removeSlot = ctx.slots.register({
             name: 'desktop.main',
             priority: WORKSPACE_MAIN_PRIORITY,
-            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, chats, review, comments, rightPanel, projects }),
+            inject: () => ({ ptyApi: ptyClient, terminals, dock, agentStatus, agents, tabTypes, tabRegistry, paletteConfig, toasts, notices, shell, groups, gitApi, filesApi, agent, chats, review, comments, rightPanel, projects, connectModel, frameSession }),
           }, WorkspaceCanvas)
         } catch (cause) {
           // A registration conflict must not take the left pane and the Changes tab down with it.

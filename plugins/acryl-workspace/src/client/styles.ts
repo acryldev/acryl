@@ -28,9 +28,7 @@ const WORKSPACE_STYLES = `
 @media (prefers-reduced-motion: reduce) { .dshWorkspaceTabActivity[data-state="live"], .dshWorkspaceTabActivity[data-state="waiting"], .dshWorkspaceDot[data-dot="attention"] { animation: none; } }
 .dshWorkspaceTabMenu { width: 220px; }
 .dshWorkspaceTabMenu .dshWorkspaceMenuItem:disabled { opacity: 0.4; cursor: default; }
-.dshWorkspaceAgentMark { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: none; color: var(--dsw-alias-label-primary); }
 .dshWorkspaceWorktreeAgents .dshWorkspaceAgentMark { width: 14px; height: 14px; }
-.dshWorkspaceAgentIcon { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1px solid currentColor; border-radius: 5px; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceMenuItem[data-muted] { color: var(--dsw-alias-label-secondary); }
 .dshWorkspaceMenuGrow { flex: 1; }
 .dshWorkspaceMenuCheck { width: 14px; text-align: right; color: #4d6bfe; }
@@ -153,6 +151,18 @@ const WORKSPACE_STYLES = `
 .dshWorkspaceChat, .dshWorkspacePty, .dshWorkspaceFile, .dshWorkspaceBrowser, .dshWorkspaceDiff, .dshWorkspaceKanban, .dshWorkspaceDoc { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; }
 /* The conversation is built to fill a flex-column parent (its root is flex: 1; min-height: 0). The frame wraps it in a plain div, so make that wrapper fill the Chat tile with a bounded height; otherwise the message list grows to its content, is clipped, and cannot scroll. */
 .dshWorkspaceChat > [data-acryl-slot="conversation"] { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; min-width: 0; }
+/* First-run model setup inside the chat: a card, never a modal. It leaves as soon as a key is stored. */
+.dshWorkspaceConnect { display: flex; flex-direction: column; gap: 8px; margin: 12px 16px 0; padding: 12px 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: color-mix(in srgb, var(--dsw-alias-bg-base) 90%, #4d6bfe 10%); font: 12.5px/1.45 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
+.dshWorkspaceConnectHead { display: flex; align-items: center; gap: 8px; }
+.dshWorkspaceConnectTitle { font-weight: 600; font-size: 13px; }
+.dshWorkspaceConnectText { margin: 0; color: var(--dsw-alias-label-secondary); }
+.dshWorkspaceConnectForm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dshWorkspaceConnectInput { flex: 1 1 220px; min-width: 0; padding: 6px 9px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 7px; background: var(--dsw-alias-bg-base); color: inherit; font: inherit; }
+.dshWorkspaceConnectAction { padding: 6px 12px; border: 1px solid #4d6bfe; border-radius: 7px; background: #4d6bfe; color: #fff; font: inherit; cursor: pointer; }
+.dshWorkspaceConnectAction:disabled { opacity: .5; cursor: not-allowed; }
+.dshWorkspaceConnectLink { padding: 6px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--dsw-alias-label-secondary); font: inherit; cursor: pointer; }
+.dshWorkspaceConnectLink:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-fill-hover, rgb(127 127 127 / 10%)); }
+.dshWorkspaceConnectError { margin: 0; color: #f87171; }
 .dshWorkspaceEmpty { display: grid; place-items: center; flex: 1; color: var(--dsw-alias-label-secondary); font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspacePtyToolbar, .dshWorkspaceBrowserBar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--dsw-alias-border-l2); }
 .dshWorkspacePtyName { font: 600 12px/1 ui-sans-serif, system-ui, sans-serif; color: var(--dsw-alias-label-primary); }
@@ -244,6 +254,9 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSideAdd:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); }
 .dshWorkspaceSideHint { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #4d6bfe; color: var(--dsw-alias-label-secondary); font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideNotice { margin: 4px 8px; padding: 6px 8px; border-left: 2px solid #f87171; color: #fca5a5; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; }
+/* The session banner replaces the endless "Reconnecting..." when the browser's session ended: warning colours, the whole width, above the tabs. */
+.dshWorkspaceSessionBanner { position: absolute; inset: 0 0 auto 0; z-index: 30; margin: 0; padding: 8px 14px; border-bottom: 1px solid color-mix(in srgb, #f59e0b 45%, transparent); background: color-mix(in srgb, #f59e0b 14%, var(--dsw-alias-bg-base)); color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.dshWorkspaceSessionBanner code { padding: 1px 5px; border-radius: 4px; background: color-mix(in srgb, #000 28%, transparent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .dshWorkspaceSideEmpty { padding: 12px 6px; color: var(--dsw-alias-label-secondary); font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceRepo { margin: 6px 0 10px; }
 .dshWorkspaceRepoHead { display: flex; align-items: center; gap: 4px; }

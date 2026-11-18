@@ -125,6 +125,10 @@ export class WorkspaceShellState {
   private pinned = false
   private reveal: (() => void) | undefined
   private disposed = false
+  /** The chat folder a restore is discovering a worktree for right now (see `follow`); undefined when no restore is in flight. */
+  private following: string | undefined
+  /** Callers waiting for the next selection (`waitForSelection`), settled together when one lands. */
+  private readonly selectionWaiters = new Set<(path: string | undefined) => void>()
 
   /**
    * @param initialForgotten - a previous run's removed roots (`forgetRepo`), so a removal survives a reload.
@@ -265,13 +269,55 @@ export class WorkspaceShellState {
    * Used to follow the current chat session.
    */
   async follow(cwd: string): Promise<void> {
-    const current = await this.discover(cwd)
-    if (current === undefined || this.disposed) return
-    // The chat switched to the worktree the user picked: the pick has taken effect, so from now on
-    // the selection follows the chat again.
-    if (this.pinned && current === this.snapshot.selectedPath) this.pinned = false
-    if (this.pinned) return
-    this.selectInternal(current)
+    this.following = cwd
+    try {
+      const current = await this.discover(cwd)
+      if (current === undefined || this.disposed) return
+      // The chat switched to the worktree the user picked: the pick has taken effect, so from now on
+      // the selection follows the chat again.
+      if (this.pinned && current === this.snapshot.selectedPath) this.pinned = false
+      if (this.pinned) return
+      this.selectInternal(current)
+    } finally {
+      this.following = undefined
+      // A restore that settled without selecting has nothing to hand a waiting new chat: it gets the notice now, not after the timeout.
+      if (this.selectionWaiters.size > 0 && this.snapshot.selectedPath === undefined) {
+        for (const resolve of [...this.selectionWaiters]) resolve(undefined)
+        this.selectionWaiters.clear()
+      }
+    }
+  }
+
+  /** Whether a chat folder is being discovered for the selection right now (a reload restoring the shown chat's worktree). */
+  restoring(): boolean {
+    return this.following !== undefined
+  }
+
+  /**
+   * The worktree a new chat should use, waiting out a reload's restore: resolved at once when one is selected, otherwise with the path the next
+   * selection resolves to within `timeoutMs`, and undefined when none does. A new chat asked while the shown chat's worktree is still being restored
+   * targets it once it lands instead of opening with no worktree.
+   */
+  waitForSelection(timeoutMs = 8_000): Promise<string | undefined> {
+    if (this.snapshot.selectedPath !== undefined) return Promise.resolve(this.snapshot.selectedPath)
+    if (this.disposed) return Promise.resolve(undefined)
+    return new Promise((resolve) => {
+      let done = false
+      const finish = (path: string | undefined): void => {
+        if (done) return
+        done = true
+        clearTimeout(timer)
+        this.selectionWaiters.delete(finish)
+        resolve(path)
+      }
+      const timer = setTimeout(() => { finish(undefined) }, timeoutMs)
+      this.selectionWaiters.add(finish)
+    })
+  }
+
+  private settleSelectionWaiters(path: string): void {
+    for (const resolve of [...this.selectionWaiters]) resolve(path)
+    this.selectionWaiters.clear()
   }
 
   /** Release a manual pick (for example when opening its chat failed) so the selection follows the chat again. */
@@ -409,11 +455,14 @@ export class WorkspaceShellState {
     this.fileListeners.clear()
     this.docListeners.clear()
     this.closeTileListeners.clear()
+    for (const resolve of [...this.selectionWaiters]) resolve(undefined)
+    this.selectionWaiters.clear()
   }
 
   private selectInternal(path: string): void {
     if (this.snapshot.selectedPath === path) return
     this.replace({ ...this.snapshot, selectedPath: path })
+    this.settleSelectionWaiters(path)
     void this.refreshStatus(path)
   }
 

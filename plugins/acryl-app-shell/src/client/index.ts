@@ -66,6 +66,7 @@ export {
 export { DesktopLayoutState, MACOS_SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED, solveFrame } from './layout-state.ts'
 export { provideDesktopLayout } from './layout-service.ts'
 export { installAdvancedStyles } from './styles.ts'
+export { stripLaunchToken } from './launch-token.ts'
 export { DesktopThemePresenter } from './theme-presenter.ts'
 export {
   MACOS_DRAG_REGION_HEIGHT,

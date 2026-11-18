@@ -66,6 +66,27 @@ describe('WorkspaceState', () => {
     expect(state.getSnapshot().tiles).toHaveLength(2)
   })
 
+  it('a browser tile opens at the address it is given, and keeps the title', () => {
+    const state = new WorkspaceState({ createId: counter() })
+    const tile = state.addTile('browser', { url: 'http://127.0.0.1:3489/app', title: 'my-app' })
+    expect(tile).toMatchObject({ kind: 'browser', url: 'http://127.0.0.1:3489/app', title: 'my-app' })
+    expect(state.getSnapshot().activeId).toBe(tile?.id)
+  })
+
+  it('a new browser tab opens at the app page, or empty, never at an outside site', () => {
+    const empty = new WorkspaceState({ createId: counter() })
+    const blank = empty.addTile('browser')
+    expect(blank?.kind).toBe('browser')
+    expect(blank?.url).toBeUndefined()
+    let home: string | undefined
+    const app = new WorkspaceState({ createId: counter(), browserHome: () => home })
+    expect(app.addTile('browser')?.url).toBeUndefined()
+    // The Host answered after the tab set was made: the next new tab opens at the app.
+    home = 'http://127.0.0.1:3489/app'
+    expect(app.addTile('browser')?.url).toBe('http://127.0.0.1:3489/app')
+    expect(app.addTile('browser', { url: 'http://127.0.0.1:3489/app/settings' })?.url).toBe('http://127.0.0.1:3489/app/settings')
+  })
+
   it('closing the active tile focuses its left neighbor', () => {
     const state = new WorkspaceState({ createId: counter() })
     const chat = state.getSnapshot().tiles[0]

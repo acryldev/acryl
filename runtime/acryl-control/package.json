@@ -36,7 +36,7 @@
     "prepublishOnly": "pnpm run check"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.4"
+    "@deepseek-ai/cordis": "^4.0.4"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",

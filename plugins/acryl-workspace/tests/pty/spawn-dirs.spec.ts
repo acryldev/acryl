@@ -43,10 +43,12 @@ function loginShell(options: { delay: number, exitCode?: number }) {
 
 describe.skipIf(process.platform === 'win32')('the terminal search path', () => {
   it('is asked of the login shell without blocking: the registry is built at once and timers keep firing while the shell answers', async () => {
-    const shell = loginShell({ delay: 0.4 })
+    // A one-second shell and a 400 ms bound: the point is that building the registry does not wait for the shell at all, and a loaded CI runner can spend
+    // ~130 ms in scheduling noise without meaning the shell was awaited (measured on the macOS runner, 127 ms against the old 100 ms bound).
+    const shell = loginShell({ delay: 1 })
     const built = performance.now()
     const registry = new WorkspacePtyRegistry({ spawn: fakeProcess, env: shell.env, platform: 'darwin' })
-    expect(performance.now() - built).toBeLessThan(100)
+    expect(performance.now() - built).toBeLessThan(400)
     let ticks = 0
     const timer = setInterval(() => { ticks += 1 }, 20)
     try {
@@ -54,7 +56,7 @@ describe.skipIf(process.platform === 'win32')('the terminal search path', () => 
     } finally {
       clearInterval(timer)
     }
-    // The shell took about 400 ms; an event loop blocked for it would have run the 20 ms timer once at most.
+    // The shell took a second; an event loop blocked for it would have run the 20 ms timer a couple of times at most.
     expect(ticks).toBeGreaterThan(5)
   })
 

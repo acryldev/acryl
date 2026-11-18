@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import type { ShortcutCommandId, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryl/ui/frame'
 import { recordKey, saveBinding, shortcutGroups, type ShortcutRow } from './shortcut-rows.ts'
 
 export interface ShortcutsSectionProps {
@@ -12,13 +12,15 @@ export interface ShortcutsSectionProps {
 }
 
 export function ShortcutsSection({ shortcuts }: ShortcutsSectionProps) {
-  const catalog = useSyncExternalStore(shortcuts.catalog.subscribe, shortcuts.catalog.getSnapshot)
-  const fixed = useSyncExternalStore(shortcuts.fixedCatalog.subscribe, shortcuts.fixedCatalog.getSnapshot)
+  // Upstream declaration: the DSH store types arrive as unknown under NodeNext (see provenance.json); the two snapshots are stated here.
+  const catalog = useSyncExternalStore(shortcuts.catalog.subscribe, shortcuts.catalog.getSnapshot) as readonly ShortcutCatalogEntry[]
+  const fixed = useSyncExternalStore(shortcuts.fixedCatalog.subscribe, shortcuts.fixedCatalog.getSnapshot) as readonly ShortcutFixedCatalogEntry[]
   const [query, setQuery] = useState('')
   const [recording, setRecording] = useState<ShortcutCommandId | null>(null)
   const [problem, setProblem] = useState<{ readonly id: string, readonly text: string } | null>(null)
   const groups = shortcutGroups(catalog, fixed, query)
-  const anyModified = catalog.some(entry => entry.modified)
+  // Upstream declaration: DSH's published types resolve as any/unknown under NodeNext (see provenance.json), so this row shape is stated here.
+  const anyModified = catalog.some((entry: { readonly modified: boolean }) => entry.modified)
 
   useEffect(() => {
     if (recording === null) return
@@ -46,10 +48,15 @@ export function ShortcutsSection({ shortcuts }: ShortcutsSectionProps) {
     }
   }, [recording, shortcuts])
 
-  const edit = (operation: Parameters<Shortcuts['edit']>[0]): void => {
+  // Upstream declaration: Shortcuts['edit']'s parameter arrives as unknown (see provenance.json); the shapes the page edits with are stated once.
+  type ShortcutEdit =
+    | { readonly type: 'reset-all' }
+    | { readonly type: 'reset', readonly id: ShortcutCommandId }
+    | { readonly type: 'set', readonly id: ShortcutCommandId, readonly binding: ShortcutBinding | null }
+  const edit = (operation: ShortcutEdit): void => {
     setRecording(null)
     const id = operation.type === 'reset-all' ? null : operation.id
-    void shortcuts.edit(operation, shortcuts.config.getSnapshot().revision).then((result) => {
+    void shortcuts.edit(operation as Parameters<Shortcuts['edit']>[0], shortcuts.config.getSnapshot().revision).then((result: { readonly status: string }) => {
       setProblem(result.status === 'saved' || id === null ? null : { id, text: 'Could not save. Try again.' })
     })
   }

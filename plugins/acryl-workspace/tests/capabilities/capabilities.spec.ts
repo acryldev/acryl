@@ -12,6 +12,18 @@ describe('capabilities contract', () => {
     expect(() => parseWorkspaceCapabilities(null)).toThrow()
     expect(() => parseWorkspaceCapabilities([])).toThrow()
   })
+
+  it('carries the app the Host serves: its page path, its folder and its name, all optional', () => {
+    expect(parseWorkspaceCapabilities({ chat: true, appPage: '/app', appRoot: '/work/my-app', appName: 'my-app' })).toEqual({
+      chat: true,
+      appPage: '/app',
+      appRoot: '/work/my-app',
+      appName: 'my-app',
+    })
+    expect(() => parseWorkspaceCapabilities({ chat: true, appPage: 'app' })).toThrow()
+    expect(() => parseWorkspaceCapabilities({ chat: true, appRoot: '' })).toThrow()
+    expect(() => parseWorkspaceCapabilities({ chat: true, appName: 7 })).toThrow()
+  })
 })
 
 describe('capabilities client', () => {

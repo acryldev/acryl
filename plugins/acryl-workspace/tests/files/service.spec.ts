@@ -31,6 +31,9 @@ const files = new WorkspaceFiles({
   ignored: (root, paths) => gitService.ignored(root, paths),
 })
 
+// The fixture starts git once. The tests ask `git rev-parse --show-toplevel` (worktreeRoot) and `git check-ignore --` (ignored), and both answer in an
+// initialized repository with no commit; `git add` and `git commit` were two more processes for a history nothing in this file reads. The hook timed out
+// at vitest's 10 s default on a saturated Windows runner with that extra work (run 41559207908 attempt 2), and the fix is a fixture that does less.
 beforeAll(() => {
   mkdirSync(join(repo, 'src', 'deep'), { recursive: true })
   mkdirSync(outside)
@@ -47,8 +50,6 @@ beforeAll(() => {
   mkdirSync(join(repo, 'build'))
   writeFileSync(join(repo, 'build', 'out.js'), 'x\n')
   gitCli(root, 'init', '-q', 'proj')
-  gitCli(repo, 'add', 'README.md', 'src')
-  gitCli(repo, 'commit', '-q', '-m', 'init')
 })
 
 afterAll(async () => {

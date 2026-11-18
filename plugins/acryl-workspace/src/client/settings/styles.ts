@@ -3,6 +3,9 @@
 const STYLE_ID = 'acryl-workspace-settings-styles'
 
 const CSS = `
+/* An agent's mark (tabs/AgentIcon.tsx): here, not in the workbench's styles, because Settings > Agents shows it wherever the section is mounted. */
+.dshWorkspaceAgentMark { display: inline-grid; place-items: center; width: 18px; height: 18px; flex: none; color: var(--dsw-alias-label-primary); }
+.dshWorkspaceAgentIcon { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1px solid currentColor; border-radius: 5px; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; }
 .dshAgentsSection { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; min-width: 0; padding: 4px 0 28px; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
 .dshAgentsHeading { margin: 0; font-size: 15px; font-weight: 600; }
 .dshAgentsSubheading { margin: 0; font-size: 13px; font-weight: 600; }

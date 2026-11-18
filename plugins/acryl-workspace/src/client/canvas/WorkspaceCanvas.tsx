@@ -6,7 +6,7 @@ import type { PropsRuntime, UseSessions } from '@acryl/ui/frame'
 // a real type from it (rather than an empty `import type {}`, which some
 // compilations drop entirely) reliably pulls that augmentation into this
 // program even though nothing here holds a value of it.
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { AgentId } from '../../pty/contract.ts'
 import { TextDiffPane } from '../diff/TextDiffPane.tsx'
 import type { AgentBridge } from '../sessions/agent-bridge.ts'
@@ -14,6 +14,7 @@ import { buildReviewComment } from '../diff/comment-message.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { SessionBoardPane } from '../board/SessionBoardPane.tsx'
 import type { ChatSelection } from '../chat/chat-selection.ts'
+import { focusChatComposer } from '../chat/composer-focus.ts'
 import { FileEditorPane } from '../files/FileEditorPane.tsx'
 import type { WorkspaceFilesApi } from '../files/files-api.ts'
 import { GitDiffPane } from '../diff/GitDiffPane.tsx'
@@ -25,6 +26,8 @@ import { PtyPane } from '../terminal/PtyPane.tsx'
 import type { TerminalRegistry } from '../terminal/terminal-session.ts'
 import { shouldRaiseSystemNotice, type SystemNoticePort } from '../notifications/system-notice.ts'
 import { Toasts } from '../notifications/Toasts.tsx'
+import { ModelConnect } from '../models/ModelConnect.tsx'
+import type { ModelConnectControl } from '../models/model-connect.ts'
 import { describeFinish, type ToastState, type ToastTarget } from '../notifications/toast-state.ts'
 import { StatusLine } from '../chrome/StatusLine.tsx'
 import { buildStatusLine } from '../chrome/status-line.ts'
@@ -48,6 +51,7 @@ import type { PaletteConfigState } from '../palette/palette-config.ts'
 import { useWorkspacePalette } from '../palette/use-workspace-palette.ts'
 import type { TabTypesState } from '../tabs/tab-types-state.ts'
 import { BrowserPane } from '../browser/BrowserPane.tsx'
+import { type FrameSessionBanner, FRAME_SESSION_ENDED_MESSAGE } from '../connection/session-banner.ts'
 import { ScratchFilePane } from '../files/ScratchFilePane.tsx'
 import { createWorkspacePtyApi, type WorkspacePtyApi } from '../terminal/pty-api.ts'
 import type { ProjectsControl } from '../projects/projects-control.ts'
@@ -94,6 +98,10 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
   readonly agentStatus: AgentStatusState
   /** Starts a brand new AcrylDSH Chat session in this worktree, for the "+" menu's own chat entry. */
   readonly projects: ProjectsControl
+  /** First-run setup: shown inside the chat surface while no model can serve a request. */
+  readonly connectModel?: ModelConnectControl
+  /** The frame's own session: its banner names the way back in when the browser session ended, instead of an endless reconnect. */
+  readonly frameSession: FrameSessionBanner
 }
 
 /**
@@ -102,7 +110,7 @@ export type WorkspaceCanvasProps = Omit<PropsRuntime<'root'>, 'useSessions'> & {
  * Diff/Kanban/Doc (new, spec 040).
  * @param props.renderConversation - upstream Chat slot, rendered by the Chat tile.
  */
-export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agentStatus, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, chats, review, comments, rightPanel, projects }: WorkspaceCanvasProps) {
+export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, agentStatus, agents: agentsState, tabTypes, tabRegistry, paletteConfig, toasts, notices, useSessions, shell, groups, gitApi, filesApi, agent, chats, review, comments, rightPanel, projects, connectModel, frameSession }: WorkspaceCanvasProps) {
   // One tab workspace per selected worktree: picking a branch swaps the whole set of tabs, and the
   // tabs of the branch you left (terminals, agents) keep running until they are closed.
   // Subscribe to primitives, not the whole shell snapshot: git polling updates that snapshot often,
@@ -117,6 +125,8 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   const api = useMemo(() => ptyApi ?? createWorkspacePtyApi(), [ptyApi])
   const subscribe = useCallback((listener: () => void) => workspace.subscribe(listener), [workspace])
   const snapshot = useSyncExternalStore(subscribe, () => workspace.getSnapshot())
+  const subscribeSession = useCallback((listener: () => void) => frameSession.subscribe(listener), [frameSession])
+  const sessionState = useSyncExternalStore(subscribeSession, () => frameSession.getSnapshot())
   const sessions = useSessions(state => state)
   const stageRef = useRef<HTMLDivElement>(null)
   const [splitRatio, setSplitRatio] = useState(() => readSplitRatio(safeStorage()))
@@ -148,9 +158,23 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   // What the tree and the Changes, Files and Checks tabs ask of the tab sets (close a tab, open a diff, a file or a document, run a check).
   useEffect(() => routeShellRequests({ shell, groups, terminals, api }), [shell, groups, terminals, api])
 
-  /** The pane for one tile, used for both the primary pane and the split pane. */
-  const renderTile = (tile: WorkspaceTile): ReactNode => {
-    if (tile.kind === 'chat') return <div className="dshWorkspaceChat">{renderConversation()}</div>
+  // A reload mounts the chat surface before DSH's composer and nothing focuses the message box, so the page lands on the body and an attendee
+  // clicks before typing; the worktree restore can also replace the focused node. The watch runs while a chat is the shown tab and only takes
+  // focus when the page itself has it (see focusChatComposer).
+  const activeChatId = active?.kind === 'chat' ? active.id : undefined
+  useEffect(() => {
+    if (activeChatId === undefined) return
+    return focusChatComposer()
+  }, [activeChatId])
+
+  /** The pane body for one tile; `renderTile` keys it. */
+  const renderTileBody = (tile: WorkspaceTile): ReactNode => {
+    if (tile.kind === 'chat') return (
+      <div className="dshWorkspaceChat">
+        {connectModel !== undefined && tile.id === snapshot.activeId && <ModelConnect control={connectModel} />}
+        {renderConversation()}
+      </div>
+    )
     if (tile.kind === 'pty') return <PtyPane tile={tile} terminals={terminals} />
     if (tile.kind === 'doc' && tile.docRel !== undefined) return <DocFilePane tile={tile} shell={shell} filesApi={filesApi} />
     if (tile.kind === 'file' && tile.fileRel !== undefined) return <FileEditorPane tile={tile} workspace={workspace} filesApi={filesApi} comments={comments} />
@@ -178,6 +202,13 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
     return <TextDiffPane tile={tile} workspace={workspace} />
   }
 
+  /**
+   * The pane for one tile, used for both the primary pane and the split pane. Keyed by the tile: a pane's own state (a browser tab's frame and its
+   * load attempts, a terminal's view) belongs to its tab, so selecting another tab of the same kind mounts that tab's pane instead of handing it the
+   * previous one. Unkeyed, React kept one browser pane across two browser tabs and re-pointed the live app page's iframe at the other tab's address.
+   */
+  const renderTile = (tile: WorkspaceTile): ReactNode => <Fragment key={tile.id}>{renderTileBody(tile)}</Fragment>
+
   const openPty = useCallback(async (commandId: AgentId, title: string) => {
     const tile = workspace.addTile('pty', { commandId, title })
     if (tile === undefined) return
@@ -197,11 +228,34 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
   // A new AcrylDSH Chat from the "+" menu: a brand new session, opened in this worktree. Once it becomes
   // current, ChatSelection gives it its own tab - never the existing one.
   const openChat = useCallback(async () => {
-    if (groupKey === GLOBAL_GROUP) { setChatNotice('Select a worktree first.'); return }
-    setChatNotice(null)
-    const result = await projects.newChat(groupKey)
-    if (!result.ok) setChatNotice(result.reason)
-  }, [projects, groupKey])
+    const start = async (worktree: string): Promise<void> => {
+      setChatNotice(null)
+      const result = await projects.newChat(worktree)
+      if (!result.ok) setChatNotice(result.reason)
+    }
+    if (groupKey !== GLOBAL_GROUP) {
+      await start(groupKey)
+      return
+    }
+    // A reload restores the shown chat's worktree asynchronously (the session list arrives, then the tree follows the chat's folder), and the tree can
+    // already list the project before that happens, so "no selection" does not mean "no worktree is coming". The new chat waits for the selection with a
+    // visible state and opens on it; only a workspace that offers none within the wait gets the notice. A chat is never opened with no worktree.
+    setChatNotice('Restoring the worktree of the open chat…')
+    const worktree = await shell.waitForSelection()
+    if (worktree !== undefined) {
+      await start(worktree)
+      return
+    }
+    // No restore picked one (a reload can come back with no shown chat at all): a workspace with projects still has a worktree for a new chat - the first
+    // one the sidebar lists (the app's own project). Select it so the chat and the tree agree; only a workspace with no worktree keeps the notice.
+    const first = shell.getSnapshot().repos.flatMap((repo) => repo.worktrees)[0]?.path
+    if (first === undefined) {
+      setChatNotice('Select a worktree first.')
+      return
+    }
+    shell.select(first)
+    await start(first)
+  }, [projects, groupKey, shell])
 
   const openTarget = useCallback((target: ToastTarget): void => {
     const show = (): void => {
@@ -294,6 +348,9 @@ export function WorkspaceCanvas({ renderConversation, ptyApi, terminals, dock, a
 
   return (
     <div className="dshWorkspace" data-acryl-workspace="true" data-workspace-mode="tabs">
+      {sessionState === 'ended' && (
+        <p className="dshWorkspaceSessionBanner" role="alert">{FRAME_SESSION_ENDED_MESSAGE}</p>
+      )}
       <TabStrip
         snapshot={snapshot}
         workspace={workspace}

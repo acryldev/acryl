@@ -99,3 +99,29 @@ describe('openSettingsSection', () => {
     expect(scheduled).toBeUndefined()
   })
 })
+
+describe('openSettings (the desktop menu)', () => {
+  it('presses the Settings button on the event, and not again while Settings is open', async () => {
+    const { OPEN_SETTINGS_EVENT, startOpenSettingsListener } = await import('../../src/client/settings/open-settings.ts')
+    document.body.innerHTML = '<button aria-haspopup="dialog" aria-label="Settings" id="trigger"></button>'
+    let presses = 0
+    document.getElementById('trigger')?.addEventListener('click', () => {
+      presses += 1
+      document.body.insertAdjacentHTML('beforeend', '<div role="dialog"><nav><button>General</button></nav></div>')
+    })
+    const stop = startOpenSettingsListener(window, document)
+    window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT))
+    window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT))
+    expect(presses).toBe(1)
+    stop()
+    document.querySelector('[role="dialog"]')?.remove()
+    window.dispatchEvent(new Event(OPEN_SETTINGS_EVENT))
+    expect(presses).toBe(1)
+  })
+
+  it('says so when the page has no way to open Settings', async () => {
+    const { openSettings } = await import('../../src/client/settings/open-settings.ts')
+    document.body.innerHTML = '<button>Other</button>'
+    expect(openSettings(document)).toBe(false)
+  })
+})

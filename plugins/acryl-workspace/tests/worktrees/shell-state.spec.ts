@@ -412,3 +412,29 @@ describe('forgetRepo persistence (T137 follow-up, owner report: "x" removal did 
     expect(calls).toBe(0)
   })
 })
+
+describe('a new chat asked while the shown chat’s worktree is being restored', () => {
+  it('waits for the restore and takes the worktree it selects', async () => {
+    let release: (view: GitRepoView | null) => void = () => {}
+    const probe = new Promise<GitRepoView | null>((resolve) => { release = resolve })
+    const shell = new WorkspaceShellState(fakeApi({ repo: () => probe }))
+    const following = shell.follow('/p/proj')
+    expect(shell.restoring()).toBe(true)
+    const selection = shell.waitForSelection()
+    release(REPO)
+    await following
+    expect(await selection).toBe('/p/proj')
+    expect(shell.restoring()).toBe(false)
+    expect(shell.getSnapshot().selectedPath).toBe('/p/proj')
+  })
+
+  it('gets no selection when the restore finds none, and at once when nothing is restoring', async () => {
+    const idle = new WorkspaceShellState(fakeApi())
+    expect(await idle.waitForSelection()).toBeUndefined()
+    const shell = new WorkspaceShellState(fakeApi())
+    const following = shell.follow('/plain/dir')
+    expect(await shell.waitForSelection()).toBeUndefined()
+    await following
+    expect(shell.restoring()).toBe(false)
+  })
+})

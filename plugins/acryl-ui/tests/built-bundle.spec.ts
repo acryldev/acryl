@@ -87,7 +87,10 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     for (const tag of styleTags) {
       expect(tag.plugin).toBe('@acryl/ui'); expect(tag.pluginCss).toMatch(/^@acryl\/ui\/[A-Za-z]+\.module\.css$/u)
       expect(tag.text).not.toMatch(/(^|\})\s*(body|html|:root)\s*\{/u)   // no global selectors
-      expect(tag.text).toMatch(/\.[A-Za-z0-9_-]{5,}_[a-zA-Z]+/u)   // [hash]_[local]
+      // A generated hash may begin with a digit, which the CSS serializer escapes as `\3X ` (one space); unescape it before
+      // checking the [hash]_[local] shape, or a valid build fails on the escape alone.
+      const css = tag.text.replace(/\\3([0-9]) /gu, '$1')
+      expect(css).toMatch(/\.[A-Za-z0-9_-]{5,}_[a-zA-Z]+/u)   // [hash]_[local]
     }
     expect(new Set(styleTags.map(t => t.pluginCss)).size).toBe(styleTags.length)
   })

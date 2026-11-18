@@ -73,7 +73,7 @@ export function AgentsPanel({ agents }: AgentsSectionInjected) {
       <div className="dshAgentsBlock dshAgentsInline">
         <div>
           <h4 className="dshAgentsSubheading">Agent status hooks</h4>
-          <p className="dshAgentsHint">Agents that support hooks (Claude Code) tell ACRYL when they are working, need you, or are done, so the Projects list can show which branch needs you. ACRYL adds the hooks to that agent's launch only; your own settings files are not touched.</p>
+          <p className="dshAgentsHint">Agents that support hooks (Claude Code) tell ACRYL when they are working, need you, or are done, so the branch list can show which branch needs you. ACRYL adds the hooks to that agent's launch only; your own settings files are not touched.</p>
         </div>
         <Segmented
           label="Agent status hooks"

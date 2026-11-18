@@ -13,7 +13,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from './Brand.tsx'
 import { installFooterActionsLayout, type StyleDocument } from './footer-actions-layout.ts'
-import { installDocumentTitleBrand, type TitleDocument, type TitleObserverConstructor } from './document-title.ts'
+import { installDocumentTitleBrand, pageProductTitle, type TitleDocument, type TitleObserverConstructor } from './document-title.ts'
 
 export { AcrylBrandMark, AcrylBrandName, AcrylHeroBrandMark } from './Brand.tsx'
 
@@ -33,6 +33,7 @@ export function apply(ctx: ClientContext): void {
     () => installDocumentTitleBrand(
       typeof document === 'undefined' ? undefined : document as unknown as TitleDocument,
       typeof MutationObserver === 'undefined' ? undefined : MutationObserver as unknown as TitleObserverConstructor,
+      pageProductTitle(typeof document === 'undefined' ? undefined : document as unknown as Parameters<typeof pageProductTitle>[0]),
     ),
     'ui-brand-acryl: document title',
   )

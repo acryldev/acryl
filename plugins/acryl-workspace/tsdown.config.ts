@@ -17,6 +17,24 @@ export default defineConfig([
     sourcemap: true,
   },
   {
+    // The reusable client layers (`src/client/ui.ts`) as a plain browser module, bundled into another root owner's client.
+    name: `${PACKAGE_NAME}/ui`,
+    entry: { ui: 'src/client/ui.ts' },
+    tsconfig: 'tsconfig.client.json',
+    outDir: 'lib',
+    format: 'esm',
+    platform: 'browser',
+    target: 'es2022',
+    fixedExtension: false,
+    dts: false,
+    clean: false,
+    sourcemap: true,
+    plugins: [xtermCssPlugin()],
+    // React and the DSH packages stay the importer's own (one React per page, the shared Module Loader for DSH); the rest is bundled in.
+    external: ['react', 'react/jsx-runtime', 'react-dom'],
+    noExternal: (id: string) => id === 'react' || id.startsWith('react/') || id === 'react-dom' || id.startsWith('@deepseek-ai/') ? undefined : true,
+  },
+  {
     name: `${PACKAGE_NAME}/client`,
     entry: { client: 'src/client/index.ts' },
     tsconfig: 'tsconfig.client.json',

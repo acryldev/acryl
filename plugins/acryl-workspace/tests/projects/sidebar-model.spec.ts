@@ -130,6 +130,16 @@ describe('entriesForWorktree', () => {
     ])
   })
 
+  it('lists a chat whose summary has no cwd yet when its tab lives in this worktree (a session restored from the Host list)', () => {
+    const restored = [{ id: 'restored', blank: false, running: false, displayTitle: 'Hello from the gate' }]
+    const chatTiles = [{ id: 'tile-9', kind: 'chat', title: 'Hello from the gate', chatSessionId: 'restored' }]
+    expect(entriesForWorktree('/p/proj', [REPO], chatTiles, restored)).toEqual([
+      { kind: 'chat', id: 'restored', label: 'Hello from the gate', running: false, active: false },
+    ])
+    // Without a tab in this worktree it stays unplaced rather than guessed onto every project.
+    expect(entriesForWorktree('/p/proj', [REPO], [], restored)).toEqual([])
+  })
+
   it('marks whichever entry matches the worktree\'s active tile (T139-followup)', () => {
     const agentActive = entriesForWorktree('/p/proj/.worktrees/x', [REPO], tiles, [], { id: 't2' })
     expect(agentActive.map(e => e.active)).toEqual([false, true])

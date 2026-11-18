@@ -132,7 +132,7 @@ export class DesktopLayoutState implements ILayout {
   /** Which keyed `main` panel is open; `null` means the ACRYL main surface (the canvas, or the conversation). */
   readonly panelInfo: HostObservable<PanelInfo> = {
     getSnapshot: () => this.panel,
-    subscribe: (listener) => {
+    subscribe: (listener: () => void) => {
       this.panelListeners.add(listener)
       return () => { this.panelListeners.delete(listener) }
     },

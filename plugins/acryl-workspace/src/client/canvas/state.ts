@@ -68,6 +68,12 @@ export interface WorkspaceStateOptions {
    * restored (there is nothing to open them with). Defaults to on, what the product always was.
    */
   readonly chat?: boolean
+  /**
+   * Where a new browser tab opens when it is not given an address: the app's own page when the Host serves one. Without it a new tab starts empty,
+   * with the address bar waiting; it never loads an outside site nobody asked for. Read when the tab is made, so a Host that answers after the tab
+   * set exists still counts.
+   */
+  readonly browserHome?: () => string | undefined
 }
 
 export interface AddTileOptions {
@@ -81,6 +87,8 @@ export interface AddTileOptions {
   readonly diffFile?: string
   readonly docWorktree?: string
   readonly docRel?: string
+  /** browser tile: the page it opens (defaults to the blank starter address). */
+  readonly url?: string
   /** A plugin tab: its registered kind. */
   readonly customType?: string
 }
@@ -96,6 +104,11 @@ const TITLES: Record<WorkspaceTileKind, string> = {
   custom: 'Tab',
 }
 
+/** A browser tab's address field: absent for a tab that starts empty. */
+function browserAddress(url: string | undefined): { url?: string } {
+  return url === undefined ? {} : { url }
+}
+
 const EMPTY_BOARD: KanbanBoard = Object.freeze({ todo: [], doing: [], done: [] })
 
 /**
@@ -107,10 +120,12 @@ export class WorkspaceState {
   private readonly listeners = new Set<() => void>()
   private readonly createId: () => string
   private readonly chat: boolean
+  private readonly browserHome: () => string | undefined
 
   constructor(options: WorkspaceStateOptions = {}) {
     this.createId = options.createId ?? (() => crypto.randomUUID())
     this.chat = options.chat ?? true
+    this.browserHome = options.browserHome ?? (() => undefined)
     const first = this.createTile(this.chat ? 'chat' : 'pty')
     this.snapshot = Object.freeze({
       tiles: Object.freeze([first]),
@@ -426,7 +441,7 @@ export class WorkspaceState {
         ? { fileWorktree: options.fileWorktree, fileRel: options.fileRel }
         : {}),
       ...(kind === 'file' && options.fileRel === undefined ? { path: '', content: '' } : {}),
-      ...(kind === 'browser' ? { url: 'https://example.com' } : {}),
+      ...(kind === 'browser' ? browserAddress(options.url ?? this.browserHome()) : {}),
       ...(kind === 'diff' && options.diffFile !== undefined && options.diffWorktree !== undefined
         ? { diffWorktree: options.diffWorktree, diffFile: options.diffFile }
         : {}),

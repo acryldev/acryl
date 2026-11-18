@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest'
 import type { ISessions } from '@acryl/ui/frame'
 import { ChatSelection } from '../../src/client/chat/chat-selection.ts'
@@ -68,6 +70,20 @@ class FakeDsh {
     this.snapshot = { ids: [...this.rows.keys()], byId, phase: 'ready' }
     for (const listener of [...this.listeners]) listener()
   }
+
+  /** Re-notify the list with nothing changed, as a projection or title update does. */
+  refresh(): void { this.publish() }
+
+  /** Change one row and notify, as a chat's blank state does on its first message or a New Session reuse. */
+  update(id: string, patch: Partial<Omit<Row, 'id'>>): void {
+    const row = this.rows.get(id)
+    if (row === undefined) throw new Error(`no session ${id}`)
+    this.rows.set(id, { ...row, ...patch })
+    this.publish()
+  }
+
+  /** Drop the main view, as closing the shown chat does. */
+  releaseMain(): void { this.held?.release(); this.held = undefined }
 }
 
 function gitApi(): WorkspaceGitApi {
@@ -235,6 +251,54 @@ describe('ChatSelection', () => {
       expect(w.misplaced()).toEqual([])
       if (action !== 0) expect(w.dsh.current()).toBe(w.selectedChatTab())
     }
+    w.stop()
+  })
+
+  it('a list refresh while the shown chat is still blank never takes the active tab from the app (126)', async () => {
+    const w = await world()
+    w.chats.showWorktree(HI, () => { w.chats.open('h1') })
+    await settle()
+    // h1 is blank, so this is the fresh-app state: the chat tab is shown and its session is empty.
+    expect(w.selectedChatTab()).toBe('h1')
+    const state = w.groups.stateFor(HI)
+    const app = state.addTile('browser', { url: 'http://127.0.0.1:1/app' })
+    expect(app).toBeDefined()
+    await settle()
+    expect(state.getSnapshot().activeId).toBe(app?.id)
+    // Two ordinary list updates: the session id, its blank state and the main view are unchanged.
+    w.dsh.refresh()
+    await settle()
+    w.dsh.refresh()
+    await settle()
+    expect(state.getSnapshot().activeId).toBe(app?.id)
+    w.stop()
+  })
+
+  it('a chat that becomes blank again is the New Session signal and selects its tab', async () => {
+    const w = await world()
+    expect(w.selectedChatTab()).toBe('m1')
+    const state = w.groups.stateFor(MAIN)
+    const app = state.addTile('browser', { url: 'http://127.0.0.1:1/app' })
+    await settle()
+    expect(state.getSnapshot().activeId).toBe(app?.id)
+    // DSH reuses the shown session for New Session: the id stays, the conversation becomes blank again.
+    w.dsh.update('m1', { blank: true })
+    await settle()
+    expect(state.getSnapshot().activeId).toBe(w.tabOf(MAIN, 'm1'))
+    w.stop()
+  })
+
+  it('a list refresh with no session shown leaves the active tab alone', async () => {
+    const w = await world()
+    w.dsh.releaseMain()
+    await settle()
+    const state = w.groups.stateFor(w.selected())
+    const app = state.addTile('browser', { url: 'http://127.0.0.1:1/app' })
+    await settle()
+    expect(state.getSnapshot().activeId).toBe(app?.id)
+    w.dsh.refresh()
+    await settle()
+    expect(state.getSnapshot().activeId).toBe(app?.id)
     w.stop()
   })
 })

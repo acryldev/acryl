@@ -44,6 +44,8 @@ export class ChatSelection implements SessionNavigator {
   /** The chat the tab sets were last reconciled to, and the tab set its tab was placed in. */
   private shown: string | undefined
   private placedIn: string | undefined
+  /** What the last reconcile saw of the shown session's blank state: New Session is the transition into blank, not the state. */
+  private shownBlank: boolean | undefined
   private scheduled = false
   private readonly seenTitles = new Map<string, string>()
   private readonly schedule: (run: () => void) => void
@@ -123,6 +125,7 @@ export class ChatSelection implements SessionNavigator {
       workspace = this.deps.groups.workspace()
       this.shown = undefined
       this.placedIn = undefined
+      this.shownBlank = undefined
       settle()
     })
     this.reconcile(sessions.list.getSnapshot())
@@ -136,7 +139,11 @@ export class ChatSelection implements SessionNavigator {
     const current = currentSessionId(list)
     const row = current === undefined ? undefined : list.byId[current]
     if (current !== undefined) shell.restoreChat(current)
-    if (current !== this.shown || current === undefined || row?.blank === true) {
+    // A list update is not a user action: select the chat tab only when the shown session changes, or when it
+    // just became blank (DSH reuses the session for New Session). A refresh that leaves a blank chat blank must
+    // not put the chat tab in front, because that unmounts the app tile and ends whatever runs in its page.
+    const becameBlank = row?.blank === true && this.shownBlank !== true
+    if (current !== this.shown || becameBlank) {
       const selected = shell.getSnapshot().selectedPath ?? GLOBAL_GROUP
       const owner = current === undefined ? selected : chatGroupFor(shell.getSnapshot().repos, row?.cwd, selected)
       this.shown = synchronizeWorkspaceWithSessionNavigation(groups.stateFor(owner), this.shown, { current, blank: row?.blank })
@@ -145,6 +152,7 @@ export class ChatSelection implements SessionNavigator {
     } else {
       this.relocateShown(list)
     }
+    this.shownBlank = row?.blank
     this.ensureSelectedWorktreeTabs(list)
     for (const [, state] of groups.entries()) syncChatTabTitles(state, list, this.seenTitles)
   }
