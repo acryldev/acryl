@@ -137,6 +137,20 @@ describe('start and stop', () => {
     expect(service.state().apps[0]?.failure).toBeUndefined()
   })
 
+  it('a Desktop app that was up and ends (its window closed) is stopped, not failed; one that ends before it is up has failed', () => {
+    const { service, makeApp, runs } = setup()
+    makeApp('csv', 'desktop')
+    service.start('csv')
+    runs[0]!.say('acrylblends host: http://127.0.0.1:3192/?token=t\n')
+    runs[0]!.end(1)
+    expect(service.state().apps[0]).toMatchObject({ state: 'stopped' })
+    expect(service.state().apps[0]?.failure).toBeUndefined()
+    service.start('csv')
+    runs[1]!.say('Error: Cannot find module x\n')
+    runs[1]!.end(1)
+    expect(service.state().apps[0]?.failure).toBe('Error: Cannot find module x')
+  })
+
   it('says so when Node and npm are not on the machine', () => {
     const { service, makeApp, runs } = setup()
     makeApp('shop')
