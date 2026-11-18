@@ -99,21 +99,33 @@ export function parseRegistrySource(text: string, cwd: string): RegistrySource |
 
 /** How the bytes of a source are obtained; real by default, replaced in tests. */
 export interface Fetchers {
-  /** The body at a URL (a GitHub tarball). */
-  download(url: string): Promise<Uint8Array>
+  /** The body at a URL (a GitHub tarball); `headers` carry the person's GitHub token for a private repository. */
+  download(url: string, headers?: Readonly<Record<string, string>>): Promise<Uint8Array>
+  /** The person's GitHub token (GITHUB_TOKEN, GH_TOKEN, else `gh auth token`), asked for only when a repository is not public. */
+  githubToken?(): string | undefined
   /** `npm pack <spec> --ignore-scripts` into `dest`; the path of the tarball. */
   pack(spec: string, dest: string): string
 }
 
 export const realFetchers: Fetchers = {
-  async download(url) {
-    const response = await fetch(url, { redirect: 'follow' }).catch((cause: unknown) => {
+  async download(url, headers) {
+    const response = await fetch(url, {
+      redirect: 'follow',
+      ...(headers === undefined ? {} : { headers }),
+    }).catch((cause: unknown) => {
       throw new SourceError(
         `could not reach ${url}: ${cause instanceof Error ? cause.message : String(cause)}`,
       )
     })
     if (!response.ok) throw new SourceError(`${url} answered ${response.status}`)
     return new Uint8Array(await response.arrayBuffer())
+  },
+  githubToken() {
+    const env = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
+    if (env !== undefined && env !== '') return env
+    const result = spawnSync('gh', ['auth', 'token'], { encoding: 'utf8', shell: false })
+    const token = result.status === 0 ? result.stdout.trim() : ''
+    return token === '' ? undefined : token
   },
   pack(spec, dest) {
     const result = spawnSync(
@@ -139,7 +151,10 @@ export const realFetchers: Fetchers = {
  * Windows' own tar (bsdtar, in every Windows 10 and 11). A bare `tar` there can be Git's GNU tar, first on PATH when Git's Unix tools are
  * installed, which reads `C:\...` as host `C` and fails on every archive.
  */
-export function tarCommand(platform: NodeJS.Platform = process.platform, systemRoot = process.env.SystemRoot): string {
+export function tarCommand(
+  platform: NodeJS.Platform = process.platform,
+  systemRoot = process.env.SystemRoot,
+): string {
   return platform === 'win32' ? join(systemRoot ?? 'C:\\Windows', 'System32', 'tar.exe') : 'tar'
 }
 
@@ -220,14 +235,44 @@ async function fetchSource(
   else if (source.kind === 'npm') tarball = fetchers.pack(source.spec, scratch)
   else {
     tarball = join(scratch, 'source.tar.gz')
-    writeFileSync(
-      tarball,
-      await fetchers.download(
-        `https://codeload.github.com/${source.owner}/${source.repo}/tar.gz/${source.ref ?? 'HEAD'}`,
-      ),
-    )
+    writeFileSync(tarball, await downloadGithub(source, fetchers))
   }
   extract(tarball, dir, limits)
+}
+
+/**
+ * A GitHub repository's tarball: anonymously first, then, when GitHub says there is none (a private repository looks absent), with the person's
+ * own GitHub login, so the owner and the people invited to a privately shared app can make an app from it.
+ */
+async function downloadGithub(
+  source: { readonly owner: string; readonly repo: string; readonly ref?: string | undefined },
+  fetchers: Fetchers,
+): Promise<Uint8Array> {
+  const name = `github:${source.owner}/${source.repo}`
+  try {
+    return await fetchers.download(
+      `https://codeload.github.com/${source.owner}/${source.repo}/tar.gz/${source.ref ?? 'HEAD'}`,
+    )
+  } catch (cause) {
+    if (!(cause instanceof SourceError && / answered 404$/u.test(cause.message))) throw cause
+    const token = fetchers.githubToken?.()
+    if (token === undefined)
+      throw new SourceError(
+        `${name} was not found: it does not exist, or it is private. For a private one you were invited to, sign in to GitHub first (gh auth login, or set GITHUB_TOKEN) and run this again`,
+      )
+    try {
+      return await fetchers.download(
+        `https://api.github.com/repos/${source.owner}/${source.repo}/tarball${source.ref === undefined ? '' : `/${source.ref}`}`,
+        { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' },
+      )
+    } catch (signedIn) {
+      if (signedIn instanceof SourceError && / answered 404$/u.test(signedIn.message))
+        throw new SourceError(
+          `${name} was not found, and your GitHub account has no access to it: check the name, or ask its owner to invite you`,
+        )
+      throw signedIn
+    }
+  }
 }
 
 /** Read and check `acryl.template.json`; a source without it is not a template. */

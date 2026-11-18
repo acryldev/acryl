@@ -233,6 +233,41 @@ describe('template sources', () => {
   })
 })
 
+describe('a private GitHub Blend', () => {
+  it("is fetched with the person's GitHub login after the anonymous download finds nothing", async () => {
+    const tgz = pack(app())
+    const asked: { url: string; auth: string | undefined }[] = []
+    const run = fakeIo({
+      download: async (url, headers) => {
+        asked.push({ url, auth: headers?.Authorization })
+        if (headers === undefined) throw new SourceError(`${url} answered 404`)
+        return readFileSync(tgz)
+      },
+      githubToken: () => 'tok',
+    })
+    expect(
+      await runCreate(['from-private', '--from', 'github:acme/secret', '-y'], run.io),
+      run.err(),
+    ).toBe(0)
+    expect(asked).toEqual([
+      { url: 'https://codeload.github.com/acme/secret/tar.gz/HEAD', auth: undefined },
+      { url: 'https://api.github.com/repos/acme/secret/tarball', auth: 'Bearer tok' },
+    ])
+  })
+
+  it('says to sign in when there is no GitHub login, and creates nothing', async () => {
+    const run = fakeIo({
+      download: async (url) => {
+        throw new SourceError(`${url} answered 404`)
+      },
+      githubToken: () => undefined,
+    })
+    expect(await runCreate(['no-login', '--from', 'github:acme/secret', '-y'], run.io)).not.toBe(0)
+    expect(run.err()).toMatch(/gh auth login/)
+    expect(existsSync(join(scratch, 'no-login'))).toBe(false)
+  })
+})
+
 describe('a download that fails', () => {
   afterEach(() => vi.unstubAllGlobals())
 
