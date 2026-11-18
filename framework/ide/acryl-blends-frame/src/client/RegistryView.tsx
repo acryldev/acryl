@@ -4,10 +4,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { PulledPluginView, RegistryEntryView, RegistryView as Registry } from '../contract.ts'
+import type { PulledPluginView, RegistryEntryView, RegistryOrigin, RegistryView as Registry } from '../contract.ts'
 import { PlainFailure } from './plain-failure.ts'
 import type { RegistryApi } from './registry-api.ts'
-import { addedText, addQuestion, cleanAddress, entryByline, filterRegistry, forOtherApps } from './registry-list.ts'
+import { addedText, addQuestion, cleanAddress, entryByline, filterRegistry, forOtherApps, type OriginFilter } from './registry-list.ts'
 
 export interface RegistryViewProps {
   readonly api: RegistryApi
@@ -26,7 +26,11 @@ interface Asking {
   readonly owner: string
   /** Bytes it downloads besides itself for this computer. */
   readonly download?: number
+  /** Unknown for an address someone pasted. */
+  readonly origin?: RegistryOrigin
 }
+
+const ORIGINS: readonly { readonly value: OriginFilter; readonly label: string }[] = [{ value: 'all', label: 'All' }, { value: 'official', label: 'Official' }, { value: 'community', label: 'Community' }]
 
 type Said =
   | { readonly kind: 'ok'; readonly text: string }
@@ -40,6 +44,7 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
   const [reads, setReads] = useState(0)
   const [query, setQuery] = useState('')
   const [showAll, setShowAll] = useState(false)
+  const [origin, setOrigin] = useState<OriginFilter>('all')
   const [asking, setAsking] = useState<Asking | undefined>(undefined)
   const [adding, setAdding] = useState<string | undefined>(undefined)
   const [said, setSaid] = useState<Said | undefined>(undefined)
@@ -56,7 +61,7 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
   }, [api, reads])
 
   const entries = load.status === 'ready' && load.registry.status === 'ready' ? load.registry.entries : []
-  const shown = useMemo(() => filterRegistry(entries, query, showAll), [entries, query, showAll])
+  const shown = useMemo(() => filterRegistry(entries, query, showAll, origin), [entries, query, showAll, origin])
   const hidden = useMemo(() => entries.filter(forOtherApps).length, [entries])
 
   const add = useCallback(async (source: string) => {
@@ -89,7 +94,7 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
 
   const question = (item: Asking) => (
     <div className="acrylBlendsShareAsk" role="alertdialog" aria-label={`Add ${item.name}`}>
-      <p>{addQuestion(item.name, item.owner, item.download)}</p>
+      <p>{addQuestion(item.name, item.owner, item.download, item.origin)}</p>
       <div className="acrylBlendsShareRow">
         {/* Cancel is the default: Enter or a stray click adds nothing. */}
         <button type="button" className="acrylBlendsShareCancel" autoFocus onClick={() => { setAsking(undefined) }}>Cancel</button>
@@ -105,12 +110,13 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
       <div key={key} className="acrylBlendsRegRow" data-installed={entry.installed || undefined}>
         <div className="acrylBlendsRegHead">
           <b>{entry.name}</b>
+          <span className="acrylBlendsPlugBy" data-origin={entry.origin} title={entry.origin === 'official' ? 'Released by the ACRYL project' : 'Released by someone outside the ACRYL project; its code is not reviewed'}>{entry.origin === 'official' ? 'Official' : 'Community'}</span>
           {entry.mine && <span className="acrylBlendsPlugBy">Yours</span>}
           {forOtherApps(entry) && <span className="acrylBlendsPlugBy" title="Made for another kind of app; it may not run in this one">other apps</span>}
           {entry.installed
             ? <span className="acrylBlendsRegAdded" role="status">Added</span>
             : (
-              <button type="button" className="acrylBlendsRegAdd" disabled={adding !== undefined} onClick={() => { setSaid(undefined); setAsking({ source: entry.source, name: entry.name, owner: entry.owner, ...(entry.download === undefined ? {} : { download: entry.download }) }) }}>
+              <button type="button" className="acrylBlendsRegAdd" disabled={adding !== undefined} onClick={() => { setSaid(undefined); setAsking({ source: entry.source, name: entry.name, owner: entry.owner, origin: entry.origin, ...(entry.download === undefined ? {} : { download: entry.download }) }) }}>
                 {adding === entry.source ? 'Adding…' : 'Add to my app'}
               </button>
             )}
@@ -142,6 +148,9 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
           <input type="checkbox" checked={showAll} onChange={(event) => { setShowAll(event.target.checked) }} />
           {' '}Show plugins for other apps too{hidden === 0 ? '' : ` (${hidden})`}
         </label>
+      </div>
+      <div className="acrylBlendsRegOrigin" role="group" aria-label="Who made it">
+        {ORIGINS.map(choice => <button key={choice.value} type="button" aria-pressed={origin === choice.value} onClick={() => { setOrigin(choice.value) }}>{choice.label}</button>)}
       </div>
       {said !== undefined && (
         <p className={said.kind === 'ok' ? 'acrylBlendsPlugSaid' : 'acrylBlendsNote'} data-error={said.kind === 'error' || undefined} role={said.kind === 'ok' ? 'status' : 'alert'}>

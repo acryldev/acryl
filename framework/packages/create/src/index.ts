@@ -7,6 +7,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  renameSync,
   writeFileSync,
 } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -425,7 +426,12 @@ async function createFromSource(
       frameworkRange(),
       name,
     )
-    if (entry !== undefined && existsSync(join(staged, 'blend.yaml'))) {
+    // Any starter with a manifest, from a registry or a repository (`github:owner/repo#tag`, a community Blend): the app is its new owner's, private,
+    // with its own id and no licence claim; the starter's licence text stays beside it as STARTER-LICENSE, since its terms ask for the notice to be kept.
+    for (const file of ['LICENSE', 'LICENSE.md', 'LICENSE.txt'])
+      if (existsSync(join(staged, 'blend.yaml')) && existsSync(join(staged, file)))
+        renameSync(join(staged, file), join(staged, `STARTER-${file}`))
+    if (existsSync(join(staged, 'blend.yaml'))) {
       const starterText = readFileSync(join(staged, 'blend.yaml'), 'utf8')
       // The starter was an app with its own name in its page, its README and its agents' instructions: they now say this app's. The staged package.json
       // already carries the new name, so the starter's is read from the source.

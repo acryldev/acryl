@@ -570,6 +570,9 @@ export function parseAppReloadView(value: unknown): AppReloadView {
 }
 
 /** What a plugin of the registry offers, as the registry's index lists it (`https://cordisplugins.github.io/registry/index.json`, formatVersion 1). */
+/** Official: released from one of the project's organisations; community: from anyone else. The registry decides it from the repository owner's GitHub id. */
+export type RegistryOrigin = 'official' | 'community'
+
 export interface RegistryEntryView {
   /** The plugin's name; a scoped name keeps its scope. */
   readonly name: string
@@ -583,6 +586,7 @@ export interface RegistryEntryView {
   readonly published?: string
   /** Where it runs: `ACRYL` (needs an ACRYL service), `Both`, or `DSH stock` (a Harness plugin, which an app of this kind cannot run). */
   readonly compatibility: string
+  readonly origin: RegistryOrigin
   /** The source a pull takes: `github:<owner>/<repo>@<version>`. */
   readonly source: string
   /** This app already has a plugin of this name or pulled from this source. */
@@ -608,10 +612,10 @@ export function parseRegistryView(value: unknown): RegistryView {
   if (value.status !== 'ready' || !Array.isArray(value.entries) || typeof value.readAt !== 'string') throw new Error('registry: not a view')
   const entries = value.entries.map((entry: unknown): RegistryEntryView => {
     if (!isRecord(entry)) throw new Error('registry: entry')
-    const { name, description, owner, url, version, published, compatibility, source, installed, mine, download } = entry
+    const { name, description, owner, url, version, published, compatibility, origin, source, installed, mine, download } = entry
     if (typeof name !== 'string' || typeof description !== 'string' || typeof owner !== 'string' || typeof url !== 'string' || typeof version !== 'string'
       || typeof compatibility !== 'string' || typeof source !== 'string' || typeof installed !== 'boolean' || typeof mine !== 'boolean') throw new Error('registry: entry')
-    return { name, description, owner, url, version, ...(typeof published === 'string' ? { published } : {}), compatibility, source, installed, mine, ...(typeof download === 'number' && download > 0 ? { download } : {}) }
+    return { name, description, owner, url, version, ...(typeof published === 'string' ? { published } : {}), compatibility, origin: origin === 'official' ? 'official' : 'community', source, installed, mine, ...(typeof download === 'number' && download > 0 ? { download } : {}) }
   })
   return { status: 'ready', entries, readAt: value.readAt }
 }

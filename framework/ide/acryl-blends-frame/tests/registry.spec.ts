@@ -106,10 +106,31 @@ describe('a plugin that brings a native package', () => {
     expect(downloadFor(undefined)).toBeUndefined()
   })
   it('shows the size on the row, and it survives the Host answer', () => {
-    const entry = { name: 'office-preview', description: '', owner: 'cordisplugins', url: 'https://github.com/cordisplugins/office-preview', version: '1.0.0', compatibility: 'ACRYL', source: 'github:cordisplugins/office-preview@1.0.0', installed: false, mine: false, download: 153_160_461 }
+    const entry = { name: 'office-preview', description: '', owner: 'cordisplugins', url: 'https://github.com/cordisplugins/office-preview', version: '1.0.0', compatibility: 'ACRYL', origin: 'official' as const, source: 'github:cordisplugins/office-preview@1.0.0', installed: false, mine: false, download: 153_160_461 }
     expect(entryByline(entry)).toBe('by cordisplugins · v1.0.0 · 153 MB download')
     const view = parseRegistryView({ status: 'ready', readAt: '2026-11-18T00:00:00Z', entries: [entry] })
     expect(view.status === 'ready' ? view.entries[0]?.download : undefined).toBe(153_160_461)
+  })
+})
+
+describe('official and community plugins', () => {
+  const entries = registryEntries(index([
+    listed('clock', 'someone', { published: '2026-11-05', origin: 'community' }),
+    listed('office-preview', 'cordisplugins', { published: '2026-10-01', origin: 'official' }),
+    listed('old-index', 'someone', { published: '2026-11-04' }),
+    listed('claims', 'someone', { published: '2026-11-03', origin: 'Official' }),
+  ]), NONE)
+
+  it('takes the origin the registry decided, calls nothing else official, and lists official first', () => {
+    expect(entries.map(entry => [entry.name, entry.origin])).toEqual([['office-preview', 'official'], ['clock', 'community'], ['old-index', 'community'], ['claims', 'community']])
+    expect(filterRegistry(entries, '', false, 'official').map(entry => entry.name)).toEqual(['office-preview'])
+    expect(filterRegistry(entries, '', false, 'community')).toHaveLength(3)
+    expect(parseRegistryView({ status: 'ready', readAt: 'x', entries: [{ ...entries[1], origin: 'something' }] })).toMatchObject({ entries: [{ origin: 'community' }] })
+  })
+
+  it('says "community" before a community plugin is added', () => {
+    expect(addQuestion('clock', 'someone', undefined, 'community')).toBe('Add clock to your app? It is a community plugin: it runs code written by someone, inside your app, and ACRYL has not reviewed it.')
+    expect(addQuestion('office-preview', 'cordisplugins', undefined, 'official')).toBe('Add office-preview to your app? It runs code written by cordisplugins, inside your app.')
   })
 })
 
