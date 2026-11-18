@@ -13,6 +13,7 @@ import {
   LAYOUT_VERSION,
   listApps,
   newAppId,
+  openProductStorage,
   openRoot,
   personHome,
   renameApp,
@@ -208,4 +209,50 @@ test('a child started with instanceEnv chooses the same app, name, home and star
     'ACRYLBLENDS_PORT',
     'ACRYLBLENDS_ROOT',
   ])
+})
+
+test("products share the root but each opens only its own apps: ACRYL ADE never opens ACRYL Control Center's", () => {
+  const home = join(scratch, 'two-products')
+  const env = {}
+  const control = openProductStorage({
+    writtenBy: 't',
+    platform: 'darwin',
+    env,
+    home,
+    product: { name: 'ACRYL Control Center', named: true },
+  })
+  // An app made before apps recorded their product (Control Center 0.1.19 and older): no product field, named after its product.
+  const old = createApp(join(home, '.acryl'), 'ACRYL Control Center', { named: true })
+  assert.equal(old.product, undefined)
+  const ade = openProductStorage({
+    writtenBy: 't',
+    platform: 'darwin',
+    env,
+    home,
+    product: { name: 'ACRYL ADE', named: true },
+  })
+  assert.equal(ade.last(), undefined)
+  assert.deepEqual(ade.apps(), [])
+  assert.equal(control.last()?.id, old.id)
+  control.open(old.id)
+  assert.equal(control.app(old.id).product, 'ACRYL Control Center')
+  const made = ade.create('ACRYL ADE', () => {}, { named: true })
+  assert.equal(made.product, 'ACRYL ADE')
+  assert.deepEqual(
+    ade.apps().map((app) => app.id),
+    [made.id],
+  )
+  assert.deepEqual(
+    control.apps().map((app) => app.id),
+    [old.id],
+  )
+  // The Blank product's apps are named by the person: an old unmarked one stays its own, a marked one of another product does not.
+  const blank = openProductStorage({
+    writtenBy: 't',
+    platform: 'darwin',
+    env,
+    home,
+    product: { name: 'ACRYL Blends', named: false },
+  })
+  assert.deepEqual(blank.apps(), [])
 })

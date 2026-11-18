@@ -39,9 +39,9 @@ import {
 import { productGit, withGitFirst } from './git.ts'
 import { appendHostLog, hostCrashed, nextRestart } from './host-supervisor.ts'
 import { hasSettings, settingsPlacement } from './menu.ts'
-import { offerUpdates } from './update-menu.ts'
 import { openProductApp, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
+import { offerUpdates } from './update-menu.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
 import { cascade, windowOptions, windowSize } from './window.ts'
 
@@ -61,6 +61,8 @@ try {
       ? undefined
       : openProductStorage({
           writtenBy: app.getVersion(),
+          // Products share ~/.acryl: ACRYL ADE once opened ACRYL Control Center's app and wrote its own build over it.
+          product: { name: product.appName, named: product.named === true },
           ...(git === undefined ? {} : { git: git.executable }),
           reveal: (path) => {
             shell.showItemInFolder(path)
