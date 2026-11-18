@@ -25,16 +25,25 @@ export const CASCADE_STEP = 32
 export const WINDOW_SIZE = { width: 1100, height: 760 } as const
 export const WINDOW_MIN_SIZE = { width: 480, height: 360 } as const
 
+/** The share of the screen's work area a new window takes, so it opens large on any screen (a fixed size looked small on a big one). */
+export const WINDOW_SHARE = 0.85
+
 /**
- * The size of a new window on a work area: the usual size, made smaller on a screen where it would not leave room for a few cascade steps, never below the
- * smallest size. macOS moves a window that runs past the screen's edge back onto it, so on a small screen (CI's 1024x768) a window of the usual size that
+ * The size of a new window on a work area: {@link WINDOW_SHARE} of it, made smaller on a screen where it would not leave room for a few cascade steps, never
+ * below the smallest size. macOS moves a window that runs past the screen's edge back onto it, so on a small screen (CI's 1024x768) a window of the usual size that
  * `cascade` placed a step from another lands exactly on it; a window of this size fits at its place.
  */
 export function windowSize(work: Rect): { width: number; height: number } {
   const room = CASCADE_STEP * 3
   return {
-    width: Math.max(WINDOW_MIN_SIZE.width, Math.min(WINDOW_SIZE.width, work.width - room)),
-    height: Math.max(WINDOW_MIN_SIZE.height, Math.min(WINDOW_SIZE.height, work.height - room)),
+    width: Math.max(
+      WINDOW_MIN_SIZE.width,
+      Math.min(Math.round(work.width * WINDOW_SHARE), work.width - room),
+    ),
+    height: Math.max(
+      WINDOW_MIN_SIZE.height,
+      Math.min(Math.round(work.height * WINDOW_SHARE), work.height - room),
+    ),
   }
 }
 
