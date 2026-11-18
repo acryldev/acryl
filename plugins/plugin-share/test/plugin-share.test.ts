@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import {
   existsSync,
   mkdirSync,
@@ -39,6 +41,7 @@ import {
   type SharedPluginInfo,
   type SharedRemoveResult,
 } from '../index.ts'
+import { type NativePorts, nativePorts, nativeStore } from '../native.ts'
 import { splitDigest } from '../pull-check.ts'
 import { parsePullList, pullListLocation } from '../pull-list.ts'
 import { pulledRecords } from '../pulled-records.ts'
@@ -96,6 +99,7 @@ async function boot({
   releases?: ReleasePort
   publish?: PublishPorts
   download?: (url: string) => Promise<Uint8Array>
+  native?: NativePorts
   root?: string
 } = {}) {
   const app = new Context()
@@ -885,4 +889,113 @@ test('a list is read line by line: comments, a pasted pull command, repeats and 
   assert.deepEqual(pullListLocation('C:\\group.txt'), { kind: 'file', path: 'C:\\group.txt' })
   assert.equal(pullListLocation('http://x/y.txt'), undefined)
   assert.equal(pullListLocation('github:a/x'), undefined)
+})
+
+/** A native package for this computer as npm packs it, the entry a plugin declares for it, and ports that count downloads. */
+function nativeEngine() {
+  const dir = scratch('share-native-')
+  mkdirSync(join(dir, 'package'), { recursive: true })
+  const name = `@scope/engine-${process.platform}-${process.arch}`
+  writeFileSync(join(dir, 'package', 'package.json'), JSON.stringify({ name, version: '1.0.0' }))
+  const file = join(dir, 'engine.tgz')
+  execFileSync('tar', ['-czf', file, '-C', dir, 'package'])
+  const declared = {
+    package: name,
+    version: '1.0.0',
+    os: process.platform,
+    cpu: process.arch,
+    integrity: `sha512-${createHash('sha512').update(readFileSync(file)).digest('base64')}`,
+    size: 150_000_000,
+  }
+  const downloads: string[] = []
+  const ports: NativePorts = {
+    download: async (url, to) => {
+      downloads.push(url)
+      writeFileSync(to, readFileSync(file))
+    },
+    unpack: nativePorts().unpack,
+  }
+  return {
+    declared,
+    ports,
+    downloads,
+    link: (root: string) => join(root, 'node_modules', ...name.split('/')),
+  }
+}
+
+test('a plugin brings its native package for this computer: installed before it starts, taken away with it', async () => {
+  const engine = nativeEngine()
+  const release = pack({ 'index.ts': ROUTE }, { acrylblends: { native: [engine.declared] } })
+  const { share, root, get } = await boot({
+    releases: releaseOf(release.tarball),
+    native: engine.ports,
+  })
+  const result = await share.pull('github:someone/hello@1.0.0')
+  assert.ok(result.ok, JSON.stringify(result))
+  assert.deepEqual(result.native, {
+    package: engine.declared.package,
+    version: '1.0.0',
+    size: 150_000_000,
+    action: 'downloaded',
+  })
+  assert.equal((await get('/hello')).status, 200)
+  assert.ok(existsSync(join(engine.link(root), 'package.json')))
+  const removed = await share.remove('hello')
+  assert.ok(removed.ok, JSON.stringify(removed))
+  assert.equal(existsSync(engine.link(root)), false)
+  assert.equal(existsSync(nativeStore(join(root, '.acrylblends'), engine.declared)), false)
+})
+
+test('a native package that cannot be downloaded refuses the plugin and leaves nothing', async () => {
+  const engine = nativeEngine()
+  const release = pack({ 'index.ts': ROUTE }, { acrylblends: { native: [engine.declared] } })
+  const failing: NativePorts = {
+    ...engine.ports,
+    download: async () => Promise.reject(new Error('offline')),
+  }
+  const { share, root, untouched } = await boot({
+    releases: releaseOf(release.tarball),
+    native: failing,
+  })
+  refused(
+    await share.pull('github:someone/hello@1.0.0'),
+    'native',
+    /150 MB\) could not be installed: offline/u,
+  )
+  await untouched()
+  assert.equal(existsSync(engine.link(root)), false)
+})
+
+test('a native list that cannot be trusted is refused before anything is downloaded', async () => {
+  const engine = nativeEngine()
+  const release = pack(
+    { 'index.ts': ROUTE },
+    { acrylblends: { native: [{ ...engine.declared, integrity: 'sha1-x' }] } },
+  )
+  const { share, untouched } = await boot({
+    releases: releaseOf(release.tarball),
+    native: engine.ports,
+  })
+  refused(await share.pull('github:someone/hello@1.0.0'), 'native', /sha512/u)
+  await untouched()
+  assert.deepEqual(engine.downloads, [])
+})
+
+test('at the next start a pulled plugin links its native package again, from the download the app kept', async () => {
+  const engine = nativeEngine()
+  const release = pack({ 'index.ts': ROUTE }, { acrylblends: { native: [engine.declared] } })
+  const root = scratch('share-root-')
+  writeFileSync(
+    join(root, 'blend.yaml'),
+    'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: t\nspec:\n  rows:\n    - id: plugin-share\n      name: plugin-share\n',
+  )
+  const first = await boot({ root, releases: releaseOf(release.tarball), native: engine.ports })
+  assert.ok((await first.share.pull('github:someone/hello@1.0.0')).ok)
+  await first.stop()
+  // What an npm install does: the link goes, the placeholder comes back.
+  rmSync(engine.link(root), { recursive: true, force: true })
+  const second = await boot({ root, releases: releaseOf(release.tarball), native: engine.ports })
+  await second.restored()
+  assert.ok(existsSync(join(engine.link(root), 'package.json')))
+  assert.equal(engine.downloads.length, 1)
 })
