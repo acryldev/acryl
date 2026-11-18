@@ -60,6 +60,8 @@ export interface StarterView {
 /** The one app the screen is making right now (making an app installs it, about a minute). */
 export interface JobView {
   readonly name: string
+  /** Making a new app, or updating one from its Blend's newer release. */
+  readonly kind: 'make' | 'update'
   /** The line a person types to do the same. */
   readonly line: string
   readonly status: 'running' | 'done' | 'failed'

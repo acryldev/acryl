@@ -6,7 +6,7 @@ export type SurfaceFilter = 'all' | Surface
 export interface Tiles {
   readonly apps: number
   readonly running: number
-  /** Updates are not checked yet (spec 050 T011 lists it as not built): the tile says 0 and the nav shows no number. */
+  /** Apps whose Blend has a newer release in the registry (`AppView.update`). */
   readonly updates: number
   /** Deploying to WebBoxes.ai is not built yet (`acryl deploy`). */
   readonly cloud: number
@@ -15,7 +15,7 @@ export interface Tiles {
 export const tilesOf = (apps: readonly AppView[]): Tiles => ({
   apps: apps.length,
   running: apps.filter(app => app.state === 'running' || app.state === 'starting').length,
-  updates: 0,
+  updates: apps.filter(app => app.update !== undefined).length,
   cloud: 0,
 })
 

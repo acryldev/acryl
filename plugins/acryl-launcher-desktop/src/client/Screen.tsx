@@ -91,7 +91,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         {nav('apps', 'My apps', tiles.apps)}
         {nav('running', 'Running', tiles.running)}
         {nav('drafts', 'Made by agents', apps.filter(app => app.madeBy === 'agent').length)}
-        {nav('updates', 'Updates')}
+        {nav('updates', 'Updates', tiles.updates)}
         <div className="acrylHomeSep" />
         {nav('store', 'Blends store')}
         {nav('cloud', 'WebBoxes.ai')}
@@ -114,7 +114,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         )}
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
-        {view === 'updates' && <Empty title="Updates" text="Updates are not checked from this screen yet. In a terminal, `acryl update` in an app's folder updates it after a check, and a failed check keeps the old version." />}
+        {view === 'updates' && <UpdatesView apps={apps.filter(app => app.update !== undefined)} onUpdate={id => act(() => api.update(id))} />}
         {view === 'store' && <StoreView api={api} state={state} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
         {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Deploying an app to WebBoxes.ai from its card is coming (`acryl deploy`). Nothing of yours is there yet." />}
         {view === 'health' && <HealthView api={api} />}
@@ -125,7 +125,8 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
 }
 
 function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNode {
-  const head = job.status === 'running' ? `Making ${job.name} · ${elapsed(job.since)}` : job.status === 'done' ? `${job.name} is made` : `${job.name} could not be made`
+  const update = job.kind === 'update'
+  const head = job.status === 'running' ? `${update ? 'Updating' : 'Making'} ${job.name} · ${elapsed(job.since)}` : job.status === 'done' ? `${job.name} is ${update ? 'updated' : 'made'}` : `${job.name} could not be ${update ? 'updated' : 'made'}`
   return (
     <div className="acrylHomeJob" role="status">
       <b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{'\n'}{job.status === 'failed' ? null : job.step}
@@ -541,6 +542,20 @@ function RunningView({ apps, openExternal, onStop }: { apps: readonly AppView[],
         </div>
       )}
       <p className="acrylHomeNote">Apps this screen started stop when ACRYL quits.</p>
+    </section>
+  )
+}
+
+function UpdatesView({ apps, onUpdate }: { apps: readonly AppView[], onUpdate: (id: string) => Promise<boolean> }): ReactNode {
+  return (
+    <section className="acrylHomeForm">
+      <h3 style={{ margin: 0 }}>Updates</h3>
+      <p className="acrylHomeNote">An app made from a Blend gets that Blend's newer releases from the registry. Updating merges the release into the app and keeps your changes; each step is a version you can go back to. ACRYL Control Center itself updates from its menu: Check for Updates.</p>
+      {apps.length === 0 ? <p className="acrylHomeNote">Every app is on the latest release of its Blend.</p> : (
+        <div className="acrylHomeList">
+          {apps.map(app => <div className="acrylHomeItem" key={app.id}><div className="acrylHomeIcon" style={{ background: iconColor(app.id) }}>{initial(app.name)}</div><div><b>{app.name}</b><small>{app.blend} {app.version} to {app.update}</small></div><button type="button" className="acrylHomeBtn" data-primary onClick={() => { void onUpdate(app.id) }}>Update to {app.update}</button></div>)}
+        </div>
+      )}
     </section>
   )
 }
