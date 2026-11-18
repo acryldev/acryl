@@ -1,5 +1,5 @@
 {
-  "//": "The names and versions the frame's packages publish under, and the DSH release they are built against. The CLI ships this file (an app made with init --desktop installs these names and versions), and verify-frame-publish packs exactly these packages: the closure of the frame's rows, nothing else. The owner's naming decision is the `scope` value and the short names; the owner confirmed these names on 2026-11-05, so a rename after the first publish is a new package on npm. A version must equal its package folder's package.json version (the CLI tests check it).",
+  "//": "The names and versions the frame's packages publish under, and the DSH release they are built against. The CLI ships this file (an app made with init --desktop installs these names and versions), and verify-frame-publish packs exactly these packages: the closure of the frame's rows, nothing else. The owner's naming decision is the `scope` value and the short names; the owner confirmed these names on 2026-11-05, so a rename after the first publish is a new package on npm. A version must equal its package folder's package.json version (the CLI tests check it). A package whose source lives outside ide/ (shared with ACRYL, spec 051) names its folder with `path`, relative to this file's framework root; the key is that folder's name.",
   "scope": "@acrylblends",
   "dshVersion": "0.2.0-rc.2",
   "pnpm": {
@@ -69,9 +69,10 @@
       "name": "loopback-http",
       "version": "0.1.0"
     },
-    "acryl-web": {
+    "acryl-web-service": {
       "name": "web",
-      "version": "0.1.0"
+      "version": "0.2.0",
+      "path": "../runtime/acryl-web-service"
     },
     "acryl-system-prompt": {
       "name": "system-prompt",

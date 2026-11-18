@@ -26,7 +26,7 @@ function app(name: string, dependencies: Record<string, string>, desktop = false
   return root
 }
 
-const web = FRAME_RELEASE.find((entry) => entry.source === 'acryl-web')
+const web = FRAME_RELEASE.find((entry) => entry.source === 'acryl-web-service')
 
 describe('the frame specs of an existing app', () => {
   it('an app on the published frame upgrades from its own pins, by the names it installed', () => {
@@ -36,7 +36,7 @@ describe('the frame specs of an existing app', () => {
       [String(web?.name)]: '^0.1.0',
     })
     const specs = frameProfileForApp(root)
-    expect(specs?.packages['acryl-web']).toBe('^0.1.0')
+    expect(specs?.packages['acryl-web-service']).toBe('^0.1.0')
     // The framework moves to this CLI's release, so the frame step does not write the old range back after the upgrade bumped it.
     expect(specs?.frameworkVersion).toBe(`^${VERSION}`)
     const input = frameProfileInput(specs ?? publishedFrameProfile(), 'on-npm', [])
@@ -49,12 +49,13 @@ describe('the frame specs of an existing app', () => {
     const root = app('on-checkout', {
       '@deepseek-ai/dsh-base': '0.2.0-rc.2',
       acrylblends: 'file:/checkout/packages/cli',
-      'acryl-web': 'file:/checkout/ide/acryl-web',
+      'acryl-web-service': 'file:/checkout/runtime/acryl-web-service',
     })
     const input = frameProfileInput(frameProfileForApp(root) ?? publishedFrameProfile(), 'x', [])
-    expect(input.dependencies?.['acryl-web']).toBe('file:/checkout/ide/acryl-web')
+    expect(input.dependencies?.['acryl-web-service']).toBe('file:/checkout/runtime/acryl-web-service')
     expect(input.frameworkVersion).toBe('file:/checkout/packages/cli')
-    expect(input.packages?.find((entry) => entry.row === 'acryl-web')?.name).toBe('acryl-web')
+    // The row keeps its id: an app made before the package moved to runtime/ (spec 051) composes the same row.
+    expect(input.packages?.find((entry) => entry.row === 'acryl-web')?.name).toBe('acryl-web-service')
   })
 
   it('a desktop app with no frame yet gets the published frame; a web app and ACRYLBLENDS_FRAME_PACKAGES=none stay on the framework alone', () => {

@@ -37,7 +37,7 @@ const FRAME_SPECS = JSON.stringify({
   frameworkVersion: '^1.0.10',
   packages: {
     'acryl-app-shell': 'file:/checkout/ide/acryl-app-shell',
-    'acryl-web': 'file:/checkout/ide/acryl-web',
+    'acryl-web-service': 'file:/checkout/runtime/acryl-web-service',
   },
 })
 

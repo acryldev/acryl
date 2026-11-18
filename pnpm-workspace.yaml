@@ -11,6 +11,7 @@ packages:
   - runtime/app-persistence
   - runtime/plugin-hub
   - runtime/acryl-loopback-http
+  - runtime/acryl-web-service
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web

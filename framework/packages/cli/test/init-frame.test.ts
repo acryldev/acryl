@@ -38,7 +38,7 @@ const FRAME_SPECS = JSON.stringify({
   frameworkVersion: '^1.0.10',
   packages: {
     'acryl-app-shell': 'file:/checkout/ide/acryl-app-shell',
-    'acryl-web': 'file:/checkout/ide/acryl-web',
+    'acryl-web-service': 'file:/checkout/runtime/acryl-web-service',
   },
 })
 
@@ -227,9 +227,18 @@ describe('scaffolding a template into the frame', () => {
 })
 
 describe('frame/packages.json, the release the CLI installs', () => {
-  const ide = join(templatesRoot(), '..', '..', '..', 'ide')
+  const frameworkRoot = join(templatesRoot(), '..', '..', '..')
+  const ide = join(frameworkRoot, 'ide')
+  // A package shared with ACRYL lives outside ide/ and the file names its folder (`path`, spec 051); every other one is ide/<key>.
+  const release = JSON.parse(readFileSync(join(frameworkRoot, 'frame', 'packages.json'), 'utf8')) as {
+    packages: Record<string, { path?: string }>
+  }
+  const folderPath = (key: string) => {
+    const path = release.packages[key]?.path
+    return path === undefined ? join(ide, key) : join(frameworkRoot, path)
+  }
   const manifestOf = (folder: string) =>
-    JSON.parse(readFileSync(join(ide, folder, 'package.json'), 'utf8')) as {
+    JSON.parse(readFileSync(join(folderPath(folder), 'package.json'), 'utf8')) as {
       name: string
       version: string
       dependencies?: Record<string, string>
@@ -242,11 +251,11 @@ describe('frame/packages.json, the release the CLI installs', () => {
   })
 
   it('is exactly the closure of the frame rows, so nothing is published that the frame does not install and nothing it installs is missing', () => {
-    const folderOf = new Map(
-      readdirSync(ide)
-        .filter((folder) => existsSync(join(ide, folder, 'package.json')))
-        .map((folder) => [manifestOf(folder).name, folder]),
-    )
+    const folders = new Set([
+      ...readdirSync(ide).filter((folder) => existsSync(join(ide, folder, 'package.json'))),
+      ...Object.keys(release.packages),
+    ])
+    const folderOf = new Map([...folders].map((folder) => [manifestOf(folder).name, folder]))
     const closure = new Set<string>()
     const need = (name: string) => {
       const folder = folderOf.get(name)

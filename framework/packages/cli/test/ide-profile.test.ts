@@ -185,7 +185,7 @@ test("the manifest carries the DSH pin, the framework, the frame packages, and k
   assert.equal(manifest.dependencies['@deepseek-ai/dsh-web-app'], '0.2.0-rc.2')
   assert.equal(manifest.dependencies['@deepseek-ai/dsh'], undefined)
   assert.equal(manifest.dependencies.acrylblends, '^1.0.10')
-  assert.equal(manifest.dependencies['acryl-web'], 'file:../acryl-web')
+  assert.equal(manifest.dependencies['acryl-web-service'], 'file:../acryl-web-service')
   assert.equal(manifest.dependencies.yaml, '^2.9.0')
   assert.equal(manifest.scripts.start, 'node src/main.ts')
 })

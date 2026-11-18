@@ -6,12 +6,16 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FRAME_PACKAGES } from '../../packages/cli/src/ide-profile.ts'
+import { frameFolders } from './frame-folders.mjs'
 
-/** The package folders under `ide/`, by package name. Throws when one is not built (the gate's `pnpm run build` builds them first). */
+/**
+ * The frame's package folders (every one under `ide/`, plus those `frame/packages.json` places elsewhere with `path`), by package name. Throws when one
+ * is not built (the gate's `pnpm run build` builds them first).
+ */
 export function frameSpecs(root) {
   const folders = new Map()
-  for (const name of readdirSync(join(root, 'ide'))) {
-    const folder = join(root, 'ide', name)
+  const candidates = new Set([...readdirSync(join(root, 'ide')).map((name) => join(root, 'ide', name)), ...frameFolders(root).values()])
+  for (const folder of candidates) {
     const manifest = join(folder, 'package.json')
     if (!existsSync(manifest)) continue
     const parsed = JSON.parse(readFileSync(manifest, 'utf8'))

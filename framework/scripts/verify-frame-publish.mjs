@@ -22,8 +22,11 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FRAME_PACKAGES } from '../packages/cli/src/ide-profile.ts'
+import { frameFolders } from './lib/frame-folders.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+/** Each frame package's source folder (`frame/packages.json`, `ide/<key>` unless it names a `path`). */
+const folderOf = frameFolders(root)
 const config = JSON.parse(readFileSync(join(root, 'frame', 'packages.json'), 'utf8'))
 const scope = config.scope
 if (typeof scope !== 'string' || !scope.startsWith('@'))
@@ -39,7 +42,7 @@ const byPublished = new Map([...published].map(([folder, name]) => [name, folder
 /** Each frame package's source name (what its own package.json says) to the name it publishes under. */
 const sourceToPublished = new Map(
   folders.map((folder) => {
-    const manifest = JSON.parse(readFileSync(join(root, 'ide', folder, 'package.json'), 'utf8'))
+    const manifest = JSON.parse(readFileSync(join(folderOf.get(folder), 'package.json'), 'utf8'))
     return [String(manifest.name), published.get(folder)]
   }),
 )
@@ -47,7 +50,7 @@ const sourceToPublished = new Map(
 /** Each frame package's version, so a workspace range becomes a range of the package it names, not of the one that depends on it. */
 const versionOf = new Map(
   folders.map((folder) => {
-    const manifest = JSON.parse(readFileSync(join(root, 'ide', folder, 'package.json'), 'utf8'))
+    const manifest = JSON.parse(readFileSync(join(folderOf.get(folder), 'package.json'), 'utf8'))
     const version = String(manifest.version ?? '0.0.0')
     // The CLI installs the version the file names, so the file and the folder must agree on what is published.
     if (config.packages[folder].version !== version)
@@ -270,7 +273,7 @@ function publishedManifest(folder, key) {
  * `prepack` (a full check) belongs to the source folder, which the pipeline already built and tested, not to the staged copy that has no dependencies.
  */
 function pack(key) {
-  const folder = join(root, 'ide', key)
+  const folder = folderOf.get(key)
   const short = shortOf[key]
   const stage = join(scratch, 'stage', short)
   mkdirSync(stage, { recursive: true })
@@ -342,33 +345,37 @@ try {
     `the frame's packages publish under ${scope} (frame/packages.json): ${selected.length} to pack`,
   )
   for (const folder of selected) {
-    const path = join(root, 'ide', folder)
-    if (!existsSync(join(path, 'package.json'))) fail(`${folder}: no package.json under ide/`)
+    const path = folderOf.get(folder)
+    if (!existsSync(join(path, 'package.json'))) fail(`${folder}: no package.json at ${path}`)
     if (!existsSync(join(path, 'lib'))) fail(`${folder}: lib/ is missing; run pnpm run build first`)
-    const provenanceFile = join(path, 'provenance.json')
-    if (!existsSync(provenanceFile)) fail(`${folder}: no provenance.json; every port carries one`)
-    // Three shapes exist: the slices' {source: {repository, commit}, ported, unchanged}, the spike's {"ported from": {repository, "main at the
-    // time", ...}, modified}, and a package written here rather than ported, {original: {repository, commit}, written}. Each names where the code
-    // came from and at which commit, which is the check.
-    const provenance = JSON.parse(readFileSync(provenanceFile, 'utf8'))
-    const sourceOf = provenance.source ?? provenance['ported from'] ?? provenance.original
-    const commitOf =
-      sourceOf?.commit ?? sourceOf?.['main at the time'] ?? sourceOf?.['last commit of the path']
-    if (typeof sourceOf?.repository !== 'string' || typeof commitOf !== 'string')
-      fail(`${folder}: provenance.json does not name the source repository and commit`)
-    const notes = [
-      provenance.ported,
-      provenance.modified,
-      provenance['changes here'],
-      provenance.written,
-    ]
-    if (notes.every((note) => typeof note !== 'string'))
-      fail(`${folder}: provenance.json does not say what changed in the port`)
+    // A port under ide/ says where it came from; a package that lives once in the repository (`path`, spec 051) is its own original.
+    const shared = config.packages[folder].path !== undefined
+    if (!shared) {
+      const provenanceFile = join(path, 'provenance.json')
+      if (!existsSync(provenanceFile)) fail(`${folder}: no provenance.json; every port carries one`)
+      // Three shapes exist: the slices' {source: {repository, commit}, ported, unchanged}, the spike's {"ported from": {repository, "main at the
+      // time", ...}, modified}, and a package written here rather than ported, {original: {repository, commit}, written}. Each names where the code
+      // came from and at which commit, which is the check.
+      const provenance = JSON.parse(readFileSync(provenanceFile, 'utf8'))
+      const sourceOf = provenance.source ?? provenance['ported from'] ?? provenance.original
+      const commitOf =
+        sourceOf?.commit ?? sourceOf?.['main at the time'] ?? sourceOf?.['last commit of the path']
+      if (typeof sourceOf?.repository !== 'string' || typeof commitOf !== 'string')
+        fail(`${folder}: provenance.json does not name the source repository and commit`)
+      const notes = [
+        provenance.ported,
+        provenance.modified,
+        provenance['changes here'],
+        provenance.written,
+      ]
+      if (notes.every((note) => typeof note !== 'string'))
+        fail(`${folder}: provenance.json does not say what changed in the port`)
+    }
     const tested = skipTests ? 'tests skipped (--skip-tests)' : test(path)
     const result = pack(folder)
     packed.push({ folder, ...result })
     log(
-      `${published.get(folder)} ${result.manifest.version}: ${tested}, provenance ok, packed ${String(result.entries.length)} files`,
+      `${published.get(folder)} ${result.manifest.version}: ${tested}, ${shared ? 'shared with ACRYL' : 'provenance ok'}, packed ${String(result.entries.length)} files`,
     )
   }
 
