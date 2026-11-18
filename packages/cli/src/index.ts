@@ -43,3 +43,4 @@ export {
   templatesRoot,
 } from './templates'
 export { parseUpgradeOptions, type UpgradeOptions, upgrade } from './upgrade'
+export { parseUpdateOptions, type UpdateOptions, update } from './update'

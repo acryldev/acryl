@@ -7,6 +7,7 @@ import { type Io, processIo } from './io'
 import { kvImport, parseKvOptions } from './kv-import'
 import { runPreflight } from './preflight'
 import { TEMPLATE_SUMMARY, TEMPLATES } from './templates'
+import { parseUpdateOptions, update } from './update'
 import { parseUpgradeOptions, upgrade } from './upgrade'
 import { VERSION } from './version'
 
@@ -22,6 +23,8 @@ Usage:
   acrylblends upgrade [plugin...] [--dir d] [--dry-run] [--force] [--diff]
                                       Bring the library plugins an app carries (the router, the server, the door, ...) up to this
                                       version: untouched files are replaced, an edited file stops it (diff shown) unless --force
+  acrylblends update [--dir d] [--check] Bring the newer release of the Blend this app was made from (blend.yaml) into it from the
+                                      registry, keeping your changes (a git merge); --check only says whether there is one
   acrylblends plugins                    List the plugin library
   acrylblends open [dir]           Print the address of the frame running this app (the URL npm run dev printed),
                                       for a page that has to be opened again after its session ended
@@ -65,6 +68,7 @@ export async function runCli(argv: readonly string[], io: Io = processIo()): Pro
     if (command === 'init') return await init(parseInitOptions(args), io)
     if (command === 'add') return await add(parseAddOptions(args), io)
     if (command === 'upgrade') return await upgrade(parseUpgradeOptions(args), io)
+    if (command === 'update') return await update(parseUpdateOptions(args), io)
     if (command === 'build-client') return await buildClient(parseBuildClientOptions(args), io)
     if (command === 'kv') return await kvImport(parseKv(args), io)
     if (command === 'check-deps') return checkDeps(parseCheckDeps(args), io)

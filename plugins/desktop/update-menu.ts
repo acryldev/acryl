@@ -6,7 +6,14 @@
 
 import { join } from 'node:path'
 import { app, type BrowserWindow, dialog, Menu, MenuItem, shell } from 'electron'
-import { downloadInstaller, isNewer, latestRelease, type Release, type ReleaseSource, startInstall } from './updater.ts'
+import {
+  downloadInstaller,
+  isNewer,
+  latestRelease,
+  type Release,
+  type ReleaseSource,
+  startInstall,
+} from './updater.ts'
 
 /** Add the menu item and check once a little after start; `window` is the window the dialogs and the download progress belong to. */
 export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow | undefined): void {
@@ -14,20 +21,32 @@ export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow 
 
   const ask = async (options: Electron.MessageBoxOptions): Promise<number> => {
     const owner = window()
-    return (owner === undefined ? await dialog.showMessageBox(options) : await dialog.showMessageBox(owner, options)).response
+    return (
+      owner === undefined
+        ? await dialog.showMessageBox(options)
+        : await dialog.showMessageBox(owner, options)
+    ).response
   }
 
   const install = async (release: Release): Promise<void> => {
     const owner = window()
     let file: string
     try {
-      file = await downloadInstaller(release, join(app.getPath('userData'), 'updates'), (fraction) => owner?.setProgressBar(fraction))
+      file = await downloadInstaller(
+        release,
+        join(app.getPath('userData'), 'updates'),
+        (fraction) => owner?.setProgressBar(fraction),
+      )
     } finally {
       owner?.setProgressBar(-1)
     }
     const installable = process.platform === 'darwin' || process.platform === 'win32'
     if (!installable) {
-      await ask({ type: 'info', message: `${app.getName()} ${release.version} is downloaded`, detail: `Install it with:\n\nsudo apt install ${file}` })
+      await ask({
+        type: 'info',
+        message: `${app.getName()} ${release.version} is downloaded`,
+        detail: `Install it with:\n\nsudo apt install ${file}`,
+      })
       shell.showItemInFolder(file)
       return
     }
@@ -50,7 +69,11 @@ export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow 
     try {
       const release = await latestRelease(source, process.platform, process.arch)
       if (release === undefined || !isNewer(release.version, app.getVersion())) {
-        if (manual) await ask({ type: 'info', message: `${app.getName()} ${app.getVersion()} is the latest version.` })
+        if (manual)
+          await ask({
+            type: 'info',
+            message: `${app.getName()} ${app.getVersion()} is the latest version.`,
+          })
         return
       }
       const choice = await ask({
@@ -66,7 +89,12 @@ export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow 
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause)
       console.warn(`desktop: update: ${message}`)
-      if (manual) await ask({ type: 'warning', message: 'The update could not be checked or downloaded', detail: message })
+      if (manual)
+        await ask({
+          type: 'warning',
+          message: 'The update could not be checked or downloaded',
+          detail: message,
+        })
     } finally {
       busy = false
     }
@@ -77,10 +105,15 @@ export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow 
   if (menu !== null) {
     if (process.platform === 'darwin') {
       const first = menu.items[0]?.submenu
-      const about = first?.items.findIndex((entry: MenuItem) => entry.role === 'about' || /^about\b/iu.test(entry.label)) ?? -1
+      const about =
+        first?.items.findIndex(
+          (entry: MenuItem) => entry.role === 'about' || /^about\b/iu.test(entry.label),
+        ) ?? -1
       first?.insert(about + 1, item)
     } else {
-      const help = menu.items.find((entry: MenuItem) => entry.role === 'help' || /^&?help$/iu.test(entry.label))?.submenu
+      const help = menu.items.find(
+        (entry: MenuItem) => entry.role === 'help' || /^&?help$/iu.test(entry.label),
+      )?.submenu
       help?.append(item)
     }
     Menu.setApplicationMenu(menu)
