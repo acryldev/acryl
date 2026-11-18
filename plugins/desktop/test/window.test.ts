@@ -88,8 +88,16 @@ test('a row of windows on a big screen starts again at the corner, but never on 
   }
 })
 
-test('a new window keeps its usual size on a big screen and is made to fit, with room to cascade, on a small one', () => {
-  assert.deepEqual(windowSize({ x: 0, y: 25, width: 1920, height: 1055 }), WINDOW_SIZE)
+test('a new window takes most of a big screen and is made to fit, with room to cascade, on a small one', () => {
+  assert.deepEqual(windowSize({ x: 0, y: 25, width: 1920, height: 1055 }), {
+    width: 1632,
+    height: 897,
+  })
+  // A 14-inch MacBook's work area: no longer the fixed 1100x760 that looked small there.
+  assert.deepEqual(windowSize({ x: 0, y: 38, width: 1512, height: 944 }), {
+    width: 1285,
+    height: 802,
+  })
   // CI's macOS screen: macOS moves a window that runs past the edge back onto the screen, so a second window of the usual size would land on the first.
   const small = { x: 0, y: 25, width: 1024, height: 743 }
   const size = windowSize(small)
