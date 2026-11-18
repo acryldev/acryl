@@ -13,6 +13,8 @@ export type {} from '@deepseek-ai/dsh-client-locale/client'
 export type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 export type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 export type {} from '@deepseek-ai/dsh-client-ui-settings-models/client'
+// The `sidebar.settings` slot and its `settings.launcher` seat, which a root fills so DSH's Settings modal is drawn (acryl-app-shell's SettingsTrigger).
+export type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 export type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 export type {} from '@deepseek-ai/dsh-client-ui-theme/client'
 // The `command/executed` event a client plugin hears when a command typed on this page was answered.

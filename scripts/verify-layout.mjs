@@ -290,9 +290,13 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // The seam grew by two lines, total 135 to 137 with outside the seam unchanged at 104, for `@acryl/ui`'s `acrylChat` service (spec 049 T002,
 // 2026-10-28): `frame.ts` re-exports DSH's `command/executed` event type and `client/chat.ts` reads DSH's own conversation phase, so a client plugin such
 // as acryl-command-reply reads the chat's phase and posts a composer notice without naming a DSH package.
-const DSH_IMPORT_CEILING = { total: 137, outsideSeam: 104 }
+// Spec 051 (2026-11-18), total 137 to 138 with outside the seam unchanged: the Blends frame's acryl-app-shell came home with a Settings launcher
+// for DSH's `sidebar.settings` slot, whose types `frame.ts` now re-exports (one line); and the acrylWeb adapter moved from the engine's own
+// engine-web.ts into runtime/acryl-web-service, which ACRYL's engine and every Blends app mount, so that one file is the same seam under a new path.
+const DSH_IMPORT_CEILING = { total: 138, outsideSeam: 104 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
+  /^runtime\/acryl-web-service\/src\/index\.ts$/,
   /^runtime\/acryl-harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,

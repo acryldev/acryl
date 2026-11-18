@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type { PropsRenderSlots, PropsRuntime } from '@acryl/ui/frame'
 import type {} from './contracts.ts'
 import type { ShellPlatform } from './environment.ts'

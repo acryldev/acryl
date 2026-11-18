@@ -7,7 +7,6 @@
  */
 
 import type { PropsRuntime } from '@acryl/ui/frame'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 
 export function SettingsTrigger({ settingsOpen, openSettings }: PropsRuntime<'settings.launcher'>) {
   return (

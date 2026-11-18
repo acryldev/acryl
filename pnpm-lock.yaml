@@ -2948,6 +2948,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-settings-models':
         specifier: 0.2.0-rc.2
         version: 0.2.0-rc.2(patch_hash=aedb2a06f78c3e37c537b205e061556fe7a313d3c951a97bbab3a04fe61cc2bb)(@deepseek-ai/cordis@4.0.4)
+      '@deepseek-ai/dsh-client-ui-sidebar':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)
       '@deepseek-ai/dsh-client-ui-sidebar-right':
         specifier: 0.2.0-rc.2
         version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)
