@@ -4,9 +4,11 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
 
 ## Phase 0 - say where code comes from
 
-- [ ] T001 [docs] Each Blend README (05-acryl-ade, 63-acryl-control-center, and the template's README in `framework/packages/create`) names
+- [x] T001 [docs] Each Blend README (05-acryl-ade, 63-acryl-control-center, and the template's README in `framework/packages/create`) names
   where its shared code comes from: `plugins/library.lock.json` and `acrylblends upgrade` for the library plugins; Control Center's
   `launcher-lib/` is acryl's `plugins/acryl-launcher`, built.
+  Done 2026-11-18: acrylblends/05-acryl-ade cbe6f51, acrylblends/63-acryl-control-center b12fea5, acrylblends/acrylblends 7711a4ce
+  (`packages/create/README.md`; it reaches `framework/` with the next `git subtree pull`, T009).
 
 ## Phase 1 - inventory
 
