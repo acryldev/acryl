@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { join } from 'node:path'
@@ -30,19 +30,27 @@ async function withApp(run: (app: App) => Promise<void>, options: AppOptions = {
   }
 }
 
-test('serves the index route: the first screen to a browser, the JSON hello to an API client', () =>
+// The pages name the app by the name it runs under (its package.json name, which Settings > App can change), not the scaffold's APP_NAME.
+const RUNNING_NAME: string = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).name
+
+test('serves the Control Center at the root, and the template\'s first screen at /home: a page to a browser, the JSON hello to an API client', () =>
   withApp(async (app) => {
-    const api = await app.root.router.request(`/`)
+    const root = await app.root.router.request('/')
+    assert.equal(root.status, 200)
+    const launcher = await root.text()
+    assert.ok(launcher.includes('<title>ACRYL Control Center</title>'), 'the root is the Control Center')
+    assert.ok(launcher.includes('acryl-launcher'), 'the root mounts the launcher bundle')
+    const api = await app.root.router.request(`/home`)
     assert.equal(api.status, 200)
-    assert.deepEqual(await api.json(), { app: APP_NAME, ok: true })
-    const page = await app.root.router.request(`/`, {
+    assert.deepEqual(await api.json(), { app: RUNNING_NAME, ok: true })
+    const page = await app.root.router.request(`/home`, {
       headers: { accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
     })
     assert.equal(page.status, 200)
     assert.match(page.headers.get('content-type') ?? '', /text\/html/)
     const html = await page.text()
     // The ACRYL frame's first tile asks for a page: the root must never hand it JSON (Chrome's viewer is nearly invisible in the dark frame).
-    assert.ok(html.includes(`<h1>${APP_NAME}</h1>`), 'the page names the app')
+    assert.ok(html.includes(`<h1>${RUNNING_NAME}</h1>`), 'the page names the app')
     assert.ok(html.includes('href="./about"'), 'the page links to About relatively')
   }))
 
@@ -99,7 +107,7 @@ test('the frame mounts the same app under /app; the app on its own server keeps 
 test('a plugin puts its widget on the first screen, and the widget leaves with the plugin', () =>
   withApp(async (app) => {
     const page = async () =>
-      (await app.root.router.request('/', { headers: { accept: 'text/html' } })).text()
+      (await app.root.router.request('/home', { headers: { accept: 'text/html' } })).text()
     const feature = app.root.plugin({
       name: 'hello-widget',
       inject: ['home'],

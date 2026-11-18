@@ -68,7 +68,12 @@ function ignoreProductFiles(source: string): void {
  * @param source - the new app's source folder.
  * @param program - the Program's paths (product.json), which stay in the bundle.
  */
-export function seedSource(bundle: string, source: string, program: readonly string[], refresh = false): void {
+export function seedSource(
+  bundle: string,
+  source: string,
+  program: readonly string[],
+  refresh = false,
+): void {
   cpSync(bundle, source, {
     recursive: true,
     dereference: true,
@@ -124,7 +129,8 @@ export function openProductApp(
     app = storage.rename(app.id, app.name)
   }
   const opened = storage.open(app.id)
-  if (product.named === true && product.build !== undefined) refreshFinishedApp(opened, product, bundle, created, log)
+  if (product.named === true && product.build !== undefined)
+    refreshFinishedApp(opened, product, bundle, created, log)
   return opened
 }
 
@@ -136,12 +142,20 @@ export const PRODUCT_BUILD_FILE = 'product-build'
  * build 1's code forever and no update reached the screen. When the source was made from another build, this build's files are copied over it (the
  * person's data lives in `data/`, never here). An app made before builds were recorded has no record, and is refreshed once.
  */
-function refreshFinishedApp(app: AppInstance, product: Product, bundle: string, created: boolean, log: (line: string) => void): void {
+function refreshFinishedApp(
+  app: AppInstance,
+  product: Product,
+  bundle: string,
+  created: boolean,
+  log: (line: string) => void,
+): void {
   const record = join(app.home, PRODUCT_BUILD_FILE)
   const made = existsSync(record) ? readFileSync(record, 'utf8').trim() : undefined
   if (made === product.build) return
   if (!created) {
-    log(`product: updating "${app.name}" to build ${product.build} (it was made from ${made ?? 'an earlier build'})`)
+    log(
+      `product: updating "${app.name}" to build ${product.build} (it was made from ${made ?? 'an earlier build'})`,
+    )
     const from = product.seed === undefined ? bundle : join(bundle, product.seed)
     seedSource(from, app.root, product.program, true)
   }

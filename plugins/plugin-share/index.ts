@@ -38,6 +38,17 @@ import {
 import { type ExtensionInfo, NAME } from '../extensions/index.ts'
 import type {} from '../instance/index.ts'
 import { LOCK_FILE, writeLock } from '../manifest/lock.ts'
+import {
+  ensureNative,
+  type NativeAction,
+  type NativePackage,
+  type NativePlaces,
+  type NativePorts,
+  nativeFor,
+  nativePorts,
+  nativesOf,
+  releaseNative,
+} from './native.ts'
 import { packagePlugin } from './package.ts'
 import {
   type PublishOptions,
@@ -80,6 +91,8 @@ export interface PluginShareConfig {
   publish?: PublishPorts
   /** How an https address is read: a release `.tgz` and a list of sources. Defaults to HTTPS with the hub's size and time limits. */
   download?: (url: string) => Promise<Uint8Array>
+  /** How a plugin's native package is downloaded and unpacked (native.ts). Defaults to the npm registry and the system's tar. */
+  native?: NativePorts
 }
 
 export type PullResult =
@@ -95,6 +108,13 @@ export type PullResult =
       readonly state: string
       /** Whether the app's `blend.yaml` and lock now name this source, so a copy of the app can fetch it. A local file names nothing to fetch. */
       readonly remembered: boolean
+      /** The native package the plugin brought for this computer (native.ts), and what installing it did. */
+      readonly native?: {
+        readonly package: string
+        readonly version: string
+        readonly size: number
+        readonly action: NativeAction
+      }
     }
   | PullRefused
 
@@ -215,6 +235,9 @@ export class PluginShare extends Service {
   private queue: Promise<unknown> = Promise.resolve()
   /** The content digest of each plugin pulled while the app runs, a local file's too, which `blend.yaml` does not remember. */
   private readonly live = new Map<string, string>()
+  private readonly nativeWork: NativePorts
+  /** The native package each installed plugin brought for this computer: what its removal takes away. */
+  private readonly natives = new Map<string, NativePackage>()
 
   /**
    * The context the service was constructed with, in the app's realm. Inside a service method `this.ctx` is Cordis's shadow context of the caller: in the
@@ -228,12 +251,14 @@ export class PluginShare extends Service {
     this.dir = resolve(config.dir ?? join(ctx.appInstance.root, 'plugins'))
     this.releases = config.releases ?? githubReleasesOverHttps()
     this.download = config.download ?? httpsDownload()
+    this.nativeWork = config.native ?? nativePorts()
     this.ports = config.publish ?? { host: githubCli(), git: gitCli() }
     // Removing a plugin removes its record. Listened to here, not asked of each caller: every way of removing it goes through extensions.
     ctx.on('extensions/changed', (name, change) => {
       if (change !== 'removed') return
       this.live.delete(name)
       this.remember(name, undefined)
+      this.dropNative(name)
     })
     // Not awaited by the app's start: a person offline still gets their app, and the warning says what is missing.
     this.restored = this.inTurn(() => this.restore())
@@ -443,12 +468,75 @@ export class PluginShare extends Service {
   }
 
   /** Fetch the remembered plugins whose folder is gone, exactly as recorded: other bytes are refused, and the record stays for the person to decide. */
+  private get places(): NativePlaces {
+    return { root: this.own.appInstance.root, home: this.own.appInstance.home }
+  }
+
+  /** Remember the native package an installed plugin brought; one it no longer brings (an update) goes. The result's `native` field. */
+  private keepNative(
+    name: string,
+    native: NativePackage | undefined,
+    before: NativePackage | undefined,
+    action: NativeAction | undefined,
+  ): Pick<Extract<PullResult, { ok: true }>, 'native'> {
+    if (
+      before !== undefined &&
+      (native === undefined ||
+        before.version !== native.version ||
+        before.package !== native.package)
+    )
+      this.dropNative(name)
+    if (native === undefined || action === undefined) return {}
+    this.natives.set(name, native)
+    return {
+      native: { package: native.package, version: native.version, size: native.size, action },
+    }
+  }
+
+  /** Take away the native package a removed plugin brought, unless another installed plugin brought the same one. */
+  private dropNative(name: string): void {
+    const native = this.natives.get(name)
+    if (native === undefined) return
+    this.natives.delete(name)
+    const shared = [...this.natives.values()].some(
+      (other) => other.package === native.package && other.version === native.version,
+    )
+    if (!shared) releaseNative(native, this.places)
+  }
+
+  /** A pulled plugin that is here again links its native package again: an `npm install` puts the placeholder back in its place. */
+  private async relinkNative(name: string): Promise<void> {
+    let manifest: Record<string, unknown>
+    try {
+      manifest = JSON.parse(readFileSync(join(this.dir, name, 'package.json'), 'utf8')) as Record<
+        string,
+        unknown
+      >
+    } catch {
+      return
+    }
+    const declared = nativesOf(manifest)
+    const native = 'natives' in declared ? nativeFor(declared.natives) : undefined
+    if (native === undefined) return
+    try {
+      await ensureNative(native, this.places, this.nativeWork)
+      this.natives.set(name, native)
+    } catch (cause) {
+      console.warn(
+        `plugin-share: ${name}'s ${native.package} was not installed again: ${reasonOf(cause)}`,
+      )
+    }
+  }
+
   private async restore(): Promise<readonly RestoreOutcome[]> {
     const file = join(this.own.appInstance.root, 'blend.yaml')
     if (!existsSync(file)) return []
     const outcomes: RestoreOutcome[] = []
     for (const [name, record] of Object.entries(pulledRecords(readFileSync(file, 'utf8')))) {
-      if (existsSync(join(this.dir, name))) continue
+      if (existsSync(join(this.dir, name))) {
+        await this.relinkNative(name)
+        continue
+      }
       const result = await this.pullNow(
         `${record.source}@sha256:${record.digest}`,
         record.integrity,
@@ -575,12 +663,14 @@ export class PluginShare extends Service {
         hasService: (service) => this.own.get(service as never) !== undefined,
       })
       if (refused !== undefined) return refused
+      const declared = nativesOf(pulled.manifest)
       return await this.install(
         pulled.stored.name,
         pulled.stored.version,
         pulled.stored.integrity,
         files,
         recordedSource(read.source, pulled.stored.version),
+        'natives' in declared ? nativeFor(declared.natives) : undefined,
       )
     } finally {
       rmSync(scratch, { recursive: true, force: true })
@@ -594,6 +684,7 @@ export class PluginShare extends Service {
     integrity: string,
     files: readonly PluginFile[],
     source: string | undefined,
+    native: NativePackage | undefined,
   ): Promise<PullResult> {
     const target = join(this.dir, name)
     const incoming = join(this.dir, `.pulling-${name}`)
@@ -628,11 +719,28 @@ export class PluginShare extends Service {
       // Remembered as the folder appears, before it is installed, so whoever sees the folder can tell it is these released bytes (the frame then does
       // not load the app again for a plugin the app installs live); a pull that does not end running puts back what was remembered before.
       const remembered = source !== undefined && this.remember(name, { source, integrity, digest })
+      // Installed before the plugin starts, so the plugin finds it; an install that does not end running takes back only what it added.
+      let nativeAction: NativeAction | undefined
+      const nativeBefore = this.natives.get(name)
       const undo = () => {
+        if (native !== undefined && (nativeAction === 'downloaded' || nativeAction === 'linked'))
+          releaseNative(native, this.places, nativeAction === 'linked')
         if (wrote) rmSync(target, { recursive: true, force: true })
         if (remembered) this.remember(name, before)
         if (liveBefore === undefined) this.live.delete(name)
         else this.live.set(name, liveBefore)
+      }
+      if (native !== undefined) {
+        try {
+          nativeAction = await ensureNative(native, this.places, this.nativeWork)
+        } catch (cause) {
+          undo()
+          return refuse(
+            'native',
+            `${native.package}@${native.version} (${Math.round(native.size / 1e6)} MB) could not be installed: ${reasonOf(cause)}`,
+            'check the internet connection and pull again; the plugin was not installed',
+          )
+        }
       }
       let result: Awaited<ReturnType<Context['extensions']['install']>>
       try {
@@ -663,6 +771,7 @@ export class PluginShare extends Service {
         action: result.action,
         state: result.state,
         remembered,
+        ...this.keepNative(name, native, nativeBefore, nativeAction),
       }
     } finally {
       rmSync(incoming, { recursive: true, force: true })

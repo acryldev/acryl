@@ -439,7 +439,8 @@ if (!app.requestSingleInstanceLock()) {
         target?.insert(placement.at + 1, new MenuItem({ type: 'separator' }))
       Menu.setApplicationMenu(menu)
     }
-    if (product?.releases !== undefined) offerUpdates(product.releases, () => live()[0])
+    if (product?.releases !== undefined)
+      offerUpdates(product.releases, () => live()[0], join(userData, 'updates'))
     stopDoorShell = startDoorShell(chosen.root, { desktop, log: console.log })
 
     if (appPage && storage !== undefined && product !== undefined) {

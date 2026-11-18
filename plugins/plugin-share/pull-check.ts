@@ -4,6 +4,7 @@
  */
 import { digestFiles, type PluginFile, portabilityIssues } from '@webboxes/blends-core'
 import { hostInjectFromSource } from '@webboxes/plugin-hub'
+import { nativesOf } from './native.ts'
 
 export type Refusal =
   | 'source'
@@ -12,6 +13,8 @@ export type Refusal =
   | 'digest'
   | 'portability'
   | 'dependencies'
+  /** Its `acrylblends.native` list (native.ts) cannot be used. */
+  | 'native'
   | 'entry'
   | 'inject'
   | 'missing-service'
@@ -100,6 +103,14 @@ export function pullRefusal(
       'dependencies',
       `it needs ${dependencies.join(', ')} installed, and a pull installs nothing`,
       'ask its author to bundle them or name them as peers',
+    )
+  }
+  const native = nativesOf(manifest)
+  if ('error' in native) {
+    return refuse(
+      'native',
+      native.error,
+      'ask its author to fix "acrylblends.native" in its package.json and release again',
     )
   }
   const entry = ENTRIES.flatMap((path) => files.filter((file) => file.path === path))[0]

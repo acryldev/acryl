@@ -30,6 +30,7 @@ import { isDeepStrictEqual } from 'node:util'
 import { type Context, type Fiber, Service } from '@deepseek-ai/cordis'
 import type {} from '../instance/index.ts'
 import type { Sandbox } from '../sandbox/index.ts'
+import { attachBrowserHalf } from './browser.ts'
 import { appendLedger, type LedgerEntry, readLedger } from './ledger.ts'
 import { type PluginStore, pluginVersion } from './plugin-store.ts'
 import {
@@ -663,9 +664,14 @@ export class Extensions extends Service {
     }
   }
 
-  private async mount(module: PluginModule): Promise<{ fiber: Fiber; error?: unknown }> {
+  private async mount(
+    module: PluginModule,
+    dir: string,
+    version: string,
+  ): Promise<{ fiber: Fiber; error?: unknown }> {
     // An extension is a plugin module whose config, if any, comes from its own defaults.
     const fiber = this.owner.plugin(module as unknown as Parameters<Context['plugin']>[0])
+    attachBrowserHalf(fiber.ctx, this.dataHome, String(module.name ?? basename(dir)), version, dir)
     try {
       await fiber.await()
       return { fiber }
@@ -746,7 +752,7 @@ export class Extensions extends Service {
 
     if (previous) await previous.fiber.dispose()
     const before = this.served()
-    const mounted = await this.mount(module)
+    const mounted = await this.mount(module, staged.dir, staged.version)
     const state = STATES[mounted.fiber.state] ?? 'failed'
     const added = state === 'active' ? addedRoutes(before, this.served()) : []
     // Commit before "done": a plugin that started still has to pass its own check before the install counts.
@@ -766,7 +772,7 @@ export class Extensions extends Service {
       this.record({ kind: 'refused', name, version: staged.version, error })
       let restored = false
       if (previous) {
-        const again = await this.mount(previous.module)
+        const again = await this.mount(previous.module, previous.dir, previous.version)
         restored = again.error === undefined && STATES[again.fiber.state] !== 'failed'
         previous.fiber = again.fiber
         if (restored) {
@@ -841,7 +847,7 @@ export class Extensions extends Service {
       try {
         const module = await this.load(folder.dir, folder.name)
         const before = this.served()
-        const mounted = await this.mount(module)
+        const mounted = await this.mount(module, folder.dir, pluginVersion(folder.dir))
         this.installed.set(folder.name, {
           name: folder.name,
           source: folder.dir,
@@ -935,7 +941,7 @@ export class Extensions extends Service {
         }
         const module = await this.load(record.dir, name)
         const before = this.served()
-        const mounted = await this.mount(module)
+        const mounted = await this.mount(module, record.dir, record.version)
         if (mounted.error !== undefined)
           summary.failed.push({ name, error: message(mounted.error) })
         this.installed.set(name, {

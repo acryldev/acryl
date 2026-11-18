@@ -42,6 +42,8 @@
       name: '@acrylblends/sign-in'
     - id: ui-brand-acryl
       name: '@acrylblends/brand-client'
+    - id: skill-mcp-manager
+      name: skill-mcp-manager
 - id: connection
   inject: []
   config:
@@ -49,5 +51,7 @@
 - id: workspace-controller
   config:
     documentsDirectory: !!js process.env.DSH_HOME
+- id: office-to-pdf
+  disabled: true
 - id: ui-brand-official
   disabled: true
