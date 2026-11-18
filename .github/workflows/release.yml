@@ -20,7 +20,7 @@ jobs:
   pack:
     name: pack (${{ matrix.platform }} ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 100
     strategy:
       fail-fast: false
       matrix:
