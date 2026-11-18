@@ -58,7 +58,9 @@ const from = option('--from', undefined)
 /** Where the product's newer builds are published: the Blend's GitHub repository (its `origin`), whose release workflow uploads this packer's files. */
 function releaseSource() {
   try {
-    const remote = execFileSync('git', ['-C', from, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim()
+    const remote = execFileSync('git', ['-C', from, 'remote', 'get-url', 'origin'], {
+      encoding: 'utf8',
+    }).trim()
     const repo = /github\.com[:/]([\w.-]+\/[\w.-]+?)(?:\.git)?$/u.exec(remote)?.[1]
     return repo === undefined ? {} : { releases: { repo, file: FILE_NAME } }
   } catch {
@@ -69,7 +71,8 @@ function releaseSource() {
 /** Which build this product is (product.json `build`): the Blend folder's commit when it is a checkout, else the moment of packing. A started app compares it with the build its copy was made from. */
 const productBuild = () => {
   try {
-    if (from !== undefined && existsSync(from)) return execFileSync('git', ['-C', from, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+    if (from !== undefined && existsSync(from))
+      return execFileSync('git', ['-C', from, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
   } catch {}
   return new Date().toISOString()
 }
@@ -411,7 +414,10 @@ exports.default = async (context) => {
 const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
 // The installed app's icon (Dock, Finder, About, the installer) is the one its window wears (plugins/desktop/brand.ts iconFile): the app's own
 // assets/icon.png, else the ACRYL Blends logo. Left unset, every product showed Electron's default icon.
-const appIcon = [join(app, 'assets', 'icon.png'), join(app, 'plugins', 'desktop', 'assets', 'acrylblends-logo.png')].find((file) => existsSync(file))
+const appIcon = [
+  join(app, 'assets', 'icon.png'),
+  join(app, 'plugins', 'desktop', 'assets', 'acrylblends-logo.png'),
+].find((file) => existsSync(file))
 manifest.main = 'plugins/desktop/main.ts'
 manifest.productName = PRODUCT
 manifest.description = DESCRIPTION

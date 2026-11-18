@@ -469,7 +469,8 @@ async function createFromSource(
       // A starter made before sharing has no plugin-share row, so pull, list and publish would be refused in the new app: it gets the plugin last, mounted.
       // A shared app is in the frame already (it carries plugins/desktop): `upgrade` brings its desktop to this release instead.
       if (
-        (!existsSync(join(target, 'plugins', 'desktop')) && (await framework(['add', 'desktop'])) !== 0) ||
+        (!existsSync(join(target, 'plugins', 'desktop')) &&
+          (await framework(['add', 'desktop'])) !== 0) ||
         (await framework(['upgrade'])) !== 0 ||
         (lacksPluginShare(target) && (await framework(['add', 'plugin-share'])) !== 0)
       ) {
