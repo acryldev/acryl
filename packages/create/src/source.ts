@@ -47,8 +47,11 @@ interface Limits {
   readonly bytes: number
 }
 
-/** A template is copied whole into the person's new app, so it is held to the size of an app's source. */
-const TEMPLATE_LIMITS: Limits = { what: 'template', files: 5000, bytes: 50 * 1024 * 1024 }
+/**
+ * A template is copied whole into the person's new app, so it is held to the size of an app's source. 64 MB, the registry's own limit for an entry: a game is
+ * a whole app with its models, textures and sounds (the largest, acrylblends.action-rpg, is about 52 MB).
+ */
+export const TEMPLATE_LIMITS: Limits = { what: 'template', files: 5000, bytes: 64 * 1024 * 1024 }
 
 /**
  * A registry is read for its index and one entry, and grows with every entry it publishes (100 blueprints are about 33,000 files and 200 MB), so its bound

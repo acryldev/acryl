@@ -14,7 +14,14 @@ import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { writeArchives } from '../../../workshop-registry/scripts/registry-archives.mjs'
 import { type Io, runCreate, TEMPLATE_MANIFEST } from '../src/index'
-import { type Fetchers, parseSource, realFetchers, SourceError, tarCommand } from '../src/source'
+import {
+  type Fetchers,
+  parseSource,
+  realFetchers,
+  SourceError,
+  TEMPLATE_LIMITS,
+  tarCommand,
+} from '../src/source'
 
 const scratch = mkdtempSync(join(tmpdir(), 'create-source-test-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
@@ -563,7 +570,7 @@ describe('starters from a registry', () => {
     const growth = join(root, 'registry', 'blends', 'acrylblends.other')
     mkdirSync(growth, { recursive: true })
     for (let i = 0; i <= 5000; i += 1) writeFileSync(join(growth, `f${i}.txt`), `${i}\n`)
-    writeFileSync(join(growth, 'big.bin'), Buffer.alloc(51 * 1024 * 1024))
+    writeFileSync(join(growth, 'big.bin'), Buffer.alloc(TEMPLATE_LIMITS.bytes + 1024 * 1024))
     return root
   }
 
@@ -588,7 +595,22 @@ describe('starters from a registry', () => {
       github.err(),
     ).toBe(0)
     expect(existsSync(join(scratch, 'grown-gh', 'src', 'app.ts'))).toBe(true)
-    // Writing, copying and packing a registry over 50 MB takes seconds, not the default five.
+    // Writing, copying and packing a registry over 64 MB takes seconds, not the default five.
+  }, 120_000)
+
+  it('makes a starter as large as a whole game (52 MB, over the old 50 MB limit)', async () => {
+    const root = registry('site')
+    const entry = join(root, 'registry', 'blends', 'acrylblends.notes-desktop')
+    writeFileSync(join(entry, 'game.bin'), Buffer.alloc(52 * 1024 * 1024))
+    const s = fakeIo()
+    expect(
+      await runCreate(
+        ['game', '--from', 'acrylblends.notes-desktop', '--registry', root, '-y'],
+        s.io,
+      ),
+      s.err(),
+    ).toBe(0)
+    expect(existsSync(join(scratch, 'game', 'game.bin'))).toBe(true)
   }, 120_000)
 
   it('still refuses a starter that is itself larger than a template may be; nothing is created', async () => {
