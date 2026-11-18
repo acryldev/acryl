@@ -27,14 +27,23 @@ export interface ReleaseSource {
 export interface Release {
   readonly version: string
   readonly page: string
-  readonly asset: { readonly name: string; readonly url: string; readonly size: number; readonly sha256?: string }
+  readonly asset: {
+    readonly name: string
+    readonly url: string
+    readonly size: number
+    readonly sha256?: string
+  }
 }
 
 const PLATFORM = { darwin: 'mac', win32: 'win', linux: 'linux' } as const
 const EXTENSION = { mac: '.dmg', win: '.exe', linux: '.deb' } as const
 
 /** The installer this machine takes from a release, or undefined on an OS the packer does not build for. */
-export function assetName(source: ReleaseSource, platform: NodeJS.Platform, arch: string): string | undefined {
+export function assetName(
+  source: ReleaseSource,
+  platform: NodeJS.Platform,
+  arch: string,
+): string | undefined {
   const kind = PLATFORM[platform as keyof typeof PLATFORM]
   return kind === undefined ? undefined : `${source.file}-${kind}-${arch}${EXTENSION[kind]}`
 }
@@ -48,7 +57,8 @@ export function isNewer(candidate: string, current: string): boolean {
   const a = parse(candidate)
   const b = parse(current)
   if (a === undefined || b === undefined) return false
-  for (let index = 0; index < 3; index += 1) if (a[index] !== b[index]) return (a[index] ?? 0) > (b[index] ?? 0)
+  for (let index = 0; index < 3; index += 1)
+    if (a[index] !== b[index]) return (a[index] ?? 0) > (b[index] ?? 0)
   return false
 }
 
@@ -67,20 +77,39 @@ export async function latestRelease(
     signal: AbortSignal.timeout(15_000),
   })
   if (answer.status === 404) return undefined
-  if (!answer.ok) throw new Error(`GitHub answered ${answer.status} for ${source.repo}'s latest release`)
+  if (!answer.ok)
+    throw new Error(`GitHub answered ${answer.status} for ${source.repo}'s latest release`)
   const body = (await answer.json()) as {
     tag_name?: string
     html_url?: string
-    assets?: { name?: string; browser_download_url?: string; size?: number; digest?: string | null }[]
+    assets?: {
+      name?: string
+      browser_download_url?: string
+      size?: number
+      digest?: string | null
+    }[]
   }
   const name = assetName(source, platform, arch)
   const asset = body.assets?.find((entry) => entry.name === name)
-  if (typeof body.tag_name !== 'string' || asset?.browser_download_url === undefined || name === undefined) return undefined
-  const sha256 = typeof asset.digest === 'string' && asset.digest.startsWith('sha256:') ? asset.digest.slice('sha256:'.length) : undefined
+  if (
+    typeof body.tag_name !== 'string' ||
+    asset?.browser_download_url === undefined ||
+    name === undefined
+  )
+    return undefined
+  const sha256 =
+    typeof asset.digest === 'string' && asset.digest.startsWith('sha256:')
+      ? asset.digest.slice('sha256:'.length)
+      : undefined
   return {
     version: body.tag_name.replace(/^v/u, ''),
     page: body.html_url ?? `https://github.com/${source.repo}/releases`,
-    asset: { name, url: asset.browser_download_url, size: asset.size ?? 0, ...(sha256 === undefined ? {} : { sha256 }) },
+    asset: {
+      name,
+      url: asset.browser_download_url,
+      size: asset.size ?? 0,
+      ...(sha256 === undefined ? {} : { sha256 }),
+    },
   }
 }
 
@@ -96,9 +125,13 @@ export async function downloadInstaller(
 ): Promise<string> {
   mkdirSync(folder, { recursive: true })
   const file = join(folder, release.asset.name)
-  const answer = await fetcher(release.asset.url, { headers: { 'user-agent': 'acrylblends-desktop-updater' } })
-  if (!answer.ok || answer.body === null) throw new Error(`the download of ${release.asset.name} failed (${answer.status})`)
-  const total = Number(answer.headers.get('content-length') ?? release.asset.size) || release.asset.size
+  const answer = await fetcher(release.asset.url, {
+    headers: { 'user-agent': 'acrylblends-desktop-updater' },
+  })
+  if (!answer.ok || answer.body === null)
+    throw new Error(`the download of ${release.asset.name} failed (${answer.status})`)
+  const total =
+    Number(answer.headers.get('content-length') ?? release.asset.size) || release.asset.size
   const hash = createHash('sha256')
   const out = createWriteStream(file)
   let received = 0
@@ -106,15 +139,20 @@ export async function downloadInstaller(
     for await (const chunk of answer.body as unknown as AsyncIterable<Uint8Array>) {
       hash.update(chunk)
       received += chunk.length
-      if (!out.write(chunk)) await new Promise<void>((resolve) => out.once('drain', () => resolve()))
+      if (!out.write(chunk))
+        await new Promise<void>((resolve) => out.once('drain', () => resolve()))
       if (total > 0) progress(Math.min(1, received / total))
     }
   } finally {
-    await new Promise<void>((resolve, reject) => out.end((error?: Error | null) => (error ? reject(error) : resolve())))
+    await new Promise<void>((resolve, reject) =>
+      out.end((error?: Error | null) => (error ? reject(error) : resolve())),
+    )
   }
   const digest = hash.digest('hex')
   if (release.asset.sha256 !== undefined && digest !== release.asset.sha256)
-    throw new Error(`${release.asset.name} does not match the checksum GitHub published for it: the download is not used`)
+    throw new Error(
+      `${release.asset.name} does not match the checksum GitHub published for it: the download is not used`,
+    )
   return file
 }
 
@@ -139,7 +177,12 @@ export function macInstallScript(dmg: string, bundle: string, pid: number): stri
  * Start the installer step for `file`, detached so it outlives this process; the caller quits the app right after. Returns false where an update cannot
  * be installed from the app (Linux: a .deb needs root), so the caller shows the file instead.
  */
-export function startInstall(file: string, platform: NodeJS.Platform, executable: string, pid: number): boolean {
+export function startInstall(
+  file: string,
+  platform: NodeJS.Platform,
+  executable: string,
+  pid: number,
+): boolean {
   if (platform === 'darwin') {
     const bundle = bundleOf(executable)
     if (bundle === undefined) return false
