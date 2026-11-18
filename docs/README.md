@@ -93,6 +93,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.18](release-notes/create-1.5.18.md) - released with acrylblends 1.5.18
 - [Release notes acrylblends 1.5.19](release-notes/acrylblends-1.5.19.md) - every app has Settings > Skills & MCP (skill-mcp-manager in the frame)
 - [Release notes create-acrylblends 1.5.19](release-notes/create-1.5.19.md) - released with acrylblends 1.5.19
+- [Release notes acrylblends 1.5.20](release-notes/acrylblends-1.5.20.md) - upgrade keeps the new acrylblends range; the packer packs apps without LibreOffice
+- [Release notes create-acrylblends 1.5.20](release-notes/create-1.5.20.md) - released with acrylblends 1.5.20
 - [Release notes acrylblends 1.5.11](release-notes/acrylblends-1.5.11.md) - acrylblends update (a Blend's newer release merged into an app, your changes kept) and the in-app update of packed products
 - [Release notes create-acrylblends 1.5.11](release-notes/create-1.5.11.md) - released with acrylblends 1.5.11
 - [Release notes acrylblends 1.5.10](release-notes/acrylblends-1.5.10.md) - released with create-acrylblends 1.5.10
