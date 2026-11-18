@@ -24,20 +24,35 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
   `framework/pnpm-lock.yaml` and `framework/pnpm-workspace.yaml` are gone.
   Done 2026-11-18 (96a15157): one lockfile for 61 projects. ACRYL's packages now use the framework's own source (`workspace:^`) instead of
   npm acrylblends 1.0.0. The pnpm release is still 11.11.0 at the root; the move to 12 is its own commit.
-- [ ] T006 [checks] The framework's `check` (lint, build, typecheck, tests, its verify scripts) runs from the root, next to acryl's; both
-  green. The root biome and the bilingual-docs and architecture checks either cover `framework/` or exclude it on purpose, with the reason
-  written beside the rule.
-- [ ] T007 [layout] `scripts/verify-layout.mjs` enforces the dependency direction in `spec.md` (framework -> runtime, never runtime ->
-  framework); CLAUDE.md's "Repository layout" lists `framework/` as a sixth group, with what belongs in it.
-- [x] T008 [one copy] Each `framework/ide/*` port and its acryl original become one package, reviewing the `changes` its `provenance.json`
-  lists; `plugins/acryl-plugin-context`'s acryl-side work since f6538891 is carried over. Which folder keeps the merged package is decided per
-  pair by the dependency rule.
-  Done 2026-11-18: e3c5ec3e (13 ports merged into the acryl originals), 0e7ca221 (acryl-system-prompt: one package, each product passes its
-  own opening line through the plugin's settings, owner's option A), 31455cda (acryl-web moved to `runtime/acryl-web-service`, row id
-  `acryl-web` kept, owner's option C), 96a15157 (the framework's copies deleted; `frame/packages.json` names the shared folders).
-  Open from it: whether ACRYL's agent gets the door's new `reload`/`navigate` as tools (named, not registered).
+- [x] T006 [checks] The framework's `check` (all 23 steps: lint, build, typecheck, tests, its verify scripts) runs inside the monorepo, next to
+  acryl's build, verify and check:layout; both green (2026-11-19, 25 of 25 after the subtree pull). The framework keeps its own biome
+  (ACRYL has none); its release tags are read as `acrylblends-v*` inside ACRYL (a38f42a4).
+- [x] T007 [layout] Dependency direction guard, the Pi model (owner 2026-11-19): `scripts/dependency-direction.mjs`, run by
+  `scripts/verify-layout.mjs`. No cycles between workspace packages, and three "never depends on" rules by package role (the framework
+  foundation depends only on itself; ACRYL's runtime only on the foundation and itself; nothing depends on an app). 60 packages, 0 cycles,
+  0 wrong-way dependencies. Done 80aeab6a.
 - [ ] T009 [mirror] acrylblends/acrylblends stays live until the cut-over: changes made there are brought in with
-  `git subtree pull --prefix=framework`, never copied by hand.
+  `git subtree pull --prefix=framework`, never copied by hand. First pull done 2026-11-19 (acrylblends 7711a4ce: release 1.5.21).
+
+### Tonight's restructure, the Pi model (owner 2026-11-19)
+
+Folders stay flat and the layers live only in the dependency graph, like earendil-works/pi. Each step is one commit, with ACRYL's build,
+verify and check:layout and all 23 framework check steps green before it lands.
+
+- [x] T016 [pnpm] Develop with pnpm 12.14.0 (root and framework); the pnpm the app ships to users stays 11.11.0. Done eb96faea.
+- [ ] T017 [flat plugins] The framework's 13 packages (`acryl-door`, `acryl-router`, `acryl-db`, `acryl-kv`, `acryl-page`,
+  `acryl-web-server`, ...) move into the one flat `plugins/` folder beside ACRYL's own: everything imports them from there. The 19 plain app
+  plugins (`desktop`, `instance`, `save`, ...) stay in `framework/plugins/` for now: they are not packages, the CLI copies them into apps as
+  source, and they develop against the framework's own dependencies (making them packages is Phase 3). The CLI reads its plugins from both
+  folders; the published npm package still ships one `plugins/`. **In progress: built, full check run going (2026-11-19 02:20).**
+- [ ] T018 [apps] The Blends frame (`framework/ide/*`) moves into `apps/`, where everything people run lives (no `products/` folder).
+- [ ] T019 [docs] This spec and `docs/acryl/MONOREPO.md` rewritten in Pi's terms: one table of what each package owns and what it
+  deliberately does not do; the layer picture (framework foundation, ACRYL runtime, plugins, apps) as documentation of the graph; phases 3-5
+  updated (no `products/`, no updater bridge release: installed apps are reinstalled). Copied to main.
+- [ ] T020 [boot] A real Desktop boot from this branch (isolated home), the last check before Phase 2 is called done.
+- [ ] T021 [exception] `acryl-harness-runtime` composes every plugin a surface runs (the guard's one named exception); move that
+  composition up into `apps/`.
+- [ ] T022 [decision] Whether ACRYL's agent gets the door's new `reload` and `navigate` as tools (named, not registered today).
 
 ## Phase 3 - packages, not copies
 
