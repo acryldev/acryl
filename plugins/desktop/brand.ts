@@ -19,9 +19,11 @@ export function appTitle(projectRoot: string): string {
   try {
     const manifest = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8')) as {
       name?: unknown
+      productName?: unknown
     }
-    if (typeof manifest.name === 'string' && manifest.name.trim() !== '')
-      return manifest.name.trim()
+    // A packed product names itself (productName, set by the packer); its package name is the folder it was packed from ("app" on the release runner).
+    for (const name of [manifest.productName, manifest.name])
+      if (typeof name === 'string' && name.trim() !== '') return name.trim()
   } catch {
     // No manifest, or not JSON: the folder names the app.
   }
