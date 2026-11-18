@@ -99,7 +99,8 @@ const userData =
   resolveDesktopUserDataOverride(process.env) ?? storage?.electron ?? join(chosen.home, 'electron')
 mkdirSync(userData, { recursive: true, mode: 0o700 })
 app.setPath('userData', userData)
-app.setName(appTitle(projectRoot))
+// A packed product is named by its marker (the menu's About and Quit, the Dock): its source's package is named after the folder it was packed from.
+app.setName(product?.product ?? appTitle(projectRoot))
 
 if (!app.requestSingleInstanceLock()) {
   // The same app is already open: its window takes focus (see `second-instance` below) and this process ends.
