@@ -17,6 +17,9 @@ test('the app is named by its package, else its folder', () => {
   assert.equal(appTitle(join(folder)), folder.split('/').pop())
   writeFileSync(join(folder, 'package.json'), JSON.stringify({ name: 'shop' }))
   assert.equal(appTitle(folder), 'shop')
+  // A packed product: the package is named after the folder it was packed from, the product by productName.
+  writeFileSync(join(folder, 'package.json'), JSON.stringify({ name: 'app', productName: 'ACRYL Control Center' }))
+  assert.equal(appTitle(folder), 'ACRYL Control Center')
 })
 
 test('an app icon of its own wins over the ACRYL Blends logo', () => {
