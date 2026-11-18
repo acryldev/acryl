@@ -57,7 +57,7 @@ jobs:
       # The About window shows the app's package version: a release carries its tag's (v0.1.13 -> 0.1.13), never the template's 0.1.0.
       - name: Version from the tag
         if: startsWith(github.ref, 'refs/tags/v')
-        working-directory: app
+        working-directory: ade
         shell: bash
         run: npm pkg set version="${GITHUB_REF_NAME#v}"
       - name: Pack ACRYL ADE
