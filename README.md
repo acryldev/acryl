@@ -37,4 +37,28 @@ cd 63-acryl-control-center && npm install && npm run desktop
 
 `npm run dev` serves it to a browser instead. The apps it lists live in `~/.acryl/apps.json`; new apps are suggested in `~/ACRYL`.
 
+## Where the shared code comes from
+
+Most of this app is not written here:
+
+- **The library plugins** (`plugins/acryl-door`, `acryl-router`, `desktop`, `instance`, `plugin-share` and the others named in
+  `plugins/library.json`) are copies of the acrylblends library, from <https://github.com/acrylblends/acrylblends>.
+  `plugins/library.lock.json` records the release each came from and a hash of every file. `npx acrylblends upgrade` brings them to the
+  newest release; when a file was changed here, it stops, shows the diff and changes nothing (`--force` replaces it and keeps a backup in
+  `.acryl/upgrade-backup/`). Fix a library plugin in acrylblends, not here; your own code goes in a plugin of your own under `plugins/`.
+- **The frame and its parts** (`@acrylblends/blends-frame`, `@acrylblends/settings` and the other `@acrylblends/*` packages in
+  `package.json`) and the framework (`acrylblends`) come from npm, built from the same repository (`ide/` and `packages/`). `npm install`
+  installs them; `npx acrylblends upgrade` moves `package.json` to the release it brings.
+- **The Control Center itself** is generated from ACRYL, <https://github.com/acryldev/acryl>, by `scripts/launcher-blend.mjs`:
+  - `plugins/acryl-launcher-host/` (its `index.ts`, `package.json`, `contract.ts`, `door.ts`, `registry.ts`, `route.ts`, `runner.ts`,
+    `service.ts`) is the Host half of acryl's `plugins/acryl-launcher-desktop`, with its imports renamed for a Blends app;
+  - `plugins/acryl-launcher-host/launcher-lib/` (8 files) is acryl's `plugins/acryl-launcher`, built: its `.js` and `.d.ts` copied as they are;
+  - `public/launcher.js` is the page, acryl's `plugins/acryl-launcher-desktop/lib/page.js`.
+
+  Change these in acryl and run the script again; an edit made here is overwritten. They become one published package in place of the
+  copies with acryl spec 051 (task T010).
+
+What is this app's own: `blend.yaml`, `cordis.patch.yml`, `src/` (the root serves the Control Center, the template's first screen is at
+`/home`), `assets/`, the tests and the release workflow.
+
 MIT licence.
