@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
+import { directionViolations, findCycles, readGraph } from './dependency-direction.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -24,8 +25,8 @@ const fabric = readJson('plugins/dsh-community-fabric/package.json')
 const market = readJson('plugins/cordis-plugin-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
 
-if (!workspace.packageManager?.match(/^pnpm@11\.\d+\.\d+$/)) {
-  fail('the product workspace must pin pnpm@11.x.x (patch updates permitted)')
+if (!workspace.packageManager?.match(/^pnpm@12\.\d+\.\d+$/)) {
+  fail('the product workspace must pin pnpm@12.x.x (patch updates permitted)')
 }
 if (workspace.workspaces !== undefined) fail('workspace membership belongs only in pnpm-workspace.yaml')
 if (!npmrc.includes('node-linker=isolated\n')) fail('the product workspace must use the documented PNPM isolated linker')
@@ -391,4 +392,12 @@ for (const path of testFiles) {
   }
 }
 
-process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam); webServer registration call sites ${webRegistrations}\n`)
+// Dependency direction (spec 051, the Pi model): no cycles between workspace packages, and nothing points the wrong way
+// (scripts/dependency-direction.mjs says which rules and why).
+const packageGraph = readGraph(root)
+const cycles = findCycles(packageGraph)
+if (cycles.length > 0) fail(`dependency cycles between workspace packages (each must point one way):\n${cycles.map(cycle => `  ${cycle.join(' -> ')}`).join('\n')}`)
+const wrongWay = directionViolations(packageGraph)
+if (wrongWay.length > 0) fail(`dependencies that point the wrong way:\n${wrongWay.map(line => `  ${line}`).join('\n')}`)
+
+process.stdout.write(`verify-layout: PNPM workspace and upstream ${upstream.commit.slice(0, 10)} are consistent; DSH import lines ${dshImports.total} (${dshImports.outsideSeam} outside the seam); webServer registration call sites ${webRegistrations}; ${packageGraph.size} packages, no cycles, all dependencies point down\n`)
