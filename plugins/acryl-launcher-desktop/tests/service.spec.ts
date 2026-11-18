@@ -151,6 +151,27 @@ describe('start and stop', () => {
     expect(service.state().apps[0]?.failure).toBe('Error: Cannot find module x')
   })
 
+  it('offers the newer registry release of an app\'s Blend and updates it with acrylblends update, starting a running app again', async () => {
+    const { service, makeApp, runs } = setup()
+    const folder = makeApp('notes')
+    writeFileSync(join(folder, 'blend.yaml'), 'kind: Blueprint\nmetadata:\n  id: acrylblends.notes\n  version: 0.0.9\n')
+    service.state()
+    await service.blends()
+    expect(service.state().apps[0]).toMatchObject({ version: '0.0.9', update: '0.1.0' })
+    service.start('notes')
+    runs[0]!.say('http://127.0.0.1:3999/?token=t\n')
+    service.update('notes')
+    expect(runs[0]!.stopped).toBe(true)
+    expect(runs[1]!.command).toMatchObject({ program: 'npm', args: ['exec', '--yes', 'acrylblends@latest', '--', 'update'], cwd: folder })
+    expect(service.state().job).toMatchObject({ status: 'running', step: expect.stringContaining('to 0.1.0') })
+    writeFileSync(join(folder, 'blend.yaml'), 'kind: Blueprint\nmetadata:\n  id: acrylblends.notes\n  version: 0.1.0\n')
+    runs[1]!.end(0)
+    expect(service.state().job).toMatchObject({ status: 'done', step: expect.stringContaining('Starting it again') })
+    expect(runs[2]!.command).toMatchObject({ program: 'npm', args: ['run', 'dev'] })
+    expect(service.state().apps[0]?.update).toBeUndefined()
+    expect(() => { service.update('notes') }).toThrow(/latest release/u)
+  })
+
   it('says so when Node and npm are not on the machine', () => {
     const { service, makeApp, runs } = setup()
     makeApp('shop')

@@ -30,6 +30,14 @@ export function blendOf(folder) {
   } catch { return '' }
 }
 
+/** The version of the Blend an app was made from (`metadata.version` of its blend.yaml), or '' when it records none. */
+export function blendVersionOf(folder) {
+  try {
+    const text = readFileSync(join(folder, APP_MARKER), 'utf8')
+    return /^metadata:[^\S\n]*\n(?:[ \t]+\S.*\n|[ \t]*\n)*?[ \t]+version:\s*["']?([^\s"'#]+)/mu.exec(text)?.[1] ?? ''
+  } catch { return '' }
+}
+
 const valid = entry => entry && typeof entry.id === 'string' && typeof entry.path === 'string'
 
 /** Every app in the list, oldest first; an empty list when the file is missing or not readable as a list (a broken file never stops the launcher). */

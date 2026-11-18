@@ -108,7 +108,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
             onSearch={setSearch} onSurface={setSurface} onPanel={setPanel} onSelect={setSelected}
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const done = await act(() => api.create(request)); if (done) setPanel('none'); return done }}
-            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onRemove={id => act(() => api.remove(id))}
+            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onRemove={id => act(() => api.remove(id))}
             openExternal={openExternal} adeUnderneath={adeUnderneath} onOpenCode={() => { visibility.set(false) }} onOpenAde={surface => { void act(() => api.openAde(surface)) }}
           />
         )}
@@ -170,6 +170,7 @@ interface AppsViewProps {
   readonly onAdd: (path: string) => Promise<boolean>
   readonly onCreate: (request: NewAppRequest) => Promise<boolean>
   readonly onStart: (id: string) => Promise<boolean>
+  readonly onUpdate: (id: string) => Promise<boolean>
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
   readonly openExternal: (url: string) => void
@@ -236,12 +237,12 @@ function AppsView(props: AppsViewProps): ReactNode {
       {props.apps.length === 0
         ? <p className="acrylHomeNote">No apps of your own yet. Press + New app to make one, or Add a folder to list one you already have.</p>
         : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p> : null}
-      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onStop={props.onStop} onRemove={props.onRemove} openExternal={props.openExternal} />}
+      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onStop={props.onStop} onRemove={props.onRemove} openExternal={props.openExternal} />}
     </div>
   )
 }
 
-function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
+function Detail({ api, app, onStart, onUpdate, onStop, onRemove, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const running = app.state === 'running' || app.state === 'starting'
   const [sharing, setSharing] = useState(false)
   // Another app's detail starts with its share closed.
@@ -254,6 +255,7 @@ function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: La
           {running
             ? <><button type="button" className="acrylHomeBtn" data-primary={app.surface === 'desktop' ? undefined : ''} disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open in the browser</button><button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
             : <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing'} onClick={() => { void onStart(app.id) }}>Start</button>}
+          {app.update === undefined ? null : <button type="button" className="acrylHomeBtn" data-primary title={`${app.blend} ${app.update} is out: bring it into this app, keeping your changes (a git merge), then npm install`} onClick={() => { void onUpdate(app.id) }}>Update to {app.update}</button>}
           <button type="button" className="acrylHomeBtn" disabled title="coming: acryl deploy">Deploy to WebBoxes.ai</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
           <button type="button" className="acrylHomeBtn" disabled title="coming">Open folder</button>
@@ -261,7 +263,7 @@ function Detail({ api, app, onStart, onStop, onRemove, openExternal }: { api: La
         </div>
       </div>
       <dl className="acrylHomeKv">
-        <dt>Blend</dt><dd>{app.blend === '' ? 'none named' : app.blend}</dd>
+        <dt>Blend</dt><dd>{app.blend === '' ? 'none named' : `${app.blend}${app.version === undefined ? '' : ` ${app.version}`}${app.update === undefined ? '' : ` (${app.update} is out)`}`}</dd>
         <dt>Surface</dt><dd>{SURFACE_LABEL[app.surface]}</dd>
         <dt>Folder</dt><dd>{app.path}</dd>
         <dt>Made by</dt><dd>{app.madeBy === 'agent' ? 'an agent' : 'you'}</dd>
