@@ -84,6 +84,8 @@ export interface RegisteredApp {
   readonly lastOpened?: string
   /** The person chose the name (named it on the first start, renamed it, or imported it under a file name); absent while it is the product's default. */
   readonly named?: true
+  /** The product that made it (product.json `appName`, e.g. "ACRYL ADE"): products share one root, and each opens only its own apps. */
+  readonly product?: string
 }
 
 /** What `openRoot` found: a root this build writes, or one written by a newer build (refused by the caller with the version it names). */
@@ -175,6 +177,8 @@ export function createApp(
     seed?: (folders: ProductAppFolders) => void
     /** The person chose this name (an import, a fresh start of a named app). */
     named?: boolean
+    /** The product making it, recorded so another product never opens it. */
+    product?: string
   } = {},
 ): RegisteredApp {
   const label = checkedName(name)
@@ -202,6 +206,7 @@ export function createApp(
     name: label,
     created: (options.now?.() ?? new Date()).toISOString(),
     ...(options.named === true ? { named: true as const } : {}),
+    ...(options.product === undefined ? {} : { product: options.product }),
   }
   saveApps(root, [...apps, entry])
   return entry
@@ -221,13 +226,43 @@ export function renameApp(root: string, id: string, name: string): RegisteredApp
 }
 
 /** Record that an app was opened now. */
-export function touchApp(root: string, id: string, now: () => Date = () => new Date()): void {
+export function touchApp(
+  root: string,
+  id: string,
+  now: () => Date = () => new Date(),
+  product?: string,
+): void {
   const apps = listApps(root)
   if (!apps.some((app) => app.id === id)) throw new AppInstanceError(`no app "${id}" in ${root}`)
   saveApps(
     root,
-    apps.map((app) => (app.id === id ? { ...app, lastOpened: now().toISOString() } : app)),
+    apps.map((app) =>
+      app.id === id
+        ? {
+            ...app,
+            lastOpened: now().toISOString(),
+            // An app made before apps recorded their product is claimed by the product that opens it.
+            ...(app.product === undefined && product !== undefined ? { product } : {}),
+          }
+        : app,
+    ),
   )
+}
+
+/**
+ * Whether `app` is one of `product`'s apps. An app made before apps recorded their product belongs to a product of the same name (a named product's app
+ * is named after it: "ACRYL Control Center"), and to an unnamed product (the Blank one, whose apps the person names) whatever its name.
+ */
+export function ownedBy(app: RegisteredApp, product: ProductIdentity | undefined): boolean {
+  if (product === undefined) return true
+  if (app.product !== undefined) return app.product === product.name
+  return product.named ? app.name === product.name : true
+}
+
+/** Which product a storage serves: its `appName`, and whether it is a finished, named product (ACRYL Control Center, ACRYL ADE) or the Blank one. */
+export interface ProductIdentity {
+  readonly name: string
+  readonly named: boolean
 }
 
 /** What an app's folder holds: its bytes (the files' own sizes, links not followed) and its files. */
@@ -281,7 +316,12 @@ export function resetApp(
   now: () => Date = () => new Date(),
 ): RegisteredApp {
   const old = findApp(root, id)
-  const fresh = createApp(root, old.name, { seed, now, named: old.named === true })
+  const fresh = createApp(root, old.name, {
+    seed,
+    now,
+    named: old.named === true,
+    ...(old.product === undefined ? {} : { product: old.product }),
+  })
   saveApps(
     root,
     listApps(root).filter((app) => app.id !== id),
@@ -350,6 +390,8 @@ export function openProductStorage(options: {
   readonly git?: string
   /** The OS file manager, showing one folder (Electron's `shell.showItemInFolder` in the product). */
   readonly reveal?: (path: string) => void
+  /** The product this storage serves: it lists, opens and makes only that product's apps (all products share the root). */
+  readonly product?: ProductIdentity
 }): AppStorage {
   const platform = options.platform ?? process.platform
   const env = options.env ?? process.env
@@ -363,11 +405,13 @@ export function openProductStorage(options: {
         : `${root} has layout ${String(state.layout)}, which this version cannot migrate`,
     )
   const opened = (app: RegisteredApp): string => app.lastOpened ?? app.created
+  const mine = (): RegisteredApp[] => listApps(root).filter((app) => ownedBy(app, options.product))
+  const stamp = options.product === undefined ? {} : { product: options.product.name }
   return {
     electron: join(root, ELECTRON_DIR),
-    apps: () => listApps(root),
+    apps: () => mine(),
     last: () =>
-      listApps(root).reduce<RegisteredApp | undefined>(
+      mine().reduce<RegisteredApp | undefined>(
         (latest, app) => (latest === undefined || opened(app) >= opened(latest) ? app : latest),
         undefined,
       ),
@@ -375,10 +419,11 @@ export function openProductStorage(options: {
       createApp(root, name, {
         seed: (folders) => seed(folders.source),
         named: options?.named === true,
+        ...stamp,
       }),
     open(id) {
       const app = findApp(root, id)
-      touchApp(root, id)
+      touchApp(root, id, undefined, options.product?.name)
       return productInstance(appFolders(root, id, platform), app.name)
     },
     app: (id) => findApp(root, id),
@@ -402,6 +447,7 @@ export function openProductStorage(options: {
     import: (file) =>
       createApp(root, archiveName(file) || 'Imported app', {
         named: true,
+        ...stamp,
         seed: (folders) => {
           importArchive({
             git,
