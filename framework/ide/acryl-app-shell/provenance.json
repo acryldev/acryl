@@ -1,0 +1,16 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "plugins/acryl-app-shell"
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": ["src/**", "cordis.patch.yml", "tsdown.config.ts", "tsconfig.json", "tsconfig.client.json", "tsconfig.tests.json", "vitest.config.ts", "scripts/**", "README.md", "LICENSE"],
+  "changes": {
+    "package.json": "repository points here, build tool versions match this repository, @acryl/ui is a workspace dependency",
+    "src/client/layout-state.ts": "one line: the panelInfo subscribe listener is annotated `listener: () => void`; the HostObservable type it would inherit comes from @deepseek-ai/dsh-client-ui-slots, whose published declaration files import './renderer.ts' and do not resolve under NodeNext, so the type arrives as any (TS errors inside the package's .d.ts are hidden by skipLibCheck). The annotation keeps the strict check; remove it when DSH publishes resolvable declarations",
+    "tests/environment.spec.ts": "one line: the window-chrome source it compares against is the vendored copy under tests/fixtures/acryl",
+    "tests/fixtures/acryl/window-chrome.ts": "byte-identical copy of apps/acryl-desktop/src/shell/window-chrome.ts from the source commit"
+  },
+  "notes": "The original test suite runs unchanged (5 files, 31 tests) apart from the fixture path; src is byte-identical apart from the one listener annotation."
+}

@@ -1,0 +1,17 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "f6538891",
+    "directory": "plugins/acryl-plugin-context"
+  },
+  "ported": "2026-11-04, 127-self-knowledge: the Blends app's agent gets ACRYL IDE's self-knowledge (pi.dev's docs-routing philosophy)",
+  "changes": {
+    "lib/router.js -> src/router.ts": "typed; the same tagged section, order 9500 and 650-token budget; the rule line names blend.yaml rows and plugins/<name>/ instead of ACRYL's plugin homes",
+    "index.js -> src/index.ts": "the prompt section in an effect and the appContext service (ACRYL's acrylPluginContext: root, manifest, resolveDoc); the install, verify, stage and publish tools are not here: the app's door, its extensions plugin and the frame's Settings > Plugins Share own those in Blends",
+    "lib/manifest.js, scripts/build-manifest.mjs -> scripts/lib/manifest.mjs, scripts/build-manifest.mjs": "the same validator and generated READMEs; surfaces are frame and standalone, plugin types are this app's (route, home-widget, state, service-provider, service-consumer, lifecycle-function)",
+    "docs/": "rewritten for a Blends app: ACRYL's pages teach plugin homes, DSH client slots and the IDE; this app's plugins are folders with a blend.yaml row, a router and a home page. The structure (start-here, extending, delivery; read-it-when; one rule) is ACRYL's",
+    "example-plugins/": "new examples in this app's shape (a page and route, a home widget, a JSON-file state plugin), each with a scenario the examples gate runs, as ACRYL's gate runs its examples",
+    "skills/": "ported separately as agent skills in packages/cli/shared/skills/",
+    "lib/lookup.js, lib/blend-capture.js, lib/blend-apply.js, lib/blend-ledger.js, evals/": "not yet ported"
+  }
+}

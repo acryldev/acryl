@@ -1,0 +1,71 @@
+# The app as data, in ACRYL's Blend format (blends.acryl.dev/v1alpha1): which plugins it mounts, in what order, with what config.
+# Edit this, not app.ts, to switch a plugin off (disabled: true) or change its config. `npm run lock` records what the app is built from.
+# Order matters: acryl-router comes before extensions, because installed extensions start again at boot and may add routes.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+metadata:
+  id: acrylblends.__APP_NAME__
+  name: __APP_NAME__
+  version: 0.1.0
+  visibility: private # `npm run save` never pushes a private app to a public remote
+spec:
+  runtime: cordis
+  parameters:
+    # The address the server listens on.
+    hostname: { type: string, default: 127.0.0.1 }
+    # Steps an agent run may take.
+    steps: { type: number, default: 12 }
+    # Where task records are kept: jsonl (a text file) or sqlite.
+    taskStore: { type: string, default: jsonl }
+    # When true, a plugin the agent installs waits for POST /extensions/approve.
+    approval: { type: boolean, default: false }
+  rows:
+    - id: tasks
+      name: tasks
+      config:
+        store: "{{parameters.taskStore}}"
+    # The model the agent asks at each step: a scripted offline one until a provider key is set.
+    - id: model
+      name: model
+    # The tools the agent can call, each with what it does and the input it takes.
+    - id: tools
+      name: tools
+    # Long-term memory for the agent.
+    - id: memory
+      name: memory
+    - id: agent
+      name: agent
+      config:
+        steps: "{{parameters.steps}}"
+    - id: router
+      name: acryl-router
+    # The home page's widgets: a plugin puts its UI on the home page with ctx.home.widget (one pulled from someone else's app too), and it leaves with the plugin.
+    - id: home
+      name: home
+    - id: state
+      name: acryl-state
+    - id: sandbox
+      name: sandbox
+    - id: extensions
+      name: extensions
+      config:
+        approval: "{{parameters.approval}}"
+    - id: builder
+      name: builder
+    - id: plugin-share
+      name: plugin-share
+    - id: save
+      name: save
+    # The panel: a chat button on every page in development (the app's own agent, or Codex, Claude or pi started in this folder). It starts nothing in production.
+    - id: agent-panel
+      name: agent-panel
+    # The app's own pages and API.
+    - id: routes
+      name: routes
+    - id: server
+      name: acryl-node-server
+      config:
+        hostname: "{{parameters.hostname}}"
+    # The door: an agent working in this folder looks at the page and acts on it through .acryl/bin/acryl. Development only: src/app.ts leaves it out when NODE_ENV=production.
+    - id: acryl-door
+      name: acryl-door

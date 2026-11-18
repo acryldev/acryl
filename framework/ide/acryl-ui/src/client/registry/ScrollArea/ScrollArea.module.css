@@ -1,0 +1,7 @@
+.root { position: relative; }
+.viewport { width: 100%; height: 100%; border-radius: inherit; outline: none; overflow: auto; overscroll-behavior: contain; }
+.viewport:focus-visible { box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); outline: 1px solid var(--dsw-alias-border-l3); }
+.viewport::-webkit-scrollbar { width: 10px; height: 10px; }
+.viewport::-webkit-scrollbar-track { background: transparent; }
+.viewport::-webkit-scrollbar-thumb { background: var(--dsw-alias-scrollbar-bg-l1); border-radius: 9999px; }
+.viewport::-webkit-scrollbar-thumb:hover { background: var(--dsw-alias-scrollbar-hover-l1); }

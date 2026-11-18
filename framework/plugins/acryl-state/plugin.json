@@ -1,0 +1,17 @@
+{
+  "name": "acryl-state",
+  "description": "Observable cells and derived cells, shared state with JSON, server-sent event and WebSocket routes on the router, and a browser module (watch) that follows keys over one socket. Vendored from ACRYL.",
+  "requires": ["acryl-router"],
+  "inject": ["router"],
+  "provides": ["state"],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "ws": "8.21.3"
+  },
+  "mount": "root.plugin(state); ctx.state.cell('todos.count', 0), then count.update((n) => n + 1); a page follows it with import { watch } from '/api/state/client.js'; watch('todos.count', (n) => { ... })",
+  "omit": ["src/react.ts", "**/*.test.*", "**/*.case.ts"],
+  "entries": {
+    "": "src/index.ts",
+    "/react": "src/react.ts"
+  }
+}

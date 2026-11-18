@@ -1,0 +1,63 @@
+/** The `changes` right-sidebar tab type, registered through upstream's public two-stage path. */
+
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type {} from '@acryl/ui/frame'
+import { ChangesBody } from './ChangesBody.tsx'
+import type { WorkspaceGitApi } from '../git/git-api.ts'
+import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
+import { ChangesGlyph } from '../chrome/panel-icons.tsx'
+
+/** The tab kind this plugin owns. */
+export const CHANGES_KIND = 'changes'
+/** This implementation's identity in the tab system, and the key its body registers under. */
+export const CHANGES_ID = 'acryl-workspace/changes'
+
+/**
+ * A dependency-gated child plugin: it is PENDING (not failed) while the upstream right sidebar is
+ * absent, and mounts by itself when it appears, so it can never take the canvas or the left pane
+ * down with it. Both registrations live inside one effect, so they unwind together.
+ * @param shell - shared shell state the body reads and the reveal callback belongs to.
+ * @param gitApi - the git routes the stage and commit controls call.
+ */
+export function changesTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGitApi) {
+  return {
+    name: 'acryl-workspace-changes-tab',
+    inject: ['sidebarRightTabs', 'sidebarRight', 'slots'],
+    apply(ctx: ClientContext): void {
+      ctx.effect(() => {
+        const removeType = ctx.sidebarRightTabs.register({
+          id: CHANGES_ID,
+          kind: CHANGES_KIND,
+          priority: 'builtin',
+          title: () => 'Changes',
+          guide: [{
+            id: CHANGES_ID,
+            icon: ChangesGlyph,
+            order: 20,
+            title: () => 'Changes',
+            description: () => 'Changed files in the selected worktree',
+          }],
+        })
+        const removeBody = ctx.slots.register({
+          name: 'sidebar.right.pane.tab',
+          key: CHANGES_ID,
+          inject: () => ({ shell, gitApi }),
+        }, ChangesBody)
+        // Picking a worktree in the left pane switches an OPEN right panel to its changes. It never opens
+        // a closed panel: that would pop a large panel over the chat every time a branch is clicked.
+        shell.setReveal(() => {
+          try {
+            if (ctx.sidebarRight.isExpanded()) ctx.sidebarRight.openTab(CHANGES_KIND)
+          } catch {
+            // No current chat session means there is no right sidebar to show it in.
+          }
+        })
+        return () => {
+          shell.setReveal(undefined)
+          removeBody()
+          removeType()
+        }
+      }, 'acryl-workspace: Changes tab type')
+    },
+  }
+}

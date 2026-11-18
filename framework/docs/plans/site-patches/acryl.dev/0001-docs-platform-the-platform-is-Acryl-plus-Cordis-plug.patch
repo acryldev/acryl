@@ -1,0 +1,81 @@
+From 5f946f75872d1916f5decbd15f8df089b45c2ee1 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <alex.musichen@gmail.com>
+Date: Wed, 28 Oct 2026 14:36:34 +0100
+Subject: [PATCH] docs(platform): the platform is Acryl plus Cordis plugins;
+ DeepSeek Harness is one agent driver
+
+/docs/platform still framed ACRYL as "a clean plugin layer over DeepSeek Harness": its install section was `dsh plugin --profile desktop add <package>`, and the compatibility contract's five items were about DSH bundles, the Harness client surface and DSH service names.
+
+- The lede, the install section and the contract now describe what 1.0 ships: a Cordis plugin platform whose web framework is Acryl (router, Node server, db and kv ports, live state, JSX), apps as folders of plugins mounted from blend.yaml, dependencies as service names, a versioned public surface with acrylblends upgrade, and ACRYL capabilities as additive and optional.
+- A 1.0 notice says the thing the page used to imply otherwise: DeepSeek Harness is not the platform. It is one agent driver - the ACP driver runs any agent that speaks the Agent Client Protocol, and dsh is its first preset - and an app that starts no agent depends on neither.
+- The runtime-layers stack gains the missing middle: ACRYL (the product), Acryl (the framework), Cordis (the runtime).
+- The footer note on every page said "Built on Cordis and DeepSeek Harness"; it now says an agent joins as a driver, so the app is not tied to one.
+---
+ src/components/Shell.tsx |  2 +-
+ src/pages/DocsPage.tsx   | 28 +++++++++++++++-------------
+ 2 files changed, 16 insertions(+), 14 deletions(-)
+
+diff --git a/src/components/Shell.tsx b/src/components/Shell.tsx
+index 3f9642e..90e43fb 100644
+--- a/src/components/Shell.tsx
++++ b/src/components/Shell.tsx
+@@ -105,7 +105,7 @@ export function Shell() {
+           <a href="https://www.tiktok.com/@acryldev" target="_blank" rel="noreferrer">TikTok</a>
+           <a href="https://www.npmjs.com/~acryldev" target="_blank" rel="noreferrer">npm</a>
+         </div>
+-        <p className="footer-note">Built on Cordis and DeepSeek Harness. ACRYL adds capabilities without replacing upstream APIs.</p>
++        <p className="footer-note">Built on Cordis. An agent joins as a driver, so the app is not tied to one of them.</p>
+         <p className="footer-note footer-scam-warning">
+           <strong>Security notice:</strong> our only official accounts are listed above (x.com/acryldev,
+           github.com/acryldev, and the others linked here). We have no token, no coin, and no crypto project.
+diff --git a/src/pages/DocsPage.tsx b/src/pages/DocsPage.tsx
+index c1ba763..fb75c9c 100644
+--- a/src/pages/DocsPage.tsx
++++ b/src/pages/DocsPage.tsx
+@@ -1,28 +1,30 @@
+-import { ArrowUpRight, Braces, Box, Cable, Layers3, Terminal } from 'lucide-react'
++import { ArrowUpRight, Braces, Box, Cable, Layers3, MonitorSmartphone } from 'lucide-react'
+ import { CommandBox } from '../components/CommandBox'
+ 
+ export function DocsPage() {
+   return (
+     <div className="docs-page page-width">
+-      <aside className="docs-nav"><p>GET STARTED</p><a href="#overview">Overview</a><a href="#install">Install packages</a><a href="#publish">Publish a package</a><a href="#contract">Compatibility contract</a><a href="#architecture">Architecture</a><p>RESOURCES</p><a href="https://github.com/acryldev">GitHub <ArrowUpRight aria-hidden="true" /></a><a href="https://agentcontextrelay.com/">ACR specification <ArrowUpRight aria-hidden="true" /></a></aside>
++      <aside className="docs-nav"><p>GET STARTED</p><a href="#overview">Overview</a><a href="#install">Start an app</a><a href="#publish">Publish a package</a><a href="#contract">Compatibility contract</a><a href="#architecture">Runtime layers</a><p>FRAMEWORK DOCS</p><a href="/docs">Acryl on the web <ArrowUpRight aria-hidden="true" /></a><a href="/blends">The Blend registry <ArrowUpRight aria-hidden="true" /></a><p>RESOURCES</p><a href="https://github.com/acryldev">GitHub <ArrowUpRight aria-hidden="true" /></a><a href="https://agentcontextrelay.com/">ACR specification <ArrowUpRight aria-hidden="true" /></a></aside>
+       <article className="docs-content">
+-        <p className="eyebrow">Documentation · Early preview</p>
+-        <h1 id="overview">ACRYL developer platform</h1>
+-        <p className="docs-lede">ACRYL is an agent-agnostic desktop and lifecycle environment built as a clean plugin layer over DeepSeek Harness and Cordis.</p>
+-        <div className="docs-notice"><span>PREVIEW</span><p>The package portal provides live, source-aware discovery with a committed static fallback. Desktop deep links, compatibility scans, ACRYL verification badges, and an ACRYL-owned public API are planned.</p></div>
+-        <h2 id="install">Install a standard DSH package</h2>
+-        <p>ACRYL does not translate a DSH package into another format. Standard DSH bundles use the original package mechanism and enter the Cordis Loader composition directly.</p>
+-        <CommandBox command="dsh plugin --profile desktop add <package-or-git-url>" />
+-        <div className="docs-cards"><div><Terminal aria-hidden="true" /><strong>Upstream CLI</strong><p>Preserved as the exact compatibility interface.</p></div><div><Box aria-hidden="true" /><strong>ACRYL package UX</strong><p>A unified discovery and install layer above ecosystem-specific installers.</p></div></div>
+-        <h2 id="publish">Publish an ACRYL package</h2>
++        <p className="eyebrow">Documentation</p>
++        <h1 id="overview">The ACRYL platform</h1>
++        <p className="docs-lede">ACRYL is a Cordis plugin platform. Its web framework is Acryl: the router, the Node server, the data ports and live state, each one a Cordis plugin behind a service name. An app is a folder of those plugins, and every capability - including the agent - can be swapped by changing a configuration row.</p>
++        <div className="docs-notice"><span>1.0</span><p>DeepSeek Harness is not the platform. It is one agent driver: the ACP driver runs any agent that speaks the Agent Client Protocol, and <code>dsh</code> is its first preset. An app that never starts an agent depends on neither.</p></div>
++        <h2 id="install">Start an app</h2>
++        <p>A new app is six templates on the same Cordis shape - <code>blank</code>, <code>nodejs</code>, <code>notes</code>, <code>chat</code>, <code>todo</code> and <code>agent</code> - with the framework docs, an <code>AGENTS.md</code> and a test inside it.</p>
++        <CommandBox command="npm create acrylblends@latest my-app notes" label="Create an app from a template" />
++        <p>A plugin joins an existing app as a folder in its one <code>plugins/</code> directory, so you own the code and can edit it.</p>
++        <CommandBox command="npx acrylblends add desktop --dir ./my-app" label="Add a plugin to an app" />
++        <div className="docs-cards"><div><Box aria-hidden="true" /><strong>One folder</strong><p>Every plugin of an app lives in <code>plugins/</code>, whether the library copied it or you wrote it.</p></div><div><Braces aria-hidden="true" /><strong>One manifest</strong><p><code>blend.yaml</code> names the plugins, their order and their config; switch one off without touching code.</p></div></div>
++        <h2 id="publish">Publish a package</h2>
+         <p>Publish an ordinary public npm package with the exact <code>acryl-package</code> keyword. The package catalog refreshes automatically - no ACRYL catalog pull request or repository access is required.</p>
+         <CommandBox command={'npm publish --access public --provenance'} label="Publish to npm" />
+         <div className="docs-notice"><span>MANIFEST</span><p>Add an <code>acryl</code> manifest with <code>schemaVersion: 1</code> and package-contained artifact paths. Discovery is deliberately permissive; compatibility and trust are shown as distinct evidence, never inferred from a listing.</p></div>
+         <p><a className="text-link" href="https://github.com/acryldev/acryldev.github.io/blob/main/docs/packages/publishing.md" target="_blank" rel="noreferrer">Read the package publishing guide <ArrowUpRight aria-hidden="true" /></a></p>
+         <h2 id="contract">ACRYL compatibility contract</h2>
+-        <ol className="contract-list"><li><span>01</span><p>Standard Cordis plugins run through the real Cordis runtime.</p></li><li><span>02</span><p>Standard DSH bundles install through official DSH package semantics.</p></li><li><span>03</span><p>DSH Web client plugins run through the embedded Harness client surface.</p></li><li><span>04</span><p>Existing Desktop and DSH service names remain compatible.</p></li><li><span>05</span><p>ACRYL capabilities are additive and optional.</p></li></ol>
++        <ol className="contract-list"><li><span>01</span><p>Standard Cordis plugins run through the real Cordis runtime.</p></li><li><span>02</span><p>An app is a folder of Cordis plugins mounted from <code>blend.yaml</code>; nothing is hidden behind a framework-shaped wrapper.</p></li><li><span>03</span><p>A dependency is a service name, never a provider: swapping SQLite for Postgres, or the web for a desktop window, is one configuration row.</p></li><li><span>04</span><p>The 1.0 public surface of <code>acrylblends</code> is written down and versioned, and an app moves forward with <code>acrylblends upgrade</code>.</p></li><li><span>05</span><p>ACRYL capabilities are additive and optional: an app that uses none of them is still an Acryl app.</p></li></ol>
+         <h2 id="architecture">Runtime layers</h2>
+-        <div className="docs-stack"><div><Cable aria-hidden="true" /><span><strong>ACRYL</strong>Persistent context, relay, agent control, Blueprints, StemCells</span></div><div><Braces aria-hidden="true" /><span><strong>DeepSeek Harness</strong>Sessions, agents, profiles, tools, package semantics</span></div><div><Layers3 aria-hidden="true" /><span><strong>Cordis</strong>Services, Fibers, injection, effects, Loader reconciliation</span></div></div>
++        <div className="docs-stack"><div><MonitorSmartphone aria-hidden="true" /><span><strong>ACRYL</strong>The product built on the platform: web, desktop and terminal surfaces, the agent panel, the door</span></div><div><Cable aria-hidden="true" /><span><strong>Acryl</strong>The web framework: router, Node server, <code>db</code> and <code>kv</code> ports, live state, JSX</span></div><div><Layers3 aria-hidden="true" /><span><strong>Cordis</strong>Services, Fibers, injection, effects, Loader reconciliation</span></div></div>
+       </article>
+     </div>
+   )
+-- 
+2.50.1 (Apple Git-155)
+

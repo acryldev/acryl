@@ -1,0 +1,50 @@
+/* Tab strip and panel, extracted from PluginsSettingsSection.module.css (deepseek-harness 5dda764ed3). */
+
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 22px;
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+  margin-top: 2px;
+}
+
+.tab {
+  position: relative;
+  border: 0;
+  padding: 7px 1px 9px;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.tab:hover,
+.tab[data-active='true'] {
+  color: var(--dsw-alias-label-primary);
+}
+
+.tab[data-active='true']::after,
+.tab:focus-visible::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--dsw-alias-label-primary);
+  content: '';
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.panel {
+  min-width: 0;
+  padding-top: 2px;
+}

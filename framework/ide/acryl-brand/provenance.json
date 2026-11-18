@@ -1,0 +1,13 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "plugins/acryl-brand"
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": ["index.js", "client.js", "lib/identity.js", "tests/host.test.mjs", "tests/identity.test.mjs", "README.md", "LICENSE"],
+  "changes": {
+    "package.json": "repository, homepage and bugs point at this repository"
+  },
+  "notes": "The original test suite runs unchanged (`node --test tests/*.test.mjs`). lib/identity.js is source in this package, so .gitignore keeps ide/acryl-brand/lib tracked while other ide/*/lib build output is ignored."
+}

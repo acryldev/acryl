@@ -1,0 +1,58 @@
+{
+  "name": "acryl-system-prompt",
+  "version": "0.1.0",
+  "description": "ACRYL's own shaping of the system prompt on top of the harness's sections: the app builder's identity, pi.dev-style tagged sections, no empty sections, and a drift record of what upstream contributes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acrylblends/acrylblends.git",
+    "directory": "ide/acryl-system-prompt"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./transform": {
+      "types": "./lib/types/transform.d.ts",
+      "default": "./lib/transform.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "~3.18.4"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^24.0.0",
+    "tsdown": "0.23.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

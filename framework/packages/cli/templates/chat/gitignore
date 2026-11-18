@@ -1,0 +1,9 @@
+node_modules/
+.acrylblends/
+.acryl/
+data/
+*.sqlite
+*.sqlite-*
+package-lock.json
+.env
+.env.*

@@ -1,0 +1,366 @@
+{
+  "batch": 6,
+  "range": "51-60",
+  "title": "ACRYL Blends — Application Blueprint Mockups",
+  "source_taxonomy": "ACRYL_BLENDS_100_Software_Categories_Formatted.md",
+  "delivery_notes": {
+    "mockups_are_implemented_apps": false,
+    "external_api_keys_required": false,
+    "seeded_data": true,
+    "prototype_only": true,
+    "responsive": true,
+    "standalone_html": true
+  },
+  "blueprints": [
+    {
+      "n": 51,
+      "category": "Simulation software",
+      "name": "Morrow Lab",
+      "tagline": "Explore system behavior through reproducible experiments.",
+      "purpose": "A compact simulation workbench for running seeded thermal-system experiments, adjusting assumptions, comparing response traces and preserving experiment snapshots.",
+      "audience": "Engineers, researchers, educators and product teams exploring simulation workflows.",
+      "ux": "Scientific workbench: dark instrument-panel visual language, parameter controls, live response charts and experiment archive.",
+      "screens": [
+        "Experiment setup and parameter controls",
+        "Thermal field / system state visualization",
+        "Response traces and run comparison",
+        "Experiment archive and saved snapshots"
+      ],
+      "flows": [
+        "Adjust ambient temperature, heater power, airflow and insulation values.",
+        "Run a deterministic local model and inspect peak temperature, settling time and energy estimate.",
+        "Compare response curves from two saved runs.",
+        "Save a named snapshot with the current parameter set."
+      ],
+      "model": "Experiment, ParameterSet, SimulationRun, MetricSeries, Snapshot. Each run stores input assumptions, computed summary metrics and a deterministic trace.",
+      "guard": "The numerical model is illustrative seed logic, not a validated engineering or safety model. Do not use for real design certification, physical control or safety-critical decisions. No external solver or hardware connection.",
+      "prompts": [
+        "Implement a deterministic simulation service that accepts a typed parameter set and returns metrics plus trace points.",
+        "Build a responsive chart workspace that overlays saved simulation runs and supports CSV export.",
+        "Add experiment persistence, versioned parameter sets and domain tests for model boundaries."
+      ],
+      "id": "blueprint-51",
+      "mockup": "mockups/simulation-morrow-lab.html",
+      "spec": "specs/51-simulation-morrow-lab.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 52,
+      "category": "Virtualization software",
+      "name": "Hyperplane",
+      "tagline": "Operate a virtual fleet from one clean control surface.",
+      "purpose": "A virtualization console prototype for selecting hosts, inspecting virtual machines, reading resource allocation and exercising safe local VM state transitions.",
+      "audience": "Infrastructure engineers, platform operators and internal IT teams.",
+      "ux": "Light hypervisor fleet console: host rail, VM inventory table, utilization summary and contextual provisioning actions.",
+      "screens": [
+        "Host overview and resource utilization",
+        "Virtual machine inventory with filters",
+        "VM detail and lifecycle actions",
+        "Provisioning form / snapshot summary"
+      ],
+      "flows": [
+        "Select a host and inspect its allocated CPU, memory and storage.",
+        "Search VMs by name, state or operating system.",
+        "Start, pause or snapshot a selected VM in local fixture state.",
+        "Create a sample VM through a small provisioning dialog."
+      ],
+      "model": "Host, VirtualMachine, ResourceAllocation, Image, Snapshot, LifecycleEvent.",
+      "guard": "All hosts and virtual machines are fictional local fixtures. Lifecycle actions update only browser state and never call a hypervisor, cloud provider or host API.",
+      "prompts": [
+        "Define a typed VM lifecycle state machine with guard conditions and domain tests.",
+        "Implement host capacity calculations and VM inventory filtering with seeded fixtures.",
+        "Create accessible provisioning and snapshot flows with optimistic UI state and rollback handling."
+      ],
+      "id": "blueprint-52",
+      "mockup": "mockups/virtualization-hyperplane.html",
+      "spec": "specs/52-virtualization-hyperplane.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 53,
+      "category": "Remote computing",
+      "name": "Remote Relay",
+      "tagline": "A focused workspace for remote sessions and terminal access.",
+      "purpose": "A remote-computing desktop prototype that organizes saved SSH-style profiles, simulated terminal sessions, file-transfer queues and connection audit history.",
+      "audience": "Developers, system administrators, support engineers and remote operations teams.",
+      "ux": "Dark remote operations console: connection sidebar, terminal session canvas, command palette and activity rail.",
+      "screens": [
+        "Connection profiles and session list",
+        "Terminal session workspace",
+        "Transfer queue with file metadata",
+        "Session audit history and connection detail"
+      ],
+      "flows": [
+        "Choose a seeded connection profile and open its simulated terminal.",
+        "Run allowlisted demo commands such as pwd, ls, uptime and whoami.",
+        "Add a mock file to the transfer queue and inspect its progress state.",
+        "Review prior session events and close a session."
+      ],
+      "model": "ConnectionProfile, RemoteSession, TerminalEntry, TransferJob, AuditEvent.",
+      "guard": "This prototype never opens network sockets, executes a shell, authenticates to a host or transfers files. The terminal uses canned outputs for allowlisted commands only.",
+      "prompts": [
+        "Implement a typed terminal simulator with an explicit command allowlist and deterministic fixture outputs.",
+        "Add session lifecycle, connection profile editing and searchable audit events.",
+        "Design a future remote transport adapter boundary without adding live transport in this prototype."
+      ],
+      "id": "blueprint-53",
+      "mockup": "mockups/remote-relay.html",
+      "spec": "specs/53-remote-relay.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 54,
+      "category": "Storage software",
+      "name": "Vaultline",
+      "tagline": "See pools, volumes, objects and recovery points in one fabric.",
+      "purpose": "A storage administration interface prototype for viewing pool health, managing volume and bucket metadata, browsing object samples and reviewing snapshots.",
+      "audience": "Storage administrators, platform engineers, backup operators and developers working with storage services.",
+      "ux": "Editorial storage fabric console: capacity-first pool cards, volume ledger, object browser and recovery-point timeline.",
+      "screens": [
+        "Storage pool capacity overview",
+        "Volumes and bucket inventory",
+        "Object browser and metadata detail",
+        "Snapshot and backup ledger"
+      ],
+      "flows": [
+        "Inspect pool capacity, allocation and health.",
+        "Create a local volume or object bucket with a name and capacity.",
+        "Browse seeded objects and inspect metadata.",
+        "Create a mock snapshot and review retention entries."
+      ],
+      "model": "StoragePool, Volume, Bucket, StoredObject, Snapshot, BackupPolicy, CapacityMetric.",
+      "guard": "No disk, filesystem, NAS, SAN, object-store or backup target is accessed. All operations modify only local mock data; capacity values are illustrative.",
+      "prompts": [
+        "Model pools, volumes, buckets and snapshots with typed constraints and testable capacity calculations.",
+        "Build an object browser with metadata filters, breadcrumb navigation and empty states.",
+        "Implement a retention timeline and snapshot actions against a local repository adapter."
+      ],
+      "id": "blueprint-54",
+      "mockup": "mockups/storage-vaultline.html",
+      "spec": "specs/54-storage-vaultline.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 55,
+      "category": "Distributed systems software",
+      "name": "Meshwatch",
+      "tagline": "Understand cluster topology, quorum and replica health.",
+      "purpose": "A distributed-systems observability prototype for exploring a seeded cluster topology, node health, leader identity, replica lag and a simulated failover drill.",
+      "audience": "Distributed-systems engineers, SREs, database operators and platform teams.",
+      "ux": "Dark topology map with selectable nodes, quorum indicators, replica state cards and an append-only consensus event log.",
+      "screens": [
+        "Cluster topology and node selection",
+        "Node detail, role and health telemetry",
+        "Consensus / replication event log",
+        "Failover drill and cluster summary"
+      ],
+      "flows": [
+        "Select a node to inspect role, region, health and replication lag.",
+        "Inspect the current leader and quorum membership.",
+        "Run a simulated failover drill and update the local leader marker.",
+        "Review the generated local event log and reset the fixture."
+      ],
+      "model": "Cluster, Node, NodeHealth, Replica, ConsensusTerm, ClusterEvent, FailoverDrill.",
+      "guard": "No distributed consensus, node election, database replication or infrastructure change occurs. The failover action is a visual state simulation only.",
+      "prompts": [
+        "Implement a deterministic cluster-state fixture and a failover reducer with invariant tests.",
+        "Build an accessible topology view with keyboard-selectable nodes and a synchronized detail panel.",
+        "Add event-log filtering and quorum / replica-health summary calculations."
+      ],
+      "id": "blueprint-55",
+      "mockup": "mockups/distributed-meshwatch.html",
+      "spec": "specs/55-distributed-meshwatch.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 56,
+      "category": "Messaging infrastructure",
+      "name": "Pulsebus",
+      "tagline": "Inspect event streams and consumer health.",
+      "purpose": "A message infrastructure control surface for browsing topics, consumer groups, message payloads, delivery states and publishing synthetic test events.",
+      "audience": "Backend engineers, integration teams, platform operators and event-driven architects.",
+      "ux": "Three-column event bus explorer: topic navigation, live-style message stream and JSON payload inspector/publisher.",
+      "screens": [
+        "Topic and consumer-group explorer",
+        "Message stream with delivery / retry state",
+        "Payload and schema inspector",
+        "Synthetic publish and replay controls"
+      ],
+      "flows": [
+        "Select a topic and inspect its message stream.",
+        "Select a message to inspect headers, schema version and JSON payload.",
+        "Validate and publish a synthetic JSON event to the local stream.",
+        "Replay a selected sample or inspect the dead-letter queue."
+      ],
+      "model": "Topic, ConsumerGroup, Message, MessageHeader, SchemaVersion, DeliveryAttempt, DeadLetterEntry.",
+      "guard": "All events and acknowledgments are local seed data. Publish and replay actions do not connect to Kafka, RabbitMQ, NATS, Pulsar or any live broker.",
+      "prompts": [
+        "Implement message/topic domain types and an in-memory event repository with publish and replay methods.",
+        "Add schema validation, payload inspection and consumer-lag calculations with unit tests.",
+        "Create topic filtering, consumer group detail and dead-letter queue review flows."
+      ],
+      "id": "blueprint-56",
+      "mockup": "mockups/messaging-pulsebus.html",
+      "spec": "specs/56-messaging-pulsebus.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 57,
+      "category": "Middleware",
+      "name": "Gatehouse",
+      "tagline": "Shape requests as they pass through your middleware stack.",
+      "purpose": "An API gateway and middleware control-plane mockup for browsing routes, configuring policies, inspecting upstream services and reviewing request traces.",
+      "audience": "Backend platform engineers, API architects and integration teams.",
+      "ux": "Dark technical gateway console: route registry, central middleware pipeline visualization, trace ledger and route-policy inspector.",
+      "screens": [
+        "Route registry and upstream service list",
+        "Middleware pipeline per selected route",
+        "Request trace timeline",
+        "Route policy inspector and draft editor"
+      ],
+      "flows": [
+        "Select a route and inspect its ordered middleware pipeline.",
+        "Change the upstream target and timeout in a local policy draft.",
+        "Toggle auth, rate-limit, logging and cache layers.",
+        "Generate a local test trace and save the route policy draft."
+      ],
+      "model": "Route, UpstreamService, MiddlewareLayer, RoutePolicy, RequestTrace, PolicyDraft.",
+      "guard": "No traffic is proxied and no gateway, upstream service or identity provider is contacted. Test traces are synthetic and local only.",
+      "prompts": [
+        "Design a typed route-policy model with ordered middleware layers and policy validation tests.",
+        "Build a request trace viewer that correlates route, middleware timing and upstream result fixtures.",
+        "Implement route editing and draft persistence behind an adapter interface without live gateway integration."
+      ],
+      "id": "blueprint-57",
+      "mockup": "mockups/middleware-gatehouse.html",
+      "spec": "specs/57-middleware-gatehouse.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 58,
+      "category": "Runtime software",
+      "name": "Runlevel",
+      "tagline": "Manage process health and runtime compatibility.",
+      "purpose": "A runtime operations console for reviewing hosts and managed processes, comparing language-runtime compatibility, simulating restarts and inspecting rollout history.",
+      "audience": "Platform engineers, SREs, runtime maintainers and application operations teams.",
+      "ux": "Warm editorial operations desk: host selector, process table, runtime compatibility matrix and rollout history tabs.",
+      "screens": [
+        "Runtime host selector and host metrics",
+        "Managed process inventory and lifecycle controls",
+        "Runtime compatibility matrix",
+        "Rollout history and deployment preparation"
+      ],
+      "flows": [
+        "Select a host and inspect CPU, memory and managed processes.",
+        "Inspect a process runtime and version.",
+        "Request a simulated restart and view local confirmation.",
+        "Compare current and target runtime versions and prepare a rollout draft."
+      ],
+      "model": "RuntimeHost, RuntimeFamily, RuntimeVersion, ManagedProcess, CompatibilityRule, Rollout, LifecycleEvent.",
+      "guard": "No process is restarted, deployed or upgraded. Host data and compatibility statuses are seeded illustrations, not authoritative runtime compatibility advice.",
+      "prompts": [
+        "Create a runtime compatibility domain model and fixture-driven compatibility matrix.",
+        "Implement host selection, process filtering and a simulated process lifecycle reducer.",
+        "Add rollout drafts with version comparison, review steps and tests for compatibility warnings."
+      ],
+      "id": "blueprint-58",
+      "mockup": "mockups/runtime-runlevel.html",
+      "spec": "specs/58-runtime-runlevel.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 59,
+      "category": "Libraries and frameworks",
+      "name": "The Foundry",
+      "tagline": "Discover the components that make up a software stack.",
+      "purpose": "A curated software-library catalogue for searching libraries and frameworks, inspecting metadata, comparing versions and assembling an illustrative stack manifest.",
+      "audience": "Developers, architects, technical leads and engineering enablement teams.",
+      "ux": "Editorial package atlas: category filters, two-column package cards and a persistent package detail / install-command panel.",
+      "screens": [
+        "Package category and keyword explorer",
+        "Package card catalogue and search",
+        "Selected package metadata and version history",
+        "Local stack comparison / manifest preview"
+      ],
+      "flows": [
+        "Filter and search packages by name, family or language.",
+        "Select a package and inspect its summary, version and example install command.",
+        "Copy the illustrative install command.",
+        "Add packages to a local stack comparison."
+      ],
+      "model": "Package, PackageVersion, PackageCategory, LanguageTag, RuntimeTarget, StackManifest, StackEntry.",
+      "guard": "Catalogue entries and version numbers are example seed data. No registry metadata is fetched and no package is installed or resolved.",
+      "prompts": [
+        "Define package, version, category and runtime-target schema with seed data and search tests.",
+        "Implement a multi-select stack composer and a serializable manifest preview.",
+        "Add package version comparison and accessibility improvements to category filters."
+      ],
+      "id": "blueprint-59",
+      "mockup": "mockups/libraries-foundry.html",
+      "spec": "specs/59-libraries-foundry.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    },
+    {
+      "n": 60,
+      "category": "API / SDK software",
+      "name": "Orbit API Console",
+      "tagline": "Explore an API and shape your first SDK request.",
+      "purpose": "A developer portal prototype with endpoint navigation, parameter editing, local request fixtures, schema examples and JavaScript / Python / Go code snippets.",
+      "audience": "API consumers, SDK developers, integration engineers and platform documentation teams.",
+      "ux": "Developer reference layout: endpoint navigation, central request builder with docs tabs and right-side response inspector.",
+      "screens": [
+        "API endpoint explorer",
+        "Try-it request builder and parameter editor",
+        "Schema and examples documentation",
+        "Response inspector and language-specific SDK snippets"
+      ],
+      "flows": [
+        "Choose an endpoint and inspect method, path and description.",
+        "Edit query parameters or a POST request body.",
+        "Send a local fixture request and inspect the response JSON.",
+        "Switch between JavaScript, Python and Go snippets."
+      ],
+      "model": "ApiService, Endpoint, Parameter, RequestSchema, ResponseFixture, CodeSample, ApiVersion.",
+      "guard": "The console does not contact an external API. API base URL and responses are illustrative fixtures; secrets are nonfunctional placeholders.",
+      "prompts": [
+        "Define endpoint, parameter and schema metadata for a small versioned API reference.",
+        "Implement a fixture-backed try-it request engine with GET and POST validation tests.",
+        "Generate idiomatic JavaScript, Python and Go examples from endpoint metadata."
+      ],
+      "id": "blueprint-60",
+      "mockup": "mockups/api-orbit-console.html",
+      "spec": "specs/60-api-orbit-console.md",
+      "seeded_data": true,
+      "requires_external_api_keys": false,
+      "prototype_only": true,
+      "responsive": true
+    }
+  ]
+}

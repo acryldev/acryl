@@ -1,0 +1,12 @@
+{
+  "name": "acryl-page",
+  "description": "The page of a framework-hosted app: our own minimal index (the ACRYL frame's document, not DSH's), its index taps applied per request, and the built client assets the client runtime boots from. Ours, served by acryl-web-server on the framework's node server.",
+  "requires": ["acryl-web-server"],
+  "inject": ["webServer"],
+  "provides": [],
+  "dependencies": {},
+  "mount": "mount it after acryl-web-server and the client rows: it serves '/' and '/assets/*' and applies the webServer index taps (the client modules' __DSH_BOOT__ and registration scripts) to its own document",
+  "entries": {
+    "": "src/index.ts"
+  }
+}

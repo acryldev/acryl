@@ -1,0 +1,42 @@
+{
+  "name": "acryl-web-server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "plugin.json"
+  ],
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "acryl-node-server": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-router": "workspace:*",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11",
+    "acryl-router-http": "workspace:*",
+    "ws": "8.21.3",
+    "@types/ws": "8.18.2"
+  }
+}

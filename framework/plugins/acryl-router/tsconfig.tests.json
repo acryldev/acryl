@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "declaration": false,
+    "declarationDir": null,
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
+  ],
+  "exclude": [
+    "tests/no-dom",
+    "src/core/jsx",
+    "src/core/helper/css"
+  ]
+}

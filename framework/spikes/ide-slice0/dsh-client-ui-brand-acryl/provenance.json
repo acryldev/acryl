@@ -1,0 +1,13 @@
+{
+  "ported from": {
+    "repository": "https://github.com/acryldev/acryl",
+    "path": "plugins/dsh-client-ui-brand-acryl",
+    "main at the time": "9073312d",
+    "last commit of the path": "aa0a182fd1e695ec61fb79b23438b055e6446c5a",
+    "license": "MIT, Copyright (c) 2026 WebBoxes s.r.o. (LICENSE)"
+  },
+  "modified": "none: src/ and tests/ are byte-identical to the original; the original suite (tests/client-acryl-brand.spec.ts, 5 tests) passes here",
+  "built here": "tsdown (this repository's) makes lib/client.js byte-identical to the one the original build makes (52,075 bytes); tsc makes lib/index.js. Neither is committed",
+  "not run here": "scripts/generate-acryl-brand-data.mjs: it needs sharp and ACRYL's logo PNGs; src/client/acryl-logo-data.ts is the generated file, kept as it is",
+  "dsh": "@deepseek-ai/dsh 0.2.0-rc.2 (the client contract it is built against: dsh-client-ui-slots, -renderer, -sidebar, -conversation)"
+}

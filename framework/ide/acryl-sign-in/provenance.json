@@ -1,0 +1,16 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "dbf6cf7d",
+    "directory": "plugins/acryl-sign-in"
+  },
+  "ported": "2026-10-30, slice 5 of docs/plans/ide-port.md",
+  "unchanged": "every file under src/, tests/, scripts/ and the build configs (tsconfig.json, tsconfig.client.json, tsconfig.tests.json, tsdown.config.ts, cordis.patch.yml) is byte-identical to the git archive of the source commit (3c7e855c); only package.json, vitest.config.ts, README.md (a port note above the original text) and this file differ",
+  "changes": {
+    "package.json": "repository, homepage and bugs point here; acrylblends is a peer dependency and the dev dependency, not a dependency (the app's one framework); build tool versions match this repository (tsdown 0.23.0, vitest 5.0.3, @types/node ^24); the workspace packages @acryl/ui, acryl-control and acryl-loopback-http stay this repository's",
+    "vitest.config.ts": "the ACRYL repository isolated HOME through scripts/testing/isolate-home.ts, which does not exist in this repository; the setupFiles entry is removed (the tests do not touch a home)",
+    "README.md": "a port note above the original text; the rest is unchanged"
+  },
+  "notes": "The original suite runs unchanged: 4 spec files (tests/client/sign-in-card.spec.tsx, tests/controller.spec.ts, tests/plugin.spec.ts, tests/route.spec.ts). The package's terminal-only account-callback entry is ported with it (it is part of the npm package); the frame mounts the main sign-in row, not the account-callback row. tests/security.spec.ts is this repository's own and is kept. The original suite now has 8 spec files (the four new ones: connect-choice, open-settings, skip-preview-notice, notice-shadowing).",
+  "reported": "2026-11-13, the first-run connect-a-model popup (Settings > Models inside the popup, More providers in Settings, Later), the replacement of DeepSeek's Preview Notice, the Settings opener, and the ChatGPT legacy-route fix that was made here first (3ba045be) and now lives in the source"
+}

@@ -1,0 +1,8 @@
+{
+  "name": "sandbox",
+  "description": "Run untrusted code (agent-written tools) in a child process under Node's permission model: read only its own folder, no child processes, no env, time and memory limits.",
+  "requires": [],
+  "inject": [],
+  "provides": ["sandbox"],
+  "dependencies": { "@deepseek-ai/cordis": "4.0.4" }
+}

@@ -1,0 +1,15 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "runtime/acryl-loopback-http"
+  },
+  "ported": "2026-10-30, slice 2 of docs/plans/ide-port.md",
+  "unchanged": "every file under src/, tests/ and the build configs (tsconfig.json, tsconfig.tests.json, tsdown.config.ts) is byte-identical to the git archive of the source commit",
+  "changes": {
+    "package.json": "repository points here, acrylblends is this repository's workspace package and the peer is the app's one framework, build tool versions match this repository",
+    "vitest.config.ts": "runs on this repository's vitest; the ACRYL repository's HOME isolation setup is not present here",
+    "README.md": "a port note above the original text; the rest is unchanged"
+  },
+  "notes": "Ported as the private-route support package of acryl-workspace, whose source imports its router entry unchanged; its two original suites run here."
+}

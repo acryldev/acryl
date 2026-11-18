@@ -1,0 +1,14 @@
+.track {
+  position: relative;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--dsw-alias-bg-layer-2);
+}
+.fill {
+  height: 100%;
+  width: 100%;
+  background: var(--acryl-accent);
+  transition: transform 0.2s;
+}

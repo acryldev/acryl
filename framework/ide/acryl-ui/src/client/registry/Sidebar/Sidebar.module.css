@@ -1,0 +1,64 @@
+/* The wrapper holds the rail and the inset side by side; the module carries the width variables upstream sets inline, so a caller can still override them. */
+.wrapper { --sidebar-width: 16rem; --sidebar-width-icon: 3rem; box-sizing: border-box; display: flex; width: 100%; min-height: 0; }
+
+/* The rail is a flex item of the wrapper rather than a fixed overlay, so the inset is laid out beside it and the collapse is the only thing that moves. */
+.rail { box-sizing: border-box; position: relative; flex: 0 0 var(--sidebar-width); width: var(--sidebar-width); transition: flex-basis 200ms ease, width 200ms ease; }
+.rail[data-collapsible='icon'] { flex-basis: var(--sidebar-width-icon); width: var(--sidebar-width-icon); }
+/* The rail's box goes to nothing; the inner is made invisible rather than removed, because the grab strip lives inside it and a reader needs that strip most
+   when the rail has slid away. The inner keeps its width so its own content does not reflow mid-collapse, and it is clipped by its own overflow rather than
+   the rail's, which would take the strip with it. The strip then re-shows itself and stays anchored to the rail, which is the nearest positioned ancestor
+   because the inner is not positioned. */
+.rail[data-collapsible='offcanvas'] { flex-basis: 0; width: 0; }
+.rail[data-collapsible='offcanvas'] .inner { width: var(--sidebar-width); visibility: hidden; }
+.rail[data-side='right'] { order: 2; }
+.inner { box-sizing: border-box; display: flex; height: 100%; min-height: 0; overflow: hidden; flex-direction: column; border-inline-end: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-2); }
+.rail[data-side='right'] .inner { border-inline-end: 0; border-inline-start: 1px solid var(--dsw-alias-border-l4); }
+.rail[data-variant='floating'] .inner { margin: 8px; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l4); }
+.rail[data-variant='inset'] .inner { background: transparent; border: 0; }
+.railPlain { box-sizing: border-box; display: flex; height: 100%; flex-direction: column; background: var(--dsw-alias-bg-layer-2); }
+
+.content { box-sizing: border-box; display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 4px; overflow: auto; padding: 4px; }
+.header { box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+.footer { box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+.separator { margin: 4px 8px; height: 1px; background: var(--dsw-alias-border-l4); }
+
+.group { box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; padding: 4px 0; }
+.groupLabel { box-sizing: border-box; display: flex; height: 32px; align-items: center; gap: 8px; border-radius: 6px; padding: 0 8px; font-size: 12px; font-weight: 500; color: var(--dsw-alias-label-tertiary); }
+.groupAction { box-sizing: border-box; display: inline-flex; height: 20px; align-items: center; justify-content: center; border: 0; border-radius: 4px; background: transparent; padding: 0 4px; font: inherit; font-size: 12px; color: var(--dsw-alias-label-tertiary); cursor: pointer; outline: none; }
+.groupAction:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.groupContent { box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; }
+
+.menu { box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.menuItem { box-sizing: border-box; position: relative; display: flex; align-items: center; }
+.menuButton { box-sizing: border-box; display: flex; width: 100%; min-height: 32px; align-items: center; gap: 8px; overflow: hidden; border: 1px solid transparent; border-radius: 6px; background: transparent; padding: 6px 8px; font: inherit; font-size: 13px; color: var(--dsw-alias-label-primary); text-align: start; cursor: pointer; outline: none; }
+.menuButton:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.menuButton:focus-visible { outline: 1px solid var(--dsw-alias-border-l3); }
+.menuButton[data-active='true'] { background: var(--dsw-alias-interactive-bg-hover); font-weight: 500; }
+.menuButton[disabled] { pointer-events: none; opacity: 0.5; }
+.menuButton svg { flex-shrink: 0; width: 16px; height: 16px; }
+.menuButton > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Collapsed to icons: the label goes, the row centres on its icon - the same convention upstream's own markup relies on. */
+.rail[data-collapsible='icon'] .menuButton { justify-content: center; padding: 6px 4px; }
+.rail[data-collapsible='icon'] .menuButton > span:last-child { display: none; }
+.rail[data-collapsible='icon'] .groupLabel, .rail[data-collapsible='icon'] .menuBadge, .rail[data-collapsible='icon'] .menuAction { display: none; }
+
+.menuAction { box-sizing: border-box; position: absolute; inset-inline-end: 8px; display: inline-flex; height: 24px; align-items: center; border: 0; border-radius: 4px; background: transparent; padding: 0 4px; font: inherit; font-size: 12px; color: var(--dsw-alias-label-tertiary); cursor: pointer; outline: none; }
+.menuAction:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.menuBadge { box-sizing: border-box; position: absolute; inset-inline-end: 8px; display: inline-flex; height: 20px; align-items: center; border-radius: 4px; padding: 0 6px; font-size: 11px; color: var(--dsw-alias-label-tertiary); }
+
+.menuSub { box-sizing: border-box; display: flex; flex-direction: column; gap: 1px; margin: 4px 0 0; padding: 0; list-style: none; padding-inline-start: 24px; }
+.menuSubItem { box-sizing: border-box; display: flex; align-items: center; }
+.menuSubButton { box-sizing: border-box; display: flex; width: 100%; min-height: 28px; align-items: center; gap: 8px; overflow: hidden; border-radius: 6px; padding: 4px 8px; font-size: 13px; color: var(--dsw-alias-label-secondary); text-decoration: none; outline: none; }
+.menuSubButton:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.menuSubButton[data-active='true'] { color: var(--dsw-alias-label-primary); font-weight: 500; }
+
+.trigger { box-sizing: border-box; display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; outline: none; }
+.trigger:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.trigger:focus-visible { outline: 1px solid var(--dsw-alias-border-l3); }
+.icon { width: 16px; height: 16px; }
+
+/* The strip a reader grabs to bring a collapsed rail back. It is not focusable, because the trigger and the shortcut are the accessible ways to toggle. */
+.railHandle { position: absolute; inset-block: 0; inset-inline-end: -4px; z-index: 20; width: 8px; cursor: pointer; visibility: visible; }
+.railHandle:hover { background: var(--dsw-alias-border-l3); }
+
+.inset { box-sizing: border-box; display: flex; min-width: 0; flex: 1; flex-direction: column; background: var(--dsw-alias-bg-layer-1); }

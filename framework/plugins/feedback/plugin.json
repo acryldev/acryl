@@ -1,0 +1,11 @@
+{
+  "name": "feedback",
+  "description": "Feedback from the people who use the app: a Feedback button on every page, in production too, that lets them pinpoint the element they mean (or choose \"Nothing specific\") and send a note; the ACRYL frame shows the notes in the builder's left panel.",
+  "requires": ["acryl-router", "instance"],
+  "inject": ["router", "appInstance"],
+  "provides": ["feedback"],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4"
+  },
+  "mount": "add a row `- id: feedback` / `name: feedback` to blend.yaml BEFORE the `routes` row (its middleware adds one script tag to every HTML page the routes after it answer) and register it in src/app.ts: 'feedback': feedback"
+}

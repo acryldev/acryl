@@ -1,0 +1,302 @@
+name: CI
+
+# The framework's home (spec 049 slice 17). The jobs:
+#  - `check`: the whole gate (`pnpm run check`: lint, build, typecheck, every test, the scaffolder, the guide, the panel, the tarball) on Linux, Node 22, 24 and 26.
+#  - `packages`: the framework packages' own suites (the router, node server, state, inspect, db and kv providers, the door, the framework build) on Linux, macOS and Windows,
+#    Node 22, 24 and 26 (26 is what a fresh Homebrew install gives). The SQLite provider and the JSON-file store follow the operating system's file locking and rename rules, so one runner proves neither.
+#  - `frame`: the six-template framed page gate on Linux, macOS and Windows, in headless Chrome, with a local model mock and no secret.
+on:
+  push:
+    branches: [main, '[0-9][0-9][0-9]-*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: check (Linux, Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+    # The router's request-signal diagnostics (service plus handler halves) append to one file per run; the failure step below uploads it.
+    env:
+      ACRYL_ROUTER_TRACE: '1'
+    steps:
+      # The release tags: verify:legacy-layouts reads every published release's scaffold from its tag, so `upgrade` knows each app a release made.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      # Bun is experimental and has one smoke gate (verify:framework runs the Bun adapter on it); the check fails when it is missing here.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - name: the router abort trace (only when a test fails)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: router-trace-check-node${{ matrix.node }}
+          path: ${{ runner.temp }}/acryl-router-trace.log
+          if-no-files-found: ignore
+
+  packages:
+    name: packages (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [22, 24, 26]
+        # The hosted macOS queue cancels jobs it cannot dispatch within 15 minutes. Branch runs keep one macOS job (Node 24); the other two Node versions
+        # still cover macOS on main through packages-macos-nodes below, and Linux and Windows keep the full matrix on every push.
+        exclude:
+          - os: macos-latest
+            node: 22
+          - os: macos-latest
+            node: 26
+    # The router's request-signal diagnostics (service plus handler halves) append to one file per run; the failure step below uploads it.
+    env:
+      ACRYL_ROUTER_TRACE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      # Bun is experimental and has one smoke gate (verify:framework runs the Bun adapter on it); the check fails when it is missing here.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run verify:framework
+      - run: pnpm run typecheck
+      - run: pnpm run test:packages
+      - name: the router abort trace (only when a test fails)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: router-trace-${{ matrix.os }}-node${{ matrix.node }}
+          path: ${{ runner.temp }}/acryl-router-trace.log
+          if-no-files-found: ignore
+      # The real terminal (node-pty) on every OS, Windows included: a load failure fails here with its reason, it is not skipped.
+      - run: pnpm run test:driver-pty
+      # `npm create acrylblends my-app agent` from the packed tarballs on every OS: 1.0.4 and 1.0.5 failed on every Windows machine and nothing ran the command there.
+      - run: pnpm run verify:create
+
+  # The macOS halves of the packages matrix that branch runs skip (Node 22 and 26): macOS coverage per Node version still runs where it matters - main - without
+  # spending the small hosted macOS queue on feature branches. Same steps as packages, one job per Node version.
+  packages-macos-nodes:
+    if: github.ref == 'refs/heads/main'
+    name: packages (macos-latest, Node ${{ matrix.node }})
+    runs-on: macos-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 26]
+    env:
+      ACRYL_ROUTER_TRACE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run verify:framework
+      - run: pnpm run typecheck
+      - run: pnpm run test:packages
+      - name: the router abort trace (only when a test fails)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: router-trace-macos-latest-node${{ matrix.node }}
+          path: ${{ runner.temp }}/acryl-router-trace.log
+          if-no-files-found: ignore
+      - run: pnpm run test:driver-pty
+      - run: pnpm run verify:create
+
+  # The framed page gate for every template, on every OS a workshop attendee uses (the matrix ran by hand on our Linux and Windows hosts before this job existed;
+  # nothing else would catch a regression in the frame, its client modules or the templates). One job per template on each OS, so a failure names exactly one gate and
+  # a slow runner cannot consume another template's budget. Each job installs and builds for itself (about two minutes); the gate scaffolds through the CLI, installs
+  # the framework, DSH and the frame packages from npm (the file: specs point at this checkout's build), boots the app on our host and walks it in headless Chrome:
+  # the frame's panels, Settings, a real PTY, the app's page in the browser tile, and the chat against a local Anthropic-Messages mock. No secret is involved: the only
+  # key in play is the gate's own fake one, entered through the frame.
+  #
+  # One block per OS rather than one matrix crossing both axes: the hosted macOS queue cuts jobs it cannot dispatch after 15 minutes, so the macOS block alone takes
+  # `max-parallel: 2` and leaves room for the macOS packages job. Linux and Windows have no such limit.
+  frame-linux:
+    name: frame (ubuntu-latest, ${{ matrix.template }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [blank, agent, todo, notes, chat, nodejs]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The gate needs the CLI's dist and the ide packages' lib folders: the scaffolded apps take the frame packages as file: specs into this checkout.
+      - run: pnpm run build
+      # Chrome is installed on all three images (Google Chrome: /usr/bin on ubuntu, the app bundle on macOS, Program Files on Windows); scripts/lib/platform.mjs finds
+      # each, and CHROME_BIN overrides it. A runner without a browser fails the gate's tile step with that message rather than skipping it.
+      - name: frame gate (${{ matrix.template }})
+        run: node --import ./scripts/workspace-source.mjs scripts/verify-ide-template.mjs ${{ matrix.template }}
+      # The tile check's Chrome writes a net log to the runner's temp folder; when a gate fails, its failed request's error code (a reset, an empty
+      # response, an abort) decides between a transport race and a cancelled navigation instead of leaving it to inference.
+      - name: the tile's Chrome net log (only when a gate fails)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frame-netlog-ubuntu-latest-${{ matrix.template }}
+          path: |
+            ${{ runner.temp }}/acryl-frame-netlog-*.json
+            ${{ runner.temp }}/acryl-chrome-launch.log
+          if-no-files-found: ignore
+
+  frame-macos:
+    name: frame (macos-latest, ${{ matrix.template }})
+    runs-on: macos-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      # Two at a time: the hosted macOS queue cancels jobs it cannot dispatch within 15 minutes, and the macOS packages job needs a slot too.
+      max-parallel: 2
+      matrix:
+        template: [blank, agent, todo, notes, chat, nodejs]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The gate needs the CLI's dist and the ide packages' lib folders: the scaffolded apps take the frame packages as file: specs into this checkout.
+      - run: pnpm run build
+      # Chrome is installed on all three images (Google Chrome: /usr/bin on ubuntu, the app bundle on macOS, Program Files on Windows); scripts/lib/platform.mjs finds
+      # each, and CHROME_BIN overrides it. A runner without a browser fails the gate's tile step with that message rather than skipping it.
+      - name: frame gate (${{ matrix.template }})
+        run: node --import ./scripts/workspace-source.mjs scripts/verify-ide-template.mjs ${{ matrix.template }}
+      # The tile check's Chrome writes a net log to the runner's temp folder; when a gate fails, its failed request's error code (a reset, an empty
+      # response, an abort) decides between a transport race and a cancelled navigation instead of leaving it to inference.
+      - name: the tile's Chrome net log (only when a gate fails)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frame-netlog-macos-latest-${{ matrix.template }}
+          path: |
+            ${{ runner.temp }}/acryl-frame-netlog-*.json
+            ${{ runner.temp }}/acryl-chrome-launch.log
+          if-no-files-found: ignore
+
+  frame-windows:
+    name: frame (windows-latest, ${{ matrix.template }})
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        template: [blank, agent, todo, notes, chat, nodejs]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The gate needs the CLI's dist and the ide packages' lib folders: the scaffolded apps take the frame packages as file: specs into this checkout.
+      - run: pnpm run build
+      # Chrome is installed on all three images (Google Chrome: /usr/bin on ubuntu, the app bundle on macOS, Program Files on Windows); scripts/lib/platform.mjs finds
+      # each, and CHROME_BIN overrides it. A runner without a browser fails the gate's tile step with that message rather than skipping it.
+      - name: frame gate (${{ matrix.template }})
+        run: node --import ./scripts/workspace-source.mjs scripts/verify-ide-template.mjs ${{ matrix.template }}
+      # The tile check's Chrome writes a net log to the runner's temp folder; when a gate fails, its failed request's error code (a reset, an empty
+      # response, an abort) decides between a transport race and a cancelled navigation instead of leaving it to inference.
+      - name: the tile's Chrome net log (only when a gate fails)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frame-netlog-windows-latest-${{ matrix.template }}
+          path: |
+            ${{ runner.temp }}/acryl-frame-netlog-*.json
+            ${{ runner.temp }}/acryl-chrome-launch.log
+          if-no-files-found: ignore
+  # The desktop door in a real Electron (windows and menu as door verbs, a window attached to a dev server, the guards on Quit and the last window). Its own job, not in `check`:
+  # it downloads Electron and opens windows. Linux runs it under a virtual display; a failure here fails the build, it is not skipped.
+  # The desktop door in a real Electron (windows and menu as door verbs, a window attached to a dev server, the guards on Quit and the last window), and the
+  # frame in the desktop window (a frame app's window shows the left and right panels, Settings and the app's tile, starts and stops its own host, or attaches
+  # to npm run dev). Its own job, not in `check`: it downloads Electron and opens windows. Linux runs it under a virtual display; a failure here fails the
+  # build, it is not skipped.
+  desktop:
+    name: desktop (${{ matrix.os }}, Node 24)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Virtual display (Linux)
+        if: runner.os == 'Linux'
+        run: command -v xvfb-run >/dev/null || (sudo apt-get update && sudo apt-get install -y xvfb)
+      - name: verify:desktop (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm run verify:desktop
+        env:
+          DESKTOP_FRAME_SHOTS: ${{ runner.temp }}/desktop-frame
+      - name: verify:desktop
+        if: runner.os != 'Linux'
+        run: pnpm run verify:desktop
+        env:
+          DESKTOP_FRAME_SHOTS: ${{ runner.temp }}/desktop-frame
+      # What the frame looked like in the desktop window on each OS, kept whether the gate passed or not.
+      - name: the desktop frame screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-frame-${{ matrix.os }}
+          path: ${{ runner.temp }}/desktop-frame/*.png
+          if-no-files-found: ignore
+

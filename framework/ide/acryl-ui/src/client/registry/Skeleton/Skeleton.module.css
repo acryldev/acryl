@@ -1,0 +1,9 @@
+.skeleton {
+  border-radius: 6px;
+  background: var(--dsw-alias-bg-layer-2);
+  animation: acryl-ui-skeleton-pulse 2s ease-in-out infinite;
+}
+@keyframes acryl-ui-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

@@ -1,0 +1,15 @@
+.textarea {
+  display: flex;
+  width: 100%;
+  min-height: 64px;
+  border-radius: 8px;
+  border: 1px solid var(--dsw-alias-border-l4);
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--dsw-alias-label-primary);
+}
+.textarea::placeholder { color: var(--dsw-alias-label-tertiary); }
+.textarea:focus-visible { outline: 2px solid var(--acryl-accent); outline-offset: 1px; }
+.textarea:disabled { cursor: not-allowed; opacity: 0.5; }

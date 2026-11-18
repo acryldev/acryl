@@ -1,0 +1,36 @@
+[
+  {
+    "id": "route-page-basic",
+    "steps": [
+      { "mount": "route-page-basic", "expect": "active" },
+      { "request": { "path": "/hello" }, "status": 200, "contains": "<h1>Hello</h1>" },
+      { "request": { "path": "/hello/greeting" }, "status": 200, "json": { "text": "Hello from a plugin" } },
+      { "dispose": "route-page-basic" },
+      { "request": { "path": "/hello" }, "status": 404 }
+    ]
+  },
+  {
+    "id": "home-widget-basic",
+    "steps": [
+      { "mount": "home-widget-basic", "expect": "active" },
+      { "home": { "contains": ["data-widget=\"home-widget-basic\"", "<output id=\"home-widget-basic-count\">0</output>"] } },
+      { "request": { "method": "POST", "path": "/home-widget-basic/count" }, "status": 200, "json": { "count": 1 } },
+      { "home": { "contains": ["<output id=\"home-widget-basic-count\">1</output>"] } },
+      { "dispose": "home-widget-basic" },
+      { "home": { "absent": ["data-widget=\"home-widget-basic\""] } }
+    ]
+  },
+  {
+    "id": "state-json-file",
+    "steps": [
+      { "mount": "state-json-file", "expect": "active" },
+      { "request": { "method": "POST", "path": "/state-json-file/items", "json": { "title": "<b>Docs</b>", "url": "https://acryl.dev" } }, "status": 201 },
+      { "request": { "method": "POST", "path": "/state-json-file/items", "json": { "title": "no url" } }, "status": 400 },
+      { "home": { "contains": ["data-widget=\"state-json-file\"", "&lt;b&gt;Docs&lt;/b&gt;"], "absent": ["<b>Docs</b>"] } },
+      { "remount": "state-json-file", "expect": "active" },
+      { "request": { "path": "/state-json-file/items" }, "status": 200, "length": 1 },
+      { "dispose": "state-json-file" },
+      { "home": { "absent": ["data-widget=\"state-json-file\""] } }
+    ]
+  }
+]

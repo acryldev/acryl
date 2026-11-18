@@ -1,0 +1,49 @@
+  from .acryl/bin/acryl brief). Say DONE
+  when it works, and in that last message
+  list each door command you ran and what it
+  showed.
+  Ran 5 shell commands
+⏺ DONE. GET /greet now answers {"text":"hello
+  from claude"} on the running app. I didn't
+  add a test or run npm test / npm run
+  check.
+  The plugin is plugins/greet/index.ts. It
+  exports name = 'greet' and inject =
+  ['router']. Its apply mounts a small Acryl
+  app at /greet with ctx.router.route. I
+  didn't start, stop or restart the app.
+
+  Door commands I ran:
+
+  - .acryl/bin/acryl brief: it gave the app
+    summary and verbs. It said Page: open and
+    Live plugins: available. It did not show
+    the app's address.
+  - .acryl/bin/acryl plugin add
+    plugins/greet: exit 0, with "ok": true,
+    "name": "greet", "action": "installed",
+    "state": "active", "missing": [],
+    "version": "78b8531e4ef2".
+  - .acryl/bin/acryl plugin list: it listed
+    greet with "state": "active", "missing":
+    [] and "stale": false. Before the add,
+    the same command returned [].
+  - .acryl/bin/acryl brief --json: it still
+    had no address, so I got the address from
+    .acryl/door.json (the door's state
+    file), which said http://127.0.0.1:3188.
+  Check with curl on that address: curl -si
+  http://127.0.0.1:3188/greet returned
+  HTTP/1.1 200 OK, content-type:
+  application/json and the body
+  {"text":"hello from claude"}.
+⏺ Ran 4 stop hooks
+  ⎿  Stop hook error: Failed with
+  non-blocking status code: /bin/sh:
+  agent-deck: command not found
+✻ Baked for 36s · done 11:02 PM
+
+─────────────────────────────────────────────
+❯ 
+─────────────────────────────────────────────
+  ⏵⏵ accept edits on (shift+tab to cycle)

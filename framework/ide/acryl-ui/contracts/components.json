@@ -1,0 +1,1789 @@
+{
+  "schemaVersion": 1,
+  "library": "@acryl/ui",
+  "surfaces": [
+    "web",
+    "desktop",
+    "tui"
+  ],
+  "components": {
+    "Stack": {
+      "summary": "Lays children out in a row or a column with a theme-consistent gap.",
+      "props": {
+        "direction": {
+          "type": "'column' | 'row'",
+          "default": "'column'"
+        },
+        "gap": {
+          "type": "'xs' | 'sm' | 'md' | 'lg'",
+          "default": "'md'"
+        },
+        "align": {
+          "type": "'start' | 'center' | 'end' | 'stretch'",
+          "default": "'stretch'"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "no role: it is layout only"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "Card": {
+      "summary": "A bordered surface with an optional title, body and footer actions.",
+      "props": {
+        "title": {
+          "type": "string"
+        },
+        "footer": {
+          "type": "ReactNode",
+          "description": "actions, right-aligned"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "role=group, labelled by the title when there is one"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "Field": {
+      "summary": "A labelled text input with hint and error text.",
+      "props": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true,
+          "description": "receives the string, not the event"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string",
+          "description": "shown in place of the hint and announced"
+        },
+        "placeholder": {
+          "type": "string"
+        }
+      },
+      "a11y": [
+        "the label is associated with the input",
+        "the error is announced (role=alert) and referenced by aria-describedby"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "SwitchField": {
+      "summary": "A switch with a label and optional hint.",
+      "props": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "checked": {
+          "type": "boolean",
+          "required": true
+        },
+        "onChange": {
+          "type": "(checked: boolean) => void",
+          "required": true
+        },
+        "hint": {
+          "type": "string"
+        }
+      },
+      "a11y": [
+        "the label is the accessible name"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "EmptyState": {
+      "summary": "Centered message for a list or view with nothing in it yet.",
+      "props": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "action": {
+          "type": "ReactNode"
+        }
+      },
+      "a11y": [
+        "the title is a heading"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "SettingsRow": {
+      "summary": "A settings-style row: label and description on the left, one control on the right (the layout of the app's own Settings screens).",
+      "props": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "focused": {
+          "type": "boolean",
+          "description": "terminal only: marks the row that has the keyboard focus"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "the control passed as children keeps its own accessible name"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "SelectField": {
+      "summary": "A dropdown built on the app's own Menu: shows the selected option and opens the option list.",
+      "props": {
+        "options": {
+          "type": "Array<{ id: string, label: string, disabled?: boolean }>",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(id: string) => void",
+          "required": true
+        },
+        "placeholder": {
+          "type": "string",
+          "default": "'Select'"
+        },
+        "label": {
+          "type": "string",
+          "description": "accessible name of the trigger"
+        }
+      },
+      "a11y": [
+        "trigger has aria-haspopup and aria-expanded",
+        "Escape and outside click close it (Menu)"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "Segmented": {
+      "summary": "Tile group for a small set of exclusive choices: DSH's Appearance picker (Light, Dark, System), a full-width row.",
+      "props": {
+        "options": {
+          "type": "Array<{ id: string, label: string, icon?: ReactNode }>",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(id: string) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "description": "accessible name of the group"
+        },
+        "title": {
+          "type": "string",
+          "description": "visible title above the tiles (DSH shows one). The row is full width: do not put it inside a SettingsRow's right-hand control."
+        }
+      },
+      "a11y": [
+        "role=radiogroup with role=radio tiles and aria-checked",
+        "roving tabindex; arrow keys move the choice"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "Tabs": {
+      "summary": "Tab strip with the active panel as children.",
+      "props": {
+        "tabs": {
+          "type": "Array<{ id: string, label: string }>",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(id: string) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "children": true,
+      "a11y": [
+        "role=tablist, tab and tabpanel wired with aria-controls and aria-labelledby",
+        "roving tabindex; left and right arrows move the tab"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "Dialog": {
+      "summary": "A confirm dialog over the app's Modal, with cancel and confirm actions.",
+      "props": {
+        "open": {
+          "type": "boolean",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "onClose": {
+          "type": "() => void",
+          "required": true
+        },
+        "onConfirm": {
+          "type": "() => void",
+          "required": true
+        },
+        "confirmLabel": {
+          "type": "string",
+          "default": "'OK'"
+        },
+        "cancelLabel": {
+          "type": "string",
+          "default": "'Cancel'"
+        },
+        "danger": {
+          "type": "boolean",
+          "default": "false",
+          "description": "terminal only (paints the confirm action with the error role). On the web use the app's RiskConfirmation primitive for destructive confirmations: its Button has no danger variant."
+        }
+      },
+      "children": true,
+      "a11y": [
+        "focus handling and Escape come from the app's Modal"
+      ],
+      "surfaces": [
+        "web",
+        "tui"
+      ]
+    },
+    "SidebarRow": {
+      "summary": "The sidebar's New Session bar: icon and label when the sidebar is wide, a plain icon control with a tooltip on the rail (extracted from DSH's sidebar).",
+      "props": {
+        "icon": {
+          "type": "ReactNode",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true,
+          "description": "visible text when wide, tooltip and accessible name on the rail"
+        },
+        "wide": {
+          "type": "boolean",
+          "required": true
+        },
+        "onClick": {
+          "type": "() => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "aria-label carries the label in both forms"
+      ]
+    },
+    "ToolCallCard": {
+      "summary": "A collapsible tool-call row as in the conversation: leading icon or state dot, title, summary, expandable IN/OUT card (extracted from DSH's ToolRow).",
+      "props": {
+        "icon": {
+          "type": "ReactNode",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "summary": {
+          "type": "string",
+          "required": true
+        },
+        "state": {
+          "type": "'running' | 'ok' | 'error' | 'stopped'",
+          "required": true
+        },
+        "errorSummary": {
+          "type": "string",
+          "description": "replaces the summary on an error row"
+        },
+        "input": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "{ input, output, running, failed, stopped }",
+          "required": true,
+          "description": "copy; the run-state labels are visually hidden text"
+        }
+      },
+      "children": true,
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "expandable rows are disclosure controls (Enter and Space toggle)",
+        "the run state is exposed as visually hidden text, not colour only"
+      ]
+    },
+    "StateDot": {
+      "summary": "A small coloured status dot (done, warning, ongoing, error, idle).",
+      "props": {
+        "state": {
+          "type": "'done' | 'warning' | 'ongoing' | 'error' | 'idle'",
+          "required": true
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "DisclosureRow": {
+      "summary": "A collapsible row: leading icon, title, optional collapsed summary, expand on click or chevron.",
+      "props": {
+        "icon": {
+          "type": "ReactNode"
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "open": {
+          "type": "boolean",
+          "required": true
+        },
+        "expandable": {
+          "type": "boolean",
+          "required": true
+        },
+        "onToggle": {
+          "type": "() => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Menu": {
+      "summary": "A positioned menu of items, separators and labels (built by SelectField).",
+      "props": {
+        "entries": {
+          "type": "MenuEntry[]",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Switch": {
+      "summary": "A toggle switch with an accessible name only; pair it with a visible label (see SwitchField).",
+      "props": {
+        "checked": {
+          "type": "boolean",
+          "required": true
+        },
+        "onChange": {
+          "type": "(checked: boolean) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Input": {
+      "summary": "A plain text input (used by Field for its label, hint and error wiring).",
+      "props": {
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "HoverCard": {
+      "summary": "Content shown on hover/focus near a trigger.",
+      "props": {
+        "trigger": {
+          "type": "ReactNode",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "RiskConfirmation": {
+      "summary": "The app's own destructive-confirmation control (has a danger state Dialog does not; terminal parity note in Dialog).",
+      "props": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "onConfirm": {
+          "type": "() => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "ConnectionIndicator": {
+      "summary": "A connection-state dot (connecting, connected, error, and so on).",
+      "props": {
+        "state": {
+          "type": "ConnectionIndicatorState",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "JsonTree": {
+      "summary": "A collapsible tree view of a JSON value.",
+      "props": {
+        "value": {
+          "type": "unknown",
+          "required": true
+        },
+        "labels": {
+          "type": "JsonTreeLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "TerminalBlock": {
+      "summary": "A scrollback view for terminal tool output, capped and expandable.",
+      "props": {
+        "lines": {
+          "type": "string[]",
+          "required": true
+        },
+        "labels": {
+          "type": "TerminalBlockLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "ReadBlock": {
+      "summary": "A file-read tool card body: numbered lines with a max before truncation.",
+      "props": {
+        "lines": {
+          "type": "ReadBlockLine[]",
+          "required": true
+        },
+        "labels": {
+          "type": "ReadBlockLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "DiffBlock": {
+      "summary": "A unified diff view, capped and expandable, with add/remove totals.",
+      "props": {
+        "hunks": {
+          "type": "DiffHunk[]",
+          "required": true
+        },
+        "labels": {
+          "type": "DiffBlockLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "SearchBlock": {
+      "summary": "A search-tool result list, capped and expandable.",
+      "props": {
+        "labels": {
+          "type": "object"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "WebBlock": {
+      "summary": "A web-fetch tool result card.",
+      "props": {},
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "CodeBlock": {
+      "summary": "A syntax-highlighted code block used inside markdown.",
+      "props": {},
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "JsonBlock": {
+      "summary": "A formatted JSON block used inside markdown.",
+      "props": {},
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "MarkdownText": {
+      "summary": "Renders assistant/user markdown with the app's own extensions (file mentions, path images, code).",
+      "props": {
+        "labels": {
+          "type": "MarkdownLabels"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Kbd": {
+      "summary": "One keyboard key or shortcut segment (ported from shadcn/ui's Kbd). Group several with this library's Stack.",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "ReferenceIconMedium": {
+      "summary": "The glyph for one inline reference domain (file, web, terminal, and so on), medium weight.",
+      "props": {
+        "kind": {
+          "type": "ReferenceIconKind",
+          "required": true
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "ReferenceIconRegular": {
+      "summary": "The glyph for one inline reference domain (file, web, terminal, and so on), regular weight.",
+      "props": {
+        "kind": {
+          "type": "ReferenceIconKind",
+          "required": true
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "LinkIconMedium": {
+      "summary": "The glyph for a file-type or web link, chosen from a path extension, medium weight.",
+      "props": {
+        "kind": {
+          "type": "LinkIconKind",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "LinkIconRegular": {
+      "summary": "The glyph for a file-type or web link, chosen from a path extension, regular weight.",
+      "props": {
+        "kind": {
+          "type": "LinkIconKind",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "FileTypeIcon": {
+      "summary": "The glyph for a file, chosen from its classified file type.",
+      "props": {
+        "kind": {
+          "type": "FileTypeKind",
+          "required": true
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "reexport": true
+    },
+    "Badge": {
+      "summary": "A small status/count pill (ported from shadcn/ui's Badge).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "variant": {
+          "type": "'default' | 'primary' | 'success' | 'warning' | 'error'"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Skeleton": {
+      "summary": "A pulsing placeholder shape for loading content (ported from shadcn/ui's Skeleton).",
+      "props": {
+        "className": {
+          "type": "string"
+        },
+        "style": {
+          "type": "{ width?, height? }"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Spinner": {
+      "summary": "A rotating loading indicator (ported from shadcn/ui's Spinner; no lucide-react dependency).",
+      "props": {
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Alert": {
+      "summary": "A titled message box with an optional icon (ported from shadcn/ui's Alert).",
+      "props": {
+        "icon": {
+          "type": "ReactNode"
+        },
+        "title": {
+          "type": "ReactNode"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "variant": {
+          "type": "'default' | 'error'"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=alert"
+      ]
+    },
+    "Separator": {
+      "summary": "A thin dividing line, horizontal or vertical (ported from shadcn/ui's Separator; no Radix dependency).",
+      "props": {
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "decorative": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Progress": {
+      "summary": "A determinate progress bar, 0 to 100 (ported from shadcn/ui's Progress; no Radix dependency).",
+      "props": {
+        "value": {
+          "type": "number",
+          "required": true
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=progressbar with aria-valuenow/min/max"
+      ]
+    },
+    "Avatar": {
+      "summary": "An image avatar with a fallback shown when there is no image or it fails to load (ported from shadcn/ui's Avatar; no Radix dependency).",
+      "props": {
+        "src": {
+          "type": "string"
+        },
+        "alt": {
+          "type": "string"
+        },
+        "fallback": {
+          "type": "ReactNode",
+          "required": true
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "ValueField": {
+      "summary": "A settings-style field bound to a text value, with an override badge and reset action.",
+      "props": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "hint": {
+          "type": "string",
+          "required": true
+        },
+        "numeric": {
+          "type": "boolean"
+        },
+        "placeholder": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "SecretField": {
+      "summary": "A settings-style field for a credential reference: shows whether it is configured, edits without ever displaying the secret.",
+      "props": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "hint": {
+          "type": "string",
+          "required": true
+        },
+        "configured": {
+          "type": "boolean",
+          "required": true
+        },
+        "stateLabel": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "SelectPill": {
+      "summary": "A pill-shaped dropdown selector built on the app's own Menu.",
+      "props": {
+        "options": {
+          "type": "SelectOption[]",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "AppearanceCubes": {
+      "summary": "A row of icon-and-label tiles for a small exclusive choice (Light/Dark/System), pressed state on the selected one.",
+      "props": {
+        "title": {
+          "type": "string"
+        },
+        "options": {
+          "type": "CubeOption[]",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Label": {
+      "summary": "A form label (ported from shadcn/ui's Label; no Radix dependency).",
+      "props": {
+        "htmlFor": {
+          "type": "string"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Textarea": {
+      "summary": "A multi-line text input (ported from shadcn/ui's Textarea).",
+      "props": {
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "rows": {
+          "type": "number"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Checkbox": {
+      "summary": "A checkbox with its accessible label (ported from shadcn/ui's Checkbox; a native input, no Radix dependency).",
+      "props": {
+        "checked": {
+          "type": "boolean",
+          "required": true
+        },
+        "onChange": {
+          "type": "(checked: boolean) => void",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "disabled": {
+          "type": "boolean"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "AspectRatio": {
+      "summary": "A box held to a fixed width:height ratio (ported from shadcn/ui's AspectRatio; pure CSS, no Radix dependency).",
+      "props": {
+        "ratio": {
+          "type": "number",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Breadcrumb": {
+      "summary": "A breadcrumb trail: list, item, link, current page, separator and an ellipsis for a collapsed middle (ported from shadcn/ui's Breadcrumb).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "nav aria-label=breadcrumb; the current page is aria-current=page"
+      ]
+    },
+    "Toggle": {
+      "summary": "A two-state pressed button (ported from shadcn/ui's Toggle; a native aria-pressed button, no Radix dependency).",
+      "props": {
+        "pressed": {
+          "type": "boolean",
+          "required": true
+        },
+        "onPressedChange": {
+          "type": "(pressed: boolean) => void",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "variant": {
+          "type": "'default' | 'outline'"
+        },
+        "size": {
+          "type": "'sm' | 'default' | 'lg'"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "ButtonGroup": {
+      "summary": "A row (or column) of controls with merged corners (ported from shadcn/ui's ButtonGroup).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Accordion": {
+      "summary": "One or more collapsible items sharing an open/close model, single or multiple open (ported from shadcn/ui's Accordion; plain state, no Radix dependency).",
+      "props": {
+        "type": {
+          "type": "'single' | 'multiple'",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "RadioGroup": {
+      "summary": "A classic radio-dot list for a set of mutually exclusive plain-text options (ported from shadcn/ui's RadioGroup; a native input[type=radio] group, no Radix dependency). Distinct from AppearanceCubes/Segmented (icon-and-label tiles).",
+      "props": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "options": {
+          "type": "RadioOption[]",
+          "required": true
+        },
+        "value": {
+          "type": "string",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string) => void",
+          "required": true
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Collapsible": {
+      "summary": "The bare collapsible primitive (trigger + content, no chrome) - ported from shadcn/ui's Collapsible. Distinct from DisclosureRow, which is a fully-chromed row (icon, title, chevron).",
+      "props": {
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "ToggleGroup": {
+      "summary": "A row of toggle buttons sharing one single- or multiple-selection model (ported from shadcn/ui's ToggleGroup; plain state, no Radix dependency).",
+      "props": {
+        "type": {
+          "type": "'single' | 'multiple'",
+          "required": true
+        },
+        "value": {
+          "type": "string | string[]",
+          "required": true
+        },
+        "onChange": {
+          "type": "(value: string | string[]) => void",
+          "required": true
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ]
+    },
+    "Table": {
+      "summary": "A data table: header, body, footer, row, head, cell and caption, each in its own horizontal scroll container (ported from shadcn/ui's Table; no Radix primitive involved).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "native table semantics; the scroll container keeps a wide table from widening the page instead of clipping it"
+      ]
+    },
+    "DirectionProvider": {
+      "summary": "A text-direction provider for descendants, with the source's dir prop and direction alias, and a useDirection hook (ported from shadcn/ui's Direction; a plain context instead of Radix).",
+      "props": {
+        "dir": {
+          "type": "'ltr' | 'rtl'"
+        },
+        "direction": {
+          "type": "'ltr' | 'rtl'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "consumers set dir on the subtree, which is what decides the browser's own bidi behavior"
+      ]
+    },
+    "Marker": {
+      "summary": "A muted label line between message groups: plain, ruled on both sides, or underlined at the bottom (ported from shadcn/ui's Marker).",
+      "props": {
+        "variant": {
+          "type": "'default' | 'separator' | 'border'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the icon part is aria-hidden, so a decorative glyph is never announced"
+      ]
+    },
+    "Message": {
+      "summary": "A message row around a Bubble: group, avatar, content, header and footer, with an end alignment for the reader's own turns (ported from shadcn/ui's Message).",
+      "props": {
+        "align": {
+          "type": "'start' | 'end'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": []
+    },
+    "Bubble": {
+      "summary": "A chat bubble with seven variants and a reaction pill, meant to sit inside this library's Message (ported from shadcn/ui's Bubble; no Radix, no cva).",
+      "props": {
+        "variant": {
+          "type": "'default' | 'secondary' | 'muted' | 'tinted' | 'outline' | 'ghost' | 'destructive'"
+        },
+        "align": {
+          "type": "'start' | 'end'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "interactive content inside a bubble keeps its own focus ring (border plus a 3px shadow) rather than having its outline removed"
+      ]
+    },
+    "Pagination": {
+      "summary": "A pagination landmark: content, item, link, previous, next and an ellipsis, with the current page marked for assistive tech (ported from shadcn/ui's Pagination; the Button item's look is restated locally to stay self-contained).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "nav aria-label=pagination; the current page is aria-current=page; the ellipsis has a screen-reader-only label"
+      ]
+    },
+    "NativeSelect": {
+      "summary": "The platform's own <select>, styled to match the library's inputs, for a short static option list (ported from shadcn/ui's Native Select; not the same control as this library's SelectField, which opens a menu).",
+      "props": {
+        "size": {
+          "type": "'sm' | 'default'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "native select semantics, keyboard behavior and typeahead are kept; an invalid control is styleable through aria-invalid"
+      ]
+    },
+    "ScrollArea": {
+      "summary": "A scroll container that stays in its own box: the platform's styled scrollbars, and reaching an end does not scroll the page behind it (ported from shadcn/ui's Scroll Area; Radix's JavaScript scroller is dropped for the platform's own).",
+      "props": {
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        },
+        "style": {
+          "type": "CSSProperties"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the viewport is focusable, so a keyboard user can scroll it without a pointer, and its focus ring is visible"
+      ]
+    },
+    "InputOTP": {
+      "summary": "A one-time-code input: one real input over a row of slots, so typing, paste and arrow keys are the platform's behaviour (ported from shadcn/ui's Input OTP; the input-otp package is dropped for it).",
+      "props": {
+        "value": {
+          "type": "string"
+        },
+        "onChange": {
+          "type": "(value: string) => void"
+        },
+        "maxLength": {
+          "type": "number"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        },
+        "containerClassName": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the real input carries inputMode=numeric, autoComplete=one-time-code and the caller's label; the active slot shows a blinking caret in place of the one the platform would draw on an invisible field"
+      ]
+    },
+    "Item": {
+      "summary": "One row of a list: group, media, content, title, description, actions, header and footer (ported from shadcn/ui's Item; no Radix, no cva, and no cross-item Separator import).",
+      "props": {
+        "variant": {
+          "type": "'default' | 'outline' | 'muted'"
+        },
+        "size": {
+          "type": "'default' | 'sm'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the group is a list (role=list); the separator is decorative (role=none)"
+      ]
+    },
+    "Attachment": {
+      "summary": "A file chip for a composer: media, title, description, actions and a whole-chip trigger, with idle, uploading, processing, error and done states (ported from shadcn/ui's Attachment).",
+      "props": {
+        "state": {
+          "type": "'idle' | 'uploading' | 'processing' | 'error' | 'done'"
+        },
+        "size": {
+          "type": "'default' | 'sm' | 'xs'"
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the trigger and each action are real buttons with accessible names, the trigger covering the whole chip; the uploading and processing states are conveyed by the title shimmer and the state attribute, not by colour alone"
+      ]
+    },
+    "InputGroup": {
+      "summary": "One bordered field grouping an input or textarea with addons before, after, above or below it; the wrapper carries the focus ring and the error tint (ported from shadcn/ui's Input Group).",
+      "props": {
+        "disabled": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=group, with each addon its own group; clicking an addon focuses the control, so a prefix behaves like part of the field; an aria-invalid control tints the whole group rather than only itself"
+      ]
+    },
+    "FormField": {
+      "summary": "The layout around one field's parts - set, group, legend, label, title, content, description, separator and error - in vertical, horizontal or container-responsive orientation (ported from shadcn/ui's Field, renamed so it cannot collide with this library's own Field).",
+      "props": {
+        "orientation": {
+          "type": "'vertical' | 'horizontal' | 'responsive'"
+        },
+        "invalid": {
+          "type": "boolean"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=group on the field and role=alert on its error; FieldLabel is a real label element; a multi-message error renders as a list rather than one run-on line"
+      ]
+    },
+    "Popover": {
+      "summary": "A floating panel anchored to a trigger: the root owns open state, the trigger toggles it, and the content is positioned in viewport coordinates with Escape and outside-click closing (ported from shadcn/ui's Popover; Radix's primitive is replaced by hand, and the panel renders in place rather than through a portal).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the trigger carries aria-haspopup=dialog and aria-expanded; the panel is role=dialog with the caller's label and takes focus once it is positioned; Escape closes it and returns focus to the trigger; a press outside closes it and leaves focus where the user pressed"
+      ]
+    },
+    "Slider": {
+      "summary": "A slider with one thumb per value, draggable and keyboard-operable, with a range fill spanning the lowest to the highest value (ported from shadcn/ui's Slider; Radix's primitive is replaced by hand).",
+      "props": {
+        "value": {
+          "type": "number | number[]"
+        },
+        "defaultValue": {
+          "type": "number | number[]"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number"
+        },
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "onValueChange": {
+          "type": "(value: number[]) => void"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "each thumb is role=slider with aria-valuemin, aria-valuemax, aria-valuenow and aria-orientation; arrows move by one step, PageUp/PageDown by ten, Home/End jump to the ends; a disabled slider takes its thumbs out of the tab order and reports aria-disabled"
+      ]
+    },
+    "Sheet": {
+      "summary": "A panel that slides in from an edge - top, right, bottom or left - over an overlay, dismissed by Escape, an overlay press or the close button (ported from shadcn/ui's Sheet; Radix's Dialog is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=dialog with aria-modal=true and the caller's label; focus moves onto the panel as it opens and back to the trigger on close; Tab wraps inside the panel. The page behind is NOT made inert, so assistive tech can still reach it - recorded in the manifest rather than claimed as done"
+      ]
+    },
+    "Drawer": {
+      "summary": "A sheet you can flick away: a panel from any edge, with a drag handle on the horizontal edges and dismissal by dragging past a quarter of its extent (ported from shadcn/ui's Drawer; vaul is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "direction": {
+          "type": "'top' | 'right' | 'bottom' | 'left'"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "role=dialog with aria-modal=true and the caller's label; focus moves onto the panel as it opens and back to the trigger on close; Tab wraps inside the panel; a press that starts on a control inside the panel belongs to that control rather than to the drag. The page behind is NOT inert, as recorded for Sheet. Dismissal is by distance only - vaul's velocity flick is not implemented"
+      ]
+    },
+    "Command": {
+      "summary": "A searchable command menu: an input, a filtered list with groups and headings, an empty state, and keyboard selection (ported from shadcn/ui's Command; cmdk is replaced by hand).",
+      "props": {
+        "label": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "onQueryChange": {
+          "type": "(query: string) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the root is role=combobox with aria-controls pointing at the listbox and the caller's label; the input carries aria-activedescendant pointing at the active option and aria-autocomplete=list; each row is role=option with aria-selected; a filtered-out row is display-none, so it leaves the accessibility tree as well as the layout. CommandDialog is not ported (it composes the Dialog item), so a consumer places this Command inside this library's Dialog"
+      ]
+    },
+    "Combobox": {
+      "summary": "A searchable single-select combobox: a field that filters a list, an anchored panel, groups with labels, an empty state and keyboard selection (ported from shadcn/ui's Combobox; Base UI's primitive is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string | null"
+        },
+        "defaultValue": {
+          "type": "string | null"
+        },
+        "onValueChange": {
+          "type": "(value: string | null) => void"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the field is role=combobox with aria-expanded and aria-controls naming the listbox, and aria-activedescendant pointing at the active row while open; rows are role=option with aria-selected and the source's data-highlighted hook for the active one; a filtered-out row is display-none, leaving the accessibility tree with the layout; the panel is not portalled, so an ancestor with overflow hidden or a transform can clip it. Single-select only in this pass - the multi-select chips family is a recorded follow-up"
+      ]
+    },
+    "ContextMenu": {
+      "summary": "A menu opened by a right-click, anchored at the pointer rather than at a field, with checkbox and radio rows (ported from shadcn/ui's Context Menu; Radix's primitive is replaced by hand).",
+      "props": {
+        "open": {
+          "type": "boolean"
+        },
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the trigger is a focusable region that opens the menu on a right-click and is where focus returns on close; the panel is role=menu with arrow keys, Home/End and Enter/Space walking and activating its rows; rows are menuitem, menuitemcheckbox or menuitemradio with aria-checked where it applies, and a disabled row reports aria-disabled. The submenu family is not ported in this pass, and the panel is not portalled"
+      ]
+    },
+    "Carousel": {
+      "summary": "A sliding track of full-viewport items with previous/next controls: the platform's own scroller with snap points, and an api a caller can drive (ported from shadcn/ui's Carousel; embla is dropped for CSS scroll snap).",
+      "props": {
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "setApi": {
+          "type": "(api: CarouselApi) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the root is a role=region named by aria-roledescription=carousel, each slide is a role=group with aria-roledescription=slide, and each arrow carries screen-reader-only text; ArrowLeft and ArrowRight are handled on the root in the capture phase, so a focused arrow still moves the track, and an arrow is disabled when the track cannot move that way. A vertical carousel needs a definite height on CarouselContent. embla's wider api (its events, scroll options, drag physics and plugins) is not ported"
+      ]
+    },
+    "ResizablePanelGroup": {
+      "summary": "A group of panels with draggable dividers between them: drag a divider or resize it from the keyboard, and each panel keeps its own limits (ported from shadcn/ui's Resizable; react-resizable-panels is replaced by hand).",
+      "props": {
+        "orientation": {
+          "type": "'horizontal' | 'vertical'"
+        },
+        "onLayoutChange": {
+          "type": "(layout: Record<string, number>) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "a divider is role=separator, focusable and reachable by Tab, with aria-orientation on the opposite axis to the group, aria-controls naming the panel before it and aria-valuenow/aria-valuemin/aria-valuemax reporting that panel's current share and the window the divider can actually move it through, narrowed by whatever its neighbour can give up; the arrow keys move the pair by 5 percent (on the group's own axis), Home and End send it to an end, and Enter collapses a collapsible panel to its collapsed size and brings it back. Give the group a size: it fills its parent, and every size in this port is a percentage (a pixel size is not supported)"
+      ]
+    },
+    "Menubar": {
+      "summary": "A bar of menus in one Tab stop: the arrow keys walk its triggers and a pointer sliding along it switches menus (ported from shadcn/ui's Menubar; Radix's primitive is replaced by hand).",
+      "props": {
+        "onValueChange": {
+          "type": "(menuId: string | null) => void"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the bar is role=menubar with aria-orientation=horizontal and is a single Tab stop, the arrow keys plus Home/End walking its triggers and opening the one they land on when a menu is already open; each trigger is a menuitem with aria-haspopup, aria-expanded and aria-controls, and a panel is role=menu whose rows are menuitem, menuitemcheckbox or menuitemradio, walked by the same keys a menu uses, with Escape closing and focusing the trigger. The submenu family is not ported in this pass, and panels are not portalled"
+      ]
+    },
+    "NavigationMenu": {
+      "summary": "A navigation bar whose panels share one surface under the whole bar, opening after a hover that rests (ported from shadcn/ui's Navigation Menu; Radix's primitive is replaced by hand).",
+      "props": {
+        "viewport": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "ReactNode"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the bar is a nav whose list is one Tab stop, aria-expanded and aria-controls tying each trigger to its panel, and the arrow keys plus Home/End walking the triggers; Escape closes the open panel and returns focus to its trigger; links mark the current page with aria-current=page. Indicator and the panel morph animation are not ported"
+      ]
+    },
+    "Calendar": {
+      "summary": "A month grid that reports the day the reader chooses, or a range of them (ported from shadcn/ui's Calendar; react-day-picker and date-fns are replaced by the platform's own date arithmetic).",
+      "props": {
+        "mode": {
+          "type": "'single' | 'range'"
+        },
+        "selected": {
+          "type": "Date | CalendarRange"
+        },
+        "onSelect": {
+          "type": "(selection: CalendarSelection) => void"
+        },
+        "month": {
+          "type": "Date"
+        },
+        "defaultMonth": {
+          "type": "Date"
+        },
+        "onMonthChange": {
+          "type": "(month: Date) => void"
+        },
+        "showOutsideDays": {
+          "type": "boolean"
+        },
+        "weekStartsOn": {
+          "type": "0 | 1 | 2 | 3 | 4 | 5 | 6"
+        },
+        "locale": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "(date: Date) => boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the days are a real grid: role=grid with column headers for the weekdays, one aria-selected per cell, and each day button's accessible name is its full date; the keyboard model is roving - one day holds the tab stop, the arrows move by day and by week, Home and End reach the week's ends, PageUp/PageDown change the month and the grid follows the focused day, and Enter or Space chooses. A disabled day is a disabled button. Multi-month, week numbers, the dropdown caption and react-day-picker's matchers are not ported"
+      ]
+    },
+    "Sidebar": {
+      "summary": "A collapsible rail with groups of rows and an inset for the content beside it, with one keyboard shortcut and one state (ported from shadcn/ui's Sidebar; every part is written by hand).",
+      "props": {
+        "defaultOpen": {
+          "type": "boolean"
+        },
+        "open": {
+          "type": "boolean"
+        },
+        "onOpenChange": {
+          "type": "(open: boolean) => void"
+        },
+        "side": {
+          "type": "'left' | 'right'"
+        },
+        "variant": {
+          "type": "'sidebar' | 'floating' | 'inset'"
+        },
+        "collapsible": {
+          "type": "'offcanvas' | 'icon' | 'none'"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        }
+      },
+      "surfaces": [
+        "web"
+      ],
+      "a11y": [
+        "the toggle is a real button with a screen-reader label and Mod+B does the same thing from the keyboard, so the state is reachable either way; the active row reports aria-current=page, a group is grouped markup and the separator is role=separator; the rail strip that a reader grabs to bring a collapsed rail back is aria-hidden, because the trigger and the shortcut are the accessible paths. The mobile rail (a Sheet upstream), the collapsed-state tooltips and the cookie that remembers the state are not ported"
+      ]
+    }
+  },
+  "helpers": {
+    "footerAction": {
+      "summary": "Register a component in the sidebar footer (root scope, receives { wide }).",
+      "slot": "sidebar.footer.action"
+    },
+    "headerAction": {
+      "summary": "Register a component next to the conversation title (session scope).",
+      "slot": "conversation.session.header.actions"
+    },
+    "sidebarTab": {
+      "summary": "Register a tab in the right sidebar (session scope).",
+      "slot": "sidebar.right.pane.tab"
+    },
+    "settingsSection": {
+      "summary": "Add a page to the Settings screen (a nav entry beside General, Models, Plugins). Give `label` for the nav text.",
+      "slot": "settings.section"
+    }
+  },
+  "reexports": {
+    "note": "Straight from the app's primitives so a consumer needs one import.",
+    "names": [
+      "Button",
+      "Tag",
+      "Pill",
+      "Toast",
+      "Modal",
+      "Tooltip",
+      "classifyLinkPath",
+      "classifyFileType",
+      "fileExtension"
+    ]
+  },
+  "roles": {
+    "note": "Semantic role CSS variables (--acryl-<role>), mapped to the app tokens in contracts/tokens.json.",
+    "source": "contracts/tokens.json"
+  },
+  "notes": {
+    "tui": "The terminal library (plugins/acryl-ui-tui) implements every component with pi-tui: the props above, keyboard instead of pointer (arrow keys, space, enter, y/n, escape), and no line ever wider than the terminal."
+  }
+}

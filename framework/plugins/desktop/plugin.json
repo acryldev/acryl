@@ -1,0 +1,16 @@
+{
+  "name": "desktop",
+  "description": "Run the app as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron.",
+  "requires": ["instance"],
+  "inject": ["appInstance"],
+  "provides": [],
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "44.9.3"
+  },
+  "scripts": {
+    "desktop": "node plugins/desktop/launch.ts"
+  },
+  "omit": ["**/*.test.*"],
+  "mount": "nothing to mount: run `npm install`, then `npm run desktop` (the window opens on the app's own server; every electron call is in plugins/desktop)"
+}

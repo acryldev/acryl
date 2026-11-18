@@ -1,0 +1,92 @@
+[
+  {
+    "n": 1,
+    "category": "System",
+    "slug": "system-monitor",
+    "title": "System Monitor",
+    "tagline": "Live host telemetry and process control",
+    "description": "Live CPU, memory, disk and process load for one machine, with safe inspection of runaway processes.",
+    "visual": "sys"
+  },
+  {
+    "n": 2,
+    "category": "Application",
+    "slug": "productivity-hub",
+    "title": "Productivity Hub",
+    "tagline": "A calm command surface for the week",
+    "description": "A personal workbench unifying quick capture, a focused task list, lightweight notes and a week calendar.",
+    "visual": "prod"
+  },
+  {
+    "n": 3,
+    "category": "Business",
+    "slug": "small-crm",
+    "title": "Small CRM",
+    "tagline": "A sales pipeline you can actually move",
+    "description": "A B2B relationship manager with companies, contacts, deal stages, ownership and next actions.",
+    "visual": "crm"
+  },
+  {
+    "n": 4,
+    "category": "Developer",
+    "slug": "snippets",
+    "title": "Snippet Manager",
+    "tagline": "A code library with editor-grade browsing",
+    "description": "A developer snippet vault with language-aware source previews, tags, reusable variables and fast search.",
+    "visual": "ide"
+  },
+  {
+    "n": 5,
+    "category": "AI",
+    "slug": "prompt-lab",
+    "title": "Prompt Lab",
+    "tagline": "Experiment with prompts, not just chat",
+    "description": "A prompt engineering workbench with a reusable library, variable inputs and side-by-side model runs.",
+    "visual": "prompt"
+  },
+  {
+    "n": 6,
+    "category": "Data",
+    "slug": "csv-explorer",
+    "title": "CSV Explorer",
+    "tagline": "Inspect rows. Understand columns. Find anomalies.",
+    "description": "A local-first data workbench for importing CSV files, profiling columns, filtering rows and charting a selected field.",
+    "visual": "data"
+  },
+  {
+    "n": 7,
+    "category": "Analytics",
+    "slug": "web-analytics",
+    "title": "Web Analytics",
+    "tagline": "A clear view of what visitors actually do",
+    "description": "A privacy-conscious website analytics console for page views, traffic sources, device mix, top pages and conversion journeys.",
+    "visual": "analytics"
+  },
+  {
+    "n": 8,
+    "category": "Cloud",
+    "slug": "cloud-costs",
+    "title": "Cloud Costs",
+    "tagline": "Know what is costing you money",
+    "description": "A FinOps cost explorer that reconciles imported provider exports, attributes spend to services and flags budget drift.",
+    "visual": "finops"
+  },
+  {
+    "n": 9,
+    "category": "DevOps",
+    "slug": "deploy-board",
+    "title": "Deploy Board",
+    "tagline": "See what shipped, what failed and what is blocked",
+    "description": "A release operations console that tracks deployments by service and environment with a chronological activity feed and incident response.",
+    "visual": "release"
+  },
+  {
+    "n": 10,
+    "category": "Networking",
+    "slug": "uptime",
+    "title": "Uptime Checker",
+    "tagline": "Know when a host stops answering",
+    "description": "A lightweight availability monitor for HTTP endpoints and hosts, with status history, response-time charts and incident records.",
+    "visual": "uptime"
+  }
+]

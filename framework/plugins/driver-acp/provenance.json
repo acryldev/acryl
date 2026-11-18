@@ -1,0 +1,20 @@
+{
+  "written": "from the specification, not ported: connection.ts and chat.ts are this repository's own code",
+  "protocol": {
+    "name": "Agent Client Protocol",
+    "version": 1,
+    "site": "https://agentclientprotocol.com",
+    "transport": "stdio, newline-delimited JSON-RPC 2.0"
+  },
+  "schema": {
+    "file": "test/acp-v1/schema.json",
+    "from": "npm @agentclientprotocol/sdk@2.0.2, schema/v1/schema.json (the stable v1 schema, not schema.unstable.json)",
+    "repository": "https://github.com/agentclientprotocol/typescript-sdk",
+    "license": "Apache-2.0, Copyright 2025 Zed Industries, Inc. and contributors (test/acp-v1/LICENSE)",
+    "sha256": "4bcd1d2051ff7ed379bd9b234fb9b09c5ab9245478698e9fab805bd9b52a33a6",
+    "modified": false,
+    "used by": "test/conformance.test.ts; the schema is a test fixture and is not copied into apps"
+  },
+  "checked against": "dsh (DeepSeek Harness) 0.2.1-rc.2, dsh --profile acp, 2026-10-28: scripts/verify-agent-panel.mjs --driver acp:dsh",
+  "update": "take schema/v1/schema.json from a newer @agentclientprotocol/sdk, update sha256 and the version here, and run test/conformance.test.ts"
+}

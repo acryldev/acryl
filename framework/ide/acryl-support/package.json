@@ -1,0 +1,112 @@
+{
+  "name": "acryl-support",
+  "version": "0.1.0",
+  "description": "ACRYL support tools, one Cordis plugin: the Web surface writes log files, and Settings > Support downloads a diagnostics archive (system facts plus masked logs)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acrylblends/acrylblends.git",
+    "directory": "ide/acryl-support"
+  },
+  "homepage": "https://github.com/acrylblends/acrylblends/tree/main/ide/acryl-support#readme",
+  "bugs": {
+    "url": "https://github.com/acrylblends/acrylblends/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@acryl/ui": "workspace:*",
+    "@deepseek-ai/dsh-home-paths": "0.2.0-rc.2",
+    "acryl-control": "workspace:*",
+    "acryl-diagnostics": "workspace:*",
+    "acryl-loopback-http": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
+    "react": "18.3.1",
+    "acrylblends": "^1.0.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.5",
+    "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "acrylblends": "workspace:*",
+    "jsdom": "29.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsdown": "0.23.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./lib/index.js",
+        "./lib/client.js"
+      ]
+    },
+    "surfaces": [
+      "web"
+    ],
+    "runtime": "cordis",
+    "compatibility": {
+      "acryl": ">=0.1.0 <1.0.0",
+      "node": "^22.19.0 || >=24.0.0",
+      "hosts": {
+        "@deepseek-ai/cordis": "^4.0.2"
+      }
+    },
+    "capabilities": [
+      "diagnostics-export",
+      "web-file-logging"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+.marker { position: relative; display: flex; width: 100%; min-height: 16px; align-items: center; gap: 8px; text-align: left; font-size: 13px; color: var(--dsw-alias-label-tertiary); }
+.marker a { text-decoration: underline; text-underline-offset: 3px; }
+.marker a:hover { color: var(--dsw-alias-label-primary); }
+.marker svg:not([class*='size-']) { width: 16px; height: 16px; }
+.separator::before, .separator::after { content: ''; height: 1px; min-width: 0; flex: 1; background: var(--dsw-alias-border-l4); }
+.separator::before { margin-right: 4px; }
+.separator::after { margin-left: 4px; }
+.separator .content { flex: none; text-align: center; }
+.border { border-bottom: 1px solid var(--dsw-alias-border-l4); padding-bottom: 8px; }
+.icon { width: 16px; height: 16px; flex-shrink: 0; }
+.icon svg:not([class*='size-']) { width: 16px; height: 16px; }
+.content { min-width: 0; overflow-wrap: break-word; }
+.content a { text-decoration: underline; text-underline-offset: 3px; }
+.content a:hover { color: var(--dsw-alias-label-primary); }

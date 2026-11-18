@@ -1,0 +1,12 @@
+{
+  "name": "save",
+  "description": "Save the app to its own git repository, and share it: a repository of its own on GitHub, created and pushed only after a person confirms the plan. Refuses a file that holds a secret, and a private app going to a public remote.",
+  "requires": [],
+  "inject": ["appInstance"],
+  "provides": [],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@webboxes/app-persistence": "0.1.2"
+  },
+  "mount": "add the scripts \"save\": \"node plugins/save/cli.ts\" and \"share\": \"node plugins/save/share-cli.ts\" to package.json; mount the plugin to give the agent a save_app tool"
+}

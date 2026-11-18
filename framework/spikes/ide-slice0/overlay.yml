@@ -1,0 +1,26 @@
+# The IDE spike: the framework, the ported brand, and ACRYL's prebuilt workspace shell on DSH's web profile.
+- insert:
+    - id: acryl-router
+      name: acrylblends/cordis/router
+    - id: acryl-router-http
+      name: acrylblends/cordis/router-http
+    - id: spike-runtime
+      name: ./app/runtime.mjs
+    - id: spike-hello
+      name: ./app/hello.mjs
+    - id: ui-brand-acryl
+      name: dsh-client-ui-brand-acryl
+    - id: acryl-settings
+      name: acryl-settings
+    - id: acryl-app-shell
+      name: acryl-app-shell
+    - id: acryl-workspace
+      name: acryl-workspace
+- id: ui-brand-official
+  disabled: true
+- id: ui-layout
+  disabled: true
+- id: ui-sidebar
+  disabled: false
+- id: ui-conversation
+  disabled: false

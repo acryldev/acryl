@@ -1,0 +1,13 @@
+{
+  "name": "driver-pty",
+  "description": "A coding agent (claude, codex, pi, any program) in a real terminal inside the running app: the panel gets a terminal tab, the agent builds through the door in its own interactive mode. Development only; needs the agent panel; opt-in with acrylblends add driver-pty.",
+  "requires": ["acryl-router", "acryl-node-server", "agent-panel", "instance"],
+  "inject": ["drivers", "router", "appInstance"],
+  "provides": [],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "node-pty": "1.2.0-beta.15"
+  },
+  "mount": "register it in src/app.ts ('driver-pty': driverPty) and add a row `- id: driver-pty` / `name: driver-pty` to blend.yaml AFTER the agent-panel row; open the panel and pick a `pty:` agent to get its terminal",
+  "gitignore": [".acryl/"]
+}

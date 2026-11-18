@@ -1,0 +1,19 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "files": [
+      "runtime/acryl-harness-runtime/src/engine-web.ts",
+      "runtime/acryl-control/src/platform/web.ts"
+    ]
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": "the two reads (host, port) and the AcrylWeb type",
+  "changes": {
+    "package": "the adapter is its own plugin here (ACRYL keeps it in the engine seam), with the service provided inside an effect",
+    "tests": "ACRYL has no test for the adapter (its body is the two reads); tests/web.spec.ts pins the seam here",
+    "contract": "the service type comes from the ported acryl-control (its platform/web.ts): host and port only, as in ACRYL 37f4dd9c after spec 048 T008. An earlier revision of this port provided two registration delegates against a control port that had drifted; both were removed when control was re-ported at a1727e46.",
+    "dependency": "acryl-control is a devDependency: only its AcrylWeb type is imported, so an app does not install it"
+  },
+  "notes": "ACRYL main (37f4dd9c) declares AcrylWeb as host and port only; the type is imported from acryl-control so the service is declared once."
+}

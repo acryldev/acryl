@@ -1,0 +1,19 @@
+{
+  "original": {
+    "repository": "https://github.com/acrylblends/acrylblends",
+    "commit": "5f7a8e21"
+  },
+  "written": "2026-11-03, for the Blends frame (docs/design/blends-frame-mockup.html, spec 127): not a port, so no source suite or unchanged files to name; its own tests are the package's tests/",
+  "ports": [
+    {
+      "from": "https://github.com/cordisplugins/cordis-plugin-graph",
+      "license": "MIT",
+      "commit": "e9bf6b5",
+      "files": {
+        "src/graph-inspect.ts": "src/inspect.ts",
+        "src/client/graph-canvas.ts": "src/client/cytoscape-graph.ts"
+      },
+      "changes": "the fiber reading and the Cytoscape elements, colours and cose layout are the original's; the numbered fiber-event recorder with long-poll, the source finder, the incremental canvas update, pulses and theme palette are new"
+    }
+  ]
+}

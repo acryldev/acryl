@@ -1,0 +1,326 @@
+From 1728d67a1fbd015256855904eb84d2107f8b4905 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <webboxes.io@gmail.com>
+Date: Wed, 28 Oct 2026 20:53:43 +0100
+Subject: [PATCH] feat(registry): entries declare the runtime they are for;
+ /blends shows it and filters on it; acrylblends apps start with
+ create-acrylblends --from
+
+---
+ .github/workflows/registry.yml |  16 ++++-
+ registry/README.md             |  44 +++++++++----
+ scripts/registry-index.ts      | 113 +++++++++++++++++++++++++++++++++
+ src/components/registry.tsx    |  30 +++++++--
+ src/lib/registry-placement.ts  |   3 +
+ src/pages/BlendDetail.tsx      |   6 +-
+ 6 files changed, 189 insertions(+), 23 deletions(-)
+ create mode 100644 scripts/registry-index.ts
+
+diff --git a/.github/workflows/registry.yml b/.github/workflows/registry.yml
+index c99a93f..9474a8f 100644
+--- a/.github/workflows/registry.yml
++++ b/.github/workflows/registry.yml
+@@ -1,7 +1,8 @@
+ name: Registry
+ 
+-# Every starter under registry/blends/ must validate with @acryl/blends-core, and registry/index.json must be what the index tool writes.
+-# A private or unlicensed entry, a misplaced folder, a repeated id or a stale index fails the check; publishing is a reviewed pull request.
++# Every starter under registry/blends/ must validate with @acryl/blends-core, and registry/index.json must be what scripts/registry-index.ts writes (blends-core's index plus the
++# runtime each entry is for: an entry with an acryl.template.json is an app for acrylblends, every other one is for the ACRYL app). A private or unlicensed entry, a misplaced folder,
++# a repeated id, a stale index, or an app entry that is not a sound starter fails the check; each app entry must also be creatable by create-acrylblends. Publishing is a reviewed pull request.
+ 
+ on:
+   pull_request:
+@@ -28,4 +29,13 @@ jobs:
+         working-directory: .acryl/runtime/blends-core
+         run: bun install --production
+       - name: Validate the registry and check its index
+-        run: bun .acryl/runtime/blends-core/src/bin/registry-index.ts registry --check
++        run: bun scripts/registry-index.ts registry --check
++      - uses: actions/setup-node@v4
++        with:
++          node-version: 22
++      # Nothing is installed or run: create-acrylblends downloads nothing here (the registry is a folder), unpacks the entry, and writes the app.
++      - name: Every app starter can be created
++        run: |
++          for id in $(node -e "console.log(require('./registry/index.json').entries.filter(e => e.runtime === 'acrylblends').map(e => e.id).join(' '))"); do
++            npm create acrylblends@latest "$RUNNER_TEMP/check-$id" -- --from "$id" --registry ./registry -y
++          done
+diff --git a/registry/README.md b/registry/README.md
+index a2a6780..acfb2b6 100644
+--- a/registry/README.md
++++ b/registry/README.md
+@@ -1,21 +1,39 @@
+-# The ACRYL Blends registry
++# The Blends registry
+ 
+-Starting points for apps built on ACRYL Blends: **Blank** (the empty house with the builder inside) and **Blueprints** (starter kits specialized enough to start
+-from). A project started from any of them is its owner's, in their own repository.
++Starting points other people published. Each entry is a folder under `blends/<id>/`, and `index.json` lists them all with the **runtime** each one is for:
++
++| Runtime | What the entry is | How to start from it |
++| --- | --- | --- |
++| `acrylblends` | A whole app for the `acrylblends` framework: `blend.yaml`, `plugins/`, `src/`, `package.json`, `README.md`, and an `acryl.template.json`. | `npm create acrylblends@latest my-app -- --from <id>` |
++| `acryl` | A starter for the ACRYL app (a Blueprint whose rows are ACRYL plugins). It runs only inside ACRYL. | Open it in the ACRYL app (<https://acryl.dev>). `create-acrylblends` refuses it with one line saying so. |
++
++A project started from any of them is its owner's, in their own repository: the new app is private, named after its folder, and carries none of the starter's id or licence.
+ 
+ ```bash
+-acryl new my-app --from <id>        # e.g. acryl.organizer
++npm create acrylblends@latest my-notes -- --from acrylblends.notes-desktop    # npm needs the -- before the options
++cd my-notes && npm install && npm run dev
+ ```
+ 
+-## Publish a starter
++`--registry github:owner/repo` (or a folder) reads another registry with this same layout, a team's or a workshop's.
++
++## Publish a starter for acrylblends
++
++Open a pull request that adds `blends/<id>/`, where `<id>` is a dotted id you own (`yourlogin.thing`). The folder is your app as it stands, without `node_modules/`, `dist/`, `data/`, and without `docs/framework/` (create adds those back):
++
++- `blend.yaml`: `kind: Blueprint`, and in `metadata` the `id` (the same as the folder name), `name`, `version`, `license` (an SPDX id), `visibility: public`, a `category` and a one-line `description`. Your app made by `acrylblends init` has `visibility: private` and no licence; change them in the entry, not in your own app.
++- `acryl.template.json`: `{ "name": "...", "description": "...", "plugins": [] }`. **This file is what marks the entry as an app for acrylblends.** `plugins` lists library plugins the app still needs (added with `npx acrylblends add`); an app that carries its `plugins/` folder lists none.
++- `package.json` (its dependencies come with the starter, a desktop starter brings `electron`), `src/`, `plugins/`, `gitignore` (named without the dot), `README.md`: what it is and how to start from it.
++
++CI refuses an entry that: is private or has no licence; lives in another folder than its id; repeats an id; has an `acryl.template.json` that is not valid or an app without `package.json` or `src/`; defines an install script (`preinstall`, `install`, `postinstall`, `prepare`, ...); holds a link, a `node_modules/` or `.git/`; is over 20 MB or 5000 files; or holds what looks like a key. It also makes the app with `create-acrylblends` (nothing is installed or run) and fails when `index.json` is not what `scripts/registry-index.ts` writes: run `bun scripts/registry-index.ts registry` after adding your folder.
++
++## Publish a starter for the ACRYL app
++
++`blends/<id>/` with `blend.yaml` (`kind: Blueprint`, `spec.extends` naming the Blueprint it grew from, usually `acryl.blank`), `plugins/` (the plugins it adds, source, no `node_modules`) and `README.md`. No `acryl.template.json`: that is what makes the entry `runtime: acryl`. People start from it in the ACRYL app.
++
++## Keeping a starter private
+ 
+-Open a pull request that adds `blends/<id>/`:
++Needs no registry at all: people start from its git repository (`npm create acrylblends@latest my-app -- --from github:you/starter`, a repository with an `acryl.template.json`). A company's own registry is this same layout in its own repository: `--registry github:company/registry`.
+ 
+-- `blend.yaml`: `kind: Blueprint`, `spec.extends` naming the Blueprint it grew from (usually `acryl.blank`), and in `metadata`: an id you own (`yourname.thing`),
+-  `license`, `visibility: public`, a `category` and a one-line `description`.
+-- `plugins/`: the plugins it adds (source, no `node_modules`).
+-- `README.md`: what it is and how to start from it.
++## The files
+ 
+-CI validates every entry with `@acryl/blends-core` and fails when `index.json` is stale; run the index tool locally to regenerate it. A private or unlicensed entry
+-is refused. Keeping a starter private needs no registry at all: people start from its git repository (`acryl new my-app --from git@host:you/starter.git`).
+-A company's private registry is this same layout in its own repository.
++`index.json` is written by `scripts/registry-index.ts`: [`@acryl/blends-core`](https://github.com/acryldev/acryl/tree/main/runtime/blends-core)'s index (validation of every `blend.yaml`) plus the `runtime` of each entry. It is served as it is at <https://acrylblends.github.io/registry/index.json>.
+diff --git a/scripts/registry-index.ts b/scripts/registry-index.ts
+new file mode 100644
+index 0000000..0c7b73c
+--- /dev/null
++++ b/scripts/registry-index.ts
+@@ -0,0 +1,113 @@
++#!/usr/bin/env bun
++// registry-index <registry folder> [--check]
++// What the registry's CI runs. It is @acryl/blends-core's index tool (validate every starter under blends/<id>/blend.yaml, refuse a private, unlicensed, misplaced or repeated one,
++// write index.json) plus one thing the format does not carry: the runtime an entry is for.
++//   - An entry with an `acryl.template.json` is a whole app for acrylblends (`runtime: acrylblends`): `npm create acrylblends@latest my-app -- --from <id>` makes it. It is checked
++//     further: the template manifest, a package.json without install scripts, src/, no links, no node_modules or .git, size limits, and nothing that looks like a key.
++//   - Every other entry is a starter for the ACRYL app (`runtime: acryl`).
++// With --check nothing is written and a stale index fails. BLENDS_CORE points at blends-core's src (CI checks it out into .acryl/).
++import { existsSync, lstatSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
++import { dirname, join, resolve } from "node:path";
++import { fileURLToPath } from "node:url";
++
++const here = dirname(fileURLToPath(import.meta.url));
++const core = process.env.BLENDS_CORE ?? join(here, "..", ".acryl", "runtime", "blends-core", "src");
++const { buildRegistryIndex } = (await import(join(core, "registry.ts"))) as {
++  buildRegistryIndex(sources: { path: string; manifestText: string }[]): { index: { formatVersion: number; entries: Record<string, unknown>[] }; problems: { path: string; message: string }[] };
++};
++
++const MARKER = "acryl.template.json";
++const LIMITS = { files: 5000, bytes: 20 * 1024 * 1024 };
++const LIFECYCLE = ["preinstall", "install", "postinstall", "prepublish", "preprepare", "prepare", "postprepare"];
++const SECRETS: [RegExp, string][] = [
++  [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, "a private key"],
++  [/\bsk-[A-Za-z0-9_-]{24,}/, "an API key (sk-...)"],
++  [/\bgh[pousr]_[A-Za-z0-9]{30,}/, "a GitHub token"],
++  [/\bAKIA[0-9A-Z]{16}\b/, "an AWS access key"],
++  [/\bnpm_[A-Za-z0-9]{30,}/, "an npm token"],
++];
++
++/** Everything wrong with an app entry; empty when it is a sound starter for acrylblends. */
++function checkApp(dir: string): string[] {
++  const problems: string[] = [];
++  let files = 0;
++  let bytes = 0;
++  const walk = (folder: string) => {
++    for (const name of readdirSync(folder)) {
++      const path = join(folder, name);
++      const info = lstatSync(path);
++      const rel = path.slice(dir.length + 1);
++      if (info.isSymbolicLink()) problems.push(`${rel} is a link; links are not allowed`);
++      else if (info.isDirectory()) {
++        if (name === "node_modules" || name === ".git") problems.push(`${rel} must not be in an entry`);
++        else walk(path);
++      } else {
++        files += 1;
++        bytes += info.size;
++        if (info.size < 1024 * 1024 && !/\.(png|jpe?g|gif|ico|woff2?|tgz|gz|zip)$/i.test(name)) {
++          const text = readFileSync(path, "utf8");
++          for (const [pattern, what] of SECRETS) if (pattern.test(text)) problems.push(`${rel} looks like it holds ${what}`);
++        }
++      }
++    }
++  };
++  walk(dir);
++  if (files > LIMITS.files) problems.push(`has ${files} files; the limit is ${LIMITS.files}`);
++  if (bytes > LIMITS.bytes) problems.push(`is ${Math.round(bytes / 1024 / 1024)} MB; the limit is ${LIMITS.bytes / 1024 / 1024} MB`);
++  try {
++    const manifest = JSON.parse(readFileSync(join(dir, MARKER), "utf8")) as Record<string, unknown>;
++    if (typeof manifest.name !== "string" || manifest.name.trim() === "") problems.push(`${MARKER} needs a "name"`);
++    if (typeof manifest.description !== "string") problems.push(`${MARKER} needs a "description"`);
++    const plugins = manifest.plugins ?? [];
++    if (!Array.isArray(plugins) || plugins.some(p => typeof p !== "string" || !/^[a-z][a-z0-9-]*$/.test(p))) problems.push(`"plugins" in ${MARKER} is a list of plugin names`);
++  } catch {
++    problems.push(`${MARKER} is not valid JSON`);
++  }
++  if (!existsSync(join(dir, "package.json"))) problems.push("has no package.json");
++  else {
++    try {
++      const pkg = JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { scripts?: Record<string, string> };
++      for (const script of LIFECYCLE) if (typeof pkg.scripts?.[script] === "string") problems.push(`package.json defines the install script "${script}"; a registry entry may not`);
++    } catch {
++      problems.push("package.json is not valid JSON");
++    }
++  }
++  if (!existsSync(join(dir, "src"))) problems.push("has no src/ folder");
++  return problems;
++}
++
++export function indexText(root: string): { text: string; problems: string[] } {
++  const blends = join(root, "blends");
++  const folders = existsSync(blends) ? readdirSync(blends, { withFileTypes: true }).filter(e => e.isDirectory() && existsSync(join(blends, e.name, "blend.yaml"))) : [];
++  const { index, problems } = buildRegistryIndex(folders.map(e => ({ path: `blends/${e.name}`, manifestText: readFileSync(join(blends, e.name, "blend.yaml"), "utf8") })));
++  const out = problems.map(p => `${p.path}: ${p.message}`);
++  const entries = index.entries.map(entry => {
++    const dir = join(root, String(entry.path));
++    if (!existsSync(join(dir, MARKER))) return { ...entry, runtime: "acryl" };
++    const apps = checkApp(dir);
++    out.push(...apps.map(message => `${String(entry.path)}: ${message}`));
++    return { ...entry, runtime: "acrylblends" };
++  });
++  return { text: `${JSON.stringify({ ...index, entries }, null, 2)}\n`, problems: out };
++}
++
++const argv = process.argv.slice(2);
++const positional = argv.filter(arg => !arg.startsWith("--"));
++if (positional.length !== 1) {
++  console.log("usage: bun scripts/registry-index.ts <registry folder> [--check]");
++  process.exit(2);
++}
++const root = resolve(positional[0] as string);
++const { text, problems } = indexText(root);
++for (const problem of problems) console.log(`refused ${problem}`);
++const file = join(root, "index.json");
++if (argv.includes("--check")) {
++  if ((existsSync(file) ? readFileSync(file, "utf8") : "") !== text) {
++    console.log(`${file} is stale: run bun scripts/registry-index.ts ${positional[0]}`);
++    process.exit(1);
++  }
++} else {
++  writeFileSync(file, text);
++  console.log(`wrote ${file}`);
++}
++process.exit(problems.length > 0 ? 1 : 0);
+diff --git a/src/components/registry.tsx b/src/components/registry.tsx
+index eadd253..0f7ccda 100644
+--- a/src/components/registry.tsx
++++ b/src/components/registry.tsx
+@@ -1,33 +1,55 @@
++import { useState } from "react";
+ import { Link } from "react-router-dom";
+ import { ArrowRight } from "lucide-react";
+ import index from "../../registry/index.json";
+ import { CodeBlock, Status } from "./ui";
+ 
+ /** One entry of registry/index.json (written by blends-registry-index from @acryl/blends-core; CI refuses a stale index). */
+-interface RegistryEntry { id: string; name: string; kind: "Blueprint" | "Blend"; version: string; path: string; license: string; category?: string; description?: string; parent?: string }
++/** `runtime` says what the entry is for: an app for the acrylblends framework, or a starter for the ACRYL app (the index of a registry written before the field existed has none: those are ACRYL's). */
++export type Runtime = "acrylblends" | "acryl";
++interface RegistryEntry { id: string; name: string; kind: "Blueprint" | "Blend"; version: string; path: string; license: string; runtime?: Runtime; category?: string; description?: string; parent?: string }
+ 
+ export type { RegistryEntry };
+ export const entries = (index as { entries: RegistryEntry[] }).entries;
+ 
++export function runtimeOf(entry: RegistryEntry): Runtime { return entry.runtime === "acrylblends" ? "acrylblends" : "acryl"; }
++
++/** The command that starts a project from an entry: for acrylblends, create-acrylblends (npm needs the `--`); an ACRYL starter opens in the ACRYL app, and its CLI form is shown as it is. */
++export function startCommand(entry: RegistryEntry): string {
++  if (runtimeOf(entry) === "acrylblends") return `npm create acrylblends@latest my-app -- --from ${entry.id}`;
++  return entry.parent === undefined ? `acryl new my-app` : `acryl new my-app --from ${entry.id}`;
++}
++
+ /** Blank, Blueprint (a starter kit) or Project: the three levels a user starts from and grows into. */
+ export function level(entry: RegistryEntry): string {
+   if (entry.kind === "Blend") return "Project";
+   return entry.parent === undefined ? "Blank" : "Blueprint";
+ }
+ 
++const FILTERS: { value: "all" | Runtime; label: string }[] = [
++  { value: "all", label: "All" },
++  { value: "acrylblends", label: "acrylblends apps" },
++  { value: "acryl", label: "ACRYL app starters" },
++];
++
+ export function RegistryStarters() {
++  const [filter, setFilter] = useState<"all" | Runtime>("all");
++  const shown = entries.filter(entry => filter === "all" || runtimeOf(entry) === filter);
+   return <section className="mx-auto max-w-[1440px] px-5 pt-12 md:px-8">
+     <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+       <div><h2 className="text-2xl font-semibold">Start here: in the registry now</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Real starting points you can create a project from today. The project is yours: private and proprietary until you decide otherwise.</p></div>
+       <a href="/registry/index.json" className="font-mono text-xs text-muted-foreground hover:text-foreground">index.json · {entries.length} {entries.length === 1 ? "entry" : "entries"}</a>
+     </div>
++    <div role="group" aria-label="Filter by runtime" className="mt-6 flex flex-wrap gap-2">
++      {FILTERS.map(f => <button key={f.value} type="button" aria-pressed={filter === f.value} onClick={() => setFilter(f.value)} className={`border px-3 py-1.5 font-mono text-xs ${filter === f.value ? "border-foreground bg-foreground text-background" : "border-input text-muted-foreground hover:text-foreground"}`}>{f.label} · {f.value === "all" ? entries.length : entries.filter(entry => runtimeOf(entry) === f.value).length}</button>)}
++    </div>
+     <div className="mt-6 grid gap-4 lg:grid-cols-2">
+-      {entries.map(entry => <article key={entry.id} className="border border-border bg-background p-6">
+-        <div className="flex flex-wrap gap-2"><Status tone="success">{level(entry)}</Status>{entry.category && <Status>{entry.category}</Status>}<Status>v{entry.version}</Status><Status>{entry.license}</Status></div>
++      {shown.map(entry => <article key={entry.id} className="border border-border bg-background p-6">
++        <div className="flex flex-wrap gap-2"><Status tone={runtimeOf(entry) === "acrylblends" ? "success" : "default"}>{runtimeOf(entry) === "acrylblends" ? "acrylblends app" : "ACRYL app starter"}</Status><Status tone="success">{level(entry)}</Status>{entry.category && <Status>{entry.category}</Status>}<Status>v{entry.version}</Status><Status>{entry.license}</Status></div>
+         <h3 className="mt-5 text-2xl font-semibold"><Link to={`/blends/b/${entry.id}`} className="hover:text-accent-foreground">{entry.name}</Link></h3>
+         {entry.description && <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">{entry.description}</p>}
+         {entry.parent && <p className="mt-3 flex items-center gap-2 font-mono text-[11px] text-muted-foreground">grew from {entry.parent} <ArrowRight size={12}/> {entry.id}</p>}
+-        <div className="mt-5"><CodeBlock label="Start a project" code={entry.parent === undefined ? `acryl new my-app` : `acryl new my-app --from ${entry.id}`}/></div>
++        <div className="mt-5"><CodeBlock label={runtimeOf(entry) === "acrylblends" ? "Start a project" : "Start a project in the ACRYL app"} code={startCommand(entry)}/>{runtimeOf(entry) === "acryl" && <p className="mt-2 text-xs leading-5 text-muted-foreground">Runs only inside the ACRYL app. <code>create-acrylblends</code> makes acrylblends apps and refuses this one.</p>}</div>
+       </article>)}
+     </div>
+   </section>;
+diff --git a/src/lib/registry-placement.ts b/src/lib/registry-placement.ts
+index e383ae2..ee95562 100644
+--- a/src/lib/registry-placement.ts
++++ b/src/lib/registry-placement.ts
+@@ -19,4 +19,7 @@ export const registryPlacement: Record<string, Placement> = {
+   "acryl.music": { category: "Media", subcategory: "Music" },
+   "acryl.orderdesk": { category: "E-commerce", subcategory: "Order management" },
+   "acryl.organizer": { category: "Application", subcategory: "Productivity" },
++  "acrylblends.notes-desktop": { category: "Application", subcategory: "Productivity" },
++  "acrylblends.chat": { category: "AI", subcategory: "AI assistants" },
++  "acrylblends.agent": { category: "AI", subcategory: "AI agents" },
+ };
+diff --git a/src/pages/BlendDetail.tsx b/src/pages/BlendDetail.tsx
+index 317b61b..86d3786 100644
+--- a/src/pages/BlendDetail.tsx
++++ b/src/pages/BlendDetail.tsx
+@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
+ import { ArrowUpRight, Download } from "lucide-react";
+ import { Breadcrumbs, SiteLayout, usePageMeta } from "../components/layouts";
+ import { CodeBlock, Status } from "../components/ui";
+-import { entries, level, type RegistryEntry } from "../components/registry";
++import { entries, level, type RegistryEntry, runtimeOf, startCommand } from "../components/registry";
+ import NotFound from "./NotFound";
+ 
+ /** A Blend's page: only the starters that are really in the registry have one, so every page here is something a reader can pull today. */
+@@ -19,8 +19,8 @@ function RegistryDetail({ entry }: { entry: RegistryEntry }) {
+   const file = `/registry/${entry.path}/blend.yaml`;
+   const [yaml, setYaml] = useState<string | null>(null);
+   useEffect(() => { fetch(file).then(r => r.ok ? r.text() : Promise.reject()).then(setYaml, () => setYaml(null)); }, [file]);
+-  const command = entry.parent === undefined ? "acryl new my-app" : `acryl new my-app --from ${entry.id}`;
+-  return <SiteLayout><section className="border-b border-border bg-surface"><div className="mx-auto max-w-[1200px] px-5 py-14 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: entry.name }]}/><div className="mt-10 grid gap-8 lg:grid-cols-[1fr_auto]"><div><div className="flex flex-wrap gap-2"><Status tone="success">{level(entry)}</Status>{entry.category && <Status>{entry.category}</Status>}</div><h1 className="mt-5 text-4xl font-semibold md:text-6xl">{entry.name}</h1>{entry.description && <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">{entry.description}</p>}</div><div className="grid min-w-60 grid-cols-2 border border-border bg-background"><Metric value={entry.version} label="Version"/><Metric value={entry.license} label="License"/><Metric value={entry.kind} label="Kind"/><Metric value={entry.id} label="Id"/></div></div></div></section><div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-12 md:px-8 lg:grid-cols-[1fr_300px]"><main className="min-w-0"><h2 className="text-2xl font-semibold">Start a project from this</h2><div className="mt-4"><CodeBlock label="Terminal" code={command}/></div><h2 className="mt-12 text-2xl font-semibold">blend.yaml</h2><div className="mt-4">{yaml === null ? <p className="text-sm text-muted-foreground">Loading the definition from the registry. <a className="font-semibold underline underline-offset-4" href={file}>Open it directly</a>.</p> : <CodeBlock label="blend.yaml" code={yaml}/>}</div></main><aside className="space-y-6"><Info label="Id" value={entry.id}/><Info label="Version" value={entry.version}/>{entry.parent && <div><span className="font-mono text-[10px] uppercase text-muted-foreground">Grew from</span><p className="mt-1 text-sm font-semibold"><Link to={`/blends/b/${entry.parent}`} className="underline underline-offset-4">{entry.parent}</Link></p></div>}<div className="border-t border-border pt-6"><a href={file} className="flex items-center gap-2 text-sm font-semibold"><Download size={15}/> Raw blend.yaml</a><a href="/registry/index.json" className="mt-4 flex items-center gap-2 text-sm font-semibold"><ArrowUpRight size={15}/> index.json</a></div></aside></div></SiteLayout>;
++  const command = startCommand(entry);
++  return <SiteLayout><section className="border-b border-border bg-surface"><div className="mx-auto max-w-[1200px] px-5 py-14 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: entry.name }]}/><div className="mt-10 grid gap-8 lg:grid-cols-[1fr_auto]"><div><div className="flex flex-wrap gap-2"><Status tone={runtimeOf(entry) === "acrylblends" ? "success" : "default"}>{runtimeOf(entry) === "acrylblends" ? "acrylblends app" : "ACRYL app starter"}</Status><Status tone="success">{level(entry)}</Status>{entry.category && <Status>{entry.category}</Status>}</div><h1 className="mt-5 text-4xl font-semibold md:text-6xl">{entry.name}</h1>{entry.description && <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">{entry.description}</p>}</div><div className="grid min-w-60 grid-cols-2 border border-border bg-background"><Metric value={entry.version} label="Version"/><Metric value={entry.license} label="License"/><Metric value={entry.kind} label="Kind"/><Metric value={entry.id} label="Id"/><Metric value={runtimeOf(entry)} label="Runtime"/></div></div></div></section><div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-12 md:px-8 lg:grid-cols-[1fr_300px]"><main className="min-w-0"><h2 className="text-2xl font-semibold">Start a project from this</h2><div className="mt-4"><CodeBlock label="Terminal" code={command}/>{runtimeOf(entry) === "acryl" && <p className="mt-3 text-sm leading-6 text-muted-foreground">This is a starter for the ACRYL app: its plugins run only inside it. <code>npm create acrylblends</code> makes acrylblends apps and refuses this one with a line that says so.</p>}</div><h2 className="mt-12 text-2xl font-semibold">blend.yaml</h2><div className="mt-4">{yaml === null ? <p className="text-sm text-muted-foreground">Loading the definition from the registry. <a className="font-semibold underline underline-offset-4" href={file}>Open it directly</a>.</p> : <CodeBlock label="blend.yaml" code={yaml}/>}</div></main><aside className="space-y-6"><Info label="Id" value={entry.id}/><Info label="Version" value={entry.version}/>{entry.parent && <div><span className="font-mono text-[10px] uppercase text-muted-foreground">Grew from</span><p className="mt-1 text-sm font-semibold"><Link to={`/blends/b/${entry.parent}`} className="underline underline-offset-4">{entry.parent}</Link></p></div>}<div className="border-t border-border pt-6"><a href={file} className="flex items-center gap-2 text-sm font-semibold"><Download size={15}/> Raw blend.yaml</a><a href="/registry/index.json" className="mt-4 flex items-center gap-2 text-sm font-semibold"><ArrowUpRight size={15}/> index.json</a></div></aside></div></SiteLayout>;
+ }
+ function Metric({ value, label }: { value: string; label: string }) { return <div className="border-b border-r border-border p-4"><strong className="block text-lg">{value}</strong><span className="font-mono text-[10px] uppercase text-muted-foreground">{label}</span></div>; }
+ function Info({ label, value }: { label: string; value: string }) { return <div><span className="font-mono text-[10px] uppercase text-muted-foreground">{label}</span><p className="mt-1 text-sm font-semibold">{value}</p></div>; }
+-- 
+2.50.1 (Apple Git-155)
+

@@ -1,0 +1,4 @@
+@xterm/xterm 6.0.0   (xterm.mjs, xterm-css.mjs = css/xterm.css as a string)
+@xterm/addon-fit 0.11.0   (addon-fit.mjs)
+Both MIT: LICENSE (xterm) and LICENSE-addon-fit. Vendored unmodified from the npm tarballs (npm pack @xterm/xterm@6.0.0 @xterm/addon-fit@0.11.0): lib/xterm.mjs, lib/addon-fit.mjs, css/xterm.css, LICENSE.
+To update: pin a new exact version here, replace the files from the tarballs, update THIRD_PARTY_NOTICES.md.

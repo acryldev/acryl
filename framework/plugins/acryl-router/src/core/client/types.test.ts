@@ -1,0 +1,149 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { expectTypeOf } from 'vitest'
+import { hc } from './index.ts'
+import { Acryl } from '../index.ts'
+import { defineWebSocketHelper } from '../helper/websocket/index.ts'
+import type { TypedURL } from './types.ts'
+
+// The Deno adapter is not part of ACRYL; these tests only build client URLs, so a helper that never upgrades stands in for it.
+const upgradeWebSocket = defineWebSocketHelper(async () => {})
+
+describe('WebSockets', () => {
+  const app = new Acryl()
+    .get(
+      '/ws',
+      upgradeWebSocket(() => ({}))
+    )
+    .get('/', (c) => c.json({}))
+  const client = hc<typeof app>('/')
+
+  it('WebSocket route', () => {
+    expectTypeOf(client.ws).toMatchTypeOf<{
+      $ws: () => WebSocket
+    }>()
+  })
+  it('Not WebSocket Route', () => {
+    expectTypeOf<
+      typeof client.index extends { $ws: () => WebSocket } ? false : true
+    >().toEqualTypeOf(true)
+  })
+})
+
+describe('without the leading slash', () => {
+  const app = new Acryl()
+    .get('foo', (c) => c.json({}))
+    .get('foo/bar', (c) => c.json({}))
+    .get('foo/:id/baz', (c) => c.json({}))
+  const client = hc<typeof app, 'http://localhost'>('http://localhost')
+  it('`foo` should have `$get`', () => {
+    expectTypeOf(client.foo).toHaveProperty('$get')
+    expectTypeOf(client.foo.$url()).toEqualTypeOf<TypedURL<'http:', 'localhost', '', '/foo', ''>>()
+    expectTypeOf(client.foo.$path()).toEqualTypeOf<'/foo'>()
+  })
+  it('`foo.bar` should not have `$get`', () => {
+    expectTypeOf(client.foo.bar).toHaveProperty('$get')
+    expectTypeOf(client.foo.bar.$url()).toEqualTypeOf<
+      TypedURL<'http:', 'localhost', '', '/foo/bar', ''>
+    >()
+    expectTypeOf(client.foo.bar.$path()).toEqualTypeOf<'/foo/bar'>()
+  })
+  it('`foo[":id"].baz` should have `$get`', () => {
+    expectTypeOf(client.foo[':id'].baz).toHaveProperty('$get')
+    expectTypeOf(client.foo[':id'].baz.$url()).toEqualTypeOf<
+      TypedURL<'http:', 'localhost', '', '/foo/:id/baz', ''>
+    >()
+    expectTypeOf(
+      client.foo[':id'].baz.$url({
+        param: { id: '123' },
+      })
+    ).toEqualTypeOf<TypedURL<'http:', 'localhost', '', '/foo/123/baz', ''>>()
+    expectTypeOf(
+      client.foo[':id'].baz.$url({
+        param: { id: '123' },
+        query: { q: 'acryl' },
+      })
+    ).toEqualTypeOf<TypedURL<'http:', 'localhost', '', '/foo/123/baz', `?${string}`>>()
+
+    expectTypeOf(client.foo[':id'].baz.$path()).toEqualTypeOf<'/foo/:id/baz'>()
+    expectTypeOf(
+      client.foo[':id'].baz.$path({
+        param: { id: '123' },
+      })
+    ).toEqualTypeOf<'/foo/123/baz'>()
+    expectTypeOf(
+      client.foo[':id'].baz.$path({
+        param: { id: '123' },
+        query: { q: 'acryl' },
+      })
+    ).toEqualTypeOf<`/foo/123/baz?${string}`>()
+  })
+})
+
+describe('with the leading slash', () => {
+  const app = new Acryl()
+    .get('/foo', (c) => c.json({}))
+    .get('/foo/bar', (c) => c.json({}))
+    .get('/foo/:id/baz', (c) => c.json({}))
+  const client = hc<typeof app>('')
+  it('`foo` should have `$get`', () => {
+    expectTypeOf(client.foo).toHaveProperty('$get')
+  })
+  it('`foo.bar` should not have `$get`', () => {
+    expectTypeOf(client.foo.bar).toHaveProperty('$get')
+  })
+  it('`foo[":id"].baz` should have `$get`', () => {
+    expectTypeOf(client.foo[':id'].baz).toHaveProperty('$get')
+  })
+})
+
+describe('app.all()', () => {
+  const app = new Acryl()
+    .all('/all-route', (c) => c.json({ msg: 'all methods' }))
+    .get('/get-route', (c) => c.json({ msg: 'get only' }))
+  const client = hc<typeof app>('http://localhost', { fetch: app.request })
+
+  it('should NOT expose $all on the client', () => {
+    expectTypeOf<
+      (typeof client)['all-route'] extends { $all: unknown } ? true : false
+    >().toEqualTypeOf<false>()
+  })
+
+  it('should still expose valid HTTP methods like $get', () => {
+    expectTypeOf(client['get-route']).toHaveProperty('$get')
+  })
+
+  it('should expose all standard HTTP methods for routes defined with app.all()', () => {
+    // $all routes should have all standard HTTP methods typed
+    expectTypeOf(client['all-route']).toHaveProperty('$get')
+    expectTypeOf(client['all-route']).toHaveProperty('$post')
+    expectTypeOf(client['all-route']).toHaveProperty('$put')
+    expectTypeOf(client['all-route']).toHaveProperty('$delete')
+    expectTypeOf(client['all-route']).toHaveProperty('$options')
+    expectTypeOf(client['all-route']).toHaveProperty('$patch')
+    expectTypeOf(client['all-route']).toHaveProperty('$query')
+  })
+
+  it('should have correct return type for expanded methods', async () => {
+    // The response type should match the original handler's return type
+    const res = await client['all-route'].$get()
+    expectTypeOf(res.json()).resolves.toEqualTypeOf<{ msg: string }>()
+  })
+})
+
+describe('with base URL pathname', () => {
+  const app = new Acryl()
+    .get('foo', (c) => c.json({}))
+    .get('foo/bar', (c) => c.json({}))
+    .get('foo/:id/baz', (c) => c.json({}))
+  const client = hc<typeof app, 'http://localhost/api'>('http://localhost/api')
+  it('$path', () => {
+    expectTypeOf(client.foo.$path()).toEqualTypeOf<'/foo'>()
+    expectTypeOf(client.foo.bar.$path()).toEqualTypeOf<'/foo/bar'>()
+    expectTypeOf(
+      client.foo[':id'].baz.$path({
+        param: { id: '123' },
+        query: { q: 'acryl' },
+      })
+    ).toEqualTypeOf<`/foo/123/baz?${string}`>()
+  })
+})

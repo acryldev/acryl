@@ -1,0 +1,598 @@
+{
+  "source": "shadcnblocks.com/components category names, fetched 2026-09-22 (classification only; no code, markup or assets used from that site), plus five names taken from shadcn/ui's own component list (ui.shadcn.com/docs/components) on 2026-09-22: Attachment, Bubble, Direction, Marker, Message",
+  "note": "Every category is listed, built or not, so the catalog shows the shape of what a rich UI library covers. componentIds map to plugins/acryl-ui/contracts/components.json. Attachment, Bubble, Direction, Marker and Message are shadcn/ui's own component names, added because shadcnblocks' taxonomy has no chat, label-line, text-direction or file-chip category at all - forcing them into Separator, List, File Upload or a similar neighbour would have been a bad match. Both sites render a component only inside a category, so a ported component with no category here would be invisible rather than merely uncategorised.",
+  "categories": [
+    {
+      "name": "Accordion",
+      "componentIds": [
+        "Accordion"
+      ]
+    },
+    {
+      "name": "Alert",
+      "componentIds": [
+        "Alert"
+      ]
+    },
+    {
+      "name": "Alert Dialog",
+      "componentIds": [
+        "Dialog"
+      ]
+    },
+    {
+      "name": "Announcement",
+      "componentIds": []
+    },
+    {
+      "name": "Aspect Ratio",
+      "componentIds": [
+        "AspectRatio"
+      ]
+    },
+    {
+      "name": "Attachment",
+      "componentIds": [
+        "Attachment"
+      ]
+    },
+    {
+      "name": "Autocomplete",
+      "componentIds": []
+    },
+    {
+      "name": "Avatar",
+      "componentIds": [
+        "Avatar"
+      ]
+    },
+    {
+      "name": "Avatar Group",
+      "componentIds": []
+    },
+    {
+      "name": "Avatar Stack",
+      "componentIds": []
+    },
+    {
+      "name": "Badge",
+      "componentIds": [
+        "Badge",
+        "Tag",
+        "Pill"
+      ]
+    },
+    {
+      "name": "Banner",
+      "componentIds": []
+    },
+    {
+      "name": "Bento Tile",
+      "componentIds": []
+    },
+    {
+      "name": "Border Button",
+      "componentIds": []
+    },
+    {
+      "name": "Breadcrumb",
+      "componentIds": [
+        "Breadcrumb"
+      ]
+    },
+    {
+      "name": "Bubble",
+      "componentIds": [
+        "Bubble"
+      ]
+    },
+    {
+      "name": "Button",
+      "componentIds": [
+        "Button"
+      ]
+    },
+    {
+      "name": "Button Group",
+      "componentIds": [
+        "ButtonGroup"
+      ]
+    },
+    {
+      "name": "Calendar",
+      "componentIds": [
+        "Calendar"
+      ]
+    },
+    {
+      "name": "Card",
+      "componentIds": [
+        "Card"
+      ]
+    },
+    {
+      "name": "Carousel",
+      "componentIds": [
+        "Carousel"
+      ]
+    },
+    {
+      "name": "Chart",
+      "componentIds": []
+    },
+    {
+      "name": "Checkbox",
+      "componentIds": [
+        "SwitchField",
+        "Checkbox"
+      ]
+    },
+    {
+      "name": "Choicebox",
+      "componentIds": []
+    },
+    {
+      "name": "Code Block",
+      "componentIds": [
+        "CodeBlock"
+      ]
+    },
+    {
+      "name": "Collapsible",
+      "componentIds": [
+        "DisclosureRow",
+        "Collapsible"
+      ]
+    },
+    {
+      "name": "Color Picker",
+      "componentIds": []
+    },
+    {
+      "name": "Combobox",
+      "componentIds": [
+        "Combobox"
+      ]
+    },
+    {
+      "name": "Command",
+      "componentIds": [
+        "Command"
+      ]
+    },
+    {
+      "name": "Comparison",
+      "componentIds": []
+    },
+    {
+      "name": "Context Menu",
+      "componentIds": [
+        "ContextMenu"
+      ]
+    },
+    {
+      "name": "Contribution Graph",
+      "componentIds": []
+    },
+    {
+      "name": "Counter",
+      "componentIds": []
+    },
+    {
+      "name": "Credit Card",
+      "componentIds": []
+    },
+    {
+      "name": "Data Table",
+      "componentIds": []
+    },
+    {
+      "name": "Date Picker",
+      "componentIds": []
+    },
+    {
+      "name": "Deck",
+      "componentIds": []
+    },
+    {
+      "name": "Dialog",
+      "componentIds": [
+        "Dialog",
+        "Modal"
+      ]
+    },
+    {
+      "name": "Dialog Stack",
+      "componentIds": []
+    },
+    {
+      "name": "Direction",
+      "componentIds": [
+        "DirectionProvider"
+      ]
+    },
+    {
+      "name": "Drawer",
+      "componentIds": [
+        "Drawer"
+      ]
+    },
+    {
+      "name": "Dropdown Menu",
+      "componentIds": [
+        "Menu"
+      ]
+    },
+    {
+      "name": "Dropzone",
+      "componentIds": []
+    },
+    {
+      "name": "Editor",
+      "componentIds": []
+    },
+    {
+      "name": "Emoji Picker",
+      "componentIds": []
+    },
+    {
+      "name": "Empty",
+      "componentIds": [
+        "EmptyState"
+      ]
+    },
+    {
+      "name": "Field",
+      "componentIds": [
+        "Field",
+        "ValueField",
+        "SecretField",
+        "FormField"
+      ]
+    },
+    {
+      "name": "File Upload",
+      "componentIds": []
+    },
+    {
+      "name": "Form",
+      "componentIds": [
+        "SettingsRow"
+      ]
+    },
+    {
+      "name": "Form Star Rating",
+      "componentIds": []
+    },
+    {
+      "name": "Gantt",
+      "componentIds": []
+    },
+    {
+      "name": "Github Stars",
+      "componentIds": []
+    },
+    {
+      "name": "Glimpse",
+      "componentIds": []
+    },
+    {
+      "name": "Hover Card",
+      "componentIds": [
+        "HoverCard"
+      ]
+    },
+    {
+      "name": "Image Crop",
+      "componentIds": []
+    },
+    {
+      "name": "Image Zoom",
+      "componentIds": []
+    },
+    {
+      "name": "Input",
+      "componentIds": [
+        "Input",
+        "Field"
+      ]
+    },
+    {
+      "name": "Input Group",
+      "componentIds": [
+        "InputGroup"
+      ]
+    },
+    {
+      "name": "Input Otp",
+      "componentIds": [
+        "InputOTP"
+      ]
+    },
+    {
+      "name": "Item",
+      "componentIds": [
+        "Item"
+      ]
+    },
+    {
+      "name": "Kanban",
+      "componentIds": []
+    },
+    {
+      "name": "Kbd",
+      "componentIds": [
+        "Kbd"
+      ]
+    },
+    {
+      "name": "Label",
+      "componentIds": [
+        "Label"
+      ]
+    },
+    {
+      "name": "List",
+      "componentIds": []
+    },
+    {
+      "name": "List Panel",
+      "componentIds": []
+    },
+    {
+      "name": "Login Button",
+      "componentIds": []
+    },
+    {
+      "name": "Logo",
+      "componentIds": []
+    },
+    {
+      "name": "Marquee",
+      "componentIds": []
+    },
+    {
+      "name": "Marker",
+      "componentIds": [
+        "Marker"
+      ]
+    },
+    {
+      "name": "Menubar",
+      "componentIds": [
+        "Menubar"
+      ]
+    },
+    {
+      "name": "Message",
+      "componentIds": [
+        "Message"
+      ]
+    },
+    {
+      "name": "Mini Calendar",
+      "componentIds": []
+    },
+    {
+      "name": "Navigation Menu",
+      "componentIds": [
+        "NavigationMenu"
+      ]
+    },
+    {
+      "name": "Pagination",
+      "componentIds": [
+        "Pagination"
+      ]
+    },
+    {
+      "name": "Pill",
+      "componentIds": [
+        "Pill",
+        "SelectPill"
+      ]
+    },
+    {
+      "name": "Popover",
+      "componentIds": [
+        "Popover"
+      ]
+    },
+    {
+      "name": "Price",
+      "componentIds": []
+    },
+    {
+      "name": "Progress",
+      "componentIds": [
+        "Progress"
+      ]
+    },
+    {
+      "name": "Qr Code",
+      "componentIds": []
+    },
+    {
+      "name": "Radio Group",
+      "componentIds": [
+        "AppearanceCubes",
+        "Segmented",
+        "RadioGroup"
+      ]
+    },
+    {
+      "name": "Rating",
+      "componentIds": []
+    },
+    {
+      "name": "Reel",
+      "componentIds": []
+    },
+    {
+      "name": "Relative Time",
+      "componentIds": []
+    },
+    {
+      "name": "Resizable",
+      "componentIds": [
+        "ResizablePanelGroup"
+      ]
+    },
+    {
+      "name": "Sandbox",
+      "componentIds": []
+    },
+    {
+      "name": "Scroll Area",
+      "componentIds": [
+        "ScrollArea"
+      ]
+    },
+    {
+      "name": "Scrollable Tabslist",
+      "componentIds": []
+    },
+    {
+      "name": "Select",
+      "componentIds": [
+        "SelectField",
+        "SelectPill",
+        "NativeSelect"
+      ]
+    },
+    {
+      "name": "Separator",
+      "componentIds": [
+        "Separator"
+      ]
+    },
+    {
+      "name": "Sheet",
+      "componentIds": [
+        "Sheet"
+      ]
+    },
+    {
+      "name": "Sidebar",
+      "componentIds": [
+        "SidebarProvider"
+      ]
+    },
+    {
+      "name": "Skeleton",
+      "componentIds": [
+        "Skeleton"
+      ]
+    },
+    {
+      "name": "Slider",
+      "componentIds": [
+        "Slider"
+      ]
+    },
+    {
+      "name": "Snippet",
+      "componentIds": []
+    },
+    {
+      "name": "Social Button",
+      "componentIds": []
+    },
+    {
+      "name": "Sonner",
+      "componentIds": [
+        "Toast"
+      ]
+    },
+    {
+      "name": "Spinner",
+      "componentIds": [
+        "Spinner"
+      ]
+    },
+    {
+      "name": "Status",
+      "componentIds": [
+        "StateDot",
+        "ConnectionIndicator"
+      ]
+    },
+    {
+      "name": "Stepper",
+      "componentIds": []
+    },
+    {
+      "name": "Switch",
+      "componentIds": [
+        "Switch",
+        "SwitchField"
+      ]
+    },
+    {
+      "name": "Table",
+      "componentIds": [
+        "Table"
+      ]
+    },
+    {
+      "name": "Tabs",
+      "componentIds": [
+        "Tabs"
+      ]
+    },
+    {
+      "name": "Tags",
+      "componentIds": [
+        "Tag"
+      ]
+    },
+    {
+      "name": "Textarea",
+      "componentIds": [
+        "Textarea"
+      ]
+    },
+    {
+      "name": "Theme Switcher",
+      "componentIds": [
+        "AppearanceCubes"
+      ]
+    },
+    {
+      "name": "Theme Toggle",
+      "componentIds": []
+    },
+    {
+      "name": "Ticker",
+      "componentIds": []
+    },
+    {
+      "name": "Toggle",
+      "componentIds": [
+        "Toggle"
+      ]
+    },
+    {
+      "name": "Toggle Group",
+      "componentIds": [
+        "ToggleGroup"
+      ]
+    },
+    {
+      "name": "Tooltip",
+      "componentIds": [
+        "Tooltip"
+      ]
+    },
+    {
+      "name": "Tree",
+      "componentIds": [
+        "JsonTree"
+      ]
+    },
+    {
+      "name": "Video Player",
+      "componentIds": []
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+# The anchored-listbox shape
+
+A written-down pattern, not a module. **No item may import another item's file** — the registry's
+ingest gate (`scripts/validate-registry.mjs`) rejects a cross-item import, and that rule is absolute.
+So the shape below is *restated* by each item that needs it, and each such item's doc comment must
+cite this file from its first line, the way `ButtonGroupSeparator` and `ItemSeparator` already cite the
+one-rule-divider shape they restate. Duplication with acknowledged lineage is a cost we accept;
+duplication nobody can trace is not.
+
+Items that restate it today: `Command` (filtering listbox), `Popover` (anchoring without a list).
+Expected next: `Combobox`, which is both halves at once.
+
+## The parts
+
+1. **Open state lives in a root.** Controlled `open` plus `defaultOpen` for uncontrolled, and
+   `onOpenChange` called from one place. Children read it through a React context; nothing else holds
+   a copy. Provider values are rebuilt with `useMemo` on the state they close over.
+2. **The trigger is a real `<button>`** carrying `aria-haspopup="dialog"` (or `"listbox"`) and
+   `aria-expanded`. `asChild`/Slot is not ported — it needs Radix — so a consumer styles the button
+   with their own class.
+3. **The panel is positioned, never portalled.** Compute from the trigger's own
+   `getBoundingClientRect()` in viewport coordinates, flip when the panel would overflow the bottom,
+   re-measure on `resize` and on `scroll` (capture). A portal is impossible here: a client bundle may
+   require only `react`, `react/jsx-runtime` and the app primitives, and `react-dom`'s
+   `createPortal` is outside that set — `tests/built-bundle.spec.ts` fails the build if anything else
+   is required. Consequence to state in the item's own docs: an ancestor with `overflow: hidden` or a
+   `transform` can clip the panel.
+4. **Focus moves in and back.** Focus the panel once it is *visible*, not when it is created. If the
+   panel starts `visibility: hidden` and the first measure clears that through a state update, a
+   `focus()` in the same commit is a silent no-op on a hidden element — focus has to run from an
+   effect keyed on the applied position. On close, focus returns to the trigger for Escape; for an
+   outside press it stays where the user pressed.
+5. **Dismissal is Escape (on `document`) plus an outside `pointerdown`.** Escape is the innermost
+   layer's to claim, but note that a surrounding app view listening on `document` will also act on it.
+6. **A filtering listbox keeps a registry, and judges by "unknown means visible".** The root holds
+   `{ text, disabled, onSelect }` per mounted item; an item that has *not* registered yet is visible,
+   or every row would be `display-none` on the first paint and a server render would show an empty
+   menu. Filtered-out rows get `display: none`, so they leave the accessibility tree as well as the
+   layout, and the empty state waits until something has registered.
+7. **Keyboard walks the DOM, not a state array.** Read the surviving items with
+   `root.querySelectorAll('[data-slot="…-item"]')` at key time and filter out the hidden and disabled.
+   Tracking order in state gets it *reversed*, because React registers children bottom-up. Arrows move,
+   Home/End jump, Enter chooses, and the chosen row gets `scrollIntoView({ block: 'nearest' })`.
+8. **The ARIA is the contract.** Root `role="combobox"` with `aria-controls` naming the listbox; the
+   input carries `aria-activedescendant` pointing at the active option and `aria-autocomplete="list"`;
+   every row is `role="option"` with `aria-selected`. Verify the input's `aria-activedescendant` equals
+   the active option's id — that is the cheapest browser check that the whole chain is wired.
+
+## What does not transfer
+
+- Radix's `--radix-*-content-transform-origin`, and enter/exit animations. These ports animate nothing
+  rather than inventing keyframes; say that in the item's docs instead of quietly dropping it.
+- The source's `*.Portal` exports, for the reason in (3).
+- A focus trap over the rest of the page. `Sheet`/`Drawer` wrap Tab inside the panel and say plainly
+  that the page behind is not inert; a real trap needs either the app's `Modal` (centred by design, so
+  it cannot become a side sheet) or an inert pass over the app root — a product decision.
+
+## Checking it
+
+Static markup can assert the ARIA shape and the slots, and cannot assert filtering or selection,
+because both depend on mount effects. Filtering, arrow movement and Enter belong in the real-browser
+check (see the CDP recipe in project memory: cached Chromium driven over `Runtime.evaluate` and
+`Input.dispatchKeyEvent`, no npm install). Clearing a controlled input in such a check needs React's
+own value setter — setting `.value` directly silently concatenates the next query instead.
+
+## Known constraints for Combobox (read before starting it)
+
+Read off the source (registry item `combobox`, style `new-york-v4`; fetch any item as JSON from
+`https://ui.shadcn.com/r/styles/new-york-v4/<slug>.json`). Combobox is the largest item in this set —
+19 exports — and three of its properties decide the port before any code is written:
+
+1. **Its source composes two other items.** `ComboboxInput` is an `InputGroup` containing an
+   `InputGroupInput`, an `InputGroupAddon` and an `InputGroupButton`, and `ComboboxClear` renders
+   shadcn's `Button`. Neither import is allowed here, so Combobox **restates that chrome locally** —
+   ruled, not open; see "Restating InputGroup's chrome" at the end of this section.
+2. **Base UI's positioner variables have no equivalent.** The content is sized and placed with
+   `--anchor-width`, `--available-width`, `--available-height` and `--transform-origin`, all published
+   by Base UI's Positioner. Here, anchoring is the shape above: measure the anchor's rect yourself,
+   decide the panel's width from it, and bound the list's height by the space left in the viewport.
+   There is no portal, so the clipping caveat in point 3 applies.
+3. **It is both a combobox and a multi-select.** Beyond input/content/list/item/group/label/empty/
+   separator, it carries a four-part chips family (`ComboboxChips`, `ComboboxChip`,
+   `ComboboxChipsInput`) plus `ComboboxValue`, `ComboboxTrigger`, `ComboboxClear` and a
+   `useComboboxAnchor` hook. Decide explicitly whether the first pass is the single-select core with the
+   chips family recorded as a follow-up, and record the answer in `manifest.yml` — a documented partial
+   is acceptable, a silent one is not.
+4. **Data attributes carry state**, as in the rest of this library: `data-open`, `data-empty`,
+   `data-chips`, `data-side`. Keep them, they are what a caller styles against, and they replace the
+   `data-open:animate-in`/`zoom-in-95` animations that are deliberately not ported.
+
+## Restating InputGroup's chrome
+
+Ruled, not open: Combobox restates it.
+
+`InputGroup` is the original of a shape now restated by more than one item — the registry item
+`InputGroup` itself, and `Combobox`, whose source wraps its input in one (an `InputGroupAddon` on the
+inline-start or end, an icon-xs ghost `InputGroupButton`, and the group's own focus and invalid ring).
+`Command` restates the *anchored-listbox* shape in this document, not this chrome — its search field is
+its own wrapper, not an input group.
+
+The rule stays absolute: a cross-item import is what the ingest gate rejects, so Combobox cannot import
+`InputGroup`. What it does instead is what `ButtonGroupSeparator`, `ItemSeparator`, `ToggleGroupItem`,
+`PaginationLink`, `AttachmentAction` and `Command` already do — restate the shape, and say so in the
+manifest's `changed` field. **Reducing fidelity to dodge the restatement is the one option that is not
+available**: dropping the addon and button affordances would make the search field a plain input, a real
+behavioural downgrade from upstream, where restating costs lines and buys nothing but duplicated code.
+That is the ruling this project applies wherever self-containment forces the question.
+
+When restating, keep the same parts and hooks so a caller's styles keep working:
+`data-slot="input-group"`, `data-align` on the addon, the `input-group-control` slot that the group's
+focus and invalid rules key off, and the group's own `data-disabled`. Then cite this section from the
+item's doc comment.
+
+## Scope ruling for Combobox
+
+Single-select core first; the multi-select chips family is an explicit, documented follow-up rather
+than part of the first pass. Both halves of that need recording when the item lands — the follow-up in
+`manifest.yml`'s `changed` field (the home for a deliberate partial) and in the item's doc comment, per
+"a partial, verified batch is worth more than an unverified pile". A silent partial is not an option.

@@ -1,0 +1,41 @@
+{
+  "commit": "d5b3de22d0e24a3e9c38a9410d3329b099717283",
+  "renames": false,
+  "directories": [
+    {
+      "ours": "src/facade",
+      "upstream": "packages/chord/src/sqlite"
+    },
+    {
+      "ours": "tests/facade",
+      "upstream": "packages/chord/test/sqlite"
+    }
+  ],
+  "omitted": {
+    "reason": "not part of this provider",
+    "packages/chord/src/sqlite/cloudflare.ts": "a host adapter (Durable Object storage); it comes with the hosting adapters after spec 049 slice 3",
+    "packages/chord/test/sqlite/cloudflare.test.ts": "tests cloudflare.ts",
+    "packages/chord/test/sqlite/helpers.ts": "the Durable Object stand-in for cloudflare.test.ts",
+    "packages/chord/src/sqlite/database.ts": "the port, in acryl-db",
+    "packages/chord/src/sqlite/migrations.ts": "the port, in acryl-db",
+    "packages/chord/src/sqlite/schema.ts": "the port, in acryl-db",
+    "packages/chord/src/sqlite/index.ts": "the barrel; src/index.ts exports the plugin"
+  },
+  "files": {
+    "src/facade/node.ts": {
+      "upstreamSha256": "87eee26ec2cd23f0ec19fa785c4b985546d85cf791fd6454e75bbe643e6eac68",
+      "sha256": "f1506fcd6bcaecf719bf716eb79e329dfe81411e9377b8bff7ebb02e4760a8d1",
+      "deviation": "implements the port's names from acryl-db (Db, DbExecutor, SqlValue), and run resolves { changes } from node:sqlite's result"
+    },
+    "tests/facade/migrations.test.ts": {
+      "upstreamSha256": "92781852cc08e850066320182d5578bcedd7f51e331ff7d53c306e97f7311903",
+      "sha256": "9a0fc7d143949ab57a9c337ee1d26b77e5cbfde140e3f9db1fbf09a08e78ddb3",
+      "deviation": "imports the port's names from acryl-db and expects its message without SQLite; failed[0] is asserted non-null for noUncheckedIndexedAccess"
+    },
+    "tests/facade/node.test.ts": {
+      "upstreamSha256": "0d19d1f9aff5592c695cbc53abff0502b6175bea7d9737037af301f3232a0828",
+      "sha256": "212cc0b32de95bbb23f1c59d9ceeb98906f0e1ea3f55f20840295395433753ce",
+      "deviation": "imports DbExecutor from acryl-db, and the misused call's promise is typed with run's { changes } result"
+    }
+  }
+}

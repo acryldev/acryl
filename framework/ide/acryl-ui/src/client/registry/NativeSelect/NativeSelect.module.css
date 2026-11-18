@@ -1,0 +1,8 @@
+.wrapper { position: relative; width: fit-content; }
+.wrapper:has(select:disabled) { opacity: 0.5; }
+.select { height: 32px; width: 100%; min-width: 0; appearance: none; border-radius: 8px; border: 1px solid var(--dsw-alias-border-l4); background: transparent; padding: 4px 32px 4px 10px; font-size: 13px; color: var(--dsw-alias-label-primary); transition: border-color 0.15s, background-color 0.15s; outline: none; user-select: none; }
+.select:focus-visible { border-color: var(--dsw-alias-border-l3); box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); }
+.select:disabled { pointer-events: none; cursor: not-allowed; }
+.select[aria-invalid='true'] { border-color: var(--dsw-alias-state-error-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--dsw-alias-state-error-primary) 20%, transparent); }
+.small { height: 28px; padding-top: 2px; padding-bottom: 2px; }
+.icon { pointer-events: none; position: absolute; top: 50%; right: 10px; width: 16px; height: 16px; transform: translateY(-50%); color: var(--dsw-alias-label-tertiary); user-select: none; }

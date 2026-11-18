@@ -1,0 +1,8 @@
+.list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--dsw-alias-label-tertiary); list-style: none; margin: 0; padding: 0; }
+.item { display: inline-flex; align-items: center; gap: 6px; }
+.link { color: inherit; text-decoration: none; }
+.link:hover { color: var(--dsw-alias-label-primary); }
+.page { color: var(--dsw-alias-label-primary); font-weight: 500; }
+.separator svg { width: 14px; height: 14px; }
+.ellipsis { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

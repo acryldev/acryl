@@ -1,0 +1,17 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "plugins/acryl-ui"
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": ["src/**", "contracts/**", "scripts/**", "build/**", "docs/**", "cordis.patch.yml", "registry-manifest.yml", "tsdown.config.ts", "tsconfig.json", "tsconfig.client.json", "index.js", "README.md"],
+  "changes": {
+    "package.json": "repository points here, build tool versions match this repository, @deepseek-ai/dsh-client-ui-commands added as a devDependency for the type-only frame import, acrylblends is not a dependency of this package",
+    "vitest.config.ts": "runs on this repository's vitest; the pinned DSH source the suite compares against is vendored under tests/fixtures/dsh, and the ACRYL repository's HOME isolation setup file is not used here",
+    "tests/library.spec.tsx": "one line: the DSH source path points at tests/fixtures/dsh/packages/client",
+    "tests/built-bundle.spec.ts": "one line: the hashed-class check unescapes a CSS-serialized leading digit (`\\3X `) before matching [hash]_[local]; a generated hash may begin with a digit and the CSS serializer escapes it, which the original regex read as a failure",
+    "tests/fixtures/dsh": "the DSH files the suite compares against or imports, byte-identical, from the deepseek-harness checkout at 639ed01539 (MIT)"
+  },
+  "notes": "src/ is byte-identical to the source commit. The original test suite runs unchanged apart from that one path."
+}

@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    "instance",
+    "acryl-router",
+    "home",
+    "acryl-state",
+    "acryl-node-server",
+    "acryl-page",
+    "acryl-web-server",
+    "tasks",
+    "agent",
+    "openai",
+    "sandbox",
+    "extensions",
+    "builder",
+    "plugin-share",
+    "agent-panel",
+    "manifest",
+    "save",
+    "acryl-door"
+  ]
+}

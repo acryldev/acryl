@@ -1,0 +1,37 @@
+# Regenerate the frame's visual baseline (scripts/frame-reference-frame) on the runner the visual gate compares on: Linux, Node 24, the same image as
+# `frame (ubuntu-latest)`. The images are captured, downloaded and reviewed before they are committed; the gate then compares every Linux agent-template
+# run against that set at 2% (`FRAME_VISUAL` on the frame job). The ACRYL design target (scripts/frame-reference) is not this baseline: it is a different
+# composition (no project, ACRYL's own plugins) and is read with `frame-compare --against acryl`, reported only.
+#
+# Triggers: by hand once this file is on the default branch, or a push whose head commit message carries [frame-baseline] (how the first set was made
+# from the workshop branch).
+name: frame baseline
+on:
+  workflow_dispatch:
+  push:
+    branches: [119-workshop-guide]
+jobs:
+  capture:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[frame-baseline]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The frame packages' lib folders and the CLI's dist: the gate's app takes them as file: specs.
+      - run: pnpm run build
+      - name: capture the frame's day-one states
+        env:
+          FRAME_VISUAL_CAPTURE: ${{ runner.temp }}/frame-baseline
+        run: node --import ./scripts/workspace-source.mjs scripts/verify-ide-template.mjs agent
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frame-baseline
+          path: ${{ runner.temp }}/frame-baseline
+          if-no-files-found: error

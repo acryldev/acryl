@@ -1,0 +1,20 @@
+.item { border-bottom: 1px solid var(--dsw-alias-border-l4); }
+.item:last-child { border-bottom: none; }
+.trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: none;
+  background: none;
+  padding: 16px 0;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+.chevron { flex-shrink: 0; color: var(--dsw-alias-label-tertiary); transition: transform 0.2s; }
+.chevronOpen { transform: rotate(180deg); }
+.content { padding: 0 0 16px; font-size: 13px; color: var(--dsw-alias-label-tertiary); }

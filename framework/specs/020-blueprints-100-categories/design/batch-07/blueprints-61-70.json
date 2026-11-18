@@ -1,0 +1,356 @@
+{
+  "batch": 7,
+  "range": "61-70",
+  "title": "ACRYL Blends — Application Blueprint Mockups",
+  "source_taxonomy": "ACRYL_BLENDS_100_Software_Categories_Formatted.md",
+  "delivery_notes": {
+    "mockups_are_implemented_apps": false,
+    "external_api_keys_required": false,
+    "seeded_data": true,
+    "prototype_only": true,
+    "responsive": true,
+    "standalone_html": true
+  },
+  "blueprints": [
+    {
+      "n": 61,
+      "category": "Integration software",
+      "name": "Relaycraft",
+      "tagline": "Move business data across systems, with every transformation visible.",
+      "purpose": "A compact integration studio for assembling connector-based data flows, mapping fields, previewing transformations and running a seeded sync job.",
+      "audience": "Operations engineers, integration specialists and teams connecting business systems.",
+      "ux": "A node-and-mapping workbench with a left connector rail, central pipeline canvas, lower record preview and a right run inspector.",
+      "screens": [
+        "Connector catalogue and connection status",
+        "Pipeline canvas with ordered source, transform and destination nodes",
+        "Field mapping and sample-record preview",
+        "Run history with row counts and error details"
+      ],
+      "flows": [
+        "Choose a source and destination connector from seeded systems.",
+        "Add a transform step and map source fields to destination fields.",
+        "Preview the first sample records and inspect unmapped fields.",
+        "Run a deterministic local sync simulation and review processed, skipped and failed rows."
+      ],
+      "model": "Connector, Connection, Pipeline, PipelineStep, FieldMapping, SampleRecord, SyncRun. Store connector capabilities separately from credential references; demo data must contain no real secrets.",
+      "guard": "No live connectors, credentials, network requests or writes to external systems. The run is a deterministic local simulation. Never display real API keys or connection secrets.",
+      "prompts": [
+        "Implement a typed pipeline graph model with connector, transform and destination step validation.",
+        "Build a mapping service that previews deterministic sample-record transformations and reports unmapped or invalid fields.",
+        "Add run history, retry semantics for seeded failed rows and unit tests for mapping edge cases."
+      ],
+      "id": "blueprint-61",
+      "mockup": "mockups/integration-relaycraft.html",
+      "spec": "specs/61-integration-relaycraft.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 62,
+      "category": "Mobile software",
+      "name": "Mobiary",
+      "tagline": "A compact mobile companion for the moments between meetings.",
+      "purpose": "A mobile-first personal field journal prototype demonstrating native-feeling navigation, widgets, quick capture and a responsive companion dashboard.",
+      "audience": "Mobile product teams, field workers and users who capture short notes while moving.",
+      "ux": "A device-first prototype: realistic phone bezel and touch-sized screen on the left, feature configuration and widget controls on the right.",
+      "screens": [
+        "Mobile home with daily focus and quick actions",
+        "Capture view for a note, photo placeholder or voice memo",
+        "Activity list and saved entries",
+        "Profile and widget preferences"
+      ],
+      "flows": [
+        "Switch between Home, Activity and Profile tabs in the device preview.",
+        "Create a quick note and see it appear in the activity list.",
+        "Add or remove home widgets from the companion controls.",
+        "Toggle compact mode and notification preference."
+      ],
+      "model": "UserProfile, JournalEntry, MobileWidget, DevicePreference, ActivityItem. Store UI state and demo entries locally in the prototype.",
+      "guard": "The device is a responsive web mockup, not an installed native or hybrid application. Camera and microphone actions are simulated; no device permissions or data collection.",
+      "prompts": [
+        "Build a mobile-first navigation shell with accessible touch targets and safe-area-aware layout.",
+        "Implement offline-first journal entries with local persistence and queued sync state.",
+        "Create widget configuration and device capability adapters with tests for mobile and desktop breakpoints."
+      ],
+      "id": "blueprint-62",
+      "mockup": "mockups/mobile-mobiary.html",
+      "spec": "specs/62-mobile-mobiary.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 63,
+      "category": "Desktop software",
+      "name": "Canvasmith Desktop",
+      "tagline": "A focused desktop workspace for building and organizing visual assets.",
+      "purpose": "A desktop application shell prototype with project navigation, asset thumbnails, a central editing canvas and contextual property controls.",
+      "audience": "Designers, desktop-product teams and developers exploring native, Electron or Tauri application UX.",
+      "ux": "A dense desktop window with familiar native chrome, project sidebar, central canvas, inspector and bottom asset strip.",
+      "screens": [
+        "Project and file navigation",
+        "Asset canvas with selection and zoom",
+        "Layer and object inspector",
+        "Asset export and activity panel"
+      ],
+      "flows": [
+        "Select a project asset from the left sidebar.",
+        "Select a layer to inspect and edit its properties.",
+        "Change zoom and toggle the layer list.",
+        "Create an asset card and export a simulated preview."
+      ],
+      "model": "DesktopProject, Asset, Layer, Property, ExportPreset, RecentFile. Model window state and selected asset independently from persistent project data.",
+      "guard": "A browser-based desktop UI simulation only. It does not access the local filesystem, OS window manager, clipboard or native export APIs.",
+      "prompts": [
+        "Create a cross-platform desktop shell with explicit platform abstraction boundaries for Electron and Tauri.",
+        "Implement typed project, asset and layer models with undoable inspector edits.",
+        "Add local file adapter interfaces and export-preset tests without coupling domain logic to the host runtime."
+      ],
+      "id": "blueprint-63",
+      "mockup": "mockups/desktop-canvasmith.html",
+      "spec": "specs/63-desktop-canvasmith.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 64,
+      "category": "Web software",
+      "name": "Pagefoundry",
+      "tagline": "Shape a web experience, block by block.",
+      "purpose": "A browser-based website builder prototype with page navigation, a live page preview, block insertion and a right-side design inspector.",
+      "audience": "Small teams, designers and developers creating websites, SaaS pages and portals.",
+      "ux": "A visual web editor with a left page/block navigator, centered browser-like page canvas and inspector on the right.",
+      "screens": [
+        "Site map and page selector",
+        "Live website canvas with selectable sections",
+        "Block library and insertion controls",
+        "Theme and publish settings"
+      ],
+      "flows": [
+        "Switch between Home, Features and Pricing pages.",
+        "Select a hero, feature grid or CTA section in the preview.",
+        "Insert a new section and change its headline or background theme.",
+        "Toggle preview mode and publish a simulated build."
+      ],
+      "model": "Site, Page, Section, Block, ThemeToken, PublishVersion. Represent page structure as ordered blocks with schema-defined editable properties.",
+      "guard": "The builder edits local demo state only. Publishing is simulated; no external hosting, analytics, form submissions or third-party services.",
+      "prompts": [
+        "Implement a schema-driven page builder with reusable block types and serializable page documents.",
+        "Create an editor state model with selection, insertion, deletion and undo/redo operations.",
+        "Build responsive rendering and a deterministic static-export pipeline with page-schema tests."
+      ],
+      "id": "blueprint-64",
+      "mockup": "mockups/web-pagefoundry.html",
+      "spec": "specs/64-web-pagefoundry.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 65,
+      "category": "Terminal software",
+      "name": "Termforge",
+      "tagline": "A command workspace for repeatable work, not just a prompt.",
+      "purpose": "A terminal-native workspace prototype combining a simulated shell, command history, task shortcuts and a compact system status panel.",
+      "audience": "Developers, platform engineers and technical users who prefer keyboard-driven interfaces.",
+      "ux": "A terminal-first dark TUI with split panes: command console, task launcher and session metadata.",
+      "screens": [
+        "Terminal session and prompt",
+        "Command history and reusable snippets",
+        "Task launcher for build, test and deploy routines",
+        "Session and environment status"
+      ],
+      "flows": [
+        "Run safe predefined commands from the prompt or shortcut list.",
+        "Use help, ls, pwd, git status, npm test and date to inspect seeded output.",
+        "Select a command snippet to populate the prompt.",
+        "Clear the terminal or switch between workspace tabs."
+      ],
+      "model": "TerminalSession, CommandHistory, CommandSnippet, Workspace, EnvironmentStatus, CommandResult. Commands must be parsed against a strict demo allowlist.",
+      "guard": "This is a browser simulation. It must never invoke a host shell, execute arbitrary commands, read files, access SSH or expose real environment variables.",
+      "prompts": [
+        "Implement a command parser with an explicit allowlist and deterministic output fixtures; reject all unknown commands.",
+        "Build a keyboard-accessible terminal history with command recall, clear and shortcut snippets.",
+        "Add multi-session persistence and tests proving that no command can reach host process execution."
+      ],
+      "id": "blueprint-65",
+      "mockup": "mockups/terminal-termforge.html",
+      "spec": "specs/65-terminal-termforge.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 66,
+      "category": "Extended reality software",
+      "name": "Luma Space",
+      "tagline": "Compose spatial experiences from scenes, anchors and interactions.",
+      "purpose": "An XR scene-composition prototype for arranging spatial anchors, switching between AR/VR/MR modes and inspecting object placement in a stylized viewport.",
+      "audience": "XR designers, spatial-computing developers and teams prototyping immersive product concepts.",
+      "ux": "An immersive dark scene editor with a large spatial viewport, floating scene object list and contextual transform inspector.",
+      "screens": [
+        "Scene viewport and camera mode selector",
+        "Spatial object and anchor hierarchy",
+        "Transform inspector for position, scale and rotation",
+        "Interaction preview and scene validation"
+      ],
+      "flows": [
+        "Switch between AR, VR and MR preview modes.",
+        "Select scene objects and inspect their transform values.",
+        "Add a new spatial anchor to the scene.",
+        "Adjust the world scale and run a local interaction preview."
+      ],
+      "model": "XRScene, SceneObject, SpatialAnchor, Transform3D, Interaction, PreviewMode. Keep coordinates in a typed 3D vector and units explicit.",
+      "guard": "The viewport is a visual 3D-style mockup, not a real XR session. No camera passthrough, tracking, eye data, biometric input or physical-world mapping. Do not claim AR safety or spatial accuracy.",
+      "prompts": [
+        "Implement a scene graph with stable object IDs, parent-child transforms and explicit meter units.",
+        "Build an XR preview-state controller for AR, VR and MR modes without requiring a hardware runtime.",
+        "Add scene serialization, anchor validation and tests for transform composition and scale boundaries."
+      ],
+      "id": "blueprint-66",
+      "mockup": "mockups/xr-luma-space.html",
+      "spec": "specs/66-xr-luma-space.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 67,
+      "category": "Human-computer interaction software",
+      "name": "Sensepath Lab",
+      "tagline": "Prototype the interface between human intent and machine response.",
+      "purpose": "An interaction research workbench for reviewing input modalities, running a simulated task and comparing accessibility and usability signals.",
+      "audience": "HCI researchers, product designers, accessibility practitioners and prototyping teams.",
+      "ux": "A research lab layout with modality selector, task-stage display, calibration controls and a measured-session summary.",
+      "screens": [
+        "Input modality overview",
+        "Speech, gesture, gaze, haptic and alternative interaction panels",
+        "Task run and calibration feedback",
+        "Session observations and comparison"
+      ],
+      "flows": [
+        "Choose a modality and inspect its requirements and feedback loop.",
+        "Run a short local task simulation for the selected modality.",
+        "Adjust sensitivity or feedback settings.",
+        "Save an observation and compare the session summary."
+      ],
+      "model": "Modality, InteractionProfile, Calibration, TaskScenario, SessionRun, Observation. Track synthetic timing and completion events without collecting real user signals.",
+      "guard": "All modality activity is simulated. No microphone, camera, eye tracking, brain-computer interface, haptic device or biometric input is accessed. Sample metrics are illustrative and not clinical or scientific evidence.",
+      "prompts": [
+        "Design a modality adapter interface that separates device-specific input from normalized interaction events.",
+        "Implement synthetic task scenarios and session metrics for keyboard, speech, gaze and gesture prototypes.",
+        "Add accessible modality settings, consent gates for any future device integration and unit tests around normalized events."
+      ],
+      "id": "blueprint-67",
+      "mockup": "mockups/hci-sensepath-lab.html",
+      "spec": "specs/67-hci-sensepath-lab.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 68,
+      "category": "Localization software",
+      "name": "LingoDesk",
+      "tagline": "Translate at scale without losing the voice of the product.",
+      "purpose": "A translation-management and CAT-workbench prototype with locale selection, segment editing, terminology suggestions and QA checks.",
+      "audience": "Localization managers, translators, product teams and language-service providers.",
+      "ux": "A focused translation editor: project/locale rail, source-target segment table, glossary sidebar and progress header.",
+      "screens": [
+        "Project and locale dashboard",
+        "Side-by-side source and target segments",
+        "Glossary and translation-memory suggestions",
+        "QA issues and locale readiness"
+      ],
+      "flows": [
+        "Choose a target locale and filter segments by state.",
+        "Edit a target segment and save the draft.",
+        "Insert a glossary term or translation-memory suggestion.",
+        "Run local QA checks for empty targets, placeholders and terminology consistency."
+      ],
+      "model": "LocalizationProject, Locale, MessageKey, TranslationSegment, GlossaryTerm, TranslationMemoryEntry, QAIssue. Preserve stable message keys and placeholder tokens.",
+      "guard": "Translations and QA are illustrative seeded examples. No machine-translation provider, external localization service or production content is contacted. Never silently rewrite approved translations.",
+      "prompts": [
+        "Implement a locale-aware message catalog with stable keys, plural forms and placeholder validation.",
+        "Build a translation editor with draft, review and approved states plus glossary and translation-memory suggestions.",
+        "Add QA checks for missing strings, placeholders, length constraints and term consistency with unit tests."
+      ],
+      "id": "blueprint-68",
+      "mockup": "mockups/localization-lingodesk.html",
+      "spec": "specs/68-localization-lingodesk.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 69,
+      "category": "Accessibility software",
+      "name": "Clearpath Audit",
+      "tagline": "Make accessibility visible, testable and part of the build.",
+      "purpose": "An accessibility audit and assistive-preview prototype for triaging sample interface issues, previewing contrast and text settings, and recording remediation.",
+      "audience": "Accessibility specialists, QA teams, designers and product owners.",
+      "ux": "A quality-audit console with issue severity rail, live page preview and a detailed remediation panel.",
+      "screens": [
+        "Audit summary and issue filters",
+        "Sample page with contrast and typography controls",
+        "Issue detail with affected component and suggested fix",
+        "Remediation checklist and re-run summary"
+      ],
+      "flows": [
+        "Filter audit items by severity and select an issue.",
+        "Inspect the corresponding component in the preview.",
+        "Toggle a high-contrast or enlarged-text preview.",
+        "Mark a sample issue resolved and re-run the local checklist."
+      ],
+      "model": "AccessibilityAudit, AuditIssue, ComponentReference, Remediation, PreviewSetting, AuditRun. Track WCAG criterion references only when the implementation spec includes verified mapping.",
+      "guard": "This is a sample issue triage concept, not an automated conformance certificate. Passing visible demo checks does not prove WCAG compliance. Do not infer disability or user health from interactions.",
+      "prompts": [
+        "Implement an accessibility issue model with severity, component references, WCAG mapping metadata and remediation state.",
+        "Build accessible preview toggles for contrast, text scale, focus visibility and reduced motion.",
+        "Add deterministic audit fixtures and unit tests; explicitly label heuristic checks as non-conformance evidence."
+      ],
+      "id": "blueprint-69",
+      "mockup": "mockups/accessibility-clearpath-audit.html",
+      "spec": "specs/69-accessibility-clearpath-audit.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 70,
+      "category": "Backup / recovery software",
+      "name": "Restorepoint",
+      "tagline": "Know what is protected, and how quickly you can recover it.",
+      "purpose": "A backup operations and recovery-planning prototype with job status, restore points, retention visibility and a guided restore simulation.",
+      "audience": "IT administrators, infrastructure teams and operations leads responsible for business continuity.",
+      "ux": "A dark operational console with backup job rail, recovery timeline and a guided restore target inspector.",
+      "screens": [
+        "Protected workloads and backup job list",
+        "Snapshot timeline and retention points",
+        "Restore-point detail with integrity status",
+        "Recovery plan preview and simulated restore run"
+      ],
+      "flows": [
+        "Select a protected workload and inspect its recent snapshots.",
+        "Choose a recovery point on the timeline.",
+        "Preview the destination and selected restore scope.",
+        "Run a local verification simulation and review recovery status."
+      ],
+      "model": "ProtectedWorkload, BackupJob, RecoveryPoint, RetentionPolicy, RestorePlan, VerificationRun. Distinguish backup completion, integrity verification and restore readiness.",
+      "guard": "No real data is read, copied, deleted, overwritten or restored. Restore actions are simulations against seeded metadata. Never imply that a real recovery point is valid without independent verification.",
+      "prompts": [
+        "Implement backup-job and recovery-point domain models with explicit states for completed, verified and restore-ready.",
+        "Build a retention timeline and restore-plan preview that requires scope and destination confirmation.",
+        "Add deterministic verification simulations, audit events and tests for stale or incomplete recovery points."
+      ],
+      "id": "blueprint-70",
+      "mockup": "mockups/backup-restorepoint.html",
+      "spec": "specs/70-backup-restorepoint.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    }
+  ]
+}

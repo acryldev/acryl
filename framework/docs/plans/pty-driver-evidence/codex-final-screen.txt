@@ -1,0 +1,51 @@
+› The app in this folder is running right n…
+
+• Ran .acryl/bin/acryl plugin list && .acryl…
+  └   }
+    ]
+    {"app":"app","root":"/private/var/folder…
+    + 9 lines (⌃t to expand)
+
+• Ran lsof -nP -iTCP -sTCP:LISTEN
+  └ node      75317 musichen   12u  IPv4 0xb…
+    Google    75365 musichen   44u  IPv4 0xf…
+    codex     75390 musichen   40u  IPv4  0x…
+    + 23 lines (⌃t to expand)
+
+• Ran curl --fail-with-body --silent --show-…
+  └     console.error('Inline bootstrap scri…
+      }
+    })()</script></body></html>
+    + 187 lines (⌃t to expand)
+
+• Ran for port in 4311 7265 3514; do printf …
+  └
+    port 3514: {"pong":true,"by":"codex"} HT…
+
+    + 4 lines (⌃t to expand)
+
+• DONE. GET /ping returns
+  {"pong":true,"by":"codex"} with HTTP 200.
+
+  Door commands and results:
+
+  • .acryl/bin/acryl brief — app was running,
+    page open, door available.
+
+  • .acryl/bin/acryl plugin add plugins/ping
+    — first attempt failed because the staged
+    plugin couldn’t resolve a relative router
+    import; after switching to acrylblends,
+    it installed as active.
+
+  • .acryl/bin/acryl plugin list — ping is
+    active with no missing dependencies.
+
+  • .acryl/bin/acryl brief --json — confirmed
+    the app and door remained available.
+
+  I verified the response with curl at the
+  app’s address, 127.0.0.1:3514/ping.
+
+  Worked for 45s • 23:28
+   

@@ -1,0 +1,32 @@
+From cfa93d11a61e0f7f287f3f16eac737b83977d21e Mon Sep 17 00:00:00 2001
+From: Alex Musichen <webboxes.io@gmail.com>
+Date: Wed, 28 Oct 2026 21:28:51 +0100
+Subject: [PATCH] docs(blends-guide): the registry entries' runtime and the
+ create-acrylblends --from command
+
+---
+ src/lib/doc-content.ts | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/lib/doc-content.ts b/src/lib/doc-content.ts
+index 8e53646..4ad7aee 100644
+--- a/src/lib/doc-content.ts
++++ b/src/lib/doc-content.ts
+@@ -170,11 +170,11 @@ export const docContent: Record<string, DocEntry> = {
+     intro: "The registry at acrylblends.github.io/registry holds starting points: Blank, and Blueprints such as the GTD Planner and the Organizer. A project started from one belongs to its owner.",
+     body: [
+       { paragraphs: [
+-        "The registry is the source of truth for Blends. Its index is plain JSON at https://acrylblends.github.io/registry/index.json, so any tool can read it. Each entry has an id, name, kind, version, path, license, category, description and, for a Blueprint grown from another, its parent. A starter's files are served at https://acrylblends.github.io/registry/blends/<id>/blend.yaml.",
+-        "From ACRYL, acryl new my-app --from <id> starts a project from an entry, for example acryl.organizer. A private starter needs no registry: start from its git repository instead.",
++        "The registry is the source of truth for Blends. Its index is plain JSON at https://acrylblends.github.io/registry/index.json, so any tool can read it. Each entry has an id, name, kind, version, path, license, runtime, category, description and, for a Blueprint grown from another, its parent. The runtime says what the entry is for: acrylblends is a whole app for the acrylblends framework, acryl is a starter for the ACRYL app. A starter's files are served at https://acrylblends.github.io/registry/blends/<id>/blend.yaml.",
++        "For an acrylblends entry, npm create acrylblends@latest my-app -- --from <id> makes the app from npm alone (for example acrylblends.notes-desktop); npm needs the -- before the options. A starter for the ACRYL app (runtime acryl, for example acryl.organizer) is opened in the ACRYL app, and create-acrylblends refuses it with a line that says so. A private starter needs no registry: start from its git repository instead (--from github:you/starter).",
+       ], code: { label: "index entry", code: "{\n  \"id\": \"acryl.gtd\",\n  \"name\": \"GTD Planner\",\n  \"kind\": \"Blueprint\",\n  \"version\": \"0.1.0\",\n  \"path\": \"blends/acryl.gtd\",\n  \"license\": \"MIT\",\n  \"category\": \"productivity\",\n  \"description\": \"Getting Things Done - ...\",\n  \"parent\": \"acryl.blank\"\n}" } },
+       { heading: "Publishing", paragraphs: [
+-        "Open a pull request that adds blends/<id>/ with a blend.yaml (kind Blueprint, an id you own, license, visibility public, category, description), the plugins it adds under plugins/, and a README. CI validates every entry with blends-core and fails when the index is stale. A private or unlicensed entry is refused.",
++        "Open a pull request that adds blends/<id>/ with a blend.yaml (kind Blueprint, an id you own, license, visibility public, category, description), the plugins it adds under plugins/, and a README. For an app for acrylblends, the folder is the whole app and holds an acryl.template.json, which is what marks its runtime. CI validates every entry with blends-core, makes each acrylblends app with create-acrylblends, and fails when the index is stale. A private or unlicensed entry is refused.",
+       ], note: "Plugins have their own registry, cordisplugins.github.io, with an index at https://cordisplugins.github.io/registry/index.json. acryl.dev/blends and acryl.dev/packages mirror both." },
+     ],
+   },
+-- 
+2.50.1 (Apple Git-155)
+

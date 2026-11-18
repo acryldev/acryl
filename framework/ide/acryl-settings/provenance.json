@@ -1,0 +1,14 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "plugins/acryl-settings"
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": ["src/index.ts", "src/merge.ts", "src/service.ts", "tests/service.spec.ts", "cordis.patch.yml"],
+  "changes": {
+    "package.json": "repository points here, build tool versions match this repository, acrylblends is not a dependency of this package",
+    "vitest.config.ts": "runs on this repository's vitest (the ACRYL repository loads its own HOME isolation there)"
+  },
+  "notes": "The original test suite runs unchanged."
+}

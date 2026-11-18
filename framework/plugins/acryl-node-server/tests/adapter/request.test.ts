@@ -1,0 +1,1230 @@
+import { IncomingMessage } from 'node:http'
+import type { ServerHttp2Stream } from 'node:http2'
+import { Http2ServerRequest } from 'node:http2'
+import { Socket } from 'node:net'
+import { Duplex } from 'node:stream'
+import {
+  abortRequest,
+  newRequest,
+  Request as LightweightRequest,
+  GlobalRequest,
+  getAbortController,
+  abortControllerKey,
+  RequestError,
+} from '../../src/adapter/request.ts'
+
+Object.defineProperty(global, 'Request', {
+  value: LightweightRequest,
+})
+
+describe('Request', () => {
+  describe('newRequest', () => {
+    it('Compatibility with standard Request object', async () => {
+      const req = newRequest({
+        method: 'GET',
+        url: '/',
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+      } as IncomingMessage)
+
+      expect(req).toBeInstanceOf(global.Request)
+      expect(req.method).toBe('GET')
+      expect(req.url).toBe('http://localhost/')
+      expect(req.headers.get('host')).toBe('localhost')
+      expect(req.keepalive).toBe(false)
+    })
+
+    it('Should not generate GlobalRequest when accessing method, url or headers', async () => {
+      const req = newRequest({
+        method: 'GET',
+        url: '/',
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+      } as IncomingMessage)
+
+      // keep lightweight request even if accessing method, url or headers
+      expect(req.method).toBe('GET')
+      expect(req.url).toBe('http://localhost/')
+      expect(req.headers.get('host')).toBe('localhost')
+      expect(req[abortControllerKey]).toBeUndefined()
+
+      // generate GlobalRequest
+      expect(req.keepalive).toBe(false)
+      expect(req[abortControllerKey]).toBeDefined()
+    })
+
+    it('Should resolve double dots in URL', async () => {
+      const req = newRequest({
+        headers: {
+          host: 'localhost',
+        },
+        url: '/static/../foo.txt',
+      } as IncomingMessage)
+      expect(req).toBeInstanceOf(global.Request)
+      expect(req.url).toBe('http://localhost/foo.txt')
+    })
+
+    it('Should accept hostname and port in host header', async () => {
+      const req = newRequest({
+        headers: {
+          host: 'localhost:8080',
+        },
+        url: '/static/../foo.txt',
+      } as IncomingMessage)
+      expect(req).toBeInstanceOf(global.Request)
+      expect(req.url).toBe('http://localhost:8080/foo.txt')
+    })
+
+    it('should generate only one `AbortController` per `Request` object created', async () => {
+      const req = newRequest({
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+        url: '/foo.txt',
+      } as IncomingMessage)
+      const req2 = newRequest({
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+        url: '/foo.txt',
+      } as IncomingMessage)
+
+      const x = req[getAbortController]()
+      const y = req[getAbortController]()
+      const z = req2[getAbortController]()
+
+      expect(x).toBeInstanceOf(AbortController)
+      expect(y).toBeInstanceOf(AbortController)
+      expect(z).toBeInstanceOf(AbortController)
+      expect(x).toBe(y)
+      expect(z).not.toBe(x)
+      expect(z).not.toBe(y)
+    })
+
+    it('should be able to safely check if an AbortController has been initialized by referencing the abortControllerKey', async () => {
+      const req = newRequest({
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+        url: '/foo.txt',
+      } as IncomingMessage)
+
+      expect(req[abortControllerKey]).toBeUndefined() // not initialized, do not initialize internal request object automatically
+
+      expect(req[getAbortController]()).toBeDefined()
+      expect(req[abortControllerKey]).toBeDefined() // initialized
+    })
+
+    it('should apply abort state lazily when signal is accessed after json() body read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      expect(await req.json()).toEqual({ foo: 'bar' })
+      expect(req[abortControllerKey]).toBeUndefined()
+
+      req[abortRequest]('Client connection prematurely closed.')
+      expect(req[abortControllerKey]).toBeUndefined()
+
+      expect(req.signal.aborted).toBe(true)
+    })
+
+    it('should preserve an application error when a complete stream is destroyed mid-read', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = {
+        host: 'localhost',
+      }
+      incomingMessage.rawHeaders = ['host', 'localhost']
+      incomingMessage.url = '/foo.txt'
+      const req = newRequest(incomingMessage)
+
+      const textPromise = req.json()
+      const error = new Error('Payload too large')
+      incomingMessage.complete = true
+      incomingMessage.destroy(error)
+
+      await expect(textPromise).rejects.toBe(error)
+    })
+
+    it.each([
+      ['without a stream error', undefined],
+      [
+        'with a client disconnect error',
+        Object.assign(new Error('aborted'), { code: 'ECONNRESET' }),
+      ],
+    ])(
+      'should preserve a complete body when the stream closes mid-read %s',
+      async (_label, destroyError) => {
+        const socket = new Socket()
+        const incomingMessage = new IncomingMessage(socket)
+        incomingMessage.method = 'POST'
+        incomingMessage.headers = {
+          host: 'localhost',
+          'content-length': '6',
+        }
+        incomingMessage.rawHeaders = ['host', 'localhost', 'content-length', '6']
+        incomingMessage.url = '/foo.txt'
+        const req = newRequest(incomingMessage)
+
+        const textPromise = req.text()
+        incomingMessage.push('foo')
+        incomingMessage.pause()
+        incomingMessage.push('bar')
+        incomingMessage.complete = true
+        incomingMessage.destroy(destroyError)
+
+        await expect(textPromise).resolves.toBe('foobar')
+      }
+    )
+
+    it('should reject direct body read when incoming stream is destroyed without error', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = {
+        host: 'localhost',
+      }
+      incomingMessage.rawHeaders = ['host', 'localhost']
+      incomingMessage.url = '/foo.txt'
+      const req = newRequest(incomingMessage)
+
+      const textPromise = req.text()
+      incomingMessage.destroy()
+
+      await expect(textPromise).rejects.toBeInstanceOf(Error)
+    })
+
+    it('should preserve the connection error when an incomplete stream was destroyed before reading', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = {
+        host: 'localhost',
+        'content-length': '6',
+      }
+      incomingMessage.rawHeaders = ['host', 'localhost', 'content-length', '6']
+      incomingMessage.url = '/foo.txt'
+      incomingMessage.push('foo')
+      incomingMessage.on('error', () => {})
+      const req = newRequest(incomingMessage)
+
+      const closed = new Promise<void>((resolve) => {
+        incomingMessage.once('close', resolve)
+      })
+      incomingMessage.destroy(new Error('aborted'))
+      await closed
+
+      await expect(req.text()).rejects.toThrow('aborted')
+    })
+
+    const newDestroyedIncomingWithCompleteBody = async (
+      body: string,
+      headers: Record<string, string> = {},
+      destroyError?: Error
+    ): Promise<IncomingMessage> => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = { host: 'localhost', ...headers }
+      incomingMessage.rawHeaders = ['host', 'localhost', ...Object.entries(headers).flat()]
+      incomingMessage.url = '/foo.txt'
+      incomingMessage.push(body)
+      incomingMessage.complete = true
+      incomingMessage.on('error', () => {})
+
+      const closed = new Promise<void>((resolve) => {
+        incomingMessage.once('close', resolve)
+      })
+      incomingMessage.destroy(destroyError)
+      await closed
+      return incomingMessage
+    }
+
+    it('should preserve the complete buffered body when the stream was destroyed before reading', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody('foo', {
+        'content-length': '3',
+      })
+      const req = newRequest(incomingMessage)
+
+      await expect(req.text()).resolves.toBe('foo')
+    })
+
+    it('should reject when the buffered body does not match content-length', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody('foo', {
+        'content-length': '6',
+      })
+      const req = newRequest(incomingMessage)
+
+      await expect(req.text()).rejects.toThrow('Body is unusable')
+    })
+
+    it('should preserve the complete buffered body for standard path reads like formData()', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody('hello=world&foo=bar', {
+        'content-type': 'application/x-www-form-urlencoded',
+        'content-length': '19',
+      })
+      const req = newRequest(incomingMessage)
+
+      const formData = await req.formData()
+      expect(Object.fromEntries(formData.entries())).toEqual({ hello: 'world', foo: 'bar' })
+    })
+
+    it('should preserve the complete buffered body when read through the body stream', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody('foo', {
+        'content-length': '3',
+      })
+      const req = newRequest(incomingMessage)
+
+      await expect(new Response(req.body).text()).resolves.toBe('foo')
+    })
+
+    it('should not recover only the remaining chunked body after a partial read', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = { host: 'localhost', 'transfer-encoding': 'chunked' }
+      incomingMessage.rawHeaders = ['host', 'localhost', 'transfer-encoding', 'chunked']
+      incomingMessage.url = '/foo.txt'
+      incomingMessage.push('first')
+      expect(incomingMessage.read()).toEqual(Buffer.from('first'))
+      expect(incomingMessage.readableDidRead).toBe(true)
+      incomingMessage.push('second')
+      incomingMessage.complete = true
+      incomingMessage.on('error', () => {})
+
+      const closed = new Promise<void>((resolve) => {
+        incomingMessage.once('close', resolve)
+      })
+      incomingMessage.destroy()
+      await closed
+
+      const req = newRequest(incomingMessage)
+      await expect(async () => new Response(req.body).text()).rejects.toThrow()
+    })
+
+    it('should reject with the underlying error when a complete stream was destroyed with an application error', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody(
+        'foo',
+        { 'content-length': '3' },
+        new Error('Payload too large')
+      )
+      const req = newRequest(incomingMessage)
+
+      await expect(req.text()).rejects.toThrow('Payload too large')
+    })
+
+    it('should reject standard path reads when a complete stream was destroyed with an application error', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody(
+        'hello=world',
+        {
+          'content-type': 'application/x-www-form-urlencoded',
+          'content-length': '11',
+        },
+        new Error('Payload too large')
+      )
+      const req = newRequest(incomingMessage)
+
+      await expect(req.formData()).rejects.toThrow('Payload too large')
+    })
+
+    it('should preserve the complete buffered body when destroyed by a client disconnect error', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody(
+        'foo',
+        { 'content-length': '3' },
+        Object.assign(new Error('aborted'), { code: 'ECONNRESET' })
+      )
+      const req = newRequest(incomingMessage)
+
+      await expect(req.text()).resolves.toBe('foo')
+    })
+
+    it('should preserve the complete buffered body when request properties were accessed after disconnect', async () => {
+      const incomingMessage = await newDestroyedIncomingWithCompleteBody('foo', {
+        'content-length': '3',
+      })
+      const req = newRequest(incomingMessage)
+
+      // creates the internal native Request cache before the body is read
+      void req.cache
+
+      await expect(req.text()).resolves.toBe('foo')
+    })
+
+    it('should skip content-length validation for non-canonical header values', async () => {
+      // The HTTP parser guarantees digit-only content-length on real
+      // connections; synthetic values must not be coerced into a bogus length.
+      for (const contentLength of ['0x10', '10, 10', '-3']) {
+        const incomingMessage = await newDestroyedIncomingWithCompleteBody('foo', {
+          'content-length': contentLength,
+        })
+        const req = newRequest(incomingMessage)
+
+        await expect(req.text()).resolves.toBe('foo')
+      }
+    })
+
+    it('should reconstruct the original bytes when setEncoding() was used before disconnect', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = { host: 'localhost' }
+      incomingMessage.rawHeaders = ['host', 'localhost']
+      incomingMessage.url = '/foo.txt'
+      incomingMessage.setEncoding('latin1')
+      incomingMessage.push(Buffer.from('café', 'utf8'))
+      incomingMessage.complete = true
+      incomingMessage.on('error', () => {})
+
+      const closed = new Promise<void>((resolve) => {
+        incomingMessage.once('close', resolve)
+      })
+      incomingMessage.destroy()
+      await closed
+
+      const req = newRequest(incomingMessage)
+      await expect(req.text()).resolves.toBe('café')
+    })
+
+    it('should not recover a body buffered with a lossy encoding', async () => {
+      for (const encoding of ['ascii', 'utf8'] as const) {
+        const socket = new Socket()
+        const incomingMessage = new IncomingMessage(socket)
+        incomingMessage.method = 'POST'
+        incomingMessage.headers = { host: 'localhost' }
+        incomingMessage.rawHeaders = ['host', 'localhost']
+        incomingMessage.url = '/foo.txt'
+        incomingMessage.setEncoding(encoding)
+        incomingMessage.push(Buffer.from([0x61, 0xe9, 0x62]))
+        incomingMessage.complete = true
+        incomingMessage.on('error', () => {})
+
+        const closed = new Promise<void>((resolve) => {
+          incomingMessage.once('close', resolve)
+        })
+        incomingMessage.destroy()
+        await closed
+
+        const req = newRequest(incomingMessage)
+        await expect(req.text()).rejects.toThrow('Client connection prematurely closed.')
+      }
+    })
+
+    it('should reconstruct the original bytes when setEncoding() was used on a streamed body', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = { host: 'localhost' }
+      incomingMessage.rawHeaders = ['host', 'localhost']
+      incomingMessage.url = '/foo.txt'
+      incomingMessage.setEncoding('latin1')
+
+      const req = newRequest(incomingMessage)
+      const textPromise = req.text()
+      incomingMessage.push(Buffer.from('café', 'utf8'))
+      incomingMessage.push(null)
+
+      await expect(textPromise).resolves.toBe('café')
+    })
+
+    it('should reject direct body read for unsupported methods like native Request', async () => {
+      for (const method of ['CONNECT', 'TRACK']) {
+        const req = newRequest({
+          method,
+          headers: {
+            host: 'localhost',
+            'content-type': 'text/plain',
+          },
+          rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+          rawBody: Buffer.from('foo'),
+          url: '/foo.txt',
+        } as IncomingMessage & { rawBody: Buffer })
+
+        await expect(req.text()).rejects.toBeInstanceOf(TypeError)
+      }
+    })
+
+    it('should allow direct body read even when aborted before rawBody read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      req[abortRequest]('Client connection prematurely closed.')
+
+      await expect(req.json()).resolves.toEqual({ foo: 'bar' })
+    })
+
+    it('should allow json() read even after signal is accessed first and then aborted', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      req[abortRequest]('Client connection prematurely closed.')
+      expect(req.signal.aborted).toBe(true)
+
+      await expect(req.json()).resolves.toEqual({ foo: 'bar' })
+    })
+
+    it('should keep bodyUsed consistent after aborted read regardless of signal access order', async () => {
+      const reqWithoutSignal = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      reqWithoutSignal[abortRequest]('Client connection prematurely closed.')
+      await expect(reqWithoutSignal.json()).resolves.toEqual({ foo: 'bar' })
+      expect(reqWithoutSignal.bodyUsed).toBe(true)
+
+      const reqWithSignal = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      expect(reqWithSignal.signal.aborted).toBe(false)
+      reqWithSignal[abortRequest]('Client connection prematurely closed.')
+      expect(reqWithSignal.signal.aborted).toBe(true)
+      await expect(reqWithSignal.json()).resolves.toEqual({ foo: 'bar' })
+      expect(reqWithSignal.bodyUsed).toBe(true)
+    })
+
+    it('should allow clone() and formData() after abort like native Request', async () => {
+      const reqForClone = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      reqForClone[abortRequest]('Client connection prematurely closed.')
+      const cloned = reqForClone.clone()
+      await expect(cloned.text()).resolves.toBe('foo')
+
+      const reqForFormData = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/x-www-form-urlencoded'],
+        rawBody: Buffer.from('a=1&b=2'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      reqForFormData[abortRequest]('Client connection prematurely closed.')
+      const formData = await reqForFormData.formData()
+      expect(formData.get('a')).toBe('1')
+      expect(formData.get('b')).toBe('2')
+    })
+
+    it('should reject direct body read when incoming stream has already been consumed', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = {
+        host: 'localhost',
+      }
+      incomingMessage.rawHeaders = ['host', 'localhost']
+      incomingMessage.url = '/foo.txt'
+      incomingMessage.push('foo')
+      incomingMessage.push(null)
+
+      for await (const chunk of incomingMessage) {
+        // consume body before lightweight request reads it
+        expect(chunk).toBeDefined()
+      }
+
+      const req = newRequest(incomingMessage)
+      await expect(req.text()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should resolve direct body read when stream already ended before first read', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = {
+        host: 'localhost',
+      }
+      incomingMessage.rawHeaders = ['host', 'localhost']
+      incomingMessage.url = '/foo.txt'
+
+      const req = newRequest(incomingMessage)
+      const ended = new Promise<void>((resolve) => {
+        incomingMessage.once('end', () => {
+          resolve()
+        })
+      })
+      incomingMessage.push(null)
+      incomingMessage.resume()
+      await ended
+
+      await expect(req.text()).resolves.toBe('')
+      expect(req.bodyUsed).toBe(true)
+    })
+
+    it('should reject on second direct json() read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.json()).resolves.toEqual({ foo: 'bar' })
+      await expect(req.json()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should set bodyUsed and reject clone() after direct json() read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.json()).resolves.toEqual({ foo: 'bar' })
+      expect(req.bodyUsed).toBe(true)
+      expect(() => req.clone()).toThrow(TypeError)
+      await expect(req.text()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should support UTF-8 BOM in direct json() read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('{"foo":"bar"}')]),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.json()).resolves.toEqual({ foo: 'bar' })
+    })
+
+    it('should set bodyUsed and reject clone() after direct text() read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.text()).resolves.toBe('foo')
+      expect(req.bodyUsed).toBe(true)
+      expect(() => req.clone()).toThrow(TypeError)
+      await expect(req.arrayBuffer()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should reject second direct text() read even after accessing signal', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.text()).resolves.toBe('foo')
+      expect(req.signal.aborted).toBe(false)
+      await expect(req.text()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should reject second direct json() read even after accessing signal', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/json',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/json'],
+        rawBody: Buffer.from('{"foo":"bar"}'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.json()).resolves.toEqual({ foo: 'bar' })
+      expect(req.signal.aborted).toBe(false)
+      await expect(req.json()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should set bodyUsed and reject clone() after direct arrayBuffer() read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'application/octet-stream',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'application/octet-stream'],
+        rawBody: Buffer.from([1, 2, 3]),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      const ab = await req.arrayBuffer()
+      expect(new Uint8Array(ab)).toEqual(new Uint8Array([1, 2, 3]))
+      expect(req.bodyUsed).toBe(true)
+      expect(() => req.clone()).toThrow(TypeError)
+      await expect(req.text()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should preserve content type in blob() result', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await expect(req.blob().then((blob: Blob) => blob.type)).resolves.toBe('text/plain')
+    })
+
+    it('should normalize content type in blob() result like native Request', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain; charset=UTF-8',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain; charset=UTF-8'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      const expectedType = await new GlobalRequest('http://localhost/foo.txt', {
+        method: 'POST',
+        headers: {
+          'content-type': 'text/plain; charset=UTF-8',
+        },
+        body: 'foo',
+      })
+        .blob()
+        .then((blob: Blob) => blob.type)
+
+      await expect(req.blob().then((blob: Blob) => blob.type)).resolves.toBe(expectedType)
+    })
+
+    it('should set bodyUsed and reject clone() after direct blob() read', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      const blob = await req.blob()
+      expect(blob.type).toBe('text/plain')
+      expect(await blob.text()).toBe('foo')
+      expect(req.bodyUsed).toBe(true)
+      expect(() => req.clone()).toThrow(TypeError)
+      await expect(req.json()).rejects.toBeInstanceOf(TypeError)
+    })
+
+    it('should allow constructing Request from consumed lightweight request when body is replaced', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await req.text()
+
+      const req2 = new LightweightRequest(req, {
+        method: 'POST',
+        body: 'bar',
+      })
+      await expect(req2.text()).resolves.toBe('bar')
+    })
+
+    it('should throw when constructing Request from consumed lightweight request without body replacement', async () => {
+      const req = newRequest({
+        method: 'POST',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      await req.text()
+
+      expect(() => {
+        new LightweightRequest(req)
+      }).toThrow(TypeError)
+    })
+
+    it('should preserve TRACE workaround after direct read when accessing signal', async () => {
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'TRACE'
+      incomingMessage.headers = {
+        host: 'localhost',
+        'content-type': 'text/plain',
+      }
+      incomingMessage.rawHeaders = ['host', 'localhost', 'content-type', 'text/plain']
+      incomingMessage.url = '/foo.txt'
+      ;(incomingMessage as IncomingMessage & { rawBody: Buffer }).rawBody = Buffer.from('foo')
+      const req = newRequest(incomingMessage)
+
+      await expect(req.text()).resolves.toBe('foo')
+      expect(() => req.signal).not.toThrow()
+    })
+
+    it('should keep TRACE direct body read behavior regardless of signal access order', async () => {
+      const createTraceRequest = () => {
+        const socket = new Socket()
+        const incomingMessage = new IncomingMessage(socket)
+        incomingMessage.method = 'TRACE'
+        incomingMessage.headers = {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        }
+        incomingMessage.rawHeaders = ['host', 'localhost', 'content-type', 'text/plain']
+        incomingMessage.url = '/foo.txt'
+        ;(incomingMessage as IncomingMessage & { rawBody: Buffer }).rawBody = Buffer.from('foo')
+        return newRequest(incomingMessage)
+      }
+
+      const reqBeforeSignal = createTraceRequest()
+      await expect(reqBeforeSignal.text()).resolves.toBe('foo')
+
+      const reqAfterSignal = createTraceRequest()
+      expect(() => reqAfterSignal.signal).not.toThrow()
+      await expect(reqAfterSignal.text()).resolves.toBe('foo')
+    })
+
+    it('should reject non-uppercase trace consistently regardless of access order', async () => {
+      const createTraceLikeRequest = (method: string) => {
+        const socket = new Socket()
+        const incomingMessage = new IncomingMessage(socket)
+        incomingMessage.method = method
+        incomingMessage.headers = {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        }
+        incomingMessage.rawHeaders = ['host', 'localhost', 'content-type', 'text/plain']
+        incomingMessage.url = '/foo.txt'
+        ;(incomingMessage as IncomingMessage & { rawBody: Buffer }).rawBody = Buffer.from('foo')
+        return newRequest(incomingMessage)
+      }
+
+      for (const method of ['trace', 'TrAcE']) {
+        const req = createTraceLikeRequest(method)
+        await expect(req.text()).rejects.toBeInstanceOf(TypeError)
+
+        const reqAfterSignal = createTraceLikeRequest(method)
+        expect(() => reqAfterSignal.signal).not.toThrow()
+        await expect(reqAfterSignal.text()).rejects.toBeInstanceOf(TypeError)
+      }
+    })
+
+    it('should preserve non-standard method casing like native Request', async () => {
+      for (const method of ['patch', 'CuStOm']) {
+        const req = newRequest({
+          method,
+          headers: {
+            host: 'localhost',
+          },
+          rawHeaders: ['host', 'localhost'],
+          url: '/foo.txt',
+        } as IncomingMessage)
+
+        const expected = new GlobalRequest('http://localhost/foo.txt', { method }).method
+        expect(req.method).toBe(expected)
+      }
+    })
+
+    it('should normalize lowercase methods and keep GET behavior consistent', async () => {
+      const req = newRequest({
+        method: 'get',
+        headers: {
+          host: 'localhost',
+          'content-type': 'text/plain',
+        },
+        rawHeaders: ['host', 'localhost', 'content-type', 'text/plain'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      expect(req.method).toBe('GET')
+      expect(() => req.signal).not.toThrow()
+      await expect(req.text()).resolves.toBe('')
+      expect(req.bodyUsed).toBe(false)
+    })
+
+    it('should keep default GET behavior when incoming.method is missing', async () => {
+      const req = newRequest({
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+        rawBody: Buffer.from('foo'),
+        url: '/foo.txt',
+      } as IncomingMessage & { rawBody: Buffer })
+
+      expect(req.method).toBe('GET')
+      expect(await req.text()).toBe('')
+      expect(req.bodyUsed).toBe(false)
+      expect(() => req.signal).not.toThrow()
+    })
+
+    it('Should throw error if host header contains path', async () => {
+      expect(() => {
+        newRequest({
+          headers: {
+            host: 'localhost/..',
+          },
+          url: '/foo.txt',
+        } as IncomingMessage)
+      }).toThrow(RequestError)
+    })
+
+    it('Should throw error if host header is empty', async () => {
+      expect(() => {
+        newRequest({
+          headers: {
+            host: '',
+          },
+          url: '/foo.txt',
+        } as IncomingMessage)
+      }).toThrow(RequestError)
+    })
+
+    it('Should throw error if host header contains query parameter', async () => {
+      expect(() => {
+        newRequest({
+          headers: {
+            host: 'localhost?foo=bar',
+          },
+          url: '/foo.txt',
+        } as IncomingMessage)
+      }).toThrow(RequestError)
+    })
+
+    it('Should throw error if host header port is invalid', async () => {
+      expect(() => {
+        newRequest({
+          headers: {
+            host: 'localhost:65536',
+          },
+          url: '/foo.txt',
+        } as IncomingMessage)
+      }).toThrow(RequestError)
+    })
+
+    it('Should be created request body from `req.rawBody` if it exists', async () => {
+      const rawBody = Buffer.from('foo')
+      const socket = new Socket()
+      const incomingMessage = new IncomingMessage(socket)
+      incomingMessage.method = 'POST'
+      incomingMessage.headers = {
+        host: 'localhost',
+      }
+      incomingMessage.url = '/foo.txt'
+      ;(incomingMessage as IncomingMessage & { rawBody: Buffer }).rawBody = rawBody
+      incomingMessage.push(rawBody)
+      incomingMessage.push(null)
+
+      for await (const chunk of incomingMessage) {
+        // consume body
+        expect(chunk).toBeDefined()
+      }
+
+      const req = newRequest(incomingMessage)
+      const text = await req.text()
+      expect(text).toBe('foo')
+    })
+
+    describe('absolute-form for request-target', () => {
+      it('should be created from valid absolute URL', async () => {
+        const req = newRequest({
+          url: 'http://localhost/path/to/file.html',
+        } as IncomingMessage)
+        expect(req).toBeInstanceOf(GlobalRequest)
+        expect(req.url).toBe('http://localhost/path/to/file.html')
+      })
+
+      it('should throw error if host header is invalid', async () => {
+        expect(() => {
+          newRequest({
+            url: 'http://',
+          } as IncomingMessage)
+        }).toThrow(RequestError)
+      })
+
+      it('should throw error if absolute-form is specified via HTTP/2', async () => {
+        expect(() => {
+          newRequest(
+            new Http2ServerRequest(
+              new Duplex() as ServerHttp2Stream,
+              {
+                ':scheme': 'http',
+                ':authority': 'localhost',
+                ':path': 'http://localhost/foo.txt',
+              },
+              {},
+              []
+            )
+          )
+        }).toThrow(RequestError)
+      })
+    })
+
+    describe('HTTP/2', () => {
+      it('should be created from "http" scheme', async () => {
+        const req = newRequest(
+          new Http2ServerRequest(
+            new Duplex() as ServerHttp2Stream,
+            {
+              ':scheme': 'http',
+              ':authority': 'localhost',
+              ':path': '/foo.txt',
+            },
+            {},
+            []
+          )
+        )
+        expect(req).toBeInstanceOf(GlobalRequest)
+        expect(req.url).toBe('http://localhost/foo.txt')
+      })
+
+      it('should be created from "https" scheme', async () => {
+        const req = newRequest(
+          new Http2ServerRequest(
+            new Duplex() as ServerHttp2Stream,
+            {
+              ':scheme': 'https',
+              ':authority': 'localhost',
+              ':path': '/foo.txt',
+            },
+            {},
+            []
+          )
+        )
+        expect(req).toBeInstanceOf(GlobalRequest)
+        expect(req.url).toBe('https://localhost/foo.txt')
+      })
+
+      it('should throw error if scheme is missing', async () => {
+        expect(() => {
+          newRequest(
+            new Http2ServerRequest(
+              new Duplex() as ServerHttp2Stream,
+              {
+                ':authority': 'localhost',
+                ':path': '/foo.txt',
+              },
+              {},
+              []
+            )
+          )
+        }).toThrow(RequestError)
+      })
+
+      it('should throw error if unsupported scheme is specified', async () => {
+        expect(() => {
+          newRequest(
+            new Http2ServerRequest(
+              new Duplex() as ServerHttp2Stream,
+              {
+                ':scheme': 'ftp',
+                ':authority': 'localhost',
+                ':path': '/foo.txt',
+              },
+              {},
+              []
+            )
+          )
+        }).toThrow(RequestError)
+      })
+    })
+  })
+
+  describe('GlobalRequest', () => {
+    it('should be overrode by Request', () => {
+      expect(Request).not.toBe(GlobalRequest)
+    })
+
+    it('should be instance of GlobalRequest', () => {
+      const req = new Request('http://localhost/')
+      expect(req).toBeInstanceOf(GlobalRequest)
+    })
+
+    it('should be success to create instance from old light weight instance', async () => {
+      const req = newRequest({
+        method: 'GET',
+        url: '/',
+        headers: {
+          host: 'localhost',
+        },
+        rawHeaders: ['host', 'localhost'],
+      } as IncomingMessage)
+      const req2 = new Request(req, {
+        method: 'POST',
+        body: 'foo',
+      })
+      expect(req2).toBeInstanceOf(GlobalRequest)
+      expect(await req2.text()).toBe('foo')
+    })
+
+    it('should set `duplex: "half"` automatically if body is a ReadableStream', async () => {
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('bar'))
+          controller.close()
+        },
+      })
+      const req2 = new Request('http://localhost', {
+        method: 'POST',
+        body: stream,
+      })
+      expect(req2).toBeInstanceOf(GlobalRequest)
+      await expect(req2.text()).resolves.toBe('bar')
+    })
+
+    it('should skip to set `duplex: "half"` if init option is a Request object', async () => {
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('bar'))
+          controller.close()
+        },
+      })
+      const req = new Request('http://localhost', {
+        method: 'POST',
+        body: stream,
+      })
+      const req2 = new Request('http://localhost/subapp', req)
+      expect(req2).toBeInstanceOf(GlobalRequest)
+      await expect(req2.text()).resolves.toBe('bar')
+    })
+  })
+})
+
+describe('util.inspect', () => {
+  it('should show a lightweight request summary without creating a native Request', () => {
+    const { inspect } = require('node:util')
+    const req = newRequest({
+      method: 'GET',
+      url: '/',
+      headers: {
+        host: 'localhost',
+      },
+      rawHeaders: ['host', 'localhost'],
+    } as IncomingMessage)
+
+    expect(() => inspect(req)).not.toThrow()
+    const result = inspect(req)
+    expect(result).toContain('Request (lightweight)')
+    expect(result).toContain('GET')
+    expect(result).toContain('http://localhost/')
+    expect(result).toContain('nativeRequest: undefined')
+    expect(req[abortControllerKey]).toBeUndefined()
+    expect(req).toBeInstanceOf(global.Request)
+  })
+
+  it('should include the native Request after cache creation', () => {
+    const { inspect } = require('node:util')
+    const req = newRequest({
+      method: 'GET',
+      url: '/',
+      headers: {
+        host: 'localhost',
+      },
+      rawHeaders: ['host', 'localhost'],
+    } as IncomingMessage)
+
+    // Access keepalive to trigger native Request creation via getRequestCache()
+    req.keepalive
+
+    const result = inspect(req)
+    expect(result).toContain('Request (lightweight)')
+    expect(result).toContain('nativeRequest: Request {')
+    expect(req[abortControllerKey]).toBeDefined()
+  })
+})
+
+describe('RequestError', () => {
+  it('should have a static name property (class name)', () => {
+    expect(RequestError.name).toBe('RequestError')
+    expect(Object.hasOwn(RequestError, 'name')).toBe(true)
+  })
+
+  it('should have an instance name property', () => {
+    const error = new RequestError('message')
+    expect(error.name).toBe('RequestError')
+    expect(Object.hasOwn(error, 'name')).toBe(true)
+  })
+})

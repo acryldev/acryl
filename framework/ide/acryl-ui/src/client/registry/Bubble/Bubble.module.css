@@ -1,0 +1,29 @@
+.group { display: flex; min-width: 0; flex-direction: column; gap: 8px; }
+.bubble { position: relative; display: flex; width: fit-content; max-width: 80%; min-width: 0; flex-direction: column; gap: 4px; }
+.bubble[data-align='end'] { align-self: flex-end; }
+.bubble[data-variant='ghost'] { max-width: 100%; }
+.content { width: fit-content; max-width: 100%; min-width: 0; overflow: hidden; border-radius: 12px; border: 1px solid transparent; padding: 8px 12px; font-size: 13px; line-height: 1.625; overflow-wrap: break-word; }
+.bubble[data-align='end'] .content { align-self: flex-end; }
+.content button { text-align: left; }
+.content button, .content a { transition: background-color 0.15s, color 0.15s; outline: none; }
+.content button:focus-visible, .content a:focus-visible { border-color: var(--dsw-alias-border-l3); box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); }
+.bubble[data-variant='default'] .content { background: var(--acryl-accent); color: var(--dsw-alias-label-primary-foreground); }
+.bubble[data-variant='default'] .content button:hover, .bubble[data-variant='default'] .content a:hover { background: color-mix(in oklab, var(--acryl-accent) 80%, transparent); }
+.bubble[data-variant='secondary'] .content { background: var(--dsw-alias-bg-layer-3); color: var(--dsw-alias-label-primary); }
+.bubble[data-variant='secondary'] .content button:hover, .bubble[data-variant='secondary'] .content a:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.bubble[data-variant='muted'] .content { background: var(--dsw-alias-bg-layer-2); }
+.bubble[data-variant='muted'] .content button:hover, .bubble[data-variant='muted'] .content a:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.bubble[data-variant='tinted'] .content { background: color-mix(in oklab, var(--acryl-accent) 14%, var(--dsw-alias-bg-layer-1)); color: var(--dsw-alias-label-primary); }
+.bubble[data-variant='tinted'] .content button:hover, .bubble[data-variant='tinted'] .content a:hover { background: color-mix(in oklab, var(--acryl-accent) 24%, var(--dsw-alias-bg-layer-1)); }
+.bubble[data-variant='outline'] .content { border-color: var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); }
+.bubble[data-variant='outline'] .content button:hover, .bubble[data-variant='outline'] .content a:hover { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
+.bubble[data-variant='ghost'] .content { border-color: transparent; border-radius: 0; background: transparent; padding: 0; }
+.bubble[data-variant='ghost'] .content button:hover, .bubble[data-variant='ghost'] .content a:hover { background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
+.bubble[data-variant='destructive'] .content { background: color-mix(in oklab, var(--dsw-alias-state-error-primary) 12%, transparent); color: var(--dsw-alias-state-error-primary); }
+.bubble[data-variant='destructive'] .content button:hover, .bubble[data-variant='destructive'] .content a:hover { background: color-mix(in oklab, var(--dsw-alias-state-error-primary) 22%, transparent); }
+.reactions { position: absolute; z-index: 10; display: flex; width: fit-content; flex-shrink: 0; align-items: center; justify-content: center; gap: 4px; border-radius: 9999px; background: var(--dsw-alias-bg-layer-2); padding: 2px 6px; font-size: 13px; box-shadow: 0 0 0 3px var(--dsw-alias-bg-layer-1); }
+.reactions:has(button) { padding: 0; }
+.reactions[data-side='bottom'] { bottom: 0; transform: translateY(75%); }
+.reactions[data-side='top'] { top: 0; transform: translateY(-75%); }
+.reactions[data-align='start'] { left: 12px; }
+.reactions[data-align='end'] { right: 12px; }

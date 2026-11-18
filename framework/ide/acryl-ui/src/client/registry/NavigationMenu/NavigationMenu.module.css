@@ -1,0 +1,21 @@
+/* The bar. Radix leaves the arrangement and the panel's animation to the caller's Tailwind; here the arrangement is the module's and there is no animation. */
+.root { box-sizing: border-box; position: relative; display: flex; }
+.list { box-sizing: border-box; display: flex; align-items: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.item { box-sizing: border-box; position: relative; display: flex; }
+.trigger { box-sizing: border-box; display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; border: 1px solid transparent; background: transparent; padding: 6px 12px; font: inherit; font-size: 13px; color: var(--dsw-alias-label-primary); cursor: default; outline: none; }
+.trigger:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.trigger:focus-visible { outline: 1px solid var(--dsw-alias-border-l3); }
+.trigger[data-state='open'] { background: var(--dsw-alias-interactive-bg-hover); }
+/* The chevron follows the trigger's own state, which is an attribute on the trigger itself - no :has(), and nothing transitions a property a :has() rule sets. */
+.chevron { width: 14px; height: 14px; transition: transform 150ms ease; }
+.trigger[data-state='open'] .chevron { transform: rotate(180deg); }
+
+/* Every item's panel lands at the same coordinates, under the list, and takes no focus of its own: the links inside it are the focusable things. */
+.content { box-sizing: border-box; position: fixed; z-index: 50; width: max-content; max-width: min(720px, calc(100vw - 16px)); padding: 16px; outline: none; }
+/* A bar with a viewport has its surface painted by NavigationMenuViewport instead, so the two boxes do not double up. */
+.content[data-shared-surface='false'] { border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); }
+.viewport { box-sizing: border-box; position: fixed; z-index: 40; border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); }
+.link { display: block; border-radius: 4px; padding: 6px 8px; font-size: 13px; color: var(--dsw-alias-label-primary); text-decoration: none; outline: none; }
+.link:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.link:focus-visible { outline: 1px solid var(--dsw-alias-border-l3); }
+.link[data-active='true'] { color: var(--dsw-alias-label-primary); font-weight: 500; }

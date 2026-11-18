@@ -1,0 +1,356 @@
+{
+  "batch": 8,
+  "range": "71-80",
+  "title": "ACRYL Blends — Application Blueprint Mockups",
+  "source_taxonomy": "ACRYL_BLENDS_100_Software_Categories_Formatted.md",
+  "delivery_notes": {
+    "mockups_are_implemented_apps": false,
+    "external_api_keys_required": false,
+    "seeded_data": true,
+    "prototype_only": true,
+    "responsive": true,
+    "standalone_html": true
+  },
+  "blueprints": [
+    {
+      "n": 71,
+      "category": "Compliance / governance software",
+      "name": "Northstar GRC",
+      "tagline": "Make controls, risks and evidence traceable.",
+      "purpose": "A governance workbench for maintaining a control library, tracking risk ownership, collecting audit evidence and reviewing compliance posture.",
+      "audience": "Compliance leads, internal auditors, risk owners and privacy or ESG teams.",
+      "ux": "A control-assurance cockpit: left-side framework rail, central control register with evidence freshness, and a right-side risk/evidence inspector. The primary interaction is evidence review and control attestation.",
+      "screens": [
+        "Framework overview and control coverage",
+        "Control register with owner, status and evidence freshness",
+        "Evidence review drawer with source and review notes",
+        "Risk register with inherent/residual score and treatment action"
+      ],
+      "flows": [
+        "Filter controls by framework, owner and assurance status.",
+        "Open a control and inspect the evidence bundle and review history.",
+        "Accept evidence, request a refresh or mark an exception.",
+        "Update a risk treatment and see the posture summary recalculate."
+      ],
+      "model": "Framework, Control, ControlTest, EvidenceItem, Risk, RiskTreatment, AuditEvent. Evidence records include provenance, collectedAt, reviewedAt and retention class.",
+      "guard": "Illustrative control catalogue only; do not claim certification or legal compliance. Do not include real personal data, sensitive evidence or actual audit findings. Seed demo controls and synthetic evidence.",
+      "prompts": [
+        "Implement a versioned control library with framework mapping and control ownership.",
+        "Build an evidence review workflow with provenance, freshness windows and immutable audit events.",
+        "Add risk scoring and treatment tracking with deterministic test fixtures and audit-log tests."
+      ],
+      "id": "blueprint-71",
+      "mockup": "mockups/compliance-northstar-grc.html",
+      "spec": "specs/71-compliance-northstar-grc.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 72,
+      "category": "Blockchain software",
+      "name": "Blockscope Explorer",
+      "tagline": "Inspect blocks, transactions and contract activity.",
+      "purpose": "A read-only blockchain explorer prototype for searching seeded blocks, transactions, addresses and smart-contract events.",
+      "audience": "Developers, analysts and operators inspecting public chain activity.",
+      "ux": "A data-dense chain explorer with a live-feeling block ticker, searchable transaction ledger and right-hand detail inspector. The home view prioritizes chain health and block progression over wallet actions.",
+      "screens": [
+        "Network overview with chain height and finality indicators",
+        "Block list and block detail",
+        "Transaction search and decoded event detail",
+        "Contract activity and log topics"
+      ],
+      "flows": [
+        "Search a seeded block, transaction hash or address label.",
+        "Select a block and inspect included transactions.",
+        "Open a transaction to inspect status, fees and event logs.",
+        "Filter contract events by event name and time range."
+      ],
+      "model": "Network, Block, Transaction, AddressLabel, Contract, EventLog, ValidatorSummary. Values are synthetic and explicitly labeled demo data.",
+      "guard": "Read-only explorer. No wallet connection, signing, transaction submission, token purchase, private keys or real financial advice. Do not imply the demo data reflects a live chain.",
+      "prompts": [
+        "Create a typed read-only explorer domain model with block-to-transaction relationships.",
+        "Implement deterministic block, transaction and event search across seeded data.",
+        "Add transaction detail parsing, pagination and tests for pending, failed and finalized states."
+      ],
+      "id": "blueprint-72",
+      "mockup": "mockups/blockchain-blockscope.html",
+      "spec": "specs/72-blockchain-blockscope.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 73,
+      "category": "Decentralized software",
+      "name": "Federary Network",
+      "tagline": "See the shape and health of a federated network.",
+      "purpose": "A federation administration console for inspecting trusted instances, federation links, moderation queues and decentralized identity handshakes.",
+      "audience": "Operators of federated communities, decentralized services and self-hosted networks.",
+      "ux": "A network-first federation map with instance cards, trust edges and a moderation queue. Selecting a node opens its federation policy and peering history.",
+      "screens": [
+        "Federation graph and instance health",
+        "Instance profile with software, policy and peer list",
+        "Inbound/outbound federation queue",
+        "Moderation and trust-rule review"
+      ],
+      "flows": [
+        "Select an instance on the federation graph.",
+        "Inspect its published policy and peer relationships.",
+        "Review an incoming federation request or content report.",
+        "Approve, quarantine or block a peer using a reversible demo action."
+      ],
+      "model": "Instance, FederationLink, TrustRule, FederationEvent, ContentReport, ModerationDecision, IdentityAssertion.",
+      "guard": "Use fictional instances and synthetic identities. No deanonymization, scraping of real communities, impersonation or collection of sensitive personal data. Federation and trust actions are simulated.",
+      "prompts": [
+        "Model federated instances, signed assertions and directional peer relationships.",
+        "Build a graph selection view with trust policy and peer status inspection.",
+        "Implement a moderation queue with reversible decisions and audit history tests."
+      ],
+      "id": "blueprint-73",
+      "mockup": "mockups/decentralized-federary.html",
+      "spec": "specs/73-decentralized-federary.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 74,
+      "category": "Peer-to-peer software",
+      "name": "Swarmdrop",
+      "tagline": "Transfer large files through cooperating peers.",
+      "purpose": "A peer-to-peer transfer-room prototype showing peer discovery, chunk availability, transfer progress and integrity verification using synthetic local state.",
+      "audience": "Teams sharing large files, distributed compute groups and P2P product developers.",
+      "ux": "A transfer-first swarm console: large file manifest at the top, chunk map in the center, peer strip below and a live transfer event feed. It emphasizes how pieces move through the swarm.",
+      "screens": [
+        "Transfer room and share-code summary",
+        "Chunk availability map and peer contribution",
+        "Peer details with latency and upload/download rate",
+        "Integrity verification and completed transfer receipt"
+      ],
+      "flows": [
+        "Create or join a seeded transfer room.",
+        "Inspect which peers have each file chunk.",
+        "Pause or resume the local transfer simulation.",
+        "Run integrity verification and inspect the completion receipt."
+      ],
+      "model": "TransferRoom, FileManifest, Chunk, Peer, PeerConnection, TransferSample, IntegrityCheck.",
+      "guard": "Simulation only: do not expose real IP addresses, create network sockets or transfer user files. Use synthetic peer IDs, synthetic rates and a fake share code.",
+      "prompts": [
+        "Implement a deterministic chunk/peer availability model for seeded transfer rooms.",
+        "Build a peer contribution view that derives rates and progress from local fixtures.",
+        "Add pause/resume and integrity-verification states with edge-case tests."
+      ],
+      "id": "blueprint-74",
+      "mockup": "mockups/p2p-swarmdrop.html",
+      "spec": "specs/74-p2p-swarmdrop.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 75,
+      "category": "Content management",
+      "name": "Strata CMS",
+      "tagline": "Structure content once. Publish it anywhere.",
+      "purpose": "A headless content management workbench for editing structured entries, managing collections, reviewing drafts and previewing channel output.",
+      "audience": "Content teams, editors, product marketers and developers building content-driven experiences.",
+      "ux": "A content studio with a collection rail, structured entry editor and live preview pane. The key interaction is editing schema-driven fields and switching preview channels.",
+      "screens": [
+        "Collection overview with drafts and scheduled entries",
+        "Structured content editor with schema fields",
+        "Channel preview for web and mobile",
+        "Editorial review and publishing queue"
+      ],
+      "flows": [
+        "Choose a collection and open an entry.",
+        "Edit structured fields and inspect validation feedback.",
+        "Switch the preview between web and mobile renderings.",
+        "Submit the draft for review or publish the seeded demo entry."
+      ],
+      "model": "Collection, ContentType, FieldDefinition, Entry, Revision, Publication, ChannelPreview, EditorialReview.",
+      "guard": "Seeded fictional content only. Publishing actions update local demo state; there is no external CMS delivery, public posting or third-party API call.",
+      "prompts": [
+        "Implement schema-driven content types with typed field definitions and validation.",
+        "Build a revision-aware entry editor with local web/mobile preview rendering.",
+        "Add editorial workflow states, publication scheduling and tests for required fields and revisions."
+      ],
+      "id": "blueprint-75",
+      "mockup": "mockups/content-strata-cms.html",
+      "spec": "specs/75-content-strata-cms.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 76,
+      "category": "File software",
+      "name": "Filewell",
+      "tagline": "Find, organize and understand your files.",
+      "purpose": "A desktop-style file manager prototype covering folder navigation, metadata, duplicate review, file conversion queue and synchronization status.",
+      "audience": "Knowledge workers and teams managing local project files and shared folders.",
+      "ux": "A dual-pane file manager with a navigable folder tree, dense file table, metadata inspector and a bottom action tray for organize/convert/sync operations.",
+      "screens": [
+        "Folder tree and file listing",
+        "File detail and metadata inspector",
+        "Duplicate review and cleanup candidates",
+        "Conversion and sync task queue"
+      ],
+      "flows": [
+        "Navigate through the seeded project directory tree.",
+        "Select files and inspect metadata, versions and tags.",
+        "Review potential duplicates without deleting automatically.",
+        "Queue a demo conversion or synchronization task and inspect its status."
+      ],
+      "model": "FileNode, Folder, FileVersion, MetadataRecord, DuplicateCandidate, ConversionJob, SyncJob.",
+      "guard": "Never access the host filesystem. Use synthetic file entries and local-only demo actions. Duplicate cleanup is review-only and must not silently delete files.",
+      "prompts": [
+        "Implement a virtual filesystem tree with stable node IDs and breadcrumb navigation.",
+        "Build metadata and duplicate-candidate services using seeded file fingerprints.",
+        "Add conversion/sync queues with cancel/retry states and tests that ensure no destructive default action."
+      ],
+      "id": "blueprint-76",
+      "mockup": "mockups/file-filewell.html",
+      "spec": "specs/76-file-filewell.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 77,
+      "category": "Digital asset management",
+      "name": "Musevault DAM",
+      "tagline": "Keep creative assets searchable, approved and licensed.",
+      "purpose": "A visual digital asset library for images, video, brand kits and campaign files, with metadata filters, rights windows and usage tracking.",
+      "audience": "Brand teams, creative studios, marketing departments and asset librarians.",
+      "ux": "An image-led masonry library with a left filter rail and a rich asset detail drawer. Rights and usage are first-class, distinct from ordinary file management.",
+      "screens": [
+        "Visual asset library with collections and facets",
+        "Asset detail with metadata, tags and rendition previews",
+        "Rights and expiry calendar",
+        "Usage history and approval state"
+      ],
+      "flows": [
+        "Browse a seeded visual collection and filter by asset type or campaign.",
+        "Open an asset and inspect tags, rendition sizes and rights holder.",
+        "Review an expiring license and record a renewal reminder.",
+        "Inspect where an asset has been used and its approval status."
+      ],
+      "model": "Asset, Rendition, Collection, Tag, RightsRecord, LicenseWindow, UsageRecord, Approval.",
+      "guard": "Use generated or abstract visual placeholders and synthetic rights holders. No real copyrighted content, personal likeness or actual license claims. Rights status is sample data only.",
+      "prompts": [
+        "Implement an asset catalog with faceted search, collections and rendition metadata.",
+        "Create a rights model with territory, permitted usage, expiry and reminder events.",
+        "Add approval and usage-history views with tests for expired and restricted assets."
+      ],
+      "id": "blueprint-77",
+      "mockup": "mockups/dam-musevault.html",
+      "spec": "specs/77-dam-musevault.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 78,
+      "category": "Identity software",
+      "name": "Identra Directory",
+      "tagline": "Manage the lifecycle behind every digital identity.",
+      "purpose": "An identity and access management console for directory users, groups, SSO applications, role assignments and joiner-mover-leaver lifecycle requests.",
+      "audience": "IT administrators, IAM teams and enterprise application owners.",
+      "ux": "An identity directory with a user-centric profile, group membership matrix and application assignment panel. The main workflow is identity lifecycle and authorization review, not sign-in.",
+      "screens": [
+        "Directory people and service identities",
+        "Identity profile with groups and attributes",
+        "Application access and role assignment",
+        "Joiner/mover/leaver request queue"
+      ],
+      "flows": [
+        "Search a seeded identity and open its profile.",
+        "Inspect group membership, roles and connected applications.",
+        "Review an access request and approve or deny the requested entitlement.",
+        "Simulate a joiner or leaver lifecycle action and inspect its audit trail."
+      ],
+      "model": "Identity, DirectoryGroup, Application, Role, Entitlement, AccessRequest, LifecycleEvent, AuditEvent.",
+      "guard": "Synthetic users only; no real directory connection, SSO provider, credentials or provisioning API. Never display real passwords, tokens or employee personal data.",
+      "prompts": [
+        "Implement identity, group, application and entitlement models with explicit role relationships.",
+        "Build an access review workflow with least-privilege context and an auditable decision history.",
+        "Add deterministic joiner/mover/leaver simulations with tests for orphaned entitlements."
+      ],
+      "id": "blueprint-78",
+      "mockup": "mockups/identity-identra.html",
+      "spec": "specs/78-identity-identra.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 79,
+      "category": "Authentication software",
+      "name": "Keyway Auth Lab",
+      "tagline": "Test the sign-in journey, not just the credential.",
+      "purpose": "A safe authentication UX lab demonstrating password, MFA, passwordless, passkey and hardware-key sign-in flows with risk signals and recovery states.",
+      "audience": "Product designers, application developers and security teams evaluating login experiences.",
+      "ux": "A split-screen sign-in simulator: selectable authentication method on the left, interactive device/verification ceremony in the center and a risk/explanation panel on the right.",
+      "screens": [
+        "Authentication method chooser",
+        "Password and MFA challenge simulation",
+        "Passkey / hardware-key ceremony",
+        "Risk review and recovery flow"
+      ],
+      "flows": [
+        "Choose an authentication method.",
+        "Complete the simulated challenge using clearly marked demo codes.",
+        "Inspect the session risk context and device trust explanation.",
+        "Try a recovery route and inspect the resulting authentication state."
+      ],
+      "model": "AuthMethod, AuthAttempt, Challenge, DeviceContext, RiskSignal, Session, RecoveryEvent.",
+      "guard": "No real authentication, password collection, biometric capture, passkey creation or hardware access. Use fake demo codes and fictional identities. Never present a demo sign-in as secure or production-ready.",
+      "prompts": [
+        "Implement an authentication state machine for password, MFA, passkey and recovery demos.",
+        "Build risk explanations from synthetic device and attempt signals without opaque scoring claims.",
+        "Add scenario tests for successful, failed, expired and recovered authentication journeys."
+      ],
+      "id": "blueprint-79",
+      "mockup": "mockups/authentication-keyway.html",
+      "spec": "specs/79-authentication-keyway.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    },
+    {
+      "n": 80,
+      "category": "Cryptographic software",
+      "name": "Cipherdesk",
+      "tagline": "Operate keys, certificates and signing workflows with care.",
+      "purpose": "A cryptographic operations workbench for reviewing key inventory metadata, certificate chains, signing requests and HSM/enclave status using synthetic fixtures.",
+      "audience": "Platform security engineers, PKI operators and teams managing certificate lifecycles.",
+      "ux": "A security operations console with a key-custody inventory, certificate-chain viewer and signing request queue. The interface focuses on lifecycle, ownership and auditability—not exposing key material.",
+      "screens": [
+        "Key inventory with purpose, owner and rotation date",
+        "Certificate chain and expiry view",
+        "Signing request review and status",
+        "HSM / secure-enclave health and audit events"
+      ],
+      "flows": [
+        "Select a synthetic key record and inspect metadata and rotation status.",
+        "Open a certificate and inspect its parent/issuer chain.",
+        "Review a signing request and approve or reject the demo operation.",
+        "Inspect HSM health and a non-sensitive audit event trail."
+      ],
+      "model": "KeyRecord, KeyVersion, Certificate, CertificateAuthority, SigningRequest, HsmDevice, RotationEvent, CryptoAuditEvent.",
+      "guard": "No actual encryption keys, private key bytes, certificates trusted by browsers, signing operations, wallet secrets or cryptographic claims. All operations are simulated with clearly labeled placeholder material.",
+      "prompts": [
+        "Implement key metadata and lifecycle models while ensuring secret material is never serialized to UI state.",
+        "Build a certificate-chain inspector with expiry and issuer relationships using synthetic certificates.",
+        "Add a signing-request queue and rotation policy simulator with tests for approval and expiry states."
+      ],
+      "id": "blueprint-80",
+      "mockup": "mockups/cryptography-cipherdesk.html",
+      "spec": "specs/80-cryptography-cipherdesk.md",
+      "seeded_data": true,
+      "external_api_keys_required": false,
+      "prototype_only": true
+    }
+  ]
+}

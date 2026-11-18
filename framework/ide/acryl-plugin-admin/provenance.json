@@ -1,0 +1,23 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "plugins/acryl-plugin-admin"
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": [
+    "src/**",
+    "tests/**",
+    "tsdown.config.ts",
+    "tsconfig.json",
+    "tsconfig.client.json",
+    "tsconfig.tests.json",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "changes": {
+    "package.json": "repository points here, build tool versions match this repository, and acrylblends moves from dependencies to peerDependencies (a second install beside the app's is the dual-framework defect the inventory names; the workspace packages it depends on are workspace dependencies here)",
+    "vitest.config.ts": "runs on this repository's vitest; the ACRYL repository's HOME isolation setup file is not used here, the package's own tests/setup.ts stays"
+  },
+  "notes": "src/ and tests/ are byte-identical to the source commit (extracted by git archive). The original suite runs unchanged: 39 tests across 9 files."
+}

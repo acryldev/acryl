@@ -1,0 +1,45 @@
+.attachment { position: relative; display: flex; width: fit-content; max-width: 100%; min-width: 0; flex-shrink: 0; flex-wrap: wrap; border-radius: 12px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); transition: background-color 0.15s; }
+.attachment:focus-within { box-shadow: 0 0 0 1px var(--dsw-alias-border-l3); }
+.attachment:has(> a, > button):hover { background: var(--dsw-alias-interactive-bg-hover); }
+.attachment[data-state='error'] { border-color: color-mix(in oklab, var(--dsw-alias-state-error-primary) 30%, transparent); }
+.attachment[data-state='idle'] { border-style: dashed; }
+.sizeDefault { gap: 8px; font-size: 13px; }
+.sizeDefault:has([data-slot='attachment-content']) { padding: 8px 10px; }
+.sizeDefault:has([data-slot='attachment-media']) { padding: 8px; }
+.sizeSmall { gap: 10px; font-size: 12px; }
+.sizeSmall:has([data-slot='attachment-content']) { padding: 6px 8px; }
+.sizeSmall:has([data-slot='attachment-media']) { padding: 6px; }
+.sizeXs { gap: 6px; font-size: 12px; border-radius: 8px; }
+.sizeXs:has([data-slot='attachment-content']) { padding: 4px 6px; }
+.sizeXs:has([data-slot='attachment-media']) { padding: 4px; }
+.horizontal { min-width: 160px; align-items: center; }
+.vertical { width: 96px; flex-direction: column; }
+.vertical:has([data-slot='attachment-content']) { width: 120px; }
+.media { position: relative; display: flex; aspect-ratio: 1 / 1; width: 40px; flex-shrink: 0; align-items: center; justify-content: center; overflow: hidden; border-radius: 8px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); }
+.media svg { pointer-events: none; }
+.media svg:not([class*='size-']) { width: 16px; height: 16px; }
+.vertical .media { width: 100%; }
+.vertical .media svg:not([class*='size-']) { width: 24px; height: 24px; }
+.sizeSmall .media { width: 32px; }
+.sizeXs .media { width: 28px; border-radius: 6px; }
+.sizeXs .media svg:not([class*='size-']) { width: 14px; height: 14px; }
+.attachment[data-state='error'] .media { background: color-mix(in oklab, var(--dsw-alias-state-error-primary) 10%, transparent); color: var(--dsw-alias-state-error-primary); }
+.mediaImage { opacity: 0.6; }
+.attachment[data-state='done'] .mediaImage, .attachment[data-state='idle'] .mediaImage { opacity: 1; }
+.mediaImage img { aspect-ratio: 1 / 1; width: 100%; object-fit: cover; }
+.content { max-width: 100%; min-width: 0; flex: 1; line-height: 1.25; }
+.vertical .content { padding: 0 4px; }
+.title { display: block; max-width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
+.attachment[data-state='processing'] .title, .attachment[data-state='uploading'] .title { background-image: linear-gradient(90deg, transparent, color-mix(in oklab, var(--dsw-alias-label-primary) 20%, transparent), transparent); background-size: 200% 100%; background-clip: text; color: transparent; animation: attachmentShimmer 1.6s linear infinite; }
+@keyframes attachmentShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.description { display: block; max-width: 100%; min-width: 0; margin-top: 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; color: var(--dsw-alias-label-tertiary); }
+.attachment[data-state='error'] .description { color: color-mix(in oklab, var(--dsw-alias-state-error-primary) 80%, transparent); }
+.actions { position: relative; z-index: 20; display: flex; flex-shrink: 0; align-items: center; }
+.vertical .actions { position: absolute; top: 12px; right: 12px; gap: 4px; }
+.action { display: inline-flex; align-items: center; justify-content: center; height: 24px; width: 24px; padding: 0; border: none; border-radius: 4px; background: none; color: inherit; cursor: pointer; }
+.action:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.action svg:not([class*='size-']) { width: 14px; height: 14px; }
+.trigger { position: absolute; inset: 0; z-index: 10; border: none; outline: none; background: none; cursor: pointer; }
+.group { display: flex; min-width: 0; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding: 0 4px; padding: 4px 0; scrollbar-width: none; mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent); }
+.group::-webkit-scrollbar { display: none; }
+.group > [data-slot='attachment'] { flex: none; scroll-snap-align: start; }

@@ -1,0 +1,345 @@
+[
+  {
+    "id": 81,
+    "category": "Operating / Management Consoles",
+    "name": "Controlroom",
+    "purpose": "Command-center console for managing environments, services, users and operational actions.",
+    "taxonomy_coverage": "Admin dashboards, control panels, management interfaces, command centers, operations consoles",
+    "ux_direction": "Dense command center with environment switcher, service tiles, activity feed and action drawer.",
+    "domain_model": [
+      "Environment",
+      "Service",
+      "Operator",
+      "ActionLog"
+    ],
+    "core_workflows": [
+      "Switch environment",
+      "inspect service",
+      "stage a controlled action",
+      "review audit trail."
+    ],
+    "safety_boundaries": "No real infrastructure actions; destructive controls are simulated and require a confirmation step.",
+    "mockup": "mockups/81-controlroom.html",
+    "spec": "specs/81-controlroom.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Controlroom core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 82,
+    "category": "Monitoring Software",
+    "name": "Signalglass",
+    "purpose": "Observability workspace for infrastructure, network, application, security and user signals.",
+    "taxonomy_coverage": "Infrastructure monitoring, network monitoring, application monitoring, security monitoring, user monitoring, synthetic monitoring, uptime monitoring",
+    "ux_direction": "Time-series dashboard with service health strip, metric charts, alert stream and trace detail.",
+    "domain_model": [
+      "Monitor",
+      "MetricSeries",
+      "Alert",
+      "SyntheticCheck",
+      "Trace"
+    ],
+    "core_workflows": [
+      "Change time range",
+      "filter alerts",
+      "inspect a trace",
+      "acknowledge a demo alert."
+    ],
+    "safety_boundaries": "Synthetic telemetry only; alert acknowledgement is local demo state.",
+    "mockup": "mockups/82-signalglass.html",
+    "spec": "specs/82-signalglass.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Signalglass core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 83,
+    "category": "Optimization Software",
+    "name": "Optima",
+    "purpose": "Operations-research workbench for comparing resource allocation and routing scenarios.",
+    "taxonomy_coverage": "Scheduling, routing, resource allocation, mathematical optimization, constraint solving, operations research",
+    "ux_direction": "Scenario canvas with decision variables, constraints, objective function and solution comparison.",
+    "domain_model": [
+      "Scenario",
+      "Variable",
+      "Constraint",
+      "Objective",
+      "Solution"
+    ],
+    "core_workflows": [
+      "Edit capacity",
+      "toggle a constraint",
+      "run a local illustrative solver",
+      "compare outcomes."
+    ],
+    "safety_boundaries": "Results are illustrative heuristics, not certified optimization advice.",
+    "mockup": "mockups/83-optima.html",
+    "spec": "specs/83-optima.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Optima core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 84,
+    "category": "Scheduling Software",
+    "name": "Shiftwell",
+    "purpose": "Workforce and appointment scheduling planner with coverage and conflict detection.",
+    "taxonomy_coverage": "Workforce scheduling, appointment scheduling, production scheduling, CPU scheduling, job scheduling, cloud workload scheduling",
+    "ux_direction": "Drag-and-drop weekly rota with staff lanes, availability, coverage and conflict sidebar.",
+    "domain_model": [
+      "Person",
+      "Shift",
+      "Availability",
+      "Requirement",
+      "Conflict"
+    ],
+    "core_workflows": [
+      "Move a shift",
+      "assign a person",
+      "detect overlap",
+      "inspect coverage gaps."
+    ],
+    "safety_boundaries": "Demo schedule only; no real employee or patient records.",
+    "mockup": "mockups/84-shiftwell.html",
+    "spec": "specs/84-shiftwell.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Shiftwell core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 85,
+    "category": "Workflow Software",
+    "name": "Flowstate",
+    "purpose": "Workflow orchestration studio for human, machine, developer, AI and durable workflows.",
+    "taxonomy_coverage": "Human workflow, machine workflow, business workflow, developer workflow, AI workflow, durable workflows",
+    "ux_direction": "Node-based workflow designer with step inspector, run history and state timeline.",
+    "domain_model": [
+      "Workflow",
+      "Node",
+      "Edge",
+      "Run",
+      "StepState"
+    ],
+    "core_workflows": [
+      "Add a step",
+      "connect nodes",
+      "validate graph",
+      "run a simulated workflow."
+    ],
+    "safety_boundaries": "Execution is simulated; no external actions or live agents.",
+    "mockup": "mockups/85-flowstate.html",
+    "spec": "specs/85-flowstate.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Flowstate core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 86,
+    "category": "Document Software",
+    "name": "Papertrail",
+    "purpose": "Document workbench for editing, PDF review, OCR, generation, signatures and document workflows.",
+    "taxonomy_coverage": "Editing, conversion, PDF, OCR, document generation, e-signature, document workflow, document intelligence",
+    "ux_direction": "Split document editor with page thumbnails, structured fields, OCR extraction and review panel.",
+    "domain_model": [
+      "Document",
+      "Page",
+      "Field",
+      "Extraction",
+      "SignatureRequest"
+    ],
+    "core_workflows": [
+      "Edit a field",
+      "switch pages",
+      "inspect OCR confidence",
+      "prepare a signature request."
+    ],
+    "safety_boundaries": "Sample documents and signatures are fictional; no legal validity.",
+    "mockup": "mockups/86-papertrail.html",
+    "spec": "specs/86-papertrail.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Papertrail core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 87,
+    "category": "Research Software",
+    "name": "Fieldnotes",
+    "purpose": "Research library for literature discovery, citations, notebooks, experiments and lab work.",
+    "taxonomy_coverage": "Literature search, citation management, reference management, academic discovery, research notebooks, experiment management, lab management",
+    "ux_direction": "Academic reading desk with source list, abstract preview, citation drawer and notebook.",
+    "domain_model": [
+      "Source",
+      "Citation",
+      "Note",
+      "Experiment",
+      "LabRecord"
+    ],
+    "core_workflows": [
+      "Filter literature",
+      "save a citation",
+      "annotate a source",
+      "add an experiment note."
+    ],
+    "safety_boundaries": "Seed references are fictional examples, not claims of real publications.",
+    "mockup": "mockups/87-fieldnotes.html",
+    "spec": "specs/87-fieldnotes.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Fieldnotes core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 88,
+    "category": "Information-management Software",
+    "name": "Indexia",
+    "purpose": "Enterprise information map for PIM, ECM, DAM, MDM, CMS, knowledge and records.",
+    "taxonomy_coverage": "PIM, ECM, DAM, MDM, CMS, knowledge management, records management",
+    "ux_direction": "Information architecture console with entity graph, schema browser, lineage and record detail.",
+    "domain_model": [
+      "EntityType",
+      "Record",
+      "Relationship",
+      "Policy",
+      "LineageEvent"
+    ],
+    "core_workflows": [
+      "Browse entity types",
+      "inspect a record",
+      "trace lineage",
+      "review retention metadata."
+    ],
+    "safety_boundaries": "Demo records only; retention and governance policies are illustrative.",
+    "mockup": "mockups/88-indexia.html",
+    "spec": "specs/88-indexia.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Indexia core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 89,
+    "category": "Personal Software",
+    "name": "Daymark",
+    "purpose": "Personal life dashboard combining finance, fitness, habits, journaling, planning, travel, recipes and family.",
+    "taxonomy_coverage": "Personal finance, fitness, health, journaling, habit tracking, life planning, travel planning, recipe management, family management",
+    "ux_direction": "Calm personal home screen with daily plan, habit streaks, journal prompt and upcoming life events.",
+    "domain_model": [
+      "DailyPlan",
+      "Habit",
+      "JournalEntry",
+      "Goal",
+      "Trip",
+      "Recipe",
+      "HouseholdTask"
+    ],
+    "core_workflows": [
+      "Complete a habit",
+      "add a journal entry",
+      "pin a goal",
+      "browse a trip or recipe."
+    ],
+    "safety_boundaries": "Personal and health-related demo data is fictional; not medical or financial advice.",
+    "mockup": "mockups/89-daymark.html",
+    "spec": "specs/89-daymark.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement Daymark core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  },
+  {
+    "id": 90,
+    "category": "Home Software",
+    "name": "HearthOS",
+    "purpose": "Smart-home control center for automation, security, energy, media and NAS.",
+    "taxonomy_coverage": "Home automation, smart-home control, home security, energy monitoring, media servers, NAS management",
+    "ux_direction": "Room-based home overview with device controls, automation timeline, energy meter and NAS status.",
+    "domain_model": [
+      "Room",
+      "Device",
+      "Automation",
+      "SecurityEvent",
+      "EnergyReading",
+      "MediaServer",
+      "StoragePool"
+    ],
+    "core_workflows": [
+      "Toggle a demo device",
+      "trigger a scene",
+      "inspect a security event",
+      "view energy use."
+    ],
+    "safety_boundaries": "No real devices or security systems are connected; controls are simulated.",
+    "mockup": "mockups/90-hearthos.html",
+    "spec": "specs/90-hearthos.md",
+    "screens": [
+      "Overview",
+      "Detail / editor",
+      "History / review"
+    ],
+    "agent_prompts": [
+      "Implement HearthOS core workflow and data model.",
+      "Add domain validation and tests.",
+      "Polish responsive UX and write setup documentation."
+    ]
+  }
+]

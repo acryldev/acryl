@@ -1,0 +1,22 @@
+{
+  "name": "acryl-kv",
+  "description": "The kv port: named JSON documents for an app too small for SQL, with atomic update; types, checks and copyKv (the import). A provider (acryl-kv-json, acryl-kv-db) serves it. Vendored from ACRYL.",
+  "requires": [],
+  "inject": [],
+  "provides": [],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4"
+  },
+  "mount": "it is the port, not a service: a plugin declares inject: ['kv'] and imports the ctx.kv type from '../plugins/acryl-kv/src/cordis.ts'; add acryl-kv-json (a file) or acryl-kv-db (your SQL database) to provide it",
+  "omit": ["**/*.test.*", "**/*.spec.*", "**/*.case.ts"],
+  "imports": {
+    "#acryl-kv": "acryl-kv/src/index.ts",
+    "#acryl-kv/conformance": "acryl-kv/src/conformance.ts"
+  },
+  "suite": "src/conformance.ts",
+  "entries": {
+    "": "src/index.ts",
+    "/cordis": "src/cordis.ts",
+    "/conformance": "src/conformance.ts"
+  }
+}

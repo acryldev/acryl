@@ -1,0 +1,433 @@
+From f642d89f4818638f070693c4522533118816f0f8 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <alex.musichen@gmail.com>
+Date: Wed, 28 Oct 2026 14:16:51 +0100
+Subject: [PATCH 1/3] feat(blends): the registry page shows what exists instead
+ of seven invented previews
+
+The /blends page listed seven "Preview - not published" Blends (ACRYL, Blank Canvas, Agent Workbench, Local-first Studio, Secure Ops, Data Pipeline, Release Pilot) with fictional plugin names, above the six starters that are really in the registry. A reader could not tell which half was real.
+
+- The invented list is removed with its data: src/lib/content.ts no longer carries the preview array, BlendDetail only renders entries of registry/index.json, and the search panel, the category and subcategory pages and the vite route list read the registry instead.
+- The page now says what a Blend is made of today: a framework map in spec 049's order (core, routing, serving, records, tiny data, live state, UI, desktop, agents, the door, live plugins, tooling), each row with the service a plugin injects, the real provider packages, and whether it is stable, optional or experimental. It is the same map as the spec, so the site and the spec can be compared line by line.
+- src/lib/registry-placement.ts places each published starter in the 100-category taxonomy (the registry's own category field is the publisher's short word, not the taxonomy), so a category page shows the real entries that belong to it instead of always "No Blends here yet".
+- The hero count is now "6 starters in the registry - 100 categories".
+
+Verified with bun run build (722 real routes) and a headless pass over /blends, /blends/application and /blends/software-factories.
+---
+ src/components/site-chrome.tsx  |   7 +-
+ src/lib/content.ts              |  23 +------
+ src/lib/framework-parts.ts      | 118 ++++++++++++++++++++++++++++++++
+ src/lib/registry-placement.ts   |  22 ++++++
+ src/pages/BlendDetail.tsx       |  12 ++--
+ src/pages/BlendsCategory.tsx    |   8 ++-
+ src/pages/BlendsIndex.tsx       |  78 ++++++++++++++++++---
+ src/pages/BlendsSubcategory.tsx |   8 ++-
+ vite.config.ts                  |   4 +-
+ 9 files changed, 231 insertions(+), 49 deletions(-)
+ create mode 100644 src/lib/framework-parts.ts
+ create mode 100644 src/lib/registry-placement.ts
+
+diff --git a/src/components/site-chrome.tsx b/src/components/site-chrome.tsx
+index a857452..2dc4799 100644
+--- a/src/components/site-chrome.tsx
++++ b/src/components/site-chrome.tsx
+@@ -2,7 +2,8 @@ import { Link, useLocation } from "react-router-dom";
+ import { docUrl, pages } from "../lib/framework-docs";
+ import { Menu, Search, X, ArrowUpRight } from "lucide-react";
+ import { useEffect, useState } from "react";
+-import { blends, categories, docGroups, slugify } from "../lib/content";
++import { categories, docGroups, slugify } from "../lib/content";
++import { entries as registryEntries } from "./registry";
+ import { cordisGroups } from "../lib/cordis-tutorial";
+ import { ThemeToggle } from "./theme-toggle";
+ 
+@@ -19,8 +20,8 @@ export function Header() {
+ }
+ function SearchPanel({ onClose }: { onClose: () => void }) {
+   const [q, setQ] = useState("");
+-  const entries = [...blends.map(b => ({ title: b.name, meta: "Blend", to: `/blends/b/${b.slug}` })), ...categories.map(c => ({ title: c.name, meta: "Category", to: `/blends/${c.slug}` })), ...[...pages.values()].map(p => ({ title: p.title, meta: "Framework docs", to: docUrl(p.key) })), ...docGroups.flatMap(g => g.items.map(i => ({ title: i, meta: g.title, to: `/docs/blends/${g.slug}/${slugify(i)}` }))), ...cordisGroups.flatMap(g => g.items.map(i => ({ title: i, meta: `Cordis Primer / ${g.title}`, to: `/cordis/${g.slug}/${slugify(i)}` })))].filter(x => x.title.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+-  return <div className="fixed inset-0 z-50 bg-overlay p-4 pt-[10vh]" onMouseDown={onClose}><div className="mx-auto max-w-2xl overflow-hidden rounded-md border border-border bg-popover shadow-modal" onMouseDown={e => e.stopPropagation()}><div className="flex items-center gap-3 border-b border-border px-4"><Search size={18} className="text-muted-foreground"/><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search Blends, categories and docs…" className="h-14 flex-1 bg-transparent text-sm outline-none"/><button onClick={onClose} className="font-mono text-xs text-muted-foreground">ESC</button></div><div className="max-h-[60vh] overflow-auto p-2">{entries.map(e => <Link key={e.to} to={e.to} onClick={onClose} className="flex items-center justify-between rounded-sm px-3 py-3 hover:bg-muted"><span className="font-medium">{e.title}</span><span className="font-mono text-xs text-muted-foreground">{e.meta}</span></Link>)}{entries.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No matching entries.</p>}</div></div></div>;
++  const results = [...registryEntries.map(e => ({ title: e.name, meta: "Blend", to: `/blends/b/${e.id}` })), ...categories.map(c => ({ title: c.name, meta: "Category", to: `/blends/${c.slug}` })), ...[...pages.values()].map(p => ({ title: p.title, meta: "Framework docs", to: docUrl(p.key) })), ...docGroups.flatMap(g => g.items.map(i => ({ title: i, meta: g.title, to: `/docs/blends/${g.slug}/${slugify(i)}` }))), ...cordisGroups.flatMap(g => g.items.map(i => ({ title: i, meta: `Cordis Primer / ${g.title}`, to: `/cordis/${g.slug}/${slugify(i)}` })))].filter(x => x.title.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
++  return <div className="fixed inset-0 z-50 bg-overlay p-4 pt-[10vh]" onMouseDown={onClose}><div className="mx-auto max-w-2xl overflow-hidden rounded-md border border-border bg-popover shadow-modal" onMouseDown={e => e.stopPropagation()}><div className="flex items-center gap-3 border-b border-border px-4"><Search size={18} className="text-muted-foreground"/><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search Blends, categories and docs…" className="h-14 flex-1 bg-transparent text-sm outline-none"/><button onClick={onClose} className="font-mono text-xs text-muted-foreground">ESC</button></div><div className="max-h-[60vh] overflow-auto p-2">{results.map(e => <Link key={e.to} to={e.to} onClick={onClose} className="flex items-center justify-between rounded-sm px-3 py-3 hover:bg-muted"><span className="font-medium">{e.title}</span><span className="font-mono text-xs text-muted-foreground">{e.meta}</span></Link>)}{results.length === 0 && <p className="p-6 text-center text-sm text-muted-foreground">No matching entries.</p>}</div></div></div>;
+ }
+ export function Footer() {
+   return <footer className="border-t border-border bg-surface text-foreground"><div className="mx-auto grid max-w-[1440px] gap-10 px-5 py-14 md:grid-cols-[1.6fr_repeat(3,1fr)] md:px-8"><div><div className="flex items-center gap-3"><Mark className="h-9 w-9"/><span className="text-sm font-bold tracking-[0.14em]">ACRYL BLENDS</span></div><p className="mt-5 max-w-sm text-sm leading-6 text-muted-foreground">A practical framework for composing stable software from Cordis plugins. Open source, built by Webboxes.</p></div><FooterCol title="Explore" links={[["Browse Blends", "/blends"], ["Documentation", "/docs"], ["Blends guide", "/docs/blends"], ["Cordis Primer", "/cordis"], ["Blog", "/blog"]]}/><FooterCol title="Ecosystem" links={[["The three layers", "/ecosystem/three-layers"], ["Business model", "/ecosystem/business-model"], ["Roadmap", "/ecosystem/roadmap"], ["acryl.dev — the product", "https://acryl.dev"], ["cordisplugins.github.io — the plugin registry", "https://cordisplugins.github.io"]]}/><FooterCol title="Code" links={[["acrylblends.github.io", "https://github.com/acrylblends/acrylblends.github.io"], ["cordisplugins (org)", "https://github.com/cordisplugins"], ["acryldev/acryl", "https://github.com/acryldev/acryl"], ["DeepSeek Harness", "https://github.com/deepseek-ai"]]}/></div><div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-2 border-t border-border px-5 py-5 font-mono text-[11px] text-muted-foreground md:flex-row md:px-8"><span>© 2026 ACRYL BLENDS</span><span>COMPOSABLE BY DESIGN · OPEN BY DEFAULT</span></div></footer>;
+diff --git a/src/lib/content.ts b/src/lib/content.ts
+index abaaa32..ba6823f 100644
+--- a/src/lib/content.ts
++++ b/src/lib/content.ts
+@@ -1,8 +1,3 @@
+-export type Blend = {
+-  slug: string; name: string; description: string; category: string; subcategory: string;
+-  tags: string[]; plugins: string[]; publisher: string; version: string; license: string; pulls: string;
+-};
+-
+ export const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+ 
+ // The real, complete 100-category software taxonomy this registry is organized
+@@ -112,23 +107,7 @@ const categoriesRaw: { name: string; subs: string[] }[] = [
+   { name: "Meta-software", subs: ["Compilers", "AI coding agents", "Software factories", "DSLs"] },
+ ];
+ 
+-export const categories = categoriesRaw.map((c) => ({ slug: slugify(c.name), name: c.name, subs: c.subs, count: 0 }));
+-
+-// Illustrative preview Blends — real category/taxonomy alignment, real plugin
+-// package names drawn from acryldev/acryl where they exist (cordis-plugin-market,
+-// dsh-client-ui-brand-acryl, acryl-control, acryl-harness-runtime), fictional
+-// names elsewhere clearly scoped as preview data, not a claim of a populated registry.
+-export const blends: Blend[] = [
+-  { slug: "acryl", name: "ACRYL", description: "The flagship, maxed-out Blend. One complete expression of the model: agent control plane, terminal/web/desktop surfaces, editor, market and brand slots composed into a single working product.", category: "Developer", subcategory: "Agentic development environments", tags: ["flagship", "agents", "multi-surface"], plugins: ["cordis", "acryl-control", "acryl-harness-runtime", "cordis-plugin-market", "dsh-client-ui-brand-acryl"], publisher: "acryldev", version: "0.1.44", license: "MIT", pulls: "—" },
+-  { slug: "blank-canvas", name: "Blank Canvas", description: "The smallest viable Blend. Start empty, then grow only what the work needs.", category: "Developer", subcategory: "Code editors", tags: ["starter", "minimal", "hot-reload"], plugins: ["cordis"], publisher: "acrylblends", version: "0.1.0", license: "MIT", pulls: "—" },
+-  { slug: "agent-workbench", name: "Agent Workbench", description: "A focused environment for tool-using agents, evaluations, memory and human checkpoints.", category: "AI", subcategory: "Agent infrastructure", tags: ["agents", "evaluation", "memory"], plugins: ["cordis", "agent-runtime", "checkpoint-store", "tool-router"], publisher: "acrylblends", version: "0.1.0", license: "Apache-2.0", pulls: "—" },
+-  { slug: "local-first-studio", name: "Local-first Studio", description: "Desktop-ready composition with local storage, sync boundaries and a visual work surface.", category: "Application", subcategory: "Productivity", tags: ["desktop", "local-first", "sync"], plugins: ["cordis", "desktop-surface", "local-store", "sync-adapter"], publisher: "webboxes", version: "0.1.0", license: "MIT", pulls: "—" },
+-  { slug: "secure-ops", name: "Secure Ops", description: "Auditable operations console with identity, secrets and policy-aware tool execution.", category: "Cybersecurity", subcategory: "Identity security", tags: ["security", "audit", "operations"], plugins: ["cordis", "identity-gate", "secret-vault", "audit-log"], publisher: "webboxes", version: "0.1.0", license: "BUSL-1.1", pulls: "—" },
+-  { slug: "data-pipeline", name: "Data Pipeline", description: "Composable ingestion, transformation and validation for durable data workflows.", category: "Data", subcategory: "Data engineering", tags: ["data", "etl", "validation"], plugins: ["cordis", "source-connectors", "transform-engine", "schema-guard"], publisher: "community", version: "0.1.0", license: "MIT", pulls: "—" },
+-  { slug: "release-pilot", name: "Release Pilot", description: "A release engineering Blend for testing, packaging and coordinated deployments.", category: "DevOps", subcategory: "CI/CD", tags: ["release", "ci", "automation"], plugins: ["cordis", "test-runner", "release-graph", "deploy-adapter"], publisher: "community", version: "0.1.0", license: "MIT", pulls: "—" },
+-];
+-
+-for (const c of categories) c.count = blends.filter((b) => b.category === c.name).length;
++export const categories = categoriesRaw.map((c) => ({ slug: slugify(c.name), name: c.name, subs: c.subs }));
+ 
+ export const docGroups = [
+   { slug: "getting-started", title: "Getting Started", items: ["What is ACRYL Blends", "Install", "Create your first app", "Let the agent build a plugin", "Add plugins", "Lock, save and ship"] },
+diff --git a/src/lib/framework-parts.ts b/src/lib/framework-parts.ts
+new file mode 100644
+index 0000000..ecdf624
+--- /dev/null
++++ b/src/lib/framework-parts.ts
+@@ -0,0 +1,118 @@
++// What the framework is made of today: one row per capability, with the service name a plugin injects and the providers that implement it.
++// Source of truth is spec 049 ("The map") in acryldev/acryl and acrylblends 1.0's packages; this file is the site's copy of it, kept in the same order so a reader
++// can compare the two. Status words match the release notes: experimental means it works, is gated, and its interface may change in a minor version.
++
++export type PartStatus = "stable" | "optional" | "experimental";
++
++export interface FrameworkPart {
++  /** The row's name in spec 049's map. */
++  layer: string;
++  /** What a person asks when they reach for this layer. */
++  question: string;
++  /** The service a plugin injects (or, for the tooling rows, the command). */
++  service: string;
++  /** The packages that implement it, the default first. */
++  providers: string[];
++  status: PartStatus;
++  /** One line of context that the table alone would hide. */
++  note?: string;
++}
++
++export const frameworkParts: FrameworkPart[] = [
++  {
++    layer: "Core",
++    question: "How do plugins start, stop and find each other?",
++    service: "Context, inject, effect, Loader",
++    providers: ["cordis"],
++    status: "stable",
++    note: "A capability is one plugin providing one service; consumers depend on the name, never the provider.",
++  },
++  {
++    layer: "Routing",
++    question: "How does a request become a response?",
++    service: "router",
++    providers: ["acryl-router"],
++    status: "stable",
++    note: "One Acryl app per plugin, mounted with ctx.router.route. Five routers behind one API: RegExp, Trie, Smart (default), Linear, Pattern.",
++  },
++  {
++    layer: "Serving",
++    question: "How is it served?",
++    service: "routerHttp",
++    providers: ["acryl-node-server", "Desktop's loopback host", "in process"],
++    status: "stable",
++    note: "Node.js is the verified runtime (22.19+); Bun is experimental. Tests and the terminal UI call the app without a socket.",
++  },
++  {
++    layer: "Records",
++    question: "Where does my app keep its records?",
++    service: "db",
++    providers: ["acryl-db-sqlite", "acryl-db-pglite", "acryl-db-postgres"],
++    status: "optional",
++    note: "SQL with numbered migrations. SQLite is the default; embedded Postgres (PGlite) and a hosted Postgres are one provider row away, and the app's SQL does not change.",
++  },
++  {
++    layer: "Tiny data",
++    question: "My app is small; can it skip SQL?",
++    service: "kv",
++    providers: ["acryl-kv-json", "acryl-kv-db"],
++    status: "stable",
++    note: "Named JSON documents. The file provider replaces atomically, so a crash leaves the old or the new file; the db provider carries the same data into SQL.",
++  },
++  {
++    layer: "Live state",
++    question: "How does the page see changes without a reload?",
++    service: "state",
++    providers: ["acryl-state"],
++    status: "stable",
++    note: "Observable cells over server-sent events.",
++  },
++  {
++    layer: "UI",
++    question: "How is a page rendered?",
++    service: "jsx, clientModules, acryl-ui",
++    providers: ["acrylblends/jsx", "acrylblends/jsx/dom"],
++    status: "stable",
++    note: "JSX on the server and the same JSX in the browser, and client components without a bundler. A richer React component library is used by the ACRYL IDE and not yet in templates.",
++  },
++  {
++    layer: "Desktop",
++    question: "The same app as a window?",
++    service: "desktop",
++    providers: ["desktop (Electron)"],
++    status: "stable",
++    note: "acrylblends add desktop to an existing app; the routes and plugins are the ones the web build runs.",
++  },
++  {
++    layer: "Agents",
++    question: "Who can work inside the running app?",
++    service: "drivers",
++    providers: ["driver-pty"],
++    status: "experimental",
++    note: "One driver per agent behind acrylblends/drivers: the PTY driver runs claude, codex or pi inside the app folder. A driver for the Agent Client Protocol, with dsh as its first preset, is in review.",
++  },
++  {
++    layer: "The door",
++    question: "How does an agent look at and change the app?",
++    service: "acryl control",
++    providers: ["acryl-door", "agent-panel"],
++    status: "experimental",
++    note: "brief, look, act and plugin add|remove|reload over the CLI, MCP and the in-app chat. Loopback, per-run secret, audit log, and off with NODE_ENV=production or ACRYL_DOOR=off.",
++  },
++  {
++    layer: "Live plugins",
++    question: "Can a plugin be installed while the app runs?",
++    service: "extensions, builder, sandbox",
++    providers: ["plugins/extensions", "plugins/builder"],
++    status: "experimental",
++    note: "A plugin is staged, imported, mounted and reported as active, pending or failed, with the previous version kept on failure. It is a correctness check, not a security boundary.",
++  },
++  {
++    layer: "Tooling",
++    question: "How do I start and grow an app?",
++    service: "acrylblends init, add, upgrade",
++    providers: ["acrylblends", "create-acrylblends"],
++    status: "stable",
++    note: "Six templates (blank, nodejs, notes, chat, todo, agent), a plugin library, and upgrade for the framework plugins an app carries.",
++  },
++];
+diff --git a/src/lib/registry-placement.ts b/src/lib/registry-placement.ts
+new file mode 100644
+index 0000000..e383ae2
+--- /dev/null
++++ b/src/lib/registry-placement.ts
+@@ -0,0 +1,22 @@
++// Where each published starter sits in the site's 100-category taxonomy. The registry's own index.json carries the publisher's short category
++// (starter, finance, productivity, ...), which is not the taxonomy; this map is the site's presentation of it and is written by hand when an entry lands.
++export interface Placement {
++  category: string;
++  subcategory: string;
++}
++
++/** The entries that have a taxonomy placement, with it; an entry without one is not shown in the browser until someone places it. */
++export function placeEntries<T extends { id: string }>(entries: readonly T[]): Array<{ entry: T; placement: Placement }> {
++  return entries
++    .map((entry) => ({ entry, placement: registryPlacement[entry.id] }))
++    .filter((item): item is { entry: T; placement: Placement } => item.placement !== undefined);
++}
++
++export const registryPlacement: Record<string, Placement> = {
++  "acryl.blank": { category: "Software Factories", subcategory: "AI software factories" },
++  "acryl.accounting": { category: "Business", subcategory: "Finance" },
++  "acryl.gtd": { category: "Application", subcategory: "Productivity" },
++  "acryl.music": { category: "Media", subcategory: "Music" },
++  "acryl.orderdesk": { category: "E-commerce", subcategory: "Order management" },
++  "acryl.organizer": { category: "Application", subcategory: "Productivity" },
++};
+diff --git a/src/pages/BlendDetail.tsx b/src/pages/BlendDetail.tsx
+index f062500..317b61b 100644
+--- a/src/pages/BlendDetail.tsx
++++ b/src/pages/BlendDetail.tsx
+@@ -1,21 +1,19 @@
+ import { useEffect, useState } from "react";
+ import { Link, useParams } from "react-router-dom";
+-import { ArrowUpRight, Download, GitFork, History } from "lucide-react";
++import { ArrowUpRight, Download } from "lucide-react";
+ import { Breadcrumbs, SiteLayout, usePageMeta } from "../components/layouts";
+ import { CodeBlock, Status } from "../components/ui";
+-import { blends } from "../lib/content";
+ import { entries, level, type RegistryEntry } from "../components/registry";
+ import NotFound from "./NotFound";
+ 
++/** A Blend's page: only the starters that are really in the registry have one, so every page here is something a reader can pull today. */
+ export default function BlendDetail() {
+   const { slug } = useParams();
+   const entry = entries.find(x => x.id === slug);
+-  if (entry) return <RegistryDetail entry={entry}/>;
+-  const b = blends.find(x => x.slug === slug);
+-  usePageMeta(b?.name ?? "Blend", b?.description ?? "ACRYL Blend");
+-  if (!b) return <NotFound/>;
+-  return <SiteLayout><section className="border-b border-border bg-surface"><div className="mx-auto max-w-[1200px] px-5 py-14 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: b.category, to: `/blends/${b.category.toLowerCase()}` }, { label: b.name }]}/><div className="mt-10 grid gap-8 lg:grid-cols-[1fr_auto]"><div><div className="flex flex-wrap gap-2"><Status>{b.category}</Status><Status>{b.subcategory}</Status><Status tone="warning">Preview · not published</Status></div><h1 className="mt-5 text-4xl font-semibold md:text-6xl">{b.name}</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">{b.description}</p></div><div className="grid min-w-60 grid-cols-2 border border-border bg-background"><Metric value={b.version} label="Version"/><Metric value={b.pulls} label="Pulls"/><Metric value={String(b.plugins.length)} label="Plugins"/><Metric value={b.license} label="License"/></div></div></div></section><div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-12 md:px-8 lg:grid-cols-[1fr_300px]"><main className="min-w-0"><h2 className="text-2xl font-semibold">Not published yet</h2><p className="mt-4 text-sm leading-6 text-muted-foreground">This is an illustrative composition showing what a Blend page will hold. It is not in the registry, so there is nothing to pull. The Blends you can start from today are listed on the <Link to="/blends" className="font-semibold underline underline-offset-4">Blends page</Link>.</p><h2 className="mt-12 text-2xl font-semibold">Composed plugins</h2><div className="mt-4 border-t border-border">{b.plugins.map((p, i) => <a key={p} href={`https://github.com/cordisplugins/${p}`} target="_blank" rel="noreferrer" className="flex items-center justify-between border-b border-border py-4 hover:text-accent-foreground"><div><span className="mr-4 font-mono text-[11px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><strong className="font-mono text-sm">{p}</strong></div><ArrowUpRight size={15}/></a>)}</div><h2 className="mt-12 text-2xl font-semibold">Provenance</h2><div className="mt-4 border border-dashed border-border p-6"><div className="flex gap-3"><GitFork size={18}/><div><h3 className="font-semibold">Original composition</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">No parent Blend recorded. Differentiation history will appear here when the Differentiation Engine lands.</p></div></div></div></main><aside className="space-y-6"><Info label="Publisher" value={b.publisher}/><Info label="License" value={b.license}/><Info label="Updated" value="September 2026"/><div className="border-t border-border pt-6"><Link to="/docs/blends/building-and-publishing/version-and-update" className="flex items-center gap-2 text-sm font-semibold"><History size={15}/> Version history</Link><button className="mt-4 flex items-center gap-2 text-sm font-semibold"><Download size={15}/> Export manifest</button></div></aside></div></SiteLayout>;
++  if (!entry) return <NotFound/>;
++  return <RegistryDetail entry={entry}/>;
+ }
++
+ function RegistryDetail({ entry }: { entry: RegistryEntry }) {
+   usePageMeta(entry.name, entry.description ?? "ACRYL Blend");
+   const file = `/registry/${entry.path}/blend.yaml`;
+diff --git a/src/pages/BlendsCategory.tsx b/src/pages/BlendsCategory.tsx
+index 3d2b059..fce07b4 100644
+--- a/src/pages/BlendsCategory.tsx
++++ b/src/pages/BlendsCategory.tsx
+@@ -2,7 +2,9 @@ import { Link, useParams } from "react-router-dom";
+ import { ArrowRight, Upload } from "lucide-react";
+ import { Breadcrumbs, PageIntro, SiteLayout, usePageMeta } from "../components/layouts";
+ import { Status } from "../components/ui";
+-import { blends, categories, slugify } from "../lib/content";
++import { categories, slugify } from "../lib/content";
++import { placeEntries } from "../lib/registry-placement";
++import { entries } from "../components/registry";
+ import NotFound from "./NotFound";
+ 
+ export default function BlendsCategory() {
+@@ -10,6 +12,6 @@ export default function BlendsCategory() {
+   const c = categories.find(x => x.slug === category);
+   usePageMeta(c?.name ?? "Category", `Explore ${c?.name ?? "category"} Blends and composable starting points.`);
+   if (!c) return <NotFound/>;
+-  const related = blends.filter(b => b.category === c.name);
+-  return <SiteLayout><PageIntro kicker="Registry category" title={c.name} description={`Explore ${c.name.toLowerCase()} starting points and the subcategories that organize them.`} actions={<Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-primary"><Upload size={15}/> Publish here</Link>}/><div className="mx-auto max-w-[1440px] px-5 py-10 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: c.name }]}/><div className="mt-10 grid gap-10 lg:grid-cols-[.65fr_1.35fr]"><aside><h2 className="font-mono text-xs font-semibold uppercase tracking-[.14em]">Subcategories</h2><div className="mt-4 border-t border-border">{c.subs.map(s => <Link key={s} to={`/blends/${c.slug}/${slugify(s)}`} className="flex items-center justify-between border-b border-border py-4 text-sm hover:text-accent-foreground"><span>{s}</span><ArrowRight size={14}/></Link>)}</div></aside><section><div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">Available Blends</h2><Status>{related.length} results</Status></div>{related.length ? <div className="mt-5 space-y-3">{related.map(b => <Link key={b.slug} to={`/blends/b/${b.slug}`} className="block border border-border p-6 hover:bg-surface"><h3 className="text-xl font-semibold">{b.name}</h3><p className="mt-2 text-sm text-muted-foreground">{b.description}</p><p className="mt-5 font-mono text-[11px] text-muted-foreground">{b.plugins.join(" · ")}</p></Link>)}</div> : <div className="mt-5 border border-dashed border-border bg-surface p-12 text-center"><h3 className="text-xl font-semibold">No Blends here yet.</h3><p className="mt-2 text-sm text-muted-foreground">This is a real category waiting for its first useful composition.</p><Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-secondary mt-6">Be the first to publish one</Link></div>}</section></div></div></SiteLayout>;
++  const related = placeEntries(entries).filter(p => p.placement.category === c.name);
++  return <SiteLayout><PageIntro kicker="Registry category" title={c.name} description={`Explore ${c.name.toLowerCase()} starting points and the subcategories that organize them.`} actions={<Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-primary"><Upload size={15}/> Publish here</Link>}/><div className="mx-auto max-w-[1440px] px-5 py-10 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: c.name }]}/><div className="mt-10 grid gap-10 lg:grid-cols-[.65fr_1.35fr]"><aside><h2 className="font-mono text-xs font-semibold uppercase tracking-[.14em]">Subcategories</h2><div className="mt-4 border-t border-border">{c.subs.map(s => <Link key={s} to={`/blends/${c.slug}/${slugify(s)}`} className="flex items-center justify-between border-b border-border py-4 text-sm hover:text-accent-foreground"><span>{s}</span><ArrowRight size={14}/></Link>)}</div></aside><section><div className="flex items-center justify-between"><h2 className="text-2xl font-semibold">Available Blends</h2><Status>{related.length} results</Status></div>{related.length ? <div className="mt-5 space-y-3">{related.map(({ entry }) => <Link key={entry.id} to={`/blends/b/${entry.id}`} className="block border border-border p-6 hover:bg-surface"><div className="flex flex-wrap gap-2"><Status tone="success">{entry.kind}</Status><Status>v{entry.version}</Status><Status>{entry.license}</Status></div><h3 className="mt-3 text-xl font-semibold">{entry.name}</h3><p className="mt-2 text-sm text-muted-foreground">{entry.description}</p><p className="mt-5 font-mono text-[11px] text-muted-foreground">{entry.id}</p></Link>)}</div> : <div className="mt-5 border border-dashed border-border bg-surface p-12 text-center"><h3 className="text-xl font-semibold">No Blends here yet.</h3><p className="mt-2 text-sm text-muted-foreground">This is a real category waiting for its first useful composition.</p><Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-secondary mt-6">Be the first to publish one</Link></div>}</section></div></div></SiteLayout>;
+ }
+diff --git a/src/pages/BlendsIndex.tsx b/src/pages/BlendsIndex.tsx
+index ca09df8..dfce586 100644
+--- a/src/pages/BlendsIndex.tsx
++++ b/src/pages/BlendsIndex.tsx
+@@ -1,14 +1,74 @@
+ import { Link } from "react-router-dom";
+-import { Search, SlidersHorizontal, ArrowRight, Upload } from "lucide-react";
+-import { useMemo, useState } from "react";
++import { ArrowRight, Upload } from "lucide-react";
+ import { PageIntro, SiteLayout, usePageMeta } from "../components/layouts";
+-import { Status } from "../components/ui";
+-import { blends, categories } from "../lib/content";
+-import { RegistryStarters } from "../components/registry";
++import { SectionTitle, Status } from "../components/ui";
++import { categories } from "../lib/content";
++import { frameworkParts } from "../lib/framework-parts";
++import { entries, RegistryStarters } from "../components/registry";
+ 
+ export default function BlendsIndex() {
+-  usePageMeta("Browse Blends", "Browse composable Cordis-based starting points by category, plugin, tag, or publisher.");
+-  const [q, setQ] = useState(""); const [mode, setMode] = useState<"blends" | "categories">("blends");
+-  const shown = useMemo(() => blends.filter(b => [b.name, b.description, b.category, b.publisher, ...b.tags, ...b.plugins].join(" ").toLowerCase().includes(q.toLowerCase())), [q]);
+-  return <SiteLayout><PageIntro kicker="The registry" title="A starting point, not a ceiling." description="Pull a complete, inspectable software composition. Change any part. Publish the form that proves useful." actions={<><Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-primary"><Upload size={15}/> Publish a Blend</Link><span className="self-center font-mono text-xs text-muted-foreground">{categories.length} categories · {blends.length} illustrative previews, not published</span></>}/><RegistryStarters/><section className="mx-auto max-w-[1440px] px-5 py-12 md:px-8"><div className="flex flex-col gap-3 border-b border-border pb-6 md:flex-row md:items-center"><div className="flex h-11 flex-1 items-center gap-3 border border-input bg-background px-4"><Search size={16} className="text-muted-foreground"/><input value={q} onChange={e => setQ(e.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="Search by name, plugin, publisher or tag"/></div><div className="flex h-11 items-center border border-input p-1"><button onClick={() => setMode("blends")} className={`segmented ${mode === "blends" ? "segmented-active" : ""}`}>Blends</button><button onClick={() => setMode("categories")} className={`segmented ${mode === "categories" ? "segmented-active" : ""}`}>Categories</button></div><button className="btn-secondary h-11"><SlidersHorizontal size={15}/> Filters</button></div>{mode === "blends" ? <div className="mt-8 grid gap-4 lg:grid-cols-2">{shown.map(b => <Link key={b.slug} to={`/blends/b/${b.slug}`} className="group border border-border bg-background p-6 hover:border-foreground/30 hover:bg-surface"><div className="flex items-start justify-between gap-3"><div><div className="flex flex-wrap gap-2"><Status>{b.category}</Status><Status tone="warning">Preview</Status></div><h2 className="mt-5 text-2xl font-semibold">{b.name}</h2></div><ArrowRight size={18} className="transition-transform group-hover:translate-x-1"/></div><p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground">{b.description}</p><div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-4 font-mono text-[11px] text-muted-foreground"><span>{b.publisher}</span><span>{b.plugins.length} plugins</span></div></Link>)}{shown.length === 0 && <div className="col-span-full py-20 text-center text-muted-foreground">No Blends match this search.</div>}</div> : <div className="mt-8 grid border-l border-t border-border sm:grid-cols-2 lg:grid-cols-4">{categories.filter(c => c.name.toLowerCase().includes(q.toLowerCase())).map((c, i) => <Link key={c.slug} to={`/blends/${c.slug}`} className="group border-b border-r border-border p-6 hover:bg-surface"><span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><h2 className="mt-7 text-xl font-semibold">{c.name}</h2><p className="mt-2 text-sm text-muted-foreground">{c.subs.join(" · ")}</p><div className="mt-7 flex items-center justify-between font-mono text-[11px]"><span>{c.count} Blends</span><ArrowRight size={14}/></div></Link>)}</div>}</section></SiteLayout>;
++  usePageMeta("Browse Blends", "Every ACRYL Blend is Cordis plugins composed into one running app: the starting points in the registry, and the parts the framework is made of today.");
++  return <SiteLayout>
++    <PageIntro
++      kicker="The registry"
++      title="A starting point, not a ceiling."
++      description="Every Blend is Cordis plugins composed into one running app. Start from a blueprint, grow it from the inside with an agent, and publish the form that proves useful."
++      actions={<>
++        <Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-primary"><Upload size={15}/> Publish a Blend</Link>
++        <span className="self-center font-mono text-xs text-muted-foreground">{entries.length} starters in the registry · {categories.length} categories</span>
++      </>}
++    />
++    <RegistryStarters/>
++    <FrameworkMap/>
++    <Categories/>
++  </SiteLayout>;
++}
++
++/** What a Blend is built from today, in spec 049's order: the service a plugin injects, the providers that implement it, and how settled each one is. */
++function FrameworkMap() {
++  return <section className="border-t border-border">
++    <div className="mx-auto max-w-[1440px] px-5 py-16 md:px-8">
++      <SectionTitle eyebrow="What a Blend is made of" title="Every capability is one plugin behind one service."
++        intro="An app's own plugins depend on the service name (inject), never on which plugin provides it. The framework ships a working default for each row; swapping SQLite for Postgres, Node for a desktop window, or one agent for another is a configuration change, not a rewrite."/>
++      <div className="mt-12 border-t border-border">
++        {frameworkParts.map((part, i) => <article key={part.layer} className="grid gap-5 border-b border-border py-7 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)_auto] md:gap-10">
++          <div>
++            <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
++            <h3 className="mt-2 text-lg font-semibold">{part.layer}</h3>
++            <p className="mt-1 text-sm leading-6 text-muted-foreground">{part.question}</p>
++          </div>
++          <div className="min-w-0">
++            <p className="font-mono text-xs text-accent-foreground">{part.service}</p>
++            <div className="mt-2 flex flex-wrap gap-1.5">{part.providers.map(provider => <span key={provider} className="inline-flex items-center border border-input bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground">{provider}</span>)}</div>
++            {part.note && <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{part.note}</p>}
++          </div>
++          <div className="md:pt-1"><Status tone={part.status === "experimental" ? "warning" : part.status === "optional" ? "default" : "success"}>{part.status}</Status></div>
++        </article>)}
++      </div>
++      <div className="mt-8 grid gap-6 md:grid-cols-[1.4fr_1fr]">
++        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">A provider is accepted by passing its port's conformance suite, whoever wrote it. That is what lets an outside tool (a renderer, an ORM, an auth library, a hosted database) join as one more row without the framework becoming a mess.</p>
++        <p className="text-sm leading-6 text-muted-foreground">The same code runs on Node.js 22.19 or newer. Bun is experimental, and the other hosting adapters of the upstream project are not part of 1.0. See <Link to="/docs/getting-started/other-runtimes" className="font-semibold text-foreground underline underline-offset-4">other runtimes</Link>.</p>
++      </div>
++    </div>
++  </section>;
++}
++
++/** The software taxonomy the registry is organized around; a category with no Blend yet is still a real address, and says so. */
++function Categories() {
++  return <section className="border-t border-border bg-surface">
++    <div className="mx-auto max-w-[1440px] px-5 py-16 md:px-8">
++      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
++        <SectionTitle eyebrow="The taxonomy" title="Browse by category" intro="The registry is organized by what software a Blend is for, not by what is trendy. Most categories have no Blend yet; the address is ready before the first publication."/>
++        <Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-secondary shrink-0">Publish here <ArrowRight size={15}/></Link>
++      </div>
++      <div className="mt-10 grid border-l border-t border-border sm:grid-cols-2 lg:grid-cols-4">
++        {categories.map((c, i) => <Link key={c.slug} to={`/blends/${c.slug}`} className="group border-b border-r border-border bg-background p-5 hover:bg-muted">
++          <span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
++          <h3 className="mt-5 text-base font-semibold">{c.name}</h3>
++          <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-muted-foreground">{c.subs.slice(0, 3).join(" · ")}</p>
++          <ArrowRight size={14} className="mt-4 transition-transform group-hover:translate-x-1"/>
++        </Link>)}
++      </div>
++    </div>
++  </section>;
+ }
+diff --git a/src/pages/BlendsSubcategory.tsx b/src/pages/BlendsSubcategory.tsx
+index e852957..6499e77 100644
+--- a/src/pages/BlendsSubcategory.tsx
++++ b/src/pages/BlendsSubcategory.tsx
+@@ -1,12 +1,14 @@
+ import { Link, useParams } from "react-router-dom";
+ import { Breadcrumbs, PageIntro, SiteLayout, usePageMeta } from "../components/layouts";
+-import { blends, categories, slugify } from "../lib/content";
++import { categories, slugify } from "../lib/content";
++import { placeEntries } from "../lib/registry-placement";
++import { entries } from "../components/registry";
+ 
+ export default function BlendsSubcategory() {
+   const { category, subcategory } = useParams<{ category: string; subcategory: string }>();
+   const c = categories.find(x => x.slug === category);
+   const label = c?.subs.find(s => slugify(s) === subcategory) ?? (subcategory ?? "").replaceAll("-", " ");
+   usePageMeta(label, "Browse Blends in this focused registry subcategory.");
+-  const list = blends.filter(b => b.category === c?.name && slugify(b.subcategory) === subcategory);
+-  return <SiteLayout><PageIntro kicker={c?.name ?? "Category"} title={label} description={`Focused compositions for ${label.toLowerCase()}. Every taxonomy node remains visible, even before its first publication.`}/><div className="mx-auto max-w-[1100px] px-5 py-10 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: c?.name ?? category ?? "", to: `/blends/${category}` }, { label }]}/>{list.length ? <div className="mt-10 grid gap-4 md:grid-cols-2">{list.map(b => <Link key={b.slug} to={`/blends/b/${b.slug}`} className="border border-border p-6 hover:bg-surface"><h2 className="text-xl font-semibold">{b.name}</h2><p className="mt-2 text-sm text-muted-foreground">{b.description}</p></Link>)}</div> : <div className="mt-10 border border-dashed border-border bg-surface p-14 text-center"><h2 className="text-2xl font-semibold">No Blends here yet.</h2><p className="mt-3 text-muted-foreground">The address is ready. The first composition is not.</p><Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-primary mt-7">Publish a Blend</Link></div>}</div></SiteLayout>;
++  const list = placeEntries(entries).filter(p => p.placement.category === c?.name && slugify(p.placement.subcategory) === subcategory);
++  return <SiteLayout><PageIntro kicker={c?.name ?? "Category"} title={label} description={`Focused compositions for ${label.toLowerCase()}. Every taxonomy node remains visible, even before its first publication.`}/><div className="mx-auto max-w-[1100px] px-5 py-10 md:px-8"><Breadcrumbs items={[{ label: "Blends", to: "/blends" }, { label: c?.name ?? category ?? "", to: `/blends/${category}` }, { label }]}/>{list.length ? <div className="mt-10 grid gap-4 md:grid-cols-2">{list.map(({ entry }) => <Link key={entry.id} to={`/blends/b/${entry.id}`} className="border border-border p-6 hover:bg-surface"><h2 className="text-xl font-semibold">{entry.name}</h2><p className="mt-2 text-sm text-muted-foreground">{entry.description}</p></Link>)}</div> : <div className="mt-10 border border-dashed border-border bg-surface p-14 text-center"><h2 className="text-2xl font-semibold">No Blends here yet.</h2><p className="mt-3 text-muted-foreground">The address is ready. The first composition is not.</p><Link to="/docs/blends/building-and-publishing/publish-to-acrylblends" className="btn-primary mt-7">Publish a Blend</Link></div>}</div></SiteLayout>;
+ }
+diff --git a/vite.config.ts b/vite.config.ts
+index 4e9387e..078a05d 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
+ import tailwindcss from "@tailwindcss/vite";
+ import { copyFileSync, cpSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+ import { resolve } from "node:path";
+-import { blends, categories, docGroups, slugify } from "./src/lib/content";
++import { categories, docGroups, slugify } from "./src/lib/content";
+ import { posts } from "./src/lib/blog";
+ import { cordisGroups } from "./src/lib/cordis-tutorial";
+ 
+@@ -49,7 +49,7 @@ export default defineConfig({
+           add(`/blends/${category.slug}`, category.name, `Blends in the ${category.name} category.`);
+           for (const sub of category.subs) add(`/blends/${category.slug}/${slugify(sub)}`, sub, `Blends for ${sub}.`);
+         }
+-        for (const blend of blends) add(`/blends/b/${blend.slug}`, blend.name, blend.description);
++        // One page per Blend: the registry's entries are the only Blends that exist, so registry/index.json is the list.
+         const registry = JSON.parse(readFileSync(resolve(__dirname, "registry/index.json"), "utf8")) as { entries: { id: string; name: string; description: string }[] };
+         for (const entry of registry.entries) add(`/blends/b/${entry.id}`, entry.name, entry.description);
+         add("/docs/blends", "Blends guide", "Practical guides for pulling a Blend, authoring Cordis plugins in place, and publishing stable compositions.");
+-- 
+2.50.1 (Apple Git-155)
+

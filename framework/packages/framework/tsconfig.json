@@ -1,0 +1,119 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": false,
+    "verbatimModuleSyntax": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "acryl-db": [
+        "../../plugins/acryl-db/src/index.ts"
+      ],
+      "acryl-db/cordis": [
+        "../../plugins/acryl-db/src/cordis.ts"
+      ],
+      "acryl-db/conformance": [
+        "../../plugins/acryl-db/src/conformance.ts"
+      ],
+      "acryl-db-sqlite": [
+        "../../plugins/acryl-db-sqlite/src/index.ts"
+      ],
+      "acryl-db-sqlite/open": [
+        "../../plugins/acryl-db-sqlite/src/open.ts"
+      ],
+      "acryl-door": [
+        "../../plugins/acryl-door/src/index.ts"
+      ],
+      "acryl-inspect": [
+        "../../plugins/acryl-inspect/src/index.ts"
+      ],
+      "acryl-kv": [
+        "../../plugins/acryl-kv/src/index.ts"
+      ],
+      "acryl-kv/cordis": [
+        "../../plugins/acryl-kv/src/cordis.ts"
+      ],
+      "acryl-kv/conformance": [
+        "../../plugins/acryl-kv/src/conformance.ts"
+      ],
+      "acryl-kv-db": [
+        "../../plugins/acryl-kv-db/src/index.ts"
+      ],
+      "acryl-kv-db/open": [
+        "../../plugins/acryl-kv-db/src/open.ts"
+      ],
+      "acryl-kv-json": [
+        "../../plugins/acryl-kv-json/src/index.ts"
+      ],
+      "acryl-kv-json/open": [
+        "../../plugins/acryl-kv-json/src/open.ts"
+      ],
+      "acryl-node-server": [
+        "../../plugins/acryl-node-server/src/index.ts"
+      ],
+      "acryl-node-server/client-modules": [
+        "../../plugins/acryl-node-server/src/client-modules.ts"
+      ],
+      "acryl-router": [
+        "../../plugins/acryl-router/src/index.ts"
+      ],
+      "acryl-router/middleware": [
+        "../../plugins/acryl-router/src/middleware/index.ts"
+      ],
+      "acryl-router/helpers": [
+        "../../plugins/acryl-router/src/helpers/index.ts"
+      ],
+      "acryl-router/client": [
+        "../../plugins/acryl-router/src/client.ts"
+      ],
+      "acryl-router/jsx": [
+        "../../plugins/acryl-router/src/core/jsx/index.ts"
+      ],
+      "acryl-router/jsx/jsx-runtime": [
+        "../../plugins/acryl-router/src/core/jsx/jsx-runtime.ts"
+      ],
+      "acryl-router/jsx/jsx-dev-runtime": [
+        "../../plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"
+      ],
+      "acryl-router/jsx/streaming": [
+        "../../plugins/acryl-router/src/core/jsx/streaming.ts"
+      ],
+      "acryl-router-http": [
+        "../../plugins/acryl-router-http/src/index.ts"
+      ],
+      "acryl-state": [
+        "../../plugins/acryl-state/src/index.ts"
+      ],
+      "acryl-state/react": [
+        "../../plugins/acryl-state/src/react.ts"
+      ]
+    },
+    "noEmit": true
+  },
+  "files": [
+    "src/index.ts",
+    "src/conninfo.ts",
+    "src/node-server.ts"
+  ],
+  "include": [
+    "../../plugins/acryl-*/src/**/*.ts",
+    "../../plugins/acryl-*/src/**/*.tsx"
+  ],
+  "exclude": [
+    "../../plugins/**/*.test.ts",
+    "../../plugins/**/*.test.tsx",
+    "../../plugins/**/*.case.ts",
+    "../../plugins/acryl-state/src/react.ts"
+  ]
+}

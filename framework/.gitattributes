@@ -1,0 +1,3 @@
+# Every checkout has the same line endings, Windows included: the CLI, the gate and the templates read and write LF. A CRLF working tree (Git for Windows'
+# core.autocrlf default) made the rows of a scaffolded blend.yaml invisible to `acrylblends add`, because the row parser looked for a bare newline.
+* text=auto eol=lf

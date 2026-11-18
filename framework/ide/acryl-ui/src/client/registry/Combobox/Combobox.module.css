@@ -1,0 +1,30 @@
+.content { position: fixed; z-index: 50; display: flex; flex-direction: column; overflow: hidden; border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-1); color: var(--dsw-alias-label-primary); outline: none; }
+.anchor { display: flex; width: 100%; }
+/* The input-group chrome, restated. Same hooks as the InputGroup item so a caller's styles survive:
+   data-slot=input-group, data-align on the addon, and the input-group-control slot the group's rules key off. */
+.group { position: relative; display: flex; width: 100%; min-width: 0; height: 36px; align-items: center; border-radius: 6px; border: 1px solid var(--dsw-alias-border-l4); outline: none; }
+.group:has([data-slot='input-group-control']:focus-visible) { border-color: var(--dsw-alias-border-l3); box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); }
+.group:has([data-slot][aria-invalid='true']) { border-color: var(--dsw-alias-state-error-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--dsw-alias-state-error-primary) 20%, transparent); }
+.addon { display: flex; height: auto; cursor: text; align-items: center; justify-content: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--dsw-alias-label-tertiary); user-select: none; }
+.addonStart { order: -1; padding-left: 12px; }
+.addonEnd { order: 1; padding-right: 12px; }
+.control { min-width: 0; flex: 1; border: none; border-radius: 0; background: transparent; padding: 0 10px; font: inherit; font-size: 13px; color: var(--dsw-alias-label-primary); outline: none; }
+.control::placeholder { color: var(--dsw-alias-label-tertiary); }
+.clear { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: none; border-radius: 4px; background: none; color: var(--dsw-alias-label-tertiary); cursor: pointer; }
+.clear:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.clear:disabled { opacity: 0.5; cursor: not-allowed; }
+.trigger { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: none; border-radius: 4px; background: none; color: var(--dsw-alias-label-tertiary); cursor: pointer; }
+.trigger:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.value { display: block; max-width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 13px; }
+.list { overflow-x: hidden; overflow-y: auto; scroll-padding-block: 4px; padding: 4px; }
+.item { position: relative; display: flex; width: 100%; cursor: default; align-items: center; gap: 8px; border-radius: 4px; padding: 6px 32px 6px 8px; font-size: 13px; outline: none; user-select: none; }
+.item[data-highlighted='true'] { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.item[data-disabled='true'] { pointer-events: none; opacity: 0.5; }
+.item[data-hidden='true'] { display: none; }
+.item svg { pointer-events: none; flex-shrink: 0; }
+.itemIndicator { pointer-events: none; position: absolute; right: 8px; display: flex; width: 16px; height: 16px; align-items: center; justify-content: center; }
+.groupBlock { overflow: hidden; padding: 4px; }
+.label { padding: 6px 8px; font-size: 12px; color: var(--dsw-alias-label-tertiary); }
+.empty { display: none; width: 100%; justify-content: center; padding: 8px 0; text-align: center; font-size: 13px; color: var(--dsw-alias-label-tertiary); }
+.content[data-empty='true'] .empty { display: flex; }
+.separator { margin: 4px -4px; height: 1px; background: var(--dsw-alias-border-l4); }

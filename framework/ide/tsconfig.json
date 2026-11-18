@@ -1,0 +1,72 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "jsx": "react-jsx",
+    "paths": {
+      "acryl-app-shell": [
+        "./acryl-app-shell/src/index.ts"
+      ],
+      "acryl-app-shell/client": [
+        "./acryl-app-shell/src/client/index.ts"
+      ],
+      "acryl-control": [
+        "./acryl-control/src/index.ts"
+      ],
+      "acryl-diagnostics": [
+        "./acryl-diagnostics/src/index.ts"
+      ],
+      "acryl-loopback-http": [
+        "./acryl-loopback-http/src/index.ts"
+      ],
+      "acryl-loopback-http/router": [
+        "./acryl-loopback-http/src/router.ts"
+      ],
+      "acryl-settings": [
+        "./acryl-settings/src/index.ts"
+      ],
+      "acryl-versions": [
+        "./acryl-versions/src/index.ts"
+      ],
+      "acryl-versions/client": [
+        "./acryl-versions/src/client/index.ts"
+      ],
+      "acryl-workspace": [
+        "./acryl-workspace/src/index.ts"
+      ],
+      "acryl-workspace/client": [
+        "./acryl-workspace/src/client/index.ts"
+      ],
+      "acryl-workspace/ui": [
+        "./acryl-workspace/src/client/ui.ts"
+      ]
+    }
+  },
+  "include": [
+    "*/src/**/*.ts",
+    "*/src/**/*.tsx",
+    "*/tests/**/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/lib/**",
+    "**/tests/fixtures/**",
+    // Workaround, to be fixed with a types-only import path: dsh-tools' Context augmentation (server-side `sessions`) leaks into the client packages.
+    "acryl-app-context/**"
+  ]
+}

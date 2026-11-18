@@ -1,0 +1,67 @@
+{
+  "name": "acryl-app-context",
+  "version": "0.1.0",
+  "description": "The app builder's own docs, as ACRYL IDE's agent has them: a routed index of how a Blends app is made and extended, verified example plugins, and the prompt section that points the frame's agent at them before it writes a plugin",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acrylblends/acrylblends.git",
+    "directory": "ide/acryl-app-context"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./router": {
+      "types": "./lib/types/router.d.ts",
+      "default": "./lib/router.js"
+    },
+    "./package.json": "./package.json",
+    "./lookup": {
+      "types": "./lib/types/lookup.d.ts",
+      "default": "./lib/lookup.js"
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "docs/**",
+    "example-plugins/**",
+    "README.md"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && node scripts/build-manifest.mjs --check && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "build:manifest": "node scripts/build-manifest.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+    "acrylblends": "^1.0.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+    "@types/node": "^24.0.0",
+    "acryl-router": "workspace:*",
+    "acrylblends": "workspace:*",
+    "tsdown": "0.23.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  }
+}

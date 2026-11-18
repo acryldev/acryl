@@ -1,0 +1,47 @@
+import { describe, expect, it } from 'vitest'
+import { createWorkspaceGitApi } from '../../src/client/git/git-api.ts'
+
+const json = (status: number, body: unknown): Response =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
+
+const REPO = { name: 'p', root: '/p', current: '/p', worktrees: [{ path: '/p', branch: 'main', head: 'a', main: true }] }
+
+describe('createWorkspaceGitApi.repo', () => {
+  it('returns null when the directory is not a repository', async () => {
+    const api = createWorkspaceGitApi(async () => json(200, { repo: null }))
+    expect(await api.repo('/tmp/x')).toBeNull()
+  })
+
+  it('returns the validated repository view', async () => {
+    const api = createWorkspaceGitApi(async () => json(200, { repo: REPO }))
+    expect((await api.repo('/p'))?.name).toBe('p')
+  })
+
+  it('rejects a malformed body and an error status', async () => {
+    await expect(createWorkspaceGitApi(async () => json(200, { nope: 1 })).repo('/p')).rejects.toThrow(/invalid response/)
+    await expect(createWorkspaceGitApi(async () => json(200, { repo: { name: 1 } })).repo('/p')).rejects.toThrow(/invalid git repo/)
+    await expect(createWorkspaceGitApi(async () => json(400, { error: 'bad path' })).repo('/p')).rejects.toThrow(/bad path/)
+  })
+})
+
+describe('createWorkspaceGitApi.createWorktree', () => {
+  const created = { path: '/p.worktrees/x', branch: 'x', repo: REPO }
+
+  it('posts the repository directory and branch, and returns the validated result', async () => {
+    let seen: { url: string; init: RequestInit | undefined } | undefined
+    const api = createWorkspaceGitApi(async (url, init) => { seen = { url, init }; return json(200, created) })
+    expect((await api.createWorktree('/p', 'x')).path).toBe('/p.worktrees/x')
+    expect(seen?.url).toBe('/api/acryl-workspace/git/worktree')
+    expect(seen?.init?.method).toBe('POST')
+    expect(JSON.parse(String(seen?.init?.body))).toEqual({ cwd: '/p', branch: 'x' })
+  })
+
+  it('throws the server\'s message as-is, so it can be shown to the user', async () => {
+    await expect(createWorkspaceGitApi(async () => json(409, { error: 'the branch x already exists' })).createWorktree('/p', 'x'))
+      .rejects.toThrow('the branch x already exists')
+    await expect(createWorkspaceGitApi(async () => new Response('nope', { status: 502 })).createWorktree('/p', 'x'))
+      .rejects.toThrow(/HTTP 502/)
+    await expect(createWorkspaceGitApi(async () => json(200, { path: '/x' })).createWorktree('/p', 'x'))
+      .rejects.toThrow()
+  })
+})

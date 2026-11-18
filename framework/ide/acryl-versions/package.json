@@ -1,0 +1,105 @@
+{
+  "name": "acryl-versions",
+  "version": "0.1.1",
+  "description": "ACRYL Versions, one Cordis plugin with a Host and a client half: a version is a commit, save makes one, restore brings a version back as a new commit, and share is an explicit push, all behind private same-origin routes",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acrylblends/acrylblends.git",
+    "directory": "ide/acryl-versions"
+  },
+  "homepage": "https://github.com/acrylblends/acrylblends/tree/main/ide/acryl-versions#readme",
+  "bugs": {
+    "url": "https://github.com/acrylblends/acrylblends/issues"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly && tsc -p tsconfig.client.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test",
+    "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "acryl-loopback-http": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "acrylblends": "^1.0.0",
+    "react": "18.3.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/cordis-plugin-loader": "1.0.5",
+    "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "acrylblends": "workspace:*",
+    "jsdom": "29.1.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsdown": "0.23.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3"
+  },
+  "acryl": {
+    "schemaVersion": 1,
+    "artifacts": {
+      "plugins": [
+        "./lib/index.js",
+        "./lib/client.js"
+      ]
+    },
+    "surfaces": [
+      "web"
+    ],
+    "runtime": "cordis",
+    "compatibility": {
+      "acryl": ">=0.1.0 <1.0.0",
+      "node": "^22.19.0 || >=24.0.0",
+      "hosts": {
+        "@deepseek-ai/cordis": "^4.0.2"
+      }
+    },
+    "capabilities": [
+      "versions-log",
+      "versions-save",
+      "versions-restore",
+      "versions-share"
+    ]
+  }
+}

@@ -1,0 +1,384 @@
+import {
+  checkOptionalParameter,
+  getPath,
+  getPathNoStrict,
+  getPattern,
+  getQueryParam,
+  getQueryParams,
+  getQueryStrings,
+  mergePath,
+  splitPath,
+  splitRoutingPath,
+} from './url.ts'
+
+describe('url', () => {
+  it('splitPath', () => {
+    let ps = splitPath('/')
+    expect(ps).toStrictEqual([''])
+
+    ps = splitPath('/hello')
+    expect(ps).toStrictEqual(['hello'])
+  })
+
+  it('splitRoutingPath', () => {
+    let ps = splitRoutingPath('/')
+    expect(ps).toStrictEqual([''])
+
+    ps = splitRoutingPath('/hello')
+    expect(ps).toStrictEqual(['hello'])
+
+    ps = splitRoutingPath('*')
+    expect(ps).toStrictEqual(['*'])
+
+    ps = splitRoutingPath('/wildcard-abc/*/wildcard-efg')
+    expect(ps).toStrictEqual(['wildcard-abc', '*', 'wildcard-efg'])
+
+    ps = splitRoutingPath('/map/:location/events')
+    expect(ps).toStrictEqual(['map', ':location', 'events'])
+
+    ps = splitRoutingPath('/js/:location{[a-z/]+.js}')
+    expect(ps).toStrictEqual(['js', ':location{[a-z/]+.js}'])
+
+    ps = splitRoutingPath('/users/:name{[0-9a-zA-Z_-]{3,10}}')
+    expect(ps).toStrictEqual(['users', ':name{[0-9a-zA-Z_-]{3,10}}'])
+
+    ps = splitRoutingPath('/users/:@name{[0-9a-zA-Z_-]{3,10}}')
+    expect(ps).toStrictEqual(['users', ':@name{[0-9a-zA-Z_-]{3,10}}'])
+
+    ps = splitRoutingPath('/users/:dept{\\d+}/:@name{[0-9a-zA-Z_-]{3,10}}')
+    expect(ps).toStrictEqual(['users', ':dept{\\d+}', ':@name{[0-9a-zA-Z_-]{3,10}}'])
+  })
+
+  describe('getPattern', () => {
+    it('no pattern', () => {
+      const res = getPattern('id')
+      expect(res).toBeNull()
+    })
+
+    it('no pattern with next', () => {
+      const res = getPattern('id', 'next')
+      expect(res).toBeNull()
+    })
+
+    it('default pattern', () => {
+      const res = getPattern(':id')
+      expect(res).toEqual([':id', 'id', true])
+    })
+
+    it('default pattern with next', () => {
+      const res = getPattern(':id', 'next')
+      expect(res).toEqual([':id', 'id', true])
+    })
+
+    it('regex pattern', () => {
+      const res = getPattern(':id{[0-9]+}')
+      expect(res).toEqual([':id{[0-9]+}', 'id', /^[0-9]+$/])
+    })
+
+    it('regex pattern with next', () => {
+      const res = getPattern(':id{[0-9]+}', 'next')
+      expect(res).toEqual([':id{[0-9]+}#next', 'id', /^[0-9]+(?=\/next)/])
+    })
+
+    it('wildcard', () => {
+      const res = getPattern('*')
+      expect(res).toBe('*')
+    })
+
+    it('wildcard with next', () => {
+      const res = getPattern('*', 'next')
+      expect(res).toBe('*')
+    })
+  })
+
+  describe('getPath', () => {
+    it('getPath - no trailing slash', () => {
+      let path = getPath(new Request('https://example.com/'))
+      expect(path).toBe('/')
+      path = getPath(new Request('https://example.com/hello'))
+      expect(path).toBe('/hello')
+      path = getPath(new Request('https://example.com/hello/hey'))
+      expect(path).toBe('/hello/hey')
+      path = getPath(new Request('https://example.com/hello?name=foo'))
+      expect(path).toBe('/hello')
+      path = getPath(new Request('https://example.com/hello/hey?name=foo&name=bar'))
+      expect(path).toBe('/hello/hey')
+    })
+
+    it('getPath - with trailing slash', () => {
+      let path = getPath(new Request('https://example.com/hello/'))
+      expect(path).toBe('/hello/')
+      path = getPath(new Request('https://example.com/hello/hey/'))
+      expect(path).toBe('/hello/hey/')
+    })
+
+    it('getPath - http+unix', () => {
+      const path = getPath(new Request('http+unix://%2Ftmp%2Fsocket%2Esock/hello/'))
+      expect(path).toBe('/hello/')
+    })
+
+    it.each([
+      'http:/example.com/hello', // invalid HTTP URL
+      'http:///hello', // invalid HTTP URL
+      'http://a/:/hello', // starts with `/:/`
+      'x://a/:/hello', // unknown schema
+    ])('getPath - %s', (url) => {
+      expect(getPath(new Request(url))).toBe(new URL(url).pathname)
+    })
+
+    it('getPath - with fragment', () => {
+      let path = getPath(new Request('https://example.com/users/#user-list'))
+      expect(path).toBe('/users/')
+      path = getPath(new Request('https://example.com/users/1#profile-section'))
+      expect(path).toBe('/users/1')
+      path = getPath(new Request('https://example.com/hello#section'))
+      expect(path).toBe('/hello')
+      path = getPath(new Request('https://example.com/#top'))
+      expect(path).toBe('/')
+    })
+
+    it('getPath - with query and fragment', () => {
+      let path = getPath(new Request('https://example.com/hello?name=foo#section'))
+      expect(path).toBe('/hello')
+      path = getPath(new Request('https://example.com/search?q=test#results'))
+      expect(path).toBe('/search')
+    })
+
+    it('getPath - with percent encoding only (no query or fragment)', () => {
+      const path = getPath(new Request('https://example.com/hello%20world'))
+      expect(path).toBe('/hello world')
+    })
+
+    it('getPath - with percent encoding and fragment', () => {
+      let path = getPath(new Request('https://example.com/hello%20world#section'))
+      expect(path).toBe('/hello world')
+      path = getPath(new Request('https://example.com/%E7%82%8E#top'))
+      expect(path).toBe('/炎')
+    })
+
+    it('getPath - with percent encoding and fragment containing query-like chars', () => {
+      const path = getPath(new Request('https://example.com/hello%20world#section?foo=bar'))
+      expect(path).toBe('/hello world')
+    })
+
+    it('getPath - with encoded hash (%23) in path and real fragment', () => {
+      // %23 is encoded '#' - decodeURI preserves reserved characters, so %23 stays as %23
+      let path = getPath(new Request('https://example.com/path%23test#real-fragment'))
+      expect(path).toBe('/path%23test')
+      path = getPath(new Request('https://example.com/foo%23bar%23baz#section'))
+      expect(path).toBe('/foo%23bar%23baz')
+      // Only encoded hash, no real fragment
+      path = getPath(new Request('https://example.com/issue%23123'))
+      expect(path).toBe('/issue%23123')
+    })
+  })
+
+  describe('getQueryStrings', () => {
+    it('getQueryStrings', () => {
+      let qs = getQueryStrings('https://example.com/hello?name=foo&name=bar&age=20')
+      expect(qs).toBe('?name=foo&name=bar&age=20')
+      qs = getQueryStrings('https://example.com/hello?')
+      expect(qs).toBe('?')
+      qs = getQueryStrings('https://example.com/hello')
+      expect(qs).toBe('')
+      qs = getQueryStrings('https://example.com/hello?name=foo&name=bar&age=20#hash')
+      expect(qs).toBe('?name=foo&name=bar&age=20')
+      qs = getQueryStrings('https://example.com/hello#?name=probe')
+      expect(qs).toBe('')
+      qs = getQueryStrings('https://example.com/hello?name=foo%23bar#hash')
+      expect(qs).toBe('?name=foo%23bar')
+    })
+  })
+
+  describe('getPathNoStrict', () => {
+    it('getPathNoStrict - no strict is false', () => {
+      let path = getPathNoStrict(new Request('https://example.com/hello/'))
+      expect(path).toBe('/hello')
+      path = getPathNoStrict(new Request('https://example.com/hello/hey/'))
+      expect(path).toBe('/hello/hey')
+    })
+
+    it('getPathNoStrict - return `/` even if strict is false', () => {
+      const path = getPathNoStrict(new Request('https://example.com/'))
+      expect(path).toBe('/')
+    })
+  })
+
+  describe('mergePath', () => {
+    it('mergePath', () => {
+      expect(mergePath('/book', '/')).toBe('/book')
+      expect(mergePath('/book/', '/')).toBe('/book/')
+      expect(mergePath('/book', '/hey')).toBe('/book/hey')
+      expect(mergePath('/book/', '/hey')).toBe('/book/hey')
+      expect(mergePath('/book', '/hey/')).toBe('/book/hey/')
+      expect(mergePath('/book/', '/hey/')).toBe('/book/hey/')
+      expect(mergePath('/book', 'hey', 'say')).toBe('/book/hey/say')
+      expect(mergePath('/book', '/hey/', '/say/')).toBe('/book/hey/say/')
+      expect(mergePath('/book', '/hey/', '/say/', '/')).toBe('/book/hey/say/')
+      expect(mergePath('/book', '/hey', '/say', '/')).toBe('/book/hey/say')
+      expect(mergePath('/', '/book', '/hey', '/say', '/')).toBe('/book/hey/say')
+
+      expect(mergePath('book', '/')).toBe('/book')
+      expect(mergePath('book/', '/')).toBe('/book/')
+      expect(mergePath('book', '/hey')).toBe('/book/hey')
+      expect(mergePath('book', 'hey')).toBe('/book/hey')
+      expect(mergePath('book', 'hey/')).toBe('/book/hey/')
+    })
+    it('Should be `/book`', () => {
+      expect(mergePath('/', 'book')).toBe('/book')
+    })
+    it('Should be `/book`', () => {
+      expect(mergePath('/', '/book')).toBe('/book')
+    })
+    it('Should be `/`', () => {
+      expect(mergePath('/', '/')).toBe('/')
+    })
+  })
+
+  describe('checkOptionalParameter', () => {
+    it('checkOptionalParameter', () => {
+      expect(checkOptionalParameter('/api/animals/:type?')).toEqual([
+        '/api/animals',
+        '/api/animals/:type',
+      ])
+      expect(checkOptionalParameter('/api/animals/type?')).toBeNull()
+      expect(checkOptionalParameter('/api/animals/:type')).toBeNull()
+      expect(checkOptionalParameter('/api/animals')).toBeNull()
+      expect(checkOptionalParameter('/api/:animals?/type')).toBeNull()
+      expect(checkOptionalParameter('/api/animals/:type?/')).toBeNull()
+      expect(checkOptionalParameter('/:optional?')).toEqual(['/', '/:optional'])
+      expect(checkOptionalParameter('/v1/leaderboard/:version?/:platform?')).toEqual([
+        '/v1/leaderboard',
+        '/v1/leaderboard/:version',
+        '/v1/leaderboard/:version/:platform',
+      ])
+      expect(checkOptionalParameter('/api/:version/animal/:type?')).toEqual([
+        '/api/:version/animal',
+        '/api/:version/animal/:type',
+      ])
+      expect(checkOptionalParameter('/api/:id{[0-9]?}?')).toEqual(['/api', '/api/:id{[0-9]?}'])
+    })
+  })
+
+  describe('getQueryParam', () => {
+    it('Parse URL query strings', () => {
+      expect(getQueryParam('http://example.com/?name=hey', 'name')).toBe('hey')
+      expect(getQueryParam('http://example.com/?name=hey#fragment', 'name')).toBe('hey')
+      expect(getQueryParam('http://example.com/#?name=probe', 'name')).toBe(undefined)
+      expect(getQueryParam('http://example.com/?name=hey%23there#fragment', 'name')).toBe(
+        'hey#there'
+      )
+      expect(getQueryParam('http://example.com/?safe=1#&admin=true')).toEqual({ safe: '1' })
+      expect(getQueryParam('http://example.com/?name=hey&age=20&tall=170', 'age')).toBe('20')
+      expect(getQueryParam('http://example.com/?Acryl+is=a+web+framework', 'Acryl is')).toBe(
+        'a web framework'
+      )
+      expect(getQueryParam('http://example.com/?name=%E0%A4%A', 'name')).toBe('%E0%A4%A')
+
+      expect(getQueryParam('http://example.com/?name0=sam&name1=tom', 'name0')).toBe('sam')
+      expect(getQueryParam('http://example.com/?name0=sam&name1=tom', 'name1')).toBe('tom')
+      expect(getQueryParam('http://example.com/?name0=sam&name1=tom', 'name')).toBe(undefined)
+
+      let searchParams = new URLSearchParams({ name: '炎' })
+      expect(getQueryParam(`http://example.com/?${searchParams.toString()}`, 'name')).toBe('炎')
+      searchParams = new URLSearchParams({ '炎 is': 'a web framework' })
+      expect(
+        getQueryParam(
+          `http://example.com/?${searchParams.toString()}`,
+          searchParams.keys().next().value
+        )
+      ).toBe('a web framework')
+      expect(getQueryParam('http://example.com/?name=hey&age=20&tall=170', 'weight')).toBe(
+        undefined
+      )
+      expect(getQueryParam('http://example.com/?name=hey&age=20&tall=170')).toEqual({
+        name: 'hey',
+        age: '20',
+        tall: '170',
+      })
+      expect(getQueryParam('http://example.com/?pretty&&&&q=1%2b1=2')).toEqual({
+        pretty: '',
+        q: '1+1=2',
+      })
+      expect(getQueryParam('http://example.com/?pretty', 'pretty')).toBe('')
+      expect(getQueryParam('http://example.com/?pretty', 'prtt')).toBe(undefined)
+      expect(getQueryParam('http://example.com/?name=sam&name=tom', 'name')).toBe('sam')
+      expect(getQueryParam('http://example.com/&name=sam?name=tom', 'name')).toBe('tom')
+      expect(getQueryParam('http://example.com/&name=sam', 'name')).toBe(undefined)
+      expect(getQueryParam('http://example.com/?name=sam&name=tom')).toEqual({
+        name: 'sam',
+      })
+      searchParams = new URLSearchParams('?name=sam=tom')
+      expect(getQueryParam('name', searchParams.get('name')?.toString()))
+    })
+  })
+
+  describe('getQueryParams', () => {
+    it('Parse URL query strings', () => {
+      expect(getQueryParams('http://example.com/?name=hey', 'name')).toEqual(['hey'])
+      expect(getQueryParams('http://example.com/?name=hey#fragment', 'name')).toEqual(['hey'])
+      expect(getQueryParams('http://example.com/#?name=probe', 'name')).toBe(undefined)
+      expect(getQueryParams('http://example.com/?name=hey%23there#fragment', 'name')).toEqual([
+        'hey#there',
+      ])
+      expect(getQueryParams('http://example.com/?safe=1#&admin=true')).toEqual({ safe: ['1'] })
+      expect(getQueryParams('http://example.com/?name=hey&name=foo', 'name')).toEqual([
+        'hey',
+        'foo',
+      ])
+      expect(getQueryParams('http://example.com/?name=hey&age=20&tall=170', 'age')).toEqual(['20'])
+      expect(
+        getQueryParams('http://example.com/?name=hey&age=20&tall=170&name=foo&age=30', 'age')
+      ).toEqual(['20', '30'])
+      expect(getQueryParams('http://example.com/?Acryl+is=a+web+framework', 'Acryl is')).toEqual([
+        'a web framework',
+      ])
+      expect(getQueryParams('http://example.com/?name=%E0%A4%A', 'name')).toEqual(['%E0%A4%A'])
+
+      let searchParams = new URLSearchParams()
+      searchParams.append('tag', '炎')
+      searchParams.append('tag', 'ほのお')
+      expect(getQueryParams(`http://example.com/?${searchParams.toString()}`, 'tag')).toEqual([
+        '炎',
+        'ほのお',
+      ])
+      searchParams = new URLSearchParams()
+      searchParams.append('炎 works on', 'Cloudflare Workers')
+      searchParams.append('炎 works on', 'Fastly Compute')
+      expect(
+        getQueryParams(
+          `http://example.com/?${searchParams.toString()}`,
+          searchParams.keys().next().value
+        )
+      ).toEqual(['Cloudflare Workers', 'Fastly Compute'])
+      expect(getQueryParams('http://example.com/?name=hey&age=20&tall=170', 'weight')).toEqual(
+        undefined
+      )
+      expect(
+        getQueryParams('http://example.com/?name=hey&age=20&tall=170&name=foo&age=30&tall=180')
+      ).toEqual({
+        name: ['hey', 'foo'],
+        age: ['20', '30'],
+        tall: ['170', '180'],
+      })
+      expect(getQueryParams('http://example.com/?pretty&&&&q=1%2b1=2&q=2%2b2=4')).toEqual({
+        pretty: [''],
+        q: ['1+1=2', '2+2=4'],
+      })
+      expect(getQueryParams('http://example.com/?pretty', 'pretty')).toEqual([''])
+      expect(getQueryParams('http://example.com/?pretty', 'prtt')).toBe(undefined)
+      expect(getQueryParams('http://example.com/?toString')).toEqual({
+        toString: [''],
+      })
+    })
+
+    it('should treat `__proto__` as a normal key without changing the prototype', () => {
+      const params = getQueryParams('http://example.com/?__proto__=a&__proto__=b') as Record<
+        string,
+        string[]
+      >
+      expect(Object.getPrototypeOf(params)).toBeNull()
+      expect(params['__proto__']).toEqual(['a', 'b'])
+    })
+  })
+})

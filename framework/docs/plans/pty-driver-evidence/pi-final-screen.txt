@@ -1,0 +1,53 @@
+ '@deepseek-ai/cordis'
+   import { Acryl } from 'acrylblends'
+
+   export const name = 'about'
+   export const inject = ['router']
+
+   export function apply(ctx: Context) {
+     const app = new
+ Acryl().get('/about-json', (c) =>
+       c.json({ app: 'agent-app', by: 'pi'
+ }),
+     )
+     ctx.router.route('/', app)
+   }
+ ```
+
+ Door commands I ran and what each showed:
+
+ 1. .acryl/bin/acryl brief → app app in this
+    folder, Page: open, Live plugins:
+    available, and the verb list (brief,
+    look, act, plugin list, plugin add,
+    plugin remove, plugin reload, tool list,
+    tool call).
+
+ 2. .acryl/bin/acryl plugin add
+    plugins/about →
+    {"ok":true,"name":"about","action":"inst
+    alled","state":"active","missing":[],"ve
+    rsion":"3ad9e45b5f19"} — the plugin
+    checked, installed and started live.
+
+ 3. .acryl/bin/acryl plugin list --json →
+    both installed plugins active:
+     - about (version 3ad9e45b5f19, state:
+       active)
+     - ping (version baeca876415c, state:
+       active)
+
+ 4. curl -s -i
+    http://127.0.0.1:3514/about-json →
+    HTTP/1.1 200 OK, content-type:
+    application/json, body
+    {"app":"agent-app","by":"pi"}.
+
+ (The app's address http://127.0.0.1:3514
+ came from the door's state file
+ .acryl/door.json; brief itself doesn't
+ print it.)
+─────────────────────────────────────────────
+
+↑46k ↓3.9k R565k CH99.6% $0.102 5.1%/1.0M ...
+bh O▕████░░░░▏ P▕░░░░░░░░▏ X▕█░░░░░░░▏ tel...

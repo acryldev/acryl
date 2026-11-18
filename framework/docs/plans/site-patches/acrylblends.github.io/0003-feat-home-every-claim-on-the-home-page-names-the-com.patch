@@ -1,0 +1,109 @@
+From 40d8244807a7dc2440e1b999eb3e197c1d1192b0 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <alex.musichen@gmail.com>
+Date: Wed, 28 Oct 2026 14:34:11 +0100
+Subject: [PATCH 3/3] feat(home): every claim on the home page names the
+ command or the page that proves it
+
+The primitives grid carried nine claims, none of them checkable: "Checkpoint & rollback" (a differentiation engine that does not exist), "Harness compatible", "Private registries", "Category registry". Its two code samples were invented as well: a plugin importing `cordis` (the package is @deepseek-ai/cordis) with `ctx.logger`, and a "blend.yml" naming agent-runtime, tool-router, checkpoint-store and web-surface.
+
+- Eight cards now, each with its proof: a command a reader can run (npm create acrylblends@latest my-app notes, npx acrylblends upgrade --dry-run, npx acrylblends init my-app --desktop) or a page that documents it (Add a plugin, The app manifest, Data and migrations, Acryl in a Cordis app, What runs in production). The four claims without one are gone.
+- The two samples are the real thing: a plugin the docs verify (Acryl mounted with ctx.router.route, imported from acrylblends) and the blank template's own blend.yaml.
+- The line that said plugins "are published on cordisplugins.github.io, the sibling registry this site's own Blends pull from" is replaced by a link to the page that explains the plugin lifecycle: no Blends in the registry composes that plugin, so the claim was not one I could show.
+- The features section gets an id, #primitives, so the grid can be linked to.
+
+Also: the oldest release-notes page (0.3.0) now says where the releases without a page are - the GitHub releases list - instead of leaving the gap silent. No pages are added for 0.5.1, 0.6.0, 0.6.2, 0.6.3 and 0.6.4.
+---
+ src/lib/doc-content.ts |  3 +++
+ src/pages/Home.tsx     | 53 ++++++++++++++++++++++++++++++------------
+ 2 files changed, 41 insertions(+), 15 deletions(-)
+
+diff --git a/src/lib/doc-content.ts b/src/lib/doc-content.ts
+index 61f43b4..3d6c8c6 100644
+--- a/src/lib/doc-content.ts
++++ b/src/lib/doc-content.ts
+@@ -213,6 +213,9 @@ export const docContent: Record<string, DocEntry> = {
+       { heading: "New", paragraphs: [
+         "The framework plugins in the library, the todo template, state cells for tasks and extensions, a fix that lets a plugin installed live read ctx.router, an offline agent and a model prompt that write router plugins, and docs in one tree. The full list is docs/release-notes/0.3.0.md in the repository.",
+       ] },
++      { heading: "Every release", paragraphs: [
++        "This page is the oldest of the releases written up here. The releases in between without a page of their own (0.5.1, 0.6.0, 0.6.2, 0.6.3, 0.6.4) and everything published since 0.3.0 are in the GitHub releases list: https://github.com/acrylblends/acrylblends/releases.",
++      ] },
+     ],
+   },
+   "framework/release-notes-0-11-0": {
+diff --git a/src/pages/Home.tsx b/src/pages/Home.tsx
+index 035af37..2109ccc 100644
+--- a/src/pages/Home.tsx
++++ b/src/pages/Home.tsx
+@@ -1,30 +1,53 @@
+ import { Link } from "react-router-dom";
+-import { ArrowRight, Boxes, Braces, Cable, Goal, Command, Layers3, MonitorSmartphone, Network, RotateCcw } from "lucide-react";
++import { ArrowRight, Boxes, Braces, Cable, Command, Layers3, MonitorSmartphone, Network, RotateCcw } from "lucide-react";
+ import { SiteLayout, usePageMeta } from "../components/layouts";
+ import { CodeBlock, Eyebrow, SectionTitle, TriangleMark } from "../components/ui";
+ import { categories } from "../lib/content";
+ 
+-const features = [
+-  [Braces, "Plugin scaffolding", "Generate the exact Cordis plugin shape your idea needs."],
+-  [RotateCcw, "In-instance authoring", "Build and hot-reload without leaving the running Blend."],
+-  [Layers3, "Blend YAML", "Describe a complete software instance as a readable recipe."],
+-  [Command, "One-command pull", "Pull a known starting point and bring it up in one motion."],
+-  [Boxes, "Category registry", "Navigate a durable taxonomy instead of a wall of packages."],
+-  [Network, "Private registries", "Keep proprietary compositions inside your own boundary."],
+-  [Goal, "Checkpoint & rollback", "Differentiate safely with traceable states and reversibility."],
+-  [MonitorSmartphone, "Many surfaces", "Compose TUI, web and desktop surfaces from the same core."],
+-  [Cable, "Harness compatible", "Cordis-native plugins remain usable beyond the ACRYL world."],
++// Every card names the command or the page that proves it. A claim that has neither is not on this page.
++const features: { icon: typeof Braces; title: string; body: string; proof: string; to?: string }[] = [
++  { icon: Braces, title: "Six templates, one command", body: "A Cordis app with the framework docs, AGENTS.md and a test, created from a template that is in the registry today.", proof: "npm create acrylblends@latest my-app notes" },
++  { icon: Layers3, title: "One plugin folder", body: "The library plugins acrylblends add copies, and the ones you or an agent write, live in plugins/ and are yours to edit.", proof: "Add a plugin", to: "/docs/getting-started/add-plugins" },
++  { icon: Command, title: "The app as one manifest", body: "blend.yaml names the plugins, their order and their config. Switch one off or change its config without touching code.", proof: "The app manifest", to: "/docs/blends/framework/the-app-manifest" },
++  { icon: Boxes, title: "Data with a default and a way out", body: "SQL with numbered migrations on SQLite by default; PGlite or a hosted Postgres is one provider row away, and kv covers a tiny app.", proof: "Data and migrations", to: "/docs/guides/data" },
++  { icon: RotateCcw, title: "Upgrade, not rewrite", body: "acrylblends upgrade brings the library plugins an app carries to the installed version, and stops with the diff before it would lose an edit.", proof: "npx acrylblends upgrade --dry-run" },
++  { icon: MonitorSmartphone, title: "Web and desktop, one app", body: "acrylblends add desktop opens the same routes and plugins in an Electron window; nothing in the app is written twice.", proof: "npx acrylblends init my-app --desktop" },
++  { icon: Cable, title: "Cordis plugins, no lock-in", body: "A plugin depends on a service name, never on the provider. Swapping one is a Loader row, and the port's conformance suite is the contract.", proof: "Acryl in a Cordis app", to: "/docs/cordis/acryl-in-a-cordis-app" },
++  { icon: Network, title: "An agent inside the app", body: "The door and the agent panel let an agent look at and change the running app. Experimental, and development only.", proof: "What runs in production", to: "/docs/guides/production" },
+ ] as const;
+ 
+-const pluginCode = `import { Context } from 'cordis'\n\nexport const name = 'hello-world'\n\nexport function apply(ctx: Context) {\n  ctx.on('ready', () => {\n    ctx.logger.info('Blend is alive')\n  })\n}`;
+-const yamlCode = `name: agent-workbench\nversion: 0.1.0\nruntime: cordis\nplugins:\n  - agent-runtime\n  - tool-router\n  - checkpoint-store\n  - web-surface`;
++// The two snippets are the real thing: a plugin a generated app can carry, and the blend.yaml of the blank template.
++const pluginCode = `import type { Context } from '@deepseek-ai/cordis'
++import { Acryl } from 'acrylblends'
++
++export const name = 'hello'
++export const inject = ['router']
++
++export function apply(ctx: Context) {
++  const app = new Acryl().get('/hello/:who', (c) => c.json({ hello: c.req.param('who') }))
++  ctx.router.route('/', app)
++}`;
++const yamlCode = `apiVersion: blends.acryl.dev/v1alpha1
++kind: Blueprint
++metadata:
++  id: acrylblends.my-app
++  version: 0.1.0
++spec:
++  runtime: cordis
++  rows:
++    - id: router
++      name: acryl-router
++    - id: routes
++      name: routes
++    - id: server
++      name: acryl-node-server`;
+ 
+ export default function Home() {
+   usePageMeta("AI development framework", "Compose stable software from Cordis plugins. Start with a Blend, grow it in place, and publish what works.");
+   return <SiteLayout>
+     <section className="relative overflow-hidden border-b border-border"><div className="geo-grid absolute inset-0 opacity-45"/><div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-[1440px] items-center gap-12 px-5 py-16 md:px-8 lg:grid-cols-[1.05fr_.95fr] lg:py-20"><div><Eyebrow>AI development framework · Based on Cordis</Eyebrow><h1 className="mt-6 max-w-4xl text-5xl font-semibold leading-[.98] tracking-normal sm:text-6xl lg:text-[5.6rem]">Everything is a plugin.<br/><span className="spectrum-text">Build from the inside out.</span></h1><p className="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">An empty house with a builder living inside it — decide the walls and expansion after you move in. Pull a proven starting point, shape it inside the running instance, then publish what works. ACRYL, the agentic development environment, is itself just one Blend — the maxed-out one. Yours can be the next.</p><div className="mt-9 flex flex-wrap gap-3"><Link to="/blends" className="btn-primary">Browse Blends <ArrowRight size={16}/></Link><Link to="/docs" className="btn-secondary">Read the docs</Link></div><div className="mt-12 flex items-center gap-3 font-mono text-xs text-muted-foreground"><span className="h-px w-10 bg-border"/>OPEN SOURCE · COMPOSABLE · REVERSIBLE</div></div><LayerVisual/></div></section>
+-    <section className="mx-auto max-w-[1440px] px-5 py-24 md:px-8"><SectionTitle eyebrow="Framework primitives" title="Everything you need to grow a Blend" intro="Small, legible pieces from the first plugin to a complete software system."/><div className="mt-12 grid border-l border-t border-border md:grid-cols-2 lg:grid-cols-3">{features.map(([Icon, title, body], i) => <div key={title as string} className="group border-b border-r border-border p-7 transition-colors hover:bg-surface"><div className="flex items-start justify-between"><Icon size={20} strokeWidth={1.6}/><span className="font-mono text-[10px] text-muted-foreground">0{i + 1}</span></div><h3 className="mt-8 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p></div>)}</div></section>
+-    <section className="border-y border-border bg-surface"><div className="mx-auto max-w-[1440px] px-5 py-24 md:px-8"><SectionTitle eyebrow="Readable by design" title="The atom and the recipe" intro="A plugin does one thing. A Blend names the things that become one working instance."/><div className="mt-12 grid gap-5 lg:grid-cols-2"><CodeBlock label="plugin.ts" code={pluginCode}/><CodeBlock label="blend.yml" code={yamlCode}/></div><p className="mt-6 text-sm text-muted-foreground">Plugins like the one above are published on <a href="https://cordisplugins.github.io" target="_blank" rel="noreferrer" className="font-semibold text-foreground underline underline-offset-4">cordisplugins.github.io</a>, the sibling registry this site's own Blends pull from.</p></div></section>
++    <section id="primitives" className="mx-auto max-w-[1440px] px-5 py-24 md:px-8"><SectionTitle eyebrow="Framework primitives" title="Everything you need to grow a Blend" intro="Small, legible pieces from the first plugin to a complete software system. Each one names the command or the page that proves it."/><div className="mt-12 grid border-l border-t border-border md:grid-cols-2 lg:grid-cols-3">{features.map(({ icon: Icon, title, body, proof, to }, i) => <div key={title} className="group border-b border-r border-border p-7 transition-colors hover:bg-surface"><div className="flex items-start justify-between"><Icon size={20} strokeWidth={1.6}/><span className="font-mono text-[10px] text-muted-foreground">0{i + 1}</span></div><h3 className="mt-8 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>{to ? <Link to={to} className="mt-4 inline-flex items-center gap-1.5 font-mono text-[11px] text-accent-foreground underline underline-offset-4">{proof} <ArrowRight size={11}/></Link> : <code className="mt-4 block truncate font-mono text-[11px] text-muted-foreground">{proof}</code>}</div>)}</div></section>
++    <section className="border-y border-border bg-surface"><div className="mx-auto max-w-[1440px] px-5 py-24 md:px-8"><SectionTitle eyebrow="Readable by design" title="The atom and the recipe" intro="A plugin does one thing. A Blend names the things that become one working instance."/><div className="mt-12 grid gap-5 lg:grid-cols-2"><CodeBlock label="plugins/hello/index.ts" code={pluginCode}/><CodeBlock label="blend.yaml" code={yamlCode}/></div><p className="mt-6 text-sm text-muted-foreground">That is the whole plugin: a name, what it needs, and an apply. <Link to="/docs/cordis/acryl-in-a-cordis-app" className="font-semibold text-foreground underline underline-offset-4">Acryl in a Cordis app</Link> explains the two layers, and what happens to the routes when the plugin unloads.</p></div></section>
+     <section className="mx-auto max-w-[1440px] px-5 py-24 md:px-8"><SectionTitle eyebrow="A short path" title="Pull. Grow. Publish."/><div className="mt-12 grid gap-px bg-border lg:grid-cols-3">{[["01", "Pull", "Choose a starting point and bring up a working Cordis instance."], ["02", "Grow", "Add and refine plugins inside the instance with hot reload."], ["03", "Publish", "Graduate a plugin to the market or the full composition to Blends."]].map(([n, t, b]) => <div key={t} className="bg-background p-8"><span className="font-mono text-xs text-accent-foreground">{n}</span><h3 className="mt-12 text-3xl font-semibold">{t}</h3><p className="mt-3 leading-7 text-muted-foreground">{b}</p></div>)}</div></section>
+     <section className="border-y border-border bg-surface text-foreground"><div className="mx-auto max-w-[1440px] px-5 py-24 md:px-8"><SectionTitle eyebrow="One of a hundred starting points" title="Find the right shape for the work" intro="Browse a stable taxonomy spanning systems, agents, infrastructure and everything between."/><div className="mt-12 grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-4">{categories.slice(0, 8).map((c, i) => <Link key={c.slug} to={`/blends/${c.slug}`} className="group bg-surface p-6 hover:bg-muted"><span className="font-mono text-[10px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span><h3 className="mt-8 text-xl font-semibold">{c.name}</h3><p className="mt-2 text-sm text-muted-foreground">{c.subs.slice(0, 2).join(" · ")}</p><ArrowRight className="mt-7 transition-transform group-hover:translate-x-1" size={16}/></Link>)}</div><Link to="/blends" className="mt-8 inline-flex items-center gap-2 text-sm font-semibold">Explore all 100 categories <ArrowRight size={15}/></Link></div></section>
+     <section className="mx-auto max-w-[1440px] px-5 py-16 md:px-8"><div className="grid items-center gap-8 border-l-2 border-spectrum-start bg-surface px-7 py-10 md:grid-cols-[1fr_auto]"><div><Eyebrow>Open core, human support</Eyebrow><h2 className="mt-3 text-2xl font-semibold">Open source, built by Webboxes.</h2><p className="mt-2 text-muted-foreground">Consulting and private registries for teams building proprietary systems.</p></div><Link to="/ecosystem/business-model" className="btn-secondary">How the model works <ArrowRight size={15}/></Link></div></section>
+-- 
+2.50.1 (Apple Git-155)
+

@@ -1,0 +1,94 @@
+name: release
+
+# A pushed tag publishes the package it names (v<version> for acrylblends, create-v<version> for create-acrylblends) with npm trusted publishing:
+# no token or secret exists anywhere. Run by hand (workflow_dispatch) it does everything except `npm publish`, so the whole path can be tried at any time.
+on:
+  push:
+    tags: ['v*', 'create-v*']
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Which package the dry run packs
+        type: choice
+        options: [acrylblends, create-acrylblends]
+        default: acrylblends
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.which.outputs.package }}
+    steps:
+      # The release tags: the check's verify:legacy-layouts reads every published release's scaffold from its tag (as the CI check job does).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - id: which
+        name: Which package, and does the tag match its version
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            package="${{ inputs.package }}"
+          else
+            case "$GITHUB_REF_NAME" in
+              create-v*) package=create-acrylblends ;;
+              v*) package=acrylblends ;;
+              *) echo "unexpected tag $GITHUB_REF_NAME"; exit 1 ;;
+            esac
+            case "$package" in
+              acrylblends) dir=packages/cli; version="${GITHUB_REF_NAME#v}" ;;
+              create-acrylblends) dir=packages/create; version="${GITHUB_REF_NAME#create-v}" ;;
+            esac
+            test "$(node -p "require('./$dir/package.json').version")" = "$version" || { echo "the tag $GITHUB_REF_NAME is not the version in $dir/package.json"; exit 1; }
+          fi
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - name: Pack (pnpm pack turns workspace ranges into real ones, which npm publish from the folder would not)
+        run: |
+          dir=packages/cli
+          [ "${{ steps.which.outputs.package }}" = "create-acrylblends" ] && dir=packages/create
+          mkdir -p "$RUNNER_TEMP/pack"
+          pnpm --dir "$dir" pack --pack-destination "$RUNNER_TEMP/pack"
+          cp "$RUNNER_TEMP"/pack/*.tgz "$GITHUB_WORKSPACE/"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tarball
+          path: '*.tgz'
+          if-no-files-found: error
+      - name: Dry run of npm publish (no credentials needed)
+        run: |
+          # Run on a version that is already on npm (a dry run of the current release), npm refuses only because of that; every other refusal still fails the run.
+          if ! npm publish ./*.tgz --access public --dry-run 2> "$RUNNER_TEMP/dry.log"; then
+            cat "$RUNNER_TEMP/dry.log"
+            grep -q "cannot publish over the previously published" "$RUNNER_TEMP/dry.log" && echo "dry run: the packed version is already on npm; the tarball itself was accepted" || exit 1
+          fi
+
+  publish:
+    # Only a pushed tag reaches this job, and only after the owner approves the `npm-release` environment.
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write # lets the job ask GitHub for the OIDC token npm exchanges for a publish credential
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: tarball
+      - name: Publish the tarball that passed the checks, with provenance
+        run: |
+          npm --version
+          npm publish ./*.tgz --access public --provenance

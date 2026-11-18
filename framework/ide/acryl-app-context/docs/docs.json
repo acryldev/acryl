@@ -1,0 +1,255 @@
+{
+  "schemaVersion": 1,
+  "packVersion": "0.1.0",
+  "navigation": [
+    {
+      "title": "Start here",
+      "items": [
+        {
+          "id": "start.this-app",
+          "title": "This app: what it is made of and how it runs",
+          "path": "start-here/this-app.md",
+          "when": "Always first: blend.yaml and plugins/ are the app, the rule that every feature is a plugin, the frame and npm start, what reloads what, the imports a plugin may use.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "extending.feature-plugin",
+            "start.verify-before-done"
+          ]
+        },
+        {
+          "id": "start.verify-before-done",
+          "title": "Verify before done",
+          "path": "start-here/verify-before-done.md",
+          "when": "Before you tell the person a feature works: npm test, npm run check and the door's look must agree.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.troubleshooting"
+          ]
+        },
+        {
+          "id": "start.troubleshooting",
+          "title": "Troubleshooting",
+          "path": "start-here/troubleshooting.md",
+          "when": "A check failed, the top bar says \"Not reloaded\", or the feature does not show: the errors this app gives and their fixes.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.this-app"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Extending the app",
+      "items": [
+        {
+          "id": "extending.feature-plugin",
+          "title": "The feature plugin",
+          "path": "extending/feature-plugin.md",
+          "when": "Any new feature: the plugins/<name>/ folder, name/inject/apply, its row in blend.yaml, its test.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "examples": [
+            "route-page-basic",
+            "home-widget-basic",
+            "state-json-file"
+          ],
+          "seeAlso": [
+            "extending.routes-and-pages",
+            "extending.home-widget",
+            "extending.state"
+          ]
+        },
+        {
+          "id": "extending.routes-and-pages",
+          "title": "Routes and pages",
+          "path": "extending/routes-and-pages.md",
+          "when": "The feature needs a page of its own or an API: an Acryl app on the router, paths and answers.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "examples": [
+            "route-page-basic"
+          ],
+          "seeAlso": [
+            "extending.home-widget"
+          ]
+        },
+        {
+          "id": "extending.home-widget",
+          "title": "A home widget",
+          "path": "extending/home-widget.md",
+          "when": "The feature shows on the app's first screen (the canvas): a widget, its script, escaping.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "examples": [
+            "home-widget-basic",
+            "state-json-file"
+          ],
+          "seeAlso": [
+            "extending.state"
+          ]
+        },
+        {
+          "id": "extending.state",
+          "title": "State: data that survives a restart",
+          "path": "extending/state.md",
+          "when": "The feature keeps what the person makes (notes, items, settings): a JSON file in the app's home.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "examples": [
+            "state-json-file"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Delivering",
+      "items": [
+        {
+          "id": "delivery.switch-and-remove",
+          "title": "Switch off, change, remove",
+          "path": "delivery/switch-and-remove.md",
+          "when": "Asked to switch a plugin off, change or fix one that exists, or remove one.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "start.verify-before-done"
+          ]
+        },
+        {
+          "id": "delivery.share-and-snapshot",
+          "title": "Share, versions and blueprints",
+          "path": "delivery/share-and-snapshot.md",
+          "when": "Asked to share or publish a plugin, save or restore a version, or make a blueprint of the app.",
+          "surfaces": [
+            "frame",
+            "standalone"
+          ],
+          "applies": "all",
+          "seeAlso": [
+            "delivery.switch-and-remove"
+          ]
+        }
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "when": "a new feature, widget, page or tool in the app",
+      "docs": [
+        "start.this-app",
+        "extending.feature-plugin",
+        "extending.home-widget"
+      ]
+    },
+    {
+      "when": "its own page or a JSON API",
+      "docs": [
+        "extending.routes-and-pages"
+      ]
+    },
+    {
+      "when": "saving what the person makes (notes, items, settings)",
+      "docs": [
+        "extending.state"
+      ]
+    },
+    {
+      "when": "checking it works",
+      "docs": [
+        "start.verify-before-done"
+      ]
+    },
+    {
+      "when": "an error, \"Not reloaded\", or nothing shows",
+      "docs": [
+        "start.troubleshooting"
+      ]
+    },
+    {
+      "when": "switching off, changing or removing a plugin",
+      "docs": [
+        "delivery.switch-and-remove"
+      ]
+    },
+    {
+      "when": "sharing a plugin, versions, blueprints",
+      "docs": [
+        "delivery.share-and-snapshot"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "id": "route-page-basic",
+      "type": "route",
+      "path": "route-page-basic",
+      "surfaces": [
+        "frame",
+        "standalone"
+      ],
+      "teaches": "A page and a JSON route of the plugin's own, mounted with ctx.router.route and gone when the plugin is off.",
+      "docs": [
+        "extending.routes-and-pages",
+        "extending.feature-plugin"
+      ],
+      "scenario": "route-page-basic"
+    },
+    {
+      "id": "home-widget-basic",
+      "type": "home-widget",
+      "path": "home-widget-basic",
+      "surfaces": [
+        "frame",
+        "standalone"
+      ],
+      "teaches": "A widget on the first screen with a button that calls the plugin's own route; it leaves with the plugin.",
+      "docs": [
+        "extending.home-widget",
+        "extending.feature-plugin"
+      ],
+      "scenario": "home-widget-basic"
+    },
+    {
+      "id": "state-json-file",
+      "type": "state",
+      "path": "state-json-file",
+      "surfaces": [
+        "frame",
+        "standalone"
+      ],
+      "teaches": "A list kept in a JSON file in the app's home (atomic writes, ids, validation, escaping), with routes and a widget with a form.",
+      "docs": [
+        "extending.state",
+        "extending.home-widget"
+      ],
+      "scenario": "state-json-file"
+    }
+  ]
+}

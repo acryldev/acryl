@@ -1,0 +1,15 @@
+{
+  "name": "acryl-inspect",
+  "description": "Introspection: what every plugin requires, provides and registers, and what unloads with it. Vendored from ACRYL.",
+  "requires": ["acryl-router"],
+  "inject": ["router"],
+  "provides": ["inspect"],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4"
+  },
+  "mount": "root.plugin(inspect); ctx.inspect.plugins(), ctx.inspect.explain('name'), ctx.inspect.render()",
+  "omit": ["**/*.test.*", "**/*.case.ts"],
+  "entries": {
+    "": "src/index.ts"
+  }
+}

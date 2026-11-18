@@ -1,0 +1,52 @@
+{
+  "name": "create-acrylblends",
+  "version": "1.5.20",
+  "description": "Create an Acryl app: npm create acrylblends@latest",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "create-acrylblends": "./bin/create-acrylblends.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "prepack": "pnpm run build && node scripts-pack.mjs copy",
+    "postpack": "node scripts-pack.mjs remove"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acrylblends/acrylblends.git",
+    "directory": "packages/create"
+  },
+  "homepage": "https://acrylblends.github.io",
+  "keywords": [
+    "acryl",
+    "create",
+    "scaffold"
+  ],
+  "dependencies": {
+    "@webboxes/app-persistence": "0.1.2",
+    "acrylblends": "workspace:^"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

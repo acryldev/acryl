@@ -1,0 +1,84 @@
+From 5dcb4682700876a9718b96702c561fea659f6276 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <webboxes.ai@gmail.com>
+Date: Fri, 6 Nov 2026 16:47:03 +0100
+Subject: [PATCH] ci(registry): refuse an entry that would not work on every OS
+ - registry-index applies blends-core's portabilityIssues to every entry, from
+ the ACRYL commit that has it (f5e3b764)
+
+---
+ .github/workflows/deploy.yml   |  2 +-
+ .github/workflows/registry.yml |  2 +-
+ scripts/registry-index.ts      | 17 +++++++++++++++++
+ 3 files changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+index 2c4e0ec..535450a 100644
+--- a/.github/workflows/deploy.yml
++++ b/.github/workflows/deploy.yml
+@@ -24,7 +24,7 @@ jobs:
+       - uses: actions/checkout@v4
+         with:
+           repository: acryldev/acryl
+-          ref: ada904ae45d1e1e7526a46ef8f9fa9cedaaf4138
++          ref: f5e3b76409b06bc43f2ae5a8f462e6ed78711c10
+           path: .acryl
+           sparse-checkout: runtime/blends-core
+       - run: bun install --production
+diff --git a/.github/workflows/registry.yml b/.github/workflows/registry.yml
+index 9474a8f..c848e59 100644
+--- a/.github/workflows/registry.yml
++++ b/.github/workflows/registry.yml
+@@ -21,7 +21,7 @@ jobs:
+       - uses: actions/checkout@v4
+         with:
+           repository: acryldev/acryl
+-          ref: ada904ae45d1e1e7526a46ef8f9fa9cedaaf4138
++          ref: f5e3b76409b06bc43f2ae5a8f462e6ed78711c10
+           path: .acryl
+           sparse-checkout: runtime/blends-core
+       - uses: oven-sh/setup-bun@v2
+diff --git a/scripts/registry-index.ts b/scripts/registry-index.ts
+index 0c7b73c..5c0f1e3 100644
+--- a/scripts/registry-index.ts
++++ b/scripts/registry-index.ts
+@@ -16,6 +16,13 @@ const { buildRegistryIndex } = (await import(join(core, "registry.ts"))) as {
+   buildRegistryIndex(sources: { path: string; manifestText: string }[]): { index: { formatVersion: number; entries: Record<string, unknown>[] }; problems: { path: string; message: string }[] };
+ };
+ 
++const { pluginFiles } = (await import(join(core, "plugin-identity", "folder-digest.ts"))) as {
++  pluginFiles(dir: string): unknown[];
++};
++const { portabilityIssues } = (await import(join(core, "plugin-identity", "plugin-portability.ts"))) as {
++  portabilityIssues(files: unknown[]): { path: string; reason: string }[];
++};
++
+ const MARKER = "acryl.template.json";
+ const LIMITS = { files: 5000, bytes: 20 * 1024 * 1024 };
+ const LIFECYCLE = ["preinstall", "install", "postinstall", "prepublish", "preprepare", "prepare", "postprepare"];
+@@ -76,6 +83,15 @@ function checkApp(dir: string): string[] {
+   return problems;
+ }
+ 
++/** Why an entry would not work the same on every OS: the format's own rules, for an app or a starter alike. */
++function checkPortable(dir: string): string[] {
++  try {
++    return portabilityIssues(pluginFiles(dir)).map(({ path, reason }) => `${path}: ${reason}`);
++  } catch (cause) {
++    return [`could not be read: ${cause instanceof Error ? cause.message : String(cause)}`];
++  }
++}
++
+ export function indexText(root: string): { text: string; problems: string[] } {
+   const blends = join(root, "blends");
+   const folders = existsSync(blends) ? readdirSync(blends, { withFileTypes: true }).filter(e => e.isDirectory() && existsSync(join(blends, e.name, "blend.yaml"))) : [];
+@@ -83,6 +99,7 @@ export function indexText(root: string): { text: string; problems: string[] } {
+   const out = problems.map(p => `${p.path}: ${p.message}`);
+   const entries = index.entries.map(entry => {
+     const dir = join(root, String(entry.path));
++    out.push(...checkPortable(dir).map((message) => `${String(entry.path)}: ${message}`));
+     if (!existsSync(join(dir, MARKER))) return { ...entry, runtime: "acryl" };
+     const apps = checkApp(dir);
+     out.push(...apps.map(message => `${String(entry.path)}: ${message}`));
+-- 
+2.50.1 (Apple Git-155)
+

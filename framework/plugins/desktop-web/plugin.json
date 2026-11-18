@@ -1,0 +1,17 @@
+{
+  "name": "desktop-web",
+  "description": "Run a plain Acryl app (`export default app`) as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron. `acrylblends add desktop` picks this one for an app without the Blend plugins.",
+  "requires": ["instance"],
+  "inject": [],
+  "provides": [],
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "44.9.3"
+  },
+  "scripts": {
+    "desktop": "node plugins/desktop-web/launch.ts"
+  },
+  "gitignore": [".acrylblends/"],
+  "omit": ["**/*.test.*"],
+  "mount": "nothing to mount: run `npm install`, then `npm run desktop` (the window opens on the app's own server; every electron call is in plugins/desktop-web)"
+}

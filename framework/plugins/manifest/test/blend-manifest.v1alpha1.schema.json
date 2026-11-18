@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://acryl.dev/schemas/blends/blend-manifest.v1alpha1.schema.json",
+  "title": "ACRYL BLEND manifest (v1alpha1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "const": "blends.acryl.dev/v1alpha1"
+    },
+    "kind": {
+      "enum": ["Blueprint", "Blend"]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/definition-id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "$ref": "#/$defs/semver"
+        },
+        "category": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SPDX license id, or a free-form statement such as 'Proprietary'."
+        },
+        "visibility": {
+          "enum": ["private", "public"],
+          "description": "Who may see this definition. A private app is never pushed to a public remote or published to a registry."
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime"],
+      "properties": {
+        "runtime": {
+          "const": "cordis"
+        },
+        "extends": {
+          "$ref": "#/$defs/definition-id"
+        },
+        "lineage": {
+          "$ref": "#/$defs/lineage"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/row-with-name"
+          }
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/row-without-required-name"
+          }
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/parameter-declaration"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "definition-id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "config": {
+      "type": "object"
+    },
+    "row-with-name": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "$ref": "#/$defs/config"
+        },
+        "disabled": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/js-expr-marker"
+            }
+          ]
+        }
+      }
+    },
+    "row-without-required-name": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "$ref": "#/$defs/config"
+        },
+        "disabled": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/js-expr-marker"
+            }
+          ]
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blueprint", "blueprintVersion"],
+      "properties": {
+        "blueprint": {
+          "$ref": "#/$defs/definition-id"
+        },
+        "blueprintVersion": {
+          "$ref": "#/$defs/semver"
+        }
+      }
+    },
+    "parameter-declaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "default"],
+      "properties": {
+        "type": {
+          "enum": ["string", "number", "boolean"]
+        },
+        "default": true
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "number"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "boolean"
+              }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": {
+              "default": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "js-expr-marker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["__jsExpr"],
+      "properties": {
+        "__jsExpr": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

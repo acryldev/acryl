@@ -1,0 +1,97 @@
+{
+  "//": "The names and versions the frame's packages publish under, and the DSH release they are built against. The CLI ships this file (an app made with init --desktop installs these names and versions), and verify-frame-publish packs exactly these packages: the closure of the frame's rows, nothing else. The owner's naming decision is the `scope` value and the short names; the owner confirmed these names on 2026-11-05, so a rename after the first publish is a new package on npm. A version must equal its package folder's package.json version (the CLI tests check it).",
+  "scope": "@acrylblends",
+  "dshVersion": "0.2.0-rc.2",
+  "pnpm": {
+    "//": "An app in the frame installed with pnpm: these build scripts run, as they do under npm (packages/cli/src/pnpm-settings.ts). Found by installing a framed app with pnpm 12: dsh-subprocess-local builds its spawn helper, node-pty and koffi their native parts.",
+    "allowBuilds": [
+      "@deepseek-ai/dsh-subprocess-local",
+      "@google/genai",
+      "koffi",
+      "node-pty",
+      "protobufjs"
+    ]
+  },
+  "omit": {
+    "//": "What the frame inherits from DSH but does not install: DSH's web app composes the Office-to-PDF converter, whose LibreOffice engine is 153 MB per OS (measured 2026-11-18, about a third of a frame app's packages). Every app gets an npm override that swaps each engine package for `placeholder` (an empty package), and the converter's row is switched off; the document preview's Office part then waits for the converter and every other preview works. The Office preview plugin in the plugin registry brings the engine back on demand. packages/cli/src/frame-omit.ts reads this.",
+    "placeholder": "@acrylblends/absent@1.0.0",
+    "rows": ["office-to-pdf"],
+    "packages": [
+      "@deepseek-ai/libreoffice-kit-darwin-arm64",
+      "@deepseek-ai/libreoffice-kit-darwin-x64",
+      "@deepseek-ai/libreoffice-kit-wasm",
+      "@deepseek-ai/libreoffice-kit-win32-arm64",
+      "@deepseek-ai/libreoffice-kit-win32-x64"
+    ]
+  },
+  "packages": {
+    "acryl-ui": {
+      "name": "ui",
+      "version": "0.3.0"
+    },
+    "dsh-client-ui-brand-acryl": {
+      "name": "brand-client",
+      "version": "0.1.1"
+    },
+    "acryl-app-shell": {
+      "name": "app-shell",
+      "version": "0.1.1"
+    },
+    "acryl-workspace": {
+      "name": "workspace",
+      "version": "0.1.1"
+    },
+    "acryl-settings": {
+      "name": "settings",
+      "version": "0.1.0"
+    },
+    "acryl-sign-in": {
+      "name": "sign-in",
+      "version": "0.1.1"
+    },
+    "acryl-control": {
+      "name": "control",
+      "version": "0.2.5"
+    },
+    "acryl-diagnostics": {
+      "name": "diagnostics",
+      "version": "0.1.0"
+    },
+    "acryl-plugin-admin": {
+      "name": "plugin-admin",
+      "version": "0.1.0"
+    },
+    "acryl-support": {
+      "name": "support",
+      "version": "0.1.0"
+    },
+    "acryl-loopback-http": {
+      "name": "loopback-http",
+      "version": "0.1.0"
+    },
+    "acryl-web": {
+      "name": "web",
+      "version": "0.1.0"
+    },
+    "acryl-system-prompt": {
+      "name": "system-prompt",
+      "version": "0.1.0"
+    },
+    "acryl-app-context": {
+      "name": "app-context",
+      "version": "0.1.0"
+    },
+    "acryl-versions": {
+      "name": "versions",
+      "version": "0.1.1"
+    },
+    "acryl-blends-frame": {
+      "name": "blends-frame",
+      "version": "0.1.5"
+    }
+  },
+  "plugins": {
+    "//": "Plugins published from their own repositories under their own npm names, mounted by every app's frame and installed at a caret over this version. Not packed by verify-frame-publish (they are not under ide/). An upgrade adds one an app lacks.",
+    "skill-mcp-manager": "1.3.1"
+  }
+}

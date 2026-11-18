@@ -1,0 +1,15 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "f6538891",
+    "directory": "plugins/acryl-system-prompt"
+  },
+  "ported": "2026-11-04, 127-self-knowledge: the Blends app's agent gets ACRYL IDE's prompt shape",
+  "changes": {
+    "index.js -> src/index.ts": "typed; the same plugin: inject systemPrompt, the Config schema, the acrylSystemPrompt service and the system-prompt/assemble pass-through",
+    "lib/transform.js -> src/transform.ts": "typed; DEFAULT_IDENTITY names the Blends app instead of the ACRYL harness; every other line is the same logic",
+    "scripts/transform.test.mjs -> tests/transform.spec.ts": "the same seven cases on vitest, plus the Blends identity",
+    "cordis.patch.yml": "unchanged",
+    "drift/": "not ported: ACRYL records the harness's sections per surface; the frame's composition records none yet"
+  }
+}

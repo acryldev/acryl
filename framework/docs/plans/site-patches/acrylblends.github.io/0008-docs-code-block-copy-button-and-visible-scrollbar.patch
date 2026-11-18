@@ -1,0 +1,85 @@
+From a2bb50a5cab8e3e4405ba8fb912bcc2745602956 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <alex.musichen@gmail.com>
+Date: Thu, 29 Oct 2026 01:38:18 +0100
+Subject: [PATCH] feat(docs): every code block gets a copy button, and its
+ scrollbar is visible
+
+A reader on the workshop page could not see that the long registry command continued past the block's edge: the block scrolls, but the theme's
+overlay scrollbar only appears while scrolling. And there was no way to copy a command without selecting it by hand.
+
+- The markdown renderer wraps every <pre> in a `.md-code` container with a copy button: it copies the block's exact textContent (no prompt characters),
+  shows "Copied" for 1.5 s, and falls back to selecting the block and document.execCommand('copy') when navigator.clipboard is refused (an insecure
+  context, or a browser setting).
+- The scrollbar is now thin and visible on both themes: `scrollbar-width: thin` and `scrollbar-color: var(--code-muted) transparent`, with the
+  webkit pseudo-elements styled so Chrome and Safari draw a classic thin bar rather than an overlay.
+- The button sits inside the block's top-right corner, subtly (opacity .65), and comes to full opacity on hover or keyboard focus.
+
+Checked in a headless browser without --hide-scrollbars at 1280 px and 400 px, in both themes: the long command's block has scrollWidth 988 against
+clientWidth 766 (1280) and 358 (400), the document itself never scrolls sideways, the thin scrollbar is visible in light and dark, and clicking the
+button copies the whole command (read back from the clipboard and compared with the block, at both widths).
+---
+ src/components/markdown.tsx | 31 +++++++++++++++++++++++++++++++
+ src/styles.css              |  2 +-
+ 2 files changed, 32 insertions(+), 1 deletion(-)
+
+diff --git a/src/components/markdown.tsx b/src/components/markdown.tsx
+index ec04979..4f6babe 100644
+--- a/src/components/markdown.tsx
++++ b/src/components/markdown.tsx
+@@ -1,12 +1,43 @@
++import { Check, Copy } from "lucide-react";
++import { useRef, useState, type HTMLAttributes } from "react";
+ import { Link } from "react-router-dom";
+ import ReactMarkdown from "react-markdown";
+ import rehypeHighlight from "rehype-highlight";
+ import remarkGfm from "remark-gfm";
+ import { resolveLink } from "../lib/framework-docs";
+ 
++/** A code block with a copy button: the exact text of the block, and "Copied" for a moment. */
++function DocsPre({ node, children, ...props }: HTMLAttributes<HTMLPreElement> & { node?: unknown }) {
++  const ref = useRef<HTMLPreElement>(null);
++  const [copied, setCopied] = useState(false);
++  const flash = () => { setCopied(true); window.setTimeout(() => setCopied(false), 1500); };
++  const copy = async () => {
++    const text = ref.current?.textContent ?? "";
++    try {
++      await navigator.clipboard.writeText(text);
++    } catch {
++      // The clipboard is refused (an insecure context, or a browser setting): select the block and copy that.
++      const range = document.createRange();
++      if (ref.current) range.selectNodeContents(ref.current);
++      const selection = window.getSelection();
++      selection?.removeAllRanges();
++      selection?.addRange(range);
++      document.execCommand("copy");
++    }
++    flash();
++  };
++  return <div className="md-code">
++    <button type="button" className="md-code-copy" aria-label="Copy this code" onClick={copy}>
++      {copied ? <><Check size={12}/> Copied</> : <><Copy size={12}/> Copy</>}
++    </button>
++    <pre ref={ref} {...props}>{children}</pre>
++  </div>;
++}
++
+ /** One page of markdown, with links between pages resolved to site routes and code highlighted. */
+ export function Markdown({ pageKey, children }: { pageKey: string; children: string }) {
+   return <div className="md-doc"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeHighlight, { detect: false, ignoreMissing: true }]]} components={{
++    pre: (props) => <DocsPre {...props} />,
+     a({ href = "", children: label }) {
+       const target = resolveLink(pageKey, href);
+       if (target.external) return <a href={target.href} target="_blank" rel="noreferrer">{label}</a>;
+diff --git a/src/styles.css b/src/styles.css
+index 3570f64..c047c23 100644
+--- a/src/styles.css
++++ b/src/styles.css
+@@ -62,4 +62,4 @@
+ .triangle-mark{position:relative;filter:drop-shadow(0 14px 18px oklch(0.1 0.02 240/.1))}.triangle-mark span{position:absolute;inset:0;margin:auto;width:72%;height:72%;clip-path:polygon(50% 0,100% 86%,84% 86%,50% 28%,18% 84%,58% 84%,68% 100%,0 100%,50% 14%,92% 86%,100% 86%,50% 0);background:linear-gradient(140deg,oklch(.45 .03 225),oklch(.22 .02 235) 58%,var(--spectrum-mid) 75%,var(--spectrum-end))}.triangle-mark span:nth-child(2){transform:scale(.72);opacity:.18}.triangle-mark span:nth-child(3){transform:scale(1.08);opacity:.08}
+ .doc-copy{margin-top:3rem;font-size:1rem;line-height:1.85;color:var(--muted-foreground)}.doc-copy h2{margin-top:2.75rem;margin-bottom:.8rem;color:var(--foreground);font-size:1.6rem;line-height:1.3;font-weight:650}.doc-copy p{margin-top:1rem}.doc-copy pre{margin-top:1.5rem;overflow:auto;border:1px solid var(--code-border);border-radius:.25rem;background:var(--code);padding:1.3rem;color:var(--code-foreground);font-family:var(--font-mono);font-size:.82rem;line-height:1.75}.doc-copy blockquote{margin:2rem 0;border-left:2px solid var(--spectrum-start);background:var(--surface);padding:1.2rem 1.5rem;color:var(--foreground);font-size:1.15rem}.doc-note{margin-top:1.75rem;border:1px solid var(--border);border-left:3px solid var(--spectrum-start);background:var(--surface);padding:1.25rem}.doc-note p{margin-top:.4rem;font-size:.9rem}
+ @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+-.md-doc{font-size:1rem;line-height:1.8;color:var(--muted-foreground)}.md-doc h1{margin-top:.5rem;color:var(--foreground);font-size:2.4rem;line-height:1.15;font-weight:650}.md-doc h2{margin-top:2.75rem;margin-bottom:.6rem;color:var(--foreground);font-size:1.5rem;line-height:1.3;font-weight:650}.md-doc h3{margin-top:2rem;margin-bottom:.4rem;color:var(--foreground);font-size:1.15rem;font-weight:650}.md-doc h4{margin-top:1.5rem;color:var(--foreground);font-weight:650}.md-doc p,.md-doc ul,.md-doc ol,.md-doc table,.md-doc pre{margin-top:1rem}.md-doc ul{list-style:disc;padding-left:1.4rem}.md-doc ol{list-style:decimal;padding-left:1.4rem}.md-doc li{margin-top:.3rem}.md-doc a{color:var(--foreground);text-decoration:underline;text-underline-offset:3px}.md-doc a:hover{color:var(--accent-foreground)}.md-doc code{font-family:var(--font-mono);font-size:.86em;color:var(--foreground)}.md-doc :not(pre)>code{border:1px solid var(--border);background:var(--surface);padding:.05rem .3rem;border-radius:.2rem}.md-doc pre{overflow:auto;border:1px solid var(--code-border);border-radius:.25rem;background:var(--code);padding:1.1rem;color:var(--code-foreground);font-size:.82rem;line-height:1.7}.md-doc pre code{border:0;background:none;padding:0;color:inherit;font-size:inherit}.md-doc blockquote{margin:1.5rem 0;border-left:3px solid var(--spectrum-start);background:var(--surface);padding:.9rem 1.2rem;color:var(--foreground)}.md-doc blockquote p{margin-top:.4rem}.md-doc blockquote p:first-child{margin-top:0}.md-doc table{display:block;overflow:auto;border-collapse:collapse;font-size:.9rem}.md-doc th,.md-doc td{border:1px solid var(--border);padding:.5rem .75rem;text-align:left;vertical-align:top}.md-doc th{color:var(--foreground);background:var(--surface)}.md-doc hr{margin:2rem 0;border-color:var(--border)}.md-doc strong{color:var(--foreground)}.md-doc .hljs-comment,.md-doc .hljs-quote{color:#94a3b8;font-style:italic}.md-doc .hljs-keyword,.md-doc .hljs-selector-tag,.md-doc .hljs-doctag{color:#7dd3fc}.md-doc .hljs-string,.md-doc .hljs-template-variable,.md-doc .hljs-regexp{color:#86efac}.md-doc .hljs-number,.md-doc .hljs-literal,.md-doc .hljs-symbol,.md-doc .hljs-bullet{color:#fda4af}.md-doc .hljs-title,.md-doc .hljs-title.function_,.md-doc .hljs-title.class_,.md-doc .hljs-section{color:#fcd34d}.md-doc .hljs-built_in,.md-doc .hljs-type,.md-doc .hljs-attr,.md-doc .hljs-attribute,.md-doc .hljs-name,.md-doc .hljs-tag{color:#c4b5fd}.md-doc .hljs-params,.md-doc .hljs-variable,.md-doc .hljs-property{color:inherit}
++.md-doc{font-size:1rem;line-height:1.8;color:var(--muted-foreground)}.md-doc h1{margin-top:.5rem;color:var(--foreground);font-size:2.4rem;line-height:1.15;font-weight:650}.md-doc h2{margin-top:2.75rem;margin-bottom:.6rem;color:var(--foreground);font-size:1.5rem;line-height:1.3;font-weight:650}.md-doc h3{margin-top:2rem;margin-bottom:.4rem;color:var(--foreground);font-size:1.15rem;font-weight:650}.md-doc h4{margin-top:1.5rem;color:var(--foreground);font-weight:650}.md-doc p,.md-doc ul,.md-doc ol,.md-doc table,.md-doc pre{margin-top:1rem}.md-doc ul{list-style:disc;padding-left:1.4rem}.md-doc ol{list-style:decimal;padding-left:1.4rem}.md-doc li{margin-top:.3rem}.md-doc a{color:var(--foreground);text-decoration:underline;text-underline-offset:3px}.md-doc a:hover{color:var(--accent-foreground)}.md-doc code{font-family:var(--font-mono);font-size:.86em;color:var(--foreground)}.md-doc :not(pre)>code{border:1px solid var(--border);background:var(--surface);padding:.05rem .3rem;border-radius:.2rem}.md-doc pre{overflow:auto;border:1px solid var(--code-border);border-radius:.25rem;background:var(--code);padding:1.1rem;color:var(--code-foreground);font-size:.82rem;line-height:1.7}.md-doc pre code{border:0;background:none;padding:0;color:inherit;font-size:inherit}.md-code{position:relative}.md-code pre{scrollbar-width:thin;scrollbar-color:var(--code-muted) transparent}.md-code pre::-webkit-scrollbar{height:.45rem;width:.45rem}.md-code pre::-webkit-scrollbar-track{background:transparent}.md-code pre::-webkit-scrollbar-thumb{background:var(--code-muted);border-radius:.25rem}.md-code pre::-webkit-scrollbar-thumb:hover{background:var(--code-foreground)}.md-code-copy{position:absolute;top:.5rem;right:.5rem;display:inline-flex;align-items:center;gap:.3rem;border:1px solid var(--code-border);border-radius:.2rem;background:var(--code);padding:.2rem .45rem;font-family:var(--font-mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--code-muted);opacity:.65;transition:opacity .15s,color .15s}.md-code:hover .md-code-copy,.md-code-copy:focus-visible{opacity:1}.md-code-copy:hover{color:var(--code-foreground)}.md-doc blockquote{margin:1.5rem 0;border-left:3px solid var(--spectrum-start);background:var(--surface);padding:.9rem 1.2rem;color:var(--foreground)}.md-doc blockquote p{margin-top:.4rem}.md-doc blockquote p:first-child{margin-top:0}.md-doc table{display:block;overflow:auto;border-collapse:collapse;font-size:.9rem}.md-doc th,.md-doc td{border:1px solid var(--border);padding:.5rem .75rem;text-align:left;vertical-align:top}.md-doc th{color:var(--foreground);background:var(--surface)}.md-doc hr{margin:2rem 0;border-color:var(--border)}.md-doc strong{color:var(--foreground)}.md-doc .hljs-comment,.md-doc .hljs-quote{color:#94a3b8;font-style:italic}.md-doc .hljs-keyword,.md-doc .hljs-selector-tag,.md-doc .hljs-doctag{color:#7dd3fc}.md-doc .hljs-string,.md-doc .hljs-template-variable,.md-doc .hljs-regexp{color:#86efac}.md-doc .hljs-number,.md-doc .hljs-literal,.md-doc .hljs-symbol,.md-doc .hljs-bullet{color:#fda4af}.md-doc .hljs-title,.md-doc .hljs-title.function_,.md-doc .hljs-title.class_,.md-doc .hljs-section{color:#fcd34d}.md-doc .hljs-built_in,.md-doc .hljs-type,.md-doc .hljs-attr,.md-doc .hljs-attribute,.md-doc .hljs-name,.md-doc .hljs-tag{color:#c4b5fd}.md-doc .hljs-params,.md-doc .hljs-variable,.md-doc .hljs-property{color:inherit}
+-- 
+2.50.1 (Apple Git-155)
+

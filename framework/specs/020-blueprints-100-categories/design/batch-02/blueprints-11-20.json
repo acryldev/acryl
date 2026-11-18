@@ -1,0 +1,105 @@
+{
+  "batch": 2,
+  "categories": [
+    {
+      "number": 11,
+      "category": "Cybersecurity",
+      "title": "Vulnerability Tracker",
+      "blueprint_id": "acrylblends.vuln-tracker",
+      "file": "mockups/11-vulnerability-tracker.html",
+      "spec": "specs/11-vulnerability-tracker.md",
+      "ux_direction": "Security operations console: dark information-dense table, severity segmentation, asset context, and a right-side finding inspector. Make risk and remediation state immediately scannable.",
+      "purpose": "A triage console for tracking vulnerabilities against registered assets, with severity, affected component, owner, remediation deadline and verification status."
+    },
+    {
+      "number": 12,
+      "category": "Internet",
+      "title": "Link Shortener",
+      "blueprint_id": "acrylblends.link-shortener",
+      "file": "mockups/12-link-shortener.html",
+      "spec": "specs/12-link-shortener.md",
+      "ux_direction": "Growth-oriented link management SaaS: a prominent create-link composer, compact KPI strip, active-links list, click trend and referrer breakdown. Use a light green palette and a compact top navigation.",
+      "purpose": "Create branded short URLs and inspect click activity, referrers and link state."
+    },
+    {
+      "number": 13,
+      "category": "Media",
+      "title": "Photo Gallery",
+      "blueprint_id": "acrylblends.photo-gallery",
+      "file": "mockups/13-photo-gallery.html",
+      "spec": "specs/13-photo-gallery.md",
+      "ux_direction": "Editorial, image-first library. Use a charcoal canvas, minimal chrome, left album rail, masonry image grid, restrained metadata and a full-screen lightbox. The image content\u2014not cards and tables\u2014dominates the screen.",
+      "purpose": "Browse photographs by album and category, upload assets, and inspect full-resolution images in a lightbox."
+    },
+    {
+      "number": 14,
+      "category": "3D / CAD / Design",
+      "title": "Moodboard",
+      "blueprint_id": "acrylblends.moodboard",
+      "file": "mockups/14-moodboard.html",
+      "spec": "specs/14-moodboard.md",
+      "ux_direction": "Freeform studio canvas, not a dashboard. Warm paper-like background, visible object layers, draggable free-positioned objects, palette rail and sparse project controls.",
+      "purpose": "Arrange reference images, colours, notes and visual ideas on a spatial canvas for a design project."
+    },
+    {
+      "number": 15,
+      "category": "Scientific & Engineering",
+      "title": "Lab Notebook",
+      "blueprint_id": "acrylblends.lab-notebook",
+      "file": "mockups/15-lab-notebook.html",
+      "spec": "specs/15-lab-notebook.md",
+      "ux_direction": "Research notebook inspired by a paper record: notebook/experiment navigation on the left, long-form structured record in the center, unit conversion and metadata tools in a side rail. Calm scientific blue-grey palette.",
+      "purpose": "Record reproducible experiments with objectives, protocols, instrument metadata, measurements, observations and results."
+    },
+    {
+      "number": 16,
+      "category": "Industrial",
+      "title": "Maintenance Log",
+      "blueprint_id": "acrylblends.maintenance-log",
+      "file": "mockups/16-maintenance-log.html",
+      "spec": "specs/16-maintenance-log.md",
+      "ux_direction": "Industrial maintenance control room: dark graphite/green palette, equipment register on left, work schedule in center, selected asset health and maintenance history on right.",
+      "purpose": "Track machines, preventive maintenance schedules, work orders, downtime and service history for a facility."
+    },
+    {
+      "number": 17,
+      "category": "Robotics",
+      "title": "Robot Missions",
+      "blueprint_id": "acrylblends.robot-missions",
+      "file": "mockups/17-robot-missions.html",
+      "spec": "specs/17-robot-missions.md",
+      "ux_direction": "Map-first robotics console. The central surface is a grid/facility map with robot positions, obstacles and route geometry; fleet selector on left; waypoint sequence and telemetry on right.",
+      "purpose": "Plan and simulate robot missions using a facility map, fleet status, ordered waypoints and telemetry."
+    },
+    {
+      "number": 18,
+      "category": "Embedded / IoT",
+      "title": "Sensor Dashboard",
+      "blueprint_id": "acrylblends.sensor-dashboard",
+      "file": "mockups/18-sensor-dashboard.html",
+      "spec": "specs/18-sensor-dashboard.md",
+      "ux_direction": "IoT operations dashboard: teal/navy palette, clear online/offline indicators, live values with small trend plots, device inventory, historical chart and threshold editor.",
+      "purpose": "Monitor device telemetry, device health and thresholds from sensors sending readings to an HTTP ingestion endpoint."
+    },
+    {
+      "number": 19,
+      "category": "Automotive",
+      "title": "Vehicle Log",
+      "blueprint_id": "acrylblends.vehicle-log",
+      "file": "mockups/19-vehicle-log.html",
+      "spec": "specs/19-vehicle-log.md",
+      "ux_direction": "Owner-oriented garage app. A vehicle identity/hero panel is the visual anchor, followed by running-cost metrics, dated maintenance history, cost trend and quick fuel entry.",
+      "purpose": "Maintain a personal vehicle record including mileage, service history, fuel, expenses and upcoming reminders."
+    },
+    {
+      "number": 20,
+      "category": "Aerospace / Aviation",
+      "title": "Flight Logbook",
+      "blueprint_id": "acrylblends.flight-logbook",
+      "file": "mockups/20-flight-logbook.html",
+      "spec": "specs/20-flight-logbook.md",
+      "ux_direction": "Aviation logbook/EFB-inspired interface: navy and chart-table styling, pilot summary and hours, flight record table on the left, route and flight detail on the right.",
+      "purpose": "Record pilot flights, aircraft, routes, roles, duration and experience totals, with informational recency summaries."
+    }
+  ]
+}

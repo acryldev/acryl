@@ -1,0 +1,438 @@
+{
+  "name": "acrylblends-framework",
+  "version": "0.5.0",
+  "private": true,
+  "description": "The ACRYL Framework without Cordis, as the public package acrylblends ships it: every upstream subpath, and the Node adapter at node-server.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "lib/**",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./request": {
+      "types": "./lib/request.d.ts",
+      "default": "./lib/request.js"
+    },
+    "./types": {
+      "types": "./lib/types.d.ts",
+      "default": "./lib/types.js"
+    },
+    "./http-exception": {
+      "types": "./lib/http-exception.d.ts",
+      "default": "./lib/http-exception.js"
+    },
+    "./tiny": {
+      "types": "./lib/tiny.d.ts",
+      "default": "./lib/tiny.js"
+    },
+    "./quick": {
+      "types": "./lib/quick.d.ts",
+      "default": "./lib/quick.js"
+    },
+    "./basic-auth": {
+      "types": "./lib/basic-auth.d.ts",
+      "default": "./lib/basic-auth.js"
+    },
+    "./bearer-auth": {
+      "types": "./lib/bearer-auth.d.ts",
+      "default": "./lib/bearer-auth.js"
+    },
+    "./body-limit": {
+      "types": "./lib/body-limit.d.ts",
+      "default": "./lib/body-limit.js"
+    },
+    "./cache": {
+      "types": "./lib/cache.d.ts",
+      "default": "./lib/cache.js"
+    },
+    "./combine": {
+      "types": "./lib/combine.d.ts",
+      "default": "./lib/combine.js"
+    },
+    "./compress": {
+      "types": "./lib/compress.d.ts",
+      "default": "./lib/compress.js"
+    },
+    "./context-storage": {
+      "types": "./lib/context-storage.d.ts",
+      "default": "./lib/context-storage.js"
+    },
+    "./cors": {
+      "types": "./lib/cors.d.ts",
+      "default": "./lib/cors.js"
+    },
+    "./csrf": {
+      "types": "./lib/csrf.d.ts",
+      "default": "./lib/csrf.js"
+    },
+    "./etag": {
+      "types": "./lib/etag.d.ts",
+      "default": "./lib/etag.js"
+    },
+    "./ip-restriction": {
+      "types": "./lib/ip-restriction.d.ts",
+      "default": "./lib/ip-restriction.js"
+    },
+    "./jsx-renderer": {
+      "types": "./lib/jsx-renderer.d.ts",
+      "default": "./lib/jsx-renderer.js"
+    },
+    "./jwk": {
+      "types": "./lib/jwk.d.ts",
+      "default": "./lib/jwk.js"
+    },
+    "./jwt": {
+      "types": "./lib/jwt.d.ts",
+      "default": "./lib/jwt.js"
+    },
+    "./language": {
+      "types": "./lib/language.d.ts",
+      "default": "./lib/language.js"
+    },
+    "./logger": {
+      "types": "./lib/logger.d.ts",
+      "default": "./lib/logger.js"
+    },
+    "./method-not-allowed": {
+      "types": "./lib/method-not-allowed.d.ts",
+      "default": "./lib/method-not-allowed.js"
+    },
+    "./method-override": {
+      "types": "./lib/method-override.d.ts",
+      "default": "./lib/method-override.js"
+    },
+    "./mount": {
+      "types": "./lib/mount.d.ts",
+      "default": "./lib/mount.js"
+    },
+    "./powered-by": {
+      "types": "./lib/powered-by.d.ts",
+      "default": "./lib/powered-by.js"
+    },
+    "./pretty-json": {
+      "types": "./lib/pretty-json.d.ts",
+      "default": "./lib/pretty-json.js"
+    },
+    "./request-id": {
+      "types": "./lib/request-id.d.ts",
+      "default": "./lib/request-id.js"
+    },
+    "./secure-headers": {
+      "types": "./lib/secure-headers.d.ts",
+      "default": "./lib/secure-headers.js"
+    },
+    "./serve-static": {
+      "types": "./lib/serve-static.d.ts",
+      "default": "./lib/serve-static.js"
+    },
+    "./timeout": {
+      "types": "./lib/timeout.d.ts",
+      "default": "./lib/timeout.js"
+    },
+    "./timing": {
+      "types": "./lib/timing.d.ts",
+      "default": "./lib/timing.js"
+    },
+    "./trailing-slash": {
+      "types": "./lib/trailing-slash.d.ts",
+      "default": "./lib/trailing-slash.js"
+    },
+    "./accepts": {
+      "types": "./lib/accepts.d.ts",
+      "default": "./lib/accepts.js"
+    },
+    "./adapter": {
+      "types": "./lib/adapter.d.ts",
+      "default": "./lib/adapter.js"
+    },
+    "./cookie": {
+      "types": "./lib/cookie.d.ts",
+      "default": "./lib/cookie.js"
+    },
+    "./dev": {
+      "types": "./lib/dev.d.ts",
+      "default": "./lib/dev.js"
+    },
+    "./factory": {
+      "types": "./lib/factory.d.ts",
+      "default": "./lib/factory.js"
+    },
+    "./html": {
+      "types": "./lib/html.d.ts",
+      "default": "./lib/html.js"
+    },
+    "./proxy": {
+      "types": "./lib/proxy.d.ts",
+      "default": "./lib/proxy.js"
+    },
+    "./route": {
+      "types": "./lib/route.d.ts",
+      "default": "./lib/route.js"
+    },
+    "./ssg": {
+      "types": "./lib/ssg.d.ts",
+      "default": "./lib/ssg.js"
+    },
+    "./streaming": {
+      "types": "./lib/streaming.d.ts",
+      "default": "./lib/streaming.js"
+    },
+    "./testing": {
+      "types": "./lib/testing.d.ts",
+      "default": "./lib/testing.js"
+    },
+    "./bun": {
+      "types": "./lib/bun.d.ts",
+      "default": "./lib/bun.js"
+    },
+    "./ws": {
+      "types": "./lib/ws.d.ts",
+      "default": "./lib/ws.js"
+    },
+    "./css": {
+      "types": "./lib/css.d.ts",
+      "default": "./lib/css.js"
+    },
+    "./jsx": {
+      "types": "./lib/jsx.d.ts",
+      "default": "./lib/jsx.js"
+    },
+    "./jsx/jsx-runtime": {
+      "types": "./lib/jsx/jsx-runtime.d.ts",
+      "default": "./lib/jsx/jsx-runtime.js"
+    },
+    "./jsx/jsx-dev-runtime": {
+      "types": "./lib/jsx/jsx-dev-runtime.d.ts",
+      "default": "./lib/jsx/jsx-dev-runtime.js"
+    },
+    "./jsx/streaming": {
+      "types": "./lib/jsx/streaming.d.ts",
+      "default": "./lib/jsx/streaming.js"
+    },
+    "./jsx/dom": {
+      "types": "./lib/jsx/dom.d.ts",
+      "default": "./lib/jsx/dom.js"
+    },
+    "./jsx/dom/jsx-runtime": {
+      "types": "./lib/jsx/dom/jsx-runtime.d.ts",
+      "default": "./lib/jsx/dom/jsx-runtime.js"
+    },
+    "./jsx/dom/jsx-dev-runtime": {
+      "types": "./lib/jsx/dom/jsx-dev-runtime.d.ts",
+      "default": "./lib/jsx/dom/jsx-dev-runtime.js"
+    },
+    "./jsx/dom/client": {
+      "types": "./lib/jsx/dom/client.d.ts",
+      "default": "./lib/jsx/dom/client.js"
+    },
+    "./jsx/dom/css": {
+      "types": "./lib/jsx/dom/css.d.ts",
+      "default": "./lib/jsx/dom/css.js"
+    },
+    "./jsx/dom/server": {
+      "types": "./lib/jsx/dom/server.d.ts",
+      "default": "./lib/jsx/dom/server.js"
+    },
+    "./conninfo": {
+      "types": "./lib/conninfo.d.ts",
+      "default": "./lib/conninfo.js"
+    },
+    "./validator": {
+      "types": "./lib/validator.d.ts",
+      "default": "./lib/validator.js"
+    },
+    "./client": {
+      "types": "./lib/client.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./router": {
+      "types": "./lib/router.d.ts",
+      "default": "./lib/router.js"
+    },
+    "./router/reg-exp-router": {
+      "types": "./lib/router/reg-exp-router.d.ts",
+      "default": "./lib/router/reg-exp-router.js"
+    },
+    "./router/smart-router": {
+      "types": "./lib/router/smart-router.d.ts",
+      "default": "./lib/router/smart-router.js"
+    },
+    "./router/trie-router": {
+      "types": "./lib/router/trie-router.d.ts",
+      "default": "./lib/router/trie-router.js"
+    },
+    "./router/pattern-router": {
+      "types": "./lib/router/pattern-router.d.ts",
+      "default": "./lib/router/pattern-router.js"
+    },
+    "./router/linear-router": {
+      "types": "./lib/router/linear-router.d.ts",
+      "default": "./lib/router/linear-router.js"
+    },
+    "./loopback-only": {
+      "types": "./lib/loopback-only.d.ts",
+      "default": "./lib/loopback-only.js"
+    },
+    "./schema-validator": {
+      "types": "./lib/schema-validator.d.ts",
+      "default": "./lib/schema-validator.js"
+    },
+    "./read-sse": {
+      "types": "./lib/read-sse.d.ts",
+      "default": "./lib/read-sse.js"
+    },
+    "./node-server": {
+      "types": "./lib/node-server.d.ts",
+      "default": "./lib/node-server.js"
+    },
+    "./node-server/serve-static": {
+      "types": "./lib/node-server/serve-static.d.ts",
+      "default": "./lib/node-server/serve-static.js"
+    },
+    "./node-server/conninfo": {
+      "types": "./lib/node-server/conninfo.d.ts",
+      "default": "./lib/node-server/conninfo.js"
+    },
+    "./node-server/register": {
+      "types": "./lib/node-server/register.d.ts",
+      "default": "./lib/node-server/register.js"
+    },
+    "./db": {
+      "types": "./lib/db.d.ts",
+      "default": "./lib/db.js"
+    },
+    "./db/sqlite": {
+      "types": "./lib/db/sqlite.d.ts",
+      "default": "./lib/db/sqlite.js"
+    },
+    "./kv": {
+      "types": "./lib/kv.d.ts",
+      "default": "./lib/kv.js"
+    },
+    "./kv/json": {
+      "types": "./lib/kv/json.d.ts",
+      "default": "./lib/kv/json.js"
+    },
+    "./kv/db": {
+      "types": "./lib/kv/db.d.ts",
+      "default": "./lib/kv/db.js"
+    },
+    "./db/conformance": {
+      "types": "./lib/db/conformance.d.ts",
+      "default": "./lib/db/conformance.js"
+    },
+    "./kv/conformance": {
+      "types": "./lib/kv/conformance.d.ts",
+      "default": "./lib/kv/conformance.js"
+    },
+    "./drivers": {
+      "types": "./lib/drivers.d.ts",
+      "default": "./lib/drivers.js"
+    },
+    "./door/host": {
+      "types": "./lib/door/host.d.ts",
+      "default": "./lib/door/host.js"
+    },
+    "./door/protocol": {
+      "types": "./lib/door/protocol.d.ts",
+      "default": "./lib/door/protocol.js"
+    },
+    "./door/page": {
+      "types": "./lib/door/page.d.ts",
+      "default": "./lib/door/page.js"
+    },
+    "./cordis/router": {
+      "types": "./lib/cordis/router.d.ts",
+      "default": "./lib/cordis/router.js"
+    },
+    "./cordis/router-http": {
+      "types": "./lib/cordis/router-http.d.ts",
+      "default": "./lib/cordis/router-http.js"
+    },
+    "./cordis/state": {
+      "types": "./lib/cordis/state.d.ts",
+      "default": "./lib/cordis/state.js"
+    },
+    "./cordis/state/react": {
+      "types": "./lib/cordis/state/react.d.ts",
+      "default": "./lib/cordis/state/react.js"
+    },
+    "./cordis/inspect": {
+      "types": "./lib/cordis/inspect.d.ts",
+      "default": "./lib/cordis/inspect.js"
+    },
+    "./cordis/node-server": {
+      "types": "./lib/cordis/node-server.d.ts",
+      "default": "./lib/cordis/node-server.js"
+    },
+    "./cordis/db": {
+      "types": "./lib/cordis/db.d.ts",
+      "default": "./lib/cordis/db.js"
+    },
+    "./cordis/db-sqlite": {
+      "types": "./lib/cordis/db-sqlite.d.ts",
+      "default": "./lib/cordis/db-sqlite.js"
+    },
+    "./cordis/kv": {
+      "types": "./lib/cordis/kv.d.ts",
+      "default": "./lib/cordis/kv.js"
+    },
+    "./cordis/kv-json": {
+      "types": "./lib/cordis/kv-json.d.ts",
+      "default": "./lib/cordis/kv-json.js"
+    },
+    "./cordis/kv-db": {
+      "types": "./lib/cordis/kv-db.d.ts",
+      "default": "./lib/cordis/kv-db.js"
+    },
+    "./cordis/door": {
+      "types": "./lib/cordis/door.d.ts",
+      "default": "./lib/cordis/door.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && node scripts/exports.mjs --check",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "tsc -p tsconfig.tests.json && node --test tests/*.test.mjs tests/*.test.ts",
+    "verify:standalone": "node scripts/verify-standalone.mjs",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test && pnpm run verify:standalone"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-router": "workspace:*",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2",
+    "@deepseek-ai/schemastery": "~3.18.4",
+    "react": ">=18",
+    "ws": ">=8"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/schemastery": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "ws": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,105 @@
+name: Entry
+
+# A pull request that adds, changes or removes blends/<login>.<name>/ is checked and, when it passes, merged and listed. No code of the pull request is ever run:
+# `pull_request_target` runs the workflow of THIS repository's main branch, the pull request's files are checked out only to be read as data (no credentials, no install, no
+# script of theirs), and every script that runs comes from main. The check is exactly what main's scripts say; the merge is of the commit that was checked.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+# One at a time: each run merges and then rewrites index.json on main.
+concurrency:
+  group: registry-main
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  entry:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      AUTHOR: ${{ github.event.pull_request.user.login }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      # main: the scripts that run. (The default checkout of pull_request_target is the base branch.)
+      - uses: actions/checkout@v4
+        with:
+          path: main
+      # The pull request: data only. Its commit is fetched from this repository's own refs/pull/N/head and unpacked with git archive and tar: nothing of it is checked out, installed
+      # or run, and no hook, filter or script of it can start. (actions/checkout refuses to check out a fork's code here, and that is the right default.)
+      - name: Read the pull request's files as data
+        run: |
+          git -C main fetch -q --depth=1 origin "refs/pull/$PR/head"
+          test "$(git -C main rev-parse FETCH_HEAD)" = "$HEAD_SHA" || { echo "the pull request changed while it was being read; run again"; exit 1; }
+          mkdir pr
+          git -C main archive FETCH_HEAD | tar -x --no-same-owner --no-same-permissions -C pr
+      - uses: oven-sh/setup-bun@v2
+      # The format library, from ACRYL's source until @acryl/blends-core is published on npm. Pinned to a reviewed commit.
+      - uses: actions/checkout@v4
+        with:
+          repository: acryldev/acryl
+          ref: f5e3b76409b06bc43f2ae5a8f462e6ed78711c10
+          path: .acryl
+          sparse-checkout: runtime/blends-core
+          persist-credentials: false
+      - run: bun install --production
+        working-directory: .acryl/runtime/blends-core
+
+      - name: What the pull request may change
+        id: rules
+        run: |
+          gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[] | [.status, .filename, (.previous_filename // "")] | @tsv' > changed.tsv
+          if id=$(node main/scripts/check-pr.mjs --login "$AUTHOR" --changed changed.tsv --pr pr --out problems.md); then
+            echo "id=$id" >> "$GITHUB_OUTPUT"
+          else
+            echo "failed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Is the entry a sound starter
+        id: entry
+        if: steps.rules.outputs.failed != '1'
+        run: |
+          id='${{ steps.rules.outputs.id }}'
+          rm -rf check && mkdir check
+          cp -R main/blends check/blends && cp main/index.json check/index.json
+          rm -rf "check/blends/$id"
+          if [ -d "pr/blends/$id" ]; then cp -R "pr/blends/$id" "check/blends/$id"; fi
+          if out=$(BLENDS_CORE="$PWD/.acryl/runtime/blends-core/src" bun main/scripts/registry-index.ts check --only "$id"); then
+            echo "ok"
+          else
+            printf '%s\n' "$out" | sed 's/^refused /- /' > problems.md
+            echo "failed=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Say why it was refused
+        if: steps.rules.outputs.failed == '1' || steps.entry.outputs.failed == '1'
+        run: |
+          { echo "This pull request was not merged:"; echo; cat problems.md; echo; echo "Fix it and push again; the check runs again. The rules are in [CONTRIBUTING.md](https://github.com/$REPO/blob/main/CONTRIBUTING.md)."; } > comment.md
+          gh pr comment "$PR" --repo "$REPO" --body-file comment.md
+          exit 1
+
+      # The commit that was checked, and no other: a push after the check makes the merge fail instead of merging unchecked files.
+      - name: Merge
+        run: gh pr merge "$PR" --repo "$REPO" --squash --match-head-commit "$HEAD_SHA"
+
+      - name: List it
+        run: |
+          git -C main fetch -q origin main
+          git -C main checkout -q --detach FETCH_HEAD
+          BLENDS_CORE="$PWD/.acryl/runtime/blends-core/src" bun main/scripts/registry-index.ts main
+          node main/scripts/listing.mjs main
+          cd main
+          git config user.name "workshop-registry[bot]"
+          git config user.email "workshop-registry@users.noreply.github.com"
+          git add index.json README.md
+          if ! git diff --cached --quiet; then
+            git commit -m "registry: index and listing"
+            git push origin HEAD:main
+          fi

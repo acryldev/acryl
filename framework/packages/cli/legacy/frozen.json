@@ -1,0 +1,7 @@
+{
+  "about": "Published acrylblends versions whose tag is not in this repository's history, so scripts/build-legacy-layouts.mjs cannot regenerate them from a clone. Their record is what layouts.json and the fixture folders hold for them, committed as is. A new release never goes here: it is tagged on this repository.",
+  "releases": {
+    "0.0.0-stage": "held the package name on npm before the first release; no tag, no templates",
+    "0.2.0": "published before this repository's history begins (a v0.2.0 tag in an older clone is the ACRYL desktop release of that number, not this one), so nothing can regenerate it and it has no fixture; its agent and app templates' src/main.ts import './plugins/...', so upgrade reports such an app as unable to start from that file alone"
+  }
+}

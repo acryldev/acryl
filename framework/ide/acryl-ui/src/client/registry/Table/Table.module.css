@@ -1,0 +1,13 @@
+.container { position: relative; width: 100%; overflow-x: auto; }
+.table { width: 100%; caption-side: bottom; border-collapse: collapse; font-size: 13px; }
+.header tr { border-bottom: 1px solid var(--dsw-alias-border-l4); }
+.body tr:last-child { border-bottom: none; }
+.footer { border-top: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-2); font-weight: 500; }
+.footer tr:last-child { border-bottom: none; }
+.row { border-bottom: 1px solid var(--dsw-alias-border-l4); transition: background-color 0.15s; }
+.row:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.row[aria-expanded='true'] { background: var(--dsw-alias-interactive-bg-hover); }
+.row[data-state='selected'] { background: var(--dsw-alias-bg-layer-2); }
+.head { height: 40px; padding: 0 8px; text-align: left; vertical-align: middle; font-weight: 500; white-space: nowrap; color: var(--dsw-alias-label-primary); }
+.cell { padding: 8px; vertical-align: middle; white-space: nowrap; }
+.caption { margin-top: 16px; font-size: 13px; color: var(--dsw-alias-label-tertiary); }

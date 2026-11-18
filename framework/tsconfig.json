@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["packages/*/src", "packages/*/test", "docs/test"],
+  "exclude": ["packages/framework"]
+}

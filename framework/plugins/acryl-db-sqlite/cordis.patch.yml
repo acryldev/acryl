@@ -1,0 +1,3 @@
+- insert:
+    - id: acryl-db-sqlite
+      name: acryl-db-sqlite

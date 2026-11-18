@@ -1,0 +1,465 @@
+{
+  "batch": 10,
+  "category_range": [
+    91,
+    100
+  ],
+  "framework": "ACRYL Blends",
+  "artifact_type": "design_prototypes_and_agent_handoff",
+  "implementation_status": "not_implemented",
+  "apps": [
+    {
+      "id": 91,
+      "category": "Utilities",
+      "name": "PocketTools",
+      "slug": "pockettools",
+      "tagline": "Small tools. Zero ceremony.",
+      "primary_job": "Fast desktop utilities for calculations, conversions, clipboard snippets and quick-launch actions.",
+      "audience": "Developers and operations staff",
+      "taxonomy_coverage": [
+        "Calculators",
+        "Converters",
+        "Clipboard managers",
+        "Launchers",
+        "Screenshot tools",
+        "Screen recorders",
+        "File finders",
+        "System cleaners",
+        "Archive tools"
+      ],
+      "screens": [
+        "Tool shelf",
+        "Converter",
+        "Clipboard drawer"
+      ],
+      "core_workflows": [
+        "Open a utility",
+        "Convert values",
+        "Pin a snippet",
+        "Launch a local action"
+      ],
+      "domain_entities": [
+        "Tool",
+        "ConversionPreset",
+        "ClipboardSnippet",
+        "LaunchAction"
+      ],
+      "agent_prompts": [
+        "Add timezone conversion presets.",
+        "Add keyboard-first command search.",
+        "Add snippet collections."
+      ],
+      "prototype": "mockups/91-pockettools.html",
+      "specification": "specs/91-pockettools.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 92,
+      "category": "Emulation software",
+      "name": "CompatLab",
+      "slug": "compatlab",
+      "tagline": "Reproduce. Inspect. Compare.",
+      "primary_job": "A test bench for launching emulated devices and comparing software behaviour across machine profiles.",
+      "audience": "QA engineers and retro-computing researchers",
+      "taxonomy_coverage": [
+        "Console emulators",
+        "CPU emulators",
+        "OS emulators",
+        "Terminal emulators",
+        "Hardware simulators",
+        "Compatibility layers"
+      ],
+      "screens": [
+        "Emulator bench",
+        "Machine profiles",
+        "Session trace"
+      ],
+      "core_workflows": [
+        "Choose a machine profile",
+        "Boot a sandboxed session",
+        "Attach a peripheral",
+        "Inspect trace events"
+      ],
+      "domain_entities": [
+        "MachineProfile",
+        "EmulationSession",
+        "Peripheral",
+        "TraceEvent"
+      ],
+      "agent_prompts": [
+        "Add CPU architecture presets.",
+        "Add deterministic session snapshots.",
+        "Add side-by-side profile comparison."
+      ],
+      "prototype": "mockups/92-compatlab.html",
+      "specification": "specs/92-compatlab.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 93,
+      "category": "Compatibility software",
+      "name": "Bridgeworks",
+      "slug": "bridgeworks",
+      "tagline": "Make old systems work with new ones.",
+      "primary_job": "A compatibility workbench for assessing application/runtime pairs, translation layers and legacy dependencies.",
+      "audience": "Platform engineers and enterprise IT",
+      "taxonomy_coverage": [
+        "Wine-like compatibility layers",
+        "Translation layers",
+        "Binary translation",
+        "API compatibility layers",
+        "Legacy runtime compatibility"
+      ],
+      "screens": [
+        "Compatibility matrix",
+        "Runtime profile",
+        "Issue dossier"
+      ],
+      "core_workflows": [
+        "Select an application and runtime",
+        "Review compatibility matrix",
+        "Inspect failed check evidence",
+        "Assign a mitigation"
+      ],
+      "domain_entities": [
+        "ApplicationTarget",
+        "RuntimeProfile",
+        "CompatibilityCheck",
+        "KnownIssue"
+      ],
+      "agent_prompts": [
+        "Add report export.",
+        "Add dependency graph.",
+        "Add API translation rule editor."
+      ],
+      "prototype": "mockups/93-bridgeworks.html",
+      "specification": "specs/93-bridgeworks.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 94,
+      "category": "Licensing / software distribution",
+      "name": "ReleaseDock",
+      "slug": "releasedock",
+      "tagline": "Ship software. Govern access.",
+      "primary_job": "A publisher console for package releases, update channels, activation keys and seat allocation.",
+      "audience": "Independent software vendors and platform teams",
+      "taxonomy_coverage": [
+        "App stores",
+        "Package repositories",
+        "License servers",
+        "Software activation",
+        "Update systems",
+        "Patch management",
+        "Software deployment"
+      ],
+      "screens": [
+        "Release overview",
+        "Package channel",
+        "License seats"
+      ],
+      "core_workflows": [
+        "Promote a package",
+        "Create activation pool",
+        "Allocate/revoke seats",
+        "Inspect rollout"
+      ],
+      "domain_entities": [
+        "ProductPackage",
+        "Release",
+        "UpdateChannel",
+        "LicensePool",
+        "Activation"
+      ],
+      "agent_prompts": [
+        "Add signed package metadata.",
+        "Add production approval gates.",
+        "Add offline activation."
+      ],
+      "prototype": "mockups/94-releasedock.html",
+      "specification": "specs/94-releasedock.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 95,
+      "category": "Software marketplaces",
+      "name": "OpenShelf",
+      "slug": "openshelf",
+      "tagline": "Discover tools worth keeping.",
+      "primary_job": "A curated marketplace for browsing apps, plugins, APIs, models and agent tools.",
+      "audience": "Teams and builders evaluating reusable software",
+      "taxonomy_coverage": [
+        "App stores",
+        "Plugin stores",
+        "Extension marketplaces",
+        "SaaS marketplaces",
+        "API marketplaces",
+        "Model marketplaces",
+        "Agent marketplaces"
+      ],
+      "screens": [
+        "Discover",
+        "Listing detail",
+        "Saved collection"
+      ],
+      "core_workflows": [
+        "Browse a category",
+        "Inspect licence and publisher",
+        "Save a listing",
+        "Compare shortlist"
+      ],
+      "domain_entities": [
+        "Listing",
+        "Publisher",
+        "Category",
+        "Collection",
+        "Review"
+      ],
+      "agent_prompts": [
+        "Add comparison tray.",
+        "Add publisher submission review.",
+        "Add collection sharing."
+      ],
+      "prototype": "mockups/95-openshelf.html",
+      "specification": "specs/95-openshelf.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 96,
+      "category": "Plugin / extension ecosystems",
+      "name": "Extensio",
+      "slug": "extensio",
+      "tagline": "A safer home for extensions.",
+      "primary_job": "An extension control plane for finding, installing, updating and reviewing plugin permissions.",
+      "audience": "Product teams and administrators",
+      "taxonomy_coverage": [
+        "Browser extensions",
+        "IDE extensions",
+        "CMS plugins",
+        "Audio plugins",
+        "Game mods",
+        "AI skills",
+        "MCP servers",
+        "Agent tools"
+      ],
+      "screens": [
+        "Extension library",
+        "Permission review",
+        "Update channel"
+      ],
+      "core_workflows": [
+        "Browse by host",
+        "Review permissions",
+        "Enable/disable extension",
+        "Pin/defer update"
+      ],
+      "domain_entities": [
+        "Extension",
+        "Installation",
+        "PermissionGrant",
+        "ReleaseChannel"
+      ],
+      "agent_prompts": [
+        "Add organisation allowlists.",
+        "Add permission diff.",
+        "Add staged rollout."
+      ],
+      "prototype": "mockups/96-extensio.html",
+      "specification": "specs/96-extensio.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 97,
+      "category": "Software factories",
+      "name": "ForgeFlow",
+      "slug": "forgeflow",
+      "tagline": "From specification to working build.",
+      "primary_job": "A software factory cockpit turning a product specification into a coordinated, reviewable build pipeline.",
+      "audience": "Small engineering teams using coding agents",
+      "taxonomy_coverage": [
+        "Code generation systems",
+        "AI software factories",
+        "Autonomous development systems",
+        "Specification-driven development",
+        "Multi-agent development systems",
+        "Continuous software-generation platforms",
+        "Self-improving development environments"
+      ],
+      "screens": [
+        "Factory pipeline",
+        "Spec brief",
+        "Artifact review"
+      ],
+      "core_workflows": [
+        "Submit a brief",
+        "Break work into agent tasks",
+        "Inspect artifacts and evidence",
+        "Approve or return a stage"
+      ],
+      "domain_entities": [
+        "ProjectSpec",
+        "BuildRun",
+        "AgentTask",
+        "Artifact",
+        "GateDecision"
+      ],
+      "agent_prompts": [
+        "Add budget envelope.",
+        "Add architecture/security review gates.",
+        "Add reproducible build manifest."
+      ],
+      "prototype": "mockups/97-forgeflow.html",
+      "specification": "specs/97-forgeflow.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 98,
+      "category": "Self-modifying / adaptive software",
+      "name": "MorphOS Studio",
+      "slug": "morphos-studio",
+      "tagline": "Observe the interface adapting.",
+      "primary_job": "A sandbox for inspecting adaptive interfaces, runtime-generated tools and configuration changes.",
+      "audience": "Frontend platform engineers and AI product teams",
+      "taxonomy_coverage": [
+        "Self-updating applications",
+        "Plugin-generating systems",
+        "Runtime extension systems",
+        "Adaptive interfaces",
+        "Generative UI",
+        "Self-configuring systems",
+        "Self-healing software",
+        "Agent-generated tooling"
+      ],
+      "screens": [
+        "Runtime preview",
+        "Adaptation rules",
+        "Change history"
+      ],
+      "core_workflows": [
+        "Load context",
+        "Switch user/task conditions",
+        "Inspect generated UI",
+        "Accept or revert changes"
+      ],
+      "domain_entities": [
+        "RuntimeVariant",
+        "AdaptationRule",
+        "GeneratedTool",
+        "ChangeSet",
+        "Evaluation"
+      ],
+      "agent_prompts": [
+        "Add generated component validation.",
+        "Add visual diff.",
+        "Add policy layer for UI mutations."
+      ],
+      "prototype": "mockups/98-morphos-studio.html",
+      "specification": "specs/98-morphos-studio.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 99,
+      "category": "Autonomous software",
+      "name": "Autonomy Fleet",
+      "slug": "autonomy-fleet",
+      "tagline": "Coordinate systems that act.",
+      "primary_job": "A simulation-first console for supervising autonomous agents, robots and infrastructure missions.",
+      "audience": "Teams prototyping autonomous software or robotics",
+      "taxonomy_coverage": [
+        "Autonomous agents",
+        "Autonomous vehicles",
+        "Trading bots",
+        "Industrial robots",
+        "Software agents",
+        "Autonomous infrastructure",
+        "Self-healing systems"
+      ],
+      "screens": [
+        "Fleet map",
+        "Mission queue",
+        "Intervention log"
+      ],
+      "core_workflows": [
+        "Inspect unit and mission",
+        "Pause/reassign simulated mission",
+        "Review policy limits",
+        "Record intervention"
+      ],
+      "domain_entities": [
+        "AutonomousUnit",
+        "Mission",
+        "Policy",
+        "Intervention",
+        "TelemetrySample"
+      ],
+      "agent_prompts": [
+        "Add geofenced mission planner.",
+        "Add explainable policy simulation.",
+        "Add incident timeline."
+      ],
+      "prototype": "mockups/99-autonomy-fleet.html",
+      "specification": "specs/99-autonomy-fleet.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    },
+    {
+      "id": 100,
+      "category": "Meta-software",
+      "name": "MetaForge",
+      "slug": "metaforge",
+      "tagline": "Build the tools that build software.",
+      "primary_job": "A developer workbench for editing a DSL, compiling it into an app scaffold and inspecting build outputs.",
+      "audience": "Framework authors and developer-experience teams",
+      "taxonomy_coverage": [
+        "Compilers",
+        "IDEs",
+        "Build systems",
+        "Package managers",
+        "Operating systems",
+        "Hypervisors",
+        "AI coding agents",
+        "Software factories",
+        "Programming languages",
+        "DSLs",
+        "Low-code systems",
+        "Runtime generators",
+        "Code generators"
+      ],
+      "screens": [
+        "Project workspace",
+        "DSL editor",
+        "Build graph and output"
+      ],
+      "core_workflows": [
+        "Edit DSL",
+        "Run parser/compiler passes",
+        "Inspect build graph",
+        "Compare generated output"
+      ],
+      "domain_entities": [
+        "Workspace",
+        "SourceFile",
+        "BuildTarget",
+        "CompilerPass",
+        "BuildArtifact"
+      ],
+      "agent_prompts": [
+        "Add grammar diagnostics.",
+        "Add incremental compilation status.",
+        "Add package publishing."
+      ],
+      "prototype": "mockups/100-metaforge.html",
+      "specification": "specs/100-metaforge.md",
+      "implementation_status": "not_implemented",
+      "external_api_required_for_demo": false
+    }
+  ]
+}

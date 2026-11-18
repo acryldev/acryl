@@ -1,0 +1,27 @@
+.item { display: flex; flex-wrap: wrap; align-items: center; border-radius: 6px; border: 1px solid transparent; font-size: 13px; outline: none; transition: background-color 0.1s; }
+.item:focus-visible { border-color: var(--dsw-alias-border-l3); box-shadow: 0 0 0 3px var(--dsw-alias-interactive-bg-hover); }
+.item a { transition: background-color 0.15s; }
+.item a:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.outline { border-color: var(--dsw-alias-border-l4); }
+.muted { background: var(--dsw-alias-bg-layer-2); }
+.sizeDefault { gap: 16px; padding: 16px; }
+.sizeSmall { gap: 10px; padding: 12px 16px; }
+.media { display: flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 8px; }
+.media svg { pointer-events: none; }
+.item:has([data-slot='item-description']) .media { transform: translateY(2px); align-self: flex-start; }
+.mediaDefault { background: transparent; }
+.mediaIcon { width: 32px; height: 32px; border-radius: 4px; border: 1px solid var(--dsw-alias-border-l4); background: var(--dsw-alias-bg-layer-2); }
+.mediaIcon svg:not([class*='size-']) { width: 16px; height: 16px; }
+.mediaImage { width: 40px; height: 40px; overflow: hidden; border-radius: 4px; }
+.mediaImage img { width: 100%; height: 100%; object-fit: cover; }
+.content { display: flex; flex: 1; flex-direction: column; gap: 4px; }
+.content + [data-slot='item-content'] { flex: none; }
+.title { display: flex; width: fit-content; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; line-height: 1.35; }
+.description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 13px; font-weight: 400; line-height: 1.5; text-wrap: balance; color: var(--dsw-alias-label-tertiary); }
+.description a { text-decoration: underline; text-underline-offset: 4px; }
+.description a:hover { color: var(--dsw-alias-brand-primary); }
+.actions { display: flex; align-items: center; gap: 8px; }
+.group { display: flex; flex-direction: column; }
+.header { display: flex; flex-basis: 100%; align-items: center; justify-content: space-between; gap: 8px; }
+.footer { display: flex; flex-basis: 100%; align-items: center; justify-content: space-between; gap: 8px; }
+.separator { height: 1px; width: 100%; background: var(--dsw-alias-border-l4); }

@@ -1,0 +1,229 @@
+# Provenance of every component in src/client/registry (spec 038-ui-component-library, plan.md "Rework after the DSH styling document").
+# origin: extracted = copied from the pinned deepseek-harness source (commit 5dda764ed3) with only the coupling removed; composed = built only from the app's own primitives
+# and DSH stylesheets; gap = DSH has nothing equivalent, so it is written here (each names what DSH has instead).
+source: deepseek-harness 5dda764ed3
+components:
+  - name: fields
+    origin: extracted (verbatim)
+    from: packages/client/ui-primitives/src/settings-form/fields.tsx, fields.module.css
+    test: byte comparison against the DSH files (tests/library.spec.tsx)
+  - name: AppearanceCubes
+    origin: extracted
+    from: packages/client/ui-theme/src/client/AppearanceRow.tsx, AppearanceRow.module.css
+    changed: slot, store and locale coupling replaced by plain props; stylesheet byte-identical
+  - name: SettingsRow
+    origin: extracted
+    from: packages/client/ui-permission-presets/src/client/PermissionRow.tsx and .module.css (row layout)
+    changed: the host-backed preference and the risk confirmation stay in the DSH feature
+  - name: SelectPill
+    origin: extracted
+    from: packages/client/ui-permission-presets/src/client/PermissionRow.tsx and .module.css (selector pill over the app's Menu)
+    changed: preset store and risk confirmation removed
+  - name: Tabs
+    origin: extracted
+    from: packages/client/ui-settings-plugins/src/client/PluginsSettingsSection.tsx and .module.css (tab strip, panel, keyboard handling)
+    changed: slot rendering and locale replaced by plain props
+  - name: Card
+    origin: extracted (surface only)
+    from: packages/client/ui-settings-plugins/src/client/PluginCard.module.css (.card, .cardOpen)
+    changed: PluginCard's disclosure behavior stays in the feature; title and footer layout are written here
+  - name: SwitchField
+    origin: composed
+    from: the app's Switch primitive plus fields.module.css .hint
+  - name: Dialog
+    origin: composed
+    from: the app's Modal and Button primitives (DSH's RiskConfirmation covers the acknowledge-first variant)
+  - name: EmptyState
+    origin: gap
+    dsh_has: a bare paragraph with the .empty style in PluginsSettingsSection
+  - name: Stack
+    origin: gap
+    dsh_has: per-feature CSS; runtime direction and gap are inline style values, which the styling rules allow
+  - name: ToolCallCard
+    origin: extracted (subset)
+    from: packages/client/ui-tool/src/client/tool/components/ToolRow.tsx and .module.css
+    changed: header, state dot, running sweep, error summary, hidden run-state label and the IN/OUT card kept; tool-specific models, locale, slot renderer and the specialised terminal, diff, read, search, web and image cards left in DSH (the blocks are primitives a consumer passes as children)
+  - name: SidebarRow
+    origin: extracted
+    from: packages/client/ui-sidebar/src/client/SidebarRoot.tsx and .module.css (the New Session bar)
+    changed: the rail form is a class on the button itself instead of an ancestor's `.collapsed`
+  - name: Kbd
+    origin: ported
+    from: shadcn/ui registry item `kbd` (style new-york-v4), https://ui.shadcn.com/docs/components/kbd, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cn() replaced by clsx; KbdGroup not ported (use this library's Stack instead)
+  - name: Badge
+    origin: ported
+    from: shadcn/ui registry item `badge` (style new-york-v4), https://ui.shadcn.com/docs/components/badge, MIT licence, fetched 2026-09-22
+    changed: cva variants replaced by a CSS Module; asChild/Slot (Radix) dropped; variant names changed to this library's own roles
+  - name: Skeleton
+    origin: ported
+    from: shadcn/ui registry item `skeleton` (style new-york-v4), https://ui.shadcn.com/docs/components/skeleton, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module keyframe
+  - name: Spinner
+    origin: ported
+    from: shadcn/ui registry item `spinner` (style new-york-v4), https://ui.shadcn.com/docs/components/spinner, MIT licence, fetched 2026-09-22
+    changed: lucide-react's Loader2Icon replaced by a plain inline SVG arc (no new dependency)
+  - name: Alert
+    origin: ported
+    from: shadcn/ui registry item `alert` (style new-york-v4), https://ui.shadcn.com/docs/components/alert, MIT licence, fetched 2026-09-22
+    changed: cva variants and the has-[>svg] grid trick replaced by a CSS Module flex layout
+  - name: Separator
+    origin: ported
+    from: shadcn/ui registry item `separator` (style new-york-v4), https://ui.shadcn.com/docs/components/separator, MIT licence, fetched 2026-09-22
+    changed: Radix Separator.Root dropped (a decorative separator needs no interactive behavior); plain div with the same ARIA role
+  - name: Progress
+    origin: ported
+    from: shadcn/ui registry item `progress` (style new-york-v4), https://ui.shadcn.com/docs/components/progress, MIT licence, fetched 2026-09-22
+    changed: Radix Progress.Root/Indicator dropped; the same ARIA attributes set directly
+  - name: Avatar
+    origin: ported
+    from: shadcn/ui registry item `avatar` (style new-york-v4), https://ui.shadcn.com/docs/components/avatar, MIT licence, fetched 2026-09-22
+    changed: Radix Avatar.Root/Image/Fallback dropped, reproduced with a plain onError state; AvatarBadge/AvatarGroup/AvatarGroupCount not ported (composition-only, no behavior of their own)
+  - name: Label
+    origin: ported
+    from: shadcn/ui registry item `label` (style new-york-v4), https://ui.shadcn.com/docs/components/label, MIT licence, fetched 2026-09-22
+    changed: Radix Label.Root dropped; a native <label for> needs no interactive behavior
+  - name: Textarea
+    origin: ported
+    from: shadcn/ui registry item `textarea` (style new-york-v4), https://ui.shadcn.com/docs/components/textarea, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module
+  - name: Checkbox
+    origin: ported
+    from: shadcn/ui registry item `checkbox` (style new-york-v4), https://ui.shadcn.com/docs/components/checkbox, MIT licence, fetched 2026-09-22
+    changed: Radix Checkbox.Root/Indicator dropped for a native input; lucide-react's CheckIcon replaced by a plain inline SVG
+  - name: AspectRatio
+    origin: ported
+    from: shadcn/ui registry item `aspect-ratio` (style new-york-v4), https://ui.shadcn.com/docs/components/aspect-ratio, MIT licence, fetched 2026-09-22
+    changed: Radix AspectRatio.Root dropped; CSS aspect-ratio needs no JS behavior at all
+  - name: Breadcrumb
+    origin: ported
+    from: shadcn/ui registry item `breadcrumb` (style new-york-v4), https://ui.shadcn.com/docs/components/breadcrumb, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module; asChild/Slot dropped from BreadcrumbLink; lucide-react icons replaced by plain inline SVGs
+  - name: Toggle
+    origin: ported
+    from: shadcn/ui registry item `toggle` (style new-york-v4), https://ui.shadcn.com/docs/components/toggle, MIT licence, fetched 2026-09-22
+    changed: Radix Toggle.Root dropped for a native aria-pressed button; cva variants replaced by a CSS Module
+  - name: ButtonGroup
+    origin: ported
+    from: shadcn/ui registry item `button-group` (style new-york-v4), https://ui.shadcn.com/docs/components/button-group, MIT licence, fetched 2026-09-22
+    changed: cva variants replaced by a CSS Module; ButtonGroupSeparator no longer depends on this library's own Separator item (would break self-containment) - its own small inline divider instead; asChild/Slot dropped from ButtonGroupText
+  - name: Accordion
+    origin: ported
+    from: shadcn/ui registry item `accordion` (style new-york-v4), https://ui.shadcn.com/docs/components/accordion, MIT licence, fetched 2026-09-22
+    changed: Radix Accordion.Root/Item/Trigger/Content dropped for plain React state (an open-item id set); lucide-react's ChevronDownIcon replaced by a plain inline SVG
+  - name: RadioGroup
+    origin: ported
+    from: shadcn/ui registry item `radio-group` (style new-york-v4), https://ui.shadcn.com/docs/components/radio-group, MIT licence, fetched 2026-09-22
+    changed: Radix RadioGroup.Root/Item/Indicator dropped for native input[type=radio] controls grouped by name; lucide-react's CircleIcon replaced by a plain CSS dot
+  - name: Collapsible
+    origin: ported
+    from: shadcn/ui registry item `collapsible` (style new-york-v4), https://ui.shadcn.com/docs/components/collapsible, MIT licence, fetched 2026-09-22
+    changed: Radix Collapsible.Root/CollapsibleTrigger/CollapsibleContent dropped for plain React state
+  - name: ToggleGroup
+    origin: ported
+    from: shadcn/ui registry item `toggle-group` (style new-york-v4), https://ui.shadcn.com/docs/components/toggle-group, MIT licence, fetched 2026-09-22
+    changed: Radix ToggleGroup.Root/Item dropped for plain state; its item buttons restate this library's Toggle styling locally instead of importing that item (self-containment)
+  - name: Table
+    origin: ported
+    from: shadcn/ui registry item `table` (style new-york-v4), https://ui.shadcn.com/docs/components/table, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cn() replaced by clsx; the source's [&_tr]-style descendant utilities became descendant selectors and bg-muted/50 became --dsw-alias-interactive-bg-hover; no Radix primitive involved
+  - name: DirectionProvider
+    origin: ported
+    from: shadcn/ui registry item `direction` (style new-york-v4), https://ui.shadcn.com/docs/components/direction, MIT licence, fetched 2026-09-22
+    changed: Radix Direction.DirectionProvider/useDirection dropped for a plain createContext with the same public API (dir, the direction alias, useDirection); the source requires dir, this port defaults to ltr as Radix itself does; no stylesheet, so no .module.css
+  - name: Marker
+    origin: ported
+    from: shadcn/ui registry item `marker` (style new-york-v4), https://ui.shadcn.com/docs/components/marker, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped; the source's group-data-[variant=separator] rule became the .separator .content descendant selector; markerVariants not exported (the source exported its cva result)
+  - name: Message
+    origin: ported
+    from: shadcn/ui registry item `message` (style new-york-v4), https://ui.shadcn.com/docs/components/message, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; the source's two group utilities that reach across the row became :has() and child-attribute selectors; the parts keep their data-slot attributes because those selectors key off them
+  - name: Bubble
+    origin: ported
+    from: shadcn/ui registry item `bubble` (style new-york-v4), https://ui.shadcn.com/docs/components/bubble, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped; the source colours the child [data-slot=bubble-content] from the parent, reproduced with .bubble[data-variant=...] .content descendant selectors; the `tinted` variant's oklch relative-colour expressions have no token equivalent and are approximated with color-mix over --acryl-accent
+  - name: Pagination
+    origin: ported
+    from: shadcn/ui registry item `pagination` (style new-york-v4), https://ui.shadcn.com/docs/components/pagination, MIT licence, fetched 2026-09-22
+    changed: PaginationLink is built on shadcn's own Button item in the source (buttonVariants); the ghost/outline link look is restated locally in this module instead of importing that item (self-containment); lucide-react chevrons replaced by plain inline SVGs; hidden sm:block kept as a width query
+  - name: NativeSelect
+    origin: ported
+    from: shadcn/ui registry item `native-select` (style new-york-v4), https://ui.shadcn.com/docs/components/native-select, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; the source's five-way IconPlaceholder reduced to one plain inline SVG; its dark-mode variant utilities dropped because the alias tokens carry both schemes (no theme selectors); NativeSelectOption/OptGroup kept as pass-throughs that deliberately add nothing, leaving the popup to the platform
+  - name: ScrollArea
+    origin: ported
+    from: shadcn/ui registry item `scroll-area` (style new-york-v4), https://ui.shadcn.com/docs/components/scroll-area, MIT licence, fetched 2026-09-22
+    changed: Radix Root/Viewport/ScrollAreaScrollbar/Thumb/Corner dropped - the platform's own scroller already does what Radix reimplements in JavaScript, so the viewport keeps overflow:auto and the module styles the real scrollbar with --dsw-alias-scrollbar-* tokens; ScrollBar is not exported, because a separate thumb element would be decoration with no behaviour behind it; overscroll-behavior replaces Radix's scroll-chaining guard; the Root keeps its full div attributes (className, style) as the source's Root does, which is what lets a caller set the definite height a scroller needs - a first pass narrowed these to className only, and the real-browser check caught the result, because the viewport grew to its content instead of scrolling
+  - name: InputOTP
+    origin: ported
+    from: shadcn/ui registry item `input-otp` (style new-york-v4), https://ui.shadcn.com/docs/components/input-otp, MIT licence, fetched 2026-09-22
+    changed: the input-otp package dropped for one real <input> covering a row of slots plus a context carrying each slot's character, active state and caret blink - typing, backspace, arrows and paste stay the platform's own behaviour rather than a reimplementation; lucide-react MinusIcon replaced by a plain inline SVG; the dark-mode variant utilities dropped because the alias tokens carry both schemes
+  - name: Item
+    origin: ported
+    from: shadcn/ui registry item `item` (style new-york-v4), https://ui.shadcn.com/docs/components/item, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped; ItemSeparator restates a one-rule divider locally instead of importing this library's Separator item (self-containment, the ButtonGroupSeparator precedent); the source's group-has-[[data-slot=item-description]] rule became a :has() selector and its sibling rule a sibling selector
+  - name: Attachment
+    origin: ported
+    from: shadcn/ui registry item `attachment` (style new-york-v4), https://ui.shadcn.com/docs/components/attachment, MIT licence, fetched 2026-09-22
+    changed: Tailwind utility classes replaced by a CSS Module on --dsw-alias-* tokens; cva variants became classes; asChild/Slot dropped from AttachmentTrigger, which is a real button type=button; AttachmentAction's ghost icon-button look is restated locally instead of importing the Button item (self-containment); the group-data-[...] reach-across utilities became descendant selectors keyed off the root's data-state/data-size/data-orientation; the shimmer utility is written out as the gradient-and-clip animation it is; scroll-fade-x and scrollbar-none on AttachmentGroup are a mask-image gradient and a hidden scrollbar, which is what those utilities compile to. Its `transition-colors` is kept deliberately, matching upstream. The hazard found in InputGroup does not apply here, and saying why matters more than the decision - that was a transition on a property the same module's :has() rule sets from a DYNAMICALLY TOGGLED ATTRIBUTE (aria-invalid flipped at runtime by user interaction), which is the invalidation path the reported engine split fails on, whereas this one pairs with :hover - a native, continuously tracked pseudo-state on a different path - and upstream ships this exact shape with no evidence of the problem. Diverging here would trade fidelity for a bug that has not been shown to exist
+  - name: InputGroup
+    origin: ported
+    from: shadcn/ui registry item `input-group` (style new-york-v4), https://ui.shadcn.com/docs/components/input-group, MIT licence, fetched 2026-09-22
+    changed: shadcn builds this out of its own Input, Textarea and Button items; the two controls and the addon button are plain locally-styled elements instead, so the item has no cross-item import - the exact dependency T040 left this item unported over; the source's has-* variant utilities became :has() selectors on the group, its group-data-[...] utilities descendant selectors, and its dark-mode background utilities dropped because the alias tokens carry both schemes; InputGroupAddon keeps the source's click-to-focus behavior. Two notes on the transition and the addon nudges. The transition is gone entirely. The source's `transition-[color,box-shadow]` names a property that never changes here, an earlier pass of this port diverged to `border-color` so the border would animate, and that divergence paired a transitioned property with the same property being set by the group's own :has() state rules - the shape a reported engine version split fails on, where a repro keeps its :has() override under Chrome 149 and loses it under Chrome 153. Rather than ship the implicated pairing for a 150ms fade, this port keeps no transition. And the addon nudges for a child button and a child kbd are both carried over as :has() rules (-7px and -6px for -0.45rem and -0.35rem), but the source's `[.border-b]:pb-3` and `[.border-t]:pt-3` on the block addons are NOT, because they key on a Tailwind border class a consumer would have to apply, and a consumer cannot reach a hashed module class - the same limitation the FormField port records for its sr-only rule
+  - name: FormField
+    origin: ported
+    from: shadcn/ui registry item `field` (style new-york-v4), https://ui.shadcn.com/docs/components/field, MIT licence, fetched 2026-09-22
+    changed: renamed to FormField because this library already exports a Field (the labelled-input adapter in contract-adapters) and a port taking that name would collide with it; FieldLabel and FieldSeparator restate their Label and Separator look locally instead of importing those items (self-containment); data-[variant=...] and group-data-[...] utilities became attribute and descendant selectors; @md/field-group became a real @container query inside the module; the invalid/disabled props set the data-invalid/data-disabled attributes the source's own styles key off but expect the caller to set; the source's [&>.sr-only]:w-auto accommodation is not carried over, because a consumer cannot reach a hashed module class
+  - name: Popover
+    origin: ported
+    from: shadcn/ui registry item `popover` (style new-york-v4), https://ui.shadcn.com/docs/components/popover, MIT licence, fetched 2026-09-22
+    changed: Radix Popover dropped and its behavior written by hand - the root owns open state (controlled or defaultOpen), the content is positioned against the trigger's own rect in viewport coordinates with bottom-overflow flipping and re-measure on resize and scroll, Escape and an outside pointerdown close it; asChild/Slot dropped from trigger and anchor, where PopoverAnchor is a wrapper element that registers itself as the position reference; the panel renders in place instead of through a portal to document.body, because a client bundle here may require only react, react/jsx-runtime and the app primitives, and react-dom's createPortal is outside that set (the built-bundle test enforces it) - the trade is that an ancestor with overflow hidden or a transform can clip the panel; Radix's transform-origin variable and its enter/exit animations have no equivalent, so this port animates nothing rather than inventing keyframes; the source's shadow-md became the app's raised surface plus a border, because the token set has no shadow token. Focus is applied from an effect keyed on the applied position rather than beside the first measure - the panel starts visibility:hidden and the measure clears that through a state update, so a focus() in the same commit is a no-op on a hidden element; verified in Chromium, where focus lands on the panel on open
+  - name: Slider
+    origin: ported
+    from: shadcn/ui registry item `slider` (style new-york-v4), https://ui.shadcn.com/docs/components/slider, MIT licence, fetched 2026-09-22
+    changed: Radix Slider dropped and the behavior written by hand - each thumb is role=slider carrying aria-valuemin/valuemax/valuenow/orientation, moved by arrow keys (one step), PageUp/PageDown (ten) and Home/End, or dragged with pointer capture and a value computed from the track's own rect and clamped against its neighbour so the thumbs cannot cross; a press on the track moves the nearest thumb; the source's bg-white thumb face became --dsw-alias-bg-layer-1 and its ring-ring/50 hover and focus rings became the app's interactive surface
+  - name: Sheet
+    origin: ported
+    from: shadcn/ui registry item `sheet` (style new-york-v4), https://ui.shadcn.com/docs/components/sheet, MIT licence, fetched 2026-09-22
+    changed: Radix Dialog dropped and its behavior written by hand - open state in the root, focus onto the panel as it opens and back to the trigger on close, Tab wrapping inside the panel, and Escape, an overlay press or the close button to dismiss; there is no portal, so SheetPortal does not exist and the panel renders where it sits in the tree (being position fixed it lands in the same place, but an ancestor with overflow hidden or a transform can clip it), because a client bundle here may require only react, react/jsx-runtime and the app primitives and react-dom's createPortal is outside that set; the page behind is NOT made inert, so assistive tech can still reach it while the sheet is open - Radix marks the rest aria-hidden, and closing that needs either the app's Modal (centered by design, its panel styling in DSH CSS, so it cannot become a side sheet) or an inert-based pass over the app root, which is a product decision rather than a port decision; lucide-react XIcon replaced by a plain inline SVG; the source's bg-black/50 overlay became --dsw-alias-bg-overlay; its animate-in/out and slide-in/out utilities have no equivalent here, so this port animates nothing rather than inventing keyframes. Observed in the running app - Escape dismisses the sheet AND the Settings view it is opened inside, because both listen for Escape on document - the innermost-layer convention would need the surrounding view to yield, which is not this item's to change
+  - name: Drawer
+    origin: ported
+    from: shadcn/ui registry item `drawer` (style new-york-v4), https://ui.shadcn.com/docs/components/drawer, MIT licence, fetched 2026-09-22
+    changed: vaul dropped and its behavior written by hand, reusing the overlay pattern the Sheet port established - open state in the root, overlay and panel positioned from the direction, Escape or an overlay press to dismiss, focus onto the panel and back to the trigger, and Tab wrapped inside; the drag is arithmetic on the panel's own rect, where a press on the panel that does not start on a control captures the pointer, movement is projected onto the axis with the sign taken from the direction, and releasing past a quarter of the panel's extent dismisses while anything shorter springs back through the module's transition; there is no portal, for the same reason Sheet has none, so DrawerPortal does not exist and the panel renders in place (it lands identically because it is position fixed, but an ancestor with overflow hidden or a transform can clip it); vaul's velocity-based dismissal, background scaling and snap points are NOT implemented, so a fast short flick springs back instead of dismissing; the source's bg-black/50 overlay became --dsw-alias-bg-overlay and its max-h-[80vh] became a plain 80vh
+  - name: Command
+    origin: ported
+    from: shadcn/ui registry item `command` (style new-york-v4), https://ui.shadcn.com/docs/components/command, MIT licence, fetched 2026-09-22
+    changed: cmdk dropped and its behavior written by hand - the root owns the query and a registry of the items mounted under it (filter text, disabled flag and select handler), each item applies its own visibility from the query so a filtered-out item is display-none rather than faded, and the keyboard walks the surviving items in DOM order read from the DOM at key time rather than tracked in state, because React registers children bottom-up and would otherwise reverse it; arrows, Home/End and Enter move and choose, and the chosen item scrolls into view with block nearest; matching is a case-insensitive substring falling back to every-word-present, a substitution for cmdk's fuzzy scorer; CommandDialog is NOT ported, because it composes shadcn's own Dialog item and the ingest gate rejects a cross-item import - a consumer composes this Command inside this library's Dialog; lucide-react SearchIcon became a plain inline SVG, and cmdk's own [cmdk-*] attribute selectors became the data-slot hooks this item already publishes
+  - name: Combobox
+    origin: ported
+    from: shadcn/ui registry item `combobox` (style new-york-v4), https://ui.shadcn.com/docs/components/combobox, MIT licence, fetched 2026-09-22
+    changed: Base UI's Combobox dropped and its behavior written by hand, restating the anchored-listbox shape from docs/pattern-anchored-listbox.md (the anchoring half from Popover's port, the filtering listbox half from Command's) and restating InputGroup's chrome for its own field as that document's Restating InputGroup's chrome section requires - the source's ComboboxInput IS an InputGroup and ComboboxClear renders shadcn's Button, both cross-item imports the ingest gate rejects, so the group, its addons and its control are restated locally with the same hooks (data-slot=input-group, data-align, the input-group-control slot) so a caller's styles keep working; the panel is measured from the anchor's own rect with a viewport-bounded height, instead of leaning on Base UI's --anchor-width/--available-width/--available-height/--transform-origin positioner variables, and there is no portal, so an ancestor with overflow hidden or a transform can clip it; DELIBERATE PARTIAL - this pass is single-select only, and the multi-select chips family (ComboboxChips, ComboboxChip, ComboboxChipsInput) is a recorded follow-up, alongside ComboboxCollection, which is Base UI's render-prop grouping helper with no local meaning; Base UI's data-highlighted hook is kept for the active row because that is what a caller styles against, with data-selected for the chosen one and data-open/data-empty for the panel; the source's animate-in/fade-in-0/zoom-in-95 animations are not ported; lucide-react ChevronDownIcon, CheckIcon and XIcon became plain inline SVGs
+  - name: ContextMenu
+    origin: ported
+    from: shadcn/ui registry item `context-menu` (style new-york-v4), https://ui.shadcn.com/docs/components/context-menu, MIT licence, fetched 2026-09-22
+    changed: Radix ContextMenu dropped and its behavior written by hand, restating the anchored-listbox shape from docs/pattern-anchored-listbox.md for the anchoring and dismissal half, with two differences the source forces - the anchor is the pointer's coordinates captured from the contextmenu event rather than an element's rect, and there is no query so the keyboard walks every item instead of a filtered subset; asChild/Slot is not ported, so the trigger is a wrapper element carrying tabIndex 0, because focus has to be restorable to it on close and a keyboard user has to be able to reach it; DELIBERATE PARTIAL - the submenu family (ContextMenuSub, ContextMenuSubTrigger, ContextMenuSubContent) is a recorded follow-up, since a submenu is a nested anchored panel with hover-intent and that is a different problem from the base menu; ContextMenuPortal does not exist, for the same reason Sheet and Popover have none, because react-dom's createPortal is outside the set a client bundle may require, so an ancestor with overflow hidden or a transform can clip the panel; Radix's collision-aware positioning is not reproduced, this port clamps the panel to the viewport instead; enter and exit animations are not ported; lucide-react CheckIcon became a plain inline SVG
+  - name: Carousel
+    origin: ported
+    from: shadcn/ui registry item `carousel` (style new-york-v4), https://ui.shadcn.com/docs/components/carousel, MIT licence, fetched 2026-09-22
+    changed: embla-carousel-react dropped and the sliding done by the platform's own scroller - the viewport keeps overflow auto with scroll-snap-type on the track's axis, every item is flex 0 0 100% with scroll-snap-align start, the arrows scroll by exactly one item measured from the first item rather than assumed to be the viewport, and canScrollPrev/canScrollNext are read off scrollLeft/scrollTop against scrollWidth - clientWidth on scroll, on resize, on a ResizeObserver of the viewport and after every render, so items added by a caller do not leave the arrows stale; DELIBERATE PARTIAL - the published CarouselApi is a subset of embla's (scrollPrev, scrollNext, scrollTo(index), canScrollPrev, canScrollNext, selectedIndex, still handed out through the source's own setApi prop), and embla's reInit events, its scrollTo options, its drag physics and its plugin system are not reproduced; the source's shadow/rounded Button for CarouselPrevious and CarouselNext is restated locally (outline chrome, 32px, round, absolutely placed at the track's edges) because a cross-item import is what the ingest gate rejects, the same restatement PaginationLink, AttachmentAction and ToggleGroupItem already do; the visual gap moved from the leading edge (-ml-4 on the track and pl-4 on every item) to the trailing edge, so an item's border box is exactly the viewport width and one step accumulates no drift - the spacing is identical; the source's overflow-hidden viewport became a real scroller with a hidden scrollbar, so wheel, trackpad and touch dragging work natively, and a vertical track needs a definite height on CarouselContent for an item's flex-basis 100% to resolve against, the same requirement ScrollArea has on itself; lucide-react ArrowLeftIcon and ArrowRightIcon became plain inline SVGs
+  - name: ResizablePanelGroup
+    origin: ported
+    from: shadcn/ui registry item `resizable` (style new-york-v4), https://ui.shadcn.com/docs/components/resizable, MIT licence, fetched 2026-09-22 (the prop semantics it wraps are v4 of react-resizable-panels; its published types were read at 4.13.2)
+    changed: named after the export that is the item's root, ResizablePanelGroup, because shadcn's `resizable` item exports no component of that name and a registry contract key has to be a real runtime export - the same rename DirectionProvider took for shadcn's `direction` item, with the catalogue's category left as Resizable; react-resizable-panels dropped and its behavior written by hand - the group owns the layout as a map of panel id to percentage and renders a flex container, a separator drags its two neighbours by capturing the pointer and projecting the movement onto the group's own rect, and the keyboard moves the same pair by 5 percent per arrow with Home and End to an end, exactly the source's steps; the pair's total is kept constant and both panels are held inside their own limits, from minSize (or collapsedSize when the panel is collapsible) to maxSize; Enter collapses a collapsible panel to its collapsedSize and brings it back to the size it had before, which the source also does; a separator reads its two panels from the DOM as its own siblings rather than from a registry built in effect order, because React runs child effects in tree order and a registry would be built bottom-up, and it publishes role=separator with aria-orientation (the opposite axis to the group), aria-controls, aria-valuenow and aria-valuemin/valuemax; the source's inline measurement styles became module classes and only the size stays inline; the grip is a plain inline SVG instead of lucide's GripVerticalIcon, and the source's bg-border grip became the app's raised surface plus a border, the same substitution Popover made for the missing shadow token. DELIBERATE PARTIALS - every size here is a percentage and the unit of a string is ignored (the upstream library reads a bare number as pixels, which is why its own docs write defaultSize="50%", the form all the documented examples use); not carried over - pixel sizes, collapsedThreshold, groupResizeBehavior, defaultLayout, disabled on any of the three parts, resizePreviewMode and SeparatorOverlay, the imperative panelRef/groupRef handles, useDefaultLayout persistence, the isUserInteraction second argument of onLayoutChanged (this port publishes onLayoutChange, called with the whole layout on each change), the F6 focus walk between separators, and the double-click reset to default size; aria-valuemin/aria-valuemax report what the pair can actually reach, which is the window the source computes by simulating a delta, so a neighbour that cannot shrink narrows it; Enter acts on the panel BEFORE the separator, the one the source collapses; RTL mirroring of the drag direction is not implemented
+  - name: Menubar
+    origin: ported
+    from: shadcn/ui registry item `menubar` (style new-york-v4), https://ui.shadcn.com/docs/components/menubar, MIT licence, fetched 2026-09-22
+    changed: Radix Menubar dropped and its behavior written by hand, restating the anchored-listbox shape from docs/pattern-anchored-listbox.md for the panel half (measured against its own trigger's rect, clamped to the viewport, re-measured on resize and scroll, rendered in place rather than through a portal, focused only once positioned, dismissed by Escape and an outside pointerdown, items walked in DOM order read at key time), plus the two things the bar adds - roving focus, so the bar is one Tab stop and the arrow keys walk its triggers and open the one they land on when a menu is already open, and hover intent, so a pointer moving onto a sibling trigger switches to it while any menu is open; the panel closes when focus leaves the bar entirely, which works because the panel is a child of the bar element rather than a portal. DELIBERATE PARTIALS - the submenu family (MenubarSub, MenubarSubTrigger, MenubarSubContent) is a recorded follow-up, the same call ContextMenu took, since a submenu is a nested anchored panel with its own hover-intent problem; MenubarPortal does not exist, for the same reason Sheet and Popover have none (react-dom's createPortal is outside the set a client bundle may require), so an ancestor with overflow hidden or a transform can clip a panel; Radix's collision-aware positioning is not reproduced, this port clamps to the viewport instead; enter and exit animations are not ported; lucide-react CheckIcon and CircleIcon became plain inline SVGs
+  - name: NavigationMenu
+    origin: ported
+    from: shadcn/ui registry item `navigation-menu` (style new-york-v4), https://ui.shadcn.com/docs/components/navigation-menu, MIT licence, fetched 2026-09-22
+    changed: Radix NavigationMenu dropped and its behavior written by hand, restating the anchored-listbox shape from docs/pattern-anchored-listbox.md for the panel half, with the two deltas that make this a navigation menu - delayed hover, where hovering a trigger opens its panel after 150ms because a pointer crossing the bar should not flash panels, while a switch to a sibling is immediate once a panel is open, and a close grace period of 250ms measured from the bar and the panel together so a pointer crossing the gap between them does not dismiss it; a shared panel, where every item's panel is placed at the same coordinates under the whole list so switching items does not move the panel a reader is looking at - the source achieves that by moving the open panel into one viewport box, a move this port cannot make without a portal, so NavigationMenuViewport paints the same surface at the open panel's own measured box and a panel draws no surface of its own while a viewport is in play (data-shared-surface says which); the bar is one Tab stop with the arrow keys walking its triggers and Home/End at the ends. DELIBERATE PARTIALS - NavigationMenuIndicator (the animated arrow under the open trigger) and Radix's panel morph animation are not ported, since the morph needs both panels measured mid-switch; navigationMenuTriggerStyle is a function returning this module's own trigger class rather than the source's cva class string, because this library publishes hashed module classes rather than utility classes a caller can compose; lucide-react ChevronDownIcon became a plain inline SVG
+  - name: Calendar
+    origin: ported
+    from: shadcn/ui registry item `calendar` (style new-york-v4), https://ui.shadcn.com/docs/components/calendar, MIT licence, fetched 2026-09-22
+    changed: react-day-picker and date-fns dropped and the month grid hand-rolled, because the registry item upstream is a theme over a date-picker engine and the engine is the part this library can write with the platform's own date arithmetic and Intl for the names - the same call ScrollArea made for the platform's scroller and Carousel for CSS scroll snap; one month at a time is built from startOfMonth, daysInMonth and a weekStartsOn week layout, the selection is single or range with the range edges and its middle published as data hooks, today is marked, a day-level disabled predicate is honoured, and the keyboard model a date grid needs is implemented - a roving tab stop on the focused day, arrows by day and by week, Home and End to the week's ends, PageUp and PageDown by month, Enter or Space to choose, with the displayed month following the focused day so paging by key moves the grid; a real table with role=grid, column headers and aria-selected per cell, and each day button carries its full date as its accessible name through Intl. DELIBERATE PARTIALS - react-day-picker's multi-month (numberOfMonths), its dropdown caption layout (this port renders the label caption only), its week numbers, its formatters/classNames/components extension points (a consumer styles this port through its data-* hooks and className), its uncontrolled defaultSelected, its rich disabled matchers (dates, ranges and day-of-week sets - this port takes a predicate), and its CalendarDayButton export are all not ported; selection is controlled through selected and onSelect; lucide-react ChevronLeftIcon and ChevronRightIcon became plain inline SVGs
+  - name: Sidebar
+    origin: ported
+    from: shadcn/ui registry item `sidebar` (style new-york-v4), https://ui.shadcn.com/docs/components/sidebar, MIT licence, fetched 2026-09-22
+    changed: Radix, class-variance-authority and lucide dropped and every part written by hand, because a client bundle here may require only react, react/jsx-runtime and the app primitives; what shipped is the desktop rail - SidebarProvider owning the open state with its Mod+B shortcut and the width variables, useSidebar, the rail with its side/variant/collapsible attributes, the trigger, the click-anywhere rail strip, the inset, header/footer/content/separator, the group parts (group, label, action, content), the menu parts (menu, item, button, action, badge) and the submenu parts (sub, sub-item, sub-button, an anchor because a nested row is nearly always a destination), plus aria-current=page on the active row, which upstream leaves to data-active alone; the rail is a flex item of the wrapper rather than a fixed overlay, so the inset lays out beside it and the collapse is the only thing that moves; the collapsed-to-icons mode hides the last span inside a row, the same convention upstream's own markup relies on. DELIBERATE PARTIALS - the mobile rail is NOT ported, because upstream renders it inside a Sheet and a Sheet exists here as its own item that this one may not import (self-containment is what the ingest gate enforces), so isMobile is false and the rail stays the desktop rail; the sidebar_state cookie is not written, so open is not remembered between sessions and a caller owns it through open/onOpenChange; the collapsed-state tooltips are not ported (they need the Tooltip item); SidebarInput and SidebarMenuSkeleton are not ported, the latter because a skeleton is the Skeleton item restated; SidebarMenuButton's asChild is not ported

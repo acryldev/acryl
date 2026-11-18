@@ -1,0 +1,46 @@
+{
+  "comment": "The frame's own views for its visual gate: the states a workshop attendee sees on day one, at one fixed viewport. The gate captures these on Linux CI and compares them with scripts/frame-reference-frame at 2%; the masks cover only what changes on every run (the app's port inside the address field, the right panel's terminal text) and never a control. The ACRYL set in scripts/frame-reference is the design target, read with `--against acryl` and reported only.",
+  "viewports": [{ "width": 1440, "height": 900 }],
+  "views": [
+    {
+      "name": "frame",
+      "path": "/",
+      "steps": [
+        { "clickIfPresent": "Continue" },
+        { "clickIfPresent": "Configure later" },
+        { "clickIfPresent": "Not now" },
+        { "wait": 800 }
+      ],
+      "mask": [{ "x": 292, "y": 49, "width": 440, "height": 18 }]
+    },
+    {
+      "name": "settings-models",
+      "path": "/",
+      "steps": [
+        { "clickIfPresent": "Continue" },
+        { "clickIfPresent": "Configure later" },
+        { "clickIfPresent": "Not now" },
+        { "click": "Settings" },
+        { "wait": 500 },
+        { "click": "Models" },
+        { "wait": 800 }
+      ],
+      "mask": [{ "x": 292, "y": 49, "width": 440, "height": 18 }]
+    },
+    {
+      "name": "right-panel-open",
+      "path": "/",
+      "steps": [
+        { "clickIfPresent": "Continue" },
+        { "clickIfPresent": "Configure later" },
+        { "clickIfPresent": "Not now" },
+        { "click": "Show right panel" },
+        { "wait": 800 }
+      ],
+      "mask": [
+        { "x": 292, "y": 49, "width": 440, "height": 18 },
+        { "x": 793, "y": 581, "width": 647, "height": 319 }
+      ]
+    }
+  ]
+}

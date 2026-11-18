@@ -1,0 +1,173 @@
+From 7b6be84e8a64b9dfd78792971eff9b561acf20d0 Mon Sep 17 00:00:00 2001
+From: Alex Musichen <webboxes.ai@gmail.com>
+Date: Fri, 6 Nov 2026 17:36:09 +0100
+Subject: [PATCH] registry: the locks of small-crm and productivity-hub match
+ their entries again - both were edited after their capture, so their
+ blend.yaml and plugin folders no longer had the digests the lock recorded;
+ recaptured, only the two locks change
+
+---
+ .../blend.lock.json                           | 18 ++++++++---------
+ .../acrylblends.small-crm/blend.lock.json     | 20 +++++++++----------
+ 2 files changed, 19 insertions(+), 19 deletions(-)
+
+diff --git a/registry/blends/acrylblends.productivity-hub/blend.lock.json b/registry/blends/acrylblends.productivity-hub/blend.lock.json
+index b16b6fe..f9daa94 100644
+--- a/registry/blends/acrylblends.productivity-hub/blend.lock.json
++++ b/registry/blends/acrylblends.productivity-hub/blend.lock.json
+@@ -2,13 +2,13 @@
+   "formatVersion": 3,
+   "generator": {
+     "name": "@webboxes/blends-core",
+-    "version": "0.4.0"
++    "version": "0.5.0"
+   },
+   "origin": {
+     "id": "acrylblends.productivity-hub",
+     "kind": "Blueprint",
+     "version": "0.1.0",
+-    "digest": "72532f8e4cb51e629c3568f299248f02011e4f37c26366bcc8779a585079be69"
++    "digest": "6df511e78b7b519119750e0a1922817eea20738c23186d3702a2e63839d0560b"
+   },
+   "parameters": {
+     "hostname": "127.0.0.1"
+@@ -100,7 +100,7 @@
+     {
+       "name": "calendar",
+       "origin": "local",
+-      "digest": "sha256:bf4a41594d3312767e9187af46d874e3d0a58d12622585c6bc5182399df39038",
++      "digest": "sha256:6a8eb6dac5d9c13f7bdc8724ad58c8b61364f079e668718be827bfb9f0857076",
+       "source": "plugins/calendar"
+     },
+     {
+@@ -118,13 +118,13 @@
+     {
+       "name": "hub-shell",
+       "origin": "local",
+-      "digest": "sha256:883182e8d3aa24b74ed8ca40eca217ef9a238a5ad32b39e37d64522684d6565d",
++      "digest": "sha256:de51c6b989cefd574b3d448a38319b4b08499be7d39c114b3ba1c18b2fce06cc",
+       "source": "plugins/hub-shell"
+     },
+     {
+       "name": "inbox",
+       "origin": "local",
+-      "digest": "sha256:fcf369a8ed59f9e4d34b22e7ff4aa2cc422126e7c607ea546aadb3801cb062ef",
++      "digest": "sha256:0263ff473e0ed845929f2460c545b1a16753949f2536320ee8951d837bcdbf30",
+       "source": "plugins/inbox"
+     },
+     {
+@@ -142,19 +142,19 @@
+     {
+       "name": "my-day",
+       "origin": "local",
+-      "digest": "sha256:b99a0888fb24befafb48e47d4c45362d451b53ade87ec2b1f29d2bbdabdac30d",
++      "digest": "sha256:b029741dea889e0583de7aef8d67c50d5a6c19f13fc5096150f9e8bf5a186b82",
+       "source": "plugins/my-day"
+     },
+     {
+       "name": "notes",
+       "origin": "local",
+-      "digest": "sha256:e2913d7e893b9251306c3232d16697aca0560d2072293d51284047ea7199accf",
++      "digest": "sha256:8539a30f844035420144869f87347e828a1d08d51fe93b8cccac454dc03e4fbe",
+       "source": "plugins/notes"
+     },
+     {
+       "name": "productivity-hub",
+       "origin": "local",
+-      "digest": "sha256:37b29eca7c9e4bfc63e2f7debb2cd02d0246120e94663746d50f05c39ce76476",
++      "digest": "sha256:b4e11611fca4c8a79d076d0aa4b89cedf654de29eee801eefb57feb5785e24f2",
+       "source": "plugins/productivity-hub"
+     },
+     {
+@@ -172,7 +172,7 @@
+     {
+       "name": "tasks",
+       "origin": "local",
+-      "digest": "sha256:88c618c02808119f87ba0ff87a7687cf8acaad689ff925850b07e05f47900085",
++      "digest": "sha256:02b94326a9c6c029493e999cf86af05259339d849e192b8ded0d68234a876097",
+       "source": "plugins/tasks"
+     }
+   ]
+diff --git a/registry/blends/acrylblends.small-crm/blend.lock.json b/registry/blends/acrylblends.small-crm/blend.lock.json
+index c56b9e4..9d9ee91 100644
+--- a/registry/blends/acrylblends.small-crm/blend.lock.json
++++ b/registry/blends/acrylblends.small-crm/blend.lock.json
+@@ -2,13 +2,13 @@
+   "formatVersion": 3,
+   "generator": {
+     "name": "@webboxes/blends-core",
+-    "version": "0.4.0"
++    "version": "0.5.0"
+   },
+   "origin": {
+     "id": "acrylblends.small-crm",
+     "kind": "Blueprint",
+     "version": "0.1.0",
+-    "digest": "5406dcf3ff9a36d8d11e6e31f92787a9fae9915082b5ac706d9c85d9c9cdae12"
++    "digest": "726a2681ecb4b2487f8d6d2b5c9ada432042b8b737d6df0dce403ffee2637b2f"
+   },
+   "parameters": {
+     "hostname": "127.0.0.1"
+@@ -104,37 +104,37 @@
+     {
+       "name": "activities",
+       "origin": "local",
+-      "digest": "sha256:c001a1a4cf9c29ea94f5146710a7a13c39757ec0adf2fc2234014e1f23df5e30",
++      "digest": "sha256:5fc72b5e6b91a77075f3834ae0a4542da1e260d9b546a8192972d7b7410589f0",
+       "source": "plugins/activities"
+     },
+     {
+       "name": "companies",
+       "origin": "local",
+-      "digest": "sha256:241a0a204f7ef789e1745731d4b57ed32823856de17c33c599a126195d3a13a0",
++      "digest": "sha256:773f5bd93db8cb9c3d9a5dbd4473a0c7046c0a69722fdc59754c36798c32ad4c",
+       "source": "plugins/companies"
+     },
+     {
+       "name": "contacts",
+       "origin": "local",
+-      "digest": "sha256:31cb80f7dc011a122a51a75e9ef5e8392f29d39ca11d20836e9659aa2e94417e",
++      "digest": "sha256:8482952d63ef20d3b776facc6b57ece6d928949bb8fc0dd15139ff7e81ac01a1",
+       "source": "plugins/contacts"
+     },
+     {
+       "name": "crm",
+       "origin": "local",
+-      "digest": "sha256:a49047c0123af0bff5fbb29dc0e78eac54918017d48f64b6cc5a8a8584ff2f2c",
++      "digest": "sha256:eea0b4a101f6f212f6b58fe81d235971b8fe7ab20c954885da25df52a92e3665",
+       "source": "plugins/crm"
+     },
+     {
+       "name": "crm-shell",
+       "origin": "local",
+-      "digest": "sha256:7662c0ffdfe7064bb1cbc0b22e76ec290364fe74604985ada6f7f8f1b69c619f",
++      "digest": "sha256:1cf3f0708e2479cb3ad2f0292d2f4e90bc21a3adca7a12a998ff7ef88d0f34b1",
+       "source": "plugins/crm-shell"
+     },
+     {
+       "name": "deals",
+       "origin": "local",
+-      "digest": "sha256:4ce0b3d2a23262f462f0eee924e3b7e326e247539b0661739e993371d864f814",
++      "digest": "sha256:58a44dc7a431865a67f08543461081438b197e7ad259b1af17a47a3f92311586",
+       "source": "plugins/deals"
+     },
+     {
+@@ -164,13 +164,13 @@
+     {
+       "name": "pipeline",
+       "origin": "local",
+-      "digest": "sha256:29ff8507c423441a7f39d6a234d9b994355d08af241b958c93d9d25d83be00f9",
++      "digest": "sha256:85761e1e9043a9445a78f3fe3a99757b649f54da569c82d460eb47dbb569242f",
+       "source": "plugins/pipeline"
+     },
+     {
+       "name": "reports",
+       "origin": "local",
+-      "digest": "sha256:22ec9253f092afeb9afa67dfb8bfb50dbd32cbe261cd37d2d4d37dfcc64d34da",
++      "digest": "sha256:d558b4aa7bc25bc2159787184a6d7fe332dd2c602a4cc943a6133653bc8e61b5",
+       "source": "plugins/reports"
+     },
+     {
+-- 
+2.50.1 (Apple Git-155)
+

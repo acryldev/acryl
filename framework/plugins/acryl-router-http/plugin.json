@@ -1,0 +1,15 @@
+{
+  "name": "acryl-router-http",
+  "description": "Mounts router prefixes on the ACRYL Host's web server, with exact-path WebSocket upgrades owned by the mounting plugin, and the serve() and request bridge. Mounting it as a plugin needs the Host web server, which a generated app does not have. Vendored from ACRYL.",
+  "requires": ["acryl-router", "acryl-node-server"],
+  "inject": ["router"],
+  "provides": [],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4"
+  },
+  "mount": "not mounted: it is the library behind acryl-node-server",
+  "omit": ["**/*.test.*", "**/*.case.ts"],
+  "entries": {
+    "": "src/index.ts"
+  }
+}

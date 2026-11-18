@@ -1,0 +1,185 @@
+/* Extracted from ui-tool ToolRow.module.css (deepseek-harness 5dda764ed3): the header row, state sweep, summary, and the IN/OUT card. The tool-specific and specialised-card rules stay in DSH. */
+
+/* Tool summary row (figma 122:9479): 24px single line at the default size —
+   [16 leading] gap6 [title 13/24] gap8 [2x2 dot] gap8 [summary FILL truncate].
+   The Settings font-size preference rides the body-published axis: the shared
+   DisclosureRow chrome scales the row height and leading glyph by the body px
+   delta; the title and the summary texts here read the secondary tier
+   (--dsh-content-font-size-secondary: one step under the body — setting −1 at
+   ≤14, setting −2 above), matching think text. */
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  position: relative; /* sweep-glare overlay anchor */
+  overflow: hidden;
+}
+
+/* Running sweep (deepsuite ShimmerText pattern): a fixed-width glare band —
+   theme background at 60% — glides over the row content from off-left to
+   off-right, washing glyphs and icon toward the background as it passes.
+   ease-out with a 10% end hold gives each pass a beat before the next. */
+.root[data-state='running'] .row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
+    transparent 100%
+  );
+  animation: dsh-tool-row-sweep 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+.leading {
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.title {
+  font-weight: 400;
+}
+
+.sep {
+  flex: none;
+  width: 2px;
+  height: 2px;
+  border-radius: 1px;
+  margin: 0 8px;
+  background: var(--dsw-alias-label-caption);
+}
+
+.summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* Trailing summary fragment kept out of .summary's ellipsis, for a count whose
+   whole value is that it survives a narrow row (the todo row's parallel-active
+   `+n`). Repeats .summary's type because it sits beside that text, and its
+   `nowrap` too: `flex: none` stops the box shrinking but not the text wrapping,
+   which would break the one-line row in the narrow case the slot exists for. */
+.summarySuffix {
+  flex: none;
+  margin-left: 4px;
+  white-space: nowrap;
+  font-size: var(--dsh-content-font-size-secondary, 13px);
+  line-height: calc(24px + var(--dsh-content-font-delta, 0px));
+  color: var(--dsw-alias-label-tertiary);
+}
+
+/* Error row's collapsed summary: the failure's first line in the error color. */
+.errorSummary {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* Expanded body + Inspect pill wrapper (sibling of .row: clicks never toggle). */
+.bodyWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Expanded input/output card (figma 1249:35657): the code-block surface and
+   radius from the TerminalBlock/CodeBlock family. The card itself is a plain
+   column — the padding and the IN/OUT gutter-label grid live on each section
+   so the divider spans the full card width and each section scrolls alone. */
+.ioCard {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 0 4px 4px;
+  border: 0.5px solid var(--dsw-alias-border-l1);
+  border-radius: 12px;
+  background: var(--dsw-alias-markdown-code-block);
+  font: var(--dsw-font-markdown-code-block-small);
+}
+
+/* One card section (IN or OUT): the gutter-label grid, capped and scrolling
+   independently so a long input never buries a short output (and vice versa). */
+.ioSection {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 14px;
+  align-items: baseline;
+  padding: 12px 16px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Card-internal scrollbar: a 2px transparent border clips the thumb inward so
+   it floats off the rounded card edge instead of hugging it (the terminal
+   card's own output scroller carries the same treatment in TerminalBlock). */
+.ioSection::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 6px;
+}
+
+/* Track end-margins keep the thumb's travel out of the rounded corners. */
+.ioSection::-webkit-scrollbar-track {
+  margin: 6px 0;
+}
+
+/* Caption (not tertiary): one step dimmer than the payload text so the
+   gutter labels read as labels, not as part of the content. Sticky against
+   the section's own scroll so the label stays readable while its payload
+   scrolls underneath (top 0 = the section's padding edge inside the
+   scrollport; start-aligned because sticky needs a block-start anchor). */
+.ioLabel {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  color: var(--dsw-alias-label-caption);
+}
+
+/* l2 hairline between the IN and OUT sections, spanning the full card width
+   (it sits between the padded sections, not inside their grid). */
+.ioDivider {
+  flex: none;
+  height: 0.5px;
+  background: var(--dsw-alias-border-l2);
+}
+
+.ioText {
+  min-width: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--dsw-alias-label-secondary);
+}
+
+/* A failed call's OUT text shares the collapsed summary's error color. */
+.ioText[data-error] {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+/* Visually hidden run-state label for assistive technology: the StateDot and
+   the running sweep are aria-hidden / colour-only, so the text carries the
+   running/failed/interrupted state to a screen reader. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes dsh-tool-row-sweep {
+  0% { left: -300px; }
+  90%, 100% { left: 100%; }
+}

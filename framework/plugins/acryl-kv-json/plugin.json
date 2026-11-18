@@ -1,0 +1,20 @@
+{
+  "name": "acryl-kv-json",
+  "description": "The JSON-file provider of the kv port: one file in the app home, rewritten atomically (temp file, then rename) on every write. Vendored from ACRYL.",
+  "requires": ["acryl-kv", "instance"],
+  "inject": [],
+  "provides": ["kv"],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/schemastery": "3.18.4"
+  },
+  "mount": "mount it after instance, as a row in blend.yaml (`- id: kv` / `name: acryl-kv-json`, registered in src/app.ts as 'acryl-kv-json') or as root.plugin(kvJson, {}) (the file is kv.json in the app home, or set path; a relative path is read from the app's folder); then a plugin that declares inject: ['kv'] calls await ctx.kv.set('theme', 'dark') and ctx.kv.update('visits', (n) => (n ?? 0) + 1)",
+  "omit": ["**/*.test.*", "**/*.spec.*", "**/*.case.ts"],
+  "imports": {
+    "#acryl-kv-json": "acryl-kv-json/src/index.ts"
+  },
+  "entries": {
+    "": "src/index.ts",
+    "/open": "src/open.ts"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "plugins": [
+    "instance",
+    "acryl-router",
+    "acryl-node-server",
+    "manifest",
+    "save",
+    "extensions",
+    "plugin-share",
+    "acryl-door",
+    "acryl-web-server",
+    "acryl-page"
+  ]
+}

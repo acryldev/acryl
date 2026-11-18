@@ -1,0 +1,7 @@
+{
+  "original": {
+    "repository": "https://github.com/acrylblends/acrylblends",
+    "commit": "5f7a8e21"
+  },
+  "written": "2026-11-03, for the Blends frame (docs/design/blends-frame-mockup.html, spec 127): not a port, so no source suite or unchanged files to name; its own tests are the package's tests/"
+}

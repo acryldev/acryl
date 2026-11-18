@@ -1,0 +1,52 @@
+{
+  "source": {
+    "repository": "https://github.com/acryldev/acryl",
+    "commit": "37f4dd9c",
+    "directory": "plugins/acryl-shortcuts"
+  },
+  "ported": "2026-10-30, slice 1 of docs/plans/ide-port.md",
+  "unchanged": [
+    "src/index.ts",
+    "src/client/index.ts",
+    "src/client/shortcut-rows.ts",
+    "src/client/ShortcutsSection.tsx",
+    "src/client/styles.ts",
+    "tests/palette-shortcut.spec.ts",
+    "tests/shortcut-rows.spec.ts",
+    "cordis.patch.yml",
+    "tsdown.config.ts",
+    "tsconfig.client.json"
+  ],
+  "changes": {
+    "package.json": "repository points here, @acryl/ui is the workspace package in this repository, tool versions match this repository",
+    "vitest.config.ts": "the original suite runs on this repository's vitest",
+    "src/client/ShortcutsSection.tsx": "five annotations for upstream declarations (see upstreamDeclarationWorkarounds); nothing else changed"
+  },
+  "upstreamDeclarationWorkarounds": [
+    {
+      "file": "src/client/ShortcutsSection.tsx",
+      "line": "catalog snapshot",
+      "why": "@deepseek-ai/dsh-client-ui-slots declares its store types in files that do not resolve under NodeNext (their .d.ts imports './renderer.ts'); the snapshot arrives as unknown, so it is stated as readonly ShortcutCatalogEntry[]"
+    },
+    {
+      "file": "src/client/ShortcutsSection.tsx",
+      "line": "fixed snapshot",
+      "why": "same declaration gap; stated as readonly ShortcutFixedCatalogEntry[]"
+    },
+    {
+      "file": "src/client/ShortcutsSection.tsx",
+      "line": "catalog.some entry",
+      "why": "the element type of the unknown snapshot; stated as {readonly modified: boolean}"
+    },
+    {
+      "file": "src/client/ShortcutsSection.tsx",
+      "line": "Shortcuts['edit'] parameter",
+      "why": "the parameter type resolves as unknown; the three operation shapes the page uses are stated once as ShortcutEdit, with one cast at the call"
+    },
+    {
+      "file": "src/client/ShortcutsSection.tsx",
+      "line": "edit result",
+      "why": "the promise result resolves as any; stated as {readonly status: string}"
+    }
+  ]
+}

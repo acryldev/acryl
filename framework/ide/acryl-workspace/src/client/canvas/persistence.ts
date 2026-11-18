@@ -1,0 +1,245 @@
+/**
+ * What survives a restart or a page reload: the Chats | Projects choice, per worktree the tabs whose
+ * content lives in the renderer (files, diffs, browser pages, docs, boards) and the terminal and agent
+ * tabs by the id of the Host terminal behind them, and which repository roots the owner explicitly
+ * removed from the tree (`forgetRepo`) - without this, a removal only lasted until the next reload: the
+ * passive per-session and per-registered-workspace discovery effects re-add every repo a chat ever ran
+ * in or the Host still lists, on every fresh page load, with nothing remembering it was removed (owner
+ * report: pressing "x" to remove a workspace, it "always appears back... as if it loads from some
+ * persisted config" - the opposite was true: the removal was the part that was never persisted). The
+ * Host keeps a terminal running across a page reload, so the tab reattaches to the exact screen; when
+ * the Host itself restarted the terminal is gone, the tab finds that out on reconnecting and closes
+ * itself. The chat is the session's own record.
+ *
+ * Stored in the renderer's storage as a convenience, so every read is defensive: anything that does
+ * not validate is dropped, never thrown, and never able to break startup.
+ */
+
+import { MAX_TAB_KIND_LENGTH, TAB_KIND_PATTERN } from '../tabs/registry/tab-registry.ts'
+import type { KanbanBoard, KanbanCard, KanbanColumnId } from './state.ts'
+import type { ShellMode } from '../worktrees/shell-state.ts'
+import type { WorkspaceGroups } from './groups.ts'
+
+export const STORAGE_KEY = 'acryl-workspace:v1'
+
+const MAX_TEXT = 200_000
+const MAX_TOTAL = 1_000_000
+/** Tab sets across every workspace (spec 043): each workspace keeps its own per worktree. */
+const MAX_GROUPS = 200
+const MAX_TILES = 40
+const MAX_FORGOTTEN_ROOTS = 500
+const MAX_ROOT_LENGTH = 4096
+const MAX_DISMISSED_CHATS = 2000
+const MAX_CHAT_ID_LENGTH = 256
+const RESTORABLE_KINDS = ['file', 'browser', 'diff', 'kanban', 'doc', 'pty', 'custom'] as const
+
+export type SavedTileKind = (typeof RESTORABLE_KINDS)[number]
+
+export interface SavedTile {
+  readonly kind: SavedTileKind
+  readonly title: string
+  readonly path?: string
+  readonly content?: string
+  readonly url?: string
+  readonly diffBefore?: string
+  readonly diffAfter?: string
+  readonly diffWorktree?: string
+  readonly diffFile?: string
+  readonly fileWorktree?: string
+  readonly fileRel?: string
+  readonly docWorktree?: string
+  readonly docRel?: string
+  readonly board?: KanbanBoard
+  readonly docText?: string
+  /** A plugin tab: its kind and the state the plugin saved. */
+  readonly customType?: string
+  readonly customState?: string
+  /** A terminal or agent tab: the Host terminal it shows and the agent it runs. */
+  readonly terminalId?: string
+  readonly commandId?: string
+}
+
+export interface SavedGroup {
+  readonly tiles: readonly SavedTile[]
+  /** Index into `tiles` of the active tab, or -1 when the chat tab was active. */
+  readonly active: number
+  /** Index into `tiles` of the tab in the split pane, or -1 when there was no split. */
+  readonly split: number
+}
+
+export interface SavedWorkspace {
+  readonly version: 1
+  readonly mode: ShellMode
+  readonly groups: Readonly<Record<string, SavedGroup>>
+  /** Repository roots explicitly removed from the tree (`WorkspaceShellState.forgetRepo`); absent or
+   * empty when none have been. */
+  readonly forgottenRoots: readonly string[]
+  /** Chat session ids hidden with "x" (`WorkspaceShellState.dismissChat`); absent or empty when none have
+   * been. */
+  readonly dismissedChats: readonly string[]
+}
+
+/** The two methods of the Storage interface this module uses. */
+export interface StorageLike {
+  getItem(key: string): string | null
+  setItem(key: string, value: string): void
+}
+
+/** @returns the page's localStorage, or undefined when it is blocked (private windows, policies). */
+export function browserStorage(): StorageLike | undefined {
+  try {
+    return window.localStorage
+  } catch {
+    return undefined
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function text(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length <= MAX_TEXT ? value : undefined
+}
+
+const COLUMNS: readonly KanbanColumnId[] = ['todo', 'doing', 'done']
+
+function parseBoard(value: unknown): KanbanBoard | undefined {
+  if (!isRecord(value)) return undefined
+  const board: Record<KanbanColumnId, KanbanCard[]> = { todo: [], doing: [], done: [] }
+  for (const column of COLUMNS) {
+    const cards = value[column]
+    if (!Array.isArray(cards)) return undefined
+    for (const card of cards) {
+      if (!isRecord(card)) return undefined
+      const id = text(card.id)
+      const cardText = text(card.text)
+      if (id === undefined || cardText === undefined) return undefined
+      board[column].push({ id, text: cardText })
+    }
+  }
+  return board
+}
+
+function parseTile(value: unknown): SavedTile | undefined {
+  if (!isRecord(value)) return undefined
+  const kind = RESTORABLE_KINDS.find(candidate => candidate === value.kind)
+  const title = text(value.title)
+  if (kind === undefined || title === undefined) return undefined
+  const tile: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title }
+  for (const key of ['path', 'content', 'url', 'diffBefore', 'diffAfter', 'diffWorktree', 'diffFile', 'fileWorktree', 'fileRel', 'docWorktree', 'docRel', 'docText', 'terminalId', 'commandId', 'customType', 'customState'] as const) {
+    const field = text(value[key])
+    if (field !== undefined) tile[key] = field
+  }
+  if (value.board !== undefined) {
+    const board = parseBoard(value.board)
+    if (board === undefined) return undefined
+    tile.board = board
+  }
+  // A terminal tab is only worth restoring with the terminal it shows and the agent it runs.
+  if (kind === 'pty' && (tile.terminalId === undefined || tile.commandId === undefined || tile.terminalId.length > 80 || tile.commandId.length > 32)) return undefined
+  // A git diff tile with only half of its identity cannot be shown; drop it rather than guess.
+  if (kind === 'diff' && (tile.diffFile === undefined) !== (tile.diffWorktree === undefined)) return undefined
+  if (kind === 'file' && (tile.fileRel === undefined) !== (tile.fileWorktree === undefined)) return undefined
+  if (kind === 'doc' && (tile.docRel === undefined) !== (tile.docWorktree === undefined)) return undefined
+  // A plugin tab is only worth restoring with the tab type it belongs to.
+  if (kind === 'custom' && (tile.customType === undefined || !TAB_KIND_PATTERN.test(tile.customType) || tile.customType.length > MAX_TAB_KIND_LENGTH)) return undefined
+  return tile
+}
+
+/**
+ * @param raw - the stored string, or null.
+ * @returns the saved state, or undefined when there is none or it does not validate.
+ */
+export function parseSavedWorkspace(raw: string | null): SavedWorkspace | undefined {
+  if (raw === null || raw.length > MAX_TOTAL * 2) return undefined
+  let value: unknown
+  try {
+    value = JSON.parse(raw)
+  } catch {
+    return undefined
+  }
+  if (!isRecord(value) || value.version !== 1 || (value.mode !== 'chats' && value.mode !== 'projects') || !isRecord(value.groups)) {
+    return undefined
+  }
+  const groups: Record<string, SavedGroup> = {}
+  for (const [key, group] of Object.entries(value.groups).slice(0, MAX_GROUPS)) {
+    if (!isRecord(group) || !Array.isArray(group.tiles)) continue
+    const tiles = group.tiles.slice(0, MAX_TILES).flatMap((entry) => {
+      const tile = parseTile(entry)
+      return tile === undefined ? [] : [tile]
+    })
+    const index = (candidate: unknown): number => (
+      typeof candidate === 'number' && Number.isInteger(candidate) && candidate < tiles.length ? Math.max(-1, candidate) : -1
+    )
+    const active = index(group.active)
+    const split = index(group.split)
+    groups[key] = { tiles, active, split: split === active ? -1 : split }
+  }
+  const forgottenRoots = Array.isArray(value.forgottenRoots)
+    ? value.forgottenRoots.filter((root): root is string => typeof root === 'string' && root.length > 0 && root.length <= MAX_ROOT_LENGTH).slice(0, MAX_FORGOTTEN_ROOTS)
+    : []
+  const dismissedChats = Array.isArray(value.dismissedChats)
+    ? value.dismissedChats.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= MAX_CHAT_ID_LENGTH).slice(0, MAX_DISMISSED_CHATS)
+    : []
+  return { version: 1, mode: value.mode, groups, forgottenRoots, dismissedChats }
+}
+
+/** @returns the JSON to store, staying under the size cap by dropping the largest tiles first. */
+export function serializeWorkspace(mode: ShellMode, groups: WorkspaceGroups, forgottenRoots: readonly string[] = [], dismissedChats: readonly string[] = []): string {
+  const saved: Record<string, SavedGroup> = {}
+  for (const [key, state] of groups.entries()) {
+    const snapshot = state.getSnapshot()
+    const tiles: SavedTile[] = []
+    let active = -1
+    let split = -1
+    for (const tile of snapshot.tiles) {
+      const kind = RESTORABLE_KINDS.find(candidate => candidate === tile.kind)
+      if (kind === undefined) continue
+      // A terminal that never started (or failed to) has nothing to reattach to.
+      if (kind === 'pty' && (tile.terminalId === undefined || tile.commandId === undefined)) continue
+      const entry: { -readonly [K in keyof SavedTile]: SavedTile[K] } = { kind, title: tile.title }
+      if (tile.path !== undefined) entry.path = tile.path
+      // An editor tab remembers which file it shows; an unsaved draft is never written to storage.
+      if (tile.content !== undefined && tile.fileRel === undefined) entry.content = tile.content
+      if (tile.url !== undefined) entry.url = tile.url
+      if (tile.diffBefore !== undefined) entry.diffBefore = tile.diffBefore
+      if (tile.diffAfter !== undefined) entry.diffAfter = tile.diffAfter
+      if (tile.diffWorktree !== undefined) entry.diffWorktree = tile.diffWorktree
+      if (tile.diffFile !== undefined) entry.diffFile = tile.diffFile
+      if (tile.fileWorktree !== undefined) entry.fileWorktree = tile.fileWorktree
+      if (tile.fileRel !== undefined) entry.fileRel = tile.fileRel
+      if (tile.docWorktree !== undefined) entry.docWorktree = tile.docWorktree
+      if (tile.docRel !== undefined) entry.docRel = tile.docRel
+      if (tile.board !== undefined) entry.board = tile.board
+      if (tile.docText !== undefined) entry.docText = tile.docText
+      if (kind === 'custom' && tile.customType === undefined) continue
+      if (tile.customType !== undefined) entry.customType = tile.customType
+      if (tile.customState !== undefined) entry.customState = tile.customState
+      if (kind === 'pty' && tile.terminalId !== undefined) entry.terminalId = tile.terminalId
+      if (kind === 'pty' && tile.commandId !== undefined) entry.commandId = tile.commandId
+      if (tile.id === snapshot.activeId) active = tiles.length
+      if (tile.id === snapshot.splitId) split = tiles.length
+      tiles.push(entry)
+    }
+    if (tiles.length > 0 || active !== -1) saved[key] = { tiles: tiles.slice(0, MAX_TILES), active, split }
+  }
+  // A tab set not opened in this run (another workspace, a worktree not visited) is kept as it was saved, after the ones in use (a load keeps the first MAX_GROUPS).
+  for (const [key, group] of Object.entries(groups.unopened())) saved[key] ??= group
+  const extra = { forgottenRoots: forgottenRoots.slice(0, MAX_FORGOTTEN_ROOTS), dismissedChats: dismissedChats.slice(0, MAX_DISMISSED_CHATS) }
+  let json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
+  // Oversized text (a pasted file, a long doc) is the only thing that can blow the cap: shed it.
+  if (json.length > MAX_TOTAL) {
+    for (const group of Object.values(saved)) {
+      group.tiles.forEach((tile, index) => {
+        const mutable = tile as { -readonly [K in keyof SavedTile]: SavedTile[K] }
+        if ((mutable.content?.length ?? 0) > 20_000) delete mutable.content
+        if ((mutable.docText?.length ?? 0) > 20_000) delete mutable.docText
+        if ((mutable.customState?.length ?? 0) > 100_000) delete mutable.customState
+        void index
+      })
+    }
+    json = JSON.stringify({ version: 1, mode, groups: saved, ...extra })
+  }
+  return json
+}

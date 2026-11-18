@@ -1,0 +1,12 @@
+{
+  "name": "driver-acp",
+  "description": "Any agent that speaks the Agent Client Protocol (ACP) as a chat in the agent panel, started in the app folder: DeepSeek Harness (dsh --profile acp) is the first preset, other ACP agents are added by config. Development only; needs the agent panel; opt-in with acrylblends add driver-acp.",
+  "requires": ["agent-panel", "instance"],
+  "inject": ["drivers", "appInstance"],
+  "provides": [],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4"
+  },
+  "mount": "register it in src/app.ts ('driver-acp': driverAcp) and add a row `- id: driver-acp` / `name: driver-acp` to blend.yaml AFTER the agent-panel row; with dsh on the PATH the panel offers acp:dsh",
+  "gitignore": []
+}

@@ -1,0 +1,26 @@
+From ef589d8824625725cfb1e1d3b8dc8cc116e7deba Mon Sep 17 00:00:00 2001
+From: Alex Musichen <webboxes.io@gmail.com>
+Date: Wed, 28 Oct 2026 21:29:55 +0100
+Subject: [PATCH] ci(deploy): the deploy checks the registry with
+ scripts/registry-index.ts, which writes the runtime of each entry
+
+---
+ .github/workflows/deploy.yml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+index 41e91ee..e584d88 100644
+--- a/.github/workflows/deploy.yml
++++ b/.github/workflows/deploy.yml
+@@ -29,7 +29,7 @@ jobs:
+           sparse-checkout: runtime/blends-core
+       - run: bun install --production
+         working-directory: .acryl/runtime/blends-core
+-      - run: bun .acryl/runtime/blends-core/src/bin/registry-index.ts registry --check
++      - run: bun scripts/registry-index.ts registry --check
+       - run: bun install --frozen-lockfile
+       - run: bun run build
+       - name: SPA fallback for client-side routes (GitHub Pages has no server-side rewrite)
+-- 
+2.50.1 (Apple Git-155)
+
