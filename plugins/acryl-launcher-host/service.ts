@@ -5,7 +5,7 @@
  */
 import { basename, join } from 'node:path'
 import {
-  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, inspectApp, maskKey, modelEnv, readApps, readModelKey, removeApp, STARTERS, whereProblem,
+  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, inspectApp, maskKey, modelEnv, readApps, readModelKey, removeApp, STARTERS, whereProblem,
   type AppEntry,
 } from './launcher-lib/index.js'
 import type {
@@ -40,6 +40,8 @@ const TAIL_LINES = 12
 const BLENDS_FRESH_MS = 60_000
 /** The package `acryl new` runs (`distribution/acryl-npm-launcher/forward.js` CREATE_SPEC). */
 const CREATE_SPEC = 'create-acrylblends@latest'
+/** The command that updates an app from its Blend's newer release (`acrylblends update`, in the acrylblends package). */
+const UPDATE_SPEC = 'acrylblends@latest'
 /** The app's own share command, from its folder (the `save` plugin of acrylblends). */
 const SHARE_COMMAND = join('plugins', 'save', 'share-cli.ts')
 /** ACRYL ADE: the Blend and the folder in the home that `acryl ade` makes and opens (`distribution/acryl-npm-launcher/managed.js` MANAGED.ade). */
@@ -83,6 +85,8 @@ export class LauncherService {
   constructor(ports: LauncherPorts) { this.#ports = ports }
 
   state(): StateResponse {
+    // The registry's versions mark the apps with a newer Blend release; a stale list is read again in the background for the next state.
+    if (this.#blends === undefined || Date.now() - this.#blends.at >= BLENDS_FRESH_MS) void this.blends().catch(() => undefined)
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
     const at = this.#job
     const job = at === undefined ? null : { name: at.name, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message } }
@@ -94,8 +98,13 @@ export class LauncherService {
     const missing = inspectApp(entry).state === 'missing'
     const state: AppRunState = missing ? 'missing' : started === undefined ? 'stopped' : started.address === undefined ? 'starting' : 'running'
     const failure = this.#failures.get(entry.id)
+    const blend = entry.blend === '' ? blendOf(entry.path) : entry.blend
+    const version = missing ? '' : blendVersionOf(entry.path)
+    const latest = this.#blends?.list.find(listed => listed.id === blend)?.version
     return {
-      id: entry.id, name: basename(entry.path), path: entry.path, blend: entry.blend === '' ? blendOf(entry.path) : entry.blend, madeBy: entry.madeBy, surface: entry.surface, state,
+      id: entry.id, name: basename(entry.path), path: entry.path, blend, madeBy: entry.madeBy, surface: entry.surface, state,
+      ...version === '' ? {} : { version },
+      ...version !== '' && latest !== undefined && newerVersion(latest, version) ? { update: latest } : {},
       ...started?.address === undefined ? {} : { address: started.address },
       ...started === undefined || started.address !== undefined || started.output === '' ? {} : { output: started.output.trimEnd() },
       ...failure === undefined || state !== 'stopped' ? {} : { failure },
@@ -157,6 +166,37 @@ export class LauncherService {
 
   stop(id: string): void {
     this.#started.get(id)?.run.stop()
+  }
+
+  /**
+   * Bring the newer registry release of the app's Blend into it: `acrylblends update` in its folder (a git merge that keeps the person's changes, then npm
+   * install). A running app is stopped first and started again after.
+   */
+  update(id: string): void {
+    if (this.#job?.status === 'running') throw new LauncherRefusal(`${this.#job.name} is still being worked on: wait for it to finish`)
+    const entry = readApps(this.#ports.home).find(app => app.id === id)
+    if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
+    const view = this.#view(entry)
+    if (view.update === undefined) throw new LauncherRefusal(`${view.name} is on the latest release of ${view.blend}`)
+    const restart = this.#started.has(id)
+    this.stop(id)
+    const run = this.#ports.runner({ program: 'npm', args: ['exec', '--yes', UPDATE_SPEC, '--', 'update'], cwd: entry.path, env: this.#environment() })
+    const job: Job = {
+      name: view.name, line: `cd ${entry.path} && npx ${UPDATE_SPEC} update`, status: 'running', run, since: Date.now(), output: '',
+      step: `Updating ${view.name} from ${view.blend} ${view.version ?? ''} to ${view.update}: getting the release and merging it in, your changes are kept, then npm install. Next: ${restart ? 'starting it again' : 'done'}.`,
+    }
+    this.#job = job
+    let output = ''
+    run.onOutput((text) => { output = tail(`${output}${text}`); job.output = output })
+    run.onEnd((end) => {
+      if (job.run !== run) return
+      if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.'; return }
+      if (end.code !== 0) { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'The update ended before it was done; the app is unchanged.') : output.trimEnd(); return }
+      job.status = 'done'
+      job.step = `Updated ${view.name} to ${view.blend} ${view.update}.${restart ? ' Starting it again: its progress shows on its card below.' : ''}`
+      job.output = ''
+      if (restart) try { this.start(id) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) }
+    })
   }
 
   stopAll(): void {
@@ -418,4 +458,14 @@ export class LauncherService {
       making.job.message = message
     } else if (id !== undefined) this.#failures.set(id, message)
   }
+}
+
+/** `0.2.0` is newer than `0.1.9`; anything that is not three numbers is never newer. */
+function newerVersion(candidate: string, current: string): boolean {
+  const parse = (text: string): number[] | undefined => /^(\d+)\.(\d+)\.(\d+)$/u.exec(text)?.slice(1).map(Number)
+  const a = parse(candidate)
+  const b = parse(current)
+  if (a === undefined || b === undefined) return false
+  for (let index = 0; index < 3; index += 1) if (a[index] !== b[index]) return (a[index] ?? 0) > (b[index] ?? 0)
+  return false
 }

@@ -11,6 +11,8 @@ export function addApp(home: string, app: { path: string, madeBy?: 'person' | 'a
 export function removeApp(home: string, id: string): boolean
 export function inspectApp(entry: AppEntry): { readonly state: 'ready' | 'missing' }
 export function blendOf(folder: string): string
+/** The version of the Blend an app was made from (`metadata.version` of its blend.yaml), or '' when it records none. */
+export function blendVersionOf(folder: string): string
 export function whereProblem(folder: string): string | undefined
 export const ORCAROUTER_REFERRAL_URL: string
 export function readModelKey(home: string, provider?: string): string | undefined

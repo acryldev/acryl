@@ -9,6 +9,7 @@ export const LAUNCHER_REMOVE_PATH = `${LAUNCHER_API_PREFIX}/remove`
 export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
+export const LAUNCHER_UPDATE_PATH = `${LAUNCHER_API_PREFIX}/update`
 /** Open ACRYL ADE (the Blend `acryl.ade` in `<home>/ade`, the folder `acryl ade` uses), made on first use, in a window or the browser. */
 export const LAUNCHER_ADE_PATH = `${LAUNCHER_API_PREFIX}/ade`
 export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
@@ -44,6 +45,10 @@ export interface AppView {
   readonly output?: string
   /** Why the app stopped on its own, when it did (the last lines it printed). */
   readonly failure?: string
+  /** The version of the Blend it was made from (its blend.yaml), when it records one. */
+  readonly version?: string
+  /** A newer release of that Blend in the registry: `acrylblends update` brings it in, keeping the person's changes. */
+  readonly update?: string
 }
 
 export interface StarterView {

@@ -3,7 +3,7 @@ import { Acryl } from 'acrylblends'
 import { error } from '@acrylblends/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acrylblends/loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH,
   SURFACES, type AppSharePlanRequest, type AppSharePlanView, type AppShareRequest, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
 } from './contract.ts'
 import { RegistryUnavailable } from './registry.ts'
@@ -159,6 +159,7 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
   change(LAUNCHER_NEW_PATH, parseNew, request => { service.create(request) }, 'make an app')
   change(LAUNCHER_START_PATH, parseOne('id'), id => { service.start(id) }, 'start an app')
   change(LAUNCHER_STOP_PATH, parseOne('id'), id => { service.stop(id) }, 'stop an app')
+  change(LAUNCHER_UPDATE_PATH, parseOne('id'), id => { service.update(id) }, 'update an app')
   change(LAUNCHER_ADE_PATH, (value) => { const surface = parseOne('surface')(value); return surface === 'web' || surface === 'desktop' ? surface : undefined }, surface => { service.openAde(surface) }, 'open ACRYL ADE')
   return privateApi(LAUNCHER_API_PREFIX, app)
 }
