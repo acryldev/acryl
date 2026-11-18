@@ -290,6 +290,9 @@ export interface ClientRow {
 
 export const CLIENT_ROWS: readonly ClientRow[] = [
   { id: 'client-modules', name: '@deepseek-ai/dsh-client-modules' },
+  // DSH's live channel (/plugins/events): an open page takes a changed module list without a reload, so a pulled plugin's Settings page appears
+  // at once; without the row the page's EventSource answers 404.
+  { id: 'client-hmr', name: '@deepseek-ai/dsh-client-hmr' },
   { id: 'client-locale', name: '@deepseek-ai/dsh-client-locale' },
   { id: 'client-shortcuts', name: '@deepseek-ai/dsh-client-shortcuts' },
   { id: 'ui-renderer', name: '@deepseek-ai/dsh-client-ui-renderer' },
