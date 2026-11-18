@@ -23,11 +23,11 @@ call succeeds, a dummy key is used; temp paths are scrubbed). Desktop uses the s
 
 ## The ACRYL shaping plugin (pi.dev-like)
 
-[`plugins/acryl-system-prompt`](../../plugins/acryl-system-prompt/index.js) applies pi.dev's prompt shape to the harness's sections: on the harness's
+[`plugins/acryl-system-prompt`](../../plugins/acryl-system-prompt/src/index.ts) applies pi.dev's prompt shape to the harness's sections: on the harness's
 `system-prompt/assemble` waterfall it puts the ACRYL identity line first (replacing "You are an AI agent powered by DeepSeek Harness."), wraps every other
 section in a tag (`<persona>`, `<tool_read>`, `<acryl_plugin_docs>`, `<cwd>`), and drops empty sections. Every other section keeps its upstream text
 unchanged, so harness updates still reach the model. Pure logic (identity, tag names, drift snapshot):
-[`lib/transform.js`](../../plugins/acryl-system-prompt/lib/transform.js); the listener is 6 lines in `index.js`. Config on its row: `identity`, `tagSections`,
+[`src/transform.ts`](../../plugins/acryl-system-prompt/src/transform.ts); the listener is in `src/index.ts`. Config on its row: `identity`, `style` (the reply style section, plain words and no em dash), `tagSections`,
 `dropEmpty`. **Drift check:** [`plugins/acryl-system-prompt/drift/`](../../plugins/acryl-system-prompt/drift) records a hash of every section upstream contributes,
 per surface; [`tests/system-prompt-shape.spec.ts`](../../runtime/acryl-harness-runtime/tests/system-prompt-shape.spec.ts) fails when a harness update adds, removes or
 changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (same command as the test).
@@ -65,7 +65,7 @@ changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (sa
 | The self-extension instructions (router) | [`router.js`](../../plugins/acryl-plugin-context/lib/router.js) | Must stay under the token budget (1500, enforced by `scripts/plugin.test.mjs`). Static text is cached across turns: keep it stable; put dynamic facts in `PromptContext`. |
 | Which docs the router lists | [`docs.json`](../../plugins/acryl-plugin-context/docs/docs.json), then `node scripts/build-manifest.mjs` in the pack | The topic list is generated from the manifest; `reference.*` docs are intentionally omitted from it. |
 | A skill's wording | `plugins/acryl-plugin-context/skills/<name>/SKILL.md` | Name and description are what sits in context; the body loads on demand. |
-| The identity line (ACRYL) or the tagging | [`acryl-system-prompt`](../../plugins/acryl-system-prompt/index.js) config or `lib/transform.js` | Pass-through: only the identity is replaced; other sections keep upstream text. |
+| The identity line (ACRYL) or the tagging | [`acryl-system-prompt`](../../plugins/acryl-system-prompt/src/index.ts) config or `src/transform.ts` | Pass-through: only the identity is replaced; other sections keep upstream text. |
 | The persona or working-directory line | the persona row in the preset [`agent.cordis.yml`](../../deepseek-harness/packages/preset/agent-presets/presets/standard/agent.cordis.yml) | It is in the read-only harness submodule: change it through a user preset or a Loader patch, never by editing `deepseek-harness/` (constitution III). A user preset lives in `<dshHome>/.agent-presets/<id>/`. |
 | Per-project or per-user standing instructions | `AGENTS.md` or `CLAUDE.md` in the workspace, or `<dshHome>/AGENTS.md` | Loaded by agent-instructions; no code change; good for "you can extend ACRYL yourself, offer it when a feature is missing". |
 | A new prompt section from a plugin | `ctx.systemPrompt.section({ name, order, text })` | See [`extending/prompt-contribution.md`](../../plugins/acryl-plugin-context/docs/extending/prompt-contribution.md). Use an order that places it where you want; the router uses `9500` (last). |

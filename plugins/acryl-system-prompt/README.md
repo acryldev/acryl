@@ -6,4 +6,10 @@ are tagged and empties dropped, and every other section keeps its upstream text,
 contributed so a harness update shows exactly what changed (`drift/`). See `docs/system-prompt/README.md` in the repository for where the whole prompt
 comes from and how to change it.
 
-Config (row `acryl-system-prompt`): `identity`, `tagSections`, `dropEmpty`.
+It also adds one section of its own, the reply style (`acryl:reply-style`, tagged `<reply_style>`): plain, short sentences and no em dash.
+
+Config (row `acryl-system-prompt`): `identity` (the opening line; ACRYL's by default, and every ACRYL Blends app's composition sets the Blends
+one), `style` (the reply style; empty leaves it out), `tagSections`, `dropEmpty`.
+
+Source: `src/index.ts` (the plugin) and `src/transform.ts` (the pure shaping, also exported as `acryl-system-prompt/transform`). One package
+for ACRYL and for the Blends frame, which publishes it as `@acrylblends/system-prompt` (spec 051).

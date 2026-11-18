@@ -7,13 +7,14 @@ Characters are exact; tokens are an estimate for comparing changes. Ceilings liv
 
 ## web and desktop (standard preset)
 
-Total: system prompt 9081 chars (about 2671 tokens), tool definitions 31110 chars (about 9150 tokens), 56 tools.
+Total: system prompt 9334 chars (about 2745 tokens), tool definitions 31110 chars (about 9150 tokens), 56 tools.
 
 ### System prompt by section
 
 | Section | Chars | Est. tokens |
 | --- | ---: | ---: |
 | `identity` | 276 | 81 |
+| `reply_style` | 251 | 74 |
 | `persona` | 83 | 24 |
 | `context_file-reference` | 458 | 135 |
 | `tool_bash` | 117 | 34 |
@@ -98,13 +99,14 @@ Total: system prompt 9081 chars (about 2671 tokens), tool definitions 31110 char
 
 ## cli (terminal engine)
 
-Total: system prompt 5428 chars (about 1596 tokens), tool definitions 21625 chars (about 6360 tokens), 31 tools.
+Total: system prompt 5681 chars (about 1671 tokens), tool definitions 21625 chars (about 6360 tokens), 31 tools.
 
 ### System prompt by section
 
 | Section | Chars | Est. tokens |
 | --- | ---: | ---: |
 | `identity` | 276 | 81 |
+| `reply_style` | 251 | 74 |
 | `tool_bash` | 117 | 34 |
 | `tool_read` | 151 | 44 |
 | `tool_write` | 167 | 49 |

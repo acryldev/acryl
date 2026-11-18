@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { FRAME_DSH_VERSION, FRAME_RELEASE, FRAME_SCOPE } from '../src/frame-release.ts'
-import { FRAME_PACKAGES, FRAME_PAGE_PREFIX, FRAME_PLUGINS } from '../src/ide-profile.ts'
+import { FRAME_IDENTITY, FRAME_PACKAGES, FRAME_PAGE_PREFIX, FRAME_PLUGINS } from '../src/ide-profile.ts'
 import { type Io, init } from '../src/index'
 import { TEMPLATES, templatesRoot } from '../src/templates.ts'
 import { VERSION } from '../src/version.ts'
@@ -193,6 +193,10 @@ describe('scaffolding a template into the frame', () => {
       expect(overlay).toContain(`- id: ${plugin.name}\n      name: ${plugin.name}`)
     }
     expect(FRAME_PLUGINS.map((plugin) => plugin.name)).toContain('skill-mcp-manager')
+    // The agent's opening line is the Blends one (the package's own default is ACRYL's), passed on the row.
+    expect(overlay).toContain(
+      `name: '${FRAME_SCOPE}/system-prompt'\n      config:\n        identity: ${JSON.stringify(FRAME_IDENTITY)}`,
+    )
     expect(manifest.dependencies.acrylblends).toBe(`^${VERSION}`)
     expect(manifest.dependencies['@deepseek-ai/dsh-base']).toBe(FRAME_DSH_VERSION)
     // The launcher's development hook is the Blends frame's, by the name it installs as.
