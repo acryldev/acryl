@@ -9,15 +9,16 @@ import { fileURLToPath } from 'node:url'
 
 const repo = fileURLToPath(new URL('../..', import.meta.url))
 
-/** What ships: the plugins an app is made of, the frame's packages, the CLI. Gates under scripts/ run on a developer's machine and may read its home. */
+/**
+ * What ships: the plugins an app is made of, the frame's packages, the CLI. Gates under scripts/ run on a developer's machine and may read its home.
+ * The frame packages shared with ACRYL (spec 051: plugins/ and runtime/ at the repository root) are under ACRYL's own bulkhead, tests/bulkhead.spec.ts.
+ */
 const ROOTS = ['plugins', 'ide', 'packages/cli/src', 'packages/create/src']
 
 /** The only files allowed to, each with its reason. Anything else is a hidden global. */
 const ALLOWED = {
   'plugins/instance/home.ts':
     "the one owner of the rule (T026): the person's home folder and ~/.acryl, where every app's data lives",
-  'ide/acryl-workspace/src/pty/service.ts':
-    "a terminal starts in the person's own home folder when its cwd is gone; not app state (as in ACRYL)",
   'packages/cli/src/preflight.ts':
     "the workshop preflight checks the person's machine (pi's key in its own folder); it runs before any app exists",
   // A ratchet, not exceptions: each repeats a rule the AppInstance family owns, and app-storage.md's slices 2 and 3 (the product host on its app folders)

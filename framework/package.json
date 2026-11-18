@@ -3,12 +3,12 @@
   "private": true,
   "type": "module",
   "description": "ACRYLBLENDS - scaffold apps built on Cordis. Cordis is the framework.",
-  "packageManager": "pnpm@12.4.2",
+  "packageManager": "pnpm@11.11.0",
   "engines": {
     "node": ">=22.19.0"
   },
   "scripts": {
-    "build": "pnpm -r --filter=!./ide/* run build && node scripts/stage-framework.mjs && pnpm -r --filter=./ide/* run build",
+    "build": "pnpm -r --filter='./packages/*' --filter='./plugins/acryl-*' run build && node scripts/stage-framework.mjs && pnpm -r --filter='{./ide/*}...' run build",
     "test:driver-pty": "node --import ./scripts/workspace-source.mjs --test --test-timeout=60000 \"plugins/driver-pty/test/*.test.ts\"",
     "test:packages": "pnpm -r --filter=./plugins/acryl-* --filter=acrylblends-framework --filter=./ide/* run test",
     "typecheck": "tsc -p tsconfig.json && tsc -p plugins/tsconfig.json && tsc -p ide/tsconfig.json",
@@ -40,7 +40,7 @@
     "verify:tarball": "node scripts/verify-tarball.mjs",
     "verify:legacy-layouts": "node scripts/build-legacy-layouts.mjs --check",
     "verify:upgrade-frame": "node --import ./scripts/workspace-source.mjs scripts/verify-upgrade-frame.mjs",
-    "typecheck:packages": "pnpm -r --if-present run typecheck"
+    "typecheck:packages": "pnpm -r --if-present --filter='./packages/*' --filter='./plugins/acryl-*' --filter='./ide/*' run typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

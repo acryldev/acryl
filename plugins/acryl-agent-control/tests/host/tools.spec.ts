@@ -5,7 +5,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { afterAll, describe, expect, it } from 'vitest'
 import { AuditLog, UiChannel } from 'acrylblends/door/host'
 import { UiControlError, type UiRequest, type UiResult } from 'acrylblends/door/protocol'
-import { MUTATING_TOOL_NAMES, RefDirectory, registerUiTools, TOOL_NAMES } from '../../src/host/tools.ts'
+import { MODEL_OPS, MUTATING_TOOL_NAMES, RefDirectory, registerUiTools, TOOL_NAMES } from '../../src/host/tools.ts'
 
 const dir = mkdtempSync(join(tmpdir(), 'acryl-ui-tools-'))
 afterAll(() => { rmSync(dir, { recursive: true, force: true }) })
@@ -40,7 +40,7 @@ function setup(respond: (request: UiRequest) => UiResult | UiControlError) {
 describe('Agent Control tools', () => {
   it('registers exactly the seven tools and removes them all on dispose', () => {
     const t = setup(() => ({ ok: true }))
-    expect([...t.registered.keys()].sort()).toEqual(Object.values(TOOL_NAMES).sort())
+    expect([...t.registered.keys()].sort()).toEqual(MODEL_OPS.map(op => TOOL_NAMES[op]).sort())
     t.dispose()
     expect(t.registered.size).toBe(0)
     expect(t.removed()).toBe(7)

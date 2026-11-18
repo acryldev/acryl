@@ -191,7 +191,7 @@
     "acryl-ui-tui": "workspace:*",
     "acryl-web-service": "workspace:*",
     "acryl-workspace": "workspace:*",
-    "acrylblends": "^1.0.0",
+    "acrylblends": "workspace:^",
     "adm-zip": "^0.6.1",
     "cordis-plugin-market": "workspace:*",
     "dsh-client-ui-brand-acryl": "workspace:*",

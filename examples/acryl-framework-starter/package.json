@@ -12,7 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "acrylblends": "^1.0.0"
+    "acrylblends": "workspace:^"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",

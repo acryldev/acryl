@@ -411,7 +411,7 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && node ../../scripts/stage-framework.mjs",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "prepack": "pnpm run build && node scripts-pack.mjs copy",
@@ -434,7 +434,10 @@
   ],
   "private": false,
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.4"
+    "@deepseek-ai/cordis": "4.0.4",
+    "acrylblends-framework": "workspace:*",
+    "tsdown": "0.23.0",
+    "vitest": "5.0.3"
   },
   "publishConfig": {
     "access": "public"

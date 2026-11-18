@@ -20,25 +20,25 @@
     "jsx": "react-jsx",
     "paths": {
       "acryl-app-shell": [
-        "./acryl-app-shell/src/index.ts"
+        "../../plugins/acryl-app-shell/src/index.ts"
       ],
       "acryl-app-shell/client": [
-        "./acryl-app-shell/src/client/index.ts"
+        "../../plugins/acryl-app-shell/src/client/index.ts"
       ],
       "acryl-control": [
-        "./acryl-control/src/index.ts"
+        "../../runtime/acryl-control/src/index.ts"
       ],
       "acryl-diagnostics": [
-        "./acryl-diagnostics/src/index.ts"
+        "../../runtime/acryl-diagnostics/src/index.ts"
       ],
       "acryl-loopback-http": [
-        "./acryl-loopback-http/src/index.ts"
+        "../../runtime/acryl-loopback-http/src/index.ts"
       ],
       "acryl-loopback-http/router": [
-        "./acryl-loopback-http/src/router.ts"
+        "../../runtime/acryl-loopback-http/src/router.ts"
       ],
       "acryl-settings": [
-        "./acryl-settings/src/index.ts"
+        "../../plugins/acryl-settings/src/index.ts"
       ],
       "acryl-versions": [
         "./acryl-versions/src/index.ts"
@@ -47,20 +47,22 @@
         "./acryl-versions/src/client/index.ts"
       ],
       "acryl-workspace": [
-        "./acryl-workspace/src/index.ts"
+        "../../plugins/acryl-workspace/src/index.ts"
       ],
       "acryl-workspace/client": [
-        "./acryl-workspace/src/client/index.ts"
+        "../../plugins/acryl-workspace/src/client/index.ts"
       ],
       "acryl-workspace/ui": [
-        "./acryl-workspace/src/client/ui.ts"
+        "../../plugins/acryl-workspace/src/client/ui.ts"
       ]
     }
   },
   "include": [
     "*/src/**/*.ts",
     "*/src/**/*.tsx",
-    "*/tests/**/*.ts"
+    "*/tests/**/*.ts",
+    // acryl-workspace/ui (reached by path above) imports its terminal CSS through this declaration.
+    "../../plugins/acryl-workspace/src/client/terminal/xterm-css.d.ts"
   ],
   "exclude": [
     "**/node_modules/**",

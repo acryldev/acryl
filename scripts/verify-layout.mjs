@@ -79,6 +79,12 @@ packages:
   - plugins/acryl-agent-control
   - plugins/acryl-launcher
   - plugins/acryl-launcher-desktop
+  # The framework (acrylblends), imported with its history (spec 051): its CLI and create, its library plugins and the frame's own packages. The
+  # frame packages it shares with ACRYL live once, above (plugins/, runtime/), and framework/frame/packages.json names their folders.
+  - framework
+  - framework/packages/*
+  - framework/plugins/acryl-*
+  - framework/ide/*
   - '!deepseek-harness/**'
 
 allowBuilds:

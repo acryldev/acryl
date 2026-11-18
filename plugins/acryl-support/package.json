@@ -77,7 +77,7 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "acrylblends": "^1.0.0",
+    "acrylblends": "workspace:^",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

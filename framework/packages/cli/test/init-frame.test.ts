@@ -37,7 +37,7 @@ const FRAME_SPECS = JSON.stringify({
   dshVersion: '0.2.0-rc.2',
   frameworkVersion: '^1.0.10',
   packages: {
-    'acryl-app-shell': 'file:/checkout/ide/acryl-app-shell',
+    'acryl-app-shell': 'file:/checkout/plugins/acryl-app-shell',
     'acryl-web-service': 'file:/checkout/runtime/acryl-web-service',
   },
 })
@@ -132,7 +132,7 @@ describe('scaffolding a template into the frame', () => {
     expect(existsSync(join(root, 'scripts', 'ide-host.mjs'))).toBe(true)
     expect(existsSync(join(root, 'cordis.yml'))).toBe(true)
     expect(manifest.dependencies['@deepseek-ai/dsh-base']).toBe('0.2.0-rc.2')
-    expect(manifest.dependencies['acryl-app-shell']).toBe('file:/checkout/ide/acryl-app-shell')
+    expect(manifest.dependencies['acryl-app-shell']).toBe('file:/checkout/plugins/acryl-app-shell')
     expect(existsSync(join(root, 'app', 'runtime.mjs'))).toBe(true)
   })
 

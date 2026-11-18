@@ -10,7 +10,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, it } from 'vitest'
 
-const root = resolve(import.meta.dirname, '..', '..', '..')
+const framework = resolve(import.meta.dirname, '..', '..', '..')
+/** The workspace root: the framework's own folder when it is a repository by itself, the folder above it inside ACRYL's monorepo (spec 051). */
+const root = [framework, resolve(framework, '..')].find((dir) => existsSync(join(dir, 'node_modules', '.pnpm'))) ?? framework
 
 /** The installed `@deepseek-ai/dsh-client-connection` folder, from the workspace's pnpm store. */
 function connectionPackage(): string {

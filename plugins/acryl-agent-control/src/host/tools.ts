@@ -9,7 +9,11 @@ import { defineAcrylTool } from 'acryl-control'
 import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from 'acrylblends/door/protocol'
 import { renderSnapshot, type AuditLog, type UiChannel } from 'acrylblends/door/host'
 
-/** The tool name for each operation. */
+/**
+ * The tool name for each operation. `reload` and `navigate` came with the framework's door after 1.0.0 (spec 051 put ACRYL on the framework's own
+ * source): they are named so the online channel's audit trail reads them, but they are not model tools here - registering them would change what
+ * ACRYL's agent can do and its tool budget, a product decision of its own.
+ */
 export const TOOL_NAMES: Readonly<Record<UiOp, string>> = {
   snapshot: 'ui_snapshot',
   click: 'ui_click',
@@ -18,10 +22,15 @@ export const TOOL_NAMES: Readonly<Record<UiOp, string>> = {
   press: 'ui_press',
   scroll: 'ui_scroll',
   wait: 'ui_wait',
+  reload: 'ui_reload',
+  navigate: 'ui_navigate',
 }
 
-/** Names of the tools that change the page, so each call is asked about. */
-export const MUTATING_TOOL_NAMES: ReadonlySet<string> = new Set(MUTATING_OPS.map(op => TOOL_NAMES[op]))
+/** The operations the model has a tool for, in the order they are registered. */
+export const MODEL_OPS: readonly UiOp[] = ['snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait']
+
+/** Names of the model's tools that change the page, so each call is asked about. */
+export const MUTATING_TOOL_NAMES: ReadonlySet<string> = new Set(MUTATING_OPS.filter(op => MODEL_OPS.includes(op)).map(op => TOOL_NAMES[op]))
 
 /** What each ref in the latest snapshot means, so an approval prompt can name the control. */
 export class RefDirectory {

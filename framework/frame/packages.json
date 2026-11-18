@@ -27,47 +27,58 @@
   "packages": {
     "acryl-ui": {
       "name": "ui",
-      "version": "0.3.0"
+      "version": "0.3.0",
+      "path": "../plugins/acryl-ui"
     },
     "dsh-client-ui-brand-acryl": {
       "name": "brand-client",
-      "version": "0.1.1"
+      "version": "0.1.1",
+      "path": "../plugins/dsh-client-ui-brand-acryl"
     },
     "acryl-app-shell": {
       "name": "app-shell",
-      "version": "0.1.1"
+      "version": "0.1.1",
+      "path": "../plugins/acryl-app-shell"
     },
     "acryl-workspace": {
       "name": "workspace",
-      "version": "0.1.1"
+      "version": "0.1.1",
+      "path": "../plugins/acryl-workspace"
     },
     "acryl-settings": {
       "name": "settings",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "path": "../plugins/acryl-settings"
     },
     "acryl-sign-in": {
       "name": "sign-in",
-      "version": "0.1.1"
+      "version": "0.1.1",
+      "path": "../plugins/acryl-sign-in"
     },
     "acryl-control": {
       "name": "control",
-      "version": "0.2.5"
+      "version": "0.2.11",
+      "path": "../runtime/acryl-control"
     },
     "acryl-diagnostics": {
       "name": "diagnostics",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "path": "../runtime/acryl-diagnostics"
     },
     "acryl-plugin-admin": {
       "name": "plugin-admin",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "path": "../plugins/acryl-plugin-admin"
     },
     "acryl-support": {
       "name": "support",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "path": "../plugins/acryl-support"
     },
     "acryl-loopback-http": {
       "name": "loopback-http",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "path": "../runtime/acryl-loopback-http"
     },
     "acryl-web-service": {
       "name": "web",
@@ -76,7 +87,8 @@
     },
     "acryl-system-prompt": {
       "name": "system-prompt",
-      "version": "0.1.0"
+      "version": "0.2.0",
+      "path": "../plugins/acryl-system-prompt"
     },
     "acryl-app-context": {
       "name": "app-context",

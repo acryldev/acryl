@@ -177,9 +177,6 @@ spikes/ide-slice0/dsh-client-ui-brand-acryl/lib/
 
 # The IDE port's packages build lib/ like the framework's; only source is committed.
 ide/*/lib/
-# acryl-brand ships lib/identity.js as source, not build output
-!ide/acryl-brand/lib/
-ide/acryl-ui/registry-seed/
 
 # The materialized frame fixture (scripts/frame-fixtures/review-fixture/setup.mjs recreates it byte-identically)
 .frame-fixture/
