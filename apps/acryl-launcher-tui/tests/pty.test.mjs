@@ -67,7 +67,7 @@ test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is liste
     assert.deepEqual(JSON.parse(readFileSync(marker, 'utf8')), ['my-app', 'blank'])
     const made = join(realpathSync(home), 'ACRYL', 'my-app')
     assert.ok(existsSync(join(made, 'blend.yaml')), 'the app was made in the suggested folder, which the selector created')
-    const listed = JSON.parse(readFileSync(join(home, '.acryl', 'apps.json'), 'utf8')).apps
+    const listed = JSON.parse(readFileSync(join(home, '.acryl', 'control-center-apps.json'), 'utf8')).apps
     assert.deepEqual(listed.map(entry => [entry.id, entry.blend, entry.madeBy]), [['my-app', 'acrylblends.blank', 'person']])
 
     // `acryl apps` says the same in words.
