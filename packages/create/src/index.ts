@@ -467,8 +467,9 @@ async function createFromSource(
         io.run(process.execPath, [acrylblendsBin(), ...args, '--dir', target], io.cwd)
       // The upgrade runs on the starter as it was published, before anything here edits src/app.ts: it recognizes a released scaffold only unedited.
       // A starter made before sharing has no plugin-share row, so pull, list and publish would be refused in the new app: it gets the plugin last, mounted.
+      // A shared app is in the frame already (it carries plugins/desktop): `upgrade` brings its desktop to this release instead.
       if (
-        (await framework(['add', 'desktop'])) !== 0 ||
+        (!existsSync(join(target, 'plugins', 'desktop')) && (await framework(['add', 'desktop'])) !== 0) ||
         (await framework(['upgrade'])) !== 0 ||
         (lacksPluginShare(target) && (await framework(['add', 'plugin-share'])) !== 0)
       ) {
