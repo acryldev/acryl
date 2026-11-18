@@ -8,6 +8,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import release from '../../../frame/packages.json' with { type: 'json' }
 import { OMITTED_ROWS, omitOverrides } from './frame-omit.ts'
 import { PNPM_WORKSPACE_FILE, withFramePnpmSettings } from './pnpm-settings.ts'
 
@@ -71,6 +72,14 @@ export const FRAME_PACKAGES: readonly IdeProfilePackage[] = [
     disables: ['ui-brand-official'],
   },
 ]
+
+/**
+ * Plugins every app's frame mounts that publish from their own repositories under their own npm names (frame/packages.json `plugins`), such as
+ * Settings > Skills & MCP. Always added after the frame's own rows, whatever the input names, so an upgrade brings one an older app lacks.
+ */
+export const FRAME_PLUGINS: readonly IdeProfilePackage[] = Object.entries(release.plugins)
+  .filter(([name]) => name !== '//')
+  .map(([name, version]) => ({ name, spec: `^${version}` }))
 
 /**
  * Where every template's frame row mounts the app (`FRAME_MOUNT_PREFIX` in the template's own source, `/app`). The overlay tells the frame's row, so
@@ -805,10 +814,13 @@ function overlayOf(
  */
 export function ideProfilePlan(input: IdeProfileInput, existing?: string): IdeProfilePlan {
   const profile = profileNameFor(input.appName)
-  const packages = (input.packages ?? FRAME_PACKAGES).map((entry) => ({
-    ...entry,
-    spec: entry.spec === '' ? (input.spec?.(entry.row ?? entry.name) ?? '') : entry.spec,
-  }))
+  const packages = [
+    ...(input.packages ?? FRAME_PACKAGES).map((entry) => ({
+      ...entry,
+      spec: entry.spec === '' ? (input.spec?.(entry.row ?? entry.name) ?? '') : entry.spec,
+    })),
+    ...FRAME_PLUGINS,
+  ]
   const dependencies: Record<string, string> = {
     // DSH rides as the chat/session driver: the two bundles it is selected from, its boot glue and the generic Cordis loader; pinned exactly.
     // One Cordis for the whole composition: DSH 0.2.0-rc.2's own rows run on 4.0.5, and the framework's plugins accept it (^4.0.2).

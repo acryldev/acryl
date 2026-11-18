@@ -89,5 +89,9 @@
       "name": "blends-frame",
       "version": "0.1.5"
     }
+  },
+  "plugins": {
+    "//": "Plugins published from their own repositories under their own npm names, mounted by every app's frame and installed at a caret over this version. Not packed by verify-frame-publish (they are not under ide/). An upgrade adds one an app lacks.",
+    "skill-mcp-manager": "1.3.1"
   }
 }

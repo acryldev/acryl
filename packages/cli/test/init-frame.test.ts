@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { FRAME_DSH_VERSION, FRAME_RELEASE, FRAME_SCOPE } from '../src/frame-release.ts'
-import { FRAME_PACKAGES, FRAME_PAGE_PREFIX } from '../src/ide-profile.ts'
+import { FRAME_PACKAGES, FRAME_PAGE_PREFIX, FRAME_PLUGINS } from '../src/ide-profile.ts'
 import { type Io, init } from '../src/index'
 import { TEMPLATES, templatesRoot } from '../src/templates.ts'
 import { VERSION } from '../src/version.ts'
@@ -187,6 +187,12 @@ describe('scaffolding a template into the frame', () => {
         `- id: ${row.row ?? row.name}\n      name: '${String(entry?.name)}'`,
       )
     }
+    // Plugins from their own repositories (Settings > Skills & MCP) are in every framed app, by their own names.
+    for (const plugin of FRAME_PLUGINS) {
+      expect(manifest.dependencies[plugin.name], plugin.name).toBe(plugin.spec)
+      expect(overlay).toContain(`- id: ${plugin.name}\n      name: ${plugin.name}`)
+    }
+    expect(FRAME_PLUGINS.map((plugin) => plugin.name)).toContain('skill-mcp-manager')
     expect(manifest.dependencies.acrylblends).toBe(`^${VERSION}`)
     expect(manifest.dependencies['@deepseek-ai/dsh-base']).toBe(FRAME_DSH_VERSION)
     // The launcher's development hook is the Blends frame's, by the name it installs as.
