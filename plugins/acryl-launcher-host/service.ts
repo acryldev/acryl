@@ -58,6 +58,7 @@ const tail = (text: string): string => {
 /** The job as this service changes it; `JobView` is what the screen is told. */
 interface Job {
   readonly name: string
+  readonly kind: JobView['kind']
   readonly line: string
   status: JobView['status']
   step: string
@@ -89,7 +90,7 @@ export class LauncherService {
     if (this.#blends === undefined || Date.now() - this.#blends.at >= BLENDS_FRESH_MS) void this.blends().catch(() => undefined)
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
     const at = this.#job
-    const job = at === undefined ? null : { name: at.name, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message } }
+    const job = at === undefined ? null : { name: at.name, kind: at.kind, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message } }
     return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job }
   }
 
@@ -182,7 +183,7 @@ export class LauncherService {
     this.stop(id)
     const run = this.#ports.runner({ program: 'npm', args: ['exec', '--yes', UPDATE_SPEC, '--', 'update'], cwd: entry.path, env: this.#environment() })
     const job: Job = {
-      name: view.name, line: `cd ${entry.path} && npx ${UPDATE_SPEC} update`, status: 'running', run, since: Date.now(), output: '',
+      name: view.name, kind: 'update', line: `cd ${entry.path} && npx ${UPDATE_SPEC} update`, status: 'running', run, since: Date.now(), output: '',
       step: `Updating ${view.name} from ${view.blend} ${view.version ?? ''} to ${view.update}: getting the release and merging it in, your changes are kept, then npm install. Next: ${restart ? 'starting it again' : 'done'}.`,
     }
     this.#job = job
@@ -229,7 +230,7 @@ export class LauncherService {
     const step = request.blend === undefined
       ? `Step 1 of 2: getting ${request.name} and installing its dependencies (${CREATE_SPEC}, about a minute). Next: starting it.`
       : `Step 1 of 3: getting ${request.name} (${CREATE_SPEC}). Next: installing its dependencies, then starting it.`
-    const job: Job = { name: request.name, line, status: 'running', run, step, since: Date.now(), output: '' }
+    const job: Job = { name: request.name, kind: 'make', line, status: 'running', run, step, since: Date.now(), output: '' }
     this.#job = job
     this.#watch(undefined, run, { folder, surface: request.surface, job })
   }
