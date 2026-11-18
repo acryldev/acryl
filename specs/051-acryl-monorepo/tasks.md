@@ -17,7 +17,8 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
 
 - [x] T003 [import] `git subtree add --prefix=framework` of acrylblends/acrylblends `main` (1a976364, release 1.5.20) with its full history.
 - [x] T004 [guard] `scripts/verify-layout.mjs` passes with `framework/` inside (it now accepts node:test's `after` as a teardown).
-- [ ] T005 [workspace] One pnpm workspace and one lockfile: one pnpm release, one node range, the framework's packages listed in the root
+- [ ] T005 [workspace] (blocked by T008, measured 2026-11-18: 15 framework packages carry the same names as their acryl originals, and pnpm
+  refuses two workspace packages with one name; see inventory.md section 5.) One pnpm workspace and one lockfile: one pnpm release, one node range, the framework's packages listed in the root
   `pnpm-workspace.yaml`, its `allowBuilds` and `minimumReleaseAgeExclude` merged; `pnpm install --frozen-lockfile` at the root works and
   `framework/pnpm-lock.yaml` and `framework/pnpm-workspace.yaml` are gone.
 - [ ] T006 [checks] The framework's `check` (lint, build, typecheck, tests, its verify scripts) runs from the root, next to acryl's; both

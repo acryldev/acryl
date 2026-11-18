@@ -59,3 +59,11 @@ narrower acryl one), and a decision on `node-linker` for the framework's package
 file does clean up, with node:test's `after()`, which the guard did not recognise. The guard now accepts `after` too, and passes with the
 framework inside. Other root checks (biome, typecheck, the bilingual-docs and architecture checks) have not been run against `framework/` yet
 (T006).
+
+## 5. Name clashes (why the workspaces cannot simply be joined)
+
+The root `pnpm-workspace.yaml` lists 39 acryl packages and the framework's lists 34. Fifteen names appear in both, which pnpm refuses in one
+workspace. They are exactly the ports in section 1: `@acryl/ui`, `acryl-app-shell`, `acryl-brand`, `acryl-control`, `acryl-diagnostics`,
+`acryl-loopback-http`, `acryl-plugin-admin`, `acryl-settings`, `acryl-shortcuts`, `acryl-sign-in`, `acryl-support`, `acryl-system-prompt`,
+`acryl-web`, `acryl-workspace`, `dsh-client-ui-brand-acryl`. So T008 (one package per pair) comes before T005 (one workspace). Renaming one side
+instead would only rename the duplication.
