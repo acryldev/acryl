@@ -39,6 +39,7 @@ import {
 import { productGit, withGitFirst } from './git.ts'
 import { appendHostLog, hostCrashed, nextRestart } from './host-supervisor.ts'
 import { hasSettings, settingsPlacement } from './menu.ts'
+import { offerUpdates } from './update-menu.ts'
 import { openProductApp, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
@@ -432,6 +433,7 @@ if (!app.requestSingleInstanceLock()) {
         target?.insert(placement.at + 1, new MenuItem({ type: 'separator' }))
       Menu.setApplicationMenu(menu)
     }
+    if (product?.releases !== undefined) offerUpdates(product.releases, () => live()[0])
     stopDoorShell = startDoorShell(chosen.root, { desktop, log: console.log })
 
     if (appPage && storage !== undefined && product !== undefined) {
