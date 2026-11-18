@@ -148,6 +148,25 @@ describe('template sources', () => {
     expect(s.runs).toEqual([])
   })
 
+  it('gives an app from a repository with a manifest to its new owner, like a registry starter: own id, private, no licence claim', async () => {
+    const starter = {
+      ...app(),
+      'blend.yaml': 'metadata:\n  id: someone.team-notes\n  name: Team Notes\n  version: 0.1.0\n  license: MIT\n  visibility: public\nspec:\n  runtime: cordis\n',
+      LICENSE: 'MIT License\n\nCopyright (c) 2026 someone\n',
+    }
+    const tgz = pack(starter, 'team-notes-v0.1.0')
+    const s = fakeIo({ download: async () => new Uint8Array(readFileSync(tgz)) })
+    expect(await runCreate(['our-notes', '--from', 'github:someone/team-notes#v0.1.0', '-y'], s.io), s.err()).toBe(0)
+    const dir = join(scratch, 'our-notes')
+    const manifestText = readFileSync(join(dir, 'blend.yaml'), 'utf8')
+    expect(manifestText).toContain('id: acrylblends.our-notes')
+    expect(manifestText).toContain('visibility: private')
+    expect(manifestText).not.toContain('someone.team-notes')
+    expect(manifestText).not.toContain('license:')
+    expect(existsSync(join(dir, 'LICENSE'))).toBe(false)
+    expect(readFileSync(join(dir, 'STARTER-LICENSE'), 'utf8')).toContain('Copyright (c) 2026 someone')
+  })
+
   it('packs an npm source without running its scripts', async () => {
     const tgz = pack(app())
     const packed: string[] = []
