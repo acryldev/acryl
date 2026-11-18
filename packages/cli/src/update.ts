@@ -121,7 +121,13 @@ export async function update(
     `${basename(app)} was made from ${blend.id} ${blend.version}. Asking the registry for its latest release...`,
   )
   const latest = await world.latest(blend.id)
-  if (latest === undefined) throw new Error(`the registry does not list ${blend.id}`)
+  if (latest === undefined) {
+    // An app made from a starter (blank, notes...) or shared from a repository has no registry releases: its updates come with git pull.
+    say(
+      `${blend.id} is not a Blend in the registry, so there is nothing to update from it. An app shared from a repository gets its changes with git pull.`,
+    )
+    return 0
+  }
   if (!isNewerVersion(latest, blend.version)) {
     say(`${blend.id} ${blend.version} is the latest release: nothing to update.`)
     return 0

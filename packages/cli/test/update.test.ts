@@ -99,6 +99,15 @@ describe('acrylblends update', () => {
     expect(latest.out()).toContain('0.3.0 is the latest release')
   })
 
+  it('says there is nothing to update for an app whose Blend is not in the registry', async () => {
+    const app = join(scratch, 'starter')
+    makeBlend(app, '0.1.0', v1)
+    const run = session(app)
+    const world: UpdateWorld = { latest: async () => undefined, make: async () => 1 }
+    expect(await update({ directory: undefined, check: false }, run.io, world)).toBe(0)
+    expect(run.out()).toContain('not a Blend in the registry')
+  })
+
   it('changes nothing when the person and the release changed the same lines', async () => {
     const app = join(scratch, 'clash')
     makeBlend(app, '0.1.0', v1)
