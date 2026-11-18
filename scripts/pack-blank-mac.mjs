@@ -358,13 +358,17 @@ for (let round = 1; round <= 4; round += 1) {
 // 3c. The packager keeps only what the app declares, and a dependency that arrived transitively (an optional one, say) is still needed at run time: every
 // installed package is declared, so the bundle carries exactly the tree that runs here.
 const declared = {}
+// A package the app overrides (frame/packages.json `omit`: the LibreOffice engines as an empty placeholder) is declared with the override's own spec:
+// npm refuses a direct dependency that differs from its override (EOVERRIDE), which stopped every pack of acrylblends 1.5.19 apps.
+const overrides = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8')).overrides ?? {}
 for (const pkg of packagesIn(modules)) {
   const manifestPath = join(pkg.path, 'package.json')
   if (!existsSync(manifestPath)) continue
   const own = JSON.parse(readFileSync(manifestPath, 'utf8'))
   // electron is the runtime the packager brings, not a package of the app: it stays in devDependencies.
   if (pkg.name === 'electron') continue
-  if (typeof own.version === 'string') declared[pkg.name] = own.version
+  if (typeof overrides[pkg.name] === 'string') declared[pkg.name] = overrides[pkg.name]
+  else if (typeof own.version === 'string') declared[pkg.name] = own.version
 }
 const before = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
 const merged = { ...before.dependencies, ...declared }
