@@ -78,6 +78,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.3](release-notes/create-1.5.3.md) - asks for acrylblends 1.5.3
 - [Release notes acrylblends 1.5.4](release-notes/acrylblends-1.5.4.md) - `acrylblends add plugin-share` mounts it, so an app made from a registry starter can pull, list and publish plugins
 - [Release notes create-acrylblends 1.5.4](release-notes/create-1.5.4.md) - asks for acrylblends 1.5.4; a registry starter without sharing gets it
+- [Release notes acrylblends 1.5.11](release-notes/acrylblends-1.5.11.md) - acrylblends update (a Blend's newer release merged into an app, your changes kept) and the in-app update of packed products
+- [Release notes create-acrylblends 1.5.11](release-notes/create-1.5.11.md) - released with acrylblends 1.5.11
 - [Release notes acrylblends 1.5.10](release-notes/acrylblends-1.5.10.md) - released with create-acrylblends 1.5.10
 - [Release notes create-acrylblends 1.5.10](release-notes/create-1.5.10.md) - a registry entry unpacks on Windows with Git's tar first on PATH
 - [Release notes acrylblends 1.5.9](release-notes/acrylblends-1.5.9.md) - the workbench opens on a folder it is given (`acryl ade` in a project); @acrylblends/workspace 0.1.1

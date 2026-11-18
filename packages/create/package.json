@@ -1,6 +1,6 @@
 {
   "name": "create-acrylblends",
-  "version": "1.5.10",
+  "version": "1.5.11",
   "description": "Create an Acryl app: npm create acrylblends@latest",
   "license": "MIT",
   "type": "module",
@@ -43,8 +43,8 @@
     "scaffold"
   ],
   "dependencies": {
-    "acrylblends": "workspace:^",
-    "@webboxes/app-persistence": "0.1.2"
+    "@webboxes/app-persistence": "0.1.2",
+    "acrylblends": "workspace:^"
   },
   "publishConfig": {
     "access": "public"
