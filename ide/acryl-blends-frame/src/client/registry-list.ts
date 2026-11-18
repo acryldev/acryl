@@ -21,8 +21,12 @@ export function cleanAddress(text: string): string | undefined {
   return /^github:[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9][A-Za-z0-9._-]*@[0-9][0-9A-Za-z.+-]*$/u.test(address) ? address : undefined
 }
 
-/** The question before anything is added: whose code it is, in one sentence. */
-export const addQuestion = (name: string, owner: string): string => `Add ${name} to your app? It runs code written by ${owner}, inside your app.`
+/** A download size the way a person reads it: whole megabytes (1 MB = 1,000,000 bytes, as npm and the Blends pages count). */
+export const megabytes = (bytes: number): string => `${Math.max(1, Math.round(bytes / 1e6))} MB`
+
+/** The question before anything is added: whose code it is, and what it downloads for this computer when it brings a native package. */
+export const addQuestion = (name: string, owner: string, download?: number): string =>
+  `Add ${name} to your app? It runs code written by ${owner}, inside your app.${download === undefined ? '' : ` It also downloads ${megabytes(download)} for this computer.`}`
 
 /** The answer after an add. */
 export function addedText(pulled: PulledPluginView): string {
@@ -32,4 +36,5 @@ export function addedText(pulled: PulledPluginView): string {
 }
 
 /** One line under a row: who released it, which version and when. */
-export const entryByline = (entry: RegistryEntryView): string => `by ${entry.owner} · v${entry.version}${entry.published === undefined ? '' : ` · ${entry.published}`}`
+export const entryByline = (entry: RegistryEntryView): string =>
+  `by ${entry.owner} · v${entry.version}${entry.published === undefined ? '' : ` · ${entry.published}`}${entry.download === undefined ? '' : ` · ${megabytes(entry.download)} download`}`

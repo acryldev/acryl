@@ -6,7 +6,7 @@ import { planAppPluginShare, shareAppPlugin, type SharePorts } from '../src/app-
 import { parseGithubReadiness, parsePulledPlugin, parseRegistryView, parseSharePlan, type RegistryEntryView, type SharePlan } from '../src/contract.ts'
 import { frameRoutes } from '../src/index.ts'
 import { githubReadiness, plainPullRefusal, plainShareProblem, PlainError } from '../src/plain.ts'
-import { bareName, createRegistryReader, readRegistryView, registryEntries, repoOfSource, type RegistryMarks } from '../src/registry.ts'
+import { bareName, createRegistryReader, downloadFor, readRegistryView, registryEntries, repoOfSource, type RegistryMarks } from '../src/registry.ts'
 import { createRegistryApi } from '../src/client/registry-api.ts'
 import { addedText, addQuestion, cleanAddress, entryByline, filterRegistry } from '../src/client/registry-list.ts'
 import { colleagueAddress, shareButton, shareDetails, shareQuestion, shareSentence } from '../src/client/plugins-navigator.ts'
@@ -33,6 +33,7 @@ describe('the registry as the frame reads it', () => {
       listed('clock', 'someone', { published: '2026-11-05' }),
       listed('notes', 'someone', { published: '2026-11-01' }),
       { ...listed('bare', 'someone'), acrylPull: undefined },
+      { ...listed('blend-made', 'someone', { published: '2026-10-20' }), acrylPull: undefined, install: 'npm run acryl -- plugin pull github:someone/blend-made@1.0.0' },
       { ...listed('noversion', 'someone'), version: undefined },
       'junk',
     ]), { names: new Set(['clock']), repos: new Set(['someone/notes']), accounts: new Set(['inboxxobni']) })
@@ -40,6 +41,7 @@ describe('the registry as the frame reads it', () => {
       ['dice', false, true],
       ['clock', true, false],
       ['notes', true, false],
+      ['blend-made', false, false],
     ])
     expect(entries[0]).toMatchObject({ owner: 'inboxxobni', url: 'https://github.com/inboxxobni/dice', source: 'github:inboxxobni/dice@1.0.0', published: '2026-10-01' })
     expect(() => registryEntries({ formatVersion: 2, entries: [] }, NONE)).toThrow('version 1')
@@ -87,6 +89,30 @@ describe('the registry as the frame reads it', () => {
   })
 })
 
+describe('a plugin that brings a native package', () => {
+  const native = [
+    { os: 'darwin', cpu: 'arm64', size: 153_160_461 },
+    { os: 'win32', cpu: 'x64', size: 190_868_740 },
+    { os: 'linux', size: 152_357_942 },
+  ]
+  it('carries the size from the index for this computer', () => {
+    const [entry] = registryEntries(index([{ ...listed('office-preview', 'cordisplugins'), native }]), NONE)
+    expect(entry?.download).toBe(downloadFor(native))
+  })
+  it('names the size for this computer: its OS and CPU, then its OS for any CPU, else nothing', () => {
+    expect(downloadFor(native, 'darwin', 'arm64')).toBe(153_160_461)
+    expect(downloadFor(native, 'linux', 'arm64')).toBe(152_357_942)
+    expect(downloadFor(native, 'darwin', 'x64')).toBeUndefined()
+    expect(downloadFor(undefined)).toBeUndefined()
+  })
+  it('shows the size on the row, and it survives the Host answer', () => {
+    const entry = { name: 'office-preview', description: '', owner: 'cordisplugins', url: 'https://github.com/cordisplugins/office-preview', version: '1.0.0', compatibility: 'ACRYL', source: 'github:cordisplugins/office-preview@1.0.0', installed: false, mine: false, download: 153_160_461 }
+    expect(entryByline(entry)).toBe('by cordisplugins · v1.0.0 · 153 MB download')
+    const view = parseRegistryView({ status: 'ready', readAt: '2026-11-18T00:00:00Z', entries: [entry] })
+    expect(view.status === 'ready' ? view.entries[0]?.download : undefined).toBe(153_160_461)
+  })
+})
+
 describe('the Registry tab\'s rules', () => {
   const entries: RegistryEntryView[] = registryEntries(index([
     listed('dice', 'inboxxobni'),
@@ -106,6 +132,7 @@ describe('the Registry tab\'s rules', () => {
     expect(cleanAddress('  github:inboxxobni/acrylblends-dice@0.1.0 ')).toBe('github:inboxxobni/acrylblends-dice@0.1.0')
     for (const bad of ['', 'inboxxobni/dice', 'github:a/b', 'https://github.com/a/b', 'github:a/b@1.0.0 && rm -rf', '../x@1.0.0']) expect(cleanAddress(bad)).toBeUndefined()
     expect(addQuestion('dice', 'inboxxobni')).toBe('Add dice to your app? It runs code written by inboxxobni, inside your app.')
+    expect(addQuestion('office-preview', 'cordisplugins', 153_160_461)).toBe('Add office-preview to your app? It runs code written by cordisplugins, inside your app. It also downloads 153 MB for this computer.')
     expect(addedText({ name: 'dice', version: '1.0.0', action: 'installed', state: 'active' })).toBe('Done. dice is added to your app as v1.0.0 and running now.')
     expect(addedText({ name: 'dice', version: '1.0.0', action: 'unchanged', state: 'active' })).toContain('nothing changed')
     expect(addedText({ name: 'dice', version: '1.0.0', action: 'installed', state: 'PENDING' })).toContain('not running yet')

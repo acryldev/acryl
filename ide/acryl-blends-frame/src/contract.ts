@@ -589,6 +589,8 @@ export interface RegistryEntryView {
   readonly installed: boolean
   /** The account the person is signed in to GitHub with (or shares to) released it. */
   readonly mine: boolean
+  /** Bytes it downloads besides itself for this computer (a native package, plugin-share/native.ts), when the index says. */
+  readonly download?: number
 }
 
 /** The registry as the Host read it: its entries, or why they could not be read (offline, rate limited, the site changed). */
@@ -606,10 +608,10 @@ export function parseRegistryView(value: unknown): RegistryView {
   if (value.status !== 'ready' || !Array.isArray(value.entries) || typeof value.readAt !== 'string') throw new Error('registry: not a view')
   const entries = value.entries.map((entry: unknown): RegistryEntryView => {
     if (!isRecord(entry)) throw new Error('registry: entry')
-    const { name, description, owner, url, version, published, compatibility, source, installed, mine } = entry
+    const { name, description, owner, url, version, published, compatibility, source, installed, mine, download } = entry
     if (typeof name !== 'string' || typeof description !== 'string' || typeof owner !== 'string' || typeof url !== 'string' || typeof version !== 'string'
       || typeof compatibility !== 'string' || typeof source !== 'string' || typeof installed !== 'boolean' || typeof mine !== 'boolean') throw new Error('registry: entry')
-    return { name, description, owner, url, version, ...(typeof published === 'string' ? { published } : {}), compatibility, source, installed, mine }
+    return { name, description, owner, url, version, ...(typeof published === 'string' ? { published } : {}), compatibility, source, installed, mine, ...(typeof download === 'number' && download > 0 ? { download } : {}) }
   })
   return { status: 'ready', entries, readAt: value.readAt }
 }

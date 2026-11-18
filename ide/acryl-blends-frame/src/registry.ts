@@ -37,6 +37,13 @@ export function repoOfSource(source: string): string | undefined {
   return match === null ? undefined : `${match[1] ?? ''}/${match[2] ?? ''}`.toLowerCase()
 }
 
+/** The unpacked size of the native package an entry brings for this computer: its OS and CPU first, then its OS for any CPU (plugin-share/native.ts). */
+export function downloadFor(native: unknown, platform: string = process.platform, arch: string = process.arch): number | undefined {
+  if (!Array.isArray(native)) return undefined
+  const sized = native.filter((item): item is { os: unknown; cpu?: unknown; size: number } => isRecord(item) && typeof item.size === 'number' && item.size > 0)
+  return (sized.find(item => item.os === platform && item.cpu === arch) ?? sized.find(item => item.os === platform && item.cpu === undefined))?.size
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
@@ -50,13 +57,16 @@ export function registryEntries(index: unknown, marks: RegistryMarks): RegistryE
   const entries: RegistryEntryView[] = []
   for (const entry of index.entries as unknown[]) {
     if (!isRecord(entry)) continue
-    const { name, description, repo, version, published, compatibility, acrylPull } = entry
-    if (typeof name !== 'string' || typeof repo !== 'string' || typeof version !== 'string' || typeof acrylPull !== 'string') continue
-    const source = SOURCE.exec(acrylPull)?.[0]
+    const { name, description, repo, version, published, compatibility, acrylPull, install, native } = entry
+    // A plugin made in a Blends app has only `install` (`npm run acryl -- plugin pull github:...`); the others have `acrylPull`.
+    const pull = typeof acrylPull === 'string' ? acrylPull : typeof install === 'string' ? install : undefined
+    if (typeof name !== 'string' || typeof repo !== 'string' || typeof version !== 'string' || pull === undefined) continue
+    const source = SOURCE.exec(pull)?.[0]
     const where = /^https:\/\/github\.com\/([^/]+)\/([^/#?]+)/u.exec(repo)
     if (source === undefined || where === null) continue
     const owner = where[1] ?? ''
     const repository = repoOfSource(source)
+    const download = downloadFor(native)
     entries.push({
       name,
       description: typeof description === 'string' ? description : '',
@@ -68,6 +78,7 @@ export function registryEntries(index: unknown, marks: RegistryMarks): RegistryE
       source,
       installed: marks.names.has(bareName(name)) || (repository !== undefined && marks.repos.has(repository)),
       mine: marks.accounts.has(owner.toLowerCase()),
+      ...(download === undefined ? {} : { download }),
     })
   }
   // The person's own first, then the newest release, then by name.

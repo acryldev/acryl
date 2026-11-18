@@ -24,6 +24,8 @@ interface Asking {
   readonly source: string
   readonly name: string
   readonly owner: string
+  /** Bytes it downloads besides itself for this computer. */
+  readonly download?: number
 }
 
 type Said =
@@ -87,7 +89,7 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
 
   const question = (item: Asking) => (
     <div className="acrylBlendsShareAsk" role="alertdialog" aria-label={`Add ${item.name}`}>
-      <p>{addQuestion(item.name, item.owner)}</p>
+      <p>{addQuestion(item.name, item.owner, item.download)}</p>
       <div className="acrylBlendsShareRow">
         {/* Cancel is the default: Enter or a stray click adds nothing. */}
         <button type="button" className="acrylBlendsShareCancel" autoFocus onClick={() => { setAsking(undefined) }}>Cancel</button>
@@ -108,7 +110,7 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
           {entry.installed
             ? <span className="acrylBlendsRegAdded" role="status">Added</span>
             : (
-              <button type="button" className="acrylBlendsRegAdd" disabled={adding !== undefined} onClick={() => { setSaid(undefined); setAsking({ source: entry.source, name: entry.name, owner: entry.owner }) }}>
+              <button type="button" className="acrylBlendsRegAdd" disabled={adding !== undefined} onClick={() => { setSaid(undefined); setAsking({ source: entry.source, name: entry.name, owner: entry.owner, ...(entry.download === undefined ? {} : { download: entry.download }) }) }}>
                 {adding === entry.source ? 'Adding…' : 'Add to my app'}
               </button>
             )}
