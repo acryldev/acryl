@@ -55,6 +55,17 @@ const npm = (npmArgs, options) =>
  * (in the frame), under its own name (`--product`, else the first heading of its README).
  */
 const from = option('--from', undefined)
+/** Where the product's newer builds are published: the Blend's GitHub repository (its `origin`), whose release workflow uploads this packer's files. */
+function releaseSource() {
+  try {
+    const remote = execFileSync('git', ['-C', from, 'remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim()
+    const repo = /github\.com[:/]([\w.-]+\/[\w.-]+?)(?:\.git)?$/u.exec(remote)?.[1]
+    return repo === undefined ? {} : { releases: { repo, file: FILE_NAME } }
+  } catch {
+    return {} // not a checkout, or no origin: the product has no update source
+  }
+}
+
 /** Which build this product is (product.json `build`): the Blend folder's commit when it is a checkout, else the moment of packing. A started app compares it with the build its copy was made from. */
 const productBuild = () => {
   try {
@@ -464,7 +475,7 @@ const program = [
 writeFileSync(
   join(app, 'product.json'),
   // A product made from a Blend (--from) is that finished app under its own name; only Blank's first app is the person's to name.
-  `${JSON.stringify({ product: PRODUCT, appName: APP_NAME, program, ...(from === undefined ? {} : { named: true, build: productBuild() }) }, null, 2)}\n`,
+  `${JSON.stringify({ product: PRODUCT, appName: APP_NAME, program, ...(from === undefined ? {} : { named: true, build: productBuild(), ...releaseSource() }) }, null, 2)}\n`,
 )
 log(`the Program: ${program.join(', ')}`)
 

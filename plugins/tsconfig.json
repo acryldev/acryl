@@ -46,6 +46,7 @@
   "exclude": [
     "acryl-*/**",
     "desktop/main.ts",
+    "desktop/update-menu.ts",
     "desktop/window.ts",
     "desktop-web/main.ts",
     "desktop-web/window.ts"

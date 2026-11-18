@@ -37,6 +37,8 @@ export interface Product {
    * source was made from another build, the next start copies this build's files over it (`openProductApp`), so an update reaches the screen.
    */
   readonly build?: string
+  /** Where newer builds are published (the packer reads the Blend's GitHub remote): the app offers them in place (plugins/desktop/updater.ts). */
+  readonly releases?: { readonly repo: string; readonly file: string }
 }
 
 export const PRODUCT_FILE = 'product.json'
@@ -46,13 +48,14 @@ export function readProduct(bundle: string): Product | undefined {
   try {
     const value: unknown = JSON.parse(readFileSync(join(bundle, PRODUCT_FILE), 'utf8'))
     if (value === null || typeof value !== 'object') return undefined
-    const { product, appName, program, seed, named, build } = value as {
+    const { product, appName, program, seed, named, build, releases } = value as {
       product?: unknown
       appName?: unknown
       program?: unknown
       seed?: unknown
       named?: unknown
       build?: unknown
+      releases?: { repo?: unknown; file?: unknown }
     }
     if (typeof product !== 'string' || product.trim() === '') return undefined
     return {
@@ -65,6 +68,9 @@ export function readProduct(bundle: string): Product | undefined {
       ...(isProgramPath(seed) ? { seed: seed.replace(/\/$/u, '') } : {}),
       ...(named === true ? { named: true as const } : {}),
       ...(typeof build === 'string' && build.trim() !== '' ? { build: build.trim() } : {}),
+      ...(typeof releases?.repo === 'string' && /^[\w.-]+\/[\w.-]+$/u.test(releases.repo) && typeof releases.file === 'string' && /^[\w.-]+$/u.test(releases.file)
+        ? { releases: { repo: releases.repo, file: releases.file } }
+        : {}),
     }
   } catch {
     return undefined
