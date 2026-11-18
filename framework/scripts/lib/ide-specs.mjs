@@ -14,7 +14,10 @@ import { frameFolders } from './frame-folders.mjs'
  */
 export function frameSpecs(root) {
   const folders = new Map()
-  const candidates = new Set([...readdirSync(join(root, 'ide')).map((name) => join(root, 'ide', name)), ...frameFolders(root).values()])
+  const candidates = new Set([
+    ...readdirSync(join(root, 'ide')).map((name) => join(root, 'ide', name)),
+    ...frameFolders(root).values(),
+  ])
   for (const folder of candidates) {
     const manifest = join(folder, 'package.json')
     if (!existsSync(manifest)) continue

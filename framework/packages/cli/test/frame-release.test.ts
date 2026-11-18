@@ -52,10 +52,14 @@ describe('the frame specs of an existing app', () => {
       'acryl-web-service': 'file:/checkout/runtime/acryl-web-service',
     })
     const input = frameProfileInput(frameProfileForApp(root) ?? publishedFrameProfile(), 'x', [])
-    expect(input.dependencies?.['acryl-web-service']).toBe('file:/checkout/runtime/acryl-web-service')
+    expect(input.dependencies?.['acryl-web-service']).toBe(
+      'file:/checkout/runtime/acryl-web-service',
+    )
     expect(input.frameworkVersion).toBe('file:/checkout/packages/cli')
     // The row keeps its id: an app made before the package moved to runtime/ (spec 051) composes the same row.
-    expect(input.packages?.find((entry) => entry.row === 'acryl-web')?.name).toBe('acryl-web-service')
+    expect(input.packages?.find((entry) => entry.row === 'acryl-web')?.name).toBe(
+      'acryl-web-service',
+    )
   })
 
   it('a desktop app with no frame yet gets the published frame; a web app and ACRYLBLENDS_FRAME_PACKAGES=none stay on the framework alone', () => {

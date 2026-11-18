@@ -109,6 +109,15 @@ function frozenRelease(version) {
 }
 
 /** Every release with templates: version, and for each template the scaffold file contents (or undefined when that release had no such template). */
+/**
+ * The prefix of the release tags. In its own repository the framework's releases are `v*`; inside ACRYL's monorepo (spec 051) `v*` are ACRYL's
+ * releases, so the framework's are imported as `acrylblends-v*` (`git fetch <acrylblends> 'refs/tags/v*:refs/tags/acrylblends-v*'`).
+ */
+const TAG_PREFIX =
+  execFileSync('git', ['rev-parse', '--show-prefix'], { cwd: root, encoding: 'utf8' }).trim() === ''
+    ? 'v'
+    : 'acrylblends-v'
+
 function releases() {
   const published = publishedVersions()
   for (const version of frozen.keys())
@@ -116,18 +125,21 @@ function releases() {
       fail(
         `${relative(root, FROZEN_FILE)} names ${version}, which npm does not list for acrylblends`,
       )
-  const tags = execFileSync('git', ['tag', '--list', 'v*'], { cwd: root, encoding: 'utf8' })
+  const tags = execFileSync('git', ['tag', '--list', `${TAG_PREFIX}*`], {
+    cwd: root,
+    encoding: 'utf8',
+  })
     .trim()
     .split('\n')
     .filter(Boolean)
   // Every published release is either regenerated from its tag or frozen: a checkout without the tags (a shallow clone), or a new release nobody
   // recorded, fails here instead of passing on fewer releases.
   const untagged = [...published].filter(
-    (version) => !tags.includes(`v${version}`) && !frozen.has(version),
+    (version) => !tags.includes(`${TAG_PREFIX}${version}`) && !frozen.has(version),
   )
   if (untagged.length > 0)
     fail(
-      `no tag for the published release${untagged.length === 1 ? '' : 's'} ${untagged.join(', ')}: fetch the tags (git fetch --tags) and run again; a release whose tag is not in this repository's history goes in ${relative(root, FROZEN_FILE)} with why`,
+      `no tag for the published release${untagged.length === 1 ? '' : 's'} ${untagged.join(', ')}: fetch the tags (git fetch --tags; inside ACRYL, the acrylblends tags as ${TAG_PREFIX}*) and run again; a release whose tag is not in this repository's history goes in ${relative(root, FROZEN_FILE)} with why`,
     )
   const out = []
   for (const version of frozen.keys()) {
@@ -135,7 +147,7 @@ function releases() {
     if (release !== undefined) out.push(release)
   }
   for (const tag of tags) {
-    const version = tag.slice(1)
+    const version = tag.slice(TAG_PREFIX.length)
     if (!published.has(version) || frozen.has(version)) continue
     let manifest
     try {

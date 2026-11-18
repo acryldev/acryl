@@ -9,5 +9,10 @@ import { join, resolve } from 'node:path'
 /** Key (the folder's name) to absolute folder, in the file's order. */
 export function frameFolders(root) {
   const { packages } = JSON.parse(readFileSync(join(root, 'frame', 'packages.json'), 'utf8'))
-  return new Map(Object.entries(packages).map(([key, entry]) => [key, resolve(root, entry.path ?? join('ide', key))]))
+  return new Map(
+    Object.entries(packages).map(([key, entry]) => [
+      key,
+      resolve(root, entry.path ?? join('ide', key)),
+    ]),
+  )
 }

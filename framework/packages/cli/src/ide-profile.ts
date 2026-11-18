@@ -786,7 +786,12 @@ function overlayOf(
     lines.push(`    - id: ${entry.row ?? entry.name}`, `      name: ${yamlName(entry.name)}`)
     // JSON quoting is valid YAML and keeps a sentence with colons or quotes one string.
     if (entry.config !== undefined)
-      lines.push('      config:', ...Object.entries(entry.config).map(([key, value]) => `        ${key}: ${JSON.stringify(value)}`))
+      lines.push(
+        '      config:',
+        ...Object.entries(entry.config).map(
+          ([key, value]) => `        ${key}: ${JSON.stringify(value)}`,
+        ),
+      )
     // The app's page, which the frame shows in its centre.
     if ((entry.row ?? entry.name) === BLENDS_FRAME_ROW)
       lines.push('      config:', `        appPage: ${FRAME_PAGE_PREFIX}`)

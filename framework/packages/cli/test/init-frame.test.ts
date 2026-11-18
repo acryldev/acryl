@@ -10,7 +10,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { FRAME_DSH_VERSION, FRAME_RELEASE, FRAME_SCOPE } from '../src/frame-release.ts'
-import { FRAME_IDENTITY, FRAME_PACKAGES, FRAME_PAGE_PREFIX, FRAME_PLUGINS } from '../src/ide-profile.ts'
+import {
+  FRAME_IDENTITY,
+  FRAME_PACKAGES,
+  FRAME_PAGE_PREFIX,
+  FRAME_PLUGINS,
+} from '../src/ide-profile.ts'
 import { type Io, init } from '../src/index'
 import { TEMPLATES, templatesRoot } from '../src/templates.ts'
 import { VERSION } from '../src/version.ts'
@@ -230,7 +235,9 @@ describe('frame/packages.json, the release the CLI installs', () => {
   const frameworkRoot = join(templatesRoot(), '..', '..', '..')
   const ide = join(frameworkRoot, 'ide')
   // A package shared with ACRYL lives outside ide/ and the file names its folder (`path`, spec 051); every other one is ide/<key>.
-  const release = JSON.parse(readFileSync(join(frameworkRoot, 'frame', 'packages.json'), 'utf8')) as {
+  const release = JSON.parse(
+    readFileSync(join(frameworkRoot, 'frame', 'packages.json'), 'utf8'),
+  ) as {
     packages: Record<string, { path?: string }>
   }
   const folderPath = (key: string) => {
