@@ -398,6 +398,9 @@ exports.default = async (context) => {
 `,
 )
 const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
+// The installed app's icon (Dock, Finder, About, the installer) is the one its window wears (plugins/desktop/brand.ts iconFile): the app's own
+// assets/icon.png, else the ACRYL Blends logo. Left unset, every product showed Electron's default icon.
+const appIcon = [join(app, 'assets', 'icon.png'), join(app, 'plugins', 'desktop', 'assets', 'acrylblends-logo.png')].find((file) => existsSync(file))
 manifest.main = 'plugins/desktop/main.ts'
 manifest.productName = PRODUCT
 manifest.description = DESCRIPTION
@@ -413,10 +416,10 @@ manifest.build = {
     // No signing by the builder (it passes --timestamp, which an ad hoc signature refuses); `afterPack` below seals the bundle instead.
     identity: null,
     category: 'public.app-category.developer-tools',
-    icon: undefined,
+    icon: appIcon,
   },
   dmg: { title: PRODUCT },
-  win: { target: [{ target: 'nsis', arch: [arch] }] },
+  win: { target: [{ target: 'nsis', arch: [arch] }], icon: appIcon },
   // Per user, no administrator: the installer asks where, and the app's home is the person's own data folder (plugins/instance/storage.ts).
   nsis: {
     oneClick: false,
@@ -426,6 +429,7 @@ manifest.build = {
   linux: {
     target: [{ target: 'deb', arch: [arch] }],
     category: 'Development',
+    icon: appIcon,
     maintainer: 'ACRYL Blends <build@acrylblends.dev>',
   },
   ...(platform === 'mac' ? { afterPack: join(work, 'seal-bundle.cjs') } : {}),
