@@ -1,15 +1,19 @@
 /** What the Registry tab lists and how it words one row: pure, so the rules are tested without a page. */
 
-import type { PulledPluginView, RegistryEntryView } from '../contract.ts'
+import type { PulledPluginView, RegistryEntryView, RegistryOrigin } from '../contract.ts'
 
 /** A plugin for a different kind of app (a stock DeepSeek Harness plugin) cannot run in a Blends app; it is hidden until the person asks to see all. */
 export const forOtherApps = (entry: RegistryEntryView): boolean => entry.compatibility === 'DSH stock'
 
+/** All (the default), or only official or only community entries. */
+export type OriginFilter = 'all' | RegistryOrigin
+
 /** The entries a search shows: by name, description or owner, every word of it; the ones for other apps only when asked. Order is kept. */
-export function filterRegistry(entries: readonly RegistryEntryView[], query: string, showAll: boolean): RegistryEntryView[] {
+export function filterRegistry(entries: readonly RegistryEntryView[], query: string, showAll: boolean, origin: OriginFilter = 'all'): RegistryEntryView[] {
   const words = query.toLowerCase().split(/\s+/u).filter(word => word !== '')
   return entries.filter((entry) => {
     if (!showAll && forOtherApps(entry)) return false
+    if (origin !== 'all' && entry.origin !== origin) return false
     const text = `${entry.name} ${entry.description} ${entry.owner}`.toLowerCase()
     return words.every(word => text.includes(word))
   })
@@ -24,9 +28,9 @@ export function cleanAddress(text: string): string | undefined {
 /** A download size the way a person reads it: whole megabytes (1 MB = 1,000,000 bytes, as npm and the Blends pages count). */
 export const megabytes = (bytes: number): string => `${Math.max(1, Math.round(bytes / 1e6))} MB`
 
-/** The question before anything is added: whose code it is, and what it downloads for this computer when it brings a native package. */
-export const addQuestion = (name: string, owner: string, download?: number): string =>
-  `Add ${name} to your app? It runs code written by ${owner}, inside your app.${download === undefined ? '' : ` It also downloads ${megabytes(download)} for this computer.`}`
+/** The question before anything is added: whose code it is (a community plugin says so: nobody at ACRYL reviewed it), and what it downloads for this computer. */
+export const addQuestion = (name: string, owner: string, download?: number, origin?: RegistryOrigin): string =>
+  `Add ${name} to your app? ${origin === 'community' ? `It is a community plugin: it runs code written by ${owner}, inside your app, and ACRYL has not reviewed it.` : `It runs code written by ${owner}, inside your app.`}${download === undefined ? '' : ` It also downloads ${megabytes(download)} for this computer.`}`
 
 /** The answer after an add. */
 export function addedText(pulled: PulledPluginView): string {

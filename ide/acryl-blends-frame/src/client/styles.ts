@@ -319,6 +319,10 @@ button.acrylBlendsFrow:hover { background: var(--bf-surface-2); }
 .acrylBlendsRegAdd { padding: 3px 10px; border: 1px solid var(--bf-accent); border-radius: 5px; background: var(--bf-accent-dim); color: var(--bf-strong); font: inherit; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
 .acrylBlendsRegAdd:disabled { opacity: .5; cursor: default; }
 .acrylBlendsRegAdded { color: var(--bf-ok); font-size: 11.5px; }
+.acrylBlendsRegOrigin { display: flex; gap: 4px; margin-bottom: 10px; }
+.acrylBlendsRegOrigin button { padding: 2px 9px; border: 1px solid var(--bf-border-2); border-radius: 5px; background: transparent; color: var(--bf-text-2); font: inherit; font-size: 11.5px; cursor: pointer; }
+.acrylBlendsRegOrigin button[aria-pressed="true"] { border-color: var(--bf-accent); background: var(--bf-accent-dim); color: var(--bf-strong); }
+.acrylBlendsPlugBy[data-origin="official"] { color: var(--bf-ok); border-color: currentColor; }
 .acrylBlendsRegAll { color: var(--bf-text-2); font-size: 11.5px; display: inline-flex; align-items: center; cursor: pointer; }
 .acrylBlendsRegByAddress { display: grid; gap: 3px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--bf-border); }
 .acrylBlendsRegByAddress b { color: var(--bf-strong); font-size: 12px; }

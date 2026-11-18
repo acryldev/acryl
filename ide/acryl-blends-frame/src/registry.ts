@@ -57,7 +57,7 @@ export function registryEntries(index: unknown, marks: RegistryMarks): RegistryE
   const entries: RegistryEntryView[] = []
   for (const entry of index.entries as unknown[]) {
     if (!isRecord(entry)) continue
-    const { name, description, repo, version, published, compatibility, acrylPull, install, native } = entry
+    const { name, description, repo, version, published, compatibility, origin, acrylPull, install, native } = entry
     // A plugin made in a Blends app has only `install` (`npm run acryl -- plugin pull github:...`); the others have `acrylPull`.
     const pull = typeof acrylPull === 'string' ? acrylPull : typeof install === 'string' ? install : undefined
     if (typeof name !== 'string' || typeof repo !== 'string' || typeof version !== 'string' || pull === undefined) continue
@@ -75,14 +75,16 @@ export function registryEntries(index: unknown, marks: RegistryMarks): RegistryE
       version,
       ...(typeof published === 'string' && /^\d{4}-\d{2}-\d{2}$/u.test(published) ? { published } : {}),
       compatibility: typeof compatibility === 'string' ? compatibility : 'DSH stock',
+      // An index written before the registry knew origins says nothing: nothing is called official that the registry did not call so.
+      origin: origin === 'official' ? 'official' : 'community',
       source,
       installed: marks.names.has(bareName(name)) || (repository !== undefined && marks.repos.has(repository)),
       mine: marks.accounts.has(owner.toLowerCase()),
       ...(download === undefined ? {} : { download }),
     })
   }
-  // The person's own first, then the newest release, then by name.
-  return entries.sort((a, b) => Number(b.mine) - Number(a.mine) || (b.published ?? '').localeCompare(a.published ?? '') || a.name.localeCompare(b.name))
+  // The person's own first, then official, then the newest release, then by name.
+  return entries.sort((a, b) => Number(b.mine) - Number(a.mine) || Number(b.origin === 'official') - Number(a.origin === 'official') || (b.published ?? '').localeCompare(a.published ?? '') || a.name.localeCompare(b.name))
 }
 
 /** The raw index, read once in a while: a fresh copy within `ttlMs`, else a new read, else the copy read before with the time it was read. */
