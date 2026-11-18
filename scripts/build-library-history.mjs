@@ -3,7 +3,7 @@
 // tell a file an old app got from a release (safe to replace) from one the app edited, for apps made before `plugins/library.lock.json` existed. Each version is installed from the registry into
 // a scratch folder and asked what it copies; hashes already in the file are kept, so a release only adds its own.
 //
-//   node scripts/build-library-history.mjs 0.9.1 0.9.2 0.10.0 0.11.0
+//   node scripts/build-library-history.mjs 1.5.19   (after each release: the gate's library-history test fails until it is in)
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -90,4 +90,16 @@ const sorted = Object.fromEntries(
     ]),
 )
 writeFileSync(target, `${JSON.stringify(sorted)}\n`)
+// The releases the history covers, so a test can fail a release that forgot to add itself (packages/cli/test/library-history.test.ts).
+const versionsFile = join(root, 'packages', 'cli', 'shared', 'library-history-versions.json')
+const covered = new Set([
+  ...(existsSync(versionsFile) ? JSON.parse(readFileSync(versionsFile, 'utf8')) : []),
+  ...versions,
+])
+// Numeric by major.minor.patch; a prerelease (1.0.0-rc.1) before its release.
+const core = (v) => v.split('-')[0].split('.').map(Number)
+const order = (a, b) =>
+  core(a).reduce((d, n, i) => d || n - core(b)[i], 0) ||
+  Number(!a.includes('-')) - Number(!b.includes('-'))
+writeFileSync(versionsFile, `${JSON.stringify([...covered].sort(order))}\n`)
 console.log(`build-library-history: wrote ${target}`)

@@ -10,46 +10,155 @@
   },
   "acryl-db-sqlite": {
     "LICENSE": ["ef3897302ab91dccedfc"],
-    "src/facade/node.ts": ["8b9405055c5da973ef2c"],
-    "src/index.ts": ["87ff9cb43f77dfa760ac"],
-    "src/open.ts": ["0ee7cc85f660910d2fca"]
+    "src/facade/node.ts": ["8b9405055c5da973ef2c", "f1506fcd6bcaecf719bf"],
+    "src/index.ts": ["87ff9cb43f77dfa760ac", "3cbbe558a011c7040cb9", "e8f291d65840a56bc2dc"],
+    "src/open.ts": ["0ee7cc85f660910d2fca", "533c8606b918dde6e3ee"]
   },
   "acryl-door": {
     "LICENSE": ["b84342464fb19baab24f"],
-    "src/cli/acryl.ts": ["0dcfd9e51ac6eba760fa"],
+    "src/cli/acryl.ts": [
+      "0dcfd9e51ac6eba760fa",
+      "db534eeaa7fdf6b39525",
+      "8aa8442f38d44cdb9827",
+      "1ddb15d45854dc3547cd",
+      "8c0078f73ff37f391dbe",
+      "1fd7228cba320e077e9a",
+      "5fd10a53c3f00728625f"
+    ],
     "src/host/api.ts": ["0626ef27ad2065b3b379"],
     "src/host/audit.ts": ["fb718ee832bdcbaf13e4"],
-    "src/host/channel.ts": ["3dee2f7f45181408c1b2"],
-    "src/host/chat-tools.ts": ["d0dd41066eef663649cb"],
-    "src/host/door-file.ts": ["aeba058f761cb2b46c03"],
-    "src/host/door.ts": ["81398163a2225b6a5c67", "f7eebdaebe24c1c8ee80"],
-    "src/host/http.ts": ["e894092402938071b346"],
-    "src/host/mcp-routes.ts": ["d139b336307d391d0696"],
-    "src/host/operator-routes.ts": ["4dbceec2a79224770ddf"],
-    "src/host/page-routes.ts": ["7c2367a408dab92ae9d8"],
-    "src/host/shim.ts": ["b1a03003568ea3a10ec8"],
-    "src/host/verbs.ts": ["3746905e14426042afd9"],
-    "src/index.ts": ["2c4f2230541d54c3868b", "3ca586bf0cefe2e3b15a"],
+    "src/host/channel.ts": [
+      "3dee2f7f45181408c1b2",
+      "3ed33fb04bbbab7e989e",
+      "45b36769398446a3287f",
+      "f35af9e1324bfe88ba71",
+      "123a49624b9562787820",
+      "7126cc193d21014a8ef9",
+      "77846e3dfa8f79e79bc6",
+      "1152afb1155be64f4707"
+    ],
+    "src/host/chat-tools.ts": [
+      "d0dd41066eef663649cb",
+      "115db97b520f46dbf6c3",
+      "6bd12694b28b34b92b12"
+    ],
+    "src/host/door-file.ts": ["aeba058f761cb2b46c03", "bd02e76eba5e1f14bffe"],
+    "src/host/door.ts": [
+      "81398163a2225b6a5c67",
+      "f7eebdaebe24c1c8ee80",
+      "172fd9dc0f1ed1db9314",
+      "f6833899f211aa23f93f",
+      "b266715f5b3266905740",
+      "cb95b2ba48d67a55a1ce",
+      "eeee88bfb0449106a1e5",
+      "c9e681a3516fcea8afa3",
+      "58638f18a0f894731295",
+      "d4de7cff6c49b35798d4",
+      "bf5976f37a23e717097d",
+      "be06dbd481547c10596b",
+      "7379a74db8c78ccee3a7"
+    ],
+    "src/host/http.ts": ["e894092402938071b346", "6178d187a0d2f309a9f0"],
+    "src/host/mcp-routes.ts": ["d139b336307d391d0696", "33dc583d98c6b5e9bd31"],
+    "src/host/operator-routes.ts": [
+      "4dbceec2a79224770ddf",
+      "474e20dc429e546b852f",
+      "fa28a0ad318bebbc160a"
+    ],
+    "src/host/page-routes.ts": [
+      "7c2367a408dab92ae9d8",
+      "7346b508aadc306071fa",
+      "476e798746299bef60d5",
+      "3c2beea4c15d8fb31a6a",
+      "4ab30ea47108c815f653"
+    ],
+    "src/host/page-socket.ts": [
+      "ed3254d0d947c3e17556",
+      "941e4ad5561866e1b17f",
+      "cc74e83d2cf25beea16f",
+      "1c0b8276c256d8a8c937"
+    ],
+    "src/host/shell.ts": ["c1d49a1ce31b900a53f2"],
+    "src/host/shim.ts": [
+      "b1a03003568ea3a10ec8",
+      "14c4d5e7f00627fd42a4",
+      "dbb58ca7aff4ccc16465",
+      "5d262506a024163e1f61"
+    ],
+    "src/host/verbs.ts": [
+      "3746905e14426042afd9",
+      "bf5e6242a3fa6952cad5",
+      "ddf646e3d7abe81c86a1",
+      "7cdecd8e2cc34f8e86a8",
+      "9c73e39aa43257bf1c84",
+      "7a4037b23640feb08a1e"
+    ],
+    "src/index.ts": [
+      "2c4f2230541d54c3868b",
+      "3ca586bf0cefe2e3b15a",
+      "97f546c85d41c8de3968",
+      "b5a87123401138339799",
+      "039be1f058c06dd89f1e",
+      "4176a0c98df7ba6f9f76",
+      "12bb1f768d06ff0d67b2",
+      "ee28b664e747c62ec76b",
+      "72fa98a2110695d6ac9f",
+      "a3b5985a71bce353971a",
+      "be6fe3e8f8ef107f70f6"
+    ],
     "src/page/api.ts": ["5644cb5607452893bc11"],
-    "src/page/channel.ts": ["134f38cb134706a62e32"],
-    "src/page/driver/accessibility.ts": ["ae3174bb2f2ad6911230", "1532845253f73399a726"],
-    "src/page/driver/actions.ts": ["38d7761494116bdf3807"],
-    "src/page/driver/driver.ts": ["567079c6ab38199678db"],
+    "src/page/base.ts": ["6604aa244a127f938bca"],
+    "src/page/channel.ts": [
+      "134f38cb134706a62e32",
+      "76dd3217b5d7bc6a7222",
+      "37398c7cdd2380355506",
+      "a4453e42578cbef1631a",
+      "985721fc38eb4bfbd8e0",
+      "8a4ee9fbc63340c8da56"
+    ],
+    "src/page/driver/accessibility.ts": [
+      "ae3174bb2f2ad6911230",
+      "1532845253f73399a726",
+      "f79e2c5a2c80b569d9d7"
+    ],
+    "src/page/driver/actions.ts": ["38d7761494116bdf3807", "7e649965ccf69b0c2a22"],
+    "src/page/driver/driver.ts": [
+      "567079c6ab38199678db",
+      "91c78398858a6192e23e",
+      "a552a9c88d74a94d4680",
+      "05facbe2d7704091fd8e"
+    ],
     "src/page/driver/ref-table.ts": ["ee4372af68a383ffe91a"],
-    "src/page/driver/sensitivity.ts": ["9e73e84e23cf7f477c2a"],
-    "src/page/driver/snapshot.ts": ["6d7d42db6577c2e4d598"],
-    "src/page/index.ts": ["9391a7defe4302c4b33b"],
-    "src/page/indicator.ts": ["ef995d1bbf0154f24997"],
+    "src/page/driver/sensitivity.ts": ["9e73e84e23cf7f477c2a", "699111c1e667ce4a5645"],
+    "src/page/driver/snapshot.ts": ["6d7d42db6577c2e4d598", "3c2c474de180a61e6465"],
+    "src/page/index.ts": [
+      "9391a7defe4302c4b33b",
+      "5f463795712d074db7f0",
+      "114a9c88a5455ace0443",
+      "17ccaa3733ac13482913",
+      "6694628850befd798668",
+      "bb2ea5d4d989939f6faf"
+    ],
+    "src/page/indicator.ts": ["ef995d1bbf0154f24997", "81f0712ba9aa78624fc9"],
     "src/page/main.ts": ["114a9fbe1a3f278bcb2a"],
-    "src/page/protocol.ts": ["2c5e4df9fd1f626b9457"],
-    "src/page/snapshot-text.ts": ["d1ab0f5eff70cfba77eb"],
-    "src/page/user-input.ts": ["edf3e28136a947b16ba1"]
+    "src/page/outline.ts": ["73d02cfcb2114b28ffa3"],
+    "src/page/protocol.ts": [
+      "2c5e4df9fd1f626b9457",
+      "e38ede653b631ff2c8c8",
+      "a489219aaafb8b0849c9",
+      "91023969f3e1183fff8c",
+      "b1f21e79453cd75953fc"
+    ],
+    "src/page/snapshot-text.ts": ["d1ab0f5eff70cfba77eb", "a26473a5e2aed0373d54"],
+    "src/page/socket-source.ts": ["e5cf8719685db8a61fae"],
+    "src/page/user-input.ts": ["edf3e28136a947b16ba1"],
+    "src/shell/protocol.ts": ["2e2ce749a8a64ef5ff70", "b34db25a8bc53beb00c3"]
   },
   "acryl-inspect": {
     "LICENSE": ["9e159eea922378a88a12"],
     "src/index.ts": ["bc7d0dd5fa8495de2bdf"],
     "src/report.ts": ["c8cc3a59fe944026ef8a"],
-    "src/service.ts": ["9a0b97ecb736b6b87568"]
+    "src/service.ts": ["9a0b97ecb736b6b87568", "46220510cb3106438efc"]
   },
   "acryl-kv": {
     "LICENSE": ["b84342464fb19baab24f"],
@@ -61,25 +170,26 @@
   },
   "acryl-kv-db": {
     "LICENSE": ["b84342464fb19baab24f"],
-    "src/index.ts": ["879553f8b9a0359b0700"],
-    "src/open.ts": ["b74bd718396874b9ae19"]
+    "src/index.ts": ["879553f8b9a0359b0700", "c072d6b1653f22d0b6f5"],
+    "src/open.ts": ["b74bd718396874b9ae19", "f90ffc31841357f66245"]
   },
   "acryl-kv-json": {
     "LICENSE": ["b84342464fb19baab24f"],
-    "src/index.ts": ["b9be594ecb6fdd2e6295"],
-    "src/open.ts": ["99c5e78fd8642fde6b27"]
+    "src/index.ts": ["b9be594ecb6fdd2e6295", "bde90b78b6f920f2bf6c", "850eda0ea5a088ce843a"],
+    "src/open.ts": ["99c5e78fd8642fde6b27", "3560b7f14b2f8b608f91"]
   },
   "acryl-node-server": {
     "LICENSE": ["97e21f62916eb3787f2d"],
-    "src/adapter/conninfo.ts": ["10eaa407ab6767842ec0"],
-    "src/adapter/early-hints.ts": ["d110b1d71290545b46f8"],
+    "src/adapter/conninfo.ts": ["10eaa407ab6767842ec0", "33b005d1ba27af208c25"],
+    "src/adapter/early-hints.ts": ["d110b1d71290545b46f8", "2d7ae68d42b3795c2eba"],
     "src/adapter/error.ts": ["e205d90b3d02f42eeecb"],
     "src/adapter/headers.ts": ["6cb4777ef5343c38be37"],
     "src/adapter/index.ts": ["09ca4a9e68e4475f542f"],
-    "src/adapter/listener.ts": ["585ac76c33ff561f7340"],
-    "src/adapter/request.ts": ["7a7c605fafc9ddd4ec97"],
+    "src/adapter/listener.ts": ["585ac76c33ff561f7340", "d9db69e8411829dd61c9"],
+    "src/adapter/raw.ts": ["8d05dbfa888077c083e5"],
+    "src/adapter/request.ts": ["7a7c605fafc9ddd4ec97", "1768785e688eb892b9fc"],
     "src/adapter/response.ts": ["24d52364b21773acee18"],
-    "src/adapter/serve-static.ts": ["84b6909a4503255c3ab3"],
+    "src/adapter/serve-static.ts": ["84b6909a4503255c3ab3", "e0a58fe307075813336f"],
     "src/adapter/server.ts": ["70d6559721dc77ef9776"],
     "src/adapter/types.ts": ["8d62b24fad3fef55fc5f"],
     "src/adapter/url.ts": ["b92d178a1d2883a1b2bf"],
@@ -88,13 +198,31 @@
     "src/adapter/utils/response/constants.ts": ["dc85a5b15c3de3c27760"],
     "src/adapter/utils/stream.ts": ["106a155dc353fc70808d"],
     "src/adapter/websocket-types.ts": ["c209a4493ddeb13cb182", "9dbe10d817290c0ce9e6"],
-    "src/adapter/websocket.ts": ["140ff3388c849daa45de", "3b81af41e36d046ca389"],
-    "src/client-modules.ts": ["80e5b1c8c29be915e4ea"],
-    "src/index.ts": ["0c5c49d805791bfc7625", "d7b806b1e1eef48a63b3"],
-    "src/register.ts": ["919c6aeda137f6b03282"],
+    "src/adapter/websocket.ts": [
+      "140ff3388c849daa45de",
+      "3b81af41e36d046ca389",
+      "2facb3ec849915d0f54f",
+      "117075484c4f708f7be6"
+    ],
+    "src/client-modules.ts": [
+      "80e5b1c8c29be915e4ea",
+      "7eac7365a589762cbf7e",
+      "8fa02fb8e23b58747928"
+    ],
+    "src/index.ts": [
+      "0c5c49d805791bfc7625",
+      "d7b806b1e1eef48a63b3",
+      "fd5721ade0aa3eb6615c",
+      "2320aa72c8b89a9a4725"
+    ],
+    "src/register.ts": ["919c6aeda137f6b03282", "9347924b80c3c209dab9", "a1728e110962650d4a01"],
     "src/test-websocket.ts": ["a91e1e4b4b37e7b77bf2"],
-    "src/transpile.ts": ["5e7afa4390fbcbc564a0"],
-    "src/upgrade-hub.ts": ["a18b5cece2d2c571463e"]
+    "src/transpile.ts": ["5e7afa4390fbcbc564a0", "be4cb4e0297b5b1997f1"],
+    "src/upgrade-hub.ts": ["a18b5cece2d2c571463e", "ded65323cabec111aac4"]
+  },
+  "acryl-page": {
+    "src/favicon.ts": ["e5b35a649cf2822b4f8e"],
+    "src/index.ts": ["cd789539ec1b6590e9e6", "de414dae653ad5edee0b"]
   },
   "acryl-router": {
     "LICENSE": ["fcf95a3a9e661936ca61"],
@@ -385,51 +513,164 @@
     "src/helpers/read-sse.ts": ["40c1ed42b0163aad3993"],
     "src/helpers/schema-validator.d.ts": ["bc059337a0996e380e03"],
     "src/helpers/schema-validator.ts": ["a0935ddbb76781744d27"],
-    "src/index.ts": ["06715586ec54d703a0ec"],
-    "src/middleware/index.ts": ["a914ea698fd8c80aed1f"],
-    "src/middleware/loopback-only.ts": ["41b210e51d004ba94cff"],
-    "src/service.ts": ["1e4715964b83930ec823", "f5067022124cde0d7a49"]
+    "src/index.ts": ["06715586ec54d703a0ec", "f079aca13fa8b336d69f"],
+    "src/middleware/index.ts": ["a914ea698fd8c80aed1f", "fc9ed60f26bee126cc77"],
+    "src/middleware/loopback-only.ts": ["41b210e51d004ba94cff", "ba84d824664c4829d548"],
+    "src/service.ts": [
+      "1e4715964b83930ec823",
+      "f5067022124cde0d7a49",
+      "35cfc4bdc38f364783fb",
+      "35f2c927a7c3d3ec1103"
+    ]
   },
   "acryl-router-http": {
     "LICENSE": ["9e159eea922378a88a12"],
     "src/bridge.ts": ["c4fe8f2230e720ce151b"],
-    "src/index.ts": ["493f97a62f69ffc92144", "a67328c359d548010159"],
-    "src/serve.ts": ["866d223954bd3d7c99e5"]
+    "src/index.ts": [
+      "493f97a62f69ffc92144",
+      "a67328c359d548010159",
+      "f8668d787f4303013de2",
+      "b34e869968e0b9b7667f"
+    ],
+    "src/serve.ts": ["866d223954bd3d7c99e5", "9da5a6794d0f07abf47a"]
   },
   "acryl-state": {
     "LICENSE": ["9e159eea922378a88a12"],
     "src/cell.ts": ["2add14530d4a39c2b358"],
+    "src/client-source.ts": ["3e4dbfb415a05247987d"],
     "src/index.ts": ["db28925155709181a5fe"],
-    "src/service.ts": ["885b6f3dd110554435cb"]
+    "src/service.ts": ["885b6f3dd110554435cb", "34aa266ed98e517d35ec", "8cb238ea00c065cd4c7d"],
+    "src/socket.ts": ["1c67134c3bbc1836b1bf", "da48d350715a6ed31673"]
   },
+  "acryl-web-server": { "src/index.ts": ["25e9ad47a238ebdebeb0"] },
   "agent": {
-    "agent.ts": ["6a8f44b7c2e7ff8f00c7", "375b09fe4b2af56fcfbd"],
-    "index.ts": ["91147873ccdb9a9d991c"],
+    "agent.ts": ["6a8f44b7c2e7ff8f00c7", "375b09fe4b2af56fcfbd", "d0939bda74f67d253e6a"],
+    "index.ts": ["91147873ccdb9a9d991c", "d0bcc496393cf7c807df"],
     "memory.ts": ["6d47d7d80eeabad9cfc3"],
-    "model.ts": ["0c61d764aa2183a1239f", "be8a04fae1adf990359c"],
-    "tools.ts": ["4771be380e631752f6c3", "0ba15dc21cc56abb29e1"]
+    "model.ts": [
+      "0c61d764aa2183a1239f",
+      "be8a04fae1adf990359c",
+      "fb1977205669c4de5a78",
+      "56db4e502061ec08725c"
+    ],
+    "tools.ts": [
+      "4771be380e631752f6c3",
+      "0ba15dc21cc56abb29e1",
+      "ffbdd59e4d469d5011c0",
+      "523763ef89da54aeaa5a"
+    ]
   },
   "agent-panel": {
-    "client/main.ts": ["888452cf3fa31e4cd8b2", "b2abc5011988ec8b168c"],
-    "drivers.ts": ["bb03f3214c87494b26c2"],
-    "headless.ts": ["787cca003e7e1d1d14e5"],
-    "index.ts": ["2d5f97e1c0cc1911ff14", "1a7aaae0c6e773e795a9", "094db3bb5f5eb1bff0fe"]
+    "client/describe.ts": ["633eecbd3250435ca079", "b4caf119252617866291"],
+    "client/driver-pick.ts": ["352d0dc8600086f2bf1c"],
+    "client/frame.ts": ["25d29cf41c137f9e38d4"],
+    "client/main.ts": [
+      "888452cf3fa31e4cd8b2",
+      "b2abc5011988ec8b168c",
+      "67698ee6e4ef217fce3f",
+      "8c681ffac56cac8b656b",
+      "890abc974cb995c429a6",
+      "b51e644ecb3eff703dbe",
+      "6ba2bf61b22397c60c0f",
+      "5a21ad7f2271d9c91bfd",
+      "5f661f6e2f89d1ab6e74",
+      "aaa5614d8c2712d7aad7"
+    ],
+    "client/markdown.ts": ["d2d4bd4877203d6ac644"],
+    "drivers.ts": ["bb03f3214c87494b26c2", "3bd348d304312ab07b7c", "05a9e34a97fde1bfcfc4"],
+    "headless.ts": [
+      "787cca003e7e1d1d14e5",
+      "203813ca3220e83cffac",
+      "4045b277e3b2435b1380",
+      "7dbd51083cdda6f14248",
+      "49f914cb34b2a9f28777",
+      "65eb22fb4d00362274b4"
+    ],
+    "index.ts": [
+      "2d5f97e1c0cc1911ff14",
+      "1a7aaae0c6e773e795a9",
+      "094db3bb5f5eb1bff0fe",
+      "e8f6de7c8ffc3da701c6",
+      "49e0f90acaba0ee987ed",
+      "d7f99863b67b410f710d",
+      "f29b79de47494671fc1b",
+      "a5db0710a34c7b426f62",
+      "4690d96897796b93c248",
+      "405f49f816b8636d0e5c",
+      "df52fd8712315310f412"
+    ],
+    "launch.ts": ["8a1cd112bce6c2f7f9d4"],
+    "mount.ts": ["3bc1f2778de4cb79f7f9"],
+    "registry.ts": ["c4920f0aa1473ff32eeb"],
+    "visitors.ts": ["dab9354e13fce638fd32"]
   },
-  "builder": { "index.ts": ["74c6e252e3ef1154f113"], "script.ts": ["fd1964df061b97d5cfa8"] },
+  "builder": {
+    "index.ts": ["74c6e252e3ef1154f113", "777b597ee54a72be9927", "64efb74765f4ccc12cd1"],
+    "package.ts": ["4659bc3aafdce32d031c"],
+    "script.ts": ["fd1964df061b97d5cfa8"]
+  },
   "desktop": {
-    "main.ts": ["e72fe0e887272789fb13"],
+    "app-page.ts": ["d2cdc61a92d89138ea8a"],
+    "assets/acrylblends-logo.png": ["c86abd74d8fbeedf8cc9"],
+    "attach.ts": ["ddd0e3e4e8a3914c9699"],
+    "brand.ts": ["8b87e63e669273f76704", "9eb70120b8da20144bbe"],
+    "door-shell.ts": ["9b879028326971973bd3", "3e535eff746a41525dbb"],
+    "frame.ts": ["191f21e3dc14e1a6d2d8", "0b856f73720a4b6bb2bf"],
+    "git.ts": ["94d70b10792693ce54db"],
+    "host-supervisor.ts": ["e69994399fa32dbb1cfc"],
+    "launch.ts": ["d7468b2289b0d6b99706", "b6650e0d33533bff9614", "3beb11b0ac097e270835"],
+    "main.ts": [
+      "e72fe0e887272789fb13",
+      "c3c5e72972b3b1757429",
+      "237e945afff64485243f",
+      "047d6ae7781ead708e97",
+      "1e188b14257867c9c953",
+      "bdb9c4d74d0fc86d5a05",
+      "915e72607666f6f42f34",
+      "229423928fa2c7fbfa58",
+      "bef847ee1674007d6f3b",
+      "a15a8f047f55f041e475",
+      "22c9017498207d03cc25",
+      "bd42ccc572a08e50040b"
+    ],
+    "menu.ts": ["9b88cda709178fffc66d"],
+    "preload.cjs": ["c7de936c2213786f2b00"],
+    "product.ts": [
+      "39d98aa96ae1ce8b040f",
+      "7729bbcb2367995bbf26",
+      "822b291f9c3d3766637a",
+      "97734e2f7ca8a8cc6547",
+      "289ecbe6118879476ebb"
+    ],
     "shutdown.ts": ["a4d94f8a92081af96251"],
+    "update-menu.ts": ["c8d3e0a03a85253e37c5", "979210ee14343972464b"],
+    "updater.ts": ["15152c46d76512027aed"],
     "user-data.ts": ["9a79f5f8b0593085cd6f"],
-    "window.ts": ["dbd0e5e91c5bc386ff1e"]
+    "window.ts": [
+      "dbd0e5e91c5bc386ff1e",
+      "ad3d3e177ddc04628574",
+      "aa0f2456a10073fbeb9e",
+      "d9ed2b265ac84c0b1c2b",
+      "6946f304e1df9831d953",
+      "634967683ddef7260008"
+    ]
   },
   "desktop-web": {
-    "main.ts": ["f86d191ce06092f56438"],
+    "launch.ts": ["d7468b2289b0d6b99706"],
+    "main.ts": ["f86d191ce06092f56438", "71a339c4c73c2ee70e54"],
     "shutdown.ts": ["a4d94f8a92081af96251"],
     "user-data.ts": ["9a79f5f8b0593085cd6f"],
     "window.ts": ["dbd0e5e91c5bc386ff1e"]
   },
+  "driver-acp": {
+    "chat.ts": ["6c640d49a4c72d8f46aa"],
+    "connection.ts": ["b045e7d1209ebbfc15a6"],
+    "index.ts": ["28099dc6397be68d1a40"],
+    "provenance.json": ["bf2fa7a5b9e4082a48c3"],
+    "README.md": ["6668c7f379be7bba0eb9"]
+  },
   "driver-pty": {
-    "client/terminal.ts": ["8ba9eccaf16077c6eac6"],
+    "client/terminal.ts": ["8ba9eccaf16077c6eac6", "16b2f86a2e8df9700cdc"],
     "client/vendor/addon-fit.d.mts": ["b25706db7e9df6b11250"],
     "client/vendor/addon-fit.mjs": ["2d87e1bddc73be9111de"],
     "client/vendor/LICENSE": ["b569f629d00f2626a810"],
@@ -439,26 +680,91 @@
     "client/vendor/xterm-css.mjs": ["0015cf7fe8053144737e"],
     "client/vendor/xterm.d.mts": ["52c18a398f12839e50e0"],
     "client/vendor/xterm.mjs": ["b336ec65a086c056d480"],
-    "index.ts": ["27dcc257a9f72c400bf6"],
-    "spawn.ts": ["b6a03dc28101ba237052"],
-    "terminal.ts": ["1cfa78ee15e01465e9b2"]
+    "index.ts": ["27dcc257a9f72c400bf6", "42ea842e42fb122af579", "5a1e184f23f3eebf18ff"],
+    "spawn.ts": ["b6a03dc28101ba237052", "3c22b9dabf0319e8632f"],
+    "terminal.ts": ["1cfa78ee15e01465e9b2", "c095d05ef1cff41c3d7e"]
   },
   "extensions": {
-    "index.ts": ["467841345b312a8b59a1"],
+    "browser.ts": ["1098d5b0127ac0b03365"],
+    "index.ts": [
+      "467841345b312a8b59a1",
+      "5d949f6f93f5c19b769d",
+      "8ce47493abda9a3674f3",
+      "1244238af1e4bd718aef",
+      "d7daccda8a3ff10089a1",
+      "e40388be887f798486ff",
+      "28c986f618b6fc4227e1",
+      "3684f4523eadc364e3fa",
+      "a177c53bce60b8762124"
+    ],
     "ledger.ts": ["2af8407a66e314b9bbbb"],
-    "resolve.ts": ["fa65b507a362adc396e3"],
-    "stage.ts": ["0b6e0c98294d65d78819"]
+    "plugin-store.ts": ["0d27e449b793694662c6"],
+    "resolve.ts": ["fa65b507a362adc396e3", "2c63681eff98555f4a81"],
+    "routes.ts": ["9c065d0356c13870c1fc"],
+    "stage.ts": ["0b6e0c98294d65d78819", "c65c1e452c3613b4655d", "036dc2a0d2cedc123b99"]
   },
-  "instance": { "index.ts": ["ede01b973dad78445111"] },
+  "feedback": {
+    "client.d.ts": ["15cff87908cf6958fdd6"],
+    "client.js": ["a7cb12ebf824f3682f6d"],
+    "index.ts": ["e0fbdf7055290bf68e81"],
+    "store.ts": ["5b024f615d97b5a1013f"]
+  },
+  "home": { "index.ts": ["071a84f8d3a21efb4cb3", "f2c8045bf3be2f5fe95e"] },
+  "instance": {
+    "archive.ts": ["10dd2970bd9f90978bec"],
+    "bundle-overlay.ts": ["1665d1f8e52fa300b9cc"],
+    "bundle.ts": [
+      "874a68bf3280734b1016",
+      "f4ed0655897b2f04b6b9",
+      "be682206c3787bfd523a",
+      "f1f1ceb121009de08225",
+      "43d091f4af8b6e39770a"
+    ],
+    "home.ts": ["5f1b729ae4f67ebc3cf5", "cf12de35b3e765b76d40"],
+    "index.ts": [
+      "ede01b973dad78445111",
+      "242f5406000fa6336105",
+      "cdb5f8082e9848efe054",
+      "15891f705ad2372c6327"
+    ],
+    "storage.ts": ["4e624086533815b07c2b", "03eb84e623d08bb64022", "50c22148dbb107913865"]
+  },
   "manifest": {
-    "index.ts": ["eab7e185ab13029aff8f"],
+    "app-plugins.ts": ["9066deec796c90af1a4f"],
+    "index.ts": ["eab7e185ab13029aff8f", "d8ab43c9964c46454e05"],
     "lock.ts": ["03f8033bbdffad3f9431"],
+    "snapshot.ts": ["047c2a1a545bdc7e8880"],
     "upgrade-cli.ts": ["636628cfbaffe019472f"],
     "upgrade.ts": ["1e0b1851f1542741d083"]
   },
-  "openai": { "index.ts": ["6be04e3f6ab27c99bf1e"], "prompt.ts": ["18b6a53a503d2dd2c9db"] },
+  "openai": {
+    "index.ts": ["6be04e3f6ab27c99bf1e", "94a2487e5daabac7dab3", "777c6905db64a7c8aad3"],
+    "prompt.ts": ["18b6a53a503d2dd2c9db", "843be19623b312082520"]
+  },
+  "plugin-share": {
+    "index.ts": [
+      "8731111f22d49925f6ea",
+      "654d000a599ac55817c4",
+      "9b90d01fe4d41b20e743",
+      "b112847a68f6d3acffe5",
+      "25b8a4803934640c6d9a"
+    ],
+    "native.ts": ["0839d2ebaa90b40183f4"],
+    "package.ts": ["4659bc3aafdce32d031c"],
+    "publish.ts": ["6100001700c7fd12788b", "26aed5dfdd2be96e8cae"],
+    "pull-check.ts": ["5c337c5c93c386bbac9c", "5516b2908b4c35c49720", "0c4255567c41c01d66f5"],
+    "pull-list.ts": ["1701ddea0bf9cae260d5"],
+    "pulled-records.ts": ["9a9aa2a26014da112735"],
+    "README.md": ["a7ec674e437fa52816d1", "be16e30e23bd5ba031d3", "db92a6810c4c05434fd9"]
+  },
   "sandbox": { "index.ts": ["c1c60f42d30c0417a6fc"], "runner.mjs": ["6437184989f4848075ba"] },
-  "save": { "cli.ts": ["fccad83af5a41bde542b"], "index.ts": ["48f96cde6c73e781e3e6"] },
+  "save": {
+    "cli.ts": ["fccad83af5a41bde542b"],
+    "index.ts": ["48f96cde6c73e781e3e6"],
+    "share-cli.ts": ["2201fe37cbbc5d167e17"],
+    "share.ts": ["458a795e3298eb69eb82"]
+  },
   "settings": { "index.ts": ["01e803a60405a1d5ca19"], "merge.ts": ["9d2648479b5cb8f765e7"] },
+  "showcase": { "cards.ts": ["c1e376b316660e5b37e9"], "index.ts": ["7e5ac4e2c6b4efe24fc8"] },
   "tasks": { "index.ts": ["2b9c53731a4c6c59b2a2"], "store.ts": ["3d24c2b53874e3e14928"] }
 }
