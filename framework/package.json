@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "description": "ACRYLBLENDS - scaffold apps built on Cordis. Cordis is the framework.",
-  "packageManager": "pnpm@11.11.0",
+  "packageManager": "pnpm@12.14.0",
   "engines": {
     "node": ">=22.19.0"
   },

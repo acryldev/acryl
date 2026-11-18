@@ -76,7 +76,7 @@ const releaseDesktopWorkflow = readFileSync(
 
 describe('published package surface', () => {
   it('runs owned-workspace typechecks and tests through PNPM filters', () => {
-    expect(workspaceManifest.packageManager).toBe('pnpm@11.11.0')
+    expect(workspaceManifest.packageManager).toBe('pnpm@12.14.0')
     // Every owned package that has the script is run through a PNPM filter. The exact list grows with the
     // repository, so this asserts membership rather than one frozen string.
     const filtersOf = (script: unknown): string[] => [...(typeof script === 'string' ? script : '').matchAll(/pnpm --filter (\S+) run/g)].map(match => match[1] ?? '')

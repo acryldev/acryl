@@ -144,7 +144,7 @@ ACRYL is not affiliated with, authorized by, or endorsed by DeepSeek.
 
 ## Run from source
 
-Requirements: Node.js `^22.19.0` or `>=24.0.0`, Corepack (selects the pinned PNPM 11.11.0).
+Requirements: Node.js `^22.19.0` or `>=24.0.0`, Corepack (selects the pinned PNPM 12.14.0).
 
 ```sh
 corepack pnpm run upstream:sync
