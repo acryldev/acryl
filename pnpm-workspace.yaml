@@ -7,3 +7,10 @@ allowBuilds:
   koffi: true
   node-pty: true
   protobufjs: true
+# What the frame does not install (the LibreOffice engines, 153 MB): an empty placeholder, as npm's overrides in package.json. Settings > Plugins > Office preview brings it back.
+overrides:
+  '@deepseek-ai/libreoffice-kit-darwin-arm64': 'npm:@acrylblends/absent@1.0.0'
+  '@deepseek-ai/libreoffice-kit-darwin-x64': 'npm:@acrylblends/absent@1.0.0'
+  '@deepseek-ai/libreoffice-kit-wasm': 'npm:@acrylblends/absent@1.0.0'
+  '@deepseek-ai/libreoffice-kit-win32-arm64': 'npm:@acrylblends/absent@1.0.0'
+  '@deepseek-ai/libreoffice-kit-win32-x64': 'npm:@acrylblends/absent@1.0.0'

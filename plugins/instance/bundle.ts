@@ -68,7 +68,10 @@ export function readProduct(bundle: string): Product | undefined {
       ...(isProgramPath(seed) ? { seed: seed.replace(/\/$/u, '') } : {}),
       ...(named === true ? { named: true as const } : {}),
       ...(typeof build === 'string' && build.trim() !== '' ? { build: build.trim() } : {}),
-      ...(typeof releases?.repo === 'string' && /^[\w.-]+\/[\w.-]+$/u.test(releases.repo) && typeof releases.file === 'string' && /^[\w.-]+$/u.test(releases.file)
+      ...(typeof releases?.repo === 'string' &&
+      /^[\w.-]+\/[\w.-]+$/u.test(releases.repo) &&
+      typeof releases.file === 'string' &&
+      /^[\w.-]+$/u.test(releases.file)
         ? { releases: { repo: releases.repo, file: releases.file } }
         : {}),
     }

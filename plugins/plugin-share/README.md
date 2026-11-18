@@ -16,6 +16,26 @@ The app remembers where each pulled plugin came from, in the `plugin-share` row 
 
 A plugin whose route or home widget another plugin already has is refused, and the message names that plugin. A different copy of a plugin with the same name is refused too, and the message says where the copy in the app came from.
 
+### Native packages
+
+A pull installs no `dependencies`. A plugin that needs a large, per-OS npm package (an engine, a native library) declares it instead,
+one entry per OS and CPU, each pinned by npm's sha512 of the tarball (`npm view <package>@<version> dist.integrity dist.unpackedSize`):
+
+```json
+"acrylblends": {
+  "native": [
+    { "package": "@deepseek-ai/libreoffice-kit-darwin-arm64", "version": "0.1.5", "os": "darwin", "cpu": "arm64",
+      "integrity": "sha512-...", "size": 153171456 }
+  ]
+}
+```
+
+Leave `cpu` out for a build that runs on any CPU of that OS (a WebAssembly one). The pull downloads only this computer's entry, from the
+npm registry, checks its sha512, unpacks it into the app's home (`native/`) and links `node_modules/<package>` to it before the plugin
+starts. It replaces only a missing package or the frame's empty placeholder (`@acrylblends/absent`); a copy npm installed stays. Removing
+the plugin removes the link and the download. An `npm install` puts the placeholder back; the app's next start links the download again.
+A plugin's entries may unpack to 1 GB at most. The code is `native.ts`.
+
 ## List and remove
 
 ```

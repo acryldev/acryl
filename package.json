@@ -53,11 +53,19 @@
     "acrylblends": "^1.5.8",
     "js-yaml": "^4.2.0",
     "typescript": "6.0.3",
-    "yaml": "2.9.0"
+    "yaml": "2.9.0",
+    "skill-mcp-manager": "^1.3.1"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "electron": "44.9.3",
     "ws": "8.21.3"
+  },
+  "overrides": {
+    "@deepseek-ai/libreoffice-kit-darwin-arm64": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-darwin-x64": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-wasm": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-win32-arm64": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-win32-x64": "npm:@acrylblends/absent@1.0.0"
   }
 }

@@ -43,7 +43,7 @@ test('GET /about renders the JSX page', () =>
     assert.match(response.headers.get('content-type') ?? '', /html/)
     assert.match(
       await response.text(),
-      /<main><h1>About<\/h1><p>ACRYL ADE, the Agent Development Environment: the ACRYL IDE as a Blend\.<\/p><\/main>/,
+      /<main><h1>About<\/h1><p>ACRYL ADE, the Agentic Development Environment: the ACRYL IDE as a Blend\. It updates itself: Check for Updates in the app menu, and keeps your work while it does\.<\/p><\/main>/,
     )
   }))
 

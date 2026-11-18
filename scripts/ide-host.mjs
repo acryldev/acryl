@@ -303,6 +303,10 @@ const clientRows = [
   {
     "id": "ui-input-trigger",
     "name": "@deepseek-ai/dsh-client-ui-input-trigger"
+  },
+  {
+    "id": "client-hmr",
+    "name": "@deepseek-ai/dsh-client-hmr"
   }
 ]
 const agentRows = [

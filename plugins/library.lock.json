@@ -2,7 +2,7 @@
   "version": 1,
   "plugins": {
     "acryl-door": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "LICENSE": "b84342464fb19baab24f",
         "src/cli/acryl.ts": "5fd10a53c3f00728625f",
@@ -42,7 +42,7 @@
       }
     },
     "acryl-node-server": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "LICENSE": "97e21f62916eb3787f2d",
         "src/adapter/conninfo.ts": "10eaa407ab6767842ec0",
@@ -73,14 +73,14 @@
       }
     },
     "acryl-page": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "src/favicon.ts": "e5b35a649cf2822b4f8e",
         "src/index.ts": "de414dae653ad5edee0b"
       }
     },
     "acryl-router": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "LICENSE": "fcf95a3a9e661936ca61",
         "src/browser/client.ts": "02d59cb4bbc4a494831e",
@@ -281,36 +281,39 @@
       }
     },
     "acryl-web-server": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "src/index.ts": "25e9ad47a238ebdebeb0"
       }
     },
     "desktop": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "app-page.ts": "d2cdc61a92d89138ea8a",
         "assets/acrylblends-logo.png": "c86abd74d8fbeedf8cc9",
         "attach.ts": "ddd0e3e4e8a3914c9699",
-        "brand.ts": "8b87e63e669273f76704",
+        "brand.ts": "9eb70120b8da20144bbe",
         "door-shell.ts": "3e535eff746a41525dbb",
         "frame.ts": "0b856f73720a4b6bb2bf",
         "git.ts": "94d70b10792693ce54db",
         "host-supervisor.ts": "e69994399fa32dbb1cfc",
         "launch.ts": "3beb11b0ac097e270835",
-        "main.ts": "229423928fa2c7fbfa58",
+        "main.ts": "bd42ccc572a08e50040b",
         "menu.ts": "9b88cda709178fffc66d",
         "preload.cjs": "c7de936c2213786f2b00",
-        "product.ts": "822b291f9c3d3766637a",
+        "product.ts": "289ecbe6118879476ebb",
         "shutdown.ts": "a4d94f8a92081af96251",
+        "update-menu.ts": "979210ee14343972464b",
+        "updater.ts": "15152c46d76512027aed",
         "user-data.ts": "9a79f5f8b0593085cd6f",
-        "window.ts": "6946f304e1df9831d953"
+        "window.ts": "634967683ddef7260008"
       }
     },
     "extensions": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
-        "index.ts": "3684f4523eadc364e3fa",
+        "browser.ts": "1098d5b0127ac0b03365",
+        "index.ts": "a177c53bce60b8762124",
         "ledger.ts": "2af8407a66e314b9bbbb",
         "plugin-store.ts": "0d27e449b793694662c6",
         "resolve.ts": "2c63681eff98555f4a81",
@@ -319,18 +322,18 @@
       }
     },
     "instance": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "archive.ts": "10dd2970bd9f90978bec",
         "bundle-overlay.ts": "1665d1f8e52fa300b9cc",
-        "bundle.ts": "be682206c3787bfd523a",
+        "bundle.ts": "43d091f4af8b6e39770a",
         "home.ts": "cf12de35b3e765b76d40",
         "index.ts": "15891f705ad2372c6327",
-        "storage.ts": "03eb84e623d08bb64022"
+        "storage.ts": "50c22148dbb107913865"
       }
     },
     "manifest": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "app-plugins.ts": "9066deec796c90af1a4f",
         "index.ts": "d8ab43c9964c46454e05",
@@ -341,26 +344,27 @@
       }
     },
     "plugin-share": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
-        "README.md": "be16e30e23bd5ba031d3",
-        "index.ts": "b112847a68f6d3acffe5",
+        "README.md": "db92a6810c4c05434fd9",
+        "index.ts": "25b8a4803934640c6d9a",
+        "native.ts": "0839d2ebaa90b40183f4",
         "package.ts": "4659bc3aafdce32d031c",
         "publish.ts": "26aed5dfdd2be96e8cae",
-        "pull-check.ts": "5516b2908b4c35c49720",
+        "pull-check.ts": "0c4255567c41c01d66f5",
         "pull-list.ts": "1701ddea0bf9cae260d5",
         "pulled-records.ts": "9a9aa2a26014da112735"
       }
     },
     "sandbox": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "index.ts": "c1c60f42d30c0417a6fc",
         "runner.mjs": "6437184989f4848075ba"
       }
     },
     "save": {
-      "from": "1.5.8",
+      "from": "1.5.19",
       "files": {
         "cli.ts": "fccad83af5a41bde542b",
         "index.ts": "48f96cde6c73e781e3e6",
