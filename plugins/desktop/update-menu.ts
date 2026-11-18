@@ -4,7 +4,6 @@
  * updater.ts; this file only asks and shows.
  */
 
-import { join } from 'node:path'
 import { app, type BrowserWindow, dialog, Menu, MenuItem, shell } from 'electron'
 import {
   downloadInstaller,
@@ -15,8 +14,15 @@ import {
   startInstall,
 } from './updater.ts'
 
-/** Add the menu item and check once a little after start; `window` is the window the dialogs and the download progress belong to. */
-export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow | undefined): void {
+/**
+ * Add the menu item and check once a little after start; `window` is the window the dialogs and the download progress belong to, `downloads` the folder
+ * the installer goes to (main.ts passes one inside the product's own user data, under ~/.acryl).
+ */
+export function offerUpdates(
+  source: ReleaseSource,
+  window: () => BrowserWindow | undefined,
+  downloads: string,
+): void {
   let busy = false
 
   const ask = async (options: Electron.MessageBoxOptions): Promise<number> => {
@@ -32,10 +38,8 @@ export function offerUpdates(source: ReleaseSource, window: () => BrowserWindow 
     const owner = window()
     let file: string
     try {
-      file = await downloadInstaller(
-        release,
-        join(app.getPath('userData'), 'updates'),
-        (fraction) => owner?.setProgressBar(fraction),
+      file = await downloadInstaller(release, downloads, (fraction) =>
+        owner?.setProgressBar(fraction),
       )
     } finally {
       owner?.setProgressBar(-1)
