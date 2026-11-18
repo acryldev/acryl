@@ -4,7 +4,7 @@ import { doorEnabled } from './door.ts'
 const About = () => (
   <main>
     <h1>About</h1>
-    <p>ACRYL ADE, the Agentic Development Environment: the ACRYL IDE as a Blend. It updates itself: Check for Updates in the app menu.</p>
+    <p>ACRYL ADE, the Agentic Development Environment: the ACRYL IDE as a Blend. It updates itself: Check for Updates in the app menu, and keeps your work while it does.</p>
   </main>
 )
 
