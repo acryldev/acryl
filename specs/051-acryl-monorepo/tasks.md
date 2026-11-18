@@ -19,18 +19,23 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
 
 - [x] T003 [import] `git subtree add --prefix=framework` of acrylblends/acrylblends `main` (1a976364, release 1.5.20) with its full history.
 - [x] T004 [guard] `scripts/verify-layout.mjs` passes with `framework/` inside (it now accepts node:test's `after` as a teardown).
-- [ ] T005 [workspace] (blocked by T008, measured 2026-11-18: 15 framework packages carry the same names as their acryl originals, and pnpm
-  refuses two workspace packages with one name; see inventory.md section 5.) One pnpm workspace and one lockfile: one pnpm release, one node range, the framework's packages listed in the root
+- [x] T005 [workspace] One pnpm workspace and one lockfile: one pnpm release, one node range, the framework's packages listed in the root
   `pnpm-workspace.yaml`, its `allowBuilds` and `minimumReleaseAgeExclude` merged; `pnpm install --frozen-lockfile` at the root works and
   `framework/pnpm-lock.yaml` and `framework/pnpm-workspace.yaml` are gone.
+  Done 2026-11-18 (96a15157): one lockfile for 61 projects. ACRYL's packages now use the framework's own source (`workspace:^`) instead of
+  npm acrylblends 1.0.0. The pnpm release is still 11.11.0 at the root; the move to 12 is its own commit.
 - [ ] T006 [checks] The framework's `check` (lint, build, typecheck, tests, its verify scripts) runs from the root, next to acryl's; both
   green. The root biome and the bilingual-docs and architecture checks either cover `framework/` or exclude it on purpose, with the reason
   written beside the rule.
 - [ ] T007 [layout] `scripts/verify-layout.mjs` enforces the dependency direction in `spec.md` (framework -> runtime, never runtime ->
   framework); CLAUDE.md's "Repository layout" lists `framework/` as a sixth group, with what belongs in it.
-- [ ] T008 [one copy] Each `framework/ide/*` port and its acryl original become one package, reviewing the `changes` its `provenance.json`
+- [x] T008 [one copy] Each `framework/ide/*` port and its acryl original become one package, reviewing the `changes` its `provenance.json`
   lists; `plugins/acryl-plugin-context`'s acryl-side work since f6538891 is carried over. Which folder keeps the merged package is decided per
   pair by the dependency rule.
+  Done 2026-11-18: e3c5ec3e (13 ports merged into the acryl originals), 0e7ca221 (acryl-system-prompt: one package, each product passes its
+  own opening line through the plugin's settings, owner's option A), 31455cda (acryl-web moved to `runtime/acryl-web-service`, row id
+  `acryl-web` kept, owner's option C), 96a15157 (the framework's copies deleted; `frame/packages.json` names the shared folders).
+  Open from it: whether ACRYL's agent gets the door's new `reload`/`navigate` as tools (named, not registered).
 - [ ] T009 [mirror] acrylblends/acrylblends stays live until the cut-over: changes made there are brought in with
   `git subtree pull --prefix=framework`, never copied by hand.
 
