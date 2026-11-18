@@ -12,6 +12,18 @@
       "protobufjs"
     ]
   },
+  "omit": {
+    "//": "What the frame inherits from DSH but does not install: DSH's web app composes the Office-to-PDF converter, whose LibreOffice engine is 153 MB per OS (measured 2026-11-18, about a third of a frame app's packages). Every app gets an npm override that swaps each engine package for `placeholder` (an empty package), and the converter's row is switched off; the document preview's Office part then waits for the converter and every other preview works. The Office preview plugin in the plugin registry brings the engine back on demand. packages/cli/src/frame-omit.ts reads this.",
+    "placeholder": "@acrylblends/absent@1.0.0",
+    "rows": ["office-to-pdf"],
+    "packages": [
+      "@deepseek-ai/libreoffice-kit-darwin-arm64",
+      "@deepseek-ai/libreoffice-kit-darwin-x64",
+      "@deepseek-ai/libreoffice-kit-wasm",
+      "@deepseek-ai/libreoffice-kit-win32-arm64",
+      "@deepseek-ai/libreoffice-kit-win32-x64"
+    ]
+  },
   "packages": {
     "acryl-ui": {
       "name": "ui",

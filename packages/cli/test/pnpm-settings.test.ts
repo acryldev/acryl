@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'vitest'
 import { parse } from 'yaml'
+import { OMIT_PLACEHOLDER, OMITTED_PACKAGES } from '../src/frame-omit.ts'
 import { FRAME_ALLOW_BUILDS, withFramePnpmSettings } from '../src/pnpm-settings.ts'
 
 test('an app with no pnpm-workspace.yaml gets the flat layout and every frame build allowed', () => {
@@ -24,7 +25,29 @@ test('applying twice changes nothing the second time', () => {
 
 test('a key the person set is kept: their own nodeLinker and an inline allowBuilds are not touched', () => {
   const theirs = 'nodeLinker: isolated\nallowBuilds: {}\n'
-  assert.equal(withFramePnpmSettings(theirs), theirs)
+  assert.equal(withFramePnpmSettings(theirs, FRAME_ALLOW_BUILDS, {}), theirs)
+  assert.ok(withFramePnpmSettings(theirs).startsWith(theirs))
+})
+
+test('what the frame omits (the LibreOffice engines) becomes the empty placeholder, as npm overrides it', () => {
+  const settings = parse(withFramePnpmSettings(undefined))
+  assert.ok(OMITTED_PACKAGES.includes('@deepseek-ai/libreoffice-kit-darwin-arm64'))
+  assert.deepEqual(
+    settings.overrides,
+    Object.fromEntries(OMITTED_PACKAGES.map((name) => [name, `npm:${OMIT_PLACEHOLDER}`])),
+  )
+})
+
+test("an overrides block of the person's keeps their values and gets only the missing names", () => {
+  const theirs =
+    "overrides:\n  '@deepseek-ai/libreoffice-kit-darwin-arm64': 0.1.5\n  left-pad: 1.0.0\n"
+  const settings = parse(withFramePnpmSettings(theirs, []))
+  assert.equal(settings.overrides['@deepseek-ai/libreoffice-kit-darwin-arm64'], '0.1.5')
+  assert.equal(settings.overrides['left-pad'], '1.0.0')
+  assert.equal(
+    settings.overrides['@deepseek-ai/libreoffice-kit-win32-x64'],
+    `npm:${OMIT_PLACEHOLDER}`,
+  )
 })
 
 test('a block allowBuilds gets only the missing names, after its last entry, and a denied name stays denied', () => {

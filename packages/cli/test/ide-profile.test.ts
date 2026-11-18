@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'vitest'
 import { parse } from 'yaml'
+import { OMIT_PLACEHOLDER, OMITTED_PACKAGES } from '../src/frame-omit.ts'
 import {
   AGENT_PRESET_ID,
   AGENT_PRESET_ROWS,
@@ -69,6 +70,16 @@ test("the overlay mounts the frame rows and leaves DSH's own brand row out", () 
       ),
     )
   assert.match(overlay, /- id: ui-brand-official\n {2}disabled: true/u)
+})
+
+test("the frame leaves DSH's Office converter out: its row is off and npm installs the empty placeholder for its 153 MB engines", () => {
+  assert.match(ideProfilePlan(input).overlay, /- id: office-to-pdf\n {2}disabled: true/u)
+  const theirs = JSON.stringify({ name: 'my-app', overrides: { 'left-pad': '1.0.0' } })
+  const manifest = JSON.parse(ideProfilePlan(input, theirs).packageJson)
+  assert.equal(manifest.overrides['left-pad'], '1.0.0')
+  for (const name of OMITTED_PACKAGES)
+    assert.equal(manifest.overrides[name], `npm:${OMIT_PLACEHOLDER}`)
+  assert.ok(OMITTED_PACKAGES.includes('@deepseek-ai/libreoffice-kit-darwin-arm64'))
 })
 
 test('the driver rows carry no DSH web surface: our node server and page serve the app', () => {
