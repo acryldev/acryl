@@ -131,7 +131,9 @@ function frameProfileOfManifest(root: string): FrameProfileSpecs | undefined {
     }
   }
   if (Object.keys(packages).length === 0) return undefined
-  return { dshVersion, frameworkVersion, packages, names }
+  // A registry range moves to this CLI's release, as the plugin step of an upgrade moves it; a checkout's `file:`/`link:` spec stays.
+  const framework = /^[\^~]?\d/u.test(frameworkVersion) ? `^${VERSION}` : frameworkVersion
+  return { dshVersion, frameworkVersion: framework, packages, names }
 }
 
 /**

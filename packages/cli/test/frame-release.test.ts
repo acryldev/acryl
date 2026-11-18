@@ -10,6 +10,7 @@ import {
   frameProfileInput,
   publishedFrameProfile,
 } from '../src/frame-release.ts'
+import { VERSION } from '../src/version.ts'
 
 const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-frame-release-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
@@ -36,6 +37,8 @@ describe('the frame specs of an existing app', () => {
     })
     const specs = frameProfileForApp(root)
     expect(specs?.packages['acryl-web']).toBe('^0.1.0')
+    // The framework moves to this CLI's release, so the frame step does not write the old range back after the upgrade bumped it.
+    expect(specs?.frameworkVersion).toBe(`^${VERSION}`)
     const input = frameProfileInput(specs ?? publishedFrameProfile(), 'on-npm', [])
     expect(input.dependencies?.[String(web?.name)]).toBe('^0.1.0')
     const row = input.packages?.find((entry) => entry.row === 'acryl-web')
@@ -50,6 +53,7 @@ describe('the frame specs of an existing app', () => {
     })
     const input = frameProfileInput(frameProfileForApp(root) ?? publishedFrameProfile(), 'x', [])
     expect(input.dependencies?.['acryl-web']).toBe('file:/checkout/ide/acryl-web')
+    expect(input.frameworkVersion).toBe('file:/checkout/packages/cli')
     expect(input.packages?.find((entry) => entry.row === 'acryl-web')?.name).toBe('acryl-web')
   })
 
