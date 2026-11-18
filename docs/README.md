@@ -85,6 +85,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.14](release-notes/create-1.5.14.md) - a starter may be 64 MB (was 50 MB), so a whole game can be one; and a private GitHub source uses your own GitHub login
 - [Release notes acrylblends 1.5.15](release-notes/acrylblends-1.5.15.md) - a new desktop window opens at 85% of the screen
 - [Release notes create-acrylblends 1.5.15](release-notes/create-1.5.15.md) - released with acrylblends 1.5.15
+- [Release notes acrylblends 1.5.16](release-notes/acrylblends-1.5.16.md) - each packed product opens only its own apps
+- [Release notes create-acrylblends 1.5.16](release-notes/create-1.5.16.md) - released with acrylblends 1.5.16
 - [Release notes acrylblends 1.5.11](release-notes/acrylblends-1.5.11.md) - acrylblends update (a Blend's newer release merged into an app, your changes kept) and the in-app update of packed products
 - [Release notes create-acrylblends 1.5.11](release-notes/create-1.5.11.md) - released with acrylblends 1.5.11
 - [Release notes acrylblends 1.5.10](release-notes/acrylblends-1.5.10.md) - released with create-acrylblends 1.5.10
