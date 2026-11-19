@@ -92,10 +92,15 @@ export function stagePackage(sourceDir, stageRoot) {
   if (!existsSync(join(sourceDir, entryRel))) return { ok: false, reason: `the host entry ${entryRel} does not exist` }
   const version = hashPackage(sourceDir)
   const safeName = String(pkg.name).replace(/[^A-Za-z0-9._-]+/gu, '_')
-  const stamp = String(Date.now()).padStart(15, '0')
+  let stamp = String(Date.now()).padStart(15, '0')
   // A UNIQUE path per install: pnpm treats an unchanged `file:` specifier as up to date and skips the copy even when the contents changed
-  // (measured), so the dependency specifier itself must change on every install.
-  const dir = join(stageRoot, `${safeName}@${stamp}`)
+  // (measured), so the dependency specifier itself must change on every install. Two installs in the same millisecond (a test, a fast machine) must not
+  // share a path: step the stamp until the folder is free, which keeps the newest-first ordering the prune relies on.
+  let dir = join(stageRoot, `${safeName}@${stamp}`)
+  while (existsSync(dir)) {
+    stamp = String(Number(stamp) + 1).padStart(15, '0')
+    dir = join(stageRoot, `${safeName}@${stamp}`)
+  }
   mkdirSync(dir, { recursive: true })
   const copy = target => cpSync(sourceDir, target, { recursive: true, filter: source => !FOLDER_DIGEST_SKIPPED.has(basename(source)) && !basename(source).startsWith(VERSION_DIR_PREFIX) })
   copy(dir)
