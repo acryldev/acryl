@@ -238,8 +238,15 @@ test('skills: frontmatter parses, and the real pack lists its skills with real d
   const root = resolvePackRoot()
   const provider = createSkillProvider(root)
   const list = await provider.list()
-  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-plugin', 'acryl-change-plugin', '@acryldev/desktop-shell', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-plugin', 'acryl-restyle-ui', 'acryl-share-plugin', 'acryl-tui-ui'])
+  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-plugin', 'acryl-change-plugin', 'acryl-desktop-shell', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-plugin', 'acryl-restyle-ui', 'acryl-share-plugin', 'acryl-tui-ui'])
   assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
+  // DSH refuses a name outside its skill-name rule, and that refusal ends every turn (a package-shaped `@acryldev/desktop-shell` did, spec 051
+  // T038): each name is that rule's shape and its own folder's name.
+  for (const dir of readdirSync(join(root, 'skills'))) {
+    const parsed = parseSkill(readFileSync(join(root, 'skills', dir, 'SKILL.md'), 'utf8'))
+    assert.match(parsed.name, /^[a-z0-9]+(?:-[a-z0-9]+)*$/u, `skills/${dir}`)
+    assert.equal(parsed.name, dir)
+  }
   const skill = await provider.get(list.find(c => c.name === 'acryl-build-plugin'))
   assert.ok(skill.content.includes(`${root}/docs/start-here/this-runtime.md`))
   assert.doesNotMatch(skill.content, /\{\{pack\}\}/)
