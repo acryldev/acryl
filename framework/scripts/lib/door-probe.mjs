@@ -174,10 +174,13 @@ export async function startChrome(profile, { args = [], timeoutMs = 60_000 } = {
 }
 
 /** The flags a headless Chrome needs; on a CI runner (a container, a sandboxed user namespace) its own sandbox cannot start. */
-export const chromeFlags = (profile, devPort) => [
+export const chromeFlags = (profile, devPort, platform = process.platform) => [
   '--headless=new',
   '--disable-gpu',
   '--no-first-run',
+  // macOS: Chrome encrypts cookies with a key from the login Keychain. A gate runs with HOME on an empty scratch folder, where there is none,
+  // and Chrome 158 then never answers Network.setCookie (every door step timed out at 30 s). The mock keychain is what automation uses.
+  ...(platform === 'darwin' ? ['--use-mock-keychain'] : []),
   ...(process.env.CI ? ['--no-sandbox', '--disable-dev-shm-usage'] : []),
   `--user-data-dir=${profile}`,
   `--remote-debugging-port=${devPort}`,

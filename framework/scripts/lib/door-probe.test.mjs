@@ -5,7 +5,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { devToolsActivePort } from './door-probe.mjs'
+import { chromeFlags, devToolsActivePort } from './door-probe.mjs'
 
 test('the port Chrome chose is read from DevToolsActivePort; an absent or malformed file is undefined', () => {
   const profile = mkdtempSync(join(tmpdir(), 'door-probe-port-'))
@@ -20,4 +20,10 @@ test('the port Chrome chose is read from DevToolsActivePort; an absent or malfor
   } finally {
     rmSync(profile, { recursive: true, force: true })
   }
+})
+
+test('headless Chrome gets the mock keychain on macOS only (a scratch HOME has no login Keychain)', () => {
+  assert.ok(chromeFlags('/p', 9222, 'darwin').includes('--use-mock-keychain'))
+  assert.ok(!chromeFlags('/p', 9222, 'linux').includes('--use-mock-keychain'))
+  assert.ok(!chromeFlags('/p', 9222, 'win32').includes('--use-mock-keychain'))
 })
