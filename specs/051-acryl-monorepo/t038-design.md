@@ -50,8 +50,11 @@ publish-time map (`framework/frame/packages.json`); T038 removes the map's reaso
 - **Library names follow the folders** (`plugins/router` -> library name `router`): `requires` lists, `acrylblends add <name>`, add.ts's
   suite stripping and the `#acryl-kv` imports map move to the new names; `add acryl-<name>` is accepted as an alias for one release.
   Legacy layouts stay as historical fixtures (they describe what old apps have).
-- **App templates** import `@acryldev/<name>` in their source exactly as they import `acryl-<name>` today: `init`/`add` rewrite a copied
-  plugin's specifiers in the app's files to relative paths at copy time (today's mechanism, new names). No tsconfig-paths trick.
+- **App templates** keep their relative imports (`../plugins/router/...`): only a copied plugin's own sources name `@acryldev/<name>`,
+  and `init`/`add` rewrite those to relative paths at copy time (today's mechanism, new names). DS2's correction, 2026-11-19.
+- **Package-import keys stay** (`#acryl-jsx`, `#acryl-kv` in an app's package.json "imports"): they live in installed apps.
+- **frame/packages.json** keys become the full package names (`@acryldev/web`) with `version` and `path`; `name` goes; `scope` stays as a
+  checked constant every key must start with. **repository/homepage** of every published package -> `acryldev/acryl` with `directory`.
 - **Delivery mode decides** (T011 slice 3 stays): a copied plugin's specifier becomes a relative path; a plugin the app installs as a
   package (T011: desktop shell, instance) keeps its `@acryldev/...` specifier.
 - **Row ids do not change.** The Loader rule ties a row id to the package name for NEW rows; existing ids (`acryl-web-service`,
