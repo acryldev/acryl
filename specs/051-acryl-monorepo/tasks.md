@@ -97,7 +97,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [x] T020 [boot] The real Desktop from the branch with an isolated home (scripts/live-run.mjs): it found what the full check could not -
   the window quit at once (dsh-client-ui-sidebar failed: "slot sidebar.settings is already declared"), caused by T008 merging the framework's
   acryl-app-shell. Fixed in 75f10079 (rootOwnsSettingsSeat); the Desktop then booted and stayed up, health clean, Settings opened.
-- [ ] T031 [app-shell, review 3] rootOwnsSettingsSeat decides once, at apply, from the Loader's static entries. Matches main for ACRYL Desktop
+- [x] T031 [app-shell, review 3] rootOwnsSettingsSeat decides once, at apply, from the Loader's static entries. Matches main for ACRYL Desktop
   and leaves ADE as the framework built it, but (Fork3, 2026-11-19): enabling DSH's left sidebar at runtime while the root owns the seat
   fails its activation; disabling it while it does not leaves Settings unreachable until a reload (same as main); a sidebar disabled through
   its parent group is not seen; `loader` is reached through Cordis's reflect walk, not declared in an inject list. Fix: declare `loader` as

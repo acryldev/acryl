@@ -10,7 +10,7 @@ import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './c
 import type { ShellEnvironment } from './environment.ts'
 import { AdvancedFrame } from './AdvancedFrame.tsx'
 import { SettingsTrigger } from './SettingsTrigger.tsx'
-import { rootOwnsSettingsSeat } from './settings-seat.ts'
+import { DSH_SIDEBAR_ENTRY, rootOwnsSettingsSeat } from './settings-seat.ts'
 import { stripLaunchToken } from './launch-token.ts'
 import { DesktopLayoutState } from './layout-state.ts'
 import { provideDesktopLayout } from './layout-service.ts'
@@ -98,14 +98,41 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
   }, DefaultDesktopSidebar))
 
   // DSH's left sidebar declares the `sidebar.settings` seat and fills its launcher with its own gear (ACRYL Desktop). Without it in the page
-  // (ACRYL ADE) this root declares the seat and gives DSH's Settings modal an out-of-sight launcher, or the modal is never drawn. Declaring
-  // the seat beside DSH's sidebar fails its activation ("slot sidebar.settings is already declared"), so it is one or the other.
-  const ownsSettingsSeat = rootOwnsSettingsSeat(ctx.loader.entries())
-  if (ownsSettingsSeat) {
-    ctx.slots.inject('settings.launcher', () => ctx.slots.register({
-      name: 'settings.launcher',
-      priority: 100,
-    }, SettingsTrigger))
+  // (ACRYL ADE, or Desktop with the plugin switched off) this root declares the seat and gives DSH's Settings modal an out-of-sight launcher,
+  // or the modal is never drawn. Declaring the seat beside DSH's sidebar fails its activation ("slot sidebar.settings is already declared"),
+  // so it is one or the other - and which one follows the sidebar at runtime: the seat belongs to this registration's children, so the root
+  // re-registers, without the seat, before the sidebar activates, and with it again after the sidebar unloads.
+  // `loader` is optional: without one (a program composing this root by hand) the root owns the seat.
+  const loader = ctx.get('loader')
+  let ownsSettingsSeat = loader === undefined || rootOwnsSettingsSeat(loader.entries())
+  let rootDispose: (() => void) | undefined
+  let triggerDispose: (() => void) | undefined
+  const rigRoot = () => {
+    triggerDispose?.()
+    triggerDispose = undefined
+    rootDispose?.()
+    rootDispose = undefined
+    if (ownsSettingsSeat) {
+      triggerDispose = ctx.slots.inject('settings.launcher', () => ctx.slots.register({
+        name: 'settings.launcher',
+        priority: 100,
+      }, SettingsTrigger))
+    }
+    rootDispose = ctx.slots.register({
+      name: 'root',
+      children: {
+        'desktop.main': { kind: 'single', scope: 'root' },
+        'desktop.sidebar': { kind: 'single', scope: 'root' },
+        'sidebar': { kind: 'single', scope: 'root' },
+        'main': { kind: 'keyed', scope: 'root' },
+        'rightbar': { kind: 'single', scope: 'root' },
+        'shell.overlay': { kind: 'list', scope: 'root' },
+        'shell.leading': { kind: 'single', scope: 'root' },
+        // DSH's Settings modal and its launcher (`dsh-client-ui-settings-general`), drawn in the left pane (SettingsTrigger.tsx).
+        ...(ownsSettingsSeat ? { 'sidebar.settings': { kind: 'single', scope: 'root' } as const } : {}),
+      },
+      inject: () => ({ layout: desktopLayout, platform: environment.platform, ownsSettingsSeat, ...hooks }),
+    }, AdvancedFrame)
   }
 
   ctx.effect(() => {
@@ -118,21 +145,46 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
     }
   }, 'acryl-app-shell: theme presenter')
 
-  ctx.effect(() => ctx.slots.register({
-    name: 'root',
-    children: {
-      'desktop.main': { kind: 'single', scope: 'root' },
-      'desktop.sidebar': { kind: 'single', scope: 'root' },
-      'sidebar': { kind: 'single', scope: 'root' },
-      'main': { kind: 'keyed', scope: 'root' },
-      'rightbar': { kind: 'single', scope: 'root' },
-      'shell.overlay': { kind: 'list', scope: 'root' },
-      'shell.leading': { kind: 'single', scope: 'root' },
-      // DSH's Settings modal and its launcher (`dsh-client-ui-settings-general`), drawn in the left pane (SettingsTrigger.tsx).
-      ...(ownsSettingsSeat ? { 'sidebar.settings': { kind: 'single', scope: 'root' } as const } : {}),
-    },
-    inject: () => ({ layout: desktopLayout, platform: environment.platform, ownsSettingsSeat, ...hooks }),
-  }, AdvancedFrame), 'acryl-app-shell: advanced root slot')
+  ctx.effect(() => {
+    rigRoot()
+    return () => {
+      rootDispose?.()
+      rootDispose = undefined
+      triggerDispose?.()
+      triggerDispose = undefined
+    }
+  }, 'acryl-app-shell: advanced root slot')
+
+  // Follow DSH's left sidebar entry while `loader` is available (optional: without it the root owns the seat). The decision reads the entry,
+  // never its fiber. A sidebar starting is seen before its own apply declares the seat; a stopping one collapses its declarations only as its
+  // fiber unloads, so the root re-registers with the seat once the loader has settled, not inside the disposal event.
+  ctx.inject(['loader'], inner => {
+    const decide = () => {
+      const next = rootOwnsSettingsSeat(inner.loader.entries())
+      if (next === ownsSettingsSeat) return
+      ownsSettingsSeat = next
+      rigRoot()
+    }
+    inner.effect(() => {
+      const settled = () => {
+        void inner.loader.await().then(decide, () => {})
+      }
+      const offFiber = inner.root.on('internal/plugin', fiber => {
+        if (fiber.entry?.options.name !== DSH_SIDEBAR_ENTRY) return
+        if (fiber.uid !== null) decide()
+        else settled()
+      })
+      // A group's own update (the sidebar disabled through its parent group) patches its context; its children's fibers report themselves.
+      const offUpdate = inner.root.on('loader/partial-dispose', entry => {
+        if (entry.options.name === DSH_SIDEBAR_ENTRY || entry.options.group) settled()
+      })
+      decide()
+      return () => {
+        offFiber()
+        offUpdate()
+      }
+    }, 'acryl-app-shell: settings seat follows DSH\'s sidebar')
+  })
 
   return {
     rightPanel: {
