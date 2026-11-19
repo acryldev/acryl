@@ -1,0 +1,19 @@
+{
+  "anti-slop(no-array-filter-map)": 58,
+  "anti-slop(no-chained-type-assertions)": 477,
+  "anti-slop(no-conditional-empty-object-spread)": 822,
+  "anti-slop(no-known-value-widening)": 415,
+  "anti-slop(no-module-mocking)": 24,
+  "anti-slop(no-object-parameters)": 59,
+  "anti-slop(no-reflect-apply)": 6,
+  "anti-slop(no-reflect-get)": 4,
+  "anti-slop(no-runtime-typeof)": 1864,
+  "anti-slop(no-shape-in-symbol-names)": 73,
+  "anti-slop(no-unknown-parameters)": 665,
+  "anti-slop(no-unknown-returns)": 269,
+  "anti-slop(no-unknown-type-aliases)": 1,
+  "anti-slop(no-unsafe-dictionary-type)": 637,
+  "anti-slop(require-readable-spacing)": 36007,
+  "anti-slop(require-safety-comment-for-type-assertion)": 4248,
+  "oxc(no-accumulating-spread)": 1
+}
