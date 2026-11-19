@@ -58,7 +58,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   (ratchets reach framework/, a real teardown, 7 leaking tests fixed), a298e8a3 (one check: root `check` runs the framework's; its CI at the
   root), c640bca4 (spike, duplicate spec tooling and dead `ide/` fallbacks removed), a9fddbb2, 3c39b787; the 114 `acrylblends-v*` release
   tags pushed to acryldev/acryl. The 3-way merge of the ports was verified clean, file by file.
-- [ ] T020 [boot] A real Desktop boot from this branch (isolated home), the last check before Phase 2 is called done.
+- [x] T020 [boot] A real Desktop boot from main 47edaaed (scripts/live-run.mjs desktop, isolated home, 2026-11-19): the home screen renders, page health has one startup long task, stop reported "port free, real homes untouched".
 - [ ] T021 [exception] `acryl-harness-runtime` composes every plugin a surface runs (the guard's one named exception); move that
   composition up into `apps/`.
 - [ ] T022 [agents drive the app] Decided by the owner 2026-11-19: yes, and it is the baseline, not a choice - "we should have
@@ -133,6 +133,8 @@ verify and check:layout and all 23 framework check steps green before it lands.
   converted to an org (owner `musichen`, members incl. `webboxescom`) or gets its own publish token - a user scope accepts no other
   publisher. One release: publish `@acryldev/*` at the same versions, `acrylblends upgrade` rewrites an app's package.json and
   generated overlay, then deprecate `@acrylblends/*`. Open: row ids = short names (CLAUDE.md row-id rule change, owner decides).
+- [ ] T038 [names, owner decision 2026-11-19 "one name everywhere tonight"] Every workspace package's name, folder and import become
+  `@acryldev/<short>` (Pi-style); design and name map in t038-design.md. Owner: DS2_Fork3, after T036, T031 and T021 land.
 - [ ] T037 [npm, deadline 2027-01] npm stops direct publishing with 2FA-bypass tokens in January 2027 (banner on npmjs.com, seen
   2026-11-19); every release here uses one. Set up npm trusted publishing for each package (GitHub Actions OIDC; today the release
   workflow's publish step 404s because nothing is configured on npm's side) and move publishing into the workflows.
