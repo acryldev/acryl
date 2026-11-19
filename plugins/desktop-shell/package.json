@@ -18,6 +18,14 @@
   },
   "main": "./lib/launch.js",
   "types": "./lib/types/launch.d.ts",
+  "bin": {
+    "acryl-desktop": "./lib/bin.js"
+  },
+  "files": [
+    "lib/**",
+    "!lib/**/*.map",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./lib/types/launch.d.ts",
@@ -34,7 +42,8 @@
     "@acryldev/node-server": "workspace:*"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2"
+    "@deepseek-ai/cordis": "^4.0.2",
+    "electron": ">=44"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",

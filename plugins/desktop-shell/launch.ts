@@ -7,8 +7,8 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { acrylRoot, appIdOf, personHome } from '@acryldev/instance/home'
+import { APP_ROOT_ENV } from './app-root.ts'
 import { appTitle, brandedElectron, iconFile } from './brand.ts'
 
 /** The sysctl that makes the sandbox fail for an Electron without an AppArmor profile; its value, or `undefined` where it does not exist (every system but a recent Ubuntu). */
@@ -78,14 +78,17 @@ function mainFile(): string {
   return existsSync(compiled) ? compiled : join(import.meta.dirname, 'main.ts')
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+/**
+ * Start the app in `projectRoot` as a desktop app: `npm run desktop` (bin.ts) with the app's folder, `extra` its arguments. Electron's main learns the
+ * app from ACRYLBLENDS_APP_ROOT (app-root.ts), since the shell is installed in node_modules, outside the app's tree.
+ */
+export function launchDesktop(projectRoot: string, extra: readonly string[]): ChildProcess {
   const electron = createRequire(import.meta.url)('electron') as string
   // ACRYLBLENDS_DESKTOP_SANDBOX=1: the owner has given Electron an AppArmor profile and wants the sandbox.
   const blocked =
     process.env.ACRYLBLENDS_DESKTOP_SANDBOX !== '1' && sandboxBlocked(process.platform)
   if (blocked) console.warn(SANDBOX_NOTICE)
   // macOS: the Dock and Cmd+Tab name the app and draw its icon only when the bundle says so (brand.ts); a copy that cannot be made leaves the stock Electron, with a note.
-  const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
   const branded = brandedElectron({
     binary: electron,
     folder: join(
@@ -98,5 +101,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   })
   if (branded.problem !== undefined)
     console.warn(`desktop: the Dock shows Electron's own name and icon (${branded.problem})`)
-  runElectron(branded.binary, electronArgs(mainFile(), blocked, process.argv.slice(2)))
+  process.env[APP_ROOT_ENV] = projectRoot
+  return runElectron(branded.binary, electronArgs(mainFile(), blocked, extra))
 }

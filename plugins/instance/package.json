@@ -18,6 +18,11 @@
   },
   "main": "./lib/index.js",
   "types": "./lib/types/index.d.ts",
+  "files": [
+    "lib/**",
+    "!lib/**/*.map",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",

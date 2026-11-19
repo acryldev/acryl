@@ -13,7 +13,7 @@ curl -X POST <url>/ask -H 'content-type: application/json' -d '{"question":"add 
 # {"status":"completed","output":"The answer is 5.","steps":2}
 ```
 
-- `src/main.ts` chooses where the app lives (`plugins/instance`) and starts it.
+- `src/main.ts` chooses where the app lives (the `@acryldev/instance` package) and starts it.
 - `blend.yaml` is the app as data: which plugins it mounts, in what order, with what config and parameters. Switch
   one off with `disabled: true`. `npm run lock` writes `blend.lock.json`: the manifest's digest and a digest of
   every plugin folder, so a diff of the lock shows what changed.

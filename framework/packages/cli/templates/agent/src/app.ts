@@ -1,17 +1,14 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { type AppInstance, instance } from '@acryldev/instance'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
-import * as door from '../plugins/door/src/index.ts'
-import * as nodeServer from '../plugins/node-server/src/index.ts'
-import * as router from '../plugins/router/src/index.ts'
-import * as state from '../plugins/state/src/index.ts'
 import { agent, memory, model, scripted, tools } from '../plugins/agent/index.ts'
 import * as panel from '../plugins/agent-panel/index.ts'
 import { builder } from '../plugins/builder/index.ts'
+import * as door from '../plugins/door/src/index.ts'
 import { extensions } from '../plugins/extensions/index.ts'
 import * as home from '../plugins/home/index.ts'
-import { type AppInstance, instance } from '../plugins/instance/index.ts'
 import {
   appPluginNames,
   blueprintsIn,
@@ -20,10 +17,13 @@ import {
   loadManifest,
   type ParameterValue,
 } from '../plugins/manifest/index.ts'
+import * as nodeServer from '../plugins/node-server/src/index.ts'
 import { ASSISTANT_PROMPT, type OpenAIConfig, openai } from '../plugins/openai/index.ts'
 import { pluginShare } from '../plugins/plugin-share/index.ts'
+import * as router from '../plugins/router/src/index.ts'
 import { sandboxPlugin } from '../plugins/sandbox/index.ts'
 import { save } from '../plugins/save/index.ts'
+import * as state from '../plugins/state/src/index.ts'
 import { tasks } from '../plugins/tasks/index.ts'
 import { FRAME_MOUNT_PREFIX, routes } from './routes.ts'
 

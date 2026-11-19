@@ -9,10 +9,10 @@
     "electron": "44.9.3"
   },
   "scripts": {
-    "desktop": "node plugins/desktop-shell/launch.ts"
+    "desktop": "acryl-desktop"
   },
   "omit": ["**/*.test.*"],
-  "mount": "nothing to mount: run `npm install`, then `npm run desktop` (the window opens on the app's own server; every electron call is in plugins/desktop-shell)",
+  "mount": "nothing to mount: run `npm install`, then `npm run desktop` (the window opens on the app's own server; every electron call is in the @acryldev/desktop-shell package)",
   "entries": {
     "": "launch.ts",
     "/main": "main.ts"

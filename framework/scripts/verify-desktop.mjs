@@ -56,7 +56,11 @@ writeFileSync(marker, '')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const run = (cmd, args, cwd) =>
   execFileSync(cmd, args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-const entry = plain ? 'plugins/desktop-web/main.ts' : 'plugins/desktop-shell/main.ts'
+// A Blend app installs the shell as a package (spec 051 T011); its main learns the app from ACRYLBLENDS_APP_ROOT, as `npm run desktop` sets it.
+const entry = plain
+  ? 'plugins/desktop-web/main.ts'
+  : 'node_modules/@acryldev/desktop-shell/lib/main.js'
+if (!plain) env.ACRYLBLENDS_APP_ROOT = join(scratch, 'app')
 /** A free port for the debugging connection (a fixed or random port could belong to another program, or to a previous run still closing). */
 const port = await new Promise((resolvePort, reject) => {
   const probe = createServer()

@@ -154,7 +154,7 @@ const GUIDE = 'docs/framework/guides/data.md#why-the-database-is-opened-in-one-p
 
 function advice(violation: Violation, openers: readonly string[]): string {
   if (violation.kind === 'electron')
-    return `"${violation.specifier}" is the desktop shell's: only plugins/desktop-shell (added with "acrylblends add desktop") imports electron`
+    return `"${violation.specifier}" is the desktop shell's: only the @acryldev/desktop-shell package (added with "acrylblends add desktop") imports electron`
   const where =
     openers.length > 0
       ? openers.join(', ')
