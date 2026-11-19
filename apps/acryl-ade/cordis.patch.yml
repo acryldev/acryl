@@ -10,11 +10,11 @@
     - id: app-routes
       name: ./src/frame.ts
     - id: acryl-router
-      name: acrylblends/cordis/router
+      name: '@acryldev/blends/cordis/router'
       config:
         trailingSlash: ignore
     - id: acryl-router-http
-      name: acrylblends/cordis/router-http
+      name: '@acryldev/blends/cordis/router-http'
     - id: acryl-web-service
       name: '@acryldev/web'
     - id: acryl-settings

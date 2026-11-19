@@ -185,7 +185,7 @@ describe('desktop pnpm and community market integration', () => {
     try {
       await writeInstalledProfile(profileDir)
       await writeFile(settingsPath, stringifyYaml({
-        '@acryldev/cordis-plugin-market': { sources: [], installReceipts: [receipt] },
+        'cordis-plugin-market': { sources: [], installReceipts: [receipt] },
       }))
 
       const selectedBootstrap = bootstrap(root, profileDir)
@@ -252,9 +252,9 @@ describe('desktop pnpm and community market integration', () => {
       })
 
       const persisted = parseYaml(await readFile(settingsPath, 'utf8')) as {
-        '@acryldev/cordis-plugin-market': { installReceipts: unknown[] }
+        'cordis-plugin-market': { installReceipts: unknown[] }
       }
-      expect(persisted['@acryldev/cordis-plugin-market'].installReceipts).toEqual([])
+      expect(persisted['cordis-plugin-market'].installReceipts).toEqual([])
       const manifest = JSON.parse(await readFile(join(profileDir, 'package.json'), 'utf8')) as {
         dependencies: Record<string, string>
       }

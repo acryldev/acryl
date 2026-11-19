@@ -35,7 +35,7 @@ const WEB_ONLY_ROWS: Readonly<Record<string, string>> = {
   'acryl-engine': 'the engine host row the Web surface mounts the runtime under',
   include: 'the root include row of the engine host',
   'community-market': 'Web always composes the community market; Desktop makes the provider a user choice',
-  '@acryldev/support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
+  'acryl-support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
 }
 
 /**
@@ -109,7 +109,7 @@ describe('Web and Desktop compose the same ACRYL features', () => {
       .filter(capability => capability.surfaces.includes('web') && capability.surfaces.includes('desktop') && capability.shellMode === undefined)
       .flatMap(capability => capability.loaderPatches.flatMap(patch => 'insert' in patch ? (patch.insert ?? []).map(row => row.id) : []))
       .filter((id): id is string => typeof id === 'string')
-    expect(sharedRowIds).toEqual(expect.arrayContaining(['authorization', '@acryldev/workspace', '@acryldev/plugin-admin']))
+    expect(sharedRowIds).toEqual(expect.arrayContaining(['authorization', 'acryl-workspace', 'acryl-plugin-admin']))
     for (const id of sharedRowIds) {
       expect(desktop.get(id), `Desktop row ${id}`).toBeDefined()
       expect(web.get(id), `Web row ${id}`).toBeDefined()
@@ -127,7 +127,7 @@ describe('Web and Desktop compose the same ACRYL features', () => {
     // checked here are the same set Desktop registers when it mounts the same row. A real Electron boot to
     // enumerate Desktop's live `ctx.tools` too is out of scope for a headless gate.
     const { desktop, webAgentControlToolNames } = composed!
-    expect(desktop.get('@acryldev/agent-control')).toBeDefined()
+    expect(desktop.get('acryl-agent-control')).toBeDefined()
     expect(webAgentControlToolNames).toEqual([...AGENT_CONTROL_TOOL_NAMES])
   })
 

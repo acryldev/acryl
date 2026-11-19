@@ -77,8 +77,8 @@ function moduleUrl(relative: string): string {
 }
 
 const BUILT_API = moduleUrl('../../lib/api.js')
-const ROUTER = moduleUrl('../../node_modules/acrylblends/lib/cordis/router.js')
-const ROUTER_HTTP = moduleUrl('../../node_modules/acrylblends/lib/cordis/router-http.js')
+const ROUTER = moduleUrl('../../node_modules/@acryldev/blends/lib/cordis/router.js')
+const ROUTER_HTTP = moduleUrl('../../node_modules/@acryldev/blends/lib/cordis/router-http.js')
 
 interface Mounted {
   readonly ctx: Context

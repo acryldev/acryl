@@ -5,9 +5,9 @@
     # composes them whatever the Blueprint carries (spec 048 T003). A Blueprint's framework kit and the community Market find
     # them here and do not insert them again.
     - id: acrylblends/cordis/router
-      name: acrylblends/cordis/router
+      name: '@acryldev/blends/cordis/router'
     - id: acrylblends/cordis/router-http
-      name: acrylblends/cordis/router-http
+      name: '@acryldev/blends/cordis/router-http'
     - id: desktop-shell
       name: acryl-desktop
       config:
