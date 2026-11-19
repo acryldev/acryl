@@ -15,6 +15,7 @@ import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import type { AppInstance } from '../src/instance/index.ts'
 import { fileURLToPath } from 'node:url'
+import { inBlendApp } from '../../../scripts/lib/blend-apps.mjs'
 
 const repo = realpathSync(fileURLToPath(new URL('../../..', import.meta.url)))
 
@@ -48,21 +49,49 @@ function sources(dir: string): string[] {
   return out
 }
 
+/**
+ * Every home read outside ALLOWED under `root`'s ROOTS. The listed Blend apps (scripts/lib/blend-apps.mjs) are skipped: they run on the framework's own
+ * instance plugin outside ACRYL's runtime, like framework/, which is not scanned either (spec 051 T013, D5). Only that list exempts a folder.
+ */
+function offencesIn(root: string): string[] {
+  const offences: string[] = []
+  for (const top of ROOTS) {
+    let files: string[]
+    try {
+      files = sources(join(root, top))
+    } catch {
+      continue
+    }
+    for (const file of files) {
+      const path = relative(root, file).split(sep).join('/')
+      if (path in ALLOWED || inBlendApp(path)) continue
+      const text = readFileSync(file, 'utf8').split('\n')
+      text.forEach((line, index) => {
+        if (/^\s*(\*|\/\/)/u.test(line)) return   // comments may name the variables
+        for (const rule of AMBIENT) if (rule.pattern.test(line)) offences.push(`${path}:${String(index + 1)} ${rule.name}: ${line.trim().slice(0, 120)}`)
+      })
+    }
+  }
+  return offences
+}
+
 describe('bulkhead architecture', () => {
   it('only the selector decides where an app lives', () => {
-    const offences: string[] = []
-    for (const root of ROOTS) {
-      for (const file of sources(join(repo, root))) {
-        const path = relative(repo, file).split(sep).join('/')
-        if (path in ALLOWED) continue
-        const text = readFileSync(file, 'utf8').split('\n')
-        text.forEach((line, index) => {
-          if (/^\s*(\*|\/\/)/u.test(line)) return   // comments may name the variables
-          for (const rule of AMBIENT) if (rule.pattern.test(line)) offences.push(`${path}:${String(index + 1)} ${rule.name}: ${line.trim().slice(0, 120)}`)
-        })
+    expect(offencesIn(repo)).toEqual([])
+  })
+
+  it('a folder that grows a blend.yaml is still scanned; only the listed Blend apps are not', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'bulkhead-'))
+    try {
+      for (const folder of ['plugins/x', 'apps/acryl-ade']) {
+        mkdirSync(join(root, folder, 'src'), { recursive: true })
+        writeFileSync(join(root, folder, 'blend.yaml'), 'id: x\n')
+        writeFileSync(join(root, folder, 'src', 'home.ts'), "import { homedir } from 'node:os'\nexport const home = homedir()\n")
       }
+      expect(offencesIn(root)).toEqual(["plugins/x/src/home.ts:2 homedir(): export const home = homedir()"])
+    } finally {
+      await rm(root, { recursive: true, force: true })
     }
-    expect(offences).toEqual([])
   })
 
   it('the allow-list only names files that exist', () => {

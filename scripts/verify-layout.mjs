@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
 import { directionViolations, findCycles, FOUNDATION, readGraph, unlistedFoundation } from './dependency-direction.mjs'
+import { BLEND_APPS, inBlendApp } from './lib/blend-apps.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -37,14 +38,7 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 // auto-managed `minimumReleaseAgeExclude:` list (every currently-resolved
 // package, regenerated on install) after this point, which is pnpm's
 // responsibility to keep correct, not a hand-authored policy this gate owns.
-// The products as Blend apps (spec 051 T013, D5): Control Center and ACRYL ADE live in apps/ with their history, but they are Blends, not
-// workspace packages. Each installs the framework's published packages with npm, exactly as a person's Blend does, and carries the library
-// plugins acrylblends copies into every Blend (plugins/library.lock.json) until those are packages (spec 051 T011). So they are not in
-// pnpm-workspace.yaml, not in the dependency-direction graph, and the source ratchets below (DSH imports, web registrations) do not count
-// their copies. This is a rule, checked here, not an accident of the folder list: a Blend app must have blend.yaml and must not be a
-// workspace package.
-const BLEND_APPS = ['apps/acryl-control-center', 'apps/acryl-ade']
-const inBlendApp = path => BLEND_APPS.some(app => path === app || path.startsWith(`${app}/`))
+// The products as Blend apps (scripts/lib/blend-apps.mjs): not workspace packages, not counted by the source ratchets below; checked at the end.
 
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
