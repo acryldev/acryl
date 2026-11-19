@@ -4,11 +4,13 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // copy of this note).
 import '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@acryl/ui/frame'
+import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type { ReactNode } from 'react'
 import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
 import type { ShellEnvironment } from './environment.ts'
 import { AdvancedFrame } from './AdvancedFrame.tsx'
 import { SettingsTrigger } from './SettingsTrigger.tsx'
+import { rootOwnsSettingsSeat } from './settings-seat.ts'
 import { stripLaunchToken } from './launch-token.ts'
 import { DesktopLayoutState } from './layout-state.ts'
 import { provideDesktopLayout } from './layout-service.ts'
@@ -95,11 +97,16 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
     priority: 100,
   }, DefaultDesktopSidebar))
 
-  // DSH's Settings modal needs a launcher in its seat or it is never drawn; a root with no gear of its own (ACRYL ADE) gets this out-of-sight one.
-  ctx.slots.inject('settings.launcher', () => ctx.slots.register({
-    name: 'settings.launcher',
-    priority: 100,
-  }, SettingsTrigger))
+  // DSH's left sidebar declares the `sidebar.settings` seat and fills its launcher with its own gear (ACRYL Desktop). Without it in the page
+  // (ACRYL ADE) this root declares the seat and gives DSH's Settings modal an out-of-sight launcher, or the modal is never drawn. Declaring
+  // the seat beside DSH's sidebar fails its activation ("slot sidebar.settings is already declared"), so it is one or the other.
+  const ownsSettingsSeat = rootOwnsSettingsSeat(ctx.loader.entries())
+  if (ownsSettingsSeat) {
+    ctx.slots.inject('settings.launcher', () => ctx.slots.register({
+      name: 'settings.launcher',
+      priority: 100,
+    }, SettingsTrigger))
+  }
 
   ctx.effect(() => {
     const presenter = new DesktopThemePresenter()
@@ -122,9 +129,9 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       'shell.overlay': { kind: 'list', scope: 'root' },
       'shell.leading': { kind: 'single', scope: 'root' },
       // DSH's Settings modal and its launcher (`dsh-client-ui-settings-general`), drawn in the left pane (SettingsTrigger.tsx).
-      'sidebar.settings': { kind: 'single', scope: 'root' },
+      ...(ownsSettingsSeat ? { 'sidebar.settings': { kind: 'single', scope: 'root' } as const } : {}),
     },
-    inject: () => ({ layout: desktopLayout, platform: environment.platform, ...hooks }),
+    inject: () => ({ layout: desktopLayout, platform: environment.platform, ownsSettingsSeat, ...hooks }),
   }, AdvancedFrame), 'acryl-app-shell: advanced root slot')
 
   return {

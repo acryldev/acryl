@@ -10,6 +10,8 @@ export interface AdvancedFrameInjected {
   layout: DesktopLayoutState
   /** Host platform controlling native title-bar spacing. */
   platform: ShellPlatform
+  /** True when this root declares DSH's `sidebar.settings` seat and draws it (no DSH left sidebar in the page, as in ACRYL ADE). */
+  ownsSettingsSeat: boolean
   /** Wraps the main column's rendered content (e.g. a terminal dock the IDE adds beneath it); the plain
    * content unchanged when absent. A domain plugin that needs no extra chrome around its main surface
    * never passes this - this package has no concept of what a "dock" is, only that a caller may want to
@@ -25,7 +27,7 @@ export type AdvancedFrameProps = PropsRuntime<'root'>
   & AdvancedFrameInjected
 
 /** Desktop-owned transparent frame around the unchanged product surfaces. */
-export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, renderSlot }: AdvancedFrameProps) {
+export function AdvancedFrame({ layout, platform, ownsSettingsSeat, wrapMain, wrapRightbar, renderSlot }: AdvancedFrameProps) {
   const subscribeLayout = useCallback((listener: () => void) => layout.subscribe(listener), [layout])
   const readLayout = useCallback(() => layout.getSnapshot(), [layout])
   const panels = useSyncExternalStore(subscribeLayout, readLayout)
@@ -108,7 +110,7 @@ export function AdvancedFrame({ layout, platform, wrapMain, wrapRightbar, render
             renderUpstream: () => renderSlot('sidebar', { collapsed, width: sidebarOwnerWidth }),
             onToggleCollapse: () => { layout.toggleSidebar() },
           })}
-          <div className="dshDesktopSettingsHost">{renderSlot('sidebar.settings', { wide: false })}</div>
+          {ownsSettingsSeat ? <div className="dshDesktopSettingsHost">{renderSlot('sidebar.settings', { wide: false })}</div> : null}
         </div>
       </aside>
       <main className="dshDesktopConversationSurface" data-acryl-slot="desktop.main">
