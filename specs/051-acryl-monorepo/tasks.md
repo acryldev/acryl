@@ -59,8 +59,13 @@ verify and check:layout and all 23 framework check steps green before it lands.
   root), c640bca4 (spike, duplicate spec tooling and dead `ide/` fallbacks removed), a9fddbb2, 3c39b787; the 114 `acrylblends-v*` release
   tags pushed to acryldev/acryl. The 3-way merge of the ports was verified clean, file by file.
 - [x] T020 [boot] A real Desktop boot from main 47edaaed (scripts/live-run.mjs desktop, isolated home, 2026-11-19): the home screen renders, page health has one startup long task, stop reported "port free, real homes untouched".
-- [ ] T021 [exception] `acryl-harness-runtime` composes every plugin a surface runs (the guard's one named exception); move that
-  composition up into `apps/`.
+- [x] T021 [exception] The composition moved up (branch 051-t021, 2026-11-19). `plugins/coding-capabilities` (package
+  `@acryldev/coding-capabilities`) owns the surface composition: the capability rows, the packages each surface must make resolvable, the shell-mode
+  split and the advanced-shell rows. The runtime keeps the Blueprint vocabulary (capability ids, surfaces/shellMode types, id + needsRouter) and
+  takes a `CodingCapabilities` input in its engine definitions and legacy boots; Web, CLI and Desktop pass their own composition. The runtime's 20
+  plugin dependencies are gone and `RUNTIME_COMPOSITION_EDGES` is deleted, so the rule is "the runtime depends only on the foundation and itself";
+  the runtime names plugins in `devDependencies` only (its integration tests boot the real composition), which the guard allows by field and fails
+  in `dependencies`/`peerDependencies`. The two capability tables are asserted equal id by id in the runtime's tests, so neither can drift.
 - [ ] T022 [agents drive the app] Decided by the owner 2026-11-19: yes, and it is the baseline, not a choice - "we should have
   functionality as it was before unification". The ACRYL chat AND every PTY driver agent (Claude Code, Pi, Codex, ...) fully control the
   running app as a user does, like acryl-control: look, click, type, fill, select, press, scroll, wait, reload, navigate. Done when each

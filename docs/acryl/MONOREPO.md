@@ -49,10 +49,13 @@ foundation      acrylblends (the framework) and its packages: acryl-router, acry
    nothing depends on an app. The foundation and the framework's app plugins are named package by package (they keep their role
    wherever they move); runtime and app are read from the folder (`runtime/`, `apps/`, `examples/`). Every library plugin (a
    `plugins/*/plugin.json` folder) must be a workspace package with a role.
-3. **One named exception:** `acryl-harness-runtime` composes every plugin a surface runs (a composition root), so it may depend on
-   exactly the 20 plugins it lists today; a 21st fails (moving that composition up into `apps/` is spec 051 T021). The foundation's one
-   plugin-shaped dependency is `acryl-drivers`, the Cordis-free driver contract: it is a foundation package by role, even though it
-   lives in `plugins/drivers` and an app receives it like any library plugin.
+3. **No shipped plugin dependency:** `acryl-harness-runtime` keeps what is runtime (engine, profiles, instances, sessions); the plugin
+   set a surface runs is composed by the surface, from `@acryldev/coding-capabilities` (rows and packages) and the Blueprint it boots
+   (spec 051 T021). The runtime may name plugins in `devDependencies` only, so its integration tests boot a surface with the real
+   composition and import the plugin under test; a plugin in `dependencies` or `peerDependencies` fails the guard. The foundation's one
+   plugin-shaped dependency is
+   `acryl-drivers`, the Cordis-free driver contract: it is a foundation package by role, even though it lives in `plugins/drivers` and an
+   app receives it like any library plugin.
 
 A Blend repository outside this one depends on published npm packages, never on copied source.
 

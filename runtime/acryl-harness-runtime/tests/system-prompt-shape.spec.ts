@@ -15,6 +15,7 @@ import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { ceilingsFor, measurePromptBudget, overBudget, type BudgetCeilings } from '../src/prompt-budget.ts'
 import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
 import { fileURLToPath } from 'node:url'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const driftDir = fileURLToPath(new URL('../../../plugins/acryl-system-prompt/drift/', import.meta.url))
 // Windows has its own shell tool (`pwsh`, not `bash`), so what the harness contributes differs there by design; its baselines are recorded separately (`*.win32.json`).
@@ -34,9 +35,9 @@ async function capture(kind: 'web' | 'cli') {
   temporaryHomes.push(home)
   process.env.DSH_HOME = home
   const host = await createAcrylEngineHost(kind === 'cli'
-    ? { engines: [createDshEngineDefinition('acryl-shape')], initialEngine: 'dsh' }
+    ? { engines: [createDshEngineDefinition('acryl-shape', codingCapabilities)], initialEngine: 'dsh' }
     : {
-        engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+        engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
         initialEngine: 'dsh',
         prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
       })

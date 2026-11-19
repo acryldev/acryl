@@ -1,0 +1,55 @@
+{
+  "name": "@acryldev/coding-capabilities",
+  "version": "0.1.0",
+  "private": true,
+  "description": "How ACRYL's coding capabilities compose on each product surface: the Loader rows, the packages a surface must make resolvable, and the shell-mode split. The Blueprint vocabulary stays in acryl-harness-runtime.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "test": "vitest run",
+    "check": "pnpm run build && pnpm run typecheck && pnpm run test"
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis-plugin-include": "1.0.9",
+    "@acryl/ui": "workspace:*",
+    "acryl-agent-control": "workspace:*",
+    "acryl-app-save": "workspace:*",
+    "acryl-app-shell": "workspace:*",
+    "acryl-brand": "workspace:*",
+    "acryl-command-reply": "workspace:*",
+    "acryl-launcher-desktop": "workspace:*",
+    "acryl-mount-anchors": "workspace:*",
+    "acryl-plugin-admin": "workspace:*",
+    "acryl-plugin-context": "workspace:*",
+    "acryl-plugin-hub": "workspace:*",
+    "acryl-settings": "workspace:*",
+    "acryl-shortcuts": "workspace:*",
+    "acryl-sign-in": "workspace:*",
+    "acryl-support": "workspace:*",
+    "acryl-system-prompt": "workspace:*",
+    "acryl-ui-tui": "workspace:*",
+    "acryl-workspace": "workspace:*",
+    "cordis-plugin-market": "workspace:*",
+    "dsh-client-ui-brand-acryl": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  }
+}

@@ -149,7 +149,9 @@
     "acryl-ui-tui": "workspace:*",
     "acrylblends": "workspace:^",
     "cordis-plugin-market": "workspace:*",
-    "diff": "^9.0.0"
+    "diff": "^9.0.0",
+    "@acryldev/coding-capabilities": "workspace:*",
+    "acryl-sign-in": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",

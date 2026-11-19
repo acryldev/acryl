@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { fileURLToPath } from 'node:url'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
 const initialDshHome = process.env.DSH_HOME
@@ -53,7 +54,7 @@ describe('an agent extends ACRYL through its tools (no model)', () => {
     folders.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })

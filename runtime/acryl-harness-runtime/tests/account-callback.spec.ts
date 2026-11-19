@@ -13,13 +13,13 @@ import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
 import { ACCOUNT_SIGN_IN_SERVICE, type AccountSignInPort } from 'acryl-control'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ACRYL_CODING_CAPABILITIES } from '../src/coding-capabilities.ts'
+import { CODING_CAPABILITY_COMPOSITIONS } from '@acryldev/coding-capabilities'
 
 const ACTIVE = 2 as FiberState.ACTIVE
 
 /** The rows exactly as the capability declares them: the callback row and the `deepseek-account` row's isolation. */
 function declaredRows() {
-  const capability = ACRYL_CODING_CAPABILITIES.find(candidate => candidate.id === 'account-callback')
+  const capability = CODING_CAPABILITY_COMPOSITIONS.find(candidate => candidate.id === 'account-callback')
   if (capability === undefined) throw new Error('account-callback capability is not declared')
   const [insertPatch, accountPatch] = capability.loaderPatches
   const callback = insertPatch?.insert?.[0]

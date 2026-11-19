@@ -22,6 +22,7 @@ import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
+import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 
 const temporaryDirs: string[] = []
 const initialAcrylHome = process.env.ACRYL_HOME
@@ -39,7 +40,7 @@ async function bootSurface(homeName: string) {
   temporaryDirs.push(home)
   process.env.ACRYL_HOME = home
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilitiesFor(new URL('../package.json', import.meta.url).href))],
     initialEngine: 'dsh',
     prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })

@@ -1,18 +1,16 @@
 /**
- * The declaration seam between ACRYL's coding capabilities and the product
- * surfaces that compose them (spec 034). The table below is the contract: a
- * change to it is a change to what a surface boots with, so it is asserted
- * per surface rather than inferred from whichever surface happens to run.
+ * The composition seam between ACRYL's coding capabilities and the product surfaces that compose them (spec 034, spec 051 T021). The table
+ * below is the contract: a change to it is a change to what a surface boots with, so it is asserted per surface rather than inferred from
+ * whichever surface happens to run. It must name exactly the Blueprint vocabulary the runtime parses; the last test holds both ways.
  */
-import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import type { AcrylSurface } from '../src/index.ts'
 import {
-  ACRYL_CODING_CAPABILITIES,
+  CODING_CAPABILITY_COMPOSITIONS,
   createAcrylCodingCapabilityPatches,
   acrylCodingCapabilityPackages,
   createAcrylShellCapabilityPatches,
-  type AcrylSurface,
-} from '../src/coding-capabilities.ts'
+} from '../src/index.ts'
 
 type PatchShape = {
   readonly idRows: readonly string[]
@@ -49,11 +47,11 @@ function shapeOf(patches: readonly unknown[]): PatchShape {
   return { idRows, insertedIds }
 }
 
-describe('ACRYL_CODING_CAPABILITIES declarations', () => {
+describe('CODING_CAPABILITY_COMPOSITIONS declarations', () => {
   it('declares every capability for at least one surface, with unique ids and stable order', () => {
-    const ids = ACRYL_CODING_CAPABILITIES.map(capability => capability.id)
+    const ids = CODING_CAPABILITY_COMPOSITIONS.map(capability => capability.id)
     expect(new Set(ids).size).toBe(ids.length)
-    for (const capability of ACRYL_CODING_CAPABILITIES) {
+    for (const capability of CODING_CAPABILITY_COMPOSITIONS) {
       expect(capability.surfaces.length).toBeGreaterThan(0)
       expect(capability.loaderPatches.length).toBeGreaterThan(0)
       for (const surface of capability.surfaces) expect(SURFACES).toContain(surface)
@@ -61,13 +59,13 @@ describe('ACRYL_CODING_CAPABILITIES declarations', () => {
   })
 
   it('declares authorization for every product surface', () => {
-    const authorization = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'authorization')
+    const authorization = CODING_CAPABILITY_COMPOSITIONS.find(capability => capability.id === 'authorization')
     expect(authorization?.surfaces).toEqual(['tui', 'web', 'desktop'])
     expect(JSON.stringify(authorization?.loaderPatches)).toContain('@deepseek-ai/dsh-authorization')
   })
 
   it('keeps the persona out of the tui-only capability set for the surfaces dsh-web-app covers', () => {
-    const persona = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'persona')
+    const persona = CODING_CAPABILITY_COMPOSITIONS.find(capability => capability.id === 'persona')
     expect(persona?.surfaces).toEqual(['tui'])
     expect(persona?.loaderPatches).toEqual([
       expect.objectContaining({
@@ -85,7 +83,7 @@ describe('ACRYL_CODING_CAPABILITIES declarations', () => {
   it('declares the agent roster through the 0.2 preset registry with its default preset', () => {
     // DETACHED root (spec 001 R25): `dsh-agent-presets` became `dsh-agent-preset-registry`, whose presets come from bundle patches rather
     // than a `roots` list, so the TUI roster declares only the default until ACRYL's own roots are re-declared.
-    const roster = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'agent-roster')
+    const roster = CODING_CAPABILITY_COMPOSITIONS.find(capability => capability.id === 'agent-roster')
     const inserted = roster?.loaderPatches.flatMap(patch => ('insert' in patch ? patch.insert ?? [] : [])) ?? []
     const registry = inserted.find(row => row.id === 'agent-preset-registry')
     expect(registry?.name).toBe('@deepseek-ai/dsh-agent-preset-registry')
@@ -103,7 +101,7 @@ describe('createAcrylCodingCapabilityPatches', () => {
       const patches = createAcrylCodingCapabilityPatches(new Set([surface]))
       const composedIds = Object.values(shapeOf(patches)).flat()
       const declaredForSurface = new Set(
-        ACRYL_CODING_CAPABILITIES
+        CODING_CAPABILITY_COMPOSITIONS
           .filter(capability => capability.surfaces.includes(surface) && capability.shellMode === undefined)
           .flatMap(capability => capability.loaderPatches.flatMap((patch) => {
             const rows = [
@@ -169,13 +167,13 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
     const second = createAcrylCodingCapabilityPatches(new Set(['tui']))
     expect(second[0]?.id).toBe('system-prompt')
-    expect(JSON.stringify(ACRYL_CODING_CAPABILITIES)).not.toContain('mutated-system-prompt')
+    expect(JSON.stringify(CODING_CAPABILITY_COMPOSITIONS)).not.toContain('mutated-system-prompt')
   })
 })
 
 describe('the workspace and the ACRYL shell are shared by Web and Desktop (spec 040, surface sharing)', () => {
   it('declares the workspace for exactly the surfaces that render it, never TUI', () => {
-    const workspace = ACRYL_CODING_CAPABILITIES.find(capability => capability.id === 'workspace')
+    const workspace = CODING_CAPABILITY_COMPOSITIONS.find(capability => capability.id === 'workspace')
     expect(workspace?.surfaces).toEqual(['desktop', 'web'])
     expect(workspace?.requiresPackages).toEqual(['acryl-app-shell', 'acryl-workspace'])
     expect(createAcrylCodingCapabilityPatches(new Set(['tui'])).flatMap(p => 'insert' in p ? p.insert ?? [] : []).map(r => r.id)).not.toContain('acryl-workspace')

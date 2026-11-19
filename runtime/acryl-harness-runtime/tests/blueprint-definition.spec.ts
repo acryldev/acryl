@@ -15,6 +15,7 @@ import {
 import { fileURLToPath } from 'node:url'
 import { blueprintRowForModule } from '../src/blueprint/index.ts'
 import { ACRYL_CODING_CAPABILITIES } from '../src/coding-capabilities.ts'
+import { ADVANCED_SHELL_PATCHES } from '@acryldev/coding-capabilities'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
@@ -87,7 +88,7 @@ describe('parseBlueprint', () => {
   it('a Blend with the app-shell row owns its frame on Web and Desktop: the frame package and row, the stock layout off, sidebar and conversation on', () => {
     const blueprint = parseBlueprint({ id: 'acme.music', extends: 'acryl.blank', rows: [...BLANK_BLUEPRINT.rows, 'app-shell'] })
     for (const surface of ['web', 'desktop'] as const) {
-      const { packages, patches } = composeBlueprintRows(blueprint, surface)
+      const { packages, patches } = composeBlueprintRows(blueprint, surface, new Set(), ADVANCED_SHELL_PATCHES)
       expect(packages).toContain('acryl-app-shell')
       expect(patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toContain('acryl-app-shell')
       expect(patches).toEqual(expect.arrayContaining([{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }]))

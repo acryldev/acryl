@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { DSH_CHAT_ROW_IDS } from '../src/blueprint/index.ts'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const STATES = ['PENDING', 'LOADING', 'ACTIVE', 'FAILED', 'UNLOADING', 'DISPOSED']
 const homes: string[] = []
@@ -32,7 +33,7 @@ async function boot(blueprint: string): Promise<Host> {
   process.env.DSH_HOME = home
   process.env.ACRYL_BLUEPRINT = blueprint
   return createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })

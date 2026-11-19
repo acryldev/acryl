@@ -12,6 +12,7 @@ import { promisify } from 'node:util'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
+import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 
 const execFileAsync = promisify(execFile)
 const require = createRequire(import.meta.url)
@@ -34,7 +35,7 @@ describe('the ACRYL workspace on the Web surface', () => {
     await writeFile(join(repo, 'a.txt'), 'hello\n')
 
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilitiesFor(new URL('../package.json', import.meta.url).href))],
       initialEngine: 'dsh',
       prepare: hostCtx => {
         provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} })

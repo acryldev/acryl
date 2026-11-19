@@ -60,22 +60,6 @@ export const FRAMEWORK_PLUGINS = new Set([
   'acryl-tasks',
 ])
 
-/**
- * The only runtime -> plugin dependencies allowed, each edge by name: acryl-harness-runtime composes every plugin a surface runs, which is a
- * composition root's job (moving that composition up into apps/ is spec 051 T021). Listing the edges, not the package, means a 21st plugin
- * fails the guard instead of passing silently.
- */
-export const RUNTIME_COMPOSITION_EDGES = new Map([
-  [
-    'acryl-harness-runtime',
-    new Set([
-      '@acryl/ui', 'acryl-agent-control', 'acryl-app-save', 'acryl-app-shell', 'acryl-brand', 'acryl-command-reply', 'acryl-launcher-desktop',
-      'acryl-mount-anchors', 'acryl-plugin-admin', 'acryl-plugin-context', 'acryl-plugin-hub', 'acryl-settings', 'acryl-shortcuts', 'acryl-sign-in',
-      'acryl-support', 'acryl-system-prompt', 'acryl-ui-tui', 'acryl-workspace', 'cordis-plugin-market', 'dsh-client-ui-brand-acryl',
-    ]),
-  ],
-])
-
 /** Workspace package folders, as pnpm itself resolves pnpm-workspace.yaml (quoting, globs and `!` negations included); the root is not one. */
 export function workspaceFolders(root) {
   const listed = JSON.parse(execFileSync('corepack', ['pnpm', 'ls', '-r', '--depth', '-1', '--json'], { cwd: root, encoding: 'utf8' }))
@@ -94,7 +78,10 @@ export function readGraph(root, folders = workspaceFolders(root)) {
     const deps = new Set()
     for (const field of ['dependencies', 'peerDependencies', 'devDependencies'])
       for (const dep of Object.keys(manifest[field] ?? {})) if (dep !== name && packages.has(dep)) deps.add(dep)
-    graph.set(name, { folder, deps })
+    const production = new Set()
+    for (const field of ['dependencies', 'peerDependencies'])
+      for (const dep of Object.keys(manifest[field] ?? {})) if (dep !== name && packages.has(dep)) production.add(dep)
+    graph.set(name, { folder, deps, production })
   }
   return graph
 }
@@ -130,15 +117,18 @@ export function roleOf(name, folder) {
 /** Every dependency that points the wrong way, as one sentence each. */
 export function directionViolations(graph) {
   const violations = []
-  for (const [name, { folder, deps }] of graph) {
+  for (const [name, { folder, deps, production }] of graph) {
     const role = roleOf(name, folder)
+    // The runtime's integration tests boot a surface with the real composition and import the plugin under test; those edges are test-only
+    // (spec 051 T021). A plugin in `dependencies` or `peerDependencies` is shipped and fails.
+    const testOnly = (dep) => production?.has(dep) !== true
     for (const dep of deps) {
       const depRole = roleOf(dep, graph.get(dep).folder)
       if (depRole === 'app')
         violations.push(`${name} depends on ${dep}, an app: apps are the top, nothing depends on them`)
       else if (role === 'foundation' && depRole !== 'foundation')
         violations.push(`${name} is framework foundation and depends on ${dep}: the foundation depends only on itself`)
-      else if (role === 'runtime' && depRole !== 'foundation' && depRole !== 'runtime' && !RUNTIME_COMPOSITION_EDGES.get(name)?.has(dep))
+      else if (role === 'runtime' && depRole !== 'foundation' && depRole !== 'runtime' && !testOnly(dep))
         violations.push(`${name} is ACRYL runtime and depends on ${dep}: the runtime depends only on the foundation and itself`)
     }
   }

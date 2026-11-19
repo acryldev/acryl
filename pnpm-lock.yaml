@@ -199,6 +199,9 @@ importers:
 
   apps/acryl-cli:
     dependencies:
+      '@acryldev/coding-capabilities':
+        specifier: workspace:*
+        version: link:../../plugins/coding-capabilities
       '@deepseek-ai/cordis-plugin-group':
         specifier: 1.0.4
         version: 1.0.4(@deepseek-ai/cordis-plugin-loader@1.0.5)(@deepseek-ai/cordis@4.0.4)
@@ -517,6 +520,9 @@ importers:
       acryl-settings:
         specifier: workspace:*
         version: link:../../plugins/acryl-settings
+      acryl-sign-in:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-sign-in
       acryl-system-prompt:
         specifier: workspace:*
         version: link:../../plugins/acryl-system-prompt
@@ -563,6 +569,9 @@ importers:
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
+      '@acryldev/coding-capabilities':
+        specifier: workspace:*
+        version: link:../../plugins/coding-capabilities
       '@deepseek-ai/cordis':
         specifier: 4.0.4
         version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
@@ -1585,6 +1594,9 @@ importers:
       '@acryl/ui':
         specifier: workspace:*
         version: link:../../plugins/acryl-ui
+      '@acryldev/coding-capabilities':
+        specifier: workspace:*
+        version: link:../../plugins/coding-capabilities
       '@deepseek-ai/cordis':
         specifier: 4.0.4
         version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
@@ -3974,6 +3986,85 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
+  plugins/coding-capabilities:
+    dependencies:
+      '@acryl/ui':
+        specifier: workspace:*
+        version: link:../acryl-ui
+      '@deepseek-ai/cordis-plugin-include':
+        specifier: 1.0.9
+        version: 1.0.9(@deepseek-ai/cordis-plugin-loader@1.0.5)(@deepseek-ai/cordis@4.0.4)
+      acryl-agent-control:
+        specifier: workspace:*
+        version: link:../acryl-agent-control
+      acryl-app-save:
+        specifier: workspace:*
+        version: link:../acryl-app-save
+      acryl-app-shell:
+        specifier: workspace:*
+        version: link:../acryl-app-shell
+      acryl-brand:
+        specifier: workspace:*
+        version: link:../acryl-brand
+      acryl-command-reply:
+        specifier: workspace:*
+        version: link:../acryl-command-reply
+      acryl-launcher-desktop:
+        specifier: workspace:*
+        version: link:../acryl-launcher-desktop
+      acryl-mount-anchors:
+        specifier: workspace:*
+        version: link:../acryl-mount-anchors
+      acryl-plugin-admin:
+        specifier: workspace:*
+        version: link:../acryl-plugin-admin
+      acryl-plugin-context:
+        specifier: workspace:*
+        version: link:../acryl-plugin-context
+      acryl-plugin-hub:
+        specifier: workspace:*
+        version: link:../acryl-plugin-hub
+      acryl-settings:
+        specifier: workspace:*
+        version: link:../acryl-settings
+      acryl-shortcuts:
+        specifier: workspace:*
+        version: link:../acryl-shortcuts
+      acryl-sign-in:
+        specifier: workspace:*
+        version: link:../acryl-sign-in
+      acryl-support:
+        specifier: workspace:*
+        version: link:../acryl-support
+      acryl-system-prompt:
+        specifier: workspace:*
+        version: link:../acryl-system-prompt
+      acryl-ui-tui:
+        specifier: workspace:*
+        version: link:../acryl-ui-tui
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../acryl-workspace
+      cordis-plugin-market:
+        specifier: workspace:*
+        version: link:../cordis-plugin-market
+      dsh-client-ui-brand-acryl:
+        specifier: workspace:*
+        version: link:../dsh-client-ui-brand-acryl
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
   plugins/cordis-plugin-market:
     dependencies:
       ajv:
@@ -4722,9 +4813,6 @@ importers:
 
   runtime/acryl-harness-runtime:
     dependencies:
-      '@acryl/ui':
-        specifier: workspace:*
-        version: link:../../plugins/acryl-ui
       '@deepseek-ai/cordis-plugin-group':
         specifier: 1.0.4
         version: 1.0.4(@deepseek-ai/cordis-plugin-loader@1.0.5)(@deepseek-ai/cordis@4.0.4)
@@ -5175,75 +5263,18 @@ importers:
       '@webboxes/plugin-hub':
         specifier: workspace:*
         version: link:../plugin-hub
-      acryl-agent-control:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-agent-control
-      acryl-app-save:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-app-save
-      acryl-app-shell:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-app-shell
-      acryl-brand:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-brand
-      acryl-command-reply:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-command-reply
       acryl-control:
         specifier: workspace:*
         version: link:../acryl-control
-      acryl-launcher-desktop:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-launcher-desktop
-      acryl-mount-anchors:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-mount-anchors
-      acryl-plugin-admin:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-plugin-admin
-      acryl-plugin-context:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-plugin-context
-      acryl-plugin-hub:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-plugin-hub
-      acryl-settings:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-settings
-      acryl-shortcuts:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-shortcuts
-      acryl-sign-in:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-sign-in
-      acryl-support:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-support
-      acryl-system-prompt:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-system-prompt
-      acryl-ui-tui:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-ui-tui
       acryl-web-service:
         specifier: workspace:*
         version: link:../acryl-web-service
-      acryl-workspace:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-workspace
       acrylblends:
         specifier: workspace:^
         version: link:../../framework/packages/cli
       adm-zip:
         specifier: ^0.6.1
         version: 0.6.1
-      cordis-plugin-market:
-        specifier: workspace:*
-        version: link:../../plugins/cordis-plugin-market
-      dsh-client-ui-brand-acryl:
-        specifier: workspace:*
-        version: link:../../plugins/dsh-client-ui-brand-acryl
       koffi:
         specifier: 3.1.5
         version: 3.1.5
@@ -5263,6 +5294,9 @@ importers:
         specifier: ^2.9.0
         version: 2.9.0
     devDependencies:
+      '@acryldev/coding-capabilities':
+        specifier: workspace:*
+        version: link:../../plugins/coding-capabilities
       '@deepseek-ai/cordis':
         specifier: 4.0.4
         version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
@@ -5275,6 +5309,18 @@ importers:
       '@types/semver':
         specifier: ^7.7.1
         version: 7.8.0
+      acryl-plugin-admin:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-admin
+      acryl-plugin-context:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-plugin-context
+      acryl-sign-in:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-sign-in
+      acryl-workspace:
+        specifier: workspace:*
+        version: link:../../plugins/acryl-workspace
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)

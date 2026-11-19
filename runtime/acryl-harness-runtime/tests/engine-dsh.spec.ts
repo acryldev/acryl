@@ -26,6 +26,7 @@ import {
   createProfileRuntimeResolution,
 } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const dshInstallAnchor = createRequire(import.meta.url).resolve('@deepseek-ai/dsh/package.json')
 
@@ -51,7 +52,7 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
   it('boots the pinned profile in the host tree, not a second Cordis root', async () => {
     await freshDshHome()
     const host = await createAcrylEngineHost({
-      engines: [createDshEngineDefinition('acryl-test')],
+      engines: [createDshEngineDefinition('acryl-test', codingCapabilities)],
       initialEngine: 'dsh',
     })
     try {
@@ -81,7 +82,7 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
   it('tears down the whole profile tree when the engine host disposes', async () => {
     await freshDshHome()
     const host = await createAcrylEngineHost({
-      engines: [createDshEngineDefinition('acryl-test')],
+      engines: [createDshEngineDefinition('acryl-test', codingCapabilities)],
       initialEngine: 'dsh',
     })
     expect(host.ctx.get('sessions')).toBeDefined()
@@ -100,7 +101,7 @@ describe('the extracted dsh engine, mounted under createAcrylEngineHost', () => 
     await freshDshHome()
     const host = await createAcrylEngineHost({
       engines: [
-        createDshEngineDefinition('acryl-test'),
+        createDshEngineDefinition('acryl-test', codingCapabilities),
         { id: 'other', plugin: () => {} },
       ],
       initialEngine: 'dsh',
@@ -131,7 +132,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
     // like on disk (`acryl plugin list --profile desktop`'s real-world
     // reproduction, spec 034 tasks.md T008).
     const webHost = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(installPackageUrl)],
+      engines: [createWebEngineDefinition(installPackageUrl, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => {
         provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} })
@@ -144,7 +145,7 @@ describe('CLI/TUI flavor booting a profile another surface already initialized (
     // agent-roster insert collided with the row the web bundle already
     // composed, throwing `duplicate loader entry id: agent-preset-registry` at boot.
     const cliHost = await createAcrylEngineHost({
-      engines: [createDshEngineDefinition('web')],
+      engines: [createDshEngineDefinition('web', codingCapabilities)],
       initialEngine: 'dsh',
     })
     try {
@@ -168,7 +169,7 @@ describe('the web engine entry point, mounted under createAcrylEngineHost', () =
     // supplies it via createAcrylEngineHost's prepare hook.
     const installPackageUrl = new URL('../package.json', import.meta.url).href
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(installPackageUrl)],
+      engines: [createWebEngineDefinition(installPackageUrl, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => {
         provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} })
@@ -190,7 +191,7 @@ describe('the web engine entry point, mounted under createAcrylEngineHost', () =
       const profile = loadProfile('web', 'web', dshInstallAnchor)
       const linkPath = join(profile.dir, 'node_modules', 'dsh-client-ui-brand-acryl')
       expect(existsSync(linkPath)).toBe(true)
-      const installManifest = findPackageJSON('dsh-client-ui-brand-acryl', installPackageUrl)
+      const installManifest = findPackageJSON('dsh-client-ui-brand-acryl', codingCapabilities.anchors[0])
       expect(installManifest).toBeDefined()
       expect(realpathSync.native(linkPath)).toBe(realpathSync.native(dirname(installManifest as string)))
 
@@ -298,7 +299,7 @@ describe('live configuration and engine reactivation on the web engine (spec 001
     await freshDshHome()
     const installPackageUrl = new URL('../package.json', import.meta.url).href
     return await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(installPackageUrl), { id: 'other', plugin: () => {} }],
+      engines: [createWebEngineDefinition(installPackageUrl, codingCapabilities), { id: 'other', plugin: () => {} }],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })

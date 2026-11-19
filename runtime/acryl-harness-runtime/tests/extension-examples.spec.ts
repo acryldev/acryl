@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const examples = new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/', import.meta.url)
 const temporaryHomes: string[] = []
@@ -29,7 +30,7 @@ async function bootHost() {
   temporaryHomes.push(home)
   process.env.DSH_HOME = home
   return createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })

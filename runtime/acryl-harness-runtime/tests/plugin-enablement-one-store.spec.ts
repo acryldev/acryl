@@ -13,6 +13,7 @@ import { isSeq, parseDocument } from 'yaml'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { resolvePluginLifecycleStatePath } from '../src/plugin-lifecycle-state.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const ENTRY = 'include:t089-probe'
 
@@ -40,7 +41,7 @@ afterAll(async () => {
 /** One app start: boot, run `body` against both pages' services, shut down. */
 async function start<T>(body: (pages: { manager: Manager; lifecycle: Lifecycle; profileDir: string }) => Promise<T>): Promise<T> {
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })
