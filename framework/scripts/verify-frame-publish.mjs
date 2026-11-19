@@ -80,7 +80,18 @@ const scratch = mkdtempSync(join(tmpdir(), 'verify-frame-publish-'))
 let devProcess = null
 let devStopped = false
 let devPort = 0
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+// npm as a command and its leading arguments. On Windows npm is a .cmd, which Node (since the 2024 batch-file fix) refuses to start without a shell:
+// spawnSync('npm.cmd') returned status null with EINVAL and no output, so verify:create failed on every Windows job (Framework run 44482501848).
+// npm's own script under this Node, as pack-blank-mac.mjs runs it, needs no shell and no quoting.
+const NPM =
+  process.platform === 'win32'
+    ? [
+        process.execPath,
+        join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      ]
+    : ['npm']
+/** `[command, args]` for an npm call. */
+const npm = (args) => [NPM[0], [...NPM.slice(1), ...args]]
 const log = (message) => console.log(`verify-frame-publish: ${message}`)
 
 function fail(message) {
@@ -89,7 +100,7 @@ function fail(message) {
 
 /** Start a package script in its own process group, so a stop takes npm and everything npm started. */
 function start(cwd, args, env) {
-  const child = spawn(npm, args, {
+  const child = spawn(...npm(args), {
     cwd,
     env: { ...process.env, ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -165,7 +176,8 @@ function run(command, args, options = {}) {
   })
   return {
     status: result.status ?? 1,
-    out: `${result.stdout ?? ''}${result.stderr ?? ''}`,
+    // A process that never started (EINVAL, ENOENT) has no output; its error is the only clue.
+    out: `${result.stdout ?? ''}${result.stderr ?? ''}${result.error === undefined ? '' : `\n${result.error.message}`}`,
     stdout: result.stdout ?? '',
     stderr: result.stderr ?? '',
   }
@@ -300,7 +312,7 @@ function pack(key) {
   // The source keeps ACRYL's package names (the port rule); the published artifact carries the configured ones everywhere it names a frame package: the
   // built JavaScript's import specifiers and the package's own cordis.patch.yml row names, which are what DSH imports by.
   rewritePublishedNames(stage)
-  const result = run(npm, ['pack', '--json', '--ignore-scripts'], { cwd: stage })
+  const result = run(...npm(['pack', '--json', '--ignore-scripts']), { cwd: stage })
   if (result.status !== 0) fail(`${folder}: npm pack failed:\n${result.out}`)
   let packed
   try {
@@ -341,7 +353,7 @@ function test(folder) {
   const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8'))
   const script = manifest.scripts?.test
   if (script === undefined) return 'no test script'
-  const result = run(npm, ['test'], { cwd: folder })
+  const result = run(...npm(['test']), { cwd: folder })
   if (result.status !== 0) fail(`${folder}: its tests failed:\n${result.out.slice(-4000)}`)
   return 'tests pass'
 }
@@ -440,7 +452,7 @@ try {
     manifest.dependencies[published.get(entry.folder)] = `file:${entry.tarball}`
   manifest.dependencies.acrylblends = `file:${cliTarball}`
   writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`)
-  const installed = run(npm, ['install', '--no-audit', '--no-fund'], {
+  const installed = run(...npm(['install', '--no-audit', '--no-fund']), {
     cwd: app,
     env: frameEnv,
   })
