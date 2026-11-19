@@ -40,19 +40,35 @@ Folders stay flat and the layers live only in the dependency graph, like earendi
 verify and check:layout and all 23 framework check steps green before it lands.
 
 - [x] T016 [pnpm] Develop with pnpm 12.14.0 (root and framework); the pnpm the app ships to users stays 11.11.0. Done eb96faea.
-- [ ] T017 [flat plugins] The framework's 13 packages (`acryl-door`, `acryl-router`, `acryl-db`, `acryl-kv`, `acryl-page`,
-  `acryl-web-server`, ...) move into the one flat `plugins/` folder beside ACRYL's own: everything imports them from there. The 19 plain app
-  plugins (`desktop`, `instance`, `save`, ...) stay in `framework/plugins/` for now: they are not packages, the CLI copies them into apps as
-  source, and they develop against the framework's own dependencies (making them packages is Phase 3). The CLI reads its plugins from both
-  folders; the published npm package still ships one `plugins/`. **In progress: built, full check run going (2026-11-19 02:20).**
-- [ ] T018 [apps] The Blends frame (`framework/ide/*`) moves into `apps/`, where everything people run lives (no `products/` folder).
-- [ ] T019 [docs] This spec and `docs/acryl/MONOREPO.md` rewritten in Pi's terms: one table of what each package owns and what it
+- [ ] T017 [flat plugins] Deferred to Phase 3 (T011). Tried 2026-11-19 and undone on purpose: the framework's 32 plugins import each other as siblings
+  (`../acryl-router/...`), exactly as they sit in an app's `plugins/` folder once the CLI copies them in, so they must stay in one folder
+  (`framework/plugins/`). Splitting them broke those imports (typecheck), and the 19 plain ones develop against the framework's own
+  dependencies, which ACRYL's root does not install. They join the flat `plugins/` in Phase 3 (T011), when they become packages that import
+  each other by name.
+- [x] T018 [frame plugins] The Blends frame's three packages (`acryl-blends-frame`, `acryl-versions`, `acryl-app-context`) are Cordis
+  plugins, not apps: they move from `framework/ide/` into the flat `plugins/` folder, and `framework/ide/` is gone. Their eight existing DSH
+  imports are now counted by ACRYL's guard (ceiling 138 to 146, none new). Done b04eed6c (26 of 26 checks green).
+- [x] T019 [docs] This spec and `docs/acryl/MONOREPO.md` rewritten in Pi's terms: one table of what each package owns and what it
   deliberately does not do; the layer picture (framework foundation, ACRYL runtime, plugins, apps) as documentation of the graph; phases 3-5
   updated (no `products/`, no updater bridge release: installed apps are reinstalled). Copied to main.
+  Done 3c39b787 (docs/acryl/MONOREPO.md, CLAUDE.md layout, spec.md layout and phases, framework specs -> specs/blends, package descriptions).
+- [x] T023 [review] Adversarial review (Fork3, 2026-11-19): 9 findings. Fixed 9b1e34ed (guard: pnpm's own package list, the harness
+  runtime's 20 edges by name, framework packages must have a role), 79f460ad (the online channel refuses reload/navigate), 60750415
+  (ratchets reach framework/, a real teardown, 7 leaking tests fixed), a298e8a3 (one check: root `check` runs the framework's; its CI at the
+  root), c640bca4 (spike, duplicate spec tooling and dead `ide/` fallbacks removed), a9fddbb2, 3c39b787; the 114 `acrylblends-v*` release
+  tags pushed to acryldev/acryl. The 3-way merge of the ports was verified clean, file by file.
 - [ ] T020 [boot] A real Desktop boot from this branch (isolated home), the last check before Phase 2 is called done.
 - [ ] T021 [exception] `acryl-harness-runtime` composes every plugin a surface runs (the guard's one named exception); move that
   composition up into `apps/`.
 - [ ] T022 [decision] Whether ACRYL's agent gets the door's new `reload` and `navigate` as tools (named, not registered today).
+
+- [ ] T024 [guard] Relative imports that cross packages are invisible to the direction guard (examples: the framework package's
+  `../../../plugins/acryl-router/src`, acryl-app-context's tests into `framework/plugins`). Teach the guard to see them, or remove them when
+  the framework's plugins become packages (Phase 3).
+- [ ] T025 [row id] Rename the Loader row `acryl-web` to `acryl-web-service` (its package name; the shared-slot exception no longer fits,
+  and installed apps are reinstalled). Touches the frame overlay apps get (`ide-profile.ts`).
+- [ ] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
+  (`ubuntu-24.04-arm`, `macos-26`, `macos-15-intel`) and it does not know `vars`: configure those, then lint all.
 
 ## Phase 3 - packages, not copies
 
@@ -63,10 +79,10 @@ verify and check:layout and all 23 framework check steps green before it lands.
 
 ## Phase 4 - products
 
-- [ ] T012 [updater first] The last release of Control Center and ADE from their current repositories points their in-app updater at the new
-  home, and an installed copy is seen to update from there (Mac, Windows, Linux), before anything else in this phase.
-- [ ] T013 [products] `products/control-center` and `products/ade` (blend.yaml, assets, release workflow); installers build from the
-  monorepo; product tags `control-center-v*`, `ade-v*`.
+- [ ] T012 [updater] Each product's in-app updater looks for its own product's latest release by tag (`control-center-v*`, `ade-v*`),
+  since one repository releases several products. No bridge release: installed copies are reinstalled (owner, 2026-11-19).
+- [ ] T013 [products] Control Center and ADE build their installers from `apps/` (blend.yaml, assets, release workflow) with product tags
+  `control-center-v*`, `ade-v*`.
 
 ## Phase 5 - registry and the old repository
 
