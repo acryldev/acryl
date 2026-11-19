@@ -138,6 +138,9 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [ ] T037 [npm, deadline 2027-01] npm stops direct publishing with 2FA-bypass tokens in January 2027 (banner on npmjs.com, seen
   2026-11-19); every release here uses one. Set up npm trusted publishing for each package (GitHub Actions OIDC; today the release
   workflow's publish step 404s because nothing is configured on npm's side) and move publishing into the workflows.
+  Found 2026-11-19: npm 11.17 sets this up from the command line (`npm trust github <pkg> --file <workflow>.yml --repo acryldev/acryl
+  --allow-publish -y`), but the stored bypass-2FA token gets 403 on it (npm counts it an account change). So the owner runs it once per
+  package after `npm login` with 2FA; an agent prepares the per-package lines and the workflows' `id-token: write` publish jobs.
 ## Phase 3 - packages, not copies
 
 - [x] T010 [launcher] acryl's `plugins/acryl-launcher` is published as a package; Control Center depends on it and its
