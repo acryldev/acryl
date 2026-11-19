@@ -80,7 +80,7 @@ describe('desktop profile BLEND composition (D24)', () => {
     // survives composition (invoicing is locked disabled by acryl.demo's
     // default parameters).
     expect(composed.find(row => row.id === 'contacts')).toEqual(expect.objectContaining({
-      name: '@acryldev/blend-demo',
+      name: 'acryl-blend-demo',
       config: {
         title: 'Contacts',
         org: 'My Organization',
