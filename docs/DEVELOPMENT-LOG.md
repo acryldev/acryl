@@ -1,3 +1,21 @@
+## 2026-11-19 - the driver contract is a foundation package, and the framework no longer reaches into the panel (spec 051 T033)
+
+`FOUNDATION_PLUGIN_EDGES` was the one upward edge T017 had to name: `acrylblends-framework` built `acrylblends/drivers` from the agent panel's
+Cordis-free `drivers.ts`, so the foundation depended on a plugin. The contract now lives in its own foundation package.
+
+- **`plugins/drivers` (package `acryl-drivers`)** (`6882aa7c`): the contract moved out of `plugins/agent-panel`, `FOUNDATION` names the package,
+  `acrylblends-framework` builds `acrylblends/drivers` from its source and declares it a workspace dependency (and no longer `acryl-agent-panel`),
+  and the panel, `driver-acp` and `driver-pty` import `acryl-drivers`. `FOUNDATION_PLUGIN_EDGES`, its guard test and its MONOREPO.md paragraph are
+  gone; the foundation rule is "the foundation depends only on itself" again, and verify-layout reports 80 packages, no cycles.
+- **The app copy path is what decided the shape** (AcrylImplementer): a foundation package in the flat `plugins/` folder, not framework source. The
+  agent template keeps no `acrylblends` dependency, so a copied panel must resolve the contract without one; `agent-panel` requires `drivers`, the
+  copy closure ships it, and every import is rewritten to a relative path. The folder is `plugins/drivers` rather than `plugins/acryl-drivers` so the
+  inherited lint exclusion (`!plugins/acryl-*`, the vendored packages) keeps its meaning; `biome.json` includes it and verify-layout's coverage
+  check enforces the include.
+- **Proven**: the framework build, typecheck and full test (413 library tests, 61 script tests, the package and frame suites), the moved driver
+  tests (82 across agent-panel, driver-acp, driver-pty), the CLI tests (49, the copy closure now carries `drivers`), verify-layout, and
+  verify-scaffolder, whose agent template copies the panel and the contract, type-checks them and boots the app.
+
 ## 2026-11-19 - the framework's plugins are flat workspace packages, and the library is in the graph (spec 051 T017/T024/T027)
 
 The Pi model's flat `plugins/` folder now holds the framework's whole plugin library beside ACRYL's own: 32 folders moved with `git mv`
