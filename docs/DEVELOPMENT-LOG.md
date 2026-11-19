@@ -45,12 +45,17 @@ their servers instead of the default port 3000, which the host already serves (t
 15 s timeout, because a stream that cannot settle spent the default 2 s grace under vitest's default 5 s budget (the SSE test alone was 2010 ms, now
 110 ms; 20 consecutive suite runs green, `711255f770c6b18a4558436ac44ad0619741da12`).
 
-## 2026-11-19 - a Blend still extends itself after the unification (spec 051 T032)
+## 2026-11-19 - a Blend still extends itself after the unification: the first release's acceptance passed (spec 051 T032)
 
-TODO(AcrylImplementer): T032's acceptance commit hash (Fork3's branch, lands after its gate). The acceptance itself: a fresh Blend made from the new
-packages, its agent asked to "add a plugin that shows a ledger page", cites paths that exist in the app, writes the plugin into the app's `plugins/`,
-and the plugin loads without a restart. The repository fields of `acryl-app-context`, `acryl-blends-frame` and `acryl-versions` now name
-`acryldev/acryl` (see the T015 audit in `specs/051-acryl-monorepo/t015-cutover.md`), and the monorepo's framework release workflow is the publish path.
+`61b4c27231847e4c69a9c9e25ad978f6db84a208` records the acceptance. A fresh app from the published release
+(`npm create acrylblends@1.6.0 ledger-app -- --template blank`, desktop frame, scratch HOME, the model key in the environment only) was started with
+`npm run dev` and its chat asked to "add a plugin that shows a ledger page". It finished in 1m57s: every path it cited exists in the app (the
+`@acryldev/app-context` docs under `node_modules` and the app's own `src/routes.ts` and `src/about.tsx`), it wrote `plugins/ledger/index.ts`
+(216 lines), a ledger row in `blend.yaml` and `test/ledger.test.ts`, the Ledger widget appeared on the running home page and `/app/ledger` answered
+200 with no restart, `npm test` ran 10/10, and it checked its own work through the door (8 look, 6 click, 2 type steps). One Edit step failed and
+the agent recovered. The publish path from the monorepo was proven by the same task: 1.6.0 and the 18 `@acryldev` packages were published from
+this repository (`framework/`, `plugins/`, `runtime/`). The app still depends on `@webboxes/app-persistence`, `blends-core` and `plugin-hub`, which
+T038 rewrites.
 
 ## 2026-11-19 - still owed tonight (spec 051)
 
@@ -59,7 +64,6 @@ and the plugin loads without a restart. The repository fields of `acryl-app-cont
 - TODO(AcrylImplementer): 1.7.0 - `@acryldev/blends` and `@acryldev/create-blends` 1.7.0 with the `acrylblends` and `create-acrylblends` aliases, the
   docs switched to `npm create @acryldev/blends` (branch 051-create-command), and the publish verified from npm.
 - TODO(AcrylImplementer): T011's desktop-package move (`acrylblends upgrade --desktop-packages`) and its acceptance.
-- TODO(AcrylImplementer): T032's acceptance hash, per the entry above.
 
 ## 2026-11-19 - the driver contract is a foundation package, and the framework no longer reaches into the panel (spec 051 T033)
 
