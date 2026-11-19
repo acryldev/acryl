@@ -67,7 +67,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   the framework's plugins become packages (Phase 3).
 - [ ] T025 [row id] Rename the Loader row `acryl-web` to `acryl-web-service` (its package name; the shared-slot exception no longer fits,
   and installed apps are reinstalled). Touches the frame overlay apps get (`ide-profile.ts`).
-- [ ] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
+- [x] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
   (`ubuntu-24.04-arm`, `macos-26`, `macos-15-intel`) and it does not know `vars`: configure those, then lint all.
 - [ ] T027 [graph] The framework's 17 plain app plugins (agent, desktop, instance, sandbox, ...) are not workspace packages, so the
   direction guard never sees them. They enter the graph when they become packages (Phase 3, T011); until then the framework's own

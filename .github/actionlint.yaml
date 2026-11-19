@@ -1,0 +1,13 @@
+# actionlint's built-in runner list and expression contexts are those of the release its wasm build embeds (1.6.22). These are GitHub's newer runner
+# labels; `config-variables: null` allows any `vars.*` name, because repository variables (ACRYL_PUBLISH_WEB_NPM) live in GitHub, not in this repo.
+# Read by framework/scripts/verify-workflows.mjs, which lints every workflow here and in framework/.
+self-hosted-runner:
+  labels:
+    - ubuntu-24.04
+    - ubuntu-24.04-arm
+    - macos-26
+    - macos-26-intel
+    - macos-15
+    - macos-15-intel
+    - windows-11-arm
+config-variables: null

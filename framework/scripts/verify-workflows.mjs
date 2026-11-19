@@ -48,17 +48,29 @@ function runScriptFindings(document, name) {
 
 let findings = 0
 // The framework's own workflows: what is left in framework/.github/workflows (its old release, until the cut-over) and, inside ACRYL's monorepo
-// (spec 051), its CI and its release at the repository root, .github/workflows/framework.yml and framework-release.yml.
-const rootWorkflows = ['framework.yml', 'framework-release.yml']
-  .map((name) => join(workflows, '..', '..', '..', '.github', 'workflows', name))
-  .filter((file) => existsSync(file))
-const files = [
-  ...readdirSync(workflows)
+// (spec 051), every workflow at the repository root, .github/workflows/*.yml.
+const rootWorkflows = join(workflows, '..', '..', '..', '.github', 'workflows')
+const workflowFilesIn = (dir) =>
+  readdirSync(dir)
     .filter((name) => /\.ya?ml$/u.test(name))
-    .map((name) => join(workflows, name)),
-  ...rootWorkflows,
+    .map((name) => join(dir, name))
+const files = [
+  ...workflowFilesIn(workflows),
+  ...(existsSync(rootWorkflows) ? workflowFilesIn(rootWorkflows) : []),
 ].sort()
 const names = files.map((file) => basename(file))
+// actionlint's wasm build (1.6.22) predates GitHub's newer runner labels and its `vars` context. `.github/actionlint.yaml` names both, and the wasm
+// API takes no config, so the same two rules are applied to its results here.
+const configFile = join(rootWorkflows, '..', 'actionlint.yaml')
+const config = existsSync(configFile) ? parse(readFileSync(configFile, 'utf8')) : undefined
+const labels = new Set(config?.['self-hosted-runner']?.labels ?? [])
+const variables = config !== undefined && 'config-variables' in config
+const configured = (result) =>
+  result.kind === 'runner-label'
+    ? labels.has(/^label "([^"]+)"/u.exec(result.message)?.[1] ?? '')
+    : variables &&
+      result.kind === 'expression' &&
+      result.message.startsWith('undefined variable "vars"')
 for (const file of files) {
   const name = basename(file)
   const source = readFileSync(file, 'utf8')
@@ -66,6 +78,7 @@ for (const file of files) {
   // files it has read add up past its first allocation (found when a fourth workflow joined the list, spec 051 T032).
   const lint = await createLinter()
   for (const result of lint(source, name)) {
+    if (configured(result)) continue
     findings += 1
     console.error(
       `${name}:${String(result.line)}:${String(result.column)}: ${result.kind}: ${result.message}`,
