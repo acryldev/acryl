@@ -33,11 +33,11 @@ import {
 
 const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-cli-test-'))
 /** The version of a packaged library plugin in this workspace: what a new app installs, exactly (spec 051 T011). */
-const workspaceVersion = (plugin: string): string =>
+const workspaceVersion = (plugin: string, group = 'plugins'): string =>
   (
     JSON.parse(
       readFileSync(
-        join(import.meta.dirname, '..', '..', '..', '..', 'plugins', plugin, 'package.json'),
+        join(import.meta.dirname, '..', '..', '..', '..', group, plugin, 'package.json'),
         'utf8',
       ),
     ) as { version: string }
@@ -393,6 +393,32 @@ describe('command line', () => {
   })
 })
 
+describe('the library pins', () => {
+  // init and add write a plugin's plugin.json dependencies into the app as they are: an @acryldev pin that is not the version this workspace
+  // builds names a release nobody tested, and one never published (blends-core 0.5.0 while the workspace built 0.6.0, found by the 1.7.0
+  // release dry run) makes every new app uninstallable.
+  it('pins every @acryldev package at the version its workspace package has', () => {
+    const repo = join(import.meta.dirname, '..', '..', '..', '..')
+    const versions = new Map<string, string>()
+    for (const group of ['plugins', 'runtime'])
+      for (const folder of readdirSync(join(repo, group))) {
+        const file = join(repo, group, folder, 'package.json')
+        if (!existsSync(file)) continue
+        const pkg = JSON.parse(readFileSync(file, 'utf8')) as { name?: string; version?: string }
+        if (pkg.name !== undefined && pkg.version !== undefined) versions.set(pkg.name, pkg.version)
+      }
+    const stale = [...readLibrary().values()].flatMap((plugin) =>
+      Object.entries(plugin.dependencies)
+        .filter(([name, pin]) => name.startsWith('@acryldev/') && versions.get(name) !== pin)
+        .map(
+          ([name, pin]) =>
+            `${plugin.name}: ${name}@${pin}, workspace ${versions.get(name) ?? 'none'}`,
+        ),
+    )
+    expect(stale).toEqual([])
+  })
+})
+
 describe('init', () => {
   it('copies the blank template with the name filled in', async () => {
     const session = fakeIo()
@@ -416,10 +442,10 @@ describe('init', () => {
     expect(manifest(dir).dependencies).toEqual({
       '@deepseek-ai/cordis': '4.0.4',
       '@deepseek-ai/schemastery': '3.18.4',
-      '@acryldev/app-persistence': '0.1.2',
-      '@acryldev/blends-core': '0.5.0',
+      '@acryldev/app-persistence': workspaceVersion('app-persistence', 'runtime'),
+      '@acryldev/blends-core': workspaceVersion('blends-core', 'runtime'),
       '@acryldev/instance': workspaceVersion('instance'),
-      '@acryldev/plugin-hub-core': '0.2.2',
+      '@acryldev/plugin-hub-core': workspaceVersion('plugin-hub-core', 'runtime'),
       typescript: '6.0.3',
       yaml: '2.9.0',
     })
