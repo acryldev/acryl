@@ -1,8 +1,13 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import {
+  mkdtempSync as makeTempDir,
+  mkdirSync,
+  rmSync as removeTempDir,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { test } from 'node:test'
+import { after, test } from 'node:test'
 import {
   appTitle,
   brandedElectron,
@@ -12,8 +17,19 @@ import {
   plistNames,
 } from '../brand.ts'
 
+/** Temporary folders this file makes; removed after its tests, also when one fails. */
+const tempDirs: string[] = []
+const tempDir = (prefix: string): string => {
+  const dir = makeTempDir(join(tmpdir(), prefix))
+  tempDirs.push(dir)
+  return dir
+}
+after(() => {
+  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+})
+
 test('the app is named by its package, else its folder', () => {
-  const folder = mkdtempSync(join(tmpdir(), 'brand-'))
+  const folder = tempDir('brand-')
   assert.equal(appTitle(join(folder)), folder.split('/').pop())
   writeFileSync(join(folder, 'package.json'), JSON.stringify({ name: 'shop' }))
   assert.equal(appTitle(folder), 'shop')
@@ -47,7 +63,7 @@ test('the bundle gets the app name and its own identifier', () => {
 })
 
 test('only macOS runs a branded copy; elsewhere the stock executable starts untouched', () => {
-  const folder = mkdtempSync(join(tmpdir(), 'brand-'))
+  const folder = tempDir('brand-')
   mkdirSync(join(folder, 'out'))
   for (const platform of ['linux', 'win32'] as const)
     assert.deepEqual(

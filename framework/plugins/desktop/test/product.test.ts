@@ -1,21 +1,33 @@
 import assert from 'node:assert/strict'
 import {
   existsSync,
+  mkdtempSync as makeTempDir,
   mkdirSync,
-  mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync as removeTempDir,
   rmSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
-import { test } from 'node:test'
+import { after, test } from 'node:test'
 import { readProduct } from '../../instance/bundle.ts'
 import { openProductStorage } from '../../instance/storage.ts'
 import { openProductApp, seedSource } from '../product.ts'
 
-const scratch = (): string => mkdtempSync(join(tmpdir(), 'acryl-product-'))
+/** Temporary folders this file makes; removed after its tests, also when one fails. */
+const tempDirs: string[] = []
+const tempDir = (prefix: string): string => {
+  const dir = makeTempDir(join(tmpdir(), prefix))
+  tempDirs.push(dir)
+  return dir
+}
+after(() => {
+  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+})
+
+const scratch = (): string => tempDir('acryl-product-')
 
 const PROGRAM = ['node_modules/', 'plugins/acryl-router/', 'scripts/', 'cordis.yml']
 

@@ -1,12 +1,28 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdtempSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync as makeTempDir,
+  rmSync as removeTempDir,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { test } from 'node:test'
+import { after, test } from 'node:test'
 import type { AppInstance } from '../../instance/index.ts'
 import { openProductStorage } from '../../instance/storage.ts'
 import { type AppPagePorts, appPageHandler, exportFileName } from '../app-page.ts'
+
+/** Temporary folders this file makes; removed after its tests, also when one fails. */
+const tempDirs: string[] = []
+const tempDir = (prefix: string): string => {
+  const dir = makeTempDir(join(tmpdir(), prefix))
+  tempDirs.push(dir)
+  return dir
+}
+after(() => {
+  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+})
 
 const git = (cwd: string, ...args: string[]): void => {
   execFileSync('git', args, {
@@ -32,7 +48,7 @@ const seed = (source: string): void => {
 
 /** A product with its first app (named by the product, as the first start makes it) and the page's ports around it, the shell's dialogs scripted. */
 function page(overrides: Partial<AppPagePorts> = {}) {
-  const home = mkdtempSync(join(tmpdir(), 'acryl-app-page-'))
+  const home = tempDir('acryl-app-page-')
   const storage = openProductStorage({
     writtenBy: '1.0.0',
     env: { HOME: home },

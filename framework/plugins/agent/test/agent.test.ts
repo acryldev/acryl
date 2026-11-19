@@ -1,7 +1,21 @@
 import assert from 'node:assert/strict'
-import { test } from 'node:test'
+import { mkdtempSync as makeTempDir, rmSync as removeTempDir } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { after, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
 import { agent, memory, model, scripted, tools } from '../index.ts'
+
+/** Temporary folders this file makes; removed after its tests, also when one fails. */
+const tempDirs: string[] = []
+const tempDir = (prefix: string): string => {
+  const dir = makeTempDir(join(tmpdir(), prefix))
+  tempDirs.push(dir)
+  return dir
+}
+after(() => {
+  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+})
 
 async function boot() {
   const root = new Context()
@@ -70,12 +84,9 @@ test('a run that never finishes stops at its budget', async () => {
 })
 
 test('with tasks mounted, a run is a durable task that owns one task per tool call', async () => {
-  const { mkdtempSync, rmSync } = await import('node:fs')
-  const { tmpdir } = await import('node:os')
-  const { join } = await import('node:path')
   const { instance, pinnedInstance } = await import('../../instance/index.ts')
   const { tasks } = await import('../../tasks/index.ts')
-  const home = mkdtempSync(join(tmpdir(), 'agent-tasks-'))
+  const home = tempDir('agent-tasks-')
   const root = new Context()
   for (const [plugin, config] of [
     [instance, pinnedInstance(home)],
@@ -100,7 +111,6 @@ test('with tasks mounted, a run is a durable task that owns one task per tool ca
       .map((call) => [call.kind, call.status, call.result]),
     [['tool:add', 'completed', 5]],
   )
-  rmSync(home, { recursive: true, force: true })
 })
 
 /** A model step that never answers on its own; it settles only when its signal aborts (or, with `ignoresSignal`, never). */

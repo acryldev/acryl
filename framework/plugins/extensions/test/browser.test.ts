@@ -1,14 +1,32 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdtempSync as makeTempDir,
+  mkdirSync,
+  readFileSync,
+  rmSync as removeTempDir,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { test } from 'node:test'
+import { after, test } from 'node:test'
 import type { Context } from '@deepseek-ai/cordis'
 import { attachBrowserHalf, browserHalf } from '../browser.ts'
 
+/** Temporary folders this file makes; removed after its tests, also when one fails. */
+const tempDirs: string[] = []
+const tempDir = (prefix: string): string => {
+  const dir = makeTempDir(join(tmpdir(), prefix))
+  tempDirs.push(dir)
+  return dir
+}
+after(() => {
+  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+})
+
 /** A plugin folder with a DSH browser half, as alone-tree's dsh-skill-mcp-manager ships one. */
 function dualPlugin(): string {
-  const dir = mkdtempSync(join(tmpdir(), 'browser-half-'))
+  const dir = tempDir('browser-half-')
   mkdirSync(join(dir, 'client'))
   writeFileSync(join(dir, 'client', 'client.js'), '/* browser half */\n')
   writeFileSync(join(dir, 'index.js'), 'export const name = "dual"\nexport function apply() {}\n')
@@ -42,7 +60,7 @@ function fiber(loader: unknown) {
 
 test('a plugin with a browser half gets a host row for as long as it runs, and the row names its own client bundle', async () => {
   const dir = dualPlugin()
-  const home = mkdtempSync(join(tmpdir(), 'browser-home-'))
+  const home = tempDir('browser-home-')
   const rows: string[] = []
   const removed: string[] = []
   const loader = {
@@ -76,11 +94,11 @@ test('a plugin with a browser half gets a host row for as long as it runs, and t
 })
 
 test('a plugin without a browser half, or a host without a Loader, gets no row', () => {
-  const plain = mkdtempSync(join(tmpdir(), 'browser-plain-'))
+  const plain = tempDir('browser-plain-')
   writeFileSync(join(plain, 'package.json'), JSON.stringify({ name: 'plain', version: '1.0.0' }))
   assert.equal(browserHalf(plain), undefined)
 
-  const home = mkdtempSync(join(tmpdir(), 'browser-home-'))
+  const home = tempDir('browser-home-')
   const noLoader = fiber(undefined)
   attachBrowserHalf(noLoader.ctx, home, 'dual', 'abc123', dualPlugin())
   assert.equal(existsSync(join(home, 'extensions-browser')), false)

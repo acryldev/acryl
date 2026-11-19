@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
-import { directionViolations, findCycles, readGraph, unlistedFoundation } from './dependency-direction.mjs'
+import { directionViolations, findCycles, FOUNDATION, readGraph, unlistedFoundation } from './dependency-direction.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -348,8 +348,11 @@ const WEB_REGISTRATION_CEILING = 0
 const WEB_REGISTRATION = /(acrylWeb|webServer|[^a-zA-Z]web)[?]?[.](register|registerUpgrade)[(]/
 const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/|\.spec\.|\.test\./
 let webRegistrations = 0
-for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime']).split('\n')) {
+for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/plugins', 'framework/packages']).split('\n')) {
   if (file === '' || NOT_SHIPPED.test(file) || !existsSync(resolve(root, file))) continue
+  // The framework foundation implements the web layer (acryl-router-http mounts routers on the web server, acryl-page serves the page): the
+  // rule is for code that uses it.
+  if (FOUNDATION.has(/(?:^|\/)plugins\/([^/]+)\//u.exec(file)?.[1] ?? '')) continue
   for (const line of readFileSync(resolve(root, file), 'utf8').split('\n')) if (WEB_REGISTRATION.test(line)) webRegistrations += 1
 }
 if (webRegistrations > WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, above the ceiling ${WEB_REGISTRATION_CEILING}; serve the route on the router instead (ctx.router.route('/', app) and ctx.routerHttp.mount(prefix), see plugins/acryl-plugin-context/docs/extending/host-route.md)`)
@@ -373,8 +376,8 @@ for (const directory of scriptDirectories) {
 // Build output is never committed (spec 001, T072). A package whose `build` writes `lib/` (every one with a build script) has no tracked file there:
 // a committed bundle goes stale the moment its source changes without a rebuild in the same commit. Packages without a build script keep
 // hand-written sources in `lib/` (acryl-plugin-context, acryl-brand, acryl-system-prompt) and are not affected.
-const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**']).split('\n').filter(Boolean)
-for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples']) {
+const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**', ':(glob)framework/*/*/lib/**']).split('\n').filter(Boolean)
+for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples', 'framework/packages', 'framework/plugins']) {
   if (!existsSync(resolve(root, group))) continue
   for (const name of readdirSync(resolve(root, group))) {
     const manifest = resolve(root, group, name, 'package.json')
@@ -387,12 +390,14 @@ for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples']) 
 // Tests clean up their temporary directories (spec 001, T063): the suites had left over 4,000 `acryl-*` and `dsh-*` folders in the temp
 // directory. A test file that creates one (`mkdtemp`) must also remove it in a teardown (`afterEach`, `afterAll`, node:test's `after` or `finally` with `rm`/`rmSync`),
 // or say why it keeps them with a `keeps-temporary-directories:` comment (an opt-in run whose files are its evidence).
-const testFiles = run('git', ['ls-files', '--', ':(glob)*/*/tests/**', ':(glob)*/*/test/**']).split('\n')
-  .filter(path => /\.(spec\.tsx?|test\.mjs)$/u.test(path) && existsSync(resolve(root, path)))
+// Every depth, framework/ included. The CLI's app templates are excluded: their tests are copied into people's apps and follow the app's
+// own conventions, so changing them is a change to what users receive.
+const testFiles = run('git', ['ls-files', '--', ':(glob)**/tests/**', ':(glob)**/test/**']).split('\n')
+  .filter(path => /\.(spec\.tsx?|test\.mjs|test\.ts)$/u.test(path) && !path.startsWith('framework/packages/cli/templates/') && !path.includes('/legacy/') && existsSync(resolve(root, path)))
 for (const path of testFiles) {
   const text = readFileSync(resolve(root, path), 'utf8')
   if (!text.includes('mkdtemp') || text.includes('keeps-temporary-directories:')) continue
-  if (!(/\b(afterEach|afterAll|after|finally)\b/u.test(text) && /\brm(Sync)?\(/u.test(text))) {
+  if (!(/\b(afterEach|afterAll|after)\s*\(|\bfinally\s*[{(]/u.test(text) && /\brm(Sync)?\(|removeTempDir\(/u.test(text))) {
     fail(`${path} creates temporary directories (mkdtemp) but never removes them: remove each in afterEach/afterAll/after/finally, or mark the file with a keeps-temporary-directories: comment saying why`)
   }
 }
