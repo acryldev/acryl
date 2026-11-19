@@ -7,7 +7,7 @@ import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { connect } from 'node:net'
 import { join, resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { appDataHome } from '../instance/index.ts'
 
 /** The launcher every frame app has; without it the app runs on its own server (made before the frame). */
@@ -186,10 +186,14 @@ export interface FrameHostLaunch {
  */
 export const WATCHED_IN_SOURCE = ['src', 'plugins', 'blend.yaml'] as const
 
+/** The packaged host's watcher (watch-host.mjs, next to this file): node --watch's restarts, on a real change of a file only, never an access-time event. */
+export const WATCH_HOST = fileURLToPath(new URL('./watch-host.mjs', import.meta.url))
+
 /**
- * The arguments of a packaged product's host (the runtime is Electron as Node): `--watch` first, as the app's `dev` script has it, so a saved change in the
- * person's source or plugins restarts the host and the app shows it, with no extensions plugin in the frame to do it (found on a packed app: an edit of
- * `src/routes.ts` stayed unseen until the app was quit). Then the loader and, when the Program is in a bundle, the overlay that serves it.
+ * The arguments of a packaged product's host (the runtime is Electron as Node): the watcher first, so a saved change in the person's source or plugins
+ * restarts the host and the app shows it, with no extensions plugin in the frame to do it (found on a packed app: an edit of `src/routes.ts` stayed unseen
+ * until the app was quit). It is not `node --watch`: macOS reports a moved access time as a change, and `git diff` moves it on every modified file, so an
+ * uncommitted edit of blend.yaml restarted the host without end (spec 051 T013). Then the loader and, when the Program is in a bundle, the overlay that serves it.
  */
 export function packagedHostArgs(
   program: string,
@@ -197,10 +201,11 @@ export function packagedHostArgs(
   exists: (path: string) => boolean = existsSync,
 ): string[] {
   return [
-    '--watch',
+    WATCH_HOST,
     ...WATCHED_IN_SOURCE.map((name) => join(root, name))
       .filter((path) => exists(path))
       .map((path) => `--watch-path=${path}`),
+    '--',
     // The loader first and the overlay second: a hook registered later runs first, so the overlay sees every import before the loader's aliases.
     '--import',
     pathToFileURL(join(program, 'plugins', 'acryl-node-server', 'src', 'register.ts')).href,

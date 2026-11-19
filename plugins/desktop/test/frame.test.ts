@@ -13,6 +13,7 @@ import {
   packagedHostArgs,
   runningFrame,
   startFrameHost,
+  WATCH_HOST,
   withoutToken,
 } from '../frame.ts'
 
@@ -218,7 +219,9 @@ test('a host that cannot start at all rejects instead of hanging', async () => {
 
 test("a packaged product watches the person's files and serves the Program from its bundle", () => {
   const args = packagedHostArgs(join('/bundle'), join('/person/source'))
-  assert.equal(args[0], '--watch')
+  // The watcher that restarts only on a real change (watch-host.mjs), not node --watch; the host's own arguments follow its `--`.
+  assert.equal(args[0], WATCH_HOST)
+  assert.ok(args.includes('--'))
   assert.equal(args.filter((arg) => arg === '--import').length, 2)
   assert.match(args.at(-1) ?? '', /ide-host\.mjs$/u)
   // The Program in the app folder itself has no overlay to load.
