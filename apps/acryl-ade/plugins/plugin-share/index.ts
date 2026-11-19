@@ -36,7 +36,7 @@ import {
   storeRootOf,
 } from '@acryldev/plugin-hub-core'
 import { type ExtensionInfo, NAME } from '../extensions/index.ts'
-import type {} from '../instance/index.ts'
+import type {} from '@acryldev/instance'
 import { LOCK_FILE, writeLock } from '../manifest/lock.ts'
 import {
   ensureNative,

@@ -11,7 +11,7 @@ file per plugin, named after it:
 ```ts
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type {} from '../instance/index.ts'
+import type {} from '@acryldev/instance'
 
 export const inject = ['router', 'home', 'appInstance']
 
@@ -30,7 +30,7 @@ export function apply(ctx: Context): void {
 - Read the file once in `apply`; change the copy in memory and write the whole file after each change, through a temporary file and a rename.
 - Validate what a request sends before you keep it (a 400 for a bad input), and escape it before it goes into HTML.
 - Give every item an id (`crypto.randomUUID()`) so it can be changed or deleted by id.
-- `inject` must list `appInstance`, and `import type {} from '../instance/index.ts'` types it.
+- `inject` must list `appInstance`, and `import type {} from '@acryldev/instance'` types it.
 
 Example: `../example-plugins/packages/state-json-file/` (a list kept in a file, with routes to list, add and delete, and a widget with a form).
 

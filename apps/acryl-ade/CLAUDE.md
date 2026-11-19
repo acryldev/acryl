@@ -58,7 +58,7 @@ export function apply(ctx: Context) {
   answers `/notes` under `npm start` and `/app/notes` in the canvas. Write the app's own path, and fetch it from a page by that path
   (`fetch('/notes')`); never put the frame's prefix in a route or a URL.
 - A plugin's name is its folder's name. It imports only `@deepseek-ai/cordis` (types), `acrylblends`, `node:*`, its own files, and type-only
-  `import type {} from '../home/index.ts'` / `'../instance/index.ts'` for the services those give `ctx`. Never guess another path.
+  `import type {} from '../home/index.ts'` / `'@acryldev/instance'` for the services those give `ctx`. Never guess another path.
 - Something on the first screen (blank template): add `'home'` to `inject` and register a widget in an effect,
   `ctx.effect(() => ctx.home.widget({ id: 'notes', title: 'Notes', render: () => '<ul>...</ul>' }))`; it leaves the page with the plugin.
 - Data that must survive a restart goes in a file in `ctx.appInstance.home` (add `'appInstance'` to `inject`), written whole through a temporary

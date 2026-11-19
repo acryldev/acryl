@@ -286,29 +286,6 @@
         "src/index.ts": "25e9ad47a238ebdebeb0"
       }
     },
-    "desktop": {
-      "from": "1.5.19",
-      "files": {
-        "app-page.ts": "d2cdc61a92d89138ea8a",
-        "assets/acrylblends-logo.png": "c86abd74d8fbeedf8cc9",
-        "attach.ts": "ddd0e3e4e8a3914c9699",
-        "brand.ts": "9eb70120b8da20144bbe",
-        "door-shell.ts": "3e535eff746a41525dbb",
-        "frame.ts": "0b856f73720a4b6bb2bf",
-        "git.ts": "94d70b10792693ce54db",
-        "host-supervisor.ts": "e69994399fa32dbb1cfc",
-        "launch.ts": "3beb11b0ac097e270835",
-        "main.ts": "bd42ccc572a08e50040b",
-        "menu.ts": "9b88cda709178fffc66d",
-        "preload.cjs": "c7de936c2213786f2b00",
-        "product.ts": "289ecbe6118879476ebb",
-        "shutdown.ts": "a4d94f8a92081af96251",
-        "update-menu.ts": "979210ee14343972464b",
-        "updater.ts": "15152c46d76512027aed",
-        "user-data.ts": "9a79f5f8b0593085cd6f",
-        "window.ts": "634967683ddef7260008"
-      }
-    },
     "extensions": {
       "from": "1.5.19",
       "files": {
@@ -319,17 +296,6 @@
         "resolve.ts": "2c63681eff98555f4a81",
         "routes.ts": "9c065d0356c13870c1fc",
         "stage.ts": "036dc2a0d2cedc123b99"
-      }
-    },
-    "instance": {
-      "from": "1.5.19",
-      "files": {
-        "archive.ts": "10dd2970bd9f90978bec",
-        "bundle-overlay.ts": "1665d1f8e52fa300b9cc",
-        "bundle.ts": "43d091f4af8b6e39770a",
-        "home.ts": "cf12de35b3e765b76d40",
-        "index.ts": "15891f705ad2372c6327",
-        "storage.ts": "50c22148dbb107913865"
       }
     },
     "manifest": {

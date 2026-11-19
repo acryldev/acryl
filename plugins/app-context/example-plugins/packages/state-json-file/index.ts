@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { Acryl } from '@acryldev/blends'
 import type {} from '../home/index.ts'
-import type {} from '../instance/index.ts'
+import type {} from '@acryldev/instance'
 
 export const name = 'state-json-file'
 export const inject = ['router', 'home', 'appInstance']

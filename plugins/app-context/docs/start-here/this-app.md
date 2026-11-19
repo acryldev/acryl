@@ -66,7 +66,7 @@ the app's rows and starts them from the new code, then reloads the canvas. The c
 import type { Context } from '@deepseek-ai/cordis'   // the plugin's context type
 import { Acryl } from 'acrylblends'                    // routes: an Acryl app (the web framework; docs/framework/ in this app)
 import type {} from '../home/index.ts'                 // types ctx.home (the home row's service)
-import type {} from '../instance/index.ts'             // types ctx.appInstance (where the app keeps its data)
+import type {} from '@acryldev/instance'             // types ctx.appInstance (where the app keeps its data)
 ```
 
 Only these. Never import from `src/`, from another plugin's files, from `plugins/router/src/...` or from a path you have not seen in
