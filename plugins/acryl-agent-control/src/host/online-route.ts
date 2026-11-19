@@ -9,6 +9,7 @@ import { Acryl } from 'acrylblends'
 import { error } from 'acryl-loopback-http'
 import { UiControlError, parseUiRequest, type UiResult } from 'acrylblends/door/protocol'
 import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from './http.ts'
+import { MODEL_OPS } from './tools.ts'
 
 export const ONLINE_CALL_PATH = '/api/acryl-agent-control/online/call'
 
@@ -38,6 +39,10 @@ export function onlineCallRoutes(
       const message = cause instanceof UiControlError ? cause.message : 'invalid request'
       return c.json({ ok: false, code: 'invalid', message } satisfies OnlineCallResponse, 400)
     }
+    // The channel offers what the model's tools offer, no more: the door's reload and navigate (acrylblends 1.5) wait for the owner's
+    // decision (spec 051 T022), so a request for one is refused before it runs.
+    if (!MODEL_OPS.includes(request.op))
+      return c.json({ ok: false, code: 'invalid', message: `${request.op} is not offered on this channel` } satisfies OnlineCallResponse, 400)
     try {
       return c.json({ ok: true, result: await run(request, c.req.raw.signal) } satisfies OnlineCallResponse)
     } catch (cause) {

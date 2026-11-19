@@ -77,6 +77,14 @@ describe('the online channel route (TB30)', () => {
     expect(calls).toEqual([])
   })
 
+  it('refuses an operation the model has no tool for (the door\'s reload and navigate) without ever calling run', async () => {
+    calls.length = 0
+    const { status, json } = await call({ op: 'reload' }, { token: SECRET })
+    expect(status).toBe(400)
+    expect(json).toMatchObject({ ok: false, code: 'invalid', message: 'reload is not offered on this channel' })
+    expect(calls).toEqual([])
+  })
+
   it('refuses invalid JSON with a plain 400, not a crash', async () => {
     const response = await new Promise<{ status: number }>((resolve, reject) => {
       const req = request({ host: '127.0.0.1', port, path: ONLINE_CALL_PATH, method: 'POST', headers: { authorization: `Bearer ${SECRET}`, 'content-type': 'application/json', 'content-length': 9 } }, (res) => {
