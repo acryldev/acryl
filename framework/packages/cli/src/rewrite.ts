@@ -49,8 +49,14 @@ function classify(source: string): Uint8Array {
   return kind
 }
 
+/** The package a specifier names: its first segment, or its first two for a scoped name (`@acryldev/instance/storage` -> `@acryldev/instance`). */
+export function packageOf(specifier: string): string {
+  const parts = specifier.split('/')
+  return (specifier.startsWith('@') ? parts.slice(0, 2) : parts.slice(0, 1)).join('/')
+}
+
 const SPECIFIER =
-  /(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(['"])(acryl-[A-Za-z0-9-]+(?:\/[A-Za-z0-9./-]+)?)\2/gu
+  /(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(['"])((?:acryl-[A-Za-z0-9-]+|@acryldev\/[A-Za-z0-9-]+)(?:\/[A-Za-z0-9./-]+)?)\2/gu
 
 /**
  * Rewrite the specifiers that name another library plugin to relative paths. `file` is the path of the file inside the plugins folder (for example
@@ -69,7 +75,7 @@ export function rewriteSpecifiers(
     (match, lead: string, quote: string, specifier: string, offset: number) => {
       if (kind[offset] !== 0) return match
       // A plugin the app installs as a package (spec 051 T011: the desktop shell, the instance) keeps its package specifier.
-      if (installed.has(specifier.split('/')[0] ?? '')) return match
+      if (installed.has(packageOf(specifier))) return match
       const target = entries.get(specifier)
       if (target === undefined)
         throw new Error(`${file}: imports "${specifier}", which is not a library plugin`)

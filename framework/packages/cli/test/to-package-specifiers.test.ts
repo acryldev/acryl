@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { rewriteSpecifiers, toPackageSpecifiers } from '../src/rewrite.ts'
+import { packageOf, rewriteSpecifiers, toPackageSpecifiers } from '../src/rewrite.ts'
 
 const table = new Map([
   ['acryl-instance', 'instance/index.ts'],
@@ -66,5 +66,38 @@ describe('rewriteSpecifiers with installed packages', () => {
         entries,
       ),
     ).toBe("import { open } from '../instance/storage.ts'\n")
+  })
+})
+
+describe('scoped names (spec 051 T038)', () => {
+  it('splits a specifier into its package', () => {
+    expect(packageOf('@acryldev/instance/storage')).toBe('@acryldev/instance')
+    expect(packageOf('@acryldev/instance')).toBe('@acryldev/instance')
+    expect(packageOf('acryl-router/middleware')).toBe('acryl-router')
+  })
+
+  it('rewrites a copied @acryldev plugin and keeps an installed one', () => {
+    const entries = new Map([
+      ['@acryldev/instance/storage', 'instance/storage.ts'],
+      ['@acryldev/router/middleware', 'router/src/middleware/index.ts'],
+    ])
+    const source =
+      "import { open } from '@acryldev/instance/storage'\nimport { m } from '@acryldev/router/middleware'\n"
+    expect(
+      rewriteSpecifiers(
+        source,
+        'agent-panel/headless.ts',
+        entries,
+        new Set(['@acryldev/instance']),
+      ),
+    ).toBe(
+      "import { open } from '@acryldev/instance/storage'\nimport { m } from '../router/src/middleware/index.ts'\n",
+    )
+  })
+
+  it('refuses an @acryldev name that is not a library plugin', () => {
+    expect(() =>
+      rewriteSpecifiers("import x from '@acryldev/nope'\n", 'a/b.ts', new Map()),
+    ).toThrow(/not a library plugin/)
   })
 })
