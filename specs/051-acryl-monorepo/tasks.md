@@ -118,7 +118,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   practice owned by the products: a full `acrylblends upgrade` replaces their workbench root row with the Blends frame (the generator's
   default, ide-profile.ts "never the IDE's workbench") and would silently turn ADE back into a plain Blend. Teach the generator a product's
   root row (from blend.yaml or product.json), with a test that regenerating an overlay keeps it. Found by Fork3 and DS_Fork3, 2026-11-19.
-- [ ] T035 [publish, owner decides] Three frame package versions exist only in this repository: @acrylblends/web 0.2.0,
+- [x] T035 [publish] Published 2026-11-19 with the owner's go (stored token): @acrylblends/control 0.2.11, system-prompt 0.2.0, web 0.2.0, each packed by verify-frame-publish (fresh app from the tarballs boots the frame) and installed from npm afterwards. Was: Three frame package versions exist only in this repository: @acrylblends/web 0.2.0,
   @acrylblends/system-prompt 0.2.0, @acrylblends/control 0.2.11. Apps made from main cannot install them until published (the gate takes
   them from local tarballs since ef386bca). The published create (1.5.21) is unaffected. Publish through framework-release.yml once the
   owner says go.
