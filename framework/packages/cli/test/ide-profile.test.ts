@@ -13,6 +13,7 @@ import {
   DRIVER_ROWS,
   FRAME_PACKAGES,
   ideProfilePlan,
+  planIdeProfileWrite,
   profileNameFor,
 } from '../src/ide-profile.ts'
 
@@ -294,4 +295,56 @@ test('a hand edit to an unrelated key survives, and the generated fields are put
   const again = applyIdeProfile(root, input)
   assert.deepEqual(again.written, [])
   assert.equal(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version, '0.2.0')
+})
+
+test('a product rooted in the workbench (acrylblends.root: workspace) keeps its workbench row when the overlay is regenerated (spec 051 T034)', () => {
+  const rootRow = (overlay: string) =>
+    (
+      parse(overlay) as {
+        insert?: { id: string; name: string; config?: Record<string, unknown> }[]
+      }[]
+    )
+      .flatMap((block) => block.insert ?? [])
+      .filter((row) => row.id === 'acryl-blends-frame' || row.id === 'acryl-workspace')
+  const blend = folder()
+  writeFileSync(join(blend, 'package.json'), '{ "name": "my-app", "private": true }\n')
+  assert.deepEqual(
+    rootRow(planIdeProfileWrite(blend, input).plan.overlay).map((row) => row.id),
+    ['acryl-blends-frame'],
+  )
+
+  const product = folder()
+  writeFileSync(
+    join(product, 'package.json'),
+    '{ "name": "acryl-ade", "private": true, "acrylblends": { "root": "workspace" } }\n',
+  )
+  const overlay = planIdeProfileWrite(product, input).plan.overlay
+  assert.deepEqual(
+    rootRow(overlay).map((row) => [row.id, row.name]),
+    [['acryl-workspace', '@acrylblends/workspace']],
+  )
+  assert.match(overlay, /openFolder: !!js process\.env\.ACRYL_OPEN_FOLDER/)
+  assert.doesNotMatch(overlay, /identity:/)
+  // An upgrade passes the frame packages under their published names, with the row id beside them.
+  const published = FRAME_PACKAGES.map((entry) =>
+    entry.name === 'acryl-system-prompt'
+      ? { ...entry, name: '@acrylblends/system-prompt', row: 'acryl-system-prompt' }
+      : entry,
+  )
+  assert.doesNotMatch(
+    ideProfilePlan({ ...input, root: 'workspace', packages: published }).overlay,
+    /identity:/,
+  )
+  assert.match(planIdeProfileWrite(blend, input).plan.overlay, /identity:/)
+  // The frame package stays installed: the host imports its app generation.
+  assert.match(
+    ideProfilePlan({ ...input, root: 'workspace' }).hostScript,
+    /blends-frame\/app-generation|acryl-blends-frame\/app-generation/,
+  )
+
+  writeFileSync(
+    join(product, 'package.json'),
+    '{ "name": "x", "acrylblends": { "root": "ide" } }\n',
+  )
+  assert.throws(() => planIdeProfileWrite(product, input), /acrylblends.root is "ide"/)
 })

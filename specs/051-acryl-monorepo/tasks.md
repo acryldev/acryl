@@ -114,7 +114,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   plugin: `acrylblends/drivers` is built from its source, the framework declares it a workspace dependency, and the panel and the driver
   plugins import `acryl-drivers`. Decision (AcrylImplementer): a foundation package in `plugins/`, not framework source, because the
   agent template keeps no acrylblends dependency and its copied panel must resolve the contract without one.
-- [ ] T034 [products, overlays] The products' generated overlays (apps/acryl-ade, apps/acryl-control-center cordis.patch.yml) are in
+- [x] T034 [products, overlays] Done: `acrylblends.root: workspace` in apps/acryl-ade/package.json; the generator keeps the workbench row and the IDE's own prompt identity (a full `upgrade --force` on a copy of ADE leaves cordis.patch.yml byte-identical). Was: The products' generated overlays (apps/acryl-ade, apps/acryl-control-center cordis.patch.yml) are in
   practice owned by the products: a full `acrylblends upgrade` replaces their workbench root row with the Blends frame (the generator's
   default, ide-profile.ts "never the IDE's workbench") and would silently turn ADE back into a plain Blend. Teach the generator a product's
   root row (from blend.yaml or product.json), with a test that regenerating an overlay keeps it. Found by Fork3 and DS_Fork3, 2026-11-19.

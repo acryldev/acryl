@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "acrylblends": {
+    "root": "workspace"
+  },
   "imports": {
     "#acryl-jsx/jsx-runtime": "./plugins/acryl-router/src/core/jsx/jsx-runtime.ts",
     "#acryl-jsx/jsx-dev-runtime": "./plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"

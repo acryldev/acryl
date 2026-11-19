@@ -117,7 +117,20 @@ export interface IdeProfileInput {
   }[]
   /** Whether the app carries the door at `plugins/acryl-door/src/index.ts`: a row then mounts it, and an app without one simply has no door. */
   readonly door?: boolean
+  /** What roots the page: the Blends frame (every Blend), or the IDE's workbench for a product that is the IDE (ACRYL ADE). From `acrylblends.root` in the app's package.json. */
+  readonly root?: PageRoot
 }
+
+/** What roots an app's page. `workspace` keeps the frame package installed (the host uses its app generation) but mounts the workbench in its row. */
+export type PageRoot = 'frame' | 'workspace'
+
+/** The workbench row a `workspace`-rooted product mounts where the frame's row would be; the folder it opens comes from the launcher. */
+const WORKSPACE_ROOT_LINES = [
+  '    - id: acryl-workspace',
+  "      name: '@acrylblends/workspace'",
+  '      config:',
+  '        openFolder: !!js process.env.ACRYL_OPEN_FOLDER',
+]
 
 /** What generation writes, as text, so the same plan can be compared before writing. */
 export interface IdeProfilePlan {
@@ -750,6 +763,7 @@ const yamlName = (name: string): string => (name.startsWith('@') ? `'${name}'` :
 function overlayOf(
   packages: readonly IdeProfilePackage[],
   door = false,
+  root: PageRoot = 'frame',
   appRows: readonly {
     readonly id: string
     readonly name: string
@@ -783,9 +797,17 @@ function overlayOf(
     ]),
   ]
   for (const entry of rows) {
+    if (root === 'workspace' && (entry.row ?? entry.name) === BLENDS_FRAME_ROW) {
+      lines.push(...WORKSPACE_ROOT_LINES)
+      continue
+    }
     lines.push(`    - id: ${entry.row ?? entry.name}`, `      name: ${yamlName(entry.name)}`)
-    // JSON quoting is valid YAML and keeps a sentence with colons or quotes one string.
-    if (entry.config !== undefined)
+    // JSON quoting is valid YAML and keeps a sentence with colons or quotes one string. A workbench-rooted product is the IDE, not a
+    // Blend: its agent keeps the prompt's own identity, never the frame's "inside an ACRYL Blends app" line.
+    if (
+      entry.config !== undefined &&
+      !(root === 'workspace' && (entry.row ?? entry.name) === 'acryl-system-prompt')
+    )
       lines.push(
         '      config:',
         ...Object.entries(entry.config).map(
@@ -858,7 +880,7 @@ export function ideProfilePlan(input: IdeProfileInput, existing?: string): IdePr
       : JSON.parse(existing)
   return {
     profile,
-    overlay: overlayOf(packages, input.door === true, input.rows ?? []),
+    overlay: overlayOf(packages, input.door === true, input.root, input.rows ?? []),
     packageJson: `${JSON.stringify(mergeManifest(manifest, dependencies), null, 2)}\n`,
     rootConfig: '[]\n',
     hostScript: hostScriptOf(profile, frameModuleOf(packages)),
@@ -934,8 +956,22 @@ export interface IdeProfileWritePlan {
 }
 
 /** The door is app source, not a registry package: the row exists when the app carries it, and nothing fails when it does not. */
-function withDoor(root: string, input: IdeProfileInput): IdeProfileInput {
-  return { ...input, door: existsSync(join(root, 'plugins', 'acryl-door', 'src', 'index.ts')) }
+/** What the app's own files say about its profile: whether it carries the door, and what roots its page (`acrylblends.root` in package.json). */
+function withAppFacts(root: string, input: IdeProfileInput): IdeProfileInput {
+  const manifest = join(root, 'package.json')
+  const declared = existsSync(manifest)
+    ? (JSON.parse(readFileSync(manifest, 'utf8')) as { acrylblends?: { root?: unknown } })
+        .acrylblends?.root
+    : undefined
+  if (declared !== undefined && declared !== 'frame' && declared !== 'workspace')
+    throw new Error(
+      `${manifest}: acrylblends.root is ${JSON.stringify(declared)}; it is "frame" or "workspace"`,
+    )
+  return {
+    ...input,
+    door: existsSync(join(root, 'plugins', 'acryl-door', 'src', 'index.ts')),
+    ...(declared === undefined ? {} : { root: declared }),
+  }
 }
 
 /**
@@ -945,7 +981,7 @@ function withDoor(root: string, input: IdeProfileInput): IdeProfileInput {
 export function planIdeProfileWrite(root: string, input: IdeProfileInput): IdeProfileWritePlan {
   const manifestFile = join(root, 'package.json')
   const existing = existsSync(manifestFile) ? readFileSync(manifestFile, 'utf8') : undefined
-  const plan = ideProfilePlan(withDoor(root, input), existing)
+  const plan = ideProfilePlan(withAppFacts(root, input), existing)
   const hostPath = join(root, 'scripts/ide-host.mjs')
   const appHost = existsSync(hostPath) ? readFileSync(hostPath, 'utf8') : undefined
   let clientRowsAdded: readonly string[] = []
