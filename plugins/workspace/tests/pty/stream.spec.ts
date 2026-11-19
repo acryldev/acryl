@@ -4,7 +4,7 @@
  */
 
 import { createServer, type Server } from 'node:http'
-import { UpgradeHub } from 'acrylblends/node-server'
+import { UpgradeHub } from '@acryldev/blends/node-server'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { WebSocket } from 'ws'
 import { privateApi } from '../../src/private-route.ts'

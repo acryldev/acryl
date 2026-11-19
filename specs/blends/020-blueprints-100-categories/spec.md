@@ -12,7 +12,7 @@ On https://acrylblends.github.io/blends every one of the 100 categories (from `s
 blueprint. Picking one gives a single command:
 
 ```sh
-npm create acrylblends@latest my-app -- --from acrylblends.<name>
+npm create @acryldev/blends@latest my-app -- --from acrylblends.<name>
 cd my-app && npm install && npm run dev
 ```
 
@@ -20,7 +20,7 @@ The app opens in the ACRYL frame and already does the category's job. From there
 
 ## What a blueprint is
 
-- An ordinary acrylblends app, made with the published CLI (`npm create acrylblends@latest <dir> -- --template blank`; use `--template agent` only
+- An ordinary acrylblends app, made with the published CLI (`npm create @acryldev/blends@latest <dir> -- --template blank`; use `--template agent` only
   where the app's own job is an agent). Its domain code is the app's own plugins and routes, built with the framework's documented parts (router,
   state, page, db port) and no extra frameworks.
 - Composed from Cordis plugins only (owner, 2026-11-05): each feature is a plugin in `plugins/<feature>/` with its own row in `blend.yaml`, so `blend.yaml` reads as
@@ -39,7 +39,7 @@ The app opens in the ACRYL frame and already does the category's job. From there
 
 ## Done for one blueprint
 
-1. `npm create acrylblends@latest t -- --from acrylblends.<name> --registry <path to the site repository>` makes the app.
+1. `npm create @acryldev/blends@latest t -- --from acrylblends.<name> --registry <path to the site repository>` makes the app.
 2. Then `npm install`, `npm test` and `npm run build` (when the app has one) pass.
 3. `npm start` serves the app, with its first page showing the seed data. (`npm run dev` serves it inside the ACRYL frame; the coordinator checks that, a cloud agent cannot.)
 4. The entry passes the registry's checks (no links, install scripts, keys or oversized files), and `registry/index.json` is regenerated.

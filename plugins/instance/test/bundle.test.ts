@@ -72,7 +72,7 @@ function product(): { bundle: string; source: string } {
     [
       "import { createRequire } from 'node:module'",
       "import * as fw from '../plugins/fw/index.js'",
-      "import * as framework from 'acrylblends'",
+      "import * as framework from '@acryldev/blends'",
       "import * as cordis from '@deepseek-ai/cordis'",
       "import * as shared from 'shared-dep'",
       "import * as mine from 'person-dep'",
@@ -88,7 +88,7 @@ function product(): { bundle: string; source: string } {
       '  mineSees: mine.sees,',
       '  jsx: jsx.who,',
       "  requiredJsx: require('#fw-jsx').who,",
-      "  required: require('acrylblends').who,",
+      "  required: require('@acryldev/blends').who,",
       "  resolved: require.resolve('acrylblends'),",
       "  importResolved: import.meta.resolve('@deepseek-ai/cordis'),",
       '}',
@@ -102,7 +102,7 @@ function product(): { bundle: string; source: string } {
   )
   write(
     join(source, 'node_modules', 'person-dep', 'index.js'),
-    "import * as a from 'acrylblends'\nimport * as c from '@deepseek-ai/cordis'\nexport const who = 'source'\nexport const sees = [a.who, c.who]\n",
+    "import * as a from '@acryldev/blends'\nimport * as c from '@deepseek-ai/cordis'\nexport const who = 'source'\nexport const sees = [a.who, c.who]\n",
   )
   pkg(
     join(source, 'node_modules', 'person-dep', 'node_modules', 'acrylblends'),
@@ -231,15 +231,15 @@ test('a path of the tree is served from its half: the Program from the bundle, e
     'file:///S/My%20App/source/plugins/notes/index.ts',
   )
   assert.equal(servedFrom('file:///elsewhere/x.js', tree), 'file:///elsewhere/x.js')
-  // `plugins/acryl-router-extra/` is not `plugins/router/`.
-  assert.equal(inProgram(tree.program, 'plugins/acryl-router-extra/index.ts'), false)
+  // `plugins/router-extra/` is not `plugins/router/`.
+  assert.equal(inProgram(tree.program, 'plugins/router-extra/index.ts'), false)
   assert.equal(inProgram(tree.program, 'cordis.yml.bak'), false)
 })
 
 test('framework names are the framework’s namespaces only', () => {
   for (const name of [
     'acrylblends',
-    'acrylblends/cordis/router',
+    '@acryldev/blends/cordis/router',
     '@acryldev/blends-frame/app-generation',
     '@acryldev/brand-client',
     '@acryldev/ui',

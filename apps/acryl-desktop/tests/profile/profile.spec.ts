@@ -331,7 +331,7 @@ describe('desktop profile composition', {
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.community.rowId
       || row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
     // The router rows are the framework kit every Blend carries, whether or not a Market is selected.
-    for (const id of ['acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
+    for (const id of ['@acryldev/blends/cordis/router', '@acryldev/blends/cordis/router-http', '@acryldev/blends/cordis/state', '@acryldev/blends/cordis/inspect']) expect(rows.some(row => row.id === id), id).toBe(true)
   })
 
   it.each([
@@ -346,10 +346,10 @@ describe('desktop profile composition', {
     }, undefined, undefined, blueprint)
     const ids = composeEntries([prepared.patches]).map(row => row.id)
 
-    expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acrylblends/cordis/router-http')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/router')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/router-http')).toHaveLength(1)
     expect(ids.filter(id => id === 'acryl-desktop/api')).toHaveLength(1)
-    expect(ids.indexOf('acrylblends/cordis/router-http')).toBeLessThan(ids.indexOf('acryl-desktop/api'))
+    expect(ids.indexOf('@acryldev/blends/cordis/router-http')).toBeLessThan(ids.indexOf('acryl-desktop/api'))
   })
 
   it('mounts a row an app plugin requires once when the Blueprint already composes it, under its name from before the framework moved too', () => {
@@ -360,8 +360,8 @@ describe('desktop profile composition', {
     writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ name: 'todo', dsh: { requiresAcrylPackages: ['@acryldev/router', '@acryldev/state'] } }))
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', undefined, undefined, undefined, undefined, undefined, undefined, appHome)
     const ids = prepared.patches.flatMap(patch => patch.insert ?? []).map(row => row.id)
-    expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acrylblends/cordis/state')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/router')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/state')).toHaveLength(1)
     expect(ids.filter(id => id === '@acryldev/router' || id === '@acryldev/state')).toEqual([])
   })
 
@@ -369,7 +369,7 @@ describe('desktop profile composition', {
     const home = temporaryHome()
     const bundleDir = installBundle(home, 'acryl-probe-kv', '- insert:\n    - id: acryl-probe-kv\n      name: acryl-probe-kv\n')
     const manifest = JSON.parse(readFileSync(join(bundleDir, 'package.json'), 'utf8')) as Record<string, { requiresAcrylPackages?: string[] }>
-    manifest.dsh = { ...manifest.dsh, requiresAcrylPackages: ['acrylblends/cordis/kv-json', '@acryldev/state'] }
+    manifest.dsh = { ...manifest.dsh, requiresAcrylPackages: ['@acryldev/blends/cordis/kv-json', '@acryldev/state'] }
     writeFileSync(join(bundleDir, 'package.json'), JSON.stringify(manifest))
     const profileManifestPath = join(ensureDesktopProfile(home), 'package.json')
     const profileManifest = JSON.parse(readFileSync(profileManifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
@@ -377,9 +377,9 @@ describe('desktop profile composition', {
     writeFileSync(profileManifestPath, JSON.stringify(profileManifest) + '\n')
 
     const ids = composeEntries([prepareDesktopProfile(undefined, home, 'darwin').patches]).map(row => row.id)
-    expect(ids.filter(id => id === 'acrylblends/cordis/kv-json')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/kv-json')).toHaveLength(1)
     // Already in the framework kit: not a second row, and the old name is read as today's module.
-    expect(ids.filter(id => id === 'acrylblends/cordis/state')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/state')).toHaveLength(1)
     expect(ids.filter(id => id === '@acryldev/state')).toEqual([])
   })
 
@@ -400,10 +400,10 @@ describe('desktop profile composition', {
     expect(rows.some(row => row.id === DESKTOP_MARKET_IDENTITIES.dshMarket.rowId)).toBe(false)
     // The community Market injects `router` and `routerHttp` (spec 046): Desktop's own rows, composed once before it, not a second time for it.
     const ids = rows.map(row => row.id)
-    expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acrylblends/cordis/router-http')).toHaveLength(1)
-    expect(ids.indexOf('acrylblends/cordis/router')).toBeLessThan(ids.indexOf('acrylblends/cordis/router-http'))
-    expect(ids.indexOf('acrylblends/cordis/router-http')).toBeLessThan(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId))
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/router')).toHaveLength(1)
+    expect(ids.filter(id => id === '@acryldev/blends/cordis/router-http')).toHaveLength(1)
+    expect(ids.indexOf('@acryldev/blends/cordis/router')).toBeLessThan(ids.indexOf('@acryldev/blends/cordis/router-http'))
+    expect(ids.indexOf('@acryldev/blends/cordis/router-http')).toBeLessThan(ids.indexOf(DESKTOP_MARKET_IDENTITIES.community.rowId))
   })
 
   it('loads the exact dshmarket dependency as a direct bundle only after explicit selection', () => {

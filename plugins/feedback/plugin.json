@@ -1,17 +1,9 @@
 {
   "name": "feedback",
   "description": "Feedback from the people who use the app: a Feedback button on every page, in production too, that lets them pinpoint the element they mean (or choose \"Nothing specific\") and send a note; the ACRYL frame shows the notes in the builder's left panel.",
-  "requires": [
-    "router",
-    "instance"
-  ],
-  "inject": [
-    "router",
-    "appInstance"
-  ],
-  "provides": [
-    "feedback"
-  ],
+  "requires": ["router", "instance"],
+  "inject": ["router", "appInstance"],
+  "provides": ["feedback"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },

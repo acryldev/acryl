@@ -24,7 +24,7 @@ export function apply(ctx: Context): void {
 After, it builds an app, mounts it, and asks the Host adapter to serve the prefix:
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const inject = ['router']
 

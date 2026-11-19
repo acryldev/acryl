@@ -11,7 +11,7 @@ import { getPattern, splitRoutingPath } from '../../utils/url.ts'
  *
  * @example
  * ```ts
- * import { matchedRoutes } from 'acrylblends/route'
+ * import { matchedRoutes } from '@acryldev/blends/route'
  *
  * app.use('*', async function logger(c, next) {
  *   await next()
@@ -42,7 +42,7 @@ export const matchedRoutes = (c: Context): RouterRoute[] =>
  *
  * @example
  * ```ts
- * import { routePath } from 'acrylblends/route'
+ * import { routePath } from '@acryldev/blends/route'
  *
  * app.use('*', (c, next) => {
  *   console.log(routePath(c)) // '*'
@@ -67,7 +67,7 @@ export const routePath = (c: Context, index?: number): string =>
  *
  * @example
  * ```ts
- * import { baseRoutePath } from 'acrylblends/route'
+ * import { baseRoutePath } from '@acryldev/blends/route'
  *
  * const app = new Acryl()
  *
@@ -91,7 +91,7 @@ export const baseRoutePath = (c: Context, index?: number): string =>
  *
  * @example
  * ```ts
- * import { basePath } from 'acrylblends/route'
+ * import { basePath } from '@acryldev/blends/route'
  *
  * const app = new Acryl()
  *

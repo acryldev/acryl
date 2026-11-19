@@ -5,8 +5,8 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import type {} from '@acryldev/settings'
 import type {} from '../settings/desktop-settings-controller.ts'
 import type {} from '../shell/runtime.ts'

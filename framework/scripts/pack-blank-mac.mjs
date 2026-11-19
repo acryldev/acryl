@@ -53,7 +53,7 @@ const npm = (npmArgs, options) =>
     ? spawnSync(process.execPath, [NPM_CLI, ...npmArgs], options)
     : spawnSync('npm', npmArgs, options)
 /**
- * A blueprint from the registry instead of Blank (`--from acrylblends.small-crm`): the product is that app, made as `npm create acrylblends --from` makes it
+ * A blueprint from the registry instead of Blank (`--from acrylblends.small-crm`): the product is that app, made as `npm create @acryldev/blends --from` makes it
  * (in the frame), under its own name (`--product`, else the first heading of its README).
  */
 const from = option('--from', undefined)

@@ -7,7 +7,7 @@ This helper provides functions for encoding, decoding, signing, and verifying JS
 To use this helper, you can import it as follows:
 
 ```ts
-import { decode, sign, verify } from 'acrylblends/jwt'
+import { decode, sign, verify } from '@acryldev/blends/jwt'
 ```
 
 > **Note.** [JWT Middleware](../middleware/builtin/jwt.md) also import the `jwt` function from the `acrylblends/jwt`.
@@ -28,7 +28,7 @@ sign(
 ### Example
 
 ```ts
-import { sign } from 'acrylblends/jwt'
+import { sign } from '@acryldev/blends/jwt'
 
 const payload = {
   sub: 'user123',
@@ -73,7 +73,7 @@ verify(
 ### Example
 
 ```ts
-import { verify } from 'acrylblends/jwt'
+import { verify } from '@acryldev/blends/jwt'
 
 const tokenToVerify = 'token'
 const secretKey = 'mySecretKey'
@@ -117,7 +117,7 @@ decode(token: string): { header: any; payload: any };
 ### Example
 
 ```ts
-import { decode } from 'acrylblends/jwt'
+import { decode } from '@acryldev/blends/jwt'
 
 // Decode the JWT token
 const tokenToDecode =

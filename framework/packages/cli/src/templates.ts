@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 export const TEMPLATES = ['blank', 'nodejs', 'notes', 'chat', 'todo', 'agent'] as const
 export type Template = (typeof TEMPLATES)[number]
 
-/** One line per template: the single list `acrylblends init` and `create-acrylblends` both show (`create-acrylblends` tests that its own copy equals this one). */
+/** One line per template: the single list `acrylblends init` and `@acryldev/create-blends` both show (`@acryldev/create-blends` tests that its own copy equals this one). */
 export const TEMPLATE_SUMMARY: Record<(typeof TEMPLATES)[number], string> = {
   blank: 'the router, a server and one route: the smallest app',
   nodejs: 'a web app with a page and a client component',
@@ -16,7 +16,7 @@ export const TEMPLATE_SUMMARY: Record<(typeof TEMPLATES)[number], string> = {
   agent: 'the blank app with an offline agent that builds plugins into the running app',
 }
 
-/** Names that were templates once and still work: `create-acrylblends --template acryl-app` made the agent app. */
+/** Names that were templates once and still work: `@acryldev/create-blends --template acryl-app` made the agent app. */
 export const TEMPLATE_ALIASES: Record<string, Template> = { 'acryl-app': 'agent' }
 
 export function isTemplate(value: string): value is Template {

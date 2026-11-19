@@ -10,7 +10,7 @@ const homes: string[] = []
 const contexts: Context[] = []
 
 function makeHome(): string {
-  const home = mkdtempSync(join(tmpdir(), '@acryldev/settings-'))
+  const home = mkdtempSync(join(tmpdir(), 'acryl-settings-'))
   homes.push(home)
   return home
 }

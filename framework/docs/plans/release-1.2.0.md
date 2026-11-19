@@ -81,7 +81,7 @@ Each tag's `verify` job checks that the tag is the package's version, runs `pnpm
 - [ ] `npm view acrylblends version` and `npm view create-acrylblends version` answer `1.2.0`.
 - [ ] In an empty folder outside every repository: `npx acrylblends@1.2.0 init fresh --template blank --desktop -y`, then `cd fresh && npm install &&
       npm run dev`. The frame opens and the app answers at `/app`. Stop the server and check its port is free.
-- [ ] `npm create acrylblends@1.2.0 app2 -- --from acrylblends.productivity-hub -y` makes an app named app2 whose `npm run snapshot verify` passes.
+- [ ] `npm create @acryldev/blends@1.2.0 app2 -- --from acrylblends.productivity-hub -y` makes an app named app2 whose `npm run snapshot verify` passes.
 
 ## What 1.2.0 contains
 

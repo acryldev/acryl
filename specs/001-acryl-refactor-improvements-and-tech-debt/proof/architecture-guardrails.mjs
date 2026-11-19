@@ -62,7 +62,7 @@ const session = read('apps/acryl-cli/src/tui-app/session.ts') ?? ''
 // actual duplicated join/activation/refresh function *definitions*.
 const surfaceOwnsAuth = ['loadAuthorizationFlows', 'computeProviderRows', 'ensureProviderActivated', 'refreshCredentialState']
   .filter(name => has(session, name))
-const controlHasAuthProjection = ['runtime/acryl-control/src/credential/', 'runtime/acryl-control/src/authorization/'].some(d => existsSync(join(repo, d)))
+const controlHasAuthProjection = ['runtime/control/src/credential/', 'runtime/control/src/authorization/'].some(d => existsSync(join(repo, d)))
 check('G1', 'auth/credential domain logic not in the surface',
   surfaceOwnsAuth.length === 0 && controlHasAuthProjection,
   `surface still defines: ${surfaceOwnsAuth.join(', ') || 'none'}; acryl-control projection present: ${controlHasAuthProjection}`)

@@ -9,10 +9,10 @@ as aliases, so there is one way to write a route.
 0.3.0:
 
 ```ts no-check
-import { HttpError } from 'acrylblends'
-import { readJson, valid, validate } from 'acrylblends'
-import { streamSSE } from 'acrylblends/streaming'
-import { bodyLimit } from 'acrylblends/body-limit'
+import { HttpError } from '@acryldev/blends'
+import { readJson, valid, validate } from '@acryldev/blends'
+import { streamSSE } from '@acryldev/blends/streaming'
+import { bodyLimit } from '@acryldev/blends/body-limit'
 
 export function apply(ctx: Context): void {
   const api = ctx.router.group('/todo')
@@ -34,11 +34,11 @@ export function apply(ctx: Context): void {
 0.4.0:
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { HTTPException } from 'acrylblends/http-exception'
-import { schemaValidator } from 'acrylblends/schema-validator'
-import { streamSSE } from 'acrylblends/streaming'
-import { bodyLimit } from 'acrylblends/body-limit'
+import { Acryl } from '@acryldev/blends'
+import { HTTPException } from '@acryldev/blends/http-exception'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
+import { streamSSE } from '@acryldev/blends/streaming'
+import { bodyLimit } from '@acryldev/blends/body-limit'
 
 export function apply(ctx: Context): void {
   const app = new Acryl()

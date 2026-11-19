@@ -889,7 +889,7 @@ spec:
         mkdirSync(join(notes, 'plugins', 'probe'), { recursive: true })
         writeFileSync(
           join(notes, 'plugins', 'probe', 'index.ts'),
-          "import type { Context } from '@deepseek-ai/cordis'\nimport { Acryl } from 'acrylblends'\nexport const name = 'probe'\nexport const inject = ['router']\nexport function apply(ctx: Context) {\n  ctx.router.route('/', new Acryl().get('/probe-route', (c) => c.json({ probe: true })))\n}\n",
+          "import type { Context } from '@deepseek-ai/cordis'\nimport { Acryl } from '@acryldev/blends'\nexport const name = 'probe'\nexport const inject = ['router']\nexport function apply(ctx: Context) {\n  ctx.router.route('/', new Acryl().get('/probe-route', (c) => c.json({ probe: true })))\n}\n",
         )
         const added = doorJson('plugin', 'add', 'plugins/probe')
         if (!added.ok || added.state !== 'active')

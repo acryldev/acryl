@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `npm create acrylblends@latest my-app agent`, end to end from the packed tarballs, on whatever OS this runs on. 1.0.4 and 1.0.5 failed on every Windows machine
+// `npm create @acryldev/blends@latest my-app agent`, end to end from the packed tarballs, on whatever OS this runs on. 1.0.4 and 1.0.5 failed on every Windows machine
 // (`node.exe.cmd is not recognized`: create started Node through the package-manager path) and no gate ran the command there; this one does.
 //   node scripts/verify-create-npm.mjs
 // The two packed tarballs are installed into a scratch folder, the `create-acrylblends` command they provide is run the way npm runs it, and the app it makes must
@@ -128,22 +128,22 @@ try {
     .map((name) => join(packed, name))
   if (tarballs.length !== 2) fail(`expected two tarballs, found ${tarballs.join(', ')}`)
 
-  // The user's folder: both packages installed, so `create-acrylblends` resolves acrylblends from the tarball and not from the registry.
+  // The user's folder: both packages installed, so ``create-blends` resolves @acryldev/blends from the tarball and not from the registry.
   const user = join(scratch, 'user')
   mkdirSync(user)
   writeFileSync(join(user, 'package.json'), '{"name":"user","private":true,"version":"0.0.0"}\n')
   run('npm', ['install', '--no-audit', '--no-fund', ...tarballs], user)
 
-  // `npm create acrylblends@latest my-app agent` is `npm exec create-acrylblends my-app agent`: run it that way, from the folder the app goes in.
+  // `npm create @acryldev/blends@latest my-app agent` is `npm exec create-blends my-app agent`: run it that way, from the folder the app goes in.
   const app = join(user, 'my-app')
   if (missing.length === 0)
-    run('npm', ['exec', '--no', '--', 'create-acrylblends', 'my-app', 'agent', '--yes'], user)
+    run('npm', ['exec', '--no', '--', 'create-blends', 'my-app', 'agent', '--yes'], user)
   else {
     // The same command with the install held back, so the unpublished frame versions can be pointed at this checkout first; then create's own install.
     const specs = packLocally(missing)
     run(
       'npm',
-      ['exec', '--no', '--', 'create-acrylblends', 'my-app', 'agent', '--yes', '--no-install'],
+      ['exec', '--no', '--', 'create-blends', 'my-app', 'agent', '--yes', '--no-install'],
       user,
     )
     overrideIn(app, pm, specs)

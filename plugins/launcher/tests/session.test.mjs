@@ -133,11 +133,11 @@ test('on disk: apps are the folders with blend.yaml, own plugins are those the l
   const root = mkdtempSync(join(tmpdir(), 'acryl-launcher-'))
   try {
     for (const app of ['shop', 'notes']) {
-      mkdirSync(join(root, app, 'plugins', '@acryldev/router'), { recursive: true })
+      mkdirSync(join(root, app, 'plugins', 'router'), { recursive: true })
       writeFileSync(join(root, app, 'blend.yaml'), 'kind: Blend\n')
     }
     mkdirSync(join(root, 'shop', 'plugins', 'cart'))
-    writeFileSync(join(root, 'shop', 'plugins', 'library.lock.json'), JSON.stringify({ version: 1, plugins: { '@acryldev/router': {} } }))
+    writeFileSync(join(root, 'shop', 'plugins', 'library.lock.json'), JSON.stringify({ version: 1, plugins: { router: {} } }))
     mkdirSync(join(root, 'not-an-app'))
     assert.deepEqual(listApps(root).map(app => app.value), ['notes', 'shop'])
     assert.deepEqual(listApps(join(root, 'shop')).map(app => app.value), ['.'])

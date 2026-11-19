@@ -5,8 +5,8 @@ The Testing Helper provides functions to make testing of Acryl applications easi
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { testClient } from 'acrylblends/testing'
+import { Acryl } from '@acryldev/blends'
+import { testClient } from '@acryldev/blends/testing'
 ```
 
 ## `testClient()`
@@ -35,8 +35,8 @@ export default app
 
 ```ts
 // index.test.ts
-import { Acryl } from 'acrylblends'
-import { testClient } from 'acrylblends/testing'
+import { Acryl } from '@acryldev/blends'
+import { testClient } from '@acryldev/blends/testing'
 import { describe, it, expect } from 'vitest' // Or your preferred test runner
 import app from './app'
 
@@ -66,8 +66,8 @@ To include headers in your test, pass them as the second parameter in the call. 
 
 ```ts
 // index.test.ts
-import { Acryl } from 'acrylblends'
-import { testClient } from 'acrylblends/testing'
+import { Acryl } from '@acryldev/blends'
+import { testClient } from '@acryldev/blends/testing'
 import { describe, it, expect } from 'vitest' // Or your preferred test runner
 import app from './app'
 
@@ -106,9 +106,9 @@ describe('Search Endpoint', () => {
 needs, such as a session cookie, are set once. Headers given to a single call are merged over them.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { getCookie } from 'acrylblends/cookie'
-import { testClient } from 'acrylblends/testing'
+import { Acryl } from '@acryldev/blends'
+import { getCookie } from '@acryldev/blends/cookie'
+import { testClient } from '@acryldev/blends/testing'
 
 const app = new Acryl().get('/me', (c) => c.json({ session: getCookie(c, 'session') ?? null }))
 

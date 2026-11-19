@@ -34,7 +34,7 @@ afterEach(async () => {
 
 describe('extension context on the web engine', () => {
   it('mounts, routes the prompt to docs that exist, and registers the install tool', async () => {
-    const home = await mkdtemp(join(tmpdir(), '@acryldev/plugin-context-'))
+    const home = await mkdtemp(join(tmpdir(), 'acryl-plugin-context-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const installPackageUrl = new URL('../package.json', import.meta.url).href
@@ -72,7 +72,7 @@ describe('extension context on the web engine', () => {
   }, 60_000)
 
   it('mounts on the CLI (tui) engine too', async () => {
-    const home = await mkdtemp(join(tmpdir(), '@acryldev/plugin-context-tui-'))
+    const home = await mkdtemp(join(tmpdir(), 'acryl-plugin-context-tui-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
@@ -338,8 +338,8 @@ describe('/reload on the web engine', () => {
     const source = fileURLToPath(new URL('../../../plugins/plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
 
     // App A: build a local extension, install it, capture the Blend.
-    const homeA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-')); temporaryHomes.push(homeA)
-    const wsA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-ws-')); temporaryHomes.push(wsA)
+    const homeA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-'))); temporaryHomes.push(homeA)
+    const wsA = await mkdtemp(join(tmpdir(), 'acryl-blend-a-ws-'))); temporaryHomes.push(wsA)
     process.env.DSH_HOME = homeA
     cpSync(source, join(wsA, '.acryl-plugins', 'round-trip'), { recursive: true })
     let host = await boot()
@@ -350,8 +350,8 @@ describe('/reload on the web engine', () => {
     } finally { await session.bridge.dispose(); await host.dispose() }
 
     // App B: a different home and a different workspace that only has the captured .acryl/blend directory.
-    const homeB = await mkdtemp(join(tmpdir(), 'acryl-blend-b-')); temporaryHomes.push(homeB)
-    const wsB = await mkdtemp(join(tmpdir(), 'acryl-blend-b-ws-')); temporaryHomes.push(wsB)
+    const homeB = await mkdtemp(join(tmpdir(), 'acryl-blend-b-'))); temporaryHomes.push(homeB)
+    const wsB = await mkdtemp(join(tmpdir(), 'acryl-blend-b-ws-'))); temporaryHomes.push(wsB)
     process.env.DSH_HOME = homeB
     cpSync(join(wsA, '.acryl', 'blend'), join(wsB, '.acryl', 'blend'), { recursive: true })
     host = await boot()
@@ -496,7 +496,7 @@ describe('/reload on the web engine', () => {
         name: `acryl-probe-${id}`, version: '0.1.0', type: 'module', main: './index.js',
         exports: { '.': './index.js', './package.json': './package.json' },
         peerDependencies: { acrylblends: '*' },
-        dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['acrylblends/cordis/state'] },
+        dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['@acryldev/blends/cordis/state'] },
       }))
       writeFileSync(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: acryl-probe-${id}\n      name: acryl-probe-${id}\n`)
       writeFileSync(join(dir, 'index.js'), [
@@ -519,7 +519,7 @@ describe('/reload on the web engine', () => {
     const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'module-row', attachment: 'owner', cwd: workspace })
     try {
       const loader = (host.ctx as unknown as { loader: { entries(): Iterable<{ id: string, options: { name: string } }> } }).loader
-      const stateRows = () => [...loader.entries()].filter(entry => entry.options.name === 'acrylblends/cordis/state').map(entry => entry.id)
+      const stateRows = () => [...loader.entries()].filter(entry => entry.options.name === '@acryldev/blends/cordis/state').map(entry => entry.id)
       expect(stateRows()).toEqual([])
       const sessionId = await bridge.open()
       const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
@@ -573,7 +573,7 @@ describe('/reload on the web engine', () => {
       name: 'acryl-probe-kept', version: '0.1.0', type: 'module', main: './index.js',
       exports: { '.': './index.js', './package.json': './package.json' },
       peerDependencies: { acrylblends: '*' },
-      dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['acrylblends/cordis/state'] },
+      dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['@acryldev/blends/cordis/state'] },
     }))
     writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: acryl-probe-kept\n      name: acryl-probe-kept\n')
     writeFileSync(join(dir, 'index.js'), "export const name = 'acryl-probe-kept'\nexport const inject = ['state']\nexport function apply(ctx) { ctx.state.cell('kept', 'yes') }\n")
@@ -583,7 +583,7 @@ describe('/reload on the web engine', () => {
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
     type Live = { loader: { entries(): Iterable<{ options: { name: string }, fiber?: { state: number } }> }, state?: { find(key: string): { get(): unknown } | undefined } }
-    const stateRowStates = (ctx: unknown) => [...(ctx as Live).loader.entries()].filter(entry => entry.options.name === 'acrylblends/cordis/state').map(entry => entry.fiber?.state)
+    const stateRowStates = (ctx: unknown) => [...(ctx as Live).loader.entries()].filter(entry => entry.options.name === '@acryldev/blends/cordis/state').map(entry => entry.fiber?.state)
     try {
       const first = await boot()
       try {

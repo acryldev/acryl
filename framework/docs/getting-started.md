@@ -1,6 +1,6 @@
 # Getting started
 
-Two ways in. To use the **framework** (handlers, routing, middleware on Web Standards), run `npm create acrylblends@latest my-app` and read the
+Two ways in. To use the **framework** (handlers, routing, middleware on Web Standards), run `npm create @acryldev/blends@latest my-app` and read the
 [framework documentation](framework/README.md). To build a **Blend** (a Cordis app of plugins, with an agent that can extend it while it runs), follow this page.
 
 You need Node 22.19 or newer (Node runs the TypeScript directly, with no build step) and npm. Git, to save your app.

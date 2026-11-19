@@ -8,8 +8,8 @@ If it is not set, it reads the body in the stream and executes an error handler 
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { bodyLimit } from 'acrylblends/body-limit'
+import { Acryl } from '@acryldev/blends'
+import { bodyLimit } from '@acryldev/blends/body-limit'
 ```
 
 ## Usage

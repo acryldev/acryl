@@ -7,8 +7,8 @@ Validate untrusted input at the route boundary. `schemaValidator` takes any [Sta
 
 ```ts
 import z from '@deepseek-ai/schemastery'
-import { Acryl } from 'acrylblends'
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { Acryl } from '@acryldev/blends'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 
 const NewTodo = z.object({
   title: z.string().required(),
@@ -60,7 +60,7 @@ If you see a field error for a field the request clearly carries, check the requ
 explicitly can refuse other content types before the validator:
 
 ```ts
-import type { MiddlewareHandler } from 'acrylblends'
+import type { MiddlewareHandler } from '@acryldev/blends'
 
 const jsonOnly: MiddlewareHandler = async (c, next) => {
   // The same types the json target reads: application/json and application/*+json, parameters allowed.
@@ -105,7 +105,7 @@ app.get('/todos/:id', schemaValidator('param', z.object({ id: z.natural() })), s
 response to refuse:
 
 ```ts
-import { validator } from 'acrylblends/validator'
+import { validator } from '@acryldev/blends/validator'
 
 app.post('/posts', validator('form', (value, c) => {
   const body = value['body']
@@ -119,7 +119,7 @@ app.post('/posts', validator('form', (value, c) => {
 Validation reads the whole body. Put `bodyLimit` in front of a validator on any route open to untrusted callers:
 
 ```ts
-import { bodyLimit } from 'acrylblends/body-limit'
+import { bodyLimit } from '@acryldev/blends/body-limit'
 
 app.post('/todos', bodyLimit({ maxSize: 16 * 1024 }), schemaValidator('json', NewTodo), createTodo)
 ```

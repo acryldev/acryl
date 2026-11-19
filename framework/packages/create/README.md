@@ -1,12 +1,12 @@
-# create-acrylblends
+# @acryldev/create-blends
 
 Create an Acryl app with one command.
 
 ```sh
-npm create acrylblends@latest my-app
+npm create @acryldev/blends@latest my-app
 ```
 
-It asks which template you want, creates `my-app`, and prints what to run next. Other package managers work the same way: `pnpm create acrylblends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`.
+It asks which template you want, creates `my-app`, and prints what to run next. Other package managers work the same way: `pnpm create @acryldev/blends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`.
 
 ## Templates
 
@@ -28,12 +28,12 @@ Every template includes `AGENTS.md`, `CLAUDE.md` and a copy of the framework doc
 Arguments for the initializer go after `--` with `npm create`:
 
 ```sh
-npm create acrylblends@latest my-app -- --template nodejs --install --pm npm
+npm create @acryldev/blends@latest my-app -- --template nodejs --install --pm npm
 ```
 
 | Option | |
 | --- | --- |
-| `--template <name>` | `blank`, `nodejs`, `notes`, `chat`, `todo` or `agent` (the same list as `acrylblends init`; `acryl-app` still means `agent`; a bare name after the directory means the same: `npm create acrylblends@latest my-app notes`) |
+| `--template <name>` | `blank`, `nodejs`, `notes`, `chat`, `todo` or `agent` (the same list as `acrylblends init`; `acryl-app` still means `agent`; a bare name after the directory means the same: `npm create @acryldev/blends@latest my-app notes`) |
 | `--desktop` | put the app inside the ACRYL frame: `npm run dev` opens it with the chat, the panels and Settings. Not with a starter from a source |
 | `--install` | install the dependencies after creating the app |
 | `--pm <manager>` | `npm`, `pnpm`, `yarn` or `bun` (default: the one that ran the command) |
@@ -49,7 +49,7 @@ npm test
 ```
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 app.get('/', (c) => c.text('Acryl!'))
@@ -84,7 +84,7 @@ MIT license.
 
 ## The `notes` template
 
-`npm create acrylblends@latest my-notes -- --template notes` makes a small full-stack app, written to be read and copied:
+`npm create @acryldev/blends@latest my-notes -- --template notes` makes a small full-stack app, written to be read and copied:
 
 - sign up and log in (scrypt password hashes from `node:crypto`, a random token in an `httpOnly` cookie, sessions in the database);
 - notes in SQLite through the built-in `node:sqlite` (Node.js 22.19 or later, nothing native to install), with create, edit, delete and search forms, server-side validation with messages on the page, and a redirect (303) after each POST;
@@ -97,9 +97,9 @@ MIT license.
 ## Templates from a repository or a package
 
 ```sh
-npm create acrylblends@latest my-app github:owner/repo[#ref]
-npm create acrylblends@latest my-app @scope/name[@version]
-npm create acrylblends@latest my-app ./template.tgz
+npm create @acryldev/blends@latest my-app github:owner/repo[#ref]
+npm create @acryldev/blends@latest my-app @scope/name[@version]
+npm create @acryldev/blends@latest my-app ./template.tgz
 ```
 
 The source is downloaded as a tarball (never cloned) or packed with `npm pack --ignore-scripts`, unpacked, and read: it must hold an `acryl.template.json` (`name`, `description`, optional `plugins`), it is checked for secrets, and only then is the folder created. Nothing of the template is installed or run; if its `package.json` defines install scripts they are listed, and `--install` prints what will run before it runs. See the create-acrylblends guide in `docs/framework/guides/`.

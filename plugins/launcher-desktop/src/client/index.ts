@@ -10,7 +10,7 @@ import { LauncherScreen, type LauncherScreenProps } from './Screen.tsx'
 import { LauncherVisibility } from './store.ts'
 import { installLauncherStyles } from './styles.ts'
 
-export const name = '@acryldev/launcher-desktop-client'
+export const name = 'acryl-launcher-desktop-client'
 export const inject = ['slots']
 
 /** Desktop hands an http(s) page opened by the window to the system browser; Web opens a tab. */

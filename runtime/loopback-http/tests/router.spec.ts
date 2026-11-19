@@ -1,8 +1,8 @@
 import { createServer, type Server } from 'node:http'
 import { afterEach, describe, expect, it } from 'vitest'
-import { Acryl } from 'acrylblends'
-import { serve } from 'acrylblends/cordis/router-http'
-import { testWebSocket, upgradeWebSocket } from 'acrylblends/node-server'
+import { Acryl } from '@acryldev/blends'
+import { serve } from '@acryldev/blends/cordis/router-http'
+import { testWebSocket, upgradeWebSocket } from '@acryldev/blends/node-server'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, ownPageSocket, privateApi, readJson } from '../src/router.ts'
 
 let server: Server | undefined

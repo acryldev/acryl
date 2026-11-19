@@ -16,7 +16,7 @@ without memorizing commands or going to docs."
 ## Why
 
 The talk at the Sentry office (2026-11-11) "looked complicated to the audience". Every path today starts with a command a person must
-know: `npm create acrylblends@latest`, `npx acrylblends init`, `npm run dev`, `npm run desktop`, `npm run acryl -- plugin pull
+know: `npm create @acryldev/blends@latest`, `npx acrylblends init`, `npm run dev`, `npm run desktop`, `npm run acryl -- plugin pull
 github:<owner>/<repo>@<version>@sha256:<digest>`, `npx acrylblends upgrade`. 049 M13 shortens them (`acryl new my-app`); this spec removes
 the need to know them at all.
 

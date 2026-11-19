@@ -50,7 +50,7 @@ function app(id = 'board'): string {
     BLEND.replace('id: acme.board, name: board', `id: acme.${id}, name: ${id}`),
   )
   plugin(dir, '@acryldev/router')
-  writeFileSync(join(dir, 'plugins', 'library.json'), JSON.stringify({ plugins: ['@acryldev/router'] }))
+  writeFileSync(join(dir, 'plugins', 'library.json'), JSON.stringify({ plugins: ['router'] }))
   return dir
 }
 

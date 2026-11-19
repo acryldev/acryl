@@ -11,7 +11,7 @@ First, introduce a way to validate incoming values without using the third-party
 Import `validator` from `acrylblends/validator`.
 
 ```ts
-import { validator } from 'acrylblends/validator'
+import { validator } from '@acryldev/blends/validator'
 ```
 
 To validate form data, specify `form` as the first argument and a callback as the second argument.
@@ -153,9 +153,9 @@ than once (several checkboxes, or a name ending in `[]`) as an array, so the val
 This page shows a form and re-renders it with a message when a field is wrong:
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { html } from 'acrylblends/html'
-import { validator } from 'acrylblends/validator'
+import { Acryl } from '@acryldev/blends'
+import { html } from '@acryldev/blends/html'
+import { validator } from '@acryldev/blends/validator'
 
 const page = (error?: string) => html`<!doctype html>
   <form method="post" action="/notes" enctype="multipart/form-data">
@@ -198,7 +198,7 @@ with `fetch()`:
 
 ```ts
 import * as z from 'zod'
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 
 const NoteForm = z.object({
   title: z.string().trim().min(1, 'Title is required'),
@@ -325,7 +325,7 @@ others without an adapter for each.
 `schemaValidator` is part of acrylblends: it validates a request target with any Standard Schema and makes the parsed value available as `c.req.valid(target)`.
 
 ```ts
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 ```
 
 A failed validation answers 400 with `{ "error": "invalid <target>", "issues": [{ "message", "path" }] }`. The failure shapes, the JSON `Content-Type` rule and a body that
@@ -361,7 +361,7 @@ bun add zod
 
 ```ts
 import * as z from 'zod'
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 
 const schema = z.object({
   name: z.string(),
@@ -407,7 +407,7 @@ bun add valibot
 
 ```ts
 import * as v from 'valibot'
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 
 const schema = v.object({
   name: v.string(),
@@ -453,7 +453,7 @@ bun add arktype
 
 ```ts
 import { type } from 'arktype'
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 
 const schema = type({
   name: 'string',

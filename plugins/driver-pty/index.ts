@@ -13,7 +13,6 @@
 
 import { appendFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
 import { onPath } from '@acryldev/agent-panel/headless'
 import { mountedBase, mountedPrefix } from '@acryldev/agent-panel/mount'
 import type {} from '@acryldev/agent-panel/registry'
@@ -23,6 +22,7 @@ import type {} from '@acryldev/instance'
 import { clientModules } from '@acryldev/node-server/client-modules'
 import { Acryl } from '@acryldev/router'
 import { streamSSE } from '@acryldev/router/helpers'
+import type { Context } from '@deepseek-ai/cordis'
 import { loadNodePty, type PtySpawn, resolveProgram } from './spawn.ts'
 import { terminalDriver } from './terminal.ts'
 

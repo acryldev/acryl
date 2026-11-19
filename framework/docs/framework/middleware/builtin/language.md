@@ -5,8 +5,8 @@ The Language Detector middleware automatically determines a user's preferred lan
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { languageDetector } from 'acrylblends/language'
+import { Acryl } from '@acryldev/blends'
+import { languageDetector } from '@acryldev/blends/language'
 ```
 
 ## Basic Usage

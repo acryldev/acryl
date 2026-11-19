@@ -1,13 +1,13 @@
 # acrylblends 1.4.0
 
-A group's app: everyone's plugins come into one app with one command, and a showcase page shows who made what. Released with [create-acrylblends 1.4.2](create-1.4.2.md), which asks for this release, so `npm create acrylblends@latest` makes an app with it even on a machine that ran an older one.
+A group's app: everyone's plugins come into one app with one command, and a showcase page shows who made what. Released with [create-acrylblends 1.4.2](create-1.4.2.md), which asks for this release, so `npm create @acryldev/blends@latest` makes an app with it even on a machine that ran an older one.
 
 ## Try it
 
 Make a framed agent app with the showcase:
 
 ```sh
-npm create acrylblends@latest collective -- --template agent --desktop
+npm create @acryldev/blends@latest collective -- --template agent --desktop
 cd collective
 npx acrylblends add showcase
 npm install

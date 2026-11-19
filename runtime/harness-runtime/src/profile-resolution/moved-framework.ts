@@ -12,24 +12,24 @@ import { registerModuleHooks } from '../module-hooks.ts'
 
 /** Each old specifier and what replaces it. */
 export const MOVED_FRAMEWORK_IMPORTS: Readonly<Record<string, string>> = Object.freeze({
-  '@acryldev/router': "'acrylblends' (Acryl, Context and the types), 'acrylblends/http-exception' (HTTPException) and 'acrylblends/cordis/router' (the Cordis plugin, connectionOf, and the ctx.router type)",
-  '@acryldev/router/middleware': "one subpath per middleware: 'acrylblends/body-limit', 'acrylblends/loopback-only', 'acrylblends/method-not-allowed', 'acrylblends/trailing-slash', 'acrylblends/bearer-auth' and the others under their names",
-  '@acryldev/router/helpers': "'acrylblends/streaming' (streamSSE) and 'acrylblends/schema-validator' (schemaValidator)",
-  '@acryldev/router-http': "'acrylblends/cordis/router-http'",
-  '@acryldev/state': "'acrylblends/cordis/state'",
-  '@acryldev/inspect': "'acrylblends/cordis/inspect'",
-  '@acryldev/node-server': "'acrylblends/node-server' (serve) or 'acrylblends/cordis/node-server' (the Cordis plugin)",
-  '@acryldev/door': "'acrylblends/cordis/door'",
-  '@acryldev/door/protocol': "'acrylblends/door/protocol'",
-  '@acryldev/door/host': "'acrylblends/door/host'",
-  '@acryldev/door/page': "'acrylblends/door/page'",
-  '@acryldev/db': "'acrylblends/db'",
-  '@acryldev/db/cordis': "'acrylblends/cordis/db'",
-  '@acryldev/db/conformance': "'acrylblends/db/conformance'",
-  '@acryldev/db-sqlite': "'acrylblends/db/sqlite' or 'acrylblends/cordis/db-sqlite' (the Cordis plugin)",
-  '@acryldev/kv': "'acrylblends/kv'",
-  '@acryldev/kv-json': "'acrylblends/kv/json' or 'acrylblends/cordis/kv-json' (the Cordis plugin)",
-  '@acryldev/kv-db': "'acrylblends/kv/db' or 'acrylblends/cordis/kv-db' (the Cordis plugin)",
+  '@acryldev/router': "'acrylblends' (Acryl, Context and the types), '@acryldev/blends/http-exception' (HTTPException) and '@acryldev/blends/cordis/router' (the Cordis plugin, connectionOf, and the ctx.router type)",
+  '@acryldev/router/middleware': "one subpath per middleware: '@acryldev/blends/body-limit', '@acryldev/blends/loopback-only', '@acryldev/blends/method-not-allowed', '@acryldev/blends/trailing-slash', '@acryldev/blends/bearer-auth' and the others under their names",
+  '@acryldev/router/helpers': "'@acryldev/blends/streaming' (streamSSE) and '@acryldev/blends/schema-validator' (schemaValidator)",
+  '@acryldev/router-http': "'@acryldev/blends/cordis/router-http'",
+  '@acryldev/state': "'@acryldev/blends/cordis/state'",
+  '@acryldev/inspect': "'@acryldev/blends/cordis/inspect'",
+  '@acryldev/node-server': "'@acryldev/blends/node-server' (serve) or '@acryldev/blends/cordis/node-server' (the Cordis plugin)",
+  '@acryldev/door': "'@acryldev/blends/cordis/door'",
+  '@acryldev/door/protocol': "'@acryldev/blends/door/protocol'",
+  '@acryldev/door/host': "'@acryldev/blends/door/host'",
+  '@acryldev/door/page': "'@acryldev/blends/door/page'",
+  '@acryldev/db': "'@acryldev/blends/db'",
+  '@acryldev/db/cordis': "'@acryldev/blends/cordis/db'",
+  '@acryldev/db/conformance': "'@acryldev/blends/db/conformance'",
+  '@acryldev/db-sqlite': "'@acryldev/blends/db/sqlite' or '@acryldev/blends/cordis/db-sqlite' (the Cordis plugin)",
+  '@acryldev/kv': "'@acryldev/blends/kv'",
+  '@acryldev/kv-json': "'@acryldev/blends/kv/json' or '@acryldev/blends/cordis/kv-json' (the Cordis plugin)",
+  '@acryldev/kv-db': "'@acryldev/blends/kv/db' or '@acryldev/blends/cordis/kv-db' (the Cordis plugin)",
 })
 
 /** What replaces an old framework import, or undefined for any other specifier. */
@@ -39,7 +39,7 @@ export function movedFrameworkImport(specifier: string): string | undefined {
 
 /** The message for an old framework import that did not resolve. */
 export function movedFrameworkMessage(specifier: string, original: string): string {
-  return `${original}\n'${specifier}' is part of acrylblends since the framework moved to its own repository: import ${MOVED_FRAMEWORK_IMPORTS[specifier] ?? "from 'acrylblends'"} instead.`
+  return `${original}\n'${specifier}' is part of acrylblends since the framework moved to its own repository: import ${MOVED_FRAMEWORK_IMPORTS[specifier] ?? "from '@acryldev/blends'"} instead.`
 }
 
 /**

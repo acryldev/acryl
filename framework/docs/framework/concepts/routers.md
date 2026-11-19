@@ -27,10 +27,10 @@ It does not support every routing pattern, so it is normally combined with a rou
 app defaults to:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { RegExpRouter } from 'acrylblends/router/reg-exp-router'
-import { SmartRouter } from 'acrylblends/router/smart-router'
-import { TrieRouter } from 'acrylblends/router/trie-router'
+import { Acryl } from '@acryldev/blends'
+import { RegExpRouter } from '@acryldev/blends/router/reg-exp-router'
+import { SmartRouter } from '@acryldev/blends/router/smart-router'
+import { TrieRouter } from '@acryldev/blends/router/trie-router'
 
 const app = new Acryl({
   router: new SmartRouter({ routers: [new RegExpRouter(), new TrieRouter()] }),
@@ -43,8 +43,8 @@ const app = new Acryl({
 the number of routes, so it suits an environment that builds the application at every start and serves few requests.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { LinearRouter } from 'acrylblends/router/linear-router'
+import { Acryl } from '@acryldev/blends'
+import { LinearRouter } from '@acryldev/blends/router/linear-router'
 
 const app = new Acryl({ router: new LinearRouter() })
 ```
@@ -54,8 +54,8 @@ const app = new Acryl({ router: new LinearRouter() })
 **PatternRouter** is the smallest of the routers: it adds a pattern and matches it, and nothing else. Choose it when size matters more than anything else.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { PatternRouter } from 'acrylblends/router/pattern-router'
+import { Acryl } from '@acryldev/blends'
+import { PatternRouter } from '@acryldev/blends/router/pattern-router'
 
 const app = new Acryl({ router: new PatternRouter() })
 ```

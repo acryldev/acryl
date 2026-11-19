@@ -11,7 +11,7 @@ import type { AcrylWeb } from '@acryldev/control'
 
 // The service's contract is declared once, in @acryldev/control (`src/platform/web.ts`); this package only provides it.
 
-export const name = '@acryldev/web'
+export const name = 'acryl-web-service'
 export const inject = ['webServer']
 
 export function apply(ctx: Context): void {

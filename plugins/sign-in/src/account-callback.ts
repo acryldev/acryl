@@ -19,7 +19,7 @@ import {
   type DeepSeekAccountPort, type DeepSeekAccountView,
 } from './deepseek-account.ts'
 
-export const name = '@acryldev/sign-in-account-callback'
+export const name = 'acryl-sign-in-account-callback'
 export const inject = ['deepseekAccount']
 
 /** The Loader isolation label shared by this row and the `deepseek-account` row (`isolate: { webServer: <label> }`). */

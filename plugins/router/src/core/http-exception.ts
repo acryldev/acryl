@@ -29,7 +29,7 @@ type HTTPExceptionOptions = {
  *
  * @example
  * ```ts
- * import { HTTPException } from 'acrylblends/http-exception'
+ * import { HTTPException } from '@acryldev/blends/http-exception'
  *
  * // ...
  *

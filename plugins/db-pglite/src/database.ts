@@ -6,7 +6,7 @@
  */
 
 import type { PGlite } from '@electric-sql/pglite'
-import type { Db, DbExecutor, SqlValue } from 'acrylblends/db'
+import type { Db, DbExecutor, SqlValue } from '@acryldev/blends/db'
 import { bindStatement } from '@acryldev/db-postgres/dialect'
 
 const PROVIDER = '@acryldev/db-pglite'

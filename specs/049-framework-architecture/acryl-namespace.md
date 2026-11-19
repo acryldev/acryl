@@ -84,7 +84,7 @@ reads the packaged closure, not only the import lines.
 same app (T035).
 
 **D8. The workshop of 2026-11-20 uses short commands, and nothing else moves before it.** The owner's requirement of 2026-11-11 replaces the
-earlier "commands do not change": the long form (`npm create acrylblends@latest app -- --template blank --desktop -y --install`) is not
+earlier "commands do not change": the long form (`npm create @acryldev/blends@latest app -- --template blank --desktop -y --install`) is not
 acceptable for participants. T039 makes `npx acryl new my-app` and `cd my-app && npm run dev` the workshop commands, verified on all three
 systems from local tarballs first; the old commands stay as the fallback. Outward steps (reserving names, publishing `acryl` with the new
 subcommands, `create-acryl`, `@acryl/blends`, `@acryl/create-blends`) each need the owner's explicit go (T031, T035). No repository move before

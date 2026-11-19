@@ -19,7 +19,7 @@ const roots: string[] = []
 afterEach(() => { while (roots.length > 0) rmSync(roots.pop()!, { recursive: true, force: true }) })
 
 function setup() {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/launcher-desktop-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-'))
   roots.push(root)
   const home = join(root, '.acryl')
   const appsFolder = join(root, 'ACRYL')

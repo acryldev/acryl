@@ -1,16 +1,16 @@
 # API summary
 
-One page with the calls an ordinary app uses, each linked to the page that explains it. Imports are from `acrylblends` (and its subpaths such as `acrylblends/cookie`) unless noted. The first example is a Cordis plugin; a plain app (`npm create acrylblends@latest`) uses the `Acryl` class below with no plugin around it.
+One page with the calls an ordinary app uses, each linked to the page that explains it. Imports are from `acrylblends` (and its subpaths such as `acrylblends/cookie`) unless noted. The first example is a Cordis plugin; a plain app (`npm create @acryldev/blends@latest`) uses the `Acryl` class below with no plugin around it.
 
 ## A plugin that serves an app
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
-import { trimTrailingSlash } from 'acrylblends/trailing-slash'
-import { schemaValidator, type StandardSchema } from 'acrylblends/schema-validator'
-import { streamSSE } from 'acrylblends/streaming'
-import type {} from 'acrylblends/cordis/state'
+import { Acryl } from '@acryldev/blends'
+import { trimTrailingSlash } from '@acryldev/blends/trailing-slash'
+import { schemaValidator, type StandardSchema } from '@acryldev/blends/schema-validator'
+import { streamSSE } from '@acryldev/blends/streaming'
+import type {} from '@acryldev/blends/cordis/state'
 
 export const name = 'orders'                 // the package name and the Loader row id
 export const inject = ['router', 'state']    // the plugin waits (PENDING) until both exist
@@ -95,8 +95,8 @@ paths: see [Trailing slashes](../api/routing.md#trailing-slashes).
 ## Validation ([Validation](../cordis/validation.md))
 
 ```ts
-import { schemaValidator } from 'acrylblends/schema-validator'
-import { validator } from 'acrylblends/validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
+import { validator } from '@acryldev/blends/validator'
 app.post('/', schemaValidator('json', Schema), c => c.json(c.req.valid('json')))
 ```
 

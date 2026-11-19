@@ -49,7 +49,7 @@ Options for init:
   -h, --help             show this help
   -v, --version          show the version
 
-Templates (the same list as npm create acrylblends):
+Templates (the same list as npm create @acryldev/blends):
 ${TEMPLATES.map((name) => `  ${name.padEnd(7)} ${TEMPLATE_SUMMARY[name]}`).join('\n')}
 `
 

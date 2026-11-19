@@ -3,9 +3,7 @@
   "description": "The app's home page as a place plugins put their widgets: a plugin registers a widget in ctx.effect, the page renders it, and it leaves with the plugin.",
   "requires": [],
   "inject": [],
-  "provides": [
-    "home"
-  ],
+  "provides": ["home"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },

@@ -51,7 +51,7 @@ On the Client side, import `hc` and `AppType` first.
 
 ```ts
 import type { AppType } from '.'
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 ```
 
 `hc` is a function to create a client. Pass `AppType` as Generics and specify the server URL as an argument.
@@ -166,7 +166,7 @@ type ResponseType200 = InferResponseType<
 Acryl RPC client doesn't automatically infer response types from global error handlers like `app.onError()` or global middleware. You can use the `ApplyGlobalResponse` type helper to merge global error response types into all routes.
 
 ```ts
-import type { ApplyGlobalResponse } from 'acrylblends/client'
+import type { ApplyGlobalResponse } from '@acryldev/blends/client'
 
 const app = new Acryl()
   .get('/api/users', (c) => c.json({ users: ['alice', 'bob'] }, 200))
@@ -235,7 +235,7 @@ export const routes = new Acryl().get(
 )
 
 // client.ts
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 const client = hc<typeof routes>('/')
 
@@ -276,9 +276,9 @@ Alternatively, you can use module augmentation to extend `NotFoundResponse` inte
 
 ```ts
 // server.ts
-import { Acryl, TypedResponse } from 'acrylblends'
+import { Acryl, TypedResponse } from '@acryldev/blends'
 
-declare module 'acrylblends' {
+declare module '@acryldev/blends' {
   interface NotFoundResponse
     extends Response,
       TypedResponse<{ error: string }, 404, 'json'> {}
@@ -439,7 +439,7 @@ const client = hc<AppType>('/api', {
 You can pass the fetch's `RequestInit` object to the request as the `init` option. Below is an example of aborting a Request.
 
 ```ts no-check
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 const client = hc<AppType>('http://localhost:8787/')
 
@@ -622,7 +622,7 @@ const client = hc<AppType>('http://localhost', {
 Use `InferRequestType` and `InferResponseType` to know the type of object to be requested and the type of object to be returned.
 
 ```ts
-import type { InferRequestType, InferResponseType } from 'acrylblends/client'
+import type { InferRequestType, InferResponseType } from '@acryldev/blends/client'
 
 // InferRequestType
 const $post = client.todo.$post
@@ -637,7 +637,7 @@ type ResType = InferResponseType<typeof $post>
 You can use `parseResponse()` helper to easily parse a Response from `hc` with type-safety.
 
 ```ts
-import { parseResponse, DetailedError } from 'acrylblends/client'
+import { parseResponse, DetailedError } from '@acryldev/blends/client'
 
 // result contains the parsed response body (automatically parsed based on Content-Type)
 const result = await parseResponse(client.hello.$get()).catch(
@@ -654,8 +654,8 @@ You can also use a React Hook library such as [SWR](https://swr.vercel.app).
 
 ```tsx
 import useSWR from 'swr'
-import { hc } from 'acrylblends/client'
-import type { InferRequestType } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
+import type { InferRequestType } from '@acryldev/blends/client'
 import type { AppType } from '../functions/api/[[route]]'
 
 const App = () => {
@@ -693,7 +693,7 @@ A simple way to do this is to chain the handlers so that the types are always in
 
 ```ts
 // authors.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
   .get('/', (c) => c.json('list authors'))
@@ -705,7 +705,7 @@ export default app
 
 ```ts
 // books.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
   .get('/', (c) => c.json('list books'))
@@ -719,7 +719,7 @@ You can then import the sub-routers as you usually would, and make sure you chai
 
 ```ts
 // index.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import authors from './authors'
 import books from './books'
 
@@ -770,7 +770,7 @@ If your backend is separated from the frontend and lives in a different director
 
 #### TypeScript project references
 
-Like in the case of [Acryl version mismatch](#acrylblends-version-mismatch), you'll run into issues if your backend and frontend are separate. If you want to access code from the backend (`AppType`, for example) on the frontend, you need to use [project references](https://www.typescriptlang.org/docs/handbook/project-references.html). TypeScript's project references allow one TypeScript codebase to access and use code from another TypeScript codebase. _(source: [Acryl RPC And TypeScript Project References](https://catalins.tech/acrylblends-rpc-in-monorepos/))_.
+Like in the case of [Acryl version mismatch](#blends-version-mismatch), you'll run into issues if your backend and frontend are separate. If you want to access code from the backend (`AppType`, for example) on the frontend, you need to use [project references](https://www.typescriptlang.org/docs/handbook/project-references.html). TypeScript's project references allow one TypeScript codebase to access and use code from another TypeScript codebase. _(source: [Acryl RPC And TypeScript Project References](https://catalins.tech/acrylblends-rpc-in-monorepos/))_.
 
 #### Compile your code before using it (recommended)
 
@@ -780,7 +780,7 @@ Compiling your client including the server app gives you the best performance. P
 
 ```ts
 import { app } from './app'
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 // this is a trick to calculate the type when compiling
 const client = hc<typeof app>('')
@@ -825,13 +825,13 @@ As described in [Using RPC with larger applications](#using-rpc-with-larger-appl
 ```ts
 // authors-cli.ts
 import { app as authorsApp } from './authors'
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 const authorsClient = hc<typeof authorsApp>('/authors')
 
 // books-cli.ts
 import { app as booksApp } from './books'
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 const booksClient = hc<typeof booksApp>('/books')
 ```
@@ -868,7 +868,7 @@ const data = await res.json() // { hello: string }
 If you cannot avoid the chain, annotating `then()` also works:
 
 ```ts
-import type { TypedResponse } from 'acrylblends/types'
+import type { TypedResponse } from '@acryldev/blends/types'
 
 const app = new Acryl().get('/', (c) =>
   Promise.resolve({ hello: 'world' }).then<

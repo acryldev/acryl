@@ -30,7 +30,7 @@ export { testWebSocket, type TestSocket, type TestWebSocketOptions, type TestWeb
 export { UpgradeEmitter, UpgradeHub, type UpgradeHubOptions, type UpgradeRouter } from './upgrade-hub.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/node-server'
+export const name = 'acryl-node-server'
 export const inject = ['router']
 
 /** A raw node handler: the request and response are the platform's, and the adapter writes nothing for them. */

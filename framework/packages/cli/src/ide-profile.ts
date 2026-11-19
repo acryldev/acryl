@@ -57,8 +57,8 @@ export function apply(ctx) {
 
 /** The packages the frame mounts, in row order: the router pair, the host services, the frame's client plugins. */
 export const FRAME_PACKAGES: readonly IdeProfilePackage[] = [
-  { name: 'acrylblends/cordis/router', spec: '', row: 'acryl-router', installed: true },
-  { name: 'acrylblends/cordis/router-http', spec: '', row: 'acryl-router-http', installed: true },
+  { name: '@acryldev/blends/cordis/router', spec: '', row: 'acryl-router', installed: true },
+  { name: '@acryldev/blends/cordis/router-http', spec: '', row: 'acryl-router-http', installed: true },
   { name: '@acryldev/web', spec: '', row: 'acryl-web-service' },
   { name: '@acryldev/settings', spec: '', row: 'acryl-settings' },
   // No `@acryldev/shortcuts`: its Settings > Shortcuts and the command palette's key are the IDE's; the frame lists the shortcuts in General.
@@ -441,7 +441,7 @@ function hostScriptOf(profile: string, frameModule: string): string {
     "import { dirname, isAbsolute, join, resolve } from 'node:path'",
     "import { fileURLToPath, pathToFileURL } from 'node:url'",
     "import { DEFAULT_SCHEMA, dump as dumpYaml, Type, load as parseYaml } from 'js-yaml'",
-    "import { Acryl } from 'acrylblends'",
+    "import { Acryl } from '@acryldev/blends'",
     '',
     "// The framework's files (this launcher, the composition it reads) sit next to it; the app is chosen by the app's own family: this folder, or the",
     '// source a desktop product names when it runs the framework from its bundle. Its home and its port come with it, decided once.',

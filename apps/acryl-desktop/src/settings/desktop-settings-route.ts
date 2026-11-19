@@ -1,6 +1,6 @@
 /** Strict loopback routes for the private Desktop settings API, on the router. */
 
-import { Acryl, type Context } from 'acrylblends'
+import { Acryl, type Context } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import { afterBody } from '../api/http.ts'

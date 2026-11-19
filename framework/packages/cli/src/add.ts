@@ -87,13 +87,13 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
     (!existsSync(join(folder, 'instance')) || existsSync(join(folder, 'desktop-web')))
   if (plain && options.names.includes('db')) {
     io.stderr.write(
-      'error: "db" is the Cordis plugin for a Blend app. A plain Acryl app opens its database with openDb from "acrylblends/db/sqlite" (see docs/framework/guides/data.md)\n',
+      'error: "db" is the Cordis plugin for a Blend app. A plain Acryl app opens its database with openDb from "@acryldev/blends/db/sqlite" (see docs/framework/guides/data.md)\n',
     )
     return 1
   }
   if (plain && options.names.includes('kv')) {
     io.stderr.write(
-      'error: "kv" is the Cordis plugin for a Blend app. A plain Acryl app opens its store with openKv from "acrylblends/kv/json" (see docs/framework/guides/data.md#a-tiny-app-kv)\n',
+      'error: "kv" is the Cordis plugin for a Blend app. A plain Acryl app opens its store with openKv from "@acryldev/blends/kv/json" (see docs/framework/guides/data.md#a-tiny-app-kv)\n',
     )
     return 1
   }
@@ -145,7 +145,7 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
       io.stderr.write(
         `error: ${plugin.name} needs the ${missing.map((row) => `\`${row}\``).join(' and ')} ${missing.length === 1 ? 'row' : 'rows'} in blend.yaml, and this app has ${describeRows(appDir)}. ` +
           `${plugin.name === 'driver-pty' ? 'Add agent-panel first (acrylblends add agent-panel driver-pty), which needs the agent template. ' : ''}` +
-          `${AGENT_ROWS.includes(plugin.name) ? `The rows come with the agent template: start from it (npm create acrylblends@latest my-app agent) and add ${plugin.name} there. ` : ''}Nothing was changed.\n`,
+          `${AGENT_ROWS.includes(plugin.name) ? `The rows come with the agent template: start from it (npm create @acryldev/blends@latest my-app agent) and add ${plugin.name} there. ` : ''}Nothing was changed.\n`,
       )
       return 1
     }

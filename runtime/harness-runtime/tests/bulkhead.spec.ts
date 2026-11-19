@@ -107,7 +107,7 @@ describe('bulkhead architecture', () => {
         writeFileSync(join(root, folder, 'home.ts'), "import { homedir } from 'node:os'\nexport const home = homedir()\n")
       }
       // plugin.json is the library marker; the exemption is a file, not a marker, so the desktop copy stays caught.
-      writeFileSync(join(root, 'plugins', 'desktop', 'plugin.json'), '{}')
+      writeFileSync(join(root, 'plugins', 'desktop-shell', 'plugin.json'), '{}')
       expect(offencesIn(root)).toEqual(['plugins/desktop-shell/src/home.ts:2 homedir(): export const home = homedir()'])
     } finally {
       await rm(root, { recursive: true, force: true })

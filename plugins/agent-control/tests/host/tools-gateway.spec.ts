@@ -44,7 +44,7 @@ const fakeTools = {
 async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<void> }; home: string; secret: string | undefined }> {
   host = await testHost()
   port = host.port
-  const home = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-gateway-'))
+  const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-gateway-'))
   roots.push(home)
   executed.length = 0
   const ctx = new Context()

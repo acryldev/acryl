@@ -47,7 +47,8 @@ export function legacyRoot(): string {
     const candidate = join(dir, 'legacy')
     if (existsSync(join(candidate, 'layouts.json'))) return candidate
     const parent = dirname(dir)
-    if (parent === dir) throw new Error('acrylblends cannot find its legacy layout fixtures')
+    // Day 0 (spec 051 T038): no released scaffolds are shipped; the absence is "no released variant", not an error.
+    if (parent === dir) return candidate
     dir = parent
   }
 }

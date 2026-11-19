@@ -7,14 +7,14 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import { VERSIONS_API_PREFIX } from './contract.ts'
 import { GitRunner } from './git/runner.ts'
 import { versionsRoutes } from './route.ts'
 import { Versions } from './versions.ts'
 
-export const name = '@acryldev/versions'
+export const name = 'acryl-versions'
 export const inject = ['router', 'routerHttp']
 
 export function apply(ctx: Context): void {

@@ -16,7 +16,7 @@ afterEach(async () => {
 
 describe('a relative path in a row of an app without a Loader base URL', () => {
   it('is read from the project folder (appInstance.root)', async () => {
-    const root = mkdtempSync(join(tmpdir(), '@acryldev/kv-json-relative-'))
+    const root = mkdtempSync(join(tmpdir(), 'acryl-kv-json-relative-'))
     roots.push(root)
     const ctx = new Context()
     contexts.push(ctx)

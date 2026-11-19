@@ -13,8 +13,11 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
-import { Context } from '@deepseek-ai/cordis'
 import { digestFiles } from '@acryldev/blends-core'
+import { routeSource } from '@acryldev/builder/script'
+import { extensions } from '@acryldev/extensions'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import { captureApp, verifyApp } from '@acryldev/manifest/snapshot'
 import {
   integrityOf,
   type PublishGitPort,
@@ -23,11 +26,8 @@ import {
   type RepositoryHostPort,
   readTarball,
 } from '@acryldev/plugin-hub-core'
-import { routeSource } from '@acryldev/builder/script'
-import { extensions } from '@acryldev/extensions'
-import { instance, pinnedInstance } from '@acryldev/instance'
-import { captureApp, verifyApp } from '@acryldev/manifest/snapshot'
 import * as router from '@acryldev/router'
+import { Context } from '@deepseek-ai/cordis'
 import {
   type PublishOptions,
   type PublishPlan,

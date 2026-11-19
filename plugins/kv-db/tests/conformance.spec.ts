@@ -26,7 +26,7 @@ async function underTest(path: string): Promise<KvUnderTest> {
 }
 
 describeKvConformance('@acryldev/kv-db on @acryldev/db-sqlite', async () => {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-db-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-db-'))
   dirs.push(dir)
   return underTest(join(dir, 'data.sqlite'))
 })

@@ -208,7 +208,7 @@ export function packagedHostArgs(
     '--',
     // The loader first and the overlay second: a hook registered later runs first, so the overlay sees every import before the loader's aliases.
     '--import',
-    pathToFileURL(join(program, 'plugins', '@acryldev/node-server', 'src', 'register.ts')).href,
+    pathToFileURL(join(program, 'plugins', 'node-server', 'src', 'register.ts')).href,
     ...(program === root
       ? []
       : [

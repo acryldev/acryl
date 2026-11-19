@@ -4,7 +4,7 @@
  */
 
 /** Stable Cordis plugin name. */
-export const name = '@acryldev/command-reply'
+export const name = 'acryl-command-reply'
 
 /** No Host-side resources to acquire. */
 export function apply(): void {}

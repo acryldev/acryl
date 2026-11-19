@@ -16,7 +16,7 @@ import { openKv } from './open.ts'
 export { openKv, type OpenKvOptions } from './open.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/kv-json'
+export const name = 'acryl-kv-json'
 
 /**
  * What this plugin reads of the runtime's optional `appInstance` service: its home folder. The service belongs to the runtime (and to an

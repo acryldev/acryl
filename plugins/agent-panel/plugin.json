@@ -12,22 +12,13 @@
     "tasks",
     "instance"
   ],
-  "inject": [
-    "router",
-    "agent",
-    "extensions",
-    "appInstance"
-  ],
-  "provides": [
-    "drivers"
-  ],
+  "inject": ["router", "agent", "extensions", "appInstance"],
+  "provides": ["drivers"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },
   "mount": "add a row `- id: agent-panel` / `name: agent-panel` to blend.yaml BEFORE the `routes` row (its middleware adds one script tag to every HTML page the routes after it answer) and register it in src/app.ts: 'agent-panel': panel; open the app in a browser and use the button at the corner of the page",
-  "gitignore": [
-    ".acryl/"
-  ],
+  "gitignore": [".acryl/"],
   "entries": {
     "": "index.ts",
     "/headless": "headless.ts",

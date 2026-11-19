@@ -23,7 +23,7 @@ afterEach(async () => {
 })
 
 async function migrations(files: Record<string, string>): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/db-postgres-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-db-postgres-'))
   dirs.push(dir)
   await mkdir(join(dir, 'migrations'))
   await Promise.all(Object.entries(files).map(([name, text]) => writeFile(join(dir, 'migrations', name), text)))

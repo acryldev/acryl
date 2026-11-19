@@ -20,7 +20,7 @@ export { NodeSqliteDatabase, openNodeSqliteDatabase, type NodeSqliteDatabaseOpti
 export { openDb, type OpenDb, type OpenDbOptions } from './open.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/db-sqlite'
+export const name = 'acryl-db-sqlite'
 
 /**
  * What this plugin reads of the runtime's optional `appInstance` service: its home folder. The service belongs to the runtime (and to an

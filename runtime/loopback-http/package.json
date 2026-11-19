@@ -38,11 +38,11 @@
     "prepublishOnly": "pnpm run check"
   },
   "peerDependencies": {
-    "acrylblends": "^1.0.0"
+    "@acryldev/blends": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.0",
-    "acrylblends": "workspace:^",
+    "@acryldev/blends": "workspace:^",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"

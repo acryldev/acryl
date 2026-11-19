@@ -10,8 +10,8 @@ import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import type { Db } from 'acrylblends/db'
-import type {} from 'acrylblends/cordis/db'
+import type { Db } from '@acryldev/blends/db'
+import type {} from '@acryldev/blends/cordis/db'
 import { afterEach, describe, expect, it } from 'vitest'
 import { LOCK_FILE } from '../src/folder-lock.ts'
 
@@ -29,7 +29,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-loader-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root

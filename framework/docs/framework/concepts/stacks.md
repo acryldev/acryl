@@ -23,7 +23,7 @@ Now let's create an API server and a client with it.
 First, write an endpoint that receives a GET request and returns JSON.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -39,7 +39,7 @@ app.get('/hello', (c) => {
 Validate with Zod to receive the value of the query parameter.
 
 ```ts
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 import * as z from 'zod'
 
 app.get(
@@ -95,7 +95,7 @@ Then, magically, completion works and the endpoint path and request type are sug
 
 ```ts
 import type { AppType } from './server'
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 const client = hc<AppType>('/api')
 const res = await client.hello.$get({
@@ -122,9 +122,9 @@ The API server.
 
 ```ts
 // src/index.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import * as z from 'zod'
-import { schemaValidator } from 'acrylblends/schema-validator'
+import { schemaValidator } from '@acryldev/blends/schema-validator'
 
 const schema = z.object({
   id: z.string(),
@@ -168,7 +168,7 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query'
 import type { AppType } from '../functions/api/[[route]]'
-import { hc, InferResponseType, InferRequestType } from 'acrylblends/client'
+import { hc, InferResponseType, InferRequestType } from '@acryldev/blends/client'
 
 const queryClient = new QueryClient()
 const client = hc<AppType>('/api')

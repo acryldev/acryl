@@ -1,7 +1,7 @@
 /**
  * The extensions service (`ctx.extensions`): install, update, remove and reload Cordis plugins while the app runs.
  *
- * Extracted from ACRYL (`plugins/acryl-extension-context/lib/install.js`, `stage.js`, `reconcile.js`), where an agent-written plugin
+ * Extracted from ACRYL (`the old acryl-extension-context copy's lib/install.js`, `stage.js`, `reconcile.js`), where an agent-written plugin
  * installs, runs, updates and is removed live in the packaged app on macOS, Windows and Linux. ACRYL goes through pnpm and the Harness
  * Loader; here an extension is a folder with an `index.ts` (or `.js`) that exports a Cordis plugin, mounted as a child fiber of this
  * plugin. The rules carried over:
@@ -27,9 +27,9 @@ import {
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { isDeepStrictEqual } from 'node:util'
-import { type Context, type Fiber, Service } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/instance'
 import type { Sandbox } from '@acryldev/sandbox'
+import { type Context, type Fiber, Service } from '@deepseek-ai/cordis'
 import { attachBrowserHalf } from './browser.ts'
 import { appendLedger, type LedgerEntry, readLedger } from './ledger.ts'
 import { type PluginStore, pluginVersion } from './plugin-store.ts'

@@ -9,8 +9,8 @@ Combine Middleware combines multiple middleware functions into a single middlewa
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { some, every, except } from 'acrylblends/combine'
+import { Acryl } from '@acryldev/blends'
+import { some, every, except } from '@acryldev/blends/combine'
 ```
 
 ## Usage
@@ -18,11 +18,11 @@ import { some, every, except } from 'acrylblends/combine'
 Here's an example of complex access control rules using Combine Middleware.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { bearerAuth } from 'acrylblends/bearer-auth'
-import { getConnInfo } from 'acrylblends/node-server'
-import { every, some } from 'acrylblends/combine'
-import { ipRestriction } from 'acrylblends/ip-restriction'
+import { Acryl } from '@acryldev/blends'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
+import { getConnInfo } from '@acryldev/blends/node-server'
+import { every, some } from '@acryldev/blends/combine'
+import { ipRestriction } from '@acryldev/blends/ip-restriction'
 import { rateLimit } from '@/my-rate-limit'
 
 const app = new Acryl()
@@ -47,8 +47,8 @@ app.get('/', (c) => c.text('Acryl!'))
 Runs the first middleware that returns true. Middleware is applied in order, and if any middleware exits successfully, subsequent middleware will not run.
 
 ```ts
-import { some } from 'acrylblends/combine'
-import { bearerAuth } from 'acrylblends/bearer-auth'
+import { some } from '@acryldev/blends/combine'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
 import { myRateLimit } from '@/rate-limit'
 
 // If client has a valid token, skip rate limiting.
@@ -64,8 +64,8 @@ app.use(
 Runs all middleware and stops if any of them fail. Middleware is applied in order, and if any middleware throws an error, subsequent middleware will not run.
 
 ```ts
-import { some, every } from 'acrylblends/combine'
-import { bearerAuth } from 'acrylblends/bearer-auth'
+import { some, every } from '@acryldev/blends/combine'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
 import { myCheckLocalNetwork } from '@/check-local-network'
 import { myRateLimit } from '@/rate-limit'
 
@@ -85,8 +85,8 @@ app.use(
 Runs all middleware except when the condition is met. You can pass a string or function as the condition. If multiple targets need to be matched, pass them as an array.
 
 ```ts
-import { except } from 'acrylblends/combine'
-import { bearerAuth } from 'acrylblends/bearer-auth'
+import { except } from '@acryldev/blends/combine'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
 
 // If client is accessing public API, skip authentication.
 // Otherwise, require a valid token.

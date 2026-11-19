@@ -7,7 +7,7 @@ Apps people made with [acrylblends](https://acrylblends.github.io), published he
 ## Start from an entry
 
 ```sh
-npm create acrylblends@latest my-app -- --from acrylblends.notes-desktop --registry github:acryldev/workshop-2026-11-20
+npm create @acryldev/blends@latest my-app -- --from acrylblends.notes-desktop --registry github:acryldev/workshop-2026-11-20
 cd my-app
 npm install
 npm run dev
@@ -20,7 +20,7 @@ npm run dev
 
 ## Publish your app
 
-You need a GitHub account (and `gh auth login` makes the steps below shorter; the website works too). Your app is an `acrylblends` app you made with `npm create acrylblends@latest`.
+You need a GitHub account (and `gh auth login` makes the steps below shorter; the website works too). Your app is an `acrylblends` app you made with `npm create @acryldev/blends@latest`.
 
 Every version the frame saves is a captured snapshot. `make-entry.mjs` checks the app against its `blend.lock.json` and refuses one changed since the last capture, naming what changed: run `npm run snapshot capture` in the app (or Save point in the frame) and try again.
 

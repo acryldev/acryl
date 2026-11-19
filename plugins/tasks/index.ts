@@ -9,8 +9,8 @@
  */
 
 import { randomUUID } from 'node:crypto'
-import { type Context, Service } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/instance'
+import { type Context, Service } from '@deepseek-ai/cordis'
 import { openStore, type StoreKind, type TaskChange, type TaskStore } from './store.ts'
 
 export interface TasksConfig {

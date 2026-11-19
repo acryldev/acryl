@@ -4,9 +4,9 @@
 address and the real local port, filled by the HTTP adapter and empty for an in-process call. Transport facts never travel in headers.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { connectionOf, type RouterEnv } from 'acrylblends/conninfo'
-import { getConnInfo } from 'acrylblends/conninfo'
+import { Acryl } from '@acryldev/blends'
+import { connectionOf, type RouterEnv } from '@acryldev/blends/conninfo'
+import { getConnInfo } from '@acryldev/blends/conninfo'
 
 const app = new Acryl<RouterEnv>()   // types c.env.connection
 app.get('/peer', c => c.json({
@@ -33,7 +33,7 @@ Both belong to the current request, and both end with their owner: see [Plugin l
 Return a response for expected failures, or throw an `HTTPException`, which becomes its own response:
 
 ```ts
-import { HTTPException } from 'acrylblends/http-exception'
+import { HTTPException } from '@acryldev/blends/http-exception'
 
 if (!todo) return c.json({ error: 'todo_not_found' }, 404)
 if (!allowed) throw new HTTPException(403, { message: 'not yours' })

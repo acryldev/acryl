@@ -10,8 +10,8 @@ The Node.js adapter (`acrylblends/node-server`) and the Bun adapter (`acrylblend
 **Bun**
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { upgradeWebSocket, websocket } from 'acrylblends/bun'
+import { Acryl } from '@acryldev/blends'
+import { upgradeWebSocket, websocket } from '@acryldev/blends/bun'
 
 // ...
 
@@ -24,8 +24,8 @@ export default {
 **Node.js**
 
 ```ts
-import { serve, upgradeWebSocket } from 'acrylblends/node-server'
-import { Acryl } from 'acrylblends'
+import { serve, upgradeWebSocket } from '@acryldev/blends/node-server'
+import { Acryl } from '@acryldev/blends'
 import { WebSocketServer } from 'ws'
 ```
 
@@ -95,8 +95,8 @@ See the examples using WebSocket Helper.
 
 ```ts
 // server.ts
-import { Acryl } from 'acrylblends'
-import { upgradeWebSocket } from 'acrylblends/node-server'
+import { Acryl } from '@acryldev/blends'
+import { upgradeWebSocket } from '@acryldev/blends/node-server'
 
 const app = new Acryl().get(
   '/ws',
@@ -114,7 +114,7 @@ export default app
 
 ```ts
 // client.ts
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 import type app from './server'
 
 const client = hc<typeof app>('http://localhost:8787')
@@ -130,9 +130,9 @@ ws.addEventListener('open', () => {
 ### Bun with JSX
 
 ```tsx
-import { Acryl } from 'acrylblends'
-import { upgradeWebSocket, websocket } from 'acrylblends/bun'
-import { html } from 'acrylblends/html'
+import { Acryl } from '@acryldev/blends'
+import { upgradeWebSocket, websocket } from '@acryldev/blends/bun'
+import { html } from '@acryldev/blends/html'
 
 const app = new Acryl()
 
@@ -184,8 +184,8 @@ export default {
 ### Node.js
 
 ```ts
-import { serve, upgradeWebSocket } from 'acrylblends/node-server'
-import { Acryl } from 'acrylblends'
+import { serve, upgradeWebSocket } from '@acryldev/blends/node-server'
+import { Acryl } from '@acryldev/blends'
 import { WebSocketServer } from 'ws'
 
 const app = new Acryl()

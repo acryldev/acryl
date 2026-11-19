@@ -18,7 +18,7 @@ spec:
     blueprintVersion: 0.1.0
   rows:
     - id: brand
-      name: @acryldev/brand
+      name: '@acryldev/brand'
       config:
         name: Accounting
 `

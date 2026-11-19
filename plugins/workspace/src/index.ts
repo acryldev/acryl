@@ -4,9 +4,9 @@ import { randomBytes } from 'node:crypto'
 import { basename } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/control'
-import type { Acryl } from 'acrylblends'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type { Acryl } from '@acryldev/blends'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import { agentRoutes } from './agents/route.ts'
 import { AgentCatalog } from './agents/catalog.ts'
 import { agentSettingsFile, agentsFile, createFileCatalogStore } from './agents/file-store.ts'
@@ -35,7 +35,7 @@ import { SHARED_CONTEXT_SERVICE, SharedContext } from './shared-context/service.
 import { registerContextTool } from './shared-context/tool.ts'
 
 /** Stable Cordis plugin name. */
-export const name = '@acryldev/workspace'
+export const name = 'acryl-workspace'
 
 /**
  * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares

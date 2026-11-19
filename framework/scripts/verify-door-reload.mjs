@@ -82,8 +82,8 @@ try {
   writeFileSync(
     join(app, 'plugins', 'rowpage', 'index.ts'),
     // A row is imported by src/app.ts before anything runs; it still imports the framework by name, as an agent writes it (acrylblends, acrylblends/body-limit).
-    `import { Acryl } from 'acrylblends'
-import { bodyLimit } from 'acrylblends/body-limit'
+    `import { Acryl } from '@acryldev/blends'
+import { bodyLimit } from '@acryldev/blends/body-limit'
 export const name = 'rowpage'
 export const inject = ['router']
 export function apply(ctx: { router: { route(path: string, app: unknown): void } }) {

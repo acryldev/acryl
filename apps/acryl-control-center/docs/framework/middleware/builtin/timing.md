@@ -10,15 +10,15 @@ performance metrics in the response headers.
 **npm**
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import {
   timing,
   setMetric,
   startTime,
   endTime,
   wrapTime,
-} from 'acrylblends/timing'
-import type { TimingVariables } from 'acrylblends/timing'
+} from '@acryldev/blends/timing'
+import type { TimingVariables } from '@acryldev/blends/timing'
 ```
 
 ## Usage

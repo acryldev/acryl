@@ -1,16 +1,9 @@
 {
   "name": "extensions",
   "description": "Install, update, remove and reload plugins while the app runs; a failed update brings the previous version back; a ledger of every change.",
-  "requires": [
-    "instance",
-    "sandbox"
-  ],
-  "inject": [
-    "appInstance"
-  ],
-  "provides": [
-    "extensions"
-  ],
+  "requires": ["instance", "sandbox"],
+  "inject": ["appInstance"],
+  "provides": ["extensions"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@acryldev/blends-core": "0.5.0"

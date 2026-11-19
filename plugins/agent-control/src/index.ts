@@ -10,10 +10,10 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/control'
-import type { Acryl } from 'acrylblends'
-import { AuditLog, auditPath, pageChannelRoutes, UiChannel } from 'acrylblends/door/host'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type { Acryl } from '@acryldev/blends'
+import { AuditLog, auditPath, pageChannelRoutes, UiChannel } from '@acryldev/blends/door/host'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import { createApprovalPolicy } from './host/approval.ts'
 import { auditRoutes } from './host/audit-route.ts'
 import { parseConfig } from './host/config.ts'
@@ -28,7 +28,7 @@ import { docsRootFromLookup, removeWorkerMcpConfig, workerMcpArgs, writeWorkerMc
 import { workersRoutes } from './host/workers/route.ts'
 import { mountWorkers } from './host/workers/service.ts'
 
-export const name = '@acryldev/agent-control'
+export const name = 'acryl-agent-control'
 /**
  * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
  * exactly this shape, so the Context augmentations agree in any program that loads several of them.
@@ -124,4 +124,4 @@ export {
   type UiOp,
   type UiRequest,
   type UiResult,
-} from 'acrylblends/door/protocol'
+} from '@acryldev/blends/door/protocol'

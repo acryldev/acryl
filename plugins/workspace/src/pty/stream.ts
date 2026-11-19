@@ -9,8 +9,8 @@
  * and closes them with 1001 when the plugin unloads.
  */
 
-import { Acryl, type MiddlewareHandler } from 'acrylblends'
-import type { UpgradeWebSocket, WSContext, WSEvents } from 'acrylblends/ws'
+import { Acryl, type MiddlewareHandler } from '@acryldev/blends'
+import type { UpgradeWebSocket, WSContext, WSEvents } from '@acryldev/blends/ws'
 import { failure, ownPageSocket, type ReportError } from '../private-route.ts'
 import { WORKSPACE_PTY_STREAM_PATH, parsePtyClientMessage, type PtyServerMessage } from './contract.ts'
 import type { WorkspacePtyRegistry } from './service.ts'

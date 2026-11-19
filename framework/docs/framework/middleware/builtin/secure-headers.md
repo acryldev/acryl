@@ -5,8 +5,8 @@ Secure Headers Middleware simplifies the setup of security headers. Inspired in 
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { secureHeaders } from 'acrylblends/secure-headers'
+import { Acryl } from '@acryldev/blends'
+import { secureHeaders } from '@acryldev/blends/secure-headers'
 ```
 
 ## Usage
@@ -148,8 +148,8 @@ app.use(
 You can add a [`nonce` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/nonce) to a `script` or `style` element by adding the `NONCE` imported from `acrylblends/secure-headers` to a `scriptSrc` or `styleSrc`:
 
 ```tsx
-import { secureHeaders, NONCE } from 'acrylblends/secure-headers'
-import type { SecureHeadersVariables } from 'acrylblends/secure-headers'
+import { secureHeaders, NONCE } from '@acryldev/blends/secure-headers'
+import type { SecureHeadersVariables } from '@acryldev/blends/secure-headers'
 
 // Specify the variable types to infer the `c.get('secureHeadersNonce')`:
 type Variables = SecureHeadersVariables

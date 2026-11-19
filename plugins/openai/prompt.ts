@@ -10,7 +10,7 @@ To add a capability:
 A plugin's index.ts is TypeScript that Node runs directly (erasable syntax only: no enums, no parameter properties):
 
   import type { Context } from '@deepseek-ai/cordis'
-  import { Acryl } from 'acrylblends'
+  import { Acryl } from '@acryldev/blends'
   export const name = 'hello'            // must equal the folder name
   export const inject = ['router']        // services it needs; it waits (pending) until they exist
   export function apply(ctx: Context) {
@@ -21,9 +21,9 @@ A plugin's index.ts is TypeScript that Node runs directly (erasable syntax only:
     if (!reply.ok) throw new Error('GET /hello failed')
   }
 
-The router: build an Acryl app (import { Acryl } from 'acrylblends'), register routes on it with app.get/post/put/patch/delete(path, handler) and mount it with
+The router: build an Acryl app (import { Acryl } from '@acryldev/blends'), register routes on it with app.get/post/put/patch/delete(path, handler) and mount it with
 ctx.router.route(prefix, app). A path parameter is :id and is read with c.req.param('id'); c.json(body, status) answers JSON, c.text(...) answers text,
-await c.req.json() reads a JSON body, throw new HTTPException(404, { message }) (also from 'acrylblends') answers an error. Routes added to an app
+await c.req.json() reads a JSON body, throw new HTTPException(404, { message }) (also from '@acryldev/blends') answers an error. Routes added to an app
 after route() are not served: build the whole app first. ctx.router.request('/path', { method: 'POST', body: ... }) calls a route in process (use it in
 check). The mount goes away when the plugin is unloaded.
 

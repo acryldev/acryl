@@ -209,7 +209,7 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   in that window says "plugin-share is not running ... restarting".
   Done when: the reload is awaited or avoided, and the plugin answers without a gap after the pull returns.
 - [ ] T023 [M12, decided by the coordinator 2026-11-07, owner may overrule] The workshop guide's first command makes the framed app it describes. Found by
-  Fork3 running it for real: `npm create acrylblends@latest my-app agent` makes a framework-only app ("init --desktop puts it inside the ACRYL frame"),
+  Fork3 running it for real: `npm create @acryldev/blends@latest my-app agent` makes a framework-only app ("init --desktop puts it inside the ACRYL frame"),
   while `docs/framework/workshop/README.md` section 1 says `npm run dev` opens the frame. Decision: `create` passes `--desktop` through to `init` (additive, the
   default stays framework-only so no existing use changes) and the guide's line uses it, spelling out npm's `--` before the flag.
   Done when: the guide's exact first command, run from the published `create`, gives an app whose `npm run dev` prints `acrylblends host: ...` and shows the frame.
@@ -247,7 +247,7 @@ Upstream had already taken T003-T010 and M11 (the Blank app), so this milestone 
   Wanted: hash CSS-module names from the package-relative path, strip or relativize the region comments, and add a pack check that fails on an absolute
   home path in any tarball. (Clean Code / Pragmatic Programmer: a build is a function of its source.)
   Done when: the same source built in two different folders packs byte-identical tarballs, and the pack check fails on a planted `/Users/x/` path.
-- [ ] T028 [M12, found 2026-11-08, corrected by Fork3 the same day, blocks the guide for anyone who ran it before 1.3.1] `npm create acrylblends@latest` reused the npx cache: create 1.4.0
+- [ ] T028 [M12, found 2026-11-08, corrected by Fork3 the same day, blocks the guide for anyone who ran it before 1.3.1] `npm create @acryldev/blends@latest` reused the npx cache: create 1.4.0
   depends on `acrylblends ^1.3.0`, and a machine that ran the guide before 1.3.1 (cache `~/.npm/_npx/<hash>` with create 1.4.0 + acrylblends 1.3.0) keeps getting a 1.3.0-era app while
   create 1.4.0 is still `latest`: `plugin list` answers "no extensions plugin to drive" in the frame, and `frame/app-plugins.mjs` has no route getter. With an empty cache the same
   line already makes a 1.3.1 app (checked in the 1.3.1 tarball). The first version of this ticket blamed packaging; that was wrong. Fix: create-acrylblends 1.4.1 publishes
@@ -303,7 +303,7 @@ commands stay as the fallback.
   `acryl` and `acryl web` behave as before; `acryl new` (alias `create`), `acryl install <blend>`, `acryl list`, `acryl update`,
   `acryl blends`, `acryl plugin` (alias `plugins`) and `acryl code` run the existing `acrylblends` CLI and the IDE. Flags reach the parts
   without a `--` (through `npx`/the installed bin; `npm create` needs a separate form, T039).
-  Done when: `npx acryl new my-app` makes the same app as `npm create acrylblends@latest my-app -- --template blank --desktop -y --install`
+  Done when: `npx acryl new my-app` makes the same app as `npm create @acryldev/blends@latest my-app -- --template blank --desktop -y --install`
   (file for file), `npx acryl plugin publish hello --owner x` works inside an app, and the existing `acryl` tests still pass. Code only; no publish.
 - [ ] T035 [M13, owner's go for each publish, in this order] The canonical names are published: `acryl` with the new subcommands, `create-acryl`
   (`npm create acryl my-app`), `@acryl/blends` and `@acryl/create-blends` (`npm create @acryl/blends my-app`), then `@acryl/create` and

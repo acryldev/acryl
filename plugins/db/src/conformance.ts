@@ -208,7 +208,7 @@ export function describeDbConformance(provider: string, open: () => Promise<DbUn
 
     it('applies an app\'s numbered migration files', async () => {
       const db = await fresh()
-      const folder = await mkdtemp(join(tmpdir(), '@acryldev/db-migrations-'))
+      const folder = await mkdtemp(join(tmpdir(), 'acryl-db-migrations-'))
       try {
         await writeFile(join(folder, '001-notes.sql'), 'CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT NOT NULL);\nINSERT INTO notes (id, body) VALUES (1, \'first\');\n')
         await writeFile(join(folder, '002-tags.sql'), 'CREATE TABLE tags (note INTEGER NOT NULL, tag TEXT NOT NULL);\n')

@@ -2,19 +2,19 @@ name: Framework release
 
 # The framework's npm releases, from the monorepo (spec 051 T032). GitHub runs only the root .github/, so framework/.github/workflows/release.yml
 # no longer runs here; this is its successor. A pushed tag publishes the one package it names, with npm trusted publishing (no token anywhere):
-#   acrylblends-v<version>           acrylblends (framework/packages/cli)
-#   create-acrylblends-v<version>    create-acrylblends (framework/packages/create)
+#   blends-v<version>           acrylblends (framework/packages/cli)
+#   create-blends-v<version>    create-acrylblends (framework/packages/create)
 #   frame-<short>-v<version>         @acryldev/<short>, a frame package (framework/frame/packages.json names its folder and version)
 #   launcher-v<version>              @acryldev/launcher (plugins/launcher; Control Center installs it, spec 051 T010)
 # None of these starts with `v`, so release-cli.yml (acryl's own `v*`) never fires on them, nor this one on its tags.
 # Run by hand (workflow_dispatch) it does everything except `npm publish`, so the whole path can be tried at any time.
 on:
   push:
-    tags: ['acrylblends-v*', 'create-acrylblends-v*', 'frame-*-v*', 'launcher-v*']
+    tags: ['blends-v*', 'create-blends-v*', 'frame-*-v*', 'launcher-v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: The tag a release would push (e.g. acrylblends-v1.5.22, frame-app-shell-v0.1.2); the dry run checks and packs it
+        description: The tag a release would push (e.g. blends-v1.5.22, frame-app-shell-v0.1.2); the dry run checks and packs it
         type: string
         required: true
 
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      # Every tag: the framework check's legacy-layouts step rebuilds each published release from its acrylblends-v* tag.
+      # Every tag: the framework check's legacy-layouts step rebuilds each published release from its blends-v* tag.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0

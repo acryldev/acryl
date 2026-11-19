@@ -4,7 +4,7 @@
  * own: loopback peer, the Host's `Host`, its exact `Origin` and same-origin fetch metadata; a test overrides one fact to see a refusal.
  */
 
-import type { Acryl } from 'acrylblends'
+import type { Acryl } from '@acryldev/blends'
 import { desktopApi } from '../../src/api/http.ts'
 
 export const PORT = 43120

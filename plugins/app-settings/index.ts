@@ -7,9 +7,9 @@
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import type {} from '@acryldev/instance'
 import { type Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type {} from '@acryldev/instance'
 import { parseDocument, stringify } from 'yaml'
 import { cloneJsonShaped, deepEqualJson, isPlainObject, mergeLayers } from './merge.ts'
 

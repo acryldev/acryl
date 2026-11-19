@@ -7,7 +7,7 @@ import { aboutPage, counterPage } from './page.tsx'
 
 /** The browser builds of the DOM renderer and the typed client, shipped by the `acrylblends` package this app depends on. */
 const runtimeDir = join(
-  dirname(createRequire(import.meta.url).resolve('acrylblends/package.json')),
+  dirname(createRequire(import.meta.url).resolve('@acryldev/blends/package.json')),
   'lib',
   'browser',
 )

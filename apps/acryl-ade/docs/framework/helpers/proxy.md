@@ -5,8 +5,8 @@ Proxy Helper provides useful functions when using Acryl application as a (revers
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { proxy } from 'acrylblends/proxy'
+import { Acryl } from '@acryldev/blends'
+import { proxy } from '@acryldev/blends/proxy'
 ```
 
 ## `proxy()`

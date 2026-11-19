@@ -6,7 +6,7 @@ Let's take a look.
 ## Basic
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 // HTTP Methods
@@ -41,7 +41,7 @@ app.on('GET', ['/hello', '/ja/hello', '/en/hello'], (c) =>
 ## Path Parameter
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/user/:name', async (c) => {
@@ -54,7 +54,7 @@ app.get('/user/:name', async (c) => {
 or all parameters at once:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/posts/:id/comment/:comment_id', async (c) => {
@@ -67,7 +67,7 @@ app.get('/posts/:id/comment/:comment_id', async (c) => {
 ## Optional Parameter
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 // Will match `/api/animal` and `/api/animal/:type`
@@ -77,7 +77,7 @@ app.get('/api/animal/:type?', (c) => c.text('Animal!'))
 ## Regexp
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/post/:date{[0-9]+}/:title{[a-z]+}', async (c) => {
@@ -90,7 +90,7 @@ app.get('/post/:date{[0-9]+}/:title{[a-z]+}', async (c) => {
 ## Including slashes
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/posts/:filename{.+\\.png}', async (c) => {
@@ -101,7 +101,7 @@ app.get('/posts/:filename{.+\\.png}', async (c) => {
 ## Chained route
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app
@@ -121,7 +121,7 @@ app
 You can group the routes with the Acryl instance and add them to the main app with the route method.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const book = new Acryl()
 
@@ -142,7 +142,7 @@ app.route('/book', book)
 You can also group multiple instances while keeping base.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const book = new Acryl()
 book.get('/book', (c) => c.text('List Books')) // GET /book
@@ -162,7 +162,7 @@ app.route('/', user) // Handle /user
 You can specify the base path.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const api = new Acryl().basePath('/api')
 api.get('/book', (c) => c.text('List Books')) // GET /api/book
@@ -173,7 +173,7 @@ api.get('/book', (c) => c.text('List Books')) // GET /api/book
 It works fine if it includes a hostname.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const app = new Acryl({
   getPath: (req) => req.url.replace(/^https?:\/([^?]+).*$/, '$1'),
@@ -188,7 +188,7 @@ app.get('/www2.example.com/hello', (c) => c.text('hello www2'))
 Acryl can handle the `host` header value if you set the `getPath()` function in the Acryl constructor.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const app = new Acryl({
   getPath: (req) =>
@@ -212,7 +212,7 @@ By applying this, for example, you can change the routing by `User-Agent` header
 Handlers or middleware will be executed in registration order.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/book/a', (c) => c.text('a')) // a
@@ -227,7 +227,7 @@ GET /book/b ---> `common`
 When a handler is executed, the process will be stopped.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('*', (c) => c.text('common')) // common
@@ -241,8 +241,8 @@ GET /foo ---> `common` // foo will not be dispatched
 If you have the middleware that you want to execute, write the code above the handler.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { logger } from 'acrylblends/logger'
+import { Acryl } from '@acryldev/blends'
+import { logger } from '@acryldev/blends/logger'
 const app = new Acryl()
 // ---cut---
 app.use(logger())
@@ -252,7 +252,7 @@ app.get('/foo', (c) => c.text('foo'))
 If you want to have a "_fallback_" handler, write the code below the other handler.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/bar', (c) => c.text('bar')) // bar
@@ -286,7 +286,7 @@ GET /two/three/hi ---> `hi`
 However, if they are in the wrong order, it will return a 404.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 const two = new Acryl()
 const three = new Acryl()

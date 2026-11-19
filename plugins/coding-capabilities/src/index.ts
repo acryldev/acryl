@@ -4,7 +4,7 @@
  *
  * A capability is a declaration, not a branch: adding one to a surface is a data change here; a per-surface `if` in a caller (or a
  * row-id filter that silently drops rows for some surfaces) is the bug this table exists to remove. The Blueprint vocabulary (which
- * capability ids exist, and which need the framework router) stays in `acryl-harness-runtime`: Blueprint parsing is runtime domain,
+ * capability ids exist, and which need the framework router) stays in `@acryldev/harness-runtime`: Blueprint parsing is runtime domain,
  * while the composition of plugins is the surface's. The two tables must name the same ids; the test asserts it both ways.
  *
  * @module @acryldev/coding-capabilities
@@ -143,9 +143,9 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // (spec 001 R22, R24). Every surface composes it; consumers use `ctx.acrylSettings`.
     id: 'acryl-settings',
     surfaces: ['tui', 'web', 'desktop'],
-    requiresPackages: ['acryl-settings'],
+    requiresPackages: ['@acryldev/settings'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-settings', name: 'acryl-settings' }] },
+      { insert: [{ id: 'acryl-settings', name: '@acryldev/settings' }] },
     ],
   },
   {
@@ -156,17 +156,17 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // `sessions/main-session.ts` (`retain(..., { source: 'mainView' })`) instead of the removed `ISessions.open`.
     id: 'workspace',
     surfaces: ['desktop', 'web'],
-    // `acryl-workspace`'s client bundle does `require('acryl-app-shell/client')`; the client-modules Host
+    // `@acryldev/workspace`'s client bundle does `require('@acryldev/app-shell/client')`; the client-modules Host
     // only resolves a `require()` target into a real browser module when that package is itself a scanned,
     // active Loader entry (`deepseek-harness/packages/client/modules/src/index.ts`'s manifest scan is over
     // Loader entries, not over any plugin's own `dsh.client.inject` list or its npm dependency graph) - found
-    // live: `acryl-app-shell` shipped as a package.json dependency and a prebuild step but never as its own
+    // live: `@acryldev/app-shell` shipped as a package.json dependency and a prebuild step but never as its own
     // row, so the Host booted clean (headless Loader smoke never renders a page) while the real browser threw
-    // `require("acryl-app-shell/client") missed the module table` the first time anything actually opened
+    // `require("@acryldev/app-shell/client") missed the module table` the first time anything actually opened
     // `desktop.main`.
-    requiresPackages: ['acryl-app-shell', 'acryl-workspace'],
+    requiresPackages: ['@acryldev/app-shell', '@acryldev/workspace'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-app-shell', name: 'acryl-app-shell' }, { id: 'acryl-workspace', name: 'acryl-workspace' }] },
+      { insert: [{ id: 'acryl-app-shell', name: '@acryldev/app-shell' }, { id: 'acryl-workspace', name: '@acryldev/workspace' }] },
     ],
   },
   {
@@ -174,9 +174,9 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // the `ctx.acrPluginLifecycle` service every surface publishes. It was Desktop-only inside `acryl-desktop`.
     id: 'plugin-admin',
     surfaces: ['desktop', 'web'],
-    requiresPackages: ['acryl-plugin-admin'],
+    requiresPackages: ['@acryldev/plugin-admin'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-plugin-admin', name: 'acryl-plugin-admin' }] },
+      { insert: [{ id: 'acryl-plugin-admin', name: '@acryldev/plugin-admin' }] },
     ],
   },
   {
@@ -184,9 +184,9 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // Settings > Models, over the harness's authorization flows; API keys stay on the Models page's own editor.
     id: 'sign-in',
     surfaces: ['web', 'desktop'],
-    requiresPackages: ['acryl-sign-in'],
+    requiresPackages: ['@acryldev/sign-in'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-sign-in', name: 'acryl-sign-in' }] },
+      { insert: [{ id: 'acryl-sign-in', name: '@acryldev/sign-in' }] },
     ],
   },
   {
@@ -195,9 +195,9 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // Node and npm. On Web and Desktop alike (surface sharing, spec 040); the terminal has its own screen (`acryl-launcher-tui`) over the same list.
     id: 'launcher-screen',
     surfaces: ['desktop', 'web'],
-    requiresPackages: ['acryl-launcher-desktop'],
+    requiresPackages: ['@acryldev/launcher-desktop'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-launcher-desktop', name: 'acryl-launcher-desktop' }] },
+      { insert: [{ id: 'acryl-launcher-desktop', name: '@acryldev/launcher-desktop' }] },
     ],
   },
   {
@@ -207,9 +207,9 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // (the documented exception: two rows share the realm `acryl-account-callback`).
     id: 'account-callback',
     surfaces: ['tui'],
-    requiresPackages: ['acryl-sign-in'],
+    requiresPackages: ['@acryldev/sign-in'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-sign-in-account-callback', name: 'acryl-sign-in/account-callback', isolate: { webServer: 'acryl-account-callback' } }] },
+      { insert: [{ id: '@acryldev/sign-in-account-callback', name: '@acryldev/sign-in/account-callback', isolate: { webServer: 'acryl-account-callback' } }] },
       { id: 'deepseek-account', name: '@deepseek-ai/dsh-deepseek-account-platform', isolate: { webServer: 'acryl-account-callback' } },
     ],
   },
@@ -218,9 +218,9 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // (the file logger in the main process and the tray export), so this stays off Desktop on purpose.
     id: 'support',
     surfaces: ['web'],
-    requiresPackages: ['acryl-support'],
+    requiresPackages: ['@acryldev/support'],
     loaderPatches: [
-      { insert: [{ id: 'acryl-support', name: 'acryl-support' }] },
+      { insert: [{ id: 'acryl-support', name: '@acryldev/support' }] },
     ],
   },
   {
@@ -229,17 +229,17 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     // click, type, select and key press is approved per call. A TUI has no page, so it is not declared here.
     id: 'agent-control-ui',
     surfaces: ['desktop', 'web'],
-    requiresPackages: ['acryl-agent-control'],
+    requiresPackages: ['@acryldev/agent-control'],
     loaderPatches: [
       // `online`: the loopback gateway (secret-gated, this machine only) on, so the assistant's Claude agent and an outside CLI agent reach ACRYL's tools,
       // the launcher's among them (spec 050 T013). Every click, type and key press of the window driver is still approved per call.
-      { insert: [{ id: 'acryl-agent-control', name: 'acryl-agent-control', config: { online: true } }] },
+      { insert: [{ id: 'acryl-agent-control', name: '@acryldev/agent-control', config: { online: true } }] },
     ],
   },
   {
     // Rows toggled so the ACRYL shell owns the frame: the stock layout off, the sidebar and conversation on.
     // The rows exist in the shared `dsh-web-app` bundle both surfaces build on.
-    // Re-attached on the DSH 0.2 branch (spec 001 R25): `acryl-app-shell`'s layout state now implements 0.2's whole `ILayout`
+    // Re-attached on the DSH 0.2 branch (spec 001 R25): `@acryldev/app-shell`'s layout state now implements 0.2's whole `ILayout`
     // (panelInfo, selectPanel, beginNavigation) and renders upstream's keyed `main` panels, so upstream's sidebars work on it.
     id: 'advanced-shell',
     surfaces: ['desktop', 'web'],

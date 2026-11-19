@@ -5,8 +5,8 @@ The Timeout Middleware enables you to easily manage request timeouts in your app
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { timeout } from 'acrylblends/timeout'
+import { Acryl } from '@acryldev/blends'
+import { timeout } from '@acryldev/blends/timeout'
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ app.get('/api/data', async (c) => {
 Custom settings:
 
 ```ts
-import { HTTPException } from 'acrylblends/http-exception'
+import { HTTPException } from '@acryldev/blends/http-exception'
 
 // Custom exception factory function
 const customTimeoutException = (context) =>

@@ -16,7 +16,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/inspect'
+export const name = 'acryl-inspect'
 
 export class Inspect extends Service {
   constructor(ctx: Context) {

@@ -6,8 +6,8 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import { defineAcrylTool } from '@acryldev/control'
-import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from 'acrylblends/door/protocol'
-import { renderSnapshot, type AuditLog, type UiChannel } from 'acrylblends/door/host'
+import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from '@acryldev/blends/door/protocol'
+import { renderSnapshot, type AuditLog, type UiChannel } from '@acryldev/blends/door/host'
 
 /**
  * The tool name for each operation. `reload` and `navigate` came with the framework's door after 1.0.0 (spec 051 put ACRYL on the framework's own

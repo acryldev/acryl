@@ -10,7 +10,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
 })
 async function folder(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-json-open-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-json-open-'))
   dirs.push(dir)
   return dir
 }

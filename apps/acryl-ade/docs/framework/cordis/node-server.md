@@ -9,8 +9,8 @@ The server is a Cordis plugin that provides the `nodeServer` service:
 
 ```ts
 import { Context } from '@deepseek-ai/cordis'
-import * as router from 'acrylblends/cordis/router'
-import * as nodeServer from 'acrylblends/cordis/node-server'
+import * as router from '@acryldev/blends/cordis/router'
+import * as nodeServer from '@acryldev/blends/cordis/node-server'
 import * as todo from './todo.ts'
 
 const root = new Context()
@@ -49,7 +49,7 @@ The adapter passes the socket's peer address and local port to the router as con
 The Node `serveStatic` reads files from disk:
 
 ```ts
-import { serveStatic } from 'acrylblends/node-server'
+import { serveStatic } from '@acryldev/blends/node-server'
 
 const app = new Acryl()
   .use('/assets/*', serveStatic({ root: './public' }))

@@ -27,7 +27,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-          # Every tag: the framework's legacy-layouts check rebuilds each published acrylblends release from its acrylblends-v* tag.
+          # Every tag: the framework's legacy-layouts check rebuilds each published acrylblends release from its blends-v* tag.
           fetch-depth: 0
 
       - uses: actions/setup-node@v5

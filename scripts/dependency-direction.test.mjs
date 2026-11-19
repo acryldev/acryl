@@ -34,7 +34,7 @@ test('each wrong-way dependency is named', () => {
     ['acryl-desktop', 'apps/acryl-desktop', []],
   ])
   assert.deepEqual(directionViolations(graph), [
-    'acrylblends is framework foundation and depends on acryl-ui: the foundation depends only on itself',
+    '@acryldev/blends is framework foundation and depends on acryl-ui: the foundation depends only on itself',
     '@acryldev/control is ACRYL runtime and depends on acryl-ui: the runtime depends only on the foundation and itself',
     // The composition exception is gone: the composition root's plugin rows are the surfaces' now.
     '@acryldev/harness-runtime is ACRYL runtime and depends on @acryldev/ui: the runtime depends only on the foundation and itself',

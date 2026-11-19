@@ -5,7 +5,7 @@
  * 404, a refusal by the current state 409, and an unexpected git failure 500 with a fixed reason.
  */
 
-import { Acryl, type Context } from 'acrylblends'
+import { Acryl, type Context } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {

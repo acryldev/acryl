@@ -1,4 +1,4 @@
-import { render, useRef, useState } from 'acrylblends/jsx/dom'
+import { render, useRef, useState } from '@acryldev/blends/jsx/dom'
 
 /** Read a Server-Sent Events body: calls `on(event, data)` for each event as it arrives. (EventSource only does GET, and this is a POST.) */
 async function readEvents(

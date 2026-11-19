@@ -4,7 +4,7 @@
  *
  * A plugin's package.json names them, one entry per OS and CPU, each pinned by npm's sha512:
  *
- *   "acrylblends": { "native": [
+ *   "@acryldev/blends": { "native": [
  *     { "package": "@deepseek-ai/libreoffice-kit-darwin-arm64", "version": "0.1.5", "os": "darwin", "cpu": "arm64",
  *       "integrity": "sha512-...", "size": 153171456 } ] }
  *

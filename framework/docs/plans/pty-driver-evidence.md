@@ -21,5 +21,5 @@ Each agent runs in its **interactive** mode in the PTY with one task as its firs
 ## What the run found
 
 - `.acryl/bin/acryl brief` does not print the app's address, so claude, codex and pi each read it from `.acryl/door.json` to curl the new route. The door should say it.
-- codex's first `plugin add` failed because its plugin imported the router by a relative path that does not exist in the app's copy; it switched to `import { Acryl } from 'acrylblends'`. The app guide should say which import a plugin uses.
+- codex's first `plugin add` failed because its plugin imported the router by a relative path that does not exist in the app's copy; it switched to `import { Acryl } from '@acryldev/blends'`. The app guide should say which import a plugin uses.
 - With the owner's own Codex settings and skills loaded, codex stopped to ask for a design confirmation instead of building; that is why the gate gives it a scratch `CODEX_HOME`.

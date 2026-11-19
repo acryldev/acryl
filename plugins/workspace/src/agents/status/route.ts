@@ -1,8 +1,8 @@
 /** The status route: agents POST what they are doing (bearer token, loopback only); the page GETs the list. */
 
-import { Acryl } from 'acrylblends'
-import { bearerAuth } from 'acrylblends/bearer-auth'
-import { loopbackOnly } from 'acrylblends/loopback-only'
+import { Acryl } from '@acryldev/blends'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
+import { loopbackOnly } from '@acryldev/blends/loopback-only'
 import { INVALID_JSON, failure, jsonBody, ownPage, readJson, type ReportError } from '../../private-route.ts'
 import { AgentStatusError, WORKSPACE_AGENT_STATUS_PATH, parseStatusReport, type AgentStatusStore } from './agent-status.ts'
 

@@ -1,6 +1,6 @@
 # The app as data, in ACRYL's Blend format (blends.acryl.dev/v1alpha1): which plugins it mounts, in what order, with what config.
 # Edit this, not app.ts, to switch a plugin off (disabled: true) or change its config. `npm run lock` records what the app is built from.
-# Order matters: @acryldev/router comes before extensions, because installed extensions start again at boot and may add routes.
+# Order matters: acryl-router comes before extensions, because installed extensions start again at boot and may add routes.
 apiVersion: blends.acryl.dev/v1alpha1
 kind: Blueprint
 metadata:
@@ -38,12 +38,12 @@ spec:
       config:
         steps: "{{parameters.steps}}"
     - id: router
-      name: router
+      name: acryl-router
     # The home page's widgets: a plugin puts its UI on the home page with ctx.home.widget (one pulled from someone else's app too), and it leaves with the plugin.
     - id: home
       name: home
     - id: state
-      name: state
+      name: acryl-state
     - id: sandbox
       name: sandbox
     - id: extensions
@@ -63,9 +63,9 @@ spec:
     - id: routes
       name: routes
     - id: server
-      name: node-server
+      name: acryl-node-server
       config:
         hostname: "{{parameters.hostname}}"
     # The door: an agent working in this folder looks at the page and acts on it through .acryl/bin/acryl. Development only: src/app.ts leaves it out when NODE_ENV=production.
     - id: acryl-door
-      name: door
+      name: acryl-door

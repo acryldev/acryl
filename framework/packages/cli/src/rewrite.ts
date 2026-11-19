@@ -75,7 +75,8 @@ export function rewriteSpecifiers(
     (match, lead: string, quote: string, specifier: string, offset: number) => {
       if (kind[offset] !== 0) return match
       // A plugin the app installs as a package (spec 051 T011: the desktop shell, the instance) keeps its package specifier.
-      if (installed.has(packageOf(specifier))) return match
+      // The framework package (@acryldev/blends) is an app dependency with subpaths of its own, never a library plugin copy.
+      if (installed.has(packageOf(specifier)) || packageOf(specifier) === '@acryldev/blends') return match
       const target = entries.get(specifier)
       if (target === undefined)
         throw new Error(`${file}: imports "${specifier}", which is not a library plugin`)

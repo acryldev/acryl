@@ -6,7 +6,7 @@
  * see it. Its script calls the plugin's routes by the app's own paths (`/home-widget-basic/count`); the frame serves them under its prefix.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import type {} from '../home/index.ts'
 
 export const name = 'home-widget-basic'

@@ -6,8 +6,8 @@
  */
 
 import { timingSafeEqual } from 'node:crypto'
-import type { Acryl, Context, MiddlewareHandler } from 'acrylblends'
-import { connectionOf } from 'acrylblends/cordis/router'
+import type { Acryl, Context, MiddlewareHandler } from '@acryldev/blends'
+import { connectionOf } from '@acryldev/blends/cordis/router'
 import { error, isLoopbackAddress } from '@acryldev/loopback-http'
 import { privateApi as privateRoutes } from '@acryldev/loopback-http/router'
 

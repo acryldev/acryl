@@ -2,8 +2,8 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acrylblends/cordis/router'
-import { apply as stateApply, name as stateName } from 'acrylblends/cordis/state'
+import { apply as routerApply, name as routerName } from '@acryldev/blends/cordis/router'
+import { apply as stateApply, name as stateName } from '@acryldev/blends/cordis/state'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as todo from '../src/index.ts'
 
@@ -73,7 +73,7 @@ describe('@acryldev/todo', () => {
   })
 
   it('survives a restart: a new context on the same file sees the list', async () => {
-    const folder = mkdtempSync(join(tmpdir(), '@acryldev/todo-'))
+    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-'))
     folders.push(folder)
     const file = join(folder, 'data', 'todos.json')
     const first = await boot(file)
@@ -86,7 +86,7 @@ describe('@acryldev/todo', () => {
   })
 
   it('refuses to start on a corrupt file and leaves its bytes untouched', async () => {
-    const folder = mkdtempSync(join(tmpdir(), '@acryldev/todo-'))
+    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-'))
     folders.push(folder)
     const file = join(folder, 'todos.json')
     const original = '[{"id":1,"title":"precious","done":false},'

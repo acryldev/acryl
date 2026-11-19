@@ -40,7 +40,7 @@ const SITES = [
   {
     id: 'framework',
     patches: 'acrylblends.github.io',
-    repo: 'acrylblends/acrylblends.github.io',
+    repo: '@acryldev/blends/acrylblends.github.io',
     releaseNotes: true,
     starters: true,
     live: 'https://acrylblends.github.io/',

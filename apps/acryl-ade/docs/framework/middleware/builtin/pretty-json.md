@@ -23,8 +23,8 @@ will be:
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { prettyJSON } from 'acrylblends/pretty-json'
+import { Acryl } from '@acryldev/blends'
+import { prettyJSON } from '@acryldev/blends/pretty-json'
 ```
 
 ## Usage

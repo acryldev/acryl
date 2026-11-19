@@ -12,7 +12,7 @@ Therefore, you can use them interchangeably.
 Usage:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 ```
 
 Routers:
@@ -28,7 +28,7 @@ this.router = new SmartRouter({
 Usage:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends/quick'
+import { Acryl } from '@acryldev/blends/quick'
 ```
 
 Router:
@@ -44,7 +44,7 @@ this.router = new SmartRouter({
 Usage:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends/tiny'
+import { Acryl } from '@acryldev/blends/tiny'
 ```
 
 Router:

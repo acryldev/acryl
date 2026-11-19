@@ -19,7 +19,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 const PENDING = 0 as FiberState.PENDING
 const ACTIVE = 2 as FiberState.ACTIVE
 const DISPOSED = 4 as FiberState.DISPOSED
-const DB_ENTRY = new URL('../../acryl-db-sqlite/lib/index.js', import.meta.url).href
+const DB_ENTRY = new URL('../../db-sqlite/lib/index.js', import.meta.url).href
 const KV_ENTRY = new URL('../lib/index.js', import.meta.url).href
 
 const roots: string[] = []
@@ -30,7 +30,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/kv-db-loader-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-kv-db-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'db-row.mjs'), `export * from ${JSON.stringify(DB_ENTRY)}\n`)
   writeFileSync(join(root, 'kv-row.mjs'), `export * from ${JSON.stringify(KV_ENTRY)}\n`)

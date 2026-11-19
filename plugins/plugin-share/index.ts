@@ -14,9 +14,11 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
-import { type Context, Service } from '@deepseek-ai/cordis'
 import { findSecrets } from '@acryldev/app-persistence'
 import { digestFolder, type PluginFile } from '@acryldev/blends-core'
+import { type ExtensionInfo, NAME } from '@acryldev/extensions'
+import type {} from '@acryldev/instance'
+import { LOCK_FILE, writeLock } from '@acryldev/manifest/lock'
 import {
   bumpVersion,
   gitCli,
@@ -35,9 +37,7 @@ import {
   sharePlugin,
   storeRootOf,
 } from '@acryldev/plugin-hub-core'
-import { type ExtensionInfo, NAME } from '@acryldev/extensions'
-import type {} from '@acryldev/instance'
-import { LOCK_FILE, writeLock } from '@acryldev/manifest/lock'
+import { type Context, Service } from '@deepseek-ai/cordis'
 import {
   ensureNative,
   type NativeAction,

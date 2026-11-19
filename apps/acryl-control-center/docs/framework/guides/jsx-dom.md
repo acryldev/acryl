@@ -13,8 +13,8 @@ This section introduces Client Components-specific features.
 Here is an example of a simple counter, the same code works as in React.
 
 ```tsx
-import { useState } from 'acrylblends/jsx'
-import { render } from 'acrylblends/jsx/dom'
+import { useState } from '@acryldev/blends/jsx'
+import { render } from '@acryldev/blends/jsx/dom'
 
 function Counter() {
   const [count, setCount] = useState(0)
@@ -88,8 +88,8 @@ The `startViewTransition()` family contains original hooks and functions to hand
 You can write a transition using the `document.startViewTransition` shortly with the `startViewTransition()`.
 
 ```tsx
-import { useState, startViewTransition } from 'acrylblends/jsx'
-import { css, Style } from 'acrylblends/css'
+import { useState, startViewTransition } from '@acryldev/blends/jsx'
+import { css, Style } from '@acryldev/blends/css'
 
 export default function App() {
   const [showLargeImage, setShowLargeImage] = useState(false)
@@ -133,9 +133,9 @@ The `viewTransition()` function allows you to get the unique `view-transition-na
 You can use it with the `keyframes()`, The `::view-transition-old()` is converted to `::view-transition-old(${uniqueName))`.
 
 ```tsx
-import { useState, startViewTransition } from 'acrylblends/jsx'
-import { viewTransition } from 'acrylblends/jsx/dom/css'
-import { css, keyframes, Style } from 'acrylblends/css'
+import { useState, startViewTransition } from '@acryldev/blends/jsx'
+import { viewTransition } from '@acryldev/blends/jsx/dom/css'
+import { css, keyframes, Style } from '@acryldev/blends/css'
 
 const rotate = keyframes`
   from {
@@ -202,9 +202,9 @@ When this hook is used, the Component is evaluated at the following two times.
 - When [the `finish` promise becomes fulfilled](https://developer.mozilla.org/en-US/docs/Web/API/ViewTransition/finished)
 
 ```tsx
-import { useState, useViewTransition } from 'acrylblends/jsx'
-import { viewTransition } from 'acrylblends/jsx/dom/css'
-import { css, keyframes, Style } from 'acrylblends/css'
+import { useState, useViewTransition } from '@acryldev/blends/jsx'
+import { viewTransition } from '@acryldev/blends/jsx/dom/css'
+import { css, keyframes, Style } from '@acryldev/blends/css'
 
 const rotate = keyframes`
   from {
@@ -283,7 +283,7 @@ There is a small JSX Runtime for Client Components. Using this will result in sm
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "acrylblends/jsx/dom"
+    "jsxImportSource": "@acryldev/blends/jsx/dom"
   }
 }
 ```
@@ -295,7 +295,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   esbuild: {
-    jsxImportSource: 'acrylblends/jsx/dom',
+    jsxImportSource: '@acryldev/blends/jsx/dom',
   },
 })
 ```

@@ -116,6 +116,8 @@ describe('framework docs: code', () => {
     mkdirSync(join(out, 'blocks'), { recursive: true })
     // The real package: the checked blocks resolve `acrylblends` through packages/cli's own exports map, as an installed app would.
     mkdirSync(join(out, 'node_modules'), { recursive: true })
+    // A scoped name needs its scope folder first.
+    mkdirSync(join(out, 'node_modules', dirname(PACKAGE)), { recursive: true })
     symlinkSync(join(root, 'packages', 'cli'), join(out, 'node_modules', PACKAGE), 'dir')
     for (const block of checked) writeFileSync(block.file, `${block.code}\nexport {}\n`)
     // Blocks that are not marked `twoslash` are fragments of a page (they use an `app` the text defines elsewhere): they are checked against ambient names, and the

@@ -5,8 +5,8 @@ JSX Renderer Middleware allows you to set up the layout when rendering JSX with 
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { jsxRenderer, useRequestContext } from 'acrylblends/jsx-renderer'
+import { Acryl } from '@acryldev/blends'
+import { jsxRenderer, useRequestContext } from '@acryldev/blends/jsx-renderer'
 ```
 
 ## Usage
@@ -203,7 +203,7 @@ app.route('/blog', blog)
 `useRequestContext()` returns an instance of Context.
 
 ```tsx
-import { useRequestContext, jsxRenderer } from 'acrylblends/jsx-renderer'
+import { useRequestContext, jsxRenderer } from '@acryldev/blends/jsx-renderer'
 
 const app = new Acryl()
 app.use(jsxRenderer())
@@ -229,7 +229,7 @@ You can't use `useRequestContext()` with a JSX option that precompiles the templ
 ```json
    "compilerOptions": {
      "jsx": "react-jsx",
-     "jsxImportSource": "acrylblends/jsx"
+     "jsxImportSource": "@acryldev/blends/jsx"
    }
  }
 ```
@@ -239,7 +239,7 @@ You can't use `useRequestContext()` with a JSX option that precompiles the templ
 By defining `ContextRenderer` as shown below, you can pass additional content to the renderer. This is handy, for instance, when you want to change the contents of the head tag depending on the page.
 
 ```tsx
-declare module 'acrylblends' {
+declare module '@acryldev/blends' {
   interface ContextRenderer {
     (
       content: string | Promise<string>,

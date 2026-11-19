@@ -1,6 +1,6 @@
 # Deploy
 
-This page runs an app made by `npm create acrylblends@latest` (the `nodejs` and `notes` templates) on a Linux server with Node.js 22.19 or later: install, start, keep it running, put HTTPS in front, and look after the SQLite file.
+This page runs an app made by `npm create @acryldev/blends@latest` (the `nodejs` and `notes` templates) on a Linux server with Node.js 22.19 or later: install, start, keep it running, put HTTPS in front, and look after the SQLite file.
 The snippets are examples to adapt: check them against your own server before relying on them.
 
 ## What the template already does

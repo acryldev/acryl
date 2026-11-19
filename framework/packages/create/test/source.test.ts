@@ -52,7 +52,7 @@ const app = (scripts: Record<string, string> = { test: 'node --test' }) => ({
   'package.json': JSON.stringify({
     name: 'x',
     scripts,
-    dependencies: { acrylblends: '^0.0.1' },
+    dependencies: { '@acryldev/blends': '^0.0.1' },
   }),
   gitignore: 'node_modules/\n',
   'src/app.ts': "export const hello = '__APP_NAME__ on __PACKAGE__'\n",
@@ -115,15 +115,15 @@ describe('template sources', () => {
   it('creates an app from a packed tarball: files, placeholders, name, framework range, docs; no manifest copied', async () => {
     const tgz = pack(app())
     const s = fakeIo()
-    expect(await runCreate(['from-tgz', tgz], s.io)).toBe(0)
+    expect(await runCreate(['from-tgz', tgz], s.io), s.err()).toBe(0)
     const dir = join(scratch, 'from-tgz')
     expect(readFileSync(join(dir, 'src/app.ts'), 'utf8')).toBe(
-      "export const hello = 'from-tgz on acrylblends'\n",
+      "export const hello = 'from-tgz on @acryldev/blends'\n",
     )
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.name).toBe('from-tgz')
-    expect(pkg.dependencies.acrylblends).toMatch(/^\^\d+\.\d+\.\d+/)
-    expect(pkg.dependencies.acrylblends).not.toBe('^0.0.1')
+    expect(pkg.dependencies['@acryldev/blends']).toMatch(/^\^\d+\.\d+\.\d+/)
+    expect(pkg.dependencies['@acryldev/blends']).not.toBe('^0.0.1')
     expect(existsSync(join(dir, '.gitignore'))).toBe(true)
     expect(readFileSync(join(dir, '.gitattributes'), 'utf8')).toMatch(/^\* text=auto eol=lf$/mu)
     expect(existsSync(join(dir, TEMPLATE_MANIFEST))).toBe(false)
@@ -217,7 +217,7 @@ describe('template sources', () => {
     // The list is printed before the install runs.
     expect(withInstall.out()).toContain("runs the template's own lifecycle scripts")
     expect(withInstall.out()).toContain('postinstall: node setup.js')
-    expect(withInstall.out()).toContain('This installs: acrylblends')
+    expect(withInstall.out()).toContain('This installs: @acryldev/blends')
   })
 
   it('refuses a template that holds a secret, and one that holds a symbolic link', async () => {
@@ -258,10 +258,10 @@ describe('template sources', () => {
   })
 
   it('tells which plugins a template needs', async () => {
-    const tgz = pack({ ...app(), [TEMPLATE_MANIFEST]: manifest({ plugins: ['desktop'] }) })
+    const tgz = pack({ ...app(), [TEMPLATE_MANIFEST]: manifest({ plugins: ['desktop-shell'] }) })
     const s = fakeIo()
     expect(await runCreate(['needs', tgz], s.io)).toBe(0)
-    expect(s.out()).toContain('npx acrylblends add desktop')
+    expect(s.out()).toContain('npx @acryldev/blends add desktop-shell')
   })
 })
 
@@ -375,7 +375,7 @@ describe('starters from a registry', () => {
     expect(s.out()).toContain('Next:')
     // In the frame by the framework's own commands, on the new app's folder; nothing is installed (a source installs only with --install).
     expect(s.runs.map((run) => run.args.slice(1))).toEqual([
-      ['add', 'desktop', '--dir', join(scratch, 'mine')],
+      ['add', 'desktop-shell', '--dir', join(scratch, 'mine')],
       ['upgrade', '--dir', join(scratch, 'mine')],
     ])
     expect(s.out()).toContain('npm run desktop')
@@ -552,7 +552,7 @@ describe('starters from a registry', () => {
       await runCreate(['no1', '--from', 'acryl.gtd', '--registry', registry(), '-y'], acryl.io),
     ).toBe(1)
     expect(acryl.err()).toContain(
-      'acryl.gtd is an ACRYL app starter: open it in the ACRYL app (https://acryl.dev). create-acrylblends makes acrylblends apps.',
+      'acryl.gtd is an ACRYL app starter: open it in the ACRYL app (https://acryl.dev). @acryldev/create-blends makes acrylblends apps.',
     )
     expect(existsSync(join(scratch, 'no1'))).toBe(false)
     const unknown = fakeIo()
@@ -562,7 +562,7 @@ describe('starters from a registry', () => {
         unknown.io,
       ),
     ).toBe(1)
-    expect(unknown.err()).toContain('starters for create-acrylblends: acrylblends.notes-desktop')
+    expect(unknown.err()).toContain('starters for @acryldev/create-blends: acrylblends.notes-desktop')
     expect(existsSync(join(scratch, 'no2'))).toBe(false)
   })
 

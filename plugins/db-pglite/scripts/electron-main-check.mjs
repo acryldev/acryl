@@ -14,7 +14,7 @@ import { join } from 'node:path'
 import { app } from 'electron'
 
 // Electron's own folders (userData, its GPU caches) go to a throwaway folder, never the user's real profile; no GPU is needed.
-const userData = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-electron-user-'))
+const userData = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-electron-user-'))
 app.setPath('userData', userData)
 app.disableHardwareAcceleration()
 
@@ -23,7 +23,7 @@ const { openDb } = await import(new URL('../lib/open.js', import.meta.url).href)
 async function check() {
   if (process.type !== 'browser' || process.versions.electron === undefined) throw new Error(`not Electron's main process (process.type ${String(process.type)})`)
   if (process.env.ELECTRON_RUN_AS_NODE !== undefined) throw new Error('ELECTRON_RUN_AS_NODE is set: this would run as Node, not as Electron\'s main process')
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-electron-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-electron-'))
   try {
     const migrations = join(root, 'migrations')
     mkdirSync(migrations)

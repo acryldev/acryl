@@ -20,12 +20,12 @@ import { MissingTypeScriptError, compileModule } from './transpile.ts'
 const RUNTIME_DIR = '@acryldev'
 /** The framework's browser imports and the browser file that provides each. */
 const BROWSER_IMPORTS: Readonly<Record<string, string>> = {
-  'acrylblends/jsx/dom': 'jsx-dom.js',
-  'acrylblends/jsx/dom/jsx-runtime': 'jsx-dom.js',
-  'acrylblends/jsx/dom/jsx-dev-runtime': 'jsx-dom.js',
-  'acrylblends/jsx/dom/client': 'jsx-dom.js',
-  'acrylblends/client': 'client.js',
-  'acrylblends/read-sse': 'read-sse.js',
+  '@acryldev/blends/jsx/dom': 'jsx-dom.js',
+  '@acryldev/blends/jsx/dom/jsx-runtime': 'jsx-dom.js',
+  '@acryldev/blends/jsx/dom/jsx-dev-runtime': 'jsx-dom.js',
+  '@acryldev/blends/jsx/dom/client': 'jsx-dom.js',
+  '@acryldev/blends/client': 'client.js',
+  '@acryldev/blends/read-sse': 'read-sse.js',
 }
 const RUNTIME_FILES = ['jsx-dom.js', 'client.js', 'read-sse.js'] as const
 const COMPILED = new Set(['.ts', '.tsx', '.jsx', '.mts'])
@@ -76,8 +76,8 @@ function compileForBrowser(file: string, relativePath: string): string {
   const prefix = runtimePrefix(relativePath)
   return compileModule(file, readFileSync(file, 'utf8'), {
     // A browser module renders with the DOM runtime whatever the server's tsconfig.json says; a file's own pragma still wins.
-    importSource: 'acrylblends/jsx/dom',
-    defaultImportSource: 'acrylblends/jsx/dom',
+    importSource: '@acryldev/blends/jsx/dom',
+    defaultImportSource: '@acryldev/blends/jsx/dom',
     what: 'is a client module',
     rewrite: (specifier) => {
       const target = BROWSER_IMPORTS[specifier]

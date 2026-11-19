@@ -204,7 +204,7 @@ console.log('ws-check: ok')
   run('npm', ['install', '--no-audit', '--no-fund', tarball('acrylblends-')], pulled)
   run('npm', ['test'], pulled, { ACRYL_DOOR: 'off' })
   run('npm', ['run', 'check'], pulled)
-  // The refusal is run the way `npm create acrylblends` runs it (`npm exec`): npm adds its own error lines, and the reason must still be on stderr.
+  // The refusal is run the way `npm create @acryldev/blends` runs it (`npm exec`): npm adds its own error lines, and the reason must still be on stderr.
   let refusal = ''
   try {
     run(

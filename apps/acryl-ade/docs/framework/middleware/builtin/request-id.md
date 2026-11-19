@@ -7,8 +7,8 @@ Request ID Middleware generates a unique ID for each request, which you can use 
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { requestId } from 'acrylblends/request-id'
+import { Acryl } from '@acryldev/blends'
+import { requestId } from '@acryldev/blends/request-id'
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ app.get('/', (c) => {
 If you want to explicitly specify the type, import `RequestIdVariables` and pass it in the generics of `new Acryl()`.
 
 ```ts
-import type { RequestIdVariables } from 'acrylblends/request-id'
+import type { RequestIdVariables } from '@acryldev/blends/request-id'
 
 const app = new Acryl<{
   Variables: RequestIdVariables

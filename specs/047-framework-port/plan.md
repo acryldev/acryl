@@ -108,8 +108,8 @@ evidence, and the tasks). This plan keeps the framework port.
 ## The public package (0.5.0)
 
 The coordinator's order: the framework's public face is 1:1 with the upstream package, so a generated app's imports are the upstream ones
-with the name swapped (`'<upstream>'` -> `'acrylblends'`, `'<upstream>/<x>'` -> `'acrylblends/<x>'`, the Node adapter ->
-`'acrylblends/node-server'`).
+with the name swapped (`'<upstream>'` -> `'acrylblends'`, `'<upstream>/<x>'` -> `'@acryldev/blends/<x>'`, the Node adapter ->
+`'@acryldev/blends/node-server'`).
 
 - The class is `Acryl` and the request `AcrylRequest` (the mechanical rule in `scripts/verify-port.mjs` maps the upstream name to `Acryl` in
   identifiers); `App` and `AppRequest` stay one release as deprecated aliases (`plugins/acryl-router/src/deprecated.ts`). Code examples in

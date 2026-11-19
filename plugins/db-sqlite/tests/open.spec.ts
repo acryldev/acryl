@@ -17,7 +17,7 @@ afterEach(async () => {
 })
 
 async function app(migrations: Record<string, string> = {}): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/db-open-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-db-open-'))
   dirs.push(dir)
   await mkdir(join(dir, 'migrations'))
   await Promise.all(Object.entries(migrations).map(([name, text]) => writeFile(join(dir, 'migrations', name), text)))

@@ -4,7 +4,7 @@
 It will be imported first and used until the end.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 //...
@@ -36,7 +36,7 @@ The first part of them is used for routing, please refer to the [routing section
 `app.notFound` allows you to customize a Not Found Response.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.notFound((c) => {
@@ -51,7 +51,7 @@ app.notFound((c) => {
 `app.onError` allows you to handle uncaught errors and return a custom Response.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.onError((err, c) => {
@@ -73,7 +73,7 @@ app.onError((err, c) => {
 As the `fetch` method of an object a host calls:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 type Env = any
 type ExecutionContext = any
@@ -88,7 +88,7 @@ export default {
 or just do:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 export default app
@@ -112,7 +112,7 @@ You can pass a URL or pathname to send a GET request.
 `app` will return a `Response` object.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 declare const test: (name: string, fn: () => void) => void
 declare const expect: (value: any) => any
@@ -126,7 +126,7 @@ test('GET /hello is ok', async () => {
 You can also pass a `Request` object:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 declare const test: (name: string, fn: () => void) => void
 declare const expect: (value: any) => any
@@ -148,7 +148,7 @@ The `mount()` allows you to mount applications built with other frameworks into 
 
 ```ts
 import { Router as IttyRouter } from 'itty-router'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 // Create itty-router application
 const ittyRouter = IttyRouter()
@@ -166,7 +166,7 @@ app.mount('/itty-router', ittyRouter.handle)
 By default, `mount()` passes a new `Request` with the mount path removed from its URL. Provide a `replaceRequest` function to control which `Request` is passed to the mounted application:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 const handler = (request: Request) => new Response(request.url)
 // ---cut---
@@ -178,7 +178,7 @@ app.mount('/app', handler, {
 To pass the original `Request` unchanged, set `replaceRequest` to `false` as a shorthand for the function above:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 const handler = (request: Request) => new Response(request.url)
 // ---cut---
@@ -199,7 +199,7 @@ Strict mode defaults to `true` and distinguishes the following routes.
 By setting strict mode to `false`, both paths will be treated equally.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const app = new Acryl({ strict: false })
 ```
@@ -209,9 +209,9 @@ const app = new Acryl({ strict: false })
 The `router` option specifies which router to use. The default router is `SmartRouter`. If you want to use `RegExpRouter`, pass it to a new `Acryl` instance:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
-import { RegExpRouter } from 'acrylblends/router/reg-exp-router'
+import { RegExpRouter } from '@acryldev/blends/router/reg-exp-router'
 
 const app = new Acryl({ router: new RegExpRouter() })
 ```
@@ -221,7 +221,7 @@ const app = new Acryl({ router: new RegExpRouter() })
 You can pass Generics to specify the type of the environment the host passes and the variables used in `c.set`/`c.get`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 type User = any
 declare const user: User
 // ---cut---

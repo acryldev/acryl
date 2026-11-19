@@ -8,8 +8,8 @@ For more information about how the Basic auth scheme works under the hood, see t
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { basicAuth } from 'acrylblends/basic-auth'
+import { Acryl } from '@acryldev/blends'
+import { basicAuth } from '@acryldev/blends/basic-auth'
 ```
 
 ## Usage

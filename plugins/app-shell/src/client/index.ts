@@ -18,7 +18,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { browserLongTasks, startUiHealth, type UiHealthRecord } from './ui-health.ts'
 
 /** Stable Cordis plugin name, matching the Host side. */
-export const name = '@acryldev/app-shell'
+export const name = 'acryl-app-shell'
 
 declare global {
   interface Window {

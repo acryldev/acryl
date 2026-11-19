@@ -24,7 +24,7 @@ function underTest(path: string): Promise<KvUnderTest> {
 }
 
 describeKvConformance('@acryldev/kv-json', async () => {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-json-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-json-'))
   dirs.push(dir)
   return underTest(join(dir, 'kv.json'))
 })

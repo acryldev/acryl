@@ -1,6 +1,6 @@
 /** The workers endpoint: the page (same origin) or an outside operator on this machine holding the instance secret. */
 
-import { Acryl, type MiddlewareHandler } from 'acrylblends'
+import { Acryl, type MiddlewareHandler } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { WORKERS_PATH, WorkerRequestError, parseWorkerRequest, type WorkerResponse } from '../../workers-contract.ts'
 import { INVALID_JSON, fromOperator, jsonBody, ownPage, readJson, type ReportError } from '../http.ts'

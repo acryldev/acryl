@@ -208,7 +208,7 @@ export function checkGitBash(probes: Pick<Probes, 'env'>): Check | undefined {
     name: 'git bash',
     status: 'NOTE',
     detail:
-      'this shell rewrites /paths: the door handles it from acrylblends 1.0.7; on an older app run .acryl/bin/acryl from PowerShell, or npx acrylblends@latest upgrade',
+      'this shell rewrites /paths: the door handles it from acrylblends 1.0.7; on an older app run .acryl/bin/acryl from PowerShell, or npx @acryldev/blends@latest upgrade',
   }
 }
 
@@ -238,7 +238,7 @@ export function formatChecks(checks: readonly Check[]): string {
   lines.push(
     fixes === 0
       ? 'Ready for the workshop.'
-      : `${fixes} to fix before the workshop: run each FIX line, then npx acrylblends@latest preflight again.`,
+      : `${fixes} to fix before the workshop: run each FIX line, then npx @acryldev/blends@latest preflight again.`,
   )
   return `${lines.join('\n')}\n`
 }

@@ -23,7 +23,7 @@
     "upgrade": "node plugins/manifest/upgrade-cli.ts"
   },
   "dependencies": {
-    "acrylblends": "__ACRYLBLENDS_RANGE__",
+    "@acryldev/blends": "__ACRYLBLENDS_RANGE__",
     "typescript": "6.0.3"
   },
   "devDependencies": {

@@ -93,7 +93,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Stable Cordis plugin name. */
-export const name = '@acryldev/settings'
+export const name = 'acryl-settings'
 
 /** The ACRYL home is chosen once at the composition root and provided before any engine row mounts. */
 export const inject = ['appInstance']

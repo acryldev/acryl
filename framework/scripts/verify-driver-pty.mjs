@@ -50,7 +50,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 console.log('SCRIPTED-AGENT-READY')
 mkdirSync('plugins/hello', { recursive: true })
 writeFileSync('plugins/hello/index.ts', \`import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 export const name = 'hello'
 export const inject = ['router']
 export function apply(ctx: Context) {

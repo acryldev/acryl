@@ -15,15 +15,15 @@
     "cordis.patch.yml"
   ],
   "peerDependencies": {
-    "acrylblends": "^1.0.0"
+    "@acryldev/blends": "^1.0.0"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
     "requiresAcrylPackages": [
-      "acrylblends/cordis/router",
-      "acrylblends/cordis/router-http"
+      "@acryldev/blends/cordis/router",
+      "@acryldev/blends/cordis/router-http"
     ]
   }
 }

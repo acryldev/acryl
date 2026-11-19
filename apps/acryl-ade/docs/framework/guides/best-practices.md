@@ -43,10 +43,10 @@ app.get('/books/:id', (c) => {
 If you still want to create a RoR-like Controller, use `factory.createHandlers()` in [`acrylblends/factory`](../helpers/factory.md). If you use this, type inference will work correctly.
 
 ```ts
-import { createFactory } from 'acrylblends/factory'
-import { logger } from 'acrylblends/logger'
+import { createFactory } from '@acryldev/blends/factory'
+import { logger } from '@acryldev/blends/logger'
 
-declare module 'acrylblends' {
+declare module '@acryldev/blends' {
   interface ContextVariableMap {
     foo: string
   }
@@ -77,7 +77,7 @@ If your application has `/authors` and `/books` endpoints and you wish to separa
 
 ```ts
 // authors.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -90,7 +90,7 @@ export default app
 
 ```ts
 // books.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -105,7 +105,7 @@ Then, import them and mount on the paths `/authors` and `/books` with `app.route
 
 ```ts
 // index.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import authors from './authors'
 import books from './books'
 
@@ -125,7 +125,7 @@ However, if you want to use the `RPC` feature, you can get the correct type by c
 
 ```ts
 // authors.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
   .get('/', (c) => c.json('list authors'))
@@ -140,7 +140,7 @@ If you pass the type of the `app` to `hc`, it will get the correct type.
 
 ```ts
 import type { AppType } from './authors'
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 
 // 😃
 const client = hc<AppType>('http://localhost') // Typed correctly

@@ -11,8 +11,8 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/control'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import { inspectCordisContext } from './architecture/inspector.ts'
 import { architectureRoutes } from './architecture/route.ts'
 import { PLUGIN_ADMIN_API_PREFIX } from './lifecycle/contract.ts'
@@ -20,7 +20,7 @@ import { lifecycleRoutes } from './lifecycle/route.ts'
 import { registerPluginTools } from './tools/plugin-tools.ts'
 import { PluginLifecycleView, type PluginLifecycleBlendSource } from './lifecycle/view.ts'
 
-export const name = '@acryldev/plugin-admin'
+export const name = 'acryl-plugin-admin'
 export const inject = ['router', 'routerHttp']
 
 /** Optional Desktop-provided launcher state; a surface without it falls back to {@link unlockedBlueprintSource}. */

@@ -12,7 +12,7 @@ import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { ChannelToPage } from 'acrylblends/door/protocol'
+import type { ChannelToPage } from '@acryldev/blends/door/protocol'
 import { AGENT_CONTROL_API_PREFIX } from '../../src/host/http.ts'
 import { UI_CONTROL_CHANNEL_PATH } from '../../src/index.ts'
 import { provideHost, testHost, type TestHost } from './test-host.ts'
@@ -64,7 +64,7 @@ const BUILT_ENTRY = new URL('../../lib/index.js', import.meta.url).href
  * anyway). @throws if the package has not been built - run `pnpm run build` first.
  */
 async function mount(): Promise<{ ctx: Context; entryId: string; root: string }> {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-loader-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-agent-control-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   const ctx = new Context()

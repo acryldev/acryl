@@ -7,8 +7,8 @@ It needs a Cache API on the host: the middleware reads `globalThis.caches`. Node
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { cache } from 'acrylblends/cache'
+import { Acryl } from '@acryldev/blends'
+import { cache } from '@acryldev/blends/cache'
 ```
 
 ## Usage

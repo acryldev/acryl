@@ -7,7 +7,7 @@
  * six days after it) always holds the same two of Ana's tasks.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'team-board'
 export const inject = ['router']

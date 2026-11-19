@@ -28,7 +28,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-sqlite-loader-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-db-sqlite-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root

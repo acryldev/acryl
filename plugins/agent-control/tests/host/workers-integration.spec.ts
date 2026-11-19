@@ -54,7 +54,7 @@ function fakeClaudeCommand(): string {
 async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<void> }; home: string }> {
   host = await testHost()
   port = host.port
-  const home = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-workers-'))
+  const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-workers-'))
   roots.push(home)
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)

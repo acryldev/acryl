@@ -31,7 +31,7 @@ export async function buildClient(
   }
   const outDir = resolve(io.cwd, options.outDir)
   const here = createRequire(resolve(io.cwd, 'package.json'))
-  let specifier = 'acrylblends/node-server'
+  let specifier = '@acryldev/blends/node-server'
   try {
     here.resolve(specifier)
   } catch {

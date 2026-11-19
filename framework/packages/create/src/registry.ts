@@ -1,5 +1,5 @@
 /**
- * Starters from a registry: `npm create acrylblends@latest my-app -- --from acryl.example`. A registry is a git repository (or a folder) with an `index.json` and one folder per
+ * Starters from a registry: `npm create @acryldev/blends@latest my-app -- --from acryl.example`. A registry is a git repository (or a folder) with an `index.json` and one folder per
  * starter under `blends/<id>/`. Its CI says in the index which runtime an entry is for: only `runtime: acrylblends` entries are apps this package can make (the folder is the
  * app, with an `acryl.template.json`); the others are ACRYL app starters and are refused with one line. Nothing is run: the entry is downloaded, unpacked and copied.
  *
@@ -231,12 +231,12 @@ export function pickEntry(entries: readonly RegistryEntry[], id: string): Regist
       .filter((candidate) => candidate.runtime === 'acrylblends')
       .map((candidate) => candidate.id)
     throw new SourceError(
-      `no starter "${id}" in this registry${mine.length > 0 ? `; starters for create-acrylblends: ${mine.join(', ')}` : ''}`,
+      `no starter "${id}" in this registry${mine.length > 0 ? `; starters for @acryldev/create-blends: ${mine.join(', ')}` : ''}`,
     )
   }
   if (entry.runtime !== 'acrylblends')
     throw new SourceError(
-      `${entry.id} is an ACRYL app starter: open it in the ACRYL app (${ACRYL_APP}). create-acrylblends makes acrylblends apps.`,
+      `${entry.id} is an ACRYL app starter: open it in the ACRYL app (${ACRYL_APP}). @acryldev/create-blends makes acrylblends apps.`,
     )
   return entry
 }

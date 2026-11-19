@@ -12,7 +12,7 @@ const frame = JSON.parse(readFileSync(join(framework, 'frame', 'packages.json'),
 
 test('the CLI and the scaffolder tags name their package, folder and tarball', () => {
   const cli = versionOf('packages/cli')
-  assert.deepEqual(releaseOfTag(`acrylblends-v${cli}`), {
+  assert.deepEqual(releaseOfTag(`blends-v${cli}`), {
     kind: 'npm',
     package: 'acrylblends',
     version: cli,
@@ -21,7 +21,7 @@ test('the CLI and the scaffolder tags name their package, folder and tarball', (
   })
   const create = versionOf('packages/create')
   assert.equal(
-    releaseOfTag(`create-acrylblends-v${create}`).tarball,
+    releaseOfTag(`create-blends-v${create}`).tarball,
     `create-acrylblends-${create}.tgz`,
   )
 })
@@ -48,7 +48,7 @@ test("the launcher tag names @acryldev/launcher in ACRYL's plugins/launcher", ()
 })
 
 test('a tag whose version is not the one in the source is refused', () => {
-  assert.throws(() => releaseOfTag('acrylblends-v0.0.1'), /the source holds/u)
+  assert.throws(() => releaseOfTag('blends-v0.0.1'), /the source holds/u)
   const entry = Object.values(frame.packages)[0]
   assert.throws(() => releaseOfTag(`frame-${entry.name}-v99.0.0`), /frame\/packages\.json holds/u)
 })

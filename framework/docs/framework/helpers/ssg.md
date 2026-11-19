@@ -44,7 +44,7 @@ For Node.js, create a build script like this:
 ```ts
 // build.ts
 import app from './index'
-import { toSSG } from 'acrylblends/ssg'
+import { toSSG } from '@acryldev/blends/ssg'
 import fs from 'fs/promises'
 
 toSSG(app, fs)
@@ -147,7 +147,7 @@ The file extension depends on the `Content-Type` returned by each route. For exa
 If you want to customize the file extensions, set the `extensionMap` option.
 
 ```ts
-import { toSSG, defaultExtensionMap } from 'acrylblends/ssg'
+import { toSSG, defaultExtensionMap } from '@acryldev/blends/ssg'
 
 // Save `application/x-html` content with `.html`
 toSSG(app, fs, {
@@ -237,7 +237,7 @@ Plugins allow you to extend the functionality of the static site generation proc
 By default, `toSSG` uses `defaultPlugin()`, which skips non-200 status responses (like redirects, errors, or 404s). This prevents generating files for unsuccessful responses.
 
 ```ts
-import { toSSG, defaultPlugin } from 'acrylblends/ssg'
+import { toSSG, defaultPlugin } from '@acryldev/blends/ssg'
 
 // defaultPlugin is automatically applied when no plugins specified
 toSSG(app, fs)
@@ -259,7 +259,7 @@ toSSG(app, fs, {
 The `redirectPlugin` generates HTML redirect pages for routes that return HTTP redirect responses (301, 302, 303, 307, 308). The generated HTML includes a `<meta http-equiv="refresh">` tag and a canonical link.
 
 ```ts
-import { toSSG, redirectPlugin, defaultPlugin } from 'acrylblends/ssg'
+import { toSSG, redirectPlugin, defaultPlugin } from '@acryldev/blends/ssg'
 
 toSSG(app, fs, {
   plugins: [redirectPlugin(), defaultPlugin()],
@@ -351,8 +351,8 @@ Here's an example of creating a sitemap plugin that generates a `sitemap.xml` fi
 // plugins.ts
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { SSGPlugin } from 'acrylblends/ssg'
-import { DEFAULT_OUTPUT_DIR } from 'acrylblends/ssg'
+import type { SSGPlugin } from '@acryldev/blends/ssg'
+import { DEFAULT_OUTPUT_DIR } from '@acryldev/blends/ssg'
 
 export const sitemapPlugin = (baseURL: string): SSGPlugin => {
   return {
@@ -376,7 +376,7 @@ Applying plugins:
 
 ```ts
 import app from './index'
-import { toSSG } from 'acrylblends/ssg'
+import { toSSG } from '@acryldev/blends/ssg'
 import { sitemapPlugin } from './plugins'
 
 toSSG(app, fs, {

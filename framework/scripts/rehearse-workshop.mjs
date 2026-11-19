@@ -132,7 +132,7 @@ async function session(app) {
 }
 
 const plugin = (who) => `import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'hello-${who}'
 export const inject = ['router', 'home']

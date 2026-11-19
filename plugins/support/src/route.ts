@@ -1,6 +1,6 @@
 /** Same-origin route for the diagnostics download. */
 
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { ownPage, privateApi, type ReportError } from '@acryldev/loopback-http/router'
 import type { DiagnosticsArchive } from '@acryldev/diagnostics'

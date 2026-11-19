@@ -1,4 +1,4 @@
-import { render, useState } from 'acrylblends/jsx/dom'
+import { render, useState } from '@acryldev/blends/jsx/dom'
 
 const Counter = () => {
   const [count, setCount] = useState(0)

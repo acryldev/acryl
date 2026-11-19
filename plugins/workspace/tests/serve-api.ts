@@ -5,9 +5,9 @@
 
 import { createServer, type Server } from 'node:http'
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
-import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
-import { serve, type FetchRouter } from 'acrylblends/cordis/router-http'
+import { Acryl } from '@acryldev/blends'
+import { apply as applyRouter, name as routerName } from '@acryldev/blends/cordis/router'
+import { serve, type FetchRouter } from '@acryldev/blends/cordis/router-http'
 import { privateApi } from '../src/private-route.ts'
 
 export interface ServedApi {

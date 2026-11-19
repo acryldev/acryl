@@ -5,8 +5,8 @@ A web API is often called from a page served by another origin. For that we have
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { cors } from 'acrylblends/cors'
+import { Acryl } from '@acryldev/blends'
+import { cors } from '@acryldev/blends/cors'
 ```
 
 ## Usage

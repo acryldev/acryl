@@ -7,8 +7,8 @@ You can write CSS in JSX in a JavaScript template literal named `css`. The retur
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { css, cx, keyframes, Style, createCssContext } from 'acrylblends/css'
+import { Acryl } from '@acryldev/blends'
+import { css, cx, keyframes, Style, createCssContext } from '@acryldev/blends/css'
 ```
 
 ## `css` *(Experimental)*
@@ -180,7 +180,7 @@ const Header = () => <a class={cx('h1', primaryClass)}>Hi</a>
 If you want to use the CSS helpers in combination with the [Secure Headers](../middleware/builtin/secure-headers.md) middleware, you can add the [`nonce` attribute](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/nonce) to the `<Style nonce={c.get('secureHeadersNonce')} />` to avoid Content-Security-Policy caused by the CSS helpers.
 
 ```tsx
-import { secureHeaders, NONCE } from 'acrylblends/secure-headers'
+import { secureHeaders, NONCE } from '@acryldev/blends/secure-headers'
 
 app.get(
   '*',
@@ -217,7 +217,7 @@ app.get('/', (c) => {
 `createCssContext` creates CSS helper functions (`css`, `cx`, `keyframes`, `viewTransition`, `Style`) with a custom context. You can use it to customize the style element ID and the generated class names.
 
 ```ts
-import { createCssContext } from 'acrylblends/css'
+import { createCssContext } from '@acryldev/blends/css'
 
 const { css, cx, keyframes, Style } = createCssContext({
   id: 'my-app',

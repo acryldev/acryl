@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { MountAnchorInspector } from './MountAnchorInspector.tsx'
 import { createInspectorToggle } from './inspector-toggle.ts'
 
-export const name = '@acryldev/mount-anchors-client'
+export const name = 'acryl-mount-anchors-client'
 export const inject = ['shortcuts']
 
 /** Stable id of the toggle command in DSH's shortcut catalog (Settings > Shortcuts lists and rebinds it). */

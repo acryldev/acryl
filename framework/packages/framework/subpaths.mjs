@@ -98,7 +98,7 @@ export const SUBPATHS = {
   'door/protocol': `${P}/door/src/page/protocol.ts`,
   'door/page': `${P}/door/src/page/api.ts`,
   // The Cordis forms (spec 049 slice 17): each framework plugin as a module of the package. `@deepseek-ai/cordis` (and `@deepseek-ai/schemastery`) are optional peer dependencies:
-  // an app that imports only the plain subpaths never loads them. They share their chunks with the plain subpaths, so `new Acryl()` from 'acrylblends' is the class `cordis/router` mounts.
+  // an app that imports only the plain subpaths never loads them. They share their chunks with the plain subpaths, so `new Acryl()` from '@acryldev/blends' is the class `cordis/router` mounts.
   'cordis/router': `${ROUTER}/index.ts`,
   'cordis/router-http': `${P}/router-http/src/index.ts`,
   'cordis/state': `${P}/state/src/index.ts`,

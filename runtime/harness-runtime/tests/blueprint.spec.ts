@@ -68,22 +68,22 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'community-market', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/shortcuts', '@acryldev/mount-anchors', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', '@acryldev/blends/cordis/router', '@acryldev/blends/cordis/router-http', 'community-market', '@acryldev/blends/cordis/state', '@acryldev/blends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/shortcuts', '@acryldev/mount-anchors', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
     expect(packages).toContain('@acryldev/brand-client')
     // The Market injects `router` and `routerHttp`, so their rows come with it, once and just before it (spec 046).
     expect(packages).toEqual(expect.arrayContaining(['acrylblends', '@acryldev/cordis-plugin-market']))
   })
 
   it('does not mount the router rows twice when the profile already has them', () => {
-    const { patches } = composeBlueprintRows(IDE_BLUEPRINT, 'web', new Set(['acrylblends/cordis/router', 'acrylblends/cordis/router-http']))
-    expect(insertedIds(patches)).not.toContain('acrylblends/cordis/router')
+    const { patches } = composeBlueprintRows(IDE_BLUEPRINT, 'web', new Set(['@acryldev/blends/cordis/router', '@acryldev/blends/cordis/router-http']))
+    expect(insertedIds(patches)).not.toContain('@acryldev/blends/cordis/router')
     expect(insertedIds(patches)).toContain('community-market')
-    expect(insertedIds(patches)).not.toContain('acrylblends/cordis/router-http')
+    expect(insertedIds(patches)).not.toContain('@acryldev/blends/cordis/router-http')
   })
 
   it('blank web: brand, extension pack, prompt shaping, UI library and the start-page command reply only', () => {
     const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['brand', '@acryldev/blends/cordis/router', '@acryldev/blends/cordis/router-http', '@acryldev/blends/cordis/state', '@acryldev/blends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
     expect(capabilityIds).toEqual(['authorization', '@acryldev/settings'])

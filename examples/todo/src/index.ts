@@ -6,20 +6,20 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
-import { HTTPException } from 'acrylblends/http-exception'
-import { bodyLimit } from 'acrylblends/body-limit'
-import { loopbackOnly } from 'acrylblends/loopback-only'
-import { trimTrailingSlash } from 'acrylblends/trailing-slash'
-import { schemaValidator, type StandardSchema } from 'acrylblends/schema-validator'
-import { streamSSE } from 'acrylblends/streaming'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
-import type {} from 'acrylblends/cordis/state'
+import { Acryl } from '@acryldev/blends'
+import { HTTPException } from '@acryldev/blends/http-exception'
+import { bodyLimit } from '@acryldev/blends/body-limit'
+import { loopbackOnly } from '@acryldev/blends/loopback-only'
+import { trimTrailingSlash } from '@acryldev/blends/trailing-slash'
+import { schemaValidator, type StandardSchema } from '@acryldev/blends/schema-validator'
+import { streamSSE } from '@acryldev/blends/streaming'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/state'
 import { PAGE } from './page.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/todo'
+export const name = 'acryl-todo'
 export const inject = ['router', 'state']
 
 export interface Todo { id: number, title: string, done: boolean }

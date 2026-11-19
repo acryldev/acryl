@@ -6,7 +6,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 
 /** Stable Cordis plugin name. */
-export const name = '@acryldev/shortcuts'
+export const name = 'acryl-shortcuts'
 
 /** The Host half mounts nothing; the row exists so the client bundle is composed. */
 export function apply(_ctx: Context): void {}

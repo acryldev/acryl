@@ -10,8 +10,8 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
-import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
-import * as routerHttpPlugin from 'acrylblends/cordis/router-http'
+import { apply as applyRouter, name as routerName } from '@acryldev/blends/cordis/router'
+import * as routerHttpPlugin from '@acryldev/blends/cordis/router-http'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as launcher from '../src/index.ts'
 import { LAUNCHER_API_PREFIX, LAUNCHER_NEW_PATH, LAUNCHER_STATE_PATH } from '../src/contract.ts'
@@ -56,7 +56,7 @@ async function host() {
   return { port, origin: `http://127.0.0.1:${String(port)}`, prefixes, exact, mounts: () => mounts, webServer, acrylWeb }
 }
 
-const home = mkdtempSync(join(tmpdir(), '@acryldev/launcher-desktop-home-'))
+const home = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-home-'))
 cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
 const appInstance = { home, dshHome: join(home, '.dsh') }
 

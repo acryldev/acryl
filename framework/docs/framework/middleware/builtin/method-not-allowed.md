@@ -5,8 +5,8 @@ The Method Not Allowed middleware returns a `405 Method Not Allowed` response wi
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { methodNotAllowed } from 'acrylblends/method-not-allowed'
+import { Acryl } from '@acryldev/blends'
+import { methodNotAllowed } from '@acryldev/blends/method-not-allowed'
 ```
 
 ## Usage
