@@ -42,7 +42,10 @@ products, registry) become folders with one owner each, not repositories that ea
 - **D5 What stays separate.** acrylblends.github.io (GitHub Pages serves an organisation's site only from that repository name; its registry
   is generated, never hand-edited) and each Blend repository (apps people fork and share; they depend on published packages instead of
   carrying copied folders).
-- **D6 Timing.** Nothing moves on `main` before the workshop (2026-11-20). This branch is where the direction is shown and tried.
+- **D6 Timing.** ~~Nothing moves on `main` before the workshop (2026-11-20).~~ Changed by the owner on 2026-11-19 (about 03:00 CET):
+  the branch merges to `main` the same night, once the full root `check` (clean home) and a real Desktop boot pass, and the owner tests
+  the merged `main` before the workshop. From the merge on, frame work (`plugins/acryl-blends-frame/`) happens only in acryldev/acryl;
+  acrylblends gets no new frame commits (a subtree pull maps only into `framework/`).
 
 ## Layout: the Pi model (owner, 2026-11-19)
 
