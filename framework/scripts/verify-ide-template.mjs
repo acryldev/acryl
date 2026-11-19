@@ -1408,11 +1408,13 @@ async function checkTileInBrowser(url, origin, jar, page, output, mock, restartH
           element.click()
           return true
         })()`)
+      // The frame records the Host read it is showing on its shell (`data-frame-state`): the canvas exists only once that read reached
+      // "ready", so the wait requires the fact and the surfaces together instead of polling for a canvas a slow read cannot show yet.
       const frame = await until(
         async () =>
           await evaluate(`(() => {
             const shell = document.querySelector('.acrylBlendsFrame')
-            if (shell === null) return undefined
+            if (shell === null || shell.getAttribute('data-frame-state') !== 'ready') return undefined
             const surfaces = {
               topbar: document.querySelector('.acrylBlendsBar') !== null,
               left: document.querySelector('.acrylBlendsLeft') !== null,
@@ -1424,18 +1426,28 @@ async function checkTileInBrowser(url, origin, jar, page, output, mock, restartH
         60_000,
       )
       if (frame === undefined) {
-        const surfaces = await evaluate(`(() => {
+        // The facts that separate "the read was slow" from "this page is hidden from the browser": the shell's own state, the document's
+        // visibility, and one timed request to the Host's state route (the route runs several git calls and is the slow half under load).
+        const probe = await evaluate(`(async () => {
           const shell = document.querySelector('.acrylBlendsFrame')
-          if (shell === null) return null
-          return {
+          const started = performance.now()
+          let state
+          try {
+            const response = await fetch('/api/acryl-blends-frame/state', { credentials: 'same-origin' })
+            state = { status: response.status, ms: Math.round(performance.now() - started) }
+          } catch (error) {
+            state = { error: String(error), ms: Math.round(performance.now() - started) }
+          }
+          const surfaces = shell === null ? null : {
             topbar: document.querySelector('.acrylBlendsBar') !== null,
             left: document.querySelector('.acrylBlendsLeft') !== null,
             right: document.querySelector('.acrylBlendsRight') !== null,
             canvas: document.querySelector('iframe.acrylAppCanvasFrame') !== null,
           }
+          return { visibility: document.visibilityState, frameState: shell?.getAttribute('data-frame-state') ?? null, surfaces, state }
         })()`)
         fail(
-          `the ACRYL Blends frame did not render its surfaces: ${JSON.stringify(surfaces)}; server said:\n${output.slice(-2500)}`,
+          `the ACRYL Blends frame did not render its surfaces: ${JSON.stringify(probe)}; page reported:\n${pageReported().join('\n')}; server said:\n${output.slice(-2500)}`,
         )
       }
       log(

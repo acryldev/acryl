@@ -19,7 +19,7 @@ import { BlendsFrame } from './BlendsFrame.tsx'
 import { AppCanvasState } from './canvas/app-canvas.ts'
 import { ChatsStore, createRealChatsApi, type MainViewNavigation, type WorkspaceRegistration } from './chats.ts'
 import { AppReloadStore } from './app-reload.ts'
-import { FrameStateStore } from './frame-state.ts'
+import { FrameStateStore, shouldReadOnTick } from './frame-state.ts'
 import { FILES_SEARCH_EVENT } from './FilesView.tsx'
 import { AgentsState, agentsSettingsPlugin, createWorkspaceAgentsApi, settingsSharedPlugin } from 'acryl-workspace/ui'
 import { ShortcutsRow } from './ShortcutsRow.tsx'
@@ -266,7 +266,9 @@ export function apply(ctx: ClientContext): void {
   }, 'acryl-blends-frame: theme presenter')
 
   ctx.effect(() => {
-    const read = () => { if (document.visibilityState === 'visible') void frameState.refresh() }
+    // First successful answer wins: until then every tick retries whether or not the page is visible (the canvas waits on that answer), and
+    // afterwards only a visible page pays for the read.
+    const read = () => { if (shouldReadOnTick(document.visibilityState, frameState.getSnapshot().status)) void frameState.refresh() }
     void frameState.refresh()
     const timer = window.setInterval(read, FRAME_STATE_INTERVAL_MS)
     document.addEventListener('visibilitychange', read)

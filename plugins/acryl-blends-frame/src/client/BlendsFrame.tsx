@@ -201,6 +201,7 @@ export function BlendsFrame({ layout, sidebar, canvas, selection, frameState, ap
       data-mode={frameView.mode}
       data-left={leftOpen ? 'open' : 'closed'}
       data-right={rightOpen ? 'open' : 'closed'}
+      data-frame-state={state.status}
     >
       <header className="acrylBlendsBar">
         <button
