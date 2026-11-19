@@ -80,6 +80,12 @@ verify and check:layout and all 23 framework check steps green before it lands.
   no longer ship Corepack and the framework's matrix runs Node 26; root CI (Node 24) keeps Corepack, framework.yml keeps pnpm/action-setup.
   Also found by the first full root `check` since 96a15157: verify-npm-web-entrypoint listed workspace packages from a fixed set of folders
   and missed acrylblends; it now reads pnpm's list.
+- [ ] T029 [parked, owner decides] anti-slop (dmmulroy/anti-slop, Oxlint rules for TypeScript anti-patterns). Built in ca8d0003 (plugin at
+  upstream d2a9aea3 in scripts/oxlint/anti-slop, oxlint 1.94.0, every rule at error, a per-rule ratchet in `pnpm run check`) and reverted in
+  db99e81c: the owner (2026-11-19) parked it until things are stable after 051, "after we are stable we will see if we need it". Do not
+  bring it back unasked. Measured on this branch: 45,630 findings; the blank-line autofix alone removes 30,546 of them in 1,841 source files.
+  If it returns, ignore build output in .oxlintrc.json first (lib-publish/, build/, scaffold-template/): the first autofix touched four
+  generated files.
 
 ## Phase 3 - packages, not copies
 
