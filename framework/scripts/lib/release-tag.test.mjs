@@ -35,6 +35,18 @@ test('a frame tag names the scoped package from frame/packages.json, and its tar
   assert.ok(release.dir.endsWith(key))
 })
 
+test("the launcher tag names @acryl/launcher in ACRYL's plugins/acryl-launcher", () => {
+  const dir = join(framework, '..', 'plugins', 'acryl-launcher')
+  const version = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version
+  assert.deepEqual(releaseOfTag(`launcher-v${version}`), {
+    kind: 'npm',
+    package: '@acryl/launcher',
+    version,
+    dir,
+    tarball: `acryl-launcher-${version}.tgz`,
+  })
+})
+
 test('a tag whose version is not the one in the source is refused', () => {
   assert.throws(() => releaseOfTag('acrylblends-v0.0.1'), /the source holds/u)
   const entry = Object.values(frame.packages)[0]

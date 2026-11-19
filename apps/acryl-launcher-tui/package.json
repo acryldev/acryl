@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@earendil-works/pi-tui": "1.1.0",
-    "acryl-launcher": "workspace:*",
+    "@acryl/launcher": "workspace:*",
     "acryl-ui-tui": "workspace:*"
   },
   "devDependencies": {

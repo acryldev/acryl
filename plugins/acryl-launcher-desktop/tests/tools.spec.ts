@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { addApp } from 'acryl-launcher'
+import { addApp } from '@acryl/launcher'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Door } from '../src/door.ts'
 import type { Command, Run } from '../src/runner.ts'

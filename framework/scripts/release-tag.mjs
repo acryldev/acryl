@@ -4,6 +4,7 @@
  *   acrylblends-v<version>         acrylblends, framework/packages/cli
  *   create-acrylblends-v<version>  create-acrylblends, framework/packages/create
  *   frame-<short>-v<version>       <scope>/<short>, the frame package framework/frame/packages.json names
+ *   launcher-v<version>            @acryl/launcher, ACRYL's plugins/acryl-launcher
  * The version must be the one the source holds, so a tag can never publish something other than what is checked in.
  *
  *   node framework/scripts/release-tag.mjs <tag>    prints kind=, package=, version=, dir=, tarball= lines (GitHub step outputs)
@@ -55,6 +56,21 @@ export function releaseOfTag(tag, root = framework) {
       versionOf(dir),
     )
   }
+  // The launcher's journeys (ACRYL's plugins/acryl-launcher, spec 051 T010): Control Center installs it instead of a hand copy.
+  match = /^launcher-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
+  if (match !== null) {
+    const dir = join(root, '..', 'plugins', 'acryl-launcher')
+    return expect(
+      {
+        kind: 'npm',
+        package: '@acryl/launcher',
+        version: match[1],
+        dir,
+        tarball: tarball('@acryl/launcher', match[1]),
+      },
+      versionOf(dir),
+    )
+  }
   match = /^frame-([a-z0-9-]+)-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
   if (match !== null) {
     const [, short, version] = match
@@ -76,7 +92,7 @@ export function releaseOfTag(tag, root = framework) {
     )
   }
   throw new Error(
-    `${tag} is not a framework release tag (acrylblends-v<version>, create-acrylblends-v<version> or frame-<short>-v<version>)`,
+    `${tag} is not a framework release tag (acrylblends-v<version>, create-acrylblends-v<version>, frame-<short>-v<version> or launcher-v<version>)`,
   )
 }
 

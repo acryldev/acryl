@@ -1,4 +1,4 @@
-# acryl-launcher
+# @acryl/launcher
 
 The ACRYL launcher's journeys (create an app, install a Blend, pull or share a plugin, update, check this machine, open ACRYL ADE) and the session every face walks them with (spec 050)
 

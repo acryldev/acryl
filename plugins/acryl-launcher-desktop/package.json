@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "acryl-control": "workspace:*",
-    "acryl-launcher": "workspace:*",
+    "@acryl/launcher": "workspace:*",
     "acryl-loopback-http": "workspace:*",
     "acrylblends": "workspace:^"
   },

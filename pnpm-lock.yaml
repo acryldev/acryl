@@ -1560,12 +1560,12 @@ importers:
 
   apps/acryl-launcher-tui:
     dependencies:
+      '@acryl/launcher':
+        specifier: workspace:*
+        version: link:../../plugins/acryl-launcher
       '@earendil-works/pi-tui':
         specifier: 1.1.0
         version: 1.1.0(patch_hash=cafd73997964c16b4eb13f7220af2c9046a6de820cf652bbd1f181ca494fb1ee)
-      acryl-launcher:
-        specifier: workspace:*
-        version: link:../../plugins/acryl-launcher
       acryl-ui-tui:
         specifier: workspace:*
         version: link:../../plugins/acryl-ui-tui
@@ -3125,12 +3125,12 @@ importers:
 
   plugins/acryl-launcher-desktop:
     dependencies:
+      '@acryl/launcher':
+        specifier: workspace:*
+        version: link:../acryl-launcher
       acryl-control:
         specifier: workspace:*
         version: link:../../runtime/acryl-control
-      acryl-launcher:
-        specifier: workspace:*
-        version: link:../acryl-launcher
       acryl-loopback-http:
         specifier: workspace:*
         version: link:../../runtime/acryl-loopback-http
