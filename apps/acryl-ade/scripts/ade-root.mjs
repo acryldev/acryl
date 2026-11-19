@@ -7,15 +7,15 @@ import { fileURLToPath } from 'node:url'
 const file = fileURLToPath(new URL('../cordis.patch.yml', import.meta.url))
 
 /**
- * The overlay with the frame's root row replaced by the workbench's; `text` unchanged when it already mounts the workbench. The frame is named
- * `'@acryldev/blends-frame'` in an app made from npm, and `@acryldev/blends-frame` in one a desktop product is packed from (the packer installs the
- * framework's packages under their source names); the workbench gets the same form of name.
+ * The overlay with the frame's root row replaced by the workbench's; `text` unchanged when it already mounts the workbench. The row ids are the
+ * persisted pre-T038 ones (`acryl-blends-frame`, `acryl-workspace`, spec 051 T038); the row names are scoped modules and are written quoted, since
+ * a YAML plain value cannot start with @.
  */
 export function withWorkbenchRoot(text) {
   return text.replace(
-    /^( +)- id: (@acryldev\/blends-frame|@acryldev\/workspace)\n\1  name: ('@acryldev\/blends-frame'|@acryldev\/blends-frame|'@acryldev\/workspace'|@acryldev\/workspace)\n(?:\1  config:\n(?:\1    .*\n)*)?/mu,
-    (_match, indent, _id, name) =>
-      `${indent}- id: acryl-workspace\n${indent}  name: ${name.startsWith("'") ? "'@acryldev/workspace'" : '@acryldev/workspace'}\n` +
+    /^( +)- id: (?:acryl-blends-frame|acryl-workspace)\n\1  name: ('@acryldev\/blends-frame'|@acryldev\/blends-frame|'@acryldev\/workspace'|@acryldev\/workspace)\n(?:\1  config:\n(?:\1    .*\n)*)?/mu,
+    (_match, indent) =>
+      `${indent}- id: acryl-workspace\n${indent}  name: '@acryldev/workspace'\n` +
       // `acryl ade` started in a folder passes it here: the workbench opens on that project.
       `${indent}  config:\n${indent}    openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n`,
   )
@@ -25,7 +25,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const before = readFileSync(file, 'utf8')
   const after = withWorkbenchRoot(before)
   if (after !== before) writeFileSync(file, after)
-  if (!/name: (?:'@acryldev\/workspace'|@acryldev\/workspace)$/mu.test(after)) {
+  if (!/name: '@acryldev\/workspace'$/mu.test(after)) {
     console.error('ade-root: cordis.patch.yml mounts neither the Blends frame nor the workbench; run `npx acrylblends upgrade` and try again')
     process.exit(1)
   }
