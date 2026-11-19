@@ -5,8 +5,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acrylblends/acrylblends.git",
-    "directory": "ide/acryl-blends-frame"
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-blends-frame"
   },
   "homepage": "https://github.com/acrylblends/acrylblends/tree/main/ide/acryl-blends-frame#readme",
   "bugs": {

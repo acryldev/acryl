@@ -5,8 +5,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acrylblends/acrylblends.git",
-    "directory": "ide/acryl-app-context"
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/acryl-app-context"
   },
   "type": "module",
   "main": "lib/index.js",
