@@ -43,7 +43,7 @@ import type {} from '@acryldev/blends/cordis/router-http'
 
 // `SettingsNamespace` is a compile-time-validated string literal type, not a
 // branded runtime value; `ctx.acrylSettings.register` accepts this literal directly.
-export const MARKET_SETTINGS_NAMESPACE = '@acryldev/cordis-plugin-market'
+export const MARKET_SETTINGS_NAMESPACE = 'cordis-plugin-market'
 const SOURCE_SCHEMA = z.object({
   sourceRecordId: z.string().required(),
   registrationKind: z.union(['user-added', 'built-in'] as const).required(),
