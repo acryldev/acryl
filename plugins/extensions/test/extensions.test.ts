@@ -364,11 +364,15 @@ test("a folder listed in library.json is the app's own import, so the source ski
 
 test("a plugin installed live can import the ports and providers beside it, by name and by the app's #name", () => {
   const aliases = routerAliases()
-  for (const name of ['@acryldev/kv', '@acryldev/kv-json', '@acryldev/db']) {
-    assert.ok(aliases[name] && existsSync(aliases[name]), `${name} resolves to a file`)
-    assert.equal(aliases[`#${name}`], aliases[name])
+  for (const [pkg, key] of [
+    ['@acryldev/kv', '#acryl-kv'],
+    ['@acryldev/kv-json', '#acryl-kv-json'],
+    ['@acryldev/db', '#acryl-db'],
+  ] as const) {
+    assert.ok(aliases[pkg] && existsSync(aliases[pkg]), `${pkg} resolves to a file`)
+    assert.equal(aliases[key], aliases[pkg])
   }
-  assert.ok(aliases['#acryl-kv/conformance']?.endsWith('@acryldev/kv/src/conformance.ts'))
+  assert.ok(aliases['#acryl-kv/conformance']?.endsWith('kv/src/conformance.ts'))
 })
 
 test("a plugin installed live from a home outside the app imports the port by its #name and gets the app's own module", async () => {
