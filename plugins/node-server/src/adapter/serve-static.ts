@@ -1,5 +1,5 @@
-import type { Context, Env, MiddlewareHandler } from 'acryl-router'
-import { getMimeType } from 'acryl-router/helpers'
+import type { Context, Env, MiddlewareHandler } from '@acryldev/router'
+import { getMimeType } from '@acryldev/router/helpers'
 import type { Stats } from 'node:fs'
 import { createReadStream, statSync, existsSync } from 'node:fs'
 import { join } from 'node:path'

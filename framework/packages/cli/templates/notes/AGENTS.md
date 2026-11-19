@@ -1,9 +1,9 @@
 
 ## This app (notes): accounts, sessions, a database
 
-A Cordis app: `blend.yaml` lists the plugins that are mounted (`acryl-router`, `acryl-db-sqlite`, `routes`, `acryl-node-server`), `src/app.ts` is the one file that names the SQLite provider, and `src/routes.ts` is the app's own plugin: it builds the app on the `db` port and mounts it.
+A Cordis app: `blend.yaml` lists the plugins that are mounted (`@acryldev/router`, `@acryldev/db-sqlite`, `routes`, `@acryldev/node-server`), `src/app.ts` is the one file that names the SQLite provider, and `src/routes.ts` is the app's own plugin: it builds the app on the `db` port and mounts it.
 
-- **The dependency rule:** only `src/app.ts` (the `opener` in `package.json`) imports the provider. Every other file takes a `Db` (`import type { Db } from '../plugins/acryl-db/src/index.ts'`) as an argument and never imports `node:sqlite`, `pg`, another driver or `acryl-db-sqlite`. `npm test` and `npm run check` run `acrylblends check-deps`, which names the file and line of a violation; do not move the `opener` entry to silence it.
+- **The dependency rule:** only `src/app.ts` (the `opener` in `package.json`) imports the provider. Every other file takes a `Db` (`import type { Db } from '../plugins/db/src/index.ts'`) as an argument and never imports `node:sqlite`, `pg`, another driver or `@acryldev/db-sqlite`. `npm test` and `npm run check` run `acrylblends check-deps`, which names the file and line of a violation; do not move the `opener` entry to silence it.
 - `src/db.ts`: `notesStore(db)`, the queries for notes. Every `db` call returns a promise: `await` it. Use `?` bindings, never string-built SQL. The database is `data/notes.sqlite` (or the file `$NOTES_DB` names), opened by the `db` row with `migrations/` applied on start. See `docs/framework/guides/data.md`.
 - `migrations/`: the shape of the database, one numbered file per change (`001-notes.sql`). A file that has run is never edited; a change is the next file (`002-name.sql`).
 - `src/auth.ts`: scrypt password hashes (`node:crypto`) and the `sessions` table; the cookie `sid` holds a random token.

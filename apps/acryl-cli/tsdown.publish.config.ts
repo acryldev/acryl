@@ -5,10 +5,10 @@ import { defineConfig } from 'tsdown'
  *
  * The default `tsdown.config.ts` (used by `pnpm build` for the development
  * loop) leaves node_modules dependencies external, which includes the
- * workspace-internal packages `acryl-control` and `acryl-harness-runtime`.
+ * workspace-internal packages `@acryldev/control` and `@acryldev/harness-runtime`.
  * That is fine in the workspace (those packages resolve as workspace deps),
  * but it produces a `bin.js` that is NOT self-contained: an external
- * `npm install -g acryl` cannot resolve `acryl-harness-runtime`, so the CLI
+ * `npm install -g acryl` cannot resolve `@acryldev/harness-runtime`, so the CLI
  * fails at startup with ERR_MODULE_NOT_FOUND.
  *
  * This publish build therefore BUNDLES the internal ACRYL packages (and the
@@ -26,7 +26,7 @@ const shared = {
   dts: false,
   sourcemap: true,
   // Bundle the internal workspace packages so the entrypoint is self-contained.
-  noExternal: ['acryl-control', 'acryl-harness-runtime'],
+  noExternal: ['@acryldev/control', '@acryldev/harness-runtime'],
 }
 
 export default defineConfig([

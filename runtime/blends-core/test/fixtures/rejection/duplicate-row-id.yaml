@@ -10,6 +10,6 @@ spec:
   runtime: cordis
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'
     - id: contacts
-      name: '@acryl/contacts-v2'
+      name: '@acryldev/contacts-v2'

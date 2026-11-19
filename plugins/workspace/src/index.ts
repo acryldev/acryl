@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto'
 import { basename } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-control'
+import type {} from '@acryldev/control'
 import type { Acryl } from 'acrylblends'
 import type {} from 'acrylblends/cordis/router'
 import type {} from 'acrylblends/cordis/router-http'
@@ -35,7 +35,7 @@ import { SHARED_CONTEXT_SERVICE, SharedContext } from './shared-context/service.
 import { registerContextTool } from './shared-context/tool.ts'
 
 /** Stable Cordis plugin name. */
-export const name = 'acryl-workspace'
+export const name = '@acryldev/workspace'
 
 /**
  * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
@@ -74,13 +74,13 @@ export const inject = ['acrylWeb', 'appInstance', 'acrylSettings', 'router', 'ro
  */
 export function apply(ctx: Context, config: WorkspaceConfig = {}): void {
   if (ctx.acrylWeb.host !== '127.0.0.1') {
-    throw new Error('acryl-workspace: requires a loopback Web server')
+    throw new Error('@acryldev/workspace: requires a loopback Web server')
   }
   const appPage = typeof config.appPage === 'string' && config.appPage.startsWith('/') ? config.appPage : undefined
   const rendererOrigin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const reportHostError = (operation: string, cause: unknown): void => {
     ctx.logger.error(
-      `acryl-workspace: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
+      `@acryldev/workspace: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`,
     )
   }
   // The services and their routes are built in the effect; the terminal's sockets are taken and the app mounted after it, so on unload the
@@ -141,17 +141,17 @@ export function apply(ctx: Context, config: WorkspaceConfig = {}): void {
       const contextFor = (folder: string): { readonly prompt: string } | undefined => sharedContext?.contextFor(folder)
       const chatContextFiber = ctx.inject(['systemPrompt'], (child) => {
         const systemPrompt = (child as unknown as { readonly systemPrompt: SystemPromptContextPort }).systemPrompt
-        child.effect(() => registerChatContext(systemPrompt, contextFor), 'acryl-workspace: shared workspace context for the chat')
+        child.effect(() => registerChatContext(systemPrompt, contextFor), '@acryldev/workspace: shared workspace context for the chat')
       })
       releases.push(() => { void chatContextFiber.dispose() })
       // The context for any agent through the tool registry and the gateway, and the agent's workspace tools (spec 043 T007); present while
       // ACRYL's tool port is.
       const contextToolFiber = ctx.inject(['acrylTools'], (child) => {
-        child.effect(() => registerContextTool(child, { view: () => projects.view(), promptFor: id => sharedContext?.promptFor(id) }), 'acryl-workspace: workspace context tool')
+        child.effect(() => registerContextTool(child, { view: () => projects.view(), promptFor: id => sharedContext?.promptFor(id) }), '@acryldev/workspace: workspace context tool')
       })
       releases.push(() => { void contextToolFiber.dispose() })
       const toolsFiber = ctx.inject(['acrylTools'], (child) => {
-        child.effect(() => registerWorkspaceTools(child, projects), 'acryl-workspace: workspace agent tools')
+        child.effect(() => registerWorkspaceTools(child, projects), '@acryldev/workspace: workspace agent tools')
       })
       releases.push(() => { void toolsFiber.dispose() })
       const keepAlive = createKeepAlive()
@@ -185,8 +185,8 @@ export function apply(ctx: Context, config: WorkspaceConfig = {}): void {
       for (const release of releases.reverse()) release()
       await Promise.all([workspacePty.disposeAll(), workspaceGit.dispose()])
     }
-  }, 'acryl-workspace: PTY table, git, files, projects and agents')
-  if (built.routes === undefined || built.pty === undefined) throw new Error('acryl-workspace: the routes were not built')
+  }, '@acryldev/workspace: PTY table, git, files, projects and agents')
+  if (built.routes === undefined || built.pty === undefined) throw new Error('@acryldev/workspace: the routes were not built')
   const upgrade = ctx.routerHttp.upgrades()
   // Removing the mount ends the requests still in flight, the project event streams among them.
   ctx.router.route('/', privateApi(...built.routes, ptyStreamRoutes(built.pty, upgrade, reportHostError)))

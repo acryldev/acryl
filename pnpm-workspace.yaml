@@ -1,17 +1,17 @@
 nodeLinker: isolated
 
 packages:
-  - examples/acryl-blend-demo
-  - examples/acryl-framework-starter
-  - examples/acryl-todo
-  - runtime/acryl-control
-  - runtime/acryl-diagnostics
-  - runtime/acryl-harness-runtime
+  - examples/blend-demo
+  - examples/framework-starter
+  - examples/todo
+  - runtime/control
+  - runtime/diagnostics
+  - runtime/harness-runtime
   - runtime/blends-core
   - runtime/app-persistence
-  - runtime/plugin-hub
-  - runtime/acryl-loopback-http
-  - runtime/acryl-web-service
+  - runtime/plugin-hub-core
+  - runtime/loopback-http
+  - runtime/web
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web
@@ -39,7 +39,7 @@ allowBuilds:
 
 overrides:
   koffi: 3.1.5
-  # Nothing loads DeepSeek Harness's native internals add-on: ACRYL's profile resolution (runtime/acryl-harness-runtime/src/profile-resolution)
+  # Nothing loads DeepSeek Harness's native internals add-on: ACRYL's profile resolution (runtime/harness-runtime/src/profile-resolution)
   # runs on Node's public module hooks, and the Cordis Loader falls back to plain import() without it. The add-on accepts only the Electron
   # builds named in its binary, so leaving it installed would tie Desktop to them again.
   node-addon-require-builtin: '-'
@@ -343,6 +343,6 @@ minimumReleaseAgeExclude:
   - '@deepseek-ai/node-addon-system-linux-arm64@0.1.2'
   - '@deepseek-ai/node-addon-system-linux-x64@0.1.2'
   - '@deepseek-ai/node-addon-system@0.1.2'
-  - '@webboxes/blends-core@0.2.0 || 0.3.0 || 0.4.0 || 0.5.0'
-  - '@webboxes/app-persistence@0.1.1 || 0.1.2'
-  - '@webboxes/plugin-hub@0.2.0 || 0.2.2'
+  - '@acryldev/blends-core@0.2.0 || 0.3.0 || 0.4.0 || 0.5.0'
+  - '@acryldev/app-persistence@0.1.1 || 0.1.2'
+  - '@acryldev/plugin-hub-core@0.2.0 || 0.2.2'

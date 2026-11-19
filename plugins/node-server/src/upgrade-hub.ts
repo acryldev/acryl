@@ -6,7 +6,7 @@
  */
 import { EventEmitter } from 'node:events'
 import { createRequire } from 'node:module'
-import type { UpgradeWebSocket } from 'acryl-router/helpers'
+import type { UpgradeWebSocket } from '@acryldev/router/helpers'
 import type { FetchCallback } from './adapter/types.ts'
 import { type UpgradeSource, setupWebSocket, upgradeWebSocket as portedUpgradeWebSocket } from './adapter/websocket.ts'
 import type { WebSocketLike, WebSocketServerLike } from './adapter/websocket-types.ts'

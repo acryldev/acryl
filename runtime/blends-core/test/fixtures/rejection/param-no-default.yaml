@@ -13,6 +13,6 @@ spec:
       type: string
   rows:
     - id: welcome
-      name: '@acryl/welcome'
+      name: '@acryldev/welcome'
       config:
         title: '{{parameters.appTitle}}'

@@ -18,7 +18,7 @@ index b16b6fe..f9daa94 100644
 @@ -2,13 +2,13 @@
    "formatVersion": 3,
    "generator": {
-     "name": "@webboxes/blends-core",
+     "name": "@acryldev/blends-core",
 -    "version": "0.4.0"
 +    "version": "0.5.0"
    },
@@ -95,7 +95,7 @@ index c56b9e4..9d9ee91 100644
 @@ -2,13 +2,13 @@
    "formatVersion": 3,
    "generator": {
-     "name": "@webboxes/blends-core",
+     "name": "@acryldev/blends-core",
 -    "version": "0.4.0"
 +    "version": "0.5.0"
    },

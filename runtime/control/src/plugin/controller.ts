@@ -7,7 +7,7 @@
  * resolution, cascade, order, and rollback; the host port
  * (`host.ts`) decides policy and persistence.
  *
- * @module acryl-control/plugin/controller
+ * @module @acryldev/control/plugin/controller
  */
 
 import { type Context, type Fiber, type FiberState } from '@deepseek-ai/cordis'

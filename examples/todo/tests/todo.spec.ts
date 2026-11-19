@@ -28,7 +28,7 @@ async function boot(file?: string): Promise<Context> {
 const post = (ctx: Context, title: unknown): Promise<Response> =>
   ctx.router.request('/todo/api', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title }) })
 
-describe('acryl-todo', () => {
+describe('@acryldev/todo', () => {
   it('creates, completes, lists and deletes', async () => {
     const ctx = await boot()
     const created = await post(ctx, ' buy milk ')
@@ -73,7 +73,7 @@ describe('acryl-todo', () => {
   })
 
   it('survives a restart: a new context on the same file sees the list', async () => {
-    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-'))
+    const folder = mkdtempSync(join(tmpdir(), '@acryldev/todo-'))
     folders.push(folder)
     const file = join(folder, 'data', 'todos.json')
     const first = await boot(file)
@@ -86,7 +86,7 @@ describe('acryl-todo', () => {
   })
 
   it('refuses to start on a corrupt file and leaves its bytes untouched', async () => {
-    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-'))
+    const folder = mkdtempSync(join(tmpdir(), '@acryldev/todo-'))
     folders.push(folder)
     const file = join(folder, 'todos.json')
     const original = '[{"id":1,"title":"precious","done":false},'

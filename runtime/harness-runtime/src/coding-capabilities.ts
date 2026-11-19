@@ -6,7 +6,7 @@
  * `@acryldev/coding-capabilities`, which the surfaces compose from: the runtime decides what a Blueprint may name, the surface decides what
  * runs. The two tables must name the same ids; the composition package's test asserts it both ways (spec 051 T021).
  *
- * @module acryl-harness-runtime/coding-capabilities
+ * @module @acryldev/harness-runtime/coding-capabilities
  */
 
 export type AcrylSurface = 'tui' | 'web' | 'desktop'

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryldev/ui/frame'
 import { recordKey, saveBinding, shortcutGroups, type KeyPress } from '../src/client/shortcut-rows.ts'
 
 const entry = (id: string, label: string, keys: string[], extra: Partial<ShortcutCatalogEntry> = {}): ShortcutCatalogEntry => ({
@@ -8,7 +8,7 @@ const entry = (id: string, label: string, keys: string[], extra: Partial<Shortcu
 const fixedEntry = (id: string, label: string, keys: string[]): ShortcutFixedCatalogEntry => ({ id: id as ShortcutCommandId, label, keys, bindings: [], group: 'input' })
 
 const catalog = [
-  entry('acryl-mount-anchors.toggle', 'Pick an element for the agent', ['⇧', '⌘', '.'], { aliases: ['inspector'] }),
+  entry('@acryldev/mount-anchors.toggle', 'Pick an element for the agent', ['⇧', '⌘', '.'], { aliases: ['inspector'] }),
   entry('session.new', 'New Session', ['⌥', '⌘', 'N'], { modified: true }),
   entry('session.fork', 'Fork session', ['⇧', '⌘', 'F'], { conflicts: ['session.new' as ShortcutCommandId] }),
 ]

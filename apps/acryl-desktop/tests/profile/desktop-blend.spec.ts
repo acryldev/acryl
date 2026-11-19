@@ -29,7 +29,7 @@ const FIXTURE_LOCK_DIR = fileURLToPath(new URL('../fixtures/blend/acryl-demo', i
 function validLock(): Record<string, unknown> {
   return {
     formatVersion: 1,
-    generator: { name: '@webboxes/blends-core', version: '0.1.0' },
+    generator: { name: '@acryldev/blends-core', version: '0.1.0' },
     origin: {
       id: 'acryl.crm',
       kind: 'Blueprint',
@@ -37,8 +37,8 @@ function validLock(): Record<string, unknown> {
       digest: `sha256:${'a'.repeat(64)}`,
     },
     rows: [
-      { id: 'contacts', name: '@acryl/contacts', config: { title: 'Contacts' } },
-      { id: 'invoicing', name: '@acryl/invoicing', disabled: true },
+      { id: 'contacts', name: '@acryldev/contacts', config: { title: 'Contacts' } },
+      { id: 'invoicing', name: '@acryldev/invoicing', disabled: true },
     ],
   }
 }
@@ -51,7 +51,7 @@ describe('parseBlendLock', () => {
   it('projects a well-formed lock with frozen rows carrying config and disabled', () => {
     const projection = parseBlendLock(validLock(), '/tmp/lock.json')
     expect(projection.lockPath).toBe('/tmp/lock.json')
-    expect(projection.generator).toEqual({ name: '@webboxes/blends-core', version: '0.1.0' })
+    expect(projection.generator).toEqual({ name: '@acryldev/blends-core', version: '0.1.0' })
     expect(projection.origin).toEqual({
       id: 'acryl.crm',
       kind: 'Blueprint',
@@ -59,8 +59,8 @@ describe('parseBlendLock', () => {
       digest: `sha256:${'a'.repeat(64)}`,
     })
     expect(projection.rows).toEqual([
-      { id: 'contacts', name: '@acryl/contacts', config: { title: 'Contacts' } },
-      { id: 'invoicing', name: '@acryl/invoicing', disabled: true },
+      { id: 'contacts', name: '@acryldev/contacts', config: { title: 'Contacts' } },
+      { id: 'invoicing', name: '@acryldev/invoicing', disabled: true },
     ])
     expect(Object.isFrozen(projection)).toBe(true)
   })
@@ -138,8 +138,8 @@ describe('blendInsertPatch and blendRowIds', () => {
     const projection = parseBlendLock(validLock(), '/tmp/lock.json')
     expect(blendInsertPatch(projection)).toEqual({
       insert: [
-        { id: 'contacts', name: '@acryl/contacts', config: { title: 'Contacts' } },
-        { id: 'invoicing', name: '@acryl/invoicing', disabled: true },
+        { id: 'contacts', name: '@acryldev/contacts', config: { title: 'Contacts' } },
+        { id: 'invoicing', name: '@acryldev/invoicing', disabled: true },
       ],
     })
     expect(blendRowIds(projection)).toEqual(new Set(['contacts', 'invoicing']))

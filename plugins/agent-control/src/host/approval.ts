@@ -1,12 +1,12 @@
 /** Per-call approval for the tools that change the page, through the harness's own policy pipeline. */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { AcrylToolCall, AcrylToolDecision } from 'acryl-control'
+import type { AcrylToolCall, AcrylToolDecision } from '@acryldev/control'
 import { describeCall, MUTATING_TOOL_NAMES, type RefDirectory } from './tools.ts'
 
 /**
  * The narrow slice of the harness's own `@deepseek-ai/dsh-user-approval` service this package reads, declared
- * locally instead of taking a dependency on that package for one check (same pattern `acryl-workspace`'s own
+ * locally instead of taking a dependency on that package for one check (same pattern `@acryldev/workspace`'s own
  * `contracts.ts` uses for slot keys it only reads, not owns).
  */
 interface SessionApprovalPolicy {

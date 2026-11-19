@@ -29,8 +29,8 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, relative, sep } from 'node:path'
-import { processIsAlive } from '../runtime/acryl-harness-runtime/src/instance/offline-lock.ts'
-import { registryDir } from '../runtime/acryl-harness-runtime/src/instance/registry.ts'
+import { processIsAlive } from '../runtime/harness-runtime/src/instance/offline-lock.ts'
+import { registryDir } from '../runtime/harness-runtime/src/instance/registry.ts'
 
 /** The real homes of the OS user, as `instance/` names them. */
 const REAL_HOME_FOLDERS = ['.acryl', '.acryl-dev', '.acryl-worktrees', '.acryl-instances', '.dsh']

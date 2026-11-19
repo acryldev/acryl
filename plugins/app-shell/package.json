@@ -1,14 +1,14 @@
 {
-  "name": "acryl-app-shell",
+  "name": "@acryldev/app-shell",
   "version": "0.1.1",
-  "description": "The generic three-column desktop/web app frame (brand sidebar, main surface, resizable details column, theme, platform title-bar spacing) any ACRYL Blend's domain plugin claims as its own main UI, the same way plugins/acryl-workspace claims it for the IDE. Extracted from acryl-workspace's own shell/ so the next Blueprint after the IDE does not rebuild this wiring again.",
+  "description": "The generic three-column desktop/web app frame (brand sidebar, main surface, resizable details column, theme, platform title-bar spacing) any ACRYL Blend's domain plugin claims as its own main UI, the same way plugins/workspace claims it for the IDE. Extracted from @acryldev/workspace's own shell/ so the next Blueprint after the IDE does not rebuild this wiring again.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-app-shell"
+    "directory": "plugins/app-shell"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-app-shell#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/app-shell#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -100,6 +100,6 @@
     ]
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*"
+    "@acryldev/ui": "workspace:*"
   }
 }

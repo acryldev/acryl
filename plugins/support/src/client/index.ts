@@ -4,7 +4,7 @@
  * same-origin route.
  */
 
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { en, zh, type SupportLocaleKey } from './locales.ts'
 import { SupportSection } from './SupportSection.tsx'
@@ -19,15 +19,15 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = 'acryl-support-client'
+export const name = '@acryldev/support-client'
 /** `slots` for the section, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 
 export function apply(ctx: ClientContext): void {
   const api = createSupportApi()
   const t = ctx.locale.bind(SUPPORT_LOCALE_NAMESPACE)
-  ctx.effect(() => ctx.locale.register(SUPPORT_LOCALE_NAMESPACE, { zh, en }), 'acryl-support: dictionaries')
-  ctx.effect(() => installSupportStyles(), 'acryl-support: styles')
+  ctx.effect(() => ctx.locale.register(SUPPORT_LOCALE_NAMESPACE, { zh, en }), '@acryldev/support: dictionaries')
+  ctx.effect(() => installSupportStyles(), '@acryldev/support: styles')
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
     id: 'support',

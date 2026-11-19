@@ -1,17 +1,17 @@
-# acryl-db-sqlite
+# @acryldev/db-sqlite
 
 The SQLite provider of the [`db` port](../acryl-db/README.md), one Cordis plugin. It opens one file with Node's built-in `node:sqlite`
 (WAL journal, `synchronous = NORMAL`, a busy timeout), applies the app's numbered migrations, and provides `db`.
 
 ```yaml
 - id: acryl-db-sqlite
-  name: acryl-db-sqlite
+  name: @acryldev/db-sqlite
   config:
     path: data/app.sqlite   # default: data.sqlite in the ACRYL app home; required outside an ACRYL app
     migrations: migrations  # a folder of 001-name.sql, 002-name.sql, ...
 ```
 
-Without Cordis, the same opening is `openDb` from `acryl-db-sqlite/open`: it takes `path` and optional `migrations` (a path or a file
+Without Cordis, the same opening is `openDb` from `@acryldev/db-sqlite/open`: it takes `path` and optional `migrations` (a path or a file
 URL), `busyTimeoutMs` and `walAutoCheckpointPages`, and resolves `{ db, close }`. That entry imports nothing from Cordis. The plugin is a
 thin wrapper over it.
 

@@ -1,9 +1,13 @@
 {
   "name": "openai",
   "description": "A real model for the agent: any OpenAI-compatible chat API (OpenAI, DeepSeek, Ollama, LM Studio) over fetch, with tool calls. No SDK.",
-  "requires": ["agent"],
+  "requires": [
+    "agent"
+  ],
   "inject": [],
-  "provides": ["model"],
+  "provides": [
+    "model"
+  ],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },

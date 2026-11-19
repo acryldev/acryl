@@ -1,5 +1,5 @@
 import { Response as PonyfillResponse } from '@whatwg-node/fetch'
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 
 export const app = new Acryl()
 

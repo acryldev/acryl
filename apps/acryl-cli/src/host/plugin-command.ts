@@ -26,7 +26,7 @@ import {
   type PluginHealthReport,
   type PluginLifecycleReceipt,
   type PluginLifecycleSnapshot,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import { startDirectHost } from './direct.ts'
 
 /** Actions this module implements; `add`/`remove` are install (spec 034, T006). */

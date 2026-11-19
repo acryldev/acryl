@@ -26,17 +26,17 @@ const DRIVERS = [
   'mysql2',
 ]
 /** The openers a provider ships: importing one of them is opening a database. */
-const OPENERS = ['acrylblends/db/sqlite', 'acryl-db-sqlite']
+const OPENERS = ['acrylblends/db/sqlite', '@acryldev/db-sqlite']
 /** The desktop shell is where Electron lives (`acrylblends add desktop` copies it). */
 const ELECTRON = 'electron'
 const ELECTRON_HOMES = [
-  'plugins/desktop/',
+  'plugins/desktop-shell/',
   'plugins/desktop-web/',
-  'src/plugins/desktop/',
+  'src/plugins/desktop-shell/',
   'src/plugins/desktop-web/',
 ]
 /** The provider plugins themselves may import what they wrap. */
-const PROVIDER_HOMES = ['plugins/acryl-db-sqlite/', 'src/plugins/acryl-db-sqlite/']
+const PROVIDER_HOMES = ['plugins/db-sqlite/', 'src/plugins/db-sqlite/']
 
 const SOURCE = /\.(?:[cm]?[jt]s|[jt]sx)$/u
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'lib', 'build', 'coverage'])
@@ -154,7 +154,7 @@ const GUIDE = 'docs/framework/guides/data.md#why-the-database-is-opened-in-one-p
 
 function advice(violation: Violation, openers: readonly string[]): string {
   if (violation.kind === 'electron')
-    return `"${violation.specifier}" is the desktop shell's: only plugins/desktop (added with "acrylblends add desktop") imports electron`
+    return `"${violation.specifier}" is the desktop shell's: only plugins/desktop-shell (added with "acrylblends add desktop") imports electron`
   const where =
     openers.length > 0
       ? openers.join(', ')

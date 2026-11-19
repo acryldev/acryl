@@ -1,14 +1,14 @@
 {
-  "name": "acryl-door",
+  "name": "@acryldev/door",
   "version": "0.1.0",
   "description": "The door of an ACRYL framework app, one Cordis plugin: an agent working in the app folder looks at the running page (snapshots with refs), acts on it (click, type, select, press, scroll, wait) and installs plugins live, through .acryl/bin/acryl; loopback only, with a per-run secret in .acryl/door.json, an audit log, and an in-page indicator with a kill switch",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-door"
+    "directory": "plugins/door"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-door#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/door#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -16,7 +16,7 @@
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
   "bin": {
-    "acryl-door": "lib/cli.js"
+    "@acryldev/door": "lib/cli.js"
   },
   "exports": {
     ".": {
@@ -65,8 +65,8 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "acryl-node-server": "workspace:*",
-    "acryl-router": "workspace:*"
+    "@acryldev/node-server": "workspace:*",
+    "@acryldev/router": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
@@ -82,8 +82,8 @@
     "typescript": "6.0.3",
     "vitest": "4.1.11",
     "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
-    "acryl-router-http": "workspace:*",
-    "acryl-web-server": "workspace:*",
+    "@acryldev/router-http": "workspace:*",
+    "@acryldev/web-server": "workspace:*",
     "ws": "8.21.3",
     "@types/ws": "8.18.2"
   },

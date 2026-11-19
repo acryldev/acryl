@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-agent-control'
+const PACKAGE_NAME = '@acryldev/agent-control'
 
 export default defineConfig([
   {

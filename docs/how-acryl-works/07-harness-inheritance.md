@@ -60,10 +60,10 @@ linker, npm artifacts are physically deduplicated per *(version, dependency-grap
 
 ## 2. Who inherits what — per surface
 
-| Surface | Direct harness deps (its own manifest) | Via `acryl-harness-runtime` (workspace) | Imports the submodule? |
+| Surface | Direct harness deps (its own manifest) | Via `@acryldev/harness-runtime` (workspace) | Imports the submodule? |
 |---|---|---|---|
 | `acryl-cli` | 19 × `dsh-*@0.1.1-rc.2` + 4 × `cordis-*` | 146 × `dsh-*` + 6 × `cordis-*` | **One runtime read only: the shipped-presets dir** (§5) |
-| `acryl-harness-runtime` | 146 × `dsh-*@0.1.1-rc.2` + 6 × `cordis-*` | — (is the assembly layer) | No |
+| `@acryldev/harness-runtime` | 146 × `dsh-*@0.1.1-rc.2` + 6 × `cordis-*` | — (is the assembly layer) | No |
 | `acryl-web` | 15 × `dsh-*@0.1.1-rc.2` + 6 × `cordis-*` | yes (`workspace:*`) | No |
 | `acryl-desktop` | **131 × `dsh-*@0.1.1-rc.2` + 5 × `cordis-*`** — declared directly, not inherited through harness-runtime | no | **No.** Despite "integrating the harness", it composes the same published npm family through its own manifest |
 
@@ -86,7 +86,7 @@ Key corrections to common assumptions:
 2. **npm artifacts in the pnpm store** — deduplicated per *(version, peer-resolution
    graph hash)*. Currently `@deepseek-ai/dsh-base@0.1.1-rc.2` exists as **two** store
    entries:
-   - `_33583eaa…` — used by `acryl-harness-runtime` and `acryl-desktop`
+   - `_33583eaa…` — used by `@acryldev/harness-runtime` and `acryl-desktop`
    - `_7ec15968…` — used by `acryl-web`
    Same version, different dependency-graph context (the root `.npmrc` deliberately gives
    the TUI its own React 19 peer graph, and the web surface resolves its own). This is
@@ -122,7 +122,7 @@ family, pinned by one `upstream.json`, patched by one patch set.**
 Two known gaps in the gate (safe today, worth closing):
 
 1. The `file:`/`link:` bypass check loops over root, desktop, canvas, control, tui,
-   fabric, market — `acryl-web` and `acryl-harness-runtime` are **not** in the loop.
+   fabric, market — `acryl-web` and `@acryldev/harness-runtime` are **not** in the loop.
 2. The `runtimePackageVersion` family check covers only `acryl-desktop`; tui / web /
    harness-runtime pin `0.1.1-rc.2` in practice but are not gate-enforced to.
 
@@ -133,7 +133,7 @@ Also note the launcher layout rule the gate encodes: launchers live with their s
 
 ## 5. The one runtime read of the submodule: shipped agent presets
 
-`acryl-harness-runtime/src/coding-capabilities.ts`:
+`@acryldev/harness-runtime/src/coding-capabilities.ts`:
 
 ```ts
 // The ACRYL repo root (this package sits at `<repo>/acryl-harness-runtime`). The
@@ -198,7 +198,7 @@ state — which is exactly what the verify-layout gate forbids.
 
 Instead, close the loop on the existing contract:
 
-1. **Fix the two gate gaps** (§4): add `acryl-web` and `acryl-harness-runtime` to the
+1. **Fix the two gate gaps** (§4): add `acryl-web` and `@acryldev/harness-runtime` to the
    bypass-check loop; extend the `runtimePackageVersion` family check from desktop-only
    to every manifest that declares `dsh-*` deps.
 2. **Optional consistency upgrade**: at each `upstream:update`, publish/adopt a runtime
@@ -223,6 +223,6 @@ source, preset assets, and the target for `upstream:*` tooling.
 | Submodule contract & gates | `upstream.json`, `scripts/update-upstream.mjs`, `scripts/verify-layout.mjs`, `pnpm-workspace.yaml` |
 | Per-surface dep counts | `*/package.json` (`dsh-*@0.1.1-rc.2` counted at authoring time) |
 | Two dsh-base store variants | `node_modules/.pnpm/@deepseek-ai+dsh-base@0.1.1-rc.2_*` + per-package symlink targets |
-| Presets runtime read | `acryl-harness-runtime/src/coding-capabilities.ts` (quoted above) |
+| Presets runtime read | `@acryldev/harness-runtime/src/coding-capabilities.ts` (quoted above) |
 | npm tarball ships no presets | `node_modules/.pnpm/@deepseek-ai+dsh-agent-presets@0.1.1-rc.2_*/…` contents |
 | Profile symlinks, not copies | `~/.dsh/profiles/node_modules/@deepseek-ai/` (233 symlink entries) |

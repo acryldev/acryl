@@ -1,7 +1,7 @@
 # Node server
 
-`acryl-node-server` serves the whole router over HTTP from a standalone Node.js process. Use it for an app that runs without the ACRYL
-Host. Inside the Host (Web and Desktop), the Host owns the web server and a plugin asks `acryl-router-http` to serve its prefix instead.
+`@acryldev/node-server` serves the whole router over HTTP from a standalone Node.js process. Use it for an app that runs without the ACRYL
+Host. Inside the Host (Web and Desktop), the Host owns the web server and a plugin asks `@acryldev/router-http` to serve its prefix instead.
 
 ## Serve the router
 

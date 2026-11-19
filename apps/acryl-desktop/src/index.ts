@@ -1,11 +1,11 @@
 /** ACRYL Host plugin: owns the selected native shell generation. */
 
 import { fileURLToPath } from 'node:url'
-import { type AppInstance, announceSelf } from 'acryl-harness-runtime'
+import { type AppInstance, announceSelf } from '@acryldev/harness-runtime'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-cmdline'
-import type {} from 'acryl-settings'
+import type {} from '@acryldev/settings'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-commands'
 // `ctx.connection`'s Context augmentation; see the authenticatedUrl() call
@@ -50,7 +50,7 @@ export const name = 'desktop-shell'
 /** Services required by the desktop shell; `desktopRuntime` is probed, not required. */
 export const inject = ['webServer', 'webRuntime', 'appExit', 'acrylSettings', 'loader']
 
-// Namespaces of ACRYL's own settings service (`ctx.acrylSettings`, package `acryl-settings`).
+// Namespaces of ACRYL's own settings service (`ctx.acrylSettings`, package `@acryldev/settings`).
 /** Standard settings namespace shared by tray and configuration surfaces. */
 export const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 
@@ -230,10 +230,10 @@ export function apply(ctx: Context, config: Config): void {
       'acryl-desktop: local plugin development watchers',
     )
   }
-  // The Settings > Plugins Lifecycle and Architecture routes are the shared `acryl-plugin-admin` plugin's,
+  // The Settings > Plugins Lifecycle and Architecture routes are the shared `@acryldev/plugin-admin` plugin's,
   // composed for every surface; this Host only publishes the lifecycle authority they drive
   // (`ctx.acrPluginLifecycle`, above).
-  // `/restart`, not `/reload`: `/reload` is acryl-plugin-context's command on every surface (re-install local plugins, `/reload new`), and
+  // `/restart`, not `/reload`: `/reload` is @acryldev/plugin-context's command on every surface (re-install local plugins, `/reload new`), and
   // two commands under one name failed this one's registration at every Desktop boot.
   ctx.inject(['commands'], (commandCtx) => {
     commandCtx.effect(() => commandCtx.commands.register({

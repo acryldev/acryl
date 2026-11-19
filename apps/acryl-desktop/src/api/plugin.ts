@@ -7,7 +7,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acrylblends/cordis/router'
 import type {} from 'acrylblends/cordis/router-http'
-import type {} from 'acryl-settings'
+import type {} from '@acryldev/settings'
 import type {} from '../settings/desktop-settings-controller.ts'
 import type {} from '../shell/runtime.ts'
 import { desktopPreferencesRoutes } from '../settings/desktop-preferences-route.ts'

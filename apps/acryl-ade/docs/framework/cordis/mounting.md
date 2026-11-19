@@ -25,7 +25,7 @@ export function apply(ctx: Context): void {
   unloads the second takes over.
 - `ctx.router.route` is the only way to register with the router.
 - To be reachable over HTTP inside the ACRYL Host, ask the adapter to serve the prefix with `routerHttp.mount(prefix)` (an optional
-  dependency, hence the inner `ctx.inject`). A standalone `acryl-node-server` serves the whole router, so there the call is not needed.
+  dependency, hence the inner `ctx.inject`). A standalone `@acryldev/node-server` serves the whole router, so there the call is not needed.
 
 ## Not found and errors
 
@@ -60,7 +60,7 @@ What each choice does for an app mounted at `/orders` with routes `/` and `/:id`
 | --- | --- | --- | --- | --- |
 | nothing (the default) | 200 | 404 | 200 | 404 |
 | `.use(trimTrailingSlash())` in the app | 200 | 301 to `/orders` | 200 | 301 to `/orders/42` |
-| `acryl-router` row config `trailingSlash: 'ignore'` | 200 | 200 | 200 | 200 |
+| `@acryldev/router` row config `trailingSlash: 'ignore'` | 200 | 200 | 200 | 200 |
 | `new Acryl({ strict: false })` for the mounted app | 200 | 404 | 200 | 404 |
 
 - **`trimTrailingSlash()`** (from `acrylblends/trailing-slash`) is the choice a plugin makes for itself. It acts after the handlers: only
@@ -68,11 +68,11 @@ What each choice does for an app mounted at `/orders` with routes `/` and `/:id`
   POST, PUT, PATCH or DELETE to `/orders/` stays a 404. `trimTrailingSlash({ alwaysRedirect: true })` redirects before the handlers run,
   which a wildcard route (`/files/*`) needs. `appendTrailingSlash()` does the opposite, for an app whose canonical paths end in `/`.
 - **`trailingSlash: 'ignore'`** is the router's own setting and applies to every mount at once, without a redirect. Set it in the
-  composition that owns the `acryl-router` row (the Blueprint or profile), not from one plugin.
+  composition that owns the `@acryldev/router` row (the Blueprint or profile), not from one plugin.
 - **`strict: false`** on an `Acryl` is the core's option and works for an app you serve yourself (`app.fetch`, `app.request`). It has no
   effect on a mounted app, because the router composes all mounts into one root app whose strictness comes from `trailingSlash`.
 
-`examples/acryl-todo` uses `trimTrailingSlash()`: `/todo/` sends the browser to `/todo`, and the API keeps one path per route.
+`examples/todo` uses `trimTrailingSlash()`: `/todo/` sends the browser to `/todo`, and the API keeps one path per route.
 
 ## Testing routes
 

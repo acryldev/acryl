@@ -6,7 +6,7 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
 
 - [x] T001 [docs] Each Blend README (05-acryl-ade, 63-acryl-control-center, and the template's README in `framework/packages/create`) names
   where its shared code comes from: `plugins/library.lock.json` and `acrylblends upgrade` for the library plugins; Control Center's
-  `launcher-lib/` is acryl's `plugins/acryl-launcher`, built.
+  `launcher-lib/` is acryl's `plugins/launcher`, built.
   Done 2026-11-18: acrylblends/05-acryl-ade cbe6f51, acrylblends/63-acryl-control-center b12fea5, acrylblends/acrylblends 7711a4ce
   (`packages/create/README.md`; it reaches `framework/` with the next `git subtree pull`, T009).
 
@@ -26,7 +26,7 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
   npm acrylblends 1.0.0. The pnpm release is still 11.11.0 at the root; the move to 12 is its own commit.
 - [x] T006 [checks] The framework's `check` (all 23 steps: lint, build, typecheck, tests, its verify scripts) runs inside the monorepo, next to
   acryl's build, verify and check:layout; both green (2026-11-19, 25 of 25 after the subtree pull). The framework keeps its own biome
-  (ACRYL has none); its release tags are read as `acrylblends-v*` inside ACRYL (a38f42a4).
+  (ACRYL has none); its release tags are read as `blends-v*` inside ACRYL (a38f42a4).
 - [x] T007 [layout] Dependency direction guard, the Pi model (owner 2026-11-19): `scripts/dependency-direction.mjs`, run by
   `scripts/verify-layout.mjs`. No cycles between workspace packages, and three "never depends on" rules by package role (the framework
   foundation depends only on itself; ACRYL's runtime only on the foundation and itself; nothing depends on an app). 60 packages, 0 cycles,
@@ -42,11 +42,11 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [x] T016 [pnpm] Develop with pnpm 12.14.0 (root and framework); the pnpm the app ships to users stays 11.11.0. Done eb96faea.
 - [x] T017 [flat plugins] The framework's 32 plugins moved from `framework/plugins/` into the flat root `plugins/` (branch 051-t017,
   2026-11-19): the 13 were packages already, the 19 app plugins (`agent`, `instance`, `desktop`, `sandbox`, ...) are now workspace
-  packages (`acryl-agent`, `acryl-instance`, `acryl-desktop-shell`, ...; two names differ where the plain name was taken). They import
+  packages (`@acryldev/agent`, `@acryldev/instance`, `@acryldev/desktop-shell`, ...; two names differ where the plain name was taken). They import
   each other by package name, build to `lib/` with tsdown, and the CLI keeps copying their source into an app's `plugins/` by rewriting
   those names to relative paths (`copyPlugin` handles both the `src/` packages and the app plugins that keep their files at the folder
   root). `pnpm-workspace.yaml` is `plugins/*`; `framework/plugins/` is gone.
-- [x] T018 [frame plugins] The Blends frame's three packages (`acryl-blends-frame`, `acryl-versions`, `acryl-app-context`) are Cordis
+- [x] T018 [frame plugins] The Blends frame's three packages (`@acryldev/blends-frame`, `@acryldev/versions`, `@acryldev/app-context`) are Cordis
   plugins, not apps: they move from `framework/ide/` into the flat `plugins/` folder, and `framework/ide/` is gone. Their eight existing DSH
   imports are now counted by ACRYL's guard (ceiling 138 to 146, none new). Done b04eed6c (26 of 26 checks green).
 - [x] T019 [docs] This spec and `docs/acryl/MONOREPO.md` rewritten in Pi's terms: one table of what each package owns and what it
@@ -56,7 +56,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [x] T023 [review] Adversarial review (Fork3, 2026-11-19): 9 findings. Fixed 9b1e34ed (guard: pnpm's own package list, the harness
   runtime's 20 edges by name, framework packages must have a role), 79f460ad (the online channel refuses reload/navigate), 60750415
   (ratchets reach framework/, a real teardown, 7 leaking tests fixed), a298e8a3 (one check: root `check` runs the framework's; its CI at the
-  root), c640bca4 (spike, duplicate spec tooling and dead `ide/` fallbacks removed), a9fddbb2, 3c39b787; the 114 `acrylblends-v*` release
+  root), c640bca4 (spike, duplicate spec tooling and dead `ide/` fallbacks removed), a9fddbb2, 3c39b787; the 114 `blends-v*` release
   tags pushed to acryldev/acryl. The 3-way merge of the ports was verified clean, file by file.
 - [x] T020 [boot] A real Desktop boot from main 47edaaed (scripts/live-run.mjs desktop, isolated home, 2026-11-19): the home screen renders, page health has one startup long task, stop reported "port free, real homes untouched".
 - [x] T021 [exception] The composition moved up (branch 051-t021, 2026-11-19). `plugins/coding-capabilities` (package
@@ -68,22 +68,22 @@ verify and check:layout and all 23 framework check steps green before it lands.
   in `dependencies`/`peerDependencies`. The two capability tables are asserted equal id by id in the runtime's tests, so neither can drift.
 - [ ] T022 [agents drive the app] Decided by the owner 2026-11-19: yes, and it is the baseline, not a choice - "we should have
   functionality as it was before unification". The ACRYL chat AND every PTY driver agent (Claude Code, Pi, Codex, ...) fully control the
-  running app as a user does, like acryl-control: look, click, type, fill, select, press, scroll, wait, reload, navigate. Done when each
+  running app as a user does, like @acryldev/control: look, click, type, fill, select, press, scroll, wait, reload, navigate. Done when each
   agent kind is proven on a real app: the chat through its `door_*` tools, a PTY agent through `.acryl/bin/acryl`, in dev and installed ADE.
 
-- [x] T024 [guard] The cross-package relative imports are gone (051-t017): `acrylblends-framework` imports `acryl-router` (new `/core`,
-  `/connection`, `/conninfo` subpaths), `acryl-node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
-  `/test-websocket`), `acryl-db/conformance` and `acryl-kv/conformance` by name, with the packages declared; acryl-app-context's tests
-  import `acryl-home` and `acryl-manifest/app-plugins`. The desktop shells load the app's `src/app.ts` by a computed path instead of a
+- [x] T024 [guard] The cross-package relative imports are gone (051-t017): `@acryldev/framework` imports `@acryldev/router` (new `/core`,
+  `/connection`, `/conninfo` subpaths), `@acryldev/node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
+  `/test-websocket`), `@acryldev/db/conformance` and `@acryldev/kv/conformance` by name, with the packages declared; @acryldev/app-context's tests
+  import `@acryldev/home` and `@acryldev/manifest/app-plugins`. The desktop shells load the app's `src/app.ts` by a computed path instead of a
   relative import out of the package.
-- [x] T025 [row id] Rename the Loader row `acryl-web` to `acryl-web-service` (its package name; the shared-slot exception no longer fits,
+- [x] T025 [row id] Rename the Loader row `acryl-web` to `@acryldev/web` (its package name; the shared-slot exception no longer fits,
   and installed apps are reinstalled). Touches the frame overlay apps get (`ide-profile.ts`).
 - [x] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
   (`ubuntu-24.04-arm`, `macos-26`, `macos-15-intel`) and it does not know `vars`: configure those, then lint all.
 - [x] T027 [graph] The framework's 19 plain app plugins are workspace packages, so the direction guard sees every edge (051-t017). The
   13 stay FOUNDATION; the 19 are the named `FRAMEWORK_PLUGINS` set with role `plugin` (they depend on the runtime's blends-core and
   plugin-hub). `verify-layout` fails when a `plugins/*/plugin.json` folder is not a workspace package or has no role, so the library
-  cannot drift out of the graph again. One named foundation edge: `acrylblends-framework` builds `acrylblends/drivers` from the agent
+  cannot drift out of the graph again. One named foundation edge: `@acryldev/framework` builds `acrylblends/drivers` from the agent
   panel's `drivers.ts`.
 - [x] T028 [review 2] Second adversarial pass (Fork3, 2026-11-19): the fixes hold, nothing weakened. Fixed: the legacy-layouts check no
   longer turns ACRYL's CI red on every new acrylblends release (inside the monorepo it records releases up to the version it holds);
@@ -101,42 +101,42 @@ verify and check:layout and all 23 framework check steps green before it lands.
   generated files.
 - [x] T020 [boot] The real Desktop from the branch with an isolated home (scripts/live-run.mjs): it found what the full check could not -
   the window quit at once (dsh-client-ui-sidebar failed: "slot sidebar.settings is already declared"), caused by T008 merging the framework's
-  acryl-app-shell. Fixed in 75f10079 (rootOwnsSettingsSeat); the Desktop then booted and stayed up, health clean, Settings opened.
+  @acryldev/app-shell. Fixed in 75f10079 (rootOwnsSettingsSeat); the Desktop then booted and stayed up, health clean, Settings opened.
 - [x] T031 [app-shell, review 3] rootOwnsSettingsSeat decides once, at apply, from the Loader's static entries. Matches main for ACRYL Desktop
   and leaves ADE as the framework built it, but (Fork3, 2026-11-19): enabling DSH's left sidebar at runtime while the root owns the seat
   fails its activation; disabling it while it does not leaves Settings unreachable until a reload (same as main); a sidebar disabled through
   its parent group is not seen; `loader` is reached through Cordis's reflect walk, not declared in an inject list. Fix: declare `loader` as
   an optional inject (default: owns the seat) and re-decide in an effect that follows that one entry, without reading "fiber not yet active"
   as "absent" (that brings the crash back: the sidebar usually activates after the root). Test the runtime toggle under a real Loader.
-  Installed ADE gets 75f10079 only with the next publish of acryl-app-shell.
+  Installed ADE gets 75f10079 only with the next publish of @acryldev/app-shell.
 - [x] T032 [self-extension after unification, owner note 2026-11-19] A Blend must still extend itself and know its own structure. Checked
-  tonight: nothing acryl-app-context, acryl-plugin-context or acryl-system-prompt ships (lib/, docs/, example-plugins/, skills/) names a
-  pre-move path; acryl-app-context reads the app's own blend.yaml, plugins/ and blend.lock.json and its own docs/ relative to where it is
-  installed. Open: (a) repository fields of acryl-app-context, acryl-blends-frame and acryl-versions still name acrylblends/acrylblends
+  tonight: nothing @acryldev/app-context, @acryldev/plugin-context or @acryldev/system-prompt ships (lib/, docs/, example-plugins/, skills/) names a
+  pre-move path; @acryldev/app-context reads the app's own blend.yaml, plugins/ and blend.lock.json and its own docs/ relative to where it is
+  installed. Open: (a) repository fields of @acryldev/app-context, @acryldev/blends-frame and @acryldev/versions still name acrylblends/acrylblends
   ide/<name> (fixed with this task's commit); (b) these packages are still published from acrylblends, but since D6 their source lives only
   here (a subtree pull maps only framework/), so the next release needs a publish path from the monorepo; (c) that first release's
   acceptance: a fresh Blend from the new packages, its agent asked "add a plugin that shows a ledger page", cites paths that exist in the
   app, writes the plugin into the app's plugins/, and the plugin loads without a restart.
-  (c) passed 2026-11-19 (AcrylImplementer): `npm create acrylblends@1.6.0 ledger-app -- --template blank` (desktop frame, scratch HOME),
+  (c) passed 2026-11-19 (AcrylImplementer): `npm create @acryldev/blends@1.6.0 ledger-app -- --template blank` (desktop frame, scratch HOME),
   `npm run dev`, DeepSeek key in the environment only; the frame's chat, asked "add a plugin that shows a ledger page", finished in 1m 57s.
   Cited, all present in the app: node_modules/@acryldev/app-context/docs/start-here/this-app.md, .../start-here/verify-before-done.md,
   .../extending/routes-and-pages.md, .../extending/feature-plugin.md, .../extending/state.md, .../extending/home-widget.md,
   .../example-plugins/README.md, src/routes.ts, src/about.tsx. Wrote plugins/ledger/index.ts (216 lines), a ledger row in blend.yaml and
   test/ledger.test.ts; the Ledger widget appeared on the running home page and /app/ledger answered 200 with no restart; npm test 10/10;
   it checked its own work through the door (8 look, 6 click, 2 type). One Edit step failed ("cannot modify ...") and the agent recovered.
-  The app still depends on @webboxes/app-persistence, blends-core and plugin-hub (T038).
+  The app still depends on @acryldev/app-persistence, blends-core and plugin-hub (T038).
   (b) done 2026-11-19: 1.6.0 and the 18 @acryldev packages were published from this monorepo (framework/, plugins/, runtime/).
 - [x] T033 [guard] FOUNDATION_PLUGIN_EDGES is gone (branch 051-t033, 2026-11-19). The Cordis-free drivers contract moved out of the
-  agent panel into `plugins/drivers` (package `acryl-drivers`), a foundation package by role (FOUNDATION by name) that the copy path ships like any library
+  agent panel into `plugins/drivers` (package `@acryldev/drivers`), a foundation package by role (FOUNDATION by name) that the copy path ships like any library
   plugin: `acrylblends/drivers` is built from its source, the framework declares it a workspace dependency, and the panel and the driver
-  plugins import `acryl-drivers`. Decision (AcrylImplementer): a foundation package in `plugins/`, not framework source, because the
+  plugins import `@acryldev/drivers`. Decision (AcrylImplementer): a foundation package in `plugins/`, not framework source, because the
   agent template keeps no acrylblends dependency and its copied panel must resolve the contract without one.
 - [x] T034 [products, overlays] Done: `acrylblends.root: workspace` in apps/acryl-ade/package.json; the generator keeps the workbench row and the IDE's own prompt identity (a full `upgrade --force` on a copy of ADE leaves cordis.patch.yml byte-identical). Was: The products' generated overlays (apps/acryl-ade, apps/acryl-control-center cordis.patch.yml) are in
   practice owned by the products: a full `acrylblends upgrade` replaces their workbench root row with the Blends frame (the generator's
   default, ide-profile.ts "never the IDE's workbench") and would silently turn ADE back into a plain Blend. Teach the generator a product's
   root row (from blend.yaml or product.json), with a test that regenerating an overlay keeps it. Found by Fork3 and DS_Fork3, 2026-11-19.
-- [x] T035 [publish] Published 2026-11-19 with the owner's go (stored token): @acrylblends/control 0.2.11, system-prompt 0.2.0, web 0.2.0, each packed by verify-frame-publish (fresh app from the tarballs boots the frame) and installed from npm afterwards. Was: Three frame package versions exist only in this repository: @acrylblends/web 0.2.0,
-  @acrylblends/system-prompt 0.2.0, @acrylblends/control 0.2.11. Apps made from main cannot install them until published (the gate takes
+- [x] T035 [publish] Published 2026-11-19 with the owner's go (stored token): @acryldev/control 0.2.11, system-prompt 0.2.0, web 0.2.0, each packed by verify-frame-publish (fresh app from the tarballs boots the frame) and installed from npm afterwards. Was: Three frame package versions exist only in this repository: @acryldev/web 0.2.0,
+  @acryldev/system-prompt 0.2.0, @acryldev/control 0.2.11. Apps made from main cannot install them until published (the gate takes
   them from local tarballs since ef386bca). The published create (1.5.21) is unaffected. Publish through framework-release.yml once the
   owner says go.
 - [ ] T036 [npm scope, owner decision 2026-11-19, AFTER the workshop] One scope: `@acryldev/*` (the npm org `@acryl` belongs to an
@@ -146,7 +146,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   `node-server`. What people type stays unscoped: `acryl`, `acrylblends`, `create-acrylblends`. First: the npm user `acryldev` is
   converted to an org (owner `musichen`, members incl. `webboxescom`) or gets its own publish token - a user scope accepts no other
   publisher. One release: publish `@acryldev/*` at the same versions, `acrylblends upgrade` rewrites an app's package.json and
-  generated overlay, then deprecate `@acrylblends/*`. Open: row ids = short names (CLAUDE.md row-id rule change, owner decides).
+  generated overlay, then deprecate `@acryldev/*`. Open: row ids = short names (CLAUDE.md row-id rule change, owner decides).
 - [ ] T038 [names, owner decision 2026-11-19 "one name everywhere tonight"] Every workspace package's name, folder and import become
   `@acryldev/<short>` (Pi-style); design and name map in t038-design.md. Owner: DS2_Fork3, after T036, T031 and T021 land.
 - [ ] T037 [npm, deadline 2027-01] npm stops direct publishing with 2FA-bypass tokens in January 2027 (banner on npmjs.com, seen
@@ -160,8 +160,8 @@ verify and check:layout and all 23 framework check steps green before it lands.
   login with 2FA), and switching the workflows' publish steps to rely on it.
 ## Phase 3 - packages, not copies
 
-- [x] T010 [launcher] acryl's `plugins/acryl-launcher` is published as a package; Control Center depends on it and its
-  `launcher-lib/` hand copy (8 files) is deleted. Done 2026-11-19: renamed to `@acryldev/control-center` (64ae202f, owner chose the
+- [x] T010 [launcher] acryl's `plugins/launcher` is published as a package; Control Center depends on it and its
+  `launcher-lib/` hand copy (8 files) is deleted. Done 2026-11-19: renamed to `@acryldev/launcher` (64ae202f, owner chose the
   @acryldev scope; also fixed the root filter that matched no package, so its 24 tests now run), published 0.1.0 by webboxescom with the
   owner's go, installed and imported from npm (29 exports); Control Center depends on it (a4c20622), proven by an npm install of the app,
   its typecheck and tests, and its host's launcher routes answering 200.
@@ -172,14 +172,14 @@ verify and check:layout and all 23 framework check steps green before it lands.
 
 - [x] T012 [updater] Each product's in-app updater looks for its own product's latest release by tag (`control-center-v*`, `ade-v*`),
   since one repository releases several products. No bridge release: installed copies are reinstalled (owner, 2026-11-19).
-  Done ff45d3d8: `releases.tagPrefix` in product.json (bundle.ts readProduct), plugins/desktop/updater.ts takes the newest non-draft,
+  Done ff45d3d8: `releases.tagPrefix` in product.json (bundle.ts readProduct), plugins/desktop-shell/updater.ts takes the newest non-draft,
   non-prerelease release whose tag starts with it (the version is the tag after the prefix); no prefix keeps releases/latest. updater.test.ts.
 - [x] T013 [products] Control Center and ADE build their installers from `apps/` (blend.yaml, assets, release workflow) with product tags
   `control-center-v*`, `ade-v*`.
   Done: .github/workflows/product-release.yml (ff45d3d8; a tag publishes with `--latest=false`, a manual run only uploads artifacts); packer
   fixes 83240111/97d3e144 (--from folder) and 3713c1af/31d59abc (Windows npm and tar). ADE built 6/6 (macOS arm64/x64, Windows x64/arm64,
   Linux x64/arm64) in runs 44484087307 and 44500345827 (main 3696d3b3). Mac install of that DMG: starts, serves in 2 s, quits clean, bundle
-  unchanged. It found the host restart loop (an access-time change from `git diff` restarted node --watch; fixed by plugins/desktop/watch-host.mjs,
+  unchanged. It found the host restart loop (an access-time change from `git diff` restarted node --watch; fixed by plugins/desktop-shell/watch-host.mjs,
   branch 051-walk-acryl-home). Before the first product tag: the same install check on Windows (mbpi9win) and Ubuntu (z370n).
 
 ## Phase 5 - registry and the old repository

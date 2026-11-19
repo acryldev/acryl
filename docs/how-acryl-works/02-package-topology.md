@@ -9,8 +9,8 @@ directions between them — and why the split looks the way it does.
 | Package | Version | Role |
 |---|---|---|
 | `acryl-cli` | 0.1.31 | The terminal surface: CLI entry, pi-tui shell, overlays, stores. The `acryl` bin. |
-| `acryl-harness-runtime` | 0.1.31 | The runtime assembly layer: boots the pinned Harness into a Cordis root; owns the session bridge and ACRYL capability patches. **160 runtime dependencies** on `@deepseek-ai/dsh-*` + Cordis plugins. |
-| `acryl-control` | — | Presentation-neutral contracts: session snapshot/attachment types, agent providers (dsh-native/codex/claude/acp), protocol client, lifecycle service. |
+| `@acryldev/harness-runtime` | 0.1.31 | The runtime assembly layer: boots the pinned Harness into a Cordis root; owns the session bridge and ACRYL capability patches. **160 runtime dependencies** on `@deepseek-ai/dsh-*` + Cordis plugins. |
+| `@acryldev/control` | — | Presentation-neutral contracts: session snapshot/attachment types, agent providers (dsh-native/codex/claude/acp), protocol client, lifecycle service. |
 | `acryl-web` | — | Browser surface distribution (separate install; not wired into the CLI). |
 | `acryl-desktop` | — | Electron surface distribution (separate install; not wired into the CLI). |
 | `deepseek-harness/` | pinned submodule | Read-only upstream source of the `@deepseek-ai/dsh-*` packages; excluded from the workspace; **never edited** from desktop feature branches. |
@@ -25,7 +25,7 @@ directions between them — and why the split looks the way it does.
                                       │ published as
                                       ▼
 ┌───────────────┐   workspace:*   ┌──────────────────────────┐
-│ acryl-control │◄────────────────│  acryl-harness-runtime   │
+│ @acryldev/control │◄────────────────│  @acryldev/harness-runtime   │
 │ (contracts,   │◄────────────────│  (boot factory, session  │
 │  providers)   │    workspace:*  │   bridge, capability     │
 └──────▲────────┘                 │   patches) ~160 deps     │
@@ -45,7 +45,7 @@ directions between them — and why the split looks the way it does.
 
 Direct dependencies of `acryl-cli` (`acryl-cli/package.json`):
 
-- **Workspace:** `acryl-harness-runtime` (boot factory + session bridge), `acryl-control`
+- **Workspace:** `@acryldev/harness-runtime` (boot factory + session bridge), `@acryldev/control`
   (snapshot/attachment types used by the bridge consumer).
 - **Surface framework:** `@earendil-works/pi-tui` — the terminal UI toolkit the shell,
   overlays, and editors are built on.
@@ -61,9 +61,9 @@ lightweight and does **not** pull the `dsh-web-app`/client-UI bundle into its pu
 closure. `acryl web` and `acryl gui` are hard errors — those surfaces are separate
 distributions.
 
-## `acryl-harness-runtime` — the only package that "knows the harness"
+## `@acryldev/harness-runtime` — the only package that "knows the harness"
 
-`acryl-harness-runtime/src` is tiny (five modules) but its `package.json` declares
+`@acryldev/harness-runtime/src` is tiny (five modules) but its `package.json` declares
 **160 runtime dependencies**: essentially the whole `@deepseek-ai/dsh-*` catalog plus
 Cordis plugin primitives (`cordis-plugin-loader/include/hmr/timer/group`).
 
@@ -83,15 +83,15 @@ The five modules:
 | `durable-message.ts` | Durable message port types |
 | `plugin-acryl-workspace-status.ts` | The `acryl_workspace_status` model-facing tool plugin |
 
-## `acryl-control` — the shared language between surfaces
+## `@acryldev/control` — the shared language between surfaces
 
-`acryl-harness-runtime/session-bridge.ts` imports its **snapshot vocabulary** from
-`acryl-control`:
+`@acryldev/harness-runtime/session-bridge.ts` imports its **snapshot vocabulary** from
+`@acryldev/control`:
 
 - `AcrylSessionSnapshot`, `AcrylSessionSubscription`, `AcrylSessionAttachment`
   (`'owner'` vs attached), `AcrylTranscriptItem`, `AcrylToolProjection`
 
-so the web/desktop protocol layer (`acryl-control/protocol/client.ts`) and the TUI's
+so the web/desktop protocol layer (`@acryldev/control/protocol/client.ts`) and the TUI's
 in-process bridge project the *same shapes*. A session viewed in the terminal and the
 same session viewed in the browser are described identically.
 
@@ -110,15 +110,15 @@ at `deepseek-harness/packages/preset/agent-presets/presets/` when that directory
 > `upstream.json` contract, the `verify-layout` gates, and the recommended ideal state —
 > see [07-harness-inheritance.md](07-harness-inheritance.md). Note that
 > `acryl-desktop` declares its own 131-package `dsh-*@0.1.1-rc.2` family directly — it
-> does **not** inherit them through `acryl-harness-runtime`, and no surface imports the
+> does **not** inherit them through `@acryldev/harness-runtime`, and no surface imports the
 > submodule as code (gate-enforced).
 
 ## The dependency rule
 
 ```
-surfaces (tui/web/desktop)  →  acryl-harness-runtime  →  pinned harness packages
-surfaces                    →  acryl-control          (types only)
-acryl-harness-runtime       →  acryl-control          (types only)
+surfaces (tui/web/desktop)  →  @acryldev/harness-runtime  →  pinned harness packages
+surfaces                    →  @acryldev/control          (types only)
+@acryldev/harness-runtime       →  @acryldev/control          (types only)
 nothing depends on a surface
 ```
 

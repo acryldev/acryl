@@ -47,7 +47,7 @@ port.
 
 Use the existing seam rather than inventing a new protocol:
 
-1. `acryl-harness-runtime` creates one Harness session with `ctx.sessions`.
+1. `@acryldev/harness-runtime` creates one Harness session with `ctx.sessions`.
 2. Its runtime-owned message port validates non-empty text and dispatches it to
    an agent handle created through `ctx.agents` using the selected profile's
    normal provider/model route.
@@ -67,10 +67,10 @@ not handled by ACRYL credential code.
 ## Files
 
 ```text
-acryl-harness-runtime/src/durable-message.ts     # extend result/projection contract
-acryl-harness-runtime/src/native-agent.ts        # runtime-owned native message port
-acryl-harness-runtime/src/index.ts               # create session and expose the handle
-acryl-harness-runtime/tests/native-agent.spec.ts # real Harness-facing RED/GREEN tests
+@acryldev/harness-runtime/src/durable-message.ts     # extend result/projection contract
+@acryldev/harness-runtime/src/native-agent.ts        # runtime-owned native message port
+@acryldev/harness-runtime/src/index.ts               # create session and expose the handle
+@acryldev/harness-runtime/tests/native-agent.spec.ts # real Harness-facing RED/GREEN tests
 
 acryl-cli/src/host/direct.ts                      # obtain selected session and port
 acryl-cli/src/render/app.tsx                      # forward them to Ink

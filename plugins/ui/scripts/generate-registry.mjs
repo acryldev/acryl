@@ -88,7 +88,7 @@ function main() {
     }
     // Surfaces reflect what was actually copied (this generator only reads src/client/registry, which is web-only
     // today), never the contract's `surfaces` field blindly - that field describes where the NAME's shape applies,
-    // not where THIS source lives. acryl-ui-tui's own hand-written components are a separate, not-yet-generated seed.
+    // not where THIS source lives. @acryldev/ui-tui's own hand-written components are a separate, not-yet-generated seed.
     const actualSurfaces = [...new Set(files.map(file => file.path.split('/')[0]))]
     const item = {
       id,

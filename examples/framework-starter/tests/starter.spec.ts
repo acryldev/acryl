@@ -20,7 +20,7 @@ async function system(): Promise<{ ctx: Context, fiber: ReturnType<Context['plug
   return { ctx, fiber }
 }
 
-describe('acryl-framework-starter', () => {
+describe('@acryldev/framework-starter', () => {
   it('answers a request in process and counts visits in a cell', async () => {
     const { ctx } = await system()
     const first = await ctx.router.request('/api/starter/hello/world')

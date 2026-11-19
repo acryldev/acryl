@@ -1,6 +1,6 @@
 /**
  * The chats as the frame lists them: DSH's sessions, newest first, the one DSH's main view retains marked current. Opening one asks DSH's own
- * navigation (`uiWorkspace`) when it is composed, so DSH stays the one owner of which session is shown (the reason is in acryl-workspace's
+ * navigation (`uiWorkspace`) when it is composed, so DSH stays the one owner of which session is shown (the reason is in @acryldev/workspace's
  * `sessions/main-session.ts`); without it, the frame holds the main-view reference itself.
  *
  * Which branch a chat belongs to, and which chats are open, is the branch-chats record (`./branch-chats.ts`), the one source of truth. The rule this
@@ -9,7 +9,7 @@
  * (`decideChat`). A chat is open while it has a tab or is on screen: the left panel lists only those, and the rest are closed, found in History.
  */
 
-import type { ISessions, SessionListState, SessionReference } from '@acryl/ui/frame'
+import type { ISessions, SessionListState, SessionReference } from '@acryldev/ui/frame'
 import { FRAME_REAL_CHATS_PATH, parseRealChats, type RealChatView } from '../contract.ts'
 import type { BranchChatsStore } from './branch-chats.ts'
 import type { ChatRow, ChatsPort } from './LeftPanel.tsx'

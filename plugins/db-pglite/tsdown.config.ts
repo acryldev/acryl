@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-db-pglite',
+  name: '@acryldev/db-pglite',
   entry: { index: 'src/index.ts', open: 'src/open.ts' },
   outDir: 'lib',
   format: 'esm',

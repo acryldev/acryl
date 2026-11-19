@@ -12,7 +12,7 @@ import type {
   AcrylSessionSubscription,
   AcrylToolProjection,
   AcrylTranscriptItem,
-} from 'acryl-control'
+} from '@acryldev/control'
 
 export interface AcrylSessionBridgeOptions {
   readonly profile: string

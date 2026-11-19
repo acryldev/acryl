@@ -7,8 +7,8 @@
 import { request as httpRequest } from 'node:http'
 import { Context } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
-import { apply as routerApply, name as routerName } from 'acryl-router'
-import { apply as stateApply, name as stateName } from 'acryl-state'
+import { apply as routerApply, name as routerName } from '@acryldev/router'
+import { apply as stateApply, name as stateName } from '@acryldev/state'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply as httpApply, inject as httpInject, name as httpName } from '../src/index.ts'
 

@@ -3,9 +3,9 @@
  *
  * The lifecycle itself - resolution, dependent cascade, transaction ordering,
  * rollback, Fiber restart, persistence - is the one controller in
- * `acryl-harness-runtime`/`acryl-control` that the CLI and the Web surface run
+ * `@acryldev/harness-runtime`/`@acryldev/control` that the CLI and the Web surface run
  * too, and its renderer-facing projection (client graph, Blend, receipts) is the
- * shared `acryl-plugin-admin` view. What this file adds is Desktop's surface
+ * shared `@acryldev/plugin-admin` view. What this file adds is Desktop's surface
  * concerns: which of its profile rows the user may toggle, and the plugin-market
  * bridge that mounts a just-installed bundle without a restart.
  */
@@ -15,12 +15,12 @@ import {
   AcrPluginLifecycleService,
   createAcrylPluginLifecycle,
   type AcrPluginLifecycleController,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import {
   PluginLifecycleView,
   type PluginLifecycleReceipt,
   type PluginLifecycleSnapshot,
-} from 'acryl-plugin-admin'
+} from '@acryldev/plugin-admin'
 import { removeDesktopDisabledBundle } from '../desktop-plugins.ts'
 import { assertDesktopProfileName } from '../../profile/profile-manager.ts'
 import {
@@ -28,7 +28,7 @@ import {
   type PluginLifecycleStateBootstrap,
 } from './plugin-lifecycle-state.ts'
 
-export { PluginLifecycleError, type PluginLifecycleErrorCode } from 'acryl-harness-runtime'
+export { PluginLifecycleError, type PluginLifecycleErrorCode } from '@acryldev/harness-runtime'
 
 const PROTECTED_REASON = 'This core capability is part of the Desktop runtime and is not user-toggleable. Plugins you add through a profile bundle or the plugin market can be enabled, disabled, and reloaded here.'
 
@@ -68,7 +68,7 @@ const LEGACY_MUTABLE_ENTRY_IDS: ReadonlySet<string> = new Set(Object.keys(MANAGE
 /** Desktop's view and market bridge over the shared lifecycle service. */
 export class PluginLifecycleController {
   private readonly lifecycle: AcrPluginLifecycleController
-  /** The renderer-facing projection shared with every surface (`acryl-plugin-admin`). */
+  /** The renderer-facing projection shared with every surface (`@acryldev/plugin-admin`). */
   private readonly view: PluginLifecycleView
   /** Row ids this profile admits to user control, in both runtime spellings. */
   private readonly mutableEntryIds: ReadonlySet<string>

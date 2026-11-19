@@ -1,24 +1,24 @@
-# ACRYL UI library (`@acryl/ui`): build screens from ready components
+# ACRYL UI library (`@acryldev/ui`): build screens from ready components
 
-**It is available; do not spend calls verifying it.** `@acryl/ui` is composed as its own row on every Web and Desktop profile, the full product and the blank canvas alike, and the
-serving app resolves `require('@acryl/ui')` for any client bundle that lists it in `dsh.client.inject`. It is not in `@deepseek-ai/dsh-web-app`'s dependencies because it is a row, not a
-dependency: searching the harness packages for it finds nothing and proves nothing. Confirm it with `acryl_list_plugins` (row `@acryl/ui` ACTIVE), then build. Its `Calendar` (a month grid),
+**It is available; do not spend calls verifying it.** `@acryldev/ui` is composed as its own row on every Web and Desktop profile, the full product and the blank canvas alike, and the
+serving app resolves `require('@acryldev/ui')` for any client bundle that lists it in `dsh.client.inject`. It is not in `@deepseek-ai/dsh-web-app`'s dependencies because it is a row, not a
+dependency: searching the harness packages for it finds nothing and proves nothing. Confirm it with `acryl_list_plugins` (row `@acryldev/ui` ACTIVE), then build. Its `Calendar` (a month grid),
 `Sheet`, `Modal`, `Tabs`, `Card` and `Field` cover most organizer-style screens; the header action or the sidebar footer action slot is the mount point for a first version.
 
 Use this instead of hand-styling. It is a client-only package that every Web and Desktop profile carries; a client bundle requires it after listing it in `package.json`:
 
 ```json
-"dsh": { "client": { "inject": ["@acryl/ui", "@deepseek-ai/dsh-client-ui-sidebar"], "platform": "web" } }
+"dsh": { "client": { "inject": ["@acryldev/ui", "@deepseek-ai/dsh-client-ui-sidebar"], "platform": "web" } }
 ```
 
 ```js
-const ui = require('@acryl/ui')   // then ui.Card, ui.Field, ui.SettingsRow ...
+const ui = require('@acryldev/ui')   // then ui.Card, ui.Field, ui.SettingsRow ...
 ```
 
 Example: `../example-plugins/packages/client-ui-library/` (a gallery as a Settings page: every component, the color roles, a Settings-style form). Like every example in this pack it is
 **opt-in**, not something a default profile carries: install it yourself with `acryl_install_plugin` (or copy it and run `/reload new`) when you want to browse the catalogue in a
 running app, and remove it with `/reload remove-stale` (or `acryl_install_plugin` with `remove: true`) once you're done, the same as any other local plugin you're finished with. The
-single source of truth for props and accessibility is `contracts/components.json` in the package (`plugins/acryl-ui/`); the semantic colors are `contracts/tokens.json`.
+single source of truth for props and accessibility is `contracts/components.json` in the package (`plugins/ui/`); the semantic colors are `contracts/tokens.json`.
 
 | Need | Use |
 | --- | --- |
@@ -42,13 +42,13 @@ Rules that keep it correct:
 - Interactive components name themselves: give `SelectField`, `Segmented` and `Tabs` a `label`. `Field` announces its error by itself.
 - The client loader treats every module as a plugin: a pure library needs an (empty) `apply`; a consumer that fills a slot declares `inject = ['slots']`.
 
-## In the terminal (`acryl-ui-tui`)
+## In the terminal (`@acryldev/ui-tui`)
 
 The same component names exist for the CLI, built on pi-tui, and every one is width-safe (no line is ever wider than the terminal) and keyboard-driven. A terminal plugin imports the library
 (it is made resolvable in the CLI profile) and hands it the CLI's palette service so colors follow the terminal's light or dark scheme:
 
 ```js
-import { createTuiUi } from 'acryl-ui-tui'
+import { createTuiUi } from '@acryldev/ui-tui'
 export function apply(ctx) {
   const ui = createTuiUi(ctx.get('tuiTheme'))   // omit for the static dark palette; undefined outside the CLI
   ctx.get('tuiCommands')?.register({ command: '/settings', description: 'Settings', packageName: 'my-plugin', overlay: { width: '70%' },
@@ -62,5 +62,5 @@ Keys: arrows move a `Segmented`, `SelectField` or `Tabs`; space or enter toggles
 
 ## Where the parts come from
 
-The web components are copied from DSH's own source, not redrawn (`plugins/acryl-ui/registry-manifest.yml` lists the origin of each and `tests/library.spec.tsx` guards it): the Appearance tiles, the Permission pill and row layout, the tab strip, the plugin field controls and the card surface. They are built with CSS Modules the way DSH builds its own client, so
+The web components are copied from DSH's own source, not redrawn (`plugins/ui/registry-manifest.yml` lists the origin of each and `tests/library.spec.tsx` guards it): the Appearance tiles, the Permission pill and row layout, the tab strip, the plugin field controls and the card surface. They are built with CSS Modules the way DSH builds its own client, so
 the styles are plugin-owned and follow the app's tokens. Only `EmptyState` and `Stack` are new, because DSH has no equivalent.

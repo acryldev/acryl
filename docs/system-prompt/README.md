@@ -9,27 +9,27 @@ copy of what the model actually receives.
 - [Web and Desktop, standard preset](current/web.md): system prompt text and tool list.
 - [CLI (terminal engine)](current/cli.md): system prompt text and tool list.
 
-[Size budget](budget.md): the system prompt by section and every tool definition, per surface, with a token estimate; the same command regenerates it, and `runtime/acryl-harness-runtime/tests/system-prompt-shape.spec.ts` enforces the ceilings in `plugins/acryl-system-prompt/drift/budget.json`. Proposal for trimming: [`specs/001-.../prompt-size-proposal.md`](../../specs/001-acryl-refactor-improvements-and-tech-debt/prompt-size-proposal.md).
+[Size budget](budget.md): the system prompt by section and every tool definition, per surface, with a token estimate; the same command regenerates it, and `runtime/harness-runtime/tests/system-prompt-shape.spec.ts` enforces the ceilings in `plugins/system-prompt/drift/budget.json`. Proposal for trimming: [`specs/001-.../prompt-size-proposal.md`](../../specs/001-acryl-refactor-improvements-and-tech-debt/prompt-size-proposal.md).
 
 Regenerate after any change (the copy is captured from the real engine, so it cannot drift):
 
 ```bash
 ACRYL_DUMP_SYSTEM_PROMPT=docs/system-prompt/current \
-  corepack pnpm --filter acryl-harness-runtime exec vitest run tests/dump-system-prompt.spec.ts
+  corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/dump-system-prompt.spec.ts
 ```
 
-The generator is [`tests/dump-system-prompt.spec.ts`](../../runtime/acryl-harness-runtime/tests/dump-system-prompt.spec.ts) (opt-in, no model
+The generator is [`tests/dump-system-prompt.spec.ts`](../../runtime/harness-runtime/tests/dump-system-prompt.spec.ts) (opt-in, no model
 call succeeds, a dummy key is used; temp paths are scrubbed). Desktop uses the same runtime and the same client as Web, so it shares the Web copy.
 
 ## The ACRYL shaping plugin (pi.dev-like)
 
-[`plugins/acryl-system-prompt`](../../plugins/acryl-system-prompt/src/index.ts) applies pi.dev's prompt shape to the harness's sections: on the harness's
+[`plugins/system-prompt`](../../plugins/system-prompt/src/index.ts) applies pi.dev's prompt shape to the harness's sections: on the harness's
 `system-prompt/assemble` waterfall it puts the ACRYL identity line first (replacing "You are an AI agent powered by DeepSeek Harness."), wraps every other
 section in a tag (`<persona>`, `<tool_read>`, `<acryl_plugin_docs>`, `<cwd>`), and drops empty sections. Every other section keeps its upstream text
 unchanged, so harness updates still reach the model. Pure logic (identity, tag names, drift snapshot):
-[`src/transform.ts`](../../plugins/acryl-system-prompt/src/transform.ts); the listener is in `src/index.ts`. Config on its row: `identity`, `style` (the reply style section, plain words and no em dash), `tagSections`,
-`dropEmpty`. **Drift check:** [`plugins/acryl-system-prompt/drift/`](../../plugins/acryl-system-prompt/drift) records a hash of every section upstream contributes,
-per surface; [`tests/system-prompt-shape.spec.ts`](../../runtime/acryl-harness-runtime/tests/system-prompt-shape.spec.ts) fails when a harness update adds, removes or
+[`src/transform.ts`](../../plugins/system-prompt/src/transform.ts); the listener is in `src/index.ts`. Config on its row: `identity`, `style` (the reply style section, plain words and no em dash), `tagSections`,
+`dropEmpty`. **Drift check:** [`plugins/system-prompt/drift/`](../../plugins/system-prompt/drift) records a hash of every section upstream contributes,
+per surface; [`tests/system-prompt-shape.spec.ts`](../../runtime/harness-runtime/tests/system-prompt-shape.spec.ts) fails when a harness update adds, removes or
 changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (same command as the test).
 
 ## How the prompt is assembled
@@ -51,24 +51,24 @@ changes one, naming it. After reviewing, refresh with `ACRYL_UPDATE_DRIFT=1` (sa
    [`runtime-context.ts`](../../deepseek-harness/packages/core/agent-loop/src/runtime-context.ts), not as part of the system prompt.
 6. **Skills.** The skill list (name and description only; bodies load on demand through the `skill` tool) is contributed by the skills service;
    the plugin context pack's skills come from
-   [`plugins/acryl-plugin-context/lib/skills.js`](../../plugins/acryl-plugin-context/lib/skills.js).
+   [`plugins/plugin-context/lib/skills.js`](../../plugins/plugin-context/lib/skills.js).
 7. **ACRYL plugin router (self-extension).** The section that tells the agent it can extend ACRYL, where the docs and examples are, and which
    tools install, verify, list, remove and prepare-publish a plugin. Text:
-   [`plugins/acryl-plugin-context/lib/router.js`](../../plugins/acryl-plugin-context/lib/router.js); the topic map is generated from
-   [`docs/docs.json`](../../plugins/acryl-plugin-context/docs/docs.json); registered by
-   [`plugins/acryl-plugin-context/index.js`](../../plugins/acryl-plugin-context/index.js) (`order 9500`, name `acryl:plugin-router`).
+   [`plugins/plugin-context/lib/router.js`](../../plugins/plugin-context/lib/router.js); the topic map is generated from
+   [`docs/docs.json`](../../plugins/plugin-context/docs/docs.json); registered by
+   [`plugins/plugin-context/index.js`](../../plugins/plugin-context/index.js) (`order 9500`, name `acryl:plugin-router`).
 
 ## How to change it
 
 | I want to change | Edit | Notes |
 | --- | --- | --- |
-| The self-extension instructions (router) | [`router.js`](../../plugins/acryl-plugin-context/lib/router.js) | Must stay under the token budget (1500, enforced by `scripts/plugin.test.mjs`). Static text is cached across turns: keep it stable; put dynamic facts in `PromptContext`. |
-| Which docs the router lists | [`docs.json`](../../plugins/acryl-plugin-context/docs/docs.json), then `node scripts/build-manifest.mjs` in the pack | The topic list is generated from the manifest; `reference.*` docs are intentionally omitted from it. |
-| A skill's wording | `plugins/acryl-plugin-context/skills/<name>/SKILL.md` | Name and description are what sits in context; the body loads on demand. |
-| The identity line (ACRYL) or the tagging | [`acryl-system-prompt`](../../plugins/acryl-system-prompt/src/index.ts) config or `src/transform.ts` | Pass-through: only the identity is replaced; other sections keep upstream text. |
+| The self-extension instructions (router) | [`router.js`](../../plugins/plugin-context/lib/router.js) | Must stay under the token budget (1500, enforced by `scripts/plugin.test.mjs`). Static text is cached across turns: keep it stable; put dynamic facts in `PromptContext`. |
+| Which docs the router lists | [`docs.json`](../../plugins/plugin-context/docs/docs.json), then `node scripts/build-manifest.mjs` in the pack | The topic list is generated from the manifest; `reference.*` docs are intentionally omitted from it. |
+| A skill's wording | `plugins/plugin-context/skills/<name>/SKILL.md` | Name and description are what sits in context; the body loads on demand. |
+| The identity line (ACRYL) or the tagging | [`@acryldev/system-prompt`](../../plugins/system-prompt/src/index.ts) config or `src/transform.ts` | Pass-through: only the identity is replaced; other sections keep upstream text. |
 | The persona or working-directory line | the persona row in the preset [`agent.cordis.yml`](../../deepseek-harness/packages/preset/agent-presets/presets/standard/agent.cordis.yml) | It is in the read-only harness submodule: change it through a user preset or a Loader patch, never by editing `deepseek-harness/` (constitution III). A user preset lives in `<dshHome>/.agent-presets/<id>/`. |
 | Per-project or per-user standing instructions | `AGENTS.md` or `CLAUDE.md` in the workspace, or `<dshHome>/AGENTS.md` | Loaded by agent-instructions; no code change; good for "you can extend ACRYL yourself, offer it when a feature is missing". |
-| A new prompt section from a plugin | `ctx.systemPrompt.section({ name, order, text })` | See [`extending/prompt-contribution.md`](../../plugins/acryl-plugin-context/docs/extending/prompt-contribution.md). Use an order that places it where you want; the router uses `9500` (last). |
+| A new prompt section from a plugin | `ctx.systemPrompt.section({ name, order, text })` | See [`extending/prompt-contribution.md`](../../plugins/plugin-context/docs/extending/prompt-contribution.md). Use an order that places it where you want; the router uses `9500` (last). |
 | Tool guidance or tool descriptions | the tool's package (`dsh-tool-*`) | Upstream for harness tools; for a tool you write, its `description` and its section. |
 
 Attribution: the identity line is ACRYL's; "built on DeepSeek Harness" belongs in the README and About text (the license is MIT; the brand guidelines only ask that the
@@ -81,10 +81,10 @@ Change the text, regenerate the copy above, then re-run the same prompts against
 ```bash
 ACRYL_E2E_PROMPTS='build a kanban with a top-bar button||change its colors||remove it' \
 ACRYL_E2E_KEY_FILE=~/.secure-storage/llmproviders/deepseek/deepseek.json ACRYL_E2E_LOG=/tmp/e2e.jsonl \
-  corepack pnpm --filter acryl-harness-runtime exec vitest run tests/e2e-real-model.spec.ts
+  corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/e2e-real-model.spec.ts
 ```
 
-([`e2e-real-model.spec.ts`](../../runtime/acryl-harness-runtime/tests/e2e-real-model.spec.ts); `ACRYL_E2E_ENGINE=tui` runs the terminal engine.) Judge
+([`e2e-real-model.spec.ts`](../../runtime/harness-runtime/tests/e2e-real-model.spec.ts); `ACRYL_E2E_ENGINE=tui` runs the terminal engine.) Judge
 by behavior: did it load the skill, read the routed docs and the nearest example, verify, install, and report the status, without over-reading.
 
 ## Research: an ACRYL-owned prompt builder without forking (2026-09-21)
@@ -105,7 +105,7 @@ Question: can ACRYL own the whole prompt, Pi-style, without diverging from upstr
   preset); registering a second section with an existing name throws (so override in the listener, not by registering); tool descriptions are
   separate from the prompt and stay upstream.
 
-Recommended shape if we build it (`acryl-system-prompt`, roughly 150 lines): own the ACRYL identity line, tag every section, drop empty ones, fix
+Recommended shape if we build it (`@acryldev/system-prompt`, roughly 150 lines): own the ACRYL identity line, tag every section, drop empty ones, fix
 the order, keep the router, and pass every other section through untouched. Add a drift test that records the upstream section names and a hash of
 their text per surface, so a submodule bump shows exactly what changed. Open checks before shipping: the DSH brand guidelines
 ([`deepseek-harness/BRAND_GUIDELINES.md`](../../deepseek-harness/BRAND_GUIDELINES.md)) for the identity line, and a real-model regression of the

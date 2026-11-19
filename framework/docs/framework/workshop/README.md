@@ -215,7 +215,7 @@ reconnects, the `my-app` tab.
 
 An agent that works in this folder can also use the app's **door**, the page channel the app carries in development: `.acryl/bin/acryl look` prints
 what is on the page with refs, and `act` clicks, types, selects, presses, scrolls, waits, navigates and reloads. Ask the terminal agent to look at
-the page before it tells you it is done; the app's own docs (`AGENTS.md`, `plugins/acryl-door`) say how.
+the page before it tells you it is done; the app's own docs (`AGENTS.md`, `plugins/door`) say how.
 
 **Stuck?** An agent that says the terminal is not a TTY needs the tab, not a script. If the agent cannot log in, sign in in a terminal first
 (`claude`, `codex login`, pi with `DEEPSEEK_API_KEY`), then open the tab again.

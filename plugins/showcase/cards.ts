@@ -2,7 +2,7 @@
  * The showcase's cards: what each plugin in the app is, who made it and where to find what it adds. Pure, so the page, the stream and the tests
  * render the same thing.
  */
-import type { SharedPluginInfo } from 'acryl-plugin-share'
+import type { SharedPluginInfo } from '@acryldev/plugin-share'
 
 /** One plugin as the showcase shows it. */
 export interface ShowcaseCard {

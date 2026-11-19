@@ -9,7 +9,7 @@
  * the selection, the previous hold released by it), and holds a reference itself only where that navigation is not composed.
  */
 
-import type { ISessions, SessionListState, SessionReference } from '@acryl/ui/frame'
+import type { ISessions, SessionListState, SessionReference } from '@acryldev/ui/frame'
 
 type SessionId = Parameters<ISessions['retain']>[0]
 

@@ -4,20 +4,20 @@
  * Web had no persistent logs. This plugin attaches the shared file sink to the Cordis logger for its own
  * lifetime (one effect, disposed with the plugin) and serves the shared support archive on the framework's router. Desktop keeps its
  * own richer export behind the tray; both use the same masking, sink and archive builder from
- * `acryl-diagnostics`.
+ * `@acryldev/diagnostics`.
  */
 
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-control'
+import type {} from '@acryldev/control'
 import type {} from 'acrylblends/cordis/router'
 import type {} from 'acrylblends/cordis/router-http'
-import { buildDiagnosticsArchive, FileExporter, LogFileSink } from 'acryl-diagnostics'
+import { buildDiagnosticsArchive, FileExporter, LogFileSink } from '@acryldev/diagnostics'
 import { SUPPORT_API_PREFIX } from './contract.ts'
 import { supportRoutes } from './route.ts'
 
-export const name = 'acryl-support'
+export const name = '@acryldev/support'
 /**
  * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
  * exactly this shape, so the Context augmentations agree in any program that loads several of them.
@@ -39,7 +39,7 @@ const pluginVersion = (createRequire(import.meta.url)('../package.json') as { ve
 
 export function apply(ctx: Context): void {
   const report = (operation: string, cause: unknown): void => {
-    ctx.logger.error(`acryl-support: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.error(`@acryldev/support: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   // Where this app's engine home keeps logs (from the `appInstance` service, never a looked-up home).
   const logsDir = join(ctx.appInstance.dshHome, 'logs')
@@ -59,12 +59,12 @@ export function apply(ctx: Context): void {
     return () => {
       sink?.close()
     }
-  }, 'acryl-support: file logging')
+  }, '@acryldev/support: file logging')
 
   ctx.router.route('/', supportRoutes(() => buildDiagnosticsArchive({
     logsDir,
     surface: 'web',
-    appVersion: `acryl-support ${pluginVersion}`,
+    appVersion: `@acryldev/support ${pluginVersion}`,
   }), report))
   ctx.routerHttp.mount(SUPPORT_API_PREFIX)
 }

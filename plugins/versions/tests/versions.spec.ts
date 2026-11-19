@@ -301,7 +301,7 @@ describe('versions share', () => {
     git(repo.dir, ['remote', 'add', 'origin', remote.dir])
     git(repo.dir, ['push', '-q', '-u', 'origin', 'main'])
 
-    const other = scratch('acryl-versions-other-')
+    const other = scratch('@acryldev/versions-other-')
     git(other.dir, ['clone', '-q', remote.dir, '.'])
     git(other.dir, ['config', 'user.name', 'Other Person'])
     git(other.dir, ['config', 'user.email', 'other@example.com'])

@@ -1,5 +1,5 @@
 {
-  "name": "acryl-driver-acp",
+  "name": "@acryldev/driver-acp",
   "version": "0.1.0",
   "description": "Any agent that speaks the Agent Client Protocol (ACP) as a chat in the agent panel, started in the app folder: DeepSeek Harness (dsh --profile acp) is the first preset, other ACP agents are added by config. Development only; needs the agent panel; opt-in with acrylblends add driver-acp.",
   "license": "MIT",
@@ -26,9 +26,9 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-agent-panel": "workspace:*",
-    "acryl-instance": "workspace:*",
-    "acryl-drivers": "workspace:*"
+    "@acryldev/agent-panel": "workspace:*",
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/drivers": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -36,12 +36,12 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-agent": "workspace:*",
-    "acryl-builder": "workspace:*",
-    "acryl-extensions": "workspace:*",
-    "acryl-instance": "workspace:*",
-    "acryl-router": "workspace:*",
-    "acryl-state": "workspace:*",
+    "@acryldev/agent": "workspace:*",
+    "@acryldev/builder": "workspace:*",
+    "@acryldev/extensions": "workspace:*",
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/router": "workspace:*",
+    "@acryldev/state": "workspace:*",
     "ajv": "^8.20.0",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"

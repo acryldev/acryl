@@ -32,7 +32,7 @@ import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { packFolder } from '@webboxes/plugin-hub'
+import { packFolder } from '@acryldev/plugin-hub-core'
 import { devtools, startChrome, stopChrome } from './lib/door-probe.mjs'
 import { frameSpecsEnv } from './lib/ide-specs.mjs'
 import { doorSpawn, npmSpawn } from './lib/platform.mjs'
@@ -339,19 +339,19 @@ try {
     if (init.status !== 0)
       fail(`init failed (exit ${String(init.status)}):\n${init.stdout}${init.stderr}`)
     const overlay = readFileSync(join(app, 'cordis.patch.yml'), 'utf8')
-    // The page's root is the Blends frame (`acryl-blends-frame`), not the IDE's workbench (`acryl-workspace`): the frame lists the branches, versions
+    // The page's root is the Blends frame (`@acryldev/blends-frame`), not the IDE's workbench (`@acryldev/workspace`): the frame lists the branches, versions
     // and the app; the workbench comes in as the frame's dependency, not as a row of its own.
     for (const row of [
       '- id: app-routes',
       'name: ./src/frame.ts',
-      'name: ./plugins/acryl-door/src/index.ts',
-      'name: acryl-app-shell',
-      'name: acryl-blends-frame',
+      'name: ./plugins/door/src/index.ts',
+      'name: @acryldev/app-shell',
+      'name: @acryldev/blends-frame',
     ])
       if (!overlay.includes(row)) fail(`the generated overlay is missing ${JSON.stringify(row)}`)
     const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
     const dev = String(manifest.scripts?.dev ?? '')
-    if (dev !== 'node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs')
+    if (dev !== 'node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs')
       fail(`the app's dev script does not boot the host launcher: ${dev}`)
     if (!existsSync(join(app, 'scripts', 'ide-host.mjs')))
       fail('the generated launcher scripts/ide-host.mjs is missing')
@@ -433,7 +433,7 @@ ${install.stdout}${install.stderr}`)
   // The composition gate first: every row active, none pending, no DSH web row, a provider removed/restored and two reloads clean.
   const composition = spawnSync(
     process.execPath,
-    ['--import', './plugins/acryl-node-server/src/register.ts', 'scripts/ide-host.mjs', '--check'],
+    ['--import', './plugins/node-server/src/register.ts', 'scripts/ide-host.mjs', '--check'],
     { cwd: app, encoding: 'utf8', env: bootEnv },
   )
   if (composition.status !== 0)
@@ -459,7 +459,7 @@ ${composition.stdout}`)
     const from = output.length
     server = spawn(
       process.execPath,
-      ['--import', './plugins/acryl-node-server/src/register.ts', 'scripts/ide-host.mjs'],
+      ['--import', './plugins/node-server/src/register.ts', 'scripts/ide-host.mjs'],
       {
         cwd: app,
         env: bootEnv,
@@ -532,7 +532,7 @@ ${composition.stdout}`)
         `the page's script tag ${match[0]} is not closed; the tags after it would be swallowed as its text`,
       )
   }
-  if (!html.includes('acryl-blends-frame/client.js'))
+  if (!html.includes('@acryldev/blends-frame/client.js'))
     fail(`the page does not load the frame's client; server said:\n${output.slice(-2500)}`)
   // The door drives the app's page, never the frame around it (its row is generated with `hostIndex: false`), so the frame's own page must not carry
   // the script; the app's page carries it once (checked below). A copy here would make an agent's navigate leave the frame.
@@ -813,7 +813,7 @@ async function checkFramedPull(app, origin, jar) {
       ? readdirSync(logs)
           .filter((file) => file.endsWith('.error.log'))
           .flatMap((file) => readFileSync(join(logs, file), 'utf8').split(/\r?\n/u))
-          .filter((entry) => entry.includes('acryl-door: failed'))
+          .filter((entry) => entry.includes('@acryldev/door: failed'))
       : []
     return lines.length === 0 ? '' : `\nthe host reported:\n${lines.slice(-5).join('\n')}`
   }

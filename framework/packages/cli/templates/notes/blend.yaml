@@ -14,10 +14,10 @@ spec:
     hostname: { type: string, default: 127.0.0.1 }
   rows:
     - id: router
-      name: acryl-router
+      name: router
     # The db port, on one SQLite file. The file and the migrations folder are set in src/app.ts (data/notes.sqlite, or the file the NOTES_DB environment variable names).
     - id: db
-      name: acryl-db-sqlite
+      name: db-sqlite
     - id: routes
       name: routes
     # Plugin folders without a row of their own (a live install with the door's `plugin add`); a folder with a row is the app's and starts by it.
@@ -28,9 +28,9 @@ spec:
     - id: plugin-share
       name: plugin-share
     - id: server
-      name: acryl-node-server
+      name: node-server
       config:
         hostname: "{{parameters.hostname}}"
     # The door: an agent working in this folder looks at the page and acts on it through .acryl/bin/acryl. Development only: src/app.ts leaves it out when NODE_ENV=production.
     - id: acryl-door
-      name: acryl-door
+      name: door

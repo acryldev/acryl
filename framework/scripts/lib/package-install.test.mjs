@@ -18,7 +18,7 @@ const packageFolder = join(repo, 'plugins', 'agent')
 test('a built framework plugin imports from node_modules the way an installed app loads it', () => {
   const app = mkdtempSync(join(tmpdir(), 'acryl-install-'))
   try {
-    const installed = join(app, 'node_modules', 'acryl-agent')
+    const installed = join(app, 'node_modules', '@acryldev/agent')
     mkdirSync(installed, { recursive: true })
     for (const file of ['package.json', 'lib'])
       cpSync(join(packageFolder, file), join(installed, file), { recursive: true })
@@ -32,7 +32,7 @@ test('a built framework plugin imports from node_modules the way an installed ap
       [
         '--input-type=module',
         '--eval',
-        "import('acryl-agent').then((module) => console.log(module.agent.name, Object.keys(module).sort().join(',')))",
+        "import('@acryldev/agent').then((module) => console.log(module.agent.name, Object.keys(module).sort().join(',')))",
       ],
       { cwd: app, encoding: 'utf8' },
     )

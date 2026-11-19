@@ -1,12 +1,12 @@
 // Example: ui-library.tui-gallery
 // Type:     tui-contribution
 // Surfaces: tui (a no-op elsewhere)
-// Teaches:  build a terminal screen from `acryl-ui-tui` instead of raw pi-tui and hand-picked colors: `createTuiUi(ctx.get('tuiTheme'))` gives Card, Field, SettingsRow,
+// Teaches:  build a terminal screen from `@acryldev/ui-tui` instead of raw pi-tui and hand-picked colors: `createTuiUi(ctx.get('tuiTheme'))` gives Card, Field, SettingsRow,
 //           SelectField, Segmented, Tabs, SwitchField, Dialog, EmptyState and Stack, all width-safe and keyboard-driven, painted with the shared semantic roles. Passing the
 //           `tuiTheme` service makes the colors follow the terminal's light/dark scheme; without it the components use the static dark palette.
 // Expect:   `/gallery` opens a popup with three tabs (Components, Settings form, Colors); Tab switches tabs, arrows and space use the controls, Esc closes.
 // Docs:     extending.ui-library
-import { createTuiUi, defaultTheme } from 'acryl-ui-tui'
+import { createTuiUi, defaultTheme } from '@acryldev/ui-tui'
 
 export const name = 'acryl-example-tui-ui-library'
 

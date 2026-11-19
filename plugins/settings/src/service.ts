@@ -16,7 +16,7 @@ import { parseDocument, stringify } from 'yaml'
 import { cloneJsonShaped, deepEqualJson, isPlainObject, mergeLayers } from './merge.ts'
 
 const NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*$/
-const DEFAULT_FILENAME = 'acryl-settings.yaml'
+const DEFAULT_FILENAME = '@acryldev/settings.yaml'
 
 /** When a namespace's changes take effect for its owner. */
 export type SettingsApplies = 'live' | 'restart'
@@ -58,7 +58,7 @@ export interface SettingsScope<T> {
 
 /** Where the service keeps its file. */
 export interface Config {
-  /** Absolute path of the YAML file. Empty means `<ACRYL home>/acryl-settings.yaml`. */
+  /** Absolute path of the YAML file. Empty means `<ACRYL home>/@acryldev/settings.yaml`. */
   filename: string
 }
 
@@ -69,7 +69,7 @@ export const Config: z<Config> = z.object({
 
 /**
  * The composition-root `appInstance` service. Every plugin that augments `Context.appInstance` declares exactly this shape
- * (see `acryl-agent-control`), so the augmentations agree in any program that loads several of them; this plugin reads `home`.
+ * (see `@acryldev/agent-control`), so the augmentations agree in any program that loads several of them; this plugin reads `home`.
  */
 interface AppInstanceService {
   readonly home: string
@@ -93,7 +93,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Stable Cordis plugin name. */
-export const name = 'acryl-settings'
+export const name = '@acryldev/settings'
 
 /** The ACRYL home is chosen once at the composition root and provided before any engine row mounts. */
 export const inject = ['appInstance']
@@ -114,7 +114,7 @@ interface Watcher {
 
 function assertNamespace(value: string): void {
   if (!NAMESPACE_PATTERN.test(value)) {
-    throw new TypeError(`acryl-settings: namespace "${value}" must match ${String(NAMESPACE_PATTERN)}`)
+    throw new TypeError(`@acryldev/settings: namespace "${value}" must match ${String(NAMESPACE_PATTERN)}`)
   }
 }
 
@@ -122,10 +122,10 @@ function readDocument(filename: string): Record<string, unknown> {
   if (!existsSync(filename)) return {}
   const parsed = parseDocument(readFileSync(filename, 'utf8'), { prettyErrors: true })
   if (parsed.errors.length > 0) {
-    throw new Error(`acryl-settings: invalid settings file ${filename}: ${parsed.errors.map(error => error.message).join('; ')}`)
+    throw new Error(`@acryldev/settings: invalid settings file ${filename}: ${parsed.errors.map(error => error.message).join('; ')}`)
   }
   const value: unknown = parsed.toJS() ?? {}
-  if (!isPlainObject(value)) throw new Error(`acryl-settings: ${filename} must be a map of namespace sections`)
+  if (!isPlainObject(value)) throw new Error(`@acryldev/settings: ${filename} must be a map of namespace sections`)
   return value
 }
 
@@ -145,13 +145,13 @@ export class AcrylSettings extends Service {
     ctx.effect(() => async () => {
       this.disposed = true
       await this.tail
-    }, 'acryl-settings: settle pending writes')
+    }, '@acryldev/settings: settle pending writes')
   }
 
   /** Register one namespace and return its handle. A stored section that fails the schema rejects the registration. */
   register<T>(namespace: string, schema: z<T>, options: SettingsRegisterOptions<T> = {}): SettingsScope<T> {
     assertNamespace(namespace)
-    if (this.entries.has(namespace)) throw new Error(`acryl-settings: namespace "${namespace}" is already registered`)
+    if (this.entries.has(namespace)) throw new Error(`@acryldev/settings: namespace "${namespace}" is already registered`)
     const entry: Entry = {
       namespace,
       schema: schema as z<unknown>,
@@ -162,7 +162,7 @@ export class AcrylSettings extends Service {
     }
     entry.resolved = this.resolve(entry, this.section(namespace))
     this.entries.set(namespace, entry)
-    this.ctx.effect(() => () => { this.entries.delete(namespace) }, `acryl-settings: namespace ${namespace}`)
+    this.ctx.effect(() => () => { this.entries.delete(namespace) }, `@acryldev/settings: namespace ${namespace}`)
     return this.scopeFor<T>(entry)
   }
 
@@ -177,7 +177,7 @@ export class AcrylSettings extends Service {
    */
   update(namespace: string, patch: Readonly<Record<string, unknown>>): Promise<void> {
     const entry = this.entries.get(namespace)
-    if (entry === undefined) return Promise.reject(new Error(`acryl-settings: namespace "${namespace}" is not registered`))
+    if (entry === undefined) return Promise.reject(new Error(`@acryldev/settings: namespace "${namespace}" is not registered`))
     return this.commit(entry, current => mergeLayers(current, cloneJsonShaped(patch)))
   }
 
@@ -199,7 +199,7 @@ export class AcrylSettings extends Service {
   private section(namespace: string): Record<string, unknown> {
     const stored = this.document[namespace]
     if (stored === undefined) return {}
-    if (!isPlainObject(stored)) throw new Error(`acryl-settings: section "${namespace}" in ${this.filename} must be a map`)
+    if (!isPlainObject(stored)) throw new Error(`@acryldev/settings: section "${namespace}" in ${this.filename} must be a map`)
     return stored
   }
 
@@ -229,7 +229,7 @@ export class AcrylSettings extends Service {
   /** Run one write: compute, validate, persist atomically, then notify watchers. A refused write changes nothing. */
   private commit(entry: Entry, next: (current: Record<string, unknown>) => Record<string, unknown>): Promise<void> {
     const run = async (): Promise<void> => {
-      if (this.disposed) throw new Error('acryl-settings: service is disposed')
+      if (this.disposed) throw new Error('@acryldev/settings: service is disposed')
       const nextSection = next(this.section(entry.namespace))
       const nextValue = this.resolve(entry, nextSection)
       const prevValue = entry.resolved
@@ -246,7 +246,7 @@ export class AcrylSettings extends Service {
         try {
           await watcher.callback(nextValue, prevValue)
         } catch (cause) {
-          this.ctx.logger.error(`acryl-settings: watcher for "${entry.namespace}" failed: ${cause instanceof Error ? cause.message : String(cause)}`)
+          this.ctx.logger.error(`@acryldev/settings: watcher for "${entry.namespace}" failed: ${cause instanceof Error ? cause.message : String(cause)}`)
         }
       }
     }

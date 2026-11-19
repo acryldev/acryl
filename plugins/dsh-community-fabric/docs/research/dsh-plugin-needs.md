@@ -146,7 +146,7 @@ This does not mean all P0 APIs must ship in Fabric v0.1. It means the manifest, 
 For a normal plugin, developers should be able to write:
 
 ```ts
-import { definePlugin } from 'dsh-community-fabric/sdk'
+import { definePlugin } from '@acryldev/dsh-community-fabric/sdk'
 
 export default definePlugin((ctx) => {
   ctx.tools.register('com.example.export', exportTool)

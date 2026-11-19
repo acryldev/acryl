@@ -90,8 +90,8 @@ describe('docs: Cordis examples run', () => {
 describe('docs: the extension contract in agent/extending-apps.md', () => {
   it('installs through the real extensions plugin and passes its own check', async () => {
     const { Context } = await import('@deepseek-ai/cordis')
-    const { instance, pinnedInstance } = await import('acryl-instance')
-    const { extensions } = await import('acryl-extensions')
+    const { instance, pinnedInstance } = await import('@acryldev/instance')
+    const { extensions } = await import('@acryldev/extensions')
     const block = /<!-- extension: hello -->\n```ts\n([\s\S]*?)```/.exec(
       read('agent/extending-apps.md'),
     )?.[1]

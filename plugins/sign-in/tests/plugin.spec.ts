@@ -91,7 +91,7 @@ async function boot(options: { router?: boolean, services?: boolean } = {}) {
   return { ...served, ctx, fiber, router, get, post }
 }
 
-describe('acryl-sign-in Host plugin', () => {
+describe('@acryldev/sign-in Host plugin', () => {
   it('serves its five routes through one router mount and registers no exact webServer route', async () => {
     const app = await boot()
     expect(app.fiber.state).toBe(ACTIVE)

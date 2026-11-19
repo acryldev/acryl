@@ -5,7 +5,7 @@
  *   tui  the terminal screen (needs a terminal), in an isolated home so it never touches ~/.acryl
  *   blend  the launcher in the Blends frame (its right panel: chat, Claude Code, Codex, Pi), in a desktop window: scripts/launcher-blend.mjs
  *   all  web and gui in the background (their logs are in the folder printed), tui in this terminal; leaving the tui stops the other two
- * The packages the screen is made of (`acryl-launcher-desktop`, `acryl-sign-in`) are built first: `pnpm web` and `pnpm desktop` do not rebuild them.
+ * The packages the screen is made of (`@acryldev/launcher-desktop`, `@acryldev/sign-in`) are built first: `pnpm web` and `pnpm desktop` do not rebuild them.
  */
 import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, openSync, readFileSync } from 'node:fs'
@@ -24,7 +24,7 @@ if (!FACES.includes(face)) {
 if (face === 'blend' || face === 'gui') process.exit(spawnSync('node', ['scripts/launcher-blend.mjs'], { cwd: root, stdio: 'inherit' }).status ?? 0)
 
 const run = (command, args, options = {}) => spawnSync(command, args, { cwd: root, stdio: 'inherit', ...options })
-const built = run('node', ['scripts/with-build-lock.mjs', 'corepack', 'pnpm', '--filter', 'acryl-launcher-desktop', '--filter', 'acryl-sign-in', 'run', 'build'], { stdio: ['ignore', 'ignore', 'inherit'] })
+const built = run('node', ['scripts/with-build-lock.mjs', 'corepack', 'pnpm', '--filter', '@acryldev/launcher-desktop', '--filter', '@acryldev/sign-in', 'run', 'build'], { stdio: ['ignore', 'ignore', 'inherit'] })
 if (built.status !== 0) process.exit(built.status ?? 1)
 
 const scratch = join(process.env.ACRYL_LAUNCHER_DEV ?? join(tmpdir(), 'acryl-launcher-dev'))

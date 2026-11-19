@@ -1,5 +1,5 @@
 {
-  "name": "acryl-system-prompt",
+  "name": "@acryldev/system-prompt",
   "version": "0.2.0",
   "description": "ACRYL's own shaping of the system prompt on top of the harness's sections: ACRYL identity, pi.dev-style tagged sections, no empty sections, and a drift record of what upstream contributes",
   "license": "MIT",
@@ -10,9 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-system-prompt"
+    "directory": "plugins/system-prompt"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-system-prompt#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/system-prompt#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

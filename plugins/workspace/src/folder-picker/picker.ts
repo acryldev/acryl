@@ -1,6 +1,6 @@
 /**
  * Opens the operating system's own folder chooser and reports the folder picked. The Host serves a
- * loopback-only Web server (`acryl-workspace` refuses to start otherwise), so a dialog raised here is on
+ * loopback-only Web server (`@acryldev/workspace` refuses to start otherwise), so a dialog raised here is on
  * the same machine as the person using the page - the reason this is safe to offer at all, unlike a
  * chooser on a remote server nobody is sitting at.
  */

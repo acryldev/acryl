@@ -84,8 +84,8 @@ test('a run that never finishes stops at its budget', async () => {
 })
 
 test('with tasks mounted, a run is a durable task that owns one task per tool call', async () => {
-  const { instance, pinnedInstance } = await import('acryl-instance')
-  const { tasks } = await import('acryl-tasks')
+  const { instance, pinnedInstance } = await import('@acryldev/instance')
+  const { tasks } = await import('@acryldev/tasks')
   const home = tempDir('agent-tasks-')
   const root = new Context()
   for (const [plugin, config] of [

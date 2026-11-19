@@ -11,7 +11,7 @@
  * and can be read back after the fact instead of re-derived from a
  * screenshot.
  *
- * @module acryl-harness-runtime/session-log-exporter
+ * @module @acryldev/harness-runtime/session-log-exporter
  */
 
 import { appendFileSync, mkdirSync } from 'node:fs'

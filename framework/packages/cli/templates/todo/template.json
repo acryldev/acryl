@@ -1,14 +1,14 @@
 {
   "plugins": [
     "instance",
-    "acryl-router",
-    "acryl-state",
-    "acryl-node-server",
+    "router",
+    "state",
+    "node-server",
     "manifest",
     "save",
-    "acryl-door",
-    "acryl-web-server",
-    "acryl-page"
+    "door",
+    "web-server",
+    "page"
   ],
   "desktopPath": "/todo"
 }

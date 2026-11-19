@@ -8,8 +8,8 @@ The order matters. `acrylblends` 1.2.0's `init --desktop` installs the frame's p
 
 ## 0. Decisions before anything is published
 
-- [x] **OWNER** (confirmed 2026-11-05) Confirm the names in `frame/packages.json`: the scope `@acryldev`, and the two new short names `versions` (acryl-versions) and
-      `blends-frame` (acryl-blends-frame). A rename is one line there; re-run step 2 after it.
+- [x] **OWNER** (confirmed 2026-11-05) Confirm the names in `frame/packages.json`: the scope `@acryldev`, and the two new short names `versions` (@acryldev/versions) and
+      `blends-frame` (@acryldev/blends-frame). A rename is one line there; re-run step 2 after it.
 - [x] **OWNER** (approved 2026-11-05) Approve the release itself (this checklist), as the coordinator relays it.
 
 ## 1. The npm org (a check)
@@ -52,7 +52,7 @@ The order matters. `acrylblends` 1.2.0's `init --desktop` installs the frame's p
 
 - [ ] `npm view @acryldev/<short> version` answers for all 16 (the registry can lag a few minutes).
 
-Not published: `acryl-brand` and `acryl-shortcuts`. The frame mounts neither and no frame package depends on them. Already on npm and not ours to publish:
+Not published: `@acryldev/brand` and `@acryldev/shortcuts`. The frame mounts neither and no frame package depends on them. Already on npm and not ours to publish:
 `@deepseek-ai/dsh-*` 0.2.0-rc.2, `@deepseek-ai/cordis` 4.0.5, `@deepseek-ai/cordis-plugin-loader` 1.0.6.
 
 ## 4. Merge the release branch into main

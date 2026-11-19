@@ -7,10 +7,10 @@ plugins provide capabilities.
 
 | Surface | How requests arrive | Typical use |
 | --- | --- | --- |
-| Web | HTTP to the ACRYL Host's web server, through `acryl-router-http` | browser applications and APIs |
+| Web | HTTP to the ACRYL Host's web server, through `@acryldev/router-http` | browser applications and APIs |
 | Desktop | the same Host web server on a loopback port, opened in the Electron window | local-first applications |
 | Terminal UI | in process: `ctx.router.request(...)` or `ctx.router.fetch(...)` | operator tools, agents, terminal workflows |
-| Standalone process | HTTP through `acryl-node-server` | an app that runs without the Host |
+| Standalone process | HTTP through `@acryldev/node-server` | an app that runs without the Host |
 | Tests | `ctx.router.request(...)` or `app.request(...)` | handler and contract tests |
 
 The handler does not know which row supplied the request. When it needs a transport fact it reads the connection from the context
@@ -59,10 +59,10 @@ host declares instead of assuming a network route exists.
 | --- | --- |
 | Route handlers and middleware | the feature plugin's `Acryl` |
 | Mount path and lifetime | the feature plugin, through `ctx.router.route` |
-| Socket and port | the Host (`acryl-router-http`) or `acryl-node-server` |
+| Socket and port | the Host (`@acryldev/router-http`) or `@acryldev/node-server` |
 | Terminal rendering and input | the terminal surface |
 | Shared domain behavior | a domain service every surface uses |
-| Shared reactive state | `acryl-state` or an application service |
+| Shared reactive state | `@acryldev/state` or an application service |
 
 ## Loopback-only routes
 

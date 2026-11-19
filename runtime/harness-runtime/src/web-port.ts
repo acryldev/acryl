@@ -2,7 +2,7 @@
  * Finding and applying the Web port of an app. Which port an app starts from is part of its instance family (`instance/`, which also reads
  * `ACRYL_WEB_PORT`); this module only scans for a free loopback port from there and turns it into the web server's Loader patch.
  *
- * @module acryl-harness-runtime/web-port
+ * @module @acryldev/harness-runtime/web-port
  */
 
 import { createServer } from 'node:net'

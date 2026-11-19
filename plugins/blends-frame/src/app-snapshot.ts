@@ -1,7 +1,7 @@
 /**
  * The app's snapshot verbs as the frame's service `appSnapshot`: every version the frame saves (Save point, the auto-save) is captured first, so
  * a version is always a snapshot whose `blend.yaml` names every plugin folder and whose lock matches; the agent's snapshot tools
- * (acryl-app-context) run on it too, the same code as `npm run snapshot`. The verbs are the app's own (`plugins/manifest/snapshot.ts`, part of the app's
+ * (@acryldev/app-context) run on it too, the same code as `npm run snapshot`. The verbs are the app's own (`plugins/manifest/snapshot.ts`, part of the app's
  * folder), so the frame runs the version the app was made with; an app made before them says so instead of guessing. Pushing and pulling are
  * not here: they are the person's (the Git tab and the versions header, ./git-sync.ts), and a push sends only a plan they confirmed.
  */

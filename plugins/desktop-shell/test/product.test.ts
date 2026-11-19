@@ -11,8 +11,8 @@ import {
 import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { after, test } from 'node:test'
-import { readProduct } from 'acryl-instance/bundle'
-import { openProductStorage } from 'acryl-instance/storage'
+import { readProduct } from '@acryldev/instance/bundle'
+import { openProductStorage } from '@acryldev/instance/storage'
 import { openProductApp, seedSource } from '../product.ts'
 
 /** Temporary folders this file makes; removed after its tests, also when one fails. */
@@ -28,7 +28,7 @@ after(() => {
 
 const scratch = (): string => tempDir('acryl-product-')
 
-const PROGRAM = ['node_modules/', 'plugins/acryl-router/', 'scripts/', 'cordis.yml']
+const PROGRAM = ['node_modules/', 'plugins/router/', 'scripts/', 'cordis.yml']
 
 /** A bundle as electron-builder leaves it: no `.git`, a filtered manifest, and the carriers the packer adds. */
 function bundle(root: string): void {
@@ -43,11 +43,11 @@ function bundle(root: string): void {
     `${JSON.stringify({ product: 'Test Product', appName: 'Test App', program: PROGRAM })}\n`,
   )
   // The Program: framework plugins next to the person's own, the generated host, the packages.
-  mkdirSync(join(root, 'plugins', 'acryl-router'), { recursive: true })
+  mkdirSync(join(root, 'plugins', '@acryldev/router'), { recursive: true })
   mkdirSync(join(root, 'plugins', 'notes'), { recursive: true })
   mkdirSync(join(root, 'scripts'), { recursive: true })
-  writeFileSync(join(root, 'plugins', 'acryl-router', 'index.ts'), 'export {}\n')
-  writeFileSync(join(root, 'plugins', 'acryl-router-extra.ts'), 'export {}\n')
+  writeFileSync(join(root, 'plugins', '@acryldev/router', 'index.ts'), 'export {}\n')
+  writeFileSync(join(root, 'plugins', '@acryldev/router-extra.ts'), 'export {}\n')
   writeFileSync(join(root, 'plugins', 'notes', 'index.ts'), 'export {}\n')
   writeFileSync(join(root, 'scripts', 'ide-host.mjs'), '// host\n')
   writeFileSync(join(root, 'cordis.yml'), '[]\n')
@@ -115,7 +115,7 @@ test('a new app’s source is the person’s part of the bundled app, with what 
     '.acrylblends',
     // The Program stays in the bundle and is served from there.
     'node_modules',
-    'plugins/acryl-router',
+    'plugins/router',
     'scripts',
     'cordis.yml',
   ])
@@ -123,7 +123,7 @@ test('a new app’s source is the person’s part of the bundled app, with what 
   assert.equal(readFileSync(join(source, 'src', 'app.ts'), 'utf8'), 'export {}\n')
   // The person's plugins are theirs; a name that only starts like a Program folder is not the Program.
   assert.ok(existsSync(join(source, 'plugins', 'notes', 'index.ts')))
-  assert.ok(existsSync(join(source, 'plugins', 'acryl-router-extra.ts')))
+  assert.ok(existsSync(join(source, 'plugins', '@acryldev/router-extra.ts')))
   // The product's names are ignored locally, never through the app's own `.gitignore`.
   assert.match(excludeOf(source), /^product\.json$/mu)
 })
@@ -215,10 +215,10 @@ test('a product that is one Blend makes its first app from the Blend in its bund
   // The Blend: its own plugin and source, a copy of a framework plugin (the Program serves that one from the bundle), and the repository it travels with.
   const seed = join(root, 'seed')
   mkdirSync(join(seed, 'plugins', 'finops'), { recursive: true })
-  mkdirSync(join(seed, 'plugins', 'acryl-router'), { recursive: true })
+  mkdirSync(join(seed, 'plugins', '@acryldev/router'), { recursive: true })
   mkdirSync(join(seed, 'template-git'), { recursive: true })
   writeFileSync(join(seed, 'plugins', 'finops', 'index.ts'), 'export const finops = 1\n')
-  writeFileSync(join(seed, 'plugins', 'acryl-router', 'index.ts'), 'export const copy = 1\n')
+  writeFileSync(join(seed, 'plugins', '@acryldev/router', 'index.ts'), 'export const copy = 1\n')
   writeFileSync(join(seed, 'blend.yaml'), 'kind: Blueprint\n')
   writeFileSync(join(seed, 'template-git', 'HEAD'), 'ref: refs/heads/main\n')
   const product = {
@@ -249,7 +249,7 @@ test('a product that is one Blend makes its first app from the Blend in its bund
   assert.ok(existsSync(join(app.root, '.git', 'HEAD')))
   // Not the bundle's own tree (the Blank starter's src), and not the Blend's copy of a Program plugin.
   assert.equal(existsSync(join(app.root, 'src', 'app.ts')), false)
-  assert.equal(existsSync(join(app.root, 'plugins', 'acryl-router')), false)
+  assert.equal(existsSync(join(app.root, 'plugins', '@acryldev/router')), false)
 })
 
 test('the marker names a seed folder only as a relative path inside the bundle', () => {

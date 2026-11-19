@@ -11,16 +11,16 @@
     }
   ],
   "imports": {
-    "": "acryl-router",
-    "/ws": "acryl-router/helpers",
-    "/conninfo": "acryl-router/helpers",
-    "/streaming": "acryl-router/helpers",
-    "/utils/mime": "acryl-router/helpers",
-    "/basic-auth": "acryl-router/middleware",
-    "/body-limit": "acryl-router/middleware",
-    "/compress": "acryl-router/middleware",
-    "/etag": "acryl-router/middleware",
-    "/powered-by": "acryl-router/middleware"
+    "": "@acryldev/router",
+    "/ws": "@acryldev/router/helpers",
+    "/conninfo": "@acryldev/router/helpers",
+    "/streaming": "@acryldev/router/helpers",
+    "/utils/mime": "@acryldev/router/helpers",
+    "/basic-auth": "@acryldev/router/middleware",
+    "/body-limit": "@acryldev/router/middleware",
+    "/compress": "@acryldev/router/middleware",
+    "/etag": "@acryldev/router/middleware",
+    "/powered-by": "@acryldev/router/middleware"
   },
   "files": {
     "src/adapter/conninfo.ts": {
@@ -64,7 +64,7 @@
     "src/adapter/server.ts": {
       "upstreamSha256": "d9cde30a3e02b8ea1be4461bb13f9b486c750542564d9bd8c2def3d6e93e52ec",
       "sha256": "70d6559721dc77ef9776e95a86b8a865645b2c6941d3c15d585b52f6697e31e5",
-      "deviation": "serve() listens on 127.0.0.1 when no hostname is given (exported as DEFAULT_HOSTNAME), where upstream passes undefined and so listens on every interface: a development server started with `npm run dev` was reachable from the whole local network, which the Cordis adapter (acryl-node-server) never allowed; `hostname: '0.0.0.0'` opts in. serve() and createAdaptorServer() are overloaded on the createServer option, so the default HTTP/1 call returns http.Server (closeIdleConnections() type-checks) and https, HTTP/2 and secure HTTP/2 return their own server types; upstream returns the union for every call."
+      "deviation": "serve() listens on 127.0.0.1 when no hostname is given (exported as DEFAULT_HOSTNAME), where upstream passes undefined and so listens on every interface: a development server started with `npm run dev` was reachable from the whole local network, which the Cordis adapter (@acryldev/node-server) never allowed; `hostname: '0.0.0.0'` opts in. serve() and createAdaptorServer() are overloaded on the createServer option, so the default HTTP/1 call returns http.Server (closeIdleConnections() type-checks) and https, HTTP/2 and secure HTTP/2 return their own server types; upstream returns the union for every call."
     },
     "src/adapter/types.ts": {
       "upstreamSha256": "216c3a940fa27a28c98a0768e3d22112a6c252794eaac110ff32823dd3b2cea8",

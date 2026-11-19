@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 function writeSettings(home: string, text: string): void {
-  writeFileSync(join(dirname(home), 'acryl-settings.yaml'), text)
+  writeFileSync(join(dirname(home), '@acryldev/settings.yaml'), text)
 }
 
 describe('desktop startup settings: dsh-desktop.blend (D23)', () => {
@@ -80,7 +80,7 @@ describe('desktop profile BLEND composition (D24)', () => {
     // survives composition (invoicing is locked disabled by acryl.demo's
     // default parameters).
     expect(composed.find(row => row.id === 'contacts')).toEqual(expect.objectContaining({
-      name: 'acryl-blend-demo',
+      name: '@acryldev/blend-demo',
       config: {
         title: 'Contacts',
         org: 'My Organization',
@@ -105,7 +105,7 @@ describe('desktop profile BLEND composition (D24)', () => {
     mkdirSync(join(lockDir, '.acryl'), { recursive: true })
     writeFileSync(join(lockDir, '.acryl', 'blend.lock.json'), JSON.stringify({
       formatVersion: 1,
-      generator: { name: '@webboxes/blends-core', version: '0.1.0' },
+      generator: { name: '@acryldev/blends-core', version: '0.1.0' },
       origin: { id: 'acme.crm', kind: 'Blend', version: '0.1.0', digest: `sha256:${'b'.repeat(64)}` },
       rows: [{ id: 'webserver', name: '@evil/webserver' }],
     }))

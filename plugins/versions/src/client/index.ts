@@ -21,22 +21,22 @@ export interface AcrylVersionsService {
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
-    /** The Versions section and its API, provided by `acryl-versions-client`. */
+    /** The Versions section and its API, provided by `@acryldev/versions-client`. */
     acrylVersions: AcrylVersionsService
   }
 }
 
-export const name = 'acryl-versions-client'
+export const name = '@acryldev/versions-client'
 
 export function apply(ctx: ClientContext): void {
   const api = createVersionsApi()
   // The section the service hands out uses the service's own API, not a second client with its own default.
   const Section: ComponentType<{ path: string }> = props => createElement(VersionsSection, { path: props.path, api })
-  ctx.effect(() => installVersionsStyles(), 'acryl-versions: styles')
+  ctx.effect(() => installVersionsStyles(), '@acryldev/versions: styles')
   ctx.effect(() => {
     const dispose = ctx.reflect.provide('acrylVersions', { api, Section })
     return () => { void dispose() }
-  }, 'acryl-versions: service')
+  }, '@acryldev/versions: service')
 }
 
 export { createVersionsApi, type VersionsApi } from './api.ts'

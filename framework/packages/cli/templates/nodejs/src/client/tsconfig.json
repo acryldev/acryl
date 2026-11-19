@@ -11,15 +11,15 @@
     "jsxImportSource": "acrylblends/jsx/dom",
     "types": [],
     "paths": {
-      "acrylblends/jsx/dom": ["../../plugins/acryl-router/src/browser/jsx-dom.ts"],
+      "acrylblends/jsx/dom": ["../../plugins/router/src/browser/jsx-dom.ts"],
       "acrylblends/jsx/dom/jsx-runtime": [
-        "../../plugins/acryl-router/src/core/jsx/dom/jsx-runtime.ts"
+        "../../plugins/router/src/core/jsx/dom/jsx-runtime.ts"
       ],
       "acrylblends/jsx/dom/jsx-dev-runtime": [
-        "../../plugins/acryl-router/src/core/jsx/dom/jsx-dev-runtime.ts"
+        "../../plugins/router/src/core/jsx/dom/jsx-dev-runtime.ts"
       ],
-      "acrylblends/jsx/dom/client": ["../../plugins/acryl-router/src/browser/jsx-dom.ts"],
-      "acrylblends/client": ["../../plugins/acryl-router/src/browser/client.ts"]
+      "acrylblends/jsx/dom/client": ["../../plugins/router/src/browser/jsx-dom.ts"],
+      "acrylblends/client": ["../../plugins/router/src/browser/client.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

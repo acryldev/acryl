@@ -1,7 +1,7 @@
 /** A file tab: the file as text, with line numbers and syntax colours. Read when the tab is shown. */
 
 import { useEffect, useState } from 'react'
-import type { FileContentView, WorkspaceFilesApi } from 'acryl-workspace/ui'
+import type { FileContentView, WorkspaceFilesApi } from '@acryldev/workspace/ui'
 import { highlightLine, languageOf } from './highlight.ts'
 
 type FileLoad =

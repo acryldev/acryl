@@ -7,7 +7,7 @@
  * @module @tomowang/dsh-tui/tui/actions
  */
 
-import type { AuthMethod } from 'acryl-control'
+import type { AuthMethod } from '@acryldev/control'
 import type { GoalCommand } from './commands.js'
 import type { ProviderDraft, ProviderRow } from './modelProfile/types.js'
 import type { QuestionAnswer } from './interaction/types.js'

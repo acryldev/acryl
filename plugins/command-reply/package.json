@@ -1,14 +1,14 @@
 {
-  "name": "acryl-command-reply",
+  "name": "@acryldev/command-reply",
   "version": "0.1.0",
   "description": "Shows a host command reply on the Web and Desktop start page, where the conversation that would show it is not drawn yet (spec 049 T002)",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-command-reply"
+    "directory": "plugins/command-reply"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-command-reply#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/command-reply#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -86,6 +86,6 @@
     ]
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*"
+    "@acryldev/ui": "workspace:*"
   }
 }

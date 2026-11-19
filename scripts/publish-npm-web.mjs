@@ -29,7 +29,7 @@ try {
     writeFileSync(join(configDir, '.npmrc'), `//registry.npmjs.org/:_authToken=${token}\n`)
   }
   // `pnpm publish`, not `npm publish`: acryl-web depends on real workspace
-  // packages (`dsh-client-ui-brand-acryl`, `cordis-plugin-market`) via the
+  // packages (`@acryldev/brand-client`, `@acryldev/cordis-plugin-market`) via the
   // `workspace:*` protocol. Only pnpm's own publish rewrites that to the
   // dependency's real published version in what actually gets uploaded -
   // `npm publish` ships the literal string `workspace:*`, which is not a

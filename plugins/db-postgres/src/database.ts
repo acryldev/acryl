@@ -43,7 +43,7 @@ function toDriver(value: SqlValue): unknown {
 type Query = (sql: string, params: readonly SqlValue[]) => Promise<pg.QueryResult<Record<string, unknown>>>
 
 function statement(sql: string, params: readonly SqlValue[]): pg.QueryConfig {
-  const text = bindStatement('acryl-db-postgres', sql, params.length)
+  const text = bindStatement('@acryldev/db-postgres', sql, params.length)
   // The extended protocol always, so one call is one statement (several statements belong in `exec`).
   return { text, values: params.map(toDriver), queryMode: 'extended' } as pg.QueryConfig
 }
@@ -79,7 +79,7 @@ export class PostgresDatabase implements Db {
 
   /** Run `operation` after everything called before it. */
   private serial<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.closing !== undefined) return Promise.reject(new Error('acryl-db-postgres: the database is closed'))
+    if (this.closing !== undefined) return Promise.reject(new Error('@acryldev/db-postgres: the database is closed'))
     const result = this.tail.then(operation)
     this.tail = result.catch(() => undefined)
     return result
@@ -109,7 +109,7 @@ export class PostgresDatabase implements Db {
         await client.query('BEGIN')
         const scope = { active: true }
         const guard = async <R>(work: () => Promise<R>): Promise<R> => {
-          if (!scope.active) throw new Error('acryl-db-postgres: transaction handle is no longer active')
+          if (!scope.active) throw new Error('@acryldev/db-postgres: transaction handle is no longer active')
           return work()
         }
         const query: Query = (sql, params) => guard(() => client.query(statement(sql, params)))

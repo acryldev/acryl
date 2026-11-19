@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { digestFolder } from '@webboxes/blends-core'
+import { digestFolder } from '@acryldev/blends-core'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AppliedLive, pulledDigestOf, readDefinition, watchAppFiles } from '../src/applied-live.ts'
 

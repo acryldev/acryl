@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describeKvConformance, type KvUnderTest } from 'acryl-kv/conformance'
+import { describeKvConformance, type KvUnderTest } from '@acryldev/kv/conformance'
 import { afterAll } from 'vitest'
 import { openKv } from '../src/open.ts'
 
@@ -23,8 +23,8 @@ function underTest(path: string): Promise<KvUnderTest> {
   }))
 }
 
-describeKvConformance('acryl-kv-json', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-json-'))
+describeKvConformance('@acryldev/kv-json', async () => {
+  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-json-'))
   dirs.push(dir)
   return underTest(join(dir, 'kv.json'))
 })

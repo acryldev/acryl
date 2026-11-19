@@ -5,7 +5,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { defineAcrylTool } from 'acryl-control'
+import { defineAcrylTool } from '@acryldev/control'
 import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiActionResult, type UiOp, type UiRequest, type UiResult, type UiSnapshot } from 'acrylblends/door/protocol'
 import { renderSnapshot, type AuditLog, type UiChannel } from 'acrylblends/door/host'
 

@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { SignInAttemptView } from 'acryl-control'
+import type { SignInAttemptView } from '@acryldev/control'
 import { SignInCard } from '../../src/client/SignInCard.tsx'
 import { createSignInApi, type SignInApi } from '../../src/client/sign-in-api.ts'
 import { en } from '../../src/client/locales.ts'

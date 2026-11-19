@@ -1,9 +1,19 @@
 {
-  "name": "acryl-door",
+  "name": "door",
   "description": "The door of the app: an agent working in the app folder looks at the running page, acts on it (click, type, select, press, scroll, wait) and adds, removes or reloads plugins live, through .acryl/bin/acryl. Loopback only, a per-run secret in .acryl/door.json, an audit log and an in-page indicator with a stop button. Vendored from ACRYL.",
-  "requires": ["acryl-router", "acryl-node-server", "instance"],
-  "inject": ["router", "appInstance", "nodeServer"],
-  "provides": ["door"],
+  "requires": [
+    "router",
+    "node-server",
+    "instance"
+  ],
+  "inject": [
+    "router",
+    "appInstance",
+    "nodeServer"
+  ],
+  "provides": [
+    "door"
+  ],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/schemastery": "3.18.4"
@@ -12,11 +22,17 @@
     "ws": "8.21.3"
   },
   "scripts": {
-    "acryl": "node plugins/acryl-door/src/cli/acryl.ts"
+    "acryl": "node plugins/door/src/cli/acryl.ts"
   },
-  "mount": "mount it after acryl-node-server and extensions in development builds: root.plugin(door); add <script type=\"module\" src=\"/api/acryl-door/page.js\"></script> to the pages; the command is .acryl/bin/acryl",
-  "gitignore": [".acryl/"],
-  "omit": ["**/*.test.*", "**/*.spec.*", "**/*.case.ts"],
+  "mount": "mount it after @acryldev/node-server and extensions in development builds: root.plugin(door); add <script type=\"module\" src=\"/api/acryl-door/page.js\"></script> to the pages; the command is .acryl/bin/acryl",
+  "gitignore": [
+    ".acryl/"
+  ],
+  "omit": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/*.case.ts"
+  ],
   "entries": {
     "": "src/index.ts"
   }

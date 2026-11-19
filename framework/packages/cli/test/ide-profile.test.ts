@@ -49,7 +49,7 @@ test('one profile per app, named from the app and safe for a DSH profile', () =>
   assert.notEqual(profileNameFor('a'), profileNameFor('b'))
   assert.match(
     ideProfilePlan(input).packageJson,
-    /"dev": "node --import \.\/plugins\/acryl-node-server\/src\/register\.ts scripts\/ide-host\.mjs"/u,
+    /"dev": "node --import \.\/plugins\/node-server\/src\/register\.ts scripts\/ide-host\.mjs"/u,
   )
 })
 
@@ -57,7 +57,7 @@ test("the frame's row is told the app's page, and the IDE's workbench is not mou
   const overlay = ideProfilePlan(input).overlay
   assert.match(
     overlay,
-    /- id: acryl-blends-frame\n {6}name: acryl-blends-frame\n {6}config:\n {8}appPage: \/app/u,
+    /- id: acryl-blends-frame\n {6}name: '?@acryldev\/blends-frame'?\n {6}config:\n {8}appPage: \/app/u,
   )
   assert.doesNotMatch(overlay, /acryl-workspace/u)
 })
@@ -68,7 +68,7 @@ test("the overlay mounts the frame rows and leaves DSH's own brand row out", () 
     assert.match(
       overlay,
       new RegExp(
-        `- id: ${entry.row ?? entry.name}\\n\\s+name: ${entry.name.replaceAll('/', '\\/')}`,
+        `- id: ${entry.row ?? entry.name}\\n\\s+name: '?${entry.name.replaceAll('/', '\\/')}'?`,
         'u',
       ),
     )
@@ -188,7 +188,7 @@ test("the manifest carries the DSH pin, the framework, the frame packages, and k
   assert.equal(manifest.dependencies['@deepseek-ai/dsh-web-app'], '0.2.0-rc.2')
   assert.equal(manifest.dependencies['@deepseek-ai/dsh'], undefined)
   assert.equal(manifest.dependencies.acrylblends, '^1.0.10')
-  assert.equal(manifest.dependencies['acryl-web-service'], 'file:../acryl-web-service')
+  assert.equal(manifest.dependencies['@acryldev/web'], 'file:../@acryldev-web')
   assert.equal(manifest.dependencies.yaml, '^2.9.0')
   assert.equal(manifest.scripts.start, 'node src/main.ts')
 })
@@ -240,7 +240,7 @@ test('a Ctrl-C that reaches the host twice (the terminal, then npm) still lets t
 
 test("the launcher installs the app's generation hook before DSH or any row of the app loads, so the app's code can be loaded again", () => {
   const { hostScript } = ideProfilePlan(input)
-  const hook = hostScript.indexOf("import('acryl-blends-frame/app-generation')")
+  const hook = hostScript.indexOf("import('@acryldev/blends-frame/app-generation')")
   assert.ok(hook > 0, "the launcher loads the frame package's hook")
   assert.match(hostScript, /installAppGeneration\(\{ appRoot \}\)/u)
   assert.ok(
@@ -362,7 +362,7 @@ test('a product rooted in the workbench (acrylblends.root: workspace) keeps its 
   assert.doesNotMatch(overlay, /identity:/)
   // An upgrade passes the frame packages under their published names, with the row id beside them.
   const published = FRAME_PACKAGES.map((entry) =>
-    entry.name === 'acryl-system-prompt'
+    entry.name === '@acryldev/system-prompt'
       ? { ...entry, name: '@acryldev/system-prompt', row: 'acryl-system-prompt' }
       : entry,
   )
@@ -374,7 +374,7 @@ test('a product rooted in the workbench (acrylblends.root: workspace) keeps its 
   // The frame package stays installed: the host imports its app generation.
   assert.match(
     ideProfilePlan({ ...input, root: 'workspace' }).hostScript,
-    /blends-frame\/app-generation|acryl-blends-frame\/app-generation/,
+    /blends-frame\/app-generation|@acryldev\/blends-frame\/app-generation/,
   )
 
   writeFileSync(
@@ -388,18 +388,17 @@ test('an upgraded app installs a frame package once, under its new scope (spec 0
   const app = folder()
   writeFileSync(
     join(app, 'package.json'),
-    `${JSON.stringify({ name: 'my-app', dependencies: { '@acrylblends/web': '^0.1.0', '@acrylblends/unrelated': '1.0.0', 'left-pad': '1.0.0' } })}\n`,
+    `${JSON.stringify({ name: 'my-app', dependencies: { '@acryldev/web': '^0.1.0', '@acryldev/unrelated': '1.0.0', 'left-pad': '1.0.0' } })}\n`,
   )
   const published = FRAME_PACKAGES.map((entry) =>
-    entry.name === 'acryl-web-service' ? { ...entry, name: '@acryldev/web', spec: '0.2.0' } : entry,
+    entry.name === '@acryldev/web' ? { ...entry, name: '@acryldev/web', spec: '0.2.0' } : entry,
   )
   const deps = JSON.parse(
     planIdeProfileWrite(app, { ...input, packages: published }).plan.packageJson,
   ).dependencies
   assert.equal(deps['@acryldev/web'], '0.2.0')
-  assert.equal(deps['@acrylblends/web'], undefined)
   // Not a frame package under the new scope: the app's own, kept.
-  assert.equal(deps['@acrylblends/unrelated'], '1.0.0')
+  assert.equal(deps['@acryldev/unrelated'], '1.0.0')
   assert.equal(deps['left-pad'], '1.0.0')
 })
 

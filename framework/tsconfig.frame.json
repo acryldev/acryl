@@ -13,38 +13,38 @@
     "types": ["node"],
     "jsx": "react-jsx",
     "paths": {
-      "acryl-app-shell": ["../plugins/acryl-app-shell/src/index.ts"],
-      "acryl-app-shell/client": ["../plugins/acryl-app-shell/src/client/index.ts"],
-      "acryl-control": ["../runtime/acryl-control/src/index.ts"],
-      "acryl-diagnostics": ["../runtime/acryl-diagnostics/src/index.ts"],
-      "acryl-loopback-http": ["../runtime/acryl-loopback-http/src/index.ts"],
-      "acryl-loopback-http/router": ["../runtime/acryl-loopback-http/src/router.ts"],
-      "acryl-settings": ["../plugins/acryl-settings/src/index.ts"],
-      "acryl-versions": ["./acryl-versions/src/index.ts"],
-      "acryl-versions/client": ["./acryl-versions/src/client/index.ts"],
-      "acryl-workspace": ["../plugins/acryl-workspace/src/index.ts"],
-      "acryl-workspace/client": ["../plugins/acryl-workspace/src/client/index.ts"],
-      "acryl-workspace/ui": ["../plugins/acryl-workspace/src/client/ui.ts"]
+      "@acryldev/app-shell": ["../plugins/app-shell/src/index.ts"],
+      "@acryldev/app-shell/client": ["../plugins/app-shell/src/client/index.ts"],
+      "@acryldev/control": ["../runtime/control/src/index.ts"],
+      "@acryldev/diagnostics": ["../runtime/diagnostics/src/index.ts"],
+      "@acryldev/loopback-http": ["../runtime/loopback-http/src/index.ts"],
+      "@acryldev/loopback-http/router": ["../runtime/loopback-http/src/router.ts"],
+      "@acryldev/settings": ["../plugins/settings/src/index.ts"],
+      "@acryldev/versions": ["./acryl-versions/src/index.ts"],
+      "@acryldev/versions/client": ["./acryl-versions/src/client/index.ts"],
+      "@acryldev/workspace": ["../plugins/workspace/src/index.ts"],
+      "@acryldev/workspace/client": ["../plugins/workspace/src/client/index.ts"],
+      "@acryldev/workspace/ui": ["../plugins/workspace/src/client/ui.ts"]
     }
   },
   "include": [
-    "../plugins/acryl-app-context/src/**/*.ts",
-    "../plugins/acryl-app-context/src/**/*.tsx",
-    "../plugins/acryl-app-context/tests/**/*.ts",
-    "../plugins/acryl-blends-frame/src/**/*.ts",
-    "../plugins/acryl-blends-frame/src/**/*.tsx",
-    "../plugins/acryl-blends-frame/tests/**/*.ts",
-    "../plugins/acryl-versions/src/**/*.ts",
-    "../plugins/acryl-versions/src/**/*.tsx",
-    "../plugins/acryl-versions/tests/**/*.ts",
-    // acryl-workspace/ui (reached by path above) imports its terminal CSS through this declaration.
-    "../plugins/acryl-workspace/src/client/terminal/xterm-css.d.ts"
+    "../plugins/app-context/src/**/*.ts",
+    "../plugins/app-context/src/**/*.tsx",
+    "../plugins/app-context/tests/**/*.ts",
+    "../plugins/blends-frame/src/**/*.ts",
+    "../plugins/blends-frame/src/**/*.tsx",
+    "../plugins/blends-frame/tests/**/*.ts",
+    "../plugins/versions/src/**/*.ts",
+    "../plugins/versions/src/**/*.tsx",
+    "../plugins/versions/tests/**/*.ts",
+    // @acryldev/workspace/ui (reached by path above) imports its terminal CSS through this declaration.
+    "../plugins/workspace/src/client/terminal/xterm-css.d.ts"
   ],
   "exclude": [
     "**/node_modules/**",
     "**/lib/**",
     "**/tests/fixtures/**",
     // Workaround, to be fixed with a types-only import path: dsh-tools' Context augmentation (server-side `sessions`) leaks into the client packages.
-    "../plugins/acryl-app-context/**"
+    "../plugins/app-context/**"
   ]
 }

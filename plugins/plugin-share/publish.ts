@@ -1,7 +1,7 @@
 /**
  * Publishing a plugin: what a person is asked to say yes to, and the comparison that makes the yes mean exactly that. Pure; the service does the I/O.
  */
-import type { PublishGitPort, RepositoryHostPort } from '@webboxes/plugin-hub'
+import type { PublishGitPort, RepositoryHostPort } from '@acryldev/plugin-hub-core'
 
 /** Everything that leaves the machine, named before anything does. */
 export interface PublishPlan {

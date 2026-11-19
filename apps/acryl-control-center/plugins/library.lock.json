@@ -1,7 +1,7 @@
 {
   "version": 1,
   "plugins": {
-    "acryl-door": {
+    "@acryldev/door": {
       "from": "1.5.19",
       "files": {
         "LICENSE": "b84342464fb19baab24f",
@@ -41,7 +41,7 @@
         "src/shell/protocol.ts": "b34db25a8bc53beb00c3"
       }
     },
-    "acryl-node-server": {
+    "@acryldev/node-server": {
       "from": "1.5.19",
       "files": {
         "LICENSE": "97e21f62916eb3787f2d",
@@ -72,14 +72,14 @@
         "src/upgrade-hub.ts": "ded65323cabec111aac4"
       }
     },
-    "acryl-page": {
+    "@acryldev/page": {
       "from": "1.5.19",
       "files": {
         "src/favicon.ts": "e5b35a649cf2822b4f8e",
         "src/index.ts": "de414dae653ad5edee0b"
       }
     },
-    "acryl-router": {
+    "@acryldev/router": {
       "from": "1.5.19",
       "files": {
         "LICENSE": "fcf95a3a9e661936ca61",
@@ -280,7 +280,7 @@
         "src/service.ts": "35f2c927a7c3d3ec1103"
       }
     },
-    "acryl-web-server": {
+    "@acryldev/web-server": {
       "from": "1.5.19",
       "files": {
         "src/index.ts": "25e9ad47a238ebdebeb0"

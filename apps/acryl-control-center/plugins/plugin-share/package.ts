@@ -12,8 +12,8 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { extname, join } from 'node:path'
-import { digestFiles, pluginFiles, portabilityIssues } from '@webboxes/blends-core'
-import { packFolder, readTarball, syncServiceContract } from '@webboxes/plugin-hub'
+import { digestFiles, pluginFiles, portabilityIssues } from '@acryldev/blends-core'
+import { packFolder, readTarball, syncServiceContract } from '@acryldev/plugin-hub-core'
 
 /** The package.json of a standalone plugin package: the host framework is a peer, never a second installed copy. */
 export function packageManifest(

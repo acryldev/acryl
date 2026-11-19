@@ -6,7 +6,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { defineAcrylTool, type AcrylToolCall, type AcrylToolDecision } from 'acryl-control'
+import { defineAcrylTool, type AcrylToolCall, type AcrylToolDecision } from '@acryldev/control'
 import { WORKSPACE_KINDS, type ProjectRegistryView, type WorkspaceKind, type WorkspaceSummary } from './contract.ts'
 import type { ProjectRegistry } from './registry.ts'
 

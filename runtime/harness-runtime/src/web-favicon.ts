@@ -27,7 +27,7 @@ const escapeHtml = (text: string): string => text.replace(/[&<>"']/gu, character
 export interface WebIndexBrand {
   /** The product name the page title carries; `ACRYL` when absent. */
   readonly productName?: string
-  /** The stock ACRYL brand (not a Blueprint's own): it wears the ACRYL icon. A custom brand ships its own icon (acryl-brand). */
+  /** The stock ACRYL brand (not a Blueprint's own): it wears the ACRYL icon. A custom brand ships its own icon (@acryldev/brand). */
   readonly stockBrand?: boolean
 }
 

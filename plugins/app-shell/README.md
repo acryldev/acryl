@@ -1,14 +1,14 @@
-# acryl-app-shell
+# @acryldev/app-shell
 
 The generic three-column desktop/web app frame — sidebar column, main surface, resizable details column,
-platform title-bar spacing, theme presentation — extracted from `plugins/acryl-workspace`'s own `shell/`
+platform title-bar spacing, theme presentation — extracted from `plugins/workspace`'s own `shell/`
 so it can be shared: any Blend's domain plugin claims it for its own main UI, through the same
-`desktop.main` / `desktop.sidebar` slot contract `acryl-workspace` already uses for the IDE.
+`desktop.main` / `desktop.sidebar` slot contract `@acryldev/workspace` already uses for the IDE.
 
 ## Why this package exists
 
 A Project Blend grown from a Blueprint is meant to become one cohesive, standalone product — not a chat
-with a side feature reached by a link to a server-routed page. `plugins/acryl-workspace` already proves
+with a side feature reached by a link to a server-routed page. `plugins/workspace` already proves
 the right shape: it's a plugin that claims the main UI surface (`desktop.main`, the tree in
 `desktop.sidebar`) and replaces Blank's plain chat with the whole IDE — tree, tabs, terminals, canvases.
 That's one differentiated product grown from the same stem cell. A different domain (GTD, accounting,
@@ -16,7 +16,7 @@ whatever a team needs) wants the exact same mechanism with completely different 
 — not PTYs and a file tree, but its own board, its own forms, its own views.
 
 Before this package existed, that wiring (claiming `root`, `desktop.main`, `desktop.sidebar`, the layout
-service, the theme presenter, the resizable three-column chrome) lived only inside `acryl-workspace`,
+service, the theme presenter, the resizable three-column chrome) lived only inside `@acryldev/workspace`,
 coupled to nothing IDE-specific in its own code but physically impossible to reuse without copying it.
 This package is exactly that code, moved out, with its one IDE-specific dependency (the terminal dock)
 replaced by two generic optional wrapper hooks (`wrapMain`, `wrapRightbar`) a caller supplies if it wants
@@ -30,14 +30,14 @@ page reached by a chat-card link, instead of a real main-surface plugin.
 ## Using it
 
 ```ts
-import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/client'
+import { applyAdvancedShell, resolveShellEnvironment } from '@acryldev/app-shell/client'
 
 export function apply(ctx: ClientContext): void {
   const environment = resolveShellEnvironment(window.location.hash)
   if (environment.mode !== 'advanced') return // compatibility mode keeps the stock upstream frame
   applyAdvancedShell(ctx, environment)
 
-  // Claim the main surface with your own UI - the same pattern acryl-workspace uses for the IDE.
+  // Claim the main surface with your own UI - the same pattern @acryldev/workspace uses for the IDE.
   ctx.slots.inject('desktop.main', () => ctx.slots.register({
     name: 'desktop.main',
     priority: 0, // lower renders: below the shell's own fallback (100)

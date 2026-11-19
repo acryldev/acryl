@@ -1,11 +1,11 @@
 /**
  * The launcher as tools an agent can call (spec 050 D11, T013): the same operations the screen offers, through the same `LauncherService`, so what an agent
  * does and what a person clicks cannot drift apart. They go into ACRYL's tool registry (`acrylTools`): the DSH chat has them, and agents ACRYL does not run
- * (Claude Code, Codex) reach them through `acryl-agent-control`'s loopback gateway, where their names are on the default allowlist. Nothing outward happens
+ * (Claude Code, Codex) reach them through `@acryldev/agent-control`'s loopback gateway, where their names are on the default allowlist. Nothing outward happens
  * here: a publish only produces the plan the person reads, and the person's click on the screen is the yes.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import { defineAcrylTool, type AcrylToolDefinition } from 'acryl-control'
+import { defineAcrylTool, type AcrylToolDefinition } from '@acryldev/control'
 import type { AppView } from './contract.ts'
 import type { LauncherService } from './service.ts'
 

@@ -1,8 +1,8 @@
-/** Strict loopback route for ACRYL's Desktop preferences (shell mode, notifications), stored by `acryl-settings`, on the router. */
+/** Strict loopback route for ACRYL's Desktop preferences (shell mode, notifications), stored by `@acryldev/settings`, on the router. */
 
 import { Acryl } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from '@acryldev/loopback-http/router'
 
 export const DESKTOP_PREFERENCES_PATH = '/api/desktop/preferences'
 

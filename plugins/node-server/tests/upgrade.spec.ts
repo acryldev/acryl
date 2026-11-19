@@ -2,7 +2,7 @@
 import { request as httpRequest } from 'node:http'
 import { connect } from 'node:net'
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl, apply as routerApply, connectionOf, name as routerName } from 'acryl-router'
+import { Acryl, apply as routerApply, connectionOf, name as routerName } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
 import WebSocket from 'ws'
 import * as nodeServer from '../src/index.ts'

@@ -11,7 +11,7 @@ an on/off switch:
 spec:
   rows:
     - id: router
-      name: acryl-router      # a library plugin: src/app.ts imports it into `registry`
+      name: @acryldev/router      # a library plugin: src/app.ts imports it into `registry`
     - id: home
       name: home              # the home page's widgets (ctx.home)
     - id: routes
@@ -21,7 +21,7 @@ spec:
     - id: extensions
       name: extensions
     - id: server
-      name: acryl-node-server
+      name: @acryldev/node-server
 ```
 
 A row's `name` is either a library plugin that `src/app.ts` imports into its `registry`, or the name of a folder in `plugins/` that is the
@@ -69,7 +69,7 @@ import type {} from '../home/index.ts'                 // types ctx.home (the ho
 import type {} from '../instance/index.ts'             // types ctx.appInstance (where the app keeps its data)
 ```
 
-Only these. Never import from `src/`, from another plugin's files, from `plugins/acryl-router/src/...` or from a path you have not seen in
+Only these. Never import from `src/`, from another plugin's files, from `plugins/router/src/...` or from a path you have not seen in
 this app: `import type` lines are erased when the code runs, every other import must resolve in this folder. Check a path before you use it.
 
 ## The door: look at the running page

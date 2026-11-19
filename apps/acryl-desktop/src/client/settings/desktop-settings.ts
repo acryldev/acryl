@@ -28,7 +28,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** Register the Desktop page in the settings.section list slot. */
 export function applyDesktopSettings(ctx: ClientContext, environment: DesktopClientEnvironment): void {
   const api = createDesktopSettingsApi()
-  // ACRYL's own preferences, read and written through the Host (`acryl-settings`); DSH 0.2 has no client settings scope.
+  // ACRYL's own preferences, read and written through the Host (`@acryldev/settings`); DSH 0.2 has no client settings scope.
   const scopeFor = createPreferenceScopes(api)
   const desktopSettings = scopeFor<DesktopShellSettings>(DESKTOP_SHELL_SETTINGS_NAMESPACE)
   const notificationSettings = scopeFor<DesktopNotificationSettings>(DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE)

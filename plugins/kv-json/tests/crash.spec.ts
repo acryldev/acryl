@@ -34,7 +34,7 @@ function crashAfter(file: string, delay: number): Promise<void> {
 }
 
 it('never leaves an unreadable file when the writer is killed mid-write, forty times', { timeout: 120_000 }, async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-json-crash-'))
+  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-json-crash-'))
   dirs.push(dir)
   const file = join(dir, 'kv.json')
   let lastStep = 0

@@ -55,7 +55,7 @@ Where a claim rests on a count or a flag, the source is named below.
 | C7 | `npm run lock writes acrylblends.lock.json` | same | **fixed** |
 | C8 | A starter publishes "the plugins it adds under `extensions/`" | `registry/README.md`: `plugins/` | **fixed** |
 | C9 | "An extension is a folder in the app's `extensions/`" | 1.0: `plugins/` only (`agents/index.md`, `library.ts` warning for the old layout) | **fixed** |
-| C10 | Framework page example: `import { App } from 'acryl-router'`, `new App()` | `App` removed in 1.0; the published entry is `acrylblends` / `acrylblends/cordis/router` | **fixed** |
+| C10 | Framework page example: `import { App } from '@acryldev/router'`, `new App()` | `App` removed in 1.0; the published entry is `acrylblends` / `acrylblends/cordis/router` | **fixed** |
 | C11 | `docs/framework` "is being unified ... copied by hand" style notes | docs use published names since 0.11 (readiness step c) | **confirmed** |
 | C12 | "acryl.dev/blends and acryl.dev/packages mirror both [registries]" | `acryldev.github.io` `App.tsx` has `/blends` and `/packages`; `BlendsPage.tsx` reads the registry index live | **confirmed** |
 

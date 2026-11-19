@@ -10,10 +10,10 @@
  * Nothing here mutates: the caller passes the live snapshot it already has and
  * gets findings back.
  *
- * @module acryl-harness-runtime/plugin-doctor
+ * @module @acryldev/harness-runtime/plugin-doctor
  */
 
-import type { PluginLifecycleSnapshot } from 'acryl-control'
+import type { PluginLifecycleSnapshot } from '@acryldev/control'
 import {
   entryPatchId,
   readDisabledPluginLifecycleEntries,

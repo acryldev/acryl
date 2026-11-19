@@ -3,7 +3,7 @@
 // Surfaces: web desktop
 // Teaches:  a browser plugin WITHOUT a build step. The bundle is CommonJS wrapped in
 //           window.__ModuleLoader__.load(...), the exact wrapper the repo's tsdown config
-//           adds (plugins/dsh-client-ui-brand-acryl/tsdown.config.ts). `react` and
+//           adds (plugins/brand-client/tsdown.config.ts). `react` and
 //           `react-dom` are provided by the app via require(); use React.createElement
 //           (no JSX, there is no compiler). State persists in localStorage.
 // Expect:   a "Notes" button in the conversation header actions; click opens a panel.

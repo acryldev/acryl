@@ -1,14 +1,14 @@
 {
-  "name": "acryl-db",
+  "name": "@acryldev/db",
   "version": "0.1.0",
   "description": "The ACRYL db port: the relational database an app plugin sees through inject: ['db'], whichever provider serves it, with numbered SQL migrations and the conformance suite every provider passes",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-db"
+    "directory": "plugins/db"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-db#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/db#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

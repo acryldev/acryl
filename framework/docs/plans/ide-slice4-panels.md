@@ -32,11 +32,11 @@ and the candidate byte-identical inputs.
 ## How both surfaces got the same state
 
 - The candidate: the app is started with `FRAME_FIXTURE=<materialized fixture>`; the run script seeds the app's
-  `acryl-settings.yaml` with the fixture as Default's only project (`adopted: true`), so the app-folder first-project
+  `@acryldev/settings.yaml` with the fixture as Default's only project (`adopted: true`), so the app-folder first-project
   seeding does not fire. The dev process runs with `HOME` in its throwaway root, as ACRYL's own live run does, so the
   terminal prompt is the plain default prompt on both surfaces.
 - The reference: the same isolated ACRYL desktop run at `37f4dd9c`, with a pre-seeded ACRYL home
-  (`acryl-settings.yaml` with the same fixture project) passed with `--copy-home`, a fake provider key (a local test
+  (`@acryldev/settings.yaml` with the same fixture project) passed with `--copy-home`, a fake provider key (a local test
   value) and `DEEPSEEK_BASE_URL` pointing at a local Anthropic-Messages mock. The mock makes the diff's "Send to
   agent" prompt acceptable, so the Review thread is recorded on both sides; the same comment text, file and line are
   used.

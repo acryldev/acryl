@@ -1,7 +1,7 @@
 # acrylblends 1.5.3
 
 An app's first run asks for a model with Settings > Models in front of the person, and DeepSeek's preview notice is gone. Released with
-[create-acrylblends 1.5.3](create-1.5.3.md); the one frame package that changes is `@acrylblends/sign-in` 0.1.1.
+[create-acrylblends 1.5.3](create-1.5.3.md); the one frame package that changes is `@acryldev/sign-in` 0.1.1.
 
 - **Connect a model at first run.** A new app's first-run step shows the Models page itself (the DeepSeek key box, a third-party provider, a custom
   model API, and the account sign-in at its foot) with "More providers in Settings" and "Later", instead of the key box alone.

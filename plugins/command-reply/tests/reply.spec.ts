@@ -1,5 +1,5 @@
 import { Context } from '@deepseek-ai/cordis'
-import type { AcrylChat, ChatPhase, ChatSessionId } from '@acryl/ui/frame'
+import type { AcrylChat, ChatPhase, ChatSessionId } from '@acryldev/ui/frame'
 import type { CommandResult } from '@deepseek-ai/dsh-commands/types'
 import { describe, expect, it } from 'vitest'
 import * as plugin from '../src/client/index.ts'

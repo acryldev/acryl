@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "generator": {
-    "name": "@webboxes/blends-core",
+    "name": "@acryldev/blends-core",
     "version": "0.1.0"
   },
   "origin": {
@@ -13,7 +13,7 @@
   "rows": [
     {
       "id": "contacts",
-      "name": "acryl-blend-demo",
+      "name": "@acryldev/blend-demo",
       "config": {
         "title": "Contacts",
         "org": "My Organization",
@@ -22,11 +22,11 @@
     },
     {
       "id": "tasks",
-      "name": "acryl-blend-demo"
+      "name": "@acryldev/blend-demo"
     },
     {
       "id": "pipeline",
-      "name": "acryl-blend-demo",
+      "name": "@acryldev/blend-demo",
       "config": {
         "enabled": true,
         "maxDealValue": 1000000
@@ -34,7 +34,7 @@
     },
     {
       "id": "invoicing",
-      "name": "acryl-blend-demo",
+      "name": "@acryldev/blend-demo",
       "disabled": true
     }
   ]

@@ -4,8 +4,8 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, test } from 'node:test'
-import type { AppInstance } from 'acryl-instance'
-import { openProductStorage } from 'acryl-instance/storage'
+import type { AppInstance } from '@acryldev/instance'
+import { openProductStorage } from '@acryldev/instance/storage'
 import { type AppPagePorts, appPageHandler, exportFileName } from '../app-page.ts'
 
 /** Temporary folders this file makes; removed after its tests, also when one fails. */

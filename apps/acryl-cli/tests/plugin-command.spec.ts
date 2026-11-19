@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { PluginLifecycleEntryView, PluginLifecycleSnapshot } from 'acryl-harness-runtime'
+import type { PluginLifecycleEntryView, PluginLifecycleSnapshot } from '@acryldev/harness-runtime'
 import { resolvePluginEntryId, runPluginCommand } from '../src/host/plugin-command.ts'
 import { renderPluginCommand } from '../src/cli/plugin-render.ts'
 import type { PluginCommandResult } from '../src/host/plugin-command.ts'
@@ -25,9 +25,9 @@ function entry(
 
 const SNAPSHOT: PluginLifecycleSnapshot = {
   entries: [
-    entry('include:ui-acryl', { moduleName: '@acryl/dsh-client-ui-brand-acryl' }),
+    entry('include:ui-acryl', { moduleName: '@acryldev/dsh-client-ui-brand-acryl' }),
     entry('include:ui-brand-official', { moduleName: '@deepseek-ai/dsh-client-ui-brand-official' }),
-    entry('include:market-plugin', { moduleName: 'cordis-plugin-market', enabled: false, hostPhase: null }),
+    entry('include:market-plugin', { moduleName: '@acryldev/cordis-plugin-market', enabled: false, hostPhase: null }),
   ],
 }
 
@@ -41,14 +41,14 @@ describe('resolvePluginEntryId', () => {
   })
 
   it('accepts the package name the market shows', () => {
-    expect(resolvePluginEntryId('acryl', SNAPSHOT, 'cordis-plugin-market')).toBe('include:market-plugin')
+    expect(resolvePluginEntryId('acryl', SNAPSHOT, '@acryldev/cordis-plugin-market')).toBe('include:market-plugin')
   })
 
   it('prefers an exact entry match over a package-name match', () => {
     const ambiguous: PluginLifecycleSnapshot = {
-      entries: [entry('cordis-plugin-market', { moduleName: 'x' }), entry('include:market-plugin', { moduleName: 'cordis-plugin-market' })],
+      entries: [entry('@acryldev/cordis-plugin-market', { moduleName: 'x' }), entry('include:market-plugin', { moduleName: '@acryldev/cordis-plugin-market' })],
     }
-    expect(resolvePluginEntryId('acryl', ambiguous, 'cordis-plugin-market')).toBe('cordis-plugin-market')
+    expect(resolvePluginEntryId('acryl', ambiguous, '@acryldev/cordis-plugin-market')).toBe('@acryldev/cordis-plugin-market')
   })
 
   it('names the profile and the list command when nothing matches', () => {

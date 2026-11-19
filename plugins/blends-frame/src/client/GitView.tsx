@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import type { GitStatusView, WorkspaceGitApi } from 'acryl-workspace/ui'
-import type { VersionsLogView } from 'acryl-versions'
-import { formatRelativeTime } from 'acryl-versions/client'
+import type { GitStatusView, WorkspaceGitApi } from '@acryldev/workspace/ui'
+import type { VersionsLogView } from '@acryldev/versions'
+import { formatRelativeTime } from '@acryldev/versions/client'
 import type { GitSyncPort } from './git-sync.ts'
 import { RemoteSync } from './RemoteSync.tsx'
 import { versionNumber, type VersionsPort } from './versions.ts'

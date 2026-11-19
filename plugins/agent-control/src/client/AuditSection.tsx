@@ -1,7 +1,7 @@
 /** Settings > Agent Control: what the agent did in this window. */
 
 import { useEffect, useState } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryldev/ui/frame'
 import type { AuditEntry } from 'acrylblends/door/protocol'
 import type { AuditApi } from './audit-api.ts'
 

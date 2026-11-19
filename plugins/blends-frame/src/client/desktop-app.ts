@@ -1,6 +1,6 @@
 /**
  * The app as a desktop product keeps it (specs/049-framework-architecture/app-storage.md in ACRYL): its name, its folder, export, import and start over.
- * A product's window gets `window.acrylBlendsApp` from its preload (acrylblends `plugins/desktop/preload.cjs`, answered by `plugins/desktop/app-page.ts`);
+ * A product's window gets `window.acrylBlendsApp` from its preload (acrylblends `plugins/desktop-shell/preload.cjs`, answered by `plugins/desktop-shell/app-page.ts`);
  * a browser tab and an app run with `npm run dev` have none, and the frame then shows no App page. The operation names and shapes are that module's:
  * keep them in step.
  */

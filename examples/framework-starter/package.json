@@ -1,5 +1,5 @@
 {
-  "name": "acryl-framework-starter",
+  "name": "@acryldev/framework-starter",
   "version": "0.1.0",
   "private": true,
   "description": "A copyable starter for an ACRYL Framework plugin: one route, one state cell, one test, no socket (spec 046).",

@@ -11,7 +11,7 @@
 //           count and pass everything through. Register inside `ctx.effect`; provide the counters as a service so other code can read them.
 // Expect:   row ACTIVE; `acrylLifecycleProbe.counts()` grows as the agent takes steps and makes requests.
 // Docs:     extending.event-hook
-// Pattern:  plugins/acryl-system-prompt/src/index.ts (system-prompt/assemble), maps/events.md for every other event
+// Pattern:  plugins/system-prompt/src/index.ts (system-prompt/assemble), maps/events.md for every other event
 export const name = 'acryl-example-lifecycle-hooks'
 
 export function apply(ctx) {

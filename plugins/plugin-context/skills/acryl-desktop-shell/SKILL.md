@@ -1,5 +1,5 @@
 ---
-name: acryl-desktop-shell
+name: @acryldev/desktop-shell
 description: Use when the user asks about the Desktop (Electron) app itself: window chrome, title bar, app icon, tray, menu, installer name, or how the Desktop app is structured.
 ---
 # Desktop (Electron) shell

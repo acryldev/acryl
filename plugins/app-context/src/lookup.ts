@@ -1,5 +1,5 @@
 /**
- * Deterministic retrieval over the pack manifest (ported from ACRYL's `plugins/acryl-plugin-context/lib/lookup.js`; pi.dev research, section 73:
+ * Deterministic retrieval over the pack manifest (ported from ACRYL's `plugins/plugin-context/lib/lookup.js`; pi.dev research, section 73:
  * "fast semantic routing" beside filesystem inspection): which docs and verified examples answer a topic, with paths the agent can read. Pure: no
  * filesystem access. The docs stay the authority; this only routes.
  */

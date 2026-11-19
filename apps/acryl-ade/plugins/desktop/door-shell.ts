@@ -45,7 +45,7 @@ export interface DesktopPort {
   menu(): readonly MenuItemPort[]
 }
 
-/** The door's side of a call, as `plugins/acryl-door/src/shell/protocol.ts` defines it. */
+/** The door's side of a call, as `plugins/door/src/shell/protocol.ts` defines it. */
 export type ShellRequest =
   | { readonly op: 'window-list' }
   | { readonly op: 'window-open'; readonly path?: string }

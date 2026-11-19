@@ -1,5 +1,5 @@
 /**
- * The right panel's tools, from the workspace's reusable client layers (`acryl-workspace/ui`): the live terminal sessions and the PTY, files and
+ * The right panel's tools, from the workspace's reusable client layers (`@acryldev/workspace/ui`): the live terminal sessions and the PTY, files and
  * git routes its Host half serves (run by this frame's Host, see `../index.ts`). Built once per client activation; the effect that builds it
  * releases the sessions.
  */
@@ -13,7 +13,7 @@ import {
   type WorkspaceFilesApi,
   type WorkspaceGitApi,
   type WorkspacePtyApi,
-} from 'acryl-workspace/ui'
+} from '@acryldev/workspace/ui'
 
 export interface FrameTools {
   readonly terminals: TerminalRegistry
@@ -34,7 +34,7 @@ export function createFrameTools(): FrameTools {
   }
 }
 
-const XTERM_STYLE_ID = 'acryl-blends-frame-xterm'
+const XTERM_STYLE_ID = '@acryldev/blends-frame-xterm'
 
 /** xterm's own stylesheet, once per page. @returns disposer, for one owning `ctx.effect`. */
 export function installXtermStyles(): () => void {

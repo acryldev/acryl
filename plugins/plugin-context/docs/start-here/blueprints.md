@@ -26,7 +26,7 @@ Persist data in the project (`<workspace>/.acryl/<name>.json`), not in the plugi
 
 ## Branding: the product wears the user's name
 
-The blank canvas carries the `brand` row (`acryl-brand`), configured entirely by the row's `config`: `name`, `tagline`, `accent` and `accentDark` (`#rrggbb`), `fontFamily`, `mark`
+The blank canvas carries the `brand` row (`@acryldev/brand`), configured entirely by the row's `config`: `name`, `tagline`, `accent` and `accentDark` (`#rrggbb`), `fontFamily`, `mark`
 (one to three characters drawn as the logo). It sets the sidebar name and mark, the conversation hero, the accent color and font, the tab or window title and the favicon, and your
 own identity line says you are the assistant inside that product. To rebrand for the user, edit that row (a Blend's `blend.yaml`, or the profile patch layer); to remove the branding,
 disable the row. Never rewrite ACRYL's own packages to change a name: the row is the seam. Colors and fonts beyond the brand are `extending.ui-theme`; the tab title and favicon

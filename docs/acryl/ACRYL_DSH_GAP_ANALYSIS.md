@@ -35,8 +35,8 @@ Method: read the pinned upstream submodule (`deepseek-harness/` at `b150a551`), 
 | Continuous mode | partial | subagent continuable, `agentTeams` | yes | durable task + resume across providers | `acrRelay` + room |
 | Tasks | **yes** | `ctx.agentTeams` task DAG, `ctx.goals`, `ctx.todo` | yes | room-scoped tasks | thin |
 | Artifacts | partial | `ctx.attachments`, `ctx.storageDomain` | partial | room-scoped artifact records | thin |
-| Extension package | partial | `dynamicCordisRunner` plugin/package/run | yes | **capability package format + permissions + provenance** | new `@acryl/capability` |
-| Dynamic UI | partial | `dynamicCordisRunner` client half, `ctx.clientModules` | yes | declarative trusted component registry | new `@acryl/ui` |
+| Extension package | partial | `dynamicCordisRunner` plugin/package/run | yes | **capability package format + permissions + provenance** | new `@acryldev/capability` |
+| Dynamic UI | partial | `dynamicCordisRunner` client half, `ctx.clientModules` | yes | declarative trusted component registry | new `@acryldev/ui` |
 | Permissions | **yes** | `ctx.approval`, `ctx.sandbox`, `ctx.sandboxPolicy`, `ctx.permissionPresets` | partial | capability-scoped authorization | thin adapter |
 | Hot activation | **yes** | Cordis HMR + `dynamicCordisRunner.run()` | no | none (adopt) | none |
 | Auth / profile awareness | partial | `ctx.credentials`, `ctx.authorization`, desktop `desktopProfiles` | yes | cross-provider identity/profile | thin |
@@ -108,7 +108,7 @@ DSH's continuity primitives are all *same-harness* or *child-of-agent*:
 - a **capability manifest** (contract id, capability family, permissions it requests, UI contribution, tests, provenance);
 - an explicit **permission model** over generated code (per §16), currently only the coarse `approval`/`sandbox`;
 - **provenance + rollback** (who generated it, from what, which prior generation).
-So ACRYL should define `@acryl/capability` as a thin contract, and let `dynamicCordisRunner` be one implementation backend — not fork it.
+So ACRYL should define `@acryldev/capability` as a thin contract, and let `dynamicCordisRunner` be one implementation backend — not fork it.
 
 ---
 
@@ -192,7 +192,7 @@ Answering the spec's eight questions with source evidence:
 | Item | Risk | Mitigation |
 | --- | --- | --- |
 | Duplicate seam overlap | ACRYL room vs `workspace` vs `agentTeams` can collide. | `acrRoom` composes, never copies; document ownership boundary. |
-| DSH is fast-moving | `0.1.1-rc.2` seams may change. | ACRYL depends on stable seams; keep `@acryl/runtime-cordis` boundary (spec §19). |
+| DSH is fast-moving | `0.1.1-rc.2` seams may change. | ACRYL depends on stable seams; keep `@acryldev/runtime-cordis` boundary (spec §19). |
 | Over-investing in missing-problem | The spec assumes more is missing than is. | Re-scope ACRYL to the product layer + inversion; avoid re-implementing existing seams. |
 | Handoff over-specification | Locking a schema too early. | Define minimal versioned payload + evolution path (spec §7). |
 | Generated-code permissions | Dynamic plugins could gain too much. | Layer capability permission model over `approval`/`sandbox`; least privilege (spec §16, §30). |

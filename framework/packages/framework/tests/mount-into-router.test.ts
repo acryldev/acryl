@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { apply, name } from 'acryl-router'
+import { apply, name } from '@acryldev/router'
 import { Acryl } from '../lib/index.js'
 import { HTTPException } from '../lib/http-exception.js'
 import { cors } from '../lib/cors.js'

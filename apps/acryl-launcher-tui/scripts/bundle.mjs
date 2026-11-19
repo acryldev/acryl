@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The launcher as one file with nothing to install: run.js with the journeys, acryl-ui-tui and the workspace's patched pi-tui inlined. The acryl npm
+// The launcher as one file with nothing to install: run.js with the journeys, @acryldev/ui-tui and the workspace's patched pi-tui inlined. The acryl npm
 // package ships this file as launcher.js and opens it for a bare `acryl` in a terminal, so `npx acryl` stays small and needs no dependency.
 // Usage: node scripts/bundle.mjs <output file>
 import { dirname, resolve } from 'node:path'

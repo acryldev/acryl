@@ -1,5 +1,5 @@
 /**
- * The `ctx.db` type for Cordis plugins: `import type {} from 'acryl-db/cordis'` beside `inject: ['db']`. Kept out of the root entry, so
+ * The `ctx.db` type for Cordis plugins: `import type {} from '@acryldev/db/cordis'` beside `inject: ['db']`. Kept out of the root entry, so
  * plain code that uses the port never names Cordis.
  */
 

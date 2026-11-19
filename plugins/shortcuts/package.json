@@ -1,14 +1,14 @@
 {
-  "name": "acryl-shortcuts",
+  "name": "@acryldev/shortcuts",
   "version": "0.1.0",
   "description": "ACRYL keyboard commands on DSH's own shortcut service, and Settings > Shortcuts, which lists and rebinds every shortcut.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-shortcuts"
+    "directory": "plugins/shortcuts"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-shortcuts#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/shortcuts#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -102,6 +102,6 @@
     ]
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*"
+    "@acryldev/ui": "workspace:*"
   }
 }

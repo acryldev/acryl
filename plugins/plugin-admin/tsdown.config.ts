@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-plugin-admin'
+const PACKAGE_NAME = '@acryldev/plugin-admin'
 
 export default defineConfig([
   {

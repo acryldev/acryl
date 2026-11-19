@@ -8,7 +8,7 @@
  * operations (Desktop's market bridge) needs the controller itself, and both
  * views must be the same object or their transitions stop sharing one queue.
  *
- * @module acryl-control/plugin/provider
+ * @module @acryldev/control/plugin/provider
  */
 
 import { type Context, Service } from '@deepseek-ai/cordis'

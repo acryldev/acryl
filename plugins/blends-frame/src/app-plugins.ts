@@ -12,7 +12,7 @@ import { isAbsolute, join, relative } from 'node:path'
 import { createRequire } from 'node:module'
 import { promisify } from 'node:util'
 import { dirname } from 'node:path'
-import { bumpVersion, gitCli, githubCli, parseVersion, PluginStore, savePlugin, sharePlugin, StoreConflictError, storeRootOf, type PublishGitPort, type RepositoryHostPort } from '@webboxes/plugin-hub'
+import { bumpVersion, gitCli, githubCli, parseVersion, PluginStore, savePlugin, sharePlugin, StoreConflictError, storeRootOf, type PublishGitPort, type RepositoryHostPort } from '@acryldev/plugin-hub-core'
 import { samePlan, type AppPluginView, type FramePluginState, type FramePluginView, type SavedPluginResult, type SavedPluginView, type ShareVisibility, type SharedPluginView, type SharePlan } from './contract.ts'
 
 /** One row of `blend.yaml`'s `spec.rows`: where its block starts and ends (line indexes, end exclusive). */
@@ -362,8 +362,8 @@ export async function switchAppPlugin(root: string, kind: 'row' | 'made', name: 
 
 /** The frame's own Loader rows the list shows: ACRYL's plugins around the app, not DSH's engine rows nor the rows that run the app. */
 export function isFramePlugin(moduleName: string, entryId: string): boolean {
-  if (entryId.startsWith('app-') || entryId === 'acryl-door') return false
-  return moduleName.startsWith('acryl-') || moduleName.startsWith('dsh-client-ui-brand-acryl')
+  if (entryId.startsWith('app-') || entryId === '@acryldev/door') return false
+  return moduleName.startsWith('acryl-') || moduleName.startsWith('@acryldev/brand-client')
 }
 
 /** A Loader row as the frame reads it: its id, module, whether it is switched off, and its fiber's state (Cordis `FiberState`). */

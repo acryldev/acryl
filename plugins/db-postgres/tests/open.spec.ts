@@ -1,5 +1,5 @@
 /**
- * `openDb`, the plain entry (`acryl-db-postgres/open`), over the network to PGlite's socket server. What the built entry imports is
+ * `openDb`, the plain entry (`@acryldev/db-postgres/open`), over the network to PGlite's socket server. What the built entry imports is
  * checked in plain-entry-imports.spec.ts.
  */
 
@@ -23,7 +23,7 @@ afterEach(async () => {
 })
 
 async function migrations(files: Record<string, string>): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'acryl-db-postgres-'))
+  const dir = await mkdtemp(join(tmpdir(), '@acryldev/db-postgres-'))
   dirs.push(dir)
   await mkdir(join(dir, 'migrations'))
   await Promise.all(Object.entries(files).map(([name, text]) => writeFile(join(dir, 'migrations', name), text)))

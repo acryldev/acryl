@@ -3,7 +3,7 @@
     - id: app-instance
       name: ./app/runtime.mjs
     - id: acryl-door
-      name: ./plugins/acryl-door/src/index.ts
+      name: ./plugins/door/src/index.ts
     - id: app-plugins
       name: ./frame/app-plugins.mjs
       isolate: {"extensions":true}

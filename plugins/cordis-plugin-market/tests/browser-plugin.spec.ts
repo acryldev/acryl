@@ -115,7 +115,7 @@ describe('community market browser plugin', () => {
 
     b.apply()
 
-    const styles = document.querySelector<HTMLStyleElement>('style[data-plugin="cordis-plugin-market/styles"]')?.textContent ?? ''
+    const styles = document.querySelector<HTMLStyleElement>('style[data-plugin="@acryldev/cordis-plugin-market/styles"]')?.textContent ?? ''
     expect(styles).toMatch(/\.dshMarketWideModal\s*\{[^}]*width: min\(800px, calc\(100vw - 48px\)\)/su)
     expect(styles).toMatch(/\.dshMarketConfirmModal\s*\{[^}]*width: min\(600px, calc\(100vw - 48px\)\)/su)
     expect(styles).toMatch(/\.dshMarketSourceModal\s*\{[^}]*width: min\(600px, calc\(100vw - 48px\)\)/su)
@@ -167,7 +167,7 @@ describe('community market browser plugin', () => {
     expect(b.entries('settings.plugins.tab')).toHaveLength(0)
     expect(b.entries('sidebar.footer.action')).toHaveLength(0)
     expect(b.entries('shell.overlay')).toHaveLength(0)
-    expect(document.querySelector('style[data-plugin="cordis-plugin-market/styles"]')).toBeNull()
+    expect(document.querySelector('style[data-plugin="@acryldev/cordis-plugin-market/styles"]')).toBeNull()
   })
 
   it('follows late declaration and declaration reload for all three entries', () => {

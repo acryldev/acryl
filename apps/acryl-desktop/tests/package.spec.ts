@@ -82,10 +82,10 @@ describe('published package surface', () => {
     const filtersOf = (script: unknown): string[] => [...(typeof script === 'string' ? script : '').matchAll(/pnpm --filter (\S+) run/g)].map(match => match[1] ?? '')
     const typecheck = filtersOf(workspaceManifest.scripts?.typecheck)
     const test = filtersOf(workspaceManifest.scripts?.test)
-    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'dsh-client-ui-brand-acryl', 'cordis-plugin-market']) {
+    for (const owned of ['@acryldev/control', '@acryldev/harness-runtime', '@acryldev/loopback-http', '@acryldev/diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', '@acryldev/workspace', '@acryldev/plugin-admin', '@acryldev/support', '@acryldev/agent-control', '@acryldev/brand-client', '@acryldev/cordis-plugin-market']) {
       expect(typecheck, `typecheck runs ${owned}`).toContain(owned)
     }
-    for (const owned of ['acryl-control', 'acryl-harness-runtime', 'acryl-loopback-http', 'acryl-diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-support', 'acryl-agent-control', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-ui-tui']) {
+    for (const owned of ['@acryldev/control', '@acryldev/harness-runtime', '@acryldev/loopback-http', '@acryldev/diagnostics', 'acryl-cli', 'acryl-web', 'acryl-desktop', '@acryldev/workspace', '@acryldev/plugin-admin', '@acryldev/support', '@acryldev/agent-control', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/ui-tui']) {
       expect(test, `test runs ${owned}`).toContain(owned)
     }
     expect(new Set(typecheck).size, 'no package is typechecked twice').toBe(typecheck.length)
@@ -164,7 +164,7 @@ describe('published package surface', () => {
       ],
     })
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop')
-    expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('name: cordis-plugin-market')
+    expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('name: @acryldev/cordis-plugin-market')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/terminal')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).not.toContain('development-canvas')
     expect(readFileSync(new URL('cordis.patch.yml', packageRoot), 'utf8')).toContain('name: acryl-desktop/hello-world')
@@ -177,7 +177,7 @@ describe('published package surface', () => {
 
   it('pins both selectable Market providers in the published runtime', () => {
     expect(manifest.dependencies).toMatchObject({
-      'cordis-plugin-market': 'workspace:*',
+      '@acryldev/cordis-plugin-market': 'workspace:*',
       dshmarket: '1.17.1',
     })
     expect(manifest.dependencies).not.toHaveProperty('acryl-development-canvas')
@@ -642,7 +642,7 @@ describe('published package surface', () => {
       // The build runs under the checkout's build lock (scripts/lib/build-lock.mjs), so a launch and a gate in one tree never rewrite lib/ at the same time.
       .toBe('node ../../scripts/with-build-lock.mjs pnpm run build && pnpm run verify:loader && node scripts/launch-dev.mjs')
     expect(manifest.scripts?.check).not.toContain('pnpm run build:canvas')
-    // Every workspace package Desktop depends on, from the dependency graph: a hand-written list left acryl-sign-in unbuilt on a fresh checkout,
+    // Every workspace package Desktop depends on, from the dependency graph: a hand-written list left @acryldev/sign-in unbuilt on a fresh checkout,
     // and `pnpm desktop` failed to import it.
     expect(manifest.scripts?.prebuild).toBe('pnpm --filter "acryl-desktop^..." --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['package:dir'])
@@ -655,7 +655,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['dist:linux']).toBe('node scripts/package-linux.ts')
     expect(manifest.scripts?.['dist:win']).toBe('node scripts/package-win.ts')
     expect(manifest.scripts?.['dist:win-portable']).toBe('node scripts/package-win-portable.ts')
-    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build')
+    expect(manifest.scripts?.['check:win-package']).toContain('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/package-win.spec.ts')
@@ -664,7 +664,7 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['check:win-package']).toContain('tests/updates/update-download.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('tests/workspaces/windows-volume-diagnostics.spec.ts')
     expect(manifest.scripts?.['check:win-package']).toContain('pnpm run verify:closure')
-    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build')
+    expect(manifest.scripts?.['check:mac-package']).toContain('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run build')
     expect(manifest.scripts?.['check:mac-package']).toContain('pnpm run typecheck')
     expect(manifest.scripts?.['check:mac-package']).toContain('tests/package-mac.spec.ts')
@@ -674,11 +674,11 @@ describe('published package surface', () => {
     expect(manifest.scripts?.['verify:cli']).toBe('node scripts/verify-cli-runtime.mjs')
     expect(manifest.scripts?.check).toContain('pnpm run verify:cli')
     expect(workspaceManifest.scripts?.['dist:mac'])
-      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac')
+      .toBe('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac')
     expect(workspaceManifest.scripts?.['dist:mac-smoke'])
-      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac-smoke')
+      .toBe('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:mac-smoke')
     expect(workspaceManifest.scripts?.['dist:linux'])
-      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:linux')
+      .toBe('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:linux')
     expect(workspaceManifest.scripts).toMatchObject({
       'build:mac': 'pnpm run dist:mac-host',
       'build:mac:universal': 'pnpm run dist:mac-smoke',
@@ -686,9 +686,9 @@ describe('published package surface', () => {
       'build:linux': 'pnpm run dist:linux',
     })
     expect(workspaceManifest.scripts?.['dist:win'])
-      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win')
+      .toBe('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win')
     expect(workspaceManifest.scripts?.['dist:win-portable'])
-      .toBe('pnpm --filter cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win-portable')
+      .toBe('pnpm --filter @acryldev/cordis-plugin-market... --workspace-concurrency=1 run build && pnpm --filter acryl-desktop run dist:win-portable')
     expect(manifest.build?.afterPack).toBe('./scripts/verify-packaged-runtime.ts')
     for (const perArchPayload of ['@deepseek-ai/libreoffice-kit-darwin-*', '@deepseek-ai/node-addon-system-darwin-*', 'sherpa-onnx-darwin-*']) {
       expect(manifest.build?.mac?.x64ArchFiles).toContain(perArchPayload)
@@ -833,7 +833,7 @@ describe('published package surface', () => {
   it('installs no Node internals add-on, so any Electron build can run the DSH engine', () => {
     // DSH 0.2's engine boot reached Node's internal module loader through node-addon-require-builtin, which accepts only the exact Electron
     // builds named in its binary (43.7.7 failed every installed app into the Recovery window, 2026-10-17). ACRYL's profile resolution runs on
-    // Node's public module hooks instead (runtime/acryl-harness-runtime/src/profile-resolution), and the workspace overrides the add-on away.
+    // Node's public module hooks instead (runtime/harness-runtime/src/profile-resolution), and the workspace overrides the add-on away.
     const fromBoot = createRequire(createRequire(import.meta.url).resolve('@deepseek-ai/dsh-app-boot'))
     const fromLoader = createRequire(fromBoot.resolve('@deepseek-ai/cordis-plugin-loader'))
     for (const from of [fromBoot, fromLoader]) {

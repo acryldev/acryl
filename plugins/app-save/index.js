@@ -1,18 +1,18 @@
 /**
- * acryl-app-save: keep an app in its own git repository from inside the app (spec 036, persistence-and-registries.md), for users who never open a terminal.
+ * @acryldev/app-save: keep an app in its own git repository from inside the app (spec 036, persistence-and-registries.md), for users who never open a terminal.
  *
  *   /app save [message]                          commit the app, and push it when it has a remote
  *   /app connect [public|private] [repository]   create the app's repository through the user's own gh login (private unless the app says public)
  *
  * One swappable Cordis plugin: disable its row and the commands go; nothing else changes. Human-typed only: saving sends the user's work to a remote, so it is the
  * user's decision; the agent may suggest it, never run it. The rules (a secret check on every save, a private app never reaching a public remote, no token ever
- * handled) are @webboxes/app-persistence's. Requires: `commands`. Reads the optional `appInstance` service: outside an app the commands say so and do nothing.
+ * handled) are @acryldev/app-persistence's. Requires: `commands`. Reads the optional `appInstance` service: outside an app the commands say so and do nothing.
  */
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { connectRemote, gitCli, githubHosting, saveApp } from '@webboxes/app-persistence'
+import { connectRemote, gitCli, githubHosting, saveApp } from '@acryldev/app-persistence'
 
-export const name = 'acryl-app-save'
+export const name = '@acryldev/app-save'
 export const inject = ['commands']
 
 /** The app folder when this process runs an app (its home has blend.yaml), else undefined. */
@@ -54,5 +54,5 @@ export function apply(ctx) {
     async handler(invocation) {
       return runAppCommand(invocation?.rawInput, appFolder(ctx.get('appInstance')))
     },
-  }), 'acryl-app-save: /app command')
+  }), '@acryldev/app-save: /app command')
 }

@@ -1,14 +1,14 @@
 {
-  "name": "acryl-mount-anchors",
+  "name": "@acryldev/mount-anchors",
   "version": "0.1.0",
   "description": "Visual mount-anchor inspector (spec 039-visual-mount-anchors, Scope A): point at ACRYL's own running UI, click an element, resolve it to its real Cordis slot and source file",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-mount-anchors"
+    "directory": "plugins/mount-anchors"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-mount-anchors#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/mount-anchors#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -95,6 +95,6 @@
     ]
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*"
+    "@acryldev/ui": "workspace:*"
   }
 }

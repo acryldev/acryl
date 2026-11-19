@@ -75,13 +75,13 @@ export async function runDevLocal(argv = process.argv.slice(2), environment = pr
   process.stdout.write(`dev:local desktop mode=${mode}\n`)
   const env = { ...environment, ...instanceEnvironment(instance) }
   if (!skipBuild) {
-    // The market and what it is built from, in dependency order (it needs `acryl-settings` built first); a bare `--filter cordis-plugin-market` failed
-    // on a fresh checkout with "Cannot find module 'acryl-settings'", because nothing before it had built that package.
-    // It holds the checkout's build lock like every other launcher: without it, `pnpm web` started alongside rebuilt (and so wiped) `acryl-settings`
-    // while this compiled the market against it ("Could not find a declaration file for module 'acryl-settings'").
+    // The market and what it is built from, in dependency order (it needs `@acryldev/settings` built first); a bare `--filter @acryldev/cordis-plugin-market` failed
+    // on a fresh checkout with "Cannot find module '@acryldev/settings'", because nothing before it had built that package.
+    // It holds the checkout's build lock like every other launcher: without it, `pnpm web` started alongside rebuilt (and so wiped) `@acryldev/settings`
+    // while this compiled the market against it ("Could not find a declaration file for module '@acryldev/settings'").
     const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
     const marketCode = await withBuildLock(root, 'desktop launcher (market)', () =>
-      runPnpm(['--filter', 'cordis-plugin-market...', '--workspace-concurrency=1', 'run', 'build'], env))
+      runPnpm(['--filter', '@acryldev/cordis-plugin-market...', '--workspace-concurrency=1', 'run', 'build'], env))
     if (marketCode !== 0) return marketCode
     return runPnpm(['--filter', 'acryl-desktop', 'run', 'dev'], env)
   }

@@ -1,12 +1,12 @@
 {
-  "name": "acryl-app-context",
+  "name": "@acryldev/app-context",
   "version": "0.1.0",
   "description": "The app builder's own docs, as ACRYL IDE's agent has them: a routed index of how a Blends app is made and extended, verified example plugins, and the prompt section that points the frame's agent at them before it writes a plugin",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-app-context"
+    "directory": "plugins/app-context"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -58,12 +58,16 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "@types/node": "^24.0.0",
-    "acryl-router": "workspace:*",
+    "@acryldev/router": "workspace:*",
     "acrylblends": "workspace:*",
     "tsdown": "0.23.0",
     "typescript": "6.0.3",
     "vitest": "5.0.3",
-    "acryl-home": "workspace:*",
-    "acryl-manifest": "workspace:*"
+    "@acryldev/home": "workspace:*",
+    "@acryldev/manifest": "workspace:*"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/app-context#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

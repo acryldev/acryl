@@ -8,10 +8,10 @@
  * code point in the end, whatever collation the database sorts with.
  */
 
-import type { Db } from 'acryl-db'
-import { checkKey, codePoints, compareKeys, decodeValue, encodeValue, type Kv, runChange } from 'acryl-kv'
+import type { Db } from '@acryldev/db'
+import { checkKey, codePoints, compareKeys, decodeValue, encodeValue, type Kv, runChange } from '@acryldev/kv'
 
-export type { Kv } from 'acryl-kv'
+export type { Kv } from '@acryldev/kv'
 
 export interface KvOnDbOptions {
   /** The table that holds the documents. Defaults to `kv`; a plain SQL identifier. */
@@ -23,7 +23,7 @@ const IDENTIFIER = /^[a-z_][a-z0-9_]*$/u
 /** The `kv` port over a `db`. It does not own the database: whoever opened it closes it, and calls after that reject. */
 export function kvOnDb(db: Db, options: KvOnDbOptions = {}): Kv {
   const table = options.table ?? 'kv'
-  if (!IDENTIFIER.test(table)) throw new TypeError(`acryl-kv-db: the table name must be a plain lower case SQL identifier, got ${JSON.stringify(table)}`)
+  if (!IDENTIFIER.test(table)) throw new TypeError(`@acryldev/kv-db: the table name must be a plain lower case SQL identifier, got ${JSON.stringify(table)}`)
 
   let ready: Promise<void> | undefined
   const ensure = (): Promise<void> => {

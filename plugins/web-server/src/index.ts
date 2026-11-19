@@ -3,7 +3,7 @@
  * `webServer.register` and `webServer.registerUpgrade`; this plugin serves them on the framework's own node server, so those rows run unchanged
  * while the HTTP host, the page and the client-module serving stay ours.
  *
- * It is the inverse of `acryl-router-http`: there the Host's web server serves a router prefix; here our node server presents the web-server
+ * It is the inverse of `@acryldev/router-http`: there the Host's web server serves a router prefix; here our node server presents the web-server
  * interface a DSH row expects. The surface is deliberately small: `host` and `port` (what `acryl-web` reads), `register` (exact or prefix),
  * `registerUpgrade` (one exact path), and the index taps the page serving applies. A row that needs more of DSH's interface gets the extra
  * method here, named with the row that needs it - so this seam can shrink when a row goes away.
@@ -11,10 +11,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Duplex } from 'node:stream'
 import { Context, Service } from '@deepseek-ai/cordis'
-import type { NodeServer, RawRoute, RawUpgradeRoute } from 'acryl-node-server'
+import type { NodeServer, RawRoute, RawUpgradeRoute } from '@acryldev/node-server'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-web-server'
+export const name = '@acryldev/web-server'
 
 /** Hard requirement: the node server whose raw routes carry these handlers. */
 export const inject = ['nodeServer']
@@ -124,13 +124,13 @@ export class WebServer extends Service implements WebServerService {
 
   register(route: WebServerRoute): () => void {
     const remove = this.ctx.nodeServer.registerRaw(route as RawRoute)
-    this.ctx.effect(() => () => { remove() }, `acryl-web-server: ${route.kind} ${route.path}`)
+    this.ctx.effect(() => () => { remove() }, `@acryldev/web-server: ${route.kind} ${route.path}`)
     return remove
   }
 
   registerUpgrade(route: WebServerUpgradeRoute): () => void {
     const remove = this.ctx.nodeServer.registerRawUpgrade(route as RawUpgradeRoute)
-    this.ctx.effect(() => () => { remove() }, `acryl-web-server: upgrade ${route.path}`)
+    this.ctx.effect(() => () => { remove() }, `@acryldev/web-server: upgrade ${route.path}`)
     return remove
   }
 
@@ -140,7 +140,7 @@ export class WebServer extends Service implements WebServerService {
       const at = this.taps.indexOf(transform)
       if (at >= 0) this.taps.splice(at, 1)
     }
-    this.ctx.effect(() => () => { remove() }, 'acryl-web-server: index tap')
+    this.ctx.effect(() => () => { remove() }, '@acryldev/web-server: index tap')
     return remove
   }
 

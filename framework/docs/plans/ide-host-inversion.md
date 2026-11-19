@@ -6,14 +6,14 @@ What changed from the first draft: DSH's web server, web runtime, page and clien
 
 ## 1. Our HTTP host
 
-- `acryl-node-server` (ours) listens on the port and serves the router and the client modules; there is no DSH `webServer` or `web-startup` row.
-- The page is one document written and served by us (`clientModules`): the frame's client entry (the `acryl-app-shell` layout, which renders the left panel, main surface and right panel) is the root bundle. No DSH page, no DSH slots switched off: the frame's slots are the page's slots.
+- `@acryldev/node-server` (ours) listens on the port and serves the router and the client modules; there is no DSH `webServer` or `web-startup` row.
+- The page is one document written and served by us (`clientModules`): the frame's client entry (the `@acryldev/app-shell` layout, which renders the left panel, main surface and right panel) is the root bundle. No DSH page, no DSH slots switched off: the frame's slots are the page's slots.
 - The app's own routes are mounted at `/app` on our router (the slice 6 prefix rule), served by our server; the door's page script rides the same document through our client-module serving (the slice 1/6 adaptation, now against our server instead of DSH's index-inject).
 - For the DSH driver rows that register HTTP endpoints (the remote gateway), our host provides **one compatibility service of our own**, `webServer`, with the slice of DSH's web-server interface they use (`register` prefix/exact, `registerUpgrade`, index tap if a row needs it), backed by our node-server. It is our adapter (estimate: 150-250 lines, tested like `routerHttp`), not DSH code; a row that needs more of the interface is listed with the extra surface and either served or excluded with a reason. This avoids mounting DSH's web server while keeping the driver rows unchanged.
 
 ## 2. Our client runtime
 
-- The page loads our client-module loader (DSH's `@deepseek-ai/dsh-client-modules` as an npm **library**, served by our server; ~1,900 lines) and the client graph of the frame: `acryl-app-shell`, `acryl-workspace`, and the DSH client packages the frame imports (table below).
+- The page loads our client-module loader (DSH's `@deepseek-ai/dsh-client-modules` as an npm **library**, served by our server; ~1,900 lines) and the client graph of the frame: `@acryldev/app-shell`, `@acryldev/workspace`, and the DSH client packages the frame imports (table below).
 - DSH's client packages are served by **our** client-module serving, from `node_modules`, through their `dsh.client` entries; our loader resolves their bare imports. They are libraries, not rows of DSH's web runtime.
 - The chat tab mounts the conversation UI client module (DSH's `dsh-client-ui-conversation`, ~18,500 lib lines) as a library in the chat tile; it talks to the driver through the remote client packages (also libraries) over our host's gateway endpoint. The frame's chat tile already receives `renderConversation` today; under our page it receives the same component from the served module.
 - The client-side services the frame's client packages inject (`slots`, `locale`, `sidebarRight`, `sidebarRightTabs`, `shortcuts`, `layout`, `renderer`, ...) come from those client libraries, bootstrapped by the page's client entry. No DSH client runtime row or DSH client boot is mounted.
@@ -84,16 +84,16 @@ Excluded with reasons: DSH's web server, web startup, web runtime, client HMR, D
 
 ## 5. What our ported packages hard-require from DSH
 
-- `acryl-sign-in` host: DSH's `authorization` and `credentials` services (slice 5; listed above).
-- `acryl-workspace`'s connect-model control: DSH's `credentials`, `llm` and `session` remote faces (slice 3; the rows above).
-- `acryl-workspace`'s chat tile and session list: the session/agent rows above; its terminals, files, git, board, comments are ours (node-pty host routes), not DSH's controllers.
+- `@acryldev/sign-in` host: DSH's `authorization` and `credentials` services (slice 5; listed above).
+- `@acryldev/workspace`'s connect-model control: DSH's `credentials`, `llm` and `session` remote faces (slice 3; the rows above).
+- `@acryldev/workspace`'s chat tile and session list: the session/agent rows above; its terminals, files, git, board, comments are ours (node-pty host routes), not DSH's controllers.
 - Settings screens, shortcuts and the palette are ours (the `@acryldev` scope packages), mounted on our host.
 
 ## 6. What the generated app contains, and what `dev` runs
 
 - `package.json`: our framework, the the `@acryldev` scope packages frame packages (published names; the `ACRYLBLENDS_FRAME_PACKAGES` bridge until then), DSH's driver packages pinned exactly, and the client libraries the frame imports. No DSH profile, no `dsh plugin add`.
 - `scripts/ide-host.mjs`: our launcher: chooses the instance/home/port (`ACRYLBLENDS_PORT`, 0 allowed), composes our rows (the app's frame layer: `app-instance`, door when present, `app-routes` at `/app`, our router/routerHttp, the the `@acryldev` scope packages rows, the DSH driver rows), provides `profileContext` and the `webServer` compatibility port, mounts the client-module serving and the page, and forwards stop signals.
-- `npm run dev`: `node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs` (the app's JSX register, as the app's own scripts use). `npm start`/production stays the app's own framework server (no frame, no door, no DSH).
+- `npm run dev`: `node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs` (the app's JSX register, as the app's own scripts use). `npm start`/production stays the app's own framework server (no frame, no door, no DSH).
 - Scaffolder (`acrylblends init` and `acrylblends upgrade`): write the host script and layer instead of the DSH profile (`scripts/ide-profile.mjs` and the profile directory are removed); generation stays idempotent; blank first.
 
 ## 7. The boot gate
@@ -114,13 +114,13 @@ Kept: the `/app` prefix and the single-prefix rule, the frame row shape (router 
 
 ## 10. Implementation notes (2026-10-31, after steps 1-2)
 
-Landed on `107-host-inversion`: `bfaeb660` (the raw node route/upgrade seam in `acryl-node-server` and the `acryl-web-server` port with its tests) and `f0c0cfa3` (the generated `scripts/ide-host.mjs`, the driver-row selection, and `scripts/verify-ide-host.mjs`, which boots the composition and checks: 52 rows active, no DSH web row, PENDING on provider removal / active on restore, two reloads clean). The app pins one Cordis (4.0.5, DSH's own) and `cordis-plugin-loader` 1.0.6; the driver rows are selected from `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-web-app` by id and mounted through the Cordis loader on our node server.
+Landed on `107-host-inversion`: `bfaeb660` (the raw node route/upgrade seam in `@acryldev/node-server` and the `@acryldev/web-server` port with its tests) and `f0c0cfa3` (the generated `scripts/ide-host.mjs`, the driver-row selection, and `scripts/verify-ide-host.mjs`, which boots the composition and checks: 52 rows active, no DSH web row, PENDING on provider removal / active on restore, two reloads clean). The app pins one Cordis (4.0.5, DSH's own) and `cordis-plugin-loader` 1.0.6; the driver rows are selected from `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-web-app` by id and mounted through the Cordis loader on our node server.
 
 The next step, the page and the client runtime, has these findings:
 
 - `@deepseek-ai/dsh-client-modules` is a Cordis row with a host half that does the client-module work: it scans the loader entries for `dsh.client` declarations, composes `window.__DSH_BOOT__`, serves the client bundles, and contributes its boot scripts to the web server's index-injection table. It hard-injects only `loader` and optionally uses `webServer`, which our port provides. It is the package to mount as the client-module serving on our host (a library row, not DSH's web runtime).
 - Its graph invariant fails loudly when a `dsh.client` row advertises a bundle that does not resolve, so the frame's client injects are the complete list of client rows to mount: for the frame packages, `client-locale`, `client-shortcuts`, `ui-settings`, `ui-sidebar-right`, `ui-theme`, `ui-settings-models`, `api-remotes`, `client-connection`, `ui-slots`, `ui-primitives`; for the chat, `client-ui-conversation` and its injects (`api-session-controller`, `client-file-upload`, `ui-layout`, `ui-renderer`, `ui-session`, `ui-workspace`). Nothing else of DSH's client surface is mounted.
-- The document itself: our page row serves a minimal index from `@deepseek-ai/dsh-web-frontend`'s `dist/index.html` with the webServer index taps applied (that is where `__DSH_BOOT__` and the registration scripts land) and serves its `assets/` files; the visible layout is the ACRYL frame because the only layout client row mounted is `acryl-app-shell`, which renders in the shell's root slot. The shell (the frontend's built client runtime) is a library served by our server, as the per-package table allows; DSH's web server, web runtime and web-startup rows are still not mounted.
+- The document itself: our page row serves a minimal index from `@deepseek-ai/dsh-web-frontend`'s `dist/index.html` with the webServer index taps applied (that is where `__DSH_BOOT__` and the registration scripts land) and serves its `assets/` files; the visible layout is the ACRYL frame because the only layout client row mounted is `@acryldev/app-shell`, which renders in the shell's root slot. The shell (the frontend's built client runtime) is a library served by our server, as the per-package table allows; DSH's web server, web runtime and web-startup rows are still not mounted.
 - The page row and the client rows are the next commit; the browser gate then runs (a)-(h) plus the PTY, the chat mock and the door.
 
 
@@ -134,7 +134,7 @@ State: `107-host-page` is pushed; the latest code commit before this note is `2c
 
 After Settings, the gate's remaining assertions are the command palette (the `acryl:toggle-command-palette` event), a terminal tab over a real PTY, `/app` in the workspace browser tile, and chat with the local Anthropic-Messages mock through the key card (the slice 3 gate's mock and flow).
 
-Other open items: the door's page WebSocket owner is deterministic (services presence; one owner; routerHttp preferred), with tests for node-only, routerHttp after the node server and routerHttp before the door; the provider-removed-and-restored scenario is skipped in `plugins/acryl-door/tests/host/hub-ownership.spec.ts` because the next upgrade is not answered after a re-provide. The door's handshake was verified 101 against the frame host before this test was written.
+Other open items: the door's page WebSocket owner is deterministic (services presence; one owner; routerHttp preferred), with tests for node-only, routerHttp after the node server and routerHttp before the door; the provider-removed-and-restored scenario is skipped in `plugins/door/tests/host/hub-ownership.spec.ts` because the next upgrade is not answered after a re-provide. The door's handshake was verified 101 against the frame host before this test was written.
 
 ## 12. Session note (2026-10-31, 107-host-page-settings)
 
@@ -176,7 +176,7 @@ stay out of the layer.
 
 The same entries the app's own server mounts: the app's `blend.yaml` lists `- id: <name>` rows, and each resolves to `./plugins/<name>/index.ts` (the folder the
 scaffolder copied). The layer should carry them in `blend.yaml` order, after `app-routes`, skipping the ids the host or the generator already provides
-(`instance`, `acryl-router`, `acryl-node-server`, `acryl-web-server`, `acryl-page`, `manifest`, `save`, `acryl-door`). The attempted implementation in
+(`instance`, `@acryldev/router`, `@acryldev/node-server`, `@acryldev/web-server`, `@acryldev/page`, `manifest`, `save`, `@acryldev/door`). The attempted implementation in
 `packages/cli/src/init.ts` did exactly that (reading `blend.yaml`, falling back to the plugin folders, `readdirSync` for the rest) and is reverted, not landed.
 
 ### 3. What actually fails, measured
@@ -200,7 +200,7 @@ so the real import rejection is swallowed. What was measured around it, on a scr
 - Patching `cordis-plugin-loader`'s own `_init` catch to print `error` printed **nothing**: the row never reaches that catch, so the import happens on another
   path (DSH's boot importer), which is where the next session must print the rejection.
 - The same plugins import cleanly from the app folder with the app's register:
-  `node --import ./plugins/acryl-node-server/src/register.ts -e "import('./plugins/agent/index.ts')"` prints `agent ok` (and the same without the register).
+  `node --import ./plugins/node-server/src/register.ts -e "import('./plugins/agent/index.ts')"` prints `agent ok` (and the same without the register).
 - It is not a row-id collision: prefixing every id (`app-agent`, ...) fails identically. It is not the loader's TypeScript extension rewrite
   (`__rewriteRelativeImportExtension`, which turns `./x.ts` into `./x.js`): an absolute `file:///.../plugins/agent/index.ts` row name and an extensionless
   `./plugins/agent/index` row name fail the same way. All six app plugin rows fail while `app-routes` (`./src/frame.ts`) and the framework rows mount.
@@ -278,8 +278,8 @@ into it explicitly.
 
 Following the coordinator's lead (2), the app's rows mount through the Loader's own entry option: the generated `app-plugins` row carries
 `isolate: {"agent":true,"extensions":true,"memory":true,"model":true,"sandbox":true,"tasks":true,"tools":true}` (the derived list), and `composeInto` with
-`host: true` leaves out the host's infrastructure rows (`instance`, `acryl-router`, `acryl-web-server`, `acryl-page`, `manifest`, `save`, `acryl-node-server`,
-`acryl-door`). Measured result: the host boots with every row active - DSH's driver rows and the app's own plugins coexist, no service collision - and the app
+`host: true` leaves out the host's infrastructure rows (`instance`, `@acryldev/router`, `@acryldev/web-server`, `@acryldev/page`, `manifest`, `save`, `@acryldev/node-server`,
+`@acryldev/door`). Measured result: the host boots with every row active - DSH's driver rows and the app's own plugins coexist, no service collision - and the app
 answers at `/app` with its page carrying the agent-panel and door script tags.
 
 What still fails: the panel UI does not appear in the page. The app's panel endpoints are mounted on the host router at the ROOT (`/api/agent-panel/...`), not
@@ -353,11 +353,11 @@ The page gate adds `driver-pty` to the agent app (with `programs: { node: [] }`,
 path: the session names `pty:node` with its view under `/app/api/driver-pty`, the view module answers there, a session starts (200 with an id) and stops (200), and a cross-site or
 untokened start answers 403. The PTY suite gains the mounted case on the same rule the panel's gained.
 
-Survey of the other app-owned rows that claim a root `/api` path under the host (2026-10-31): `acryl-state` mounts `/api/state` on the router, and `acryl-inspect` mounts `/api/inspect`;
+Survey of the other app-owned rows that claim a root `/api` path under the host (2026-10-31): `@acryldev/state` mounts `/api/state` on the router, and `@acryldev/inspect` mounts `/api/inspect`;
 both also claim that prefix through `routerHttp` when it exists, and the host's raw routing picks the longest prefix, so `/api/state` and `/api/inspect` beat DSH's `/api` and are served.
 They work, but they live outside the app's mount (their browser modules are addressed root-absolute, `/api/state/client.js`); moving them under the mount is a later change, not a
 breakage. The door's `/api/acryl-door` is host-owned in the frame (the host layer mounts the row, `composeInto` leaves the app's out) and claims a longer prefix than `/api` by design,
-because the CLI addresses it by app URL plus that path. The frame packages (`acryl-workspace`, `acryl-plugin-admin`, `acryl-support`, `acryl-sign-in`) are host rows and claim
+because the CLI addresses it by app URL plus that path. The frame packages (`@acryldev/workspace`, `@acryldev/plugin-admin`, `@acryldev/support`, `@acryldev/sign-in`) are host rows and claim
 `/api/acryl-*` through `routerHttp`, so they are never in DSH's `/api`. The templates other than `agent` mount their routes at `/` on their own server and have no framed composition
 yet; when they get one they take the same `mount` config the agent template passes.
 
@@ -378,7 +378,7 @@ plus `src/app.ts` where the current template exports `composeInto`, so the file 
 committed bytes with the tags. `planFrameStep` identifies the app's template from those files and plans three kinds of writes. The template's own files are
 `same` when they already equal the current template's, `update` when they equal the released ones, `add` when missing and `conflict` when the app edited
 them. The generated files (overlay, `cordis.yml`, `scripts/ide-host.mjs`, `app/runtime.mjs`, `frame/app-plugins.mjs`) are ours by their marker line. The
-two host plugins the launcher mounts by path (`acryl-web-server`, `acryl-page`) are copied when missing. `package.json` is merged, never a conflict (its
+two host plugins the launcher mounts by path (`@acryldev/web-server`, `@acryldev/page`) are copied when missing. `package.json` is merged, never a conflict (its
 `dev` script moves to the launcher; `start` keeps the app's own server). The app's `blend.yaml` and any file of its own are untouched. The old
 `scripts/ide-profile.mjs` is removed when it carries the generated marker.
 
@@ -568,7 +568,7 @@ The "no Models section" error on every frame job and on the check jobs was two t
 
 Run 41258550752 on `94548f5d` (the merge of the green 118 tip) was red in three jobs on a tree that had just passed: the notes frame gate on ubuntu
 ("Settings did not open"), the chat frame gate on macOS (the tile's iframe had `src` and no readable document), and `packages` on Windows Node 22
-(acryl-db-sqlite's ten-cycle loader test at the 5-second default). Each had its own cause, and each is fixed at the cause on `120-ci-stable`.
+(@acryldev/db-sqlite's ten-cycle loader test at the 5-second default). Each had its own cause, and each is fixed at the cause on `120-ci-stable`.
 
 **The tile's first Go, and a failed load no press could recover.** The browser tab submitted `draft`, the React copy of the address, so a press that
 arrived before the input's state had committed submitted nothing or the previous address. It now reads the address field itself (`name="address"`),
@@ -623,7 +623,7 @@ failure carries the panel's own log, button states and driver list instead of on
 **The SQLite bound.** The ten open/close cycles measured 1.2 to 1.4 s in three runs on Windows 10 (mbpi9win, Node 24.18), so the 5-second default is
 honest cost under a loaded windows-latest runner, not a hang. The test carries the same 20-second bound as the kv-db ten-cycle test.
 
-**A refusal answered before the request body (the queued ECONNRESET ticket).** The adapter (`acryl-router-http`'s `serve`) wrote the answer and ended,
+**A refusal answered before the request body (the queued ECONNRESET ticket).** The adapter (`@acryldev/router-http`'s `serve`) wrote the answer and ended,
 leaving a request body the handler never read (a guard's 403, a 415, a body over its limit). Node then closes the socket with data pending, and the
 peer sees a reset instead of the answer: read ECONNRESET in the workspace git worktree test on Windows, and reproducible on macOS with a client that
 writes half a body and waits. `serve` now settles an unread body (bounded: one second, resumed not buffered) before writing the answer, so the client
@@ -790,7 +790,7 @@ screenshots) is ready.
 ### Handoff 3 (2026-11-02, after the stylesheet root cause)
 
 The kit's dialog defect and the Start view's misplacement had one cause, found by reading the live page rather than the code's intent: `clientAssetTags`
-in `plugins/acryl-page/src/index.ts` copied the frontend's `<script ... src>` opening tag without its closing `</script>`. The browser then parsed the
+in `plugins/page/src/index.ts` copied the frontend's `<script ... src>` opening tag without its closing `</script>`. The browser then parsed the
 vendor modulepreload and both stylesheet links as that script's text, so DSH's whole component stylesheet (primitives: Modal, Button, Input, Menu, ...)
 never loaded and every surface drawn by it fell back to browser defaults. The theme tokens still worked because the theme plugin injects its CSS inline,
 which is why only primitives-drawn surfaces looked wrong. Fixed at the cause in `49417c57`: the page closes the tag it owns, the test pins the copied
@@ -929,7 +929,7 @@ web surface already has the whole ACRYL frame (`npm run dev` boots `scripts/ide-
 build a second one: the host is the one `npm run dev` runs, and the window is one more surface on it.
 
 1. **Capability and plugin boundary.** The window is a surface, not a Cordis plugin: it is not a row of the composition, and it owns nothing a row
-   provides. `plugins/desktop` stays the only place that imports Electron (`check-deps` enforces it). The frame host stays the one owner of the
+   provides. `plugins/desktop-shell` stays the only place that imports Electron (`check-deps` enforces it). The frame host stays the one owner of the
    frame: the composition, the driver rows, the PTY, the chat and the app under `/app`. ACRYL Desktop draws the same line: its shell generation
    loads the workspace URL into a locked-down window and owns only the window, the menu and the navigation policy
    (`apps/acryl-desktop/src/shell/electron-shell-generation.ts`).
@@ -1081,7 +1081,7 @@ watcher does not restart), not this branch.
 boot 1 printed `http://127.0.0.1:3659/` and the gate's `fetch` threw `TypeError: fetch failed` with cause `bad port`, and that same nested gate failed
 `verify-upgrade-frame`. The cause was not the gate. `stablePort` hashes every app's address into 3100..3999 (`plugins/instance`), and 3659 is one of the
 Fetch standard's bad ports, which Chromium refuses for a page too (ERR_UNSAFE_PORT): that app's address could never have been opened by a person. The
-listener now skips them: `acryl-node-server` carries the standard's 82 ports (probed against Node 24 port by port on 2026-11-03), and `portCandidates`
+listener now skips them: `@acryldev/node-server` carries the standard's 82 ports (probed against Node 24 port by port on 2026-11-03), and `portCandidates`
 leaves them out of the scan like a taken port, configured or scanned. The address record, the profile row and the printed URL already carry the bound
 port, so the stable address simply becomes the next usable one (3660 for 3659) and a restart keeps it; a configured restricted port with no scan left to
 move to fails with `no usable port from X to Y: each is taken, or one a browser refuses` instead of binding an address no browser opens. Tests: the list

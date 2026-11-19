@@ -23,7 +23,7 @@ function parseView(value: unknown): WorkspacePtyView {
     || typeof value.output !== 'string'
     || (value.exitCode !== null && typeof value.exitCode !== 'number')
     || (value.error !== null && typeof value.error !== 'string')) {
-    throw new Error('acryl-workspace: invalid workspace PTY response')
+    throw new Error('@acryldev/workspace: invalid workspace PTY response')
   }
   return {
     id: value.id,
@@ -78,7 +78,7 @@ export function createWorkspacePtyApi(fetcher: FetchLike = fetch): WorkspacePtyA
       const url = `${WORKSPACE_PTY_PATH}?id=${encodeURIComponent(id)}`
       const response = await fetcher(url, { method: 'GET', credentials: 'same-origin' })
       const body = await readJson(response)
-      if (!response.ok) throw new Error('acryl-workspace: workspace PTY read failed')
+      if (!response.ok) throw new Error('@acryldev/workspace: workspace PTY read failed')
       return parseView(body)
     },
     async write(id, data) {
@@ -88,7 +88,7 @@ export function createWorkspacePtyApi(fetcher: FetchLike = fetch): WorkspacePtyA
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id, data }),
       })
-      if (!response.ok) throw new Error('acryl-workspace: workspace PTY write failed')
+      if (!response.ok) throw new Error('@acryldev/workspace: workspace PTY write failed')
     },
     async resize(id, cols, rows) {
       const response = await fetcher(WORKSPACE_PTY_RESIZE_PATH, {
@@ -97,7 +97,7 @@ export function createWorkspacePtyApi(fetcher: FetchLike = fetch): WorkspacePtyA
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id, cols, rows }),
       })
-      if (!response.ok) throw new Error('acryl-workspace: workspace PTY resize failed')
+      if (!response.ok) throw new Error('@acryldev/workspace: workspace PTY resize failed')
     },
     async close(id) {
       const response = await fetcher(WORKSPACE_PTY_CLOSE_PATH, {
@@ -106,7 +106,7 @@ export function createWorkspacePtyApi(fetcher: FetchLike = fetch): WorkspacePtyA
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id }),
       })
-      if (!response.ok) throw new Error('acryl-workspace: workspace PTY close failed')
+      if (!response.ok) throw new Error('@acryldev/workspace: workspace PTY close failed')
     },
   }
 }

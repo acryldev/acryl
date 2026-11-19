@@ -5,8 +5,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { SignInAttemptView } from 'acryl-control'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
+import type { SignInAttemptView } from '@acryldev/control'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryldev/ui/frame'
 import type { SignInProviderView } from '../contract.ts'
 import type { SignInApi } from './sign-in-api.ts'
 

@@ -9,4 +9,4 @@ let server: TestServer
 beforeAll(async () => { server = await startTestServer() })
 afterAll(async () => { await server.stop() })
 
-describeDbConformance('acryl-db-postgres', async () => openDb({ url: await server.fresh() }), vitest)
+describeDbConformance('@acryldev/db-postgres', async () => openDb({ url: await server.fresh() }), vitest)

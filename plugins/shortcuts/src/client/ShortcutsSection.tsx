@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import type { ShortcutBinding, ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryldev/ui/frame'
 import { recordKey, saveBinding, shortcutGroups, type ShortcutRow } from './shortcut-rows.ts'
 
 export interface ShortcutsSectionProps {

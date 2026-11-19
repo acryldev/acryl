@@ -14,7 +14,7 @@ import {
   readDesktopShellMode,
   validateDshMarketBundlePatches,
 } from '../../src/profile.ts'
-import { BLANK_BLUEPRINT, IDE_BLUEPRINT } from 'acryl-harness-runtime'
+import { BLANK_BLUEPRINT, IDE_BLUEPRINT } from '@acryldev/harness-runtime'
 import { DESKTOP_MARKET_IDENTITIES } from '../../src/plugins/desktop-market.ts'
 
 const homes: string[] = []
@@ -207,7 +207,7 @@ describe('desktop profile composition', {
       disabled: true,
     }))
     // The workspace is composed from the shared capability declaration (the same one Web uses), exactly once.
-    expect(rows.filter(row => row.id === 'acryl-workspace')).toEqual([{ id: 'acryl-workspace', name: 'acryl-workspace' }])
+    expect(rows.filter(row => row.id === '@acryldev/workspace')).toEqual([{ id: 'acryl-workspace', name: '@acryldev/workspace' }])
     for (const [id, name] of [
       ['ui-sidebar', '@deepseek-ai/dsh-client-ui-sidebar'],
       ['ui-conversation', '@deepseek-ai/dsh-client-ui-conversation'],
@@ -217,7 +217,7 @@ describe('desktop profile composition', {
       expect(matching[0]).toEqual(expect.objectContaining({ name }))
       expect(matching[0]?.disabled).toBeFalsy()
     }
-    // Brand swap: `dsh-client-ui-brand-acryl` and the base bundle's
+    // Brand swap: `@acryldev/brand-client` and the base bundle's
     // `@deepseek-ai/dsh-client-ui-brand-official` occupy the identical slot
     // set; exactly one is enabled per `DESKTOP_BRAND`, proving the two
     // packages are a real swappable Cordis composition rather than one
@@ -228,7 +228,7 @@ describe('desktop profile composition', {
     }))
     const acrylBrandRows = rows.filter(row => row.id === 'ui-acryl')
     expect(acrylBrandRows).toHaveLength(1)
-    expect(acrylBrandRows[0]).toEqual(expect.objectContaining({ name: 'dsh-client-ui-brand-acryl' }))
+    expect(acrylBrandRows[0]).toEqual(expect.objectContaining({ name: '@acryldev/brand-client' }))
     expect(acrylBrandRows[0]?.disabled).toBeFalsy()
     expect(rows.find(row => row.id === 'directory-picker')).toEqual(expect.objectContaining({
       name: '@deepseek-ai/dsh-host-directory-picker-auto',
@@ -357,19 +357,19 @@ describe('desktop profile composition', {
     const appHome = dirname(home)
     const pluginDir = join(appHome, 'plugins', 'todo')
     mkdirSync(pluginDir, { recursive: true })
-    writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ name: 'todo', dsh: { requiresAcrylPackages: ['acryl-router', 'acryl-state'] } }))
+    writeFileSync(join(pluginDir, 'package.json'), JSON.stringify({ name: 'todo', dsh: { requiresAcrylPackages: ['@acryldev/router', '@acryldev/state'] } }))
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', undefined, undefined, undefined, undefined, undefined, undefined, appHome)
     const ids = prepared.patches.flatMap(patch => patch.insert ?? []).map(row => row.id)
     expect(ids.filter(id => id === 'acrylblends/cordis/router')).toHaveLength(1)
     expect(ids.filter(id => id === 'acrylblends/cordis/state')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acryl-router' || id === 'acryl-state')).toEqual([])
+    expect(ids.filter(id => id === '@acryldev/router' || id === '@acryldev/state')).toEqual([])
   })
 
   it('composes a module a plugin installed into the profile requires, once, so a row the running app mounted for it is there at the next start (spec 049 T001)', () => {
     const home = temporaryHome()
     const bundleDir = installBundle(home, 'acryl-probe-kv', '- insert:\n    - id: acryl-probe-kv\n      name: acryl-probe-kv\n')
     const manifest = JSON.parse(readFileSync(join(bundleDir, 'package.json'), 'utf8')) as Record<string, { requiresAcrylPackages?: string[] }>
-    manifest.dsh = { ...manifest.dsh, requiresAcrylPackages: ['acrylblends/cordis/kv-json', 'acryl-state'] }
+    manifest.dsh = { ...manifest.dsh, requiresAcrylPackages: ['acrylblends/cordis/kv-json', '@acryldev/state'] }
     writeFileSync(join(bundleDir, 'package.json'), JSON.stringify(manifest))
     const profileManifestPath = join(ensureDesktopProfile(home), 'package.json')
     const profileManifest = JSON.parse(readFileSync(profileManifestPath, 'utf8')) as { dsh: { profile: { bundles: string[] } } }
@@ -380,7 +380,7 @@ describe('desktop profile composition', {
     expect(ids.filter(id => id === 'acrylblends/cordis/kv-json')).toHaveLength(1)
     // Already in the framework kit: not a second row, and the old name is read as today's module.
     expect(ids.filter(id => id === 'acrylblends/cordis/state')).toHaveLength(1)
-    expect(ids.filter(id => id === 'acryl-state')).toEqual([])
+    expect(ids.filter(id => id === '@acryldev/state')).toEqual([])
   })
 
   it('inserts the community Market as one canonical row only after explicit selection', () => {
@@ -564,7 +564,7 @@ describe('desktop profile composition', {
 
   it('fails a conflicting provider identity closed without blocking the core profile', () => {
     const home = temporaryHome()
-    writeFileSync(join(home, 'cordis.patch.yml'), `- insert:\n    - id: community-market\n      name: cordis-plugin-market\n`)
+    writeFileSync(join(home, 'cordis.patch.yml'), `- insert:\n    - id: community-market\n      name: @acryldev/cordis-plugin-market\n`)
 
     const prepared = prepareDesktopProfile(undefined, home, 'darwin', 'desktop', undefined, {
       requested: 'community-market',
@@ -622,7 +622,7 @@ describe('desktop profile composition', {
 
   it('projects YAML startup settings into the Host, Web server, and client Loader rows', () => {
     const home = temporaryHome()
-    writeFileSync(join(dirname(home), 'acryl-settings.yaml'), 'dsh-desktop:\n  mode: advanced\n  port: 43189\n')
+    writeFileSync(join(dirname(home), '@acryldev/settings.yaml'), 'dsh-desktop:\n  mode: advanced\n  port: 43189\n')
 
     const prepared = prepareDesktopProfile(undefined, home, 'darwin')
     const rows = composeEntries([prepared.patches])

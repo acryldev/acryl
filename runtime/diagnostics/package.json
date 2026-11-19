@@ -1,12 +1,12 @@
 {
-  "name": "acryl-diagnostics",
+  "name": "@acryldev/diagnostics",
   "version": "0.1.0",
   "description": "Log files, secret masking, the Cordis file exporter and the support archive shared by every ACRYL surface",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "runtime/acryl-diagnostics"
+    "directory": "runtime/diagnostics"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -48,5 +48,9 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.4"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/runtime/diagnostics#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

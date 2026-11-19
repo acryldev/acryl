@@ -6,7 +6,7 @@
  * (see `definition.ts`); unset means `acryl.ide`.
  * `ACRYL_BRAND_NAME` (and the other `ACRYL_BRAND_*` values) rebrand the selected Blueprint without editing any file.
  *
- * @module acryl-harness-runtime/blueprint/selection
+ * @module @acryldev/harness-runtime/blueprint/selection
  */
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs'

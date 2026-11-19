@@ -1,9 +1,9 @@
 /** Strict private loopback routes for plugin lifecycle inspection and mutation. */
 
 import { Acryl } from 'acrylblends'
-import { PluginLifecycleError } from 'acryl-control'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { PluginLifecycleError } from '@acryldev/control'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {
   PLUGIN_LIFECYCLE_DISABLE_PATH,
   PLUGIN_LIFECYCLE_ENABLE_PATH,

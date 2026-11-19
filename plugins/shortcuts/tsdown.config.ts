@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-shortcuts'
+const PACKAGE_NAME = '@acryldev/shortcuts'
 
 export default defineConfig([
   {

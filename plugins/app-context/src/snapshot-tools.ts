@@ -9,7 +9,7 @@ export const SNAPSHOT_CAPTURE_TOOL = 'acryl_snapshot_capture'
 export const SNAPSHOT_VERIFY_TOOL = 'acryl_snapshot_verify'
 export const SNAPSHOT_APPLY_TOOL = 'acryl_snapshot_apply'
 
-/** The parts of the frame's `appSnapshot` service the tools call (acryl-blends-frame `src/app-snapshot.ts`). */
+/** The parts of the frame's `appSnapshot` service the tools call (@acryldev/blends-frame `src/app-snapshot.ts`). */
 export interface AppSnapshotTools {
   capture(): Promise<{ readonly addedRows: readonly string[]; readonly modules: number }>
   verify(dir?: string): Promise<{ readonly ok: boolean; readonly problems: readonly string[]; readonly checked: number }>

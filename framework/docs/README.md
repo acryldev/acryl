@@ -27,7 +27,7 @@ ACRYLBLENDS is the public ACRYL framework, in two parts.
 
 [framework/README.md](framework/README.md) is the framework's own text, kept in this repository and shipped inside every new app.
 `pnpm run verify:framework` fails when the exports map of the package is out of date. The pages write `import { Acryl } from 'acrylblends'`; in a
-generated Blend app the same names are the vendored plugin source in `plugins/acryl-router/src/` (see the app's `AGENTS.md`).
+generated Blend app the same names are the vendored plugin source in `plugins/router/src/` (see the app's `AGENTS.md`).
 
 ## Our own pages
 
@@ -57,7 +57,7 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [IDE port, slice 2: the frame comparison](plans/ide-slice2-frame-comparison.md) - 18 views, 13 within 2%: the frame, both themes, the collapsed sidebar and the terminal pass; the one desktop-only right-panel row and the remaining Settings diffs
 - [IDE port, slice 3: chat, models and sessions](plans/ide-slice3-chat.md) - the connect-a-model card, where the key goes, the gate that proves the chat uses it and that a session survives a restart, and the frame numbers
 - [IDE port, slice 4: files, the editor, Changes and Review](plans/ide-slice4-panels.md) - the four new comparison views, the committed git fixture both surfaces open, and the numbers
-- [IDE port, slice 5: account sign-in](plans/ide-slice5-signin.md) - acryl-sign-in ported and mounted in Settings > Models, the account join that keeps the API-key card away, the token boundary and its test, and the comparison
+- [IDE port, slice 5: account sign-in](plans/ide-slice5-signin.md) - @acryldev/sign-in ported and mounted in Settings > Models, the account join that keeps the API-key card away, the token boundary and its test, and the comparison
 - [Sharing a plugin between people](plans/plugin-share.md) - the plugin-share mini-design: the order of a pull and why no refusal has anything to undo, the plan a person says yes to, and what the app remembers
 - [Workshop outline v2](plans/workshop-outline-v2.md) - the refocused workshop: a visual app built and driven by the agent inside it, with the capability each block depends on
 - [Extending a running app](agent/extending-apps.md) - extensions, the builder, durable tasks; how an agent writes a plugin

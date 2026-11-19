@@ -10,7 +10,7 @@
  *
  * Pure: no I/O. Paths are built, never checked; `select.ts` does the few filesystem checks that choose a factory.
  *
- * @module acryl-harness-runtime/instance/app-instance
+ * @module @acryldev/harness-runtime/instance/app-instance
  */
 
 import { createHash } from 'node:crypto'

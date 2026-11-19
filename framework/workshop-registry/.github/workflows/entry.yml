@@ -41,7 +41,7 @@ jobs:
           mkdir pr
           git -C main archive FETCH_HEAD | tar -x --no-same-owner --no-same-permissions -C pr
       - uses: oven-sh/setup-bun@v2
-      # The format library, from ACRYL's source until @acryl/blends-core is published on npm. Pinned to a reviewed commit.
+      # The format library, from ACRYL's source until @acryldev/blends-core is published on npm. Pinned to a reviewed commit.
       - uses: actions/checkout@v4
         with:
           repository: acryldev/acryl

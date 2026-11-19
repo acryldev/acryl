@@ -20,7 +20,7 @@ const sourceFiles = builtFrom(join(root, 'src/client'))
 /**
  * Sources newer than the bundle. Absent artifact is reported by `pnpm run verify:artifact` in the
  * gate rather than here, because a bare `vitest run` on a fresh clone legitimately has no build; but
- * a *stale* artifact must never read as green - that is how a served @acryl/ui without its newest
+ * a *stale* artifact must never read as green - that is how a served @acryldev/ui without its newest
  * components reached the app during T045 while these tests passed.
  */
 function staleSources(): string[] {
@@ -63,7 +63,7 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
 
   it('registers under the package name and requires only react, the app primitives and the conversation client (the phase rule acrylChat reads) from the loader', () => {
     const { id } = loadBuilt()
-    expect(id).toBe('@acryl/ui')
+    expect(id).toBe('@acryldev/ui')
     const source = readFileSync(bundlePath, 'utf8')
     expect([...source.matchAll(/require\("([^"]+)"\)/gu)].map(m => m[1]).sort()).toEqual(['@deepseek-ai/dsh-client-ui-conversation/client', '@deepseek-ai/dsh-client-ui-primitives', 'react', 'react/jsx-runtime'])
   })
@@ -85,7 +85,7 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     const { styleTags } = loadBuilt()
     expect(styleTags.length).toBeGreaterThanOrEqual(8)
     for (const tag of styleTags) {
-      expect(tag.plugin).toBe('@acryl/ui'); expect(tag.pluginCss).toMatch(/^@acryl\/ui\/[A-Za-z]+\.module\.css$/u)
+      expect(tag.plugin).toBe('@acryldev/ui'); expect(tag.pluginCss).toMatch(/^@acryldev\/ui\/[A-Za-z]+\.module\.css$/u)
       expect(tag.text).not.toMatch(/(^|\})\s*(body|html|:root)\s*\{/u)   // no global selectors
       // A generated hash may begin with a digit, which the CSS serializer escapes as `\3X ` (one space); unescape it before
       // checking the [hash]_[local] shape, or a valid build fails on the escape alone.
@@ -104,7 +104,7 @@ describe.skipIf(!existsSync(bundlePath))('the built lib/client.js (run `pnpm run
     const ctx = { theme: { overrideTokens: (source: string, tokens: Record<string, { light: string, dark: string }>) => { registered.push({ source, tokens }); return () => { disposed += 1 } } }, effect: (fn: () => () => void) => fn(), reflect }
     ;(exports.apply as (c: unknown) => void)(ctx)
     expect(provided).toEqual(['acrylChat'])
-    expect(registered).toHaveLength(1); expect(registered[0]?.source).toBe('@acryl/ui')
+    expect(registered).toHaveLength(1); expect(registered[0]?.source).toBe('@acryldev/ui')
     expect(Object.keys(registered[0]?.tokens ?? {}).sort()).toEqual(['--acryl-accent', '--acryl-reasoning'])
     for (const pair of Object.values(registered[0]?.tokens ?? {})) { expect(pair.light).toMatch(/^#[0-9A-Fa-f]{6}$/u); expect(pair.dark).toMatch(/^#[0-9A-Fa-f]{6}$/u) }
     expect(disposed).toBe(0)

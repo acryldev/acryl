@@ -1,5 +1,5 @@
 {
-  "name": "acryl-showcase",
+  "name": "@acryldev/showcase",
   "version": "0.1.0",
   "description": "The collective app's showcase: a page at /showcase with a card for every plugin in the app (name, author, version, where it came from, its state, and links to its pages, its home widget and its tool), updated live as plugins are pulled and removed.",
   "license": "MIT",
@@ -26,9 +26,9 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-extensions": "workspace:*",
-    "acryl-plugin-share": "workspace:*",
-    "acryl-router": "workspace:*"
+    "@acryldev/extensions": "workspace:*",
+    "@acryldev/plugin-share": "workspace:*",
+    "@acryldev/router": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -36,10 +36,10 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-builder": "workspace:*",
-    "acryl-home": "workspace:*",
-    "acryl-instance": "workspace:*",
-    "@webboxes/plugin-hub": "0.2.2",
+    "@acryldev/builder": "workspace:*",
+    "@acryldev/home": "workspace:*",
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/plugin-hub-core": "workspace:^",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"
   },

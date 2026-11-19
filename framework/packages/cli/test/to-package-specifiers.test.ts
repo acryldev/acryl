@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { packageOf, rewriteSpecifiers, toPackageSpecifiers } from '../src/rewrite.ts'
 
 const table = new Map([
-  ['acryl-instance', 'instance/index.ts'],
-  ['acryl-instance/storage', 'instance/storage.ts'],
-  ['acryl-openai', 'openai/index.ts'],
+  ['@acryldev/instance', 'instance/index.ts'],
+  ['@acryldev/instance/storage', 'instance/storage.ts'],
+  ['@acryldev/openai', 'openai/index.ts'],
 ])
 const moved = new Set(['instance'])
 
@@ -13,14 +13,14 @@ describe('toPackageSpecifiers', () => {
     const source =
       "import { selectInstance } from '../plugins/instance/index.ts'\nimport { x } from '../plugins/openai/index.ts'\n"
     expect(toPackageSpecifiers(source, 'src/main.ts', table, moved)).toBe(
-      "import { selectInstance } from 'acryl-instance'\nimport { x } from '../plugins/openai/index.ts'\n",
+      "import { selectInstance } from '@acryldev/instance'\nimport { x } from '../plugins/openai/index.ts'\n",
     )
   })
 
   it("rewrites a copied plugin's sibling import, and a subpath", () => {
     const source = "import { open } from '../instance/storage.ts'\n"
     expect(toPackageSpecifiers(source, 'plugins/agent-panel/headless.ts', table, moved)).toBe(
-      "import { open } from 'acryl-instance/storage'\n",
+      "import { open } from '@acryldev/instance/storage'\n",
     )
   })
 
@@ -44,24 +44,24 @@ describe('toPackageSpecifiers', () => {
 
 describe('rewriteSpecifiers with installed packages', () => {
   const entries = new Map([
-    ['acryl-instance/storage', 'instance/storage.ts'],
-    ['acryl-home', 'home/index.ts'],
+    ['@acryldev/instance/storage', 'instance/storage.ts'],
+    ['@acryldev/home', 'home/index.ts'],
   ])
 
   it('turns a carried plugin into a relative path and leaves an installed one as its package name', () => {
     const source =
-      "import { open } from 'acryl-instance/storage'\nimport { home } from 'acryl-home'\n"
+      "import { open } from '@acryldev/instance/storage'\nimport { home } from '@acryldev/home'\n"
     expect(
-      rewriteSpecifiers(source, 'agent-panel/headless.ts', entries, new Set(['acryl-instance'])),
+      rewriteSpecifiers(source, 'agent-panel/headless.ts', entries, new Set(['@acryldev/instance'])),
     ).toBe(
-      "import { open } from 'acryl-instance/storage'\nimport { home } from '../home/index.ts'\n",
+      "import { open } from '@acryldev/instance/storage'\nimport { home } from '../home/index.ts'\n",
     )
   })
 
   it('rewrites everything when nothing is installed (the copy layout every app has had)', () => {
     expect(
       rewriteSpecifiers(
-        "import { open } from 'acryl-instance/storage'\n",
+        "import { open } from '@acryldev/instance/storage'\n",
         'agent-panel/headless.ts',
         entries,
       ),
@@ -73,7 +73,7 @@ describe('scoped names (spec 051 T038)', () => {
   it('splits a specifier into its package', () => {
     expect(packageOf('@acryldev/instance/storage')).toBe('@acryldev/instance')
     expect(packageOf('@acryldev/instance')).toBe('@acryldev/instance')
-    expect(packageOf('acryl-router/middleware')).toBe('acryl-router')
+    expect(packageOf('@acryldev/router/middleware')).toBe('@acryldev/router')
   })
 
   it('rewrites a copied @acryldev plugin and keeps an installed one', () => {

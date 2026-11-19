@@ -3,7 +3,7 @@
  * service (`ctx.shortcuts`) stays the only store. DSH's own "Edit shortcuts" dialog edits the same service, so both always agree.
  */
 
-import type { ShortcutBinding, ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCatalogEntry, ShortcutCommandId, ShortcutFixedCatalogEntry, Shortcuts } from '@acryldev/ui/frame'
 
 /** One listed shortcut. `editable` rows can be recorded, cleared and reset; built-in text editing and menu keys cannot. */
 export interface ShortcutRow {

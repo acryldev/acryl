@@ -398,19 +398,19 @@ describe('packaged desktop runtime verification', () => {
 
   it('reports a required peer the application manifest never ships instead of failing the packager', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const unpackedRoot = syntheticUnpackedRoot(['cordis-plugin-market'])
-    writePackageManifest(unpackedRoot, 'node_modules/cordis-plugin-market', {
-      name: 'cordis-plugin-market',
+    const unpackedRoot = syntheticUnpackedRoot(['@acryldev/cordis-plugin-market'])
+    writePackageManifest(unpackedRoot, 'node_modules/@acryldev/cordis-plugin-market', {
+      name: '@acryldev/cordis-plugin-market',
       peerDependencies: { '@deepseek-ai/dsh-client-store': '0.1.5-alpha.1' },
     })
 
     const report = verifyPackagedDependencyClosure(unpackedRoot)
 
     expect(report.unshipablePeerEdges).toEqual([
-      'cordis-plugin-market -> @deepseek-ai/dsh-client-store',
+      '@acryldev/cordis-plugin-market -> @deepseek-ai/dsh-client-store',
     ])
     expect(warn).toHaveBeenCalledWith(expect.stringContaining(
-      'cordis-plugin-market -> @deepseek-ai/dsh-client-store',
+      '@acryldev/cordis-plugin-market -> @deepseek-ai/dsh-client-store',
     ))
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('acryl-desktop/package.json'))
     warn.mockRestore()
@@ -418,14 +418,14 @@ describe('packaged desktop runtime verification', () => {
 
   it('does not report the react peers of a package with a browser bundle, or a terminal-only peer, but still reports other missing peers', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const unpackedRoot = syntheticUnpackedRoot(['acryl-shell', 'acryl-ui-tui', 'plain-host'])
+    const unpackedRoot = syntheticUnpackedRoot(['acryl-shell', '@acryldev/ui-tui', 'plain-host'])
     writePackageManifest(unpackedRoot, 'node_modules/acryl-shell', {
       name: 'acryl-shell',
       dsh: { client: { platform: 'web' } },
       peerDependencies: { react: '18.3.1', 'react-dom': '18.3.1' },
     })
-    writePackageManifest(unpackedRoot, 'node_modules/acryl-ui-tui', {
-      name: 'acryl-ui-tui',
+    writePackageManifest(unpackedRoot, 'node_modules/@acryldev/ui-tui', {
+      name: '@acryldev/ui-tui',
       peerDependencies: { '@earendil-works/pi-tui': '*' },
     })
     // The same peers on a package with no browser bundle are real Node imports and stay reported.

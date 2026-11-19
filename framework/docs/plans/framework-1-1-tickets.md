@@ -12,8 +12,8 @@ Same-shape check (a template or built-in row that stays mounted in production an
 | --- | --- |
 | `blank`, `todo` | no development rows |
 | `nodejs`, `notes`, `chat` | already leave `extensions` out in production, and the door |
-| `agent-panel`, `driver-pty`, `driver-acp`, `acryl-door` | gate themselves on `NODE_ENV=production` / `ACRYL_DOOR=off` |
-| `acryl-state` | exposes cells only for what is mounted |
+| `agent-panel`, `driver-pty`, `driver-acp`, `@acryldev/door` | gate themselves on `NODE_ENV=production` / `ACRYL_DOOR=off` |
+| `@acryldev/state` | exposes cells only for what is mounted |
 | `chat` template's chat endpoint | open by design (a chat app answers its visitors with the model key); not changed, said in the 1.0.1 notes: put a login in front |
 
 ## 1.0.2 (workshop fixes, in release)

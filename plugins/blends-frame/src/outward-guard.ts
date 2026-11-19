@@ -171,7 +171,7 @@ export function guardOutwardCommands(events: OutwardEvents, report: (line: strin
     if (decided.kind === 'deny' || decided.kind === 'cancel') return decided
     const needs = outwardApproval(exec)
     if (needs === undefined) return decided
-    report(`acryl-blends-frame: asked the person before ${needs.action}`)
+    report(`@acryldev/blends-frame: asked the person before ${needs.action}`)
     return { kind: 'ask', reason: `outward: ${needs.action}`, displayReason: { en: outwardQuestion(needs.action, needs.command) } }
   })
 }

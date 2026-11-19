@@ -1,14 +1,14 @@
 {
-  "name": "acryl-launcher-desktop",
+  "name": "@acryldev/launcher-desktop",
   "version": "0.1.0",
   "description": "The ACRYL screen of the desktop app (spec 050): every app made with ACRYL on this machine, the surface of each (Web, Desktop, CLI/TUI), and New app, Add a folder, Start and Stop. The Host half serves the list and runs the commands; the Client half draws the Control Center design as the first screen",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-launcher-desktop"
+    "directory": "plugins/launcher-desktop"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-launcher-desktop#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/launcher-desktop#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -51,9 +51,9 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-control": "workspace:*",
-    "@acryldev/control-center": "workspace:*",
-    "acryl-loopback-http": "workspace:*",
+    "@acryldev/control": "workspace:*",
+    "@acryldev/launcher": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*",
     "acrylblends": "workspace:^"
   },
   "peerDependencies": {
@@ -77,7 +77,7 @@
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11",
-    "@acryl/ui": "workspace:*"
+    "@acryldev/ui": "workspace:*"
   },
   "acryl": {
     "schemaVersion": 1,

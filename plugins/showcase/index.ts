@@ -7,10 +7,10 @@
  * restore and removal goes through extensions, so one event covers them all. The stream's open connections end with the plugin.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-extensions'
-import type {} from 'acryl-plugin-share'
-import { Acryl } from 'acryl-router'
-import { streamSSE } from 'acryl-router/helpers'
+import type {} from '@acryldev/extensions'
+import type {} from '@acryldev/plugin-share'
+import { Acryl } from '@acryldev/router'
+import { streamSSE } from '@acryldev/router/helpers'
 import {
   appBase,
   type Offered,

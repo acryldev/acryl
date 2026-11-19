@@ -1,11 +1,11 @@
-# acryl-brand
+# @acryldev/brand
 
 A configurable product identity for the ACRYL Web and Desktop app. Everything is in the row's `config`; the plugin has no
 code to edit to rebrand.
 
 ```yaml
 - id: brand
-  name: acryl-brand
+  name: @acryldev/brand
   config:
     name: Orbit
     tagline: Plan your day by talking to it.

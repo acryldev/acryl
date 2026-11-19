@@ -1,7 +1,7 @@
 /** Lifecycle and Architecture tabs contribution for the Plugins Settings section. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import { PluginArchitectureSettingsTab } from '../architecture/PluginArchitectureSettingsTab.tsx'
 import { PluginLifecycleSettingsTab } from './PluginLifecycleSettingsTab.tsx'
 import { createPluginArchitectureApi } from '../architecture/plugin-architecture-api.ts'
@@ -24,11 +24,11 @@ export function applyPluginLifecycleSettings(ctx: ClientContext): void {
   const t = ctx.locale.bind(PLUGIN_LIFECYCLE_LOCALE_NAMESPACE)
   ctx.effect(
     () => ctx.locale.register(PLUGIN_LIFECYCLE_LOCALE_NAMESPACE, { zh, en }),
-    'acryl-plugin-admin: plugin lifecycle dictionaries',
+    '@acryldev/plugin-admin: plugin lifecycle dictionaries',
   )
   ctx.effect(
     () => installPluginLifecycleStyles(),
-    'acryl-plugin-admin: plugin lifecycle styles',
+    '@acryldev/plugin-admin: plugin lifecycle styles',
   )
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
     name: 'settings.plugins.tab',

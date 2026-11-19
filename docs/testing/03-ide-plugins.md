@@ -46,5 +46,5 @@ Expected: under 3 minutes; it writes a tool plugin, installs it and calls it in 
 
 Ask for a plugin you would actually use in your work. Report what you asked for, how long it took, and whether it did what you meant.
 
-Docs for writing plugins by hand: `plugins/acryl-plugin-context/docs/README.md` (routed guides) and
-`plugins/acryl-plugin-context/example-plugins/README.md` (a verified example of every plugin type).
+Docs for writing plugins by hand: `plugins/plugin-context/docs/README.md` (routed guides) and
+`plugins/plugin-context/example-plugins/README.md` (a verified example of every plugin type).

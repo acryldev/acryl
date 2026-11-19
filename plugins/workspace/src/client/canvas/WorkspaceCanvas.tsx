@@ -1,6 +1,6 @@
 /** Advanced-mode ADE workspace: one tile fills the main content area. */
 
-import type { PropsRuntime, UseSessions } from '@acryl/ui/frame'
+import type { PropsRuntime, UseSessions } from '@acryldev/ui/frame'
 // `GlobalStandardProps.useSessions` (destructured below) is merged in by
 // `dsh-client-ui-session`'s ambient `declare module` augmentation. Importing
 // a real type from it (rather than an empty `import type {}`, which some

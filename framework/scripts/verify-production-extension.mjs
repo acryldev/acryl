@@ -51,7 +51,7 @@ async function stopTree(child) {
     spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
   await stopGroup(child)
 }
-const board = `import { Acryl } from 'acryl-router'
+const board = `import { Acryl } from '@acryldev/router'
 export const name = 'board'
 export const inject = ['router']
 export function apply(ctx: { router: { route(path: string, app: unknown): void } }) {

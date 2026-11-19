@@ -1,13 +1,22 @@
 {
   "name": "builder",
   "description": "The agent's tools for building the app it runs in: write, install, read, list and remove extensions, with real results.",
-  "requires": ["agent", "extensions", "sandbox", "plugin-share"],
-  "inject": ["extensions", "tools", "appInstance"],
+  "requires": [
+    "agent",
+    "extensions",
+    "sandbox",
+    "plugin-share"
+  ],
+  "inject": [
+    "extensions",
+    "tools",
+    "appInstance"
+  ],
   "provides": [],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.2"
+    "@acryldev/blends-core": "0.5.0",
+    "@acryldev/plugin-hub-core": "0.2.2"
   },
   "mount": "mount it after agent and extensions: root.plugin(builder, { dir: join(root, 'plugins') }); dir must be an extensions source",
   "entries": {

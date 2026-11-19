@@ -1,4 +1,4 @@
-# acryl-blends-frame
+# @acryldev/blends-frame
 
 The workbench around an app made with ACRYL Blends, as the owner's mockup draws it (`docs/design/blends-frame-mockup.html`):
 
@@ -18,14 +18,14 @@ through `window.parent`; a page opened directly is unchanged.
 
 A feedback note shows its screenshot as a thumbnail, and handing it to the chat puts the page and selector text in the composer with the picture as a real attachment. Settings > Plugins shares a local plugin: the frame packages it under the app's home (`plugin-packages/<name>`; the builder's package shape,
 plus the Loader patch the plugin-hub needs) and first says what it will do, for example "Create repository ana/notes on GitHub and publish
-v0.1.0? It will be private.", with Cancel as the default. Only on the person's yes does it publish, with `@webboxes/plugin-hub` through the user's
+v0.1.0? It will be private.", with Cancel as the default. Only on the person's yes does it publish, with `@acryldev/plugin-hub-core` through the user's
 own `gh` and `git`, exactly that repository, version and visibility; when the plan changed meanwhile nothing is sent. The Host refuses a share
 that does not carry the confirmed plan. The row then shows the repository and version. A second app installs it with `acrylblends add <the
 package folder>`; the plugin-hub refuses a package with secrets before anything is sent. `shareOwner` in the frame row's config names the GitHub
 account or organization (the signed-in account when absent); a rehearsal sets a test organization there (`shareOwner: inboxxobni`). A version
 already released there is planned as the next patch, and the question says so.
 
-It owns the page's `root` slot, so it is mounted instead of the IDE's workbench (`acryl-workspace`), never beside it. The Host half serves one
+It owns the page's `root` slot, so it is mounted instead of the IDE's workbench (`@acryldev/workspace`), never beside it. The Host half serves one
 private route, `GET /api/acryl-blends-frame/state` (the app's name, folder, page and branches); `appPage` in the row's config says where the
 app's page is served.
 
@@ -92,7 +92,7 @@ line typed in an editor or a `git switch` shows in the canvas without a restart 
 the Host loads the app's code again whenever `blend.yaml` or a file under `src/` or `plugins/` changes, whoever changed it (300 ms after the last
 change).
 
-How it works: the launcher (`scripts/ide-host.mjs`) loads `acryl-blends-frame/app-generation` before anything of the app does. It installs a resolve
+How it works: the launcher (`scripts/ide-host.mjs`) loads `@acryldev/blends-frame/app-generation` before anything of the app does. It installs a resolve
 hook that, once the Host raises the generation, gives every file of the app's `src/`, of its own plugins (the
 folders of `plugins/` that `plugins/library.json` does not list) and of the generated `frame/` rows a `?gen=N` query, so a new import of them - and
 of everything they import - is a fresh copy. Nothing in `node_modules` or the library copies in `plugins/` gets one, so their services stay single

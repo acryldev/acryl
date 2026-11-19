@@ -1,14 +1,14 @@
 {
-  "name": "acryl-db-postgres",
+  "name": "@acryldev/db-postgres",
   "version": "0.1.0",
-  "description": "The Postgres provider of the ACRYL db port, one Cordis plugin: connects to a Postgres or Supabase server (DATABASE_URL), applies the app's numbered migrations and provides db; openDb from acryl-db-postgres/open does the same without Cordis",
+  "description": "The Postgres provider of the ACRYL db port, one Cordis plugin: connects to a Postgres or Supabase server (DATABASE_URL), applies the app's numbered migrations and provides db; openDb from @acryldev/db-postgres/open does the same without Cordis",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-db-postgres"
+    "directory": "plugins/db-postgres"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-db-postgres#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/db-postgres#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

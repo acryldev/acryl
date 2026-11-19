@@ -2,7 +2,7 @@
 /**
  * No literal token, secret or password in what acrylblends ships into generated apps: the framework docs, the templates, the framework packages' source (their JSDoc examples)
  * and the package READMEs. Twice an example with a literal credential landed in ACRYL, and `save` then refused every generated app. The check is `save`'s own scan (`findSecrets`
- * from `@webboxes/app-persistence`, one rule for both), over the files git tracks there, tests excluded (their fixtures need literals). A literal credential in an example is read
+ * from `@acryldev/app-persistence`, one rule for both), over the files git tracks there, tests excluded (their fixtures need literals). A literal credential in an example is read
  * from the environment instead (`process.env.JWT_SECRET!`).
  *
  *   node scripts/verify-docs-secrets.mjs
@@ -48,9 +48,9 @@ function trackedFiles() {
     })
 }
 
-// create-acrylblends depends on @webboxes/app-persistence; resolve it from there.
+// create-acrylblends depends on @acryldev/app-persistence; resolve it from there.
 const { findSecrets } = createRequire(join(HOME, 'packages', 'create', 'package.json'))(
-  '@webboxes/app-persistence',
+  '@acryldev/app-persistence',
 )
 const files = trackedFiles()
 const findings = findSecrets(files)

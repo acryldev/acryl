@@ -4,7 +4,7 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { SecretFinding } from '@webboxes/app-persistence'
+import type { SecretFinding } from '@acryldev/app-persistence'
 import { syncServiceContract } from './contract.js'
 import { parsePluginName } from './name.js'
 import { bundleProblem, packFolder } from './pack.js'

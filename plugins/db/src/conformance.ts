@@ -1,6 +1,6 @@
 /**
  * The `db` conformance suite: what every provider of the port must do, as Vitest tests. A provider passes it to be accepted
- * (`describeDbConformance('acryl-db-sqlite', open)` in its own tests); the SQL is the portable subset, with `?` bindings, so the same
+ * (`describeDbConformance('@acryldev/db-sqlite', open)` in its own tests); the SQL is the portable subset, with `?` bindings, so the same
  * suite runs unchanged on SQLite and Postgres.
  *
  * A `?` inside a string literal, a quoted identifier or a comment is text, not a binding. Foreign keys are enforced (`ON DELETE CASCADE` works) and `INSERT ... RETURNING` answers through `get`, on every provider.
@@ -208,7 +208,7 @@ export function describeDbConformance(provider: string, open: () => Promise<DbUn
 
     it('applies an app\'s numbered migration files', async () => {
       const db = await fresh()
-      const folder = await mkdtemp(join(tmpdir(), 'acryl-db-migrations-'))
+      const folder = await mkdtemp(join(tmpdir(), '@acryldev/db-migrations-'))
       try {
         await writeFile(join(folder, '001-notes.sql'), 'CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT NOT NULL);\nINSERT INTO notes (id, body) VALUES (1, \'first\');\n')
         await writeFile(join(folder, '002-tags.sql'), 'CREATE TABLE tags (note INTEGER NOT NULL, tag TEXT NOT NULL);\n')

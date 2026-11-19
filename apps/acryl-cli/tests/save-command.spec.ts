@@ -28,7 +28,7 @@ describe('acryl save', () => {
   })
 
   it('a new app is private and proprietary; it saves locally, connects to an existing remote, and pushes; a secret is refused', async () => {
-    const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-save-'))); dirs.push(root)
+    const root = realpathSync(mkdtempSync(join(tmpdir(), '@acryldev/save-'))); dirs.push(root)
     const app = runNewApp({ dir: join(root, 'books'), title: 'Books' }).root
     for (const [key, value] of [['user.name', 't'], ['user.email', 't@t']]) spawnSync('git', ['config', key!, value!], { cwd: app })
     const manifest = readFileSync(join(app, 'blend.yaml'), 'utf8')

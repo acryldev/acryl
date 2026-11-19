@@ -2,7 +2,7 @@
 // Artifact freshness check (spec 038-ui-component-library). Closes a hole found during T045: the
 // built-bundle suite is skipped when lib/client.js is absent, so a stale artifact - or a build that
 // silently failed - could still report green. Two real failures came from exactly that: a served
-// @acryl/ui bundle without the newest components (React #130 in the app), and a `pnpm run build |
+// @acryldev/ui bundle without the newest components (React #130 in the app), and a `pnpm run build |
 // tail` that masked the build's own exit code.
 //
 // Run this from the batch gate (`pnpm run check`), after `pnpm run build`. Exits non-zero when the

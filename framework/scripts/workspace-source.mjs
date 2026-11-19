@@ -1,5 +1,5 @@
 // `node --import ./scripts/workspace-source.mjs --test ...`: the library plugins (plugins/ at the repository root, the app plugins beside ACRYL's own) import each other by
-// package name (`acryl-router`, `acryl-instance`), which in this workspace resolves to each package's built `lib/` or source. The tests import the same plugins' SOURCE by
+// package name (`@acryldev/router`, `@acryldev/instance`), which in this workspace resolves to each package's built `lib/` or source. The tests import the same plugins' SOURCE by
 // relative path, so the two would be two copies of one module. This hook resolves those package names to the source too, from the `entries` table of each plugin.json,
 // exactly as `acrylblends init` does when it copies a plugin into an app.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'

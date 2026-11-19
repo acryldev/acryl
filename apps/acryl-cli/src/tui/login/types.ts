@@ -3,7 +3,7 @@
  * `ctx.authorization`'s registered flows with the surface that renders them.
  * @module @tomowang/dsh-tui/tui/login/types
  */
-import type { AuthMethod } from 'acryl-control'
+import type { AuthMethod } from '@acryldev/control'
 
 /** One method a flow offers (e.g. `oauth`, `api-key`). */
 export interface AuthorizationMethodRow {

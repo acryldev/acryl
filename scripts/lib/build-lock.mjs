@@ -2,7 +2,7 @@
  * One build at a time in this checkout.
  *
  * Every package's build wipes its `lib/` and rewrites it in place, so a build that runs while another one reads that output sees it missing or half written
- * (`Cannot find module 'acryl-workspace/client'` in a package that depends on it, for a few seconds). It has happened between an owner's launch and a gate run in
+ * (`Cannot find module '@acryldev/workspace/client'` in a package that depends on it, for a few seconds). It has happened between an owner's launch and a gate run in
  * the same tree three times. The launchers (`pnpm web`, `pnpm acryl`, Desktop `dev`) take this lock around their build, and a gate or any long build
  * runs through `scripts/with-build-lock.mjs`, so they wait for each other instead of colliding.
  *

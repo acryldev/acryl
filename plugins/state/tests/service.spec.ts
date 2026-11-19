@@ -4,7 +4,7 @@
  */
 
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acryl-router'
+import { apply as routerApply, name as routerName } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply, name } from '../src/index.ts'
 
@@ -42,7 +42,7 @@ async function events(response: Response, count: number): Promise<string[]> {
   return out
 }
 
-describe('acryl-state', () => {
+describe('@acryldev/state', () => {
   it('creates cells owned by the calling plugin and removes them when it unloads', async () => {
     const ctx = await system()
     const fiber = ctx.plugin({ name: 'owner', inject: ['state'], apply(c: Context) { c.state.cell('owner.count', 1) } })

@@ -10,7 +10,7 @@ import { ProjectsSidebar, type ProjectsSidebarProps } from '../src/client/projec
 import type { ProjectAction, ProjectsControl } from '../src/client/projects/projects-control.ts'
 import type { UpstreamPanels } from '../src/client/projects/upstream-panels.ts'
 import { ChatSelection } from '../src/client/chat/chat-selection.ts'
-import type { ISessions } from '@acryl/ui/frame'
+import type { ISessions } from '@acryldev/ui/frame'
 import { makeStatus } from './dock/dock-fixtures.ts'
 import { AgentsState } from '../src/client/agents/agents-state.ts'
 import { WorkspaceGroups } from '../src/client/canvas/groups.ts'
@@ -185,7 +185,7 @@ describe('ProjectsSidebar', () => {
     expect(host).toBeTruthy()
     // aria-hidden (T144 follow-up, owner screenshot): this host's own real controls (its "Collapse
     // sidebar", its "Add workspace") must not appear beside the tree's own ones in anything that reads the
-    // accessibility tree - acryl-agent-control's ui_snapshot found two indistinguishable "Collapse sidebar"
+    // accessibility tree - @acryldev/agent-control's ui_snapshot found two indistinguishable "Collapse sidebar"
     // buttons without this. A click proxied through `Element.click()` (`openSettings`,
     // `clickAddWorkspaceTrigger`) still works - aria-hidden does not block programmatic clicks.
     expect(host?.getAttribute('aria-hidden')).toBe('true')

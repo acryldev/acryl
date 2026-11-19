@@ -78,6 +78,6 @@ describe('buildUpdateHintText', () => {
     const text = buildUpdateHintText('0.6.0', '0.7.0')
     expect(text).toContain('0.6.0')
     expect(text).toContain('0.7.0')
-    expect(text).toContain('pnpm add -g @acryl/cli')
+    expect(text).toContain('pnpm add -g @acryldev/cli')
   })
 })

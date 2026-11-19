@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '../plugins/acryl-db/src/cordis.ts'
+import type {} from '../plugins/db/src/cordis.ts'
 import { createApp } from './notes-app.ts'
 import { createClient } from './runtime.ts'
 

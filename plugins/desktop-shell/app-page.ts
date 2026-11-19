@@ -6,8 +6,8 @@
  * Every answer is a plain result, never a thrown IPC error: the page shows `message` as it is.
  */
 
-import type { AppInstance } from 'acryl-instance'
-import type { AppSize, AppStorage, RegisteredApp } from 'acryl-instance/storage'
+import type { AppInstance } from '@acryldev/instance'
+import type { AppSize, AppStorage, RegisteredApp } from '@acryldev/instance/storage'
 import type { ProductGit } from './git.ts'
 
 /** The IPC channel; `preload.cjs` names the same string. */

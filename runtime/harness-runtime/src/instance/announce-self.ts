@@ -4,7 +4,7 @@
  * started it. A launcher that only spawns the app (scripts/blank.mjs, the dev runners) no longer holds the lock: the process that serves the app does, so a
  * stop signal reaches it directly and the port in the Registry is the bound one, not the one that was asked for.
  *
- * @module acryl-harness-runtime/instance/announce-self
+ * @module @acryldev/harness-runtime/instance/announce-self
  */
 
 import type { AppInstance } from './app-instance.ts'

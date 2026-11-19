@@ -59,8 +59,8 @@ html:has([aria-modal="true"]) .dshDesktopSidebarSurface::before { -webkit-app-re
 /** Install and remove the advanced shell's global native-window styles. @returns the style disposer. */
 export function installAdvancedStyles(): () => void {
   const style = document.createElement('style')
-  style.dataset.plugin = 'acryl-workspace'
-  style.dataset.pluginCss = 'acryl-workspace/advanced-shell'
+  style.dataset.plugin = '@acryldev/workspace'
+  style.dataset.pluginCss = '@acryldev/workspace/advanced-shell'
   style.textContent = ADVANCED_STYLES
   document.head.appendChild(style)
   return () => { style.remove() }

@@ -2,8 +2,8 @@
  * What decides whether a pulled plugin may enter this app. Pure, over the files of the package: nothing here touches a disk or runs the plugin,
  * so a refusal has nothing to undo (Clean Architecture: policy free of I/O).
  */
-import { digestFiles, type PluginFile, portabilityIssues } from '@webboxes/blends-core'
-import { hostInjectFromSource } from '@webboxes/plugin-hub'
+import { digestFiles, type PluginFile, portabilityIssues } from '@acryldev/blends-core'
+import { hostInjectFromSource } from '@acryldev/plugin-hub-core'
 import { nativesOf } from './native.ts'
 
 export type Refusal =

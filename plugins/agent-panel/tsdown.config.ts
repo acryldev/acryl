@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-agent-panel',
+  name: '@acryldev/agent-panel',
   entry,
   outDir: 'lib',
   format: 'esm',

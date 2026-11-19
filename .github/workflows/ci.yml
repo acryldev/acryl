@@ -65,7 +65,7 @@ jobs:
 
       # The one command that is the project's gate: layout and architecture guardrails, then every package's own check (typecheck, tests and build in
       # dependency order). It passes from a clean checkout, which is the point: CI must not keep its own hand-listed copy of a build order that drifts
-      # (the stale list here failed every push once `acryl-settings` was added).
+      # (the stale list here failed every push once `@acryldev/settings` was added).
       - name: Check
         run: corepack pnpm run check
 

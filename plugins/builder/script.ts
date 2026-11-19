@@ -12,7 +12,7 @@
  *   list plugins                            list installed extensions
  *   package plugin <name>                   make it a standalone package other apps can add
  */
-import type { Rule, Step } from 'acryl-agent'
+import type { Rule, Step } from '@acryldev/agent'
 
 const PATH = /^\/[a-z0-9/-]*$/
 

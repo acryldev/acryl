@@ -8,7 +8,7 @@ import {
   installDesktopChildProcessLogging,
   installDesktopUncaughtExceptionLogging,
 } from '../../src/diagnostics/desktop-logger.ts'
-import { LogFileSink } from 'acryl-diagnostics'
+import { LogFileSink } from '@acryldev/diagnostics'
 
 const temporaryDirectories: string[] = []
 afterEach(() => { for (const dir of temporaryDirectories.splice(0)) rmSync(dir, { recursive: true, force: true }) })

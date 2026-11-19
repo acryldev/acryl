@@ -398,7 +398,7 @@ const PAGE_PROVIDED_PEERS: ReadonlySet<string> = new Set(['react', 'react-dom'])
  */
 const PEERS_UNUSED_BY_THE_DESKTOP: Readonly<Record<string, ReadonlyMap<string, string>>> = {
   // A terminal UI library (pi-tui components); the Desktop renders no terminal UI, and nothing it loads imports this package.
-  'acryl-ui-tui': new Map([['@earendil-works/pi-tui', 'terminal-only']]),
+  '@acryldev/ui-tui': new Map([['@earendil-works/pi-tui', 'terminal-only']]),
 }
 
 /** Whether a manifest is a package with a browser bundle (`dsh.client`), whose react peers the served page provides. */

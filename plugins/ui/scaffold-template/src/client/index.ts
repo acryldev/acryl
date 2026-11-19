@@ -1,8 +1,8 @@
 /**
- * Starter client entry. This plugin has no dependency on @acryl/ui - every component under
+ * Starter client entry. This plugin has no dependency on @acryldev/ui - every component under
  * `ui/` was copied here by `acryl ui add <id> .` and is now this plugin's own source, free to
  * edit. Add components with more `acryl ui add`, import them below, and build them into a
- * screen. The slot registration below is the same one-line pattern @acryl/ui's own
+ * screen. The slot registration below is the same one-line pattern @acryldev/ui's own
  * `settingsSection` helper uses internally (spec 038-ui-component-library); it is inlined here
  * so this plugin needs no import from the library it copied source out of.
  */

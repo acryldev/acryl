@@ -1,13 +1,13 @@
 /**
  * `acryl control`: the terminal surface of the online channel (spec 041 TB31). No host boot here - this talks
- * to an already-running app instance over the channel TB30 wired into `acryl-agent-control`, the same way
+ * to an already-running app instance over the channel TB30 wired into `@acryldev/agent-control`, the same way
  * `acryl doctor`/`acryl repair` work offline: reading files a real process already wrote, not starting one.
  *
  * @module acryl-cli/host/control-command
  */
 
-import { UiControlError, type UiRequest, type UiResult, type WorkerRequest, type WorkerResponse, type GatewayCallResponse, type GatewayListResponse } from 'acryl-agent-control'
-import type { RunningApp } from 'acryl-harness-runtime'
+import { UiControlError, type UiRequest, type UiResult, type WorkerRequest, type WorkerResponse, type GatewayCallResponse, type GatewayListResponse } from '@acryldev/agent-control'
+import type { RunningApp } from '@acryldev/harness-runtime'
 import { callOnlineChannel, callToolGateway, callWorkers, discoverInstances, pickInstance, OnlineChannelError } from './online-client.ts'
 import type { AcrylControlInvocation } from '../cli/grammar.ts'
 

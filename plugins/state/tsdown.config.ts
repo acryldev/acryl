@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-state',
+  name: '@acryldev/state',
   entry: { index: 'src/index.ts', react: 'src/react.ts' },
   outDir: 'lib',
   format: 'esm',

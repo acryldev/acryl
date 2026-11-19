@@ -1,4 +1,4 @@
-# dsh-client-ui-brand-acryl
+# @acryldev/brand-client
 
 ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero
 slots (`sidebar.brand.mark`, `sidebar.brand.name`,
@@ -26,7 +26,7 @@ against:
   disabled: true
 
 - id: ui-brand-acryl
-  name: dsh-client-ui-brand-acryl
+  name: @acryldev/brand-client
 ```
 
 `acryl-desktop/src/profile.ts` composes exactly this pair, selected by its

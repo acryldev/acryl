@@ -10,7 +10,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { type Context, Service } from '@deepseek-ai/cordis'
-import type {} from 'acryl-instance'
+import type {} from '@acryldev/instance'
 import { openStore, type StoreKind, type TaskChange, type TaskStore } from './store.ts'
 
 export interface TasksConfig {
@@ -69,7 +69,7 @@ declare module '@deepseek-ai/cordis' {
 type Change = Partial<TaskRecord> & { readonly id: string }
 const changeOf = (change: TaskChange) => change as unknown as Change
 
-/** The slice of the state service the tasks plugin uses, by name, so it imports nothing from acryl-state. */
+/** The slice of the state service the tasks plugin uses, by name, so it imports nothing from @acryldev/state. */
 interface StateService {
   cell<T>(key: string, initial: T): { set(value: T): void }
 }

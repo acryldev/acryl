@@ -9,11 +9,11 @@ import { createRequire } from 'node:module'
 import { dirname, extname, join, normalize, sep } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-web-server'
+import type {} from '@acryldev/web-server'
 import { ACRYL_FAVICON_SVG, pageManifest } from './favicon.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-page'
+export const name = '@acryldev/page'
 
 /** The page is served through the host's webServer port. */
 export const inject = ['webServer']

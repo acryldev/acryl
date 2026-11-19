@@ -6,8 +6,8 @@
  * Desktop: an Electron window and a browser tab run this same code.
  */
 
-import type {} from '@acryl/ui/frame'
-import type {} from 'acryl-workspace/client'
+import type {} from '@acryldev/ui/frame'
+import type {} from '@acryldev/workspace/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { PageChannel, UiDriver, UserInputClock } from 'acrylblends/door/page'
 import { createAuditApi } from './audit-api.ts'
@@ -29,7 +29,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = 'acryl-agent-control-client'
+export const name = '@acryldev/agent-control-client'
 /** `slots` for the indicator and the audit section, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 
@@ -39,8 +39,8 @@ export function apply(ctx: ClientContext): void {
   const windowId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `w-${String(Date.now())}-${String(Math.random()).slice(2, 8)}`
   const focused = (): boolean => document.visibilityState === 'visible' && document.hasFocus()
 
-  ctx.effect(() => installIndicatorStyles(), 'acryl-agent-control: styles')
-  ctx.effect(() => ctx.locale.register(AGENT_CONTROL_LOCALE_NAMESPACE, { zh, en }), 'acryl-agent-control: dictionaries')
+  ctx.effect(() => installIndicatorStyles(), '@acryldev/agent-control: styles')
+  ctx.effect(() => ctx.locale.register(AGENT_CONTROL_LOCALE_NAMESPACE, { zh, en }), '@acryldev/agent-control: dictionaries')
   const t = ctx.locale.bind(AGENT_CONTROL_LOCALE_NAMESPACE)
   const auditApi = createAuditApi()
   ctx.slots.inject('settings.section', () => ctx.slots.register({
@@ -69,7 +69,7 @@ export function apply(ctx: ClientContext): void {
       // Pending calls settle as `unloaded` and every ref goes stale.
       driver.dispose()
     }
-  }, 'acryl-agent-control: page channel and driver')
+  }, '@acryldev/agent-control: page channel and driver')
 
   // A tab type for a Claude Code worker the Host runs. Optional: with no workspace there is nowhere to put the tab, and this plugin goes on without it.
   const workersApi = createWorkersApi()
@@ -80,12 +80,12 @@ export function apply(ctx: ClientContext): void {
       description: 'A Claude Code agent the app runs for you in a folder, beside your terminals and chats.',
       glyph: 'C',
       component: workerTabComponent(workersApi),
-    }), 'acryl-agent-control: Claude worker tab type')
+    }), '@acryldev/agent-control: Claude worker tab type')
   })
 
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
-    id: 'acryl-agent-control-indicator',
+    id: '@acryldev/agent-control-indicator',
     order: 1000,
     inject: () => ({ driver }),
   }, AgentDrivingIndicator))

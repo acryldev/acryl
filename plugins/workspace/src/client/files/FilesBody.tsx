@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import type { PropsRuntime } from '@acryl/ui/frame'
+import type { PropsRuntime } from '@acryldev/ui/frame'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { GitSearchMode, GitSearchView } from '../../git/contract.ts'
 import type { WorkspaceGitApi } from '../git/git-api.ts'

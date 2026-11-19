@@ -1,4 +1,4 @@
-# acryl-router
+# @acryldev/router
 
 The ACRYL router: the application API (`Acryl`, context, middleware, validation, helpers) and one Cordis service, `ctx.router`, that
 mounts a plugin's app and lets every surface call it. Part of the ACRYL Framework (specs 046 and 047).
@@ -6,7 +6,7 @@ mounts a plugin's app and lets every surface call it. Part of the ACRYL Framewor
 ## What it gives you
 
 ```ts
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 
 export const name = 'notes'
 export const inject = ['router']
@@ -24,7 +24,7 @@ export function apply(ctx: Context): void {
 - **Web-standard types.** Handlers take a context and return a `Response`. Nothing in a handler knows whether the caller is a browser,
   the Desktop window, the terminal UI or a test.
 - **In-process `fetch`.** `ctx.router.fetch(request, connection?)` and `ctx.router.request(path, init?)` run the same handler with no
-  socket. Web and Desktop reach it over HTTP through `acryl-router-http`; a standalone process uses `acryl-node-server`.
+  socket. Web and Desktop reach it over HTTP through `@acryldev/router-http`; a standalone process uses `@acryldev/node-server`.
 - **Owned mounts.** A mount belongs to the plugin that made it and goes away when that plugin unloads; `route` also returns a remover. A
   mount is a snapshot of the app's routes at the call.
 - **Nothing outlives its owner.** Unloading a plugin ends the requests and streams its code is serving; disposing the router ends all of
@@ -36,11 +36,11 @@ export function apply(ctx: Context): void {
 
 | Import | Contents |
 | --- | --- |
-| `acryl-router` | `Acryl`, `HTTPException`, `connectionOf`, the router service and its types |
-| `acryl-router/middleware` | the built-in middleware, including `loopbackOnly` |
-| `acryl-router/helpers` | streaming, cookies, validation, factory, testing, connection info and more |
-| `acryl-router/client` | the typed client for a running server, without Cordis |
-| `acryl-router/tsconfig.app.json` | the TypeScript profile an app extends |
+| `@acryldev/router` | `Acryl`, `HTTPException`, `connectionOf`, the router service and its types |
+| `@acryldev/router/middleware` | the built-in middleware, including `loopbackOnly` |
+| `@acryldev/router/helpers` | streaming, cookies, validation, factory, testing, connection info and more |
+| `@acryldev/router/client` | the typed client for a running server, without Cordis |
+| `@acryldev/router/tsconfig.app.json` | the TypeScript profile an app extends |
 
 ## Configuration
 
@@ -58,4 +58,4 @@ export function apply(ctx: Context): void {
 - `tests/`: the service through Cordis (lifecycle, reload, replacement, disposal), the Loader, and the shadow-context proofs.
 - `scripts/bench-remount.mjs`: the cost of composing after a mount change.
 
-Documentation: `docs/framework/`. Row id and package name: `acryl-router`.
+Documentation: `docs/framework/`. Row id and package name: `@acryldev/router`.

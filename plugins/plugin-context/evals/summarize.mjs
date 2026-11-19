@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Summarize one opt-in real-model run (runtime/acryl-harness-runtime/tests/e2e-real-model.spec.ts writes the log) into comparable metrics.
+ * Summarize one opt-in real-model run (runtime/harness-runtime/tests/e2e-real-model.spec.ts writes the log) into comparable metrics.
  *   node evals/summarize.mjs <log.jsonl>          prints JSON
  * Metrics come from session events only: prompts, steps, tool calls, reads of the pack's docs and examples, verify/install outcomes.
  */

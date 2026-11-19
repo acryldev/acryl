@@ -1,14 +1,14 @@
 {
-  "name": "acryl-desktop-shell",
+  "name": "@acryldev/desktop-shell",
   "version": "0.1.0",
   "description": "Run the app as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/desktop"
+    "directory": "plugins/desktop-shell"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/desktop#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/desktop-shell#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -30,8 +30,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-instance": "workspace:*",
-    "acryl-node-server": "workspace:*"
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/node-server": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

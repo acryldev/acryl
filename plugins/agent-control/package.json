@@ -1,14 +1,14 @@
 {
-  "name": "acryl-agent-control",
+  "name": "@acryldev/agent-control",
   "version": "0.1.0",
-  "description": "Agent Control (spec 041): a governed, snapshot-and-act interface to ACRYL's own window for the agent, one Cordis plugin for Web and Desktop. Host tools reach the page over acryl-door's channel (an event stream down, POST up, same origin); the in-page driver builds accessibility snapshots with short-lived refs, redacts sensitive fields, refuses protected controls, and shows an \"agent is driving\" indicator with a kill switch",
+  "description": "Agent Control (spec 041): a governed, snapshot-and-act interface to ACRYL's own window for the agent, one Cordis plugin for Web and Desktop. Host tools reach the page over @acryldev/door's channel (an event stream down, POST up, same origin); the in-page driver builds accessibility snapshots with short-lived refs, redacts sensitive fields, refuses protected controls, and shows an \"agent is driving\" indicator with a kill switch",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-agent-control"
+    "directory": "plugins/agent-control"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-agent-control#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/agent-control#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -56,9 +56,9 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*",
-    "acryl-control": "workspace:*",
-    "acryl-loopback-http": "workspace:*",
+    "@acryldev/ui": "workspace:*",
+    "@acryldev/control": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*",
     "acrylblends": "workspace:^"
   },
   "peerDependencies": {
@@ -76,7 +76,7 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "acryl-workspace": "workspace:*",
+    "@acryldev/workspace": "workspace:*",
     "acrylblends": "workspace:^",
     "jsdom": "29.1.1",
     "react": "18.3.1",

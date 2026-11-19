@@ -16,7 +16,7 @@ import {
   manifestDigest,
   parseDefinition,
   resolveDefinition,
-} from '@webboxes/blends-core'
+} from '@acryldev/blends-core'
 import { blueprintsIn } from './index.ts'
 
 export const LOCK_FILE = 'blend.lock.json'

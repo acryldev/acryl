@@ -1,4 +1,4 @@
-// What makes an entry usable on every OS: a plain-Node copy of `portabilityIssues` from @webboxes/blends-core (src/plugin-identity/plugin-portability.ts),
+// What makes an entry usable on every OS: a plain-Node copy of `portabilityIssues` from @acryldev/blends-core (src/plugin-identity/plugin-portability.ts),
 // because make-entry runs in a fork with no install. test/rules.test.mjs holds this copy to the original. Change the rules there first.
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'

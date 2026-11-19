@@ -1,6 +1,6 @@
 /**
  * @module
- * This module provides APIs for `acryl-router/jsx/server`, which is compatible with `react-dom/server`.
+ * This module provides APIs for `@acryldev/router/jsx/server`, which is compatible with `react-dom/server`.
  */
 
 import type { HtmlEscapedString } from '../../utils/html.ts'

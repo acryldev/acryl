@@ -22,7 +22,7 @@ It also removes one coupling to the DSH Host: plugins would depend on the `route
 | Matching is fixed: exact over the whole table, then longest prefix, then the fallback. A duplicate path throws. | webserver README, "Registering routes" |
 | The webserver "serves browsers only; Electron loads dist over `file://` and carries fetch over an IPC bridge." | webserver README, summary |
 | Typed RPC is a separate system: typert (`@Remote` decorators, generated descriptors) exposed by the API gateway through `registerUpgrade` (WebSocket). | `packages/typert/*`, `packages/api/gateway/src/index.ts:262` |
-| ACRYL HTTP routes today: the market plugin (`registerMarketRoutes`) and sign-in callbacks, all through `ctx.webServer`. | `plugins/cordis-plugin-market/src/host/routes.ts`, `plugins/acryl-sign-in/src/account-callback.ts` |
+| ACRYL HTTP routes today: the market plugin (`registerMarketRoutes`) and sign-in callbacks, all through `ctx.webServer`. | `plugins/cordis-plugin-market/src/host/routes.ts`, `plugins/sign-in/src/account-callback.ts` |
 | ACRYL has no Reference A, Express, Fastify or Koa dependency. | grep of every `package.json` |
 
 ## The shape (what to copy from Reference A)
@@ -31,7 +31,7 @@ Reference A's useful idea is small: a `Context`, a middleware chain with `next()
 Web-standard `Request`/`Response`. We take that shape, not the 4.9k lines of source or the built-in middleware.
 
 ```ts
-// provided by the plugin `acryl-router`
+// provided by the plugin `@acryldev/router`
 interface Router {
   /** Register a route. Returns a disposer. A duplicate (method, path) throws, like webServer. */
   route(method: Method | '*', path: string, handler: Handler): () => void
@@ -54,8 +54,8 @@ The domain is "request routing for plugin-owned capabilities". It needs its own 
 and disappear as plugins load and unload, and it must be replaceable (a faster matcher later) without touching the
 plugins that register routes. Two plugins:
 
-- `acryl-router`: the `router` service (tables, middleware chain, `fetch`). No I/O.
-- `acryl-router-http`: the Web adapter. Consumes `webServer` and `router`, registers one prefix route per mount on
+- `@acryldev/router`: the `router` service (tables, middleware chain, `fetch`). No I/O.
+- `@acryldev/router-http`: the Web adapter. Consumes `webServer` and `router`, registers one prefix route per mount on
   `webServer`, converts `IncomingMessage` to `Request` and `Response` to `ServerResponse`.
 
 Loader row ids equal the package names (repo rule). Neither is a shared multi-provider slot.
@@ -64,8 +64,8 @@ Loader row ids equal the package names (repo rule). Neither is a shared multi-pr
 
 | Plugin | Provides | Hard `inject` | Optional `ctx.get()` |
 | --- | --- | --- | --- |
-| `acryl-router` | `router` | none | none |
-| `acryl-router-http` | none | `router`, `webServer` | none |
+| `@acryldev/router` | `router` | none | none |
+| `@acryldev/router-http` | none | `router`, `webServer` | none |
 
 Desktop and TUI need no adapter plugin: they call `router.fetch` directly. A consumer plugin (for example the market)
 injects `router`. While no `router` exists the consumer is PENDING, which is the valid missing-dependency state.
@@ -74,18 +74,18 @@ injects `router`. While no `router` exists the consumer is PENDING, which is the
 
 - Every `route` and `use` registration is acquired inside the registering plugin's `ctx.effect()` and released by the
   returned disposer, so a route vanishes when its owning Fiber unloads.
-- `acryl-router-http` holds one effect per mount on `webServer.register`. On dispose it removes that route first, then
+- `@acryldev/router-http` holds one effect per mount on `webServer.register`. On dispose it removes that route first, then
   aborts in-flight requests through an `AbortController` per request (`exec.signal`-style quiescence), then returns.
 - Required order on provider change: the adapter disposes before `router` does, so no request reaches a dead table.
-- No timers, sockets or subprocesses live in `acryl-router`.
+- No timers, sockets or subprocesses live in `@acryldev/router`.
 
 ### 4. Configuration and composition
 
-- `acryl-router`: no config except an optional `trailingSlash: 'strict' | 'ignore'` (default `strict`), validated by a
+- `@acryldev/router`: no config except an optional `trailingSlash: 'strict' | 'ignore'` (default `strict`), validated by a
   runtime schema.
-- `acryl-router-http`: `mount: string` (default `/`), loopback only unless `webServer` is exposed (it carries no auth
+- `@acryldev/router-http`: `mount: string` (default `/`), loopback only unless `webServer` is exposed (it carries no auth
   itself, as the webserver README states).
-- Stable row ids: `acryl-router`, `acryl-router-http`. Provider replacement: swapping `acryl-router` reloads every
+- Stable row ids: `@acryldev/router`, `@acryldev/router-http`. Provider replacement: swapping `@acryldev/router` reloads every
   consumer, which re-registers its routes.
 
 ### 5. Events and durability
@@ -98,7 +98,7 @@ plain in-service composition (`next()` as a function argument), not a Cordis wat
 Run against a real Loader, not mocks:
 
 - activation order and PENDING then reactivation when `router` loads late;
-- provider replacement (swap `acryl-router`, consumers re-register, no duplicates);
+- provider replacement (swap `@acryldev/router`, consumers re-register, no duplicates);
 - disposal (unload a consumer: its route returns 404; no leaked tables);
 - repeated mount and reload (50 cycles, table size returns to baseline);
 - in-flight request abort on adapter disposal;
@@ -128,8 +128,8 @@ fallback if parameter matching grows past what the market and sign-in routes nee
 ## Next steps
 
 1. Review this page.
-2. Prototype `acryl-router` with the six verification checks above.
-3. Port the market routes. If that works, add `acryl-router-http` to the Web composition.
+2. Prototype `@acryldev/router` with the six verification checks above.
+3. Port the market routes. If that works, add `@acryldev/router-http` to the Web composition.
 4. Decide `state` (the DOM-free reactive core shared by the surfaces) and the optional DOM renderer in a second page.
 
 ## Decision record: Reference A or Vike as the base (2026-10-23)

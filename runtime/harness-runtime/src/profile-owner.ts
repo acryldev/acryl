@@ -7,7 +7,7 @@
  * with a Pessimistic Offline Lock (`instance/offline-lock.ts`): the same installation is always admitted, another is refused while the holder is alive,
  * and a stopped holder is taken over.
  *
- * @module acryl-harness-runtime/profile-owner
+ * @module @acryldev/harness-runtime/profile-owner
  */
 
 import { realpathSync } from 'node:fs'

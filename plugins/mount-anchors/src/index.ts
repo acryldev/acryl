@@ -7,7 +7,7 @@
  */
 
 /** Stable Cordis plugin name. */
-export const name = 'acryl-mount-anchors'
+export const name = '@acryldev/mount-anchors'
 
 /** No Host-side resources to acquire. */
 export function apply(): void {}

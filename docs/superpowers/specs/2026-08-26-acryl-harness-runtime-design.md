@@ -9,7 +9,7 @@ plugin dependency closure.
 
 ## Architecture
 
-Create `acryl-harness-runtime/`, a non-presentation workspace that owns:
+Create `@acryldev/harness-runtime/`, a non-presentation workspace that owns:
 
 - the complete pinned DSH runtime dependency closure required by
   `@deepseek-ai/dsh-base`;

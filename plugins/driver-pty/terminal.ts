@@ -1,6 +1,6 @@
 /** A terminal driver: a program started in a pseudo-terminal, ended as a whole (the process group on POSIX, the console on Windows). */
 import { delimiter, join } from 'node:path'
-import type { TerminalDriver, TerminalSession } from 'acryl-drivers'
+import type { TerminalDriver, TerminalSession } from '@acryldev/drivers'
 import type { PtySpawn } from './spawn.ts'
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

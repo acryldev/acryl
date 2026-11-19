@@ -73,15 +73,15 @@ export class LogFileSink {
     this.maxFileBytes = options.maxFileBytes
     this.maxDirectoryBytes = options.maxDirectoryBytes
     if (this.maxFileBytes < 2 || this.maxDirectoryBytes < 1) {
-      throw new Error('acryl-diagnostics: log size limits must be positive')
+      throw new Error('@acryldev/diagnostics: log size limits must be positive')
     }
     if (!existsSync(directory)) mkdirSync(directory, { recursive: true })
     const directoryStats = lstatSync(directory)
     if (directoryStats.isSymbolicLink()) {
-      throw new Error('acryl-diagnostics: refusing linked log directory')
+      throw new Error('@acryldev/diagnostics: refusing linked log directory')
     }
     if (!directoryStats.isDirectory()) {
-      throw new Error('acryl-diagnostics: log path is not a directory')
+      throw new Error('@acryldev/diagnostics: log path is not a directory')
     }
     this.directoryBytes = this.measureDirectoryBytes()
   }

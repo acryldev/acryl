@@ -2,14 +2,14 @@
  * The DSH-profile plugin lifecycle: one host policy, mounted as one Cordis
  * service, for every ACRYL surface (spec 034, T005).
  *
- * The lifecycle mechanics live in `acryl-control`'s host-neutral controller.
+ * The lifecycle mechanics live in `@acryldev/control`'s host-neutral controller.
  * What is left here is the part that is the same on the Desktop, the Web host,
  * and the CLI: which rows a DSH profile admits to user control, where the
  * override file lives, and how a just-installed profile bundle inserts its row.
  * A surface that needs more (Desktop's Blend rows and market bookkeeping)
  * passes it in through the options rather than forking the policy.
  *
- * @module acryl-harness-runtime/plugin-lifecycle
+ * @module @acryldev/harness-runtime/plugin-lifecycle
  */
 
 import { readFileSync } from 'node:fs'
@@ -25,7 +25,7 @@ import {
   PluginLifecycleError,
   type PluginLifecycleEntryRef,
   type PluginLifecycleHost,
-} from 'acryl-control'
+} from '@acryldev/control'
 import {
   clearProfilePatchDisable,
   entryPatchId,

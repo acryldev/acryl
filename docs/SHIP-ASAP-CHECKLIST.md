@@ -94,7 +94,7 @@ Goal: Identify the minimum set of tasks to release ACRYL as a stable product.
 
 - [ ] Unit tests
   - All `pnpm test` suites passing ✓
-  - Known pre-existing test failures documented (e.g., 4 failures in acryl-harness-runtime are pre-existing, not regressions from this release)
+  - Known pre-existing test failures documented (e.g., 4 failures in @acryldev/harness-runtime are pre-existing, not regressions from this release)
 
 - [ ] Integration tests
   - Desktop smoke tests passing ✓ (`verify:loader`, `verify:profile`)

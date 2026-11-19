@@ -18,7 +18,7 @@ import {
   useViewTransition,
 } from './index.ts'
 // run tests by old style jsx default
-// acryl-router/jsx/jsx-runtime and acryl-router/jsx/dom/jsx-runtime are tested in their respective settings
+// @acryldev/router/jsx/jsx-runtime and @acryldev/router/jsx/dom/jsx-runtime are tested in their respective settings
 import { ErrorBoundary, Suspense, render } from '../dom/index.ts'
 
 describe('Hooks', () => {

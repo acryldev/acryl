@@ -12,8 +12,8 @@ import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import * as router from 'acryl-router'
-import * as nodeServer from 'acryl-node-server'
+import * as router from '@acryldev/router'
+import * as nodeServer from '@acryldev/node-server'
 import { afterEach, describe, expect, it } from 'vitest'
 import { doorFilePath, readDoorFile } from '../../src/host/door-file.ts'
 import { appFolder, removeFolders, runCommand } from '../harness.ts'
@@ -70,7 +70,7 @@ function deadPid(): number {
   return Number(child.stdout)
 }
 
-describe('acryl-door through a real Loader', () => {
+describe('@acryldev/door through a real Loader', () => {
   it('activates without a server, writes .acryl/door.json once one listens, and removes it when the row is disabled', async () => {
     const { ctx, root } = await loader()
     const entryId = await ctx.loader.create({ name: './row.mjs' })

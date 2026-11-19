@@ -14,7 +14,7 @@ import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
 import { codingCapabilities } from '@acryldev/coding-capabilities'
 
-const examples = new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/', import.meta.url)
+const examples = new URL('../../../plugins/plugin-context/example-plugins/packages/', import.meta.url)
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
 

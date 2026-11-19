@@ -1,6 +1,6 @@
-/** @jsxImportSource acryl-router/jsx */
+/** @jsxImportSource @acryldev/router/jsx */
 /**
- * JSX in a Cordis plugin, set up as the docs say (`jsxImportSource: 'acryl-router/jsx'`, which resolves this package's built runtime): a page rendered with the ported JSX renderer and styled with the CSS helper, served through `ctx.router`, and a
+ * JSX in a Cordis plugin, set up as the docs say (`jsxImportSource: '@acryldev/router/jsx'`, which resolves this package's built runtime): a page rendered with the ported JSX renderer and styled with the CSS helper, served through `ctx.router`, and a
  * streamed page whose suspended part arrives after the shell. The ported suites cover the renderer itself; this covers the plugin seam.
  */
 
@@ -8,8 +8,8 @@ import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 import { css, Style } from '../src/helpers/index.ts'
 import { Acryl, apply, name } from '../src/index.ts'
-import { Suspense } from 'acryl-router/jsx'
-import { renderToReadableStream } from 'acryl-router/jsx/streaming'
+import { Suspense } from '@acryldev/router/jsx'
+import { renderToReadableStream } from '@acryldev/router/jsx/streaming'
 
 const contexts: Context[] = []
 const settle = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0))

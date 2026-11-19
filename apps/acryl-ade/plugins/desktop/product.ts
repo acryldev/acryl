@@ -84,7 +84,7 @@ export function seedSource(
       const parts = relative(bundle, path).split(sep)
       if (parts[0] === '') return true
       if (SKIPPED.has(parts[0] ?? '')) return false
-      // A folder is compared with its trailing separator, so `plugins/acryl-router` is the Program's `plugins/acryl-router/`.
+      // A folder is compared with its trailing separator, so `plugins/router` is the Program's `plugins/router/`.
       const tree = parts.join('/')
       return !inProgram(program, tree) && !inProgram(program, `${tree}/`)
     },

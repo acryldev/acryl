@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-showcase',
+  name: '@acryldev/showcase',
   entry,
   outDir: 'lib',
   format: 'esm',

@@ -42,19 +42,19 @@ describe('an import of a moved framework package', () => {
     const ctx = new Context()
     await ctx.plugin(ProfilePluginPackages, { resolution })
 
-    const router = failure(() => resolve('acryl-router'))
-    expect(router).toContain("'acryl-router' is part of acrylblends")
+    const router = failure(() => resolve('@acryldev/router'))
+    expect(router).toContain("'@acryldev/router' is part of acrylblends")
     expect(router).toContain("'acrylblends/cordis/router'")
-    expect(failure(() => resolve('acryl-router/middleware'))).toContain("'acrylblends/body-limit'")
+    expect(failure(() => resolve('@acryldev/router/middleware'))).toContain("'acrylblends/body-limit'")
     // Any other missing package fails as before.
     expect(failure(() => resolve('not-a-framework-package'))).not.toContain('acrylblends')
 
     await ctx.fiber.dispose()
-    expect(failure(() => resolve('acryl-router'))).not.toContain('acrylblends')
+    expect(failure(() => resolve('@acryldev/router'))).not.toContain('acrylblends')
   })
 
   it('names a replacement for every package that moved', () => {
-    for (const old of ['acryl-router', 'acryl-router-http', 'acryl-state', 'acryl-inspect', 'acryl-node-server', 'acryl-door', 'acryl-db', 'acryl-db-sqlite', 'acryl-kv', 'acryl-kv-json', 'acryl-kv-db']) {
+    for (const old of ['@acryldev/router', '@acryldev/router-http', '@acryldev/state', '@acryldev/inspect', '@acryldev/node-server', '@acryldev/door', '@acryldev/db', '@acryldev/db-sqlite', '@acryldev/kv', '@acryldev/kv-json', '@acryldev/kv-db']) {
       expect(MOVED_FRAMEWORK_IMPORTS[old], old).toMatch(/'acrylblends(\/[a-z/-]+)?'/u)
     }
   })

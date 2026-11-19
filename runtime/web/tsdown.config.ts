@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-web-service',
+  name: '@acryldev/web',
   entry: { index: 'src/index.ts' },
   outDir: 'lib',
   format: 'esm',

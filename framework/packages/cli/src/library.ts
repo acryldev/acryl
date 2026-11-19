@@ -8,7 +8,7 @@ import { type EntryTable, entryTable, rewriteSpecifiers } from './rewrite'
 export interface LibraryPlugin {
   /** The library name, equal to its folder: what `acrylblends add` takes. */
   readonly name: string
-  /** The npm name its workspace package declares (`acryl-instance`), which is how the plugins import each other; absent when the plugin has no package.json, and then the name is its own. */
+  /** The npm name its workspace package declares (`@acryldev/instance`), which is how the plugins import each other; absent when the plugin has no package.json, and then the name is its own. */
   readonly packageName?: string
   readonly description: string
   /** Library plugins this one imports; they are copied with it. */
@@ -216,8 +216,10 @@ export function copyPlugin(
     },
   })
   if (entries) {
-    if (inSourceDir) rewriteTree(join(target, 'src'), plugin.name, 'src', entries)
-    else rewriteTree(target, plugin.name, '', entries)
+    // A package the plugin lists as a dependency is installed in the app, so its specifier stays a package specifier (spec 051 T011/T038).
+    const installed = new Set(Object.keys(plugin.dependencies))
+    if (inSourceDir) rewriteTree(join(target, 'src'), plugin.name, 'src', entries, installed)
+    else rewriteTree(target, plugin.name, '', entries, installed)
   }
   if (!folder.legacy) {
     recordLibraryCopy(folder.dir, plugin.name)
@@ -228,13 +230,19 @@ export function copyPlugin(
 }
 
 /** Rewrite the `acryl-*` imports of every TypeScript file below `dir` (the plugin's `src/`) to relative paths. */
-function rewriteTree(dir: string, plugin: string, inside: string, entries: EntryTable): void {
+function rewriteTree(
+  dir: string,
+  plugin: string,
+  inside: string,
+  entries: EntryTable,
+  installed: ReadonlySet<string>,
+): void {
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry)
-    if (statSync(path).isDirectory()) rewriteTree(path, plugin, `${inside}/${entry}`, entries)
+    if (statSync(path).isDirectory()) rewriteTree(path, plugin, `${inside}/${entry}`, entries, installed)
     else if (/\.(?:ts|tsx|mts)$/u.test(entry)) {
       const id = inside === '' ? `${plugin}/${entry}` : `${plugin}/${inside}/${entry}`
-      writeFileSync(path, rewriteSpecifiers(readFileSync(path, 'utf8'), id, entries))
+      writeFileSync(path, rewriteSpecifiers(readFileSync(path, 'utf8'), id, entries, installed))
     }
   }
 }
@@ -247,12 +255,14 @@ export function copyRewritten(
   inside: string,
   root: string = libraryRoot(),
 ): void {
+  const library = readLibrary(root)
   writeFileSync(
     to,
     rewriteSpecifiers(
       readFileSync(from, 'utf8'),
       `${plugin}/${inside}`,
-      entryTable(readLibrary(root)),
+      entryTable(library),
+      new Set(Object.keys(library.get(plugin)?.dependencies ?? {})),
     ),
   )
 }

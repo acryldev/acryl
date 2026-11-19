@@ -19,7 +19,7 @@ plugins you or an agent write. There is no `src/plugins/` and no `extensions/`. 
 ## Defaults, and how to swap each
 
 The framework is not rigid: every choice is a plugin behind a port, and the default is only a fallback. A new app names each default in `AGENTS.md`: records on the `db` port
-with SQLite, small state on the `kv` port with one JSON file, the Node server, the browser as the window (`acrylblends add desktop` adds Electron), browser code through
+with SQLite, small state on the `kv` port with one JSON file, the Node server, the browser as the window (`acrylblends add desktop-shell` adds Electron), browser code through
 `clientModules`. A swap changes the one file that opens or mounts the choice (the opener, `src/db.ts`; or `src/app.ts` in a Blend app), because nothing else imports a provider
 (`acrylblends check-deps` checks it). An outside tool, such as a database server or a bundler, joins the app as a provider in `plugins/<name>/` that implements the port.
 

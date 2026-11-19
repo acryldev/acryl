@@ -1,5 +1,5 @@
-import { Acryl } from 'acryl-router'
-import { bodyLimit } from 'acryl-router/middleware'
+import { Acryl } from '@acryldev/router'
+import { bodyLimit } from '@acryldev/router/middleware'
 import fs from 'node:fs'
 import { request as requestHTTP } from 'node:http'
 import type { IncomingMessage } from 'node:http'

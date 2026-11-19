@@ -205,8 +205,8 @@ unregistration on disposal.
 - `acryl-development-canvas/src/index.ts`
 - `acryl-development-canvas/src/canvas-pty.ts`
 - `acryl-development-canvas/src/client/`
-- `cordis-plugin-market/src/index.ts`
-- `cordis-plugin-market/src/client/index.ts`
+- `@acryldev/cordis-plugin-market/src/index.ts`
+- `@acryldev/cordis-plugin-market/src/client/index.ts`
 - `specs/002-acryl-1-plugin-identity/`
 - `specs/003-acryl-2-pty-provider/`
 - `specs/015-development-canvas/`

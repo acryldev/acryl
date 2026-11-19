@@ -1,9 +1,9 @@
 import { defineConfig } from 'tsdown'
 import { cssModulesInline } from './build/css-modules-plugin.ts'
 
-const PACKAGE_NAME = '@acryl/ui'
+const PACKAGE_NAME = '@acryldev/ui'
 
-// Same shape as dsh-client-ui-brand-acryl's client build plus the DSH CSS Modules step: a `require`-able client module for the loader, react and the app's own
+// Same shape as @acryldev/brand-client's client build plus the DSH CSS Modules step: a `require`-able client module for the loader, react and the app's own
 // primitives and theme stay external (the module table answers them), everything else (clsx) is inlined.
 export default defineConfig({
   name: `${PACKAGE_NAME}/client`,

@@ -1,6 +1,6 @@
 ---
 name: acryl-add-ui
-description: Use when a feature of acryl-control-center needs something the person sees - a widget on the first screen, a page of its own, a button or a form.
+description: Use when a feature of @acryldev/control-center needs something the person sees - a widget on the first screen, a page of its own, a button or a form.
 ---
 # Add UI to the app
 

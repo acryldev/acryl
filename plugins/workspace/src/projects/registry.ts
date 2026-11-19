@@ -1,5 +1,5 @@
 /**
- * The project registry: the folders the user added, grouped into workspaces (spec 043), in one `acryl-settings` section, changed one write at a time.
+ * The project registry: the folders the user added, grouped into workspaces (spec 043), in one `@acryldev/settings` section, changed one write at a time.
  * A workspace is a named set of projects the sidebar shows as a whole; Default always exists and starts with every project added before workspaces
  * existed. A project can be in several workspaces; removing it from one never touches the others or the disk.
  */
@@ -7,7 +7,7 @@
 import { randomUUID } from 'node:crypto'
 import { statSync } from 'node:fs'
 import { isAbsolute, resolve } from 'node:path'
-import type { SettingsScope } from 'acryl-settings'
+import type { SettingsScope } from '@acryldev/settings'
 import z from '@deepseek-ai/schemastery'
 import { DEFAULT_WORKSPACE_ID, type ProjectRegistryView, type WorkspaceKind, type WorkspaceSummary } from './contract.ts'
 

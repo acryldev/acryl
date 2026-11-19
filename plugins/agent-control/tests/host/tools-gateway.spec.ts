@@ -44,7 +44,7 @@ const fakeTools = {
 async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<void> }; home: string; secret: string | undefined }> {
   host = await testHost()
   port = host.port
-  const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-gateway-'))
+  const home = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-gateway-'))
   roots.push(home)
   executed.length = 0
   const ctx = new Context()
@@ -52,7 +52,7 @@ async function mount(config: unknown): Promise<{ fiber: { dispose(): Promise<voi
   provideHost(ctx, host)
   ctx.provide('acrylTools' as never, fakeTools as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
+  const fiber = ctx.plugin({ name: '@acryldev/agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
   await new Promise(resolve => { setTimeout(resolve, 50) })
   const secretPath = join(home, 'agent-control-secret')
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home, secret: existsSync(secretPath) ? readFileSync(secretPath, 'utf8').trim() : undefined }
@@ -196,7 +196,7 @@ describe('gateway configuration and requests', () => {
 describe('docs access for workers', () => {
   it('finds the extension package folder from a lookup answer, and says nothing when the answer has no usable path', async () => {
     const { docsRootFromLookup } = await import('../../src/host/tools-gateway/worker-config.ts')
-    expect(docsRootFromLookup(JSON.stringify({ ok: true, docs: [{ path: '/a/b/plugins/acryl-plugin-context/docs/extending/tool-plugin.md' }] }))).toBe('/a/b/plugins/acryl-plugin-context')
+    expect(docsRootFromLookup(JSON.stringify({ ok: true, docs: [{ path: '/a/b/plugins/plugin-context/docs/extending/tool-plugin.md' }] }))).toBe('/a/b/plugins/plugin-context')
     expect(docsRootFromLookup(JSON.stringify({ ok: true, docs: [] }))).toBeUndefined()
     expect(docsRootFromLookup(JSON.stringify({ docs: [{ path: 'relative.md' }] }))).toBeUndefined()
     expect(docsRootFromLookup('not json')).toBeUndefined()

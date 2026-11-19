@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { PluginLifecycleError } from 'acryl-control'
+import { PluginLifecycleError } from '@acryldev/control'
 import {
   PLUGIN_LIFECYCLE_DISABLE_PATH,
   PLUGIN_LIFECYCLE_ENABLE_PATH,

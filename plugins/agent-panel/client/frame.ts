@@ -1,5 +1,5 @@
 /**
- * The ACRYL frame's view as the app page sees it (plugins/acryl-blends-frame/src/client/frame-view.ts): the frame's canvas hides the app's own build-time
+ * The ACRYL frame's view as the app page sees it (plugins/blends-frame/src/client/frame-view.ts): the frame's canvas hides the app's own build-time
  * controls in Build and shows what production shows in Preview. The page is same-origin with the frame, so it reads the handle the frame publishes on
  * its window through `window.parent`; a page opened directly has no such parent and keeps its own behavior.
  */

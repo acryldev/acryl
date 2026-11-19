@@ -93,7 +93,7 @@ const PERMISSION_ROLES: Record<string, Role> = {
 export function buildUpdateHintText(currentVersion: string, latestVersion: string | undefined): string {
   if (latestVersion === undefined) return ''
   return warning(`⬆ ACRYL update available: v${currentVersion} → v${latestVersion}`) +
-    dim(' (run `pnpm add -g @acryl/cli` to upgrade)')
+    dim(' (run `pnpm add -g @acryldev/cli` to upgrade)')
 }
 
 export function buildPermissionText(permission: PermissionState | undefined): string {

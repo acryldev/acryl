@@ -1,5 +1,5 @@
 /**
- * Spec 051 T011: an app stops carrying its copies of the desktop shell and the instance (`plugins/desktop`, `plugins/instance`) and installs
+ * Spec 051 T011: an app stops carrying its copies of the desktop shell and the instance (`plugins/desktop-shell`, `plugins/instance`) and installs
  * them as packages instead. This module only plans that move for one app; `upgrade` shows the plan and applies it. An app whose copy it
  * edited keeps the copy (a conflict, named file by file): its changes are its own and are never thrown away.
  */
@@ -21,7 +21,7 @@ import { entryTable, toPackageSpecifiers } from './rewrite.ts'
 
 /** The library plugins that move, by folder, and the package each is installed as. */
 export const MOVED_PLUGINS: ReadonlyMap<string, string> = new Map([
-  ['desktop', '@acryldev/desktop-shell'],
+  ['desktop-shell', '@acryldev/desktop-shell'],
   ['instance', '@acryldev/instance'],
 ])
 

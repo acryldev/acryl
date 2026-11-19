@@ -1,5 +1,5 @@
 /**
- * Real-Loader lifecycle mechanics for `acryl-agent-control` (spec 041 T022): PENDING while its dependencies are
+ * Real-Loader lifecycle mechanics for `@acryldev/agent-control` (spec 041 T022): PENDING while its dependencies are
  * missing, reactivation when they appear, restart on provider replacement, settling every pending call on
  * disposal, and no leak across repeated reloads. Mounted through a real `@deepseek-ai/cordis-plugin-loader`
  * Loader, the real `router` and `routerHttp` over a loopback Host (`test-host.ts`), and a fake `tools` service that captures what
@@ -64,7 +64,7 @@ const BUILT_ENTRY = new URL('../../lib/index.js', import.meta.url).href
  * anyway). @throws if the package has not been built - run `pnpm run build` first.
  */
 async function mount(): Promise<{ ctx: Context; entryId: string; root: string }> {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-agent-control-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   const ctx = new Context()
@@ -121,7 +121,7 @@ const active = async (ctx: Context, entryId: string): Promise<void> => {
   await until(() => entryOf(ctx, entryId).fiber?.state === ACTIVE, 'the row to be ACTIVE')
 }
 
-describe('acryl-agent-control through a real Loader', () => {
+describe('@acryldev/agent-control through a real Loader', () => {
   it('is PENDING (not failed) without the Host, the router and tools, and reactivates the moment all are provided', async () => {
     const { ctx, entryId } = await mount()
     expect(entryOf(ctx, entryId).fiber?.state).toBe(PENDING)

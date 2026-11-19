@@ -34,7 +34,7 @@ or packaging.
 - `acryl-cli/src/tui/commands.ts` recognizes the slash commands.
 - `acryl-cli/src/tui-app/session.ts` provides the login overlay and invokes the
   Harness `authorization` service.
-- `acryl-harness-runtime` inserts the `authorization` Loader row only through
+- `@acryldev/harness-runtime` inserts the `authorization` Loader row only through
   `bootAcrylHarnessProfile()`.
 - Desktop independently composes the upstream Web profile and substitutes its
   `webserver` row with `acryl-desktop/webserver`.
@@ -45,7 +45,7 @@ version, but does not create feature parity.
 
 ## Chosen module boundary
 
-`acryl-harness-runtime` becomes the narrow shared composition boundary for
+`@acryldev/harness-runtime` becomes the narrow shared composition boundary for
 ACRYL coding capabilities. It must expose a surface-neutral, immutable function
 that returns the ACRYL coding Loader patches. It must not expose a second
 runtime, command registry, event bus, credential store, or UI framework.
@@ -119,7 +119,7 @@ state.
 ### 1. Capability and plugin boundary
 
 The shared boundary is composition of existing Harness coding capabilities,
-starting with authorization. It belongs in `acryl-harness-runtime` because that
+starting with authorization. It belongs in `@acryldev/harness-runtime` because that
 package already owns ACRYL's Harness profile composition. No new generic plugin
 runtime is introduced. A feature that needs independently replaceable runtime
 behavior is an ordinary Cordis plugin with a stable Loader row; surface code

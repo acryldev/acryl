@@ -115,7 +115,7 @@ function product(home: string) {
     { lineWidth: 40 },
   )
   assert.ok(!settings.includes(folders.source), 'the folder is folded in the settings file')
-  write(join(folders.data, 'acryl-settings.yaml'), settings)
+  write(join(folders.data, '@acryldev/settings.yaml'), settings)
   // The composition the launcher writes again on every boot, naming the app's plugins by file URL: never carried.
   write(
     join(folders.data, 'node_modules', 'acrylblends-frame', 'cordis.patch.yml'),
@@ -168,7 +168,7 @@ test('export then import: every branch, tag and version, HEAD on its branch, the
   assert.ok(!readFileSync(join(copy.source, '.git', 'config'), 'utf8').includes(scratch))
   assert.ok(!refs(copy.source).includes(WORKTREE_REF) && !refs(copy.source).includes(DATA_REF))
 
-  const { 'acryl-settings.yaml': relocated, ...data } = tree(copy.data)
+  const { '@acryldev/settings.yaml': relocated, ...data } = tree(copy.data)
   assert.deepEqual(data, {
     'settings.yaml': 'theme: dark\n',
     'storages/workspace.json': `${JSON.stringify({ projects: [{ path: copy.source, name: 'Blank' }] })}\n`,

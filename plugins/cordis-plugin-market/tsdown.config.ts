@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'cordis-plugin-market'
+const PACKAGE_NAME = '@acryldev/cordis-plugin-market'
 
 export default defineConfig({
     name: `${PACKAGE_NAME}/client`,

@@ -1,19 +1,19 @@
 /**
- * The Web adapter for `acryl-router` (spec 046, milestone M2). A plugin that owns routes on the router asks for a path
+ * The Web adapter for `@acryldev/router` (spec 046, milestone M2). A plugin that owns routes on the router asks for a path
  * prefix to be served over HTTP: `ctx.routerHttp.mount('/api/market')` claims that prefix on the DSH `webServer` and every
  * request under it is run through `router.fetch`. The TUI and Desktop do not need this: they call `router.fetch` directly.
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Duplex } from 'node:stream'
-import type { RouterHttpService } from 'acryl-router'
-import type { UpgradeWebSocket } from 'acryl-router/helpers'
+import type { RouterHttpService } from '@acryldev/router'
+import type { UpgradeWebSocket } from '@acryldev/router/helpers'
 import { Context, Service } from '@deepseek-ai/cordis'
-import { UpgradeEmitter, UpgradeHub } from 'acryl-node-server'
+import { UpgradeEmitter, UpgradeHub } from '@acryldev/node-server'
 import { serve } from './serve.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-router-http'
+export const name = '@acryldev/router-http'
 
 /** Hard requirements: both services must exist, otherwise this plugin stays PENDING. */
 export const inject = ['router', 'webServer']
@@ -63,14 +63,14 @@ export class RouterHttp extends Service implements RouterHttpService {
    * exact-path upgrade route of the web server, removed with the mount. No other path of the mount accepts an upgrade.
    */
   mount(prefix: string, options: { readonly upgrade?: readonly string[] } = {}): () => void {
-    if (!PREFIX_PATTERN.test(prefix)) throw new TypeError(`acryl-router-http: "${prefix}" is not a mountable path prefix`)
+    if (!PREFIX_PATTERN.test(prefix)) throw new TypeError(`@acryldev/router-http: "${prefix}" is not a mountable path prefix`)
     const upgrade = options.upgrade ?? []
     for (const path of upgrade) {
       if (!PREFIX_PATTERN.test(path) || !(path === prefix || path.startsWith(`${prefix}/`)))
-        throw new TypeError(`acryl-router-http: the upgrade path "${path}" is not inside the prefix "${prefix}"`)
+        throw new TypeError(`@acryldev/router-http: the upgrade path "${path}" is not inside the prefix "${prefix}"`)
     }
     if (upgrade.length > 0 && this.web.registerUpgrade === undefined)
-      throw new TypeError('acryl-router-http: this web server cannot take WebSocket upgrades (it has no registerUpgrade)')
+      throw new TypeError('@acryldev/router-http: this web server cannot take WebSocket upgrades (it has no registerUpgrade)')
     const removers: Array<() => void> = []
     // Claim the upgrade paths first: a duplicate throws before anything is mounted, so a refused mount leaves nothing behind.
     try {
@@ -95,7 +95,7 @@ export class RouterHttp extends Service implements RouterHttpService {
       throw error
     }
     const remove = (): void => { for (const undo of removers.splice(0)) undo() }
-    this.ctx.effect(() => () => { remove() }, `acryl-router-http: mount ${prefix}`)
+    this.ctx.effect(() => () => { remove() }, `@acryldev/router-http: mount ${prefix}`)
     return remove
   }
 
@@ -127,7 +127,7 @@ export class RouterHttp extends Service implements RouterHttpService {
       const hub = new UpgradeHub()
       hub.attach(this.upgradesIn, this.router)
       this.hub = hub
-      this.home.effect(() => () => hub.close(), 'acryl-router-http: WebSocket hub')
+      this.home.effect(() => () => hub.close(), '@acryldev/router-http: WebSocket hub')
     }
     return this.hub
   }

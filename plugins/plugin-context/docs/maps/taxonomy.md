@@ -83,8 +83,8 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-client-ui-workspace | client | - web desktop | Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots | uiWorkspace | slots, sessions, workspaces, locale, remote, remote.directoryPicker, layout, shortcuts |
 | dsh-cordis-client-runner | client | - web desktop | Browser half of dynamic dual-half plugin packages: event subscription, closure evaluation, guard facade, and loader entries | timer, dynamicCordisRunner, cordisInspect | loader, modules, slots, remote, remote.dynamicCordisRunner |
 | acryl-desktop | client | - - desktop | ACRYL desktop: a local-first agent workspace composed with Cordis plugins | desktopPlugins, livePluginActivation, desktopPnpm, desktopProfiles, desktopActions | router, routerHttp, desktopRuntime, acrylSettings |
-| cordis-plugin-market | client | - web desktop | Community plugin discovery and managed package operations for Cordis-based products (ACRYL and stock DeepSeek Harness alike) |  | slots, locale |
-| dsh-client-ui-brand-acryl | client | - web desktop | ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero slots - the swappable counterpart to @deepseek-ai/dsh-client-ui-brand-official |  | slots |
+| @acryldev/cordis-plugin-market | client | - web desktop | Community plugin discovery and managed package operations for Cordis-based products (ACRYL and stock DeepSeek Harness alike) |  | slots, locale |
+| @acryldev/brand-client | client | - web desktop | ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero slots - the swappable counterpart to @deepseek-ai/dsh-client-ui-brand-official |  | slots |
 
 ## tool (20)
 
@@ -109,7 +109,7 @@ that type are the real, shipped implementations to study (their source is in the
 | dsh-tool-web | host | tui web desktop | Model-facing web tools (web_search, web_fetch) over the DeepSeek Harness web capability seam (ctx.web) |  | tools, web, systemPrompt |
 | dsh-tool-workflow | host | tui web desktop | Model-facing workflow tool: run a JavaScript orchestration script over ctx.workflowEngine |  | tools, workflowEngine, systemPrompt |
 | dsh-tools | host | tui web desktop | Tool registry and execution pipeline for the DeepSeek Harness | tools | invariants |
-| acryl-plugin-context | host | tui web desktop | Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037) | pluginContext | systemPrompt |
+| @acryldev/plugin-context | host | tui web desktop | Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037) | pluginContext | systemPrompt |
 
 ## storage-or-persistence (14)
 

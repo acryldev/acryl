@@ -10,7 +10,7 @@ import {
   createLaunchEnvironmentSnapshot,
   DSH_LAUNCH_ENVIRONMENT_KEY,
 } from '@deepseek-ai/dsh-launch-environment'
-import { selectInstance } from 'acryl-harness-runtime'
+import { selectInstance } from '@acryldev/harness-runtime'
 import { installDesktopPnpmRuntime } from '../lib/desktop-runtime-environment.js'
 
 // Match the isolated `~/.acryl-dev` home `pnpm run dev` (the root
@@ -39,9 +39,9 @@ const isolatedHome = join(home, 'home')
 mkdirSync(isolatedHome, { recursive: true })
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-process.env.ACRYL_HOME = join(home, 'acryl-home')
+process.env.ACRYL_HOME = join(home, '@acryldev/home')
 // The engine home too: this smoke must not read or write the developer's ~/.acryl-dev/.dsh, and a DSH_HOME inherited from the caller would.
-process.env.DSH_HOME = join(home, 'acryl-home', '.dsh')
+process.env.DSH_HOME = join(home, '@acryldev/home', '.dsh')
 let ctx
 let mounted
 let mountedSpec
@@ -168,7 +168,7 @@ try {
       { insert: [
         { id: 'acrylblends/cordis/router', name: 'acrylblends/cordis/router' },
         { id: 'acrylblends/cordis/router-http', name: 'acrylblends/cordis/router-http' },
-        { id: 'community-market', name: 'cordis-plugin-market' },
+        { id: 'community-market', name: '@acryldev/cordis-plugin-market' },
         { id: 'third-party-smoke', name: THIRD_PARTY_NAME },
       ] },
     ],
@@ -241,7 +241,7 @@ try {
   await runtime.mountScheduled()
 
   // A row whose module never imported is a broken composition, not a warning: the boot only reports it, and on 2026-10-30 this check
-  // passed on Linux with two rows unimported (acryl-sign-in, the third-party smoke) while on macOS 178 rows failed and Desktop could not start.
+  // passed on Linux with two rows unimported (@acryldev/sign-in, the third-party smoke) while on macOS 178 rows failed and Desktop could not start.
   // Rows waiting on a service the smoke does not provide stay PENDING and are allowed.
   const unimported = []
   for (const entry of ctx.loader.entries()) {
@@ -262,7 +262,7 @@ try {
   if (thirdPartyEntry?.options.name !== THIRD_PARTY_NAME) {
     throw new Error('profile-local third-party plugin did not activate')
   }
-  if (marketEntry?.options.name !== 'cordis-plugin-market') {
+  if (marketEntry?.options.name !== '@acryldev/cordis-plugin-market') {
     throw new Error('community market Host plugin did not activate through its bare package name')
   }
   if (mountedSpec?.mode !== 'compatibility') {
@@ -286,7 +286,7 @@ try {
   if (dumpFlag !== -1) {
     const outDir = resolve(process.argv[dumpFlag + 1] ?? '')
     process.env.DEEPSEEK_API_KEY = 'dummy-key-for-prompt-capture'
-    const { captureSystemPrompt, renderSystemPromptDoc } = await import('acryl-harness-runtime')
+    const { captureSystemPrompt, renderSystemPromptDoc } = await import('@acryldev/harness-runtime')
     const captured = await captureSystemPrompt(ctx, {
       profile: 'web',
       selectStandardPreset: true,

@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { digestFiles } from '@webboxes/blends-core'
+import { digestFiles } from '@acryldev/blends-core'
 import {
   integrityOf,
   type PublishGitPort,
@@ -22,12 +22,12 @@ import {
   type ReleasePort,
   type RepositoryHostPort,
   readTarball,
-} from '@webboxes/plugin-hub'
-import { routeSource } from 'acryl-builder/script'
-import { extensions } from 'acryl-extensions'
-import { instance, pinnedInstance } from 'acryl-instance'
-import { captureApp, verifyApp } from 'acryl-manifest/snapshot'
-import * as router from 'acryl-router'
+} from '@acryldev/plugin-hub-core'
+import { routeSource } from '@acryldev/builder/script'
+import { extensions } from '@acryldev/extensions'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import { captureApp, verifyApp } from '@acryldev/manifest/snapshot'
+import * as router from '@acryldev/router'
 import {
   type PublishOptions,
   type PublishPlan,
@@ -527,7 +527,7 @@ spec:
   runtime: cordis
   rows:
     - id: router # the routes every plugin mounts on
-      name: acryl-router
+      name: @acryldev/router
     - id: extensions
       name: extensions
     - id: plugin-share

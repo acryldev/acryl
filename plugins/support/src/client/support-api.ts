@@ -17,7 +17,7 @@ type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
 /** The file name the Host suggested, or a plain default. */
 export function fileNameFrom(disposition: string | null): string {
   const match = disposition === null ? null : /filename="([A-Za-z0-9._-]{1,120})"/.exec(disposition)
-  return match?.[1] ?? 'acryl-diagnostics.zip'
+  return match?.[1] ?? '@acryldev/diagnostics.zip'
 }
 
 /** @param fetchImpl - injectable for tests; defaults to the page's fetch. */

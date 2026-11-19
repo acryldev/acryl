@@ -1,9 +1,9 @@
-# acryl-ui-tui
+# @acryldev/ui-tui
 
-ACRYL UI library for the terminal (spec 038-ui-component-library): pi-tui components with the same names and contracts as `@acryl/ui`, themed by the shared semantic roles.
+ACRYL UI library for the terminal (spec 038-ui-component-library): pi-tui components with the same names and contracts as `@acryldev/ui`, themed by the shared semantic roles.
 
 ```js
-import { createTuiUi } from 'acryl-ui-tui'
+import { createTuiUi } from '@acryldev/ui-tui'
 export function apply(ctx) {
   const ui = createTuiUi(ctx.get('tuiTheme'))   // follows the terminal's light/dark scheme; omit for the static dark palette
   ctx.get('tuiCommands')?.register({ command: '/settings', description: 'Settings', packageName: 'my-plugin',
@@ -11,4 +11,4 @@ export function apply(ctx) {
 }
 ```
 
-The contract for every component is `plugins/acryl-ui/contracts/components.json`; `tests/conformance.test.mjs` checks width (12, 24, 40, 80, 200 columns) and keyboard behavior.
+The contract for every component is `plugins/ui/contracts/components.json`; `tests/conformance.test.mjs` checks width (12, 24, 40, 80, 200 columns) and keyboard behavior.

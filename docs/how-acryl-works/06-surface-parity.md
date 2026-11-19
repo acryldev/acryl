@@ -6,7 +6,7 @@ it deliberately stops being true.
 
 ## One factory, three surfaces
 
-`acryl-harness-runtime/src/index.ts` exports two boot factories:
+`@acryldev/harness-runtime/src/index.ts` exports two boot factories:
 
 | Factory | Used by | Profile | Extra seam |
 |---|---|---|---|
@@ -24,7 +24,7 @@ desktop package.
 | Aspect | TUI (`pnpm acryl`) | Web (`acryl-web`) | Desktop (Electron) |
 |---|---|---|---|
 | Process model | **Direct host** — one process owns the Cordis root; no server | Runtime serves HTTP/WebSocket on loopback; renderer is sandboxed, no Electron APIs | Electron main boots Host via Cordis; renderer served over loopback |
-| Session access | In-process `AcrylSessionBridge`, `attachment: 'owner'` | `acryl-control` protocol client over transport | Host/client faces in `acryl-desktop` |
+| Session access | In-process `AcrylSessionBridge`, `attachment: 'owner'` | `@acryldev/control` protocol client over transport | Host/client faces in `acryl-desktop` |
 | UI toolkit | `@earendil-works/pi-tui` (alternate-screen terminal) | DSH web app (`dsh-web-app` bundle) | Desktop shell + Development Canvas |
 | Capability patches | Persona + `agent-presets` + `session-stats` + `authorization` | `authorization` only (non-TUI selection) | Desktop profile composes its own rows |
 | DSH home | `~/.dsh` (shared) | `~/.dsh` | `~/.dsh-acryl` (isolated) |
@@ -33,7 +33,7 @@ desktop package.
 What makes them "the same runtime": all three compose the pinned `@deepseek-ai/dsh-*`
 harness into Cordis roots with the same service vocabulary (`sessions`, `agents`,
 `tools`, `llm`, `settings`, `credentials`, `approval`, …), all write the same durable
-session log, and all project snapshots through `acryl-control` types. The ACRYL-specific
+session log, and all project snapshots through `@acryldev/control` types. The ACRYL-specific
 model-facing tool (`acryl_workspace_status`) is installed on every profile boot through
 `installAcrylWorkspaceStatusTool(ctx)`.
 
@@ -48,7 +48,7 @@ model-facing tool (`acryl_workspace_status`) is installed on every profile boot 
 
 Both commands throw a directed error telling the user to install the separate
 distribution. This is a **publish-closure guarantee**, enforced by the dependency graph:
-`acryl-cli` depends on `acryl-harness-runtime` (which does include `dsh-web-app` for
+`acryl-cli` depends on `@acryldev/harness-runtime` (which does include `dsh-web-app` for
 composition purposes), but the CLI package's own surface code never imports the
 client-UI bundle, and `pnpm pack` of `acryl-cli` ships `lib/**` only.
 
@@ -73,7 +73,7 @@ For the terminal surface, hosting the runtime in-process is a feature:
 
 ```
                        ┌──────────────────────────────────────────┐
-                       │        acryl-harness-runtime             │
+                       │        @acryldev/harness-runtime             │
                        │  bootAcrylHarnessProfile (tui)           │
                        │  bootAcrylWebProfile (web)               │
                        │  createAcrylSessionBridge (shared seam)  │

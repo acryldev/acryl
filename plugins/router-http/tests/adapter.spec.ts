@@ -1,15 +1,15 @@
 /**
  * The Web adapter against the real DSH `webServer` listening on a loopback port: a plugin mounts a prefix, requests
  * travel over real HTTP into `router.fetch`, and the lifecycle (PENDING, unload, reload) is observed the way a browser
- * would see it. The router is the built `acryl-router` entry, as production loads it.
+ * would see it. The router is the built `@acryldev/router` entry, as production loads it.
  */
 
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import WebServer from '@deepseek-ai/dsh-host-webserver'
-import { apply as routerApply, name as routerName } from 'acryl-router'
+import { apply as routerApply, name as routerName } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
-import { Acryl, connectionOf, type RouterHttpService } from 'acryl-router'
-import { methodNotAllowed } from 'acryl-router/middleware'
+import { Acryl, connectionOf, type RouterHttpService } from '@acryldev/router'
+import { methodNotAllowed } from '@acryldev/router/middleware'
 import { apply, inject, name } from '../src/index.ts'
 
 const PENDING = 0 as FiberState.PENDING
@@ -66,7 +66,7 @@ function demo(prefix: string, extra?: (app: Acryl) => void) {
   }
 }
 
-describe('acryl-router-http against a real webServer', () => {
+describe('@acryldev/router-http against a real webServer', () => {
   it('serves a mounted prefix over HTTP: params, query, JSON, status', async () => {
     const { ctx, base } = await stack()
     ctx.plugin(demo('/api/demo'))

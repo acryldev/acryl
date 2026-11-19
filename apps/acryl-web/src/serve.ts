@@ -5,7 +5,7 @@
  *
  * This is the 3rd ACRYL surface. It is deliberately TUI-free and Desktop-free:
  * it only owns the web host (the `web` profile: `dsh-base` + `dsh-web-app`,
- * mounted through `acryl-harness-runtime`'s `createAcrylEngineHost` +
+ * mounted through `@acryldev/harness-runtime`'s `createAcrylEngineHost` +
  * `createWebEngineDefinition`) and serves the local web client. The terminal
  * (`acryl`) and Electron (`acryl-desktop`) surfaces are separate
  * distributions.
@@ -24,7 +24,7 @@ import {
   createAcrylEngineHost,
   createWebEngineDefinition,
   type AppInstance,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 
 export interface AcrylWebServeOptions {

@@ -7,7 +7,7 @@
 | Part | In development | With `NODE_ENV=production` |
 | --- | --- | --- |
 | Your routes and plugins, the router, the server, state, the `db` and `kv` ports and their providers | run | run |
-| **The door** (`acryl-door`: `.acryl/bin/acryl`, the page script, the operator routes) | **experimental**: starts when the server is up | starts nothing: no service, no route, no `.acryl/` folder, no script in the page. `ACRYL_DOOR=off` also turns it off. A host that means to run it in production sets `allowInProduction: true` in the plugin's config |
+| **The door** (`@acryldev/door`: `.acryl/bin/acryl`, the page script, the operator routes) | **experimental**: starts when the server is up | starts nothing: no service, no route, no `.acryl/` folder, no script in the page. `ACRYL_DOOR=off` also turns it off. A host that means to run it in production sets `allowInProduction: true` in the plugin's config |
 | **The agent panel** (`agent-panel`) | **experimental**: a script tag on every HTML page and `/api/agent-panel/*` | does nothing (no tag, no routes). `ACRYL_DOOR=off` too |
 | **The PTY driver** (`driver-pty`) | **experimental**: terminal drivers in the panel, `/api/driver-pty/*` | does nothing. `ACRYL_DOOR=off` too |
 | **Live plugin install and the agent** (`extensions`, `builder`, `agent`: `POST /ask`) | **experimental**: install, update, remove and reload plugins while the app runs; the agent builds them | left out: the `nodejs`, `notes` and `chat` templates drop the `extensions` row, and the `agent` template drops `agent` and `builder` (since 1.0.1) and starts the `extensions` read-only (since 1.0.7: the plugins in `plugins/` run as deployed, nothing can be installed or changed) unless `ACRYL_PRODUCTION_KEEP` names them |

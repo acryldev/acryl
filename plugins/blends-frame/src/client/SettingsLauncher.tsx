@@ -4,10 +4,10 @@
  * DSH's real Settings and nothing else. The Desktop's Settings... menu item reaches the same launcher through a window event.
  */
 
-import type { PropsRuntime } from '@acryl/ui/frame'
+import type { PropsRuntime } from '@acryldev/ui/frame'
 import { useEffect } from 'react'
 
-/** The window event the Desktop's Settings... menu item sends (`plugins/desktop/frame.ts`, `openFrameSettings`); keep the string in step. */
+/** The window event the Desktop's Settings... menu item sends (`plugins/desktop-shell/frame.ts`, `openFrameSettings`); keep the string in step. */
 export const OPEN_SETTINGS_EVENT = 'acryl:open-settings'
 
 const GearIcon = () => (

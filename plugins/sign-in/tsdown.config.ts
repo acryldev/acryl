@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-sign-in'
+const PACKAGE_NAME = '@acryldev/sign-in'
 
 export default defineConfig([
   {

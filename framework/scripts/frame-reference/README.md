@@ -24,7 +24,7 @@ steps and waits:
 - A readiness wait before each shot for the ACRYL workspace client (`data-dsh-desktop-mode=advanced`,
   `.dshDesktopFrame`, `.dshWorkspaceTabstrip`), so no view can catch DSH's stock sidebar while the client is still
   registering.
-- A user patch layer in the isolated engine profile (`acryl-home/.dsh/profiles/desktop/cordis.patch.yml`):
+- A user patch layer in the isolated engine profile (`@acryldev/home/.dsh/profiles/desktop/cordis.patch.yml`):
   `ui-settings-models` with `credentialOnboarding: false`, so the first-run API-key dialog is absent from every view.
   This is the same switch the generated acrylblends profile writes.
 
@@ -43,7 +43,7 @@ They need a project and a known git state, so both surfaces open the committed f
 
 - The ACRYL run: the same isolated desktop live run at `37f4dd9c`, with a fake provider key (a local test value) and
   `DEEPSEEK_BASE_URL` pointing at a local Anthropic-Messages mock, so the diff's "Send to agent" prompt is accepted and
-  the Review thread is recorded. A pre-seeded ACRYL home (`acryl-settings.yaml` with the fixture as Default's only
+  the Review thread is recorded. A pre-seeded ACRYL home (`@acryldev/settings.yaml` with the fixture as Default's only
   project and `adopted: true`) is passed with `--copy-home`. The run keeps its own HOME, so the terminal prompt is the
   plain default one.
 - The candidate run: the app is started with `FRAME_FIXTURE=<materialized fixture>` (the registry is seeded with the

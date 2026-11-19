@@ -19,8 +19,8 @@ if (registrations.length !== 1) {
   throw new Error(`market client registered ${String(registrations.length)} Loader modules`)
 }
 const [registration] = registrations
-if (registration?.id !== 'cordis-plugin-market' || typeof registration.factory !== 'function') {
+if (registration?.id !== '@acryldev/cordis-plugin-market' || typeof registration.factory !== 'function') {
   throw new Error('market client did not register the expected Loader module')
 }
 
-process.stdout.write('verify-market-client-loader: cordis-plugin-market registered one client module\n')
+process.stdout.write('verify-market-client-loader: @acryldev/cordis-plugin-market registered one client module\n')

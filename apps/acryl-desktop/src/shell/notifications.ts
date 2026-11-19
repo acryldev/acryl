@@ -1,6 +1,6 @@
 /** Privacy-safe desktop attention for completed user turns and background jobs. */
 
-import type {} from 'acryl-settings'
+import type {} from '@acryldev/settings'
 import type { Context } from '@deepseek-ai/cordis'
 import type { JobView } from '@deepseek-ai/dsh-jobs'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
@@ -10,7 +10,7 @@ import type { DesktopLocale, DesktopNotification } from './runtime.ts'
 export const name = 'desktop-notifications'
 export const inject = ['desktopRuntime']
 
-// Namespace of ACRYL's own settings service (`ctx.acrylSettings`, package `acryl-settings`).
+// Namespace of ACRYL's own settings service (`ctx.acrylSettings`, package `@acryldev/settings`).
 export const DESKTOP_NOTIFICATIONS_SETTINGS_NAMESPACE = 'dsh-desktop-notifications'
 
 export interface DesktopNotificationSettings {

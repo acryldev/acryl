@@ -6,5 +6,5 @@ import type { AgentsState } from './agents-state.ts'
 
 /** @param agents - the shared agents state the section reads and changes. */
 export function agentsSettingsPlugin(agents: AgentsState) {
-  return settingsSectionPlugin('acryl-workspace-agents-settings', 'agents', 40, (ctx, base) => ctx.slots.register({ ...base, inject: () => ({ agents }) }, AgentsSection))
+  return settingsSectionPlugin('@acryldev/workspace-agents-settings', 'agents', 40, (ctx, base) => ctx.slots.register({ ...base, inject: () => ({ agents }) }, AgentsSection))
 }

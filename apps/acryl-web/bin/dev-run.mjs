@@ -3,11 +3,11 @@
 // The web surface owns its launcher (the terminal surface owns
 // `acryl-cli/bin/dev-run.mjs`). It rebuilds `acryl-web` if its compiled entry
 // is missing or stale - newer source under `acryl-web/src`, or under the
-// pre-built workspace dependencies it imports (`acryl-control`,
-// `acryl-harness-runtime` - `pnpm --filter acryl-web run build`'s own
+// pre-built workspace dependencies it imports (`@acryldev/control`,
+// `@acryldev/harness-runtime` - `pnpm --filter acryl-web run build`'s own
 // `prebuild` script rebuilds both, but only once this launcher actually
 // decides to run that build). Without checking those dependencies too, an
-// edit to e.g. `runtime/acryl-harness-runtime/src/engine-dsh.ts` alone would leave
+// edit to e.g. `runtime/harness-runtime/src/engine-dsh.ts` alone would leave
 // `isStale()` false (acryl-web's own src is untouched) and this launcher
 // would silently keep serving a stale build of that shared engine code - the
 // exact class of confusion hit live while building the ACRYL web brand swap.
@@ -26,10 +26,10 @@ const root = resolve(packageRoot, '..', '..')
 const bin = resolve(packageRoot, 'lib/bin.js')
 const watchedSourceDirs = [
   resolve(packageRoot, 'src'),
-  resolve(root, 'runtime/acryl-control/src'),
-  resolve(root, 'runtime/acryl-harness-runtime/src'),
+  resolve(root, 'runtime/control/src'),
+  resolve(root, 'runtime/harness-runtime/src'),
   // The UI library is built by acryl-web's prebuild; its source changing must rebuild it (its lib/client.js is what the profile serves).
-  resolve(root, 'plugins/acryl-ui/src'),
+  resolve(root, 'plugins/ui/src'),
 ]
 
 function newestSourceMtime(dir) {

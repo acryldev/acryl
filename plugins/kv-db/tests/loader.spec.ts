@@ -1,8 +1,8 @@
 /**
  * The provider mounted the way production mounts every plugin: real `@deepseek-ai/cordis-plugin-loader` rows pointing at the built
- * `lib/index.js` files of `acryl-db-sqlite` (provides `db`) and this package (injects `db`, provides `kv`), with a consumer that declares
+ * `lib/index.js` files of `@acryldev/db-sqlite` (provides `db`) and this package (injects `db`, provides `kv`), with a consumer that declares
  * `inject: ['kv']`.
- * @throws if the packages have not been built: run `pnpm run build` in `acryl-db`, `acryl-db-sqlite`, `acryl-kv` and this package first.
+ * @throws if the packages have not been built: run `pnpm run build` in `@acryldev/db`, `@acryldev/db-sqlite`, `@acryldev/kv` and this package first.
  */
 
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -11,9 +11,9 @@ import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import type {} from 'acryl-db/cordis'
-import type { Kv } from 'acryl-kv'
-import type {} from 'acryl-kv/cordis'
+import type {} from '@acryldev/db/cordis'
+import type { Kv } from '@acryldev/kv'
+import type {} from '@acryldev/kv/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 
 const PENDING = 0 as FiberState.PENDING
@@ -30,7 +30,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-kv-db-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/kv-db-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'db-row.mjs'), `export * from ${JSON.stringify(DB_ENTRY)}\n`)
   writeFileSync(join(root, 'kv-row.mjs'), `export * from ${JSON.stringify(KV_ENTRY)}\n`)
@@ -56,7 +56,7 @@ function consumer(ctx: Context): { seen: Kv[], fiber: ReturnType<Context['plugin
   return { seen, fiber }
 }
 
-describe('acryl-kv-db through a real Loader', () => {
+describe('@acryldev/kv-db through a real Loader', () => {
   it('stays PENDING until a db provider exists, then provides kv to a consumer that was waiting for it', async () => {
     const root = app()
     const ctx = await loader(root)

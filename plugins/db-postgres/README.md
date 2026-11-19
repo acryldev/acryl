@@ -1,13 +1,13 @@
-# acryl-db-postgres
+# @acryldev/db-postgres
 
-The Postgres provider of the [`db` port](https://github.com/acrylblends/acrylblends/tree/main/plugins/acryl-db/README.md) (`acrylblends/db`), for a Postgres or Supabase server reached through a connection string.
+The Postgres provider of the [`db` port](https://github.com/acrylblends/acrylblends/tree/main/plugins/db/README.md) (`acrylblends/db`), for a Postgres or Supabase server reached through a connection string.
 It ships the `pg` driver. App code depends on the port only, so moving from `acrylblends/cordis/db-sqlite` to this provider changes how the database is
 opened, not the code that uses it. It is an optional plugin: not part of the `acrylblends` package or its templates (spec 049, 2026-10-27).
 
 Without Cordis (an acrylblends app):
 
 ```ts
-import { openDb } from 'acryl-db-postgres/open'
+import { openDb } from '@acryldev/db-postgres/open'
 
 const { db, close } = await openDb({ url: process.env.DATABASE_URL!, migrations: new URL('./migrations/', import.meta.url) })
 ```
@@ -16,7 +16,7 @@ As a Cordis row, `url` defaults to the `DATABASE_URL` environment variable, and 
 
 ```yaml
 - id: acryl-db-postgres
-  name: acryl-db-postgres
+  name: @acryldev/db-postgres
   config:
     migrations: migrations
 ```
@@ -36,8 +36,8 @@ As a Cordis row, `url` defaults to the `DATABASE_URL` environment variable, and 
 - One connection: the port's contract serializes calls, and the pool reconnects after a dropped connection. With Supabase, use the
   connection pooler's URL or the direct one; statements are unnamed, so the transaction-mode pooler works.
 
-`acryl-db-postgres/dialect` holds the Postgres dialect code: the `?` translation, and the check that a statement got as many values as it
-binds. It imports nothing, so `acryl-db-pglite`, the embedded provider, shares it without loading `pg`.
+`@acryldev/db-postgres/dialect` holds the Postgres dialect code: the `?` translation, and the check that a statement got as many values as it
+binds. It imports nothing, so `@acryldev/db-pglite`, the embedded provider, shares it without loading `pg`.
 
 The tests run against PGlite (in memory) behind its socket server, so they need no Postgres installed but still go through `pg` over the
 network. To run them against a real server, set `ACRYL_DB_POSTGRES_URL`. Each case then uses a schema of its own, dropped afterwards.

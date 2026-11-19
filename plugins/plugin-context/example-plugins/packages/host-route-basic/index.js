@@ -4,7 +4,7 @@
 // Teaches:  a Host plugin serves HTTP routes as one app on the framework's router, under a prefix it mounts; a client bundle can fetch them. Not on tui.
 // Expect:   ACTIVE on web/desktop (PENDING without the router); GET /api/example/hello returns "ok".
 // Docs:     extending.host-route
-// Pattern:  acryl-support src/route.ts, acryl-plugin-admin src/index.ts
+// Pattern:  @acryldev/support src/route.ts, @acryldev/plugin-admin src/index.ts
 import { Acryl } from 'acrylblends'
 
 export const name = 'acryl-example-route'

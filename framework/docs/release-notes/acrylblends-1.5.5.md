@@ -1,7 +1,7 @@
 # acrylblends 1.5.5
 
 An app shares itself: `npm run share` gives it a repository of its own on GitHub and pushes it there, after a person reads what would be sent.
-Released with [create-acrylblends 1.5.5](create-1.5.5.md); the one frame package that changes is `@acrylblends/blends-frame` 0.1.3.
+Released with [create-acrylblends 1.5.5](create-1.5.5.md); the one frame package that changes is `@acryldev/blends-frame` 0.1.3.
 
 - **`npm run share`.** It prints the plan: the repository (a new one under your account, or the remote the app already has), who can see it, and how
   many changed files are saved first. Only a plain yes at the terminal sends it. `--owner <account>` names another account or organization.

@@ -1,8 +1,8 @@
 /**
  * The SQLite provider of the `db` port (spec 049 slice 1): one `node:sqlite` file, opened with the ported facade's settings (WAL,
  * `synchronous = NORMAL`, a busy timeout), migrated, and provided as `db`. App plugins declare `inject: ['db']` and import types from
- * `acryl-db` only, so replacing this row with another provider does not touch them. The plugin is a thin wrapper over `openDb`
- * (`acryl-db-sqlite/open`), the same opening for code without Cordis.
+ * `@acryldev/db` only, so replacing this row with another provider does not touch them. The plugin is a thin wrapper over `openDb`
+ * (`@acryldev/db-sqlite/open`), the same opening for code without Cordis.
  *
  * Unloading withdraws `db` first, so consumers stop calling, and then closes the file: the close waits for running operations and
  * transactions, checkpoints the WAL and releases the file.
@@ -12,15 +12,15 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { DB_SERVICE } from 'acryl-db'
-import type {} from 'acryl-db/cordis'
+import { DB_SERVICE } from '@acryldev/db'
+import type {} from '@acryldev/db/cordis'
 import { openDb } from './open.ts'
 
 export { NodeSqliteDatabase, openNodeSqliteDatabase, type NodeSqliteDatabaseOptions } from './facade/node.ts'
 export { openDb, type OpenDb, type OpenDbOptions } from './open.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-db-sqlite'
+export const name = '@acryldev/db-sqlite'
 
 /**
  * What this plugin reads of the runtime's optional `appInstance` service: its home folder. The service belongs to the runtime (and to an
@@ -64,7 +64,7 @@ function resolveFromApp(ctx: Context, path: string, option: string): string {
   if (base === undefined || !base.startsWith('file:')) {
     const root = appRoot(ctx.get('appInstance'))
     if (root !== undefined) return resolve(root, path)
-    throw new Error(`acryl-db-sqlite: ${option} ${JSON.stringify(path)} is relative, but this app has no file base URL to resolve it from; give an absolute path`)
+    throw new Error(`@acryldev/db-sqlite: ${option} ${JSON.stringify(path)} is relative, but this app has no file base URL to resolve it from; give an absolute path`)
   }
   const appDir = base.endsWith('/') ? fileURLToPath(base) : dirname(fileURLToPath(base))
   return resolve(appDir, path)
@@ -77,7 +77,7 @@ export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void>
   let file: string
   if (config.path !== undefined) file = resolveFromApp(ctx, config.path, 'path')
   else if (isAppHome(appInstance)) file = join(appInstance.home, DEFAULT_FILE)
-  else throw new Error('acryl-db-sqlite: no database path; set `path` in this row\'s config (there is no ACRYL app home to default to)')
+  else throw new Error('@acryldev/db-sqlite: no database path; set `path` in this row\'s config (there is no ACRYL app home to default to)')
   const migrations = config.migrations === undefined ? undefined : resolveFromApp(ctx, config.migrations, 'migrations')
   const options = {
     path: file,
@@ -91,5 +91,5 @@ export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void>
     const opened = await openDb(options)
     yield () => opened.close()
     yield ctx.reflect.provide(DB_SERVICE, opened.db)
-  }, `acryl-db-sqlite: ${file}`)
+  }, `@acryldev/db-sqlite: ${file}`)
 }

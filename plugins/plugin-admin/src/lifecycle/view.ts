@@ -15,7 +15,7 @@ import type {} from '@deepseek-ai/dsh-client-modules'
 import type {
   AcrPluginLifecycle,
   PluginLifecycleReceipt as SharedReceipt,
-} from 'acryl-control'
+} from '@acryldev/control'
 import type {
   PluginLifecycleBlendView,
   PluginLifecycleEntryView,
@@ -129,7 +129,7 @@ export class PluginLifecycleView implements PluginLifecycleRouteController {
   }
 
   /**
-   * The installed version of the package a row loads (`acryl-plugin-hub/manager` is the `acryl-plugin-hub` package). Read on every snapshot,
+   * The installed version of the package a row loads (`@acryldev/plugin-hub/manager` is the `@acryldev/plugin-hub` package). Read on every snapshot,
    * not cached: a live reinstall changes it.
    */
   private packageVersion(moduleName: string): string | null {

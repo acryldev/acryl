@@ -7,7 +7,7 @@
  * the other machine-readable commands.
  */
 
-import type { PluginLifecycleEntryView } from 'acryl-harness-runtime'
+import type { PluginLifecycleEntryView } from '@acryldev/harness-runtime'
 import type { PluginCommandResult } from '../host/plugin-command.ts'
 
 export interface RenderedPluginCommand {

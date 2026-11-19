@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import type { SettingsScope } from 'acryl-settings'
+import type { SettingsScope } from '@acryldev/settings'
 import { describe, expect, it, vi } from 'vitest'
 import {
   SettingsCatalogSourceStore,

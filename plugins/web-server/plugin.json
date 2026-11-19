@@ -1,9 +1,15 @@
 {
-  "name": "acryl-web-server",
-  "description": "The webServer port of a framework-hosted app: the node request/upgrade interface DSH's driver rows register on, backed by acryl-node-server's raw routes. Ours, so the chat driver's connection and gateway run on our host without DSH's web server.",
-  "requires": ["acryl-node-server"],
-  "inject": ["nodeServer"],
-  "provides": ["webServer"],
+  "name": "web-server",
+  "description": "The webServer port of a framework-hosted app: the node request/upgrade interface DSH's driver rows register on, backed by @acryldev/node-server's raw routes. Ours, so the chat driver's connection and gateway run on our host without DSH's web server.",
+  "requires": [
+    "node-server"
+  ],
+  "inject": [
+    "nodeServer"
+  ],
+  "provides": [
+    "webServer"
+  ],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },

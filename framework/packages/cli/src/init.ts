@@ -171,7 +171,7 @@ export async function init(options: InitOptions, io: Io): Promise<number> {
   }
   const own = closure(readTemplatePlugins(templateDir(template)), readLibrary())
   const plugins = options.desktop
-    ? closure([...own.map((plugin) => plugin.name), 'desktop'], readLibrary())
+    ? closure([...own.map((plugin) => plugin.name), 'desktop-shell'], readLibrary())
     : own
   // What only the desktop shell brought (and needs), named apart so the list does not read as if the web app had asked for it.
   const forDesktop = plugins.filter((plugin) => !own.some((owned) => owned.name === plugin.name))

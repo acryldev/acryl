@@ -3,7 +3,7 @@
 import {
   useCallback, useEffect, useId, useState, useSyncExternalStore, type FormEvent, type ReactNode,
 } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryldev/ui/frame'
 import type {
   DesktopMarketProvider, DesktopProfileView, DesktopSettingsApi, DesktopSettingsView,
 } from './desktop-settings-api.ts'

@@ -122,12 +122,12 @@ describe('framework docs: code', () => {
     // errors that only say a placeholder is undefined are ignored. Everything else (a wrong import, a missing export, a method that does not exist) still fails.
     writeFileSync(
       join(out, 'blocks', 'ambient.d.ts'),
-      `// The Cordis side of the docs (ctx.router, ctx.routerHttp) is the vendored acryl-router plugin's declaration of those services.\nimport type {} from '${join(library, 'acryl-router', 'src', 'index.ts')}'\ndeclare global {\n  const app: import('${PACKAGE}').${CLASS}<any, any, any>\n}\nexport {}\n`,
+      `// The Cordis side of the docs (ctx.router, ctx.routerHttp) is the vendored @acryldev/router plugin's declaration of those services.\nimport type {} from '${join(library, '@acryldev/router', 'src', 'index.ts')}'\ndeclare global {\n  const app: import('${PACKAGE}').${CLASS}<any, any, any>\n}\nexport {}\n`,
     )
     // A block that augments the package's interfaces (`declare module`) changes the types of every other block in the same program, so each one is checked alone.
     const augments = (block: Block) => /declare (module|global)/.test(block.code)
     // A block fenced ` ```ts lib=webworker ` is code for a Service Worker or a Worker: it is checked with the WebWorker library (and no DOM, no Node types), alone.
-    // The pages about Cordis describe an app where `acrylblends` is the vendored acryl-router plugin (the app's tsconfig `paths`, taken from the agent template); the others are the
+    // The pages about Cordis describe an app where `acrylblends` is the vendored @acryldev/router plugin (the app's tsconfig `paths`, taken from the agent template); the others are the
     // public package. The two classes are separate declarations, so a block is checked against the one its page is about.
     const inCordis = (b: Block) =>
       b.page.startsWith('cordis') ||
@@ -139,10 +139,10 @@ describe('framework docs: code', () => {
     const pluginPaths: Record<string, string[]> = Object.fromEntries(
       Object.entries(appPaths).map(([key, targets]) => [
         key,
-        targets.map((t) => join(library, 'acryl-router', t.replace('./plugins/acryl-router/', ''))),
+        targets.map((t) => join(library, 'router', t.replace('./plugins/router/', ''))),
       ]),
     )
-    // The framework plugins by their package names (`acryl-state`, `acryl-router/middleware`): the source in plugins/, from each plugin's `entries`.
+    // The framework plugins by their package names (`@acryldev/state`, `@acryldev/router/middleware`): the source in plugins/, from each plugin's `entries`.
     for (const name of readdirSync(library)) {
       const manifest = join(library, name, 'plugin.json')
       if (!existsSync(manifest)) continue

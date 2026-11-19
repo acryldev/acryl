@@ -36,7 +36,7 @@ async function boot(): Promise<{ host: Host, origin: string, secret: string }> {
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })
   for (const entry of host.ctx.loader.entries()) {
-    if (entry.options.id === 'acryl-agent-control') entry.update({ config: { online: true, approval: 'none' } })
+    if (entry.options.id === '@acryldev/agent-control') entry.update({ config: { online: true, approval: 'none' } })
   }
   await host.ctx.loader.await()
   await new Promise(resolve => setTimeout(resolve, 300))
@@ -95,7 +95,7 @@ describe('the tool gateway on the real engine', () => {
   it('installs and removes a plugin an outside agent wrote, over MCP, through the same pipeline', async () => {
     const { host, origin, secret } = await boot()
     const { cpSync, writeFileSync } = await import('node:fs')
-    const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const example = fileURLToPath(new URL('../../../plugins/plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     const dir = mkdtempSync(join(tmpdir(), 'acryl-gateway-plugin-'))
     folders.push(dir)
     cpSync(example, dir, { recursive: true })

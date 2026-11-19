@@ -1,4 +1,4 @@
-import type { Db } from '../plugins/acryl-db/src/index.ts'
+import type { Db } from '../plugins/db/src/index.ts'
 
 export interface Message {
   id: number

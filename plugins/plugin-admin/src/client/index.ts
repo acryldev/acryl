@@ -6,11 +6,11 @@
  */
 
 // Pulls in `ctx.slots` (declared by the renderer package) and the settings slot map.
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { applyPluginLifecycleSettings } from './lifecycle/plugin-lifecycle-settings.ts'
 
-export const name = 'acryl-plugin-admin-client'
+export const name = '@acryldev/plugin-admin-client'
 /** `slots` for the tab contributions, `locale` for their dictionaries. */
 export const inject = ['slots', 'locale']
 

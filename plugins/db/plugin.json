@@ -1,17 +1,20 @@
 {
-  "name": "acryl-db",
-  "description": "The db port: the relational database an app plugin sees through inject: ['db'], with numbered SQL migrations. Types and the migration runner; a provider (acryl-db-sqlite) serves it. Vendored from ACRYL.",
+  "name": "db",
+  "description": "The db port: the relational database an app plugin sees through inject: ['db'], with numbered SQL migrations. Types and the migration runner; a provider (@acryldev/db-sqlite) serves it. Vendored from ACRYL.",
   "requires": [],
   "inject": [],
   "provides": [],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },
-  "mount": "it is the port, not a service: a plugin declares inject: ['db'] and imports its types from '../plugins/acryl-db/src/index.ts' (or the ctx.db type from '../plugins/acryl-db/src/cordis.ts'); add acryl-db-sqlite to provide it",
-  "omit": ["**/*.test.*", "**/*.case.ts"],
+  "mount": "it is the port, not a service: a plugin declares inject: ['db'] and imports its types from '../plugins/db/src/index.ts' (or the ctx.db type from '../plugins/db/src/cordis.ts'); add @acryldev/db-sqlite to provide it",
+  "omit": [
+    "**/*.test.*",
+    "**/*.case.ts"
+  ],
   "imports": {
-    "#acryl-db": "acryl-db/src/index.ts",
-    "#acryl-db/conformance": "acryl-db/src/conformance.ts"
+    "#acryl-db": "db/src/index.ts",
+    "#acryl-db/conformance": "db/src/conformance.ts"
   },
   "suite": "src/conformance.ts",
   "entries": {

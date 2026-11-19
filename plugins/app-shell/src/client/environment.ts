@@ -33,10 +33,10 @@ export function resolveShellEnvironment(hash: string): ShellEnvironment {
   const platform = params.get('dsh-desktop-platform')
   if (mode === null && platform === null) return WEB_SHELL_ENVIRONMENT
   if (!MODES.has(mode as ShellMode)) {
-    throw new Error(`acryl-workspace: invalid or missing dsh-desktop-mode ${JSON.stringify(mode)}`)
+    throw new Error(`@acryldev/workspace: invalid or missing dsh-desktop-mode ${JSON.stringify(mode)}`)
   }
   if (!DESKTOP_PLATFORMS.has(platform as ShellPlatform)) {
-    throw new Error(`acryl-workspace: invalid or missing dsh-desktop-platform ${JSON.stringify(platform)}`)
+    throw new Error(`@acryldev/workspace: invalid or missing dsh-desktop-platform ${JSON.stringify(platform)}`)
   }
   return { mode: mode as ShellMode, platform: platform as ShellPlatform }
 }

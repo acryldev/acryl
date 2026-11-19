@@ -37,7 +37,7 @@ spec:
   runtime: cordis
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'
 `
 
 const CYCLE_B = `

@@ -1,14 +1,14 @@
-# acryl-node-server
+# @acryldev/node-server
 
 The framework's standalone HTTP adapter (spec 046, ported in spec 047), the standalone counterpart of the Host adapter. One `node:http`
 server, built by the adapter in `src/adapter/`, that hands every request to `ctx.router.fetch`, with the socket's peer address and local
 port as connection facts. Use it in an app that runs
-without the ACRYL Host. Inside the Host, `acryl-router-http` mounts prefixes on the Host's own web server instead: one adapter per runtime.
+without the ACRYL Host. Inside the Host, `@acryldev/router-http` mounts prefixes on the Host's own web server instead: one adapter per runtime.
 
 ```ts
-import * as router from 'acryl-router'
-import { Acryl } from 'acryl-router'
-import * as nodeServer from 'acryl-node-server'
+import * as router from '@acryldev/router'
+import { Acryl } from '@acryldev/router'
+import * as nodeServer from '@acryldev/node-server'
 
 const root = new Context()
 root.plugin(router)
@@ -25,4 +25,4 @@ root.plugin(nodeServer, { port: 3000, hostname: '127.0.0.1', scan: 20 })
   middleware in a mounted `Acryl`. A client that goes away aborts `c.req.raw.signal`.
 - The platform's global `Request` and `Response` are left alone.
 
-Row id and package name: `acryl-node-server`.
+Row id and package name: `@acryldev/node-server`.

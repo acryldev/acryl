@@ -1,6 +1,6 @@
 # 03 — Runtime Boot: `bootAcrylHarnessProfile()` Deep Dive
 
-Source: `acryl-harness-runtime/src/index.ts` (plus `@deepseek-ai/dsh-app-boot` internals
+Source: `@acryldev/harness-runtime/src/index.ts` (plus `@deepseek-ai/dsh-app-boot` internals
 and `@deepseek-ai/dsh-base`'s bundle patch). This is the function that turns "a package
 name and a profile name" into a live Cordis root Context.
 

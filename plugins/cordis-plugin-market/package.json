@@ -1,5 +1,5 @@
 {
-  "name": "cordis-plugin-market",
+  "name": "@acryldev/cordis-plugin-market",
   "version": "0.1.0",
   "description": "Community plugin discovery and managed package operations for Cordis-based products (ACRYL and stock DeepSeek Harness alike)",
   "license": "MIT",
@@ -220,7 +220,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/semver": "^7.7.1",
-    "acryl-settings": "workspace:*",
+    "@acryldev/settings": "workspace:*",
     "acrylblends": "workspace:^",
     "jsdom": "29.1.1",
     "json-schema-to-typescript": "^15.0.4",

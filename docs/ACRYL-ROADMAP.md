@@ -15,9 +15,9 @@ Electron process state, are the authoritative account of agent work.
                          Node runtime owner
              (pinned Harness + Cordis + HMR + durable state)
                                   |
-                       acryl-harness-runtime
+                       @acryldev/harness-runtime
                                   |
-            acryl-control: lease, protocol, inspection, lifecycle
+            @acryldev/control: lease, protocol, inspection, lifecycle
                     /                 |                  \
           acryl-cli (pi-tui)      acryl-gui (Electron)   acryl-web
 ```
@@ -26,13 +26,13 @@ Electron process state, are the authoritative account of agent work.
 
 The current repository is in a staged migration from an Electron-heavy fork,
 not yet in the target architecture. `acryl-desktop` contains most product
-implementation, while `acryl-control`, `acryl-harness-runtime`, and
+implementation, while `@acryldev/control`, `@acryldev/harness-runtime`, and
 `acryl-cli` are newer, much smaller packages. The migration direction must be
 explicit: logic that is reusable across presentation surfaces moves out of
 `acryl-desktop`, while that package shrinks toward Electron-only concerns
 (window chrome, tray, native menu, packaging, updater, and OS integration).
 
-`acryl-harness-runtime` is the engine boundary. It starts and disposes the
+`@acryldev/harness-runtime` is the engine boundary. It starts and disposes the
 pinned Harness profile and owns the one live Cordis root. It must preserve the
 normal Harness composition, generated empty Loader root, bundle layers, and
 user `cordis.patch.yml` behavior. HMR is a Cordis framework capability, not a
@@ -40,7 +40,7 @@ TUI feature: development owners must launch Node with `--expose-internals` when
 the composed profile enables HMR; production profile composition decides whether
 HMR is disabled. No shared runtime package may disable HMR unconditionally.
 
-`acryl-control` is the control plane linked by every surface. It owns the
+`@acryldev/control` is the control plane linked by every surface. It owns the
 single-writer lease, authenticated attach protocol, architecture projection,
 lifecycle operations, and provider-neutral agent-control contracts. One active
 CLI, GUI, or Web controller may delegate scoped work to generic terminal or ACP
@@ -55,7 +55,7 @@ React Ink direction. Its renderer projects typed control/runtime snapshots and
 durable Harness records. It must not own a Cordis root, directly become the
 profile runtime, or become a second source of truth. The integration extracts
 surface-neutral agent, session, tool, approval, and lifecycle operations behind
-`acryl-control`, allowing the same agent to be operated from pi-tui, Electron,
+`@acryldev/control`, allowing the same agent to be operated from pi-tui, Electron,
 and Web.
 
 The community market is useful only after there are real capability packages to
@@ -93,8 +93,8 @@ that satisfies its acceptance criteria.
 
 - Declare `acryl-desktop` legacy presentation scaffolding to be drained,
   not the default home for new cross-surface capability work.
-- Keep the three package roles strict: runtime in `acryl-harness-runtime`,
-  typed semantic API in `acryl-control`, and presentation in surface packages.
+- Keep the three package roles strict: runtime in `@acryldev/harness-runtime`,
+  typed semantic API in `@acryldev/control`, and presentation in surface packages.
 - Implement agent/session/tool/plugin behavior once in the runtime. TUI,
   Electron, and Web call the same capability contracts through direct, IPC, or
   HTTP/WebSocket adapters as documented in
@@ -146,7 +146,7 @@ while retaining renderer-specific presentation code.
 
 > Note: M9 (`specs/028-harness-engine-swap`) carries a minimal slice of this
 > milestone ("M2-slice-alpha": an engine-neutral runtime seam in
-> `acryl-harness-runtime` + the TUI re-pointed off the direct DSH bootstrap),
+> `@acryldev/harness-runtime` + the TUI re-pointed off the direct DSH bootstrap),
 > scoped to what the engine swap needs. See `specs/028-harness-engine-swap/research.md`
 > Decision 1.
 
@@ -154,7 +154,7 @@ while retaining renderer-specific presentation code.
 
 - Extract profile materialization, profile state, checkpoint/recovery,
   lifecycle control, and architecture inspection from `acryl-desktop`
-  behind `acryl-harness-runtime` and `acryl-control` contracts.
+  behind `@acryldev/harness-runtime` and `@acryldev/control` contracts.
 - Keep Electron-specific UI routes as clients of the extracted services until
   they can be simplified or removed.
 - Ensure profile semantics remain identical whether initiated by terminal,
@@ -241,11 +241,11 @@ separate, per-turn concern. See
 
 - Make the agent **engine** - the owner of the agent loop, durable sessions,
   tools, models, and approvals - a replaceable provider behind
-  `acryl-harness-runtime`, not a hard-wired DeepSeek Harness `startDirectHost()`
+  `@acryldev/harness-runtime`, not a hard-wired DeepSeek Harness `startDirectHost()`
   call. DSH-in-CLI-mode is the first engine; `pi` (`pi.dev` / prime-agent) is
   the second; a declared DSH+pi composition is a later candidate.
 - Surfaces (`acryl-cli`, Electron, Web) talk only to the engine-neutral
-  `acryl-control` capability API. No surface imports a DSH-only or pi-only
+  `@acryldev/control` capability API. No surface imports a DSH-only or pi-only
   bootstrap. This milestone depends on M2 normalizing that API.
 - Keep the ACRYL room, context relay, task artifacts, decisions, and canonical
   worker identity constant across an engine swap. Engine-native session stores

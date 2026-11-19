@@ -71,11 +71,11 @@ index abaaa32..ba6823f 100644
 -export const categories = categoriesRaw.map((c) => ({ slug: slugify(c.name), name: c.name, subs: c.subs, count: 0 }));
 -
 -// Illustrative preview Blends — real category/taxonomy alignment, real plugin
--// package names drawn from acryldev/acryl where they exist (cordis-plugin-market,
--// dsh-client-ui-brand-acryl, acryl-control, acryl-harness-runtime), fictional
+-// package names drawn from acryldev/acryl where they exist (@acryldev/cordis-plugin-market,
+-// @acryldev/brand-client, @acryldev/control, @acryldev/harness-runtime), fictional
 -// names elsewhere clearly scoped as preview data, not a claim of a populated registry.
 -export const blends: Blend[] = [
--  { slug: "acryl", name: "ACRYL", description: "The flagship, maxed-out Blend. One complete expression of the model: agent control plane, terminal/web/desktop surfaces, editor, market and brand slots composed into a single working product.", category: "Developer", subcategory: "Agentic development environments", tags: ["flagship", "agents", "multi-surface"], plugins: ["cordis", "acryl-control", "acryl-harness-runtime", "cordis-plugin-market", "dsh-client-ui-brand-acryl"], publisher: "acryldev", version: "0.1.44", license: "MIT", pulls: "—" },
+-  { slug: "acryl", name: "ACRYL", description: "The flagship, maxed-out Blend. One complete expression of the model: agent control plane, terminal/web/desktop surfaces, editor, market and brand slots composed into a single working product.", category: "Developer", subcategory: "Agentic development environments", tags: ["flagship", "agents", "multi-surface"], plugins: ["cordis", "@acryldev/control", "@acryldev/harness-runtime", "@acryldev/cordis-plugin-market", "@acryldev/brand-client"], publisher: "acryldev", version: "0.1.44", license: "MIT", pulls: "—" },
 -  { slug: "blank-canvas", name: "Blank Canvas", description: "The smallest viable Blend. Start empty, then grow only what the work needs.", category: "Developer", subcategory: "Code editors", tags: ["starter", "minimal", "hot-reload"], plugins: ["cordis"], publisher: "acrylblends", version: "0.1.0", license: "MIT", pulls: "—" },
 -  { slug: "agent-workbench", name: "Agent Workbench", description: "A focused environment for tool-using agents, evaluations, memory and human checkpoints.", category: "AI", subcategory: "Agent infrastructure", tags: ["agents", "evaluation", "memory"], plugins: ["cordis", "agent-runtime", "checkpoint-store", "tool-router"], publisher: "acrylblends", version: "0.1.0", license: "Apache-2.0", pulls: "—" },
 -  { slug: "local-first-studio", name: "Local-first Studio", description: "Desktop-ready composition with local storage, sync boundaries and a visual work surface.", category: "Application", subcategory: "Productivity", tags: ["desktop", "local-first", "sync"], plugins: ["cordis", "desktop-surface", "local-store", "sync-adapter"], publisher: "webboxes", version: "0.1.0", license: "MIT", pulls: "—" },
@@ -128,7 +128,7 @@ index 0000000..ecdf624
 +    layer: "Routing",
 +    question: "How does a request become a response?",
 +    service: "router",
-+    providers: ["acryl-router"],
++    providers: ["@acryldev/router"],
 +    status: "stable",
 +    note: "One Acryl app per plugin, mounted with ctx.router.route. Five routers behind one API: RegExp, Trie, Smart (default), Linear, Pattern.",
 +  },
@@ -136,7 +136,7 @@ index 0000000..ecdf624
 +    layer: "Serving",
 +    question: "How is it served?",
 +    service: "routerHttp",
-+    providers: ["acryl-node-server", "Desktop's loopback host", "in process"],
++    providers: ["@acryldev/node-server", "Desktop's loopback host", "in process"],
 +    status: "stable",
 +    note: "Node.js is the verified runtime (22.19+); Bun is experimental. Tests and the terminal UI call the app without a socket.",
 +  },
@@ -144,7 +144,7 @@ index 0000000..ecdf624
 +    layer: "Records",
 +    question: "Where does my app keep its records?",
 +    service: "db",
-+    providers: ["acryl-db-sqlite", "acryl-db-pglite", "acryl-db-postgres"],
++    providers: ["@acryldev/db-sqlite", "@acryldev/db-pglite", "@acryldev/db-postgres"],
 +    status: "optional",
 +    note: "SQL with numbered migrations. SQLite is the default; embedded Postgres (PGlite) and a hosted Postgres are one provider row away, and the app's SQL does not change.",
 +  },
@@ -152,7 +152,7 @@ index 0000000..ecdf624
 +    layer: "Tiny data",
 +    question: "My app is small; can it skip SQL?",
 +    service: "kv",
-+    providers: ["acryl-kv-json", "acryl-kv-db"],
++    providers: ["@acryldev/kv-json", "@acryldev/kv-db"],
 +    status: "stable",
 +    note: "Named JSON documents. The file provider replaces atomically, so a crash leaves the old or the new file; the db provider carries the same data into SQL.",
 +  },
@@ -160,7 +160,7 @@ index 0000000..ecdf624
 +    layer: "Live state",
 +    question: "How does the page see changes without a reload?",
 +    service: "state",
-+    providers: ["acryl-state"],
++    providers: ["@acryldev/state"],
 +    status: "stable",
 +    note: "Observable cells over server-sent events.",
 +  },
@@ -192,7 +192,7 @@ index 0000000..ecdf624
 +    layer: "The door",
 +    question: "How does an agent look at and change the app?",
 +    service: "acryl control",
-+    providers: ["acryl-door", "agent-panel"],
++    providers: ["@acryldev/door", "agent-panel"],
 +    status: "experimental",
 +    note: "brief, look, act and plugin add|remove|reload over the CLI, MCP and the in-app chat. Loopback, per-run secret, audit log, and off with NODE_ENV=production or ACRYL_DOOR=off.",
 +  },

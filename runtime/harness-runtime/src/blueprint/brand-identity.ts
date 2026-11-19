@@ -3,7 +3,7 @@
  * (a private, closed-source product or an internal tool). Pure: no I/O, no framework types. Every invariant is
  * enforced at construction, so a Blueprint can never hold a brand the client cannot render.
  *
- * @module acryl-harness-runtime/blueprint/brand-identity
+ * @module @acryldev/harness-runtime/blueprint/brand-identity
  */
 
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/u

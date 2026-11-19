@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-driver-acp',
+  name: '@acryldev/driver-acp',
   entry,
   outDir: 'lib',
   format: 'esm',

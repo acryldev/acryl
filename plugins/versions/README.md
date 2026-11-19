@@ -1,4 +1,4 @@
-# acryl-versions
+# @acryldev/versions
 
 Versions for the ACRYL frame: the branch's commits as save points. One Cordis plugin with a Host half and
 a client half.
@@ -10,9 +10,9 @@ never rewritten.
 
 ## Host
 
-Row id and name `acryl-versions`; injects `router` and `routerHttp`; mounts
+Row id and name `@acryldev/versions`; injects `router` and `routerHttp`; mounts
 `/api/acryl-versions` on the framework's router. Every route is private: only the app's own page on the
-loopback address may call it (`ownPage` from `acryl-loopback-http/router`), answers are never cached or
+loopback address may call it (`ownPage` from `@acryldev/loopback-http/router`), answers are never cached or
 sniffed, and a known path asked with another method is 405 with its `Allow`.
 
 | Route | Body / query | Answer |
@@ -52,7 +52,7 @@ One `ctx.effect` owns the runner and both registrations.
 
 ## Client
 
-Client plugin `acryl-versions-client`, platform `web`. It provides the `acrylVersions` service:
+Client plugin `@acryldev/versions-client`, platform `web`. It provides the `acrylVersions` service:
 
 ```ts
 { api: VersionsApi, Section: ComponentType<{ path: string }> }

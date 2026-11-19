@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { GitRunner, Versions } from 'acryl-versions'
+import { GitRunner, Versions } from '@acryldev/versions'
 import { Acryl } from 'acrylblends'
 import { AutoSave, messageText, requestSubject, SaveStore, type AutoSaveDeps } from '../src/auto-save.ts'
 import { frameRoutes, saveVersion } from '../src/index.ts'

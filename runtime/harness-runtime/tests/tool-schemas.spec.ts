@@ -5,8 +5,8 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { registerPluginTools } from 'acryl-plugin-admin'
-import { registerContextTool, registerWorkspaceTools } from 'acryl-workspace'
+import { registerPluginTools } from '@acryldev/plugin-admin'
+import { registerContextTool, registerWorkspaceTools } from '@acryldev/workspace'
 import { describe, expect, it } from 'vitest'
 
 function portThroughDshCompiler(): { ctx: Context, names: string[] } {

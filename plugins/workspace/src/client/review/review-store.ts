@@ -25,7 +25,7 @@ export interface ReviewThread {
 
 export type NewReviewThread = Omit<ReviewThread, 'id' | 'sentAt' | 'resolved'>
 
-export const REVIEW_STORAGE_KEY = 'acryl-workspace:review:v1'
+export const REVIEW_STORAGE_KEY = '@acryldev/workspace:review:v1'
 export const MAX_THREADS_PER_WORKTREE = 200
 const MAX_TEXT = 4000
 

@@ -10,5 +10,5 @@ spec:
   runtime: cordis
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'
       priority: 1

@@ -1,8 +1,8 @@
 /** Strict loopback routes for the private Desktop settings API, on the router. */
 
 import { Acryl, type Context } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import { afterBody } from '../api/http.ts'
 import { assertDesktopProfileName } from '../profile/profile-manager.ts'
 import type { DesktopMarketProvider } from '../plugins/desktop-market.ts'

@@ -51,7 +51,7 @@ const run = (command, args, cwd) => {
 
 /** A plugin whose pages carry no door script: /p1 shows a version and the contents of page.txt (read on each request), /p2 is another page. */
 const plugin = (version) => `import { readFileSync } from 'node:fs'
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 
 export const name = 'pages'
 export const inject = ['router']
@@ -117,7 +117,7 @@ export function apply(ctx: { router: { route(path: string, app: unknown): void }
   mkdirSync(join(app, 'plugins', 'ticker'))
   writeFileSync(
     join(app, 'plugins', 'ticker', 'index.ts'),
-    `import { Acryl } from 'acryl-router'
+    `import { Acryl } from '@acryldev/router'
 
 export const name = 'ticker'
 export const inject = ['router', 'state', 'model', 'tools']
@@ -434,7 +434,7 @@ export function apply(ctx: { router: { route(path: string, app: unknown): void }
   // (A navigation is a request too: it would queue behind the six, so they are let go first.)
   await inPage('window.__hogs.forEach((source) => source.close()); true')
   await sleep(500)
-  await inPage("localStorage.setItem('acryl-door-transport', 'stream'); true")
+  await inPage("localStorage.setItem('@acryldev/door-transport', 'stream'); true")
   await panelCdp.send('Page.navigate', { url: `${base}/p1` })
   await until(
     async () => (await inPage("!!document.getElementById('agent-panel')")) === true,
@@ -460,7 +460,7 @@ export function apply(ctx: { router: { route(path: string, app: unknown): void }
     return seen.code === 0 && seen.out.includes('Version')
   }, 20_000)
   if (!recovered) fail('E: the event stream fallback does not work once the connections are free')
-  await inPage("localStorage.removeItem('acryl-door-transport'); true")
+  await inPage("localStorage.removeItem('@acryldev/door-transport'); true")
   log(
     'E: kept to the event stream, six held connections make a look fail in seconds with a named reason, and it works again once they are free',
   )

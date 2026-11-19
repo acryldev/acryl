@@ -10,7 +10,7 @@
  */
 import { existsSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
-import { HOME_PLUGINS_FOLDER, homePluginsDir, moveFolder, PROJECT_PLUGINS_FOLDER, projectPluginsDir as sharedProjectPluginsDir } from '@webboxes/plugin-hub'
+import { HOME_PLUGINS_FOLDER, homePluginsDir, moveFolder, PROJECT_PLUGINS_FOLDER, projectPluginsDir as sharedProjectPluginsDir } from '@acryldev/plugin-hub-core'
 
 const SCOPE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u
 const SCOPE_MAX = 64
@@ -40,7 +40,7 @@ function instanceRoot(workspaceDir, instance) {
   return join(workspaceDir, '.acryl', 'instances', instance)
 }
 
-/** A project's source plugins folder, moved once from its name before the rename (`@webboxes/plugin-hub` folders). */
+/** A project's source plugins folder, moved once from its name before the rename (`@acryldev/plugin-hub-core` folders). */
 export function projectPluginsDir(workspaceDir, instance = currentInstance()) {
   if (instance === undefined) return sharedProjectPluginsDir(workspaceDir)
   const dir = join(instanceRoot(workspaceDir, instance), HOME_PLUGINS_FOLDER)

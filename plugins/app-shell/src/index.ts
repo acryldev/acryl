@@ -6,7 +6,7 @@
  */
 
 /** Stable Cordis plugin name. */
-export const name = 'acryl-app-shell'
+export const name = '@acryldev/app-shell'
 
 /** No Host-side resources to acquire. */
 export function apply(): void {}

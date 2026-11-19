@@ -1,7 +1,7 @@
 /**
  * CLI/TUI's own `desktopPlugins` + `livePluginActivation` capabilities (spec
  * 034, completing T006 for the third surface) - the package-name-shaped view
- * `cordis-plugin-market`'s install service needs, plus real live activation
+ * `@acryldev/cordis-plugin-market`'s install service needs, plus real live activation
  * so an install through the TUI's own `/plugins` command takes effect
  * without restarting the process.
  *
@@ -13,7 +13,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { type Context, Service } from '@deepseek-ai/cordis'
-import type { AcrPluginLifecycleController } from 'acryl-control'
+import type { AcrPluginLifecycleController } from '@acryldev/control'
 import {
   mountAcrylPluginLifecycle,
   type DshPluginLifecycleOptions,
@@ -38,10 +38,10 @@ interface PreviewEntry {
 
 const PREVIEW_TTL_MS = 5 * 60 * 1000
 const MAX_PREVIEWS = 256
-/** Matches cordis-plugin-market's own PACKAGE_NAME_PATTERN. */
+/** Matches @acryldev/cordis-plugin-market's own PACKAGE_NAME_PATTERN. */
 const NPM_PACKAGE_NAME_PATTERN = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/u
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPlugins` shape exactly. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPlugins` shape exactly. */
 export class CliPluginsService extends Service {
   private readonly previews = new Map<string, PreviewEntry>()
 
@@ -105,7 +105,7 @@ export class CliPluginsService extends Service {
   // `controller.setEnabled()` applies live via Cordis' reactive Loader before
   // resolving, so a resolved call always means `live: true`. Omitting this
   // field left `MarketDesktopPlugins.executeEnable/executeDisable`'s
-  // `restartRequired` computation (cordis-plugin-market/src/host/routes.ts)
+  // `restartRequired` computation (@acryldev/cordis-plugin-market/src/host/routes.ts)
   // permanently `true` for CLI too - same copy-pasted gap as Web had.
   private async execute(previewId: string, targetEnabled: boolean): Promise<{ readonly packageName: string; readonly live: boolean }> {
     const preview = this.previews.get(previewId)

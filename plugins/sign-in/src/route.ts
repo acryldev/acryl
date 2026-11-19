@@ -1,8 +1,8 @@
 /** Strict same-origin loopback routes for signing in. No response carries a secret; an answer is handed to the flow and dropped. */
 import { Acryl } from 'acrylblends'
-import { SignInAttemptError } from 'acryl-control'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { SignInAttemptError } from '@acryldev/control'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import type { SignInController } from './controller.ts'
 import { SignInRequestError } from './controller.ts'
 import {

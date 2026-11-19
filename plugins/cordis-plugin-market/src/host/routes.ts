@@ -4,7 +4,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { Acryl, type Context as RequestContext } from 'acrylblends'
 import { connectionOf } from 'acrylblends/cordis/router'
-import type { SettingsScope } from 'acryl-settings'
+import type { SettingsScope } from '@acryldev/settings'
 import type { CatalogSourceManifest } from '../contracts/index.js'
 import { parseCatalogSnapshot, parseCatalogSource, validateLocalSourceRecords } from '../contracts/validate.js'
 import type { CatalogHttpClient } from '../contracts/types.js'
@@ -43,7 +43,7 @@ import type {} from 'acrylblends/cordis/router-http'
 
 // `SettingsNamespace` is a compile-time-validated string literal type, not a
 // branded runtime value; `ctx.acrylSettings.register` accepts this literal directly.
-export const MARKET_SETTINGS_NAMESPACE = 'cordis-plugin-market'
+export const MARKET_SETTINGS_NAMESPACE = '@acryldev/cordis-plugin-market'
 const SOURCE_SCHEMA = z.object({
   sourceRecordId: z.string().required(),
   registrationKind: z.union(['user-added', 'built-in'] as const).required(),
@@ -1319,10 +1319,10 @@ export function registerMarketRoutes(
           setTimeout(() => {
             try {
               void actions.requestRestart().catch(() => {
-                ctx.logger.error('cordis-plugin-market: desktop restart request failed')
+                ctx.logger.error('@acryldev/cordis-plugin-market: desktop restart request failed')
               })
             } catch {
-              ctx.logger.error('cordis-plugin-market: desktop restart request failed')
+              ctx.logger.error('@acryldev/cordis-plugin-market: desktop restart request failed')
             }
             resolve()
           }, 0)

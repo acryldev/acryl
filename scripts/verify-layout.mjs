@@ -19,8 +19,8 @@ const pnpmWorkspace = readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8')
 const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
 const plugin = readJson('apps/acryl-desktop/package.json')
-const control = readJson('runtime/acryl-control/package.json')
-const harness = readJson('runtime/acryl-harness-runtime/package.json')
+const control = readJson('runtime/control/package.json')
+const harness = readJson('runtime/harness-runtime/package.json')
 const cli = readJson('apps/acryl-cli/package.json')
 const web = readJson('apps/acryl-web/package.json')
 const fabric = readJson('plugins/dsh-community-fabric/package.json')
@@ -44,17 +44,17 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
-  - examples/acryl-blend-demo
-  - examples/acryl-framework-starter
-  - examples/acryl-todo
-  - runtime/acryl-control
-  - runtime/acryl-diagnostics
-  - runtime/acryl-harness-runtime
+  - examples/blend-demo
+  - examples/framework-starter
+  - examples/todo
+  - runtime/control
+  - runtime/diagnostics
+  - runtime/harness-runtime
   - runtime/blends-core
   - runtime/app-persistence
-  - runtime/plugin-hub
-  - runtime/acryl-loopback-http
-  - runtime/acryl-web-service
+  - runtime/plugin-hub-core
+  - runtime/loopback-http
+  - runtime/web
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web
@@ -82,7 +82,7 @@ allowBuilds:
 
 overrides:
   koffi: 3.1.5
-  # Nothing loads DeepSeek Harness's native internals add-on: ACRYL's profile resolution (runtime/acryl-harness-runtime/src/profile-resolution)
+  # Nothing loads DeepSeek Harness's native internals add-on: ACRYL's profile resolution (runtime/harness-runtime/src/profile-resolution)
   # runs on Node's public module hooks, and the Cordis Loader falls back to plain import() without it. The add-on accepts only the Electron
   # builds named in its binary, so leaving it installed would tie Desktop to them again.
   node-addon-require-builtin: '-'
@@ -144,22 +144,22 @@ supportedArchitectures:
 }
 for (const [name, manifest] of [
   ['acryl-desktop', plugin],
-  ['acryl-control', control],
-  ['acryl-harness-runtime', harness],
+  ['@acryldev/control', control],
+  ['@acryldev/harness-runtime', harness],
   ['acryl-npm-launcher', readJson('distribution/acryl-npm-launcher/package.json')],
   ['acryl-cli', cli],
   ['acryl-web', web],
-  ['dsh-community-fabric', fabric],
-  ['cordis-plugin-market', market],
+  ['@acryldev/dsh-community-fabric', fabric],
+  ['@acryldev/cordis-plugin-market', market],
 ]) {
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root PNPM release`)
 }
-if (control.name !== 'acryl-control') fail('the control workspace must own acryl-control')
+if (control.name !== '@acryldev/control') fail('the control workspace must own @acryldev/control')
 if (readJson('distribution/acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
 if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
 if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
-if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
-if (market.name !== 'cordis-plugin-market') fail('the market workspace must own cordis-plugin-market')
+if (fabric.name !== '@acryldev/dsh-community-fabric') fail('the Fabric workspace must own @acryldev/dsh-community-fabric')
+if (market.name !== '@acryldev/cordis-plugin-market') fail('the market workspace must own @acryldev/cordis-plugin-market')
 const claudePath = resolve(root, 'CLAUDE.md')
 const claudeStat = lstatSync(claudePath)
 // Windows checkouts materialize the symlink as a regular file holding the
@@ -176,10 +176,10 @@ for (const obsoleteFile of [
   '.yarn',
   'apps/acryl-desktop/yarn.lock',
   'apps/acryl-desktop/.yarnrc.yml',
-  'runtime/acryl-control/yarn.lock',
-  'runtime/acryl-control/.yarnrc.yml',
-  'runtime/acryl-harness-runtime/yarn.lock',
-  'runtime/acryl-harness-runtime/.yarnrc.yml',
+  'runtime/control/yarn.lock',
+  'runtime/control/.yarnrc.yml',
+  'runtime/harness-runtime/yarn.lock',
+  'runtime/harness-runtime/.yarnrc.yml',
   'apps/acryl-cli/yarn.lock',
   'apps/acryl-cli/.yarnrc.yml',
   'plugins/dsh-community-fabric/yarn.lock',
@@ -258,7 +258,7 @@ for (const [owner, manifest] of [
 }
 
 // DSH 0.2 ships each agent preset as a patch file of the `dsh-web-app` bundle, and ACRYL's terminal layers those same four files in
-// (`terminalPresetPatches` in acryl-harness-runtime). Make that dependency loud: if upstream drops or renames one, the terminal roster
+// (`terminalPresetPatches` in @acryldev/harness-runtime). Make that dependency loud: if upstream drops or renames one, the terminal roster
 // would silently shrink, so fail here when the submodule is initialized but a file is gone.
 for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
   const presetPatch = resolve(upstreamDir, 'packages', 'bundle', 'web-app', 'presets', `${preset}.patch.yml`)
@@ -269,20 +269,20 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 
 // The DSH import ratchet (spec 001 T046). ACRYL's own code reaches DeepSeek Harness only through the engine seam; every other direct
 // `from '@deepseek-ai/dsh...'` line in non-test source is coupling that has to shrink. The seam is named here, as files, so "outside the seam" has one
-// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryl/ui` facades (contract adapters, `frame.ts` and the `acrylChat` service in `client/chat.ts`); a plugin whose sole capability is the DSH chat would
+// definition: the engine files and the ported DSH profile resolution, the Desktop Electron entry, and the `@acryldev/ui` facades (contract adapters, `frame.ts` and the `acrylChat` service in `client/chat.ts`); a plugin whose sole capability is the DSH chat would
 // also belong, and none is declared: if one seems to qualify, record it as a finding instead of adding it. Both ceilings only move down: when a
 // change lowers a count, this gate says so and the ceiling is lowered in the same commit.
 // One deliberate raise: total went from 133 to 135 when DSH's profile package resolution was ported into the runtime (2026-10-25), because the port
 // subclasses DSH's PluginPackages and routes DSH's own resolution table; it serves only the DSH engine, so it is part of the seam.
-// The seam grew by two lines, total 135 to 137 with outside the seam unchanged at 104, for `@acryl/ui`'s `acrylChat` service (spec 049 T002,
+// The seam grew by two lines, total 135 to 137 with outside the seam unchanged at 104, for `@acryldev/ui`'s `acrylChat` service (spec 049 T002,
 // 2026-10-28): `frame.ts` re-exports DSH's `command/executed` event type and `client/chat.ts` reads DSH's own conversation phase, so a client plugin such
-// as acryl-command-reply reads the chat's phase and posts a composer notice without naming a DSH package.
-// Spec 051 (2026-11-18), total 137 to 138 with outside the seam unchanged: the Blends frame's acryl-app-shell came home with a Settings launcher
+// as @acryldev/command-reply reads the chat's phase and posts a composer notice without naming a DSH package.
+// Spec 051 (2026-11-18), total 137 to 138 with outside the seam unchanged: the Blends frame's @acryldev/app-shell came home with a Settings launcher
 // for DSH's `sidebar.settings` slot, whose types `frame.ts` now re-exports (one line); and the acrylWeb adapter moved from the engine's own
-// engine-web.ts into runtime/acryl-web-service, which ACRYL's engine and every Blends app mount, so that one file is the same seam under a new path.
-// Spec 051 T018 (2026-11-19), total 138 to 146 and outside the seam 104 to 112: the Blends frame's own plugins (acryl-blends-frame,
-// acryl-app-context) moved from framework/ide into the flat plugins/ folder, so their existing DSH imports (chat, sidebars, dsh-tools, dsh-llm;
-// eight lines, none new) are counted for the first time. Routing them through @acryl/ui's seam is its own task.
+// engine-web.ts into runtime/web, which ACRYL's engine and every Blends app mount, so that one file is the same seam under a new path.
+// Spec 051 T018 (2026-11-19), total 138 to 146 and outside the seam 104 to 112: the Blends frame's own plugins (@acryldev/blends-frame,
+// @acryldev/app-context) moved from framework/ide into the flat plugins/ folder, so their existing DSH imports (chat, sidebars, dsh-tools, dsh-llm;
+// eight lines, none new) are counted for the first time. Routing them through @acryldev/ui's seam is its own task.
 const DSH_IMPORT_CEILING = { total: 146, outsideSeam: 112 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
@@ -330,12 +330,12 @@ let webRegistrations = 0
 const foundationFolders = [...readGraph(root)].filter(([name]) => FOUNDATION.has(name)).map(([, { folder }]) => folder)
 for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/packages']).split('\n')) {
   if (file === '' || NOT_SHIPPED.test(file) || inBlendApp(file) || !existsSync(resolve(root, file))) continue
-  // The framework foundation implements the web layer (acryl-router-http mounts routers on the web server, acryl-page serves the page): the
+  // The framework foundation implements the web layer (@acryldev/router-http mounts routers on the web server, @acryldev/page serves the page): the
   // rule is for code that uses it.
   if (foundationFolders.some(folder => file.startsWith(`${folder}/`))) continue
   for (const line of readFileSync(resolve(root, file), 'utf8').split('\n')) if (WEB_REGISTRATION.test(line)) webRegistrations += 1
 }
-if (webRegistrations > WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, above the ceiling ${WEB_REGISTRATION_CEILING}; serve the route on the router instead (ctx.router.route('/', app) and ctx.routerHttp.mount(prefix), see plugins/acryl-plugin-context/docs/extending/host-route.md)`)
+if (webRegistrations > WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, above the ceiling ${WEB_REGISTRATION_CEILING}; serve the route on the router instead (ctx.router.route('/', app) and ctx.routerHttp.mount(prefix), see plugins/plugin-context/docs/extending/host-route.md)`)
 if (webRegistrations < WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, below the ceiling ${WEB_REGISTRATION_CEILING}: lower WEB_REGISTRATION_CEILING to ${webRegistrations} in scripts/verify-layout.mjs`)
 
 // Isolation fails closed (spec 001, T058). A `verify-*` script that spawns a process able to boot an app (a packed or built bin, Electron, a launcher) must
@@ -355,7 +355,7 @@ for (const directory of scriptDirectories) {
 
 // Build output is never committed (spec 001, T072). A package whose `build` writes `lib/` (every one with a build script) has no tracked file there:
 // a committed bundle goes stale the moment its source changes without a rebuild in the same commit. Packages without a build script keep
-// hand-written sources in `lib/` (acryl-plugin-context, acryl-brand, acryl-system-prompt) and are not affected.
+// hand-written sources in `lib/` (@acryldev/plugin-context, @acryldev/brand, @acryldev/system-prompt) and are not affected.
 const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**', ':(glob)framework/*/*/lib/**']).split('\n').filter(Boolean)
 for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples', 'framework/packages']) {
   if (!existsSync(resolve(root, group))) continue

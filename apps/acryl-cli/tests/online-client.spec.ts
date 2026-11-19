@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RunningApp } from 'acryl-harness-runtime'
+import type { RunningApp } from '@acryldev/harness-runtime'
 import { OnlineChannelError, pickInstance } from '../src/host/online-client.ts'
 
 function app(id: string, overrides: Partial<RunningApp> = {}): RunningApp {

@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-plugin-share',
+  name: '@acryldev/plugin-share',
   entry,
   outDir: 'lib',
   format: 'esm',

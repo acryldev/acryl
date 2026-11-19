@@ -49,7 +49,7 @@ describe('parseBlueprint', () => {
 
   it('stands alone with safe defaults when it extends nothing', () => {
     const blueprint = parseBlueprint({ id: 'tiny' })
-    expect(blueprint.capabilities).toEqual(['authorization', 'acryl-settings'])
+    expect(blueprint.capabilities).toEqual(['authorization', '@acryldev/settings'])
     expect(blueprint.shell).toBe('compatibility')
   })
 
@@ -80,7 +80,7 @@ describe('parseBlueprint', () => {
   it('every row id a file may name composes on at least one surface (the id list cannot drift from the row table)', () => {
     for (const id of BLUEPRINT_ROW_IDS) {
       const probe = parseBlueprint({ id: 'probe', rows: [id], capabilities: ['authorization'] })
-      const composed = (['tui', 'web', 'desktop'] as const).some(surface => composeBlueprintRows(probe, surface).packages.some(name => name !== 'dsh-client-ui-brand-acryl' && name !== 'acryl-brand'))
+      const composed = (['tui', 'web', 'desktop'] as const).some(surface => composeBlueprintRows(probe, surface).packages.some(name => name !== '@acryldev/brand-client' && name !== '@acryldev/brand'))
       expect(composed, id).toBe(true)
     }
   })
@@ -89,14 +89,14 @@ describe('parseBlueprint', () => {
     const blueprint = parseBlueprint({ id: 'acme.music', extends: 'acryl.blank', rows: [...BLANK_BLUEPRINT.rows, 'app-shell'] })
     for (const surface of ['web', 'desktop'] as const) {
       const { packages, patches } = composeBlueprintRows(blueprint, surface, new Set(), ADVANCED_SHELL_PATCHES)
-      expect(packages).toContain('acryl-app-shell')
-      expect(patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toContain('acryl-app-shell')
+      expect(packages).toContain('@acryldev/app-shell')
+      expect(patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toContain('@acryldev/app-shell')
       expect(patches).toEqual(expect.arrayContaining([{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }]))
     }
     const tui = composeBlueprintRows(blueprint, 'tui')
-    expect(tui.packages).not.toContain('acryl-app-shell')
+    expect(tui.packages).not.toContain('@acryldev/app-shell')
     expect(tui.patches).not.toContainEqual({ id: 'ui-layout', disabled: true })
-    expect(blueprintRowForModule('acryl-app-shell')).toBe('app-shell')
+    expect(blueprintRowForModule('@acryldev/app-shell')).toBe('app-shell')
   })
 
   it('a Blend without it keeps the stock frame', () => {
@@ -109,8 +109,8 @@ describe('a blueprint file selected from the environment', () => {
     const sample = fileURLToPath(new URL('../../../specs/036-cordis-ecosystem-and-acryl-blends/samples/private-brand.blueprint.yaml', import.meta.url))
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: sample })
     expect(blueprint.id).toBe('acme.notes')
-    expect(blueprint.rows).not.toContain('acryl-workspace' as never)
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
+    expect(blueprint.rows).not.toContain('@acryldev/workspace' as never)
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', '@acryldev/blends/cordis/router', '@acryldev/blends/cordis/router-http', '@acryldev/blends/cordis/state', '@acryldev/blends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub-core/manager'])
   })
 
   it('is read, validated and rebranded like a built-in', () => {

@@ -6,15 +6,15 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { agent, memory, model, tools } from 'acryl-agent'
-import * as panel from 'acryl-agent-panel'
-import { builder } from 'acryl-builder'
-import * as door from 'acryl-door'
-import { extensions } from 'acryl-extensions'
-import { instance, pinnedInstance } from 'acryl-instance'
-import * as nodeServer from 'acryl-node-server'
-import * as router from 'acryl-router'
-import * as state from 'acryl-state'
+import { agent, memory, model, tools } from '@acryldev/agent'
+import * as panel from '@acryldev/agent-panel'
+import { builder } from '@acryldev/builder'
+import * as door from '@acryldev/door'
+import { extensions } from '@acryldev/extensions'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import * as nodeServer from '@acryldev/node-server'
+import * as router from '@acryldev/router'
+import * as state from '@acryldev/state'
 import * as driverPty from '../index.ts'
 import type { PtySpawn } from '../spawn.ts'
 
@@ -132,7 +132,7 @@ test('the web templates leave the door out in production and start their plugins
       /NODE_ENV === 'production' \? \{ readOnly: true \}/u,
       `${template} lets plugins be installed in production`,
     )
-    assert.match(text, /leaveOut\.add\('acryl-door'\)/u, `${template} keeps the door in production`)
+    assert.match(text, /leaveOut\.add\('@acryldev\/door'\)/u, `${template} keeps the door in production`)
   }
   // The chat template spends the model key for whoever reaches it: in production it is closed unless it has a token or is made public on purpose.
   const chatRoutes = readFileSync(
@@ -159,7 +159,7 @@ test('the web templates leave the door out in production and start their plugins
   const agentText = read('agent')
   assert.match(
     agentText,
-    /if \(!assistant && \(process\.env\.NODE_ENV === 'production' \|\| process\.env\.ACRYL_DOOR === 'off'\)\)\s*leaveOut\.add\('acryl-door'\)/u,
+    /if \(!assistant && \(process\.env\.NODE_ENV === 'production' \|\| process\.env\.ACRYL_DOOR === 'off'\)\)\s*leaveOut\.add\('@acryldev\/door'\)/u,
     'the agent template leaves the door out in production unless the Assistant (page-only) needs it',
   )
   assert.doesNotMatch(

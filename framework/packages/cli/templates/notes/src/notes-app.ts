@@ -1,14 +1,14 @@
-import type { Db } from '../plugins/acryl-db/src/index.ts'
+import type { Db } from '../plugins/db/src/index.ts'
 import {
   createMiddleware,
   deleteCookie,
   getCookie,
   schemaValidator,
   setCookie,
-} from '../plugins/acryl-router/src/helpers/index.ts'
-import type { Context } from '../plugins/acryl-router/src/index.ts'
-import { Acryl, HTTPException } from '../plugins/acryl-router/src/index.ts'
-import { csrf } from '../plugins/acryl-router/src/middleware/index.ts'
+} from '../plugins/router/src/helpers/index.ts'
+import type { Context } from '../plugins/router/src/index.ts'
+import { Acryl, HTTPException } from '../plugins/router/src/index.ts'
+import { csrf } from '../plugins/router/src/middleware/index.ts'
 import { authStore, verifyPassword } from './auth.ts'
 import { notesStore } from './db.ts'
 import { checkCredentials, checkNote, NoteSchema } from './schema.ts'

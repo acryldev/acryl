@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-manifest',
+  name: '@acryldev/manifest',
   entry,
   outDir: 'lib',
   format: 'esm',

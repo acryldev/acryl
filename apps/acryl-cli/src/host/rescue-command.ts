@@ -22,7 +22,7 @@ import {
   type RecipeId,
   type RepairPlan,
   type RepairResult,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 
 export interface RescueOptions {
   readonly profile: string

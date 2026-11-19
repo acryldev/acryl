@@ -25,7 +25,7 @@ export const FIRST_RUN_VIEW: FrameView = Object.freeze({
   rightWidth: DEFAULT_PANEL_WIDTHS.right,
 })
 
-const STORAGE_KEY = 'acryl-blends-frame.view.v1'
+const STORAGE_KEY = '@acryldev/blends-frame.view.v1'
 
 /** A width from storage: a finite positive number, else the default (a view stored before the panels resized has none). */
 function storedWidth(value: unknown, fallback: number): number {

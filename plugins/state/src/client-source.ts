@@ -10,7 +10,7 @@
  * leaves every one of them free for requests. Where the WebSocket cannot open (no `ws` package on the server, a proxy that does not upgrade), each key is followed by its
  * event stream instead, with one console warning.
  */
-export const CLIENT_SOURCE = String.raw`// acryl-state: watch(key, onValue, onError?) follows a state key over one WebSocket for the page.
+export const CLIENT_SOURCE = String.raw`// @acryldev/state: watch(key, onValue, onError?) follows a state key over one WebSocket for the page.
 const HEARTBEAT_SILENCE_MS = 45000
 const RETRY_MIN_MS = 250
 const RETRY_MAX_MS = 10000
@@ -49,7 +49,7 @@ const deliver = (key, text) => {
     try {
       watcher.onValue(value)
     } catch (cause) {
-      console.error('acryl-state: a watcher of ' + key + ' threw', cause)
+      console.error('@acryldev/state: a watcher of ' + key + ' threw', cause)
     }
   }
 }
@@ -64,12 +64,12 @@ const fail = (key, message) => {
     try {
       watcher.onError(new Error(message))
     } catch (cause) {
-      console.error('acryl-state: an error handler of ' + key + ' threw', cause)
+      console.error('@acryldev/state: an error handler of ' + key + ' threw', cause)
     }
   }
   if (!told && !complained.has(key)) {
     complained.add(key)
-    console.warn('acryl-state: ' + key + ': ' + message)
+    console.warn('@acryldev/state: ' + key + ': ' + message)
   }
 }
 
@@ -118,7 +118,7 @@ const fallBack = () => {
   following = 'stream'
   if (!warnedStream) {
     warnedStream = true
-    console.warn('acryl-state: the WebSocket did not open, so each key is followed by its own event stream (each holds one of the browser\'s six connections to this host)')
+    console.warn('@acryldev/state: the WebSocket did not open, so each key is followed by its own event stream (each holds one of the browser\'s six connections to this host)')
   }
   for (const key of watchers.keys()) openStream(key)
 }
@@ -214,7 +214,7 @@ export function watch(key, onValue, onError) {
       try {
         onValue(JSON.parse(text))
       } catch (cause) {
-        console.error('acryl-state: a watcher of ' + key + ' threw', cause)
+        console.error('@acryldev/state: a watcher of ' + key + ' threw', cause)
       }
     })
   }

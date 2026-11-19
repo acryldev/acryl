@@ -3,7 +3,7 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // than `import type {}`, into every program that imports this package's types - see `client/index.ts`'s own
 // copy of this note).
 import '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type { ReactNode } from 'react'
 import type { DesktopMainOwnerProps, DesktopSidebarSurfaceOwnerProps } from './contracts.ts'
@@ -46,7 +46,7 @@ export interface AdvancedShell {
  * `desktop.sidebar` (falling back to the unchanged upstream chat and sidebar until something replaces
  * them), mount the layout service, theme presenter and chrome styles, and own the `root` slot that
  * composes everything into `AdvancedFrame`. Call once, from the plugin that is this Blend's main-surface
- * owner (the IDE's `plugins/acryl-workspace`, or a domain plugin like a GTD or accounting Blend) - never
+ * owner (the IDE's `plugins/workspace`, or a domain plugin like a GTD or accounting Blend) - never
  * from more than one plugin in the same program, since `root` is a single slot.
  * @param ctx - active browser Cordis context.
  * @param environment - validated mode and platform marker (`resolveShellEnvironment`).
@@ -56,16 +56,16 @@ export interface AdvancedShell {
  */
 export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnvironment, hooks: AdvancedShellHooks = {}): AdvancedShell {
   if (environment.mode !== 'advanced') {
-    throw new Error(`acryl-app-shell: advanced shell received mode ${JSON.stringify(environment.mode)}`)
+    throw new Error(`@acryldev/app-shell: advanced shell received mode ${JSON.stringify(environment.mode)}`)
   }
 
   const desktopLayout = new DesktopLayoutState()
   ctx.effect(
     () => provideDesktopLayout(ctx, desktopLayout),
-    'acryl-app-shell: layout service',
+    '@acryldev/app-shell: layout service',
   )
   // Upstream's sidebars and session views read the open keyed panel through the standard `usePanelInfo` hook, which the root supplies.
-  ctx.effect(() => ctx.slots.provideRoot({ hooks: { panelInfo: desktopLayout.panelInfo } }), 'acryl-app-shell: panel info')
+  ctx.effect(() => ctx.slots.provideRoot({ hooks: { panelInfo: desktopLayout.panelInfo } }), '@acryldev/app-shell: panel info')
 
   // The launch token was exchanged for the browser's cookie before this client ran. Left in the address bar it stays
   // in history and a reconnect can spend it again, re-admitting a page whose cookie is gone - so the session-ended
@@ -74,7 +74,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
     const stripped = stripLaunchToken(window.location.href)
     if (stripped !== undefined) window.history.replaceState(window.history.state, '', stripped)
     return () => {}
-  }, 'acryl-app-shell: strip the launch token')
+  }, '@acryldev/app-shell: strip the launch token')
 
   ctx.effect(() => {
     document.body.dataset.dshDesktopMode = 'advanced'
@@ -85,7 +85,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       delete document.body.dataset.dshDesktopMode
       delete document.body.dataset.dshDesktopPlatform
     }
-  }, 'acryl-app-shell: advanced shell styles')
+  }, '@acryldev/app-shell: advanced shell styles')
 
   ctx.slots.inject('desktop.main', () => ctx.slots.register({
     name: 'desktop.main',
@@ -143,7 +143,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       off()
       presenter.dispose()
     }
-  }, 'acryl-app-shell: theme presenter')
+  }, '@acryldev/app-shell: theme presenter')
 
   ctx.effect(() => {
     rigRoot()
@@ -153,7 +153,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
       triggerDispose?.()
       triggerDispose = undefined
     }
-  }, 'acryl-app-shell: advanced root slot')
+  }, '@acryldev/app-shell: advanced root slot')
 
   // Follow DSH's left sidebar entry while `loader` is available (optional: without it the root owns the seat). The decision reads the entry,
   // never its fiber. A sidebar starting is seen before its own apply declares the seat; a stopping one collapses its declarations only as its
@@ -183,7 +183,7 @@ export function applyAdvancedShell(ctx: ClientContext, environment: ShellEnviron
         offFiber()
         offUpdate()
       }
-    }, 'acryl-app-shell: settings seat follows DSH\'s sidebar')
+    }, '@acryldev/app-shell: settings seat follows DSH\'s sidebar')
   })
 
   return {

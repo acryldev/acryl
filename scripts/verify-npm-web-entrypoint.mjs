@@ -17,7 +17,7 @@ let isolated
 try {
   const windows = process.platform === 'win32'
   // `pnpm pack`, not `npm pack`: acryl-web depends on real workspace
-  // packages (`dsh-client-ui-brand-acryl`, `cordis-plugin-market`) via the
+  // packages (`@acryldev/brand-client`, `@acryldev/cordis-plugin-market`) via the
   // `workspace:*` protocol - only pnpm's own pack/publish rewrites that to
   // the dependency's real published version in the packed manifest. `npm
   // pack` leaves the literal string `workspace:*` in the packed

@@ -9,10 +9,10 @@
       "vitest/globals"
     ],
     "paths": {
-      "acryl-home": [
+      "@acryldev/home": [
         "../../plugins/home/index.ts"
       ],
-      "acryl-manifest/app-plugins": [
+      "@acryldev/manifest/app-plugins": [
         "../../plugins/manifest/app-plugins.ts"
       ]
     }

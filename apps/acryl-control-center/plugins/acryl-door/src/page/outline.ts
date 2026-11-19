@@ -4,7 +4,7 @@
  * own: nothing outside the page has to draw it, position it, or take it away.
  */
 
-const STYLE_ID = 'acryl-door-outline-style'
+const STYLE_ID = '@acryldev/door-outline-style'
 /** The class the ring is drawn with: the page's element keeps its own styles, and an outline follows the element's shape. */
 const CLASS = 'acrylDoorOutline'
 /** How long the ring stays after the agent's last act; each act replaces it, so one run leaves one ring, a moment after its last step. */

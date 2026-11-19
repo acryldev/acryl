@@ -77,7 +77,7 @@ describe('the guard on DSH\'s pre-dispatch stage', () => {
       reason: 'outward: git push',
       displayReason: { en: 'The agent wants to run git push origin main. It sends your work out of this computer under your name (git push). Allow it once?' },
     })
-    expect(guard.lines).toEqual(['acryl-blends-frame: asked the person before git push'])
+    expect(guard.lines).toEqual(['@acryldev/blends-frame: asked the person before git push'])
   })
 
   it('keeps a refusal a refusal, leaves other calls as they were decided, and stops listening when disposed', async () => {

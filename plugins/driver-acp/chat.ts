@@ -5,7 +5,7 @@
  * What the panel gets from the ACP updates: the agent's message chunks as `text`, each finished tool call as one `tool` (its title, input, and result or error), and an
  * `error` for a turn that stopped short (a refusal, a token or request limit, an agent that ended). Thoughts, plans and the rest stay out of the chat.
  */
-import type { ChatDriver, ChatEvent } from 'acryl-drivers'
+import type { ChatDriver, ChatEvent } from '@acryldev/drivers'
 import { type AcpAgent, type AcpConnection, AcpError } from './connection.ts'
 
 /** Which answer a permission request gets: the agent's own "allow once" or "reject once" option. */

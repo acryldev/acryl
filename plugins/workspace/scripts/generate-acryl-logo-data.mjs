@@ -4,7 +4,7 @@
  * chrome - T128 made that hidden behind Search, and the tree's own header never got a replacement).
  *
  * The source PNGs (`acryl-logo.png` / `acryl-logo-white.png`) live at the workspace root - the same
- * single source of truth `dsh-client-ui-brand-acryl`'s own `generate-acryl-brand-data.mjs` and
+ * single source of truth `@acryldev/brand-client`'s own `generate-acryl-brand-data.mjs` and
  * `acryl-desktop`'s own `generate-acryl-brand.mjs` already read for the identical purpose. This is a
  * third, independent reader of that one shared source, not a copy of either sibling script's own
  * package internals - the same pattern they already establish for a third consumer to follow.

@@ -11,7 +11,7 @@ import type { Duplex } from 'node:stream'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
-import * as settingsPlugin from 'acryl-settings'
+import * as settingsPlugin from '@acryldev/settings'
 import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
 import * as routerHttpPlugin from 'acrylblends/cordis/router-http'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
@@ -80,7 +80,7 @@ async function host() {
 
 async function boot(options: { router?: boolean } = {}) {
   const served = await host()
-  const home = mkdtempSync(join(tmpdir(), 'acryl-workspace-plugin-'))
+  const home = mkdtempSync(join(tmpdir(), '@acryldev/workspace-plugin-'))
   cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
   const ctx = new Context()
   cleanups.push(async () => { await ctx.fiber.dispose() })

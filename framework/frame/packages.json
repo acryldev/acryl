@@ -15,7 +15,9 @@
   "omit": {
     "//": "What the frame inherits from DSH but does not install: DSH's web app composes the Office-to-PDF converter, whose LibreOffice engine is 153 MB per OS (measured 2026-11-18, about a third of a frame app's packages). Every app gets an npm override that swaps each engine package for `placeholder` (an empty package), and the converter's row is switched off; the document preview's Office part then waits for the converter and every other preview works. The Office preview plugin in the plugin registry brings the engine back on demand. packages/cli/src/frame-omit.ts reads this.",
     "placeholder": "@acryldev/absent@1.0.0",
-    "rows": ["office-to-pdf"],
+    "rows": [
+      "office-to-pdf"
+    ],
     "packages": [
       "@deepseek-ai/libreoffice-kit-darwin-arm64",
       "@deepseek-ai/libreoffice-kit-darwin-x64",
@@ -25,85 +27,69 @@
     ]
   },
   "packages": {
-    "acryl-ui": {
-      "name": "ui",
+    "@acryldev/ui": {
       "version": "0.3.0",
-      "path": "../plugins/acryl-ui"
+      "path": "../plugins/ui"
     },
-    "dsh-client-ui-brand-acryl": {
-      "name": "brand-client",
+    "@acryldev/brand-client": {
       "version": "0.1.1",
-      "path": "../plugins/dsh-client-ui-brand-acryl"
+      "path": "../plugins/brand-client"
     },
-    "acryl-app-shell": {
-      "name": "app-shell",
+    "@acryldev/app-shell": {
       "version": "0.1.1",
-      "path": "../plugins/acryl-app-shell"
+      "path": "../plugins/app-shell"
     },
-    "acryl-workspace": {
-      "name": "workspace",
+    "@acryldev/workspace": {
       "version": "0.1.1",
-      "path": "../plugins/acryl-workspace"
+      "path": "../plugins/workspace"
     },
-    "acryl-settings": {
-      "name": "settings",
+    "@acryldev/settings": {
       "version": "0.1.0",
-      "path": "../plugins/acryl-settings"
+      "path": "../plugins/settings"
     },
-    "acryl-sign-in": {
-      "name": "sign-in",
+    "@acryldev/sign-in": {
       "version": "0.1.1",
-      "path": "../plugins/acryl-sign-in"
+      "path": "../plugins/sign-in"
     },
-    "acryl-control": {
-      "name": "control",
+    "@acryldev/control": {
       "version": "0.2.11",
-      "path": "../runtime/acryl-control"
+      "path": "../runtime/control"
     },
-    "acryl-diagnostics": {
-      "name": "diagnostics",
+    "@acryldev/diagnostics": {
       "version": "0.1.0",
-      "path": "../runtime/acryl-diagnostics"
+      "path": "../runtime/diagnostics"
     },
-    "acryl-plugin-admin": {
-      "name": "plugin-admin",
+    "@acryldev/plugin-admin": {
       "version": "0.1.0",
-      "path": "../plugins/acryl-plugin-admin"
+      "path": "../plugins/plugin-admin"
     },
-    "acryl-support": {
-      "name": "support",
+    "@acryldev/support": {
       "version": "0.1.0",
-      "path": "../plugins/acryl-support"
+      "path": "../plugins/support"
     },
-    "acryl-loopback-http": {
-      "name": "loopback-http",
+    "@acryldev/loopback-http": {
       "version": "0.1.0",
-      "path": "../runtime/acryl-loopback-http"
+      "path": "../runtime/loopback-http"
     },
-    "acryl-web-service": {
-      "name": "web",
+    "@acryldev/web": {
       "version": "0.2.0",
-      "path": "../runtime/acryl-web-service"
+      "path": "../runtime/web"
     },
-    "acryl-system-prompt": {
-      "name": "system-prompt",
+    "@acryldev/system-prompt": {
       "version": "0.2.0",
-      "path": "../plugins/acryl-system-prompt"
+      "path": "../plugins/system-prompt"
     },
-    "acryl-app-context": {
-      "name": "app-context",
+    "@acryldev/app-context": {
       "version": "0.1.0",
-      "path": "../plugins/acryl-app-context"
+      "path": "../plugins/app-context"
     },
-    "acryl-versions": {
-      "name": "versions",
+    "@acryldev/versions": {
       "version": "0.1.1",
-      "path": "../plugins/acryl-versions"
+      "path": "../plugins/versions"
     },
-    "acryl-blends-frame": {
-      "name": "blends-frame",
+    "@acryldev/blends-frame": {
       "version": "0.1.6",
-      "path": "../plugins/acryl-blends-frame"
+      "path": "../plugins/blends-frame"
     }
   },
   "plugins": {

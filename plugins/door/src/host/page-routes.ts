@@ -6,9 +6,9 @@
  * `{ window, message }` (a result, an error or a focus change). Both are for the app's own page only (same origin, loopback).
  */
 
-import { Acryl } from 'acryl-router'
-import { streamSSE } from 'acryl-router/helpers'
-import { loopbackOnly } from 'acryl-router/middleware'
+import { Acryl } from '@acryldev/router'
+import { streamSSE } from '@acryldev/router/helpers'
+import { loopbackOnly } from '@acryldev/router/middleware'
 import { parseChannelToHost, WINDOW_ID } from '../page/protocol.ts'
 import type { UiChannel } from './channel.ts'
 import { error, INVALID_JSON, jsonBody, ownPage, readJson } from './http.ts'

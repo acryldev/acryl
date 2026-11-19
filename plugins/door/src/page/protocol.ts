@@ -1,5 +1,5 @@
 /**
- * The one shape of a door call, shared by the Host and the in-page driver (moved from `acryl-agent-control`, spec 041).
+ * The one shape of a door call, shared by the Host and the in-page driver (moved from `@acryldev/agent-control`, spec 041).
  *
  * The Host turns a verb's arguments into a {@link UiRequest}, sends it to the page over the channel, and gets a {@link UiResult} back.
  * Everything crossing the channel is validated here once, so neither side trusts the other's JSON. The page imports this file too, so it

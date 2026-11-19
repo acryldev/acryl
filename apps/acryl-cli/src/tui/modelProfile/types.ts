@@ -5,13 +5,13 @@
  * draft one add/edit form works with before a save round-trips it back.
  * @module @tomowang/dsh-tui/tui/modelProfile/types
  */
-import type { AuthMethod } from 'acryl-control'
+import type { AuthMethod } from '@acryldev/control'
 
 /**
- * The `apiKeyEnv` fallback naming rule, owned by `acryl-control` so the overlay, the host wiring and the Desktop sign-in
+ * The `apiKeyEnv` fallback naming rule, owned by `@acryldev/control` so the overlay, the host wiring and the Desktop sign-in
  * all read the same name.
  */
-export { deriveApiKeyRef } from 'acryl-control'
+export { deriveApiKeyRef } from '@acryldev/control'
 
 /**
  * A short, identifying (never full) preview of a stored secret — first 4 and

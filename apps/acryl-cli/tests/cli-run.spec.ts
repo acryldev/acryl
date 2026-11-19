@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import type { PluginLifecycleEntryView } from 'acryl-harness-runtime'
+import type { PluginLifecycleEntryView } from '@acryldev/harness-runtime'
 import {
   runAcryl,
   type AcrylCliDependencies,
@@ -44,7 +44,7 @@ function snapshot(profile: string): PluginCommandResult & { readonly kind: 'snap
     statePath: '/home/.acryl/plugin-lifecycle/state.json',
     snapshot: {
       entries: [
-        entry('include:ui-acryl', { moduleName: '@acryl/dsh-client-ui-brand-acryl' }),
+        entry('include:ui-acryl', { moduleName: '@acryldev/dsh-client-ui-brand-acryl' }),
         entry('include:market-plugin', { enabled: false, hostPhase: null }),
       ],
     },
@@ -147,7 +147,7 @@ describe('runAcryl', () => {
       'plugin:list::work',
       'write:profile work (dsh) - 2 plugins',
       'write:off include:market-plugin  acryl-plugin',
-      'write:on  include:ui-acryl  @acryl/dsh-client-ui-brand-acryl',
+      'write:on  include:ui-acryl  @acryldev/dsh-client-ui-brand-acryl',
       'write:override file: /home/.acryl/plugin-lifecycle/state.json',
     ])
   })

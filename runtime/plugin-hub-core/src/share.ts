@@ -13,7 +13,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { findSecrets, type SecretFinding } from '@webboxes/app-persistence'
+import { findSecrets, type SecretFinding } from '@acryldev/app-persistence'
 import { syncServiceContract } from './contract.js'
 import { parsePluginName } from './name.js'
 import { bundleProblem, packFolder, type PackedPlugin } from './pack.js'

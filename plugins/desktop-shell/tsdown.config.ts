@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-desktop-shell',
+  name: '@acryldev/desktop-shell',
   entry,
   outDir: 'lib',
   format: 'esm',

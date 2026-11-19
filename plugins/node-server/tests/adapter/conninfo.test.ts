@@ -1,5 +1,5 @@
-import { Acryl } from 'acryl-router'
-import type { AddressType, ConnInfo } from 'acryl-router/helpers'
+import { Acryl } from '@acryldev/router'
+import type { AddressType, ConnInfo } from '@acryldev/router/helpers'
 import { getConnInfo } from '../../src/adapter/conninfo.ts'
 
 describe('ConnInfo', () => {

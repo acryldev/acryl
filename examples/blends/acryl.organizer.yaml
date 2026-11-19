@@ -17,21 +17,21 @@ spec:
     blueprintVersion: 0.1.0
   rows:
     - id: brand
-      name: 'acryl-brand'
+      name: '@acryldev/brand'
       config:
         name: Organizer
         tagline: Plan your day by talking to it.
         accent: '#e8590c'
         accentDark: '#ff922b'
     - id: acryl-plugin-context
-      name: 'acryl-plugin-context'
+      name: '@acryldev/plugin-context'
     - id: acryl-system-prompt
-      name: 'acryl-system-prompt'
+      name: '@acryldev/system-prompt'
     - id: '@acryl/ui'
-      name: '@acryl/ui'
+      name: '@acryldev/ui'
     - id: acryl-app-save
-      name: 'acryl-app-save'
+      name: '@acryldev/app-save'
     - id: acryl-plugin-hub
-      name: 'acryl-plugin-hub'
+      name: '@acryldev/plugin-hub'
     - id: acryl-organizer
       name: 'acryl-organizer'

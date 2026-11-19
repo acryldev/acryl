@@ -1,5 +1,5 @@
 {
-  "acryl-db": {
+  "@acryldev/db": {
     "LICENSE": ["b84342464fb19baab24f"],
     "src/cordis.ts": ["5521f8caba096ed0c924"],
     "src/facade/database.ts": ["6946de67e2226b10569a"],
@@ -8,13 +8,13 @@
     "src/index.ts": ["ddec11313248a8a23f7b"],
     "src/migration-files.ts": ["06122839b04c338a7b55"]
   },
-  "acryl-db-sqlite": {
+  "@acryldev/db-sqlite": {
     "LICENSE": ["ef3897302ab91dccedfc"],
     "src/facade/node.ts": ["8b9405055c5da973ef2c", "f1506fcd6bcaecf719bf"],
     "src/index.ts": ["87ff9cb43f77dfa760ac", "3cbbe558a011c7040cb9", "e8f291d65840a56bc2dc"],
     "src/open.ts": ["0ee7cc85f660910d2fca", "533c8606b918dde6e3ee"]
   },
-  "acryl-door": {
+  "@acryldev/door": {
     "LICENSE": ["b84342464fb19baab24f"],
     "src/cli/acryl.ts": [
       "0dcfd9e51ac6eba760fa",
@@ -154,13 +154,13 @@
     "src/page/user-input.ts": ["edf3e28136a947b16ba1"],
     "src/shell/protocol.ts": ["2e2ce749a8a64ef5ff70", "b34db25a8bc53beb00c3"]
   },
-  "acryl-inspect": {
+  "@acryldev/inspect": {
     "LICENSE": ["9e159eea922378a88a12"],
     "src/index.ts": ["bc7d0dd5fa8495de2bdf"],
     "src/report.ts": ["c8cc3a59fe944026ef8a"],
     "src/service.ts": ["9a0b97ecb736b6b87568", "46220510cb3106438efc"]
   },
-  "acryl-kv": {
+  "@acryldev/kv": {
     "LICENSE": ["b84342464fb19baab24f"],
     "src/check.ts": ["0749ebd141cfdfb3975e"],
     "src/copy.ts": ["a72af91ac13e078617a3"],
@@ -168,17 +168,17 @@
     "src/index.ts": ["b664afd830bfbc5fba00"],
     "src/kv.ts": ["d3fa1146596a0ce77b2e"]
   },
-  "acryl-kv-db": {
+  "@acryldev/kv-db": {
     "LICENSE": ["b84342464fb19baab24f"],
     "src/index.ts": ["879553f8b9a0359b0700", "c072d6b1653f22d0b6f5"],
     "src/open.ts": ["b74bd718396874b9ae19", "f90ffc31841357f66245"]
   },
-  "acryl-kv-json": {
+  "@acryldev/kv-json": {
     "LICENSE": ["b84342464fb19baab24f"],
     "src/index.ts": ["b9be594ecb6fdd2e6295", "bde90b78b6f920f2bf6c", "850eda0ea5a088ce843a"],
     "src/open.ts": ["99c5e78fd8642fde6b27", "3560b7f14b2f8b608f91"]
   },
-  "acryl-node-server": {
+  "@acryldev/node-server": {
     "LICENSE": ["97e21f62916eb3787f2d"],
     "src/adapter/conninfo.ts": ["10eaa407ab6767842ec0", "33b005d1ba27af208c25"],
     "src/adapter/early-hints.ts": ["d110b1d71290545b46f8", "2d7ae68d42b3795c2eba"],
@@ -221,11 +221,11 @@
     "src/transpile.ts": ["5e7afa4390fbcbc564a0", "be4cb4e0297b5b1997f1"],
     "src/upgrade-hub.ts": ["a18b5cece2d2c571463e", "ded65323cabec111aac4"]
   },
-  "acryl-page": {
+  "@acryldev/page": {
     "src/favicon.ts": ["e5b35a649cf2822b4f8e"],
     "src/index.ts": ["cd789539ec1b6590e9e6", "de414dae653ad5edee0b"]
   },
-  "acryl-router": {
+  "@acryldev/router": {
     "LICENSE": ["fcf95a3a9e661936ca61"],
     "src/browser/client.ts": ["02d59cb4bbc4a494831e"],
     "src/browser/jsx-dom.ts": ["51382d53e99f407273c4"],
@@ -524,7 +524,7 @@
       "35f2c927a7c3d3ec1103"
     ]
   },
-  "acryl-router-http": {
+  "@acryldev/router-http": {
     "LICENSE": ["9e159eea922378a88a12"],
     "src/bridge.ts": ["c4fe8f2230e720ce151b"],
     "src/index.ts": [
@@ -535,7 +535,7 @@
     ],
     "src/serve.ts": ["866d223954bd3d7c99e5", "9da5a6794d0f07abf47a"]
   },
-  "acryl-state": {
+  "@acryldev/state": {
     "LICENSE": ["9e159eea922378a88a12"],
     "src/cell.ts": ["2add14530d4a39c2b358"],
     "src/client-source.ts": ["3e4dbfb415a05247987d"],
@@ -543,7 +543,7 @@
     "src/service.ts": ["885b6f3dd110554435cb", "34aa266ed98e517d35ec", "8cb238ea00c065cd4c7d"],
     "src/socket.ts": ["1c67134c3bbc1836b1bf", "da48d350715a6ed31673"]
   },
-  "acryl-web-server": { "src/index.ts": ["25e9ad47a238ebdebeb0"] },
+  "@acryldev/web-server": { "src/index.ts": ["25e9ad47a238ebdebeb0"] },
   "agent": {
     "agent.ts": ["6a8f44b7c2e7ff8f00c7", "375b09fe4b2af56fcfbd", "d0939bda74f67d253e6a"],
     "index.ts": ["91147873ccdb9a9d991c", "d0bcc496393cf7c807df"],

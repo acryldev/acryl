@@ -16,7 +16,7 @@ export interface CopyKvResult {
 
 /**
  * Copy every key of one store into another: the import when an app moves from a JSON file to SQL (the file opened with
- * `acryl-kv-json` is the source, `kvOnDb` the target). The source is not changed.
+ * `@acryldev/kv-json` is the source, `kvOnDb` the target). The source is not changed.
  * @throws when the target has a key the source has and `overwrite` is not set; nothing is written then.
  */
 export async function copyKv(source: Kv, target: Kv, options: CopyKvOptions = {}): Promise<CopyKvResult> {

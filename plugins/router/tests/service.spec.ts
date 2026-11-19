@@ -59,7 +59,7 @@ function consumer(path: string, label: string) {
 
 const get = (router: Router, path: string): Promise<Response> => router.fetch(new Request(`http://acryl.test${path}`))
 
-describe('acryl-router mounts', () => {
+describe('@acryldev/router mounts', () => {
   it('serves a mounted app under its path, with the app\'s own routes, middleware and error handler', async () => {
     const { router } = await mountRouter()
     const api = new Acryl()
@@ -133,7 +133,7 @@ describe('acryl-router mounts', () => {
   })
 })
 
-describe('acryl-router lifecycle through Cordis', () => {
+describe('@acryldev/router lifecycle through Cordis', () => {
   it('leaves a consumer PENDING while router is missing and activates it when router appears', async () => {
     const ctx = root()
     const fiber = ctx.plugin(consumer('/c', 'A'))
@@ -170,9 +170,9 @@ describe('acryl-router lifecycle through Cordis', () => {
     await settle()
     const [mount, ...rest] = fiber.getEffects()
     expect(rest).toEqual([])
-    expect(mount?.label).toBe('acryl-router: route /')
+    expect(mount?.label).toBe('@acryldev/router: route /')
     expect(mount?.children).toHaveLength(61)
-    expect(mount?.children[0]?.label).toBe('acryl-router: serves ALL /api/*')
+    expect(mount?.children[0]?.label).toBe('@acryldev/router: serves ALL /api/*')
     expect(mount?.children.every(child => child.label.length < 100 && child.children.length === 0)).toBe(true)
     expect(router.size).toBe(1)
     await fiber.dispose()

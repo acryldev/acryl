@@ -1,6 +1,6 @@
 /**
  * The project registry's wire contract. A project is a folder the user added to ACRYL; ACRYL owns the list (it lives in the ACRYL home through
- * `acryl-settings`), and the DeepSeek Harness chat's workspaces follow it one way: a chat registers the folder it runs in when it starts, never the other
+ * `@acryldev/settings`), and the DeepSeek Harness chat's workspaces follow it one way: a chat registers the folder it runs in when it starts, never the other
  * way round.
  */
 

@@ -9,7 +9,7 @@
  * Nothing here is special-cased in the runtime: every row a Blueprint names is an ordinary Cordis plugin, so adding
  * one later, or disabling one, is the same reversible row edit for a human, an agent or a Blend file.
  *
- * @module acryl-harness-runtime/blueprint/blueprint
+ * @module @acryldev/harness-runtime/blueprint/blueprint
  */
 
 import { ACRYL_CODING_CAPABILITIES, type AcrylCodingCapabilityId, type AcrylShellMode } from '../coding-capabilities.ts'
@@ -35,7 +35,7 @@ export const BLUEPRINT_ROW_IDS: readonly BlueprintRowId[] = ['plugin-context', '
 /** Row ids a Blueprint file once used, read as their current names (spec 044 step 1b); never written. */
 export const RENAMED_BLUEPRINT_ROW_IDS: Readonly<Record<string, BlueprintRowId>> = Object.freeze({ 'extension-context': 'plugin-context' })
 
-/** `acryl`: the stock ACRYL brand plugin. `custom`: the configurable `acryl-brand` plugin carrying this identity. */
+/** `acryl`: the stock ACRYL brand plugin. `custom`: the configurable `@acryldev/brand` plugin carrying this identity. */
 export type BlueprintBrand =
   | { readonly kind: 'acryl' }
   | { readonly kind: 'custom', readonly identity: BrandIdentity }
@@ -70,8 +70,8 @@ export const BLANK_BLUEPRINT: Blueprint = freezeBlueprint({
   id: 'acryl.blank',
   name: 'Blank',
   description: 'The smallest working agent that can grow itself: chat, model choice, and the plugin context pack.',
-  // `acryl-settings` is essential: surface plugins (Desktop's shell, notifications) keep their preferences there.
-  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', 'acryl-settings'],
+  // `@acryldev/settings` is essential: surface plugins (Desktop's shell, notifications) keep their preferences there.
+  capabilities: ['persona', 'agent-roster', 'session-stats', 'authorization', '@acryldev/settings'],
   rows: ['plugin-context', 'system-prompt', 'ui-library', 'app-save', 'plugin-hub', 'framework-kit', 'command-reply'],
   brand: { kind: 'custom', identity: brandIdentity({ name: 'Blank', tagline: 'Ask for what you need. It builds it.', accent: '#3b6ef5', accentDark: '#7c9dff' }) },
   shell: 'compatibility',

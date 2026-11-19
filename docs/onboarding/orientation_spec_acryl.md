@@ -205,17 +205,17 @@ proposal.
 
 ### 6.2 Cordis-owned application composition
 
-- `acryl-control` provides host-neutral ACRYL control-plane capabilities.
-- `acryl-harness-runtime` integrates ACRYL behavior with Harness capability
+- `@acryldev/control` provides host-neutral ACRYL control-plane capabilities.
+- `@acryldev/harness-runtime` integrates ACRYL behavior with Harness capability
   seams while remaining outside the pinned upstream checkout.
 - `acryl-desktop` composes Host and Client behavior through Cordis rather than
   a parallel Electron plugin system.
 - `acryl-development-canvas` is a standalone Host/Client plugin contributing
   the Development Canvas through a stable Loader row and owned lifecycle.
-- `cordis-plugin-market` is an optional private Host/Client Market provider,
+- `@acryldev/cordis-plugin-market` is an optional private Host/Client Market provider,
   disabled by default and composed through normal Cordis, profile, and Desktop
   service contracts.
-- `dsh-community-fabric` remains a private interoperability RFC scaffold. It is
+- `@acryldev/dsh-community-fabric` remains a private interoperability RFC scaffold. It is
   not a loadable runtime or a second plugin framework.
 
 ### 6.3 Development Canvas and terminals
@@ -284,13 +284,13 @@ at once. Work only on the active vertical slice.
 ## 8. Repository map
 
 ```text
-acryl-control/              Host-neutral control-plane capabilities
-acryl-harness-runtime/      ACRYL integration with Harness runtime seams
+@acryldev/control/              Host-neutral control-plane capabilities
+@acryldev/harness-runtime/      ACRYL integration with Harness runtime seams
 acryl-cli/                  Canonical terminal client and `acryl` command
 acryl-desktop/              Electron, Host/Client composition, native UI, release
 acryl-development-canvas/   Composable workspace and PTY surface
-cordis-plugin-market/       Optional private Market provider
-dsh-community-fabric/       Interoperability RFC scaffold only
+@acryldev/cordis-plugin-market/       Optional private Market provider
+@acryldev/dsh-community-fabric/       Interoperability RFC scaffold only
 deepseek-harness/           Pinned read-only upstream submodule
 docs/acryl/                 ACRYL architecture constraints and analysis
 docs/cordis/                Operational Cordis guidance and audits

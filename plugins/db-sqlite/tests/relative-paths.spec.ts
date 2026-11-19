@@ -19,7 +19,7 @@ afterEach(async () => {
 
 describe('a relative path in a row of an app without a Loader base URL', () => {
   it('is read from the project folder (appInstance.root)', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'acryl-db-sqlite-relative-'))
+    const root = mkdtempSync(join(tmpdir(), '@acryldev/db-sqlite-relative-'))
     roots.push(root)
     mkdirSync(join(root, 'migrations'))
     writeFileSync(join(root, 'migrations', '001-notes.sql'), 'CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT NOT NULL);\n')

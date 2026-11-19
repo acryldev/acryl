@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-blends-frame'
+const PACKAGE_NAME = '@acryldev/blends-frame'
 
 export default defineConfig([
   {
@@ -35,9 +35,9 @@ export default defineConfig([
       '@deepseek-ai/dsh-client-runtime/client',
       '@deepseek-ai/dsh-client-ui-slots',
       // Sibling plugins with their own Loader rows: resolved through the shared Module Loader registry at runtime, since rolldown
-      // cannot read named exports out of another package's `window.__ModuleLoader__`-wrapped client.js (see acryl-workspace).
-      'acryl-app-shell/client',
-      'acryl-versions/client',
+      // cannot read named exports out of another package's `window.__ModuleLoader__`-wrapped client.js (see @acryldev/workspace).
+      '@acryldev/app-shell/client',
+      '@acryldev/versions/client',
     ],
     noExternal: (id: string) => id.startsWith('@deepseek-ai/') ? undefined : true,
     outputOptions: {

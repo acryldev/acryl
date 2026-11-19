@@ -6,10 +6,10 @@
  * a local socket it can open, and how Jupyter's own token file works. A different OS user is refused by
  * filesystem permissions alone; this adds no stronger boundary than that on purpose (TB03).
  *
- * Lives beside `offline-lock.ts` and `registry.ts` (not in `acryl-agent-control`) so both the Host plugin that
+ * Lives beside `offline-lock.ts` and `registry.ts` (not in `@acryldev/agent-control`) so both the Host plugin that
  * writes it and the CLI that reads it depend on the same shared package, neither on the other.
  *
- * @module acryl-harness-runtime/instance/online-secret
+ * @module @acryldev/harness-runtime/instance/online-secret
  */
 
 import { randomBytes } from 'node:crypto'

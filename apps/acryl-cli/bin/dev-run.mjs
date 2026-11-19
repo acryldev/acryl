@@ -5,11 +5,11 @@
 // missing or stale, so this launcher rebuilds it first and then execs the real
 // CLI with the user's remaining arguments. A stale rebuild is mtime-based: if
 // the newest source file under `acryl-cli/src`, or under the pre-built
-// workspace dependencies it imports (`acryl-control`, `acryl-harness-runtime`
+// workspace dependencies it imports (`@acryldev/control`, `@acryldev/harness-runtime`
 // - `pnpm --filter acryl-cli run build`'s own `prebuild` script rebuilds both,
 // but only once this launcher actually decides to run that build), is newer
 // than `lib/bin.js`, we rebuild. Without checking those dependencies too, an
-// edit to e.g. `runtime/acryl-harness-runtime/src/engine-dsh.ts` alone would leave
+// edit to e.g. `runtime/harness-runtime/src/engine-dsh.ts` alone would leave
 // `isStale()` false (acryl-cli's own src is untouched) and this launcher
 // would silently keep running a stale build of that shared engine code. This
 // keeps `pnpm acryl` forgiving in a dev loop without forcing a full build on
@@ -27,8 +27,8 @@ const root = resolve(packageRoot, '..', '..')
 const bin = resolve(packageRoot, 'lib/bin.js')
 const watchedSourceDirs = [
   resolve(packageRoot, 'src'),
-  resolve(root, 'runtime/acryl-control/src'),
-  resolve(root, 'runtime/acryl-harness-runtime/src'),
+  resolve(root, 'runtime/control/src'),
+  resolve(root, 'runtime/harness-runtime/src'),
 ]
 
 function newestSourceMtime(dir) {

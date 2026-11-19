@@ -238,7 +238,7 @@ test('skills: frontmatter parses, and the real pack lists its skills with real d
   const root = resolvePackRoot()
   const provider = createSkillProvider(root)
   const list = await provider.list()
-  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-plugin', 'acryl-change-plugin', 'acryl-desktop-shell', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-plugin', 'acryl-restyle-ui', 'acryl-share-plugin', 'acryl-tui-ui'])
+  assert.deepEqual(list.map(c => c.name).sort(), ['acryl-add-provider-or-capability', 'acryl-add-ui', 'acryl-build-plugin', 'acryl-change-plugin', '@acryldev/desktop-shell', 'acryl-diagnose-plugin', 'acryl-fix-plugin', 'acryl-improve-ui', 'acryl-remove-plugin', 'acryl-restyle-ui', 'acryl-share-plugin', 'acryl-tui-ui'])
   assert.ok(list.every(c => c.rank === 600 && c.source === 'bundled'))
   const skill = await provider.get(list.find(c => c.name === 'acryl-build-plugin'))
   assert.ok(skill.content.includes(`${root}/docs/start-here/this-runtime.md`))
@@ -1017,7 +1017,7 @@ test('required framework modules: an acrylblends module is mounted through live.
   try {
     writeFileSync(join(profileDir, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: [] } } }))
     const modules = {
-      'acryl-state': { module: 'acrylblends/cordis/state', packageName: 'acrylblends', mounted: false },
+      '@acryldev/state': { module: 'acrylblends/cordis/state', packageName: 'acrylblends', mounted: false },
       'acrylblends/cordis/router': { module: 'acrylblends/cordis/router', packageName: 'acrylblends', mounted: true },
     }
     const required = []
@@ -1031,7 +1031,7 @@ test('required framework modules: an acrylblends module is mounted through live.
     // Today's names, the mounted one included: the controller uses a mounted row as it is and owns only what it inserts.
     assert.deepEqual(required, [['my-plugin', ['acrylblends/cordis/state', 'acrylblends/cordis/router']]])
     fail = true
-    const failed = await materializeRequiredAcrylPackages(services, ['acryl-state'], undefined, 'my-plugin')
+    const failed = await materializeRequiredAcrylPackages(services, ['@acryldev/state'], undefined, 'my-plugin')
     assert.equal(failed.errors.length, 1)
     assert.match(failed.errors[0], /could not start what my-plugin needs: state-failed-3/)
   } finally {
@@ -1057,9 +1057,9 @@ test('required framework modules: a package is linked, registered and started; a
     const linked = []
     const started = []
     const modules = {
-      'acryl-router': { module: 'acrylblends/cordis/router', packageName: 'acrylblends', mounted: true },
+      '@acryldev/router': { module: 'acrylblends/cordis/router', packageName: 'acrylblends', mounted: true },
       'acrylblends/cordis/db': { module: 'acrylblends/cordis/db', packageName: 'acrylblends', mounted: false },
-      'acryl-app-shell': { module: 'acryl-app-shell', packageName: 'acryl-app-shell', mounted: false },
+      '@acryldev/app-shell': { module: '@acryldev/app-shell', packageName: '@acryldev/app-shell', mounted: false },
     }
     const services = {
       profileDir,
@@ -1067,10 +1067,10 @@ test('required framework modules: a package is linked, registered and started; a
       live: { statusOf: () => undefined, activate: async (name) => { started.push(name) } },
     }
     const result = await materializeRequiredAcrylPackages(services, Object.keys(modules))
-    assert.deepEqual(linked, ['acrylblends/cordis/router', 'acrylblends/cordis/db', 'acryl-app-shell'])
-    assert.deepEqual(started, ['acryl-app-shell'])
+    assert.deepEqual(linked, ['acrylblends/cordis/router', 'acrylblends/cordis/db', '@acryldev/app-shell'])
+    assert.deepEqual(started, ['@acryldev/app-shell'])
     // Only a package is a bundle: the profile's bundle list never names a module inside a package.
-    assert.deepEqual(JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dsh.profile.bundles, ['acryl-app-shell'])
+    assert.deepEqual(JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dsh.profile.bundles, ['@acryldev/app-shell'])
     assert.equal(result.errors.length, 1)
     assert.match(result.errors[0], /"acrylblends\/cordis\/db" is not mounted in this app .* plugins\/ folder, and it mounts at the next start/)
   } finally {

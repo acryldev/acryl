@@ -24,7 +24,7 @@ mounted at all.
 
 ## Router service
 
-The Cordis `router` service (`ctx.router`, provided by `acryl-router`) composes the mounted apps into one route space. A plugin builds an
+The Cordis `router` service (`ctx.router`, provided by `@acryldev/router`) composes the mounted apps into one route space. A plugin builds an
 app and mounts it:
 
 ```ts
@@ -70,10 +70,10 @@ A surface is the place a person or another program uses the application:
 
 | Surface | Transport |
 | --- | --- |
-| Web | the ACRYL Host's web server, through `acryl-router-http` |
+| Web | the ACRYL Host's web server, through `@acryldev/router-http` |
 | Desktop | the same: the Electron window talks to the app's own loopback web server |
 | Terminal UI | in process: `ctx.router.request(...)`, no server |
-| A standalone process | `acryl-node-server` serves the whole router |
+| A standalone process | `@acryldev/node-server` serves the whole router |
 | Tests | `ctx.router.request(...)` or `app.request(...)` |
 
 Surfaces share capabilities and contracts. They do not need to share a transport or a user interface.
@@ -88,11 +88,11 @@ Following the ACRYL framework rules, a plugin declares what it:
 - owns until disposal.
 
 The declaration is what lets tooling answer two questions without reading all the code: what does this plugin do, and what disappears
-when it unloads? `acryl-inspect` reads it from the running system: each mount is labeled with its path and has one labeled child per route it serves.
+when it unloads? `@acryldev/inspect` reads it from the running system: each mount is labeled with its path and has one labeled child per route it serves.
 
 ## State
 
-Request state belongs to the context. Application state shared between surfaces belongs in `acryl-state` or an application-owned Cordis
+Request state belongs to the context. Application state shared between surfaces belongs in `@acryldev/state` or an application-owned Cordis
 service. Do not hide shared mutable state in module globals: Cordis can reload plugins and run several surfaces from one host, and a
 module global outlives the plugin that wrote it.
 

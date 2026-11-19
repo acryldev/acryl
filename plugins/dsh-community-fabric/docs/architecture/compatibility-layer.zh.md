@@ -202,7 +202,7 @@ my-fabric-plugin/
 ### 6.2 开发流程
 
 ```sh
-yarn dlx dsh-community-fabric init
+yarn dlx @acryldev/dsh-community-fabric init
 yarn fabric validate       # schema、ID、entrypoint、capability 版本
 yarn fabric generate       # 从 manifest 生成精确 context 类型
 yarn fabric test           # fake Host + lifecycle + capability fixtures
@@ -215,7 +215,7 @@ yarn fabric pack           # 产出静态 manifest 与可审查包
 ### 6.3 插件代码
 
 ```ts
-import { definePlugin } from 'dsh-community-fabric/sdk'
+import { definePlugin } from '@acryldev/dsh-community-fabric/sdk'
 
 export default definePlugin(async (ctx) => {
   ctx.commands.handle('com.example.hello.open', async () => {
@@ -274,7 +274,7 @@ testkit/       headless fixtures 与共享 conformance suite
 cli/           init、validate、generate、test 与 pack
 ```
 
-具体 npm package/subpath 在 RFC 接受前不冻结。`dsh-community-fabric` 可以作为轻量的插件侧统一入口，但默认不能重新导出 Broker 或 Adapter。依赖方向保持单向：schema 不依赖 Host；contract 只依赖 schema；SDK 依赖 contract；Broker 依赖 schema 与 contract，但不依赖 DSH；只有 `dsh-adapter` import 上游 runtime package。生产 Host Descriptor 属于 schema/contract 边界，授权属于 Broker 职责，不能藏在测试工具中。
+具体 npm package/subpath 在 RFC 接受前不冻结。`@acryldev/dsh-community-fabric` 可以作为轻量的插件侧统一入口，但默认不能重新导出 Broker 或 Adapter。依赖方向保持单向：schema 不依赖 Host；contract 只依赖 schema；SDK 依赖 contract；Broker 依赖 schema 与 contract，但不依赖 DSH；只有 `dsh-adapter` import 上游 runtime package。生产 Host Descriptor 属于 schema/contract 边界，授权属于 Broker 职责，不能藏在测试工具中。
 
 Host 注册 capability implementation 后，由工具生成 Host Descriptor，避免文档与实际实现漂移。每项实现运行 `testkit` 提供的同一套 headless contract suite；真实 DSH integration test 仍由 `dsh-adapter` 持有。完整 Host 再运行生命周期和跨 capability integration tests。
 

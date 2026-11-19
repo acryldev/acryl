@@ -1,9 +1,9 @@
 ---
 name: acryl-app
-description: How the acryl-control-center app is put together - its blend.yaml rows, its plugins/ folder and src/ - and how to change it, run it and check it through the door. Use before adding a feature, a route, a plugin or a dependency to this app, and before saying the work is done.
+description: How the @acryldev/control-center app is put together - its blend.yaml rows, its plugins/ folder and src/ - and how to change it, run it and check it through the door. Use before adding a feature, a route, a plugin or a dependency to this app, and before saying the work is done.
 ---
 
-# Working in acryl-control-center
+# Working in @acryldev/control-center
 
 1. **Read first.** `AGENTS.md` (the same text as `CLAUDE.md`) is the app's guide. The framework's API is in `docs/framework/`: start at `docs/framework/README.md`, and `docs/framework/api/summary.md` is the one-page summary. Parts the docs mark "not yet available" are not in this app.
 2. **The app is data plus code.** `blend.yaml` is the blueprint: which plugins (rows) the app mounts, in what order, with what config. `src/app.ts` is the runtime: a row's `name` is a library plugin its `registry` imports or a folder `plugins/<name>/` of the app's own, and `compose` starts them in row order. `src/routes.ts` is the app's own `Acryl` app (its page and API). A plugin the app owns is a folder `plugins/<name>/`.

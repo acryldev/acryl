@@ -280,7 +280,7 @@ describe('the door is a development tool', () => {
 describe('the page script on every HTML page', () => {
   it('is added to a page that has none, once to a page that has it, and never to anything that is not HTML', async () => {
     const running = await app()
-    const { Acryl } = await import('acryl-router')
+    const { Acryl } = await import('@acryldev/router')
     running.ctx.router.route('/', new Acryl()
       .get('/plain', c => c.html('<!doctype html><html><body><p>hi</p></body></html>'))
       .get('/fragment', c => c.html('<p>no body tag</p>'))
@@ -297,7 +297,7 @@ describe('the page script on every HTML page', () => {
 
   it('turns a path the app does not serve, opened as a page, into a 404 page that carries the script (so a window sent there can still be looked at), and touches nothing else', async () => {
     const running = await app()
-    const { Acryl } = await import('acryl-router')
+    const { Acryl } = await import('@acryldev/router')
     running.ctx.router.route('/', new Acryl().get('/api-missing', c => c.json({ error: 'no such thing' }, 404)))
     const tag = '<script type="module" src="/api/acryl-door/page.js"></script>'
     const opened = await fetch(`${running.origin}/nope?x=<b>`, { headers: { accept: 'text/html,application/xhtml+xml' } })

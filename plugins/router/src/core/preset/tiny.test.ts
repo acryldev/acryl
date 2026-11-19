@@ -1,7 +1,7 @@
 import { getRouterName } from '../helper/dev/index.ts'
 import { Acryl } from './tiny.ts'
 
-describe('acryl-router/tiny preset', () => {
+describe('@acryldev/router/tiny preset', () => {
   it('Should have PatternRouter', async () => {
     const app = new Acryl()
     expect(getRouterName(app)).toBe('PatternRouter')

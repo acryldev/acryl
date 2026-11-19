@@ -1,4 +1,4 @@
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 import type { HttpBindings } from '../../../src/adapter/index.ts'
 import { createAdaptorServer } from '../../../src/adapter/server.ts'
 import { RESPONSE_ALREADY_SENT } from '../../../src/adapter/utils/response.ts'

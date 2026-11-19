@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-save',
+  name: '@acryldev/save',
   entry,
   outDir: 'lib',
   format: 'esm',

@@ -20,11 +20,11 @@ import { randomUUID } from 'node:crypto'
 import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey } from '@earendil-works/pi-tui'
 import type { Context } from '@deepseek-ai/cordis'
-import { parseCatalogProviderPage, type CatalogProviderPage } from 'cordis-plugin-market'
+import { parseCatalogProviderPage, type CatalogProviderPage } from '@acryldev/cordis-plugin-market'
 import type {
   CliMarketPnpm,
   CliMarketProfile,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import { fgRole } from '../theme.ts'
 
 const bold = (s: string): string => `\x1b[1m${s}\x1b[0m`
@@ -69,7 +69,7 @@ export async function resolveInstallVersion(packageName: string, catalogVersion:
  * `compatibility.hosts` (populated from the package's own `acryl.surfaces`
  * field by acryl.dev's catalog build) must include `'tui'`, matching the
  * exact rule Web/Desktop's own Market tab already applies in
- * `cordis-plugin-market/src/client/MarketSettingsTab.tsx`'s
+ * `@acryldev/cordis-plugin-market/src/client/MarketSettingsTab.tsx`'s
  * `matchesSurfaceFilter` - an item with no `compatibility` at all is
  * surface-agnostic (or simply never declared it), not "for no surface", so
  * it stays visible rather than being hidden by this default. Without this,

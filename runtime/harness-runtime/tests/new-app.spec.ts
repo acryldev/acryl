@@ -31,7 +31,7 @@ describe('acryl new', () => {
     expect(app.files['.github/workflows/app.yml']).toMatch(/blends-validate blend\.yaml[\s\S]*acryl-secret-check \./u)
     const manifest = parse(app.files['blend.yaml']!) as Record<string, any>
     expect(manifest).toMatchObject({ apiVersion: 'blends.acryl.dev/v1alpha1', kind: 'Blend', metadata: { id: 'app.stage-sound', name: 'Stage Sound' }, spec: { lineage: { blueprint: 'acryl.blank' } } })
-    expect(manifest.spec.rows[0]).toMatchObject({ id: 'brand', name: 'acryl-brand', config: { name: 'Stage Sound', accent: '#e8590c' } })
+    expect(manifest.spec.rows[0]).toMatchObject({ id: 'brand', name: '@acryldev/brand', config: { name: 'Stage Sound', accent: '#e8590c' } })
     expect(app.files['bin/acryl']).toContain(JSON.stringify(launcher))
     expect(app.files['AGENTS.md']).toContain('plugins/<name>/')
     // Runtime data is never committed with the app: the engine home, the run lock, and the plugin store (spec 044).
@@ -76,7 +76,7 @@ describe('acryl new', () => {
     expect(existsSync(join(dir, 'plugins'))).toBe(true)
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: join(dir, 'blend.yaml') })
     expect(blueprint.id).toBe('app.video-cut')
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
   })
 })
 
@@ -95,8 +95,8 @@ describe('reading a Blends manifest', () => {
 
   it('an ACRYL row turns a capability on, a disabled one turns it off, and any other row is an app plugin left to plugins/', () => {
     const blueprint = blueprintFromManifest(blend([
-      { id: 'community-market', name: 'cordis-plugin-market' },
-      { id: '@acryl/ui', name: '@acryl/ui', disabled: true },
+      { id: 'community-market', name: '@acryldev/cordis-plugin-market' },
+      { id: '@acryl/ui', name: '@acryldev/ui', disabled: true },
       { id: 'organizer', name: 'acryl-organizer' },
     ]))
     expect(blueprint.rows).toContain('community-market')
@@ -110,8 +110,8 @@ describe('reading a Blends manifest', () => {
   })
 
   it('an app written before the framework moved to acrylblends still names its packages, read as the acrylblends modules (spec 049 slice 17)', () => {
-    expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: 'acryl-inspect', disabled: true }])).rows).not.toContain('framework-kit')
-    expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: 'acryl-inspect' }])).rows).toContain('framework-kit')
+    expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: '@acryldev/inspect', disabled: true }])).rows).not.toContain('framework-kit')
+    expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: '@acryldev/inspect' }])).rows).toContain('framework-kit')
     expect(blueprintFromManifest(blend([{ id: 'acrylblends/cordis/inspect', name: 'acrylblends/cordis/inspect', disabled: true }])).rows).not.toContain('framework-kit')
     // Written today: each row under its module, never an old name.
     const written = appManifest({ id: 'app.y', name: 'Y', blueprint: BLANK_BLUEPRINT, brand: brandIdentity({ name: 'Y' }) }) as { spec: { rows: { id: string, name: string }[] } }

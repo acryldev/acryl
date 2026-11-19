@@ -28,12 +28,12 @@ test('the generated frame row becomes the workbench row, and nothing else change
 })
 
 test('a desktop product names the frame by its source name, and gets the workbench by its source name', () => {
-  const packed = generated.replaceAll("'@acryldev/blends-frame'", 'acryl-blends-frame')
+  const packed = generated.replaceAll("'@acryldev/blends-frame'", '@acryldev/blends-frame')
   assert.equal(
     withWorkbenchRoot(packed),
     packed.replace(
-      '    - id: acryl-blends-frame\n      name: acryl-blends-frame\n      config:\n        appPage: /app\n',
-      '    - id: acryl-workspace\n      name: acryl-workspace\n      config:\n        openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n',
+      '    - id: acryl-blends-frame\n      name: @acryldev/blends-frame\n      config:\n        appPage: /app\n',
+      '    - id: acryl-workspace\n      name: @acryldev/workspace\n      config:\n        openFolder: !!js process.env.ACRYL_OPEN_FOLDER\n',
     ),
   )
 })

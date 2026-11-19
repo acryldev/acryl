@@ -49,4 +49,4 @@ The outer repository uses English as its default product language:
 
 ## Status convention
 
-These pages distinguish shipped behavior, platform limits, and roadmap items. Compatibility mode keeps the upstream default Web client; advanced mode installs the Desktop-owned layout and native materials. The plugin marketplace now has a documentation scaffold in [`cordis-plugin-market`](../cordis-plugin-market/README.md), but no usable page or installer; mobile remote control and Channels also remain separate roadmap items and are not implied to be part of the current installer.
+These pages distinguish shipped behavior, platform limits, and roadmap items. Compatibility mode keeps the upstream default Web client; advanced mode installs the Desktop-owned layout and native materials. The plugin marketplace now has a documentation scaffold in [`@acryldev/cordis-plugin-market`](../cordis-plugin-market/README.md), but no usable page or installer; mobile remote control and Channels also remain separate roadmap items and are not implied to be part of the current installer.

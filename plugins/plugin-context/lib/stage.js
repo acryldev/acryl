@@ -1,7 +1,7 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { digestFolder, FOLDER_DIGEST_SKIPPED } from '@webboxes/blends-core'
-import { currentSourcePath } from '@webboxes/plugin-hub'
+import { digestFolder, FOLDER_DIGEST_SKIPPED } from '@acryldev/blends-core'
+import { currentSourcePath } from '@acryldev/plugin-hub-core'
 
 /**
  * Automatic host-code hot reload (pi.dev clears its module cache on reload; Node cannot). Node caches an ES module by URL and caches the

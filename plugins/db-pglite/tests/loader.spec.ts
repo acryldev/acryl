@@ -29,7 +29,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root
@@ -48,7 +48,7 @@ function entryOf(ctx: Context, entryId: string) {
   return found
 }
 
-describe('acryl-db-pglite through a real Loader', () => {
+describe('@acryldev/db-pglite through a real Loader', () => {
   it('keeps a consumer PENDING until the row provides db, migrates from the app\'s folder, and serves queries', async () => {
     const root = app()
     mkdirSync(join(root, 'migrations'))

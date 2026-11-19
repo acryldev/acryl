@@ -1,6 +1,6 @@
 /** What the "+" button opens: the last thing the user opened from the menu (a terminal until they choose). */
 
-export const LAST_TAB_KEY = 'acryl-workspace:last-tab'
+export const LAST_TAB_KEY = '@acryldev/workspace:last-tab'
 
 export type LastTab =
   | { readonly kind: 'agent'; readonly id: string; readonly label: string }

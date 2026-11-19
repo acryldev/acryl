@@ -1,5 +1,5 @@
 /**
- * Serve workspace routes on a real loopback socket through the real HTTP adapter (`serve` from acryl-router-http), composed as the plugin
+ * Serve workspace routes on a real loopback socket through the real HTTP adapter (`serve` from @acryldev/router-http), composed as the plugin
  * composes them (`privateApi`), so a test sees the peer, the port, the guard and the 405s a browser does.
  */
 

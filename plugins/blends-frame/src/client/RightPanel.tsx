@@ -30,7 +30,7 @@ const PlusIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
 )
 
-const PTY_NOTE = 'Claude, Codex and Pi run as they are, in a terminal. They drive the app from inside: they know the ACRYL app\'s architecture through its skills, extend it with Cordis plugins, and use the app\'s UI through acryl-control.'
+const PTY_NOTE = 'Claude, Codex and Pi run as they are, in a terminal. They drive the app from inside: they know the ACRYL app\'s architecture through its skills, extend it with Cordis plugins, and use the app\'s UI through @acryldev/control.'
 
 export interface RightPanelProps {
   readonly chats: ChatsPort

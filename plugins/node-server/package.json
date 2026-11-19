@@ -1,14 +1,14 @@
 {
-  "name": "acryl-node-server",
+  "name": "@acryldev/node-server",
   "version": "0.1.0",
   "description": "The framework's standalone HTTP adapter, one Cordis service: serves the whole router from a node:http listener where the ACRYL Host is not running",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-node-server"
+    "directory": "plugins/node-server"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-node-server#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/node-server#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -89,6 +89,6 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "acryl-router": "workspace:*"
+    "@acryldev/router": "workspace:*"
   }
 }

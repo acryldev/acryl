@@ -15,7 +15,7 @@
  * DSH's: its `@Remote` markers are written onto the prototype of the instance being constructed, so the page reaches these overrides.
  */
 import { PluginManager } from '@deepseek-ai/dsh-plugin-manager'
-import { createPluginHub, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, PluginStore, storeRootOf } from '@acryldev/plugin-hub-core'
 import { releaseSpec } from './release-spec.js'
 
 /**

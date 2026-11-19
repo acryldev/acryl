@@ -1,7 +1,7 @@
 import { getRouterName } from '../helper/dev/index.ts'
 import { Acryl } from './quick.ts'
 
-describe('acryl-router/quick preset', () => {
+describe('@acryldev/router/quick preset', () => {
   it('Should have SmartRouter + LinearRouter', async () => {
     const app = new Acryl()
     expect(getRouterName(app)).toBe('SmartRouter + LinearRouter')

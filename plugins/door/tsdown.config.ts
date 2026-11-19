@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-door',
+  name: '@acryldev/door',
   entry: { index: 'src/index.ts', cli: 'src/cli/acryl.ts', host: 'src/host/api.ts', page: 'src/page/api.ts', protocol: 'src/page/protocol.ts' },
   outDir: 'lib',
   format: 'esm',

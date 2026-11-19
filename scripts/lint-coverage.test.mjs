@@ -10,8 +10,8 @@ test('the lint config must cover every root-source library plugin, and the vendo
   try {
     for (const [folder, entries] of [
       ['agent', { '': 'index.ts' }],
-      ['desktop', { '': 'launch.ts', '/main': 'main.ts' }],
-      ['acryl-router', { '': 'src/index.ts' }],
+      ['desktop-shell', { '': 'launch.ts', '/main': 'main.ts' }],
+      ['@acryldev/router', { '': 'src/index.ts' }],
     ]) {
       mkdirSync(join(root, 'plugins', folder), { recursive: true })
       writeFileSync(join(root, 'plugins', folder, 'plugin.json'), JSON.stringify({ entries }))
@@ -19,10 +19,10 @@ test('the lint config must cover every root-source library plugin, and the vendo
     const plugins = join(root, 'plugins')
     const agent = 'plugins/agent is a root-source library plugin but biome.json files.includes does not cover it: add "plugins/agent/**"'
     const desktop =
-      'plugins/desktop is a root-source library plugin but biome.json files.includes does not cover it: add "plugins/desktop/**"'
+      'plugins/desktop-shell is a root-source library plugin but biome.json files.includes does not cover it: add "plugins/desktop-shell/**"'
 
     // The real config's pattern for each folder covers its entry file; the vendored src/-shape plugin is not asked.
-    assert.deepEqual(uncoveredLibraryPlugins(plugins, ['framework/**', 'plugins/agent/**', 'plugins/desktop/**']), [])
+    assert.deepEqual(uncoveredLibraryPlugins(plugins, ['framework/**', 'plugins/agent/**', 'plugins/desktop-shell/**']), [])
     // A new root-source plugin missing from the includes is named, in the order the folders are read.
     assert.deepEqual(uncoveredLibraryPlugins(plugins, ['framework/**', 'plugins/agent/**']), [desktop])
     assert.deepEqual(uncoveredLibraryPlugins(plugins, []), [agent, desktop])

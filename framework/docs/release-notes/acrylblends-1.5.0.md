@@ -1,8 +1,8 @@
 # acrylblends 1.5.0
 
 Every new app opens in the ACRYL frame: the chat with its agents, branches, versions and Settings, in the browser or in its own window. Released with
-[create-acrylblends 1.5.0](create-1.5.0.md) and the frame packages `@acrylblends/blends-frame` 0.1.2, `@acrylblends/brand-client` 0.1.1 and
-`@acrylblends/versions` 0.1.1.
+[create-acrylblends 1.5.0](create-1.5.0.md) and the frame packages `@acryldev/blends-frame` 0.1.2, `@acryldev/brand-client` 0.1.1 and
+`@acryldev/versions` 0.1.1.
 
 ## Try it
 

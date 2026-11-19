@@ -64,7 +64,7 @@ describe('the plugins navigator', () => {
   })
 
   it('lists the frame plugins around the app, not the rows that run it', () => {
-    expect(isFramePlugin('acryl-versions', 'acryl-versions')).toBe(true)
+    expect(isFramePlugin('@acryldev/versions', '@acryldev/versions')).toBe(true)
     expect(isFramePlugin('./frame/app-plugins.mjs', 'app-plugins')).toBe(false)
     expect(isFramePlugin('@deepseek-ai/dsh-agent', 'agent')).toBe(false)
   })
@@ -73,7 +73,7 @@ describe('the plugins navigator', () => {
     const now = new Date('2026-11-03T15:00:00')
     expect(madeWhen('2026-11-03T09:00:00', now)).toBe('today')
     expect(madeWhen('2026-11-02T09:00:00', now)).toBe('yesterday')
-    const row = framePluginRow({ id: 'acryl-versions', name: 'acryl-versions', version: '0.1.0', description: 'Versions', state: 'active' })
+    const row = framePluginRow({ id: 'acryl-versions', name: '@acryldev/versions', version: '0.1.0', description: 'Versions', state: 'active' })
     expect(row.toggle).toBeUndefined()
     expect(row.by).toBe('frame · v0.1.0')
     expect(filterPlugins([row], 'versions', 'frame')).toEqual([row])

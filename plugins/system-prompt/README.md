@@ -1,4 +1,4 @@
-# acryl-system-prompt
+# @acryldev/system-prompt
 
 ACRYL's shaping of the system prompt, in the shape pi.dev builds its own (`packages/coding-agent/src/core/system-prompt.ts`): one identity line, then
 every section as a tagged block. It is a pass-through on the harness's `system-prompt/assemble` waterfall: only the identity line is replaced, sections
@@ -8,8 +8,8 @@ comes from and how to change it.
 
 It also adds one section of its own, the reply style (`acryl:reply-style`, tagged `<reply_style>`): plain, short sentences and no em dash.
 
-Config (row `acryl-system-prompt`): `identity` (the opening line; ACRYL's by default, and every ACRYL Blends app's composition sets the Blends
+Config (row `@acryldev/system-prompt`): `identity` (the opening line; ACRYL's by default, and every ACRYL Blends app's composition sets the Blends
 one), `style` (the reply style; empty leaves it out), `tagSections`, `dropEmpty`.
 
-Source: `src/index.ts` (the plugin) and `src/transform.ts` (the pure shaping, also exported as `acryl-system-prompt/transform`). One package
+Source: `src/index.ts` (the plugin) and `src/transform.ts` (the pure shaping, also exported as `@acryldev/system-prompt/transform`). One package
 for ACRYL and for the Blends frame, which publishes it as `@acryldev/system-prompt` (spec 051).

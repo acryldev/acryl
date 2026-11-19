@@ -2,7 +2,7 @@
  * Where installed versions of a plugin are kept, as the install transaction needs it. The transaction (`index.ts`) owns this port and says nothing about folders,
  * copies or URLs; `stage.ts` is the adapter that keeps them on disk (Clean Architecture: a boundary owned by the use case; the layout is a detail).
  */
-import { digestFolder } from '@webboxes/blends-core'
+import { digestFolder } from '@acryldev/blends-core'
 
 /** One kept version of a plugin. `dir` is what the transaction imports it from. */
 export interface StoredPlugin {

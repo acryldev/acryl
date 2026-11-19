@@ -1,6 +1,6 @@
-/** The `drivers` service of the agent panel: the registry (the `acryl-drivers` package, published as `acrylblends/drivers`) provided on a Cordis context, and the `ctx.drivers` type. */
+/** The `drivers` service of the agent panel: the registry (the `@acryldev/drivers` package, published as `acrylblends/drivers`) provided on a Cordis context, and the `ctx.drivers` type. */
 import type { Context } from '@deepseek-ai/cordis'
-import { createDrivers, type Drivers } from 'acryl-drivers'
+import { createDrivers, type Drivers } from '@acryldev/drivers'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {

@@ -8,7 +8,7 @@
  *
  * `acryl-desktop`'s own Electron host cannot be booted this way (its web server row is Electron-coupled), so
  * this is two Web engine hosts standing in for "two independent surface processes" rather than literally Web
- * and Desktop - but `acryl-workspace`'s git and files routes are the identical shared plugin either surface
+ * and Desktop - but `@acryldev/workspace`'s git and files routes are the identical shared plugin either surface
  * composes (surface-parity.spec.ts already proves that composition is identical), so this is a real test of
  * the thing T076 actually worries about (does the shared profile's git state disagree across processes), not
  * an approximation of it. Checks (the worktree's own package scripts, read from disk) are included for the
@@ -20,7 +20,7 @@ import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
+import { createAcrylEngineHost, createWebEngineDefinition } from '@acryldev/harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
 import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 

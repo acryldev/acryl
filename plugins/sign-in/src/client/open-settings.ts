@@ -1,6 +1,6 @@
 /**
  * Opens Settings on its Models section from the first-run step: press the Settings button, then the section in its list, as a person does. The Settings
- * panel keeps its open state inside the shell, so there is no call to open it. `acryl-workspace` has the same helper for its own sections; this one
+ * panel keeps its open state inside the shell, so there is no call to open it. `@acryldev/workspace` has the same helper for its own sections; this one
  * is the narrow copy this package needs (the plugins do not import each other's client code).
  */
 

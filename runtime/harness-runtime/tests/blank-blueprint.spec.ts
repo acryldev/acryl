@@ -49,9 +49,9 @@ describe('blank blueprint on the Web engine', () => {
     try {
       const ids = rowIds(host)
       // The stem cell.
-      expect(ids).toEqual(expect.arrayContaining(['brand', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'authorization']))
+      expect(ids).toEqual(expect.arrayContaining(['brand', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', 'authorization']))
       // Nothing of the full product.
-      for (const absent of ['acryl-workspace', 'acryl-plugin-admin', 'community-market', 'acryl-shortcuts', 'acryl-mount-anchors', 'ui-acryl']) {
+      for (const absent of ['@acryldev/workspace', '@acryldev/plugin-admin', 'community-market', '@acryldev/shortcuts', '@acryldev/mount-anchors', 'ui-acryl']) {
         expect(ids, absent).not.toContain(absent)
       }
       // The stock brand is swapped out, not deleted (reversible): the row still exists and is disabled.
@@ -84,7 +84,7 @@ describe('blank blueprint on the Web engine', () => {
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
     try {
-      expect(rowIds(host)).toEqual(expect.arrayContaining(['ui-acryl', 'community-market', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-shortcuts', 'acryl-mount-anchors']))
+      expect(rowIds(host)).toEqual(expect.arrayContaining(['ui-acryl', 'community-market', '@acryldev/workspace', '@acryldev/plugin-admin', '@acryldev/shortcuts', '@acryldev/mount-anchors']))
     } finally {
       await host.dispose()
     }
@@ -98,7 +98,7 @@ describe('blank blueprint on the CLI engine', () => {
     const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-blank-test', codingCapabilities)], initialEngine: 'dsh' })
     try {
       const ids = rowIds(host)
-      expect(ids).toEqual(expect.arrayContaining(['acryl-plugin-context', 'acryl-system-prompt', 'authorization', 'agent-preset-registry']))
+      expect(ids).toEqual(expect.arrayContaining(['@acryldev/plugin-context', '@acryldev/system-prompt', 'authorization', 'agent-preset-registry']))
       expect(ids).not.toContain('brand')
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
       expect(JSON.stringify(assembly.sections)).toContain('inside Blank')

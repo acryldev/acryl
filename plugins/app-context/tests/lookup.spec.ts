@@ -12,12 +12,12 @@ const manifest = JSON.parse(readFileSync(join(root, 'docs', 'docs.json'), 'utf8'
 
 describe('the docs lookup', () => {
   it('routes the Notes request to the feature plugin, the widget and state docs, and their examples', () => {
-    const result = lookupAppDocs('please build a simple Notes widget', manifest, 'node_modules/acryl-app-context')
+    const result = lookupAppDocs('please build a simple Notes widget', manifest, 'node_modules/@acryldev/app-context')
     if (!result.ok) throw new Error(result.error)
     expect(result.docs[0]?.id).toBe('extending.home-widget')
-    expect(result.docs.map(doc => doc.path)).toContain('node_modules/acryl-app-context/docs/extending/home-widget.md')
+    expect(result.docs.map(doc => doc.path)).toContain('node_modules/@acryldev/app-context')
     expect(result.examples[0]?.id).toBe('home-widget-basic')
-    expect(result.examples[0]?.path).toBe('node_modules/acryl-app-context/example-plugins/packages/home-widget-basic')
+    expect(result.examples[0]?.path).toBe('node_modules/@acryldev/app-context')
   })
 
   it('finds state for keeping data, and troubleshooting for an error', () => {

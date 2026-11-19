@@ -2,7 +2,7 @@
  * The generic three-column desktop/web app frame: sidebar column, main surface, resizable details column,
  * platform title-bar spacing, theme presentation. One plugin claims it for its own UI (`applyAdvancedShell`),
  * via the same `desktop.main`/`desktop.sidebar` slot contract regardless of which domain the caller is -
- * the IDE (`plugins/acryl-workspace`) and a GTD, accounting or any other Blend's own main-surface plugin
+ * the IDE (`plugins/workspace`) and a GTD, accounting or any other Blend's own main-surface plugin
  * all use exactly this, never a Host-served page of their own (see
  * `specs/036-cordis-ecosystem-and-acryl-blends/blend-instance-design.md` section 0 for why).
  *
@@ -18,7 +18,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { browserLongTasks, startUiHealth, type UiHealthRecord } from './ui-health.ts'
 
 /** Stable Cordis plugin name, matching the Host side. */
-export const name = 'acryl-app-shell'
+export const name = '@acryldev/app-shell'
 
 declare global {
   interface Window {
@@ -42,7 +42,7 @@ export function apply(ctx: Context): void {
       health.stop()
       if (window.__acrylHealth === health.record) delete window.__acrylHealth
     }
-  }, 'acryl-app-shell: page health record')
+  }, '@acryldev/app-shell: page health record')
 }
 
 export { applyAdvancedShell, type AdvancedShell, type AdvancedShellHooks } from './advanced-shell.ts'

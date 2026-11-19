@@ -205,10 +205,10 @@ describe('a coding agent in a generated app', () => {
 
 describe('library', () => {
   it('orders each plugin after what it requires, without duplicates', () => {
-    const names = closure(['acryl-node-server', 'instance', 'acryl-router'], readLibrary()).map(
+    const names = closure(['node-server', 'instance', 'router'], readLibrary()).map(
       (plugin) => plugin.name,
     )
-    expect(names).toEqual(['acryl-router', 'acryl-node-server', 'instance'])
+    expect(names).toEqual(['router', 'node-server', 'instance'])
   })
 
   it('refuses an unknown plugin and names who required it', () => {
@@ -233,9 +233,9 @@ describe('library', () => {
     const allowed = new Set([
       '@deepseek-ai/cordis',
       '@deepseek-ai/schemastery',
-      '@webboxes/app-persistence',
-      '@webboxes/blends-core',
-      '@webboxes/plugin-hub',
+      '@acryldev/app-persistence',
+      '@acryldev/blends-core',
+      '@acryldev/plugin-hub-core',
       'node-pty',
       'ws',
       'yaml',
@@ -249,22 +249,22 @@ describe('library', () => {
 describe('vendored framework plugins', () => {
   it('copy their source with the plugins they require, and leave out tests and what an app cannot type-check', () => {
     const library = readLibrary()
-    const names = closure(['acryl-state'], library).map((plugin) => plugin.name)
-    expect(names).toEqual(['acryl-router', 'acryl-state'])
+    const names = closure(['state'], library).map((plugin) => plugin.name)
+    expect(names).toEqual(['router', 'state'])
     const app = mkdtempSync(join(tmpdir(), 'vendored-copy-'))
     try {
-      for (const plugin of closure(['acryl-state'], library)) copyPlugin(plugin, app)
+      for (const plugin of closure(['state'], library)) copyPlugin(plugin, app)
       const copied = (path: string) => existsSync(join(app, 'plugins', path))
-      expect(copied('acryl-router/src/index.ts')).toBe(true)
-      expect(copied('acryl-state/src/index.ts')).toBe(true)
+      expect(copied('router/src/index.ts')).toBe(true)
+      expect(copied('state/src/index.ts')).toBe(true)
       // A package is copied as its source: no build files, tests or manifest of the repository.
-      expect(copied('acryl-state/package.json')).toBe(false)
-      expect(copied('acryl-state/tsdown.config.ts')).toBe(false)
-      expect(copied('acryl-state/tests')).toBe(false)
-      expect(copied('acryl-state/LICENSE')).toBe(true)
-      expect(copied('acryl-state/src/react.ts')).toBe(false)
-      expect(copied('acryl-state/tests')).toBe(false)
-      expect(copied('acryl-state/plugin.json')).toBe(false)
+      expect(copied('@acryldev/state/package.json')).toBe(false)
+      expect(copied('state/tsdown.config.ts')).toBe(false)
+      expect(copied('state/tests')).toBe(false)
+      expect(copied('state/LICENSE')).toBe(true)
+      expect(copied('state/src/react.ts')).toBe(false)
+      expect(copied('state/tests')).toBe(false)
+      expect(copied('state/plugin.json')).toBe(false)
     } finally {
       rmSync(app, { recursive: true, force: true })
     }
@@ -391,22 +391,22 @@ describe('init', () => {
     expect(manifest(dir).name).toBe('plain')
     expect(readFileSync(join(dir, 'src/routes.ts'), 'utf8')).toContain("APP_NAME = 'plain'")
     expect(existsSync(join(dir, 'plugins/instance/index.ts'))).toBe(true)
-    for (const plugin of ['acryl-router', 'acryl-node-server'])
+    for (const plugin of ['router', 'node-server'])
       expect(existsSync(join(dir, 'plugins', plugin, 'src/index.ts'))).toBe(true)
     expect(existsSync(join(dir, 'plugins/agent'))).toBe(false)
-    expect(existsSync(join(dir, 'plugins/acryl-router/plugin.json'))).toBe(false)
-    expect(existsSync(join(dir, 'plugins/acryl-router/tests'))).toBe(false)
-    expect(existsSync(join(dir, 'plugins/acryl-router/package.json'))).toBe(false)
-    expect(existsSync(join(dir, 'plugins/acryl-router/src/index.ts'))).toBe(true)
+    expect(existsSync(join(dir, 'plugins/router/plugin.json'))).toBe(false)
+    expect(existsSync(join(dir, 'plugins/router/tests'))).toBe(false)
+    expect(existsSync(join(dir, 'plugins/router/package.json'))).toBe(false)
+    expect(existsSync(join(dir, 'plugins/router/src/index.ts'))).toBe(true)
     expect(existsSync(join(dir, '.gitignore'))).toBe(true)
     expect(readFileSync(join(dir, '.gitattributes'), 'utf8')).toMatch(/^\* text=auto eol=lf$/mu)
     expect(existsSync(join(dir, 'template.json'))).toBe(false)
     expect(manifest(dir).dependencies).toEqual({
       '@deepseek-ai/cordis': '4.0.4',
       '@deepseek-ai/schemastery': '3.18.4',
-      '@webboxes/app-persistence': '0.1.2',
-      '@webboxes/blends-core': '0.5.0',
-      '@webboxes/plugin-hub': '0.2.2',
+      '@acryldev/app-persistence': '0.1.2',
+      '@acryldev/blends-core': '0.5.0',
+      '@acryldev/plugin-hub-core': '0.2.2',
       typescript: '6.0.3',
       yaml: '2.9.0',
     })
@@ -467,11 +467,11 @@ describe('the desktop shell', () => {
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.devDependencies.electron).toBe('44.9.3')
     expect(pkg.dependencies.electron).toBeUndefined()
-    expect(pkg.scripts.desktop).toBe('node plugins/desktop/launch.ts')
+    expect(pkg.scripts.desktop).toBe('node plugins/desktop-shell/launch.ts')
     expect(pkg.acrylblends).toEqual({ desktopPath: '/todo' })
     for (const file of ['main.ts', 'window.ts', 'user-data.ts', 'shutdown.ts'])
-      expect(existsSync(join(dir, 'plugins/desktop', file))).toBe(true)
-    expect(existsSync(join(dir, 'plugins/desktop/plugin.json'))).toBe(false)
+      expect(existsSync(join(dir, 'plugins/desktop-shell', file))).toBe(true)
+    expect(existsSync(join(dir, 'plugins/desktop-shell/plugin.json'))).toBe(false)
   })
 
   it('a plain init has no electron, and add desktop brings it later without replacing a script the app has', async () => {
@@ -485,7 +485,7 @@ describe('the desktop shell', () => {
     const pkg = JSON.parse(readFileSync(file, 'utf8'))
     pkg.scripts.desktop = 'echo mine'
     writeFileSync(file, JSON.stringify(pkg))
-    expect(await runCli(['add', 'desktop', '--dir', dir], fakeIo().io)).toBe(0)
+    expect(await runCli(['add', 'desktop-shell', '--dir', dir], fakeIo().io)).toBe(0)
     const after = JSON.parse(readFileSync(file, 'utf8'))
     expect(after.devDependencies.electron).toBe('44.9.3')
     expect(after.scripts.desktop).toBe('echo mine')
@@ -506,17 +506,17 @@ describe('the desktop shell in a plain Acryl app', () => {
     )
     writeFileSync(join(dir, 'src/app.ts'), 'export default {}\n')
     writeFileSync(join(dir, '.gitignore'), 'node_modules/\n')
-    expect(await runCli(['add', 'desktop', '--dir', dir], fakeIo().io)).toBe(0)
+    expect(await runCli(['add', 'desktop-shell', '--dir', dir], fakeIo().io)).toBe(0)
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.scripts).toEqual({ desktop: 'node plugins/desktop-web/launch.ts', dev: 'x' })
     expect(pkg.devDependencies.electron).toBe('44.9.3')
     expect(existsSync(join(dir, 'plugins/desktop-web/main.ts'))).toBe(true)
     // The instance plugin comes with it: it alone decides where the app's data lives (~/.acryl/apps/<id>/data).
     expect(existsSync(join(dir, 'plugins/instance/index.ts'))).toBe(true)
-    expect(existsSync(join(dir, 'plugins/desktop'))).toBe(false)
+    expect(existsSync(join(dir, 'plugins/desktop-shell'))).toBe(false)
     expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe('node_modules/\n.acrylblends/\n')
     // Adding it again changes nothing and is refused.
-    expect(await runCli(['add', 'desktop', '--dir', dir], fakeIo().io)).toBe(1)
+    expect(await runCli(['add', 'desktop-shell', '--dir', dir], fakeIo().io)).toBe(1)
   })
 })
 
@@ -581,20 +581,20 @@ describe('add and plugins', () => {
     expect(await runCli(['init', 'suited', '-y'], fakeIo().io)).toBe(0)
     const dir = join(scratch, 'suited')
     expect(await runCli(['add', 'kv', '--dir', dir], fakeIo().io)).toBe(0)
-    expect(existsSync(join(dir, 'plugins/acryl-kv/src/conformance.ts'))).toBe(false)
+    expect(existsSync(join(dir, 'plugins/kv/src/conformance.ts'))).toBe(false)
     // The port is imported by name in tests, the type-check and plugins installed live: package.json "imports".
     const imports = (
       JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
         imports: Record<string, string>
       }
     ).imports
-    expect(imports['#acryl-kv']).toBe('./plugins/acryl-kv/src/index.ts')
-    expect(imports['#acryl-kv-json']).toBe('./plugins/acryl-kv-json/src/index.ts')
-    expect(imports['#acryl-kv/conformance']).toBe('./plugins/acryl-kv/src/conformance.ts')
+    expect(imports['#acryl-kv']).toBe('./plugins/kv/src/index.ts')
+    expect(imports['#acryl-kv-json']).toBe('./plugins/kv-json/src/index.ts')
+    expect(imports['#acryl-kv/conformance']).toBe('./plugins/kv/src/conformance.ts')
     const session = fakeIo()
     expect(await runCli(['add', 'kv', '--suite', '--dir', dir], session.io)).toBe(0)
-    expect(existsSync(join(dir, 'plugins/acryl-kv/src/conformance.ts'))).toBe(true)
-    expect(session.out()).toContain('plugins/acryl-kv/src/conformance.ts')
+    expect(existsSync(join(dir, 'plugins/kv/src/conformance.ts'))).toBe(true)
+    expect(session.out()).toContain('plugins/kv/src/conformance.ts')
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
       devDependencies: Record<string, string>
     }
@@ -633,7 +633,7 @@ describe('add and plugins', () => {
   it('lists the library', async () => {
     const session = fakeIo()
     expect(await runCli(['plugins'], session.io)).toBe(0)
-    expect(session.out()).toMatch(/^acryl-node-server .*requires acryl-router\b/m)
+    expect(session.out()).toMatch(/^node-server .*requires router\b/m)
   })
 })
 

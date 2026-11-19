@@ -49,4 +49,4 @@
 
 ## 状态约定
 
-文档会明确区分已实现能力、平台限制和 roadmap。Desktop 的兼容模式保留上游默认 Web 客户端；高级模式才安装 Desktop 自有的布局和原生材质。插件市场已建立 [`cordis-plugin-market`](../cordis-plugin-market/README.zh.md) 文档初始化工程，但尚无可用页面或安装器；手机远程和 Channels 也仍是独立 roadmap，不代表当前安装包已经提供这些产品入口。
+文档会明确区分已实现能力、平台限制和 roadmap。Desktop 的兼容模式保留上游默认 Web 客户端；高级模式才安装 Desktop 自有的布局和原生材质。插件市场已建立 [`@acryldev/cordis-plugin-market`](../cordis-plugin-market/README.zh.md) 文档初始化工程，但尚无可用页面或安装器；手机远程和 Channels 也仍是独立 roadmap，不代表当前安装包已经提供这些产品入口。

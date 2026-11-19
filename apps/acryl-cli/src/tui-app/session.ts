@@ -12,7 +12,7 @@
 import { randomUUID } from 'node:crypto'
 import { execFile } from 'node:child_process'
 import type { Context } from '@deepseek-ai/cordis'
-import { announceSelf, createAcrylSessionBridge, type AcrylSessionBridge, type AppInstance } from 'acryl-harness-runtime'
+import { announceSelf, createAcrylSessionBridge, type AcrylSessionBridge, type AppInstance } from '@acryldev/harness-runtime'
 import {
   ACCOUNT_SIGN_IN_SERVICE,
   DEEPSEEK_ACCOUNT_FLOW_KEY,
@@ -30,11 +30,11 @@ import {
   type DefaultModelAdoptionPort,
   type DefaultModelAdoptionPorts,
   type RouteActivationPort,
-} from 'acryl-control'
+} from '@acryldev/control'
 import { startDirectHost, type DirectHost } from '../host/direct.js'
 import { expandDynamicCommands, setDynamicSlashCommands } from '../tui/commands.js'
 import { MarketOverlay } from '../tui/market/MarketOverlay.js'
-import type { MarketDesktopPlugins } from 'cordis-plugin-market'
+import type { MarketDesktopPlugins } from '@acryldev/cordis-plugin-market'
 import { TuiStore } from '../tui/store.js'
 import { mountTui, type TuiHandle } from '../tui/TuiApp.js'
 import type { TuiActions } from '../tui/actions.js'
@@ -54,7 +54,7 @@ const LOGIN_RECORD_SCOPE = 'llm-pi-ai'
 
 // Typed `host.ctx.get(...)` ports for the raw DSH runtime services this host
 // adapter reads/writes directly (finding R9: no untyped service handles).
-// `acryl-control`'s narrower credential/authorization ports cover the shared
+// `@acryldev/control`'s narrower credential/authorization ports cover the shared
 // read side; these extend them with the write/discovery methods only the
 // host adapter itself needs.
 type SettingsServicePort = CredentialProjectionSettingsPort & {
@@ -157,7 +157,7 @@ function getAtPath(value: unknown, path: readonly string[]): unknown {
  * A `/login` sign-in (OAuth or API key) writes here through pi-ai's own
  * `CredentialStore`, entirely separate from the `apiKeyEnv` reference a
  * manually configured provider's settings profile points at.
- * `acryl-control`'s `CredentialProjection` computes this internally for the
+ * `@acryldev/control`'s `CredentialProjection` computes this internally for the
  * read side; only `clearApiKey`'s explicit delete still needs it directly.
  */
 function loginRecordKey(providerId: string): string {
@@ -248,7 +248,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   void bridge.subscribe(id, next => { storeSetStatus(store, next) })
   void bridge.subscribeEvents(id, event => { store.appendEvent(event) })
   // Process-local live-typing presentation, separate from the durable event
-  // log above (see acryl-harness-runtime's `subscribeAssistantStream` doc
+  // log above (see @acryldev/harness-runtime's `subscribeAssistantStream` doc
   // comment): folds `agent/assistant-stream` frames into `store.streaming`
   // without ever appending a `SessionEvent`.
   void bridge.subscribeAssistantStream(id, frame => store.appendAssistantStreamFrame(frame))
@@ -257,7 +257,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
   const history: string[] = []
 
   // Read `credentialProjectionServices()`'s three optional services and join
-  // them through `acryl-control`'s `CredentialProjection` — the one shared
+  // them through `@acryldev/control`'s `CredentialProjection` — the one shared
   // read-model `/login` and `/model` both consume, so `hasSettingsProfile`/
   // `hasCredential`/`isLive`/`authMethod` mean the same thing everywhere
   // (specs/001-acryl-refactor-improvements-and-tech-debt, findings R1/R3).
@@ -401,7 +401,7 @@ async function attachSession(host: DirectHost, resumeId: string | undefined): Pr
     },
   }
 
-  // DeepSeek's account: its browser step returns to `acryl-sign-in/account-callback`'s loopback server, and success makes
+  // DeepSeek's account: its browser step returns to `@acryldev/sign-in/account-callback`'s loopback server, and success makes
   // the account's route the default when the current default cannot answer, as a flow sign-in does.
   async function signInWithAccount(accountSignIn: AccountSignInPort, label: string): Promise<void> {
     store.updateLogin({ signingIn: accountSignIn.key })

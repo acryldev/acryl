@@ -52,7 +52,7 @@ try {
   mkdirSync(join(app, 'plugins', 'counter'))
   writeFileSync(
     join(app, 'plugins', 'counter', 'index.ts'),
-    `import { Acryl } from 'acryl-router'
+    `import { Acryl } from '@acryldev/router'
 export const name = 'counter'
 export const inject = ['router']
 export function apply(ctx: { router: { route(path: string, app: unknown): void } }) {

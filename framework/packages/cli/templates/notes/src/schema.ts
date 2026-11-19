@@ -1,4 +1,4 @@
-import type { StandardSchema } from '../plugins/acryl-router/src/helpers/index.ts'
+import type { StandardSchema } from '../plugins/router/src/helpers/index.ts'
 
 export interface NoteInput {
   title: string

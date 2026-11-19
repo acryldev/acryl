@@ -12,7 +12,7 @@
  * then ACRYL_WEB_PORT (explicit start port), ACRYL_WEB_HOST and ACRYL_WEB_TRUSTED_HOSTS (reachable beyond loopback, comma-separated names), ACRYL_INSTANCE (explicit project scope) and ACRYL_LOCAL_PRODUCT_NAME (Electron user data) refine the
  * chosen family: they are how `instanceEnvironment` hands a family to a child process.
  *
- * @module acryl-harness-runtime/instance/select
+ * @module @acryldev/harness-runtime/instance/select
  */
 
 import { existsSync, realpathSync, statSync } from 'node:fs'

@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-sandbox',
+  name: '@acryldev/sandbox',
   entry,
   outDir: 'lib',
   format: 'esm',

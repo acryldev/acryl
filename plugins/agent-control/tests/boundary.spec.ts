@@ -15,7 +15,7 @@ function sources(dir: string): string[] {
 
 const files = sources(join(process.cwd(), 'src'))
 
-describe('acryl-agent-control boundaries', () => {
+describe('@acryldev/agent-control boundaries', () => {
   it('has source to check', () => {
     expect(files.length).toBeGreaterThan(10)
   })
@@ -29,7 +29,7 @@ describe('acryl-agent-control boundaries', () => {
     const host = files.filter(file => file.includes('/host/') || file.endsWith('/src/index.ts'))
     const client = files.filter(file => file.includes('/client/'))
     expect(host.filter(file => /from\s+['"](?:\.\.\/)+client\//.test(readFileSync(file, 'utf8')))).toEqual([])
-    expect(client.filter(file => /from\s+['"](?:\.\.\/)+host\//.test(readFileSync(file, 'utf8')) || /from\s+['"](?:ws|acryl-loopback-http|@deepseek-ai\/dsh-tools)['"]/.test(readFileSync(file, 'utf8')))).toEqual([])
+    expect(client.filter(file => /from\s+['"](?:\.\.\/)+host\//.test(readFileSync(file, 'utf8')) || /from\s+['"](?:ws|@acryldev/loopback-http|@deepseek-ai\/dsh-tools)['"]/.test(readFileSync(file, 'utf8')))).toEqual([])
   })
 
   it('only the Host reads the environment', () => {

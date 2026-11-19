@@ -4,9 +4,9 @@ This repository owns the desktop product around an unmodified DeepSeek Harness c
 
 The agent's system prompt (where it comes from, how to change it, and a generated current copy per surface): `docs/system-prompt/README.md`.
 
-Building or changing an ACRYL plugin, tool, UI slot or skill: start at `plugins/acryl-plugin-context/docs/README.md` (routed docs) and `plugins/acryl-plugin-context/example-plugins/README.md` (verified examples for every plugin type).
+Building or changing an ACRYL plugin, tool, UI slot or skill: start at `plugins/plugin-context/docs/README.md` (routed docs) and `plugins/plugin-context/example-plugins/README.md` (verified examples for every plugin type).
 
-Where an ACRYL app keeps anything (home, engine home, port, Electron user data, project folders): only through the `AppInstance` family in `runtime/acryl-harness-runtime/src/instance/` (chosen once by `select.ts`, read by plugins from the `appInstance` service). Never call `homedir()` or read `ACRYL_HOME`/`DSH_HOME`/`ACRYL_WEB_PORT` anywhere else; `tests/bulkhead.spec.ts` enforces it. Design and rules: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`.
+Where an ACRYL app keeps anything (home, engine home, port, Electron user data, project folders): only through the `AppInstance` family in `runtime/harness-runtime/src/instance/` (chosen once by `select.ts`, read by plugins from the `appInstance` service). Never call `homedir()` or read `ACRYL_HOME`/`DSH_HOME`/`ACRYL_WEB_PORT` anywhere else; `tests/bulkhead.spec.ts` enforces it. Design and rules: `docs/acryl/APP-INSTANCES-AND-BULKHEADS.md`.
 
 ## Prerequisites and setup
 
@@ -76,7 +76,7 @@ a hypothetical). The one legitimate
 exception is a deliberately shared, multi-provider slot where the id names
 a *capability*, not a package, because more than one interchangeable
 package can fill it (e.g., the brand-slot pair, where `ui-brand-official`
-and `dsh-client-ui-brand-acryl` both occupy the same swap slot by design).
+and `@acryldev/brand-client` both occupy the same swap slot by design).
 That exception must be named as such in the mini-design (point 4 above) —
 it is never a default excuse for an unrelated or abbreviated id.
 
@@ -126,7 +126,7 @@ boundary-discipline rules, not a second architecture.
 
 - Surfaces (`acryl-tui`, Electron, Web) render and drive runtime semantics; they
   do not own domain or business logic. ACRYL-owned capability logic belongs
-  behind `acryl-control` / `acryl-harness-runtime` contracts. Never implement a
+  behind `@acryldev/control` / `@acryldev/harness-runtime` contracts. Never implement a
   provider/credential/authorization state machine, a durable-state write, or a
   business invariant inside an overlay or surface file.
 - Depend on typed service interfaces (`inject` keys and typed `ctx.get(...)`),
@@ -146,7 +146,7 @@ boundary-discipline rules, not a second architecture.
 Root packages are grouped by role, not left flat (fixed real instance:
 ten packages sat loose at repo root with no grouping signal for what
 depended on what — `acryl-npm-launcher`, a release shim, sat at the same
-level as `acryl-harness-runtime`, the core engine, and `cordis-plugin-market`,
+level as `@acryldev/harness-runtime`, the core engine, and `@acryldev/cordis-plugin-market`,
 a Cordis plugin; regrouped 2026-09-14, `pnpm-workspace.yaml` and
 `scripts/verify-layout.mjs` are the enforced source of truth for the
 result). This is Clean Architecture ch.11 (dependency inversion — depend
@@ -162,13 +162,13 @@ Current groups and what belongs in each:
 - `apps/` — the swappable surfaces (`acryl-cli`, `acryl-web`, `acryl-desktop`).
   A new terminal/web/desktop-shaped entry point goes here.
 - `runtime/` — the stable core every surface depends on
-  (`acryl-control`, `acryl-harness-runtime`). Nothing here may depend on
+  (`@acryldev/control`, `@acryldev/harness-runtime`). Nothing here may depend on
   anything under `apps/`.
 - `plugins/` — independently replaceable Cordis/DSH plugins
-  (`dsh-client-ui-brand-acryl`, `dsh-community-fabric`, `cordis-plugin-market`).
+  (`@acryldev/brand-client`, `@acryldev/dsh-community-fabric`, `@acryldev/cordis-plugin-market`).
   A new installable capability package goes here, not next to `apps/` or
   `runtime/`.
-- `examples/` — demo/reference packages (`acryl-blend-demo`) that ship
+- `examples/` — demo/reference packages (`@acryldev/blend-demo`) that ship
   nothing production-facing.
 - `distribution/` — release/publish shims (`acryl-npm-launcher`), never
   product logic.
@@ -185,7 +185,7 @@ package.json files declare (the Pi model, owner 2026-11-19): foundation
 (acrylblends and its packages) <- runtime <- plugins <- apps.
 `scripts/dependency-direction.mjs` (run by `verify-layout.mjs`) fails on any
 cycle and on any dependency that points the wrong way; its one exception,
-`acryl-harness-runtime` as the composition root, lists its plugins by name.
+`@acryldev/harness-runtime` as the composition root, lists its plugins by name.
 The map, with what each package owns and does not do:
 [`docs/acryl/MONOREPO.md`](docs/acryl/MONOREPO.md).
 
@@ -252,7 +252,7 @@ Single-context. Constitution, orientation, Cordis spec, and `docs/acryl/` are re
 
 ### Local Cordis plugin quick-build
 
-Need a Cordis plugin for your own immediate use, not public distribution? Use the `cordis-plugin-quickstart` skill (`.claude/skills/cordis-plugin-quickstart/SKILL.md`) to scaffold, mount, and hot-iterate one locally instead of going through `cordis-plugin-market`'s npm-publish install path.
+Need a Cordis plugin for your own immediate use, not public distribution? Use the `cordis-plugin-quickstart` skill (`.claude/skills/cordis-plugin-quickstart/SKILL.md`) to scaffold, mount, and hot-iterate one locally instead of going through `@acryldev/cordis-plugin-market`'s npm-publish install path.
 
 Agent-runtime, Development Canvas, context-relay, and third-party adapter work must follow [`docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`](docs/acryl/AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md) and [the current alignment audit](docs/cordis/acryl_cordis_alignment_audit.md). Build on Cordis services, injection, effects, events, Fibers, Loader composition, and existing DSH capability seams; do not introduce a parallel lifecycle, dependency-injection, event, tool, or provider framework.
 

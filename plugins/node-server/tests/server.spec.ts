@@ -5,8 +5,8 @@ import { join } from 'node:path'
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl, apply as routerApply, connectionOf, name as routerName } from 'acryl-router'
-import { streamSSE } from 'acryl-router/helpers'
+import { Acryl, apply as routerApply, connectionOf, name as routerName } from '@acryldev/router'
+import { streamSSE } from '@acryldev/router/helpers'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as nodeServer from '../src/index.ts'
 
@@ -32,7 +32,7 @@ async function boot(config: Partial<nodeServer.Config> = {}): Promise<Context> {
   const ctx = await routed()
   const fiber = ctx.plugin(nodeServer, config)
   await fiber
-  if (ctx.get('nodeServer') === undefined) throw new Error(`acryl-node-server did not provide nodeServer (fiber state ${String(fiber.state)}, config ${JSON.stringify(config)})`)
+  if (ctx.get('nodeServer') === undefined) throw new Error(`@acryldev/node-server did not provide nodeServer (fiber state ${String(fiber.state)}, config ${JSON.stringify(config)})`)
   return ctx
 }
 
@@ -51,7 +51,7 @@ const portIsFree = async (port: number): Promise<boolean> => {
   })
 }
 
-describe('acryl-node-server', () => {
+describe('@acryldev/node-server', () => {
   it('serves the router over a real socket with the peer and port as connection facts', async () => {
     const ctx = await boot()
     ctx.router.route('/', new Acryl().get('/who', c => c.json({ peer: connectionOf(c).remoteAddress, port: connectionOf(c).localPort })))

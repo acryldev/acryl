@@ -22,7 +22,7 @@ import {
   DESKTOP_LIFECYCLE_SUMMARY_ENTRY,
   summarizeDesktopLifecycleEvidence,
 } from './startup/lifecycle-events.ts'
-import { isDiagnosticLogFileName } from 'acryl-diagnostics'
+import { isDiagnosticLogFileName } from '@acryldev/diagnostics'
 
 const DIAGNOSTIC_ARCHIVE = /^diagnostics-\d+(?:-[0-9a-f-]+)?\.zip$/u
 const MAX_DIAGNOSTIC_ARCHIVES = 3

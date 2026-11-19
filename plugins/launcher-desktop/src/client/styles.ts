@@ -1,6 +1,6 @@
 /** Styles for the ACRYL screen (the Control Center design, spec 050 `design/control-center.html`), installed for the plugin's lifetime. Colors come from the app's theme tokens. */
 
-const STYLE_ID = 'acryl-launcher-desktop-styles'
+const STYLE_ID = '@acryldev/launcher-desktop-styles'
 
 const CSS = `
 .acrylHome {

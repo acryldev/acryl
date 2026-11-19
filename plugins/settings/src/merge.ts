@@ -31,18 +31,18 @@ export function cloneJsonShaped(root: Record<string, unknown>): Record<string, u
   const clone = (value: unknown, path: string): unknown => {
     if (value === null || typeof value === 'string' || typeof value === 'boolean') return value
     if (typeof value === 'number') {
-      if (!Number.isFinite(value)) throw new TypeError(`acryl-settings: ${path} is a non-finite number`)
+      if (!Number.isFinite(value)) throw new TypeError(`@acryldev/settings: ${path} is a non-finite number`)
       return value
     }
     if (Array.isArray(value)) {
-      if (visiting.has(value)) throw new TypeError(`acryl-settings: ${path} is a circular reference`)
+      if (visiting.has(value)) throw new TypeError(`@acryldev/settings: ${path} is a circular reference`)
       visiting.add(value)
       const entries = value.map((entry, index) => clone(entry, `${path}[${String(index)}]`))
       visiting.delete(value)
       return entries
     }
     if (isPlainObject(value)) {
-      if (visiting.has(value)) throw new TypeError(`acryl-settings: ${path} is a circular reference`)
+      if (visiting.has(value)) throw new TypeError(`@acryldev/settings: ${path} is a circular reference`)
       visiting.add(value)
       const out: Record<string, unknown> = {}
       for (const [key, entry] of Object.entries(value)) {
@@ -52,7 +52,7 @@ export function cloneJsonShaped(root: Record<string, unknown>): Record<string, u
       visiting.delete(value)
       return out
     }
-    throw new TypeError(`acryl-settings: ${path} is ${value === undefined ? 'undefined' : `a ${typeof value}`}, which cannot be stored`)
+    throw new TypeError(`@acryldev/settings: ${path} is ${value === undefined ? 'undefined' : `a ${typeof value}`}, which cannot be stored`)
   }
   return clone(root, '$') as Record<string, unknown>
 }

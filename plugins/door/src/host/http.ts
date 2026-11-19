@@ -1,12 +1,12 @@
 /**
- * What every door route shares (moved from `acryl-agent-control`, spec 041). Two kinds of caller reach it, each with its own guard: the
+ * What every door route shares (moved from `@acryldev/agent-control`, spec 041). Two kinds of caller reach it, each with its own guard: the
  * app's own page (same origin, on a loopback address), and an operator on this machine (`.acryl/bin/acryl`, an agent's shell) presenting
  * this run's secret.
  */
 
 import { timingSafeEqual } from 'node:crypto'
-import { Acryl, type Context, type MiddlewareHandler } from 'acryl-router'
-import { bodyLimit, loopbackAuthority, loopbackOnly, methodNotAllowed } from 'acryl-router/middleware'
+import { Acryl, type Context, type MiddlewareHandler } from '@acryldev/router'
+import { bodyLimit, loopbackAuthority, loopbackOnly, methodNotAllowed } from '@acryldev/router/middleware'
 
 /** Every door route lives below this path. */
 export const DOOR_PREFIX = '/api/acryl-door'

@@ -19,9 +19,9 @@ spec:
       default: ACRYL Zero
   rows:
     - id: welcome
-      name: '@acryl/welcome'
+      name: '@acryldev/welcome'
       config:
         title: '{{parameters.appTitle}}'
     - id: pipeline-preview
-      name: '@acryl/pipeline'
+      name: '@acryldev/pipeline'
       disabled: true

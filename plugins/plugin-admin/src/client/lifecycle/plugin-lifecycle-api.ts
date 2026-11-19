@@ -59,7 +59,7 @@ function hasExactKeys(record: Record<string, unknown>, expected: readonly string
 
 function parseString(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.length === 0 || value.length > MAX_STRING) {
-    throw new Error(`acryl-plugin-admin: invalid plugin lifecycle ${field}`)
+    throw new Error(`@acryldev/plugin-admin: invalid plugin lifecycle ${field}`)
   }
   return value
 }
@@ -71,7 +71,7 @@ function parsePhase(value: unknown): PluginLifecycleFiberPhase {
     || value === 'active'
     || value === 'failed'
     || value === 'unloading') return value
-  throw new Error('acryl-plugin-admin: invalid plugin lifecycle Fiber phase')
+  throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle Fiber phase')
 }
 
 function parseEntry(value: unknown): PluginLifecycleEntryView {
@@ -80,7 +80,7 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
       'entryId', 'moduleName', 'enabled', 'hostPhase', 'clientPackage',
       'clientInBootGraph', 'version', 'mutable', 'protectedReason', 'dependents',
     ])) {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle entry')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle entry')
   }
   const clientPackage = value.clientPackage === null
     ? null
@@ -90,15 +90,15 @@ function parseEntry(value: unknown): PluginLifecycleEntryView {
     || typeof value.mutable !== 'boolean'
     || (value.protectedReason !== null
       && (typeof value.protectedReason !== 'string' || value.protectedReason.length > MAX_STRING))) {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle entry flags')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle entry flags')
   }
   if (value.mutable === (value.protectedReason !== null)) {
-    throw new Error('acryl-plugin-admin: inconsistent plugin lifecycle mutation policy')
+    throw new Error('@acryldev/plugin-admin: inconsistent plugin lifecycle mutation policy')
   }
   if (!Array.isArray(value.dependents)
     || value.dependents.length > MAX_ENTRIES
     || value.dependents.some(id => typeof id !== 'string' || id.length > MAX_STRING)) {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle dependents')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle dependents')
   }
   return Object.freeze({
     entryId: parseString(value.entryId, 'entry id'),
@@ -119,11 +119,11 @@ export function parsePluginLifecycleSnapshot(value: unknown): PluginLifecycleSna
     || !hasExactKeys(value, ['entries', 'blend'])
     || !Array.isArray(value.entries)
     || value.entries.length > MAX_ENTRIES) {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle snapshot')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle snapshot')
   }
   const entries = value.entries.map(parseEntry)
   if (new Set(entries.map(entry => entry.entryId)).size !== entries.length) {
-    throw new Error('acryl-plugin-admin: duplicate plugin lifecycle entry')
+    throw new Error('@acryldev/plugin-admin: duplicate plugin lifecycle entry')
   }
   return Object.freeze({
     entries: Object.freeze(entries),
@@ -134,12 +134,12 @@ export function parsePluginLifecycleSnapshot(value: unknown): PluginLifecycleSna
 function parseBlendView(value: unknown): PluginLifecycleBlendView {
   if (!isRecord(value) || typeof value.locked !== 'boolean'
     || typeof value.rows !== 'number' || !Number.isInteger(value.rows) || value.rows < 0 || value.rows > MAX_ENTRIES) {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle blend view')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle blend view')
   }
   if (value.locked) {
     if (!hasExactKeys(value, ['locked', 'id', 'kind', 'version', 'digest', 'lockPath', 'rows'])
       || (value.kind !== 'Blueprint' && value.kind !== 'Blend')) {
-      throw new Error('acryl-plugin-admin: invalid plugin lifecycle blend view')
+      throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle blend view')
     }
     return Object.freeze({
       locked: true,
@@ -152,7 +152,7 @@ function parseBlendView(value: unknown): PluginLifecycleBlendView {
     })
   }
   if (!hasExactKeys(value, ['locked', 'id', 'name', 'rows'])) {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle blend view')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle blend view')
   }
   return Object.freeze({
     locked: false,
@@ -172,11 +172,11 @@ function parseReceipt(value: unknown): PluginLifecycleReceipt {
     || !Array.isArray(value.entryIds)
     || value.entryIds.length > MAX_ENTRIES
     || typeof value.rendererReloadRequired !== 'boolean') {
-    throw new Error('acryl-plugin-admin: invalid plugin lifecycle receipt')
+    throw new Error('@acryldev/plugin-admin: invalid plugin lifecycle receipt')
   }
   const entryIds = value.entryIds.map(entryId => parseString(entryId, 'receipt entry id'))
   if (new Set(entryIds).size !== entryIds.length) {
-    throw new Error('acryl-plugin-admin: duplicate plugin lifecycle receipt entry')
+    throw new Error('@acryldev/plugin-admin: duplicate plugin lifecycle receipt entry')
   }
   return Object.freeze({
     accepted: true,
@@ -204,7 +204,7 @@ async function readResponse(response: Response): Promise<unknown> {
   try {
     value = await response.json() as unknown
   } catch {
-    throw new Error('acryl-plugin-admin: plugin lifecycle response was not JSON')
+    throw new Error('@acryldev/plugin-admin: plugin lifecycle response was not JSON')
   }
   if (!response.ok) {
     const message = isRecord(value) && typeof value.error === 'string'
@@ -268,7 +268,7 @@ export function createPluginLifecycleApi(
   const mutate = async (path: string, entryId?: string): Promise<void> => {
     const receipt = parseReceipt(await readResponse(await post(fetcher, path, entryId)))
     if (!receipt.rendererReloadRequired) {
-      throw new Error('acryl-plugin-admin: lifecycle receipt omitted the required renderer reload')
+      throw new Error('@acryldev/plugin-admin: lifecycle receipt omitted the required renderer reload')
     }
     reloadPage()
   }

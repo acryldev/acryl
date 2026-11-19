@@ -29,19 +29,19 @@ spec:
       default: '#7c9dff'
   rows:
     - id: brand
-      name: 'acryl-brand'
+      name: '@acryldev/brand'
       config:
         name: '{{parameters.brandName}}'
         tagline: '{{parameters.brandTagline}}'
         accent: '{{parameters.brandAccent}}'
         accentDark: '{{parameters.brandAccentDark}}'
     - id: acryl-plugin-context
-      name: 'acryl-plugin-context'
+      name: '@acryldev/plugin-context'
     - id: acryl-system-prompt
-      name: 'acryl-system-prompt'
+      name: '@acryldev/system-prompt'
     - id: '@acryl/ui'
-      name: '@acryl/ui'
+      name: '@acryldev/ui'
     - id: acryl-app-save
-      name: 'acryl-app-save'
+      name: '@acryldev/app-save'
     - id: acryl-plugin-hub
-      name: 'acryl-plugin-hub'
+      name: '@acryldev/plugin-hub'

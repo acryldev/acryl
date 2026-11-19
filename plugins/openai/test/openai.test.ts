@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { agent, memory, tools } from 'acryl-agent'
+import { agent, memory, tools } from '@acryldev/agent'
 import { messagesFor, modelConfigFrom, modelConfigFromFile, openai } from '../index.ts'
 
 /** A stand-in for an OpenAI-compatible server: answers with the scripted replies in order, and records what it was sent. */

@@ -3,7 +3,7 @@
  * and its local branches. The frame itself is the client half (`./client`).
  *
  * One effect owns the confined git runner and both registrations; disposal unmounts the route and reaps any git call still running. The right
- * panel's terminals, PTY agents, files and git are the workspace's own Host services (`acryl-workspace`), run here as a child plugin: only its
+ * panel's terminals, PTY agents, files and git are the workspace's own Host services (`@acryldev/workspace`), run here as a child plugin: only its
  * Host half, since the frame, not the workbench, owns the page.
  */
 
@@ -15,11 +15,11 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acrylblends/cordis/router'
 import type {} from 'acrylblends/cordis/router-http'
 import { Acryl } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson } from 'acryl-loopback-http/router'
-import { storeRootOf } from '@webboxes/plugin-hub'
-import { GitRunner, Versions } from 'acryl-versions'
-import * as workspaceHost from 'acryl-workspace'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson } from '@acryldev/loopback-http/router'
+import { storeRootOf } from '@acryldev/plugin-hub-core'
+import { GitRunner, Versions } from '@acryldev/versions'
+import * as workspaceHost from '@acryldev/workspace'
 // `ctx.loader`: the frame lists its Loader rows and starts the app's plugins again after a switch.
 import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
 import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
@@ -113,7 +113,7 @@ interface CanvasConnection {
 }
 
 /**
- * The part of `acryl-node-server` the canvas URL mapping uses: a request gate, and its asynchronous answer through the router. Typed here because the
+ * The part of `@acryldev/node-server` the canvas URL mapping uses: a request gate, and its asynchronous answer through the router. Typed here because the
  * adapter package belongs to the host the frame runs in, not to this plugin.
  */
 interface CanvasServer {
@@ -131,7 +131,7 @@ export interface FrameConfig {
   readonly shareOwner?: string
 }
 
-export const name = 'acryl-blends-frame'
+export const name = '@acryldev/blends-frame'
 export const inject = ['router', 'routerHttp', 'appInstance']
 
 /** `git for-each-ref` lines `<current marker> <name>`: the checked-out branch first, the rest by name. */
@@ -840,7 +840,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
   const shareOwner = typeof wantedOwner === 'string' && /^[A-Za-z0-9-]+$/u.test(wantedOwner) ? wantedOwner : undefined
   const shareTo = shareOwner === undefined ? {} : { owner: shareOwner }
   const root = (ctx.appInstance as { readonly root?: unknown }).root
-  if (typeof root !== 'string') throw new Error('acryl-blends-frame: the app instance has no app folder (root)')
+  if (typeof root !== 'string') throw new Error('@acryldev/blends-frame: the app instance has no app folder (root)')
   const appBase = appPage === undefined ? undefined : appPage.replace(/\/+$/u, '')
   // Development host only: an app page answers under the canvas prefix, but its root-relative links, form actions, images and fetch calls go to the
   // frame's root. A navigation from an app page is sent back under the prefix (307, so a form's method and body survive); a sub-resource or fetch is
@@ -858,7 +858,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
         if (navigation !== undefined) return new Response(null, { status: 307, headers: { location: navigation } })
         if (appFallbackTarget(appBase, url, request.headers) === undefined) return undefined
         return server.throughRouter(request, connection)
-      }), 'acryl-blends-frame: an app page\'s URLs under the canvas prefix')
+      }), '@acryldev/blends-frame: an app page\'s URLs under the canvas prefix')
     })
     ctx.effect(() => ctx.router.wrap(async (c, next) => {
       const url = new URL(c.req.url)
@@ -873,7 +873,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       if (copy !== undefined) init.body = await copy.arrayBuffer()
       // The app's own routes may check the peer and the real port, as on its own server: hand the transport facts on.
       c.res = await ctx.router.fetch(new Request(new URL(target, url.origin), init), (c.env as { connection?: CanvasConnection } | undefined)?.connection ?? {})
-    }), 'acryl-blends-frame: app requests under the canvas prefix')
+    }), '@acryldev/blends-frame: app requests under the canvas prefix')
   }
   ctx.plugin(workspaceHost, appPage === undefined ? {} : { appPage })
   // The chat works in the app's own folder. DSH's first-run workspace is a folder under Documents; with the app's folder registered first, the page's first chat
@@ -882,14 +882,14 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
     const workspaces = (child as unknown as { workspaceController: { create(request: { readonly path: string }): Promise<unknown> } }).workspaceController
     child.effect(() => {
       workspaces.create({ path: root }).catch((cause: unknown) => {
-        child.logger.error(`acryl-blends-frame: the app folder could not be made a workspace: ${cause instanceof Error ? cause.message : String(cause)}`)
+        child.logger.error(`@acryldev/blends-frame: the app folder could not be made a workspace: ${cause instanceof Error ? cause.message : String(cause)}`)
       })
       return () => {}
-    }, 'acryl-blends-frame: the chat works in the app folder')
+    }, '@acryldev/blends-frame: the chat works in the app folder')
   })
   ctx.effect(() => {
     const report = (cause: unknown): void => {
-      ctx.logger.error(`acryl-blends-frame: ${cause instanceof Error ? cause.message : String(cause)}`)
+      ctx.logger.error(`@acryldev/blends-frame: ${cause instanceof Error ? cause.message : String(cause)}`)
     }
     const git = new GitRunner()
     const chatsFile = createBranchChatsStore(branchChatsFile(ctx.appInstance.home))
@@ -908,7 +908,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
     const githubConnect = new GithubConnect(githubConnectPorts())
     ctx.effect(() => () => {
       githubConnect.dispose()
-    }, 'acryl-blends-frame: connecting GitHub')
+    }, '@acryldev/blends-frame: connecting GitHub')
     const plugins: PluginsPort = {
       read: async () => {
         const [app, frame] = await Promise.all([readAppPlugins(root, git, join(ctx.appInstance.home, 'shared-plugins.json'), ghRepositoryCheck, storeRootOf(ctx.appInstance.home)), readFramePlugins(root, frameRows())])
@@ -1000,15 +1000,15 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
     const selectionInbox = new SelectionInbox()
     ctx.effect(
       () => installSelectionContext(ctx, selectionInbox, (cause) => {
-        ctx.logger.error(`acryl-blends-frame: the selected element did not reach the chat: ${cause instanceof Error ? cause.message : String(cause)}`)
+        ctx.logger.error(`@acryldev/blends-frame: the selected element did not reach the chat: ${cause instanceof Error ? cause.message : String(cause)}`)
       }),
-      'acryl-blends-frame: the picked element as context',
+      '@acryldev/blends-frame: the picked element as context',
     )
     ctx.router.route('/', frameRoutes({
       state,
       selection: selectionInbox,
       report: (cause) => {
-        ctx.logger.error(`acryl-blends-frame: request failed: ${cause instanceof Error ? cause.message : String(cause)}`)
+        ctx.logger.error(`@acryldev/blends-frame: request failed: ${cause instanceof Error ? cause.message : String(cause)}`)
       },
       plugins,
       graph: graph.port,
@@ -1057,7 +1057,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       snapshot,
     }))
     ctx.routerHttp.mount(FRAME_API_PREFIX)
-    // The snapshot verbs for the agent's tools (acryl-app-context), on the same git runner and queue as the left panel's buttons.
+    // The snapshot verbs for the agent's tools (@acryldev/app-context), on the same git runner and queue as the left panel's buttons.
     const stopSnapshot = ctx.reflect.provide('appSnapshot', snapshot)
     return () => {
       graph.stop()
@@ -1068,7 +1068,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       stopWatching()
       void autoSave.settled().then(() => git.dispose())
     }
-  }, 'acryl-blends-frame: git runner and state route')
+  }, '@acryldev/blends-frame: git runner and state route')
 }
 
 export { AutoSave, messageText, requestSubject, SaveStore } from './auto-save.ts'

@@ -66,7 +66,7 @@ describe('an agent stopping the Host', () => {
     hostGroupId: 96684,
     hostName: 'ACRYL Blends Blank',
     hostCommand:
-      '/Applications/ACRYL Blends Blank.app/Contents/MacOS/ACRYL Blends Blank --import ./plugins/acryl-node-server/src/register.ts /Users/x/Documents/ACRYL Blends Blank/scripts/ide-host.mjs',
+      '/Applications/ACRYL Blends Blank.app/Contents/MacOS/ACRYL Blends Blank --import ./plugins/node-server/src/register.ts /Users/x/Documents/ACRYL Blends Blank/scripts/ide-host.mjs',
   }
 
   it('sees a broad kill of every node process', () => {
@@ -78,7 +78,7 @@ describe('an agent stopping the Host', () => {
   })
 
   it('sees a -f pattern that matches the Host command line', () => {
-    expect(stopsHost(bash('pkill -f acryl-node-server'), running)).toBe(true)
+    expect(stopsHost(bash('pkill -f @acryldev/node-server'), running)).toBe(true)
     expect(stopsHost(bash("pkill -f 'scripts/ide'"), running)).toBe(true)
     expect(stopsHost(bash('pkill -f "ACRYL Blends Blank"'), running)).toBe(true)
     expect(stopsHost(bash('pkill -f "ide-host.mjs"'), running)).toBe(true)

@@ -2,7 +2,7 @@
 /**
  * No literal token, secret or password in the examples, which apps are started from (the framework's docs, sources and release package
  * moved to the acrylblends repository and are scanned there). Twice an example with a literal credential landed here, and `save` then refused
- * every generated app. The check is `save`'s own scan (`findSecrets` from `@webboxes/app-persistence`, one rule for both), over the files git
+ * every generated app. The check is `save`'s own scan (`findSecrets` from `@acryldev/app-persistence`, one rule for both), over the files git
  * tracks there, tests excluded (their fixtures need literals). A literal credential in an example is read from the environment instead
  * (`process.env.JWT_SECRET!`).
  *

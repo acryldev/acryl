@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-system-prompt',
+  name: '@acryldev/system-prompt',
   entry: { index: 'src/index.ts', transform: 'src/transform.ts' },
   outDir: 'lib',
   format: 'esm',

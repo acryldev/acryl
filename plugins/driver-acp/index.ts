@@ -12,9 +12,9 @@
 import { existsSync } from 'node:fs'
 import { isAbsolute } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import { onPath } from 'acryl-agent-panel/headless'
-import type {} from 'acryl-agent-panel/registry'
-import type {} from 'acryl-instance'
+import { onPath } from '@acryldev/agent-panel/headless'
+import type {} from '@acryldev/agent-panel/registry'
+import type {} from '@acryldev/instance'
 import { type AcpPermissions, acpDriver, type OpenAgent } from './chat.ts'
 import { type AcpAgent, AcpConnection } from './connection.ts'
 

@@ -4,12 +4,12 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
-import type { AcrPluginLifecycle } from 'acryl-control'
+import type { AcrPluginLifecycle } from '@acryldev/control'
 import { PluginLifecycleView } from '../../src/lifecycle/view.ts'
 
 const SHARED_SNAPSHOT = {
   entries: [
-    { entryId: 'include:acryl-workspace', moduleName: 'acryl-workspace', enabled: true, hostPhase: 'active' as const, mutable: true, protectedReason: null, dependents: [] },
+    { entryId: 'include:@acryldev/workspace', moduleName: '@acryldev/workspace', enabled: true, hostPhase: 'active' as const, mutable: true, protectedReason: null, dependents: [] },
     { entryId: 'include:host-only', moduleName: 'host-only-plugin', enabled: true, hostPhase: 'active' as const, mutable: true, protectedReason: null, dependents: [] },
   ],
 }
@@ -25,7 +25,7 @@ function lifecycle(): AcrPluginLifecycle & { calls: string[] } {
     },
     async reload(entryId) {
       calls.push(`reload ${entryId ?? 'all'}`)
-      return { accepted: true, action: 'reload', entryIds: [entryId ?? 'include:acryl-workspace'], snapshot: SHARED_SNAPSHOT }
+      return { accepted: true, action: 'reload', entryIds: [entryId ?? 'include:@acryldev/workspace'], snapshot: SHARED_SNAPSHOT }
     },
   }
 }
@@ -36,10 +36,10 @@ function context(graphIds: readonly string[]): Context {
 
 describe('PluginLifecycleView', () => {
   it('adds each entry\'s browser face and whether it is in the page boot graph, on top of the shared snapshot', () => {
-    const view = new PluginLifecycleView(context(['acryl-workspace']), lifecycle())
+    const view = new PluginLifecycleView(context(['@acryldev/workspace']), lifecycle())
     const { entries, blend } = view.snapshot()
     expect(entries.map(e => [e.entryId, e.clientPackage, e.clientInBootGraph])).toEqual([
-      ['include:acryl-workspace', 'acryl-workspace', true],
+      ['include:@acryldev/workspace', '@acryldev/workspace', true],
       ['include:host-only', null, false],
     ])
     expect(blend).toBeNull()
@@ -49,15 +49,15 @@ describe('PluginLifecycleView', () => {
   it('carries each row\'s installed package version, read from its package.json (a subpath row reads its package), null when there is none', () => {
     const root = mkdtempSync(join(tmpdir(), 'plugin-admin-version-'))
     try {
-      for (const [name, version] of [['acryl-workspace', '0.4.1'], ['acryl-plugin-hub', '0.1.0']] as const) {
+      for (const [name, version] of [['@acryldev/workspace', '0.4.1'], ['@acryldev/plugin-hub', '0.1.0']] as const) {
         mkdirSync(join(root, 'node_modules', name), { recursive: true })
         writeFileSync(join(root, 'node_modules', name, 'package.json'), JSON.stringify({ name, version }))
       }
       const ctx = { baseUrl: pathToFileURL(join(root, 'index.js')).href, get: () => undefined } as unknown as Context
-      const rows = [['include:acryl-workspace', 'acryl-workspace'], ['include:acryl-plugin-hub/manager', 'acryl-plugin-hub/manager'], ['include:host-only', 'host-only']]
+      const rows = [['include:@acryldev/workspace', '@acryldev/workspace'], ['include:@acryldev/plugin-hub/manager', '@acryldev/plugin-hub/manager'], ['include:host-only', 'host-only']]
       const shared = { snapshot: () => ({ entries: rows.map(([entryId, moduleName]) => ({ entryId, moduleName, enabled: true, hostPhase: 'active', mutable: false, protectedReason: 'x', dependents: [] })) }) }
       const view = new PluginLifecycleView(ctx, shared as never)
-      expect(view.snapshot().entries.map(e => [e.moduleName, e.version])).toEqual([['acryl-workspace', '0.4.1'], ['acryl-plugin-hub/manager', '0.1.0'], ['host-only', null]])
+      expect(view.snapshot().entries.map(e => [e.moduleName, e.version])).toEqual([['@acryldev/workspace', '0.4.1'], ['@acryldev/plugin-hub/manager', '0.1.0'], ['host-only', null]])
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
@@ -80,10 +80,10 @@ describe('PluginLifecycleView', () => {
   it('delegates enable, disable and reload to the shared authority and marks the page for reload', async () => {
     const shared = lifecycle()
     const view = new PluginLifecycleView(context([]), shared)
-    const enabled = await view.setEnabled('include:acryl-workspace', true)
-    const disabled = await view.setEnabled('include:acryl-workspace', false)
+    const enabled = await view.setEnabled('include:@acryldev/workspace', true)
+    const disabled = await view.setEnabled('include:@acryldev/workspace', false)
     const reloaded = await view.reload()
-    expect(shared.calls).toEqual(['enable include:acryl-workspace', 'disable include:acryl-workspace', 'reload all'])
+    expect(shared.calls).toEqual(['enable include:@acryldev/workspace', 'disable include:@acryldev/workspace', 'reload all'])
     for (const receipt of [enabled, disabled, reloaded]) {
       expect(receipt).toMatchObject({ accepted: true, rendererReloadRequired: true })
       expect(receipt.snapshot.entries).toHaveLength(2)

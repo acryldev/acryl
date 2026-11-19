@@ -1,6 +1,6 @@
 /** Styles for the Versions section, installed for the plugin's lifetime. */
 
-const STYLE_ID = 'acryl-versions-styles'
+const STYLE_ID = '@acryldev/versions-styles'
 
 const CSS = `
 .acrylVersionsSection { display: grid; gap: 10px; padding: 4px 0 24px; color: var(--dsw-alias-label-primary); }

@@ -13,7 +13,7 @@ export interface AgentPanelProps {
 /** Width of the collapsed rail. The panel is the last column of the app's grid, which shrinks to it while collapsed. */
 export const AGENT_PANEL_RAIL = 44
 
-const STYLE_ID = 'acryl-agent-panel-style'
+const STYLE_ID = '@acryldev/agent-panel-style'
 const STYLES = `
 [data-acryl-agent-panel] { display: flex !important; flex-direction: column !important; min-height: 0; overflow: hidden; }
 [data-acryl-agent-panel][data-collapsed] { width: ${AGENT_PANEL_RAIL}px !important; min-width: ${AGENT_PANEL_RAIL}px !important; }
@@ -31,12 +31,12 @@ const STYLES = `
 
 function readCollapsed(key: string | undefined): boolean {
   if (key === undefined) return false
-  try { return window.localStorage.getItem(`acryl-agent-panel:${key}`) === 'collapsed' } catch { return false }
+  try { return window.localStorage.getItem(`@acryldev/agent-panel:${key}`) === 'collapsed' } catch { return false }
 }
 
 function writeCollapsed(key: string | undefined, collapsed: boolean): void {
   if (key === undefined) return
-  try { window.localStorage.setItem(`acryl-agent-panel:${key}`, collapsed ? 'collapsed' : 'open') } catch { /* blocked storage: the state lasts for this page only */ }
+  try { window.localStorage.setItem(`@acryldev/agent-panel:${key}`, collapsed ? 'collapsed' : 'open') } catch { /* blocked storage: the state lasts for this page only */ }
 }
 
 /** A window whose right column carries an arrow: pointing right hides the panel, pointing left shows it. */

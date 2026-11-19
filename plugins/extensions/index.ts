@@ -28,8 +28,8 @@ import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { isDeepStrictEqual } from 'node:util'
 import { type Context, type Fiber, Service } from '@deepseek-ai/cordis'
-import type {} from 'acryl-instance'
-import type { Sandbox } from 'acryl-sandbox'
+import type {} from '@acryldev/instance'
+import type { Sandbox } from '@acryldev/sandbox'
 import { attachBrowserHalf } from './browser.ts'
 import { appendLedger, type LedgerEntry, readLedger } from './ledger.ts'
 import { type PluginStore, pluginVersion } from './plugin-store.ts'
@@ -247,7 +247,7 @@ function injected(module: PluginModule): string[] {
 }
 
 /** The service. One instance serves one app home. */
-/** The slice of the state service this plugin uses, by name, so it imports nothing from acryl-state. */
+/** The slice of the state service this plugin uses, by name, so it imports nothing from @acryldev/state. */
 interface StateService {
   cell<T>(key: string, initial: T): { set(value: T): void }
 }

@@ -151,7 +151,7 @@ try {
   for (const peer of ['@deepseek-ai/cordis', '@deepseek-ai/schemastery']) {
     mkdirSync(join(app, 'node_modules', '@deepseek-ai'), { recursive: true })
     // Each peer is found where a plugin that depends on it has it (pnpm keeps them per package).
-    const found = ['packages/framework', 'plugins/acryl-door', 'plugins/acryl-node-server', 'plugins/acryl-db-sqlite'].map(d => join(root, '..', '..', d, 'node_modules', peer)).find(existsSync)
+    const found = ['packages/framework', 'plugins/door', 'plugins/node-server', 'plugins/db-sqlite'].map(d => join(root, '..', '..', d, 'node_modules', peer)).find(existsSync)
     if (found === undefined) throw new Error(`${peer} is not installed in this workspace`)
     symlinkSync(realpathSync(found), join(app, 'node_modules', peer), 'junction')
   }

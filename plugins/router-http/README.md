@@ -1,6 +1,6 @@
-# acryl-router-http
+# @acryldev/router-http
 
-The Web adapter for [`acryl-router`](../acryl-router/README.md) (spec 046, milestone M2). A plugin that owns routes on the
+The Web adapter for [`@acryldev/router`](../acryl-router/README.md) (spec 046, milestone M2). A plugin that owns routes on the
 router asks for a path prefix to be served over HTTP:
 
 ```ts
@@ -23,4 +23,4 @@ export function apply(ctx: Context): void {
 A prefix matches the path itself and everything below it, following the `webServer` rule. Mounting a prefix another route
 already claims throws.
 
-Row id and package name: `acryl-router-http`.
+Row id and package name: `@acryldev/router-http`.

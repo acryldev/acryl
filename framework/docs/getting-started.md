@@ -21,15 +21,15 @@ npm run desktop                       # the same in its own window
 
 | Template | Plugins | What it is |
 |---|---|---|
-| `blank` | `instance`, `acryl-router`, `acryl-node-server`, `manifest`, `save` | a Cordis app that serves routes on the router |
-| `agent` | the above plus `acryl-state`, `tasks`, `agent`, `extensions`, `builder` | the same, with an offline agent that can extend the app while it runs |
+| `blank` | `instance`, `@acryldev/router`, `@acryldev/node-server`, `manifest`, `save` | a Cordis app that serves routes on the router |
+| `agent` | the above plus `@acryldev/state`, `tasks`, `agent`, `extensions`, `builder` | the same, with an offline agent that can extend the app while it runs |
 
 Every generated app is TypeScript, has `npm test` (`node:test`) and `npm run check` (types), and depends at run time on
 `@deepseek-ai/cordis` and `yaml` (plus `@deepseek-ai/schemastery` if you add `settings`).
 
 ## As a desktop app
 
-`npx acrylblends init my-app --template todo --desktop` (or `acrylblends add desktop` in an existing app) adds `npm run desktop`: an Electron window on the app's own server, the same code as `npm run dev`. See [the desktop shell](desktop.md).
+`npx acrylblends init my-app --template todo --desktop` (or `acrylblends add desktop-shell` in an existing app) adds `npm run desktop`: an Electron window on the app's own server, the same code as `npm run dev`. See [the desktop shell](desktop.md).
 
 ## Try the agent
 

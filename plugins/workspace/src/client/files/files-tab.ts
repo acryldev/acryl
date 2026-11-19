@@ -1,7 +1,7 @@
 /** The right sidebar's Files tab: ACRYL's tree, a dependency-gated child plugin like the Changes, Review and Checks tabs. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { FilesBody } from './FilesBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
@@ -16,8 +16,8 @@ import { CodeGlyph } from '../chrome/panel-icons.tsx'
 export const DSH_FILES_KIND = 'files'
 /** The kind ACRYL's tree had before the takeover; still registered (with no start-page entry) so a tab the user kept open still shows. */
 export const FILES_KIND = 'worktree-files'
-export const FILES_ID = 'acryl-workspace/files'
-export const FILES_TAKEOVER_ID = 'acryl-workspace/files-takeover'
+export const FILES_ID = '@acryldev/workspace/files'
+export const FILES_TAKEOVER_ID = '@acryldev/workspace/files-takeover'
 
 /**
  * PENDING (not failed) while the upstream right sidebar is absent; every registration unwinds together.
@@ -26,7 +26,7 @@ export const FILES_TAKEOVER_ID = 'acryl-workspace/files-takeover'
  */
 export function filesTabPlugin(shell: WorkspaceShellState, filesApi: WorkspaceFilesApi, gitApi: WorkspaceGitApi, takeOver = false) {
   return {
-    name: 'acryl-workspace-files-tab',
+    name: '@acryldev/workspace-files-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {
@@ -46,7 +46,7 @@ export function filesTabPlugin(shell: WorkspaceShellState, filesApi: WorkspaceFi
         add(FILES_ID, FILES_KIND, 'builtin', !takeOver)
         if (takeOver) add(FILES_TAKEOVER_ID, DSH_FILES_KIND, 'extension', true)
         return () => { for (const remove of removers.reverse()) remove() }
-      }, 'acryl-workspace: Files tab type')
+      }, '@acryldev/workspace: Files tab type')
     },
   }
 }

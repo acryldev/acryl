@@ -39,7 +39,7 @@ const IMMUTABLE_BUNDLES = new Set([
   ...(PROFILE_TEMPLATES.web?.bundles ?? []),
   '@deepseek-ai/dsh-desktop-app',
   'acryl-desktop',
-  'cordis-plugin-market',
+  '@acryldev/cordis-plugin-market',
 ])
 
 /** One direct bundle declared by the active profile. */

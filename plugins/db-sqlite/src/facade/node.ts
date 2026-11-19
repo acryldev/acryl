@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { StatementSync } from "node:sqlite";
 import { DatabaseSync } from "node:sqlite";
-import type { Db, DbExecutor, SqlValue } from "acryl-db";
+import type { Db, DbExecutor, SqlValue } from "@acryldev/db";
 
 /** Node SQLite connection settings for a database file. */
 export type NodeSqliteDatabaseOptions = {

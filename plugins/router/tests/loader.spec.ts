@@ -25,7 +25,7 @@ afterEach(async () => {
 })
 
 async function mount(): Promise<{ ctx: Context, entryId: string }> {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-router-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/router-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   const ctx = new Context()
@@ -42,7 +42,7 @@ function entryOf(ctx: Context, entryId: string) {
   return found
 }
 
-describe('acryl-router through a real Loader', () => {
+describe('@acryldev/router through a real Loader', () => {
   it('activates from the built entry and serves a request in process', async () => {
     const { ctx, entryId } = await mount()
     expect(entryOf(ctx, entryId).fiber?.state).toBe(ACTIVE)

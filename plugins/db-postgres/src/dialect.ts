@@ -1,5 +1,5 @@
 /**
- * Postgres's dialect of the port, for every Postgres provider: this one, over `pg`, and `acryl-db-pglite`, embedded. The port's `?`
+ * Postgres's dialect of the port, for every Postgres provider: this one, over `pg`, and `@acryldev/db-pglite`, embedded. The port's `?`
  * bindings in Postgres's spelling, and the check that a statement got as many values as it binds. This entry imports nothing, so a
  * provider that uses it does not load `pg`.
  */

@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-control',
+  name: '@acryldev/control',
   entry: { index: 'src/index.ts' },
   outDir: 'lib',
   format: 'esm',

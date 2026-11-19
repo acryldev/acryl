@@ -17,7 +17,7 @@ npx acrylblends add kv --suite
 npm install
 ```
 
-`add kv` copies the port (`plugins/acryl-kv`) and the JSON-file provider (`plugins/acryl-kv-json`) and gives your plugins the names `#acryl-kv` and `#acryl-kv-json` (entries in `package.json` "imports").
+`add kv` copies the port (`plugins/kv`) and the JSON-file provider (`plugins/kv-json`) and gives your plugins the names `#acryl-kv` and `#acryl-kv-json` (entries in `package.json` "imports").
 `--suite` also copies the port's conformance suite (`#acryl-kv/conformance`) and adds `vitest`, which runs it. The same works for the `db` port: `npx acrylblends add db --suite`.
 
 ## 2. Install the tool

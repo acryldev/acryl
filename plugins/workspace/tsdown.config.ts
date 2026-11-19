@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 import { xtermCssPlugin } from './scripts/xterm-css-plugin.mjs'
 
-const PACKAGE_NAME = 'acryl-workspace'
+const PACKAGE_NAME = '@acryldev/workspace'
 
 export default defineConfig([
   {
@@ -58,8 +58,8 @@ export default defineConfig([
       // Its own Loader row (like every `@deepseek-ai/*` client package here): resolved through the shared
       // Module Loader registry at runtime, not bundled in - bundling a sibling package's own
       // `window.__ModuleLoader__`-wrapped client.js fails outright (rolldown cannot read named exports out
-      // of that wrapper), discovered live extracting `acryl-app-shell` out of this package's own `shell/`.
-      'acryl-app-shell/client',
+      // of that wrapper), discovered live extracting `@acryldev/app-shell` out of this package's own `shell/`.
+      '@acryldev/app-shell/client',
     ],
     noExternal: (id: string) => id.startsWith('@deepseek-ai/') ? undefined : true,
     outputOptions: {

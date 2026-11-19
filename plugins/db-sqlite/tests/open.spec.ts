@@ -1,5 +1,5 @@
 /**
- * `openDb`, the plain entry (`acryl-db-sqlite/open`) for code without Cordis. What the built entries import is checked in
+ * `openDb`, the plain entry (`@acryldev/db-sqlite/open`) for code without Cordis. What the built entries import is checked in
  * plain-entry-imports.spec.ts.
  */
 
@@ -17,7 +17,7 @@ afterEach(async () => {
 })
 
 async function app(migrations: Record<string, string> = {}): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'acryl-db-open-'))
+  const dir = await mkdtemp(join(tmpdir(), '@acryldev/db-open-'))
   dirs.push(dir)
   await mkdir(join(dir, 'migrations'))
   await Promise.all(Object.entries(migrations).map(([name, text]) => writeFile(join(dir, 'migrations', name), text)))

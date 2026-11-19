@@ -26,7 +26,7 @@ export default async function setup(project: TestProject): Promise<() => void> {
   const db = await PGlite.create()
   const dump = await db.dumpDataDir('none')
   await db.close()
-  const folder = mkdtempSync(join(tmpdir(), 'acryl-db-postgres-pglite-'))
+  const folder = mkdtempSync(join(tmpdir(), '@acryldev/db-postgres-pglite-'))
   const file = join(folder, 'pgdata.tar')
   writeFileSync(file, new Uint8Array(await dump.arrayBuffer()))
   project.provide('pgliteDataDir', file)

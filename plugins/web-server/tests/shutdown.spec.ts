@@ -4,11 +4,11 @@
  */
 
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl, apply as routerApply, name as routerName } from 'acryl-router'
-import { apply as httpApply, inject as httpInject, name as httpName } from 'acryl-router-http'
+import { Acryl, apply as routerApply, name as routerName } from '@acryldev/router'
+import { apply as httpApply, inject as httpInject, name as httpName } from '@acryldev/router-http'
 import { afterEach, describe, expect, it } from 'vitest'
 import WebSocket from 'ws'
-import * as nodeServer from 'acryl-node-server'
+import * as nodeServer from '@acryldev/node-server'
 import * as webServer from '../src/index.ts'
 
 const contexts: Context[] = []

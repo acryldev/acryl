@@ -19,8 +19,8 @@ import {
   type UiErrorCode,
   type UiRequest,
   type UiResult,
-} from 'acryl-agent-control'
-import { listRunning, osHomeDirectory, readOnlineSecret, type RunningApp } from 'acryl-harness-runtime'
+} from '@acryldev/agent-control'
+import { listRunning, osHomeDirectory, readOnlineSecret, type RunningApp } from '@acryldev/harness-runtime'
 
 export class OnlineChannelError extends Error {}
 
@@ -60,7 +60,7 @@ export async function callOnlineChannel(instance: RunningApp, request: UiRequest
   if (instance.port === undefined) throw new OnlineChannelError(`${instance.id} has no port recorded; it may be a CLI/TUI session with no page to control`)
   const secret = readOnlineSecret(instance.home)
   if (secret === undefined) {
-    throw new OnlineChannelError(`${instance.id} has no online channel - set acryl-agent-control's "online" option to true in its profile and restart it`)
+    throw new OnlineChannelError(`${instance.id} has no online channel - set @acryldev/agent-control's "online" option to true in its profile and restart it`)
   }
   let response: Response
   try {
@@ -88,7 +88,7 @@ export async function callWorkers(instance: RunningApp, request: WorkerRequest, 
   if (instance.port === undefined) throw new OnlineChannelError(`${instance.id} has no port recorded; it may be a CLI/TUI session with no page to control`)
   const secret = readOnlineSecret(instance.home)
   if (secret === undefined) {
-    throw new OnlineChannelError(`${instance.id} has no online channel - set acryl-agent-control's "online" option to true in its profile and restart it`)
+    throw new OnlineChannelError(`${instance.id} has no online channel - set @acryldev/agent-control's "online" option to true in its profile and restart it`)
   }
   let response: Response
   try {
@@ -119,7 +119,7 @@ export async function callToolGateway(
   if (instance.port === undefined) throw new OnlineChannelError(`${instance.id} has no port recorded; it may be a CLI/TUI session with no page to control`)
   const secret = readOnlineSecret(instance.home)
   if (secret === undefined) {
-    throw new OnlineChannelError(`${instance.id} has no online channel - set acryl-agent-control's "online" option to true in its profile and restart it`)
+    throw new OnlineChannelError(`${instance.id} has no online channel - set @acryldev/agent-control's "online" option to true in its profile and restart it`)
   }
   let response: Response
   try {

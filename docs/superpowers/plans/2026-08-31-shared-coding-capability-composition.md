@@ -4,7 +4,7 @@
 
 **Goal:** Compose ACRYL authorization once across TUI, Web, and Desktop, establish the small shared-capability contract for future coding-agent features, and retain each surface's native presentation.
 
-**Architecture:** `acryl-harness-runtime` exports immutable ACRYL coding-capability declarations and a patch factory. CLI boot, Web boot, and Desktop profile preparation all consume that factory. A dedicated authorization Host/Client Cordis plugin exposes the existing Harness `authorization` service to Web and Desktop settings UI, while the TUI retains its terminal overlay as an adapter. Desktop keeps its owned Web server replacement and all Electron concerns.
+**Architecture:** `@acryldev/harness-runtime` exports immutable ACRYL coding-capability declarations and a patch factory. CLI boot, Web boot, and Desktop profile preparation all consume that factory. A dedicated authorization Host/Client Cordis plugin exposes the existing Harness `authorization` service to Web and Desktop settings UI, while the TUI retains its terminal overlay as an adapter. Desktop keeps its owned Web server replacement and all Electron concerns.
 
 **Tech Stack:** TypeScript 6, Node 24, pnpm 11.7.0, Cordis, DeepSeek Harness, Vitest, React, existing DSH Client Connection and Settings Slots.
 
@@ -14,7 +14,7 @@
 
 - Do not edit `deepseek-harness/`; its pinned source and types are authoritative.
 - Use `corepack pnpm`, never npm or yarn, for workspace dependencies and scripts.
-- Keep `acryl-harness-runtime` the shared composition boundary. Do not create a second DI system, command registry, event bus, credential store, or plugin runtime.
+- Keep `@acryldev/harness-runtime` the shared composition boundary. Do not create a second DI system, command registry, event bus, credential store, or plugin runtime.
 - Use stable Cordis Loader IDs, `inject` for mandatory services, and `ctx.effect()` for every adapter-owned registration or route.
 - Desktop retains `acryl-desktop/webserver`, Electron lifecycle, tray, file picker, packaging, and native integrations.
 - Authorization credentials remain in the existing Harness credentials provider. Never put secret values in settings, events, client state, or logs.
@@ -27,22 +27,22 @@
 
 | File | Responsibility |
 | --- | --- |
-| `acryl-harness-runtime/src/coding-capabilities.ts` | Static declarations for ACRYL coding capabilities and immutable shared Loader-patch construction. |
-| `acryl-harness-runtime/src/authorization-host.ts` | Host-side authorization projection over `ctx.authorization`; exposes only flow metadata, status, notices, prompts, start, answer, cancel, and logout semantics. |
-| `acryl-harness-runtime/src/authorization-client.tsx` | Client Cordis plugin that registers the shared authorization settings section and lifecycle-owned UI contributions. |
-| `acryl-harness-runtime/src/authorization-contract.ts` | Validated DTOs and pure parsers shared by host and client, with no secret fields. |
-| `acryl-harness-runtime/src/index.ts` | Re-exports the capability factory and composes it in CLI and Web boot helpers. |
-| `acryl-harness-runtime/tests/coding-capabilities.spec.ts` | Exact shared-patch and capability-declaration tests. |
-| `acryl-harness-runtime/tests/authorization-host.spec.ts` | Real Host plugin activation, provider loss/recovery, cancellation, logout, and no-secret projection tests. |
-| `acryl-harness-runtime/tests/authorization-client.spec.tsx` | Client settings registration, interaction rendering state, and disposal tests. |
+| `@acryldev/harness-runtime/src/coding-capabilities.ts` | Static declarations for ACRYL coding capabilities and immutable shared Loader-patch construction. |
+| `@acryldev/harness-runtime/src/authorization-host.ts` | Host-side authorization projection over `ctx.authorization`; exposes only flow metadata, status, notices, prompts, start, answer, cancel, and logout semantics. |
+| `@acryldev/harness-runtime/src/authorization-client.tsx` | Client Cordis plugin that registers the shared authorization settings section and lifecycle-owned UI contributions. |
+| `@acryldev/harness-runtime/src/authorization-contract.ts` | Validated DTOs and pure parsers shared by host and client, with no secret fields. |
+| `@acryldev/harness-runtime/src/index.ts` | Re-exports the capability factory and composes it in CLI and Web boot helpers. |
+| `@acryldev/harness-runtime/tests/coding-capabilities.spec.ts` | Exact shared-patch and capability-declaration tests. |
+| `@acryldev/harness-runtime/tests/authorization-host.spec.ts` | Real Host plugin activation, provider loss/recovery, cancellation, logout, and no-secret projection tests. |
+| `@acryldev/harness-runtime/tests/authorization-client.spec.tsx` | Client settings registration, interaction rendering state, and disposal tests. |
 | `acryl-cli/src/tui-app/session.ts` | Keep the existing TUI adapter against the same authorization behavior; replace `any` surface calls with the shared contract types where possible. |
 | `acryl-cli/tests/tui/commands.spec.ts` and new focused session test | Preserve `/login` and `/logout` behavior against the shared composition. |
-| `acryl-desktop/package.json` | Add the explicit workspace dependency on `acryl-harness-runtime` so packaged Desktop resolves the shared Loader plugins. |
+| `acryl-desktop/package.json` | Add the explicit workspace dependency on `@acryldev/harness-runtime` so packaged Desktop resolves the shared Loader plugins. |
 | `acryl-desktop/src/profile.ts` | Apply the shared coding patches before Desktop overlays and preserve `desktop-webserver` substitution. |
 | `acryl-desktop/src/client/index.ts` | Compose the shared authorization client plugin in the Desktop Client root. |
 | `acryl-desktop/tests/profile.spec.ts` | Prove Desktop uses shared authorization rows and preserves its Web server ownership. |
 | `acryl-desktop/tests/client-authorization.spec.tsx` | Prove Desktop exposes the shared authorization settings adapter and removes it on unload. |
-| `acryl-cli/src/cli/run.ts` and `acryl-harness-runtime/tests/profile.spec.ts` | Prove `acryl web` composes the shared authorization Host/Client path. |
+| `acryl-cli/src/cli/run.ts` and `@acryldev/harness-runtime/tests/profile.spec.ts` | Prove `acryl web` composes the shared authorization Host/Client path. |
 | `docs/superpowers/specs/2026-08-31-shared-coding-capability-composition-design.md` | Update only if implementation discovers a material constraint that changes the approved design. |
 | `docs/DEVELOPMENT-LOG.md` | Record each coherent implementation checkpoint after its implementation commit. |
 
@@ -92,12 +92,12 @@ may cross it.
 ### Task 1: Establish the shared capability declaration and patch factory
 
 **Files:**
-- Create: `acryl-harness-runtime/src/coding-capabilities.ts`
-- Create: `acryl-harness-runtime/tests/coding-capabilities.spec.ts`
-- Modify: `acryl-harness-runtime/src/index.ts:45-125`
-- Modify: `acryl-harness-runtime/tests/profile.spec.ts`
+- Create: `@acryldev/harness-runtime/src/coding-capabilities.ts`
+- Create: `@acryldev/harness-runtime/tests/coding-capabilities.spec.ts`
+- Modify: `@acryldev/harness-runtime/src/index.ts:45-125`
+- Modify: `@acryldev/harness-runtime/tests/profile.spec.ts`
 
-**Consumes:** Existing `PatchOptions`, `agentPresetConfig`, `DEFAULT_PROFILE_BUNDLES`, and the existing coding rows in `acryl-harness-runtime/src/index.ts`.
+**Consumes:** Existing `PatchOptions`, `agentPresetConfig`, `DEFAULT_PROFILE_BUNDLES`, and the existing coding rows in `@acryldev/harness-runtime/src/index.ts`.
 
 **Produces:** `AcrylSurface`, `AcrylCodingCapability`, and `createAcrylCodingCapabilityPatches()` for later CLI, Web, and Desktop composition.
 
@@ -127,7 +127,7 @@ it('returns fresh immutable shared coding patches without desktop rows', () => {
 
 - [ ] **Step 2: Run the new test and verify it fails**
 
-Run: `corepack pnpm --filter acryl-harness-runtime exec vitest run tests/coding-capabilities.spec.ts`
+Run: `corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/coding-capabilities.spec.ts`
 
 Expected: FAIL because `coding-capabilities.ts` does not exist.
 
@@ -157,14 +157,14 @@ Do not change the HMR guard, profile directory handling, credential provider, or
 
 - [ ] **Step 4: Run focused runtime tests**
 
-Run: `corepack pnpm --filter acryl-harness-runtime exec vitest run tests/coding-capabilities.spec.ts tests/profile.spec.ts`
+Run: `corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/coding-capabilities.spec.ts tests/profile.spec.ts`
 
 Expected: PASS, including the existing one-root profile boot test.
 
 - [ ] **Step 5: Commit the shared composition extraction**
 
 ```bash
-git add acryl-harness-runtime/src/coding-capabilities.ts acryl-harness-runtime/src/index.ts acryl-harness-runtime/tests/coding-capabilities.spec.ts acryl-harness-runtime/tests/profile.spec.ts
+git add @acryldev/harness-runtime/src/coding-capabilities.ts @acryldev/harness-runtime/src/index.ts @acryldev/harness-runtime/tests/coding-capabilities.spec.ts @acryldev/harness-runtime/tests/profile.spec.ts
 git commit -m "refactor(runtime): centralize coding capability patches"
 ```
 
@@ -174,8 +174,8 @@ git commit -m "refactor(runtime): centralize coding capability patches"
 - Modify: `acryl-desktop/package.json`
 - Modify: `acryl-desktop/src/profile.ts:580-855`
 - Modify: `acryl-desktop/tests/profile.spec.ts`
-- Modify: `acryl-harness-runtime/src/index.ts:145-176`
-- Modify: `acryl-harness-runtime/tests/profile.spec.ts`
+- Modify: `@acryldev/harness-runtime/src/index.ts:145-176`
+- Modify: `@acryldev/harness-runtime/tests/profile.spec.ts`
 
 **Consumes:** `createAcrylCodingCapabilityPatches(new Set(['desktop']))` and `createAcrylCodingCapabilityPatches(new Set(['web']))` from Task 1.
 
@@ -205,15 +205,15 @@ Use the existing isolated-home fixtures. Do not bind a public interface or launc
 
 - [ ] **Step 2: Run the focused tests and verify they fail**
 
-Run: `corepack pnpm --filter acryl-desktop exec vitest run tests/profile.spec.ts && corepack pnpm --filter acryl-harness-runtime exec vitest run tests/profile.spec.ts`
+Run: `corepack pnpm --filter acryl-desktop exec vitest run tests/profile.spec.ts && corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/profile.spec.ts`
 
 Expected: FAIL because Desktop and Web do not yet consume the shared factory.
 
 - [ ] **Step 3: Add the explicit Desktop dependency and compose patches**
 
-Add `"acryl-harness-runtime": "workspace:*"` to Desktop dependencies. In `prepareDesktopProfile()`, append the shared Desktop patches after the upstream bundle patches and before `desktopPatches`, Canvas patches, provider patches, and the Desktop webserver replacement. In `bootAcrylWebProfile()`, append the Web patches after the Web bundle layers and before user profile patches.
+Add `"@acryldev/harness-runtime": "workspace:*"` to Desktop dependencies. In `prepareDesktopProfile()`, append the shared Desktop patches after the upstream bundle patches and before `desktopPatches`, Canvas patches, provider patches, and the Desktop webserver replacement. In `bootAcrylWebProfile()`, append the Web patches after the Web bundle layers and before user profile patches.
 
-Do not import `acryl-cli`, do not alter `DESKTOP_WEB_SERVER_PACKAGE`, and do not move any Desktop-only row into `acryl-harness-runtime`.
+Do not import `acryl-cli`, do not alter `DESKTOP_WEB_SERVER_PACKAGE`, and do not move any Desktop-only row into `@acryldev/harness-runtime`.
 
 - [ ] **Step 4: Update the lockfile and run composition tests**
 
@@ -222,7 +222,7 @@ Run:
 ```bash
 corepack pnpm install --lockfile-only
 corepack pnpm --filter acryl-desktop exec vitest run tests/profile.spec.ts
-corepack pnpm --filter acryl-harness-runtime exec vitest run tests/profile.spec.ts
+corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/profile.spec.ts
 ```
 
 Expected: PASS. The Desktop test proves both authorization and `desktop-webserver` rows; Web proves `ctx.authorization` is active.
@@ -230,20 +230,20 @@ Expected: PASS. The Desktop test proves both authorization and `desktop-webserve
 - [ ] **Step 5: Commit Desktop and Web shared composition**
 
 ```bash
-git add acryl-desktop/package.json acryl-desktop/src/profile.ts acryl-desktop/tests/profile.spec.ts acryl-harness-runtime/src/index.ts acryl-harness-runtime/tests/profile.spec.ts pnpm-lock.yaml
+git add acryl-desktop/package.json acryl-desktop/src/profile.ts acryl-desktop/tests/profile.spec.ts @acryldev/harness-runtime/src/index.ts @acryldev/harness-runtime/tests/profile.spec.ts pnpm-lock.yaml
 git commit -m "feat: compose coding capabilities across desktop and web"
 ```
 
 ### Task 3: Provide a shared, secret-free authorization Host/Client adapter
 
 **Files:**
-- Create: `acryl-harness-runtime/src/authorization-contract.ts`
-- Create: `acryl-harness-runtime/src/authorization-host.ts`
-- Create: `acryl-harness-runtime/src/authorization-client.tsx`
-- Create: `acryl-harness-runtime/tests/authorization-host.spec.ts`
-- Create: `acryl-harness-runtime/tests/authorization-client.spec.tsx`
-- Modify: `acryl-harness-runtime/package.json`
-- Modify: `acryl-harness-runtime/src/index.ts`
+- Create: `@acryldev/harness-runtime/src/authorization-contract.ts`
+- Create: `@acryldev/harness-runtime/src/authorization-host.ts`
+- Create: `@acryldev/harness-runtime/src/authorization-client.tsx`
+- Create: `@acryldev/harness-runtime/tests/authorization-host.spec.ts`
+- Create: `@acryldev/harness-runtime/tests/authorization-client.spec.tsx`
+- Modify: `@acryldev/harness-runtime/package.json`
+- Modify: `@acryldev/harness-runtime/src/index.ts`
 
 **Consumes:** `ctx.authorization`, `ctx.credentials`, pinned `dsh-client-connection` host/client remote conventions, and the shared composition from Tasks 1-2.
 
@@ -275,7 +275,7 @@ Build the fixture from actual pinned Harness authorization and credentials test 
 
 - [ ] **Step 2: Run the Host test and verify it fails**
 
-Run: `corepack pnpm --filter acryl-harness-runtime exec vitest run tests/authorization-host.spec.ts`
+Run: `corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/authorization-host.spec.ts`
 
 Expected: FAIL because the shared authorization Host API does not exist.
 
@@ -292,7 +292,7 @@ Read the exact exported Host route/remote registration APIs in `deepseek-harness
 - plugin activation declares `inject = ['authorization', 'credentials', ...exact remote service names]`.
 - the request map, subscriptions, and remote registration live inside one `ctx.effect()` disposer that aborts attempts, rejects unresolved prompts, unregisters routes, and reaches quiescence.
 
-Export the plugin from `acryl-harness-runtime` as a Loader-addressable subpath. Add one stable Host Loader row in the shared Web/Desktop patches only. TUI continues to call `ctx.authorization` directly; it is already an adapter over identical behavior.
+Export the plugin from `@acryldev/harness-runtime` as a Loader-addressable subpath. Add one stable Host Loader row in the shared Web/Desktop patches only. TUI continues to call `ctx.authorization` directly; it is already an adapter over identical behavior.
 
 - [ ] **Step 4: Write and run failing Client adapter tests**
 
@@ -318,8 +318,8 @@ Implement the section with the established `ctx.slots.inject('settings.section',
 Run:
 
 ```bash
-corepack pnpm --filter acryl-harness-runtime exec vitest run tests/authorization-host.spec.ts tests/authorization-client.spec.tsx
-corepack pnpm --filter acryl-harness-runtime typecheck
+corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/authorization-host.spec.ts tests/authorization-client.spec.tsx
+corepack pnpm --filter @acryldev/harness-runtime typecheck
 ```
 
 Expected: PASS.
@@ -327,21 +327,21 @@ Expected: PASS.
 - [ ] **Step 6: Commit the shared authorization adapter**
 
 ```bash
-git add acryl-harness-runtime/package.json acryl-harness-runtime/src/authorization-contract.ts acryl-harness-runtime/src/authorization-host.ts acryl-harness-runtime/src/authorization-client.tsx acryl-harness-runtime/src/index.ts acryl-harness-runtime/tests/authorization-host.spec.ts acryl-harness-runtime/tests/authorization-client.spec.tsx
+git add @acryldev/harness-runtime/package.json @acryldev/harness-runtime/src/authorization-contract.ts @acryldev/harness-runtime/src/authorization-host.ts @acryldev/harness-runtime/src/authorization-client.tsx @acryldev/harness-runtime/src/index.ts @acryldev/harness-runtime/tests/authorization-host.spec.ts @acryldev/harness-runtime/tests/authorization-client.spec.tsx
 git commit -m "feat: add shared authorization surface adapter"
 ```
 
 ### Task 4: Mount authorization UI in Web and Desktop, preserve TUI behavior, and add parity gates
 
 **Files:**
-- Modify: `acryl-harness-runtime/src/coding-capabilities.ts`
-- Modify: `acryl-harness-runtime/src/index.ts`
+- Modify: `@acryldev/harness-runtime/src/coding-capabilities.ts`
+- Modify: `@acryldev/harness-runtime/src/index.ts`
 - Modify: `acryl-desktop/src/client/index.ts`
 - Create: `acryl-desktop/tests/client-authorization.spec.tsx`
 - Modify: `acryl-cli/src/tui-app/session.ts`
 - Modify: `acryl-cli/tests/tui/commands.spec.ts`
 - Create: `acryl-cli/tests/tui/authorization-parity.spec.ts`
-- Create: `acryl-harness-runtime/tests/capability-parity.spec.ts`
+- Create: `@acryldev/harness-runtime/tests/capability-parity.spec.ts`
 
 **Consumes:** Shared Host/Client plugin exports from Task 3 and the existing TUI login overlay/actions.
 
@@ -354,7 +354,7 @@ it('has a verified adapter test for every authorization surface', () => {
   expect(authorizationCapability.surfaces).toEqual(['tui', 'web', 'desktop'])
   expect(authorizationCapability.adapters).toEqual({
     tui: 'acryl-cli/tests/tui/authorization-parity.spec.ts',
-    web: 'acryl-harness-runtime/tests/authorization-client.spec.tsx',
+    web: '@acryldev/harness-runtime/tests/authorization-client.spec.tsx',
     desktop: 'acryl-desktop/tests/client-authorization.spec.tsx',
   })
 })
@@ -374,7 +374,7 @@ The Desktop client test must mount the plugin with its real `ClientContext` test
 Run:
 
 ```bash
-corepack pnpm --filter acryl-harness-runtime exec vitest run tests/capability-parity.spec.ts
+corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/capability-parity.spec.ts
 corepack pnpm --filter acryl-desktop exec vitest run tests/client-authorization.spec.tsx
 corepack pnpm --filter acryl-cli exec vitest run tests/tui/authorization-parity.spec.ts
 ```
@@ -392,10 +392,10 @@ Keep `acryl-cli/src/tui-app/session.ts` as the terminal adapter. Replace its `an
 Run:
 
 ```bash
-corepack pnpm --filter acryl-harness-runtime exec vitest run tests/capability-parity.spec.ts tests/authorization-host.spec.ts tests/authorization-client.spec.tsx
+corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/capability-parity.spec.ts tests/authorization-host.spec.ts tests/authorization-client.spec.tsx
 corepack pnpm --filter acryl-desktop exec vitest run tests/profile.spec.ts tests/client-authorization.spec.tsx
 corepack pnpm --filter acryl-cli exec vitest run tests/tui/commands.spec.ts tests/tui/authorization-parity.spec.ts
-corepack pnpm --filter acryl-harness-runtime typecheck
+corepack pnpm --filter @acryldev/harness-runtime typecheck
 corepack pnpm --filter acryl-desktop typecheck
 corepack pnpm --filter acryl-cli typecheck
 ```
@@ -405,7 +405,7 @@ Expected: PASS. The tests prove one shared behavior, three adapters, no secret p
 - [ ] **Step 5: Commit the surface parity integration**
 
 ```bash
-git add acryl-harness-runtime/src/coding-capabilities.ts acryl-harness-runtime/src/index.ts acryl-harness-runtime/tests/capability-parity.spec.ts acryl-desktop/src/client/index.ts acryl-desktop/tests/client-authorization.spec.tsx acryl-cli/src/tui-app/session.ts acryl-cli/tests/tui/commands.spec.ts acryl-cli/tests/tui/authorization-parity.spec.ts
+git add @acryldev/harness-runtime/src/coding-capabilities.ts @acryldev/harness-runtime/src/index.ts @acryldev/harness-runtime/tests/capability-parity.spec.ts acryl-desktop/src/client/index.ts acryl-desktop/tests/client-authorization.spec.tsx acryl-cli/src/tui-app/session.ts acryl-cli/tests/tui/commands.spec.ts acryl-cli/tests/tui/authorization-parity.spec.ts
 git commit -m "feat: expose shared authorization across acryl surfaces"
 ```
 
@@ -435,7 +435,7 @@ Run:
 ```bash
 node --test scripts/publish-npm-cli.test.mjs
 corepack pnpm --filter acryl-cli exec vitest run
-corepack pnpm --filter acryl-harness-runtime run check
+corepack pnpm --filter @acryldev/harness-runtime run check
 corepack pnpm --filter acryl-desktop run check
 ```
 

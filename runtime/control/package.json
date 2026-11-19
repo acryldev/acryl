@@ -1,5 +1,5 @@
 {
-  "name": "acryl-control",
+  "name": "@acryldev/control",
   "version": "0.2.11",
   "private": false,
   "description": "Host-neutral Cordis control plane for ACRYL",
@@ -52,5 +52,14 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "runtime/control"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/runtime/control#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

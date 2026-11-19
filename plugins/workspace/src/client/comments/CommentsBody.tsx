@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import type { PropsRuntime } from '@acryl/ui/frame'
+import type { PropsRuntime } from '@acryldev/ui/frame'
 import { splitPath } from '../changes/ChangesBody.tsx'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { CommentStore, OpenComment } from './comment-store.ts'

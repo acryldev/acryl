@@ -1,14 +1,14 @@
 /** The `review` right-sidebar tab type, registered like the Changes tab (dependency-gated child plugin). */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import { ReviewBody } from './ReviewBody.tsx'
 import type { ReviewStore } from './review-store.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { ReviewGlyph } from '../chrome/panel-icons.tsx'
 
 export const REVIEW_KIND = 'review'
-export const REVIEW_ID = 'acryl-workspace/review'
+export const REVIEW_ID = '@acryldev/workspace/review'
 
 /**
  * PENDING (not failed) while the upstream right sidebar is absent; both registrations live in one
@@ -16,7 +16,7 @@ export const REVIEW_ID = 'acryl-workspace/review'
  */
 export function reviewTabPlugin(shell: WorkspaceShellState, review: ReviewStore) {
   return {
-    name: 'acryl-workspace-review-tab',
+    name: '@acryldev/workspace-review-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {
@@ -42,7 +42,7 @@ export function reviewTabPlugin(shell: WorkspaceShellState, review: ReviewStore)
           removeBody()
           removeType()
         }
-      }, 'acryl-workspace: Review tab type')
+      }, '@acryldev/workspace: Review tab type')
     },
   }
 }

@@ -4,7 +4,7 @@
  * first-run dialog renders before its own key editor; saving a credential makes a provider ready, which ends the step by itself.
  */
 import type { ReactNode } from 'react'
-import type { InjectFace, PropsLocale } from '@acryl/ui/frame'
+import type { InjectFace, PropsLocale } from '@acryldev/ui/frame'
 import { ModelsPane, type RegisteredSection } from './ModelsPane.tsx'
 import { openModelsSettings } from './open-settings.ts'
 import { SignInCard, type SignInCardInjected } from './SignInCard.tsx'

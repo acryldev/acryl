@@ -138,9 +138,9 @@ capability operations remain service methods.
 Every event is declared through TypeScript declaration merging, namespaced, and
 documents its dispatch mode. Examples:
 
-- `acryl-agent/runtime-status`: `emit`, synchronous observation;
-- `acryl-agent/observation`: `emit`, append/projection notification;
-- `acryl-agent/command`: only a `waterfall` if policy plugins genuinely need to
+- `@acryldev/agent/runtime-status`: `emit`, synchronous observation;
+- `@acryldev/agent/observation`: `emit`, append/projection notification;
+- `@acryldev/agent/command`: only a `waterfall` if policy plugins genuinely need to
   wrap, replace, or veto command dispatch.
 
 A waterfall observer must call `next()`. Returning without `next()` is an

@@ -56,7 +56,7 @@ async function host() {
   return { port, origin: `http://127.0.0.1:${String(port)}`, prefixes, exact, mounts: () => mounts, webServer, acrylWeb }
 }
 
-const home = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-home-'))
+const home = mkdtempSync(join(tmpdir(), '@acryldev/launcher-desktop-home-'))
 cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
 const appInstance = { home, dshHome: join(home, '.dsh') }
 
@@ -92,7 +92,7 @@ async function boot(options: { router?: boolean, instance?: boolean } = {}) {
   return { ...served, ctx, fiber, router, get, post }
 }
 
-describe('acryl-launcher-desktop Host plugin', () => {
+describe('@acryldev/launcher-desktop Host plugin', () => {
   it('serves its routes through one router mount, registers no exact webServer route, and lists the apps of the home it is given', async () => {
     const app = await boot()
     expect(app.fiber.state).toBe(ACTIVE)

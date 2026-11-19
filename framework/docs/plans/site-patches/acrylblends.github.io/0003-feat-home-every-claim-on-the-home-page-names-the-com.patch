@@ -87,11 +87,11 @@ index 035af37..2109ccc 100644
 +  runtime: cordis
 +  rows:
 +    - id: router
-+      name: acryl-router
++      name: @acryldev/router
 +    - id: routes
 +      name: routes
 +    - id: server
-+      name: acryl-node-server`;
++      name: @acryldev/node-server`;
  
  export default function Home() {
    usePageMeta("AI development framework", "Compose stable software from Cordis plugins. Start with a Blend, grow it in place, and publish what works.");

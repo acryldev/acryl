@@ -14,19 +14,19 @@ import { GitRunner } from './git/runner.ts'
 import { versionsRoutes } from './route.ts'
 import { Versions } from './versions.ts'
 
-export const name = 'acryl-versions'
+export const name = '@acryldev/versions'
 export const inject = ['router', 'routerHttp']
 
 export function apply(ctx: Context): void {
   const report = (operation: string, cause: unknown): void => {
-    ctx.logger.error(`acryl-versions: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.error(`@acryldev/versions: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   ctx.effect(() => {
     const git = new GitRunner()
     ctx.router.route('/', versionsRoutes(new Versions(git), report))
     ctx.routerHttp.mount(VERSIONS_API_PREFIX)
     return () => { void git.dispose() }
-  }, 'acryl-versions: git runner and routes')
+  }, '@acryldev/versions: git runner and routes')
 }
 
 export { parseVersionsEntries, Versions } from './versions.ts'

@@ -1,7 +1,7 @@
 /**
  * The Program and the person's source as one app tree (specs/049-framework-architecture/app-storage.md in ACRYL, slice 3). A desktop product ships the
  * Program in its bundle, read-only and replaced by every update: the framework's plugins, the generated host and the frame's packages. An app's
- * `source` holds only what is the person's. Their files still name the framework the way every app does (`../plugins/acryl-router/src/index.ts`,
+ * `source` holds only what is the person's. Their files still name the framework the way every app does (`../plugins/router/src/index.ts`,
  * `acrylblends`), so the module resolver serves the tree from both places: a Program path from the bundle, anything else from the source.
  *
  * Framework packages resolve from the bundle FIRST, for any importer outside it: a package the person added that carries its own `acrylblends` or
@@ -23,7 +23,7 @@ export interface Product {
   readonly product: string
   /** The name the first app gets, until the person names it (`Blank`). */
   readonly appName: string
-  /** The Program's paths in the app tree, `/`-separated and relative; a folder ends in `/` (`node_modules/`, `plugins/acryl-router/`, `cordis.yml`). */
+  /** The Program's paths in the app tree, `/`-separated and relative; a folder ends in `/` (`node_modules/`, `plugins/router/`, `cordis.yml`). */
   readonly program: readonly string[]
   /**
    * A folder of the bundle that holds the Blend this product is: its first app is made from it (the person's part of it) instead of from the bundle itself.
@@ -37,7 +37,7 @@ export interface Product {
    * source was made from another build, the next start copies this build's files over it (`openProductApp`), so an update reaches the screen.
    */
   readonly build?: string
-  /** Where newer builds are published (the packer reads the Blend's GitHub remote): the app offers them in place (plugins/desktop/updater.ts). */
+  /** Where newer builds are published (the packer reads the Blend's GitHub remote): the app offers them in place (plugins/desktop-shell/updater.ts). */
   readonly releases?: { readonly repo: string; readonly file: string }
 }
 
@@ -101,7 +101,7 @@ export function inProgram(program: readonly string[], path: string): boolean {
 
 /**
  * The framework's package names: its own (`acrylblends`, the frame's `acryl-*` and `@acryldev/*`, the brand row's `dsh-*`), the engine's
- * (`@deepseek-ai/*`), and the shared ones the frame is built from (`@acryl/*`, `@webboxes/*`). One copy each per process, the bundle's.
+ * (`@deepseek-ai/*`), and the shared ones the frame is built from (`@acryldev/*`, `@acryldev/*`). One copy each per process, the bundle's.
  */
 const FRAMEWORK_PACKAGE =
   /^(?:acrylblends(?:\/|$)|acryl-|dsh-|@acryldev\/|@deepseek-ai\/|@acryl\/|@webboxes\/)/u

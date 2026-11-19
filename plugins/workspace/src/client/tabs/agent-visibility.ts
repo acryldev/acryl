@@ -4,7 +4,7 @@
  * in Settings > Agents. The choice is remembered in the browser storage (a per-viewer convenience).
  */
 
-export const HIDDEN_AGENTS_KEY = 'acryl-workspace:hidden-agents'
+export const HIDDEN_AGENTS_KEY = '@acryldev/workspace:hidden-agents'
 
 /** @returns the ids the user hid; anything unreadable counts as "nothing hidden". */
 export function readHiddenAgents(storage: Pick<Storage, 'getItem'> | undefined): ReadonlySet<string> {

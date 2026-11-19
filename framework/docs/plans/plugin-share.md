@@ -6,7 +6,7 @@ Spec: `specs/049-framework-architecture/tasks.md` M11 (T009, T011, T015) in acry
 
 `plugin-share` turns a release someone published into a running plugin in this app, and later publishes one. It is its own plugin because it has its own lifecycle and is left out of production, as the builder is. Extensions keeps owning the install transaction (`install`, rollback, ledger): pull hands it a folder and never mounts anything itself.
 
-Fetching and unpacking belong to `@webboxes/plugin-hub`, the digest and the portability rules to `@webboxes/blends-core`. Neither is copied.
+Fetching and unpacking belong to `@acryldev/plugin-hub-core`, the digest and the portability rules to `@acryldev/blends-core`. Neither is copied.
 
 ## 2. Provides and consumes
 
@@ -59,7 +59,7 @@ Real Cordis activation in `plugins/plugin-share/test/`: a pull from a local rele
 
 Spec 049 T020: a framed blank, notes, chat or nodejs app refuses the pull, and the Blank DMG is a framed blank app. plugin-share becomes a row of every template that has an extensions row.
 
-- **The blocker is one import.** plugin-share imported `packagePlugin` from `builder/package.ts`, so its `plugin.json` requires builder, and builder requires agent and sandbox. `package.ts` imports only `@webboxes/blends-core` and `@webboxes/plugin-hub`, nothing of builder. It moves to `plugins/plugin-share/package.ts`. Builder's `package_plugin` tool imports it from there and requires plugin-share. The dependency then points from the agent's tool to the sharing capability, never back.
+- **The blocker is one import.** plugin-share imported `packagePlugin` from `builder/package.ts`, so its `plugin.json` requires builder, and builder requires agent and sandbox. `package.ts` imports only `@acryldev/blends-core` and `@acryldev/plugin-hub-core`, nothing of builder. It moves to `plugins/plugin-share/package.ts`. Builder's `package_plugin` tool imports it from there and requires plugin-share. The dependency then points from the agent's tool to the sharing capability, never back.
 - **`requires` after the move:** plugin-share requires `instance`, `extensions` and `manifest`. It imports `extensions`' name rule and `manifest`'s lock writer, and it injects `extensions` and `appInstance`. Every one of the four templates carries all three.
 - **The rows.** Blank, notes, chat and nodejs gain the row after `extensions` in `blend.yaml`, the registry entry and `'plugin-share': { dir }` in `src/app.ts`, and the name in `template.json`. In production the row is left out, as the agent template does, because a pull runs a stranger's code.
 - **The frame.** Nothing changes. `frame-rows.ts` already keeps `pluginShare` out of the isolate list, so the door reaches it in every framed template.

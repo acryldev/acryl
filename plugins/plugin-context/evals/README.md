@@ -7,12 +7,12 @@ Opt-in, spends real tokens, never part of the required gate. Same tasks, two var
   prepare-publish tools stay (the agent can still act, it just is not told where the knowledge is).
 
 ```bash
-cd runtime/acryl-harness-runtime
+cd runtime/harness-runtime
 ACRYL_E2E_KEY_FILE=~/.secure-storage/llmproviders/deepseek/deepseek.json ACRYL_E2E_LOG=/tmp/full.jsonl \
-  ACRYL_E2E_PROMPTS="$(node -e "console.log(require('../../plugins/acryl-plugin-context/evals/tasks.json').tasks.map(t=>t.prompt).join('||'))")" \
+  ACRYL_E2E_PROMPTS="$(node -e "console.log(require('../../plugins/plugin-context/evals/tasks.json').tasks.map(t=>t.prompt).join('||'))")" \
   corepack pnpm exec vitest run tests/e2e-real-model.spec.ts
 ACRYL_PLUGIN_DOCS=off ACRYL_E2E_LOG=/tmp/without.jsonl ... same command
-node ../../plugins/acryl-plugin-context/evals/summarize.mjs /tmp/full.jsonl
+node ../../plugins/plugin-context/evals/summarize.mjs /tmp/full.jsonl
 ```
 
 `summarize.mjs` reads the session events and reports steps, tool calls, reads of the pack's docs and examples, verify and install outcomes. Judge on those (outcome and

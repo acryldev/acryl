@@ -2,7 +2,7 @@
   "source": {
     "repository": "https://github.com/acryldev/acryl",
     "commit": "f6538891",
-    "directory": "plugins/acryl-plugin-context"
+    "directory": "plugins/plugin-context"
   },
   "ported": "2026-11-04, 127-self-knowledge: the Blends app's agent gets ACRYL IDE's self-knowledge (pi.dev's docs-routing philosophy)",
   "changes": {

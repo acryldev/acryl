@@ -7,18 +7,18 @@
     "root": "workspace"
   },
   "imports": {
-    "#acryl-jsx/jsx-runtime": "./plugins/acryl-router/src/core/jsx/jsx-runtime.ts",
-    "#acryl-jsx/jsx-dev-runtime": "./plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"
+    "#acryl-jsx/jsx-runtime": "./plugins/router/src/core/jsx/jsx-runtime.ts",
+    "#acryl-jsx/jsx-dev-runtime": "./plugins/router/src/core/jsx/jsx-dev-runtime.ts"
   },
   "engines": {
     "node": ">=22.19.0"
   },
   "scripts": {
-    "desktop": "node plugins/desktop/launch.ts",
-    "acryl": "node plugins/acryl-door/src/cli/acryl.ts",
-    "start": "node --import ./plugins/acryl-node-server/src/register.ts src/main.ts",
-    "dev": "node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs",
-    "test": "acrylblends check-deps && node --import ./plugins/acryl-node-server/src/register.ts --test \"test/**/*.test.{ts,tsx}\"",
+    "desktop": "node plugins/desktop-shell/launch.ts",
+    "acryl": "node plugins/door/src/cli/acryl.ts",
+    "start": "node --import ./plugins/node-server/src/register.ts src/main.ts",
+    "dev": "node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs",
+    "test": "acrylblends check-deps && node --import ./plugins/node-server/src/register.ts --test \"test/**/*.test.{ts,tsx}\"",
     "check": "tsc --noEmit && tsc --noEmit -p src/client && acrylblends check-deps",
     "build": "acrylblends build-client",
     "lock": "node plugins/manifest/lock.ts",
@@ -50,9 +50,9 @@
     "@deepseek-ai/dsh-base": "0.2.0-rc.2",
     "@deepseek-ai/dsh-web-app": "0.2.0-rc.2",
     "@deepseek-ai/schemastery": "3.18.4",
-    "@webboxes/app-persistence": "0.1.2",
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.2",
+    "@acryldev/app-persistence": "0.1.2",
+    "@acryldev/blends-core": "0.5.0",
+    "@acryldev/plugin-hub-core": "0.2.2",
     "acrylblends": "^1.5.19",
     "js-yaml": "^4.2.0",
     "skill-mcp-manager": "^1.3.1",

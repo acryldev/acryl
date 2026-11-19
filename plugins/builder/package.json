@@ -1,5 +1,5 @@
 {
-  "name": "acryl-builder",
+  "name": "@acryldev/builder",
   "version": "0.1.0",
   "description": "The agent's tools for building the app it runs in: write, install, read, list and remove extensions, with real results.",
   "license": "MIT",
@@ -30,12 +30,12 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-agent": "workspace:*",
-    "acryl-extensions": "workspace:*",
-    "acryl-instance": "workspace:*",
-    "acryl-plugin-share": "workspace:*",
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.2"
+    "@acryldev/agent": "workspace:*",
+    "@acryldev/extensions": "workspace:*",
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/plugin-share": "workspace:*",
+    "@acryldev/blends-core": "workspace:^",
+    "@acryldev/plugin-hub-core": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

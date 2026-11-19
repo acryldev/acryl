@@ -1,4 +1,4 @@
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import type { IncomingMessage, ServerResponse } from 'node:http'

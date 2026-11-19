@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 if (process.env.ACRYL_HOME === undefined || process.env.ACRYL_HOME === '') {
-  const home = mkdtempSync(join(tmpdir(), 'acryl-home-'))
+  const home = mkdtempSync(join(tmpdir(), '@acryldev/home-'))
   process.env.ACRYL_HOME = home
   process.on('exit', () => {
     try {

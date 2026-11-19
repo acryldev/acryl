@@ -12,13 +12,13 @@ import type {} from 'acrylblends/cordis/router-http'
 import {
   createDefaultModelAdoption, createRouteActivation, isRouteUsable,
   type CredentialProjectionConfigurableProvider, type DefaultModelAdoptionPort, type DefaultModelAdoptionPorts, type RouteActivationSettingsPort, type RouteUsabilityServices,
-} from 'acryl-control'
+} from '@acryldev/control'
 import { SignInController, type SignInPorts } from './controller.ts'
 import type { DeepSeekAccountPort } from './deepseek-account.ts'
 import { SIGN_IN_API_PREFIX } from './contract.ts'
 import { signInRoutes } from './route.ts'
 
-export const name = 'acryl-sign-in'
+export const name = '@acryldev/sign-in'
 /** This package's version (`lib/index.js` sits one folder below `package.json`), sent to DeepSeek as the requesting client's version. */
 const VERSION = (createRequire(import.meta.url)('../package.json') as { version: string }).version
 /** The routes are served through the framework's router; `acrylWeb` still names the origin DeepSeek's browser sign-in returns to. */
@@ -65,7 +65,7 @@ export function apply(ctx: Context): void {
   const origin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const authorization = service<SignInPorts['authorization']>(ctx, 'authorization')
   const credentials = service<SignInPorts['credentials'] & RouteUsabilityServices['credentials']>(ctx, 'credentials')
-  if (authorization === undefined || credentials === undefined) throw new Error('acryl-sign-in: the harness authorization and credentials services are required')
+  if (authorization === undefined || credentials === undefined) throw new Error('@acryldev/sign-in: the harness authorization and credentials services are required')
   const activation = routeActivation(ctx)
   const controller = new SignInController({
     authorization,
@@ -82,7 +82,7 @@ export function apply(ctx: Context): void {
     newId: randomUUID,
   })
   const report = (operation: string, cause: unknown): void => {
-    ctx.logger.error(`acryl-sign-in: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.error(`@acryldev/sign-in: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   ctx.router.route('/', signInRoutes(controller, report))
   ctx.routerHttp.mount(SIGN_IN_API_PREFIX)

@@ -126,7 +126,7 @@ function carriedCopies(dir: string): string[] {
 }
 
 /** The plugins the frame's host layer mounts by path: any framed app carries them, and an app made before the frame gets them here. */
-const HOST_PLUGINS = ['acryl-web-server', 'acryl-page'] as const
+const HOST_PLUGINS = ['@acryldev/web-server', '@acryldev/page'] as const
 
 /** A library plugin a scaffold file imports: `from '../plugins/<name>/...'`. */
 const PLUGIN_IMPORT = /from '\.\.\/plugins\/([^/']+)\//gu

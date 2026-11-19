@@ -15,7 +15,7 @@ import DefaultExport, {
 } from './index.ts'
 import type { Child, FC } from '../index.ts'
 // run tests by old style jsx default
-// acryl-router/jsx/jsx-runtime and acryl-router/jsx/dom/jsx-runtime are tested in their respective settings
+// @acryldev/router/jsx/jsx-runtime and @acryldev/router/jsx/dom/jsx-runtime are tested in their respective settings
 import { createElement, jsx } from '../index.ts'
 import type { RefObject } from '../hooks/index.ts'
 import {

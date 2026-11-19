@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "library": "@acryl/ui",
+  "library": "@acryldev/ui",
   "surfaces": [
     "web",
     "desktop",
@@ -1784,6 +1784,6 @@
     "source": "contracts/tokens.json"
   },
   "notes": {
-    "tui": "The terminal library (plugins/acryl-ui-tui) implements every component with pi-tui: the props above, keyboard instead of pointer (arrow keys, space, enter, y/n, escape), and no line ever wider than the terminal."
+    "tui": "The terminal library (plugins/ui-tui) implements every component with pi-tui: the props above, keyboard instead of pointer (arrow keys, space, enter, y/n, escape), and no line ever wider than the terminal."
   }
 }

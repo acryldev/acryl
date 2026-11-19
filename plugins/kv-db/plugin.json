@@ -1,17 +1,28 @@
 {
-  "name": "acryl-kv-db",
+  "name": "kv-db",
   "description": "The kv provider over the db port: a kv table in the app's SQL database, so an app that grows into SQL keeps its data. Vendored from ACRYL.",
-  "requires": ["acryl-kv", "acryl-db-sqlite"],
-  "inject": ["db"],
-  "provides": ["kv"],
+  "requires": [
+    "kv",
+    "db-sqlite"
+  ],
+  "inject": [
+    "db"
+  ],
+  "provides": [
+    "kv"
+  ],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/schemastery": "3.18.4"
   },
-  "mount": "mount it after acryl-db-sqlite: root.plugin(kvDb, {}); it waits for db and provides the same kv as acryl-kv-json",
-  "omit": ["**/*.test.*", "**/*.spec.*", "**/*.case.ts"],
+  "mount": "mount it after @acryldev/db-sqlite: root.plugin(kvDb, {}); it waits for db and provides the same kv as @acryldev/kv-json",
+  "omit": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/*.case.ts"
+  ],
   "imports": {
-    "#acryl-kv-db": "acryl-kv-db/src/index.ts"
+    "#acryl-kv-db": "kv-db/src/index.ts"
   },
   "entries": {
     "": "src/index.ts",

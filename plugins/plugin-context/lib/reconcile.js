@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs'
 import { basename, dirname, isAbsolute, join } from 'node:path'
-import { currentSourcePath, homePluginsDir } from '@webboxes/plugin-hub'
+import { currentSourcePath, homePluginsDir } from '@acryldev/plugin-hub-core'
 import { readManifest } from './manifest.js'
 import { SOURCE_FILE } from './stage.js'
 import { projectPluginsDir } from './scopes.js'

@@ -189,10 +189,10 @@ describe('plugin lifecycle state', () => {
     mkdirSync(dirname(path), { recursive: true })
     writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'web', disabledEntries: ['include:extension-context', 'include:other'] }] }))
     const persistence = { profileName: 'web', statePath: path }
-    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:acryl-plugin-context', 'include:other'])
-    expect(pluginLifecyclePatches(persistence, new Set(['acryl-plugin-context', 'other']))).toEqual([{ id: 'acryl-plugin-context', disabled: true }, { id: 'other', disabled: true }])
+    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:@acryldev/plugin-context', 'include:other'])
+    expect(pluginLifecyclePatches(persistence, new Set(['@acryldev/plugin-context', 'other']))).toEqual([{ id: 'acryl-plugin-context', disabled: true }, { id: 'other', disabled: true }])
     await setPluginLifecycleEntryEnabled(persistence, 'include:other', true)
-    expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:acryl-plugin-context'])
+    expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:@acryldev/plugin-context'])
   })
 
   it('reads a disabled Development Canvas kept under its old row id as the row by its package name (spec 048 T014)', async () => {

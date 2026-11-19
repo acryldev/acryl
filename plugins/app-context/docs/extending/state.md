@@ -36,6 +36,6 @@ Example: `../example-plugins/packages/state-json-file/` (a list kept in a file, 
 
 ## Other stores
 
-A larger app can add a library plugin for its data: `npx acrylblends add acryl-state` (cells a page can follow live) or a database (see
+A larger app can add a library plugin for its data: `npx acrylblends add @acryldev/state` (cells a page can follow live) or a database (see
 `docs/framework/guides/data.md` in this app). Adding one is its own change: it puts a library copy in `plugins/` and its row in `blend.yaml`.
 Do not add one for a feature a JSON file serves.

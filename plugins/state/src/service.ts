@@ -6,9 +6,9 @@
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
-import { Acryl, type Context as RequestContext, type MiddlewareHandler } from 'acryl-router'
-import { streamSSE, type UpgradeWebSocket } from 'acryl-router/helpers'
-import { loopbackOnly, methodNotAllowed } from 'acryl-router/middleware'
+import { Acryl, type Context as RequestContext, type MiddlewareHandler } from '@acryldev/router'
+import { streamSSE, type UpgradeWebSocket } from '@acryldev/router/helpers'
+import { loopbackOnly, methodNotAllowed } from '@acryldev/router/middleware'
 import { createCell, createDerived, type Cell, type ReadonlyCell } from './cell.ts'
 import { CLIENT_SOURCE } from './client-source.ts'
 import { refuseStranger, stateSocket } from './socket.ts'
@@ -22,7 +22,7 @@ declare module '@deepseek-ai/cordis' {
 const KEEP_ALIVE_MS = 15_000
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-state'
+export const name = '@acryldev/state'
 
 const KEY_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$/
 
@@ -37,13 +37,13 @@ export class State extends Service {
   }
 
   private claim(key: string): void {
-    if (!KEY_PATTERN.test(key)) throw new TypeError(`acryl-state: key "${key}" must be dotted lowercase words, like "market.sources"`)
-    if (RESERVED_KEYS.has(key)) throw new TypeError(`acryl-state: "${key}" is the name of a route under /api/state, choose another key`)
-    if (this.cells.has(key)) throw new Error(`acryl-state: key "${key}" is already in use`)
+    if (!KEY_PATTERN.test(key)) throw new TypeError(`@acryldev/state: key "${key}" must be dotted lowercase words, like "market.sources"`)
+    if (RESERVED_KEYS.has(key)) throw new TypeError(`@acryldev/state: "${key}" is the name of a route under /api/state, choose another key`)
+    if (this.cells.has(key)) throw new Error(`@acryldev/state: key "${key}" is already in use`)
   }
 
   private report = (error: unknown): void => {
-    this.ctx.logger.error(`acryl-state: a subscriber failed: ${error instanceof Error ? error.message : String(error)}`)
+    this.ctx.logger.error(`@acryldev/state: a subscriber failed: ${error instanceof Error ? error.message : String(error)}`)
   }
 
   /** Create a writable cell owned by the calling plugin. The key must be new. */
@@ -51,7 +51,7 @@ export class State extends Service {
     this.claim(key)
     const cell = createCell(key, initial, this.report)
     this.cells.set(key, cell as ReadonlyCell<unknown>)
-    this.ctx.effect(() => () => { this.cells.delete(key) }, `acryl-state: cell ${key}`)
+    this.ctx.effect(() => () => { this.cells.delete(key) }, `@acryldev/state: cell ${key}`)
     return cell
   }
 
@@ -64,7 +64,7 @@ export class State extends Service {
     this.claim(key)
     const derived = createDerived(key, inputs, compute, this.report)
     this.cells.set(key, derived.cell as ReadonlyCell<unknown>)
-    this.ctx.effect(() => () => { derived.dispose(); this.cells.delete(key) }, `acryl-state: derived ${key}`)
+    this.ctx.effect(() => () => { derived.dispose(); this.cells.delete(key) }, `@acryldev/state: derived ${key}`)
     return derived.cell
   }
 
@@ -135,9 +135,9 @@ export function apply(ctx: Context): void {
       try {
         const upgrade = (withServer as unknown as { nodeServer: { upgrades(): UpgradeWebSocket } }).nodeServer.upgrades()
         socket = stateSocket(state, { upgrade })
-        withServer.effect(() => () => { socket = undefined }, 'acryl-state: the WebSocket route')
+        withServer.effect(() => () => { socket = undefined }, '@acryldev/state: the WebSocket route')
       } catch (cause) {
-        ctx.logger.warn(`acryl-state: state is followed by event streams only (${cause instanceof Error ? cause.message : String(cause)})`)
+        ctx.logger.warn(`@acryldev/state: state is followed by event streams only (${cause instanceof Error ? cause.message : String(cause)})`)
       }
     })
     // Over HTTP only where an adapter exists (Web and Desktop); the terminal needs none.

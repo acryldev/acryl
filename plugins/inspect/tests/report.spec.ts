@@ -12,12 +12,12 @@ describe('reportFiber', () => {
       inject: { router: null, acrylSettings: null },
       effects: [
         { label: 'ctx.provide("things")', children: [] },
-        { label: 'acryl-router: route /api', children: [
-          { label: 'acryl-router: serves ALL /api/*', children: [] },
-          { label: 'acryl-router: serves GET /api/things/:id', children: [] },
+        { label: '@acryldev/router: route /api', children: [
+          { label: '@acryldev/router: serves ALL /api/*', children: [] },
+          { label: '@acryldev/router: serves GET /api/things/:id', children: [] },
         ] },
-        { label: 'acryl-router: route /api/things', children: [
-          { label: 'acryl-router: serves POST /api/things', children: [] },
+        { label: '@acryldev/router: route /api/things', children: [
+          { label: '@acryldev/router: serves POST /api/things', children: [] },
           { label: 'inner timer', children: [] },
         ] },
         { label: 'ctx.on("internal/status")', children: [] },
@@ -47,7 +47,7 @@ describe('explain', () => {
   it('says what a plugin needs, adds and removes on unload', () => {
     const text = explain(reportFiber(fiber({
       inject: { router: null },
-      effects: [{ label: 'acryl-router: route /', children: [{ label: 'acryl-router: serves GET /a', children: [] }] }],
+      effects: [{ label: '@acryldev/router: route /', children: [{ label: '@acryldev/router: serves GET /a', children: [] }] }],
     })))
     expect(text).toContain('demo (ACTIVE)')
     expect(text).toContain('needs:     router')

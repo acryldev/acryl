@@ -1,7 +1,7 @@
 {
-  "name": "acryl-page",
+  "name": "@acryldev/page",
   "version": "0.1.0",
-  "description": "The page of a framework-hosted app: the ACRYL frame's own minimal document, its index taps applied per request, and the built client assets the client runtime boots from, served by acryl-web-server",
+  "description": "The page of a framework-hosted app: the ACRYL frame's own minimal document, its index taps applied per request, and the built client assets the client runtime boots from, served by @acryldev/web-server",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -24,7 +24,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-web-server": "workspace:*"
+    "@acryldev/web-server": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -33,10 +33,19 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-web-frontend": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
-    "acryl-node-server": "workspace:*",
-    "acryl-router": "workspace:*",
+    "@acryldev/node-server": "workspace:*",
+    "@acryldev/router": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/page"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/page#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

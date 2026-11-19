@@ -5,7 +5,7 @@ export const SPLIT_MAX = 0.8
 export const SPLIT_DEFAULT = 0.5
 /** One arrow-key press on the divider moves this fraction of the stage width. */
 export const SPLIT_KEY_STEP = 0.05
-const STORAGE_KEY = 'acryl-workspace:split-ratio'
+const STORAGE_KEY = '@acryldev/workspace:split-ratio'
 
 /** Clamp to the allowed range; anything that is not a finite number falls back to an even split. */
 export function clampSplit(value: number): number {

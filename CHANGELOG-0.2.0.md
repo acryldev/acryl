@@ -14,7 +14,7 @@
 - **Browse and install plugins** from a curated market (Desktop, Web, CLI)
 - **Live activation** of installed plugins without app restart
 - Market integration with package.json reconciliation
-- Community plugin support (dsh-community-fabric, dsh-community-market)
+- Community plugin support (@acryldev/dsh-community-fabric, dsh-community-market)
 
 ### Platform Parity
 - Desktop, Web, and CLI all support hot-reload and market install
@@ -30,7 +30,7 @@
 ## Known Issues
 
 ### Pre-existing Test Failures (Not Regressions)
-- `acryl-harness-runtime`: 4 test failures in profile/session-bridge tests (pre-existing, unrelated to 0.2.0 changes)
+- `@acryldev/harness-runtime`: 4 test failures in profile/session-bridge tests (pre-existing, unrelated to 0.2.0 changes)
 - These are tracked in the codebase and do not indicate new regressions
 
 ### Setup Required

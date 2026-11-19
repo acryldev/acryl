@@ -8,7 +8,7 @@
  * way to open.
  */
 
-import type { HostObservable, ILayout, MainPanelId, PanelInfo } from '@acryl/ui/frame'
+import type { HostObservable, ILayout, MainPanelId, PanelInfo } from '@acryldev/ui/frame'
 
 export interface DesktopLayoutSnapshot {
   /** Sidebar width preference in px; 0 means collapsed to the rail. */

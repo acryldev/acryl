@@ -1,5 +1,5 @@
 {
-  "name": "acryl-extensions",
+  "name": "@acryldev/extensions",
   "version": "0.1.0",
   "description": "Install, update, remove and reload plugins while the app runs; a failed update brings the previous version back; a ledger of every change.",
   "license": "MIT",
@@ -26,9 +26,9 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-instance": "workspace:*",
-    "acryl-sandbox": "workspace:*",
-    "@webboxes/blends-core": "0.5.0"
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/sandbox": "workspace:*",
+    "@acryldev/blends-core": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -36,9 +36,9 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-agent": "workspace:*",
-    "acryl-home": "workspace:*",
-    "acryl-router": "workspace:*",
+    "@acryldev/agent": "workspace:*",
+    "@acryldev/home": "workspace:*",
+    "@acryldev/router": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"
   },

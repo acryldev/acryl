@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-mount-anchors'
+const PACKAGE_NAME = '@acryldev/mount-anchors'
 
 export default defineConfig([
   {

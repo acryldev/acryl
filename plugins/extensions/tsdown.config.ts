@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-extensions',
+  name: '@acryldev/extensions',
   entry,
   outDir: 'lib',
   format: 'esm',

@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '../plugins/acryl-db/src/cordis.ts'
+import type {} from '../plugins/db/src/cordis.ts'
 import { chatAccess } from './access.ts'
 import { createApp } from './chat-app.ts'
 import { openAiCompatible } from './llm.ts'

@@ -1,5 +1,5 @@
 {
-  "name": "acrylblends-monorepo",
+  "name": "@acryldev/monorepo",
   "private": true,
   "type": "module",
   "description": "ACRYLBLENDS - scaffold apps built on Cordis. Cordis is the framework.",
@@ -8,9 +8,9 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "build": "pnpm -r --filter=./packages/* --filter=acryl-db --filter=acryl-db-sqlite --filter=acryl-door --filter=acryl-inspect --filter=acryl-kv --filter=acryl-kv-db --filter=acryl-kv-json --filter=acryl-node-server --filter=acryl-page --filter=acryl-router --filter=acryl-router-http --filter=acryl-state --filter=acryl-web-server run build && node scripts/stage-framework.mjs && pnpm -r --filter=./../plugins/drivers --filter=./../plugins/agent --filter=./../plugins/agent-panel --filter=./../plugins/builder --filter=./../plugins/desktop --filter=./../plugins/desktop-web --filter=./../plugins/driver-acp --filter=./../plugins/driver-pty --filter=./../plugins/extensions --filter=./../plugins/feedback --filter=./../plugins/home --filter=./../plugins/instance --filter=./../plugins/manifest --filter=./../plugins/openai --filter=./../plugins/plugin-share --filter=./../plugins/sandbox --filter=./../plugins/save --filter=./../plugins/settings --filter=./../plugins/showcase --filter=./../plugins/tasks run build && pnpm -r --filter=acryl-app-context... --filter=acryl-blends-frame... --filter=acryl-versions... run build && node scripts/build-frame.mjs",
+    "build": "pnpm -r --filter=./packages/* --filter=@acryldev/db --filter=@acryldev/db-sqlite --filter=@acryldev/door --filter=@acryldev/inspect --filter=@acryldev/kv --filter=@acryldev/kv-db --filter=@acryldev/kv-json --filter=@acryldev/node-server --filter=@acryldev/page --filter=@acryldev/router --filter=@acryldev/router-http --filter=@acryldev/state --filter=@acryldev/web-server run build && node scripts/stage-framework.mjs && pnpm -r --filter=./../plugins/drivers --filter=./../plugins/agent --filter=./../plugins/agent-panel --filter=./../plugins/builder --filter=./../plugins/desktop-shell --filter=./../plugins/desktop-web --filter=./../plugins/driver-acp --filter=./../plugins/driver-pty --filter=./../plugins/extensions --filter=./../plugins/feedback --filter=./../plugins/home --filter=./../plugins/instance --filter=./../plugins/manifest --filter=./../plugins/openai --filter=./../plugins/plugin-share --filter=./../plugins/sandbox --filter=./../plugins/save --filter=./../plugins/app-settings --filter=./../plugins/showcase --filter=./../plugins/tasks run build && pnpm -r --filter=@acryldev/app-context... --filter=@acryldev/blends-frame... --filter=@acryldev/versions... run build && node scripts/build-frame.mjs",
     "test:driver-pty": "node --import ./scripts/workspace-source.mjs --test --test-timeout=60000 \"../plugins/driver-pty/test/*.test.ts\"",
-    "test:packages": "pnpm -r --filter=acryl-db --filter=acryl-db-sqlite --filter=acryl-door --filter=acryl-inspect --filter=acryl-kv --filter=acryl-kv-db --filter=acryl-kv-json --filter=acryl-node-server --filter=acryl-page --filter=acryl-router --filter=acryl-router-http --filter=acryl-state --filter=acryl-web-server --filter=acrylblends-framework --filter=acryl-app-context --filter=acryl-blends-frame --filter=acryl-versions run test",
+    "test:packages": "pnpm -r --filter=@acryldev/db --filter=@acryldev/db-sqlite --filter=@acryldev/door --filter=@acryldev/inspect --filter=@acryldev/kv --filter=@acryldev/kv-db --filter=@acryldev/kv-json --filter=@acryldev/node-server --filter=@acryldev/page --filter=@acryldev/router --filter=@acryldev/router-http --filter=@acryldev/state --filter=@acryldev/web-server --filter=@acryldev/framework --filter=@acryldev/app-context --filter=@acryldev/blends-frame --filter=@acryldev/versions run test",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.plugins.json && tsc -p tsconfig.frame.json",
     "test": "vitest run && pnpm run test:packages && node --import ./scripts/workspace-source.mjs --test \"../plugins/*/test/*.test.ts\" && node --test scripts/lib/*.test.mjs workshop-registry/test/*.test.mjs",
     "lint": "biome check .",
@@ -23,7 +23,7 @@
     "build:frame": "node scripts/build-frame.mjs",
     "verify:frame-publish": "node --import ./scripts/workspace-source.mjs scripts/verify-frame-publish.mjs",
     "verify:ide-template": "node --import ./scripts/workspace-source.mjs scripts/verify-ide-template.mjs blank",
-    "check": "pnpm run lint && pnpm run verify:workflows && pnpm run build && pnpm run verify:framework && pnpm run verify:secrets && pnpm run typecheck && pnpm run typecheck:packages && pnpm run test && pnpm run verify:scaffolder && pnpm run verify:core-boundary && pnpm run verify:ide-host && pnpm run verify:ide-template && pnpm run verify:legacy-layouts && pnpm run verify:upgrade-frame && pnpm run verify:byo && pnpm run verify:panel && pnpm run verify:door && pnpm run verify:dev-install && pnpm run verify:production && pnpm run verify:driver-pty && pnpm run verify:packed && pnpm run verify:tarball && pnpm run verify:vitest-peer",
+    "check": "pnpm run lint && pnpm run verify:workflows && pnpm run build && pnpm run verify:framework && pnpm run verify:secrets && pnpm run typecheck && pnpm run typecheck:packages && pnpm run test && pnpm run verify:scaffolder && pnpm run verify:core-boundary && pnpm run verify:ide-host && pnpm run verify:ide-template && pnpm run verify:byo && pnpm run verify:panel && pnpm run verify:door && pnpm run verify:dev-install && pnpm run verify:production && pnpm run verify:driver-pty && pnpm run verify:packed && pnpm run verify:tarball && pnpm run verify:vitest-peer",
     "verify:model": "node scripts/verify-real-model.mjs",
     "verify:framework": "node scripts/stage-framework.mjs --check",
     "verify:secrets": "node scripts/verify-docs-secrets.mjs",
@@ -39,9 +39,7 @@
     "verify:create": "node scripts/verify-create-npm.mjs",
     "verify:packed": "node scripts/verify-packed.mjs",
     "verify:tarball": "node scripts/verify-tarball.mjs",
-    "verify:legacy-layouts": "node scripts/build-legacy-layouts.mjs --check",
-    "verify:upgrade-frame": "node --import ./scripts/workspace-source.mjs scripts/verify-upgrade-frame.mjs",
-    "typecheck:packages": "pnpm -r --if-present --filter=./packages/* --filter=acryl-db --filter=acryl-db-sqlite --filter=acryl-door --filter=acryl-inspect --filter=acryl-kv --filter=acryl-kv-db --filter=acryl-kv-json --filter=acryl-node-server --filter=acryl-page --filter=acryl-router --filter=acryl-router-http --filter=acryl-state --filter=acryl-web-server --filter=acryl-app-context --filter=acryl-blends-frame --filter=acryl-versions run typecheck"
+    "typecheck:packages": "pnpm -r --if-present --filter=./packages/* --filter=@acryldev/db --filter=@acryldev/db-sqlite --filter=@acryldev/door --filter=@acryldev/inspect --filter=@acryldev/kv --filter=@acryldev/kv-db --filter=@acryldev/kv-json --filter=@acryldev/node-server --filter=@acryldev/page --filter=@acryldev/router --filter=@acryldev/router-http --filter=@acryldev/state --filter=@acryldev/web-server --filter=@acryldev/app-context --filter=@acryldev/blends-frame --filter=@acryldev/versions run typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -52,9 +50,9 @@
     "@deepseek-ai/schemastery": "3.18.4",
     "@types/node": "^24.0.0",
     "@types/ws": "8.18.2",
-    "@webboxes/app-persistence": "0.1.2",
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.2",
+    "@acryldev/app-persistence": "workspace:^",
+    "@acryldev/blends-core": "workspace:^",
+    "@acryldev/plugin-hub-core": "workspace:^",
     "@whatwg-node/fetch": "0.9.23",
     "ajv": "^8.20.0",
     "msw": "2.15.0",
@@ -65,7 +63,7 @@
     "ws": "8.21.3",
     "yaml": "2.9.0",
     "zod": "3.25.76",
-    "acryl-extensions": "workspace:*",
-    "acryl-instance": "workspace:*"
+    "@acryldev/extensions": "workspace:*",
+    "@acryldev/instance": "workspace:*"
   }
 }

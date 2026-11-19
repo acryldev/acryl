@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { addApp, saveModelKey } from '@acryldev/control-center'
+import { addApp, saveModelKey } from '@acryldev/launcher'
 import { LauncherRefusal, LauncherService } from '../src/service.ts'
 import { appEnvironment, type Command, type Run } from '../src/runner.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from '../src/door.ts'
@@ -19,7 +19,7 @@ const roots: string[] = []
 afterEach(() => { while (roots.length > 0) rmSync(roots.pop()!, { recursive: true, force: true }) })
 
 function setup() {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/launcher-desktop-'))
   roots.push(root)
   const home = join(root, '.acryl')
   const appsFolder = join(root, 'ACRYL')

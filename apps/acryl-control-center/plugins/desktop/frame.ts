@@ -104,8 +104,8 @@ export function withoutToken(href: string): string {
 }
 
 /**
- * What the Settings... menu item runs in a frame window: the window event the page's root owner opens its own Settings on (`acryl-blends-frame`'s
- * `OPEN_SETTINGS_EVENT`, and the IDE's `acryl-workspace`; keep the string in step). The same dialog as the top bar's gear, never a second one.
+ * What the Settings... menu item runs in a frame window: the window event the page's root owner opens its own Settings on (`@acryldev/blends-frame`'s
+ * `OPEN_SETTINGS_EVENT`, and the IDE's `@acryldev/workspace`; keep the string in step). The same dialog as the top bar's gear, never a second one.
  */
 export const openFrameSettings = "window.dispatchEvent(new Event('acryl:open-settings'))"
 
@@ -208,7 +208,7 @@ export function packagedHostArgs(
     '--',
     // The loader first and the overlay second: a hook registered later runs first, so the overlay sees every import before the loader's aliases.
     '--import',
-    pathToFileURL(join(program, 'plugins', 'acryl-node-server', 'src', 'register.ts')).href,
+    pathToFileURL(join(program, 'plugins', '@acryldev/node-server', 'src', 'register.ts')).href,
     ...(program === root
       ? []
       : [

@@ -1,8 +1,8 @@
 /**
- * The `acryl-system-prompt` plugin on the real engines: the model receives the ACRYL identity first, every other section tagged pi.dev-style
+ * The `@acryldev/system-prompt` plugin on the real engines: the model receives the ACRYL identity first, every other section tagged pi.dev-style
  * with the extension router present exactly once, and upstream's contribution matches the committed drift baseline. A harness update that changes
  * the harness's prompt sections fails the baseline check and shows which sections changed; refresh it deliberately with
- * `ACRYL_UPDATE_DRIFT=1 corepack pnpm --filter acryl-harness-runtime exec vitest run tests/system-prompt-shape.spec.ts`.
+ * `ACRYL_UPDATE_DRIFT=1 corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/system-prompt-shape.spec.ts`.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -17,7 +17,7 @@ import { captureSystemPrompt } from '../src/system-prompt-capture.ts'
 import { fileURLToPath } from 'node:url'
 import { codingCapabilities } from '@acryldev/coding-capabilities'
 
-const driftDir = fileURLToPath(new URL('../../../plugins/acryl-system-prompt/drift/', import.meta.url))
+const driftDir = fileURLToPath(new URL('../../../plugins/system-prompt/drift/', import.meta.url))
 // Windows has its own shell tool (`pwsh`, not `bash`), so what the harness contributes differs there by design; its baselines are recorded separately (`*.win32.json`).
 const platformSuffix = process.platform === 'win32' ? '.win32' : ''
 const temporaryHomes: string[] = []
@@ -48,7 +48,7 @@ async function capture(kind: 'web' | 'cli') {
   } finally { await host.dispose() }
 }
 
-describe.each(['web', 'cli'] as const)('acryl-system-prompt on the %s engine', kind => {
+describe.each(['web', 'cli'] as const)('@acryldev/system-prompt on the %s engine', kind => {
   it('puts the ACRYL identity first, tags sections pi.dev-style, and keeps the router once', async () => {
     const { captured, upstream } = await capture(kind)
     expect(captured.system.startsWith('You are an expert coding assistant operating inside ACRYL')).toBe(true)

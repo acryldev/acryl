@@ -1,14 +1,14 @@
 {
-  "name": "acryl-router-http",
+  "name": "@acryldev/router-http",
   "version": "0.1.0",
-  "description": "The Web adapter for acryl-router: mounts path prefixes on the DSH webServer and serves them through the router as Web-standard Request and Response",
+  "description": "The Web adapter for @acryldev/router: mounts path prefixes on the DSH webServer and serves them through the router as Web-standard Request and Response",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-router-http"
+    "directory": "plugins/router-http"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-router-http#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/router-http#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -44,8 +44,8 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-node-server": "workspace:*",
-    "acryl-router": "workspace:*"
+    "@acryldev/node-server": "workspace:*",
+    "@acryldev/router": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -55,7 +55,7 @@
     "@deepseek-ai/dsh-host-webserver": "0.2.0-rc.2",
     "@types/node": "^22.20.0",
     "@types/ws": "8.18.2",
-    "acryl-state": "workspace:*",
+    "@acryldev/state": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11",

@@ -97,7 +97,7 @@ npm install                                      # the shell needs electron
 npm run desktop                                  # an Electron window on the app's own server
 ```
 
-Every Electron call lives in `plugins/desktop`, so the app's own code never imports it. See
+Every Electron call lives in `plugins/desktop-shell`, so the app's own code never imports it. See
 [Desktop](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/getting-started/desktop.md).
 
 ## Start from the registry
@@ -379,7 +379,7 @@ An app made with any 0.9.1 or later release moves with `acrylblends upgrade` (ab
 An app made by a published release from 0.7.8 on that still runs on the standalone layout also moves onto the ACRYL frame: `acrylblends upgrade` writes
 `scripts/ide-host.mjs`, the generated overlay (`cordis.patch.yml` with the app's own rows and the frame rows), `cordis.yml`, `app/runtime.mjs` and
 `frame/app-plugins.mjs` (with the entry isolate the app's services need), brings `src/app.ts`, `src/routes.ts` (or the template's route module) and
-`src/frame.ts` up to date when they are still the released template's, copies the two host plugins (`acryl-web-server`, `acryl-page`), and points
+`src/frame.ts` up to date when they are still the released template's, copies the two host plugins (`@acryldev/web-server`, `@acryldev/page`), and points
 `npm run dev` at the frame; `npm start` keeps the app's own server and URLs. A file you edited stops the upgrade (nothing is written) unless `--force`
 backs it up first, and `blend.yaml` is never touched. The frame packages' specs come from `ACRYLBLENDS_FRAME_PACKAGES` while they are unpublished.
 An app made before 0.7.8 cannot be carried forward: those releases wrote `src/main.ts` importing `./plugins/...` where the plugins are one folder up, so the
@@ -415,7 +415,7 @@ See the [ACRYLBLENDS documentation](https://github.com/acrylblends/acrylblends/b
 | ACRYLBLENDS website | https://acrylblends.github.io |
 | ACRYL website | https://acryl.dev |
 | This package's source and issues | https://github.com/acrylblends/acrylblends ([issues](https://github.com/acrylblends/acrylblends/issues)) |
-| The framework's source | https://github.com/acryldev/acryl (`plugins/acryl-router`, `plugins/acryl-node-server`) |
+| The framework's source | https://github.com/acryldev/acryl (`plugins/router`, `plugins/node-server`) |
 | For coding agents | https://github.com/acrylblends/acrylblends/blob/main/docs/framework/agents/index.md |
 | npm | https://www.npmjs.com/package/acrylblends |
 

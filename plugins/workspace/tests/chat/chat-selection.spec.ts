@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest'
-import type { ISessions } from '@acryl/ui/frame'
+import type { ISessions } from '@acryldev/ui/frame'
 import { ChatSelection } from '../../src/client/chat/chat-selection.ts'
 import type { MainViewNavigation } from '../../src/client/sessions/main-session.ts'
 import { WorkspaceGroups } from '../../src/client/canvas/groups.ts'

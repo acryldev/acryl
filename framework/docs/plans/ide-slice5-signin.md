@@ -8,13 +8,13 @@ page, the app folder or `.acryl`.
 
 ## The port
 
-`ide/acryl-sign-in/` is ACRYL's `plugins/acryl-sign-in` at `37f4dd9c`, extracted with `git archive`: every file under
+`ide/acryl-sign-in/` is ACRYL's `plugins/sign-in` at `37f4dd9c`, extracted with `git archive`: every file under
 `src/`, `tests/`, `scripts/` and the build configs is byte-identical, the four original spec files run unchanged (30
 tests), and `provenance.json` records the three differences:
 
 - `package.json`: repository points here; `acrylblends` is a peer dependency and the dev dependency, not a dependency
   (the app's one framework); the build tools match this repository (tsdown 0.23.0, vitest 5.0.3, `@types/node` ^24);
-  `@acryl/ui`, `acryl-control` and `acryl-loopback-http` are this repository's workspace packages.
+  `@acryldev/ui`, `@acryldev/control` and `@acryldev/loopback-http` are this repository's workspace packages.
 - `vitest.config.ts`: ACRYL isolated HOME through `scripts/testing/isolate-home.ts`, which this repository does not have;
   the `setupFiles` entry is removed. These tests do not touch a home.
 - `README.md`: a port note above the original text.
@@ -25,12 +25,12 @@ original files.
 
 ## Wiring into the frame
 
-`acryl-sign-in` is a row in `FRAME_PACKAGES` (after `acryl-support`), so the generated overlay mounts it and the
+`@acryldev/sign-in` is a row in `FRAME_PACKAGES` (after `@acryldev/support`), so the generated overlay mounts it and the
 generated profile installs it with the other frame packages. Its client half registers the card in the Models page's
 `settings.models.footer` seat; the host half serves the `/api/acryl-sign-in` routes and needs the router, `routerHttp`,
 `acrylWeb`, and the harness's `authorization` and `credentials` services, all present in the frame's composition.
 
-The boot gate now asserts both halves: its row check includes `acryl-sign-in` and reports every row activated, and its
+The boot gate now asserts both halves: its row check includes `@acryldev/sign-in` and reports every row activated, and its
 browser check opens Settings > Models and requires the `.acrylSignIn` card in the page. The gate stays green.
 
 ## The slice 3 fix: a signed-in account never sees the API-key card
@@ -45,7 +45,7 @@ model does not, and the card still asks for a key. The two cases are tests on th
 
 - **Where tokens live.** The harness's authorization flows write their grants through the credentials service's
   serialized record write; the credentials document is under the harness home (`$DSH_HOME/.credentials.yaml`, mode 600),
-  never the app. `acryl-sign-in` stores no secret itself: it relays the flow's notices and prompts over its routes and
+  never the app. `@acryldev/sign-in` stores no secret itself: it relays the flow's notices and prompts over its routes and
   hands a typed answer to the flow (the ported route test asserts no response echoes an answer; responses carry no
   secret). Nothing in the package writes a file.
 - **The test.** `ide/acryl-sign-in/tests/security.spec.ts` runs a fake browser-style sign-in through the real

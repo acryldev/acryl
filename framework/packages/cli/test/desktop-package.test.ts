@@ -22,13 +22,13 @@ function app(files: Record<string, string>): string {
 const table = new Map([
   ['@acryldev/instance', 'instance/index.ts'],
   ['@acryldev/instance/storage', 'instance/storage.ts'],
-  ['@acryldev/desktop-shell/main', 'desktop/main.ts'],
+  ['@acryldev/desktop-shell/main', 'desktop-shell/main.ts'],
 ])
 const versions = { '@acryldev/desktop-shell': '0.1.0', '@acryldev/instance': '0.1.0' }
 const always = () => true
 
 const copies = {
-  'plugins/desktop/main.ts': 'export {}\n',
+  'plugins/desktop-shell/main.ts': 'export {}\n',
   'plugins/instance/index.ts': 'export const selectInstance = () => {}\n',
   'plugins/instance/storage.ts': 'export const open = () => {}\n',
 }
@@ -44,7 +44,7 @@ describe('planDesktopPackage (spec 051 T011)', () => {
     const plan = planDesktopPackage(dir, table, versions, always)
     expect(plan).toEqual({
       kind: 'move',
-      remove: ['plugins/desktop', 'plugins/instance'],
+      remove: ['plugins/desktop-shell', 'plugins/instance'],
       dependencies: versions,
       rewrites: [
         { file: 'src/main.ts', text: "import { selectInstance } from '@acryldev/instance'\n" },
@@ -87,7 +87,7 @@ it('installs the versions the workspace packages are at', () => {
       ) as { version: string }
     ).version
   expect(DESKTOP_PACKAGE_VERSIONS).toEqual({
-    '@acryldev/desktop-shell': at('desktop'),
+    '@acryldev/desktop-shell': at('desktop-shell'),
     '@acryldev/instance': at('instance'),
   })
 })

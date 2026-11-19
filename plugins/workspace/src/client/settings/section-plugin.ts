@@ -6,7 +6,7 @@
  */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import { en, zh, type SettingsLocaleKey, type SettingsSectionKey } from './locales.ts'
 import { installSettingsStyles } from './styles.ts'
 
@@ -21,11 +21,11 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** The sections' shared dictionary and styles, registered once for all of them. */
 export function settingsSharedPlugin() {
   return {
-    name: 'acryl-workspace-settings-shared',
+    name: '@acryldev/workspace-settings-shared',
     inject: ['locale'],
     apply(ctx: ClientContext): void {
-      ctx.effect(() => ctx.locale.register(SETTINGS_LOCALE_NAMESPACE, { zh, en }), 'acryl-workspace settings: dictionaries')
-      ctx.effect(() => installSettingsStyles(), 'acryl-workspace settings: styles')
+      ctx.effect(() => ctx.locale.register(SETTINGS_LOCALE_NAMESPACE, { zh, en }), '@acryldev/workspace settings: dictionaries')
+      ctx.effect(() => installSettingsStyles(), '@acryldev/workspace settings: styles')
     },
   }
 }

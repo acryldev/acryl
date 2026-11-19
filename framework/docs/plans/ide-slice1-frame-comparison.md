@@ -39,7 +39,7 @@ Settings > Shortcuts at 3-4% (image beside the reference: [frame-compare-setting
 ## What differs, and where each difference belongs
 
 1. **DSH's first-run dialogs covered the frame, and are now off.** The first run showed "Add an API key to get started" over the main surface: the view steps click "Configure later", but the dialog reappears after the click in this build, so the screenshot catches it. The generated overlay now carries DSH's own switch (`- id: ui-settings-models` with `credentialOnboarding: false`), covered by a generator test; on the second run `frame@1440x900` went from 28.69% to 22.02% and no dialog is on any view.
-2. **The left column's content.** The reference shows Projects and Workspaces with a project row; the candidate shows DSH's session list (New Session, Plugins, Default workspace). Projects and the workspace are slice 2 (`acryl-workspace`); until then the frame is right and its content is not.
+2. **The left column's content.** The reference shows Projects and Workspaces with a project row; the candidate shows DSH's session list (New Session, Plugins, Default workspace). Projects and the workspace are slice 2 (`@acryldev/workspace`); until then the frame is right and its content is not.
 3. **The main surface.** The reference's conversation area is ACRYL's, the candidate's is DSH's conversation UI: that is the intended composition (the chat is DSH's), so those pixels will never match by design. A strict whole-page comparison of `frame*` is the wrong gate; the gate should compare the frame chrome (panels, Settings) and accept the chat surface as the design.
 4. **Right panel and terminals** do not exist yet (slice 2), so two views have no candidate.
 

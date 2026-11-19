@@ -4,7 +4,7 @@ name: Product release
 # arm64 and x64, packed from apps/<product> with this checkout's framework (framework/scripts/pack-blank-mac.mjs), never a published or stale one.
 #   ade-v<version>              ACRYL ADE, apps/acryl-ade
 #   control-center-v<version>   ACRYL Control Center, apps/acryl-control-center
-# Each product's installed app asks for the newest release with its own prefix (product.json releases.tagPrefix, plugins/desktop/updater.ts), so the
+# Each product's installed app asks for the newest release with its own prefix (product.json releases.tagPrefix, plugins/desktop-shell/updater.ts), so the
 # products and ACRYL's own `v*` / `desktop-v*` releases share this repository without taking each other's updates; a product release is never marked Latest.
 # Run by hand (workflow_dispatch) it packs all six installers as workflow artifacts and publishes nothing.
 on:

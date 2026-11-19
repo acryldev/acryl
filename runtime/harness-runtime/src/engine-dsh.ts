@@ -45,9 +45,9 @@ import {
   type RuntimeResolution,
 } from '@deepseek-ai/dsh-app-boot'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
-import { homePluginsDir } from '@webboxes/plugin-hub'
+import { homePluginsDir } from '@acryldev/plugin-hub-core'
 import { provideAcrylTools } from './engine-tools.ts'
-import * as acrylWebService from 'acryl-web-service'
+import * as acrylWebService from '@acryldev/web'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 
 import { provideCliMarketInstall } from './cli-market-install.ts'
@@ -332,7 +332,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   ctx.inject(['tools'], toolsCtx => { provideAcrylTools(toolsCtx) })
   if (composition.surface === 'web') {
     ctx.inject(['webServer'], webServerCtx => {
-      // A custom brand ships its own favicon (acryl-brand); only the stock ACRYL brand gets the ACRYL logo (`productName` is always set, so it cannot tell).
+      // A custom brand ships its own favicon (@acryldev/brand); only the stock ACRYL brand gets the ACRYL logo (`productName` is always set, so it cannot tell).
       const disposeTap = webServerCtx.webServer.tapIndex(html => brandWebIndex(html, composition))
       ctx.effect(() => disposeTap)
     })
@@ -370,7 +370,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
       })
     }
     // Web's own desktopProfiles/desktopPnpm (spec 034 T006, scoped v1) - what
-    // cordis-plugin-market's install service needs for its Install/Uninstall
+    // @acryldev/cordis-plugin-market's install service needs for its Install/Uninstall
     // buttons to do a real operation instead of showing "ACRYL is required".
     // Both are stateless besides this one profile's own fixed name/directory,
     // so - also like dshHomePath - never disposed; there is nothing to
@@ -382,7 +382,7 @@ async function mountDshEngine(ctx: Context, composition: DshEngineComposition): 
   // CLI/TUI's own desktopPlugins/livePluginActivation + desktopProfiles/
   // desktopPnpm (spec 034 T006, completing the third surface) - same
   // ordering constraint as Web above (mount desktopPlugins first, since
-  // cordis-plugin-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
+  // @acryldev/cordis-plugin-market's own ctx.inject(['desktopProfiles', 'desktopPnpm'])
   // reads ctx.get('livePluginActivation') exactly once, opportunistically).
   // Unlike Web, the CLI has more than one named profile, so the profile name
   // comes from this composition's own directory rather than a literal - see
@@ -451,7 +451,7 @@ async function resolveDshEngineComposition(profileName: string, capabilities: Co
   // The Blueprint's ACRYL-owned rows (extension pack, prompt shaping) and the terminal UI library (a plain library a
   // terminal plugin imports, so it is only made resolvable). Rows the profile's own bundle already composes are skipped
   // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI).
-  // The ACRYL packages the terminal's coding capabilities name (`acryl-settings`), resolvable from this profile like the Web surface's.
+  // The ACRYL packages the terminal's coding capabilities name (`@acryldev/settings`), resolvable from this profile like the Web surface's.
   const tuiCapabilityPackages = capabilities?.packages(new Set(['tui'] as const), new Set(blueprint.capabilities)) ?? []
   for (const packageName of [...tuiCapabilityPackages, ...rowsComposition.packages]) materializeFrom(profile.dir, packageName, [...(capabilities?.anchors ?? []), import.meta.url])
   patches.push(...rowsComposition.patches)
@@ -527,7 +527,7 @@ function withDeclaredDependency(inject: unknown, name: string): string[] | Recor
  */
 /**
  * Materialize one package from the first anchor that has it: an ACRYL capability package comes from the surface's composition
- * (`@acryldev/coding-capabilities`), while the Blueprint's framework-kit packages (`acrylblends`, `@acryl/ui`) come from the runtime's own
+ * (`@acryldev/coding-capabilities`), while the Blueprint's framework-kit packages (`acrylblends`, `@acryldev/ui`) come from the runtime's own
  * installation. Either anchor is a real installation; the first that resolves wins (spec 051 T021).
  */
 function materializeFrom(profileDir: string, packageName: string, anchors: readonly (string | undefined)[]): void {
@@ -589,7 +589,7 @@ export function materializeProfilePackage(profileDir: string, packageName: strin
  * Resolves an ACRYL-owned workspace package by name into its live on-disk install and symlinks it into a
  * profile, the same way the Blueprint's own fixed rows do ({@link materializeProfilePackage}) - these
  * packages are not published, so a local extension's `package.json` cannot name one as an ordinary npm
- * dependency. Consumed by `acryl-plugin-context`'s local-plugin install path (`dsh.requiresAcrylPackages`
+ * dependency. Consumed by `@acryldev/plugin-context`'s local-plugin install path (`dsh.requiresAcrylPackages`
  * in an extension's `package.json`), which also activates the materialized package as a live Loader entry
  * through the existing `livePluginActivation` service - this object only makes the package resolvable.
  */
@@ -632,9 +632,9 @@ declare module '@deepseek-ai/cordis' {
 /**
  * ACRYL-owned framework packages the app's own committed plugins (`<app home>/plugins/*`, `homePluginsDir`) declare
  * through `dsh.requiresAcrylPackages` in their `package.json`. Read at compose time, not through
- * `acryl-plugin-context`'s dynamic agent-runtime install path: `livePluginActivation.activate()`'s group
+ * `@acryldev/plugin-context`'s dynamic agent-runtime install path: `livePluginActivation.activate()`'s group
  * resolution (`PluginLifecycleController`'s `bundleGroup()`, a fixed-point-free heuristic over the live Loader
- * tree) failed a real, reproduced activation of `acryl-app-shell` through that path ("invalid plugin... received
+ * tree) failed a real, reproduced activation of `@acryldev/app-shell` through that path ("invalid plugin... received
  * object") for reasons that trace into vendored Cordis internals this repo does not edit. A static row, inserted
  * the same way the Blueprint's own fixed rows are (`composeBlueprintRows`/`materializeProfilePackage`), sidesteps
  * dynamic activation entirely and is what every one of those fixed rows already relies on successfully.
@@ -726,7 +726,7 @@ async function resolveWebEngineComposition(installPackageUrl: string, capabiliti
   }
   // The app's own committed plugins may each need an ACRYL-owned framework package (see
   // `pluginRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
-  // agent-runtime install path `acryl-plugin-context` otherwise uses), and a plugin installed into the
+  // agent-runtime install path `@acryldev/plugin-context` otherwise uses), and a plugin installed into the
   // profile may need a module whose row the running app mounted for it (`profileRequiredFrameworkModules`).
   const composedRowIds = new Set(rowsComposition.patches.flatMap(patch => patch.insert ?? []).map(row => row.id))
   const requiredFrameworkPackages = [...new Set([...pluginRequiredFrameworkPackages(instance.home), ...profileRequiredFrameworkModules(profile.dir)])]
@@ -735,11 +735,11 @@ async function resolveWebEngineComposition(installPackageUrl: string, capabiliti
   // A Blueprint that never enables the IDE's own `workspace` capability (every Blank-grown project) keeps the
   // stock `ui-layout` row active, because the advanced-shell capability's disabling patch is gated behind
   // `ACRYL_CODING_CAPABILITIES`' own capability table, which a third-party extension cannot opt into - it is
-  // the IDE's, not a general extension mechanism. An extension that requires `acryl-app-shell` is claiming the
+  // the IDE's, not a general extension mechanism. An extension that requires `@acryldev/app-shell` is claiming the
   // advanced shell exactly the same way that capability does, so it needs the identical row toggle (measured
-  // live: without it, `acryl-app-shell`'s own layout service and the still-active stock one both try to
+  // live: without it, `@acryldev/app-shell`'s own layout service and the still-active stock one both try to
   // register the `layout` service and the Loader throws "service \"layout\" has been registered").
-  const claimsAdvancedShell = requiredFrameworkPackages.includes('acryl-app-shell')
+  const claimsAdvancedShell = requiredFrameworkPackages.includes('@acryldev/app-shell')
   const patches = structuredClone([
     ...profileLayerPatches,
     ...(capabilities?.patches(webSurfaces, existingRowIds, enabledCapabilities) ?? []),
@@ -753,7 +753,7 @@ async function resolveWebEngineComposition(installPackageUrl: string, capabiliti
   // (independent) brand swap in profile.ts - the stock DeepSeek Harness
   // identity (`@deepseek-ai/dsh-client-ui-brand-official`, already composed
   // by the base dsh-web-app bundle at row id `ui-brand-official`) and
-  // `dsh-client-ui-brand-acryl` are standalone, independently swappable
+  // `@acryldev/brand-client` are standalone, independently swappable
   // Cordis Client plugins carrying the same slot contract
   // (`sidebar.brand.mark`/`.name`, `conversation.hero.brand.mark`) - exactly
   // one is ever enabled. Validated against the real composed row (not
@@ -824,7 +824,7 @@ function connectionConfig(config: unknown): Record<string, unknown> {
  * profile system like the CLI flavor (Web has no external profile pipeline
  * of its own, unlike Desktop's `prepareDesktopProfile()`).
  * @param installPackageUrl - file URL of `acryl-web`'s own `package.json`,
- * used to materialize `dsh-client-ui-brand-acryl` and `cordis-plugin-market`
+ * used to materialize `@acryldev/brand-client` and `@acryldev/cordis-plugin-market`
  * into the profile (see {@link resolveWebEngineComposition}'s own comments
  * for why that is needed).
  */
@@ -841,7 +841,7 @@ export function createWebEngineDefinition(installPackageUrl: string, capabilitie
  * selection, market/editor/BLEND patch layering, and worker bare-module base
  * URL). Performs no profile resolution of its own - unlike
  * {@link createDshEngineDefinition}, which is the CLI/TUI flavor that
- * resolves a profile by name through `acryl-harness-runtime`'s own profile
+ * resolves a profile by name through `@acryldev/harness-runtime`'s own profile
  * system. Handing an already-resolved composition to that function would
  * silently discard it and resolve a different profile instead.
  */
