@@ -15,6 +15,15 @@ export const npmSpawn = (platform = process.platform) =>
     : { command: 'npm', options: {} }
 
 /**
+ * The pnpm a child process spawns. On Windows through the shell and named bare: corepack installs `pnpm.cmd`, pnpm 12 itself is `pnpm.exe`, and only
+ * the shell's PATHEXT finds either (Node starts neither a .cmd nor a bare name without one). Everywhere else: `pnpm`, no shell.
+ */
+export const pnpmSpawn = (platform = process.platform) =>
+  platform === 'win32'
+    ? { command: 'pnpm', options: { shell: true } }
+    : { command: 'pnpm', options: {} }
+
+/**
  * The door's command in an app folder and how to run it: `acryl.cmd` on Windows, through the shell and quoted so a folder with spaces still runs; the
  * POSIX script elsewhere.
  */

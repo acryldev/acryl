@@ -191,3 +191,6 @@ verify and check:layout and all 23 framework check steps green before it lands.
   main ca369d52 with pnpm 12.14.0). CI does not see it because `verify:packed` runs only inside framework's `check` (Linux, macOS); the Windows
   job runs `verify:create`, which already passes `shell: true` for `.cmd` tools. Fix the same way as verify-create-npm.mjs (`shell: isWindows`),
   then run it on mbpi9win. Not a 1.6.0 blocker.
+  Fixed 2026-11-19 (AcrylImplementer): verify-packed's runner starts npm and pnpm through `npmSpawn` / the new `pnpmSpawn` in
+  framework/scripts/lib/platform.mjs (Windows: through the shell, pnpm named bare so PATHEXT finds pnpm.cmd or pnpm.exe); unit-tested in
+  platform.test.mjs on macOS. NOT yet proven on Windows: mbpi9win is off the network tonight; open until `pnpm run verify:packed` passes there.

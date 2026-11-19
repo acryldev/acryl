@@ -18,6 +18,7 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { npmSpawn, pnpmSpawn } from './lib/platform.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const log = (message) => console.log(`verify-packed: ${message}`)
@@ -34,14 +35,20 @@ const assertAcrylLine = (app) => {
     )
 }
 
-const run = (command, args, cwd, env = {}) =>
-  execFileSync(command, args, {
+/** npm and pnpm are .cmd files (or pnpm.exe) on Windows, which Node starts only through the shell (spec 051 T039: `spawnSync npm ENOENT` there). */
+const SPAWN = { npm: npmSpawn, pnpm: pnpmSpawn }
+// shortcut: through the Windows shell an argument is not quoted, so a scratch path with a space would split; quote args if a run ever needs one.
+const run = (command, args, cwd, env = {}) => {
+  const spawn = SPAWN[command]?.() ?? { command, options: {} }
+  return execFileSync(spawn.command, args, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, ...env },
     timeout: 900_000,
+    ...spawn.options,
   })
+}
 const scratch = mkdtempSync(join(tmpdir(), 'verify-packed-'))
 try {
   const packed = join(scratch, 'packed')
