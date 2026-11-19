@@ -3,6 +3,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from '
 import { relative, resolve } from 'node:path'
 import { directionViolations, findCycles, FOUNDATION, FRAMEWORK_PLUGINS, readGraph, unlistedFoundation } from './dependency-direction.mjs'
 import { BLEND_APPS, inBlendApp } from './lib/blend-apps.mjs'
+import { uncoveredLibraryPlugins } from './lint-coverage.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -409,6 +410,12 @@ for (const entry of readdirSync(pluginsRoot, { withFileTypes: true })) {
   else if (!FOUNDATION.has(name) && !FRAMEWORK_PLUGINS.has(name)) libraryProblems.push(`${name} (plugins/${entry.name}) is a library plugin but neither FOUNDATION nor FRAMEWORK_PLUGINS names it`)
 }
 if (libraryProblems.length > 0) fail(`library plugins outside the graph (scripts/dependency-direction.mjs):\n${libraryProblems.map(line => `  ${line}`).join('\n')}`)
+
+// Lint coverage (spec 051 T017): the root lint:library runs biome over plugins/, and biome.json names every root-source library plugin (the app
+// plugins; the vendored src/-shape ones stay out, as they always did). A new app plugin that is not named there would be silently unlinted.
+const lintConfig = readJson('biome.json').files?.includes ?? []
+const uncoveredLint = uncoveredLibraryPlugins(resolve(root, 'plugins'), lintConfig)
+if (uncoveredLint.length > 0) fail(`library plugins missing from the lint config (biome.json):\n${uncoveredLint.map(line => `  ${line}`).join('\n')}`)
 const wrongWay = directionViolations(packageGraph)
 if (wrongWay.length > 0) fail(`dependencies that point the wrong way:\n${wrongWay.map(line => `  ${line}`).join('\n')}`)
 
