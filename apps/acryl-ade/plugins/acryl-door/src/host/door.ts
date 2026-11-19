@@ -85,6 +85,30 @@ export function renderPublishPlan(plan: PublishPlanView): string {
 }
 
 /** The slice of acrylblends' `tools` registry (the `agent` plugin's) the tool verbs use, and where the built-in chat finds the verbs. */
+/**
+ * DSH's tool registry (`ctx.tools`, the ToolRuntime the ACRYL chat's agent reads): one definition object per tool, with an output schema and a
+ * render (`register(definition)`), unlike the framework agent's `register(name, tool)`. The framed apps and ACRYL ADE run that chat, so without this the
+ * chat had no door tools at all after the unification (spec 051 T022).
+ */
+export interface DshToolsPort {
+  register(definition: {
+    readonly name: string
+    readonly description: string
+    readonly parameters: Readonly<Record<string, unknown>>
+    readonly output: { readonly schema: Readonly<Record<string, unknown>>; render(args: unknown, value: unknown): Array<{ type: 'text'; text: string }> }
+    execute(args: unknown, exec: { readonly signal?: AbortSignal }): Promise<unknown>
+  }): () => void
+  schemas(): ReadonlyArray<{ readonly name: string; readonly description: string }>
+}
+
+/** Whether a `tools` service is DSH's registry rather than the framework agent's. */
+export const isDshTools = (tools: unknown): tools is DshToolsPort =>
+  typeof (tools as { schemas?: unknown } | undefined)?.schemas === 'function'
+
+/** The tools a registry lists: DSH's `schemas()` or the framework agent's `list()`. */
+const listedTools = (tools: ToolsPort | DshToolsPort): ReadonlyArray<{ readonly name: string; readonly description: string }> =>
+  isDshTools(tools) ? tools.schemas() : tools.list()
+
 export interface ToolsPort {
   /** @returns the function that removes the tool. @throws when the name is taken. */
   register(name: string, tool: { readonly description: string; readonly parameters?: Readonly<Record<string, unknown>>; run(input: unknown, options?: { signal?: AbortSignal; page?: string }): unknown }): () => void
@@ -105,7 +129,7 @@ export interface DoorDeps {
   readonly extensions: () => ExtensionsPort | undefined
   /** Read at each call, as `extensions` is; absent where the app has no plugin-share row. */
   readonly pluginShare?: () => PluginSharePort | undefined
-  readonly tools: () => ToolsPort | undefined
+  readonly tools: () => ToolsPort | DshToolsPort | undefined
   /** The app tools the door offers; anything else is refused before it reaches the registry. */
   readonly expose: readonly string[]
   /** Reload the open pages after a plugin was added, removed or reloaded, so the page an agent looks at next is the new one. Default: true. */
@@ -434,7 +458,7 @@ export class Door {
     const tools = this.deps.tools()
     if (tools === undefined) return []
     const allowed = new Set(this.deps.expose)
-    return tools.list().filter(tool => allowed.has(tool.name)).map(({ name, description }) => ({ name, description }))
+    return listedTools(tools).filter(tool => allowed.has(tool.name)).map(({ name, description }) => ({ name, description }))
   }
 
   private async callTool(input: Record<string, unknown>): Promise<VerbAnswer> {
@@ -442,7 +466,9 @@ export class Door {
     if (typeof name !== 'string' || name === '') throw new DoorError('invalid', 'tool call needs --tool <name>')
     if (!this.deps.expose.includes(name)) throw new DoorError('not-exposed', `${name} is not offered through the door`)
     const tools = this.deps.tools()
-    if (tools === undefined || !tools.list().some(tool => tool.name === name)) throw new DoorError('unavailable', `${name} is not available right now`)
+    if (tools === undefined || !listedTools(tools).some(tool => tool.name === name)) throw new DoorError('unavailable', `${name} is not available right now`)
+    // DSH runs its tools inside an agent's turn (scope, policy, approval), not on a bare call from outside it.
+    if (isDshTools(tools)) throw new DoorError('unavailable', `${name} is a tool of the app's chat agent; ask the chat to use it`)
     let value: unknown
     try {
       value = await tools.call(name, input.args ?? {})
