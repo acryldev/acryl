@@ -7,7 +7,7 @@ same error as one line in the top bar (`Not reloaded: ...`) while the last good 
 
 `ERR_MODULE_NOT_FOUND`: an import in your plugin names a file or package that is not there. You guessed a path. A plugin imports only:
 `@deepseek-ai/cordis` (types), `acrylblends` (the web framework), `node:*`, its own files (`./store.ts`), and type-only
-`import type {} from '../home/index.ts'` / `'../instance/index.ts'`. Never `../acryl-router/src/...`, `../plugins/...`, `../../src/...` or a
+`import type {} from '../home/index.ts'` / `'@acryldev/instance'`. Never `../acryl-router/src/...`, `../plugins/...`, `../../src/...` or a
 package that is not in `package.json`. Open the folder and check the path before you import it.
 
 ## Not reloaded: plugins/<folder> exports the plugin name "<x>"; a plugin's name is its folder's, "<folder>"
