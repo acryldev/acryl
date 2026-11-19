@@ -428,9 +428,11 @@ describe('a new chat asked while the shown chat’s worktree is being restored',
     expect(shell.getSnapshot().selectedPath).toBe('/p/proj')
   })
 
-  it('gets no selection when the restore finds none, and at once when nothing is restoring', async () => {
+  it('gets no selection when the restore finds none, and after its bound when nothing selects one', async () => {
+    // Nothing restoring is not "no worktree coming" (a reload's restore may not have started yet), so it waits out its bound; a short one here, the
+    // default 8 s ran past Linux's 5 s test timeout (found by the frame publish gate on GitHub, spec 051 T032).
     const idle = new WorkspaceShellState(fakeApi())
-    expect(await idle.waitForSelection()).toBeUndefined()
+    expect(await idle.waitForSelection(20)).toBeUndefined()
     const shell = new WorkspaceShellState(fakeApi())
     const following = shell.follow('/plain/dir')
     expect(await shell.waitForSelection()).toBeUndefined()
