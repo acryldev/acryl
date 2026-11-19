@@ -260,7 +260,15 @@ const init = spawnSync(
         '--no-next',
       ]
     : // The registry blueprint, put in the frame by create itself (add desktop, upgrade); installed in step 2 like Blank.
-      [join(root, 'packages/create/bin/create-acrylblends.js'), app, '--from', from, '--yes'],
+      // A folder goes to create as an absolute path: create takes a folder only when it is written as one (./x, ../x, /x), so a bare apps/acryl-ade
+      // from a release workflow would be read as an unknown source (product-release run 44482560217 failed that way on all six runners).
+      [
+        join(root, 'packages/create/bin/create-acrylblends.js'),
+        app,
+        '--from',
+        existsSync(from) ? resolve(from) : from,
+        '--yes',
+      ],
   {
     stdio: 'inherit',
     env: {
