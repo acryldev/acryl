@@ -38,11 +38,11 @@
       "path": "../plugins/app-shell"
     },
     "@acryldev/workspace": {
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": "../plugins/workspace"
     },
     "@acryldev/settings": {
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "../plugins/settings"
     },
     "@acryldev/sign-in": {
@@ -62,7 +62,7 @@
       "path": "../plugins/plugin-admin"
     },
     "@acryldev/support": {
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "../plugins/support"
     },
     "@acryldev/loopback-http": {
@@ -78,15 +78,15 @@
       "path": "../plugins/system-prompt"
     },
     "@acryldev/app-context": {
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "../plugins/app-context"
     },
     "@acryldev/versions": {
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": "../plugins/versions"
     },
     "@acryldev/blends-frame": {
-      "version": "0.1.6",
+      "version": "0.2.0",
       "path": "../plugins/blends-frame"
     }
   },
