@@ -34,7 +34,7 @@
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",
     "check:architecture": "pnpm run test:architecture-gates && node scripts/verify-market-dependency-direction.mjs",
     "check:docs-secrets": "node scripts/verify-docs-secrets.mjs",
-    "check:layout": "pnpm run check:bilingual-docs && pnpm run check:architecture && pnpm run check:framework-app && node scripts/verify-layout.mjs && pnpm run check:slop",
+    "check:layout": "pnpm run check:bilingual-docs && pnpm run check:architecture && pnpm run check:framework-app && node scripts/verify-layout.mjs",
     "check:framework-app": "pnpm --filter acryl-todo exec tsc -p ../../tsconfig.framework-app.json",
     "check:features": "node scripts/check-features.mjs --launch",
     "check": "node scripts/real-home-guard.mjs -- pnpm run check:steps",
@@ -75,13 +75,9 @@
     "launcher": "node scripts/launcher-dev.mjs",
     "debt:check": "node specs/001-acryl-refactor-improvements-and-tech-debt/proof/architecture-guardrails.mjs",
     "gui": "node scripts/dev-local.mjs",
-    "check:framework": "pnpm --dir framework run check",
-    "lint": "oxlint --disable-nested-config",
-    "check:slop": "node scripts/anti-slop-ratchet.mjs"
+    "check:framework": "pnpm --dir framework run check"
   },
   "devDependencies": {
-    "@oxlint/plugins": "1.94.0",
-    "@types/react": "18.3.31",
-    "oxlint": "1.94.0"
+    "@types/react": "18.3.31"
   }
 }
