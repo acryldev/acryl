@@ -141,6 +141,9 @@ verify and check:layout and all 23 framework check steps green before it lands.
   Found 2026-11-19: npm 11.17 sets this up from the command line (`npm trust github <pkg> --file <workflow>.yml --repo acryldev/acryl
   --allow-publish -y`), but the stored bypass-2FA token gets 403 on it (npm counts it an account change). So the owner runs it once per
   package after `npm login` with 2FA; an agent prepares the per-package lines and the workflows' `id-token: write` publish jobs.
+  Done 2026-11-19 for all 18 `@acryldev/*` packages (owner as acryldevadmin with a security key; verified with `npm trust list`: github,
+  framework-release.yml, acryldev/acryl, publish). Open: `acrylblends`, `create-acrylblends`, `acryl` (unscoped; need a maintainer
+  login with 2FA), and switching the workflows' publish steps to rely on it.
 ## Phase 3 - packages, not copies
 
 - [x] T010 [launcher] acryl's `plugins/acryl-launcher` is published as a package; Control Center depends on it and its
