@@ -104,7 +104,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   an optional inject (default: owns the seat) and re-decide in an effect that follows that one entry, without reading "fiber not yet active"
   as "absent" (that brings the crash back: the sidebar usually activates after the root). Test the runtime toggle under a real Loader.
   Installed ADE gets 75f10079 only with the next publish of acryl-app-shell.
-- [ ] T032 [self-extension after unification, owner note 2026-11-19] A Blend must still extend itself and know its own structure. Checked
+- [x] T032 [self-extension after unification, owner note 2026-11-19] A Blend must still extend itself and know its own structure. Checked
   tonight: nothing acryl-app-context, acryl-plugin-context or acryl-system-prompt ships (lib/, docs/, example-plugins/, skills/) names a
   pre-move path; acryl-app-context reads the app's own blend.yaml, plugins/ and blend.lock.json and its own docs/ relative to where it is
   installed. Open: (a) repository fields of acryl-app-context, acryl-blends-frame and acryl-versions still name acrylblends/acrylblends
@@ -112,6 +112,15 @@ verify and check:layout and all 23 framework check steps green before it lands.
   here (a subtree pull maps only framework/), so the next release needs a publish path from the monorepo; (c) that first release's
   acceptance: a fresh Blend from the new packages, its agent asked "add a plugin that shows a ledger page", cites paths that exist in the
   app, writes the plugin into the app's plugins/, and the plugin loads without a restart.
+  (c) passed 2026-11-19 (AcrylImplementer): `npm create acrylblends@1.6.0 ledger-app -- --template blank` (desktop frame, scratch HOME),
+  `npm run dev`, DeepSeek key in the environment only; the frame's chat, asked "add a plugin that shows a ledger page", finished in 1m 57s.
+  Cited, all present in the app: node_modules/@acryldev/app-context/docs/start-here/this-app.md, .../start-here/verify-before-done.md,
+  .../extending/routes-and-pages.md, .../extending/feature-plugin.md, .../extending/state.md, .../extending/home-widget.md,
+  .../example-plugins/README.md, src/routes.ts, src/about.tsx. Wrote plugins/ledger/index.ts (216 lines), a ledger row in blend.yaml and
+  test/ledger.test.ts; the Ledger widget appeared on the running home page and /app/ledger answered 200 with no restart; npm test 10/10;
+  it checked its own work through the door (8 look, 6 click, 2 type). One Edit step failed ("cannot modify ...") and the agent recovered.
+  The app still depends on @webboxes/app-persistence, blends-core and plugin-hub (T038).
+  (b) done 2026-11-19: 1.6.0 and the 18 @acryldev packages were published from this monorepo (framework/, plugins/, runtime/).
 - [x] T033 [guard] FOUNDATION_PLUGIN_EDGES is gone (branch 051-t033, 2026-11-19). The Cordis-free drivers contract moved out of the
   agent panel into `plugins/drivers` (package `acryl-drivers`), a foundation package by role (FOUNDATION by name) that the copy path ships like any library
   plugin: `acrylblends/drivers` is built from its source, the framework declares it a workspace dependency, and the panel and the driver
