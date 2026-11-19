@@ -27,6 +27,10 @@ const ROOTS = ['runtime', 'apps', 'plugins', 'scripts']
  */
 const ALLOWED: Readonly<Record<string, string>> = {
   'runtime/acryl-harness-runtime/src/instance/select.ts': 'the selector: the one place an app instance is chosen',
+  // The framework's selector for Blend apps (personHome, acrylRoot: ~/.acryl, moved by ACRYL_HOME for isolated runs), the counterpart of
+  // src/instance/select.ts outside ACRYL's runtime; framework/scripts/lib/bulkhead.test.mjs owns its rule. One file, one reason: every other
+  // library plugin stays under this scan.
+  'plugins/instance/home.ts': 'the framework\'s instance home selector for Blend apps, the counterpart of src/instance/select.ts outside ACRYL\'s runtime',
   'plugins/acryl-workspace/src/pty/service.ts': 'a terminal starts in the user\'s own home folder when the cwd is gone; not ACRYL state',
   'plugins/acryl-launcher-desktop/blend/host/index.ts': 'the launcher Blend runs outside ACRYL\'s runtime (no appInstance); its home is ~/.acryl, the one home of every ACRYL app',
   'scripts/graft-deepscan.mjs': 'a repository indexing tool; not part of any app',
@@ -89,6 +93,21 @@ describe('bulkhead architecture', () => {
         writeFileSync(join(root, folder, 'src', 'home.ts'), "import { homedir } from 'node:os'\nexport const home = homedir()\n")
       }
       expect(offencesIn(root)).toEqual(["plugins/x/src/home.ts:2 homedir(): export const home = homedir()"])
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  it('the framework selector is allowed by file, so a home read in another library plugin is still caught', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'bulkhead-'))
+    try {
+      for (const folder of ['plugins/instance', 'plugins/desktop/src']) {
+        mkdirSync(join(root, folder), { recursive: true })
+        writeFileSync(join(root, folder, 'home.ts'), "import { homedir } from 'node:os'\nexport const home = homedir()\n")
+      }
+      // plugin.json is the library marker; the exemption is a file, not a marker, so the desktop copy stays caught.
+      writeFileSync(join(root, 'plugins', 'desktop', 'plugin.json'), '{}')
+      expect(offencesIn(root)).toEqual(['plugins/desktop/src/home.ts:2 homedir(): export const home = homedir()'])
     } finally {
       await rm(root, { recursive: true, force: true })
     }
