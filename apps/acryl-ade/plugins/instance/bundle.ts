@@ -100,11 +100,11 @@ export function inProgram(program: readonly string[], path: string): boolean {
 }
 
 /**
- * The framework's package names: its own (`acrylblends`, the frame's `acryl-*` and `@acrylblends/*`, the brand row's `dsh-*`), the engine's
+ * The framework's package names: its own (`acrylblends`, the frame's `acryl-*` and `@acryldev/*`, the brand row's `dsh-*`), the engine's
  * (`@deepseek-ai/*`), and the shared ones the frame is built from (`@acryl/*`, `@webboxes/*`). One copy each per process, the bundle's.
  */
 const FRAMEWORK_PACKAGE =
-  /^(?:acrylblends(?:\/|$)|acryl-|dsh-|@acrylblends\/|@deepseek-ai\/|@acryl\/|@webboxes\/)/u
+  /^(?:acrylblends(?:\/|$)|acryl-|dsh-|@acryldev\/|@deepseek-ai\/|@acryl\/|@webboxes\/)/u
 
 export function isFrameworkPackage(specifier: string): boolean {
   return FRAMEWORK_PACKAGE.test(specifier)

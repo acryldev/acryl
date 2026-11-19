@@ -8,10 +8,10 @@ test("the shell takes the app two levels above in an app copy, and Electron's ap
     appRootFor('file:///apps/shop/plugins/desktop/main.ts', () => '/wrong'),
     '/apps/shop/',
   )
-  // `<app>/node_modules/@acrylblends/desktop-shell/lib/main.js`: the installed package, where Electron names the app (electron . and a packaged app alike).
+  // `<app>/node_modules/@acryldev/desktop-shell/lib/main.js`: the installed package, where Electron names the app (electron . and a packaged app alike).
   assert.equal(
     appRootFor(
-      'file:///apps/shop/node_modules/@acrylblends/desktop-shell/lib/main.js',
+      'file:///apps/shop/node_modules/@acryldev/desktop-shell/lib/main.js',
       () => '/apps/shop',
     ),
     '/apps/shop',

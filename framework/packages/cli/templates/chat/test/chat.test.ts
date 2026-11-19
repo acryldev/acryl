@@ -214,7 +214,7 @@ test('the chat page loads its client component, served by the running app', asyn
   const module = await running.root.router.request('/client/chat.tsx')
   assert.equal(module.status, 200)
   assert.match(module.headers.get('content-type') ?? '', /javascript/)
-  assert.equal((await running.root.router.request('/client/@acrylblends/jsx-dom.js')).status, 200)
+  assert.equal((await running.root.router.request('/client/@acryldev/jsx-dom.js')).status, 200)
 })
 
 const production = (env: Record<string, string> = {}) =>
@@ -316,8 +316,7 @@ test('the frame mounts the chat at /app: the page, the streaming API and the cli
   assert.equal(module.status, 200)
   assert.match(module.headers.get('content-type') ?? '', /javascript/u)
   assert.equal(
-    (await running.root.router.request(`${FRAME_MOUNT_PREFIX}/client/@acrylblends/jsx-dom.js`))
-      .status,
+    (await running.root.router.request(`${FRAME_MOUNT_PREFIX}/client/@acryldev/jsx-dom.js`)).status,
     200,
   )
 })

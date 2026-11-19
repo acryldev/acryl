@@ -362,7 +362,7 @@ export function startRepository(directory: string): void {
   // A machine without a git identity still gets the first commit: this one is the scaffolder's, and later commits use the person's own identity.
   const identity = run(['config', 'user.email'])
     ? []
-    : ['-c', 'user.name=acrylblends', '-c', 'user.email=scaffold@acrylblends.invalid']
+    : ['-c', 'user.name=acrylblends', '-c', 'user.email=scaffold@acryldev.invalid']
   run([...identity, 'commit', '-q', '-m', 'Initial commit from acrylblends'])
 }
 

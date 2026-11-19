@@ -127,7 +127,7 @@ export type PageRoot = 'frame' | 'workspace'
 /** The workbench row a `workspace`-rooted product mounts where the frame's row would be; the folder it opens comes from the launcher. */
 const WORKSPACE_ROOT_LINES = [
   '    - id: acryl-workspace',
-  "      name: '@acrylblends/workspace'",
+  "      name: '@acryldev/workspace'",
   '      config:',
   '        openFolder: !!js process.env.ACRYL_OPEN_FOLDER',
 ]
@@ -887,6 +887,9 @@ export function ideProfilePlan(input: IdeProfileInput, existing?: string): IdePr
   }
 }
 
+/** The scope the frame packages were published under before spec 051 T036; an upgraded app drops their old names. */
+const MOVED_FROM_SCOPE = '@acrylblends'
+
 /** The app's manifest with the generated fields set: dependencies merged (generated wins), the dev script on its own profile, keys in a stable order. */
 function mergeManifest(
   manifest: Record<string, unknown>,
@@ -900,9 +903,19 @@ function mergeManifest(
     ...(manifest.scripts as Record<string, string> | undefined),
     dev: 'node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs',
   }
+  // A frame package that moved scope (spec 051 T036: @acrylblends/* to @acryldev/*) is installed once, under its new name: the old one goes.
+  const kept = Object.fromEntries(
+    Object.entries((manifest.dependencies as Record<string, string> | undefined) ?? {}).filter(
+      ([name]) =>
+        !(
+          name.startsWith(`${MOVED_FROM_SCOPE}/`) &&
+          sorted[name.replace(MOVED_FROM_SCOPE, release.scope)] !== undefined
+        ),
+    ),
+  )
   return {
     ...manifest,
-    dependencies: { ...(manifest.dependencies as Record<string, string> | undefined), ...sorted },
+    dependencies: { ...kept, ...sorted },
     // npm installs an empty placeholder for what the frame omits (frame/packages.json `omit`); the app's own overrides stay.
     overrides: {
       ...(manifest.overrides as Record<string, string> | undefined),

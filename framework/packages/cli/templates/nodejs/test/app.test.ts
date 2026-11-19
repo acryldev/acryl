@@ -74,7 +74,7 @@ test('GET /counter serves a page with a client component, and the component is c
     assert.match(module.headers.get('content-type') ?? '', /javascript/)
     assert.doesNotMatch(await module.text(), /<Counter|<button/)
     // The component's import of the DOM renderer is pointed at the browser build the acrylblends package ships.
-    const runtime = await app.root.router.request('/client/@acrylblends/jsx-dom.js')
+    const runtime = await app.root.router.request('/client/@acryldev/jsx-dom.js')
     assert.equal(runtime.status, 200)
   }))
 
@@ -102,8 +102,7 @@ test('the frame mounts the app at /app: its pages, health route and client compo
       assert.doesNotMatch(await module.text(), /<Counter|<button/u)
       // The component's import of the DOM renderer is served below the app's prefix too.
       assert.equal(
-        (await app.root.router.request(`${FRAME_MOUNT_PREFIX}/client/@acrylblends/jsx-dom.js`))
-          .status,
+        (await app.root.router.request(`${FRAME_MOUNT_PREFIX}/client/@acryldev/jsx-dom.js`)).status,
         200,
       )
       // The app's own URLs are not mounted in the frame; its own server keeps them (the tests above).

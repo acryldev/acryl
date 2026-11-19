@@ -31,7 +31,7 @@ process.env.DSH_HOME = home
 // of the app's src/ then resolves under a generation the frame's Host raises, so nothing but the app's own rows restarts. Before anything of the app loads;
 // a frame package that predates the hook leaves the code as it started.
 try {
-  const { installAppGeneration } = await import('@acrylblends/blends-frame/app-generation')
+  const { installAppGeneration } = await import('@acryldev/blends-frame/app-generation')
   installAppGeneration({ appRoot })
 } catch (error) {
   if (error?.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED' && error?.code !== 'ERR_MODULE_NOT_FOUND') throw error

@@ -88,4 +88,4 @@ same command. The framework's jobs on Linux, macOS and Windows run from `.github
 
 - A fix to code that several products share is one commit, one review and one release, not a copy per repository.
 - `git clone` plus `pnpm install` gives a contributor the framework, the runtime, the plugins and the apps together.
-- Users notice nothing: the npm names (`acrylblends`, `create-acrylblends`, `@acrylblends/*`) and the installers stay the same.
+- Users notice nothing: the npm names (`acrylblends`, `create-acrylblends`, `@acryldev/*`) and the installers stay the same.

@@ -227,5 +227,5 @@ export async function update(
 function identity(cwd: string): string[] {
   return spawnSync('git', ['config', 'user.email'], { cwd, windowsHide: true }).status === 0
     ? []
-    : ['-c', 'user.name=acrylblends', '-c', 'user.email=scaffold@acrylblends.invalid']
+    : ['-c', 'user.name=acrylblends', '-c', 'user.email=scaffold@acryldev.invalid']
 }

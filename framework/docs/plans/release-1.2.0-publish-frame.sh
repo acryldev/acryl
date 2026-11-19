@@ -10,7 +10,7 @@
 # acrylblends and create-acrylblends 1.2.0 are not published here: the release workflow publishes them from the tags (printed at the end).
 set -euo pipefail
 
-SCOPE=@acrylblends
+SCOPE=@acryldev
 ORG=acrylblends
 # The account that owns acrylblends, create-acrylblends and the org (the owner's; another account is refused).
 ACCOUNT="${NPM_ACCOUNT:-webboxescom}"

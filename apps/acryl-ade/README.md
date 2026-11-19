@@ -2,7 +2,7 @@
 
 **ACRYL ADE**, the Agent Development Environment: the ACRYL IDE (<https://github.com/acryldev/acryl>) as one Blend. Registry id `acryl.ade`. Source: <https://github.com/acrylblends/05-acryl-ade>. Page: <https://acrylblends.github.io/blends/ai/ade/acryl.ade>.
 
-It opens the IDE's workbench, ported into the Blends framework as `@acrylblends/workspace`:
+It opens the IDE's workbench, ported into the Blends framework as `@acryldev/workspace`:
 
 - **left:** your projects, each with its git branches and worktrees, and the chats and terminals open on each;
 - **centre:** tabs: the agent's chat (DeepSeek Harness), terminals, files, diffs;
@@ -44,8 +44,8 @@ The first screen asks for a model key (Settings > Models). Add a project with th
 ## How it is made
 
 ACRYL ADE is an ordinary Blend: `blend.yaml`, `src/`, `plugins/`, tests. The one difference from the blank app is its frame layer,
-`cordis.patch.yml`: where every other Blend mounts the Blends frame (`@acrylblends/blends-frame`) at the page's root, ACRYL ADE mounts the
-IDE's workbench (`@acrylblends/workspace`). The app's own pages still answer under `/app` (`/app/about`), and the agent can grow the app with
+`cordis.patch.yml`: where every other Blend mounts the Blends frame (`@acryldev/blends-frame`) at the page's root, ACRYL ADE mounts the
+IDE's workbench (`@acryldev/workspace`). The app's own pages still answer under `/app` (`/app/about`), and the agent can grow the app with
 plugins like in every Blend.
 
 ## Where the shared code comes from
@@ -57,10 +57,10 @@ Most of this app is not written here:
   `plugins/library.lock.json` records the release each came from and a hash of every file. `npx acrylblends upgrade` brings them to the
   newest release; when a file was changed here, it stops, shows the diff and changes nothing (`--force` replaces it and keeps a backup in
   `.acryl/upgrade-backup/`). Fix a library plugin in acrylblends, not here; your own code goes in a plugin of your own under `plugins/`.
-- **The frame and its parts** (`@acrylblends/blends-frame`, `@acrylblends/settings` and the other `@acrylblends/*` packages in
+- **The frame and its parts** (`@acryldev/blends-frame`, `@acryldev/settings` and the other `@acryldev/*` packages in
   `package.json`) and the framework (`acrylblends`) come from npm, built from the same repository (`ide/` and `packages/`). `npm install`
   installs them; `npx acrylblends upgrade` moves `package.json` to the release it brings.
-- **The workbench** (`@acrylblends/workspace`, mounted by `cordis.patch.yml`) is ACRYL's IDE workbench ported into the acrylblends
+- **The workbench** (`@acryldev/workspace`, mounted by `cordis.patch.yml`) is ACRYL's IDE workbench ported into the acrylblends
   repository (`ide/acryl-workspace`, whose `provenance.json` names the acryl commit it was ported from and what changed), and published to
   npm from there.
 

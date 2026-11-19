@@ -26,7 +26,7 @@ export function releaseOfTag(tag, root = framework) {
       )
     return release
   }
-  // npm's tarball name: the scope's @ dropped and its slash a dash (@acrylblends/app-shell 0.1.1 -> acrylblends-app-shell-0.1.1.tgz).
+  // npm's tarball name: the scope's @ dropped and its slash a dash (@acryldev/app-shell 0.1.1 -> acrylblends-app-shell-0.1.1.tgz).
   const tarball = (name, version) => `${name.replace(/^@/u, '').replace('/', '-')}-${version}.tgz`
   let match = /^create-acrylblends-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
   if (match !== null) {

@@ -148,9 +148,9 @@ For a request that streams its answer and a Stop button (an `AbortController` ke
 
 - JSX in a client module always compiles for the DOM renderer (`acrylblends/jsx/dom`), whatever the server's `tsconfig.json` says. A file's
   own `/** @jsxImportSource ... */` comment still wins.
-- `acrylblends/jsx/dom`, its `jsx-runtime`, `jsx-dev-runtime` and `client` are one browser module (`@acrylblends/jsx-dom.js`), and
-  `acrylblends/client` is another (`@acrylblends/client.js`), and `acrylblends/read-sse` (the reader of a POST event stream, see
-  [Streaming](../helpers/streaming.md#reading-a-post-event-stream-in-the-browser)) a third (`@acrylblends/read-sse.js`). None imports anything. The same app
+- `acrylblends/jsx/dom`, its `jsx-runtime`, `jsx-dev-runtime` and `client` are one browser module (`@acryldev/jsx-dom.js`), and
+  `acrylblends/client` is another (`@acryldev/client.js`), and `acrylblends/read-sse` (the reader of a POST event stream, see
+  [Streaming](../helpers/streaming.md#reading-a-post-event-stream-in-the-browser)) a third (`@acryldev/read-sse.js`). None imports anything. The same app
   serves them, and each import is rewritten to a URL relative to the module, so the setup works under whatever path you route `clientModules` at.
 - Import your own modules with their file names, as the browser fetches them: `import { label } from './parts/label.ts'`.
 - Another package (`import confetti from 'canvas-confetti'`) is left as it is: add an
@@ -187,7 +187,7 @@ Compile the client folder once when you build, as the `build` script of your `pa
 ```
 
 It writes each module compiled to `dist/client` at the same path and file name, so the page's URLs stay the same, and copies the three
-browser modules to `dist/client/@acrylblends/`. Run it where `typescript` is installed, before the development dependencies are removed.
+browser modules to `dist/client/@acryldev/`. Run it where `typescript` is installed, before the development dependencies are removed.
 
 With `NODE_ENV=production` and the `compiled` option set, `clientModules` serves only that folder and compiles nothing. A module that is in
 `src/client` but missing from `dist/client` answers 500 with a message to build again, and a `compiled` folder that does not exist stops the

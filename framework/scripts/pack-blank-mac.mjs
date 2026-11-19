@@ -479,12 +479,12 @@ manifest.build = {
     target: [{ target: 'deb', arch: [arch] }],
     category: 'Development',
     icon: appIcon,
-    maintainer: 'ACRYL Blends <build@acrylblends.dev>',
+    maintainer: 'ACRYL Blends <build@acryldev.dev>',
   },
   ...(platform === 'mac' ? { afterPack: join(work, 'seal-bundle.cjs') } : {}),
 }
 // A Debian package names its maintainer and the app's home page; electron-builder reads both from the manifest.
-manifest.author ??= { name: 'ACRYL Blends', email: 'build@acrylblends.dev' }
+manifest.author ??= { name: 'ACRYL Blends', email: 'build@acryldev.dev' }
 manifest.homepage ??= 'https://acrylblends.github.io'
 // 4a. The product's own git (app-storage.md, "Git on a clean machine"): a clean Mac has only the shim that asks to install the Command Line Tools, and
 // versions, export, the terminals and the agents all run `git`. It lies beside the app in Resources/git, and the desktop shell puts it first on the
@@ -575,7 +575,7 @@ const gitIdentity = [
   '-c',
   'user.name=ACRYL Blends',
   '-c',
-  'user.email=build@acrylblends.dev',
+  'user.email=build@acryldev.dev',
   '-c',
   'commit.gpgsign=false',
 ]

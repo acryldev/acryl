@@ -814,7 +814,7 @@ spec:
     capture(npm, ['run', 'build'], { cwd: notes })
     if (
       !existsSync(join(notes, 'dist', 'client', clientFile[kind])) ||
-      !existsSync(join(notes, 'dist', 'client', '@acrylblends', 'jsx-dom.js'))
+      !existsSync(join(notes, 'dist', 'client', '@acryldev', 'jsx-dom.js'))
     )
       fail(`${kind}: npm run build did not write dist/client`)
     const production = capture(

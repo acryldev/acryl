@@ -6,7 +6,7 @@
 proves them, and the one file the owner's naming decision moves. The release order is `docs/plans/release-1.2.0.md`.
 
 **Dry run only.** The pipeline runs `npm pack` and stops: it never publishes, never logs in, and never writes outside its scratch folder. `npm publish` is
-the owner's step: `@acrylblends/*` publishes into the npm org **`acrylblends`**, which the owner created on 2026-11-05 (webboxescom is its owner).
+the owner's step: `@acryldev/*` publishes into the npm org **`acrylblends`**, which the owner created on 2026-11-05 (webboxescom is its owner).
 The publish is one `npm publish <tarball> --access public` per tarball, in dependency order, which `docs/plans/release-1.2.0-publish-frame.sh` runs.
 
 ## The one file
@@ -14,7 +14,7 @@ The publish is one `npm publish <tarball> --access public` per tarball, in depen
 `frame/packages.json` holds the scope, the DSH release the packages are built against, and each package folder's short name and version:
 
 ```json
-{ "scope": "@acrylblends", "dshVersion": "0.2.0-rc.2", "packages": { "acryl-ui": { "name": "ui", "version": "0.3.0" }, ... } }
+{ "scope": "@acryldev", "dshVersion": "0.2.0-rc.2", "packages": { "acryl-ui": { "name": "ui", "version": "0.3.0" }, ... } }
 ```
 
 A published name is `<scope>/<name>`. The set is exactly the closure of the frame's rows (`FRAME_PACKAGES` in `packages/cli/src/ide-profile.ts` and
@@ -23,22 +23,22 @@ pipeline fail when either drifts. A frame package's version bump is therefore a 
 
 | Folder | Published as | What it is |
 | --- | --- | --- |
-| `acryl-ui` | `@acrylblends/ui` | the design: themed components, semantic colour roles |
-| `dsh-client-ui-brand-acryl` | `@acrylblends/brand-client` | the DSH client brand plugin that paints the mark |
-| `acryl-app-shell` | `@acrylblends/app-shell` | the frame: three columns, collapsible and resizable panels, layout state, theme |
-| `acryl-workspace` | `@acrylblends/workspace` | Projects, sessions, terminal tabs, the right panel's files and changes |
-| `acryl-settings` | `@acrylblends/settings` | the Settings surface and its sections |
-| `acryl-sign-in` | `@acrylblends/sign-in` | connect a provider by account |
-| `acryl-control` | `@acrylblends/control` | the host control surface the frame talks to |
-| `acryl-diagnostics` | `@acrylblends/diagnostics` | diagnostics and support bundles |
-| `acryl-plugin-admin` | `@acrylblends/plugin-admin` | plugin lifecycle and architecture routes |
-| `acryl-support` | `@acrylblends/support` | support routes and the diagnostics download |
-| `acryl-loopback-http` | `@acrylblends/loopback-http` | the loopback HTTP helper the host uses |
-| `acryl-web-service` | `@acrylblends/web` | the web host surface the frame mounts on |
-| `acryl-system-prompt` | `@acrylblends/system-prompt` | the agent's prompt, as ACRYL IDE's agent has it |
-| `acryl-app-context` | `@acrylblends/app-context` | the app builder's docs and verified example plugins |
-| `acryl-versions` | `@acrylblends/versions` | Versions: the branch's commits as save points |
-| `acryl-blends-frame` | `@acrylblends/blends-frame` | the Blends frame, the page's root |
+| `acryl-ui` | `@acryldev/ui` | the design: themed components, semantic colour roles |
+| `dsh-client-ui-brand-acryl` | `@acryldev/brand-client` | the DSH client brand plugin that paints the mark |
+| `acryl-app-shell` | `@acryldev/app-shell` | the frame: three columns, collapsible and resizable panels, layout state, theme |
+| `acryl-workspace` | `@acryldev/workspace` | Projects, sessions, terminal tabs, the right panel's files and changes |
+| `acryl-settings` | `@acryldev/settings` | the Settings surface and its sections |
+| `acryl-sign-in` | `@acryldev/sign-in` | connect a provider by account |
+| `acryl-control` | `@acryldev/control` | the host control surface the frame talks to |
+| `acryl-diagnostics` | `@acryldev/diagnostics` | diagnostics and support bundles |
+| `acryl-plugin-admin` | `@acryldev/plugin-admin` | plugin lifecycle and architecture routes |
+| `acryl-support` | `@acryldev/support` | support routes and the diagnostics download |
+| `acryl-loopback-http` | `@acryldev/loopback-http` | the loopback HTTP helper the host uses |
+| `acryl-web-service` | `@acryldev/web` | the web host surface the frame mounts on |
+| `acryl-system-prompt` | `@acryldev/system-prompt` | the agent's prompt, as ACRYL IDE's agent has it |
+| `acryl-app-context` | `@acryldev/app-context` | the app builder's docs and verified example plugins |
+| `acryl-versions` | `@acryldev/versions` | Versions: the branch's commits as save points |
+| `acryl-blends-frame` | `@acryldev/blends-frame` | the Blends frame, the page's root |
 
 The owner confirmed these names on 2026-11-05 (`brand-client` because there are two brand packages, `versions` and `blends-frame` added with the
 frame, the rest dropping the `acryl-` prefix). After the first publish a rename is a new package on npm, not a one-line change. `acryl-brand` and `acryl-shortcuts` are not published: the frame mounts
@@ -70,12 +70,12 @@ The source keeps ACRYL's package names (the port rule); the published artifact c
 
 - `package.json`: the published `name`, and every dependency/peer/optional/dev entry renamed, with `workspace:` ranges turned into `^<that package's version>`.
 - the built JavaScript and declarations: import and export specifiers of a frame package are rewritten (a package built against `acryl-loopback-http` imports
-  `@acrylblends/loopback-http` in the tarball), so source maps point at the original source lines.
+  `@acryldev/loopback-http` in the tarball), so source maps point at the original source lines.
 - `cordis.patch.yml`: the row's `name:` is the published name, quoted because a scoped name starts with `@` (YAML reserves it).
-- Loader row ids stay the source package names (`- id: acryl-web-service` with `name: '@acrylblends/web'`). A row id cannot contain `@` or `/` (DSH refuses to
+- Loader row ids stay the source package names (`- id: acryl-web-service` with `name: '@acryldev/web'`). A row id cannot contain `@` or `/` (DSH refuses to
   parse the overlay), and keeping the source name means a checkout app and a published app have the same rows, so an upgrade between them renames nothing
   and the rows that key on an id (the Blends frame's `appPage`) keep working. The launcher's development hook imports the Blends frame by the name it is
-  installed as (`@acrylblends/blends-frame/app-generation`).
+  installed as (`@acryldev/blends-frame/app-generation`).
 
 Three packages listed `LICENSE` in `files` without carrying the file (`acryl-workspace`, `acryl-plugin-admin`, `acryl-support`); they now carry the source's MIT
 notice (WebBoxes s.r.o.), like the other ports.

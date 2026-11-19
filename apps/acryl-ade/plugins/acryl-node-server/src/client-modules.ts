@@ -17,7 +17,7 @@ import { basePath } from '../../acryl-router/src/helpers/index.ts'
 import { MissingTypeScriptError, compileModule } from './transpile.ts'
 
 /** The folder the three browser files are served from, below the app's mount. A source folder of this name is not served. */
-const RUNTIME_DIR = '@acrylblends'
+const RUNTIME_DIR = '@acryldev'
 /** The framework's browser imports and the browser file that provides each. */
 const BROWSER_IMPORTS: Readonly<Record<string, string>> = {
   'acrylblends/jsx/dom': 'jsx-dom.js',
@@ -211,7 +211,7 @@ export function clientModules(options: ClientModulesOptions): Acryl {
   const app = new Acryl()
   app.get('/*', (c) => {
     const requestPath = c.req.path.slice(options.mount === undefined ? basePath(c).length : options.mount.length)
-    const runtime = /^\/@acrylblends\/([a-z-]+\.js)$/u.exec(requestPath)?.[1]
+    const runtime = /^\/@acryldev\/([a-z-]+\.js)$/u.exec(requestPath)?.[1]
     const send = (code: string, etag: string): Response => {
       if (c.req.header('if-none-match') === etag) return c.body(null, 304, { etag, 'cache-control': 'no-cache' })
       return c.body(code, 200, { 'content-type': JS_TYPE, etag, 'cache-control': 'no-cache' })
@@ -272,7 +272,7 @@ function sourceFiles(root: string, dir = root): string[] {
 /**
  * Compile a folder of client modules once, for a production that has no `typescript`: each module is written to `outDir` at the same
  * relative path and file name (so the page's URLs stay the same), compiled exactly as {@link clientModules} compiles it, and the three
- * browser files are copied to `outDir/@acrylblends/`. Files already in `outDir` that no source produces are left there.
+ * browser files are copied to `outDir/@acryldev/`. Files already in `outDir` that no source produces are left there.
  * @param options - the source folder and the output folder.
  * @returns the paths written, relative to `outDir`.
  * @throws MissingTypeScriptError when the app has no `typescript`; an error when `outDir` lies inside `root`.

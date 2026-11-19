@@ -242,7 +242,7 @@ test('framework names are the framework’s namespaces only', () => {
     'acrylblends/cordis/router',
     'acryl-blends-frame/app-generation',
     'dsh-client-ui-brand-acryl',
-    '@acrylblends/ui',
+    '@acryldev/ui',
     '@deepseek-ai/cordis',
     '@acryl/ui',
     '@webboxes/blends-core',

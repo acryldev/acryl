@@ -79,27 +79,27 @@ describe('clientModules', () => {
     expect(res.headers.get('content-type')).toBe('text/javascript; charset=utf-8')
     expect(res.headers.get('cache-control')).toBe('no-cache')
     const code = await res.text()
-    expect(code).toContain('from "./@acrylblends/jsx-dom.js"') // the JSX runtime TypeScript adds
-    expect(code).toContain("from './@acrylblends/jsx-dom.js'")
-    expect(code).toContain("from './@acrylblends/client.js'")
-    expect(code).toContain("from './@acrylblends/read-sse.js'")
+    expect(code).toContain('from "./@acryldev/jsx-dom.js"') // the JSX runtime TypeScript adds
+    expect(code).toContain("from './@acryldev/jsx-dom.js'")
+    expect(code).toContain("from './@acryldev/client.js'")
+    expect(code).toContain("from './@acryldev/read-sse.js'")
     expect(code).toContain("from 'canvas-confetti'") // another package is left to the page's import map
     expect(code).toContain("from './parts/label.ts'")
     expect(code).toContain("\"import x from 'acrylblends/jsx/dom'\"") // a string is not an import
     expect(code).not.toContain(': string')
     expect(code).toContain('//# sourceMappingURL=data:application/json;base64,')
     // One level down, the browser files are one level up.
-    expect(await (await site.request('/client/parts/label.ts')).text()).toContain("from '../@acrylblends/jsx-dom.js'")
-    expect(await (await site.request('/client/@acrylblends/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
-    expect(await (await site.request('/client/@acrylblends/client.js')).text()).toBe('/* client */\n')
-    expect(await (await site.request('/client/@acrylblends/read-sse.js')).text()).toBe('/* read-sse */\n')
+    expect(await (await site.request('/client/parts/label.ts')).text()).toContain("from '../@acryldev/jsx-dom.js'")
+    expect(await (await site.request('/client/@acryldev/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
+    expect(await (await site.request('/client/@acryldev/client.js')).text()).toBe('/* client */\n')
+    expect(await (await site.request('/client/@acryldev/read-sse.js')).text()).toBe('/* read-sse */\n')
   })
 
   it('works under whatever path the app is routed at', async () => {
     const { root, runtimeDir } = app({ 'counter.tsx': COUNTER, 'parts/label.ts': LABEL })
     const site = serve({ root, runtimeDir }, '/assets/islands')
     expect((await site.request('/assets/islands/counter.tsx')).status).toBe(200)
-    expect(await (await site.request('/assets/islands/@acrylblends/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
+    expect(await (await site.request('/assets/islands/@acryldev/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
     expect((await site.request('/client/counter.tsx')).status).toBe(404)
   })
 
@@ -112,7 +112,7 @@ describe('clientModules', () => {
     const res = await site.request('/client/counter.tsx')
     expect(res.status).toBe(200)
     expect(await res.text()).toContain('const Counter')
-    expect(await (await site.request('/client/@acrylblends/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
+    expect(await (await site.request('/client/@acryldev/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
   })
 
   it('compiles JSX for the DOM renderer whatever the server tsconfig.json says, and a file pragma still wins', async () => {
@@ -122,7 +122,7 @@ describe('clientModules', () => {
     })
     writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'acrylblends/jsx' } }))
     const site = serve({ root, runtimeDir })
-    expect(await (await site.request('/client/a.tsx')).text()).toContain('from "./@acrylblends/jsx-dom.js"')
+    expect(await (await site.request('/client/a.tsx')).text()).toContain('from "./@acryldev/jsx-dom.js"')
     expect(await (await site.request('/client/b.tsx')).text()).toContain('from "preact/jsx-runtime"')
   })
 
@@ -144,7 +144,7 @@ describe('clientModules', () => {
     for (const path of [
       '/client/../server.ts', '/client/%2e%2e/server.ts', '/client/parts/..%2f..%2f..%2fserver.ts', '/client/.secret.ts', '/client/types.d.ts',
       '/client/notes.txt', '/client/linked.ts', '/client/dir.ts', '/client/missing.tsx', '/client/parts%5clabel.ts', '/client/%E0%A4%A.ts',
-      '/client/@acrylblends/other.js', '/client/', '/client',
+      '/client/@acryldev/other.js', '/client/', '/client',
     ]) {
       expect((await site.request(path)).status, path).toBe(404)
     }
@@ -201,10 +201,10 @@ describe('buildClientModules', () => {
   it('writes each module compiled at the same path and copies the browser files', () => {
     const { dir, root, runtimeDir } = app({ 'counter.tsx': COUNTER, 'parts/label.ts': LABEL, 'plain.js': 'export {}\n', '.hidden.ts': 'x', 'types.d.ts': 'x' })
     const outDir = join(dir, 'dist', 'client')
-    expect(buildClientModules({ root, outDir, runtimeDir })).toEqual(['counter.tsx', 'parts/label.ts', 'plain.js', '@acrylblends/jsx-dom.js', '@acrylblends/client.js', '@acrylblends/read-sse.js'])
-    expect(readFileSync(join(outDir, 'counter.tsx'), 'utf8')).toContain("from './@acrylblends/client.js'")
-    expect(readFileSync(join(outDir, 'parts', 'label.ts'), 'utf8')).toContain("from '../@acrylblends/jsx-dom.js'")
-    expect(readFileSync(join(outDir, '@acrylblends', 'jsx-dom.js'), 'utf8')).toBe('/* jsx-dom */\n')
+    expect(buildClientModules({ root, outDir, runtimeDir })).toEqual(['counter.tsx', 'parts/label.ts', 'plain.js', '@acryldev/jsx-dom.js', '@acryldev/client.js', '@acryldev/read-sse.js'])
+    expect(readFileSync(join(outDir, 'counter.tsx'), 'utf8')).toContain("from './@acryldev/client.js'")
+    expect(readFileSync(join(outDir, 'parts', 'label.ts'), 'utf8')).toContain("from '../@acryldev/jsx-dom.js'")
+    expect(readFileSync(join(outDir, '@acryldev', 'jsx-dom.js'), 'utf8')).toBe('/* jsx-dom */\n')
   })
 
   it('refuses an output folder inside the client folder', () => {
@@ -224,7 +224,7 @@ describe('buildClientModules', () => {
       const res = await site.request('/client/counter.tsx')
       expect(res.status).toBe(200)
       expect(await res.text()).toBe(readFileSync(join(outDir, 'counter.tsx'), 'utf8'))
-      expect(await (await site.request('/client/@acrylblends/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
+      expect(await (await site.request('/client/@acryldev/jsx-dom.js')).text()).toBe('/* jsx-dom */\n')
       const stale = await site.request('/client/later.ts')
       expect(stale.status).toBe(500)
       expect(await stale.text()).toContain('later.ts is not in')
@@ -259,7 +259,7 @@ describe('clientModules inside an app that is mounted on the router', () => {
       const module = await context.router.request('/client/counter.tsx')
       expect(module.status).toBe(200)
       expect(await module.text()).toContain('42')
-      expect((await context.router.request('/client/@acrylblends/jsx-dom.js')).status).toBe(200)
+      expect((await context.router.request('/client/@acryldev/jsx-dom.js')).status).toBe(200)
     } finally {
       await context.fiber.dispose()
     }

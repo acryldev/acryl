@@ -34,7 +34,7 @@ const config = JSON.parse(readFileSync(join(root, 'frame', 'packages.json'), 'ut
 const scope = config.scope
 if (typeof scope !== 'string' || !scope.startsWith('@'))
   fail(
-    `frame/packages.json: scope must be an npm scope like "@acrylblends" (got ${JSON.stringify(scope)})`,
+    `frame/packages.json: scope must be an npm scope like "@acryldev" (got ${JSON.stringify(scope)})`,
   )
 const shortOf = Object.fromEntries(
   Object.entries(config.packages).map(([folder, entry]) => [folder, entry.name]),
@@ -445,7 +445,7 @@ try {
   const cliTarball = join(scratch, 'cli', `acrylblends-${cliVersion}.tgz`)
   if (!existsSync(cliTarball))
     fail(`pnpm pack wrote no ${cliTarball}:\n${cliPack.out.slice(-2000)}`)
-  // Every frame package as a direct tarball dependency: npm resolves a frame package's own @acrylblends dependencies to these, as it will to the registry's.
+  // Every frame package as a direct tarball dependency: npm resolves a frame package's own @acryldev dependencies to these, as it will to the registry's.
   for (const entry of packed)
     manifest.dependencies[published.get(entry.folder)] = `file:${entry.tarball}`
   manifest.dependencies.acrylblends = `file:${cliTarball}`

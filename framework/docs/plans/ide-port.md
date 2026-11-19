@@ -90,7 +90,7 @@ DSH has its own desktop shell; ACRYL's `apps/acryl-desktop` (111 files, 21k line
 **Answered by the owner on 2026-10-31:**
 
 - **1. Hosting: our own framework hosts the application.** Our node server and router serve the document and the client modules; the page is the ACRYL frame's own layout; DSH's web server, web runtime and page are not mounted. DSH contributes only the chat/session driver rows listed in the design note (transport, sessions, model/credentials/authorization, agent, attachments, the session controller, remotes), plus its client packages, which the frame imports as libraries served by our server and does not port. One small compatibility service of ours (`webServer`) lets a driver row register its endpoints on our host, and `profileContext` is supplied minimally for DSH's settings row. What this changes in the already-landed work: the DSH profile, the overlay and the generated `dev` command are superseded by our launcher `scripts/ide-host.mjs`; the boot gates stop composing a DSH profile and stop expecting DSH's index; the door rides our client-module serving. The ported packages are unchanged, which is what keeping them host-neutral bought. Design note: [ide-host-inversion.md](ide-host-inversion.md). The comparison reference set (ACRYL's Desktop) is unaffected.
-- **2. Publish names: the frame packages publish as the `@acrylblends` scope packages.** Source stays at `ide/<name>/`; the publish pipeline is built in dry-run first.
+- **2. Publish names: the frame packages publish as the `@acryldev` scope packages.** Source stays at `ide/<name>/`; the publish pipeline is built in dry-run first.
 
 Still open:
 

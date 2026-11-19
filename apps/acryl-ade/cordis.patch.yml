@@ -19,29 +19,29 @@
     - id: acryl-router-http
       name: acrylblends/cordis/router-http
     - id: acryl-web-service
-      name: '@acrylblends/web'
+      name: '@acryldev/web'
     - id: acryl-settings
-      name: '@acrylblends/settings'
+      name: '@acryldev/settings'
     - id: acryl-app-shell
-      name: '@acrylblends/app-shell'
+      name: '@acryldev/app-shell'
     - id: acryl-versions
-      name: '@acrylblends/versions'
+      name: '@acryldev/versions'
     - id: acryl-workspace
-      name: '@acrylblends/workspace'
+      name: '@acryldev/workspace'
       config:
         openFolder: !!js process.env.ACRYL_OPEN_FOLDER
     - id: acryl-plugin-admin
-      name: '@acrylblends/plugin-admin'
+      name: '@acryldev/plugin-admin'
     - id: acryl-system-prompt
-      name: '@acrylblends/system-prompt'
+      name: '@acryldev/system-prompt'
     - id: acryl-app-context
-      name: '@acrylblends/app-context'
+      name: '@acryldev/app-context'
     - id: acryl-support
-      name: '@acrylblends/support'
+      name: '@acryldev/support'
     - id: acryl-sign-in
-      name: '@acrylblends/sign-in'
+      name: '@acryldev/sign-in'
     - id: ui-brand-acryl
-      name: '@acrylblends/brand-client'
+      name: '@acryldev/brand-client'
     - id: skill-mcp-manager
       name: skill-mcp-manager
 - id: connection

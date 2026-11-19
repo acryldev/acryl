@@ -1,5 +1,5 @@
 {
-  "name": "@acrylblends/absent",
+  "name": "@acryldev/absent",
   "version": "1.0.0",
   "description": "An empty package that stands in for a package an ACRYLBLENDS app does not install (the LibreOffice engines DSH brings). See frame/packages.json `omit` in the acrylblends repository.",
   "license": "MIT",

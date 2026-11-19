@@ -12,4 +12,4 @@ Config (row `acryl-system-prompt`): `identity` (the opening line; ACRYL's by def
 one), `style` (the reply style; empty leaves it out), `tagSections`, `dropEmpty`.
 
 Source: `src/index.ts` (the plugin) and `src/transform.ts` (the pure shaping, also exported as `acryl-system-prompt/transform`). One package
-for ACRYL and for the Blends frame, which publishes it as `@acrylblends/system-prompt` (spec 051).
+for ACRYL and for the Blends frame, which publishes it as `@acryldev/system-prompt` (spec 051).

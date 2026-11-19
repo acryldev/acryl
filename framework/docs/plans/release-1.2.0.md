@@ -8,7 +8,7 @@ The order matters. `acrylblends` 1.2.0's `init --desktop` installs the frame's p
 
 ## 0. Decisions before anything is published
 
-- [x] **OWNER** (confirmed 2026-11-05) Confirm the names in `frame/packages.json`: the scope `@acrylblends`, and the two new short names `versions` (acryl-versions) and
+- [x] **OWNER** (confirmed 2026-11-05) Confirm the names in `frame/packages.json`: the scope `@acryldev`, and the two new short names `versions` (acryl-versions) and
       `blends-frame` (acryl-blends-frame). A rename is one line there; re-run step 2 after it.
 - [x] **OWNER** (approved 2026-11-05) Approve the release itself (this checklist), as the coordinator relays it.
 
@@ -33,24 +33,24 @@ The order matters. `acrylblends` 1.2.0's `init --desktop` installs the frame's p
 
 | # | Package | Version | Depends on (frame) |
 | --- | --- | --- | --- |
-| 1 | @acrylblends/ui | 0.3.0 | - |
-| 2 | @acrylblends/brand-client | 0.1.0 | - |
-| 3 | @acrylblends/app-shell | 0.1.0 | ui |
-| 4 | @acrylblends/control | 0.2.5 | - |
-| 5 | @acrylblends/loopback-http | 0.1.0 | - |
-| 6 | @acrylblends/settings | 0.1.0 | - |
-| 7 | @acrylblends/workspace | 0.1.0 | ui, control, loopback-http, settings |
-| 8 | @acrylblends/sign-in | 0.1.0 | ui, control, loopback-http |
-| 9 | @acrylblends/diagnostics | 0.1.0 | - |
-| 10 | @acrylblends/plugin-admin | 0.1.0 | ui, control, loopback-http |
-| 11 | @acrylblends/support | 0.1.0 | ui, control, diagnostics, loopback-http |
-| 12 | @acrylblends/web | 0.1.0 | - |
-| 13 | @acrylblends/system-prompt | 0.1.0 | - |
-| 14 | @acrylblends/app-context | 0.1.0 | - |
-| 15 | @acrylblends/versions | 0.1.0 | loopback-http |
-| 16 | @acrylblends/blends-frame | 0.1.0 | app-shell, loopback-http, versions, workspace |
+| 1 | @acryldev/ui | 0.3.0 | - |
+| 2 | @acryldev/brand-client | 0.1.0 | - |
+| 3 | @acryldev/app-shell | 0.1.0 | ui |
+| 4 | @acryldev/control | 0.2.5 | - |
+| 5 | @acryldev/loopback-http | 0.1.0 | - |
+| 6 | @acryldev/settings | 0.1.0 | - |
+| 7 | @acryldev/workspace | 0.1.0 | ui, control, loopback-http, settings |
+| 8 | @acryldev/sign-in | 0.1.0 | ui, control, loopback-http |
+| 9 | @acryldev/diagnostics | 0.1.0 | - |
+| 10 | @acryldev/plugin-admin | 0.1.0 | ui, control, loopback-http |
+| 11 | @acryldev/support | 0.1.0 | ui, control, diagnostics, loopback-http |
+| 12 | @acryldev/web | 0.1.0 | - |
+| 13 | @acryldev/system-prompt | 0.1.0 | - |
+| 14 | @acryldev/app-context | 0.1.0 | - |
+| 15 | @acryldev/versions | 0.1.0 | loopback-http |
+| 16 | @acryldev/blends-frame | 0.1.0 | app-shell, loopback-http, versions, workspace |
 
-- [ ] `npm view @acrylblends/<short> version` answers for all 16 (the registry can lag a few minutes).
+- [ ] `npm view @acryldev/<short> version` answers for all 16 (the registry can lag a few minutes).
 
 Not published: `acryl-brand` and `acryl-shortcuts`. The frame mounts neither and no frame package depends on them. Already on npm and not ours to publish:
 `@deepseek-ai/dsh-*` 0.2.0-rc.2, `@deepseek-ai/cordis` 4.0.5, `@deepseek-ai/cordis-plugin-loader` 1.0.6.

@@ -321,14 +321,14 @@ test('a product rooted in the workbench (acrylblends.root: workspace) keeps its 
   const overlay = planIdeProfileWrite(product, input).plan.overlay
   assert.deepEqual(
     rootRow(overlay).map((row) => [row.id, row.name]),
-    [['acryl-workspace', '@acrylblends/workspace']],
+    [['acryl-workspace', '@acryldev/workspace']],
   )
   assert.match(overlay, /openFolder: !!js process\.env\.ACRYL_OPEN_FOLDER/)
   assert.doesNotMatch(overlay, /identity:/)
   // An upgrade passes the frame packages under their published names, with the row id beside them.
   const published = FRAME_PACKAGES.map((entry) =>
     entry.name === 'acryl-system-prompt'
-      ? { ...entry, name: '@acrylblends/system-prompt', row: 'acryl-system-prompt' }
+      ? { ...entry, name: '@acryldev/system-prompt', row: 'acryl-system-prompt' }
       : entry,
   )
   assert.doesNotMatch(
@@ -347,4 +347,23 @@ test('a product rooted in the workbench (acrylblends.root: workspace) keeps its 
     '{ "name": "x", "acrylblends": { "root": "ide" } }\n',
   )
   assert.throws(() => planIdeProfileWrite(product, input), /acrylblends.root is "ide"/)
+})
+
+test('an upgraded app installs a frame package once, under its new scope (spec 051 T036)', () => {
+  const app = folder()
+  writeFileSync(
+    join(app, 'package.json'),
+    `${JSON.stringify({ name: 'my-app', dependencies: { '@acrylblends/web': '^0.1.0', '@acrylblends/unrelated': '1.0.0', 'left-pad': '1.0.0' } })}\n`,
+  )
+  const published = FRAME_PACKAGES.map((entry) =>
+    entry.name === 'acryl-web-service' ? { ...entry, name: '@acryldev/web', spec: '0.2.0' } : entry,
+  )
+  const deps = JSON.parse(
+    planIdeProfileWrite(app, { ...input, packages: published }).plan.packageJson,
+  ).dependencies
+  assert.equal(deps['@acryldev/web'], '0.2.0')
+  assert.equal(deps['@acrylblends/web'], undefined)
+  // Not a frame package under the new scope: the app's own, kept.
+  assert.equal(deps['@acrylblends/unrelated'], '1.0.0')
+  assert.equal(deps['left-pad'], '1.0.0')
 })

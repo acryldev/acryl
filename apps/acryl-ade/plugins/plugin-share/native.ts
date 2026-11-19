@@ -10,7 +10,7 @@
  *
  * The pull reads the list (the policy below is pure), downloads only this computer's entry from the npm registry, checks its sha512, unpacks it into
  * the app's home (`<home>/native/<package>@<version>`, so an `npm install` cannot prune it) and links `node_modules/<package>` to it, where the package
- * that needs it resolves it. Only a missing package or the empty placeholder (`@acrylblends/absent`) is replaced; a real copy npm installed stays.
+ * that needs it resolves it. Only a missing package or the empty placeholder (`@acryldev/absent`) is replaced; a real copy npm installed stays.
  * Removing the plugin takes the link and the download away; an app's start links again what an `npm install` unlinked.
  */
 import { spawn } from 'node:child_process'
@@ -41,7 +41,7 @@ export const NATIVE_REGISTRY = 'https://registry.npmjs.org'
 export const NATIVE_MAX_BYTES = 1_000_000_000
 
 /** The empty package the frame installs in place of an omitted one (frame/packages.json `omit.placeholder`). */
-export const PLACEHOLDER = '@acrylblends/absent'
+export const PLACEHOLDER = '@acryldev/absent'
 
 /** The file written last into an unpacked native package: without it the folder is an interrupted download. */
 const COMPLETE = '.acrylblends-native-complete'

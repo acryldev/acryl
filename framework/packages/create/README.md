@@ -66,7 +66,7 @@ An app made here holds two kinds of code that are not its own, and says so in it
   `plugins/library.lock.json` records the release each came from and a hash of every file. `npx acrylblends upgrade` brings them to the
   newest release; when a file was changed here, it stops, shows the diff and changes nothing (`--force` replaces it and keeps a backup in
   `.acryl/upgrade-backup/`). Fix a library plugin in acrylblends, not here; your own code goes in a plugin of your own under `plugins/`.
-- **The frame and its parts** (`@acrylblends/blends-frame`, `@acrylblends/settings` and the other `@acrylblends/*` packages in
+- **The frame and its parts** (`@acryldev/blends-frame`, `@acryldev/settings` and the other `@acryldev/*` packages in
   `package.json`) and the framework (`acrylblends`) come from npm, built from the same repository (`ide/` and `packages/`). `npm install`
   installs them; `npx acrylblends upgrade` moves `package.json` to the release it brings.
 

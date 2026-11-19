@@ -1,6 +1,6 @@
 // Runs inside the sandbox child process, started with `node --permission`. Reads { input } as JSON from stdin, calls the tool's exported
 // `run(input)`, and prints the result after a marker, so anything the tool itself prints cannot be mistaken for the result.
-const MARK = '\n@@acrylblends-result@@'
+const MARK = '\n@@acryldev-result@@'
 const chunks = []
 for await (const chunk of process.stdin) chunks.push(chunk)
 const { input } = JSON.parse(Buffer.concat(chunks).toString('utf8'))

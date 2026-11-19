@@ -74,7 +74,7 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes 1.0.10](release-notes/1.0.10.md) - a production install no longer carries vitest (the optional peer for the conformance suites is gone)
 - [Release notes 1.1.0](release-notes/1.1.0.md) - a page follows its state over one WebSocket (`watch` of `/api/state/client.js`), so windows no longer use up the browser's six connections
 - [Release notes 1.2.0](release-notes/1.2.0.md) - a new app is a repository of plugin folders with snapshots; `create --from` makes a blueprint your own (name, lock, first commit); `init --desktop` installs the ACRYL frame from npm, one framework copy
-- [Release notes acrylblends 1.5.3](release-notes/acrylblends-1.5.3.md) - a new app's first run connects a model with Settings > Models in front of the person, and shows no preview notice (`@acrylblends/sign-in` 0.1.1)
+- [Release notes acrylblends 1.5.3](release-notes/acrylblends-1.5.3.md) - a new app's first run connects a model with Settings > Models in front of the person, and shows no preview notice (`@acryldev/sign-in` 0.1.1)
 - [Release notes create-acrylblends 1.5.3](release-notes/create-1.5.3.md) - asks for acrylblends 1.5.3
 - [Release notes acrylblends 1.5.4](release-notes/acrylblends-1.5.4.md) - `acrylblends add plugin-share` mounts it, so an app made from a registry starter can pull, list and publish plugins
 - [Release notes create-acrylblends 1.5.4](release-notes/create-1.5.4.md) - asks for acrylblends 1.5.4; a registry starter without sharing gets it
@@ -101,15 +101,15 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.11](release-notes/create-1.5.11.md) - released with acrylblends 1.5.11
 - [Release notes acrylblends 1.5.10](release-notes/acrylblends-1.5.10.md) - released with create-acrylblends 1.5.10
 - [Release notes create-acrylblends 1.5.10](release-notes/create-1.5.10.md) - a registry entry unpacks on Windows with Git's tar first on PATH
-- [Release notes acrylblends 1.5.9](release-notes/acrylblends-1.5.9.md) - the workbench opens on a folder it is given (`acryl ade` in a project); @acrylblends/workspace 0.1.1
+- [Release notes acrylblends 1.5.9](release-notes/acrylblends-1.5.9.md) - the workbench opens on a folder it is given (`acryl ade` in a project); @acryldev/workspace 0.1.1
 - [Release notes create-acrylblends 1.5.9](release-notes/create-1.5.9.md) - asks for acrylblends 1.5.9
 - [Release notes acrylblends 1.5.8](release-notes/acrylblends-1.5.8.md) - a packed Blend product does not ask for a name, also for an app it made before
 - [Release notes create-acrylblends 1.5.8](release-notes/create-1.5.8.md) - asks for acrylblends 1.5.8
 - [Release notes acrylblends 1.5.7](release-notes/acrylblends-1.5.7.md) - every registry Blend can be made in the frame again; a packed Blend product does not ask for a name
 - [Release notes create-acrylblends 1.5.7](release-notes/create-1.5.7.md) - asks for acrylblends 1.5.7; `--from` a registry Blend with its own src/app.ts finishes
-- [Release notes acrylblends 1.5.6](release-notes/acrylblends-1.5.6.md) - sharing pushes through your gh login whatever git protocol you chose; an app in a WebBoxes.ai box takes its model key (`@acrylblends/blends-frame` 0.1.4)
+- [Release notes acrylblends 1.5.6](release-notes/acrylblends-1.5.6.md) - sharing pushes through your gh login whatever git protocol you chose; an app in a WebBoxes.ai box takes its model key (`@acryldev/blends-frame` 0.1.4)
 - [Release notes create-acrylblends 1.5.6](release-notes/create-1.5.6.md) - asks for acrylblends 1.5.6
-- [Release notes acrylblends 1.5.5](release-notes/acrylblends-1.5.5.md) - `npm run share`: an app gets a repository of its own on GitHub and is pushed there, after a person confirms the plan (`@acrylblends/blends-frame` 0.1.3)
+- [Release notes acrylblends 1.5.5](release-notes/acrylblends-1.5.5.md) - `npm run share`: an app gets a repository of its own on GitHub and is pushed there, after a person confirms the plan (`@acryldev/blends-frame` 0.1.3)
 - [Release notes create-acrylblends 1.5.5](release-notes/create-1.5.5.md) - asks for acrylblends 1.5.5
 - [Release notes acrylblends 1.5.2](release-notes/acrylblends-1.5.2.md) - an app can run behind a hosting front such as a WebBoxes.ai box (`ACRYL_PUBLIC_ORIGIN`, `ACRYL_TRUSTED_PROXY`, `ACRYLBLENDS_HOST`)
 - [Release notes create-acrylblends 1.5.2](release-notes/create-1.5.2.md) - asks for acrylblends 1.5.2

@@ -155,9 +155,9 @@ function stageData(data: string, into: string, source: string): void {
 /** The name a synthetic commit of an export carries: it is the product's, never the person's. */
 const SNAPSHOT_IDENTITY = {
   GIT_AUTHOR_NAME: 'ACRYL Blends',
-  GIT_AUTHOR_EMAIL: 'export@acrylblends.invalid',
+  GIT_AUTHOR_EMAIL: 'export@acryldev.invalid',
   GIT_COMMITTER_NAME: 'ACRYL Blends',
-  GIT_COMMITTER_EMAIL: 'export@acrylblends.invalid',
+  GIT_COMMITTER_EMAIL: 'export@acryldev.invalid',
 }
 
 /** The environment of a git call: the process's, without any `GIT_` variable it inherited (a repository or index of someone else's), never prompting. */

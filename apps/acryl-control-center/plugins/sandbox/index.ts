@@ -47,7 +47,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 const RUNNER = join(dirname(fileURLToPath(import.meta.url)), 'runner.mjs')
-const MARK = '\n@@acrylblends-result@@'
+const MARK = '\n@@acryldev-result@@'
 
 export const sandbox: Sandbox = {
   run(entry, input, options = {}) {

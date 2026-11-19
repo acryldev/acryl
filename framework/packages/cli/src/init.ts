@@ -52,7 +52,7 @@ function startRepository(directory: string): void {
   // options are git's own and must precede the command.
   const identity = run(['config', 'user.email'])
     ? []
-    : ['-c', 'user.name=acrylblends', '-c', 'user.email=scaffold@acrylblends.invalid']
+    : ['-c', 'user.name=acrylblends', '-c', 'user.email=scaffold@acryldev.invalid']
   run([...identity, 'commit', '-q', '-m', 'Initial commit from acrylblends'])
 }
 

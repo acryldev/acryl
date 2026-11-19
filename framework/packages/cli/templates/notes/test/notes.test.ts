@@ -276,7 +276,7 @@ test('the note form loads the character counter, a client component compiled for
   assert.equal(module.status, 200)
   assert.match(module.headers.get('content-type') ?? '', /javascript/)
   assert.doesNotMatch(await module.text(), /<Count/)
-  assert.equal((await running.root.router.request('/client/@acrylblends/jsx-dom.js')).status, 200)
+  assert.equal((await running.root.router.request('/client/@acryldev/jsx-dom.js')).status, 200)
   assert.equal((await running.root.router.request('/client/../src/db.ts')).status, 404)
 })
 
@@ -312,7 +312,7 @@ test('the frame mounts the app at /app: the login page, its links and redirects 
   const module = await root.router.request('/app/client/counter.tsx')
   assert.equal(module.status, 200)
   assert.match(module.headers.get('content-type') ?? '', /javascript/u)
-  assert.equal((await root.router.request('/app/client/@acrylblends/jsx-dom.js')).status, 200)
+  assert.equal((await root.router.request('/app/client/@acryldev/jsx-dom.js')).status, 200)
   // The app's own URLs are not mounted in the frame; its own server keeps them (the tests above).
   assert.equal((await root.router.request('/login')).status, 404)
 })

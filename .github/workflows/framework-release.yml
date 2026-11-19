@@ -4,7 +4,7 @@ name: Framework release
 # no longer runs here; this is its successor. A pushed tag publishes the one package it names, with npm trusted publishing (no token anywhere):
 #   acrylblends-v<version>           acrylblends (framework/packages/cli)
 #   create-acrylblends-v<version>    create-acrylblends (framework/packages/create)
-#   frame-<short>-v<version>         @acrylblends/<short>, a frame package (framework/frame/packages.json names its folder and version)
+#   frame-<short>-v<version>         @acryldev/<short>, a frame package (framework/frame/packages.json names its folder and version)
 #   launcher-v<version>              @acryldev/control-center (plugins/acryl-launcher; Control Center installs it, spec 051 T010)
 # None of these starts with `v`, so release-cli.yml (acryl's own `v*`) never fires on them, nor this one on its tags.
 # Run by hand (workflow_dispatch) it does everything except `npm publish`, so the whole path can be tried at any time.

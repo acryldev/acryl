@@ -32,18 +32,18 @@
     "predesktop": "node scripts/ade-root.mjs"
   },
   "dependencies": {
-    "@acrylblends/app-context": "^0.1.0",
-    "@acrylblends/app-shell": "^0.1.0",
-    "@acrylblends/blends-frame": "^0.1.2",
-    "@acrylblends/brand-client": "^0.1.1",
-    "@acrylblends/plugin-admin": "^0.1.0",
-    "@acrylblends/settings": "^0.1.0",
-    "@acrylblends/sign-in": "^0.1.0",
-    "@acrylblends/support": "^0.1.0",
-    "@acrylblends/system-prompt": "^0.1.0",
-    "@acrylblends/versions": "^0.1.1",
-    "@acrylblends/web": "^0.1.0",
-    "@acrylblends/workspace": "^0.1.1",
+    "@acryldev/app-context": "^0.1.0",
+    "@acryldev/app-shell": "^0.1.0",
+    "@acryldev/blends-frame": "^0.1.2",
+    "@acryldev/brand-client": "^0.1.1",
+    "@acryldev/plugin-admin": "^0.1.0",
+    "@acryldev/settings": "^0.1.0",
+    "@acryldev/sign-in": "^0.1.0",
+    "@acryldev/support": "^0.1.0",
+    "@acryldev/system-prompt": "^0.1.0",
+    "@acryldev/versions": "^0.1.1",
+    "@acryldev/web": "^0.1.0",
+    "@acryldev/workspace": "^0.1.1",
     "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/cordis-plugin-loader": "~1.0.6",
     "@deepseek-ai/dsh-app-boot": "0.2.0-rc.2",
@@ -65,10 +65,10 @@
     "ws": "8.21.3"
   },
   "overrides": {
-    "@deepseek-ai/libreoffice-kit-darwin-arm64": "npm:@acrylblends/absent@1.0.0",
-    "@deepseek-ai/libreoffice-kit-darwin-x64": "npm:@acrylblends/absent@1.0.0",
-    "@deepseek-ai/libreoffice-kit-wasm": "npm:@acrylblends/absent@1.0.0",
-    "@deepseek-ai/libreoffice-kit-win32-arm64": "npm:@acrylblends/absent@1.0.0",
-    "@deepseek-ai/libreoffice-kit-win32-x64": "npm:@acrylblends/absent@1.0.0"
+    "@deepseek-ai/libreoffice-kit-darwin-arm64": "npm:@acryldev/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-darwin-x64": "npm:@acryldev/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-wasm": "npm:@acryldev/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-win32-arm64": "npm:@acryldev/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-win32-x64": "npm:@acryldev/absent@1.0.0"
   }
 }

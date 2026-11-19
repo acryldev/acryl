@@ -59,7 +59,7 @@ about.html  index.html
 
 ### Vite Plugin
 
-Using the `@acrylblends/vite-ssg` Vite Plugin, you can easily handle the process.
+Using the `@acryldev/vite-ssg` Vite Plugin, you can easily handle the process.
 
 For more details, see here:
 
