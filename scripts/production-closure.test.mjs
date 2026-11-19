@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { execShim } from './lib/portable-commands.mjs'
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
-// Test tooling that reached the shipped runtimes through acrylblends' optional vitest peer (see .pnpmfile.cjs): fsevents is the macOS-only
+// Test tooling that once reached the shipped runtimes through acrylblends' optional vitest peer (a .pnpmfile.cjs dropped it until the framework moved in): fsevents is the macOS-only
 // native the Web archive refuses, the rest is weight.
 const TEST_TOOLING = ['vitest', 'vite', 'fsevents']
 const SHIPPED = ['acryl-web', 'acryl-cli']

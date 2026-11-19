@@ -15,7 +15,6 @@ on:
       - 'distribution/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
-      - '.pnpmfile.cjs'
       - 'deepseek-harness'
       - '.github/workflows/windows.yml'
   pull_request:
@@ -28,7 +27,6 @@ on:
       - 'distribution/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
-      - '.pnpmfile.cjs'
       - 'deepseek-harness'
       - '.github/workflows/windows.yml'
 
