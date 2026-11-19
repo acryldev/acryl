@@ -33,10 +33,13 @@ for (const group of ['plugins', 'runtime', 'framework/packages']) {
     const manifest = JSON.parse(readFileSync(file, 'utf8'))
     if (typeof manifest.name !== 'string' || manifest.exports === undefined) continue
     for (const [subpath, target] of Object.entries(manifest.exports)) {
-      const value = typeof target === 'string' ? target : (target?.default ?? target?.import ?? target?.require)
+      const value =
+        typeof target === 'string' ? target : (target?.default ?? target?.import ?? target?.require)
       if (typeof value !== 'string' || !value.startsWith('./lib/')) continue
-      const specifier = subpath === '.' ? manifest.name : `${manifest.name}/${subpath.replace(/^\.\//u, '')}`
-      if (!sources.has(specifier)) sources.set(specifier, pathToFileURL(join(base, name, value)).href)
+      const specifier =
+        subpath === '.' ? manifest.name : `${manifest.name}/${subpath.replace(/^\.\//u, '')}`
+      if (!sources.has(specifier))
+        sources.set(specifier, pathToFileURL(join(base, name, value)).href)
     }
   }
 }

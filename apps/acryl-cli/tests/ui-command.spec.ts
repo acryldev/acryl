@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { runUiCommand } from '../src/host/ui-command.ts'
 
-const uiPackageDir = resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..', 'plugins', 'acryl-ui')
+const uiPackageDir = resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..', 'plugins', 'ui')
 const registryDir = join(uiPackageDir, 'registry-seed')
 
 beforeAll(() => {

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:@acryldev/cordis-plugin-market:schema:catalog-snapshot:1.0.0",
+  "$id": "urn:cordis-plugin-market:schema:catalog-snapshot:1.0.0",
   "title": "DSH Community Market normalized catalog snapshot",
   "description": "A normalized, non-executable page produced locally by a catalog adapter. Host-observed provenance is retained for every item.",
   "type": "object",

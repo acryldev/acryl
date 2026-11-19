@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:@acryldev/cordis-plugin-market:schema:catalog-source:1.0.0",
+  "$id": "urn:cordis-plugin-market:schema:catalog-source:1.0.0",
   "title": "DSH Community Market catalog source manifest",
   "description": "A provider-neutral declaration for one user-selectable HTTPS JSON catalog endpoint. A user registers its manifest URL; selection and all other user-owned state stay local. The smallest recommended profile supports q, category, cursor, and limit and uses 50 as an example page size, not a global cap.",
   "type": "object",

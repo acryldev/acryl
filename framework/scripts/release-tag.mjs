@@ -59,7 +59,7 @@ export function releaseOfTag(tag, root = framework) {
   // The launcher's journeys (ACRYL's plugins/launcher, spec 051 T010): Control Center installs it instead of a hand copy.
   match = /^launcher-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
   if (match !== null) {
-    const dir = join(root, '..', 'plugins', 'acryl-launcher')
+    const dir = join(root, '..', 'plugins', 'launcher')
     return expect(
       {
         kind: 'npm',
