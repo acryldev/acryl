@@ -8,7 +8,7 @@
 
 **Input**: User direction ("rebuild our own framework based on Cordis from scratch",
 scaffolder shaped like create-better-t-stack) and the ponytail review in
-[`./review.md`](./review.md). Supersedes the framework direction in
+[`./review.md`](review.md). Supersedes the framework direction in
 `docs/aimbrace_spec.md` for all new work; old code is frozen, not deleted.
 
 ## Summary

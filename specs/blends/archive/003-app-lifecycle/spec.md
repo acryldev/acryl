@@ -1,6 +1,6 @@
 # Feature Specification: App, Context, Scope and lifecycle on Cordis
 
-**Milestone**: M3 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M3 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

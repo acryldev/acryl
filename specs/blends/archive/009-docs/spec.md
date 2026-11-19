@@ -1,6 +1,6 @@
 # Feature Specification: Documentation
 
-**Milestone**: M9 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M9 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

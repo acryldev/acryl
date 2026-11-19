@@ -1,6 +1,6 @@
 # Tasks: M10 scaffolding ledger
 
-Spec: [`./spec.md`](./spec.md). Plan: [`./plan.md`](./plan.md).
+Spec: [`./spec.md`](spec.md). Plan: [`./plan.md`](plan.md).
 A task closes only when its exit evidence exists on `main`.
 
 Owner correction 2026-10-06: everything stays in this repository. Scaffolding

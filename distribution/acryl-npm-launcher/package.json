@@ -1,6 +1,7 @@
 {
   "name": "acryl",
   "version": "0.2.11",
+  "description": "ACRYL, a persistent, agent-agnostic coding environment: the acryl command as npm installs it (npx acryl)",
   "private": true,
   "acrylRuntime": "0.2.7",
   "type": "module",

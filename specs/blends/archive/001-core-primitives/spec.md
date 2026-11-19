@@ -1,6 +1,6 @@
 # Feature Specification: Core primitives
 
-**Milestone**: M1 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M1 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

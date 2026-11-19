@@ -1,6 +1,6 @@
 # Feature Specification: Testing package and CLI host
 
-**Milestone**: M7 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M7 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

@@ -11,7 +11,7 @@ const repo = fileURLToPath(new URL('../..', import.meta.url))
 
 /**
  * What ships: the plugins an app is made of, the frame's packages, the CLI. Gates under scripts/ run on a developer's machine and may read its home.
- * The frame packages shared with ACRYL (spec 051: plugins/ and runtime/ at the repository root) are under ACRYL's own bulkhead, tests/bulkhead.spec.ts.
+ * The frame packages shared with ACRYL (spec 051: plugins/ and runtime/ at the repository root) are under ACRYL's own bulkhead, runtime/acryl-harness-runtime/tests/bulkhead.spec.ts.
  */
 const ROOTS = [
   'plugins',

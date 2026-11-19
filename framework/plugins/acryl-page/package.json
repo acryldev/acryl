@@ -1,6 +1,7 @@
 {
   "name": "acryl-page",
   "version": "0.1.0",
+  "description": "The page of a framework-hosted app: the ACRYL frame's own minimal document, its index taps applied per request, and the built client assets the client runtime boots from, served by acryl-web-server",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

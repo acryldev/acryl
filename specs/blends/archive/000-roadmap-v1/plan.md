@@ -1,6 +1,6 @@
 # Implementation Plan: AIMBRACE roadmap
 
-**Branch**: `main` | **Date**: 2026-10-06 | **Spec**: [spec.md](./spec.md)
+**Branch**: `main` | **Date**: 2026-10-06 | **Spec**: [spec.md](spec.md)
 
 ## Summary
 

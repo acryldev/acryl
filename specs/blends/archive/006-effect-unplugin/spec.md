@@ -1,6 +1,6 @@
 # Feature Specification: Effect bridge and Unplugin build plugin
 
-**Milestone**: M6 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M6 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

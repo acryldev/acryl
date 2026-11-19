@@ -1,6 +1,6 @@
 # Feature Specification: Reference AI plugins and examples
 
-**Milestone**: M8 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M8 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

@@ -172,14 +172,28 @@ Current groups and what belongs in each:
   nothing production-facing.
 - `distribution/` — release/publish shims (`acryl-npm-launcher`), never
   product logic.
+- `framework/` — acrylblends, the framework apps are made with (imported
+  with its history, spec 051): its CLI and create, the frame's release list,
+  and its own app plugins in `framework/plugins/` (they import each other as
+  siblings, as in an app, so they stay together until they become packages).
+  Its packages are the foundation everything else rests on.
 - `deepseek-harness/` (pinned submodule), `docs/`, `specs/`, `scripts/`,
   `patches/`, `assets/` stay at root — they are not workspace packages.
 
-A new top-level package's home is decided by which of the five groups it
+The folders stay flat; the layers live only in the dependency graph the
+package.json files declare (the Pi model, owner 2026-11-19): foundation
+(acrylblends and its packages) <- runtime <- plugins <- apps.
+`scripts/dependency-direction.mjs` (run by `verify-layout.mjs`) fails on any
+cycle and on any dependency that points the wrong way; its one exception,
+`acryl-harness-runtime` as the composition root, lists its plugins by name.
+The map, with what each package owns and does not do:
+[`docs/acryl/MONOREPO.md`](docs/acryl/MONOREPO.md).
+
+A new top-level package's home is decided by which of the six groups it
 plays the *role* of, not by where it's convenient to drop it "for now" —
 there is no scratch space at root. If a new package genuinely fits none
-of the five, that is a signal to design the grouping deliberately (raise
-it, don't invent a sixth ad hoc bucket) — the same discipline this
+of the six, that is a signal to design the grouping deliberately (raise
+it, don't invent a seventh ad hoc bucket) — the same discipline this
 section already asks for Loader row ids and service contracts. Whichever
 directory a package moves to or is added under, update it in the same
 commit as `pnpm-workspace.yaml`'s package list and

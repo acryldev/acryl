@@ -1,6 +1,6 @@
 # Feature Specification: Plugin model and dependency graph
 
-**Milestone**: M2 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M2 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 

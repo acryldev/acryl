@@ -10,7 +10,7 @@
 //           events) are listed in maps/events.md.
 // Expect:   row ACTIVE; the assembled prompt gains a section named `example:note`.
 // Docs:     extending.event-hook
-// Pattern:  plugins/acryl-system-prompt/index.js
+// Pattern:  plugins/acryl-system-prompt/src/index.ts
 export const name = 'acryl-example-prompt-hook'
 export const inject = ['systemPrompt']
 

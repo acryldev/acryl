@@ -1,6 +1,7 @@
 {
   "name": "acryl-web-server",
   "version": "0.1.0",
+  "description": "The webServer port of a framework-hosted app: the node request and upgrade interface DSH's driver rows register on, backed by acryl-node-server's raw routes",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

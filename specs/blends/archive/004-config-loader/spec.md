@@ -1,6 +1,6 @@
 # Feature Specification: Config and loader
 
-**Milestone**: M4 | **Parent**: [000-roadmap](../000-roadmap/spec.md) | **Status**: In progress
+**Milestone**: M4 | **Parent**: [000-roadmap](../../000-roadmap/spec.md) | **Status**: In progress
 
 ## Summary
 
