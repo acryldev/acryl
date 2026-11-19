@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/diagnostics",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Log files, secret masking, the Cordis file exporter and the support archive shared by every ACRYL surface",
   "license": "MIT",
   "repository": {
