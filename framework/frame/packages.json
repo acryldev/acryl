@@ -28,15 +28,15 @@
   },
   "packages": {
     "@acryldev/ui": {
-      "version": "0.3.0",
+      "version": "0.4.0",
       "path": "../plugins/ui"
     },
     "@acryldev/brand-client": {
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": "../plugins/brand-client"
     },
     "@acryldev/app-shell": {
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": "../plugins/app-shell"
     },
     "@acryldev/workspace": {
@@ -48,19 +48,19 @@
       "path": "../plugins/settings"
     },
     "@acryldev/sign-in": {
-      "version": "0.1.1",
+      "version": "0.2.0",
       "path": "../plugins/sign-in"
     },
     "@acryldev/control": {
-      "version": "0.2.11",
+      "version": "0.3.0",
       "path": "../runtime/control"
     },
     "@acryldev/diagnostics": {
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "../runtime/diagnostics"
     },
     "@acryldev/plugin-admin": {
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "../plugins/plugin-admin"
     },
     "@acryldev/support": {
@@ -68,15 +68,15 @@
       "path": "../plugins/support"
     },
     "@acryldev/loopback-http": {
-      "version": "0.1.0",
+      "version": "0.2.0",
       "path": "../runtime/loopback-http"
     },
     "@acryldev/web": {
-      "version": "0.2.0",
+      "version": "0.3.0",
       "path": "../runtime/web"
     },
     "@acryldev/system-prompt": {
-      "version": "0.2.0",
+      "version": "0.3.0",
       "path": "../plugins/system-prompt"
     },
     "@acryldev/app-context": {

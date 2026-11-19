@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/ui",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "ACRYL UI library for the Web and Desktop client: themed building blocks over the app's own primitives (Stack, Card, Field, SwitchField, SettingsRow, SelectField, Segmented, Tabs, Dialog, EmptyState), semantic color roles and slot helpers",
   "license": "MIT",
   "type": "module",
