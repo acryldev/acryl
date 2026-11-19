@@ -20,10 +20,7 @@ test('the CLI and the scaffolder tags name their package, folder and tarball', (
     tarball: `acrylblends-${cli}.tgz`,
   })
   const create = versionOf('packages/create')
-  assert.equal(
-    releaseOfTag(`create-blends-v${create}`).tarball,
-    `create-acrylblends-${create}.tgz`,
-  )
+  assert.equal(releaseOfTag(`create-blends-v${create}`).tarball, `create-acrylblends-${create}.tgz`)
 })
 
 test('a frame tag names the scoped package from frame/packages.json, and its tarball as npm names it', () => {

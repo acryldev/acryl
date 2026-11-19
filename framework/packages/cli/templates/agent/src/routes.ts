@@ -1,9 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from '../plugins/router/src/index.ts'
-import { bodyLimit } from '../plugins/router/src/middleware/index.ts'
 import type {} from '../plugins/agent/index.ts'
 import type {} from '../plugins/extensions/index.ts'
 import { type Home, renderWidgets } from '../plugins/home/index.ts'
+import { Acryl } from '../plugins/router/src/index.ts'
+import { bodyLimit } from '../plugins/router/src/middleware/index.ts'
 import type {} from '../plugins/tasks/index.ts'
 
 export const APP_NAME = '__APP_NAME__'

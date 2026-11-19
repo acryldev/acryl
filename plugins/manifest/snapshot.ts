@@ -108,7 +108,7 @@ export function captureApp(appRoot: string): CaptureResult {
     const before =
       names.indexOf('extensions') >= 0
         ? names.indexOf('extensions')
-        : names.indexOf('@acryldev/node-server')
+        : names.indexOf('acryl-node-server')
     const at = before >= 0 ? before : rows.items.length
     rows.items.splice(at, 0, ...missing.map((name) => document.createNode({ id: name, name })))
     writeAtomic(file, String(document))

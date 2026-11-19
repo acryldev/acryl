@@ -58,7 +58,12 @@ export function apply(ctx) {
 /** The packages the frame mounts, in row order: the router pair, the host services, the frame's client plugins. */
 export const FRAME_PACKAGES: readonly IdeProfilePackage[] = [
   { name: '@acryldev/blends/cordis/router', spec: '', row: 'acryl-router', installed: true },
-  { name: '@acryldev/blends/cordis/router-http', spec: '', row: 'acryl-router-http', installed: true },
+  {
+    name: '@acryldev/blends/cordis/router-http',
+    spec: '',
+    row: 'acryl-router-http',
+    installed: true,
+  },
   { name: '@acryldev/web', spec: '', row: 'acryl-web-service' },
   { name: '@acryldev/settings', spec: '', row: 'acryl-settings' },
   // No `@acryldev/shortcuts`: its Settings > Shortcuts and the command palette's key are the IDE's; the frame lists the shortcuts in General.

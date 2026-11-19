@@ -23,7 +23,7 @@ import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createPluginHub, findSourceFolder, firstRegistryPort, homePluginsDir, projectPluginsDir, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, npmCli, npmRegistryViaCli, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@acryldev/plugin-hub-core'
 
-export const name = '@acryldev/plugin-hub'
+export const name = 'acryl-plugin-hub'
 export const inject = ['appInstance']
 
 /** Where this app instance keeps its plugin store (`storeRootOf`: per instance, never machine-wide). */

@@ -74,7 +74,12 @@ const WANTED = [
     1,
     'loopback and origin guard; `acrylblends/loopback-only` covers it',
   ],
-  ['@acryldev/mount-anchors', 'reference', 0, 'visual mount-anchor inspector; not part of the frame'],
+  [
+    '@acryldev/mount-anchors',
+    'reference',
+    0,
+    'visual mount-anchor inspector; not part of the frame',
+  ],
   ['@acryldev/app-save', 'reference', 0, 'save to git from the app; the framework has `save`'],
 ]
 

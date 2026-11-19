@@ -17,6 +17,7 @@ import {
   parseDefinition,
   resolveDefinition,
 } from '@acryldev/blends-core'
+import { pluginEntry } from './app-plugins.ts'
 import { blueprintsIn } from './index.ts'
 
 export const LOCK_FILE = 'blend.lock.json'
@@ -31,13 +32,29 @@ function read(file: string): { text: string; document: BlendDocument } {
   return { text, document: document as BlendDocument }
 }
 
+/**
+ * A plugin folder's plugin name, as its entry file declares it (`export const name = '...'`): the library copies keep their pre-T038 plugin names
+ * while their folders are the scoped packages' short names (spec 051 T038), so the folder alone no longer names the module a row mounts. A folder
+ * without a readable name keeps its folder name, which is the app plugins' contract.
+ */
+function moduleNameOf(directory: string, folderName: string): string {
+  const entry = pluginEntry(directory)
+  if (entry === undefined) return folderName
+  try {
+    const match = /export const name = '([^']+)'/u.exec(readFileSync(entry, 'utf8'))
+    return match?.[1] ?? folderName
+  } catch {
+    return folderName
+  }
+}
+
 function localModules(appRoot: string, folder: string): LockModule[] {
   const directory = join(appRoot, folder)
   if (!existsSync(directory)) return []
   return readdirSync(directory, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => ({
-      name: entry.name,
+      name: moduleNameOf(join(directory, entry.name), entry.name),
       origin: 'local' as const,
       digest: `sha256:${digestFolder(join(directory, entry.name))}`,
       source: `${folder}/${entry.name}`,

@@ -9,7 +9,7 @@
 import Schema from '@deepseek-ai/schemastery'
 import { escapeHtml, faviconDataUrl, parseIdentity } from './lib/identity.js'
 
-export const name = '@acryldev/brand'
+export const name = 'acryl-brand'
 
 export const Config = Schema.object({
   name: Schema.string().required().description('Product name.'),

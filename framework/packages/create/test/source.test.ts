@@ -562,7 +562,9 @@ describe('starters from a registry', () => {
         unknown.io,
       ),
     ).toBe(1)
-    expect(unknown.err()).toContain('starters for @acryldev/create-blends: acrylblends.notes-desktop')
+    expect(unknown.err()).toContain(
+      'starters for @acryldev/create-blends: acrylblends.notes-desktop',
+    )
     expect(existsSync(join(scratch, 'no2'))).toBe(false)
   })
 

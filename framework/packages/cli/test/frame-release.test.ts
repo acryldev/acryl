@@ -52,9 +52,7 @@ describe('the frame specs of an existing app', () => {
       '@acryldev/web': 'file:/checkout/runtime/web',
     })
     const input = frameProfileInput(frameProfileForApp(root) ?? publishedFrameProfile(), 'x', [])
-    expect(input.dependencies?.['@acryldev/web']).toBe(
-      'file:/checkout/runtime/web',
-    )
+    expect(input.dependencies?.['@acryldev/web']).toBe('file:/checkout/runtime/web')
     expect(input.frameworkVersion).toBe('file:/checkout/packages/cli')
     // The row id is the package name (T025), so a checkout app and a published one compose the same row.
     expect(input.packages?.find((entry) => entry.row === 'acryl-web-service')?.name).toBe(

@@ -6,8 +6,9 @@
  * `/` is the app's home in production and in the frame's canvas alike. Due dates are counted from the day the page is served, so "this week" (today and the
  * six days after it) always holds the same two of Ana's tasks.
  */
-import type { Context } from '@deepseek-ai/cordis'
+
 import { Acryl } from '@acryldev/blends'
+import type { Context } from '@deepseek-ai/cordis'
 
 export const name = 'team-board'
 export const inject = ['router']

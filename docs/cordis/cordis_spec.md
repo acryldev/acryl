@@ -825,7 +825,7 @@ Always prefer explicit stable IDs in ACRYL-owned composition.
 Example:
 
 ```yaml
-- id: '@acryldev/agent-claude'
+- id: 'acryl-agent-claude'
   name: './plugins/agent-claude.ts'
 ```
 

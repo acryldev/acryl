@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
+
 const require = createRequire(import.meta.url)
 const manifest = require.resolve('@acryldev/create-blends/package.json')
 const bin = join(dirname(manifest), 'bin', 'create-acrylblends.js')

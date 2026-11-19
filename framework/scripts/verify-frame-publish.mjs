@@ -36,8 +36,7 @@ if (typeof scope !== 'string' || !scope.startsWith('@'))
   fail(
     `frame/packages.json: scope must be an npm scope like "@acryldev" (got ${JSON.stringify(scope)})`,
   )
-const publishedName = (key, entry) =>
-  key.includes('/') ? key : `${scope}/${entry.name ?? key}`
+const publishedName = (key, entry) => (key.includes('/') ? key : `${scope}/${entry.name ?? key}`)
 const shortOf = Object.fromEntries(
   Object.entries(config.packages).map(([key, entry]) => [
     key,
@@ -45,7 +44,9 @@ const shortOf = Object.fromEntries(
   ]),
 )
 const folders = Object.keys(shortOf)
-const published = new Map(folders.map((folder) => [folder, publishedName(folder, config.packages[folder])]))
+const published = new Map(
+  folders.map((folder) => [folder, publishedName(folder, config.packages[folder])]),
+)
 const byPublished = new Map([...published].map(([folder, name]) => [name, folder]))
 /** Each frame package's source name (what its own package.json says) to the name it publishes under. */
 const sourceToPublished = new Map(

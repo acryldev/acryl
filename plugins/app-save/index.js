@@ -12,7 +12,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { connectRemote, gitCli, githubHosting, saveApp } from '@acryldev/app-persistence'
 
-export const name = '@acryldev/app-save'
+export const name = 'acryl-app-save'
 export const inject = ['commands']
 
 /** The app folder when this process runs an app (its home has blend.yaml), else undefined. */

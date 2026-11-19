@@ -21,9 +21,7 @@ const library = readdirSync(join(repo, '..', 'plugins'), { withFileTypes: true }
   .map((entry) => `../plugins/${entry.name}`)
 const ROOTS = [
   ...library,
-  ...['app-context', 'blends-frame', 'versions'].map(
-    (name) => `../plugins/${name}`,
-  ),
+  ...['app-context', 'blends-frame', 'versions'].map((name) => `../plugins/${name}`),
   'packages/cli/src',
   'packages/create/src',
 ]

@@ -78,7 +78,8 @@ export function releaseOfTag(tag, root = framework) {
     const publishedName = (key, entry) =>
       key.includes('/') ? key : `${config.scope}/${entry.name ?? key}`
     const key = Object.keys(config.packages).find(
-      (folder) => publishedName(folder, config.packages[folder]).slice(config.scope.length + 1) === short,
+      (folder) =>
+        publishedName(folder, config.packages[folder]).slice(config.scope.length + 1) === short,
     )
     if (key === undefined)
       throw new Error(`the tag ${tag} names ${short}, which frame/packages.json does not list`)

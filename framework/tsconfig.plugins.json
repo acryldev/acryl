@@ -37,9 +37,7 @@
       "@acryldev/router/client": ["../plugins/router/src/client.ts"],
       "@acryldev/router/jsx": ["../plugins/router/src/core/jsx/index.ts"],
       "@acryldev/router/jsx/jsx-runtime": ["../plugins/router/src/core/jsx/jsx-runtime.ts"],
-      "@acryldev/router/jsx/jsx-dev-runtime": [
-        "../plugins/router/src/core/jsx/jsx-dev-runtime.ts"
-      ],
+      "@acryldev/router/jsx/jsx-dev-runtime": ["../plugins/router/src/core/jsx/jsx-dev-runtime.ts"],
       "@acryldev/router/jsx/streaming": ["../plugins/router/src/core/jsx/streaming.ts"],
       "@acryldev/router-http": ["../plugins/router-http/src/index.ts"],
       "@acryldev/state": ["../plugins/state/src/index.ts"],
@@ -83,9 +81,7 @@
       "@acryldev/node-server/conninfo": ["../plugins/node-server/src/adapter/conninfo.ts"],
       "@acryldev/node-server/upgrade-hub": ["../plugins/node-server/src/upgrade-hub.ts"],
       "@acryldev/router/connection": ["../plugins/router/src/connection.ts"],
-      "@acryldev/node-server/serve-static": [
-        "../plugins/node-server/src/adapter/serve-static.ts"
-      ],
+      "@acryldev/node-server/serve-static": ["../plugins/node-server/src/adapter/serve-static.ts"],
       "@acryldev/node-server/test-websocket": ["../plugins/node-server/src/test-websocket.ts"]
     }
   },

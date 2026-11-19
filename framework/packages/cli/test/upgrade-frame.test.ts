@@ -2,7 +2,7 @@
  * The frame half of `acrylblends upgrade` on apps made by this version (spec 051 T038, day 0): an app that already has the frame is left alone, an app
  * that never carried it stays standalone and says so, and an overlay the app wrote is never replaced. No released scaffold is involved.
  */
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it } from 'vitest'

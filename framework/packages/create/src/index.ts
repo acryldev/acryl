@@ -316,7 +316,10 @@ function acrylblendsBin(): string {
   const pkgFile = createRequire(import.meta.url).resolve(`${PACKAGE}/package.json`)
   const pkg = JSON.parse(readFileSync(pkgFile, 'utf8')) as { bin?: string | Record<string, string> }
   // The package is @acryldev/blends but its command is still `acrylblends` (spec 051 T038).
-  const bin = typeof pkg.bin === 'string' ? pkg.bin : (pkg.bin?.acrylblends ?? Object.values(pkg.bin ?? {})[0])
+  const bin =
+    typeof pkg.bin === 'string'
+      ? pkg.bin
+      : (pkg.bin?.acrylblends ?? Object.values(pkg.bin ?? {})[0])
   if (!bin) throw new Error(`${PACKAGE} has no command to create an app with`)
   return join(dirname(pkgFile), bin)
 }

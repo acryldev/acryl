@@ -8,7 +8,7 @@
  * propagation by logging once per mounted row.
  */
 
-export const name = '@acryldev/blend-demo'
+export const name = 'acryl-blend-demo'
 
 export function apply(ctx, config = {}) {
   const rendered = Object.keys(config).length > 0 ? JSON.stringify(config) : '(no config)'

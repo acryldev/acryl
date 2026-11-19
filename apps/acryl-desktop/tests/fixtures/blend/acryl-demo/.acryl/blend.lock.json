@@ -13,7 +13,7 @@
   "rows": [
     {
       "id": "contacts",
-      "name": "@acryldev/blend-demo",
+      "name": "acryl-blend-demo",
       "config": {
         "title": "Contacts",
         "org": "My Organization",
@@ -22,11 +22,11 @@
     },
     {
       "id": "tasks",
-      "name": "@acryldev/blend-demo"
+      "name": "acryl-blend-demo"
     },
     {
       "id": "pipeline",
-      "name": "@acryldev/blend-demo",
+      "name": "acryl-blend-demo",
       "config": {
         "enabled": true,
         "maxDealValue": 1000000
@@ -34,7 +34,7 @@
     },
     {
       "id": "invoicing",
-      "name": "@acryldev/blend-demo",
+      "name": "acryl-blend-demo",
       "disabled": true
     }
   ]
