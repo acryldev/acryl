@@ -10,7 +10,7 @@ import type {} from '@acryldev/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { applyPluginLifecycleSettings } from './lifecycle/plugin-lifecycle-settings.ts'
 
-export const name = '@acryldev/plugin-admin-client'
+export const name = 'acryl-plugin-admin-client'
 /** `slots` for the tab contributions, `locale` for their dictionaries. */
 export const inject = ['slots', 'locale']
 

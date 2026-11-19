@@ -7,7 +7,7 @@ Ships with [acrylblends 1.3.0](acrylblends-1.3.0.md).
 - **`--desktop` puts the new app inside the ACRYL frame.** The default stays an app on the framework alone.
 
   ```sh
-  npm create acrylblends@latest my-app agent -- --desktop
+  npm create @acryldev/blends@latest my-app agent -- --desktop
   ```
 
   A starter from a source (`--from`, `github:`, a folder) refuses the option, since it decides its own shape.

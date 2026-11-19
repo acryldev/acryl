@@ -214,8 +214,8 @@ type HandleOptions = {
  *
  * @example
  * ```js
- * import { Acryl } from 'acrylblends'
- * import { handle } from 'acrylblends/aws-lambda'
+ * import { Acryl } from '@acryldev/blends'
+ * import { handle } from '@acryldev/blends/aws-lambda'
  *
  * const app = new Acryl()
  *
@@ -228,7 +228,7 @@ type HandleOptions = {
  * @example
  * ```js
  * // With custom binary content type detection
- * import { handle, defaultIsContentTypeBinary } from 'acrylblends/aws-lambda'
+ * import { handle, defaultIsContentTypeBinary } from '@acryldev/blends/aws-lambda'
  * export const handler = handle(app, {
  *   isContentTypeBinary: (contentType) => {
  *     if (defaultIsContentTypeBinary(contentType)) {

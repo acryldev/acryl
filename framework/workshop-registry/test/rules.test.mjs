@@ -215,7 +215,7 @@ test('a whole app in the wrong folder is one line, not one per file', () => {
 })
 
 describe('make-entry', () => {
-  /** A whole app in a folder of its own, as `npm create acrylblends` leaves it. */
+  /** A whole app in a folder of its own, as `npm create @acryldev/blends` leaves it. */
   function appFolder() {
     const app = mkdtempSync(join(scratch, 'app-'))
     const { dir } = entryTree('alice.hello')

@@ -5,13 +5,13 @@ The Route Helper provides enhanced routing information for debugging and middlew
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import {
   matchedRoutes,
   routePath,
   baseRoutePath,
   basePath,
-} from 'acrylblends/route'
+} from '@acryldev/blends/route'
 ```
 
 ## Usage

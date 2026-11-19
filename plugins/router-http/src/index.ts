@@ -13,7 +13,7 @@ import { UpgradeEmitter, UpgradeHub } from '@acryldev/node-server'
 import { serve } from './serve.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/router-http'
+export const name = 'acryl-router-http'
 
 /** Hard requirements: both services must exist, otherwise this plugin stays PENDING. */
 export const inject = ['router', 'webServer']

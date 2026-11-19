@@ -2,7 +2,7 @@
  * Lint coverage for the framework's plugin library (spec 051 T017). The root `lint:library` runs biome over `plugins/`, and `biome.json` decides
  * which files that means: the framework's `framework/**` and one pattern per app-shape library plugin. A new app plugin that is not named there is
  * silently unlinted, so `verify-layout` asks this module who is missing. The vendored packages (sources in `src/`) were never linted by the
- * framework (`!plugins/acryl-*`) and stay out by the same rule.
+ * framework (the old `!plugins/acryl-*` pattern, now gone) and stay out by the same rule.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'

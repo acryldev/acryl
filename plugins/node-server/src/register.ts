@@ -13,7 +13,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { compileModule, usePackagesOfProgram } from './transpile.ts'
 
 /** The JSX runtime the docs set up; an app's tsconfig.json (or a file's own `@jsxImportSource` pragma) chooses another. */
-const DEFAULT_IMPORT_SOURCE = 'acrylblends/jsx'
+const DEFAULT_IMPORT_SOURCE = '@acryldev/blends/jsx'
 const JSX_FILE = /\.[jt]sx$/u
 
 process.setSourceMapsEnabled(true)
@@ -46,7 +46,7 @@ if (existsSync(fileURLToPath(family))) {
   if (appTree(process.env, fileURLToPath(appRoot)) !== undefined) usePackagesOfProgram(fileURLToPath(appRoot))
 }
 const resolver = new URL('extensions/resolve.ts', plugins)
-if (existsSync(fileURLToPath(new URL('@acryldev/router/src/index.ts', plugins))) && existsSync(fileURLToPath(resolver))) {
+if (existsSync(fileURLToPath(new URL('router/src/index.ts', plugins))) && existsSync(fileURLToPath(resolver))) {
   const { routerAliases } = (await import(resolver.href)) as { routerAliases(): Record<string, string> }
   const aliases = routerAliases()
   registerHooks({

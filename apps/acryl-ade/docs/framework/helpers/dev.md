@@ -3,8 +3,8 @@
 Dev Helper provides useful methods you can use in development.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { getRouterName, showRoutes } from 'acrylblends/dev'
+import { Acryl } from '@acryldev/blends'
+import { getRouterName, showRoutes } from '@acryldev/blends/dev'
 ```
 
 ## `getRouterName()`

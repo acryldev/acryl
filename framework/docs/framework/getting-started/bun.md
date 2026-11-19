@@ -53,7 +53,7 @@ See the Bun starter template for a minimal example setup. This is the output of 
 "Hello World" script is below. Almost the same as writing on other platforms.
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 app.get('/', (c) => c.text('Hello Bun!'))
@@ -79,7 +79,7 @@ You can specify the port number with exporting the `port`.
 
 <!-- prettier-ignore -->
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 app.get('/', (c) => c.text('Hello Bun!'))
@@ -95,7 +95,7 @@ export default {
 To serve static files, use `serveStatic` from `acrylblends/bun`.
 
 ```ts
-import { serveStatic } from 'acrylblends/bun'
+import { serveStatic } from '@acryldev/blends/bun'
 
 const app = new Acryl()
 

@@ -12,8 +12,8 @@ curl -H 'Authorization: Bearer acrylblendsiscool' http://localhost:8787/auth/pag
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { bearerAuth } from 'acrylblends/bearer-auth'
+import { Acryl } from '@acryldev/blends'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
 ```
 
 ## Usage

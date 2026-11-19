@@ -49,7 +49,7 @@ describe('parseBlueprint', () => {
 
   it('stands alone with safe defaults when it extends nothing', () => {
     const blueprint = parseBlueprint({ id: 'tiny' })
-    expect(blueprint.capabilities).toEqual(['authorization', '@acryldev/settings'])
+    expect(blueprint.capabilities).toEqual(['authorization', 'acryl-settings'])
     expect(blueprint.shell).toBe('compatibility')
   })
 
@@ -110,7 +110,7 @@ describe('a blueprint file selected from the environment', () => {
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: sample })
     expect(blueprint.id).toBe('acme.notes')
     expect(blueprint.rows).not.toContain('@acryldev/workspace' as never)
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', '@acryldev/blends/cordis/router', '@acryldev/blends/cordis/router-http', '@acryldev/blends/cordis/state', '@acryldev/blends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub-core/manager'])
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub-core/manager'])
   })
 
   it('is read, validated and rebranded like a built-in', () => {

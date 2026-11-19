@@ -13,7 +13,7 @@ mkdirSync(scratch, { recursive: true })
 
 /** A plugin no scripted command knows: the model writes it from scratch. */
 const COUNTER = `import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'counter'
 export const inject = ['router']

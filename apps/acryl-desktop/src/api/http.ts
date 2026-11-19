@@ -4,7 +4,7 @@
  * startup, workspaces) builds its routes with these and the shared rules; `plugin.ts` serves them.
  */
 
-import type { Acryl } from 'acrylblends'
+import type { Acryl } from '@acryldev/blends'
 import { privateApi } from '@acryldev/loopback-http/router'
 
 /** The prefixes Desktop's renderer calls its Host on: settings and preferences, and the boot report and directory picker. */

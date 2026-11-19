@@ -22,7 +22,7 @@ declare module '@deepseek-ai/cordis' {
 const KEEP_ALIVE_MS = 15_000
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/state'
+export const name = 'acryl-state'
 
 const KEY_PATTERN = /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$/
 

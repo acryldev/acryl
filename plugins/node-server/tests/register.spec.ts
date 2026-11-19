@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const register = join(here, '..', 'src', 'register.ts')
-const jsxRuntime = pathToFileURL(join(here, '..', '..', '@acryldev/router', 'src', 'core', 'jsx', 'jsx-runtime.ts')).href
+const jsxRuntime = pathToFileURL(join(here, '..', '..', 'router', 'src', 'core', 'jsx', 'jsx-runtime.ts')).href
 const typescript = realpathSync(join(here, '..', 'node_modules', 'typescript'))
 
 const folders: string[] = []

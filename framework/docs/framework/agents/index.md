@@ -1,7 +1,7 @@
 # Agents
 
 A coding agent (Claude Code, Codex, OpenCode, Copilot and others) builds on Acryl best when the documentation is in the folder it works in. A project created with
-`npm create acrylblends@latest` (and one made with `npx acrylblends init`) therefore contains:
+`npm create @acryldev/blends@latest` (and one made with `npx acrylblends init`) therefore contains:
 
 - `docs/framework/`: these pages. Start at `README.md`; `api/summary.md` is the one-page summary of the API.
 - `AGENTS.md`: where the API is, how a feature is built (an `Acryl` app mounted with `ctx.router.route`, a plugin registered in `src/app.ts` and `blend.yaml`, a state cell),
@@ -35,10 +35,10 @@ See [Acryl in a Cordis app](../cordis/acryl-in-a-cordis-app.md), [Plugin lifecyc
 
 ## The agent panel and the terminals
 
-The panel is a chat button on every page of the running app. **A new app from the `agent` template has it** (`npm create acrylblends@latest my-app agent`), and `driver-pty` adds real terminals to it. Both are **development only** (see [what runs in production](../guides/production.md)).
+The panel is a chat button on every page of the running app. **A new app from the `agent` template has it** (`npm create @acryldev/blends@latest my-app agent`), and `driver-pty` adds real terminals to it. Both are **development only** (see [what runs in production](../guides/production.md)).
 
 ```sh
-npm create acrylblends@latest my-app agent
+npm create @acryldev/blends@latest my-app agent
 cd my-app
 npm install
 npm run dev          # the panel is the button at the corner of the page

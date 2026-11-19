@@ -7,7 +7,7 @@ The `AcrylRequest` is an object that can be taken from `c.req` which wraps a [Re
 Get the values of path parameters.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 // Captured params
@@ -29,7 +29,7 @@ app.get('/entry/:id/comment/:commentId', async (c) => {
 Get querystring parameters.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 // Query params
@@ -50,7 +50,7 @@ app.get('/search', async (c) => {
 Get multiple querystring parameter values, e.g. `/search?tags=A&tags=B`
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/search', async (c) => {
@@ -66,7 +66,7 @@ app.get('/search', async (c) => {
 Get the request header value.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/', (c) => {
@@ -97,7 +97,7 @@ const foo = c.req.header('X-Foo')
 Parse Request body of type `multipart/form-data` or `application/x-www-form-urlencoded`
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/entry', async (c) => {
@@ -111,7 +111,7 @@ app.post('/entry', async (c) => {
 **Single file**
 
 ```ts twoslash
-import { Context } from 'acrylblends'
+import { Context } from '@acryldev/blends'
 declare const c: Context
 // ---cut---
 const body = await c.req.parseBody()
@@ -126,7 +126,7 @@ If multiple files are uploaded, the last one will be used.
 ### Multiple files
 
 ```ts twoslash
-import { Context } from 'acrylblends'
+import { Context } from '@acryldev/blends'
 declare const c: Context
 // ---cut---
 const body = await c.req.parseBody()
@@ -142,7 +142,7 @@ body['foo[]']
 If you have an input field that allows multiple `<input type="file" multiple />` or multiple checkboxes with the same name `<input type="checkbox" name="favorites" value="Acryl"/>`.
 
 ```ts twoslash
-import { Context } from 'acrylblends'
+import { Context } from '@acryldev/blends'
 declare const c: Context
 // ---cut---
 const body = await c.req.parseBody({ all: true })
@@ -169,7 +169,7 @@ data.append('obj.key2', 'value2')
 You can get the structured value by setting the `dot` option `true`:
 
 ```ts twoslash
-import { Context } from 'acrylblends'
+import { Context } from '@acryldev/blends'
 declare const c: Context
 // ---cut---
 const body = await c.req.parseBody({ dot: true })
@@ -181,7 +181,7 @@ const body = await c.req.parseBody({ dot: true })
 Parses the request body of type `application/json`
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/entry', async (c) => {
@@ -195,7 +195,7 @@ app.post('/entry', async (c) => {
 Parses the request body of type `text/plain`
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/entry', async (c) => {
@@ -209,7 +209,7 @@ app.post('/entry', async (c) => {
 Parses the request body as an `ArrayBuffer`
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/entry', async (c) => {
@@ -223,7 +223,7 @@ app.post('/entry', async (c) => {
 Parses the request body as a `Blob`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/entry', async (c) => {
@@ -237,7 +237,7 @@ app.post('/entry', async (c) => {
 Parses the request body as a `FormData`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/entry', async (c) => {
@@ -275,7 +275,7 @@ See the [Validation section](../guides/validation.md) for usage examples.
 You can retrieve the registered path within the handler like this:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/posts/:id', (c) => {
@@ -296,7 +296,7 @@ If you access `/posts/123`, it will return `/posts/:id`:
 It returns matched routes within the handler, which is useful for debugging.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.use(async function logger(c, next) {
@@ -322,7 +322,7 @@ app.use(async function logger(c, next) {
 The request pathname.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/about/me', async (c) => {
@@ -336,7 +336,7 @@ app.get('/about/me', async (c) => {
 The request url strings.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/about/me', async (c) => {
@@ -350,7 +350,7 @@ app.get('/about/me', async (c) => {
 The method name of the request.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/about/me', async (c) => {
@@ -376,11 +376,11 @@ app.post('/upload', async (c) => {
 Clones the raw Request object from a AcrylRequest. Works even after the request body has been consumed by validators or AcrylRequest methods.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 
-import { cloneRawRequest } from 'acrylblends/request'
-import { validator } from 'acrylblends/validator'
+import { cloneRawRequest } from '@acryldev/blends/request'
+import { validator } from '@acryldev/blends/validator'
 
 app.post(
   '/forward',

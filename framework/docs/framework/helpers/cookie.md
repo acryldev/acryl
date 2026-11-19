@@ -5,7 +5,7 @@ The Cookie Helper provides an easy interface to manage cookies, enabling develop
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import {
   deleteCookie,
   getCookie,
@@ -14,7 +14,7 @@ import {
   setSignedCookie,
   generateCookie,
   generateSignedCookie,
-} from 'acrylblends/cookie'
+} from '@acryldev/blends/cookie'
 ```
 
 ## Usage

@@ -6,11 +6,12 @@
  * app's plugins through `pluginShare` (which knows where each pulled one came from), and follows `extensions/changed`: every install, update,
  * restore and removal goes through extensions, so one event covers them all. The stream's open connections end with the plugin.
  */
-import type { Context } from '@deepseek-ai/cordis'
+
 import type {} from '@acryldev/extensions'
 import type {} from '@acryldev/plugin-share'
 import { Acryl } from '@acryldev/router'
 import { streamSSE } from '@acryldev/router/helpers'
+import type { Context } from '@deepseek-ai/cordis'
 import {
   appBase,
   type Offered,

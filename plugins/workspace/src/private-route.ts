@@ -4,7 +4,7 @@
  * routes with these and `index.ts` mounts them under {@link WORKSPACE_API_PREFIX}.
  */
 
-import type { Acryl } from 'acrylblends'
+import type { Acryl } from '@acryldev/blends'
 import { privateApi as privateRoutes } from '@acryldev/loopback-http/router'
 
 export { INVALID_JSON, jsonBody, ownPage, ownPageSocket, readJson, type ReportError } from '@acryldev/loopback-http/router'

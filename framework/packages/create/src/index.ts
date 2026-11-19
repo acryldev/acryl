@@ -48,7 +48,7 @@ import { packageManagerInvocation } from './spawn'
 export { CLASS, CREATE, PACKAGE, TEMPLATE_MANIFEST }
 
 /**
- * The templates: the same list as acrylblends init (the framework package makes every one of them; create-acrylblends delegates). A test compares this list and its summaries with the
+ * The templates: the same list as acrylblends init (the framework package makes every one of them; @acryldev/create-blends delegates). A test compares this list and its summaries with the
  * framework package's, so they cannot drift.
  */
 export const TEMPLATES = ['blank', 'nodejs', 'notes', 'chat', 'todo', 'agent'] as const
@@ -315,7 +315,8 @@ const isEmpty = (directory: string) => !existsSync(directory) || readdirSync(dir
 function acrylblendsBin(): string {
   const pkgFile = createRequire(import.meta.url).resolve(`${PACKAGE}/package.json`)
   const pkg = JSON.parse(readFileSync(pkgFile, 'utf8')) as { bin?: string | Record<string, string> }
-  const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.[PACKAGE]
+  // The package is @acryldev/blends but its command is still `acrylblends` (spec 051 T038).
+  const bin = typeof pkg.bin === 'string' ? pkg.bin : (pkg.bin?.acrylblends ?? Object.values(pkg.bin ?? {})[0])
   if (!bin) throw new Error(`${PACKAGE} has no command to create an app with`)
   return join(dirname(pkgFile), bin)
 }
@@ -397,7 +398,7 @@ async function createFromSource(
     io.stderr.write(`error: ${target} is not empty; nothing was changed\n`)
     return 1
   }
-  const scratch = mkdtempSync(join(tmpdir(), 'create-acrylblends-'))
+  const scratch = mkdtempSync(join(tmpdir(), 'acryl-create-blends-'))
   try {
     const name = nameFrom(target)
     const fetchers = io.fetchers ?? realFetchers
@@ -475,8 +476,8 @@ async function createFromSource(
       // A starter made before sharing has no plugin-share row, so pull, list and publish would be refused in the new app: it gets the plugin last, mounted.
       // A shared app is in the frame already (it carries plugins/desktop-shell): `upgrade` brings its desktop to this release instead.
       if (
-        (!existsSync(join(target, 'plugins', 'desktop')) &&
-          (await framework(['add', 'desktop'])) !== 0) ||
+        (!existsSync(join(target, 'plugins', 'desktop-shell')) &&
+          (await framework(['add', 'desktop-shell'])) !== 0) ||
         (await framework(['upgrade'])) !== 0 ||
         (lacksPluginShare(target) && (await framework(['add', 'plugin-share'])) !== 0)
       ) {

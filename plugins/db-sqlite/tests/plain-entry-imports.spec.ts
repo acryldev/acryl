@@ -26,6 +26,6 @@ it('imports nothing from Cordis in the plain entries or anything they import, at
     }
   }
   const lib = (pkg: string, file: string) => new URL(`../../${pkg}/lib/${file}`, import.meta.url)
-  for (const [pkg, file] of [['@acryldev/db-sqlite', 'open.js'], ['@acryldev/db-sqlite', 'types/open.d.ts'], ['@acryldev/db', 'index.js'], ['@acryldev/db', 'types/index.d.ts']] as const) visit(lib(pkg, file))
+  for (const [pkg, file] of [['db-sqlite', 'open.js'], ['db-sqlite', 'types/open.d.ts'], ['db', 'index.js'], ['db', 'types/index.d.ts']] as const) visit(lib(pkg, file))
   expect(seen.size).toBeGreaterThan(4)
 })

@@ -14,15 +14,15 @@ spec:
     hostname: { type: string, default: 127.0.0.1 }
   rows:
     - id: router
-      name: router
+      name: acryl-router
     - id: state
-      name: state
+      name: acryl-state
     - id: todo
       name: todo
     - id: server
-      name: node-server
+      name: acryl-node-server
       config:
         hostname: "{{parameters.hostname}}"
     # The door: an agent working in this folder looks at the page and acts on it through .acryl/bin/acryl. Development only: src/app.ts leaves it out when NODE_ENV=production.
     - id: acryl-door
-      name: door
+      name: acryl-door

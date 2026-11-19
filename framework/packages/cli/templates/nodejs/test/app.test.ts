@@ -43,7 +43,7 @@ test('GET /about renders the JSX page', () =>
     assert.match(response.headers.get('content-type') ?? '', /html/)
     assert.match(
       await response.text(),
-      /<main><h1>About<\/h1><p>Rendered on the server with the JSX runtime in plugins\/acryl-router\.<\/p><\/main>/,
+      /<main><h1>About<\/h1><p>Rendered on the server with the JSX runtime in plugins\/router\.<\/p><\/main>/,
     )
   }))
 

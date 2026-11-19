@@ -104,7 +104,7 @@ try {
 
   // The getting-started app, exactly as the docs show it.
   writeFileSync(join(app, 'index.ts'), [
-    "import { Acryl } from 'acrylblends'",
+    "import { Acryl } from '@acryldev/blends'",
     'const app = new Acryl()',
     "app.get('/', (c) => c.text('Acryl!'))",
     'export default app',
@@ -113,7 +113,7 @@ try {
 
   // Node: the same app served by the Node adapter.
   writeFileSync(join(app, 'node.ts'), [
-    "import { serve } from 'acrylblends/node-server'",
+    "import { serve } from '@acryldev/blends/node-server'",
     "import app from './index.ts'",
     'serve({ fetch: app.fetch, port: Number(process.env.PORT), hostname: \'127.0.0.1\' })',
     '',
@@ -125,25 +125,25 @@ try {
   // the default import source, acrylblends/jsx, renders it.
   symlinkSync(realpathSync(join(root, 'node_modules', 'typescript')), join(app, 'node_modules', 'typescript'), 'junction')
   writeFileSync(join(app, 'server.tsx'), [
-    "import { Acryl } from 'acrylblends'",
-    "import { serve } from 'acrylblends/node-server'",
+    "import { Acryl } from '@acryldev/blends'",
+    "import { serve } from '@acryldev/blends/node-server'",
     'const Title = ({ text }: { text: string }) => <h1>{text}</h1>',
     "const app = new Acryl().get('/', (c) => c.html(<Title text=\"Acryl!\" />))",
     "serve({ fetch: app.fetch, port: Number(process.env.PORT), hostname: '127.0.0.1' })",
     '',
   ].join('\n'))
   const tsxPort = await freePort()
-  const tsx = await serveAndFetch(process.execPath, ['--import', 'acrylblends/node-server/register', 'server.tsx'], tsxPort, { PORT: String(tsxPort) })
+  const tsx = await serveAndFetch(process.execPath, ['--import', '@acryldev/blends/node-server/register', 'server.tsx'], tsxPort, { PORT: String(tsxPort) })
   if (tsx.status !== 200 || tsx.body !== '<h1>Acryl!</h1>') throw new Error(`the .tsx app answered ${String(tsx.status)} ${JSON.stringify(tsx.body)}`)
   report('node (a .tsx app through acrylblends/node-server/register)', 'GET / -> 200 "<h1>Acryl!</h1>"')
 
   // Server-side JSX: the string renderer renders on Node, from the published build.
-  const rendered = run(process.execPath, ['--input-type=module', '-e', "import { jsx } from 'acrylblends/jsx'; process.stdout.write(String(jsx('h1', { class: 'title' }, 'Acryl!')))"], app)
+  const rendered = run(process.execPath, ['--input-type=module', '-e', "import { jsx } from '@acryldev/blends/jsx'; process.stdout.write(String(jsx('h1', { class: 'title' }, 'Acryl!')))"], app)
   if (rendered !== '<h1 class="title">Acryl!</h1>') throw new Error(`acrylblends/jsx rendered ${JSON.stringify(rendered)}`)
   report('node (server JSX from acrylblends/jsx)', 'renders <h1 class="title">Acryl!</h1>')
 
   // The plain entries load without Cordis (an optional peer dependency: not installed here).
-  for (const plain of ['acrylblends', 'acrylblends/node-server', 'acrylblends/db', 'acrylblends/db/sqlite', 'acrylblends/kv', 'acrylblends/kv/json', 'acrylblends/streaming', 'acrylblends/body-limit']) {
+  for (const plain of ['acrylblends', '@acryldev/blends/node-server', '@acryldev/blends/db', '@acryldev/blends/db/sqlite', '@acryldev/blends/kv', '@acryldev/blends/kv/json', '@acryldev/blends/streaming', '@acryldev/blends/body-limit']) {
     const loaded = run(process.execPath, ['--input-type=module', '-e', `await import('${plain}'); process.stdout.write('ok')`], app)
     if (loaded !== 'ok') throw new Error(`${plain} did not load without Cordis installed`)
   }
@@ -155,7 +155,7 @@ try {
     if (found === undefined) throw new Error(`${peer} is not installed in this workspace`)
     symlinkSync(realpathSync(found), join(app, 'node_modules', peer), 'junction')
   }
-  const once = run(process.execPath, ['--input-type=module', '-e', "import { Acryl } from 'acrylblends'; import { Acryl as served } from 'acrylblends/cordis/router'; process.stdout.write(String(Acryl === served))"], app)
+  const once = run(process.execPath, ['--input-type=module', '-e', "import { Acryl } from '@acryldev/blends'; import { Acryl as served } from '@acryldev/blends/cordis/router'; process.stdout.write(String(Acryl === served))"], app)
   if (once !== 'true') throw new Error('acrylblends and acrylblends/cordis/router export two different Acryl classes')
   report('one Acryl, and the plain entries load without Cordis', 'acrylblends and acrylblends/cordis/router export the same Acryl; 8 plain entries import with no @deepseek-ai/cordis installed')
 
@@ -165,7 +165,7 @@ try {
   writeFileSync(join(app, 'migrations', '001-notes.sql'), 'CREATE TABLE users (id INTEGER PRIMARY KEY);\nCREATE TABLE notes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL);\n')
   writeFileSync(join(app, 'migrations', '002-tags.sql'), 'ALTER TABLE notes ADD COLUMN tags TEXT NOT NULL DEFAULT \'\';\n')
   writeFileSync(join(app, 'data.mjs'), [
-    "import { openDb } from 'acrylblends/db/sqlite'",
+    "import { openDb } from '@acryldev/blends/db/sqlite'",
     "import assert from 'node:assert/strict'",
     "import { mkdirSync, writeFileSync } from 'node:fs'",
     "const path = 'data/nested/app.sqlite'",
@@ -196,10 +196,10 @@ try {
   // The kv entries, from the packed build: openKv writes one file atomically (no temporary file left), update is atomic under concurrency,
   // a reopen sees the data, kvOnDb keeps the same documents in the app's SQL database, and copyKv is the import from the file into SQL.
   writeFileSync(join(app, 'kv.mjs'), [
-    "import { copyKv } from 'acrylblends/kv'",
-    "import { openKv } from 'acrylblends/kv/json'",
-    "import { kvOnDb } from 'acrylblends/kv/db'",
-    "import { openDb } from 'acrylblends/db/sqlite'",
+    "import { copyKv } from '@acryldev/blends/kv'",
+    "import { openKv } from '@acryldev/blends/kv/json'",
+    "import { kvOnDb } from '@acryldev/blends/kv/db'",
+    "import { openDb } from '@acryldev/blends/db/sqlite'",
     "import assert from 'node:assert/strict'",
     "import { readdirSync } from 'node:fs'",
     "const file = 'data/kv/kv.json'",
@@ -230,9 +230,9 @@ try {
   // readSSE, from the packed build: a POST event stream served by streamSSE is read event by event, and the browser file clientModules serves
   // exists and imports nothing.
   writeFileSync(join(app, 'read-sse.mjs'), [
-    "import { Acryl } from 'acrylblends'",
-    "import { streamSSE } from 'acrylblends/streaming'",
-    "import { readSSE } from 'acrylblends/read-sse'",
+    "import { Acryl } from '@acryldev/blends'",
+    "import { streamSSE } from '@acryldev/blends/streaming'",
+    "import { readSSE } from '@acryldev/blends/read-sse'",
     "import assert from 'node:assert/strict'",
     "import { readFileSync } from 'node:fs'",
     "const app = new Acryl().post('/chat', (c) => streamSSE(c, async (stream) => {",
@@ -243,7 +243,7 @@ try {
     "const seen = []",
     "for await (const event of readSSE(await app.request('/chat', { method: 'POST' }))) seen.push(event.event + ':' + event.data)",
     "assert.deepEqual(seen, ['meta:{\"conversation\":1}', 'token:\"Hel\"', 'token:\"lo\\\\nthere\"', 'done:{}'])",
-    "const browser = readFileSync(new URL(import.meta.resolve('acrylblends/read-sse')).pathname.replace(/read-sse\\.js$/, 'browser/read-sse.js'), 'utf8')",
+    "const browser = readFileSync(new URL(import.meta.resolve('@acryldev/blends/read-sse')).pathname.replace(/read-sse\\.js$/, 'browser/read-sse.js'), 'utf8')",
     "assert.ok(!/^import |from ['\"]/m.test(browser), 'the browser file imports nothing')",
     "assert.ok(browser.includes('readSSE'))",
     "console.log('ok')",
@@ -259,7 +259,7 @@ try {
   mkdirSync(join(app, 'src', 'client', 'parts'), { recursive: true })
   // The routes and their type live apart from the Node entry, so the browser code imports the type without Node's types.
   writeFileSync(join(app, 'app.ts'), [
-    "import { Acryl } from 'acrylblends'",
+    "import { Acryl } from '@acryldev/blends'",
     'export const app = new Acryl()',
     "  .get('/', (c) => c.html('<!doctype html><div id=\"counter\"></div><p id=\"greeting\"></p>'",
     // Server markup for the hydrated island, and a handle on its button taken before any module runs.
@@ -271,16 +271,16 @@ try {
     '',
   ].join('\n'))
   writeFileSync(join(app, 'site.ts'), [
-    "import { Acryl } from 'acrylblends'",
-    "import { clientModules, serve } from 'acrylblends/node-server'",
+    "import { Acryl } from '@acryldev/blends'",
+    "import { clientModules, serve } from '@acryldev/blends/node-server'",
     "import { app } from './app.ts'",
     "const site = new Acryl().route('/', app).route('/client', clientModules({ root: 'src/client', compiled: 'dist/client' }))",
     "serve({ fetch: site.fetch, port: Number(process.env.PORT), hostname: '127.0.0.1' })",
     '',
   ].join('\n'))
   writeFileSync(join(app, 'src', 'client', 'counter.tsx'), [
-    "import { render, useState } from 'acrylblends/jsx/dom'",
-    "import { hc } from 'acrylblends/client'",
+    "import { render, useState } from '@acryldev/blends/jsx/dom'",
+    "import { hc } from '@acryldev/blends/client'",
     "import type { AppType } from '../../app.ts'",
     "import { label } from './parts/label.ts'",
     'const Counter = () => {',
@@ -296,8 +296,8 @@ try {
   writeFileSync(join(app, 'src', 'client', 'parts', 'label.ts'), 'export const label = (count: number): string => `Count ${count}`\n')
   // hydrateRoot over server markup, as the guide's hydrateRoot section describes it: the island works, and the server's nodes are replaced.
   writeFileSync(join(app, 'src', 'client', 'island.tsx'), [
-    "import { useState } from 'acrylblends/jsx/dom'",
-    "import { hydrateRoot } from 'acrylblends/jsx/dom/client'",
+    "import { useState } from '@acryldev/blends/jsx/dom'",
+    "import { hydrateRoot } from '@acryldev/blends/jsx/dom/client'",
     "import { label } from './parts/label.ts'",
     'const Island = () => {',
     '  const [count, setCount] = useState(0)',
@@ -337,7 +337,7 @@ try {
   }
   await browserCheck('client components, development (compiled on request)', { NODE_ENV: 'development' })
   // The documented build step, run the way an app's package.json script runs it.
-  run(process.execPath, ['--input-type=module', '-e', "import { buildClientModules } from 'acrylblends/node-server'; buildClientModules({ root: 'src/client', outDir: 'dist/client' })"], app)
+  run(process.execPath, ['--input-type=module', '-e', "import { buildClientModules } from '@acryldev/blends/node-server'; buildClientModules({ root: 'src/client', outDir: 'dist/client' })"], app)
   unlinkSync(join(app, 'node_modules', 'typescript'))
   await browserCheck('client components, production (built folder, no typescript installed)', { NODE_ENV: 'production' })
   const devPort = await freePort()
@@ -350,7 +350,7 @@ try {
   symlinkSync(realpathSync(join(root, 'node_modules', 'typescript')), join(app, 'node_modules', 'typescript'), 'junction')
   // The editor's view of the client folder: its own tsconfig.json, the DOM library and the DOM runtime, no Node types.
   writeFileSync(join(app, 'src', 'client', 'tsconfig.json'), `${JSON.stringify({
-    compilerOptions: { target: 'ES2024', lib: ['ES2024', 'DOM', 'DOM.Iterable'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, jsx: 'react-jsx', jsxImportSource: 'acrylblends/jsx/dom', types: [] },
+    compilerOptions: { target: 'ES2024', lib: ['ES2024', 'DOM', 'DOM.Iterable'], module: 'NodeNext', moduleResolution: 'NodeNext', strict: true, noEmit: true, allowImportingTsExtensions: true, jsx: 'react-jsx', jsxImportSource: '@acryldev/blends/jsx/dom', types: [] },
     include: ['**/*.ts', '**/*.tsx'],
   }, null, 2)}\n`)
   run(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', join('src', 'client', 'tsconfig.json')], app)
@@ -373,8 +373,8 @@ try {
     mkdirSync(join(app, 'static'), { recursive: true })
     writeFileSync(join(app, 'static', 'hello.txt'), 'hello from bun\n')
     writeFileSync(join(app, 'bun-server.ts'), [
-      "import { Acryl } from 'acrylblends'",
-      "import { getConnInfo, serveStatic, upgradeWebSocket, websocket } from 'acrylblends/bun'",
+      "import { Acryl } from '@acryldev/blends'",
+      "import { getConnInfo, serveStatic, upgradeWebSocket, websocket } from '@acryldev/blends/bun'",
       'const app = new Acryl()',
       "app.get('/', (c) => c.text('Acryl!'))",
       "app.use('/static/*', serveStatic({ root: './' }))",
@@ -434,14 +434,14 @@ try {
   // A server-side JSX page, the way the JSX guide writes one.
   writeFileSync(join(app, 'page.tsx'), [
     '/** @jsxImportSource acrylblends/jsx */',
-    "import { Acryl } from 'acrylblends'",
-    "import type { FC } from 'acrylblends/jsx'",
+    "import { Acryl } from '@acryldev/blends'",
+    "import type { FC } from '@acryldev/blends/jsx'",
     'const Title: FC<{ text: string }> = ({ text }) => <h1 onClick={(event) => event.preventDefault()}>{text}</h1>',
     "export const pages = new Acryl().get('/', (c) => c.html(<Title text=\"Acryl!\" />))",
     '',
   ].join('\n'))
   writeFileSync(join(app, 'types.ts'), [
-    "import type { Acryl } from 'acrylblends'",
+    "import type { Acryl } from '@acryldev/blends'",
     ...imports(subpaths),
     '',
     "declare module 'acrylblends' {",
@@ -464,7 +464,7 @@ try {
   writeFileSync(join(app, 'dom.ts'), [...imports(domSubpaths), '', `export type Entries = [${domSubpaths.map((_, at) => `typeof Entry${String(at)}`).join(', ')}]`, ''].join('\n'))
   writeFileSync(join(app, 'client.tsx'), [
     '/** @jsxImportSource acrylblends/jsx/dom */',
-    "import { render, useState } from 'acrylblends/jsx/dom'",
+    "import { render, useState } from '@acryldev/blends/jsx/dom'",
     'const Counter = () => {',
     '  const [count, setCount] = useState(0)',
     '  return <button onClick={(event: MouseEvent) => setCount(count + event.detail)}>{count}</button>',

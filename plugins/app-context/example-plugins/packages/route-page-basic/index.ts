@@ -5,7 +5,7 @@
  * or removed. The paths are the app's own (`/hello`): the frame serves the same routes under its canvas prefix, so a plugin never names that prefix.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'route-page-basic'
 export const inject = ['router']

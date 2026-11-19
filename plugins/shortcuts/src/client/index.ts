@@ -6,7 +6,7 @@ type ShortcutRegistration = Parameters<Shortcuts['register']>[0]
 import { ShortcutsSection } from './ShortcutsSection.tsx'
 import { installShortcutsStyles } from './styles.ts'
 
-export const name = '@acryldev/shortcuts-client'
+export const name = 'acryl-shortcuts-client'
 export const inject = ['shortcuts']
 
 /**

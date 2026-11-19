@@ -1,15 +1,9 @@
 {
   "name": "tasks",
   "description": "Durable task records: id, owner, input, status, result, trace; appended to a log in the app's home and readable after a restart.",
-  "requires": [
-    "instance"
-  ],
-  "inject": [
-    "appInstance"
-  ],
-  "provides": [
-    "tasks"
-  ],
+  "requires": ["instance"],
+  "inject": ["appInstance"],
+  "provides": ["tasks"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },

@@ -6,9 +6,9 @@
 To compare routers on your own workload today, register your routes on an `Acryl` app with each router and time `app.request()` for the paths you care about:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { RegExpRouter } from 'acrylblends/router/reg-exp-router'
-import { TrieRouter } from 'acrylblends/router/trie-router'
+import { Acryl } from '@acryldev/blends'
+import { RegExpRouter } from '@acryldev/blends/router/reg-exp-router'
+import { TrieRouter } from '@acryldev/blends/router/trie-router'
 
 const routes = ['/', '/users/:id', '/posts/:id/comments']
 

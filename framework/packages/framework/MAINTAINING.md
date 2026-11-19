@@ -16,7 +16,7 @@ export default app
 Node is the runtime the framework targets; serve the app with the adapter:
 
 ```ts
-import { serve } from 'acrylblends/node-server'
+import { serve } from '@acryldev/blends/node-server'
 import app from './index.ts'
 
 serve({ fetch: app.fetch, port: 3000 })

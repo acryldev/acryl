@@ -10,9 +10,9 @@ The middleware will check for an `Authorization` header if the `cookie` option i
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { jwt } from 'acrylblends/jwt'
-import type { JwtVariables } from 'acrylblends/jwt'
+import { Acryl } from '@acryldev/blends'
+import { jwt } from '@acryldev/blends/jwt'
+import type { JwtVariables } from '@acryldev/blends/jwt'
 ```
 
 ## Usage

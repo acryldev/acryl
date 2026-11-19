@@ -2,7 +2,7 @@
  * `acrylblends update`: bring the newer release of the Blend an app was made from (`blend.yaml` metadata id and version) into the app, keeping the
  * person's own changes. `upgrade` is a different thing: it brings the library plugins and the frame up to this CLI's version.
  *
- * The app is a git repository whose first commit is the Blend as it was made (create-acrylblends). The newer release is made the same way, with the same
+ * The app is a git repository whose first commit is the Blend as it was made (@acryldev/create-blends). The newer release is made the same way, with the same
  * name, in a scratch folder; its files become a commit on top of the commit the app was made from, and that commit is merged into the app. A file only
  * the Blend changed takes the Blend's change, a file only the person changed keeps theirs, and both changes in different places of one file are both kept.
  * When both changed the same lines nothing is changed: the merge is undone and the files are named. Uncommitted work is committed first, so nothing is lost.
@@ -18,7 +18,7 @@ import { UsageError } from './init'
 import type { Io } from './io'
 import { packageManagerInvocation } from './spawn'
 
-/** The public registry's index, as its site serves it (create-acrylblends reads the same one). */
+/** The public registry's index, as its site serves it (@acryldev/create-blends reads the same one). */
 export const REGISTRY_INDEX = 'https://acrylblends.github.io/registry/index.json'
 /** The commit of the Blend's release the app last took: the base the next update merges from. */
 export const BLEND_REF = 'refs/acrylblends/blend'
@@ -83,7 +83,7 @@ export function registryWorld(io: Io): UpdateWorld {
         const { file, args } = packageManagerInvocation('npm', [
           'exec',
           '--yes',
-          'create-acrylblends@latest',
+          '@acryldev/create-blends@latest',
           '--',
           name,
           '--from',
@@ -165,7 +165,7 @@ export async function update(
 
   const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-'))
   try {
-    say(`Getting ${blend.id} ${latest} (create-acrylblends@latest, as the app was made)...`)
+    say(`Getting ${blend.id} ${latest} (@acryldev/create-blends@latest, as the app was made)...`)
     const name = basename(app)
     if ((await world.make(blend.id, name, scratch)) !== 0)
       throw new Error(`${blend.id} ${latest} could not be made; the app is unchanged`)

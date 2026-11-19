@@ -7,7 +7,7 @@ It's like an onion structure.
 For example, we can write the middleware to add the "X-Response-Time" header as follows.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.use(async (c, next) => {

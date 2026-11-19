@@ -77,9 +77,9 @@ describe('templates', () => {
       for (const name of readTemplatePlugins(join(templatesRoot(), template)))
         expect(library.has(name)).toBe(true)
       // The Cordis templates made for the web also depend on the framework package, for its command (check-deps, build-client) and its browser files.
-      const web = ['nodejs', 'notes', 'chat'].includes(template)
+      const web = ['nodejs', 'notes', 'chat', 'agent'].includes(template)
       expect(manifest(join(templatesRoot(), template)).dependencies).toEqual({
-        ...(web ? { acrylblends: '__ACRYLBLENDS_RANGE__' } : {}),
+        ...(web ? { '@acryldev/blends': '__ACRYLBLENDS_RANGE__' } : {}),
         typescript: '6.0.3',
       })
     },
@@ -501,7 +501,7 @@ describe('the desktop shell in a plain Acryl app', () => {
       JSON.stringify({
         name: 'plain-acryl',
         scripts: { dev: 'x' },
-        dependencies: { acrylblends: '^0.6.0' },
+        dependencies: { '@acryldev/blends': '^0.6.0' },
       }),
     )
     writeFileSync(join(dir, 'src/app.ts'), 'export default {}\n')
@@ -658,7 +658,7 @@ describe('add agent-panel and driver-pty', () => {
     expect(await runCli(['add', 'agent-panel', '--dir', dir], refused.io)).toBe(1)
     // A blank app has the extensions row (its own plugins start by their rows next to it); the agent row is the agent template's.
     expect(refused.err()).toContain('needs the `agent` row in blend.yaml')
-    expect(refused.err()).toContain('npm create acrylblends@latest my-app agent')
+    expect(refused.err()).toContain('npm create @acryldev/blends@latest my-app agent')
     expect(refused.err()).toContain('Nothing was changed')
     expect(existsSync(join(dir, 'plugins/agent-panel'))).toBe(false)
     const pty = fakeIo()

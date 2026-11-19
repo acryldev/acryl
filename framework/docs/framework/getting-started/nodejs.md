@@ -15,7 +15,7 @@ Select `nodejs` template for this example.
 **npm**
 
 ```sh
-npm create acrylblends@latest my-app
+npm create @acryldev/blends@latest my-app
 ```
 
 **yarn**
@@ -27,7 +27,7 @@ yarn create acrylblends my-app
 **pnpm**
 
 ```sh
-pnpm create acrylblends my-app
+pnpm create @acryldev/blends my-app
 ```
 
 **bun**
@@ -71,8 +71,8 @@ bun i
 Edit `src/index.ts`:
 
 ```ts
-import { serve } from 'acrylblends/node-server'
-import { Acryl } from 'acrylblends'
+import { serve } from '@acryldev/blends/node-server'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 app.get('/', (c) => c.text('Hello Node.js!'))
@@ -159,8 +159,8 @@ serve({
 WebSocket support is built into `acrylblends/node-server`. Install `ws` and, if you use TypeScript, `@types/ws`. Then create a `WebSocketServer` with `{ noServer: true }` and pass it to `serve()` with the `websocket` option.
 
 ```ts
-import { serve, upgradeWebSocket } from 'acrylblends/node-server'
-import { Acryl } from 'acrylblends'
+import { serve, upgradeWebSocket } from '@acryldev/blends/node-server'
+import { Acryl } from '@acryldev/blends'
 import { WebSocketServer } from 'ws'
 
 const app = new Acryl()
@@ -187,8 +187,8 @@ serve({
 You can access the Node.js APIs from `c.env.incoming` and `c.env.outgoing`.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { serve, type HttpBindings } from 'acrylblends/node-server'
+import { Acryl } from '@acryldev/blends'
+import { serve, type HttpBindings } from '@acryldev/blends/node-server'
 // or `Http2Bindings` if you use HTTP2
 
 type Bindings = HttpBindings & {
@@ -222,7 +222,7 @@ You can use `serveStatic` to serve static files from the local file system. For 
 If a request to the path `/static/*` comes in and you want to return a file under `./static`, you can write the following:
 
 ```ts
-import { serveStatic } from 'acrylblends/node-server'
+import { serveStatic } from '@acryldev/blends/node-server'
 
 app.use('/static/*', serveStatic({ root: './' }))
 ```
@@ -235,7 +235,7 @@ For reliable path resolution that always points to the same directory as your so
 
 ```ts
 import { fileURLToPath } from 'node:url'
-import { serveStatic } from 'acrylblends/node-server'
+import { serveStatic } from '@acryldev/blends/node-server'
 
 app.use(
   '/static/*',

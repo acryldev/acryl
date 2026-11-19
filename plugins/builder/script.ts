@@ -18,7 +18,7 @@ const PATH = /^\/[a-z0-9/-]*$/
 
 export function routeSource(name: string, path: string, text: string): string {
   return `import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 /** Written by the builder: answers GET ${path}, and checks that it does before the install counts. */
 export const name = '${name}'

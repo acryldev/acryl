@@ -37,8 +37,8 @@ type Env = {
  * @returns Connection information including remote address
  * @example
  * ```ts
- * import { Acryl } from 'acrylblends'
- * import { handle, getConnInfo } from 'acrylblends/netlify'
+ * import { Acryl } from '@acryldev/blends'
+ * import { handle, getConnInfo } from '@acryldev/blends/netlify'
  *
  * const app = new Acryl()
  *

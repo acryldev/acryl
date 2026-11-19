@@ -45,8 +45,8 @@ const defaultGetOptions = (c: Context): unknown[] => {
  * @example
  * ```ts
  * import { Router as IttyRouter } from 'itty-router'
- * import { Acryl } from 'acrylblends'
- * import { mount } from 'acrylblends/mount'
+ * import { Acryl } from '@acryldev/blends'
+ * import { mount } from '@acryldev/blends/mount'
  * // Create itty-router application
  * const ittyRouter = IttyRouter()
  * // GET /itty-router/hello

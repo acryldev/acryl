@@ -1,6 +1,6 @@
 /** A route app called as the Host's Web adapter calls it: the page's own request by default, with the socket's peer and local port. */
 
-import type { Acryl } from 'acrylblends'
+import type { Acryl } from '@acryldev/blends'
 
 export const PORT = 43120
 export const ORIGIN = `http://127.0.0.1:${String(PORT)}`

@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "acrylblends": {
-    "root": "workspace"
-  },
   "imports": {
     "#acryl-jsx/jsx-runtime": "./plugins/router/src/core/jsx/jsx-runtime.ts",
     "#acryl-jsx/jsx-dev-runtime": "./plugins/router/src/core/jsx/jsx-dev-runtime.ts"
@@ -53,7 +50,7 @@
     "@acryldev/app-persistence": "0.1.2",
     "@acryldev/blends-core": "0.5.0",
     "@acryldev/plugin-hub-core": "0.2.2",
-    "acrylblends": "^1.5.19",
+    "@acryldev/blends": "^1.5.19",
     "js-yaml": "^4.2.0",
     "skill-mcp-manager": "^1.3.1",
     "typescript": "6.0.3",
@@ -70,5 +67,8 @@
     "@deepseek-ai/libreoffice-kit-wasm": "npm:@acryldev/absent@1.0.0",
     "@deepseek-ai/libreoffice-kit-win32-arm64": "npm:@acryldev/absent@1.0.0",
     "@deepseek-ai/libreoffice-kit-win32-x64": "npm:@acryldev/absent@1.0.0"
+  },
+  "acrylblends": {
+    "root": "workspace"
   }
 }

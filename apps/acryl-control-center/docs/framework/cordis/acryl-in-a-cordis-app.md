@@ -19,7 +19,7 @@ Cordis fiber is active.
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'todo'           // equals the package name and the Loader row id
 export const inject = ['router']     // PENDING until a router exists
@@ -56,7 +56,7 @@ one of these, in this order of preference:
   route keeps one canonical path. Other methods are not redirected: `POST /todo/api/` stays a 404.
 
   ```ts
-  import { trimTrailingSlash } from 'acrylblends/trailing-slash'
+  import { trimTrailingSlash } from '@acryldev/blends/trailing-slash'
 
   const app = new Acryl()
     .use(trimTrailingSlash())
@@ -126,7 +126,7 @@ smallest one to copy is `examples/framework-starter`.
 
 ```ts
 import { Context } from '@deepseek-ai/cordis'
-import * as router from 'acrylblends/cordis/router'
+import * as router from '@acryldev/blends/cordis/router'
 import * as todo from '../src/index.ts'
 
 const ctx = new Context()

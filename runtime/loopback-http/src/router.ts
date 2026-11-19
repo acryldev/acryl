@@ -4,10 +4,10 @@
  * 405 with its `Allow`, and a JSON body is small. The workspace, Agent Control and Desktop compose their routes with these.
  */
 
-import { Acryl, type Context, type MiddlewareHandler } from 'acrylblends'
-import { bodyLimit } from 'acrylblends/body-limit'
-import { loopbackAuthority, loopbackOnly } from 'acrylblends/loopback-only'
-import { methodNotAllowed } from 'acrylblends/method-not-allowed'
+import { Acryl, type Context, type MiddlewareHandler } from '@acryldev/blends'
+import { bodyLimit } from '@acryldev/blends/body-limit'
+import { loopbackAuthority, loopbackOnly } from '@acryldev/blends/loopback-only'
+import { methodNotAllowed } from '@acryldev/blends/method-not-allowed'
 import { DEFAULT_MAX_BODY_BYTES, error } from './index.ts'
 
 export type ReportError = (operation: string, cause: unknown) => void

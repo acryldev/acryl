@@ -283,7 +283,7 @@ export function readManifest(dir: string): Manifest {
   const file = join(dir, TEMPLATE_MANIFEST)
   if (!existsSync(file))
     throw new SourceError(
-      `this source has no ${TEMPLATE_MANIFEST}, so it is not a template: add one with a name and a description (see the create-acrylblends guide)`,
+      `this source has no ${TEMPLATE_MANIFEST}, so it is not a template: add one with a name and a description (see the @acryldev/create-blends guide)`,
     )
   let data: unknown
   try {

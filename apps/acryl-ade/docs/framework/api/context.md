@@ -7,7 +7,7 @@ The `Context` object is instantiated for each request and kept until the respons
 `req` is an instance of AcrylRequest. For more details, see [AcrylRequest](request.md).
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/hello', (c) => {
@@ -24,7 +24,7 @@ app.get('/hello', (c) => {
 You can set an HTTP status code with `c.status()`. The default is `200`. You don't have to use `c.status()` if the code is `200`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.post('/posts', (c) => {
@@ -39,7 +39,7 @@ app.post('/posts', (c) => {
 You can set HTTP Headers for the response.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/', (c) => {
@@ -56,7 +56,7 @@ Return an HTTP response.
 > **Note.** When returning text or HTML, it is recommended to use `c.text()` or `c.html()`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/welcome', (c) => {
@@ -69,7 +69,7 @@ app.get('/welcome', (c) => {
 You can also write the following.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/welcome', (c) => {
@@ -97,7 +97,7 @@ new Response('Thank you for coming', {
 Render text as `Content-Type: text/plain`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/say', (c) => {
@@ -110,7 +110,7 @@ app.get('/say', (c) => {
 Render JSON as `Content-Type: application/json`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/api', (c) => {
@@ -123,7 +123,7 @@ app.get('/api', (c) => {
 Render HTML as `Content-Type: text/html`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/', (c) => {
@@ -136,7 +136,7 @@ app.get('/', (c) => {
 Return a `Not Found` Response. You can customize it with [`app.notFound()`](acryl.md#not-found).
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/notfound', (c) => {
@@ -149,7 +149,7 @@ app.get('/notfound', (c) => {
 Redirect, default status code is `302`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/redirect', (c) => {
@@ -165,7 +165,7 @@ app.get('/redirect-permanently', (c) => {
 You can access the [Response] object that will be returned.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 // Response object
@@ -182,7 +182,7 @@ app.use('/', async (c, next) => {
 Get and set arbitrary key-value pairs, with a lifetime of the current request. This allows passing specific values between middleware or from middleware to route handlers.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl<{ Variables: { message: string } }>()
 // ---cut---
 app.use(async (c, next) => {
@@ -199,7 +199,7 @@ app.get('/', (c) => {
 Pass the `Variables` as Generics to the constructor of `Acryl` to make it type-safe.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 type Variables = {
   message: string
@@ -215,7 +215,7 @@ The value of `c.set` / `c.get` are retained only within the same request. They c
 You can also access the value of a variable with `c.var`.
 
 ```ts twoslash
-import type { Context } from 'acrylblends'
+import type { Context } from '@acryldev/blends'
 declare const c: Context
 // ---cut---
 const result = c.var.client.oneMethod()
@@ -225,8 +225,8 @@ If you want to create the middleware which provides a custom method,
 write like the following:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { createMiddleware } from 'acrylblends/factory'
+import { Acryl } from '@acryldev/blends'
+import { createMiddleware } from '@acryldev/blends/factory'
 // ---cut---
 type Env = {
   Variables: {
@@ -250,8 +250,8 @@ If you want to use the middleware in multiple handlers, you can use `app.use()`.
 Then, you have to pass the `Env` as Generics to the constructor of `Acryl` to make it type-safe.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import type { MiddlewareHandler } from 'acrylblends/types'
+import { Acryl } from '@acryldev/blends'
+import type { MiddlewareHandler } from '@acryldev/blends/types'
 declare const echoMiddleware: MiddlewareHandler
 type Env = {
   Variables: {
@@ -275,7 +275,7 @@ You can set a layout using `c.setRenderer()` within a custom middleware.
 ```tsx
 /** @jsx jsx */
 /** @jsxImportSource acrylblends/jsx */
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.use(async (c, next) => {
@@ -295,7 +295,7 @@ app.use(async (c, next) => {
 Then, you can utilize `c.render()` to create responses within this layout.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.get('/', (c) => {
@@ -317,7 +317,7 @@ Additionally, this feature offers the flexibility to customize arguments.
 To ensure type safety, types can be defined as:
 
 ```ts
-declare module 'acrylblends' {
+declare module '@acryldev/blends' {
   interface ContextRenderer {
     (
       content: string | Promise<string>,
@@ -365,7 +365,7 @@ app.get('/pages/my-hobbies', (c) => {
 A host that embeds the app can pass an execution context: `waitUntil(promise)` keeps work alive after the response has been sent, and `passThroughOnException()` lets the host take over when the handler throws. The Node server passes none, so read it only in an app whose host provides one.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 declare const sendReceipt: Promise<void>
 // ---cut---
@@ -381,7 +381,7 @@ app.get('/orders/:id', async (c) => {
 `c.env` is the environment the host hands the app. The Node server passes `process.env`, so `c.env.MY_KEY` is the variable `MY_KEY`. A host that passes something else gives the app a type parameter, and then `c.env` is that shape.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 // ---cut---
 const app = new Acryl<{ Bindings: { REGION: string } }>()
 
@@ -397,7 +397,7 @@ If the Handler throws an error, the error object is placed in `c.error`.
 You can access it in your middleware.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl()
 // ---cut---
 app.use(async (c, next) => {
@@ -417,7 +417,7 @@ app.use(async (c, next) => {
 Take a look at the following example:
 
 ```ts
-declare module 'acrylblends' {
+declare module '@acryldev/blends' {
   interface ContextVariableMap {
     result: string
   }
@@ -446,7 +446,7 @@ You can augment the `ContextVariableMap` interface to define types for context v
 For example:
 
 ```ts
-declare module 'acrylblends' {
+declare module '@acryldev/blends' {
   interface ContextVariableMap {
     result: string
   }
@@ -456,7 +456,7 @@ declare module 'acrylblends' {
 You can then utilize this in your middleware:
 
 ```ts twoslash
-import { createMiddleware } from 'acrylblends/factory'
+import { createMiddleware } from '@acryldev/blends/factory'
 // ---cut---
 const mw = createMiddleware(async (c, next) => {
   c.set('result', 'some values') // result is a string
@@ -467,7 +467,7 @@ const mw = createMiddleware(async (c, next) => {
 In a handler, the variable is inferred as the proper type:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 const app = new Acryl<{ Variables: { result: string } }>()
 // ---cut---
 app.get('/', (c) => {

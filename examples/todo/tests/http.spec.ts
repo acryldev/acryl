@@ -5,9 +5,9 @@ import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acrylblends/cordis/router'
-import { serve } from 'acrylblends/cordis/router-http'
-import { apply as stateApply, name as stateName } from 'acrylblends/cordis/state'
+import { apply as routerApply, name as routerName } from '@acryldev/blends/cordis/router'
+import { serve } from '@acryldev/blends/cordis/router-http'
+import { apply as stateApply, name as stateName } from '@acryldev/blends/cordis/state'
 import { describe, expect, it } from 'vitest'
 import * as todo from '../src/index.ts'
 
@@ -25,7 +25,7 @@ async function start(file: string): Promise<{ origin: string, stop: () => Promis
 
 describe('@acryldev/todo over HTTP', () => {
   it('serves CRUD to a loopback client and keeps the list across a server restart', async () => {
-    const folder = mkdtempSync(join(tmpdir(), '@acryldev/todo-http-'))
+    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-http-'))
     try {
       const file = join(folder, 'todos.json')
       const first = await start(file)

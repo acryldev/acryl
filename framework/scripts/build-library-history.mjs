@@ -25,7 +25,7 @@ import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { copyPlugin, readLibrary } from 'acrylblends/cli'
+import { copyPlugin, readLibrary } from '@acryldev/blends/cli'
 const digest = (b) => createHash('sha256').update(b.toString('utf8').replace(/\\r\\n/g, '\\n')).digest('hex').slice(0, 20)
 const walk = (dir, inside, out) => { for (const e of readdirSync(dir).sort()) { const p = join(dir, e); const n = inside ? inside + '/' + e : e; if (statSync(p).isDirectory()) walk(p, n, out); else out[n] = digest(readFileSync(p)) } return out }
 const app = mkdtempSync(join(tmpdir(), 'history-app-'))

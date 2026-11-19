@@ -17,7 +17,7 @@ export function apply(ctx) {
 - No `ctx.effect` and no disposer: the routes and the mount belong to the plugin and leave when it unloads (a request still running is
   ended within a short grace).
 - `package.json`: `acrylblends` under `peerDependencies` (the app provides it; under `dependencies` the install is refused), and
-  `"dsh": { "requiresAcrylPackages": ["acrylblends/cordis/router", "acrylblends/cordis/router-http"] }` so an installed plugin resolves the
+  `"dsh": { "requiresAcrylPackages": ["@acryldev/blends/cordis/router", "@acryldev/blends/cordis/router-http"] }` so an installed plugin resolves the
   app's own copy.
 - The router comes from the app's `framework-kit` row (every built-in Blueprint has it). In an app without it, the install mounts each module
   `requiresAcrylPackages` names while the app runs, shares it with any other plugin that names it, and removes it with the last of them;

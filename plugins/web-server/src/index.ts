@@ -14,7 +14,7 @@ import { Context, Service } from '@deepseek-ai/cordis'
 import type { NodeServer, RawRoute, RawUpgradeRoute } from '@acryldev/node-server'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/web-server'
+export const name = 'acryl-web-server'
 
 /** Hard requirement: the node server whose raw routes carry these handlers. */
 export const inject = ['nodeServer']

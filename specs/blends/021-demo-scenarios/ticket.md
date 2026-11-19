@@ -16,7 +16,7 @@ timeout, `layout` service never provided).
    - Ask the agent for a feature in the chat, see it appear live in the canvas without a restart.
    - Pull a blueprint from the registry (Small CRM) and change it by asking.
 2. Music as an ACRYL Blends blueprint (`acrylblends.music`), from the MIT `acryl-music` plugin (about 600 lines: tools, a WebAudio
-   sequencer page, a JSON store), so it runs like the CRM: `npm create acrylblends@latest my-beats -- --from acrylblends.music`.
+   sequencer page, a JSON store), so it runs like the CRM: `npm create @acryldev/blends@latest my-beats -- --from acrylblends.music`.
 3. A demo checklist in the docs: which apps to start before the talk, how to keep their windows open, how to restart one.
 
 ## Done when

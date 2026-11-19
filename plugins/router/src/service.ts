@@ -87,7 +87,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/router'
+export const name = 'acryl-router'
 
 /**
  * What {@link Router.route} takes: any app with routes, read structurally. An `Acryl` from this package qualifies, and so does one built from

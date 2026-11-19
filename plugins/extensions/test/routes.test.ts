@@ -4,10 +4,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
 import * as homePage from '@acryldev/home'
 import { instance, pinnedInstance } from '@acryldev/instance'
 import * as router from '@acryldev/router'
+import { Context } from '@deepseek-ai/cordis'
 import { extensions } from '../index.ts'
 import { addedRoutes, pathsOverlap, routeClash, type ServedRoute } from '../routes.ts'
 
@@ -67,7 +67,7 @@ async function app() {
     mkdirSync(dir, { recursive: true })
     writeFileSync(
       join(dir, 'index.ts'),
-      `import { Acryl } from 'acrylblends'
+      `import { Acryl } from '@acryldev/blends'
 export const name = '${name}'
 export const inject = ['router']
 export function apply(ctx) { ctx.router.route('/', new Acryl().get('${path}', (c) => c.json({ from: '${name}' }))) }

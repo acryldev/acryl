@@ -5,8 +5,8 @@ Using this middleware, you can add ETag headers easily.
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { etag } from 'acrylblends/etag'
+import { Acryl } from '@acryldev/blends'
+import { etag } from '@acryldev/blends/etag'
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ The 304 Response must include the headers that would have been sent in an equiva
 If you want to add the header that is sent, you can use `retainedHeaders` option and `RETAINED_304_HEADERS` strings array variable that includes the default headers:
 
 ```ts
-import { etag, RETAINED_304_HEADERS } from 'acrylblends/etag'
+import { etag, RETAINED_304_HEADERS } from '@acryldev/blends/etag'
 
 // ...
 

@@ -9,7 +9,7 @@ Start at `docs/framework/README.md`; `api/summary.md` is the one-page summary. R
 `api/context.md` (`c`), `cordis/validation.md` and `guides/validation.md`, `guides/helpers.md` (`streamSSE`), `concepts/middleware.md`, `cordis/plugin-lifecycle.md` (what a plugin
 owns and when it is unloaded), `cordis/mounting.md` and `cordis/node-server.md`. Pages marked "not yet available" describe parts that are not in this app.
 
-The docs write `import { Acryl } from 'acrylblends'` and `from 'acrylblends/<subpath>'`. In this app the framework is the vendored plugin source in `plugins/router/src`
+The docs write `import { Acryl } from 'acrylblends'` and `from '@acryldev/blends/<subpath>'`. In this app the framework is the vendored plugin source in `plugins/router/src`
 (read it, do not edit it: a change belongs in ACRYL, upstream), so from a file in `src/` import:
 
 - `../plugins/router/src/index.ts` for `Acryl`, `Context`, `HTTPException`, `connectionOf`, `getConnInfo` and the types;

@@ -12,8 +12,8 @@ Old browsers that do not send `Origin` headers, or environments that use reverse
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { csrf } from 'acrylblends/csrf'
+import { Acryl } from '@acryldev/blends'
+import { csrf } from '@acryldev/blends/csrf'
 ```
 
 ## Usage

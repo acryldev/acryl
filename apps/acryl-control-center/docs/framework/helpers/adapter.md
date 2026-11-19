@@ -5,8 +5,8 @@ The Adapter Helper reads an app's environment the same way on every runtime it r
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { env, getRuntimeKey } from 'acrylblends/adapter'
+import { Acryl } from '@acryldev/blends'
+import { env, getRuntimeKey } from '@acryldev/blends/adapter'
 ```
 
 ## `env()`
@@ -14,7 +14,7 @@ import { env, getRuntimeKey } from 'acrylblends/adapter'
 The `env()` function returns the environment the host gives the app. On Node.js, the verified runtime, that is `process.env`; on Bun it is `Bun.env` (and `process.env`), and the two entries a `.env` file adds are there as well. A host that passes its own environment to `app.fetch(request, env)` gets that instead.
 
 ```ts
-import { env } from 'acrylblends/adapter'
+import { env } from '@acryldev/blends/adapter'
 
 app.get('/env', (c) => {
   // NAME is process.env.NAME on Node.js and Bun

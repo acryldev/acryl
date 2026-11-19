@@ -5,9 +5,9 @@
  * only, with a constant-time `Bearer` check (`operatorOnly`, `./http.ts`).
  */
 
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
-import { UiControlError, parseUiRequest, type UiResult } from 'acrylblends/door/protocol'
+import { UiControlError, parseUiRequest, type UiResult } from '@acryldev/blends/door/protocol'
 import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from './http.ts'
 import { MODEL_OPS } from './tools.ts'
 

@@ -1,6 +1,6 @@
 /** Strict loopback route for ACRYL's Desktop preferences (shell mode, notifications), stored by `@acryldev/settings`, on the router. */
 
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from '@acryldev/loopback-http/router'
 

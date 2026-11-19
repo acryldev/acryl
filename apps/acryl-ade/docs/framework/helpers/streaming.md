@@ -5,8 +5,8 @@ The Streaming Helper provides methods for streaming responses.
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { stream, streamText, streamSSE } from 'acrylblends/streaming'
+import { Acryl } from '@acryldev/blends'
+import { stream, streamText, streamSSE } from '@acryldev/blends/streaming'
 ```
 
 ## `stream()`
@@ -104,8 +104,8 @@ Keep what you have when the client leaves by saving it in a `finally` block: the
 A chat answer that arrives token by token is a `streamSSE` response that reads a streaming upstream. This server route calls an OpenAI-compatible chat completions API (`stream: true`), forwards each piece as an event, and cancels the upstream request when the client leaves. The key comes from the environment and is never written anywhere.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { streamSSE } from 'acrylblends/streaming'
+import { Acryl } from '@acryldev/blends'
+import { streamSSE } from '@acryldev/blends/streaming'
 
 /** The pieces of an OpenAI-compatible streaming answer: each `data:` line holds a JSON chunk, and `[DONE]` ends it. */
 async function* modelPieces(messages: { role: string; content: string }[], signal: AbortSignal): AsyncGenerator<string> {
@@ -163,7 +163,7 @@ app.post('/api/chat', async (c) => {
 `EventSource` can only send a GET request. For a POST (a chat message), call `fetch` and read the events with `readSSE` from `acrylblends/read-sse`. It is an async iterator over the events of a `text/event-stream` response, parsed by the rules of the SSE standard (LF, CRLF and CR line ends, several `data` lines joined with a line feed, comments, UTF-8 split across chunks):
 
 ```ts
-import { readSSE } from 'acrylblends/read-sse'
+import { readSSE } from '@acryldev/blends/read-sse'
 
 const controller = new AbortController() // controller.abort() is the Stop button
 const response = await fetch('/api/chat', {
@@ -182,9 +182,9 @@ for await (const { event, data } of readSSE(response)) {
 - Each event is `{ event, data, id?, retry? }`; `event` is `message` when the server named none, and `data` is a string (parse it yourself when the server sends JSON).
 - Leaving the loop early (a `break`, a thrown error) cancels the response body, so the request to the server ends. Abort the `fetch` with its own `signal` for a Stop button; `readSSE(response, { signal })` also stops reading when a signal aborts.
 - A response that is not `ok` throws with its status (the body is not parsed as events), and a response without a body throws.
-- A client module served by `clientModules` can import it as it is (`import { readSSE } from 'acrylblends/read-sse'`): the import is pointed at a browser file the same app serves, like `acrylblends/client`. With a bundler it is an ordinary import.
+- A client module served by `clientModules` can import it as it is (`import { readSSE } from '@acryldev/blends/read-sse'`): the import is pointed at a browser file the same app serves, like `acrylblends/client`. With a bundler it is an ordinary import.
 
-A complete chat component is in the `chat` template of `create-acrylblends` (`npm create acrylblends@latest my-chat -- --template chat`).
+A complete chat component is in the `chat` template of `create-acrylblends` (`npm create @acryldev/blends@latest my-chat -- --template chat`).
 
 ## Error Handling
 

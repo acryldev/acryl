@@ -14,7 +14,7 @@ import { kvOnDb } from './open.ts'
 export { kvOnDb, type KvOnDbOptions } from './open.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/kv-db'
+export const name = 'acryl-kv-db'
 
 /** The service this plugin needs: Cordis starts it only while a `db` provider is active. */
 export const inject = ['db']

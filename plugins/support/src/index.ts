@@ -11,13 +11,13 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/control'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import { buildDiagnosticsArchive, FileExporter, LogFileSink } from '@acryldev/diagnostics'
 import { SUPPORT_API_PREFIX } from './contract.ts'
 import { supportRoutes } from './route.ts'
 
-export const name = '@acryldev/support'
+export const name = 'acryl-support'
 /**
  * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
  * exactly this shape, so the Context augmentations agree in any program that loads several of them.

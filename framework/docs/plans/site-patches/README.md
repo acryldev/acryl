@@ -39,7 +39,7 @@ What the patch does:
 
 Nine primitives, none checkable - "Checkpoint & rollback" (a differentiation engine that does not exist), "Harness compatible", "Private registries", "Category registry" - and two invented code samples: a plugin importing `cordis` (the package is `@deepseek-ai/cordis`) with `ctx.logger`, and a "blend.yml" naming `agent-runtime`, `tool-router`, `checkpoint-store` and `web-surface`.
 
-- Eight cards, each with its proof: a command (`npm create acrylblends@latest my-app notes`, `npx acrylblends upgrade --dry-run`, `npx acrylblends init my-app --desktop`) or a docs page (Add a plugin, The app manifest, Data and migrations, Acryl in a Cordis app, What runs in production). The claims without one are gone.
+- Eight cards, each with its proof: a command (`npm create @acryldev/blends@latest my-app notes`, `npx acrylblends upgrade --dry-run`, `npx acrylblends init my-app --desktop`) or a docs page (Add a plugin, The app manifest, Data and migrations, Acryl in a Cordis app, What runs in production). The claims without one are gone.
 - The samples are real: a plugin the docs verify, and the blank template's own `blend.yaml`.
 - "Plugins like the one above are published on cordisplugins.github.io, the sibling registry this site's own Blends pull from" is replaced by a link to the plugin-lifecycle page: no Blend in the registry composes that plugin, so the claim could not be shown.
 - The oldest release-notes page (0.3.0) now points at the GitHub releases list for the releases without a page (0.5.1, 0.6.0, 0.6.2, 0.6.3, 0.6.4) instead of leaving the gap silent; no pages are added for them.

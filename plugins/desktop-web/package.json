@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@acryldev/instance": "workspace:*",
-    "acrylblends": "workspace:*"
+    "@acryldev/blends": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

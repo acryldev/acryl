@@ -2,9 +2,9 @@
 import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
 import type { ChatDriver, ChatEvent } from '@acryldev/drivers'
 import { personHome } from '@acryldev/instance/storage'
+import type { Context } from '@deepseek-ai/cordis'
 import { resolveLaunch } from './launch.ts'
 
 export type HeadlessName = 'claude' | 'codex' | 'pi'

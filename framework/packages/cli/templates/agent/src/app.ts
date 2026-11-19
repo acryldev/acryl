@@ -34,18 +34,18 @@ export const registry = {
   tools,
   memory,
   agent,
-  '@acryldev/router': router,
+  'acryl-router': router,
   home,
-  '@acryldev/state': state,
+  'acryl-state': state,
   extensions,
   builder,
   'plugin-share': pluginShare,
   save,
   sandbox: sandboxPlugin,
   routes,
-  '@acryldev/node-server': nodeServer,
+  'acryl-node-server': nodeServer,
   'agent-panel': panel,
-  '@acryldev/door': door,
+  'acryl-door': door,
 }
 
 /** The manifest next to this app's source. */
@@ -122,13 +122,13 @@ export async function composeInto(
   let extensionsReadOnly = false
   // In the frame host the infrastructure rows are the host's own (its server, its web-server port, its router, the app instance, the door): the app
   // contributes only the plugins that are its own.
-  if (!listen || options.host === true) leaveOut.add('@acryldev/node-server').add('@acryldev/door')
+  if (!listen || options.host === true) leaveOut.add('acryl-node-server').add('acryl-door')
   if (options.host === true)
     for (const row of [
       'instance',
-      '@acryldev/router',
-      '@acryldev/web-server',
-      '@acryldev/page',
+      'acryl-router',
+      'acryl-web-server',
+      'acryl-page',
       'manifest',
       'save',
     ])
@@ -141,7 +141,7 @@ export async function composeInto(
     process.env.ACRYL_DOOR !== 'off' &&
     listen
   if (!assistant && (process.env.NODE_ENV === 'production' || process.env.ACRYL_DOOR === 'off'))
-    leaveOut.add('@acryldev/door')
+    leaveOut.add('acryl-door')
   // Production: the rows that give a visitor power over the running app or the owner's model key are left out too. The agent (`POST /ask` spends the model key and runs tools),
   // the builder and the extensions (live plugin install runs code in this process, and `POST /extensions/approve` decides it) are development tools. `ACRYL_PRODUCTION_KEEP`
   // names the ones to keep (`agent,builder,extensions`); each one kept is announced at start, because none of them is behind a login.
@@ -227,7 +227,7 @@ export async function composeInto(
           ? {
               // Every answer comes right after a look, so it says what the visitor's page shows now.
               agent: { tools: ASSISTANT_TOOLS, steps: ASSISTANT_STEPS, answerAfter: 'door_look' },
-              '@acryldev/door': { pageOnly: true },
+              'acryl-door': { pageOnly: true },
               'agent-panel': { assistant: true },
               // The visitor reaches the agent through the panel only: no /ask, /tasks or /extensions routes.
               routes: { agentRoutes: false },

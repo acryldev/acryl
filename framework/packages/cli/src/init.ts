@@ -64,7 +64,7 @@ export interface InitOptions {
   install: boolean | undefined
   /** In the ACRYL frame with the desktop shell (`add desktop`): the default; `--bare` makes a plain app. */
   desktop: boolean
-  /** Print no "Next:" block: `create-acrylblends` runs `init` and prints its own, for the package manager it knows. */
+  /** Print no "Next:" block: `@acryldev/create-blends` runs `init` and prints its own, for the package manager it knows. */
   quietNext: boolean
   yes: boolean
 }

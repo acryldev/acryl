@@ -5,8 +5,8 @@ It's a simple logger.
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { logger } from 'acrylblends/logger'
+import { Acryl } from '@acryldev/blends'
+import { logger } from '@acryldev/blends/logger'
 ```
 
 ## Usage

@@ -7,8 +7,8 @@
 
 import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
-import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
-import * as routerHttpPlugin from 'acrylblends/cordis/router-http'
+import { apply as applyRouter, name as routerName } from '@acryldev/blends/cordis/router'
+import * as routerHttpPlugin from '@acryldev/blends/cordis/router-http'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as adminPlugin from '../src/index.ts'
 import { unlockedBlueprintSource } from '../src/index.ts'

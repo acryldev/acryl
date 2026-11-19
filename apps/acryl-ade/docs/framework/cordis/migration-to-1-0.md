@@ -1,6 +1,6 @@
 # Migration to 1.0
 
-1.0 fixes the public surface of `acrylblends` and gives an app a way to move its copies of the framework plugins forward. This page is the one path from any 0.x app that was made by 0.9.1 or later; an older app is best made again with `npm create acrylblends@latest` and its own code moved over (its routes and plugins are plain `Acryl` code and Cordis plugins).
+1.0 fixes the public surface of `acrylblends` and gives an app a way to move its copies of the framework plugins forward. This page is the one path from any 0.x app that was made by 0.9.1 or later; an older app is best made again with `npm create @acryldev/blends@latest` and its own code moved over (its routes and plugins are plain `Acryl` code and Cordis plugins).
 
 ## 1. Upgrade the app's copies of the framework plugins
 
@@ -24,12 +24,12 @@ npm install && npm run check && npm test
 
 | Removed or changed | Do this |
 | --- | --- |
-| `App` and `AppRequest` (the 0.4 names, deprecated since 0.5) are removed | `Acryl` and `AcrylRequest`: `import { Acryl } from 'acrylblends'` |
+| `App` and `AppRequest` (the 0.4 names, deprecated since 0.5) are removed | `Acryl` and `AcrylRequest`: `import { Acryl } from '@acryldev/blends'` |
 | `acrylblends/utils/*` and `acrylblends/acryl-base` are internal, not exported | Use the public helpers (`acrylblends/cookie`, `acrylblends/http-exception`, ...); the utilities are not promised |
 | The adapters for AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify and Service Workers are not exported | An app is plain `fetch` code (`app.fetch(request)`), so a platform that calls a `fetch` handler can call it. Their ported sources stay in the repository; they may return as separate plugins, each with a gate. See [Other runtimes](../getting-started/other-runtimes.md) |
 | `acrylblends/bun` is experimental | The one Bun gate runs it on Bun; no promise beyond that |
 | The door (`door/*`, `cordis/door`), the agent panel and the PTY driver are experimental and development-only | They start nothing with `NODE_ENV=production` (the door plugin now checks it itself; `allowInProduction: true` for a host that means it); see [what runs in production](../guides/production.md) |
-| `HTTPException` is `acrylblends/http-exception`, not the root | `import { HTTPException } from 'acrylblends/http-exception'` |
+| `HTTPException` is `acrylblends/http-exception`, not the root | `import { HTTPException } from '@acryldev/blends/http-exception'` |
 | `acrylblends/cordis/*` are the published forms of the framework plugins | In code that uses the package (not an app's own copies), import `acrylblends/cordis/router` where an old guide wrote `@acryldev/router` |
 | One template list: `blank`, `nodejs`, `notes`, `chat`, `todo`, `agent` in both `create-acrylblends` and `acrylblends init` | `acryl-app` still means `agent` |
 

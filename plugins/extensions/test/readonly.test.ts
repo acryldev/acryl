@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
 import { instance, pinnedInstance } from '@acryldev/instance'
+import { Context } from '@deepseek-ai/cordis'
 import { extensions } from '../index.ts'
 
 const appRoot = fileURLToPath(new URL('..', import.meta.url))

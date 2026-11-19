@@ -1,4 +1,4 @@
-import { render, useEffect, useState } from 'acrylblends/jsx/dom'
+import { render, useEffect, useState } from '@acryldev/blends/jsx/dom'
 
 /** The live character counter of the note form: a client component drawn next to the textarea, compiled on request by clientModules (see src/notes-app.ts). */
 const Count = ({ area }: { area: HTMLTextAreaElement }) => {

@@ -12,9 +12,9 @@ import { realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
-import { Acryl } from 'acrylblends'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson } from '@acryldev/loopback-http/router'
 import { storeRootOf } from '@acryldev/plugin-hub-core'
@@ -131,7 +131,7 @@ export interface FrameConfig {
   readonly shareOwner?: string
 }
 
-export const name = '@acryldev/blends-frame'
+export const name = 'acryl-blends-frame'
 export const inject = ['router', 'routerHttp', 'appInstance']
 
 /** `git for-each-ref` lines `<current marker> <name>`: the checked-out branch first, the rest by name. */

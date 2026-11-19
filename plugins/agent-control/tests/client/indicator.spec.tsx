@@ -3,7 +3,7 @@
 /** The React indicator over the door's driver (the channel, the driver and the input clock are tested in `acrylblends`). */
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { UiDriver } from 'acrylblends/door/page'
+import { UiDriver } from '@acryldev/blends/door/page'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { AgentDrivingIndicator } from '../../src/client/Indicator.tsx'
 

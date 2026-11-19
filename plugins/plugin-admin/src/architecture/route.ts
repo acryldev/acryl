@@ -1,6 +1,6 @@
 /** Strict private loopback route for the native Host Cordis architecture snapshot. */
 
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { ownPage, privateApi, type ReportError } from '@acryldev/loopback-http/router'
 import type { CordisPlaneSnapshot } from './contract.ts'

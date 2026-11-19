@@ -73,7 +73,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const LOCALE_NAMESPACE = 'acryl.blendsFrame'
 /** The Loader row that composes the app's own plugins (`frame/app-plugins.mjs`): loading it again applies a switch in `blend.yaml`. */
 
-export const name = '@acryldev/blends-frame-client'
+export const name = 'acryl-blends-frame-client'
 
 /** How often a visible frame reads its state again (branches, the newest version, unsaved files). */
 const FRAME_STATE_INTERVAL_MS = 5000

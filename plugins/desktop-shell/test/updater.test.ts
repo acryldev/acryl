@@ -13,7 +13,7 @@ import {
   macInstallScript,
 } from '../updater.ts'
 
-const source = { repo: 'acrylblends/63-acryl-control-center', file: 'ACRYL-Control-Center' }
+const source = { repo: '@acryldev/blends/63-acryl-control-center', file: 'ACRYL-Control-Center' }
 
 test('a newer version is offered, an equal, older or pre-release one is not', () => {
   assert.equal(isNewer('0.1.16', '0.1.15'), true)

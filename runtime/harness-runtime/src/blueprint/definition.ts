@@ -70,7 +70,7 @@ export function parseBlueprint(input: unknown, catalog: BlueprintCatalog = built
     : { kind: 'custom', identity: brandIdentity(record.brand) } as const
 
   const base: Blueprint = parent ?? {
-    id, name: id, description: '', capabilities: ['authorization', '@acryldev/settings'], rows: ['plugin-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility', dshChat: true,
+    id, name: id, description: '', capabilities: ['authorization', 'acryl-settings'], rows: ['plugin-context', 'system-prompt'], brand: { kind: 'acryl' }, shell: 'compatibility', dshChat: true,
   }
   const composedCapabilities = capabilities ?? base.capabilities
   const composedRows = rows ?? base.rows

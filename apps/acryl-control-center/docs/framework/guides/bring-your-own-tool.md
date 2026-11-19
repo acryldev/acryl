@@ -175,7 +175,7 @@ Any plugin that declares `inject: ['kv']` now has a store. This one counts visit
 ```ts no-check
 // plugins/visits/index.ts
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import type {} from '#acryl-kv'
 
 export const name = 'visits'

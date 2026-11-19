@@ -12,7 +12,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import Schema from '@deepseek-ai/schemastery'
 import { DEFAULT_IDENTITY, DEFAULT_STYLE, type PromptSection, STYLE_SECTION, shapeSections, upstreamSnapshot } from './transform.ts'
 
-export const name = '@acryldev/system-prompt'
+export const name = 'acryl-system-prompt'
 export const inject = ['systemPrompt']
 
 export interface Config {

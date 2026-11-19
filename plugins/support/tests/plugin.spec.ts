@@ -9,8 +9,8 @@ import { createServer, request, type IncomingMessage, type Server, type ServerRe
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
-import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
-import * as routerHttpPlugin from 'acrylblends/cordis/router-http'
+import { apply as applyRouter, name as routerName } from '@acryldev/blends/cordis/router'
+import * as routerHttpPlugin from '@acryldev/blends/cordis/router-http'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as support from '../src/index.ts'
 import { SUPPORT_API_PREFIX, SUPPORT_DIAGNOSTICS_PATH } from '../src/contract.ts'
@@ -55,7 +55,7 @@ async function host() {
 
 async function boot(options: { router?: boolean } = {}) {
   const served = await host()
-  const home = mkdtempSync(join(tmpdir(), '@acryldev/support-plugin-'))
+  const home = mkdtempSync(join(tmpdir(), 'acryl-support-plugin-'))
   cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
   const ctx = new Context()
   cleanups.push(async () => { await ctx.fiber.dispose() })

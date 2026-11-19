@@ -34,7 +34,7 @@ afterEach(async () => {
 
 describe('extension context on the web engine', () => {
   it('mounts, routes the prompt to docs that exist, and registers the install tool', async () => {
-    const home = await mkdtemp(join(tmpdir(), '@acryldev/plugin-context-'))
+    const home = await mkdtemp(join(tmpdir(), 'acryl-plugin-context-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const installPackageUrl = new URL('../package.json', import.meta.url).href
@@ -72,7 +72,7 @@ describe('extension context on the web engine', () => {
   }, 60_000)
 
   it('mounts on the CLI (tui) engine too', async () => {
-    const home = await mkdtemp(join(tmpdir(), '@acryldev/plugin-context-tui-'))
+    const home = await mkdtemp(join(tmpdir(), 'acryl-plugin-context-tui-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({

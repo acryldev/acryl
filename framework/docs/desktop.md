@@ -17,10 +17,9 @@ binary the first time it runs. Behind a proxy or mirror, set `ELECTRON_MIRROR` (
 
 ## A plain Acryl app
 
-In an app made by `npm create @acryldev/blends@latest my-app -- --template nodejs`, `npx acrylblends add desktop` adds `plugins/desktop-web` instead: it imports `src/app.ts` (`export default app`), serves `app.fetch` on
-`127.0.0.1` with a free port through `acrylblends/node-server`, opens the window on it and, when the window closes, closes the server and exits. The rules below are the same, with `~/.acryl/apps/<id>/cache/electron` as the
+In an app made by `npm create @acryldev/blends@latest my-app -- --template nodejs`, `npx acrylblends add desktop-shell` adds `plugins/desktop-web` instead: it imports `src/app.ts` (`export default app`), serves `app.fetch` on
+`127.0.0.1` with a free port through `@acryldev/blends/node-server`, opens the window on it and, when the window closes, closes the server and exits. The rules below are the same, with `~/.acryl/apps/<id>/cache/electron` as the
 user-data folder.
-
 ## What `npm run desktop` does
 
 1. Picks the app's instance exactly as `npm run dev` does.

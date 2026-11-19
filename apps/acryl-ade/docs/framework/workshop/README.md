@@ -8,8 +8,30 @@ app around it: a folder of Cordis plugins with a `blend.yaml`, running on your m
 The frame is the workshop's point. You do not edit a folder and alt-tab to a browser: your app is a page inside the workspace, the agents work in
 the same folder the frame shows, and every change you or an agent makes is one restart away from the page.
 
-This guide is for **acrylblends 1.3.0 or newer**; `npm create acrylblends@latest` gives you that. An app you made with an older release gets the
+This guide is for **acrylblends 1.3.0 or newer**; `npm create @acryldev/blends@latest` gives you that. An app you made with an older release gets the
 frame with the upgrade in block 6.
+
+## The fastest start: ACRYL Control Center
+
+ACRYL Control Center lists your apps, makes new ones and starts them. Download it for your machine:
+
+| | Apple Silicon / ARM | Intel / x64 |
+| --- | --- | --- |
+| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-x64.dmg) |
+| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-x64.deb) |
+
+The apps are not signed yet: on macOS the first start is right-click > Open; on Windows SmartScreen may ask, More info > Run anyway; on Linux
+`sudo apt install ./ACRYL-Control-Center-linux-x64.deb`. Or, with Node.js installed, start it without a download:
+
+```sh
+npx acryl --web    # in your browser
+npx acryl --gui    # in its own window
+```
+
+Press **+ New app**, give it a name, pick a starter (Blank, Node.js, Notes, Chat, To-do, Agent) and Web or Desktop, then **Make it**: Control
+Center makes the app in `~/ACRYL/<name>`, installs it (about a minute) and starts it. The blocks below do the same with commands, and show
+what is inside.
 
 ## 0. Before you start (10 minutes)
 
@@ -81,7 +103,7 @@ between watching and building.
 ## 1. Create the app; the frame opens on it (10 minutes)
 
 ```sh
-npm create acrylblends@latest my-app agent -- --desktop
+npm create @acryldev/blends@latest my-app agent -- --desktop
 cd my-app
 npm install
 npm run dev
@@ -236,7 +258,7 @@ gh pr create --fill --repo acryldev/workshop-2026-11-20
 commit` as two lines, or join them with `;`.)
 
 A check runs on the pull request and merges it: your starter is listed in about two minutes, and anyone can start from it with
-`npm create acrylblends@latest another-app -- --from <your-github-login>.my-app --registry github:acryldev/workshop-2026-11-20`.
+`npm create @acryldev/blends@latest another-app -- --from <your-github-login>.my-app --registry github:acryldev/workshop-2026-11-20`.
 
 **Stuck?** The registry's check comments what to change; fix, commit, push again. `gh auth status` not logged in means `gh auth login`.
 

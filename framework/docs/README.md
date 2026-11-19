@@ -2,8 +2,8 @@
 
 ACRYLBLENDS is the public ACRYL framework, in two parts.
 
-- **The framework** is `import { Acryl } from 'acrylblends'`: a small web framework on Web Standards that runs on Node.js (Bun experimental), with each middleware and helper at its own
-  subpath (`acrylblends/cors`, `acrylblends/node-server`). Start a project with `npm create acrylblends@latest`.
+- **The framework** is `import { Acryl } from '@acryldev/blends'`: a small web framework on Web Standards that runs on Node.js (Bun experimental), with each middleware and helper at its own
+  subpath (`acrylblends/cors`, `acrylblends/node-server`). Start a project with `npm create @acryldev/blends@latest`.
 - **Blends** are apps built from [Cordis](https://www.npmjs.com/package/@deepseek-ai/cordis) plugins: ACRYL's router, shared state and inspector, and a library of plugins extracted from ACRYL
   (instance, settings, live extensions, an agent that extends the app it runs in, tasks, the app manifest, save). `acrylblends init` copies what you pick into your app. You own
   every copied line.
@@ -26,7 +26,7 @@ ACRYLBLENDS is the public ACRYL framework, in two parts.
 ## The framework docs (generated)
 
 [framework/README.md](framework/README.md) is the framework's own text, kept in this repository and shipped inside every new app.
-`pnpm run verify:framework` fails when the exports map of the package is out of date. The pages write `import { Acryl } from 'acrylblends'`; in a
+`pnpm run verify:framework` fails when the exports map of the package is out of date. The pages write `import { Acryl } from '@acryldev/blends'`; in a
 generated Blend app the same names are the vendored plugin source in `plugins/router/src/` (see the app's `AGENTS.md`).
 
 ## Our own pages
@@ -68,6 +68,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 0.10.0](release-notes/0.10.0.md) - driver-pty: a coding agent in a real terminal in the app, the panel's drivers as a registry
 - [Release notes 1.0.5](release-notes/1.0.5.md) - the app's own agent drives the page with a real model; the agent template's tests no longer collide with /hello
 - [Release notes 1.0.6](release-notes/1.0.6.md) - the desktop app's windows and menu as door verbs (window, menu, --window), guarded against ending the session; a clean tarball
+- [Release notes @acryldev/blends 1.7.0](release-notes/blends-1.7.0.md) - the CLI publishes as @acryldev/blends; the short name stays as an alias
+- [Release notes @acryldev/create-blends 1.7.0](release-notes/create-blends-1.7.0.md) - the scaffolder publishes as @acryldev/create-blends; npm create @acryldev/blends
 - [Release notes 1.0.7](release-notes/1.0.7.md) - production serves the extensions the agent installed (read-only); Git Bash paths, two tabs and the word "card" in the door; the panel docks, renders Markdown and says it is working
 - [Release notes 1.0.8](release-notes/1.0.8.md) - the door and the panel on a WebSocket (two live windows no longer stall), a Settings menu item and page, windows that cascade
 - [Release notes 1.0.9](release-notes/1.0.9.md) - a message typed as the page loads is no longer dropped; a look after a navigate waits for the page; window places
@@ -121,7 +123,7 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes acrylblends 1.3.2](release-notes/acrylblends-1.3.2.md) - `upgrade` works again on an untouched app made by 1.2.0, 1.3.0 or 1.3.1, and the gate fails when a release is missing from what it knows
 - [Release notes acrylblends 1.3.1](release-notes/acrylblends-1.3.1.md) - plugins from several people in one app: a taken route or widget is refused naming its plugin, the list says who released each one, and every template that installs live can pull; in the frame a pull no longer restarts the app
 - [Release notes acrylblends 1.3.0](release-notes/acrylblends-1.3.0.md) - share a plugin between people: `plugin pull` and `plugin publish`, `npm run acryl`, and upgrade moves a dependency forward
-- [Release notes create-acrylblends 1.5.1](release-notes/create-1.5.1.md) - `pnpm create acrylblends` installs and starts the app in the frame (it asks for acrylblends 1.5.1)
+- [Release notes create-acrylblends 1.5.1](release-notes/create-1.5.1.md) - `pnpm create @acryldev/blends` installs and starts the app in the frame (it asks for acrylblends 1.5.1)
 - [Release notes create-acrylblends 1.5.0](release-notes/create-1.5.0.md) - a registry blueprint opens in the frame (it asks for acrylblends 1.5.0)
 - [Release notes create-acrylblends 1.4.2](release-notes/create-1.4.2.md) - a new app has `pull --from`, the showcase and the agent home page (it asks for acrylblends 1.4.0)
 - [Release notes create-acrylblends 1.4.1](release-notes/create-1.4.1.md) - a new app has plugin list, remove and route removal in the frame (it asks for acrylblends 1.3.1)

@@ -17,9 +17,9 @@
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/instance'
 import { Acryl } from '@acryldev/router'
+import type { Context } from '@deepseek-ai/cordis'
 import {
   type FeedbackNote,
   FeedbackStore,

@@ -3,13 +3,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
-import { Context } from '@deepseek-ai/cordis'
-import { integrityOf, packFolder } from '@acryldev/plugin-hub-core'
 import { agent, memory, model, tools } from '@acryldev/agent'
 import { extensions } from '@acryldev/extensions'
 import { instance, pinnedInstance } from '@acryldev/instance'
+import { integrityOf, packFolder } from '@acryldev/plugin-hub-core'
 import * as router from '@acryldev/router'
 import * as state from '@acryldev/state'
+import { Context } from '@deepseek-ai/cordis'
 import { builder } from '../index.ts'
 
 const cleanup: Array<() => Promise<void> | void> = []
@@ -209,7 +209,7 @@ test('a plugin installed live reads a service as a property (ctx.router) and bui
   mkdirSync(dir, { recursive: true })
   writeFileSync(
     join(dir, 'index.ts'),
-    `import { Acryl } from 'acrylblends'
+    `import { Acryl } from '@acryldev/blends'
 export const name = 'probe'
 export const inject = ['router']
 export function apply(ctx) {
@@ -231,7 +231,7 @@ test("a live plugin's check runs with the plugin context: ctx.router reads as in
     mkdirSync(dir, { recursive: true })
     writeFileSync(
       join(dir, 'index.ts'),
-      `import { Acryl } from 'acrylblends'
+      `import { Acryl } from '@acryldev/blends'
 export const name = '${name}'
 export const inject = ['router']
 export function apply(ctx) {
@@ -265,8 +265,8 @@ test('a live plugin renders a page with acrylblends/jsx (the call JSX compiles t
   mkdirSync(dir, { recursive: true })
   writeFileSync(
     join(dir, 'index.ts'),
-    `import { Acryl } from 'acrylblends'
-import { jsx } from 'acrylblends/jsx'
+    `import { Acryl } from '@acryldev/blends'
+import { jsx } from '@acryldev/blends/jsx'
 export const name = 'about'
 export const inject = ['router']
 export function apply(ctx) {

@@ -10,8 +10,8 @@ import { dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { DB_SERVICE } from 'acrylblends/db'
-import type {} from 'acrylblends/cordis/db'
+import { DB_SERVICE } from '@acryldev/blends/db'
+import type {} from '@acryldev/blends/cordis/db'
 import { openDb } from './open.ts'
 
 export { PostgresDatabase, type PostgresDatabaseOptions } from './database.ts'
@@ -19,7 +19,7 @@ export { openDb, type OpenDb, type OpenDbOptions } from './open.ts'
 export { translatePlaceholders, type TranslatedSql } from './placeholders.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/db-postgres'
+export const name = 'acryl-db-postgres'
 
 export interface Config {
   url?: string

@@ -43,18 +43,18 @@ function app(files: Record<string, string>, { withTypescript = true } = {}): { d
 }
 
 const COUNTER = [
-  "import { render, useState } from 'acrylblends/jsx/dom'",
-  "import { hc } from 'acrylblends/client'",
-  "import { readSSE } from 'acrylblends/read-sse'",
+  "import { render, useState } from '@acryldev/blends/jsx/dom'",
+  "import { hc } from '@acryldev/blends/client'",
+  "import { readSSE } from '@acryldev/blends/read-sse'",
   "import confetti from 'canvas-confetti'",
   "import { label } from './parts/label.ts'",
-  "const hint: string = \"import x from 'acrylblends/jsx/dom'\"",
+  "const hint: string = \"import x from '@acryldev/blends/jsx/dom'\"",
   'const Counter = () => { const [n, set] = useState(0); return <button onClick={() => set(n + 1)}>{label(n)}</button> }',
   "render(<Counter />, document.getElementById('counter')!)",
   'export { hc, readSSE, confetti, hint }',
   '',
 ].join('\n')
-const LABEL = "import { jsx } from 'acrylblends/jsx/dom/jsx-runtime'\nexport const label = (n: number): string => `Count ${n}`\nexport { jsx }\n"
+const LABEL = "import { jsx } from '@acryldev/blends/jsx/dom/jsx-runtime'\nexport const label = (n: number): string => `Count ${n}`\nexport { jsx }\n"
 
 const serve = (options: Parameters<typeof clientModules>[0], mount = '/client') => new Acryl().route(mount, clientModules(options))
 
@@ -85,7 +85,7 @@ describe('clientModules', () => {
     expect(code).toContain("from './@acryldev/read-sse.js'")
     expect(code).toContain("from 'canvas-confetti'") // another package is left to the page's import map
     expect(code).toContain("from './parts/label.ts'")
-    expect(code).toContain("\"import x from 'acrylblends/jsx/dom'\"") // a string is not an import
+    expect(code).toContain("\"import x from '@acryldev/blends/jsx/dom'\"") // a string is not an import
     expect(code).not.toContain(': string')
     expect(code).toContain('//# sourceMappingURL=data:application/json;base64,')
     // One level down, the browser files are one level up.
@@ -120,18 +120,18 @@ describe('clientModules', () => {
       'a.tsx': 'export const a = <i />\n',
       'b.tsx': '/** @jsxImportSource preact */\nexport const b = <i />\n',
     })
-    writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: 'acrylblends/jsx' } }))
+    writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: { jsx: 'react-jsx', jsxImportSource: '@acryldev/blends/jsx' } }))
     const site = serve({ root, runtimeDir })
     expect(await (await site.request('/client/a.tsx')).text()).toContain('from "./@acryldev/jsx-dom.js"')
     expect(await (await site.request('/client/b.tsx')).text()).toContain('from "preact/jsx-runtime"')
   })
 
   it('serves .js and .mjs files as they are', async () => {
-    const { root, runtimeDir } = app({ 'plain.js': "import 'acrylblends/jsx/dom'\n", 'mod.mjs': 'export {}\n' })
+    const { root, runtimeDir } = app({ 'plain.js': "import '@acryldev/blends/jsx/dom'\n", 'mod.mjs': 'export {}\n' })
     const site = serve({ root, runtimeDir })
     const res = await site.request('/client/plain.js')
     expect(res.headers.get('content-type')).toBe('text/javascript; charset=utf-8')
-    expect(await res.text()).toBe("import 'acrylblends/jsx/dom'\n")
+    expect(await res.text()).toBe("import '@acryldev/blends/jsx/dom'\n")
     expect((await site.request('/client/mod.mjs')).status).toBe(200)
   })
 

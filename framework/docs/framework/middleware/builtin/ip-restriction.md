@@ -5,8 +5,8 @@ IP Restriction Middleware is middleware that limits access to resources based on
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { ipRestriction } from 'acrylblends/ip-restriction'
+import { Acryl } from '@acryldev/blends'
+import { ipRestriction } from '@acryldev/blends/ip-restriction'
 ```
 
 ## Usage
@@ -14,9 +14,9 @@ import { ipRestriction } from 'acrylblends/ip-restriction'
 For your application running on Node.js, if you want to allow access only from local, you can write it as follows. Specify the rules you want to deny in the `denyList` and the rules you want to allow in the `allowList`.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { getConnInfo } from 'acrylblends/node-server'
-import { ipRestriction } from 'acrylblends/ip-restriction'
+import { Acryl } from '@acryldev/blends'
+import { getConnInfo } from '@acryldev/blends/node-server'
+import { ipRestriction } from '@acryldev/blends/ip-restriction'
 
 const app = new Acryl()
 

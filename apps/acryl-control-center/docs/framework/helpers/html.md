@@ -5,8 +5,8 @@ The html Helper lets you write HTML in JavaScript template literal with a tag na
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { html, raw } from 'acrylblends/html'
+import { Acryl } from '@acryldev/blends'
+import { html, raw } from '@acryldev/blends/html'
 ```
 
 ## `html`

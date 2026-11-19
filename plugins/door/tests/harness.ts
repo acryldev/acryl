@@ -41,7 +41,7 @@ const roots: string[] = []
 
 /** A fresh app folder. */
 export function appFolder(): string {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), '@acryldev/door-')))
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-door-'))
   roots.push(root)
   return root
 }

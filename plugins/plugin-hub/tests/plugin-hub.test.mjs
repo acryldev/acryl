@@ -8,7 +8,7 @@ import { apply, pluginTools, runPluginCommand, sourceRoots, storeRoot } from '..
 
 const made = []
 function temp() {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), '@acryldev/plugin-hub-')))
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-plugin-hub-'))
   made.push(dir)
   return dir
 }

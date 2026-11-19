@@ -18,7 +18,7 @@ import { LOOKUP_TOOL_NAME, type LookupManifest, lookupAppDocs } from './lookup.t
 import { type AppSnapshotTools, snapshotTools } from './snapshot-tools.ts'
 import { buildRouterText, type PackManifest, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './router.ts'
 
-export const name = '@acryldev/app-context'
+export const name = 'acryl-app-context'
 export const inject = ['systemPrompt']
 
 /** The package folder: `lib/` or `src/` sits one level below it. */

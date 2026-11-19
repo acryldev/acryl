@@ -8,7 +8,7 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/ui/frame'
 
-export const name = '@acryldev/command-reply-client'
+export const name = 'acryl-command-reply-client'
 export const inject = ['acrylChat']
 
 export function apply(ctx: ClientContext): void {

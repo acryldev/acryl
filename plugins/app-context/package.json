@@ -52,14 +52,14 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
-    "acrylblends": "^1.0.0"
+    "@acryldev/blends": "^1.0.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "@types/node": "^24.0.0",
     "@acryldev/router": "workspace:*",
-    "acrylblends": "workspace:*",
+    "@acryldev/blends": "workspace:*",
     "tsdown": "0.23.0",
     "typescript": "6.0.3",
     "vitest": "5.0.3",

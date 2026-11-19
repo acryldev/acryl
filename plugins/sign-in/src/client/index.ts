@@ -21,7 +21,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = '@acryldev/sign-in-client'
+export const name = 'acryl-sign-in-client'
 /** `slots` for the card, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 

@@ -6,8 +6,8 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import { LAUNCHER_API_PREFIX } from './contract.ts'
 import { fileDoor } from './door.ts'
 import { readBlends } from './registry.ts'
@@ -16,7 +16,7 @@ import { launcherRoutes } from './route.ts'
 import { spawnRunner } from './runner.ts'
 import { LauncherService } from './service.ts'
 
-export const name = '@acryldev/launcher-desktop'
+export const name = 'acryl-launcher-desktop'
 
 /** The part of the runtime's `appInstance` service ACRYL plugins read (every plugin declares exactly this shape, so the augmentations agree). */
 interface AppInstanceService {

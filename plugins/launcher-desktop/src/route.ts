@@ -1,5 +1,5 @@
 /** Strict same-origin loopback routes for the ACRYL screen. Reads need the app's own page; a change needs the exact `Origin` and a small JSON body. */
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {

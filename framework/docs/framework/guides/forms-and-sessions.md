@@ -23,7 +23,7 @@ CREATE TABLE sessions (
 ```
 
 ```ts
-import { openDb } from 'acrylblends/db/sqlite'
+import { openDb } from '@acryldev/blends/db/sqlite'
 
 export function openNotesDb(path = process.env.NOTES_DB ?? 'data/notes.sqlite') {
   return openDb({ path, migrations: 'migrations' })
@@ -62,11 +62,11 @@ The simplest session is a random token in an `httpOnly` cookie and a `sessions` 
 `getCookie`, `setCookie` and `deleteCookie` are in [the Cookie helper](../helpers/cookie.md).
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { createMiddleware } from 'acrylblends/factory'
-import { deleteCookie, getCookie, setCookie } from 'acrylblends/cookie'
+import { Acryl } from '@acryldev/blends'
+import { createMiddleware } from '@acryldev/blends/factory'
+import { deleteCookie, getCookie, setCookie } from '@acryldev/blends/cookie'
 import { randomBytes } from 'node:crypto'
-import type { Db } from 'acrylblends/db'
+import type { Db } from '@acryldev/blends/db'
 
 type Env = { Variables: { user: { id: number; email: string } } }
 
@@ -134,7 +134,7 @@ export function checkNote(value: unknown): { value: NoteInput } | { issues: { me
 ```
 
 ```tsx
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -169,8 +169,8 @@ Wrap `checkNote` as a Standard Schema (an object with a `~standard.validate` fun
 Build the API app by **chaining** the routes on `new Acryl()`, because the typed client and `testClient` only know chained routes:
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { schemaValidator, type StandardSchema } from 'acrylblends/schema-validator'
+import { Acryl } from '@acryldev/blends'
+import { schemaValidator, type StandardSchema } from '@acryldev/blends/schema-validator'
 
 const NoteSchema: StandardSchema<NoteInput> = {
   '~standard': { validate: (value) => checkNote(value) },
@@ -200,7 +200,7 @@ await app.request('/notes', { headers: { cookie } })
 For the typed API use `testClient` ([Testing helper](../helpers/testing.md)); the cookie goes in the second argument of each call:
 
 ```ts
-import { testClient } from 'acrylblends/testing'
+import { testClient } from '@acryldev/blends/testing'
 
 const client = testClient(api)
 const created = await client.index.$post({ json: { title: 'First', body: 'hello' } }, { headers: { cookie } })

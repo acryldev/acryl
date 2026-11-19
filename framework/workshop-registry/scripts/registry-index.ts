@@ -2,7 +2,7 @@
 // registry-index <registry folder> [--check] [--only <id>]
 // What the registry's CI runs. It is @acryldev/blends-core's index tool (validate every starter under blends/<id>/blend.yaml, refuse a private, unlicensed, misplaced or repeated one,
 // write index.json) plus one thing the format does not carry: the runtime an entry is for.
-//   - An entry with an `acryl.template.json` is a whole app for acrylblends (`runtime: acrylblends`): `npm create acrylblends@latest my-app -- --from <id>` makes it. It is checked
+//   - An entry with an `acryl.template.json` is a whole app for acrylblends (`runtime: acrylblends`): `npm create @acryldev/blends@latest my-app -- --from <id>` makes it. It is checked
 //     further: the template manifest, a package.json without install scripts, src/, no links, no node_modules or .git, size limits, and nothing that looks like a key.
 //   - Every other entry is a starter for the ACRYL app (`runtime: acryl`).
 // This copy is the workshop registry's: the limits are tighter (REGISTRY_LIMITS="file=1048576,total=8388608,files=1500" by default), and `--only <id>` reports only that entry's problems and writes nothing (what the pull request check runs).

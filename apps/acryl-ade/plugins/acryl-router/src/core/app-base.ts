@@ -317,7 +317,7 @@ class Acryl<
    * @example
    * ```ts
    * import { Router as IttyRouter } from 'itty-router'
-   * import { Acryl } from 'acrylblends'
+   * import { Acryl } from '@acryldev/blends'
    * // Create itty-router application
    * const ittyRouter = IttyRouter()
    * // GET /itty-router/hello

@@ -141,7 +141,7 @@ test("the chat view's rows are mounted, so an answer and its tool calls are draw
 test('the frame router reads /app/ as /app, so the app root answers with or without the slash', () => {
   assert.match(
     ideProfilePlan(input).overlay,
-    /- id: acryl-router\n {6}name: acrylblends\/cordis\/router\n {6}config:\n {8}trailingSlash: ignore\n/u,
+    /- id: acryl-router\n {6}name: '?@acryldev\/blends\/cordis\/router'?\n {6}config:\n {8}trailingSlash: ignore\n/u,
   )
 })
 

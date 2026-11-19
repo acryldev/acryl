@@ -1,3 +1,3 @@
 - insert:
     - id: acryl-router-http
-      name: @acryldev/router-http
+      name: '@acryldev/router-http'

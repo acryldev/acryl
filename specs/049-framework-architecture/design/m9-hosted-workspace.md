@@ -11,7 +11,7 @@ What the owner wants on 20.11 (2026-11-12, their words condensed):
 - Attendees see their own web apps running in the cloud.
 - Attendees can edit an app in the WebBoxes.ai cloud with no setup at all, from the browser only.
 
-The goal (milestone M9 in [spec 049](../spec.md)): an app made with `npm create acrylblends` runs on WebBoxes.ai, reachable by URL,
+The goal (milestone M9 in [spec 049](../spec.md)): an app made with `npm create @acryldev/blends` runs on WebBoxes.ai, reachable by URL,
 with its agent working through the door.
 
 ## What exists
@@ -62,7 +62,7 @@ The smallest change that keeps both trust models honest:
 
 Each one is verifiable on its own:
 
-1. **WebBoxes, staging only.** A template `acrylblends-starter` in the runner's catalog: the `npm create acrylblends` output, prebuilt
+1. **WebBoxes, staging only.** A template `acrylblends-starter` in the runner's catalog: the `npm create @acryldev/blends` output, prebuilt
    into the image or created at provision, started with hostname `0.0.0.0`. Verify: the box runs, and `curl` from the runner gets the
    page.
 2. **Blends.** The trusted-front config in acryl-router and acryl-door, with tests on both sides of the rule. The public origin

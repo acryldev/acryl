@@ -10,7 +10,7 @@ Format: `T<nnn> [B<batch>] <category> (subcategories) - acrylblends.<name>: <the
 
 - [x] T000 The registry path works end to end with one real blueprint: `acrylblends.system-monitor` made, published to
   `registry/blends/` in acrylblends.github.io with `make-entry.mjs`, `index.json` regenerated, and started again with
-  `npm create acrylblends@latest t -- --from acrylblends.system-monitor --registry <checkout>`. The steps that worked go into cloud-brief.md. (Done 2026-11-04: site branch `blueprints/batch-01`; the brief is the steps as run.)
+  `npm create @acryldev/blends@latest t -- --from acrylblends.system-monitor --registry <checkout>`. The steps that worked go into cloud-brief.md. (Done 2026-11-04: site branch `blueprints/batch-01`; the brief is the steps as run.)
 
 
 ## Batch 1 (categories 1-10)
@@ -152,4 +152,4 @@ Things a builder ran into that the CLI, the framework or the registry should fix
 - T001: every batch branch appends a line to `registryPlacement` and an entry to `registry/index.json`, so merging the ten branches conflicts there; after merging, regenerate the index (`node scripts/registry-index.ts registry`) instead of resolving it by hand, and keep every placement line.
 - T001: `npm run dev` in a blank-template app is `node --watch` (the app alone). "Serves the app inside the frame" in spec.md's "Done for one blueprint" (3) is therefore not something a cloud agent can check; the brief leaves the frame to the coordinator. The system-monitor was not opened in the frame in T000.
 - T001: the made app starts with `package-lock.json` after `npm install`; `make-entry.mjs` carries it into the entry (kept: it makes the entry's install repeatable).
-- T001: `npm create acrylblends@latest` printed "Next: see the template's README" for an app made from a registry entry; harmless, not changed.
+- T001: `npm create @acryldev/blends@latest` printed "Next: see the template's README" for an app made from a registry entry; harmless, not changed.

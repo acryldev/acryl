@@ -1,13 +1,13 @@
 {
-  "name": "create-acrylblends",
-  "version": "1.6.0",
-  "description": "Create an Acryl app: npm create acrylblends@latest",
+  "name": "@acryldev/create-blends",
+  "version": "1.7.0",
+  "description": "Create an Acryl app: npm create @acryldev/blends@latest",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "create-acrylblends": "./bin/create-acrylblends.js"
+    "create-blends": "./bin/create-acrylblends.js"
   },
   "exports": {
     ".": {
@@ -44,7 +44,7 @@
   ],
   "dependencies": {
     "@acryldev/app-persistence": "workspace:^",
-    "acrylblends": "workspace:^"
+    "@acryldev/blends": "workspace:^"
   },
   "publishConfig": {
     "access": "public"

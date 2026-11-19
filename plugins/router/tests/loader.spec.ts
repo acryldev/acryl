@@ -25,7 +25,7 @@ afterEach(async () => {
 })
 
 async function mount(): Promise<{ ctx: Context, entryId: string }> {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/router-loader-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-router-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   const ctx = new Context()

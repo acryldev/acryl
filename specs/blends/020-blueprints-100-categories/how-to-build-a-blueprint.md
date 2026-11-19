@@ -34,7 +34,7 @@ A blueprint is an app composed from Cordis plugins and nothing else.
 
 1. **Read the design.** `design/spec.md` (intent, screens, data, seed, states, routes, flows) and `design/mockup.html` (open it in a browser; it is the visual
    target, and the spec wins where it differs from `tasks.md`). Do not replace the mockup's composition with a generic dashboard.
-2. **Make the app** with the CLI the brief names, outside any repository: `npm create acrylblends@latest <name> -- --template blank --yes` (use `--template agent`
+2. **Make the app** with the CLI the brief names, outside any repository: `npm create @acryldev/blends@latest <name> -- --template blank --yes` (use `--template agent`
    only where the spec says the app's job is an agent). Write absolute paths in every command.
 3. **Build each feature as a plugin** as above. Pages come from the router and the page helpers the framework documents (`docs/framework/README.md`, `AGENTS.md`);
    use the home widget helper for a widget on the first screen. The first page at `/` shows the seed data at once.
@@ -49,7 +49,7 @@ A blueprint is an app composed from Cordis plugins and nothing else.
    then add the entry's line to `<site>/src/lib/registry-placement.ts` (`"acrylblends.<name>": { category: "<Category>", subcategory: "<Subcategory>" }`, names as
    `tasks.md` writes them), run `node scripts/registry-index.ts registry` and `... --check` in the site checkout, and the site's tests and build. An entry with no
    placement line is not shown on the site. Do not edit `registry/index.json` by hand.
-9. **Prove it as a person gets it:** `npm create acrylblends@latest t-<name> -- --from acrylblends.<name> --registry <absolute path to the site's registry>`, then
+9. **Prove it as a person gets it:** `npm create @acryldev/blends@latest t-<name> -- --from acrylblends.<name> --registry <absolute path to the site's registry>`, then
    `npm install`, `npm test`, and `npm start` with the first page fetched; in the ACRYL frame (`npm run dev`) the app is on the canvas and Settings > Plugins lists
    each plugin and switches it. Also check that a clean copy works with the published npm packages only, which is what everyone else gets.
 10. **Publish, in this order, each a normal commit, never a force:**

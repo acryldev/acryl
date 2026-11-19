@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * What a framework release tag publishes (spec 051 T032), read by .github/workflows/framework-release.yml:
- *   acrylblends-v<version>         acrylblends, framework/packages/cli
- *   create-acrylblends-v<version>  create-acrylblends, framework/packages/create
+ *   blends-v<version>         acrylblends, framework/packages/cli
+ *   create-blends-v<version>  create-acrylblends, framework/packages/create
  *   frame-<short>-v<version>       <scope>/<short>, the frame package framework/frame/packages.json names
  *   launcher-v<version>            @acryldev/launcher, ACRYL's plugins/launcher
  * The version must be the one the source holds, so a tag can never publish something other than what is checked in.
@@ -28,30 +28,30 @@ export function releaseOfTag(tag, root = framework) {
   }
   // npm's tarball name: the scope's @ dropped and its slash a dash (@acryldev/app-shell 0.1.1 -> acrylblends-app-shell-0.1.1.tgz).
   const tarball = (name, version) => `${name.replace(/^@/u, '').replace('/', '-')}-${version}.tgz`
-  let match = /^create-acrylblends-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
+  let match = /^create-blends-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
   if (match !== null) {
     const dir = join(root, 'packages', 'create')
     return expect(
       {
         kind: 'npm',
-        package: 'create-acrylblends',
+        package: '@acryldev/create-blends',
         version: match[1],
         dir,
-        tarball: tarball('create-acrylblends', match[1]),
+        tarball: tarball('@acryldev/create-blends', match[1]),
       },
       versionOf(dir),
     )
   }
-  match = /^acrylblends-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
+  match = /^blends-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
   if (match !== null) {
     const dir = join(root, 'packages', 'cli')
     return expect(
       {
         kind: 'npm',
-        package: 'acrylblends',
+        package: '@acryldev/blends',
         version: match[1],
         dir,
-        tarball: tarball('acrylblends', match[1]),
+        tarball: tarball('@acryldev/blends', match[1]),
       },
       versionOf(dir),
     )
@@ -94,7 +94,7 @@ export function releaseOfTag(tag, root = framework) {
     )
   }
   throw new Error(
-    `${tag} is not a framework release tag (acrylblends-v<version>, create-acrylblends-v<version>, frame-<short>-v<version> or launcher-v<version>)`,
+    `${tag} is not a framework release tag (blends-v<version>, create-blends-v<version>, frame-<short>-v<version> or launcher-v<version>)`,
   )
 }
 

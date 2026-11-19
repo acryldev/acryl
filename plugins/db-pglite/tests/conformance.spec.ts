@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describeDbConformance } from 'acrylblends/db/conformance'
+import { describeDbConformance } from '@acryldev/blends/db/conformance'
 import * as vitest from 'vitest'
 import { afterAll } from 'vitest'
 import { IN_MEMORY, openDb } from '../src/open.ts'
@@ -12,7 +12,7 @@ describeDbConformance('@acryldev/db-pglite (in memory)', () => openDb({ dataDir:
 const folders: string[] = []
 afterAll(() => { for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true }) })
 describeDbConformance('@acryldev/db-pglite (data folder)', async () => {
-  const folder = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-'))
+  const folder = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-'))
   folders.push(folder)
   return openDb({ dataDir: join(folder, 'pglite') })
 }, vitest)

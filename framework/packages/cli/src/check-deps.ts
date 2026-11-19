@@ -26,7 +26,7 @@ const DRIVERS = [
   'mysql2',
 ]
 /** The openers a provider ships: importing one of them is opening a database. */
-const OPENERS = ['acrylblends/db/sqlite', '@acryldev/db-sqlite']
+const OPENERS = ['@acryldev/blends/db/sqlite', '@acryldev/db-sqlite']
 /** The desktop shell is where Electron lives (`acrylblends add desktop` copies it). */
 const ELECTRON = 'electron'
 const ELECTRON_HOMES = [
@@ -160,8 +160,8 @@ function advice(violation: Violation, openers: readonly string[]): string {
       ? openers.join(', ')
       : 'a file named in package.json "acryl": { "opener": "..." }'
   return violation.kind === 'driver'
-    ? `"${violation.specifier}" is a database driver; take a Db (import type { Db } from "acrylblends/db") as an argument and let ${where} open the database`
-    : `"${violation.specifier}" opens a database, and only ${where} may; take a Db (import type { Db } from "acrylblends/db") as an argument`
+    ? `"${violation.specifier}" is a database driver; take a Db (import type { Db } from "@acryldev/blends/db") as an argument and let ${where} open the database`
+    : `"${violation.specifier}" opens a database, and only ${where} may; take a Db (import type { Db } from "@acryldev/blends/db") as an argument`
 }
 
 /** Parse `check-deps [dir]`. */

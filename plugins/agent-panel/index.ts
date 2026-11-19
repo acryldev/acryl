@@ -18,7 +18,6 @@
  */
 import { appendFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/agent'
 import type { ChatDriver, Driver } from '@acryldev/drivers'
 import type {} from '@acryldev/extensions'
@@ -26,6 +25,7 @@ import { clientModules } from '@acryldev/node-server/client-modules'
 import { Acryl, type MiddlewareHandler } from '@acryldev/router'
 import { streamSSE, type UpgradeWebSocket } from '@acryldev/router/helpers'
 import { pageAuthority } from '@acryldev/router/middleware'
+import type { Context } from '@deepseek-ai/cordis'
 import {
   agentDriver,
   availableHeadless,

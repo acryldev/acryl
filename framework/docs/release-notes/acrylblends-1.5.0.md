@@ -15,7 +15,7 @@ npm run desktop                               # the same in its own window
 A blueprint from the registry (https://acrylblends.github.io/blends), in the frame too:
 
 ```sh
-npm create acrylblends@latest my-crm -- --from acrylblends.small-crm --install
+npm create @acryldev/blends@latest my-crm -- --from acrylblends.small-crm --install
 cd my-crm && npm run dev
 ```
 
@@ -23,7 +23,7 @@ cd my-crm && npm run dev
 
 - **`init` makes the app in the frame by default.** Before, `init` without `--desktop` made the plain app, and the README's own command
   (`init my-app --agent -y`) gave a page with no chat and no agents. `--bare` now asks for the plain app; `--desktop` is still accepted.
-- **A registry blueprint opens in the frame.** `npm create acrylblends --from <id>` puts it in the frame (`add desktop`, then `upgrade`); `--bare` keeps
+- **A registry blueprint opens in the frame.** `npm create @acryldev/blends --from <id>` puts it in the frame (`add desktop`, then `upgrade`); `--bare` keeps
   it plain. A starter from another source (`github:`, an npm package, a folder) gets the frame with `--desktop`.
 - **`upgrade` frames an app built on its own.** An app whose scaffold is no template's (a blueprint) but that carries the frame row (`src/frame.ts`,
   `FRAME_MOUNT_PREFIX` in `src/routes.ts`, `composeInto` in `src/app.ts`) gets the frame around it; its own files are never written. Its library

@@ -25,6 +25,6 @@ it('imports nothing from Cordis in the plain entries or anything they import, at
     }
   }
   const lib = (pkg: string, file: string) => new URL(`../../${pkg}/lib/${file}`, import.meta.url)
-  for (const [pkg, file] of [['@acryldev/kv-json', 'open.js'], ['@acryldev/kv-json', 'types/open.d.ts'], ['@acryldev/kv', 'index.js'], ['@acryldev/kv', 'types/index.d.ts']] as const) visit(lib(pkg, file))
+  for (const [pkg, file] of [['kv-json', 'open.js'], ['kv-json', 'types/open.d.ts'], ['kv', 'index.js'], ['kv', 'types/index.d.ts']] as const) visit(lib(pkg, file))
   expect(seen.size).toBeGreaterThan(4)
 })

@@ -7,11 +7,11 @@
  */
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
 import { scripted, type Tools } from '@acryldev/agent'
 import { NAME } from '@acryldev/extensions'
 import type {} from '@acryldev/instance'
 import { packagePlugin } from '@acryldev/plugin-share/package'
+import type { Context } from '@deepseek-ai/cordis'
 import { builderRules } from './script.ts'
 
 export interface BuilderConfig {

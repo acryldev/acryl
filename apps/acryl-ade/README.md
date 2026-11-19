@@ -28,7 +28,7 @@ Or with the `acryl` command, which makes and runs it from source in `~/.acryl/ad
 ## Start from source
 
 ```bash
-npm create acrylblends@latest my-ade -- --from acryl.ade
+npm create @acryldev/blends@latest my-ade -- --from acryl.ade
 cd my-ade && npm run dev
 ```
 

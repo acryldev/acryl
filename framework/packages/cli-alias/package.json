@@ -1,0 +1,25 @@
+{
+  "name": "acrylblends",
+  "version": "1.7.0",
+  "description": "The short name for @acryldev/blends: the same CLI, forwarded.",
+  "license": "MIT",
+  "bin": {
+    "acrylblends": "./bin/acrylblends.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "dependencies": {
+    "@acryldev/blends": "workspace:*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "framework/packages/cli-alias"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/framework/packages/cli-alias#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module"
+}

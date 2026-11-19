@@ -5,7 +5,7 @@
 // Expect:   ACTIVE on web/desktop (PENDING without the router); GET /api/example/hello returns "ok".
 // Docs:     extending.host-route
 // Pattern:  @acryldev/support src/route.ts, @acryldev/plugin-admin src/index.ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'acryl-example-route'
 // Both come from the app's framework-kit row. Until they exist this plugin is PENDING, not failed.

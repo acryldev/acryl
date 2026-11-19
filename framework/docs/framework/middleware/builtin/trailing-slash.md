@@ -7,11 +7,11 @@ This middleware handles Trailing Slash in the URL on a GET request.
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import {
   appendTrailingSlash,
   trimTrailingSlash,
-} from 'acrylblends/trailing-slash'
+} from '@acryldev/blends/trailing-slash'
 ```
 
 ## Usage
@@ -19,8 +19,8 @@ import {
 Example of redirecting a GET request of `/about/me` to `/about/me/`.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { appendTrailingSlash } from 'acrylblends/trailing-slash'
+import { Acryl } from '@acryldev/blends'
+import { appendTrailingSlash } from '@acryldev/blends/trailing-slash'
 
 const app = new Acryl({ strict: true })
 
@@ -31,8 +31,8 @@ app.get('/about/me/', (c) => c.text('With Trailing Slash'))
 Example of redirecting a GET request of `/about/me/` to `/about/me`.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { trimTrailingSlash } from 'acrylblends/trailing-slash'
+import { Acryl } from '@acryldev/blends'
+import { trimTrailingSlash } from '@acryldev/blends/trailing-slash'
 
 const app = new Acryl({ strict: true })
 

@@ -5,8 +5,8 @@ This middleware executes the handler of the specified method, which is different
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { methodOverride } from 'acrylblends/method-override'
+import { Acryl } from '@acryldev/blends'
+import { methodOverride } from '@acryldev/blends/method-override'
 ```
 
 ## Usage
@@ -39,7 +39,7 @@ The HTML form:
 The application:
 
 ```ts
-import { methodOverride } from 'acrylblends/method-override'
+import { methodOverride } from '@acryldev/blends/method-override'
 
 const app = new Acryl()
 app.use('/posts', methodOverride({ app }))

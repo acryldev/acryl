@@ -7,8 +7,8 @@ This middleware compresses the response body, according to `Accept-Encoding` req
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { compress } from 'acrylblends/compress'
+import { Acryl } from '@acryldev/blends'
+import { compress } from '@acryldev/blends/compress'
 ```
 
 ## Usage
@@ -46,7 +46,7 @@ Or pass a function for custom logic. The built-in `COMPRESSIBLE_CONTENT_TYPE_REG
 import {
   compress,
   COMPRESSIBLE_CONTENT_TYPE_REGEX,
-} from 'acrylblends/compress'
+} from '@acryldev/blends/compress'
 
 // Compress the default Content-Types plus a custom one
 app.use(

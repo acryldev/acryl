@@ -28,7 +28,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/kv-json-loader-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-kv-json-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root

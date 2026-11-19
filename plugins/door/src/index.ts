@@ -30,7 +30,7 @@ import { ShellChannel, shellRoutes } from './host/shell.ts'
 import { realNode, writeShims, type ShimTarget } from './host/shim.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/door'
+export const name = 'acryl-door'
 
 /** The part of acrylblends' `appInstance` the door reads: the app folder and its name. */
 interface AppFolder {

@@ -5,8 +5,8 @@ The Mount Middleware lets you mount an application built with another framework 
 ## Import
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { mount } from 'acrylblends/mount'
+import { Acryl } from '@acryldev/blends'
+import { mount } from '@acryldev/blends/mount'
 ```
 
 ## Usage
@@ -40,8 +40,8 @@ You can pass a function or an object as the second argument.
 Returns the arguments passed to the mounted application after the `Request`. An array is spread into multiple arguments. You can pass the function directly as the second argument:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { mount } from 'acrylblends/mount'
+import { Acryl } from '@acryldev/blends'
+import { mount } from '@acryldev/blends/mount'
 const app = new Acryl()
 const anotherApp = (request: Request, ...args: unknown[]) =>
   new Response(request.url)
@@ -66,8 +66,8 @@ app.all(
 Controls which `Request` is passed to the mounted application:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { mount } from 'acrylblends/mount'
+import { Acryl } from '@acryldev/blends'
+import { mount } from '@acryldev/blends/mount'
 const app = new Acryl()
 const anotherApp = (request: Request, ...args: unknown[]) =>
   new Response(request.url)
@@ -88,8 +88,8 @@ app.all(
 To pass the original `Request` unchanged, set it to `false` as a shorthand for `(req) => req`:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { mount } from 'acrylblends/mount'
+import { Acryl } from '@acryldev/blends'
+import { mount } from '@acryldev/blends/mount'
 const app = new Acryl()
 const anotherApp = (request: Request, ...args: unknown[]) =>
   new Response(request.url)

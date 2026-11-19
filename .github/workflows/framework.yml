@@ -76,7 +76,7 @@ jobs:
           if-no-files-found: ignore
       # The real terminal (node-pty) on every OS, Windows included: a load failure fails here with its reason, it is not skipped.
       - run: pnpm run test:driver-pty
-      # `npm create acrylblends my-app agent` from the packed tarballs on every OS: 1.0.4 and 1.0.5 failed on every Windows machine and nothing ran the command there.
+      # `npm create @acryldev/blends my-app agent` from the packed tarballs on every OS: 1.0.4 and 1.0.5 failed on every Windows machine and nothing ran the command there.
       - run: pnpm run verify:create
 
   # The macOS halves of the packages matrix that branch runs skip (Node 22 and 26): macOS coverage per Node version still runs where it matters - main - without

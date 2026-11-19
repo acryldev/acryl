@@ -6,18 +6,18 @@ template) and a Blend app (the `agent` template or any other `acrylblends init` 
 
 ## Add it
 
-In an app made by `npm create acrylblends@latest my-app nodejs` (or `notes`, `chat`):
+In an app made by `npm create @acryldev/blends@latest my-app nodejs` (or `notes`, `chat`):
 
 ```sh
 cd my-app
 npm install
-npx acrylblends add desktop
+npx acrylblends add desktop-shell
 npm install
 npm run desktop
 ```
 
-In a Blend app, the same two commands (`npx acrylblends add desktop`, `npm install`) add the Blend form of the shell, and `npx acrylblends init my-app --template todo --desktop` creates a Blend app with it already in.
-`acrylblends add desktop` chooses the right form: a Blend app (it has `plugins/instance`) or a plain Acryl app.
+In a Blend app, the same two commands (`npx acrylblends add desktop-shell`, `npm install`) add the Blend form of the shell, and `npx acrylblends init my-app --template todo --desktop` creates a Blend app with it already in.
+`acrylblends add desktop-shell` chooses the right form: a Blend app (it has `plugins/instance`) or a plain Acryl app.
 
 ## What it adds
 

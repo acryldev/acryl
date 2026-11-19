@@ -17,7 +17,7 @@ export const CREATE_SPEC = 'create-acrylblends@latest'
 export const BLENDS_SPEC = 'acrylblends'
 
 /** The door of an app: the same file the app's `npm run acryl` runs. */
-export const DOOR = join('plugins', '@acryldev/door', 'src', 'cli', 'acryl.ts')
+export const DOOR = join('plugins', 'door', 'src', 'cli', 'acryl.ts')
 
 /**
  * The npm that runs a package from the registry (or a local one), without a shell wherever that is possible: the npm that started this process (npx sets

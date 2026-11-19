@@ -13,7 +13,7 @@ afterAll(async () => {
 })
 
 describeDbConformance('@acryldev/db-sqlite', async () => {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/db-sqlite-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-db-sqlite-'))
   dirs.push(dir)
   return openDb({ path: join(dir, 'data.sqlite') })
 })

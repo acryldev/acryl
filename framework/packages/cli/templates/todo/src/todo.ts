@@ -13,7 +13,7 @@ import type {} from '../plugins/state/src/index.ts'
 import { pageHtml } from './page.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/todo'
+export const name = 'acryl-todo'
 export const inject = ['router', 'state']
 
 /**

@@ -31,7 +31,7 @@ import {
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { force: true, recursive: true }) })
-const temp = (): string => { const dir = realpathSync(mkdtempSync(join(tmpdir(), '@acryldev/instance-'))); dirs.push(dir); return dir }
+const temp = (): string => { const dir = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-instance-'))); dirs.push(dir); return dir }
 const app = (root: string, name: string): string => { const dir = join(root, name); mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'blend.yaml'), 'x'); return dir }
 
 /**

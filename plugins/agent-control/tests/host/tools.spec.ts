@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { afterAll, describe, expect, it } from 'vitest'
-import { AuditLog, UiChannel } from 'acrylblends/door/host'
-import { UiControlError, type UiRequest, type UiResult } from 'acrylblends/door/protocol'
+import { AuditLog, UiChannel } from '@acryldev/blends/door/host'
+import { UiControlError, type UiRequest, type UiResult } from '@acryldev/blends/door/protocol'
 import { MODEL_OPS, MUTATING_TOOL_NAMES, RefDirectory, registerUiTools, TOOL_NAMES } from '../../src/host/tools.ts'
 
 const dir = mkdtempSync(join(tmpdir(), 'acryl-ui-tools-'))

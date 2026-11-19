@@ -22,7 +22,7 @@ data is a handful of settings or a small list that one process reads and writes.
 `kv` keeps named JSON documents in one file, with no SQL and no migrations. It suits a settings page, a demo, a one-person tool.
 
 ```ts
-import { openKv } from 'acrylblends/kv/json'
+import { openKv } from '@acryldev/blends/kv/json'
 
 const { kv, close } = await openKv({ path: 'data/kv.json' })
 
@@ -63,10 +63,10 @@ The same `kv` interface runs on SQL, so the code does not change, only the line 
 database from `openDb`, and `copyKv` moves what the file holds:
 
 ```ts
-import { copyKv } from 'acrylblends/kv'
-import { openKv } from 'acrylblends/kv/json'
-import { kvOnDb } from 'acrylblends/kv/db'
-import { openDb } from 'acrylblends/db/sqlite'
+import { copyKv } from '@acryldev/blends/kv'
+import { openKv } from '@acryldev/blends/kv/json'
+import { kvOnDb } from '@acryldev/blends/kv/db'
+import { openDb } from '@acryldev/blends/db/sqlite'
 
 const file = await openKv({ path: 'data/kv.json' })
 const sql = await openDb({ path: 'data/app.sqlite', migrations: 'migrations' })
@@ -85,7 +85,7 @@ The table is created on first use, beside the app's own tables; nothing else cha
 `openDb` from `acrylblends/db/sqlite` opens one SQLite file, applies your migrations, and returns the database next to the function that closes it:
 
 ```ts
-import { openDb } from 'acrylblends/db/sqlite'
+import { openDb } from '@acryldev/blends/db/sqlite'
 
 const { db, close } = await openDb({ path: 'data/app.sqlite', migrations: 'migrations' })
 ```
@@ -99,7 +99,7 @@ const { db, close } = await openDb({ path: 'data/app.sqlite', migrations: 'migra
 Pass `db` to the code that needs it. Nothing opens the database at import time, so importing a module never creates a file:
 
 ```ts
-import type { Db } from 'acrylblends/db'
+import type { Db } from '@acryldev/blends/db'
 
 export function notesStore(db: Db) {
   return {
@@ -219,7 +219,7 @@ A test opens its own database in memory, with the same migrations as production,
 
 ```ts
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { openDb } from 'acrylblends/db/sqlite'
+import { openDb } from '@acryldev/blends/db/sqlite'
 import { notesStore } from './db.ts'
 
 let close: () => Promise<void>
@@ -242,8 +242,8 @@ test('a new store has no notes', async () => {
 Open the database once at start, serve, and close it when the process is told to stop, after the server has stopped taking requests:
 
 ```ts
-import { serve } from 'acrylblends/node-server'
-import { openDb } from 'acrylblends/db/sqlite'
+import { serve } from '@acryldev/blends/node-server'
+import { openDb } from '@acryldev/blends/db/sqlite'
 import { createApp } from './app.ts'
 
 const { db, close } = await openDb({ path: process.env.DATABASE_FILE ?? 'data/app.sqlite', migrations: 'migrations' })
@@ -287,7 +287,7 @@ the opener imports a database driver, an opener such as `acrylblends/db/sqlite` 
 It names the file and the line:
 
 ```
-src/routes.ts:3: "node:sqlite" is a database driver; take a Db (import type { Db } from "acrylblends/db") as an argument and let src/db.ts open the database
+src/routes.ts:3: "node:sqlite" is a database driver; take a Db (import type { Db } from "@acryldev/blends/db") as an argument and let src/db.ts open the database
 ```
 
 The `notes` and `chat` templates run it in `npm test` and `npm run check`. List more than one opener as an array (`"opener": ["src/db.ts", "src/app.ts"]`).
@@ -301,7 +301,7 @@ applies the `migrations` folder, and provides `db`; a plugin declares `inject: [
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acrylblends/cordis/db'
+import type {} from '@acryldev/blends/cordis/db'
 
 export const name = 'notes'
 export const inject = ['db']

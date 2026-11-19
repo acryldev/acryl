@@ -37,7 +37,7 @@ b. The registry index tool needs the Blend format library. CI takes it from a pr
 
 For each of your ten tasks:
 1. Make the app with the published CLI, outside both repositories:
-     cd WORK && npm create acrylblends@latest <name> -- --template blank --yes
+     cd WORK && npm create @acryldev/blends@latest <name> -- --template blank --yes
    (npm needs the --. Use --template agent only where the task says agent template.) It is a Cordis app: src/main.ts, src/app.ts, blend.yaml, plugins/.
 2. Composition rule (owner): a blueprint is composed from Cordis plugins and nothing else. Every feature is its own plugin in its own folder
    plugins/<feature>/ (index.ts exporting name, inject and apply; its domain code beside it), listed as its own row in blend.yaml (the template loads the folder by the row's name; do not import it in src/app.ts). No feature code in src/app.ts, src/main.ts or a shared routes file; an app with several domains (say tasks and calendar) has several plugins, one row each.
@@ -62,7 +62,7 @@ For each of your ten tasks:
    (subcategory: the closest of the task's subcategories). An entry with no placement line is not shown on the site.
    Then regenerate the index and check it: cd SITE && node scripts/registry-index.ts registry && node scripts/registry-index.ts registry --check
    (this also runs the entry checks: no links, install scripts, keys or oversized files, an acryl.template.json, a package.json and src/). Do not edit registry/index.json by hand.
-6. Prove the entry as a person gets it: cd WORK && npm create acrylblends@latest t-<name> -- --from acrylblends.<name> --registry SITE/registry
+6. Prove the entry as a person gets it: cd WORK && npm create @acryldev/blends@latest t-<name> -- --from acrylblends.<name> --registry SITE/registry
    then, in t-<name>: npm install, npm test, and `ACRYLBLENDS_PORT=<free port> npm start` with the first page fetched. (--registry takes SITE/registry; SITE itself works too.)
 
 Do not create repositories (the session cannot). After review the coordinator merges your branch so the entry shows on https://acrylblends.github.io/blends and

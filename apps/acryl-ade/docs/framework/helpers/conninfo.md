@@ -9,15 +9,15 @@ Each adapter has its own `getConnInfo`: `acrylblends/node-server` and `acrylblen
 **Bun**
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { getConnInfo } from 'acrylblends/bun'
+import { Acryl } from '@acryldev/blends'
+import { getConnInfo } from '@acryldev/blends/bun'
 ```
 
 **Node.js**
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { getConnInfo } from 'acrylblends/node-server'
+import { Acryl } from '@acryldev/blends'
+import { getConnInfo } from '@acryldev/blends/node-server'
 ```
 
 ## Usage

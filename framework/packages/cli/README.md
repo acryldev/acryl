@@ -58,13 +58,13 @@ export default app
 ## Start an app in five minutes
 
 ```sh
-npm create acrylblends@latest my-app
+npm create @acryldev/blends@latest my-app
 cd my-app
 npm install
 npm run dev
 ```
 
-The starter asks which template you want; naming one skips the question (`npm create acrylblends@latest my-app notes`).
+The starter asks which template you want; naming one skips the question (`npm create @acryldev/blends@latest my-app notes`).
 
 | Template | What you get |
 | --- | --- |
@@ -107,7 +107,7 @@ and readable by any tool as plain JSON at <https://acrylblends.github.io/registr
 `acrylblends` starter is a whole app, and one command makes it from npm alone:
 
 ```sh
-npm create acrylblends@latest my-notes -- --from acrylblends.notes-desktop     # npm needs the -- before the options
+npm create @acryldev/blends@latest my-notes -- --from acrylblends.notes-desktop     # npm needs the -- before the options
 cd my-notes
 npm install
 npm run dev
@@ -169,7 +169,7 @@ export default app
 Serve it on Node.js with the adapter in `server.ts`:
 
 ```ts
-import { serve } from 'acrylblends/node-server'
+import { serve } from '@acryldev/blends/node-server'
 import app from './index.ts'
 
 serve({ fetch: app.fetch, port: 3000 }, (info) => {
@@ -191,7 +191,7 @@ For Bun, `bun run index.ts` serves the same `export default app`. The same app m
 
 ```ts
 import { Acryl } from 'acrylblends'
-import { HTTPException } from 'acrylblends/http-exception'
+import { HTTPException } from '@acryldev/blends/http-exception'
 
 type Book = { id: string, title: string }
 const books = new Map<string, Book>()
@@ -230,10 +230,10 @@ Each built-in middleware has its own subpath:
 
 ```ts
 import { Acryl } from 'acrylblends'
-import { cors } from 'acrylblends/cors'
-import { logger } from 'acrylblends/logger'
-import { secureHeaders } from 'acrylblends/secure-headers'
-import { bearerAuth } from 'acrylblends/bearer-auth'
+import { cors } from '@acryldev/blends/cors'
+import { logger } from '@acryldev/blends/logger'
+import { secureHeaders } from '@acryldev/blends/secure-headers'
+import { bearerAuth } from '@acryldev/blends/bearer-auth'
 
 const app = new Acryl()
 
@@ -256,7 +256,7 @@ in the handler:
 
 ```ts
 import { Acryl } from 'acrylblends'
-import { validator } from 'acrylblends/validator'
+import { validator } from '@acryldev/blends/validator'
 
 const app = new Acryl()
 
@@ -289,7 +289,7 @@ export default app
 
 ```ts
 // client.ts
-import { hc } from 'acrylblends/client'
+import { hc } from '@acryldev/blends/client'
 import type { AppType } from './api.ts'
 
 const client = hc<AppType>('http://localhost:3000')
@@ -325,9 +325,9 @@ Run it with `node --test`. `acrylblends/testing` adds `testClient`, the typed cl
 
 ```ts
 import { Acryl } from 'acrylblends'
-import { serve } from 'acrylblends/node-server'
-import { serveStatic } from 'acrylblends/node-server/serve-static'
-import { getConnInfo } from 'acrylblends/node-server/conninfo'
+import { serve } from '@acryldev/blends/node-server'
+import { serveStatic } from '@acryldev/blends/node-server/serve-static'
+import { getConnInfo } from '@acryldev/blends/node-server/conninfo'
 
 const app = new Acryl()
 app.use('/static/*', serveStatic({ root: './' }))
@@ -354,7 +354,7 @@ See [Node.js](https://github.com/acrylblends/acrylblends/blob/main/docs/framewor
 | `acrylblends/cache`, `acrylblends/mount` | the cache middleware and mounting another framework's fetch handler |
 | `acrylblends/ssg` | static site generation: `toSSG` writes every route as a file ([SSG helper](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/helpers/ssg.md)) |
 | `acrylblends/proxy`, `acrylblends/dev` | the proxy helper and the dev helpers (`showRoutes`, `inspectRoutes`, `getRouterName`) |
-| `acrylblends/jsx` | JSX on the server: `jsxImportSource: 'acrylblends/jsx'`, `.tsx` files run on Node with `node --import acrylblends/node-server/register`, with `jsx/streaming`, and `acrylblends/jsx-renderer` for a layout behind `c.render` ([JSX guide](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/guides/jsx.md)) |
+| `acrylblends/jsx` | JSX on the server: `jsxImportSource: '@acryldev/blends/jsx'`, `.tsx` files run on Node with `node --import acrylblends/node-server/register`, with `jsx/streaming`, and `acrylblends/jsx-renderer` for a layout behind `c.render` ([JSX guide](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/guides/jsx.md)) |
 | `acrylblends/jsx/dom` | JSX in the browser: hooks and `render` (needs the DOM library) ([client components](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/guides/jsx-dom.md)); on Node, `clientModules` serves them to the browser without a bundler ([guide](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/guides/client-modules.md)) |
 | `acrylblends/drivers` | the driver contract of the agent panel (`ChatDriver`, `TerminalDriver`, `Drivers`), for plugins that add an agent to the panel |
 | `acrylblends/css` | CSS in JSX: `css`, `cx`, `keyframes`, `Style` ([CSS helper](https://github.com/acrylblends/acrylblends/blob/main/docs/framework/helpers/css.md)) |

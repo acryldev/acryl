@@ -154,8 +154,8 @@ try {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import * as vitest from 'vitest'
-import { openKv } from 'acrylblends/kv/json'
-import { describeKvConformance } from 'acrylblends/kv/conformance'
+import { openKv } from '@acryldev/blends/kv/json'
+import { describeKvConformance } from '@acryldev/blends/kv/conformance'
 
 describeKvConformance('json file', async () => {
   const path = join(await mkdtemp(join(tmpdir(), 'kv-')), 'kv.json')
@@ -170,7 +170,7 @@ describeKvConformance('json file', async () => {
   writeFileSync(
     join(provider, 'tests', 'missing.spec.ts'),
     `import { expect, it } from 'vitest'
-import { describeKvConformance } from 'acrylblends/kv/conformance'
+import { describeKvConformance } from '@acryldev/blends/kv/conformance'
 
 it('says what to pass when the suite is not given vitest', () => {
   expect(() => describeKvConformance('x', async () => { throw new Error('unused') }, undefined as never)).toThrow(/third argument/)

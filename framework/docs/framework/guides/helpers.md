@@ -5,7 +5,7 @@ Helpers are available to assist in developing your application. Unlike middlewar
 For instance, here's how to use the [Cookie helper](../helpers/cookie.md):
 
 ```ts
-import { getCookie, setCookie } from 'acrylblends/cookie'
+import { getCookie, setCookie } from '@acryldev/blends/cookie'
 
 const app = new Acryl()
 

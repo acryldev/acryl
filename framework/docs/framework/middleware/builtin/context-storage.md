@@ -7,12 +7,12 @@ The Context Storage Middleware stores the Acryl `Context` in the `AsyncLocalStor
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import {
   contextStorage,
   getContext,
   tryGetContext,
-} from 'acrylblends/context-storage'
+} from '@acryldev/blends/context-storage'
 ```
 
 ## Usage

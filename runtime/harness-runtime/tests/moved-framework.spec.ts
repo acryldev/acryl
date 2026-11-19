@@ -45,7 +45,7 @@ describe('an import of a moved framework package', () => {
     const router = failure(() => resolve('@acryldev/router'))
     expect(router).toContain("'@acryldev/router' is part of acrylblends")
     expect(router).toContain("'acrylblends/cordis/router'")
-    expect(failure(() => resolve('@acryldev/router/middleware'))).toContain("'acrylblends/body-limit'")
+    expect(failure(() => resolve('@acryldev/router/middleware'))).toContain("'@acryldev/blends/body-limit'")
     // Any other missing package fails as before.
     expect(failure(() => resolve('not-a-framework-package'))).not.toContain('acrylblends')
 

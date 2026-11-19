@@ -24,7 +24,7 @@ afterEach(() => {
 
 /** An app folder with the files a token could be mistaken into: the app's own files and the door's `.acryl` log. */
 function appFolder(): string {
-  const app = mkdtempSync(join(tmpdir(), '@acryldev/sign-in-app-'))
+  const app = mkdtempSync(join(tmpdir(), 'acryl-sign-in-app-'))
   cleanups.push(() => rmSync(app, { recursive: true, force: true }))
   mkdirSync(join(app, '.acryl'))
   writeFileSync(join(app, '.acryl', 'audit.log'), 'door: brief {"ok":true}\n')

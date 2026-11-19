@@ -19,7 +19,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = '@acryldev/support-client'
+export const name = 'acryl-support-client'
 /** `slots` for the section, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 

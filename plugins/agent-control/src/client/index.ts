@@ -9,7 +9,7 @@
 import type {} from '@acryldev/ui/frame'
 import type {} from '@acryldev/workspace/client'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import { PageChannel, UiDriver, UserInputClock } from 'acrylblends/door/page'
+import { PageChannel, UiDriver, UserInputClock } from '@acryldev/blends/door/page'
 import { createAuditApi } from './audit-api.ts'
 import { AuditSection } from './AuditSection.tsx'
 import { AgentDrivingIndicator } from './Indicator.tsx'
@@ -29,7 +29,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = '@acryldev/agent-control-client'
+export const name = 'acryl-agent-control-client'
 /** `slots` for the indicator and the audit section, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 
@@ -91,5 +91,5 @@ export function apply(ctx: ClientContext): void {
   }, AgentDrivingIndicator))
 }
 
-export { PageChannel, UiDriver } from 'acrylblends/door/page'
+export { PageChannel, UiDriver } from '@acryldev/blends/door/page'
 export { AgentDrivingIndicator } from './Indicator.tsx'

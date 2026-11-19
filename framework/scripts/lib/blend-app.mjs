@@ -155,7 +155,7 @@ export function assertSeedFits({ seed, resourcesApp }) {
  * Put a Blend into a product (a folder `resourcesApp`, the engine's `resources/app`): its files in `seed/`, its repository as `seed/template-git` with the
  * Program taken out of the commit (a source never holds it), and the marker naming the folder. The product's first app is made from it
  * (plugins/desktop-shell/product.ts). Throws one message listing what the engine lacks for this Blend.
- * @param seed - the pulled Blend's folder (`npm create acrylblends@latest app -- --from <id>`).
+ * @param seed - the pulled Blend's folder (`npm create @acryldev/blends@latest app -- --from <id>`).
  * @param git - the git to run (the product's own, else the one on the PATH).
  */
 export function applySeed({ seed, resourcesApp, git = 'git' }) {

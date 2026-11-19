@@ -5,8 +5,8 @@ The Factory Helper provides useful functions for creating Acryl's components suc
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { createFactory, createMiddleware } from 'acrylblends/factory'
+import { Acryl } from '@acryldev/blends'
+import { createFactory, createMiddleware } from '@acryldev/blends/factory'
 ```
 
 ## `createFactory()`
@@ -14,7 +14,7 @@ import { createFactory, createMiddleware } from 'acrylblends/factory'
 `createFactory()` will create an instance of the Factory class.
 
 ```ts
-import { createFactory } from 'acrylblends/factory'
+import { createFactory } from '@acryldev/blends/factory'
 
 const factory = createFactory()
 ```
@@ -75,9 +75,9 @@ app.use(messageMiddleware('Good evening!'))
 `createHandlers()` helps to define handlers in a different place than `app.get('/')`.
 
 ```ts
-import { createFactory } from 'acrylblends/factory'
-import { logger } from 'acrylblends/logger'
-declare module 'acrylblends' {
+import { createFactory } from '@acryldev/blends/factory'
+import { logger } from '@acryldev/blends/logger'
+declare module '@acryldev/blends' {
   interface ContextVariableMap {
     foo: string
   }
@@ -106,7 +106,7 @@ app.get('/api', ...handlers)
 If your application is like this, you have to set the `Env` in two places:
 
 ```ts
-import { createMiddleware } from 'acrylblends/factory'
+import { createMiddleware } from '@acryldev/blends/factory'
 
 type Env = {
   Variables: {
@@ -128,7 +128,7 @@ app.use(mw)
 By using `createFactory()` and `createApp()`, you can set the `Env` only in one place.
 
 ```ts
-import { createFactory } from 'acrylblends/factory'
+import { createFactory } from '@acryldev/blends/factory'
 
 // ...
 

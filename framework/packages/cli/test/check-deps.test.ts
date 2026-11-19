@@ -63,10 +63,10 @@ describe('classifySpecifier', () => {
     expect(classifySpecifier('pg')).toBe('driver')
     expect(classifySpecifier('pg/lib/client')).toBe('driver')
     expect(classifySpecifier('@electric-sql/pglite')).toBe('driver')
-    expect(classifySpecifier('acrylblends/db/sqlite')).toBe('opener')
+    expect(classifySpecifier('@acryldev/blends/db/sqlite')).toBe('opener')
     expect(classifySpecifier('@acryldev/db-sqlite/open')).toBe('opener')
     expect(classifySpecifier('electron')).toBe('electron')
-    expect(classifySpecifier('acrylblends/db')).toBeUndefined()
+    expect(classifySpecifier('@acryldev/blends/db')).toBeUndefined()
     expect(classifySpecifier('@acryldev/db')).toBeUndefined()
     expect(classifySpecifier('pgrx')).toBeUndefined()
     expect(classifySpecifier('postgres-array')).toBeUndefined()
@@ -78,8 +78,8 @@ describe('findViolations', () => {
   it('passes an app whose only provider import is its declared opener', () => {
     const dir = app(
       {
-        'src/db.ts': "import { openDb } from 'acrylblends/db/sqlite'\n",
-        'src/routes.ts': "import type { Db } from 'acrylblends/db'\n",
+        'src/db.ts': "import { openDb } from '@acryldev/blends/db/sqlite'\n",
+        'src/routes.ts': "import type { Db } from '@acryldev/blends/db'\n",
         'test/a.test.ts': "import { openDb } from '../src/db.ts'\n",
       },
       'src/db.ts',
@@ -89,9 +89,9 @@ describe('findViolations', () => {
   it('names the file and line of a driver imported in a route file', () => {
     const dir = app(
       {
-        'src/db.ts': "import { openDb } from 'acrylblends/db/sqlite'\n",
+        'src/db.ts': "import { openDb } from '@acryldev/blends/db/sqlite'\n",
         'src/routes.ts':
-          "import { Acryl } from 'acrylblends'\n\nimport { DatabaseSync } from 'node:sqlite'\n",
+          "import { Acryl } from '@acryldev/blends'\n\nimport { DatabaseSync } from 'node:sqlite'\n",
       },
       'src/db.ts',
     )
@@ -100,12 +100,12 @@ describe('findViolations', () => {
     ])
   })
   it('refuses the opener outside the declared file, and every provider when none is declared', () => {
-    const dir = app({ 'src/a.ts': "import { openDb } from 'acrylblends/db/sqlite'\n" })
+    const dir = app({ 'src/a.ts': "import { openDb } from '@acryldev/blends/db/sqlite'\n" })
     expect(findViolations(dir).map((v) => v.kind)).toEqual(['opener'])
     const two = app(
       {
-        'src/db.ts': "import 'acrylblends/db/sqlite'\n",
-        'src/other.ts': "import 'acrylblends/db/sqlite'\n",
+        'src/db.ts': "import '@acryldev/blends/db/sqlite'\n",
+        'src/other.ts': "import '@acryldev/blends/db/sqlite'\n",
       },
       ['src/db.ts', 'src/extra.ts'],
     )
@@ -139,7 +139,7 @@ describe('check-deps', () => {
     }
     expect(await runCli(['check-deps'], io)).toBe(1)
     expect(err).toContain('src/routes.ts:1: "pg" is a database driver')
-    const good = app({ 'src/routes.ts': "import type { Db } from 'acrylblends/db'\n" })
+    const good = app({ 'src/routes.ts': "import type { Db } from '@acryldev/blends/db'\n" })
     expect(await runCli(['check-deps', good], { ...io, cwd: scratch })).toBe(0)
     expect(out).toContain('no app code imports a database provider')
     expect(await runCli(['check-deps', 'a', 'b'], io)).toBe(2)

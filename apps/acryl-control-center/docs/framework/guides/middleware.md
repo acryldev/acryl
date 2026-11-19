@@ -81,10 +81,10 @@ Note that if the handler or any middleware throws, acrylblends will catch it and
 Acryl has built-in middleware.
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { poweredBy } from 'acrylblends/powered-by'
-import { logger } from 'acrylblends/logger'
-import { basicAuth } from 'acrylblends/basic-auth'
+import { Acryl } from '@acryldev/blends'
+import { poweredBy } from '@acryldev/blends/powered-by'
+import { logger } from '@acryldev/blends/logger'
+import { basicAuth } from '@acryldev/blends/basic-auth'
 
 const app = new Acryl()
 
@@ -143,7 +143,7 @@ However, embedding middleware directly within `app.use()` can limit its reusabil
 To ensure we don't lose type definitions for `context` and `next`, when separating middleware, we can use [`createMiddleware()`](../helpers/factory.md#createmiddleware) from Acryl's factory. This also allows us to type-safely [access data we've `set` in `Context`](../api/context.md#set-get) from downstream handlers.
 
 ```ts
-import { createMiddleware } from 'acrylblends/factory'
+import { createMiddleware } from '@acryldev/blends/factory'
 
 const logger = createMiddleware(async (c, next) => {
   console.log(`[${c.req.method}] ${c.req.url}`)
@@ -176,7 +176,7 @@ const stripRes = createMiddleware(async (c, next) => {
 To access the context inside middleware arguments, directly use the context parameter provided by `app.use`. See the example below for clarification.
 
 ```ts
-import { cors } from 'acrylblends/cors'
+import { cors } from '@acryldev/blends/cors'
 
 app.use('*', async (c, next) => {
   const middleware = cors({
@@ -191,7 +191,7 @@ app.use('*', async (c, next) => {
 To extend the context inside middleware, use `c.set`. You can make this type-safe by passing a `{ Variables: { yourVariable: YourVariableType } }` generic argument to the `createMiddleware` function.
 
 ```ts
-import { createMiddleware } from 'acrylblends/factory'
+import { createMiddleware } from '@acryldev/blends/factory'
 
 const echoMiddleware = createMiddleware<{
   Variables: {
@@ -212,7 +212,7 @@ app.get('/echo', echoMiddleware, (c) => {
 When you chain multiple middleware using `.use()`, Acryl automatically accumulates the `Variables` types. Route handlers that follow the middleware chain can access all variables from every preceding middleware in a type-safe way:
 
 ```ts
-import { createMiddleware } from 'acrylblends/factory'
+import { createMiddleware } from '@acryldev/blends/factory'
 
 const authMiddleware = createMiddleware<{
   Variables: { user: { id: string; name: string } }

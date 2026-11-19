@@ -285,12 +285,12 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // eight lines, none new) are counted for the first time. Routing them through @acryldev/ui's seam is its own task.
 const DSH_IMPORT_CEILING = { total: 146, outsideSeam: 112 }
 const SEAM_FILES = [
-  /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
-  /^runtime\/acryl-web-service\/src\/index\.ts$/,
-  /^runtime\/acryl-harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
+  /^runtime\/harness-runtime\/src\/engine-[a-z-]+\.ts$/,
+  /^runtime\/web\/src\/index\.ts$/,
+  /^runtime\/harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
   /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
   /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
-  /^plugins\/acryl-ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|chat\.ts|registry\/.*))$/,
+  /^plugins\/ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|chat\.ts|registry\/.*))$/,
 ]
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
   const path = resolve(dir, entry.name)

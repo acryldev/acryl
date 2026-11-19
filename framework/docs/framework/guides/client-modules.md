@@ -13,7 +13,7 @@ better tool; see [The `acrylblends/jsx/dom` runtime](jsx-dom.md#the-acrylblendsj
 The routes, with the type the browser's typed client uses, in a file of their own (`app.ts`):
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const app = new Acryl()
   .get('/', (c) =>
@@ -30,8 +30,8 @@ export type AppType = typeof app
 The Node entry routes the client modules next to them (`site.ts`):
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { clientModules, serve } from 'acrylblends/node-server'
+import { Acryl } from '@acryldev/blends'
+import { clientModules, serve } from '@acryldev/blends/node-server'
 import { app } from './app.ts'
 
 const site = new Acryl()
@@ -44,8 +44,8 @@ serve({ fetch: site.fetch, port: 3000 })
 A client component (`src/client/counter.tsx`), with a helper module beside it (`src/client/parts/label.ts`):
 
 ```tsx
-import { render, useState } from 'acrylblends/jsx/dom'
-import { hc } from 'acrylblends/client'
+import { render, useState } from '@acryldev/blends/jsx/dom'
+import { hc } from '@acryldev/blends/client'
 import type { AppType } from '../../app.ts'
 import { label } from './parts/label.ts'
 
@@ -81,7 +81,7 @@ types. This is why `AppType` comes from `app.ts`, which does not import the Node
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "acrylblends/jsx/dom",
+    "jsxImportSource": "@acryldev/blends/jsx/dom",
     "types": []
   },
   "include": ["**/*.ts", "**/*.tsx"]
@@ -93,8 +93,8 @@ types. This is why `AppType` comes from `app.ts`, which does not import the Node
 A page can carry server-rendered markup for an island and take it over in the browser with `hydrateRoot` from `acrylblends/jsx/dom/client`:
 
 ```tsx
-import { useState } from 'acrylblends/jsx/dom'
-import { hydrateRoot } from 'acrylblends/jsx/dom/client'
+import { useState } from '@acryldev/blends/jsx/dom'
+import { hydrateRoot } from '@acryldev/blends/jsx/dom/client'
 
 const Counter = () => {
   const [count, setCount] = useState(0)
@@ -115,7 +115,7 @@ server markup of an island, or render them only in the browser.
 An island that owns an input keeps the text in state and writes it back to the element, so typing and clearing the box both work:
 
 ```tsx
-import { render, useState } from 'acrylblends/jsx/dom'
+import { render, useState } from '@acryldev/blends/jsx/dom'
 
 const Ask = () => {
   const [text, setText] = useState('')
@@ -181,7 +181,7 @@ Compile the client folder once when you build, as the `build` script of your `pa
 ```json
 {
   "scripts": {
-    "build": "node --input-type=module -e \"import { buildClientModules } from 'acrylblends/node-server'; buildClientModules({ root: 'src/client', outDir: 'dist/client' })\""
+    "build": "node --input-type=module -e \"import { buildClientModules } from '@acryldev/blends/node-server'; buildClientModules({ root: 'src/client', outDir: 'dist/client' })\""
   }
 }
 ```

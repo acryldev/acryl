@@ -34,7 +34,6 @@
       "!**/*.md",
       "!framework/docs/design",
       "!framework/specs/*/design",
-      "!plugins/acryl-*",
       "!plugins/driver-pty/client/vendor",
       "!plugins/driver-acp/test/acp-v1",
       "!framework/packages/framework",

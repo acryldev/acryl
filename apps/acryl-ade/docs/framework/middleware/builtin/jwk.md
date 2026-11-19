@@ -28,9 +28,9 @@ If you need additional token checks beyond the above (for example, custom applic
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { jwk } from 'acrylblends/jwk'
-import { verifyWithJwks } from 'acrylblends/jwt'
+import { Acryl } from '@acryldev/blends'
+import { jwk } from '@acryldev/blends/jwk'
+import { verifyWithJwks } from '@acryldev/blends/jwt'
 ```
 
 ## Usage

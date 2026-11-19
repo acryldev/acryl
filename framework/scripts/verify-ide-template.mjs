@@ -1269,7 +1269,7 @@ function releaseServing(app, name, path) {
   )
   writeFileSync(
     join(source, 'index.ts'),
-    `import { Acryl } from 'acrylblends'
+    `import { Acryl } from '@acryldev/blends'
 export const name = '${name}'
 export const inject = ['router']
 export function apply(ctx) {

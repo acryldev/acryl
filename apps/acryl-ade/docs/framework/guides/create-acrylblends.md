@@ -1,6 +1,6 @@
 # create-acrylblends
 
-`create-acrylblends` is the project initializer that runs when you run `npm create acrylblends@latest`, `npx create-acrylblends@latest`, `pnpm create acrylblends@latest`,
+`create-acrylblends` is the project initializer that runs when you run `npm create @acryldev/blends@latest`, `npx create-acrylblends@latest`, `pnpm create @acryldev/blends@latest`,
 `yarn create acrylblends` or `bun create acrylblends@latest`. It creates a folder with a working Acryl application for the runtime you choose.
 
 ## Templates
@@ -14,7 +14,7 @@
 | `todo` | a to-do list on the router and state: CRUD routes, a page, tests |
 | `agent` | the blank app with an offline agent that builds plugins into the running app, through the door (`acryl-app` is the old name for it and still works) |
 
-Every template is a Cordis app: `blend.yaml` lists the plugins that are mounted, every plugin is a folder in `plugins/`, and the app is started by `src/main.ts`. A bare template name after the directory is the same as `--template`: `npm create acrylblends@latest my-app notes`. `bun` is no longer a template; the framework still runs on Bun (see [Bun](../getting-started/bun.md)), but a new app is a Cordis app on Node.
+Every template is a Cordis app: `blend.yaml` lists the plugins that are mounted, every plugin is a folder in `plugins/`, and the app is started by `src/main.ts`. A bare template name after the directory is the same as `--template`: `npm create @acryldev/blends@latest my-app notes`. `bun` is no longer a template; the framework still runs on Bun (see [Bun](../getting-started/bun.md)), but a new app is a Cordis app on Node.
 
 Every template includes `AGENTS.md` and `CLAUDE.md` (the same text), two skills (`acryl-app`, `cordis-plugin`) in `.claude/skills/` and `.agents/skills/`, and a copy of these docs in `docs/framework/`, so a coding agent working in the folder reads the
 API from the folder.
@@ -26,7 +26,7 @@ When you use `npm create` (or `npx`), arguments meant for the initializer must b
 **npm**
 
 ```sh
-npm create acrylblends@latest my-app -- --template nodejs
+npm create @acryldev/blends@latest my-app -- --template nodejs
 ```
 
 **yarn**
@@ -38,7 +38,7 @@ yarn create acrylblends my-app --template nodejs
 **pnpm**
 
 ```sh
-pnpm create acrylblends@latest my-app --template nodejs
+pnpm create @acryldev/blends@latest my-app --template nodejs
 ```
 
 **bun**
@@ -68,7 +68,7 @@ The templates are inside the package, so creating a project needs no network exc
 The [registry](https://acrylblends.github.io/blends) lists starters people published. Each is a whole app (`blend.yaml`, `plugins/`, `src/`, `package.json`, `README.md`) that other people can start from, and its index says which runtime it is for:
 
 ```sh
-npm create acrylblends@latest my-notes -- --from acrylblends.notes-desktop
+npm create @acryldev/blends@latest my-notes -- --from acrylblends.notes-desktop
 cd my-notes
 npm install
 npm run dev
@@ -89,10 +89,10 @@ To publish a starter of your own, see [the registry README](https://github.com/a
 A second argument after the directory makes the app from someone else's template:
 
 ```sh
-npm create acrylblends@latest my-app github:acme/starter          # a GitHub repository (the default branch)
-npm create acrylblends@latest my-app github:acme/starter#v1.2      # a tag, branch or commit
-npm create acrylblends@latest my-app @acme/starter                 # an npm package
-npm create acrylblends@latest my-app ./acme-starter-1.0.0.tgz      # a packed template on disk
+npm create @acryldev/blends@latest my-app github:acme/starter          # a GitHub repository (the default branch)
+npm create @acryldev/blends@latest my-app github:acme/starter#v1.2      # a tag, branch or commit
+npm create @acryldev/blends@latest my-app @acme/starter                 # an npm package
+npm create @acryldev/blends@latest my-app ./acme-starter-1.0.0.tgz      # a packed template on disk
 ```
 
 A template is a folder (a repository, or an npm package) with an `acryl.template.json` at its top:
@@ -124,7 +124,7 @@ To publish your own: put `acryl.template.json` in the repository or package, nam
 ### Interactive
 
 ```sh
-npm create acrylblends@latest my-app
+npm create @acryldev/blends@latest my-app
 ```
 
 This asks which template you want.
@@ -132,7 +132,7 @@ This asks which template you want.
 ### Non-interactive
 
 ```sh
-npm create acrylblends@latest my-app -- --template nodejs --pm npm --install
+npm create @acryldev/blends@latest my-app -- --template nodejs --pm npm --install
 ```
 
 This creates `my-app` from the `nodejs` template and installs its dependencies with npm.
@@ -140,4 +140,4 @@ This creates `my-app` from the `nodejs` template and installs its dependencies w
 ## Troubleshooting
 
 - If an argument is not recognized, make sure you forward it with `--` when you use `npm create` or `npx`.
-- Run `npm create acrylblends@latest -- --help` to see the arguments of the version you have.
+- Run `npm create @acryldev/blends@latest -- --help` to see the arguments of the version you have.

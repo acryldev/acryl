@@ -7,8 +7,8 @@
 
 import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
-import { apply as applyRouter, name as routerName } from 'acrylblends/cordis/router'
-import * as routerHttpPlugin from 'acrylblends/cordis/router-http'
+import { apply as applyRouter, name as routerName } from '@acryldev/blends/cordis/router'
+import * as routerHttpPlugin from '@acryldev/blends/cordis/router-http'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as signIn from '../src/index.ts'
 import { SIGN_IN_API_PREFIX, SIGN_IN_BEGIN_PATH, SIGN_IN_PROVIDERS_PATH } from '../src/contract.ts'

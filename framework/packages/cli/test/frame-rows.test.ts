@@ -5,8 +5,8 @@
  */
 
 import { Context, type Fiber } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
-import * as router from 'acrylblends/cordis/router'
+import { Acryl } from '@acryldev/blends'
+import * as router from '@acryldev/blends/cordis/router'
 import { describe, expect, it } from 'vitest'
 import { appPluginsRow } from '../src/frame-rows'
 

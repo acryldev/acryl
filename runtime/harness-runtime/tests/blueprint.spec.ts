@@ -86,7 +86,7 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
-    expect(capabilityIds).toEqual(['authorization', '@acryldev/settings'])
+    expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])
     expect(createAcrylShellCapabilityPatches(new Set(['web']), 'advanced', new Set(), capabilities)).toEqual([])
   })
 
@@ -95,7 +95,7 @@ describe('what each Blueprint composes', () => {
     expect(insertedIds(patches)).toEqual(['@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/plugin-hub/manager'])
     expect(packages).toContain('@acryldev/ui-tui')
     const tui = insertedIds(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(), new Set(BLANK_BLUEPRINT.capabilities)))
-    expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', '@acryldev/settings'])
+    expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('a custom brand carries into the system prompt identity, and a row the profile already has is not composed twice', () => {

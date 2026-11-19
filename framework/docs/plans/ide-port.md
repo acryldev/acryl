@@ -50,7 +50,7 @@ The door stays in every slice. Every slice ends with the original tests of what 
 | 3. DSH chat | chat with DSH next to the terminals; sessions in the left panel; connect a model (API key now, OAuth in slice 5) | DSH's conversation UI is already in the page; the work is connection, first run, session persistence, the chat tab selection, model settings in the ACRYL frame | 8-16 h |
 | 4. Files, diff, changes | edit files (CodeMirror), diffs, stage and commit, review threads, checks, the board, docs tabs | right-panel tabs and tiles of the workspace: they come with slice 2's port, so this slice is tests, gates and the screenshot comparisons | 8-16 h |
 | 5. Sign-in | connect a provider by account (OAuth) from Settings > Models; keys and tokens stay in DSH's or the agent's own store, never in the page, the app folder, `.acryl`, the audit log or what `make-entry` and the production build pack | `@acryldev/sign-in` (11 files, 1.1k lines); the test with a fake agent that does a browser-style login and shows the state moving; no token string in any file | 8-12 h |
-| 6. Templates | `npm create acrylblends@latest my-app <template>` for every template starts in the frame; `blank` is the frame with the main surface nearly empty; `acrylblends upgrade` moves an existing app onto it | the generated profile and overlay per template, the upgrade path, docs, gates (real Chrome, real Electron, Windows), the workshop guide's blocks | 24-36 h |
+| 6. Templates | `npm create @acryldev/blends@latest my-app <template>` for every template starts in the frame; `blank` is the frame with the main surface nearly empty; `acrylblends upgrade` moves an existing app onto it | the generated profile and overlay per template, the upgrade path, docs, gates (real Chrome, real Electron, Windows), the workshop guide's blocks | 24-36 h |
 | Electron (alongside 5 and 6) | the frame in a desktop window | section 4 | 8-16 h |
 
 Total: about 105-170 agent hours after the spike (the earlier estimate was 130-200 with the client contract to port). Slices 3 and 4 can move after 5 if the owner wants OAuth first; slice 1 cannot move: everything else needs the frame.
@@ -62,7 +62,7 @@ Total: about 105-170 agent hours after the spike (the earlier estimate was 130-2
 ## 3. What the attendee runs
 
 ```
-npm create acrylblends@latest my-app agent
+npm create @acryldev/blends@latest my-app agent
 cd my-app
 npm run dev
 ```

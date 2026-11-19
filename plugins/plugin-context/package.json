@@ -45,7 +45,7 @@
     "@acryldev/blends-core": "workspace:*",
     "@acryldev/plugin-hub-core": "workspace:*",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
-    "acrylblends": "workspace:^",
+    "@acryldev/blends": "workspace:^",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

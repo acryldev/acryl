@@ -21,7 +21,7 @@ afterEach(async () => {
 })
 
 function folder(): string {
-  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-open-'))
+  const root = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-open-'))
   folders.push(root)
   return root
 }

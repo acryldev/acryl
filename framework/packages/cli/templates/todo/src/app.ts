@@ -20,11 +20,11 @@ import { FRAME_MOUNT_PREFIX } from './todo.ts'
 
 /** The plugins this app's code provides. `blend.yaml` chooses, orders and configures them, and adds the app's own plugins from `plugins/` by name. */
 export const registry = {
-  '@acryldev/router': router,
-  '@acryldev/state': state,
+  'acryl-router': router,
+  'acryl-state': state,
   todo,
-  '@acryldev/node-server': nodeServer,
-  '@acryldev/door': door,
+  'acryl-node-server': nodeServer,
+  'acryl-door': door,
 }
 
 export const APP_NAME = '__APP_NAME__'
@@ -77,13 +77,13 @@ export interface AppOptions {
 /** The rows the frame host provides: the app contributes only the plugins that are its own. */
 const HOST_ROWS = [
   'instance',
-  '@acryldev/router',
-  '@acryldev/node-server',
-  '@acryldev/web-server',
-  '@acryldev/page',
+  'acryl-router',
+  'acryl-node-server',
+  'acryl-web-server',
+  'acryl-page',
   'manifest',
   'save',
-  '@acryldev/door',
+  'acryl-door',
 ]
 
 /**
@@ -102,8 +102,8 @@ export async function composeInto(
   const prefix = options.prefix ?? (options.host === true ? FRAME_MOUNT_PREFIX : undefined)
   const leaveOut = new Set<string>(options.host === true ? HOST_ROWS : [])
   // The server, and the door that needs it, are not mounted when the app is reached in process or inside the frame host.
-  if (!own) leaveOut.add('@acryldev/node-server').add('@acryldev/door')
-  if (!doorEnabled()) leaveOut.add('@acryldev/door')
+  if (!own) leaveOut.add('acryl-node-server').add('acryl-door')
+  if (!doorEnabled()) leaveOut.add('acryl-door')
   const manifest = without(read, ...leaveOut)
   // The rows that name one of the app's own plugin folders (a feature: plugins/<name>/ and its row) rather than a registry import; each one that runs is imported here.
   const ownRows = [

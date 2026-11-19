@@ -15,7 +15,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acrylblends": "workspace:^",
+    "@acryldev/blends": "workspace:^",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
@@ -36,16 +36,16 @@
   ],
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
-    "acrylblends": "^1.0.0"
+    "@acryldev/blends": "^1.0.0"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
     "requiresAcrylPackages": [
-      "acrylblends/cordis/router",
-      "acrylblends/cordis/router-http",
-      "acrylblends/cordis/state"
+      "@acryldev/blends/cordis/router",
+      "@acryldev/blends/cordis/router-http",
+      "@acryldev/blends/cordis/state"
     ]
   }
 }

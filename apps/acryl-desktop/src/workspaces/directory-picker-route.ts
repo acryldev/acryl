@@ -1,4 +1,4 @@
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {

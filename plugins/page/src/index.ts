@@ -13,7 +13,7 @@ import type {} from '@acryldev/web-server'
 import { ACRYL_FAVICON_SVG, pageManifest } from './favicon.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = '@acryldev/page'
+export const name = 'acryl-page'
 
 /** The page is served through the host's webServer port. */
 export const inject = ['webServer']

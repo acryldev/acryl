@@ -31,12 +31,14 @@ interface RowDeclaration extends RowModule {
   readonly needs?: readonly RowModule[]
 }
 
-/** The framework's package (spec 049 slice 17): its Cordis plugins are subpaths, and each row's id is its module, by the row-naming rule. */
-const FRAMEWORK_PACKAGE = 'acrylblends'
+/** The framework's package (spec 049 slice 17): its Cordis plugins are subpaths. The package moved into the scope (spec 051 T038); row ids stay as they were. */
+const FRAMEWORK_PACKAGE = '@acryldev/blends'
+/** The framework's package name before spec 051 T038: a row id is persisted, so it keeps this name while the module moves. */
+const LEGACY_FRAMEWORK_PACKAGE = 'acrylblends'
 
 function frameworkRow(plugin: string): RowModule {
   const module = `${FRAMEWORK_PACKAGE}/cordis/${plugin}`
-  return { rowId: module, module, packageName: FRAMEWORK_PACKAGE }
+  return { rowId: `${LEGACY_FRAMEWORK_PACKAGE}/cordis/${plugin}`, module, packageName: FRAMEWORK_PACKAGE }
 }
 
 /** A row whose module is its own package, under the package's name. */

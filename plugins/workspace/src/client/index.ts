@@ -71,7 +71,7 @@ import { WorkspaceCanvas } from './canvas/WorkspaceCanvas.tsx'
  */
 export const WORKSPACE_MAIN_PRIORITY = -1
 
-export const name = '@acryldev/workspace-client'
+export const name = 'acryl-workspace-client'
 // `theme` is read by the shell's theme presenter; Cordis rejects reading a service a plugin did not declare.
 export const inject = ['slots', 'theme']
 

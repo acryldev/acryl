@@ -26,7 +26,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const name = '@acryldev/versions-client'
+export const name = 'acryl-versions-client'
 
 export function apply(ctx: ClientContext): void {
   const api = createVersionsApi()

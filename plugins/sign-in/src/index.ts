@@ -7,8 +7,8 @@
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acrylblends/cordis/router'
-import type {} from 'acrylblends/cordis/router-http'
+import type {} from '@acryldev/blends/cordis/router'
+import type {} from '@acryldev/blends/cordis/router-http'
 import {
   createDefaultModelAdoption, createRouteActivation, isRouteUsable,
   type CredentialProjectionConfigurableProvider, type DefaultModelAdoptionPort, type DefaultModelAdoptionPorts, type RouteActivationSettingsPort, type RouteUsabilityServices,
@@ -18,7 +18,7 @@ import type { DeepSeekAccountPort } from './deepseek-account.ts'
 import { SIGN_IN_API_PREFIX } from './contract.ts'
 import { signInRoutes } from './route.ts'
 
-export const name = '@acryldev/sign-in'
+export const name = 'acryl-sign-in'
 /** This package's version (`lib/index.js` sits one folder below `package.json`), sent to DeepSeek as the requesting client's version. */
 const VERSION = (createRequire(import.meta.url)('../package.json') as { version: string }).version
 /** The routes are served through the framework's router; `acrylWeb` still names the origin DeepSeek's browser sign-in returns to. */

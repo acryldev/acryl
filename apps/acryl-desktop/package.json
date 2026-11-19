@@ -441,7 +441,7 @@
     "@acryldev/sign-in": "workspace:*",
     "@acryldev/system-prompt": "workspace:*",
     "@acryldev/workspace": "workspace:*",
-    "acrylblends": "workspace:^",
+    "@acryldev/blends": "workspace:^",
     "adm-zip": "^0.6.1",
     "commander": "^15.0.0",
     "@acryldev/cordis-plugin-market": "workspace:*",

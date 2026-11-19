@@ -28,7 +28,7 @@ async function mount(config?: unknown): Promise<{ fiber: { dispose(): Promise<vo
   host = await testHost()
   port = host.port
 
-  const home = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-online-'))
+  const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-online-'))
   roots.push(home)
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)

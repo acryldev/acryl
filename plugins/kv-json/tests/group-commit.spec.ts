@@ -36,7 +36,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
 })
 async function file(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-json-group-'))
+  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-json-group-'))
   dirs.push(dir)
   return join(dir, 'kv.json')
 }

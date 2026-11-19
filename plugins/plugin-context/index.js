@@ -13,7 +13,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import { globalPluginsDir } from './lib/reconcile.js'
 import { listInstalledPlugins } from './lib/provenance.js'
 import { captureApp, captureBlend, verifyBlend, writeAppBlend, writeBlend } from './lib/blend-capture.js'

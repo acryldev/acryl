@@ -10,7 +10,7 @@ A starter is a Cordis app that arrives already wired: `blend.yaml`, its plugins 
 **npm**
 
 ```sh
-npm create acrylblends@latest my-app
+npm create @acryldev/blends@latest my-app
 ```
 
 **yarn**
@@ -22,7 +22,7 @@ yarn create acrylblends my-app
 **pnpm**
 
 ```sh
-pnpm create acrylblends@latest my-app
+pnpm create @acryldev/blends@latest my-app
 ```
 
 **bun**
@@ -62,7 +62,7 @@ In a generated app the routes live in `src/routes.ts`, which builds an `Acryl` a
 The `import` and the final `export default` are the same on Node.js and on Bun; what differs is how the runtime starts the app (see [Node.js](nodejs.md) and [Bun](bun.md)).
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -80,7 +80,7 @@ Start the development server and open the address it prints.
 Returning JSON is also easy. The following handles a GET request to `/api/hello` and returns an `application/json` response.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -97,7 +97,7 @@ app.get('/api/hello', (c) => {
 Getting a path parameter, a URL query value, and adding a response header is written as follows.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -112,7 +112,7 @@ app.get('/posts/:id', (c) => {
 POST, PUT and DELETE are handled the same way as GET.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -125,8 +125,8 @@ app.delete('/posts/:id', (c) => c.text(`${c.req.param('id')} is deleted!`))
 Write HTML with [the html helper](../helpers/html.md):
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { html } from 'acrylblends/html'
+import { Acryl } from '@acryldev/blends'
+import { html } from '@acryldev/blends/html'
 
 const app = new Acryl()
 
@@ -143,7 +143,7 @@ JSX works too: `acrylblends/jsx` renders on the server and in the browser, and t
 You can also return a raw Web Standard `Response`.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 
@@ -157,8 +157,8 @@ app.get('/', () => {
 Middleware can do the hard work for you. For example, add Basic Authentication.
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
-import { basicAuth } from 'acrylblends/basic-auth'
+import { Acryl } from '@acryldev/blends'
+import { basicAuth } from '@acryldev/blends/basic-auth'
 
 const app = new Acryl()
 
@@ -182,7 +182,7 @@ There are useful middleware included, such as Bearer and JWT authentication, COR
 An app is a function from `Request` to `Response`, so a test needs no server:
 
 ```ts twoslash
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 const app = new Acryl()
 app.get('/', (c) => c.text('Acryl!'))

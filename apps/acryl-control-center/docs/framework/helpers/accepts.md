@@ -5,8 +5,8 @@ Accepts Helper helps to handle Accept headers in the Requests.
 ## Import
 
 ```ts
-import { Acryl } from 'acrylblends'
-import { accepts } from 'acrylblends/accepts'
+import { Acryl } from '@acryldev/blends'
+import { accepts } from '@acryldev/blends/accepts'
 ```
 
 ## `accepts()`
@@ -14,7 +14,7 @@ import { accepts } from 'acrylblends/accepts'
 The `accepts()` function looks at the Accept header, such as Accept-Encoding and Accept-Language, and returns the proper value.
 
 ```ts
-import { accepts } from 'acrylblends/accepts'
+import { accepts } from '@acryldev/blends/accepts'
 
 app.get('/', (c) => {
   const accept = accepts(c, {

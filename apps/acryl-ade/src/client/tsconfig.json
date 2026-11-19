@@ -8,18 +8,18 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "acrylblends/jsx/dom",
+    "jsxImportSource": "@acryldev/blends/jsx/dom",
     "types": [],
     "paths": {
-      "acrylblends/jsx/dom": ["../../plugins/router/src/browser/jsx-dom.ts"],
-      "acrylblends/jsx/dom/jsx-runtime": [
+      "@acryldev/blends/jsx/dom": ["../../plugins/router/src/browser/jsx-dom.ts"],
+      "@acryldev/blends/jsx/dom/jsx-runtime": [
         "../../plugins/router/src/core/jsx/dom/jsx-runtime.ts"
       ],
-      "acrylblends/jsx/dom/jsx-dev-runtime": [
+      "@acryldev/blends/jsx/dom/jsx-dev-runtime": [
         "../../plugins/router/src/core/jsx/dom/jsx-dev-runtime.ts"
       ],
-      "acrylblends/jsx/dom/client": ["../../plugins/router/src/browser/jsx-dom.ts"],
-      "acrylblends/client": ["../../plugins/router/src/browser/client.ts"]
+      "@acryldev/blends/jsx/dom/client": ["../../plugins/router/src/browser/jsx-dom.ts"],
+      "@acryldev/blends/client": ["../../plugins/router/src/browser/client.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

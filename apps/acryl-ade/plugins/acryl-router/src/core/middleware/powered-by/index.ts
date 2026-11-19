@@ -20,7 +20,7 @@ type PoweredByOptions = {
  *
  * @example
  * ```ts
- * import { poweredBy } from 'acrylblends/powered-by'
+ * import { poweredBy } from '@acryldev/blends/powered-by'
  *
  * const app = new Acryl()
  *

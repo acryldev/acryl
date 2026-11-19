@@ -257,7 +257,7 @@ describe('acrylblends preflight', () => {
     )
     expect(code).toBe(1)
     expect(out.trimEnd().split('\n').at(-1)).toBe(
-      '2 to fix before the workshop: run each FIX line, then npx acrylblends@latest preflight again.',
+      '2 to fix before the workshop: run each FIX line, then npx @acryldev/blends@latest preflight again.',
     )
   })
 
@@ -267,7 +267,7 @@ describe('acrylblends preflight', () => {
       { name: 'long paths', status: 'FIX', detail: 'b' },
     ])
     expect(text).toBe(
-      'PASS  node        a\nFIX   long paths  b\n1 to fix before the workshop: run each FIX line, then npx acrylblends@latest preflight again.\n',
+      'PASS  node        a\nFIX   long paths  b\n1 to fix before the workshop: run each FIX line, then npx @acryldev/blends@latest preflight again.\n',
     )
   })
 

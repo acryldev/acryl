@@ -1,6 +1,6 @@
 # acrylblends 1.3.1
 
-Pull plugins from several people into one app: a plugin whose route or widget another plugin already has is refused, naming that plugin; the list says who released each one; and every template that installs live can pull. `create-acrylblends` is unchanged (1.4.0); `npm create acrylblends@latest` installs this release.
+Pull plugins from several people into one app: a plugin whose route or widget another plugin already has is refused, naming that plugin; the list says who released each one; and every template that installs live can pull. `create-acrylblends` is unchanged (1.4.0); `npm create @acryldev/blends@latest` installs this release.
 
 ## Added
 
