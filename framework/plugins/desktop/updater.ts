@@ -22,6 +22,25 @@ export interface ReleaseSource {
   readonly repo: string
   /** The installer files' name stem (`ACRYL-Control-Center`): an asset is `<file>-<platform>-<arch>.<dmg|exe|deb>`. */
   readonly file: string
+  /**
+   * The product's own tags (`ade-v`) when its repository releases more than one product (acryldev/acryl: ACRYL ADE, Control Center, the desktop app):
+   * its newest release is the newest tag with this prefix, not the repository's latest. Absent: the repository's latest release, tagged `v<version>`.
+   */
+  readonly tagPrefix?: string
+}
+
+/** A release as GitHub's REST API returns it. */
+interface GitHubRelease {
+  tag_name?: string
+  html_url?: string
+  draft?: boolean
+  prerelease?: boolean
+  assets?: {
+    name?: string
+    browser_download_url?: string
+    size?: number
+    digest?: string | null
+  }[]
 }
 
 export interface Release {
@@ -72,23 +91,31 @@ export async function latestRelease(
   arch: string,
   fetcher: typeof fetch = fetch,
 ): Promise<Release | undefined> {
-  const answer = await fetcher(`https://api.github.com/repos/${source.repo}/releases/latest`, {
+  const prefix = source.tagPrefix
+  // GitHub lists releases newest first; 100 is its page maximum and far more than one product ships between two updates.
+  const url =
+    prefix === undefined
+      ? `https://api.github.com/repos/${source.repo}/releases/latest`
+      : `https://api.github.com/repos/${source.repo}/releases?per_page=100`
+  const answer = await fetcher(url, {
     headers: { accept: 'application/vnd.github+json', 'user-agent': 'acrylblends-desktop-updater' },
     signal: AbortSignal.timeout(15_000),
   })
   if (answer.status === 404) return undefined
   if (!answer.ok)
     throw new Error(`GitHub answered ${answer.status} for ${source.repo}'s latest release`)
-  const body = (await answer.json()) as {
-    tag_name?: string
-    html_url?: string
-    assets?: {
-      name?: string
-      browser_download_url?: string
-      size?: number
-      digest?: string | null
-    }[]
-  }
+  const listed = (await answer.json()) as GitHubRelease | GitHubRelease[]
+  const body = Array.isArray(listed)
+    ? listed.find(
+        (entry) =>
+          entry.draft !== true &&
+          entry.prerelease !== true &&
+          typeof entry.tag_name === 'string' &&
+          prefix !== undefined &&
+          entry.tag_name.startsWith(prefix),
+      )
+    : listed
+  if (body === undefined) return undefined
   const name = assetName(source, platform, arch)
   const asset = body.assets?.find((entry) => entry.name === name)
   if (
@@ -102,7 +129,8 @@ export async function latestRelease(
       ? asset.digest.slice('sha256:'.length)
       : undefined
   return {
-    version: body.tag_name.replace(/^v/u, ''),
+    version:
+      prefix === undefined ? body.tag_name.replace(/^v/u, '') : body.tag_name.slice(prefix.length),
     page: body.html_url ?? `https://github.com/${source.repo}/releases`,
     asset: {
       name,

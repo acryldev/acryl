@@ -80,6 +80,39 @@ test('the latest release and its installer for this machine, with the digest Git
   )
 })
 
+test('a product of a repository that releases several takes the newest release with its own tag prefix', async () => {
+  const shared = { repo: 'acryldev/acryl', file: 'ACRYL-ADE', tagPrefix: 'ade-v' }
+  const asset = (tag: string) => ({
+    tag_name: tag,
+    html_url: `https://github.com/acryldev/acryl/releases/tag/${tag}`,
+    assets: [
+      { name: 'ACRYL-ADE-mac-arm64.dmg', browser_download_url: `https://d/${tag}`, size: 3 },
+    ],
+  })
+  let asked = ''
+  const release = await latestRelease(shared, 'darwin', 'arm64', async (url) => {
+    asked = String(url)
+    return answer([
+      asset('desktop-v0.3.0'),
+      { ...asset('ade-v0.2.0'), draft: true },
+      { ...asset('ade-v0.1.20-rc.1'), prerelease: true },
+      asset('control-center-v0.1.9'),
+      asset('ade-v0.1.19'),
+      asset('ade-v0.1.18'),
+    ])
+  })
+  assert.equal(asked, 'https://api.github.com/repos/acryldev/acryl/releases?per_page=100')
+  assert.deepEqual(release, {
+    version: '0.1.19',
+    page: 'https://github.com/acryldev/acryl/releases/tag/ade-v0.1.19',
+    asset: { name: 'ACRYL-ADE-mac-arm64.dmg', url: 'https://d/ade-v0.1.19', size: 3 },
+  })
+  assert.equal(
+    await latestRelease(shared, 'darwin', 'arm64', async () => answer([asset('desktop-v0.3.0')])),
+    undefined,
+  )
+})
+
 test('a download is kept only when it matches the published checksum', async () => {
   const folder = mkdtempSync(join(tmpdir(), 'updater-'))
   try {

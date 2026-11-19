@@ -5,6 +5,7 @@
  *
  *   node scripts/pack-blank-mac.mjs [--out <dir>] [--arch arm64|x64]
  *   node scripts/pack-blank-mac.mjs --from acrylblends.small-crm [--product "Small CRM"]     a registry blueprint as its own product
+ *   node scripts/pack-blank-mac.mjs --from ../apps/acryl-ade --product "ACRYL ADE" --tag-prefix ade-v  a product of a repository that releases several
  *
  * The DMG carries the app itself: the frame and the Blank app it builds in, with Electron's own Node, so it needs no Node, npm or git. The bundle is
  * read-only; on the first start the packaged app makes the person's first app from it in the product's own folder of the OS per-user data folder
@@ -55,14 +56,24 @@ const npm = (npmArgs, options) =>
  * (in the frame), under its own name (`--product`, else the first heading of its README).
  */
 const from = option('--from', undefined)
-/** Where the product's newer builds are published: the Blend's GitHub repository (its `origin`), whose release workflow uploads this packer's files. */
+/**
+ * Where the product's newer builds are published: the Blend's GitHub repository (its `origin`), whose release workflow uploads this packer's files. A
+ * repository that releases several products (acryldev/acryl) passes `--tag-prefix`, so the updater takes this product's newest tag, not the repository's latest.
+ */
+const tagPrefix = option('--tag-prefix', undefined)
+if (tagPrefix !== undefined && !/^[\w.-]+$/u.test(tagPrefix))
+  throw new Error(
+    `pack-blank-mac: --tag-prefix ${tagPrefix} is not a tag prefix (letters, digits, . _ -)`,
+  )
 function releaseSource() {
   try {
     const remote = execFileSync('git', ['-C', from, 'remote', 'get-url', 'origin'], {
       encoding: 'utf8',
     }).trim()
     const repo = /github\.com[:/]([\w.-]+\/[\w.-]+?)(?:\.git)?$/u.exec(remote)?.[1]
-    return repo === undefined ? {} : { releases: { repo, file: FILE_NAME } }
+    return repo === undefined
+      ? {}
+      : { releases: { repo, file: FILE_NAME, ...(tagPrefix === undefined ? {} : { tagPrefix }) } }
   } catch {
     return {} // not a checkout, or no origin: the product has no update source
   }

@@ -38,7 +38,7 @@ export interface Product {
    */
   readonly build?: string
   /** Where newer builds are published (the packer reads the Blend's GitHub remote): the app offers them in place (plugins/desktop/updater.ts). */
-  readonly releases?: { readonly repo: string; readonly file: string }
+  readonly releases?: { readonly repo: string; readonly file: string; readonly tagPrefix?: string }
 }
 
 export const PRODUCT_FILE = 'product.json'
@@ -55,7 +55,7 @@ export function readProduct(bundle: string): Product | undefined {
       seed?: unknown
       named?: unknown
       build?: unknown
-      releases?: { repo?: unknown; file?: unknown }
+      releases?: { repo?: unknown; file?: unknown; tagPrefix?: unknown }
     }
     if (typeof product !== 'string' || product.trim() === '') return undefined
     return {
@@ -72,7 +72,16 @@ export function readProduct(bundle: string): Product | undefined {
       /^[\w.-]+\/[\w.-]+$/u.test(releases.repo) &&
       typeof releases.file === 'string' &&
       /^[\w.-]+$/u.test(releases.file)
-        ? { releases: { repo: releases.repo, file: releases.file } }
+        ? {
+            releases: {
+              repo: releases.repo,
+              file: releases.file,
+              // A repository that releases several products (acryldev/acryl: ade-v*, control-center-v*) names this product's tags by their prefix.
+              ...(typeof releases.tagPrefix === 'string' && /^[\w.-]+$/u.test(releases.tagPrefix)
+                ? { tagPrefix: releases.tagPrefix }
+                : {}),
+            },
+          }
         : {}),
     }
   } catch {

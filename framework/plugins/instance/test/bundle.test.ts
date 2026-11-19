@@ -281,3 +281,25 @@ test('product.json: named is read only as true; a finished Blend product says it
   )
   assert.equal(readProduct(bundle)?.named, undefined)
 })
+
+test('product.json: releases keeps a valid tag prefix and drops one that is not a tag prefix', () => {
+  const bundle = join(scratch, 'releases')
+  const releases = (tagPrefix: unknown) => {
+    write(
+      join(bundle, 'product.json'),
+      JSON.stringify({
+        product: 'ACRYL ADE',
+        program: [],
+        releases: { repo: 'acryldev/acryl', file: 'ACRYL-ADE', tagPrefix },
+      }),
+    )
+    return readProduct(bundle)?.releases
+  }
+  assert.deepEqual(releases('ade-v'), {
+    repo: 'acryldev/acryl',
+    file: 'ACRYL-ADE',
+    tagPrefix: 'ade-v',
+  })
+  assert.deepEqual(releases('../x y'), { repo: 'acryldev/acryl', file: 'ACRYL-ADE' })
+  assert.deepEqual(releases(undefined), { repo: 'acryldev/acryl', file: 'ACRYL-ADE' })
+})

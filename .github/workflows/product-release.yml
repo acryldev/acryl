@@ -1,0 +1,118 @@
+name: Product release
+
+# ACRYL's Blend products as installers on every OS and CPU (spec 051 T013): a DMG (macOS), an NSIS installer (Windows) and a Debian package (Linux), for
+# arm64 and x64, packed from apps/<product> with this checkout's framework (framework/scripts/pack-blank-mac.mjs), never a published or stale one.
+#   ade-v<version>              ACRYL ADE, apps/acryl-ade
+#   control-center-v<version>   ACRYL Control Center, apps/acryl-control-center
+# Each product's installed app asks for the newest release with its own prefix (product.json releases.tagPrefix, plugins/desktop/updater.ts), so the
+# products and ACRYL's own `v*` / `desktop-v*` releases share this repository without taking each other's updates; a product release is never marked Latest.
+# Run by hand (workflow_dispatch) it packs all six installers as workflow artifacts and publishes nothing.
+on:
+  push:
+    tags: ['ade-v*', 'control-center-v*']
+  workflow_dispatch:
+    inputs:
+      product:
+        description: The product to pack (no release is published)
+        type: choice
+        options: [ade, control-center]
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  which:
+    runs-on: ubuntu-latest
+    outputs:
+      folder: ${{ steps.which.outputs.folder }}
+      name: ${{ steps.which.outputs.name }}
+      prefix: ${{ steps.which.outputs.prefix }}
+      version: ${{ steps.which.outputs.version }}
+    steps:
+      - id: which
+        name: Which product the tag or the input names
+        env:
+          REF: ${{ github.event_name == 'workflow_dispatch' && format('{0}-v', inputs.product) || github.ref_name }}
+        run: |
+          case "$REF" in
+            ade-v*) echo "folder=apps/acryl-ade" >> "$GITHUB_OUTPUT"; echo "name=ACRYL ADE" >> "$GITHUB_OUTPUT"; prefix=ade-v ;;
+            control-center-v*) echo "folder=apps/acryl-control-center" >> "$GITHUB_OUTPUT"; echo "name=ACRYL Control Center" >> "$GITHUB_OUTPUT"; prefix=control-center-v ;;
+            *) echo "$REF names no product"; exit 1 ;;
+          esac
+          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+          echo "version=${REF#"$prefix"}" >> "$GITHUB_OUTPUT"
+
+  pack:
+    name: pack (${{ matrix.platform }} ${{ matrix.arch }})
+    needs: which
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-15, platform: mac, arch: arm64 }
+          - { os: macos-15-intel, platform: mac, arch: x64 }
+          - { os: windows-latest, platform: win, arch: x64 }
+          - { os: windows-11-arm, platform: win, arch: arm64 }
+          - { os: ubuntu-24.04, platform: linux, arch: x64 }
+          - { os: ubuntu-24.04-arm, platform: linux, arch: arm64 }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the framework and every frame package the packer makes the app with
+        run: pnpm --dir framework run build
+      # A Debian package is built with fakeroot and dpkg; the hosted image has dpkg, not always fakeroot.
+      - if: matrix.platform == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y fakeroot
+      # The About window shows the app's package version: a release carries its tag's (ade-v0.1.20 -> 0.1.20), never the template's.
+      - name: Version from the tag
+        if: github.event_name == 'push'
+        working-directory: ${{ needs.which.outputs.folder }}
+        shell: bash
+        run: npm pkg set version="${{ needs.which.outputs.version }}"
+      - name: Pack ${{ needs.which.outputs.name }}
+        shell: bash
+        run: >-
+          node framework/scripts/pack-blank-mac.mjs --from "${{ needs.which.outputs.folder }}" --product "${{ needs.which.outputs.name }}"
+          --tag-prefix "${{ needs.which.outputs.prefix }}" --arch ${{ matrix.arch }} --out out
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ needs.which.outputs.prefix }}${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    needs: [which, pack]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Publish the release (never marked Latest - ACRYL's own releases keep that)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ needs.which.outputs.name }}
+          VERSION: ${{ needs.which.outputs.version }}
+        run: |
+          ls -la out
+          # A release made by hand from a run's artifacts gets this run's files instead.
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --clobber
+            exit 0
+          fi
+          file="${NAME// /-}"
+          gh release create "$GITHUB_REF_NAME" out/* --repo "$GITHUB_REPOSITORY" --latest=false --title "$NAME $VERSION" \
+            --notes "$NAME $VERSION, ready to install. macOS: open the .dmg (Apple Silicon: arm64, Intel: x64); the app is not signed yet, so the first start is right-click > Open. Windows: run the -win- .exe (arm64 or x64); SmartScreen may ask, More info > Run anyway. Linux: sudo apt install ./$file-linux-<arch>.deb. Windows and Linux use the git on your machine."
