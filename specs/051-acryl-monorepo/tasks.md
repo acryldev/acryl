@@ -156,8 +156,14 @@ verify and check:layout and all 23 framework check steps green before it lands.
   @acryldev scope; also fixed the root filter that matched no package, so its 24 tests now run), published 0.1.0 by webboxescom with the
   owner's go, installed and imported from npm (29 exports); Control Center depends on it (a4c20622), proven by an npm install of the app,
   its typecheck and tests, and its host's launcher routes answering 200.
-- [ ] T011 [desktop, instance] The desktop shell and the instance become packages; `acrylblends upgrade desktop` moves an app from the copied
-  folder to the package once; ADE and Control Center switch.
+- [ ] T011 [desktop, instance] The desktop shell and the instance become packages; ADE and Control Center switch. The one-time
+  `upgrade --desktop-packages` move is dropped (day 0, owner 2026-11-19: installed apps are remade, never migrated).
+  Done on branch 051-t011-packages (43a9475d, 9cfebac5): `init` and `add` write `@acryldev/instance` and `@acryldev/desktop-shell` as dependencies at
+  their exact workspace versions (library.ts PACKAGED) instead of copying them; the shell's `acryl-desktop` bin is `npm run desktop`; templates,
+  generated rows, `open` and the docs use the package; ADE and Control Center dropped their identical copies. Proved on a real app made by the CLI
+  and installed from local tarballs (check passes; the desktop window opens from node_modules). Open: publish both packages in the release
+  (the release script's closure has them as roots), then prove the ADE and Control Center packs; and the T038 Cordis-name fix, without which
+  a made app fails its own tests.
 
 ## Phase 4 - products
 
