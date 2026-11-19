@@ -1,12 +1,18 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { chromeCandidates, doorSpawn, npmSpawn } from './platform.mjs'
+import { chromeCandidates, doorSpawn, npmSpawn, pnpmSpawn } from './platform.mjs'
 
 test('npm runs as npm.cmd through the shell on Windows, and as npm elsewhere', () => {
   assert.deepEqual(npmSpawn('win32'), { command: 'npm.cmd', options: { shell: true } })
   assert.deepEqual(npmSpawn('darwin'), { command: 'npm', options: {} })
   assert.deepEqual(npmSpawn('linux'), { command: 'npm', options: {} })
+})
+
+test('pnpm runs bare through the shell on Windows (pnpm.cmd from corepack or pnpm.exe), and as pnpm elsewhere (spec 051 T039)', () => {
+  assert.deepEqual(pnpmSpawn('win32'), { command: 'pnpm', options: { shell: true } })
+  assert.deepEqual(pnpmSpawn('darwin'), { command: 'pnpm', options: {} })
+  assert.deepEqual(pnpmSpawn('linux'), { command: 'pnpm', options: {} })
 })
 
 test('the door runs its .cmd wrapper through the shell, quoted so spaces in the folder survive', () => {
