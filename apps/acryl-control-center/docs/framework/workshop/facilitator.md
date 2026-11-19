@@ -6,13 +6,13 @@ chat model works on the app from inside the frame, and coding agents run in term
 the panel-first flow of the previous handout are gone.
 
 The handout is written for **acrylblends 1.3.0 or newer** (the release whose `create --desktop` makes the framed app). A room on an older release is on the previous handout;
-check with `npx acrylblends@latest --version` before the day.
+check with `npx @acryldev/blends@latest --version` before the day.
 
 ## Before the room: put this on every machine
 
 | What | Why | How |
 | --- | --- | --- |
-| The preflight passing | it checks Node, npm, git, an agent with its login or key, a free port, and on Windows PowerShell and long paths | `npx acrylblends@latest preflight` ends with `Ready for the workshop.` |
+| The preflight passing | it checks Node, npm, git, an agent with its login or key, a free port, and on Windows PowerShell and long paths | `npx @acryldev/blends@latest preflight` ends with `Ready for the workshop.` |
 | Node.js 22.19 or newer (24 and 26 tested) | the app runs TypeScript directly | `node -v`; the app's `scripts/check-node.cjs` refuses an older Node with a clear line |
 | git, and a GitHub account with `gh auth login` | the first `npm run dev` makes the folder a git repository (Files and Changes need one); the last block forks the registry | `git --version`, `gh auth status` |
 | One coding agent, logged in | block 5 starts it in a terminal tab; `claude`, `codex` and `pi` all worked | `codex login` once, or run `claude` once, or pi with `DEEPSEEK_API_KEY` in the terminal that starts `npm run dev` |
@@ -39,7 +39,7 @@ run dev` (the terminal tabs inherit it); the preflight reports `PASS agent pi (D
 | 25-30 | Settings > Models | the key saves with Apply (`Saved DeepSeek (deepseek-official).`); the page uses it after a reload | paste the key in the first-run card instead, Save and continue |
 | 30-50 | chat builds the board | the chat writes into the app folder and Changes fills; the restart loop shows it at /app/board | if the model is slow, cut the board to one column |
 | 50-65 | a coding agent in a terminal | the agent tab starts in the app folder (its prompt is `my-app`); `.acryl/bin/acryl look` prints the page in the frame's tile | demo one agent and let the room follow |
-| 65-80 | upgrade an older app | `npx acrylblends@latest upgrade` reports every file it changed (the `frame` line is the new layout), then `npm install` and `npm run dev` | keep the report, skip the second app |
+| 65-80 | upgrade an older app | `npx @acryldev/blends@latest upgrade` reports every file it changed (the `frame` line is the new layout), then `npm install` and `npm run dev` | keep the report, skip the second app |
 | 80-90 | publish (take-home) | the registry check merges in about two minutes | leave it as the take-home |
 
 What the rehearsal verified end to end on this Mac: a packed CLI in an isolated HOME, the app opened by the frame with the app's page in a tab
@@ -51,7 +51,7 @@ app made by the previous release upgraded and opened by the frame.
 
 - **The frame is the product.** The point is not "an app with a chat sidebar"; it is that ACRYL's IDE hosts the app you are building: the app is
   the page in the middle, its folder is the workspace, and the agents work in that folder.
-- **Settings > Models is the key's home.** The key goes to the frame's own credentials store, never the app folder or `.acrylblends` files. The
+- **Settings > Models is the key's home.** The key goes to the frame's own credentials store in the app's data folder (`~/.acryl/apps/<id>/data/`), never the app folder. The
   first-run card writes the same store; either path is fine.
 - **The loop is stop, start, look.** A source change needs `npm run dev` again; the port is stable per app, so the frame reconnects on the same
   address and the app's tab is still there. If a chat tab comes to the front after the restart, press the `my-app` tab.
@@ -85,9 +85,11 @@ of Visual Studio Build Tools for the terminal package; the preflight notes it.
 
 ## Resetting between sessions
 
-Everything a person makes lives inside their app folder and `~/acryl-workshop`. To reset a machine, delete the app folders and copy the prepared one
-back; nothing is installed globally except the agent, `gh` and Node. An app's data lives in its `.acrylblends/` (gitignored); the model key lives in
-that home's credentials store, so a fresh copy starts without it.
+Everything a person makes lives inside their app folder, its data folder in `~/.acryl/apps/` and `~/acryl-workshop`. To reset a machine, delete the app
+folders and their data folders, and copy the prepared one back without its `.acryl/` folder; nothing is installed globally except the agent, `gh` and Node.
+An app's data, the model key's credentials store included, lives in `~/.acryl/apps/<id>/data/`, outside the app folder. The `<id>` is written once into
+the app folder's `.acryl/app.json` (gitignored): a copy that keeps that file shares the original's data and key, and a copy without it gets its own id
+and an empty data folder.
 
 ## What is still open
 

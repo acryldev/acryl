@@ -17,7 +17,7 @@ export default app
 npm create @acryldev/blends@latest my-app
 ```
 
-Other package managers work the same way: `pnpm create @acryldev/blends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`.
+Other package managers work the same way: `pnpm create @acryldev/blends@latest`, `yarn create @acryldev/blends`, `bun create @acryldev/blends`.
 Every template is a Cordis app (`blend.yaml`, plugins in `plugins/`). The starter asks which one you want, from the same list `acrylblends init --template` takes: `blank`, `nodejs`, `notes`, `chat`, `todo`, `agent` (`acryl-app` is the old name for `agent`), and `npm create @acryldev/blends@latest my-app notes` names it directly. See [Getting started](getting-started/basic.md).
 
 ## What is in the box

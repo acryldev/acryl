@@ -18,7 +18,7 @@ A starter for Bun is available. Start your project with "bun create" command.
 Select `bun` template for this example.
 
 ```sh
-bun create acrylblends@latest my-app
+bun create @acryldev/blends my-app
 ```
 
 Move into my-app and install the dependencies.
@@ -46,7 +46,7 @@ Then add the `dev` command to your existing `package.json`.
 }
 ```
 
-See the Bun starter template for a minimal example setup. This is the output of running `bun create acrylblends@latest`.
+See the Bun starter template for a minimal example setup. This is the output of running `bun create @acryldev/blends`.
 
 ## 3. Hello World
 

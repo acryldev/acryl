@@ -184,7 +184,7 @@ for await (const { event, data } of readSSE(response)) {
 - A response that is not `ok` throws with its status (the body is not parsed as events), and a response without a body throws.
 - A client module served by `clientModules` can import it as it is (`import { readSSE } from '@acryldev/blends/read-sse'`): the import is pointed at a browser file the same app serves, like `acrylblends/client`. With a bundler it is an ordinary import.
 
-A complete chat component is in the `chat` template of `create-acrylblends` (`npm create @acryldev/blends@latest my-chat -- --template chat`).
+A complete chat component is in the `chat` template of `@acryldev/create-blends` (`npm create @acryldev/blends@latest my-chat -- --template chat`).
 
 ## Error Handling
 

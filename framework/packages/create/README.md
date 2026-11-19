@@ -6,7 +6,7 @@ Create an Acryl app with one command.
 npm create @acryldev/blends@latest my-app
 ```
 
-It asks which template you want, creates `my-app`, and prints what to run next. Other package managers work the same way: `pnpm create @acryldev/blends@latest`, `yarn create acrylblends`, `bun create acrylblends@latest`.
+It asks which template you want, creates `my-app`, and prints what to run next. Other package managers work the same way: `pnpm create @acryldev/blends@latest`, `yarn create @acryldev/blends`, `bun create @acryldev/blends`.
 
 ## Templates
 
@@ -102,4 +102,4 @@ npm create @acryldev/blends@latest my-app @scope/name[@version]
 npm create @acryldev/blends@latest my-app ./template.tgz
 ```
 
-The source is downloaded as a tarball (never cloned) or packed with `npm pack --ignore-scripts`, unpacked, and read: it must hold an `acryl.template.json` (`name`, `description`, optional `plugins`), it is checked for secrets, and only then is the folder created. Nothing of the template is installed or run; if its `package.json` defines install scripts they are listed, and `--install` prints what will run before it runs. See the create-acrylblends guide in `docs/framework/guides/`.
+The source is downloaded as a tarball (never cloned) or packed with `npm pack --ignore-scripts`, unpacked, and read: it must hold an `acryl.template.json` (`name`, `description`, optional `plugins`), it is checked for secrets, and only then is the folder created. Nothing of the template is installed or run; if its `package.json` defines install scripts they are listed, and `--install` prints what will run before it runs. See the @acryldev/create-blends guide in `docs/framework/guides/`.

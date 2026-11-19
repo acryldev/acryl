@@ -1,7 +1,7 @@
-# create-acrylblends
+# @acryldev/create-blends
 
-`create-acrylblends` is the project initializer that runs when you run `npm create @acryldev/blends@latest`, `npx create-acrylblends@latest`, `pnpm create @acryldev/blends@latest`,
-`yarn create acrylblends` or `bun create acrylblends@latest`. It creates a folder with a working Acryl application for the runtime you choose.
+`@acryldev/create-blends` is the project initializer that runs when you run `npm create @acryldev/blends@latest`, `npx @acryldev/create-blends@latest`, `pnpm create @acryldev/blends@latest`,
+`yarn create @acryldev/blends` or `bun create @acryldev/blends`. It creates a folder with a working Acryl application for the runtime you choose.
 
 ## Templates
 
@@ -32,7 +32,7 @@ npm create @acryldev/blends@latest my-app -- --template nodejs
 **yarn**
 
 ```sh
-yarn create acrylblends my-app --template nodejs
+yarn create @acryldev/blends my-app --template nodejs
 ```
 
 **pnpm**
@@ -44,7 +44,7 @@ pnpm create @acryldev/blends@latest my-app --template nodejs
 **bun**
 
 ```sh
-bun create acrylblends@latest my-app --template nodejs
+bun create @acryldev/blends my-app --template nodejs
 ```
 
 ## Arguments

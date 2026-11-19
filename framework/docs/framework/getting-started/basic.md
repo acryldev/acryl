@@ -5,7 +5,7 @@ which is experimental; only the entry point differs. This page shows the basic u
 
 ## Starter
 
-A starter is a Cordis app that arrives already wired: `blend.yaml`, its plugins in `plugins/`, and a test. Use the "create-acrylblends" command.
+A starter is a Cordis app that arrives already wired: `blend.yaml`, its plugins in `plugins/`, and a test. Use the `npm create @acryldev/blends` command.
 
 **npm**
 
@@ -16,7 +16,7 @@ npm create @acryldev/blends@latest my-app
 **yarn**
 
 ```sh
-yarn create acrylblends my-app
+yarn create @acryldev/blends my-app
 ```
 
 **pnpm**
@@ -28,7 +28,7 @@ pnpm create @acryldev/blends@latest my-app
 **bun**
 
 ```sh
-bun create acrylblends@latest my-app
+bun create @acryldev/blends my-app
 ```
 
 You are asked which template you want:
@@ -45,7 +45,7 @@ Which template do you want to use? [nodejs]:
 ```
 
 Every template is a Cordis app: `blend.yaml` lists its plugins and every plugin is a folder in `plugins/`. `blank` is the smallest app, `nodejs` is a web app with a page and a client component, `notes` and `chat` add a database, `todo` is a to-do list, and `agent` adds an agent that can extend the app while it
-runs (see [Acryl in a Cordis app](../cordis/acryl-in-a-cordis-app.md)). Pass `--template` to skip the question, see [create-acrylblends](../guides/create-acrylblends.md).
+runs (see [Acryl in a Cordis app](../cordis/acryl-in-a-cordis-app.md)). Pass `--template` to skip the question, see [@acryldev/create-blends](../guides/create-acrylblends.md).
 
 The template is created in `my-app`: go to it, install the dependencies and start the local server.
 

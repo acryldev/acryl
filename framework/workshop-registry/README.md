@@ -2,7 +2,7 @@
 
 Apps people made with [acrylblends](https://acrylblends.github.io), published here by pull request and listed in seconds. It started as the registry for the 2026-11-20 workshop and **stays open**: anyone with a GitHub account can add an app.
 
-> **A community showcase, not reviewed for production.** An entry is somebody else's code. Nothing here runs by itself: `create-acrylblends` downloads and unpacks an entry and runs nothing, and the checks below refuse links, install scripts, keys and oversized files. But a check is not a review. Read an app before you run it, and do not deploy one you have not read.
+> **A community showcase, not reviewed for production.** An entry is somebody else's code. Nothing here runs by itself: `@acryldev/create-blends` downloads and unpacks an entry and runs nothing, and the checks below refuse links, install scripts, keys and oversized files. But a check is not a review. Read an app before you run it, and do not deploy one you have not read.
 
 ## Start from an entry
 

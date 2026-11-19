@@ -38,7 +38,7 @@ what is inside.
 Run this first. It checks everything below and prints one line per check, with the exact command for anything missing:
 
 ```sh
-npx acrylblends@latest preflight
+npx @acryldev/blends@latest preflight
 ```
 
 It ends with `Ready for the workshop.`, or with how many lines say `FIX`: run each `FIX` line, then the preflight again. `NOTE` lines are things the
@@ -228,7 +228,7 @@ generated, plus the library plugins the app carries.
 
 ```sh
 cd old-app
-npx acrylblends@latest upgrade
+npx @acryldev/blends@latest upgrade
 npm install
 npm run dev
 ```
@@ -280,7 +280,7 @@ the same folders. Nothing to install, nothing to keep on your machine. Until it 
 
 | Symptom | Do |
 | --- | --- |
-| The preflight prints `FIX` lines | run each one, then `npx acrylblends@latest preflight` again |
+| The preflight prints `FIX` lines | run each one, then `npx @acryldev/blends@latest preflight` again |
 | `npm create` fails or hangs | check the network; the facilitator has prepared apps |
 | `npm install` fails building node-pty | install the C++ toolchain (block 1's **Stuck?**) and run it again |
 | A port is taken | use the address the app printed |
