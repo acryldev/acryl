@@ -65,7 +65,7 @@ describe('the project registry on the real engine', () => {
       expect((await projects(first.origin, { op: 'add', path: projectA })).json.view.paths).toEqual([projectA])
       expect((await projects(first.origin, { op: 'add', path: projectB })).json.view.paths).toEqual([projectA, projectB])
       expect((await projects(first.origin, { op: 'add', path: '/definitely/not/here' })).json).toMatchObject({ ok: false, code: 'not-a-folder' })
-      const file = join(first.acrylHome, '@acryldev/settings.yaml')
+      const file = join(first.acrylHome, 'acryl-settings.yaml')
       expect(existsSync(file)).toBe(true)
       expect(readFileSync(file, 'utf8')).toContain(projectA)
     } finally { await first.host.dispose() }
