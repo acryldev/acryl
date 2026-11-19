@@ -88,15 +88,16 @@ jobs:
       - name: What the Desktop logged
         if: always()
         run: |
-          for d in "$HOME/.config/ACRYL Development"*; do
+          # The Desktop keeps its data in its own home (~/.acryl*/desktop-data), never in ~/.config.
+          for d in "$HOME"/.acryl*; do
             echo "== $d"
-            find "$d" -maxdepth 3 \( -name '*.log' -o -name 'startup.jsonl' \) -print -exec tail -n 40 {} \; 2>/dev/null | cut -c1-300
+            find "$d" -maxdepth 4 \( -name '*.log' -o -name 'startup.jsonl' \) -print -exec tail -n 40 {} \; 2>/dev/null | cut -c1-300
           done
 
       # The app writes its own startup record; a window that never opened (or a recovery window) leaves no healthy renderer in it.
       - name: The renderer must have reported healthy
         run: |
-          log=$(find "$HOME/.config/ACRYL Development" -name startup.jsonl | head -1)
+          log=$(find "$HOME"/.acryl* -name startup.jsonl 2>/dev/null | head -1)
           test -n "$log" || { echo "no startup record: the Desktop never started"; exit 1; }
           grep -q '"eventName":"renderer.boot.completed".*"rendererStatus":"healthy"' "$log" || { echo "the renderer did not report healthy"; exit 1; }
           echo "renderer healthy"

@@ -82,7 +82,8 @@ jobs:
 
       - name: The renderer must have reported healthy
         run: |
-          log=$(find "$HOME/.config" -name startup.jsonl | head -1)
+          # The installed app keeps its data in ~/.acryl (desktop-data), never in ~/.config.
+          log=$(find "$HOME"/.acryl* -name startup.jsonl 2>/dev/null | head -1)
           test -n "$log" || { echo "no startup record: the installed app never started"; exit 1; }
           tail -n 20 "$log" | cut -c1-300
           grep -q '"eventName":"renderer.boot.completed".*"rendererStatus":"healthy"' "$log" || { echo "the renderer did not report healthy"; exit 1; }
