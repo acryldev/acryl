@@ -1,5 +1,8 @@
 # Slice 0 of the IDE port: the decision record
 
+> History. The spike folder this record names (`spikes/ide-slice0/`) was removed in ACRYL's spec 051 (c640bca4); its commands ran
+> there. The decisions below still stand.
+
 Status: done, on branch `099-ide-slice0`; nothing is released and nothing changes for a user. The code is `spikes/ide-slice0/` (one script, `run.sh`, reproduces every number below from nothing). This page is the evidence the plan (`ide-port.md`) was amended with.
 
 ## What was proved

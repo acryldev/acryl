@@ -4,8 +4,8 @@
  * Two checks keep that graph predictable:
  *
  * 1. No cycles. With none, the packages have one straight build order, foundation first, surfaces last.
- * 2. A short list of "never depends on" rules for what must stay at the bottom. Roles are package names, not folders, so a package can move
- *    without changing the rule.
+ * 2. A short list of "never depends on" rules for what must stay at the bottom. The foundation is named package by package; runtime and
+ *    app are read from the folder (runtime/, apps/, examples/).
  *
  * The picture for people (docs/acryl/MONOREPO.md): framework foundation (0) <- ACRYL runtime (1) <- ACRYL plugins (2) <- apps (3).
  */

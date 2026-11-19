@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict'
 import {
   existsSync,
-  mkdtempSync as makeTempDir,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
-  rmSync as removeTempDir,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -19,12 +18,12 @@ import { openProductApp, seedSource } from '../product.ts'
 /** Temporary folders this file makes; removed after its tests, also when one fails. */
 const tempDirs: string[] = []
 const tempDir = (prefix: string): string => {
-  const dir = makeTempDir(join(tmpdir(), prefix))
+  const dir = mkdtempSync(join(tmpdir(), prefix))
   tempDirs.push(dir)
   return dir
 }
 after(() => {
-  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
 
 const scratch = (): string => tempDir('acryl-product-')

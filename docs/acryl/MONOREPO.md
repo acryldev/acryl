@@ -44,7 +44,8 @@ foundation      acrylblends (the framework) and its packages: acryl-router, acry
 
 1. **No cycles** between workspace packages, so there is one straight build order, foundation first.
 2. **Nothing points the wrong way:** the foundation depends only on itself; the runtime depends only on the foundation and itself;
-   nothing depends on an app. Roles are package names, so a package can move without changing a rule.
+   nothing depends on an app. The foundation is named package by package (a foundation package keeps its protection wherever it
+   moves); runtime and app are read from the folder (`runtime/`, `apps/`, `examples/`).
 3. **One named exception:** `acryl-harness-runtime` composes every plugin a surface runs (a composition root), so it may depend on
    exactly the 20 plugins it lists today; a 21st fails. Moving that composition up into `apps/` is spec 051 T021.
 

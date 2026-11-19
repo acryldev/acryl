@@ -1,11 +1,5 @@
 /** `acrylblends add` reads and edits an app's blend.yaml and registry; a Windows checkout writes both with CRLF, and the rows must still be found and kept in that style. */
-import {
-  mkdtempSync as makeTempDir,
-  mkdirSync,
-  readFileSync,
-  rmSync as removeTempDir,
-  writeFileSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -14,12 +8,12 @@ import { MOUNTED, mount, rowNames } from '../src/mount.ts'
 /** Temporary folders this file makes; removed after its tests, also when one fails. */
 const tempDirs: string[] = []
 const tempDir = (prefix: string): string => {
-  const dir = makeTempDir(join(tmpdir(), prefix))
+  const dir = mkdtempSync(join(tmpdir(), prefix))
   tempDirs.push(dir)
   return dir
 }
 afterAll(() => {
-  for (const dir of tempDirs.splice(0)) removeTempDir(dir, { recursive: true, force: true })
+  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
 
 const panel = MOUNTED.find((plugin) => plugin.name === 'agent-panel')

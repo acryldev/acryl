@@ -73,7 +73,17 @@ function publishedVersions() {
     }
     throw error
   }
-  return new Set(JSON.parse(listed))
+  const versions = JSON.parse(listed)
+  // Inside ACRYL's monorepo (spec 051) acrylblends/acrylblends still publishes until the cut-over, so npm can list a release this
+  // repository has not pulled yet (git subtree pull, T009). Only releases up to the version this checkout holds are its to record; a
+  // newer one is recorded by the pull that brings it, not by turning ACRYL's CI red the moment it is published.
+  if (TAG_PREFIX === 'acrylblends-v') {
+    const held = JSON.parse(
+      readFileSync(join(root, 'packages', 'cli', 'package.json'), 'utf8'),
+    ).version
+    return new Set(versions.filter((version) => compareVersions(version, held) <= 0))
+  }
+  return new Set(versions)
 }
 
 /**

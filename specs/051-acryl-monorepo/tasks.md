@@ -69,6 +69,17 @@ verify and check:layout and all 23 framework check steps green before it lands.
   and installed apps are reinstalled). Touches the frame overlay apps get (`ide-profile.ts`).
 - [ ] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
   (`ubuntu-24.04-arm`, `macos-26`, `macos-15-intel`) and it does not know `vars`: configure those, then lint all.
+- [ ] T027 [graph] The framework's 17 plain app plugins (agent, desktop, instance, sandbox, ...) are not workspace packages, so the
+  direction guard never sees them. They enter the graph when they become packages (Phase 3, T011); until then the framework's own
+  core-boundary check is what guards them.
+- [x] T028 [review 2] Second adversarial pass (Fork3, 2026-11-19): the fixes hold, nothing weakened. Fixed: the legacy-layouts check no
+  longer turns ACRYL's CI red on every new acrylblends release (inside the monorepo it records releases up to the version it holds);
+  framework.yml triggers on every frame input; the docs say roles are named for the foundation and read from the folder for runtime and
+  apps; the web-registration exemption matches the foundation's exact folders; the DSH ceiling scans framework/; stale CONSTITUTION, README,
+  plan and test text; the teardown helper uses the plain fs names. Declined: one pnpm setup everywhere (Corepack), because Node 25 and later
+  no longer ship Corepack and the framework's matrix runs Node 26; root CI (Node 24) keeps Corepack, framework.yml keeps pnpm/action-setup.
+  Also found by the first full root `check` since 96a15157: verify-npm-web-entrypoint listed workspace packages from a fixed set of folders
+  and missed acrylblends; it now reads pnpm's list.
 
 ## Phase 3 - packages, not copies
 

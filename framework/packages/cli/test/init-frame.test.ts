@@ -239,7 +239,11 @@ describe('frame/packages.json, the release the CLI installs', () => {
   ) as {
     packages: Record<string, { path: string }>
   }
-  const folderPath = (key: string) => join(frameworkRoot, release.packages[key]?.path ?? key)
+  const folderPath = (key: string) => {
+    const path = release.packages[key]?.path
+    if (path === undefined) throw new Error(`frame/packages.json: ${key} names no path`)
+    return join(frameworkRoot, path)
+  }
   const manifestOf = (folder: string) =>
     JSON.parse(readFileSync(join(folderPath(folder), 'package.json'), 'utf8')) as {
       name: string

@@ -10,7 +10,7 @@ keeps Node and adds a library of Cordis plugins that the command copies into app
 
 **Version 3.0.0 (amended 2026-10-06).** Version 1 defined ACRYLBLENDS as a composition runtime on Cordis plus five
 libraries; version 2 as a scaffolder with templates for two HTTP libraries. Both re-did what Cordis already provides and were
-removed. The reason is in `specs/000-roadmap/research.md` (R1).
+removed. The reason is in `specs/blends/000-roadmap/research.md` (at the repository root) (R1).
 
 ## Core Principles
 
@@ -56,7 +56,7 @@ Templates are tested by booting them and requesting their routes, not by mocking
 ### IX. Honest specs and docs
 
 Ledgers say what is done, blocked and deferred. Docs describe only what the tests run. Superseded specs live in
-`specs/archive/` and nowhere else.
+`specs/blends/archive/` (at the repository root, spec 051) and nowhere else.
 
 ## Engineering rules
 
@@ -69,7 +69,7 @@ Ledgers say what is done, blocked and deferred. Docs describe only what the test
 
 ## Governance
 
-Amendments need a changed version line, a research note in `specs/000-roadmap/research.md`, and updates to any plan
+Amendments need a changed version line, a research note in `specs/blends/000-roadmap/research.md` (at the repository root), and updates to any plan
 they invalidate.
 
 **Version**: 5.0.0 | **Ratified**: 2026-10-06 | **Last Amended**: 2026-10-09

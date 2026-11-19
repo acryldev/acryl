@@ -320,7 +320,7 @@ const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(e
   return /\.(ts|tsx|mts)$/.test(entry.name) && !entry.name.endsWith('.d.ts') ? [path] : []
 })
 const dshImports = { total: 0, outsideSeam: 0 }
-for (const group of ['runtime', 'apps', 'plugins']) {
+for (const group of ['runtime', 'apps', 'plugins', 'framework/packages', 'framework/plugins']) {
   for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
     const src = resolve(root, group, entry.name, 'src')
     if (!entry.isDirectory() || !existsSync(src)) continue
@@ -348,11 +348,13 @@ const WEB_REGISTRATION_CEILING = 0
 const WEB_REGISTRATION = /(acrylWeb|webServer|[^a-zA-Z]web)[?]?[.](register|registerUpgrade)[(]/
 const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/|\.spec\.|\.test\./
 let webRegistrations = 0
+// The foundation's own folders, by package name (pnpm's list), so a look-alike folder elsewhere is not exempt.
+const foundationFolders = [...readGraph(root)].filter(([name]) => FOUNDATION.has(name)).map(([, { folder }]) => folder)
 for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/plugins', 'framework/packages']).split('\n')) {
   if (file === '' || NOT_SHIPPED.test(file) || !existsSync(resolve(root, file))) continue
   // The framework foundation implements the web layer (acryl-router-http mounts routers on the web server, acryl-page serves the page): the
   // rule is for code that uses it.
-  if (FOUNDATION.has(/(?:^|\/)plugins\/([^/]+)\//u.exec(file)?.[1] ?? '')) continue
+  if (foundationFolders.some(folder => file.startsWith(`${folder}/`))) continue
   for (const line of readFileSync(resolve(root, file), 'utf8').split('\n')) if (WEB_REGISTRATION.test(line)) webRegistrations += 1
 }
 if (webRegistrations > WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, above the ceiling ${WEB_REGISTRATION_CEILING}; serve the route on the router instead (ctx.router.route('/', app) and ctx.routerHttp.mount(prefix), see plugins/acryl-plugin-context/docs/extending/host-route.md)`)
@@ -397,7 +399,7 @@ const testFiles = run('git', ['ls-files', '--', ':(glob)**/tests/**', ':(glob)**
 for (const path of testFiles) {
   const text = readFileSync(resolve(root, path), 'utf8')
   if (!text.includes('mkdtemp') || text.includes('keeps-temporary-directories:')) continue
-  if (!(/\b(afterEach|afterAll|after)\s*\(|\bfinally\s*[{(]/u.test(text) && /\brm(Sync)?\(|removeTempDir\(/u.test(text))) {
+  if (!(/\b(afterEach|afterAll|after)\s*\(|\bfinally\s*[{(]/u.test(text) && /\brm(Sync)?\(/u.test(text))) {
     fail(`${path} creates temporary directories (mkdtemp) but never removes them: remove each in afterEach/afterAll/after/finally, or mark the file with a keeps-temporary-directories: comment saying why`)
   }
 }

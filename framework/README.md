@@ -45,7 +45,7 @@ time on `@deepseek-ai/cordis` and `yaml`.
 | `packages/cli` | the `acrylblends` command (`init`, `add`, `plugins`) and the `blank` and `agent` templates |
 | `scripts/verify-scaffolder.mjs` | scaffolds both templates, installs, type-checks, tests, boots them, drives the agent, saves |
 | `docs/` | the documentation; its examples are executed by the tests |
-| `specs/` | specs and ledgers ([roadmap](../specs/blends/000-roadmap/spec.md), [013](../specs/blends/013-acryl-extraction/spec.md)) |
+| `../specs/blends/` | the framework's specs and ledgers, in ACRYL's `specs/` since spec 051 ([roadmap](../specs/blends/000-roadmap/spec.md), [013](../specs/blends/013-acryl-extraction/spec.md)) |
 
 `pnpm run verify:model` (opt-in, needs `ACRYLBLENDS_MODEL_URL`, `ACRYLBLENDS_MODEL` and a key) proves the agent builds a plugin with a real model.
 `pnpm run check` runs lint, build, both type checks, the tests and the scaffolder verification. A Deno version of the

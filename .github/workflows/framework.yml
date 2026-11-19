@@ -8,10 +8,10 @@ name: Framework
 on:
   push:
     branches: [main]
-    paths: ['framework/**', 'plugins/acryl-*/**', 'runtime/**', 'pnpm-lock.yaml', '.github/workflows/framework.yml']
+    paths: ['framework/**', 'plugins/**', 'runtime/**', 'package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', '.npmrc', '.github/workflows/framework.yml']
   pull_request:
     branches: [main]
-    paths: ['framework/**', 'plugins/acryl-*/**', 'runtime/**', 'pnpm-lock.yaml', '.github/workflows/framework.yml']
+    paths: ['framework/**', 'plugins/**', 'runtime/**', 'package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', '.npmrc', '.github/workflows/framework.yml']
   workflow_dispatch:
 
 # The framework (acrylblends) inside ACRYL's monorepo (spec 051): its whole gate runs in the root CI (`pnpm run check` ends with
@@ -52,11 +52,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      # pnpm/action-setup reads the root's packageManager. Not Corepack: Node 25 and later no longer ship it, and this matrix runs Node 26.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
           cache: pnpm
+          node-version: ${{ matrix.node }}
       # Bun is experimental and has one smoke gate (verify:framework runs the Bun adapter on it); the check fails when it is missing here.
       - uses: oven-sh/setup-bun@v2
         with:
@@ -95,11 +96,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      # pnpm/action-setup reads the root's packageManager. Not Corepack: Node 25 and later no longer ship it, and this matrix runs Node 26.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
           cache: pnpm
+          node-version: ${{ matrix.node }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.3
@@ -139,11 +141,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      # pnpm/action-setup reads the root's packageManager. Not Corepack: Node 25 and later no longer ship it, and this matrix runs Node 26.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
           cache: pnpm
+          node-version: 24
       - run: pnpm install --frozen-lockfile
       # The gate needs the CLI's dist and the ide packages' lib folders: the scaffolded apps take the frame packages as file: specs into this checkout.
       - run: pnpm run build
@@ -177,11 +180,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      # pnpm/action-setup reads the root's packageManager. Not Corepack: Node 25 and later no longer ship it, and this matrix runs Node 26.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
           cache: pnpm
+          node-version: 24
       - run: pnpm install --frozen-lockfile
       # The gate needs the CLI's dist and the ide packages' lib folders: the scaffolded apps take the frame packages as file: specs into this checkout.
       - run: pnpm run build
@@ -213,11 +217,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      # pnpm/action-setup reads the root's packageManager. Not Corepack: Node 25 and later no longer ship it, and this matrix runs Node 26.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
           cache: pnpm
+          node-version: 24
       - run: pnpm install --frozen-lockfile
       # The gate needs the CLI's dist and the ide packages' lib folders: the scaffolded apps take the frame packages as file: specs into this checkout.
       - run: pnpm run build
@@ -254,11 +259,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      # pnpm/action-setup reads the root's packageManager. Not Corepack: Node 25 and later no longer ship it, and this matrix runs Node 26.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
           cache: pnpm
+          node-version: 24
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - name: Virtual display (Linux)
