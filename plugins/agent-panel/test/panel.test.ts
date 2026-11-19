@@ -277,7 +277,7 @@ test('a plugin that injects drivers is pending while no panel is mounted, and st
   })
   await fiber.await().catch(() => {})
   assert.equal(registered, false)
-  const { createDrivers } = await import('../drivers.ts')
+  const { createDrivers } = await import('acryl-drivers')
   app.provide('drivers', createDrivers())
   await new Promise((r) => setTimeout(r, 20))
   assert.equal(registered, true)

@@ -4,8 +4,10 @@
  * - `chat`: a message in, the panel's own events out (`text`, `tool`, `error`). The app's agent, the headless coding agents and a harness chat are chat drivers.
  * - `terminal`: bytes in, bytes out, a real pseudo-terminal (the `driver-pty` plugin). Nothing is forced to speak bytes.
  *
- * This module is `acrylblends/drivers`: the contract a driver plugin writes against, with no dependency on Cordis. The panel lists every registered driver and picks the view by `kind`. A plugin that provides drivers injects `drivers`: with no panel mounted it is pending,
- * and a panel without such a plugin simply lists none of its drivers.
+ * This package is the contract a driver plugin writes against, with no dependency on Cordis: `acrylblends/drivers` when built, `acryl-drivers` in the
+ * repository and in an app's `plugins/`. It is a foundation package, so the framework and the panel both depend on it, never the other way round. The
+ * panel lists every registered driver and picks the view by `kind`. A plugin that provides drivers injects `drivers`: with no panel mounted it is
+ * pending, and a panel without such a plugin simply lists none of its drivers.
  */
 /** One event of a chat run. The panel adds `change` (a plugin was installed or removed) and `done` itself. */
 export type ChatEvent =

@@ -53,6 +53,7 @@ plugins/acryl-router-http/lib/
 plugins/acryl-state/lib/
 plugins/acryl-web-server/lib/
 plugins/agent/lib/
+plugins/drivers/lib/
 plugins/agent-panel/lib/
 plugins/builder/lib/
 plugins/desktop/lib/

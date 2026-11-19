@@ -27,6 +27,7 @@
       "plugins/settings/**",
       "plugins/showcase/**",
       "plugins/tasks/**",
+      "plugins/drivers/**",
       "!**/dist",
       "!plugins/*/lib",
       "!**/node_modules",

@@ -73,12 +73,14 @@ test('a framework app plugin has the plugin role, so the runtime cannot depend o
   ])
 })
 
-test('the foundation reaches the agent panel only through its one named build edge', () => {
+test('the foundation depends on the driver contract, never on the panel that uses it', () => {
   const graph = graphOf([
-    ['acrylblends-framework', 'framework/packages/framework', ['acryl-agent-panel']],
-    ['acryl-agent-panel', 'plugins/agent-panel', []],
+    ['acrylblends-framework', 'framework/packages/framework', ['acryl-drivers']],
+    ['acryl-drivers', 'plugins/drivers', []],
+    ['acryl-agent-panel', 'plugins/agent-panel', ['acryl-drivers']],
     ['acryl-door', 'plugins/acryl-door', ['acryl-agent-panel']],
   ])
+  // The contract is foundation, so the framework may build acrylblends/drivers from it; the panel is a plugin, so the foundation may not reach it.
   assert.deepEqual(directionViolations(graph), [
     'acryl-door is framework foundation and depends on acryl-agent-panel: the foundation depends only on itself',
   ])

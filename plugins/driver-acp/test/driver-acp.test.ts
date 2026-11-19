@@ -6,13 +6,8 @@ import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
 import { agent, memory, model, tools } from 'acryl-agent'
 import * as panel from 'acryl-agent-panel'
-import {
-  type ChatDriver,
-  type ChatEvent,
-  createDrivers,
-  type Drivers,
-} from 'acryl-agent-panel/drivers'
 import { builder } from 'acryl-builder'
+import { type ChatDriver, type ChatEvent, createDrivers, type Drivers } from 'acryl-drivers'
 import { extensions } from 'acryl-extensions'
 import { instance, pinnedInstance } from 'acryl-instance'
 import * as router from 'acryl-router'

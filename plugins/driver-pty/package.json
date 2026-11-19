@@ -31,7 +31,8 @@
     "acryl-router": "workspace:*",
     "node-pty": "1.2.0-beta.15",
     "acryl-instance": "workspace:*",
-    "acryl-extensions": "workspace:*"
+    "acryl-extensions": "workspace:*",
+    "acryl-drivers": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

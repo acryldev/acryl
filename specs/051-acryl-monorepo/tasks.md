@@ -109,9 +109,11 @@ verify and check:layout and all 23 framework check steps green before it lands.
   here (a subtree pull maps only framework/), so the next release needs a publish path from the monorepo; (c) that first release's
   acceptance: a fresh Blend from the new packages, its agent asked "add a plugin that shows a ledger page", cites paths that exist in the
   app, writes the plugin into the app's plugins/, and the plugin loads without a restart.
-- [ ] T033 [guard] Remove FOUNDATION_PLUGIN_EDGES (acrylblends-framework -> acryl-agent-panel, named by T017): move the Cordis-free
-  drivers contract into the foundation (acrylblends/drivers built from framework source), the agent panel imports it from there, the edge
-  goes. Owner: DS2_Fork3, its own commit after T017 merges.
+- [x] T033 [guard] FOUNDATION_PLUGIN_EDGES is gone (branch 051-t033, 2026-11-19). The Cordis-free drivers contract moved out of the
+  agent panel into `plugins/drivers` (package `acryl-drivers`), a foundation package by role (FOUNDATION by name) that the copy path ships like any library
+  plugin: `acrylblends/drivers` is built from its source, the framework declares it a workspace dependency, and the panel and the driver
+  plugins import `acryl-drivers`. Decision (AcrylImplementer): a foundation package in `plugins/`, not framework source, because the
+  agent template keeps no acrylblends dependency and its copied panel must resolve the contract without one.
 - [ ] T034 [products, overlays] The products' generated overlays (apps/acryl-ade, apps/acryl-control-center cordis.patch.yml) are in
   practice owned by the products: a full `acrylblends upgrade` replaces their workbench root row with the Blends frame (the generator's
   default, ide-profile.ts "never the IDE's workbench") and would silently turn ADE back into a plain Blend. Teach the generator a product's

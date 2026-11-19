@@ -1,7 +1,7 @@
 /**
  * The built-in agent (spec 049 slice 14): a chat panel inside the running app. The person says what they want; the app's own agent (`driver: 'agent'`) or a coding
  * agent started in the app folder (`'claude'`, `'codex'`, `'pi'`) builds it through the door, and when a plugin was installed or removed the page reloads, so the new feature
- * shows with no restart. The drivers are entries of the `drivers` service this plugin provides (`drivers.ts`): chat drivers here, and other plugins (`driver-pty`) add more.
+ * shows with no restart. The drivers are entries of the `drivers` service this plugin provides (`acryl-drivers`): chat drivers here, and other plugins (`driver-pty`) add more.
  *
  * - A middleware appends one script tag (`/api/agent-panel/panel.js`) to every HTML response of the routes mounted after it, so no page is edited.
  * - `GET /api/agent-panel/session` gives the page the drivers it may use and a token; `POST /api/agent-panel/ask` runs one message and answers server-sent events:
@@ -20,12 +20,12 @@ import { appendFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from 'acryl-agent'
+import type { ChatDriver, Driver } from 'acryl-drivers'
 import type {} from 'acryl-extensions'
 import { clientModules } from 'acryl-node-server/client-modules'
 import { Acryl, type MiddlewareHandler } from 'acryl-router'
 import { streamSSE, type UpgradeWebSocket } from 'acryl-router/helpers'
 import { pageAuthority } from 'acryl-router/middleware'
-import type { ChatDriver, Driver } from './drivers.ts'
 import {
   agentDriver,
   availableHeadless,
@@ -44,7 +44,7 @@ export type {
   Drivers,
   TerminalDriver,
   TerminalSession,
-} from './drivers.ts'
+} from 'acryl-drivers'
 
 export const name = 'agent-panel'
 export const inject = ['router', 'agent', 'extensions', 'appInstance']

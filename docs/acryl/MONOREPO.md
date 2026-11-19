@@ -39,7 +39,7 @@ plugins         @acryl/ui, acryl-workspace, acryl-settings, acryl-sign-in, acryl
   ^ use
 runtime         acryl-control, acryl-loopback-http, acryl-diagnostics, acryl-web-service, blends-core, plugin-hub, ...
   ^ rests on
-foundation      acrylblends (the framework) and its packages: acryl-router, acryl-door, acryl-db, acryl-kv, acryl-state, ...
+foundation      acrylblends (the framework) and its packages: acryl-router, acryl-door, acryl-db, acryl-kv, acryl-state, acryl-drivers, ...
 ```
 
 `scripts/dependency-direction.mjs` enforces it, run by `node scripts/verify-layout.mjs` (part of `pnpm run check`):
@@ -49,10 +49,10 @@ foundation      acrylblends (the framework) and its packages: acryl-router, acry
    nothing depends on an app. The foundation and the framework's app plugins are named package by package (they keep their role
    wherever they move); runtime and app are read from the folder (`runtime/`, `apps/`, `examples/`). Every library plugin (a
    `plugins/*/plugin.json` folder) must be a workspace package with a role.
-3. **Two named exceptions, each by edge:** `acryl-harness-runtime` composes every plugin a surface runs (a composition root), so it
-   may depend on exactly the 20 plugins it lists today; a 21st fails (moving that composition up into `apps/` is spec 051 T021).
-   `acrylblends-framework` builds `acrylblends/drivers` from the agent panel's Cordis-free `drivers.ts`, so the foundation may depend
-   on exactly `acryl-agent-panel`; any other plugin edge fails.
+3. **One named exception:** `acryl-harness-runtime` composes every plugin a surface runs (a composition root), so it may depend on
+   exactly the 20 plugins it lists today; a 21st fails (moving that composition up into `apps/` is spec 051 T021). The foundation's one
+   plugin-shaped dependency is `acryl-drivers`, the Cordis-free driver contract: it is a foundation package by role, even though it
+   lives in `plugins/drivers` and an app receives it like any library plugin.
 
 A Blend repository outside this one depends on published npm packages, never on copied source.
 

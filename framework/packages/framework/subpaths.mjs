@@ -92,7 +92,7 @@ export const SUBPATHS = {
   'db/conformance': 'src/db-conformance.ts',
   'kv/conformance': 'src/kv-conformance.ts',
   // The driver contract (spec 046 T028/T029): `ChatDriver`, `ChatEvent`, `TerminalDriver`, `TerminalSession`, `Drivers` and `createDrivers`, with no Cordis in it. The agent panel and the driver plugins write against it.
-  'drivers': `${P}/agent-panel/drivers.ts`,
+  'drivers': `${P}/drivers/index.ts`,
   // The door's three parts that other packages build on: the host API, the page protocol and the page API (browser code).
   'door/host': `${P}/acryl-door/src/host/api.ts`,
   'door/protocol': `${P}/acryl-door/src/page/protocol.ts`,

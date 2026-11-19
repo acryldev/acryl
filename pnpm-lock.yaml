@@ -2341,9 +2341,6 @@ importers:
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1
-      acryl-agent-panel:
-        specifier: workspace:*
-        version: link:../../../plugins/agent-panel
       acryl-db:
         specifier: workspace:*
         version: link:../../../plugins/acryl-db
@@ -2353,6 +2350,9 @@ importers:
       acryl-door:
         specifier: workspace:*
         version: link:../../../plugins/acryl-door
+      acryl-drivers:
+        specifier: workspace:*
+        version: link:../../../plugins/drivers
       acryl-inspect:
         specifier: workspace:*
         version: link:../../../plugins/acryl-inspect
@@ -3896,6 +3896,9 @@ importers:
       acryl-agent:
         specifier: workspace:*
         version: link:../agent
+      acryl-drivers:
+        specifier: workspace:*
+        version: link:../drivers
       acryl-extensions:
         specifier: workspace:*
         version: link:../extensions
@@ -4216,6 +4219,9 @@ importers:
       acryl-agent-panel:
         specifier: workspace:*
         version: link:../agent-panel
+      acryl-drivers:
+        specifier: workspace:*
+        version: link:../drivers
       acryl-instance:
         specifier: workspace:*
         version: link:../instance
@@ -4256,6 +4262,9 @@ importers:
       acryl-agent-panel:
         specifier: workspace:*
         version: link:../agent-panel
+      acryl-drivers:
+        specifier: workspace:*
+        version: link:../drivers
       acryl-extensions:
         specifier: workspace:*
         version: link:../extensions
@@ -4290,6 +4299,18 @@ importers:
       acryl-state:
         specifier: workspace:*
         version: link:../acryl-state
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/drivers:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)

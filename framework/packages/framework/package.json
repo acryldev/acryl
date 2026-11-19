@@ -409,9 +409,9 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "devDependencies": {
+    "acryl-drivers": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-agent-panel": "workspace:*",
     "acryl-db": "workspace:*",
     "acryl-db-sqlite": "workspace:*",
     "acryl-door": "workspace:*",

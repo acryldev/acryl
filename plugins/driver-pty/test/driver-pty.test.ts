@@ -355,7 +355,7 @@ test('without a panel the plugin is pending and offers nothing; when the panel a
     undefined,
     'no registry without the panel',
   )
-  const { createDrivers } = await import('acryl-agent-panel/drivers')
+  const { createDrivers } = await import('acryl-drivers')
   const registry = createDrivers()
   app.provide('drivers', registry)
   await sleep(50)

@@ -1,0 +1,11 @@
+{
+  "name": "drivers",
+  "description": "The driver contract the agent panel and the driver plugins are written against: chat and terminal drivers, their events, and the registry, with no dependency on Cordis. Built as acrylblends/drivers.",
+  "requires": [],
+  "inject": [],
+  "provides": [],
+  "dependencies": {},
+  "entries": {
+    "": "index.ts"
+  }
+}

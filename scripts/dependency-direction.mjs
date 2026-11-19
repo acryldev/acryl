@@ -19,6 +19,7 @@ export const FOUNDATION = new Set([
   'acrylblends-framework',
   'acryl-db',
   'acryl-db-sqlite',
+  'acryl-drivers',
   'acryl-door',
   'acryl-inspect',
   'acryl-kv',
@@ -58,12 +59,6 @@ export const FRAMEWORK_PLUGINS = new Set([
   'acryl-showcase',
   'acryl-tasks',
 ])
-
-/**
- * The foundation's one build input from the plugins layer, by name: `acrylblends-framework` builds `acrylblends/drivers` from the agent panel's
- * Cordis-free `drivers.ts` (the contract the panel and the driver plugins write against). Listing the edge keeps a second one from slipping in.
- */
-export const FOUNDATION_PLUGIN_EDGES = new Map([['acrylblends-framework', new Set(['acryl-agent-panel'])]])
 
 /**
  * The only runtime -> plugin dependencies allowed, each edge by name: acryl-harness-runtime composes every plugin a surface runs, which is a
@@ -141,7 +136,7 @@ export function directionViolations(graph) {
       const depRole = roleOf(dep, graph.get(dep).folder)
       if (depRole === 'app')
         violations.push(`${name} depends on ${dep}, an app: apps are the top, nothing depends on them`)
-      else if (role === 'foundation' && depRole !== 'foundation' && !FOUNDATION_PLUGIN_EDGES.get(name)?.has(dep))
+      else if (role === 'foundation' && depRole !== 'foundation')
         violations.push(`${name} is framework foundation and depends on ${dep}: the foundation depends only on itself`)
       else if (role === 'runtime' && depRole !== 'foundation' && depRole !== 'runtime' && !RUNTIME_COMPOSITION_EDGES.get(name)?.has(dep))
         violations.push(`${name} is ACRYL runtime and depends on ${dep}: the runtime depends only on the foundation and itself`)
