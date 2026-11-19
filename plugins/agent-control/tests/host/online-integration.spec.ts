@@ -28,14 +28,14 @@ async function mount(config?: unknown): Promise<{ fiber: { dispose(): Promise<vo
   host = await testHost()
   port = host.port
 
-  const home = mkdtempSync(join(tmpdir(), 'acryl-agent-control-online-'))
+  const home = mkdtempSync(join(tmpdir(), '@acryldev/agent-control-online-'))
   roots.push(home)
   const ctx = new Context()
   ctx.provide('appInstance' as never, { home, dshHome: join(home, '.dsh') } as never)
   provideHost(ctx, host)
   ctx.provide('acrylTools' as never, { get: () => undefined, register: () => () => {}, policy: () => () => {} } as never)
   const module = await import(BUILT_ENTRY) as { apply(ctx: Context, config?: unknown): void }
-  const fiber = ctx.plugin({ name: 'acryl-agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
+  const fiber = ctx.plugin({ name: '@acryldev/agent-control', inject: ['acrylWeb', 'acrylTools', 'appInstance', 'router', 'routerHttp'], apply: module.apply }, config)
   await new Promise(resolve => { setTimeout(resolve, 10) })
   return { fiber: fiber as unknown as { dispose(): Promise<void> }, home }
 }

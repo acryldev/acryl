@@ -42,7 +42,7 @@ async function start(env: Record<string, string> = {}) {
   const home = mkdtempSync(join(scratch, 'server-test-'))
   const child = spawn(
     process.execPath,
-    ['--import', './plugins/acryl-node-server/src/register.ts', 'src/main.ts'],
+    ['--import', './plugins/node-server/src/register.ts', 'src/main.ts'],
     {
       env: {
         ...process.env,

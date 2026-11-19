@@ -1,7 +1,7 @@
 /** The `changes` right-sidebar tab type, registered through upstream's public two-stage path. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import { ChangesBody } from './ChangesBody.tsx'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
@@ -10,7 +10,7 @@ import { ChangesGlyph } from '../chrome/panel-icons.tsx'
 /** The tab kind this plugin owns. */
 export const CHANGES_KIND = 'changes'
 /** This implementation's identity in the tab system, and the key its body registers under. */
-export const CHANGES_ID = 'acryl-workspace/changes'
+export const CHANGES_ID = '@acryldev/workspace/changes'
 
 /**
  * A dependency-gated child plugin: it is PENDING (not failed) while the upstream right sidebar is
@@ -21,7 +21,7 @@ export const CHANGES_ID = 'acryl-workspace/changes'
  */
 export function changesTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGitApi) {
   return {
-    name: 'acryl-workspace-changes-tab',
+    name: '@acryldev/workspace-changes-tab',
     inject: ['sidebarRightTabs', 'sidebarRight', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {
@@ -57,7 +57,7 @@ export function changesTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGi
           removeBody()
           removeType()
         }
-      }, 'acryl-workspace: Changes tab type')
+      }, '@acryldev/workspace: Changes tab type')
     },
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Wait for `acryl-plugin-context`'s startup pass before the window loads. The
+ * Wait for `@acryldev/plugin-context`'s startup pass before the window loads. The
  * pass installs an app's own plugins and re-syncs changed ones one tick after
  * the engine boots; the web client composes once from the plugin list it
  * loads and fails its boot audit for anything missing, so a window loaded
@@ -11,7 +11,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 
-/** The part of `acryl-plugin-context`'s `pluginContext` service this reads. */
+/** The part of `@acryldev/plugin-context`'s `pluginContext` service this reads. */
 interface PluginContextStartup {
   /** Settles when the startup install/re-sync pass has finished, failed, or could not run. */
   readonly startupSettled?: Promise<void>

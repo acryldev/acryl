@@ -1,6 +1,6 @@
 /** Send a message to the agent of the chat session that is currently open. */
 
-import type { ISessions } from '@acryl/ui/frame'
+import type { ISessions } from '@acryldev/ui/frame'
 import { currentSessionId } from './main-session.ts'
 
 export type SendResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }

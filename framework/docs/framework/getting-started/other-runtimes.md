@@ -11,7 +11,7 @@ Acryl is built on Web Standards, so the same application code is expected to run
 
 ## Removed in 1.0
 
-The upstream also ships adapters for AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify and Service Workers. They were part of 0.x, ported with their tests, but no gate of ours deploys to any of them, so a 1.0 package does not promise them: they are not built or exported. Their ported sources stay in `plugins/acryl-router/src/core/adapter/` in the repository and may come back as separate plugins, each with its own gate. An app written with `acrylblends` is still plain `fetch` code (`app.fetch(request)`), so a platform that calls a `fetch` handler can call it directly.
+The upstream also ships adapters for AWS Lambda, Lambda@Edge, Cloudflare Workers and Pages, Vercel, Netlify and Service Workers. They were part of 0.x, ported with their tests, but no gate of ours deploys to any of them, so a 1.0 package does not promise them: they are not built or exported. Their ported sources stay in `plugins/router/src/core/adapter/` in the repository and may come back as separate plugins, each with its own gate. An app written with `acrylblends` is still plain `fetch` code (`app.fetch(request)`), so a platform that calls a `fetch` handler can call it directly.
 
 ## Not yet verified
 

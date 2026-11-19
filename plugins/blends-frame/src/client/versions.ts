@@ -1,9 +1,9 @@
 /**
- * The versions the left panel lists, through `acryl-versions`: the calls it makes, how a version is numbered, how its time reads, and which
+ * The versions the left panel lists, through `@acryldev/versions`: the calls it makes, how a version is numbered, how its time reads, and which
  * versions are shared (also on another branch or the remote, which the frame's Host answers).
  */
 
-import type { VersionsEntry, VersionsLogView } from 'acryl-versions'
+import type { VersionsEntry, VersionsLogView } from '@acryldev/versions'
 import { FRAME_VERSIONS_SHARED_PATH, parseSharedVersions } from '../contract.ts'
 
 export interface VersionsPort {

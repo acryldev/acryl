@@ -4,7 +4,7 @@
  * same-origin routes.
  */
 
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { en, zh, type SignInLocaleKey } from './locales.ts'
 import { ConnectChoice } from './ConnectChoice.tsx'
@@ -21,7 +21,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 
-export const name = 'acryl-sign-in-client'
+export const name = '@acryldev/sign-in-client'
 /** `slots` for the card, `locale` for its dictionary. */
 export const inject = ['slots', 'locale']
 
@@ -39,8 +39,8 @@ export function apply(ctx: ClientContext): void {
     copy: text => navigator.clipboard.writeText(text),
     language: () => document.documentElement.lang || navigator.language || undefined,
   }
-  ctx.effect(() => ctx.locale.register(SIGN_IN_LOCALE_NAMESPACE, { zh, en }), 'acryl-sign-in: dictionaries')
-  ctx.effect(() => installSignInStyles(), 'acryl-sign-in: styles')
+  ctx.effect(() => ctx.locale.register(SIGN_IN_LOCALE_NAMESPACE, { zh, en }), '@acryldev/sign-in: dictionaries')
+  ctx.effect(() => installSignInStyles(), '@acryldev/sign-in: styles')
   ctx.slots.inject('settings.models.footer', () => ctx.slots.register({
     name: 'settings.models.footer',
     id: 'acryl-sign-in',

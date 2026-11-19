@@ -42,7 +42,7 @@ const run = (command, args, cwd) => {
   return r.stdout
 }
 /** A plugin whose page shows the text of its version; the name is its own, so no route of the template can shadow it. */
-const plugin = (version) => `import { Acryl } from 'acryl-router'
+const plugin = (version) => `import { Acryl } from '@acryldev/router'
 export const name = 'board'
 export const inject = ['router']
 export function apply(ctx: { router: { route(path: string, app: unknown): void } }) {

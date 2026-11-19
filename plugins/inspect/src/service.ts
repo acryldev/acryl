@@ -5,8 +5,8 @@
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
-import { loopbackOnly } from 'acryl-router/middleware'
-import { Acryl } from 'acryl-router'
+import { loopbackOnly } from '@acryldev/router/middleware'
+import { Acryl } from '@acryldev/router'
 import { explain, ownerOf, renderReports, reportFiber, type FiberView, type PluginReport } from './report.ts'
 
 declare module '@deepseek-ai/cordis' {
@@ -16,7 +16,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-inspect'
+export const name = '@acryldev/inspect'
 
 export class Inspect extends Service {
   constructor(ctx: Context) {

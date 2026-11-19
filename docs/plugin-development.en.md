@@ -1,6 +1,6 @@
 # DSH Desktop Plugin Development
 
-> **Do not confuse current APIs with a Draft:** this guide describes working DSH/Cordis and Desktop services. The manifest, capability, and unified event model in `dsh-community-fabric` remains a [community RFC Draft](../dsh-community-fabric/README.md) and cannot yet be used as a dependency or release target.
+> **Do not confuse current APIs with a Draft:** this guide describes working DSH/Cordis and Desktop services. The manifest, capability, and unified event model in `@acryldev/dsh-community-fabric` remains a [community RFC Draft](../dsh-community-fabric/README.md) and cannot yet be used as a dependency or release target.
 
 ## Understand the two plugin layers
 

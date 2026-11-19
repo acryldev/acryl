@@ -1,4 +1,4 @@
-# acryl-diagnostics
+# @acryldev/diagnostics
 
 What every ACRYL surface shares for support: per-day log files with rotation and a size cap (`LogFileSink`), secret
 masking (`maskSecrets`), the Cordis logger exporter that feeds the files (`FileExporter`), and the support archive

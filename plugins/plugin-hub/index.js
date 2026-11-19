@@ -1,6 +1,6 @@
 /**
- * acryl-plugin-hub: saving, sharing and pulling plugins inside an app (spec 044, `specs/044-extension-persistence-and-registries/lifecycle.md`,
- * layer 2 over `@webboxes/plugin-hub`).
+ * @acryldev/plugin-hub: saving, sharing and pulling plugins inside an app (spec 044, `specs/044-extension-persistence-and-registries/lifecycle.md`,
+ * layer 2 over `@acryldev/plugin-hub-core`).
  *
  * Provides `pluginHub`, the one service every face drives (the `/plugin` chat command here, `acryl plugin` on the CLI, the agent tools and the
  * Plugins page later), so a result is the same whichever face asked:
@@ -11,7 +11,7 @@
  *   bump(folder, 'patch'|...)        give a fix its new version
  *   installed()                      the profile's plugins as DSH's plugin manager lists them, with their versions
  *
- * The operations are `@webboxes/plugin-hub`'s `createPluginHub`; this plugin supplies the app's side of them.
+ * The operations are `@acryldev/plugin-hub-core`'s `createPluginHub`; this plugin supplies the app's side of them.
  *
  * Installing is DSH's `pluginManager.installBundle` on the stored tarball (D1): the same installer stock DSH uses, with its compatibility check
  * and its approval of install scripts. This plugin never runs a package manager itself.
@@ -21,9 +21,9 @@
  */
 import { join } from 'node:path'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createPluginHub, findSourceFolder, firstRegistryPort, homePluginsDir, projectPluginsDir, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, npmCli, npmRegistryViaCli, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@webboxes/plugin-hub'
+import { createPluginHub, findSourceFolder, firstRegistryPort, homePluginsDir, projectPluginsDir, firstReleasePort, gitCli, githubCli, githubReleasesOverHttps, githubReleasesViaGh, npmCli, npmRegistryViaCli, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf } from '@acryldev/plugin-hub-core'
 
-export const name = 'acryl-plugin-hub'
+export const name = '@acryldev/plugin-hub'
 export const inject = ['appInstance']
 
 /** Where this app instance keeps its plugin store (`storeRootOf`: per instance, never machine-wide). */
@@ -31,7 +31,7 @@ export function storeRoot(instance) {
   return storeRootOf(instance.home)
 }
 
-/** Where plugins you edit live: the session's project folder, then the app instance's own (`@webboxes/plugin-hub` folders, moved there once from the old names). */
+/** Where plugins you edit live: the session's project folder, then the app instance's own (`@acryldev/plugin-hub-core` folders, moved there once from the old names). */
 export function sourceRoots({ workspaceDir, home }) {
   return [workspaceDir === undefined ? undefined : projectPluginsDir(workspaceDir), home === undefined ? undefined : homePluginsDir(home)]
 }
@@ -223,7 +223,7 @@ export function apply(ctx) {
       async handler(invocation) {
         return runPluginCommand(invocation?.rawInput, hub, { workspaceDir: invocation?.agent?.session?.header?.cwd, home: ctx.appInstance.home })
       },
-    }), 'acryl-plugin-hub: /plugin command')
+    }), '@acryldev/plugin-hub: /plugin command')
   })
 
   ctx.inject(['tools'], scoped => {

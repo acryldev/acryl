@@ -15,8 +15,8 @@ framework/   acrylblends, the framework apps are made with: its CLI and create, 
              scripts. Its library plugins (what `acrylblends add` copies into an app) live flat in plugins/, below
 runtime/     ACRYL's runtime: the control plane, the harness runtime, loopback HTTP, diagnostics, persistence, the plugin hub
 plugins/     Cordis plugins, each replaceable on its own: ACRYL's (ui, workspace, settings, sign-in, launcher, market, ...), the
-             Blends frame's (acryl-blends-frame, acryl-versions, acryl-app-context) and the framework library's app plugins
-             (acryl-instance, acryl-extensions, acryl-desktop-shell, ...)
+             Blends frame's (@acryldev/blends-frame, @acryldev/versions, @acryldev/app-context) and the framework library's app plugins
+             (@acryldev/instance, @acryldev/extensions, @acryldev/desktop-shell, ...)
 apps/        what people run: the acryl command, the desktop app, the web app, the terminal launcher
 examples/    demo packages that ship nothing production-facing
 distribution/ release shims (the `acryl` npm launcher)
@@ -35,11 +35,11 @@ The picture, bottom to top. It is documentation of the graph, not a folder rule:
 ```
 apps            acryl-cli, acryl-desktop, acryl-web, acryl-launcher-tui, examples
   ^ compose
-plugins         @acryl/ui, acryl-workspace, acryl-settings, acryl-sign-in, acryl-launcher, acryl-blends-frame, acryl-instance, ...
+plugins         @acryldev/ui, @acryldev/workspace, @acryldev/settings, @acryldev/sign-in, acryl-launcher, @acryldev/blends-frame, @acryldev/instance, ...
   ^ use
-runtime         acryl-control, acryl-loopback-http, acryl-diagnostics, acryl-web-service, blends-core, plugin-hub, ...
+runtime         @acryldev/control, @acryldev/loopback-http, @acryldev/diagnostics, @acryldev/web, blends-core, plugin-hub, ...
   ^ rests on
-foundation      acrylblends (the framework) and its packages: acryl-router, acryl-door, acryl-db, acryl-kv, acryl-state, acryl-drivers, ...
+foundation      acrylblends (the framework) and its packages: @acryldev/router, @acryldev/door, @acryldev/db, @acryldev/kv, @acryldev/state, @acryldev/drivers, ...
 ```
 
 `scripts/dependency-direction.mjs` enforces it, run by `node scripts/verify-layout.mjs` (part of `pnpm run check`):
@@ -49,12 +49,12 @@ foundation      acrylblends (the framework) and its packages: acryl-router, acry
    nothing depends on an app. The foundation and the framework's app plugins are named package by package (they keep their role
    wherever they move); runtime and app are read from the folder (`runtime/`, `apps/`, `examples/`). Every library plugin (a
    `plugins/*/plugin.json` folder) must be a workspace package with a role.
-3. **No shipped plugin dependency:** `acryl-harness-runtime` keeps what is runtime (engine, profiles, instances, sessions); the plugin
+3. **No shipped plugin dependency:** `@acryldev/harness-runtime` keeps what is runtime (engine, profiles, instances, sessions); the plugin
    set a surface runs is composed by the surface, from `@acryldev/coding-capabilities` (rows and packages) and the Blueprint it boots
    (spec 051 T021). The runtime may name plugins in `devDependencies` only, so its integration tests boot a surface with the real
    composition and import the plugin under test; a plugin in `dependencies` or `peerDependencies` fails the guard. The foundation's one
    plugin-shaped dependency is
-   `acryl-drivers`, the Cordis-free driver contract: it is a foundation package by role, even though it lives in `plugins/drivers` and an
+   `@acryldev/drivers`, the Cordis-free driver contract: it is a foundation package by role, even though it lives in `plugins/drivers` and an
    app receives it like any library plugin.
 
 A Blend repository outside this one depends on published npm packages, never on copied source.
@@ -63,19 +63,19 @@ A Blend repository outside this one depends on published npm packages, never on 
 
 | Package | Owns | Deliberately does not |
 |---|---|---|
-| `acrylblends` (framework/packages/cli) | the framework (`import { Acryl } from 'acrylblends'`) and the `acrylblends` command: add, upgrade, update plugins | depend on any ACRYL package (the frame's packages it names only by their published names, in `frame/packages.json`) |
-| `create-acrylblends` | `npm create acrylblends`: a new app from a template | carry the framework itself (it installs it) |
-| `acryl-router`, `acryl-router-http` | routes and middleware on Web-standard Request/Response; mounting them on the web server | own any product route |
-| the framework's app plugins (`acryl-instance`, `acryl-extensions`, `acryl-agent-panel`, `acryl-desktop-shell`, ...) | the features an app is made with, each one `acrylblends add` copies into `plugins/`: where data lives, extensions, the agent panel, the desktop shell | ship inside ACRYL Desktop; be imported by the foundation (the one named edge above) |
-| `acryl-door` | how an agent in the app folder looks at the running app and acts on it, with approval | decide which tools the agent gets |
-| `acryl-db`, `acryl-kv` (+ their providers) | the storage ports an app plugin injects, and their conformance suites | choose a database for the app |
-| `acryl-state`, `acryl-inspect` | observable state cells; what every running plugin requires and provides | render UI |
-| `acryl-control` | the host-neutral control plane: plugin lifecycle, agent control, providers | render any surface |
-| `acryl-harness-runtime` | composing the harness and the plugins a surface runs (the composition root) | own a surface's UI |
-| `acryl-loopback-http`, `acryl-diagnostics` | the same-origin loopback check for private routes; logs, secret masking, support archives | own a route of their own |
-| `@acryl/ui`, `acryl-ui-tui` | the design system, for the browser and for the terminal, with the same names | hold business logic |
-| `acryl-workspace` | the IDE workspace: worktrees, tiles, terminals, agents | own the agent loop |
-| `acryl-blends-frame` | the workbench around an app being built: versions, the app, the agents | ship inside the app itself |
+| `acrylblends` (framework/packages/cli) | the framework (`import { Acryl } from '@acryldev/blends'`) and the `acrylblends` command: add, upgrade, update plugins | depend on any ACRYL package (the frame's packages it names only by their published names, in `frame/packages.json`) |
+| `create-acrylblends` | `npm create @acryldev/blends`: a new app from a template | carry the framework itself (it installs it) |
+| `@acryldev/router`, `@acryldev/router-http` | routes and middleware on Web-standard Request/Response; mounting them on the web server | own any product route |
+| the framework's app plugins (`@acryldev/instance`, `@acryldev/extensions`, `@acryldev/agent-panel`, `@acryldev/desktop-shell`, ...) | the features an app is made with, each one `acrylblends add` copies into `plugins/`: where data lives, extensions, the agent panel, the desktop shell | ship inside ACRYL Desktop; be imported by the foundation (the one named edge above) |
+| `@acryldev/door` | how an agent in the app folder looks at the running app and acts on it, with approval | decide which tools the agent gets |
+| `@acryldev/db`, `@acryldev/kv` (+ their providers) | the storage ports an app plugin injects, and their conformance suites | choose a database for the app |
+| `@acryldev/state`, `@acryldev/inspect` | observable state cells; what every running plugin requires and provides | render UI |
+| `@acryldev/control` | the host-neutral control plane: plugin lifecycle, agent control, providers | render any surface |
+| `@acryldev/harness-runtime` | composing the harness and the plugins a surface runs (the composition root) | own a surface's UI |
+| `@acryldev/loopback-http`, `@acryldev/diagnostics` | the same-origin loopback check for private routes; logs, secret masking, support archives | own a route of their own |
+| `@acryldev/ui`, `@acryldev/ui-tui` | the design system, for the browser and for the terminal, with the same names | hold business logic |
+| `@acryldev/workspace` | the IDE workspace: worktrees, tiles, terminals, agents | own the agent loop |
+| `@acryldev/blends-frame` | the workbench around an app being built: versions, the app, the agents | ship inside the app itself |
 | `acryl-launcher` | the launcher's journeys (make, install, pull, update) for every face | draw the screen (the faces do) |
 | `apps/*` | starting a surface and composing it | hold logic a plugin could own |
 

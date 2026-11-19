@@ -58,7 +58,7 @@ async function framework<T>(io: Io, subpath: string, own: string): Promise<T> {
 }
 
 /**
- * Import a JSON-file kv store into the `kv` table of an app's SQLite database: the move from `acryl-kv-json` to SQL. The file is not changed.
+ * Import a JSON-file kv store into the `kv` table of an app's SQLite database: the move from `@acryldev/kv-json` to SQL. The file is not changed.
  * The database is opened with the app's `migrations/` folder when it has one (a database whose schema is newer than the files given is refused),
  * and the table is created when missing. Refuses to overwrite a key the table already has unless `--overwrite`.
  */

@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useRef, useState, type ComponentType } from 'react'
-import type { WorkspaceTabProps } from 'acryl-workspace/client'
+import type { WorkspaceTabProps } from '@acryldev/workspace/client'
 import type { WorkerResponse } from '../../workers-contract.ts'
 import type { WorkersApi } from './workers-api.ts'
 import { folderName, parseWorkerState, serializeWorkerState, type WorkerMessage, type WorkerTabState } from './worker-state.ts'

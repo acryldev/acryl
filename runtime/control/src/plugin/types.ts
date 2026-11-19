@@ -6,7 +6,7 @@
  * in `controller.ts` returns them. Nothing here knows about Electron, a client
  * UI, a Blend, or a particular profile layout - those are host projections.
  *
- * @module acryl-control/plugin/types
+ * @module @acryldev/control/plugin/types
  */
 
 /** Public Cordis Fiber phases, plus `null` for a disposed entry. */

@@ -1,7 +1,7 @@
 /** Settings > Support: export a diagnostics archive. */
 
 import { useState } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryldev/ui/frame'
 import type { SupportApi } from './support-api.ts'
 import { saveDownload } from './support-api.ts'
 

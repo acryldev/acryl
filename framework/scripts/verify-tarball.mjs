@@ -65,7 +65,7 @@ for (const tarball of tarballs) {
     if (/^plugins\//.test(inside) && /(\.test\.|\.spec\.|\.case\.ts$|\/tests?\/)/.test(inside))
       problems.push(`${tarball.split('/').at(-1)}: ${inside} is a test file of a vendored plugin`)
   }
-  // A declaration file beside the TypeScript source it describes is build debris (the vendored plugins ship as .ts): 1.0.5 carried 95 of them in plugins/acryl-router/src, which every new app received.
+  // A declaration file beside the TypeScript source it describes is build debris (the vendored plugins ship as .ts): 1.0.5 carried 95 of them in plugins/router/src, which every new app received.
   const inPackage = new Set(files.map((file) => file.slice(join(into, 'package').length + 1)))
   for (const inside of inPackage)
     if (

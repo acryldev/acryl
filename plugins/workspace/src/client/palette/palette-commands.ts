@@ -23,7 +23,7 @@ export interface PaletteActions {
   focusTab(tabId: string): void
   closeActiveTab(): void
   openFile(worktree: string, file: string, line?: number): void
-  /** Starts picking an element on the page, to copy where it is for an agent (`acryl-mount-anchors`). */
+  /** Starts picking an element on the page, to copy where it is for an agent (`@acryldev/mount-anchors`). */
   pickElement(): void
 }
 
@@ -39,7 +39,7 @@ export interface PaletteView {
 }
 
 const isMac = (): boolean => typeof navigator !== 'undefined' && /mac/i.test(navigator.platform)
-/** The palette's default shortcut (registered by `acryl-shortcuts`), drawn for the platform. */
+/** The palette's default shortcut (registered by `@acryldev/shortcuts`), drawn for the platform. */
 export const PALETTE_SHORTCUT_LABEL = (): string => (isMac() ? '⌘⇧P' : 'Ctrl+Shift+P')
 
 interface FixedCommand {

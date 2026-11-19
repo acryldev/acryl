@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-tasks',
+  name: '@acryldev/tasks',
   entry,
   outDir: 'lib',
   format: 'esm',

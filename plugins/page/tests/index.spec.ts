@@ -2,10 +2,10 @@
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import { apply as routerApply, name as routerName } from 'acryl-router'
+import { apply as routerApply, name as routerName } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
-import * as nodeServer from 'acryl-node-server'
-import * as webServer from 'acryl-web-server'
+import * as nodeServer from '@acryldev/node-server'
+import * as webServer from '@acryldev/web-server'
 import * as page from '../src/index.ts'
 
 const contexts: Context[] = []
@@ -23,7 +23,7 @@ async function boot(): Promise<Context> {
   return ctx
 }
 
-describe('acryl-page', () => {
+describe('@acryldev/page', () => {
   it('serves our own document, not the frontend package index, with the taps applied', async () => {
     const ctx = await boot()
     ctx.webServer.tapIndex(html => html.replace('</head>', '<script>window.__TEST_BOOT__ = 1</script></head>'))

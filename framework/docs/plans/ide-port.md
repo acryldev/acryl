@@ -5,7 +5,7 @@ Status: amended after slice 0 (`ide-slice0.md`, the decision record, with measur
 ## What the owner asked for
 
 1. ACRYL's IDE becomes framework plugins, **ported as source with its tests** (provenance recorded, the original suites passing), not rebuilt: the workspace, PTY terminals running `claude`, `codex` and `pi` as they are, DeepSeek Harness (DSH) chat mode as the chat driver, ACRYL's design. The door stays.
-2. **The ACRYL frame is the base of every app**, not an `ide` template beside simpler ones. Every app made with `create-acrylblends` (the `blank` template included) starts inside it: `acryl-app-shell`'s three columns (a left sessions and projects panel, the main surface, a right panel, each collapsible and resizable, and remembered), ACRYL's Settings screens (the same sections, rows and controls), its design (`acryl-ui`, brand, light and dark) and its shortcuts. The app's own pages render in the main surface. "Minimal" means few panels filled, never a different and simpler UI.
+2. **The ACRYL frame is the base of every app**, not an `ide` template beside simpler ones. Every app made with `create-acrylblends` (the `blank` template included) starts inside it: `@acryldev/app-shell`'s three columns (a left sessions and projects panel, the main surface, a right panel, each collapsible and resizable, and remembered), ACRYL's Settings screens (the same sections, rows and controls), its design (`acryl-ui`, brand, light and dark) and its shortcuts. The app's own pages render in the main surface. "Minimal" means few panels filled, never a different and simpler UI.
 3. **Predictable means the same positions, toggles and shortcuts as ACRYL.** Behaviour is ported, not reinterpreted, and each slice is compared against screenshots of ACRYL's own desktop taken as the reference.
 
 The panel of the `agent` template (a chat dropdown over headless runs, an optional terminal tab) is frozen and is replaced by the frame for every app; nothing more is built on it.
@@ -26,12 +26,12 @@ Details and numbers are in `ide-slice0.md`; the decisions that shape the rest of
 | --- | --- | --- |
 | Slot registry, store, renderer, module loader, page shell, connection, locale, shortcuts service | DSH's npm packages (pinned) | none |
 | Conversation UI and session engine (chat) | DSH's npm packages | none; connect models (slice 3) |
-| The frame: `acryl-app-shell` (13 files, 1.1k lines) | ACRYL source | port with tests |
-| Design: `acryl-ui` (64 files, 6.1k lines), `acryl-brand`, `dsh-client-ui-brand-acryl` (ported in the spike) | ACRYL source | port with tests |
-| Settings: `acryl-settings` (service), the Settings screens ACRYL adds to DSH's (`Agents`, `Tabs`, `Command palette`, plugin lifecycle in `acryl-plugin-admin`), `acryl-shortcuts` | ACRYL source | port with tests |
-| Workspace: `acryl-workspace` (host half 8 folders, client half 15 folders; 202 files, 19k lines), the terminal (`node-pty`, `@xterm/headless`, `ws`), the agent catalog | ACRYL source | port with tests |
-| Sign-in (OAuth for Claude, ChatGPT/Codex, DeepSeek account): `acryl-sign-in` | ACRYL source | port with tests |
-| The door: `acryl-door` (this repository) | this repository | adapt to DSH's host (below) |
+| The frame: `@acryldev/app-shell` (13 files, 1.1k lines) | ACRYL source | port with tests |
+| Design: `acryl-ui` (64 files, 6.1k lines), `@acryldev/brand`, `@acryldev/brand-client` (ported in the spike) | ACRYL source | port with tests |
+| Settings: `@acryldev/settings` (service), the Settings screens ACRYL adds to DSH's (`Agents`, `Tabs`, `Command palette`, plugin lifecycle in `@acryldev/plugin-admin`), `@acryldev/shortcuts` | ACRYL source | port with tests |
+| Workspace: `@acryldev/workspace` (host half 8 folders, client half 15 folders; 202 files, 19k lines), the terminal (`node-pty`, `@xterm/headless`, `ws`), the agent catalog | ACRYL source | port with tests |
+| Sign-in (OAuth for Claude, ChatGPT/Codex, DeepSeek account): `@acryldev/sign-in` | ACRYL source | port with tests |
+| The door: `@acryldev/door` (this repository) | this repository | adapt to DSH's host (below) |
 | `appInstance`, `acrylWeb` | 15 lines each over DSH's `webServer` | become small framework plugins |
 
 **Where the ported packages live.** They are npm packages with a `dsh.client` declaration, built at publish time, so the repository holds their source and tests under a folder of their own (not `plugins/`, whose contents are copied into apps as source) and the publish pipeline builds and verifies them like `acrylblends`. Which npm names they publish under is an owner decision (below).
@@ -45,11 +45,11 @@ The door stays in every slice. Every slice ends with the original tests of what 
 | Slice | What you can do when it lands | Contents | Estimate |
 | --- | --- | --- | --- |
 | 0. Spike | nothing new for an attendee | done: `ide-slice0.md` | about 5 h (spent) |
-| 1. The ACRYL frame and Settings | every app opens inside ACRYL's frame: collapsible, resizable, remembered panels, Settings with ACRYL's sections, light and dark, shortcuts; the app's pages in the main surface; the door works in it | `acryl-app-shell`, `acryl-ui`, `acryl-settings` and its screens, `acryl-brand`, shortcuts, the brand client (done in the spike); the `dsh` profile and overlay the templates generate; `acrylWeb` and `appInstance` plugins; the door adapted to the host (its page script through DSH's index-inject hook, `acrylWeb` in place of `nodeServer`); the publish pipeline for client packages; first run without DSH's two dialogs in the way | 24-36 h |
-| 2. Workspace and PTY terminals | projects, tabs per worktree, split, `claude`, `codex` and `pi` as they are in terminal tiles, the agent catalog | `acryl-workspace` host and client (with the git, files, projects folders it contains) and its tests; `node-pty` allowed in the profile; Windows | 24-36 h |
+| 1. The ACRYL frame and Settings | every app opens inside ACRYL's frame: collapsible, resizable, remembered panels, Settings with ACRYL's sections, light and dark, shortcuts; the app's pages in the main surface; the door works in it | `@acryldev/app-shell`, `acryl-ui`, `@acryldev/settings` and its screens, `@acryldev/brand`, shortcuts, the brand client (done in the spike); the `dsh` profile and overlay the templates generate; `acrylWeb` and `appInstance` plugins; the door adapted to the host (its page script through DSH's index-inject hook, `acrylWeb` in place of `nodeServer`); the publish pipeline for client packages; first run without DSH's two dialogs in the way | 24-36 h |
+| 2. Workspace and PTY terminals | projects, tabs per worktree, split, `claude`, `codex` and `pi` as they are in terminal tiles, the agent catalog | `@acryldev/workspace` host and client (with the git, files, projects folders it contains) and its tests; `node-pty` allowed in the profile; Windows | 24-36 h |
 | 3. DSH chat | chat with DSH next to the terminals; sessions in the left panel; connect a model (API key now, OAuth in slice 5) | DSH's conversation UI is already in the page; the work is connection, first run, session persistence, the chat tab selection, model settings in the ACRYL frame | 8-16 h |
 | 4. Files, diff, changes | edit files (CodeMirror), diffs, stage and commit, review threads, checks, the board, docs tabs | right-panel tabs and tiles of the workspace: they come with slice 2's port, so this slice is tests, gates and the screenshot comparisons | 8-16 h |
-| 5. Sign-in | connect a provider by account (OAuth) from Settings > Models; keys and tokens stay in DSH's or the agent's own store, never in the page, the app folder, `.acryl`, the audit log or what `make-entry` and the production build pack | `acryl-sign-in` (11 files, 1.1k lines); the test with a fake agent that does a browser-style login and shows the state moving; no token string in any file | 8-12 h |
+| 5. Sign-in | connect a provider by account (OAuth) from Settings > Models; keys and tokens stay in DSH's or the agent's own store, never in the page, the app folder, `.acryl`, the audit log or what `make-entry` and the production build pack | `@acryldev/sign-in` (11 files, 1.1k lines); the test with a fake agent that does a browser-style login and shows the state moving; no token string in any file | 8-12 h |
 | 6. Templates | `npm create acrylblends@latest my-app <template>` for every template starts in the frame; `blank` is the frame with the main surface nearly empty; `acrylblends upgrade` moves an existing app onto it | the generated profile and overlay per template, the upgrade path, docs, gates (real Chrome, real Electron, Windows), the workshop guide's blocks | 24-36 h |
 | Electron (alongside 5 and 6) | the frame in a desktop window | section 4 | 8-16 h |
 
@@ -71,7 +71,7 @@ Every template name now says what the app does, not what UI it has: the UI is al
 
 ## 4. Electron
 
-DSH has its own desktop shell; ACRYL's `apps/acryl-desktop` (111 files, 21k lines, 16 files import `electron`) is built around it, and this repository's `plugins/desktop` (about 1,100 lines) is a smaller shell with the door's `window` and `menu` verbs, gated on three platforms. Proposed: **keep `plugins/desktop` as the shell** and port from ACRYL only what the frame needs of Electron: the native menu, the window options and chrome metrics (the frame reserves title-bar space per platform), tray icons, reveal in folder and the native folder picker the workspace isolates behind a seam. It loads the same page DSH serves. The rest of `apps/acryl-desktop` stays in ACRYL. Slice 0 did not run Electron.
+DSH has its own desktop shell; ACRYL's `apps/acryl-desktop` (111 files, 21k lines, 16 files import `electron`) is built around it, and this repository's `plugins/desktop-shell` (about 1,100 lines) is a smaller shell with the door's `window` and `menu` verbs, gated on three platforms. Proposed: **keep `plugins/desktop-shell` as the shell** and port from ACRYL only what the frame needs of Electron: the native menu, the window options and chrome metrics (the frame reserves title-bar space per platform), tray icons, reveal in folder and the native folder picker the workspace isolates behind a seam. It loads the same page DSH serves. The rest of `apps/acryl-desktop` stays in ACRYL. Slice 0 did not run Electron.
 
 ## 5. Risks
 
@@ -97,7 +97,7 @@ Still open:
 1. (answered above)
 2. (answered above)
 3. The order of slices (frame and Settings first, as asked).
-4. Electron: `plugins/desktop` stays the shell (section 4).
+4. Electron: `plugins/desktop-shell` stays the shell (section 4).
 5. Provenance wording for source derived from ACRYL and DSH (both MIT).
 6. Whether the workshop stays on the `agent` template.
 7. A reference set of ACRYL desktop screenshots for the comparisons.

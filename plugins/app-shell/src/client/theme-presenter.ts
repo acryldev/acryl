@@ -1,4 +1,4 @@
-import type { ThemeSnapshot } from '@acryl/ui/frame'
+import type { ThemeSnapshot } from '@acryldev/ui/frame'
 
 const DARK_ATTRIBUTE = 'data-ds-dark-theme'
 

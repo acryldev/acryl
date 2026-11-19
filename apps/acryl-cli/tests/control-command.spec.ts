@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { RunningApp } from 'acryl-harness-runtime'
-import { UiControlError, type UiResult } from 'acryl-agent-control'
+import type { RunningApp } from '@acryldev/harness-runtime'
+import { UiControlError, type UiResult } from '@acryldev/agent-control'
 import { buildRequest, buildToolCall, buildWorkerRequest, runControlCommand } from '../src/host/control-command.ts'
 import { parseAcrylArgs } from '../src/cli/grammar.ts'
 import { renderControl } from '../src/cli/control-render.ts'

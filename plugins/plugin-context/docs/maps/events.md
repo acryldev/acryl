@@ -7,15 +7,15 @@ gets the same reach from the harness event bus. Listen with `ctx.on(name, listen
 **Dispatch modes**: `emit` (fire and forget), `parallel` (all run), `serial` and `bail` (in order until a value bails), `waterfall`
 (around-middleware: `ctx.on(name, async (input, next) => { const result = await next(); return result })`; a listener that only observes MUST
 still call `next()` and return its result; the returned value is authoritative). Working example: `example-plugins/packages/prompt-assemble-hook/` (shapes
-the system prompt on `system-prompt/assemble`, the same hook `acryl-system-prompt` uses). Read `extending/event-hook.md` first.
+the system prompt on `system-prompt/assemble`, the same hook `@acryldev/system-prompt` uses). Read `extending/event-hook.md` first.
 
 93 events:
 
 | Event | Mode | What | Declared by |
 | --- | --- | --- | --- |
-| `acryl/agent-runtime-status` |  |  | acryl-control |
-| `acryl/operation-settled` |  |  | acryl-control |
-| `acrylSettings/updated` | emit | Committed change to one registered namespace's resolved value, emitted after the file was written and never when | acryl-settings |
+| `acryl/agent-runtime-status` |  |  | @acryldev/control |
+| `acryl/operation-settled` |  |  | @acryldev/control |
+| `acrylSettings/updated` | emit | Committed change to one registered namespace's resolved value, emitted after the file was written and never when | @acryldev/settings |
 | `agent-loop/config-start-failed` | emit | A declarative agent entry failed before it could publish a live agent. | dsh-agent-loop |
 | `agent-preset/selected` | emit | One session committed a different agent preset to its durable log. | dsh-agent-preset-registry |
 | `agent/assistant-stream` | emit | Process-local assistant-stream publication. Chunk frames are transient; | dsh-agent |

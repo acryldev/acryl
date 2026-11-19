@@ -9,7 +9,7 @@
  *
  * The DMG carries the app itself: the frame and the Blank app it builds in, with Electron's own Node, so it needs no Node, npm or git. The bundle is
  * read-only; on the first start the packaged app makes the person's first app from it in the product's own folder of the OS per-user data folder
- * (plugins/desktop/product.ts, plugins/instance/storage.ts).
+ * (plugins/desktop-shell/product.ts, plugins/instance/storage.ts).
  */
 import { execFileSync, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -210,7 +210,7 @@ function gitSourceOffer() {
 }
 
 if (
-  !existsSync(join(root, '..', 'plugins', 'acryl-blends-frame', 'lib')) ||
+  !existsSync(join(root, '..', 'plugins', 'blends-frame', 'lib')) ||
   !existsSync(join(root, 'packages', 'cli', 'dist'))
 )
   throw new Error('the checkout is not built: run `corepack pnpm run build` first')
@@ -228,7 +228,7 @@ const newestFile = (folder) => {
 }
 const stale = []
 for (const [pkg, out] of [
-  ['../plugins/acryl-blends-frame', 'lib'],
+  ['../plugins/blends-frame', 'lib'],
   ['packages/cli', 'dist'],
 ]) {
   const src = join(root, pkg, 'src')
@@ -435,16 +435,16 @@ exports.default = async (context) => {
 `,
 )
 const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
-// The installed app's icon (Dock, Finder, About, the installer) is the one its window wears (plugins/desktop/brand.ts iconFile): the app's own
+// The installed app's icon (Dock, Finder, About, the installer) is the one its window wears (plugins/desktop-shell/brand.ts iconFile): the app's own
 // assets/icon.png, else the ACRYL Blends logo. Left unset, every product showed Electron's default icon.
-// The app's desktop shell: its own copy in plugins/desktop, or the acryl-desktop-shell package it depends on (spec 051 T011).
+// The app's desktop shell: its own copy in plugins/desktop-shell, or the @acryldev/desktop-shell package it depends on (spec 051 T011).
 const { findDesktopShell } = await import(
   pathToFileURL(join(root, 'packages/cli/src/desktop-shell.ts')).href
 )
 const shell = findDesktopShell(app)
 if (shell === undefined)
   throw new Error(
-    `pack-blank-mac: ${app} has no desktop shell (plugins/desktop, or the acryl-desktop-shell package)`,
+    `pack-blank-mac: ${app} has no desktop shell (plugins/desktop-shell, or the @acryldev/desktop-shell package)`,
   )
 const appIcon = [
   join(app, 'assets', 'icon.png'),
@@ -488,7 +488,7 @@ manifest.author ??= { name: 'ACRYL Blends', email: 'build@acryldev.dev' }
 manifest.homepage ??= 'https://acrylblends.github.io'
 // 4a. The product's own git (app-storage.md, "Git on a clean machine"): a clean Mac has only the shim that asks to install the Command Line Tools, and
 // versions, export, the terminals and the agents all run `git`. It lies beside the app in Resources/git, and the desktop shell puts it first on the
-// frame host's PATH (plugins/desktop/git.ts).
+// frame host's PATH (plugins/desktop-shell/git.ts).
 // shortcut: git ships with the macOS product only; Windows and Linux use the machine's git (dugite-native has builds for both, add them when the desktop
 // shell's git.ts finds a Windows git.exe).
 if (platform === 'mac')
@@ -519,7 +519,7 @@ log(`the Program: ${program.join(', ')}`)
 
 // 4b. The packager drops or rewrites files the app owns: `.git` and `.gitignore` never enter a bundle (electron-builder excludes those names), and the
 // manifest it ships is filtered (the scripts go). Each travels under a plain carrier name and a new app's source gets it back as itself
-// (plugins/desktop/product.ts). The product's own build-time files stay out of the repository's status through its local exclude, never the app's tracked
+// (plugins/desktop-shell/product.ts). The product's own build-time files stay out of the repository's status through its local exclude, never the app's tracked
 // .gitignore.
 cpSync(join(app, '.gitignore'), join(app, 'gitignore-product'))
 // `.gitattributes` pins the line endings of the app's files (a plugin written on Windows must digest the same on a Mac): the template commits it, the builder drops it by name.

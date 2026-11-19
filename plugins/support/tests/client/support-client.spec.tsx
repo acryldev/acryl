@@ -13,9 +13,9 @@ const props = (api: SupportApi) => ({ api, t }) as unknown as Parameters<typeof 
 
 describe('fileNameFrom', () => {
   it('takes the Host-suggested name and refuses anything odd', () => {
-    expect(fileNameFrom('attachment; filename="acryl-diagnostics-1.zip"')).toBe('acryl-diagnostics-1.zip')
-    expect(fileNameFrom('attachment; filename="../../etc/passwd"')).toBe('acryl-diagnostics.zip')
-    expect(fileNameFrom(null)).toBe('acryl-diagnostics.zip')
+    expect(fileNameFrom('attachment; filename="@acryldev/diagnostics-1.zip"')).toBe('@acryldev/diagnostics-1.zip')
+    expect(fileNameFrom('attachment; filename="../../etc/passwd"')).toBe('@acryldev/diagnostics.zip')
+    expect(fileNameFrom(null)).toBe('@acryldev/diagnostics.zip')
   })
 })
 

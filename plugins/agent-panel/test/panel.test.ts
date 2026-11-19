@@ -4,12 +4,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { agent, memory, model, scripted, tools } from 'acryl-agent'
-import { builder } from 'acryl-builder'
-import { extensions } from 'acryl-extensions'
-import { instance, pinnedInstance } from 'acryl-instance'
-import * as router from 'acryl-router'
-import * as state from 'acryl-state'
+import { agent, memory, model, scripted, tools } from '@acryldev/agent'
+import { builder } from '@acryldev/builder'
+import { extensions } from '@acryldev/extensions'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import * as router from '@acryldev/router'
+import * as state from '@acryldev/state'
 import * as panel from '../index.ts'
 
 const cleanup: Array<() => Promise<void> | void> = []
@@ -277,7 +277,7 @@ test('a plugin that injects drivers is pending while no panel is mounted, and st
   })
   await fiber.await().catch(() => {})
   assert.equal(registered, false)
-  const { createDrivers } = await import('acryl-drivers')
+  const { createDrivers } = await import('@acryldev/drivers')
   app.provide('drivers', createDrivers())
   await new Promise((r) => setTimeout(r, 20))
   assert.equal(registered, true)

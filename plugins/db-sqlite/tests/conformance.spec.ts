@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describeDbConformance } from 'acryl-db/conformance'
+import { describeDbConformance } from '@acryldev/db/conformance'
 import { afterAll } from 'vitest'
 import { openDb } from '../src/open.ts'
 
@@ -12,8 +12,8 @@ afterAll(async () => {
   await Promise.all(dirs.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
 })
 
-describeDbConformance('acryl-db-sqlite', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'acryl-db-sqlite-'))
+describeDbConformance('@acryldev/db-sqlite', async () => {
+  const dir = await mkdtemp(join(tmpdir(), '@acryldev/db-sqlite-'))
   dirs.push(dir)
   return openDb({ path: join(dir, 'data.sqlite') })
 })

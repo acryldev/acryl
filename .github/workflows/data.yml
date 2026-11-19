@@ -9,15 +9,15 @@ on:
   push:
     branches: [main, ci-data]
     paths:
-      - 'plugins/acryl-db-postgres/**'
-      - 'plugins/acryl-db-pglite/**'
+      - 'plugins/db-postgres/**'
+      - 'plugins/db-pglite/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/data.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'plugins/acryl-db-postgres/**'
-      - 'plugins/acryl-db-pglite/**'
+      - 'plugins/db-postgres/**'
+      - 'plugins/db-pglite/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/data.yml'
 
@@ -59,17 +59,17 @@ jobs:
 
       # Only the two providers and what they depend on: they import nothing from the rest of the workspace.
       - name: Install the data packages
-        run: corepack pnpm install --frozen-lockfile --filter "acryl-db-postgres..." --filter "acryl-db-pglite..."
+        run: corepack pnpm install --frozen-lockfile --filter "@acryldev/db-postgres..." --filter "@acryldev/db-pglite..."
 
       # PGlite (a devDependency) serves the suite over its socket server, so the provider's network driver is tested with no Postgres installed.
       # Since spec 051 the providers' acrylblends is the workspace's framework/packages/cli, not an npm package with a built lib/:
       # build what they depend on (^... = dependencies only) before their own checks.
       - name: Build the workspace packages the providers depend on
-        run: corepack pnpm --filter "acryl-db-postgres^..." --filter "acryl-db-pglite^..." run build
+        run: corepack pnpm --filter "@acryldev/db-postgres^..." --filter "@acryldev/db-pglite^..." run build
 
       - name: Build, typecheck and test the Postgres provider
-        run: corepack pnpm --filter acryl-db-postgres run check
+        run: corepack pnpm --filter @acryldev/db-postgres run check
 
       # PGlite in this process, with its data folder on this runner's file system: the suite, data across a reopen, and the folder lock.
       - name: Build, typecheck and test the embedded Postgres provider
-        run: corepack pnpm --filter acryl-db-pglite run check
+        run: corepack pnpm --filter @acryldev/db-pglite run check

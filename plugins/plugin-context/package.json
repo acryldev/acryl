@@ -1,5 +1,5 @@
 {
-  "name": "acryl-plugin-context",
+  "name": "@acryldev/plugin-context",
   "version": "0.1.0",
   "description": "Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037)",
   "license": "MIT",
@@ -10,9 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-plugin-context"
+    "directory": "plugins/plugin-context"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-plugin-context#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/plugin-context#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -42,8 +42,8 @@
   },
   "main": "./index.js",
   "dependencies": {
-    "@webboxes/blends-core": "workspace:*",
-    "@webboxes/plugin-hub": "workspace:*",
+    "@acryldev/blends-core": "workspace:*",
+    "@acryldev/plugin-hub-core": "workspace:*",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "acrylblends": "workspace:^",
     "yaml": "^2.9.0"
@@ -54,6 +54,6 @@
     "@deepseek-ai/schemastery": "~3.18.4",
     "@earendil-works/pi-tui": "1.1.0",
     "@types/node": "^22.20.0",
-    "acryl-ui-tui": "workspace:*"
+    "@acryldev/ui-tui": "workspace:*"
   }
 }

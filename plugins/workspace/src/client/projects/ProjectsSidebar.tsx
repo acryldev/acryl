@@ -5,7 +5,7 @@
  * second, classic list to switch to. */
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import type { PropsRuntime, UseSessions } from '@acryl/ui/frame'
+import type { PropsRuntime, UseSessions } from '@acryldev/ui/frame'
 import { AcrylMarkIcon, CollapseSidebarIcon } from '../agents/controls.tsx'
 import type { AgentsState } from '../agents/agents-state.ts'
 import type { WorkspaceGroups } from '../canvas/groups.ts'
@@ -15,7 +15,7 @@ import type { UpstreamPanels } from './upstream-panels.ts'
 import { attentionByWorktree, type WorktreeAttention } from '../status/attention-model.ts'
 import type { AgentStatusState } from '../status/agent-status-state.ts'
 import { buildProjectRows, entriesForWorktree, reposInWorkspace, type WorktreeSessionEntry } from './sidebar-model.ts'
-import type { DesktopSidebarSurfaceOwnerProps } from 'acryl-app-shell/client'
+import type { DesktopSidebarSurfaceOwnerProps } from '@acryldev/app-shell/client'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import type { ChatSelection } from '../chat/chat-selection.ts'
 import { RepoSection } from './RepoSection.tsx'

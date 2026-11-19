@@ -1,14 +1,14 @@
 {
-  "name": "acryl-support",
+  "name": "@acryldev/support",
   "version": "0.1.0",
   "description": "ACRYL support tools, one Cordis plugin: the Web surface writes log files, and Settings > Support downloads a diagnostics archive (system facts plus masked logs)",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-support"
+    "directory": "plugins/support"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-support#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/support#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -55,11 +55,11 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*",
+    "@acryldev/ui": "workspace:*",
     "@deepseek-ai/dsh-home-paths": "0.2.0-rc.2",
-    "acryl-control": "workspace:*",
-    "acryl-diagnostics": "workspace:*",
-    "acryl-loopback-http": "workspace:*"
+    "@acryldev/control": "workspace:*",
+    "@acryldev/diagnostics": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

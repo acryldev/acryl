@@ -1,6 +1,6 @@
 /**
  * CLI/TUI's own `desktopProfiles`/`desktopPnpm` capabilities (spec 034,
- * completing T006 for the third surface) - what `cordis-plugin-market`'s
+ * completing T006 for the third surface) - what `@acryldev/cordis-plugin-market`'s
  * install service needs for a CLI-driven Market install/uninstall to do a
  * real package operation, instead of the "ACRYL is required" gate it shows
  * without them.
@@ -26,19 +26,19 @@ import { type Context, Service } from '@deepseek-ai/cordis'
 import { pinnedPnpmEnv } from './pinned-pnpm.ts'
 import { reconcileProfileLayout, type PnpmProfileConfig } from './profile-layout.ts'
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopProfile` shape. */
 export interface CliMarketProfile {
   readonly name: string
   readonly dir: string
 }
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
 export interface CliMarketPnpmOutcome {
   readonly exitCode: number | null
   readonly signal: NodeJS.Signals | null
 }
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
 export interface CliMarketPnpmHandle {
   readonly stdout: Readable
   readonly stderr: Readable
@@ -52,7 +52,7 @@ export interface CliMarketPnpmHandle {
 // `Service`'s constructor takes a plain string name, not `keyof Context`, so
 // providing under these exact names needs no static declaration at all.
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly. */
 export interface CliMarketPnpm {
   runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): CliMarketPnpmHandle
   installPlugin(request: {

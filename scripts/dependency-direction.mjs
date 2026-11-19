@@ -15,49 +15,49 @@ import { join, relative } from 'node:path'
 
 /** The framework's foundation: acrylblends and its library packages. They depend on nothing else in the repository. */
 export const FOUNDATION = new Set([
-  'acrylblends',
-  'acrylblends-framework',
-  'acryl-db',
-  'acryl-db-sqlite',
-  'acryl-drivers',
-  'acryl-door',
-  'acryl-inspect',
-  'acryl-kv',
-  'acryl-kv-db',
-  'acryl-kv-json',
-  'acryl-node-server',
-  'acryl-page',
-  'acryl-router',
-  'acryl-router-http',
-  'acryl-state',
-  'acryl-web-server',
+  '@acryldev/blends',
+  '@acryldev/framework',
+  '@acryldev/db',
+  '@acryldev/db-sqlite',
+  '@acryldev/drivers',
+  '@acryldev/door',
+  '@acryldev/inspect',
+  '@acryldev/kv',
+  '@acryldev/kv-db',
+  '@acryldev/kv-json',
+  '@acryldev/node-server',
+  '@acryldev/page',
+  '@acryldev/router',
+  '@acryldev/router-http',
+  '@acryldev/state',
+  '@acryldev/web-server',
 ])
 
 /**
  * The framework's app plugins, which live in the root `plugins/` folder beside ACRYL's own (spec 051 T017): the desktop shell, the instance, the agent panel and
- * so on. They are workspace packages that import each other by package name, and they depend on the runtime (`@webboxes/blends-core`, `plugin-hub`), so they are
+ * so on. They are workspace packages that import each other by package name, and they depend on the runtime (`@acryldev/blends-core`, `plugin-hub`), so they are
  * the plugins layer, not the foundation. Named here so the guard knows them and a new one cannot slip in without a role.
  */
 export const FRAMEWORK_PLUGINS = new Set([
-  'acryl-agent',
-  'acryl-agent-panel',
-  'acryl-app-settings',
-  'acryl-builder',
-  'acryl-desktop-shell',
-  'acryl-desktop-web',
-  'acryl-driver-acp',
-  'acryl-driver-pty',
-  'acryl-extensions',
-  'acryl-feedback',
-  'acryl-home',
-  'acryl-instance',
-  'acryl-manifest',
-  'acryl-openai',
-  'acryl-plugin-share',
-  'acryl-sandbox',
-  'acryl-save',
-  'acryl-showcase',
-  'acryl-tasks',
+  '@acryldev/agent',
+  '@acryldev/agent-panel',
+  '@acryldev/app-settings',
+  '@acryldev/builder',
+  '@acryldev/desktop-shell',
+  '@acryldev/desktop-web',
+  '@acryldev/driver-acp',
+  '@acryldev/driver-pty',
+  '@acryldev/extensions',
+  '@acryldev/feedback',
+  '@acryldev/home',
+  '@acryldev/instance',
+  '@acryldev/manifest',
+  '@acryldev/openai',
+  '@acryldev/plugin-share',
+  '@acryldev/sandbox',
+  '@acryldev/save',
+  '@acryldev/showcase',
+  '@acryldev/tasks',
 ])
 
 /** Workspace package folders, as pnpm itself resolves pnpm-workspace.yaml (quoting, globs and `!` negations included); the root is not one. */
@@ -139,7 +139,12 @@ export function directionViolations(graph) {
  * Framework packages missing from FOUNDATION: every workspace package under framework/ is foundation unless it is a tool that builds or
  * scaffolds apps (create, and the framework's own private root), so a new one cannot slip in without the foundation's protection.
  */
-export const FRAMEWORK_TOOLS = new Set(['create-acrylblends', 'acrylblends-monorepo'])
+export const FRAMEWORK_TOOLS = new Set([
+  '@acryldev/create-blends',
+  '@acryldev/monorepo',
+  'acrylblends',
+  'create-acrylblends',
+])
 export function unlistedFoundation(graph) {
   return [...graph]
     .filter(([name, { folder }]) => folder.startsWith('framework/') && !FOUNDATION.has(name) && !FRAMEWORK_TOOLS.has(name))

@@ -1,4 +1,4 @@
-# @webboxes/plugin-hub
+# @acryldev/plugin-hub-core
 
 Saving, sharing and pulling Cordis plugins, with no Cordis, DSH or surface dependency (spec 044, `specs/044-extension-persistence-and-registries/lifecycle.md`).
 

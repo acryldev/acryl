@@ -26,8 +26,8 @@
 ### Task 1: Establish the runtime projection seam
 
 **Files:**
-- Modify: `acryl-harness-runtime/src/session-bridge.ts`
-- Modify: `acryl-harness-runtime/tests/session-bridge.spec.ts`
+- Modify: `@acryldev/harness-runtime/src/session-bridge.ts`
+- Modify: `@acryldev/harness-runtime/tests/session-bridge.spec.ts`
 - Create: `acryl-cli/src/tui/store.ts`
 - Create: `acryl-cli/tests/tui-store.spec.ts`
 
@@ -48,7 +48,7 @@ expect(store.snapshot().tools[0]?.status).toBe('running')
 
 - [ ] **Step 2: Run the focused tests to confirm the projection seam is incomplete**
 
-Run: `corepack pnpm --filter acryl-harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-cli test -- tui-store`
+Run: `corepack pnpm --filter @acryldev/harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-cli test -- tui-store`
 Expected: failure because the store/controller exports do not yet exist or do not project bridge updates.
 
 - [ ] **Step 3: Implement the immutable store and bridge error propagation**
@@ -66,13 +66,13 @@ Subscribe the controller to `bridge.subscribe`, copy snapshots into this present
 
 - [ ] **Step 4: Run focused tests**
 
-Run: `corepack pnpm --filter acryl-harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-cli test -- tui-store`
+Run: `corepack pnpm --filter @acryldev/harness-runtime test -- session-bridge` and `corepack pnpm --filter acryl-cli test -- tui-store`
 Expected: PASS.
 
 - [ ] **Step 5: Commit the projection seam**
 
 ```bash
-git add acryl-harness-runtime/src/session-bridge.ts acryl-harness-runtime/tests/session-bridge.spec.ts acryl-cli/src/tui/store.ts acryl-cli/tests/tui-store.spec.ts
+git add @acryldev/harness-runtime/src/session-bridge.ts @acryldev/harness-runtime/tests/session-bridge.spec.ts acryl-cli/src/tui/store.ts acryl-cli/tests/tui-store.spec.ts
 git commit -m "feat: project durable sessions into tui state"
 ```
 
@@ -189,8 +189,8 @@ Record the Tomo repository, exact `f7663341f604c3ad96e9b2b838a7ca2de8e84fd1` com
 - [ ] **Step 2: Run mandatory validation sequentially**
 
 ```bash
-corepack pnpm --filter acryl-control test
-corepack pnpm --filter acryl-harness-runtime test
+corepack pnpm --filter @acryldev/control test
+corepack pnpm --filter @acryldev/harness-runtime test
 corepack pnpm --filter acryl-cli test
 corepack pnpm --filter acryl-cli typecheck
 git diff --check

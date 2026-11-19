@@ -29,7 +29,7 @@ export function git(dir: string, args: readonly string[]): string {
 }
 
 /** A repository on `main` with a local identity, so commits work without the machine's config. */
-export function makeRepository(prefix = 'acryl-versions-repo-'): TempDirectory {
+export function makeRepository(prefix = '@acryldev/versions-repo-'): TempDirectory {
   const repo = tempDirectory(prefix)
   git(repo.dir, ['init', '-q', '-b', 'main'])
   git(repo.dir, ['config', 'user.name', 'Test Person'])
@@ -38,7 +38,7 @@ export function makeRepository(prefix = 'acryl-versions-repo-'): TempDirectory {
 }
 
 /** A bare repository that plays the remote in share tests. */
-export function makeBareRemote(prefix = 'acryl-versions-remote-'): TempDirectory {
+export function makeBareRemote(prefix = '@acryldev/versions-remote-'): TempDirectory {
   const remote = tempDirectory(prefix)
   git(remote.dir, ['init', '--bare', '-q'])
   // The remote's HEAD names the branch a clone checks out; without this it is the machine's init.defaultBranch

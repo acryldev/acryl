@@ -137,7 +137,7 @@
           "id": "extending.ui-library",
           "title": "ACRYL UI library: build screens from ready components",
           "path": "extending/ui-library.md",
-          "when": "Any Web or Desktop UI that has forms, settings, lists, dialogs or tabs: use @acryl/ui instead of hand-styling; semantic color roles for your own colors.",
+          "when": "Any Web or Desktop UI that has forms, settings, lists, dialogs or tabs: use @acryldev/ui instead of hand-styling; semantic color roles for your own colors.",
           "surfaces": [
             "web",
             "desktop",
@@ -2715,7 +2715,7 @@
         "web",
         "desktop"
       ],
-      "teaches": "Build a screen from the ACRYL UI library (@acryl/ui): cards, fields, settings rows, dropdown, segmented tiles, tabs, dialog, color roles and slot helpers.",
+      "teaches": "Build a screen from the ACRYL UI library (@acryldev/ui): cards, fields, settings rows, dropdown, segmented tiles, tabs, dialog, color roles and slot helpers.",
       "docs": [
         "extending.ui-library"
       ]
@@ -2727,7 +2727,7 @@
       "surfaces": [
         "tui"
       ],
-      "teaches": "Build a terminal screen from the ACRYL UI library (acryl-ui-tui): cards, fields, settings rows, select, segmented, tabs, dialog, colors from the shared roles and the tuiTheme service.",
+      "teaches": "Build a terminal screen from the ACRYL UI library (@acryldev/ui-tui): cards, fields, settings rows, select, segmented, tabs, dialog, colors from the shared roles and the tuiTheme service.",
       "docs": [
         "extending.ui-library",
         "extending.tui-components"

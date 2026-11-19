@@ -7,5 +7,5 @@ import { TabsSection } from './TabsPanel.tsx'
 
 /** @param tabTypes - the shared enable and disable state of the tab types. @param tabRegistry - the tab types plugins registered. */
 export function tabsSettingsPlugin(tabTypes: TabTypesState, tabRegistry: WorkspaceTabRegistry) {
-  return settingsSectionPlugin('acryl-workspace-tabs-settings', 'tabs', 41, (ctx, base) => ctx.slots.register({ ...base, inject: () => ({ tabTypes, tabRegistry }) }, TabsSection))
+  return settingsSectionPlugin('@acryldev/workspace-tabs-settings', 'tabs', 41, (ctx, base) => ctx.slots.register({ ...base, inject: () => ({ tabTypes, tabRegistry }) }, TabsSection))
 }

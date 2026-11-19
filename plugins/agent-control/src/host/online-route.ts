@@ -6,7 +6,7 @@
  */
 
 import { Acryl } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
+import { error } from '@acryldev/loopback-http'
 import { UiControlError, parseUiRequest, type UiResult } from 'acrylblends/door/protocol'
 import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from './http.ts'
 import { MODEL_OPS } from './tools.ts'

@@ -1,14 +1,14 @@
 {
-  "name": "acryl-kv-json",
+  "name": "@acryldev/kv-json",
   "version": "0.1.0",
   "description": "The JSON-file provider of the ACRYL kv port, one Cordis plugin: one file, rewritten atomically (temp file, then rename) on every write",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-kv-json"
+    "directory": "plugins/kv-json"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-kv-json#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/kv-json#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "acryl-kv": "workspace:*"
+    "@acryldev/kv": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

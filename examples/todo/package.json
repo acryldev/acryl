@@ -1,5 +1,5 @@
 {
-  "name": "acryl-todo",
+  "name": "@acryldev/todo",
   "version": "0.1.0",
   "private": true,
   "description": "The reference app of the ACRYL Framework: a todo list built only from the router, state and the validate helper, persisted to a file (spec 046).",

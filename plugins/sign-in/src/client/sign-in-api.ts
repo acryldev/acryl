@@ -1,6 +1,6 @@
 /** Same-origin browser client for the sign-in routes (`../contract.ts`). */
 
-import type { SignInAttemptView } from 'acryl-control'
+import type { SignInAttemptView } from '@acryldev/control'
 import {
   SIGN_IN_ANSWER_PATH, SIGN_IN_ATTEMPT_PATH, SIGN_IN_BEGIN_PATH, SIGN_IN_CANCEL_PATH, SIGN_IN_PROVIDERS_PATH,
   type SignInAttemptResponse, type SignInProvidersResponse,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { AuthorizationBeginRequest, AuthorizationOutcome } from 'acryl-control'
+import type { AuthorizationBeginRequest, AuthorizationOutcome } from '@acryldev/control'
 import { SignInController, SignInRequestError, type SignInPorts } from '../src/controller.ts'
 import type { DeepSeekAccountPort, DeepSeekAccountView } from '../src/deepseek-account.ts'
 

@@ -1,7 +1,7 @@
 /** Raw node handlers beside the router: exact and prefix paths, the longest prefix, duplicates, disposal, errors, and a claimed upgrade. */
 import { connect } from 'node:net'
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl, apply as routerApply, name as routerName, type RouterEnv } from 'acryl-router'
+import { Acryl, apply as routerApply, name as routerName, type RouterEnv } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
 import * as nodeServer from '../src/index.ts'
 
@@ -17,7 +17,7 @@ async function boot(config: Partial<nodeServer.Config> = {}): Promise<Context> {
   const fiber = ctx.plugin(nodeServer, { port: 0, scan: 0, ...config })
   await fiber
   if (ctx.get('nodeServer') === undefined)
-    throw new Error(`acryl-node-server did not provide nodeServer (fiber state ${String(fiber.state)})`)
+    throw new Error(`@acryldev/node-server did not provide nodeServer (fiber state ${String(fiber.state)})`)
   return ctx
 }
 

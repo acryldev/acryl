@@ -8,9 +8,9 @@
  * exactly this app's own origin, or the upgrade is refused (403) before any handshake. A page on another port, a web site, and a program that sends no `Origin` are all refused.
  */
 
-import { Acryl, type MiddlewareHandler } from 'acryl-router'
-import type { UpgradeWebSocket, WSEvents } from 'acryl-router/helpers'
-import { pageAuthority } from 'acryl-router/middleware'
+import { Acryl, type MiddlewareHandler } from '@acryldev/router'
+import type { UpgradeWebSocket, WSEvents } from '@acryldev/router/helpers'
+import { pageAuthority } from '@acryldev/router/middleware'
 import { parseChannelToHost, WINDOW_ID } from '../page/protocol.ts'
 import type { UiChannel } from './channel.ts'
 import { error } from './http.ts'

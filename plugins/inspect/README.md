@@ -1,4 +1,4 @@
-# acryl-inspect
+# @acryldev/inspect
 
 What every running plugin **requires**, **provides** and **registers**, and what unloads with it, read from the running
 system (spec 046, milestone M4). There is no second declaration to keep in step with the code: Cordis already holds a
@@ -21,7 +21,7 @@ demo-market (ACTIVE)
 
 ## The one convention
 
-An effect says what it is, prefixed by its owner: `acryl-router: GET /a`, `acryl-router: use /api`, and Cordis labels its own
+An effect says what it is, prefixed by its owner: `@acryldev/router: GET /a`, `@acryldev/router: use /api`, and Cordis labels its own
 (`ctx.provide("router")`). The inspector sorts labels into provides, routes, middleware and everything else. A plugin that
 registers a resource through `ctx.effect(fn, 'my-plugin: what this is')` is described for free; one that registers with no
 label shows as `anonymous` in "also".
@@ -37,4 +37,4 @@ can read them with `ctx.router.fetch` and no server. They are not served over HT
 `removedOnUnload` is a promise: the test mounts a plugin, reads that number, unloads the plugin, and compares it with what
 the router really lost. A report that drifts from reality fails there.
 
-Row id and package name: `acryl-inspect`.
+Row id and package name: `@acryldev/inspect`.

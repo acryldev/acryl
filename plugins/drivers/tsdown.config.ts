@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-drivers',
+  name: '@acryldev/drivers',
   entry: { index: 'index.ts' },
   outDir: 'lib',
   format: 'esm',

@@ -1,6 +1,6 @@
 {
  "label": "desktop",
- "source": "apps/acryl-desktop/scripts/verify-loader-boot.mjs (DEBUG_VERIFY_LOADER_BOOT=1); acryl-plugin-context added by hand after T012",
+ "source": "apps/acryl-desktop/scripts/verify-loader-boot.mjs (DEBUG_VERIFY_LOADER_BOOT=1); @acryldev/plugin-context added by hand after T012",
  "rowCount": 169,
  "entries": [
   {
@@ -652,7 +652,7 @@
    "state": "2"
   },
   {
-   "id": "dsh-client-ui-brand-acryl",
+   "id": "@acryldev/brand-client",
    "state": "2"
   },
   {
@@ -660,7 +660,7 @@
    "state": "undefined"
   },
   {
-   "id": "cordis-plugin-market",
+   "id": "@acryldev/cordis-plugin-market",
    "state": "2"
   },
   {
@@ -676,7 +676,7 @@
    "state": "2"
   },
   {
-   "id": "acryl-plugin-context",
+   "id": "@acryldev/plugin-context",
    "state": "2"
   }
  ]

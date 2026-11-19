@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { visibleWidth } from '@earendil-works/pi-tui'
-import { paletteTheme } from 'acryl-ui-tui/scheme'
+import { paletteTheme } from '@acryldev/ui-tui/scheme'
 import { createLauncherView } from '../view.js'
 
 const KEY = { enter: '\r', down: '\x1b[B', esc: '\x1b', ctrlC: '\x03' }

@@ -67,7 +67,7 @@ A plugin reaches a service through its own view of it: `ctx.router` in one plugi
 service. Two facts follow, each with a test as proof.
 
 **Fields are shared.** Reading or assigning a service's field through any plugin's view reads or writes the one instance, so every caller
-sees the same value (`plugins/acryl-router/tests/shadow-state.spec.ts`). Keeping changing state in one object, as the router does, is a
+sees the same value (`plugins/router/tests/shadow-state.spec.ts`). Keeping changing state in one object, as the router does, is a
 readability choice, not a requirement.
 
 **`this.ctx` inside a method is the caller's view, not the service's own context.** It is what lets `route` tie a mount to the plugin
@@ -91,7 +91,7 @@ class Installer extends Service {
 }
 ```
 
-The proof is `plugins/acryl-router/tests/live-install.spec.ts`, which runs both forms against a live router. This sits next to the general
+The proof is `plugins/router/tests/live-install.spec.ts`, which runs both forms against a live router. This sits next to the general
 rule: a plugin started with `this.ctx.plugin(...)` in `apply` is a child of the plugin and unloads with it.
 
 ## Module state

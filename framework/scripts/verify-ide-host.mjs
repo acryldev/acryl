@@ -52,7 +52,7 @@ try {
   log('scaffolded and installed the blank app')
   const check = run(
     process.execPath,
-    ['--import', './plugins/acryl-node-server/src/register.ts', 'scripts/ide-host.mjs', '--check'],
+    ['--import', './plugins/node-server/src/register.ts', 'scripts/ide-host.mjs', '--check'],
     app,
     { ACRYLBLENDS_HOME: home, ACRYLBLENDS_PORT: '0' },
   )

@@ -2,10 +2,10 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
-import * as door from '../plugins/acryl-door/src/index.ts'
-import * as nodeServer from '../plugins/acryl-node-server/src/index.ts'
-import * as router from '../plugins/acryl-router/src/index.ts'
-import * as state from '../plugins/acryl-state/src/index.ts'
+import * as door from '../plugins/door/src/index.ts'
+import * as nodeServer from '../plugins/node-server/src/index.ts'
+import * as router from '../plugins/router/src/index.ts'
+import * as state from '../plugins/state/src/index.ts'
 import { agent, memory, model, scripted, tools } from '../plugins/agent/index.ts'
 import * as panel from '../plugins/agent-panel/index.ts'
 import { builder } from '../plugins/builder/index.ts'
@@ -34,18 +34,18 @@ export const registry = {
   tools,
   memory,
   agent,
-  'acryl-router': router,
+  '@acryldev/router': router,
   home,
-  'acryl-state': state,
+  '@acryldev/state': state,
   extensions,
   builder,
   'plugin-share': pluginShare,
   save,
   sandbox: sandboxPlugin,
   routes,
-  'acryl-node-server': nodeServer,
+  '@acryldev/node-server': nodeServer,
   'agent-panel': panel,
-  'acryl-door': door,
+  '@acryldev/door': door,
 }
 
 /** The manifest next to this app's source. */
@@ -122,13 +122,13 @@ export async function composeInto(
   let extensionsReadOnly = false
   // In the frame host the infrastructure rows are the host's own (its server, its web-server port, its router, the app instance, the door): the app
   // contributes only the plugins that are its own.
-  if (!listen || options.host === true) leaveOut.add('acryl-node-server').add('acryl-door')
+  if (!listen || options.host === true) leaveOut.add('@acryldev/node-server').add('@acryldev/door')
   if (options.host === true)
     for (const row of [
       'instance',
-      'acryl-router',
-      'acryl-web-server',
-      'acryl-page',
+      '@acryldev/router',
+      '@acryldev/web-server',
+      '@acryldev/page',
       'manifest',
       'save',
     ])
@@ -141,7 +141,7 @@ export async function composeInto(
     process.env.ACRYL_DOOR !== 'off' &&
     listen
   if (!assistant && (process.env.NODE_ENV === 'production' || process.env.ACRYL_DOOR === 'off'))
-    leaveOut.add('acryl-door')
+    leaveOut.add('@acryldev/door')
   // Production: the rows that give a visitor power over the running app or the owner's model key are left out too. The agent (`POST /ask` spends the model key and runs tools),
   // the builder and the extensions (live plugin install runs code in this process, and `POST /extensions/approve` decides it) are development tools. `ACRYL_PRODUCTION_KEEP`
   // names the ones to keep (`agent,builder,extensions`); each one kept is announced at start, because none of them is behind a login.
@@ -227,7 +227,7 @@ export async function composeInto(
           ? {
               // Every answer comes right after a look, so it says what the visitor's page shows now.
               agent: { tools: ASSISTANT_TOOLS, steps: ASSISTANT_STEPS, answerAfter: 'door_look' },
-              'acryl-door': { pageOnly: true },
+              '@acryldev/door': { pageOnly: true },
               'agent-panel': { assistant: true },
               // The visitor reaches the agent through the panel only: no /ask, /tasks or /extensions routes.
               routes: { agentRoutes: false },

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // The gate of the desktop door: an agent that lives in the app opens a window, drives it, resizes it, presses a menu item, and cannot end its own session by accident. A real Electron.
 //   node scripts/verify-desktop-door.mjs [--npm <version>]
-// Not part of `pnpm run check` (it downloads Electron and opens windows); run it before a release that touches plugins/desktop or the door's window verbs.
+// Not part of `pnpm run check` (it downloads Electron and opens windows); run it before a release that touches plugins/desktop-shell or the door's window verbs.
 // A fresh agent app made with --desktop, started with `npm run dev`, then `npm run desktop` attaches to it. Through `.acryl/bin/acryl`:
 //   window list sees the window; window open --path /two makes a second one and look --window drives that page (not the first); act click --window changes it;
 //   window resize and menu click work; the last window and Quit are refused without force; after the dev server restarts (a change of src/) the shell reconnects
@@ -89,7 +89,7 @@ const run = (command, args, cwd) => {
 }
 
 /** Two pages with nothing else between them: /one and /two (a button that changes its heading). */
-const pages = `import { Acryl } from 'acryl-router'
+const pages = `import { Acryl } from '@acryldev/router'
 export const name = 'pages'
 export const inject = ['router', 'state']
 export function apply(ctx: { router: { route(path: string, app: unknown): void }; state: { cell(key: string, initial: number): { update(change: (n: number) => number): void } } }) {

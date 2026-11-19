@@ -4,7 +4,7 @@
  * (`engine-dsh.ts`) does the materializing and mounting. The row table below is the single place a row's package, id
  * and surfaces are declared, in the order the rows must mount (the shortcut registry before anything that reads it).
  *
- * @module acryl-harness-runtime/blueprint/compose
+ * @module @acryldev/harness-runtime/blueprint/compose
  */
 
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
@@ -52,24 +52,24 @@ const FRAMEWORK_NEEDS: readonly RowModule[] = [...ROUTER_ROWS, frameworkRow('sta
 
 /** Declaration order is mount order. The Market is Web-only here: Desktop owns its own provider switch. */
 const ROWS: readonly RowDeclaration[] = [
-  { id: 'community-market', surfaces: ['web'], rowId: 'community-market', module: 'cordis-plugin-market', packageName: 'cordis-plugin-market', needs: ROUTER_ROWS },
+  { id: 'community-market', surfaces: ['web'], rowId: 'community-market', module: '@acryldev/cordis-plugin-market', packageName: '@acryldev/cordis-plugin-market', needs: ROUTER_ROWS },
   { id: 'framework-kit', surfaces: ['web', 'desktop'], ...frameworkRow('inspect'), needs: FRAMEWORK_NEEDS },
-  { id: 'plugin-context', surfaces: ['tui', 'web', 'desktop'], ...packageRow('acryl-plugin-context') },
-  { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], ...packageRow('acryl-system-prompt') },
-  { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], ...packageRow('@acryl/ui'), libraryOnly: ['tui'] },
+  { id: 'plugin-context', surfaces: ['tui', 'web', 'desktop'], ...packageRow('@acryldev/plugin-context') },
+  { id: 'system-prompt', surfaces: ['tui', 'web', 'desktop'], ...packageRow('@acryldev/system-prompt') },
+  { id: 'ui-library', surfaces: ['tui', 'web', 'desktop'], ...packageRow('@acryldev/ui'), libraryOnly: ['tui'] },
   // Saving an app to its own repository (/app save, /app connect): a command, so it works on every surface.
-  { id: 'app-save', surfaces: ['tui', 'web', 'desktop'], ...packageRow('acryl-app-save') },
+  { id: 'app-save', surfaces: ['tui', 'web', 'desktop'], ...packageRow('@acryldev/app-save') },
   // Saving, sharing and pulling plugins (spec 044): the pluginHub service and /plugin, part of every Blend's base kit.
-  { id: 'plugin-hub', surfaces: ['tui', 'web', 'desktop'], ...packageRow('acryl-plugin-hub') },
+  { id: 'plugin-hub', surfaces: ['tui', 'web', 'desktop'], ...packageRow('@acryldev/plugin-hub') },
   // ACRYL's keyboard commands on DSH 0.2's own shortcut service (`ctx.shortcuts.register`): upstream owns the registry, persisted rebinding and the
   // editor, so this package no longer provides a service of its own (a second provider fails the client boot).
-  { id: 'shortcuts', surfaces: ['web', 'desktop'], ...packageRow('acryl-shortcuts') },
-  { id: 'mount-anchors', surfaces: ['web', 'desktop'], ...packageRow('acryl-mount-anchors') },
+  { id: 'shortcuts', surfaces: ['web', 'desktop'], ...packageRow('@acryldev/shortcuts') },
+  { id: 'mount-anchors', surfaces: ['web', 'desktop'], ...packageRow('@acryldev/mount-anchors') },
   // A host command's reply on the start page, where the conversation that would show it is not drawn yet (spec 049 T002).
-  { id: 'command-reply', surfaces: ['web', 'desktop'], ...packageRow('acryl-command-reply') },
+  { id: 'command-reply', surfaces: ['web', 'desktop'], ...packageRow('@acryldev/command-reply') },
   // The three-column app frame a domain plugin claims for its own main UI (`desktop.main`), with the conversation beside it, instead of the stock
   // chat frame (blend-instance-design.md 0a). The IDE composes the same frame through its coding capabilities.
-  { id: 'app-shell', surfaces: ['web', 'desktop'], ...packageRow('acryl-app-shell') },
+  { id: 'app-shell', surfaces: ['web', 'desktop'], ...packageRow('@acryldev/app-shell') },
 ]
 
 /**
@@ -81,28 +81,28 @@ export const DSH_CHAT_ROW_IDS: readonly string[] = ['agent', 'llm', 'llm-pi-ai']
 
 /** DSH's base-bundle row providing `pluginManager`, and the hub's row that takes its place (its id is its module, by the row-naming rule). */
 export const DSH_PLUGIN_MANAGER_ROW_ID = 'plugin-manager'
-export const PLUGIN_MANAGER_ROW_ID = 'acryl-plugin-hub/manager'
+export const PLUGIN_MANAGER_ROW_ID = '@acryldev/plugin-hub/manager'
 
 /** The terminal library is a differently named package than the browser one. */
-const TUI_LIBRARY_PACKAGE = 'acryl-ui-tui'
+const TUI_LIBRARY_PACKAGE = '@acryldev/ui-tui'
 
 /**
- * Modules a Blend once named, read as their current names and never written: `acryl-plugin-context`'s old name (spec 044 step 1b), and the
+ * Modules a Blend once named, read as their current names and never written: `@acryldev/plugin-context`'s old name (spec 044 step 1b), and the
  * framework packages that became subpaths of `acrylblends` when the framework moved to its own repository (spec 049 slice 17).
  */
 export const RENAMED_MODULES: Readonly<Record<string, string>> = Object.freeze({
-  'acryl-extension-context': 'acryl-plugin-context',
-  'acryl-router': frameworkRow('router').module,
-  'acryl-router-http': frameworkRow('router-http').module,
-  'acryl-state': frameworkRow('state').module,
-  'acryl-inspect': frameworkRow('inspect').module,
-  'acryl-node-server': frameworkRow('node-server').module,
-  'acryl-door': frameworkRow('door').module,
-  'acryl-db': frameworkRow('db').module,
-  'acryl-db-sqlite': frameworkRow('db-sqlite').module,
-  'acryl-kv': frameworkRow('kv').module,
-  'acryl-kv-json': frameworkRow('kv-json').module,
-  'acryl-kv-db': frameworkRow('kv-db').module,
+  'acryl-extension-context': '@acryldev/plugin-context',
+  '@acryldev/router': frameworkRow('router').module,
+  '@acryldev/router-http': frameworkRow('router-http').module,
+  '@acryldev/state': frameworkRow('state').module,
+  '@acryldev/inspect': frameworkRow('inspect').module,
+  '@acryldev/node-server': frameworkRow('node-server').module,
+  '@acryldev/door': frameworkRow('door').module,
+  '@acryldev/db': frameworkRow('db').module,
+  '@acryldev/db-sqlite': frameworkRow('db-sqlite').module,
+  '@acryldev/kv': frameworkRow('kv').module,
+  '@acryldev/kv-json': frameworkRow('kv-json').module,
+  '@acryldev/kv-db': frameworkRow('kv-db').module,
 })
 
 /** A module as it is named today: a renamed one under its current name, anything else unchanged. */
@@ -110,7 +110,7 @@ export function currentModule(module: string): string {
   return RENAMED_MODULES[module] ?? module
 }
 
-/** The package a module specifier lives in: `acrylblends/cordis/router` is in `acrylblends`, `@acryl/ui` in itself. */
+/** The package a module specifier lives in: `acrylblends/cordis/router` is in `acrylblends`, `@acryldev/ui` in itself. */
 export function packageOfModule(module: string): string {
   const parts = module.split('/')
   return module.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0] ?? module
@@ -153,16 +153,16 @@ export function composeBlueprintRows(
   // Brand first: it swaps the stock identity row and must exist before any client row reads it.
   if (surface === 'web' || surface === 'desktop') {
     if (blueprint.brand.kind === 'acryl') {
-      packages.push('dsh-client-ui-brand-acryl')
+      packages.push('@acryldev/brand-client')
       patches.push(
         { id: 'ui-brand-official', disabled: true },
-        { insert: [{ id: 'ui-acryl', name: 'dsh-client-ui-brand-acryl', disabled: false }] },
+        { insert: [{ id: 'ui-acryl', name: '@acryldev/brand-client', disabled: false }] },
       )
     } else {
-      packages.push('acryl-brand')
+      packages.push('@acryldev/brand')
       patches.push(
         { id: 'ui-brand-official', disabled: true },
-        { insert: [{ id: 'brand', name: 'acryl-brand', config: { ...blueprint.brand.identity } }] },
+        { insert: [{ id: 'brand', name: '@acryldev/brand', config: { ...blueprint.brand.identity } }] },
       )
     }
   }

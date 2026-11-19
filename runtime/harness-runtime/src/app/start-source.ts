@@ -5,14 +5,14 @@
  *
  * Git is a port (`GitClone`): the rules here are pure; `gitClone` below is the adapter that shells out to the user's git, never prompting for credentials.
  *
- * @module acryl-harness-runtime/app/start-source
+ * @module @acryldev/harness-runtime/app/start-source
  */
 
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { parseRegistryIndex } from '@webboxes/blends-core'
+import { parseRegistryIndex } from '@acryldev/blends-core'
 
 /** The public registry: a folder of the acrylblends.github.io repository. `#<folder>` names the folder inside a repository. */
 export const PUBLIC_REGISTRY = 'https://github.com/acrylblends/acrylblends.github.io.git#registry'

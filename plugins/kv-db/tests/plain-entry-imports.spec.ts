@@ -1,6 +1,6 @@
 /**
- * The plain entries import nothing from Cordis: `acryl-kv-db/open` and `acryl-kv`'s root, their built JavaScript and declarations, and
- * every file those import. It reads this package's built `lib/` and its workspace neighbour `acryl-kv`'s, so it needs `pnpm run build` first.
+ * The plain entries import nothing from Cordis: `@acryldev/kv-db/open` and `@acryldev/kv`'s root, their built JavaScript and declarations, and
+ * every file those import. It reads this package's built `lib/` and its workspace neighbour `@acryldev/kv`'s, so it needs `pnpm run build` first.
  *
  * vendoring: skip - a copy vendored into an app (with relative imports, no build of its own) has neither `lib/`; the app's own typecheck
  * is what proves the copy names no Cordis type it does not provide.
@@ -25,6 +25,6 @@ it('imports nothing from Cordis in the plain entries or anything they import, at
     }
   }
   const lib = (pkg: string, file: string) => new URL(`../../${pkg}/lib/${file}`, import.meta.url)
-  for (const [pkg, file] of [['acryl-kv-db', 'open.js'], ['acryl-kv-db', 'types/open.d.ts'], ['acryl-kv', 'index.js'], ['acryl-kv', 'types/index.d.ts'], ['acryl-db', 'index.js']] as const) visit(lib(pkg, file))
+  for (const [pkg, file] of [['@acryldev/kv-db', 'open.js'], ['@acryldev/kv-db', 'types/open.d.ts'], ['@acryldev/kv', 'index.js'], ['@acryldev/kv', 'types/index.d.ts'], ['@acryldev/db', 'index.js']] as const) visit(lib(pkg, file))
   expect(seen.size).toBeGreaterThan(4)
 })

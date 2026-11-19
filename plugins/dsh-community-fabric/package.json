@@ -1,5 +1,5 @@
 {
-  "name": "dsh-community-fabric",
+  "name": "@acryldev/dsh-community-fabric",
   "version": "0.1.0-dev.0",
   "private": true,
   "description": "Documentation-first home for a community DSH plugin interoperability standard",
@@ -11,9 +11,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "dsh-community-fabric"
+    "directory": "plugins/dsh-community-fabric"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/dsh-community-fabric#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/dsh-community-fabric#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

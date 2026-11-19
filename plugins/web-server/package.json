@@ -1,7 +1,7 @@
 {
-  "name": "acryl-web-server",
+  "name": "@acryldev/web-server",
   "version": "0.1.0",
-  "description": "The webServer port of a framework-hosted app: the node request and upgrade interface DSH's driver rows register on, backed by acryl-node-server's raw routes",
+  "description": "The webServer port of a framework-hosted app: the node request and upgrade interface DSH's driver rows register on, backed by @acryldev/node-server's raw routes",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -24,7 +24,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-node-server": "workspace:*"
+    "@acryldev/node-server": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -32,12 +32,21 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-router": "workspace:*",
+    "@acryldev/router": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11",
-    "acryl-router-http": "workspace:*",
+    "@acryldev/router-http": "workspace:*",
     "ws": "8.21.3",
     "@types/ws": "8.18.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/web-server"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/web-server#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

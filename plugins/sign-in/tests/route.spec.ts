@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { SignInAttemptError } from 'acryl-control'
+import { SignInAttemptError } from '@acryldev/control'
 import { SignInRequestError, type SignInController } from '../src/controller.ts'
 import { SIGN_IN_ANSWER_PATH, SIGN_IN_ATTEMPT_PATH, SIGN_IN_BEGIN_PATH, SIGN_IN_CANCEL_PATH, SIGN_IN_PROVIDERS_PATH } from '../src/contract.ts'
 import { signInRoutes } from '../src/route.ts'

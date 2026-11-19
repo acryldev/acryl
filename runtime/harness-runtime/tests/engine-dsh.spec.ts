@@ -186,12 +186,12 @@ describe('the web engine entry point, mounted under createAcrylEngineHost', () =
 
       // materializeProfilePackage's actual effect: a real symlink from the
       // fresh profile's own node_modules to the acryl-web installation's
-      // resolved copy of dsh-client-ui-brand-acryl - not just "no error was
+      // resolved copy of @acryldev/brand-client - not just "no error was
       // thrown while resolving it".
       const profile = loadProfile('web', 'web', dshInstallAnchor)
-      const linkPath = join(profile.dir, 'node_modules', 'dsh-client-ui-brand-acryl')
+      const linkPath = join(profile.dir, 'node_modules', '@acryldev/brand-client')
       expect(existsSync(linkPath)).toBe(true)
-      const installManifest = findPackageJSON('dsh-client-ui-brand-acryl', codingCapabilities.anchors[0])
+      const installManifest = findPackageJSON('@acryldev/brand-client', codingCapabilities.anchors[0])
       expect(installManifest).toBeDefined()
       expect(realpathSync.native(linkPath)).toBe(realpathSync.native(dirname(installManifest as string)))
 
@@ -202,7 +202,7 @@ describe('the web engine entry point, mounted under createAcrylEngineHost', () =
       const officialBrand = entries.find(candidate => candidate.options.id === 'ui-brand-official')
       const acrylBrand = entries.find(candidate => candidate.options.id === 'ui-acryl')
       expect(officialBrand?.options.disabled).toBe(true)
-      expect(acrylBrand?.options.name).toBe('dsh-client-ui-brand-acryl')
+      expect(acrylBrand?.options.name).toBe('@acryldev/brand-client')
       expect(acrylBrand?.options.disabled).toBeFalsy()
 
       // The served shell HTML's <title> is a pinned dsh-web-frontend build

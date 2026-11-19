@@ -1,6 +1,6 @@
 /** ACRYL executable: minimal Electron bootstrap around the Host Cordis root. */
 
-import type {} from 'acryl-settings'
+import type {} from '@acryldev/settings'
 import { app, crashReporter, dialog } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
@@ -22,7 +22,7 @@ import {
   createProfileRuntimeResolution,
   selectInstance,
   resolvePluginLifecycleStatePath,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import {
   installDesktopDshRuntime,
   installDesktopPnpmRuntime,
@@ -47,7 +47,7 @@ import type {
   DesktopLifecycleRendererFailureReason,
 } from './startup/lifecycle-events.ts'
 import { DESKTOP_SETTINGS_NAMESPACE, type DesktopSettings } from './index.ts'
-import { FileExporter, LogFileSink, maskSecrets } from 'acryl-diagnostics'
+import { FileExporter, LogFileSink, maskSecrets } from '@acryldev/diagnostics'
 import { resolveDesktopShellEnvironment } from './terminal/shell-environment.ts'
 import { installProfilePackageResolver } from './module-resolution.ts'
 import { packagedDependencyPath } from './runtime/packaged-runtime-path.ts'
@@ -846,7 +846,7 @@ async function start(): Promise<void> {
         surface: 'desktop',
         instance,
         // Provides the `acrylFrameworkPackages` service (`mountDshEngine`) - without it, an extension's own
-        // `dsh.requiresAcrylPackages` goes unresolved the moment acryl-plugin-context tries to install it
+        // `dsh.requiresAcrylPackages` goes unresolved the moment @acryldev/plugin-context tries to install it
         // live (measured: "this runtime cannot resolve ACRYL framework packages", acryl-gtd never activating).
         installPackageUrl: pathToFileURL(desktopInstallAnchor()).href,
         // DSH 0.2 answers every bare-package import of the profile from this table (see `DshEngineComposition`).

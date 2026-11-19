@@ -6,8 +6,8 @@
  */
 
 import { Acryl, type Context } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson, type ReportError } from 'acryl-loopback-http/router'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {
   MAX_LOG_LIMIT,
   VERSIONS_LOG_PATH,

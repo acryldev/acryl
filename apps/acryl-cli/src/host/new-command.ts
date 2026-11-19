@@ -8,8 +8,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { homePluginsDir } from '@webboxes/plugin-hub'
-import { planNewApp, resolveStartSource, writeNewApp, type LauncherFile } from 'acryl-harness-runtime'
+import { homePluginsDir } from '@acryldev/plugin-hub-core'
+import { planNewApp, resolveStartSource, writeNewApp, type LauncherFile } from '@acryldev/harness-runtime'
 
 export interface NewAppCommandOptions {
   readonly dir: string
@@ -49,7 +49,7 @@ export function findLauncher(from: string = dirname(fileURLToPath(import.meta.ur
  */
 function carriedLauncher(launcher: string): Record<string, LauncherFile> {
   const scripts = dirname(launcher)
-  const instanceSource = join(scripts, '..', 'runtime', 'acryl-harness-runtime', 'src', 'instance')
+  const instanceSource = join(scripts, '..', 'runtime', '@acryldev/harness-runtime', 'src', 'instance')
   const files: Record<string, LauncherFile> = {
     'launch.mjs': { from: launcher },
     'lib/instances.mjs': { from: join(scripts, 'lib', 'instances.mjs') },

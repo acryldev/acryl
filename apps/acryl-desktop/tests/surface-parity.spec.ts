@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { createAcrylEngineHost, createWebEngineDefinition, UPSTREAM_PRODUCT_ANALYTICS_OFF } from 'acryl-harness-runtime'
+import { createAcrylEngineHost, createWebEngineDefinition, UPSTREAM_PRODUCT_ANALYTICS_OFF } from '@acryldev/harness-runtime'
 import { CODING_CAPABILITY_COMPOSITIONS, codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { prepareDesktopProfile } from '../src/profile.ts'
@@ -35,7 +35,7 @@ const WEB_ONLY_ROWS: Readonly<Record<string, string>> = {
   'acryl-engine': 'the engine host row the Web surface mounts the runtime under',
   include: 'the root include row of the engine host',
   'community-market': 'Web always composes the community market; Desktop makes the provider a user choice',
-  'acryl-support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
+  '@acryldev/support': 'Web has no native logger or tray; Desktop already writes logs in its main process and exports diagnostics from the tray',
 }
 
 /**
@@ -57,7 +57,7 @@ function summarize(rows: readonly { id?: unknown; name?: unknown; disabled?: unk
 }
 
 /**
- * The seven `ui_*` tools `acryl-agent-control` registers (spec 041 TS04): fixed here so a change to the set
+ * The seven `ui_*` tools `@acryldev/agent-control` registers (spec 041 TS04): fixed here so a change to the set
  * (one added, removed, or renamed) fails this cross-surface test, not only a unit test local to that package.
  */
 const AGENT_CONTROL_TOOL_NAMES = ['ui_click', 'ui_press', 'ui_scroll', 'ui_select', 'ui_snapshot', 'ui_type', 'ui_wait'] as const
@@ -109,7 +109,7 @@ describe('Web and Desktop compose the same ACRYL features', () => {
       .filter(capability => capability.surfaces.includes('web') && capability.surfaces.includes('desktop') && capability.shellMode === undefined)
       .flatMap(capability => capability.loaderPatches.flatMap(patch => 'insert' in patch ? (patch.insert ?? []).map(row => row.id) : []))
       .filter((id): id is string => typeof id === 'string')
-    expect(sharedRowIds).toEqual(expect.arrayContaining(['authorization', 'acryl-workspace', 'acryl-plugin-admin']))
+    expect(sharedRowIds).toEqual(expect.arrayContaining(['authorization', '@acryldev/workspace', '@acryldev/plugin-admin']))
     for (const id of sharedRowIds) {
       expect(desktop.get(id), `Desktop row ${id}`).toBeDefined()
       expect(web.get(id), `Web row ${id}`).toBeDefined()
@@ -122,12 +122,12 @@ describe('Web and Desktop compose the same ACRYL features', () => {
   })
 
   it('registers the same Agent Control tools on Web as on Desktop (spec 041 TS04)', () => {
-    // Desktop composes the identical `acryl-agent-control` row (proven above: same package, same enabled
+    // Desktop composes the identical `@acryldev/agent-control` row (proven above: same package, same enabled
     // state), and that package registers its tools with no surface branching - so the live Web tool names
     // checked here are the same set Desktop registers when it mounts the same row. A real Electron boot to
     // enumerate Desktop's live `ctx.tools` too is out of scope for a headless gate.
     const { desktop, webAgentControlToolNames } = composed!
-    expect(desktop.get('acryl-agent-control')).toBeDefined()
+    expect(desktop.get('@acryldev/agent-control')).toBeDefined()
     expect(webAgentControlToolNames).toEqual([...AGENT_CONTROL_TOOL_NAMES])
   })
 

@@ -1,7 +1,7 @@
 # acrylblends 1.5.1
 
-Two fixes to 1.5.0. Released with [create-acrylblends 1.5.1](create-1.5.1.md); the frame packages are unchanged (`@acrylblends/blends-frame` 0.1.2,
-`@acrylblends/brand-client` 0.1.1, `@acrylblends/versions` 0.1.1).
+Two fixes to 1.5.0. Released with [create-acrylblends 1.5.1](create-1.5.1.md); the frame packages are unchanged (`@acryldev/blends-frame` 0.1.2,
+`@acryldev/brand-client` 0.1.1, `@acryldev/versions` 0.1.1).
 
 - **pnpm installs and runs an app in the frame.** With pnpm 11 or later, `pnpm install` stopped with `ERR_PNPM_IGNORED_BUILDS`, and once builds were
   allowed the host could not find its rows in pnpm's isolated `node_modules`. `init` and `upgrade` now write the two settings the frame needs into the

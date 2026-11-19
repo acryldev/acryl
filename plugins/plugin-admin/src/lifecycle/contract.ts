@@ -1,6 +1,6 @@
 /** Renderer-safe contract for plugin lifecycle inspection and control. */
 
-/** The one prefix every acryl-plugin-admin route lives under, lifecycle and architecture alike: what the plugin mounts on the router. */
+/** The one prefix every @acryldev/plugin-admin route lives under, lifecycle and architecture alike: what the plugin mounts on the router. */
 export const PLUGIN_ADMIN_API_PREFIX = '/api/acryl-plugin-admin'
 
 export const PLUGIN_LIFECYCLE_PATH = '/api/acryl-plugin-admin/lifecycle'

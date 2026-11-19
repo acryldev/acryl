@@ -20,7 +20,7 @@ function repository(): TempDirectory {
 }
 
 function plainDirectory(): TempDirectory {
-  const dir = tempDirectory('acryl-versions-plain-')
+  const dir = tempDirectory('@acryldev/versions-plain-')
   cleanups.push(dir.cleanup)
   return dir
 }

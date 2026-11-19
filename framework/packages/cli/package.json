@@ -405,7 +405,6 @@
     "dist",
     "lib",
     "templates",
-    "legacy",
     "shared",
     "plugins",
     "docs"
@@ -422,10 +421,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acrylblends/acrylblends.git",
-    "directory": "packages/cli"
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "framework/packages/cli"
   },
-  "homepage": "https://acrylblends.github.io",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/framework/packages/cli#readme",
   "keywords": [
     "acryl",
     "web-framework",
@@ -435,7 +434,7 @@
   "private": false,
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "acrylblends-framework": "workspace:*",
+    "@acryldev/framework": "workspace:*",
     "tsdown": "0.23.0",
     "vitest": "5.0.3"
   },
@@ -462,5 +461,8 @@
     "ws": {
       "optional": true
     }
+  },
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

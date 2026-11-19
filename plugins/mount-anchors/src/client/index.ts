@@ -1,17 +1,17 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ShortcutBinding, ShortcutCommandId, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCommandId, Shortcuts } from '@acryldev/ui/frame'
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MountAnchorInspector } from './MountAnchorInspector.tsx'
 import { createInspectorToggle } from './inspector-toggle.ts'
 
-export const name = 'acryl-mount-anchors-client'
+export const name = '@acryldev/mount-anchors-client'
 export const inject = ['shortcuts']
 
 /** Stable id of the toggle command in DSH's shortcut catalog (Settings > Shortcuts lists and rebinds it). */
-const TOGGLE_COMMAND_ID = 'acryl-mount-anchors.toggle' as ShortcutCommandId
+const TOGGLE_COMMAND_ID = '@acryldev/mount-anchors.toggle' as ShortcutCommandId
 
-/** Window event that starts or stops picking, for a starter that is not a key (the command palette). Keep the string in step with `acryl-workspace`. */
+/** Window event that starts or stops picking, for a starter that is not a key (the command palette). Keep the string in step with `@acryldev/workspace`. */
 export const PICK_ELEMENT_EVENT = 'acryl:toggle-element-picker'
 
 /** Cmd/Ctrl+Shift+. - the combination the inspector has always used. */
@@ -50,15 +50,15 @@ export function pickElementShortcut(run: () => void): Parameters<Shortcuts['regi
  */
 export function apply(ctx: ClientContext): void {
   const toggle = createInspectorToggle()
-  ctx.effect(() => ctx.shortcuts.register(pickElementShortcut(() => { toggle.toggle() })), 'acryl-mount-anchors: toggle shortcut')
+  ctx.effect(() => ctx.shortcuts.register(pickElementShortcut(() => { toggle.toggle() })), '@acryldev/mount-anchors: toggle shortcut')
   ctx.effect(() => {
     const onToggle = (): void => { toggle.toggle() }
     window.addEventListener(PICK_ELEMENT_EVENT, onToggle)
     return () => { window.removeEventListener(PICK_ELEMENT_EVENT, onToggle) }
-  }, 'acryl-mount-anchors: toggle event')
+  }, '@acryldev/mount-anchors: toggle event')
   ctx.effect(() => {
     const container = document.createElement('div')
-    container.id = 'acryl-mount-anchors-root'
+    container.id = '@acryldev/mount-anchors-root'
     document.body.appendChild(container)
     const root = createRoot(container)
     root.render(createElement(MountAnchorInspector, { toggle }))
@@ -66,7 +66,7 @@ export function apply(ctx: ClientContext): void {
       root.unmount()
       container.remove()
     }
-  }, 'acryl-mount-anchors: overlay root')
+  }, '@acryldev/mount-anchors: overlay root')
 }
 
 export { MountAnchorInspector } from './MountAnchorInspector.tsx'

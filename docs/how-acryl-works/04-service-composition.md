@@ -3,7 +3,7 @@
 The booted Cordis root contains every service the coding agent needs. This file lists
 what those services are, where each row comes from, and the ACRYL-specific overrides.
 Ground truth: `@deepseek-ai/dsh-base`'s `cordis.patch.yml` (one giant `insert` over the
-empty root) and `acryl-harness-runtime/src/coding-capabilities.ts`.
+empty root) and `@acryldev/harness-runtime/src/coding-capabilities.ts`.
 
 ## Layering recap
 

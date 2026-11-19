@@ -6,7 +6,7 @@ unchanged.
 
 | 0.4 | 0.5 |
 | --- | --- |
-| `import { App } from 'acryl-router'`, `new App()` | `import { Acryl } from 'acrylblends/cordis/router'`, `new Acryl()` (`App` and `AppRequest` are removed in 1.0) |
+| `import { App } from '@acryldev/router'`, `new App()` | `import { Acryl } from 'acrylblends/cordis/router'`, `new Acryl()` (`App` and `AppRequest` are removed in 1.0) |
 | `AppRequest` | `AcrylRequest` |
 
 `App` and `AppRequest` still work in 0.5, marked deprecated, and are removed in the next release. Code outside Cordis imports the same

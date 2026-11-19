@@ -16,10 +16,10 @@ describe('inspectDefinition (US4)', () => {
       version: '0.1.0',
       lineage: null,
       rows: [
-        { id: 'contacts', name: '@acryl/contacts', disabled: false },
-        { id: 'tasks', name: '@acryl/tasks', disabled: false },
-        { id: 'pipeline', name: '@acryl/pipeline', disabled: false },
-        { id: 'invoicing', name: '@acryl/invoicing', disabled: true },
+        { id: 'contacts', name: '@acryldev/contacts', disabled: false },
+        { id: 'tasks', name: '@acryldev/tasks', disabled: false },
+        { id: 'pipeline', name: '@acryldev/pipeline', disabled: false },
+        { id: 'invoicing', name: '@acryldev/invoicing', disabled: true },
       ],
       parameters: ['contactTitle', 'orgName', 'pipelineEnabled', 'maxDealValue'],
     })
@@ -44,7 +44,7 @@ describe('inspectDefinition (US4)', () => {
   it('reports a !!js document without evaluating anything (scenario 2)', () => {
     const doc = loadValidDefinition('rejection/js-expression-distribution.yaml', 'local-authoring')
     const summary = inspectDefinition(doc)
-    expect(summary.rows).toEqual([{ id: 'gate', name: '@acryl/gate', disabled: false }])
+    expect(summary.rows).toEqual([{ id: 'gate', name: '@acryldev/gate', disabled: false }])
     const serialized = JSON.stringify(summary)
     expect(serialized).not.toContain('linux')
     expect(serialized).not.toContain('__jsExpr')

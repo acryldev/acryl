@@ -1,6 +1,6 @@
 /**
  * The Market on the real stack (spec 046, M2 gate): the actual DSH `webServer` listening on a loopback port, the real
- * `acryl-router` and `acryl-router-http` plugins, and this package's own `apply`, with no handler fakes. A browser-shaped
+ * `@acryldev/router` and `@acryldev/router-http` plugins, and this package's own `apply`, with no handler fakes. A browser-shaped
  * `fetch` reaches the ported routes, the peer address travels as connection info, and the plugin unloads and reloads cleanly.
  */
 

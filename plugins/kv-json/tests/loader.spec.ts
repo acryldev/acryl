@@ -10,8 +10,8 @@ import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import type { Kv } from 'acryl-kv'
-import type {} from 'acryl-kv/cordis'
+import type { Kv } from '@acryldev/kv'
+import type {} from '@acryldev/kv/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
 
 const PENDING = 0 as FiberState.PENDING
@@ -28,7 +28,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-kv-json-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/kv-json-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root
@@ -54,7 +54,7 @@ function consumer(ctx: Context): { seen: Kv[], fiber: ReturnType<Context['plugin
   return { seen, fiber }
 }
 
-describe('acryl-kv-json through a real Loader', () => {
+describe('@acryldev/kv-json through a real Loader', () => {
   it('keeps a consumer PENDING until the row provides kv, writes the file from the app\'s folder, and serves reads and writes', async () => {
     const root = app()
     const ctx = await loader(root)

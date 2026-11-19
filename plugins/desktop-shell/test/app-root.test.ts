@@ -3,9 +3,9 @@ import { test } from 'node:test'
 import { appRootFor } from '../app-root.ts'
 
 test("the shell takes the app two levels above in an app copy, and Electron's app path as an installed package", () => {
-  // `<app>/plugins/desktop/main.ts`: the copy an app made with acrylblends init holds.
+  // `<app>/plugins/desktop-shell/main.ts`: the copy an app made with acrylblends init holds.
   assert.equal(
-    appRootFor('file:///apps/shop/plugins/desktop/main.ts', () => '/wrong'),
+    appRootFor('file:///apps/shop/plugins/desktop-shell/main.ts', () => '/wrong'),
     '/apps/shop/',
   )
   // `<app>/node_modules/@acryldev/desktop-shell/lib/main.js`: the installed package, where Electron names the app (electron . and a packaged app alike).

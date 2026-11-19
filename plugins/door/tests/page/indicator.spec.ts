@@ -28,7 +28,7 @@ describe('the door indicator', () => {
     await waiting
     expect(bar()).toBeNull()
     remove()
-    expect(document.getElementById('acryl-door-indicator-style')).toBeNull()
+    expect(document.getElementById('@acryldev/door-indicator-style')).toBeNull()
   })
 
   it('Stop ends an act in progress as killed, refuses the next one, and Allow again lets the agent back', async () => {

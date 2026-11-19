@@ -71,7 +71,7 @@ export type AccountSignInOutcome =
 
 /**
  * `acrylAccountSignIn`: DeepSeek account sign-in on a surface without a web server of its own (the terminal), provided by
- * `acryl-sign-in/account-callback`. DeepSeek's account flow is registered on `ctx.authorization` as `key`, but it can only
+ * `@acryldev/sign-in/account-callback`. DeepSeek's account flow is registered on `ctx.authorization` as `key`, but it can only
  * be started here; a surface lists it under that key and signs in through this port instead of `begin`.
  */
 export interface AccountSignInPort {

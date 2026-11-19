@@ -173,7 +173,7 @@ jobs:
           set -euo pipefail
           # A real tag must equal the packages' version. A manual run on a branch (the dry run) has no release version, so it checks everything else.
           if [ "$GITHUB_REF_TYPE" = tag ]; then
-            node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json runtime/acryl-control/package.json runtime/acryl-harness-runtime/package.json apps/acryl-cli/package.json apps/acryl-web/package.json apps/acryl-desktop/package.json distribution/acryl-npm-launcher/package.json
+            node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json runtime/control/package.json runtime/harness-runtime/package.json apps/acryl-cli/package.json apps/acryl-web/package.json apps/acryl-desktop/package.json distribution/acryl-npm-launcher/package.json
           fi
           mapfile -t RECEIPTS < <(find artifacts -name release-receipt.json -type f | sort)
           test "${#RECEIPTS[@]}" -eq 13
@@ -227,8 +227,8 @@ jobs:
           # resolution.
           for PACKAGE in ./npm-packages/acryl-cli-*.tgz; do npm publish "$PACKAGE" --access public; done
           npm publish "./$(find npm-packages -maxdepth 1 -name 'acryl-*.tgz' ! -name 'acryl-cli-*.tgz')" --access public
-      # Off unless the repository variable ACRYL_PUBLISH_WEB_NPM is 'true'. The published acryl-web depends on 13 workspace packages (acryl-workspace,
-      # acryl-settings, acryl-agent-control, @acryl/ui ...) that are not on npm, so `npm i acryl-web` cannot resolve them. The `acryl` selector does not use this
+      # Off unless the repository variable ACRYL_PUBLISH_WEB_NPM is 'true'. The published acryl-web depends on 13 workspace packages (@acryldev/workspace,
+      # @acryldev/settings, @acryldev/agent-control, @acryldev/ui ...) that are not on npm, so `npm i acryl-web` cannot resolve them. The `acryl` selector does not use this
       # package (it downloads the Web archive from this release), so nothing depends on it. Turn it on once those packages are published.
       - name: Publish standalone Web package
         if: vars.ACRYL_PUBLISH_WEB_NPM == 'true'

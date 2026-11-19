@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { openDb } from 'acryl-db-sqlite/open'
-import { describeKvConformance, type KvUnderTest } from 'acryl-kv/conformance'
+import { openDb } from '@acryldev/db-sqlite/open'
+import { describeKvConformance, type KvUnderTest } from '@acryldev/kv/conformance'
 import { afterAll } from 'vitest'
 import { kvOnDb } from '../src/open.ts'
 
@@ -25,8 +25,8 @@ async function underTest(path: string): Promise<KvUnderTest> {
   }
 }
 
-describeKvConformance('acryl-kv-db on acryl-db-sqlite', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'acryl-kv-db-'))
+describeKvConformance('@acryldev/kv-db on @acryldev/db-sqlite', async () => {
+  const dir = await mkdtemp(join(tmpdir(), '@acryldev/kv-db-'))
   dirs.push(dir)
   return underTest(join(dir, 'data.sqlite'))
 })

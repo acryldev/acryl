@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-openai',
+  name: '@acryldev/openai',
   entry,
   outDir: 'lib',
   format: 'esm',

@@ -2,7 +2,7 @@
  * Deterministic package selection between the Desktop installation and one
  * Profile.
  *
- * Thin wrapper over `acryl-harness-runtime`'s shared `package-overlay.ts`
+ * Thin wrapper over `@acryldev/harness-runtime`'s shared `package-overlay.ts`
  * (extracted from this file's own original implementation, first built and
  * proven here) - `binName: 'acryl-desktop'` is curried in so every message
  * and this module's own public API (options with no `binName` field, a
@@ -19,7 +19,7 @@ import {
   type PackageOverlayOptions as SharedPackageOverlayOptions,
   type PackageOverlaySelection,
   type PackageOverlaySource,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 
 const BIN_NAME = 'acryl-desktop'
 

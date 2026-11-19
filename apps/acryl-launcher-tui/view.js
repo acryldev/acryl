@@ -1,12 +1,12 @@
-// The launcher in a terminal (spec 050, T003): it draws the session of acryl-launcher with acryl-ui-tui and pi-tui and turns keys into answers.
+// The launcher in a terminal (spec 050, T003): it draws the session of acryl-launcher with @acryldev/ui-tui and pi-tui and turns keys into answers.
 // It holds no step, rule or command line of its own: the list of things to do, the questions, the checks and the command all come from the
 // session. Keys: arrows choose, Enter goes on, Esc goes back (from the list of things to do it quits), Ctrl-C quits.
 //
 // The view is a pi-tui component (`render(width)`, `handleInput(data)`), so a test drives it with key strings and reads what it draws,
 // without a terminal. `finish(result)` is called once: `{ command, line }` to run, or undefined to quit.
 import { SelectList, matchesKey, truncateToWidth, wrapTextWithAnsi } from '@earendil-works/pi-tui'
-import { JOURNEYS, createSession } from '@acryldev/control-center'
-import { createTuiUi } from 'acryl-ui-tui'
+import { JOURNEYS, createSession } from '@acryldev/launcher'
+import { createTuiUi } from '@acryldev/ui-tui'
 
 const bold = text => `\x1b[1m${text}\x1b[22m`
 const MENU_ROWS = JOURNEYS.length

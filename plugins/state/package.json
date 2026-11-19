@@ -1,14 +1,14 @@
 {
-  "name": "acryl-state",
+  "name": "@acryldev/state",
   "version": "0.1.0",
   "description": "The ACRYL state service, one Cordis service: observable cells and derived values owned by plugins, readable in process, streamed over the router as server-sent events, and bound to React with one hook",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-state"
+    "directory": "plugins/state"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-state#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/state#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -49,7 +49,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-router": "workspace:*"
+    "@acryldev/router": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
@@ -63,7 +63,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/ws": "8.18.2",
-    "acryl-node-server": "workspace:*",
+    "@acryldev/node-server": "workspace:*",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

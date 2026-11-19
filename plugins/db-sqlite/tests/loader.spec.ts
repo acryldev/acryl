@@ -10,7 +10,7 @@ import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import type { Db } from 'acryl-db'
+import type { Db } from '@acryldev/db'
 import { afterEach, describe, expect, it } from 'vitest'
 import { openNodeSqliteDatabase } from '../src/index.ts'
 
@@ -28,7 +28,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-db-sqlite-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-sqlite-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root
@@ -54,7 +54,7 @@ function consumer(ctx: Context): { seen: Db[], fiber: ReturnType<Context['plugin
   return { seen, fiber }
 }
 
-describe('acryl-db-sqlite through a real Loader', () => {
+describe('@acryldev/db-sqlite through a real Loader', () => {
   it('keeps a consumer PENDING until the row provides db, migrates the file from the app\'s folder, and serves queries', async () => {
     const root = app()
     mkdirSync(join(root, 'migrations'))

@@ -3,7 +3,7 @@
  * wherever their folders are. An announcement whose process is gone is dropped when read. The registry lives in the OS user's `~/.acryl-instances/.running`
  * and holds only pointers (id, folder, pid, surface, port), never app data.
  *
- * @module acryl-harness-runtime/instance/registry
+ * @module @acryldev/harness-runtime/instance/registry
  */
 
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'

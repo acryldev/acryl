@@ -6,7 +6,7 @@
  * `plugin-lifecycle/state.json`, so a disable applies to the whole profile the
  * next time it boots no matter which surface asked for it.
  *
- * @module acryl-harness-runtime/plugin-lifecycle-state
+ * @module @acryldev/harness-runtime/plugin-lifecycle-state
  */
 
 import { readFileSync } from 'node:fs'
@@ -95,12 +95,12 @@ export function isPluginLifecycleEntryId(value: unknown): value is string {
 
 /**
  * Loader rows that were renamed, old entry id to new: a disable kept under the old id applies to the row by its new id, and is written
- * back under the new id on the next change. `extension-context` became `acryl-plugin-context` in spec 044 step 1b; the Development
+ * back under the new id on the next change. `extension-context` became `@acryldev/plugin-context` in spec 044 step 1b; the Development
  * Canvas row `desktop-development-canvas` took its package name `acryl-development-canvas` under the row-id rule (spec 048 T014).
  */
 const RENAMED_ENTRY_IDS: Readonly<Record<string, string>> = Object.freeze({
-  'include:extension-context': 'include:acryl-plugin-context',
-  'extension-context': 'acryl-plugin-context',
+  'include:extension-context': 'include:@acryldev/plugin-context',
+  'extension-context': '@acryldev/plugin-context',
   'include:desktop-development-canvas': 'include:acryl-development-canvas',
   'desktop-development-canvas': 'acryl-development-canvas',
 })

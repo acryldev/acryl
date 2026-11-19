@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'dsh-client-ui-brand-acryl'
+const PACKAGE_NAME = '@acryldev/brand-client'
 
 export default defineConfig({
   name: `${PACKAGE_NAME}/client`,

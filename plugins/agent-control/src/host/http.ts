@@ -1,6 +1,6 @@
 /**
  * What every Agent Control route shares, on the router. Two kinds of caller reach it, each with the guard it always had: the app's own
- * page (same origin, on the loopback address: `ownPage` from `acryl-loopback-http/router`), and an outside operator on this machine
+ * page (same origin, on the loopback address: `ownPage` from `@acryldev/loopback-http/router`), and an outside operator on this machine
  * (`acryl control`, a worker's MCP client) holding this run's secret. Each domain route file builds its routes with these and `index.ts`
  * mounts them under {@link AGENT_CONTROL_API_PREFIX}.
  */
@@ -8,10 +8,10 @@
 import { timingSafeEqual } from 'node:crypto'
 import type { Acryl, Context, MiddlewareHandler } from 'acrylblends'
 import { connectionOf } from 'acrylblends/cordis/router'
-import { error, isLoopbackAddress } from 'acryl-loopback-http'
-import { privateApi as privateRoutes } from 'acryl-loopback-http/router'
+import { error, isLoopbackAddress } from '@acryldev/loopback-http'
+import { privateApi as privateRoutes } from '@acryldev/loopback-http/router'
 
-export { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from 'acryl-loopback-http/router'
+export { INVALID_JSON, jsonBody, ownPage, readJson, type ReportError } from '@acryldev/loopback-http/router'
 
 /** Every Agent Control route lives below this path; it is the one prefix the plugin mounts on the Web server. */
 export const AGENT_CONTROL_API_PREFIX = '/api/acryl-agent-control'

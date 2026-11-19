@@ -21,7 +21,7 @@ if (folder === undefined) {
   process.exit(2)
 }
 for (const built of [
-  join('..', 'plugins', 'acryl-blends-frame', 'lib', 'index.js'),
+  join('..', 'plugins', 'blends-frame', 'lib', 'index.js'),
   join('packages', 'create', 'dist', 'index.js'),
 ]) {
   if (!existsSync(join(root, built))) {

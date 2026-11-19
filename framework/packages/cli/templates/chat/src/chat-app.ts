@@ -1,10 +1,10 @@
-import type { Db } from '../plugins/acryl-db/src/index.ts'
+import type { Db } from '../plugins/db/src/index.ts'
 import {
   type StandardSchema,
   schemaValidator,
   streamSSE,
-} from '../plugins/acryl-router/src/helpers/index.ts'
-import { Acryl } from '../plugins/acryl-router/src/index.ts'
+} from '../plugins/router/src/helpers/index.ts'
+import { Acryl } from '../plugins/router/src/index.ts'
 import { type Access, accessGate } from './access.ts'
 import { chatStore } from './db.ts'
 import { type Llm, MissingKey, openAiCompatible } from './llm.ts'

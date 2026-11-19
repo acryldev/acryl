@@ -1,7 +1,7 @@
 /**
  * Synchronize the repository-owned ACRYL logos into native application
  * assets (app icon, tray icons). The browser-embeddable data URLs are a
- * separate concern owned by `dsh-client-ui-brand-acryl`'s own
+ * separate concern owned by `@acryldev/brand-client`'s own
  * `generate-acryl-brand-data.mjs`, which reads the same workspace-root
  * source PNGs - this script no longer writes a client module.
  */

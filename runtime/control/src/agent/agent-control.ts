@@ -157,7 +157,7 @@ export class AcrAgentControlService extends Service implements AcrAgentControl {
       return () => {
         if (this.providers.get(provider.id) === provider) this.providers.delete(provider.id)
       }
-    }, `acryl-control: agent provider ${provider.id}`)
+    }, `@acryldev/control: agent provider ${provider.id}`)
   }
 
   async attach(request: AttachAgentRequest): Promise<AgentSnapshot> {

@@ -1,5 +1,5 @@
 {
-  "name": "acryl-save",
+  "name": "@acryldev/save",
   "version": "0.1.0",
   "description": "Save the app to its own git repository, and share it: a repository of its own on GitHub, created and pushed only after a person confirms the plan. Refuses a file that holds a secret, and a private app going to a public remote.",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@webboxes/app-persistence": "0.1.2"
+    "@acryldev/app-persistence": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

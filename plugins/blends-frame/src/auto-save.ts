@@ -5,7 +5,7 @@
  *
  * The turn-end signal is DSH's own: its `workspace-changes` plugin diffs the working tree around every turn (the person's earlier unsaved edits never
  * enter a turn's list) and appends a `workspace/changes` session event only when files changed, so a turn that changed nothing makes no version here.
- * The Host hears that event on `session/event`, reads the turn's file list from `ctx.workspaceChanges.summary`, and saves through `acryl-versions`.
+ * The Host hears that event on `session/event`, reads the turn's file list from `ctx.workspaceChanges.summary`, and saves through `@acryldev/versions`.
  */
 
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'

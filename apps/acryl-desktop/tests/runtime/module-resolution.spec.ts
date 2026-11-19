@@ -1,5 +1,5 @@
 /**
- * The deep hook-logic tests moved to acryl-harness-runtime's own
+ * The deep hook-logic tests moved to @acryldev/harness-runtime's own
  * module-resolution.spec.ts when this file became a thin wrapper over its
  * shared installProfilePackageResolver() (see this file's own doc comment).
  * This suite only confirms the wrapper passes Desktop's own anchors through
@@ -12,7 +12,7 @@ const harness = vi.hoisted(() => ({
   installProfilePackageResolver: vi.fn(() => vi.fn()),
 }))
 
-vi.mock('acryl-harness-runtime', async importOriginal => ({
+vi.mock('@acryldev/harness-runtime', async importOriginal => ({
   ...await importOriginal<object>(),
   installProfilePackageResolver: harness.installProfilePackageResolver,
 }))

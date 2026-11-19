@@ -146,7 +146,7 @@ Broker 可以把它映射到 Cordis、loopback HTTP/WS、IPC 或其他宿主 tra
 普通插件开发者应该可以写出：
 
 ```ts
-import { definePlugin } from 'dsh-community-fabric/sdk'
+import { definePlugin } from '@acryldev/dsh-community-fabric/sdk'
 
 export default definePlugin((ctx) => {
   ctx.tools.register('com.example.export', exportTool)

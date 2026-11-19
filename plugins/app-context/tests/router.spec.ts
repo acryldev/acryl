@@ -10,7 +10,7 @@ const manifest = JSON.parse(readFileSync(join(root, 'docs', 'docs.json'), 'utf8'
 
 describe('the prompt router', () => {
   it('names the pack, every route with its doc paths, and the plugin rule, within its budget', () => {
-    const text = buildRouterText('node_modules/acryl-app-context', manifest)
+    const text = buildRouterText('node_modules/@acryldev/app-context', manifest)
     expect(text.startsWith(`<${ROUTER_TAG}>`)).toBe(true)
     expect(text).toContain("This app's builder docs: node_modules/acryl-app-context.")
     for (const route of manifest.routes) expect(text).toContain(route.when)
@@ -50,8 +50,8 @@ describe('the prompt router', () => {
     const app = mkdtempSync(join(root, 'tests', '.apps-'))
     try {
       mkdirSync(join(app, 'node_modules'), { recursive: true })
-      symlinkSync(root, join(app, 'node_modules', 'acryl-app-context'), 'dir')
-      expect(appContext.readablePackRoot(root, app)).toBe('node_modules/acryl-app-context')
+      symlinkSync(root, join(app, 'node_modules', '@acryldev/app-context'), 'dir')
+      expect(appContext.readablePackRoot(root, app)).toBe('node_modules/@acryldev/app-context')
     } finally {
       rmSync(app, { recursive: true, force: true })
     }

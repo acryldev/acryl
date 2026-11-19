@@ -1,6 +1,6 @@
 /**
  * The React binding: one hook that reads a cell and re-renders when it changes. `useSyncExternalStore` is React's own
- * contract for exactly this, so it is tear-free under concurrent rendering. Import from `acryl-state/react`.
+ * contract for exactly this, so it is tear-free under concurrent rendering. Import from `@acryldev/state/react`.
  */
 
 import { useSyncExternalStore } from 'react'

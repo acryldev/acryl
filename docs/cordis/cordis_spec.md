@@ -135,7 +135,7 @@ Recommended boundary:
 ```text
 ACRYL domain APIs
       |
-@acryl/runtime-cordis
+@acryldev/runtime-cordis
       |
 Cordis v4
 ```
@@ -216,7 +216,7 @@ embeddings  NO
 Later:
 
 ```text
-@acryl/embeddings-local mounts
+@acryldev/embeddings-local mounts
         |
         v
 embeddings becomes available
@@ -825,7 +825,7 @@ Always prefer explicit stable IDs in ACRYL-owned composition.
 Example:
 
 ```yaml
-- id: acryl-agent-claude
+- id: @acryldev/agent-claude
   name: './plugins/agent-claude.ts'
 ```
 
@@ -1138,7 +1138,7 @@ Desired ACRYL behavior:
 ```text
 1. research FooCode CLI/API
 2. infer adapter contract
-3. generate @acryl/agent-foocode
+3. generate @acryldev/agent-foocode
 4. test spawn/send/stream/interrupt/resume/stop
 5. stage plugin
 6. mount through Cordis
@@ -1221,14 +1221,14 @@ Example:
 Agent Provider Seam
 
 Definition:
-@acryl/contracts/agent-provider
+@acryldev/contracts/agent-provider
 
 Providers:
-@acryl/agent-claude-code
-@acryl/agent-codex
-@acryl/agent-pi
-@acryl/agent-opencode
-@acryl/agent-dsh-native
+@acryldev/agent-claude-code
+@acryldev/agent-codex
+@acryldev/agent-pi
+@acryldev/agent-opencode
+@acryldev/agent-dsh-native
 
 Consumers:
 room runtime
@@ -1359,13 +1359,13 @@ Only `runtime-cordis` and deliberately Cordis-facing plugin packages should need
 Example:
 
 ```text
-@acryl/contracts
+@acryldev/contracts
         |
         v
-@acryl/runtime
+@acryldev/runtime
         |
         v
-@acryl/runtime-cordis
+@acryldev/runtime-cordis
         |
         v
 @deepseek-ai/cordis or upstream Cordis
@@ -1392,7 +1392,7 @@ Recommended progression:
 ```text
 ACRYL
  |
- +-- @acryl/runtime-cordis
+ +-- @acryldev/runtime-cordis
           |
           +-- pinned Cordis version
 ```
@@ -2794,7 +2794,7 @@ When implementing ACRYL on Cordis:
 11. **Classify mutations as HOT, WARM, or COLD.**
 12. **Use Cordis generations for runtime changes and an external supervisor for binary/core changes.**
 13. **Do not let self-adaptation become uncontrolled in-place source mutation.**
-14. **Pin Cordis behind `@acryl/runtime-cordis`; vendor/fork only when evidence justifies it.**
+14. **Pin Cordis behind `@acryldev/runtime-cordis`; vendor/fork only when evidence justifies it.**
 15. **Use DeepSeek Harness as the Cordis-v4 agent-runtime reference implementation, but invert its product assumptions so ACRYL remains agent-agnostic.**
 
 The desired property is:

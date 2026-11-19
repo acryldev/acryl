@@ -1,7 +1,7 @@
 /**
  * Desktop's own inputs to the shared plugin lifecycle.
  *
- * The override store itself lives in `acryl-harness-runtime` (`plugin-lifecycle-state.ts`),
+ * The override store itself lives in `@acryldev/harness-runtime` (`plugin-lifecycle-state.ts`),
  * because the Web surface and the CLI read and write the same
  * `plugin-lifecycle/state.json` (spec 034). What stays here is what only this
  * profile can answer: which rows it composes and therefore always admits to
@@ -10,7 +10,7 @@
  */
 
 import type { DesktopBlendProjection } from '../../profile/desktop-blend.ts'
-import type { PluginLifecycleStatePersistence } from 'acryl-harness-runtime'
+import type { PluginLifecycleStatePersistence } from '@acryldev/harness-runtime'
 
 /** Legacy seed of always-mutable entries that are not user-added profile bundles. */
 export interface ManagedPluginLifecycleEntry {
@@ -28,7 +28,7 @@ export interface ManagedPluginLifecycleEntry {
  * Entries that are user-mutable regardless of the profile bundle list: the
  * Development Canvas and the two brand-slot packages. Every other mutable
  * entry is derived at runtime from `dsh.profile.bundles` (see the lifecycle
- * host in `acryl-harness-runtime`).
+ * host in `@acryldev/harness-runtime`).
  */
 export const MANAGED_PLUGIN_LIFECYCLE_ENTRIES = Object.freeze({
   'include:acryl-development-canvas': Object.freeze({
@@ -52,8 +52,8 @@ export const MANAGED_PLUGIN_LIFECYCLE_ENTRIES = Object.freeze({
   'include:ui-acryl': Object.freeze({
     entryId: 'include:ui-acryl',
     patchId: 'ui-acryl',
-    moduleName: 'dsh-client-ui-brand-acryl',
-    clientPackage: 'dsh-client-ui-brand-acryl',
+    moduleName: '@acryldev/brand-client',
+    clientPackage: '@acryldev/brand-client',
   }),
 } satisfies Readonly<Record<string, ManagedPluginLifecycleEntry>>)
 

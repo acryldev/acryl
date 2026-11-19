@@ -1,9 +1,9 @@
 /** The webServer port on a real socket: exact and prefix routes, upgrades, ownership and disposal, taps, host and port. */
 import { connect } from 'node:net'
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl, apply as routerApply, name as routerName } from 'acryl-router'
+import { Acryl, apply as routerApply, name as routerName } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
-import * as nodeServer from 'acryl-node-server'
+import * as nodeServer from '@acryldev/node-server'
 import * as webServer from '../src/index.ts'
 
 const contexts: Context[] = []
@@ -28,7 +28,7 @@ async function owner(ctx: Context, apply: (ctx: Context) => void) {
   return fiber
 }
 
-describe('acryl-web-server', () => {
+describe('@acryldev/web-server', () => {
   it('serves exact and prefix routes and leaves the router the rest', async () => {
     const ctx = await boot()
     ctx.router.route('/', new Acryl().get('/router', c => c.text('router')))

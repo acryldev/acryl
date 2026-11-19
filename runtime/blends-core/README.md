@@ -1,4 +1,4 @@
-# @webboxes/blends-core
+# @acryldev/blends-core
 
 The ACRYL Blends format, `blends.acryl.dev/v1alpha1`: the manifest an app's `blend.yaml` is, and the library that parses, validates, resolves (Blueprint
 inheritance and parameters), compiles (to Cordis Loader patches) and locks it. Host-independent: no Cordis, DSH or surface dependencies, so the engine, the
@@ -15,7 +15,7 @@ module comes from: `local` (a folder inside the app, by `digestFolder`), `regist
 source it was pulled from and the tarball's sha512), `git`, `linked`.
 
 ```ts
-import { digestFolder, generateBlendLock, manifestDigest } from '@webboxes/blends-core'
+import { digestFolder, generateBlendLock, manifestDigest } from '@acryldev/blends-core'
 
 const { json } = generateBlendLock({
   resolved,
@@ -54,7 +54,7 @@ means, as a plan before an action. It resolves the Blend over the old and over t
 conflicts are the diagnostics the format already has (`override-unknown-id`, `insert-id-collision`):
 
 ```ts
-import { applyUpgrade, planUpgrade } from '@webboxes/blends-core'
+import { applyUpgrade, planUpgrade } from '@acryldev/blends-core'
 
 const { plan, diagnostics } = planUpgrade({ blend, oldBlueprint, newBlueprint })
 // plan.blueprintChanges  what the Blueprint changed (rows added, removed, changed in name, config or disabled)

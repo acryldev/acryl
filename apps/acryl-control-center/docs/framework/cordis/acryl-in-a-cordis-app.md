@@ -43,7 +43,7 @@ export function apply(ctx: Context): void {
 | `GET /todo/todos/42` | `{ "id": "42" }` |
 | `GET /todo/` | 404: `/todo` and `/todo/` are different paths (see below) |
 
-The app can come from `acryl-router` or from the published `acrylblends` package: `route` takes any app by its routes
+The app can come from `@acryldev/router` or from the published `acrylblends` package: `route` takes any app by its routes
 (`MountableApp`), so an `Acryl` imported from `acrylblends` mounts as it is, with its middleware and its own `onError`.
 
 ### `/todo/` is a 404 until you choose
@@ -51,7 +51,7 @@ The app can come from `acryl-router` or from the published `acrylblends` package
 `/todo/` is the first thing people type, and by default it is not found: the router treats `/todo` and `/todo/` as two paths. Choose
 one of these, in this order of preference:
 
-- **Redirect in your app** (what `examples/acryl-todo` does): add `trimTrailingSlash()` from `acrylblends/trailing-slash` to the app.
+- **Redirect in your app** (what `examples/todo` does): add `trimTrailingSlash()` from `acrylblends/trailing-slash` to the app.
   A GET or HEAD that would be a 404 and ends in `/` gets a 301 to the same path without it, so `/todo/` reaches the page and every
   route keeps one canonical path. Other methods are not redirected: `POST /todo/api/` stays a 404.
 
@@ -63,7 +63,7 @@ one of these, in this order of preference:
     .get('/', c => c.json({ ok: true }))
   ```
 
-- **One path everywhere**: the `acryl-router` row's config `trailingSlash: 'ignore'` makes `/a` and `/a/` the same path for every
+- **One path everywhere**: the `@acryldev/router` row's config `trailingSlash: 'ignore'` makes `/a` and `/a/` the same path for every
   mounted app, with no redirect. It is the app's composition that sets it (the Blueprint or profile that owns the router row), not one
   plugin, because it changes every other plugin's routes too.
 
@@ -96,18 +96,18 @@ The built-in set is listed in [Middleware](../concepts/middleware.md).
 
 ## Render pages with JSX
 
-A plugin renders HTML with the same JSX as the published package: set `"jsx": "react-jsx"` and `"jsxImportSource": "acryl-router/jsx"`
-in its `tsconfig.json` (a `.tsx` file), and style with the CSS helper from `acryl-router/helpers`. Streaming with `Suspense` is in
-`acryl-router/jsx/streaming`. The [JSX guide](../guides/jsx.md) covers the rest; its examples import from `acrylblends/jsx` instead.
+A plugin renders HTML with the same JSX as the published package: set `"jsx": "react-jsx"` and `"jsxImportSource": "@acryldev/router/jsx"`
+in its `tsconfig.json` (a `.tsx` file), and style with the CSS helper from `@acryldev/router/helpers`. Streaming with `Suspense` is in
+`@acryldev/router/jsx/streaming`. The [JSX guide](../guides/jsx.md) covers the rest; its examples import from `acrylblends/jsx` instead.
 
 ## Run the same app on a surface
 
 The application does not open a socket. A surface supplies requests to it:
 
-- **Web** and **Desktop**: the Host's web server, through `acryl-router-http` (`routerHttp.mount(prefix)`).
+- **Web** and **Desktop**: the Host's web server, through `@acryldev/router-http` (`routerHttp.mount(prefix)`).
 - **Terminal UI**: in process, `await ctx.router.request('/todo/todos/42')`.
 - **Tests**: `await ctx.router.request(...)` through the plugin, or `await app.request(...)` on the app alone.
-- **A standalone process**: `acryl-node-server`, see [Node server](./node-server.md).
+- **A standalone process**: `@acryldev/node-server`, see [Node server](./node-server.md).
 
 ## Mount it in a Blend
 
@@ -119,8 +119,8 @@ Add a row to the Blend's `cordis.patch.yml`; the row id is the package name:
       name: todo
 ```
 
-A Blank app already carries the router, the HTTP adapter, state and the inspector. The reference app is `examples/acryl-todo`; the
-smallest one to copy is `examples/acryl-framework-starter`.
+A Blank app already carries the router, the HTTP adapter, state and the inspector. The reference app is `examples/todo`; the
+smallest one to copy is `examples/framework-starter`.
 
 ## Test it without a socket
 
@@ -143,14 +143,14 @@ The framework plugins are published as subpaths of the `acrylblends` package (th
 
 | Plugin | Published as | Responsibility |
 | --- | --- | --- |
-| `acryl-router` | `acrylblends/cordis/router` | the application API and the Cordis `router` service |
-| `acryl-router-http` | `acrylblends/cordis/router-http` | serving router prefixes on the ACRYL Host's web server, with WebSocket upgrades owned by the mounting plugin |
-| `acryl-node-server` | `acrylblends/cordis/node-server` | serving the whole router from a standalone Node.js process |
-| `acryl-state` | `acrylblends/cordis/state` | shared application state across surfaces |
-| `acryl-inspect` | `acrylblends/cordis/inspect` | runtime inspection of mounts, routes and plugins |
-| `acryl-db`, `acryl-db-sqlite` | `acrylblends/cordis/db`, `acrylblends/cordis/db-sqlite` | the `db` port and its SQLite provider |
-| `acryl-kv`, `acryl-kv-json`, `acryl-kv-db` | `acrylblends/cordis/kv`, `.../kv-json`, `.../kv-db` | the `kv` port and its providers |
-| `acryl-door` | `acrylblends/cordis/door` (experimental) | the door: an agent looks at the running app and acts on it, in development only |
+| `@acryldev/router` | `acrylblends/cordis/router` | the application API and the Cordis `router` service |
+| `@acryldev/router-http` | `acrylblends/cordis/router-http` | serving router prefixes on the ACRYL Host's web server, with WebSocket upgrades owned by the mounting plugin |
+| `@acryldev/node-server` | `acrylblends/cordis/node-server` | serving the whole router from a standalone Node.js process |
+| `@acryldev/state` | `acrylblends/cordis/state` | shared application state across surfaces |
+| `@acryldev/inspect` | `acrylblends/cordis/inspect` | runtime inspection of mounts, routes and plugins |
+| `@acryldev/db`, `@acryldev/db-sqlite` | `acrylblends/cordis/db`, `acrylblends/cordis/db-sqlite` | the `db` port and its SQLite provider |
+| `@acryldev/kv`, `@acryldev/kv-json`, `@acryldev/kv-db` | `acrylblends/cordis/kv`, `.../kv-json`, `.../kv-db` | the `kv` port and its providers |
+| `@acryldev/door` | `acrylblends/cordis/door` (experimental) | the door: an agent looks at the running app and acts on it, in development only |
 
 ## Next
 

@@ -6,11 +6,11 @@ Live status for a fresh session. The plan is [ide-port.md](ide-port.md); each sl
 
 | Slice | Commit | What works |
 | --- | --- | --- |
-| 1 | e7d9d3e3 | Frame, `@acryl/ui`, `acryl-app-shell`, settings, shortcuts, control, diagnostics, brand; profile and overlay generation; the door on both hosts; first-run dialog off |
-| 2 | 4e2d28c2 | `acryl-workspace` ported whole (803 tests + 1); Projects left pane, right panel, real PTY terminals; frame rendered in DSH; comparison alpha fix and recaptured references |
+| 1 | e7d9d3e3 | Frame, `@acryldev/ui`, `@acryldev/app-shell`, settings, shortcuts, control, diagnostics, brand; profile and overlay generation; the door on both hosts; first-run dialog off |
+| 2 | 4e2d28c2 | `@acryldev/workspace` ported whole (803 tests + 1); Projects left pane, right panel, real PTY terminals; frame rendered in DSH; comparison alpha fix and recaptured references |
 | 3 | 1f4c6af2 | DSH chat as a tab; first-run connect card; key stored only by DSH (600) and never under the app; sessions survive a restart; gate flake fixed |
 | 4 | a93324cd | Files, editor, Changes, Review right-panel views; 4 new references with a committed, hash-verified fixture; 20 of 26 views within 2% |
-| 5 | 127447cf | `acryl-sign-in` ported (30 tests) and mounted; OAuth connect flow in Settings > Models; API-key card suppressed for signed-in accounts; no token on disk under the app |
+| 5 | 127447cf | `@acryldev/sign-in` ported (30 tests) and mounted; OAuth connect flow in Settings > Models; API-key card suppressed for signed-in accounts; no token on disk under the app |
 
 ## The slice 6 decisions (made 2026-10-31, before the code)
 
@@ -35,7 +35,7 @@ Not yet done, in this order: (1) a per-template boot gate: scaffold with the fra
 
 ## Slice 6, step 2 landed: todo, notes, chat and nodejs on the frame
 
-`todo`, `notes`, `chat` and `nodejs` now build from one mount prefix: their own path on their own server (the todo app keeps `/todo`; the others keep the root) and `/app` when the ACRYL frame hosts them. Every link, form action and client-script URL in a template's pages is derived from that prefix, so the standalone URLs do not move, and each template's test asserts both. The app's composition is exported as `composeInto`; the generated `app-plugins` row calls it with `host: true`, which leaves the host's infrastructure rows (server, router, page, app instance, door) to the frame and mounts the app's own rows at `/app`. `src/frame.ts` claims `/app` on the frame's router-http adapter, and `template.json` lists the host rows the launcher mounts (`acryl-web-server`, `acryl-page`); `todo` now carries the door like the other templates.
+`todo`, `notes`, `chat` and `nodejs` now build from one mount prefix: their own path on their own server (the todo app keeps `/todo`; the others keep the root) and `/app` when the ACRYL frame hosts them. Every link, form action and client-script URL in a template's pages is derived from that prefix, so the standalone URLs do not move, and each template's test asserts both. The app's composition is exported as `composeInto`; the generated `app-plugins` row calls it with `host: true`, which leaves the host's infrastructure rows (server, router, page, app instance, door) to the frame and mounts the app's own rows at `/app`. `src/frame.ts` claims `/app` on the frame's router-http adapter, and `template.json` lists the host rows the launcher mounts (`@acryldev/web-server`, `@acryldev/page`); `todo` now carries the door like the other templates.
 
 - `todo`: 448ab65f (merged to `main` as 94e25bae)
 - `notes`: e82ce3e7

@@ -21,7 +21,7 @@ afterEach(async () => {
 })
 
 function folder(): string {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-open-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-open-'))
   folders.push(root)
   return root
 }
@@ -46,7 +46,7 @@ function child(body: string): { readonly ready: Promise<void>; readonly exited: 
   return { ready, exited, stop: () => { process_.stdin.end() } }
 }
 
-describe('acryl-db-pglite on a data folder', () => {
+describe('@acryldev/db-pglite on a data folder', () => {
   it('keeps the data across closing and reopening the folder', async () => {
     const dataDir = join(folder(), 'pglite')
     const first = await openDb({ dataDir })

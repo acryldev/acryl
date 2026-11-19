@@ -1,5 +1,5 @@
 /**
- * The door as a framework app mounts it: the real `acryl-router` and `acryl-node-server` plugins on a loopback port, an `appInstance` for
+ * The door as a framework app mounts it: the real `@acryldev/router` and `@acryldev/node-server` plugins on a loopback port, an `appInstance` for
  * a temporary app folder, and the door. A test page answers the Host the way a browser does: an event stream opened with the page's
  * headers (`Sec-Fetch-Site: same-origin`, a `Referer` from the app) and answers posted with its `Origin`.
  */
@@ -10,8 +10,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { JSDOM } from 'jsdom'
-import * as router from 'acryl-router'
-import * as nodeServer from 'acryl-node-server'
+import * as router from '@acryldev/router'
+import * as nodeServer from '@acryldev/node-server'
 import * as door from '../src/index.ts'
 import { PageChannel, type ChannelSource } from '../src/page/channel.ts'
 import type { UiDriver } from '../src/page/driver/driver.ts'
@@ -41,7 +41,7 @@ const roots: string[] = []
 
 /** A fresh app folder. */
 export function appFolder(): string {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-door-')))
+  const root = realpathSync(mkdtempSync(join(tmpdir(), '@acryldev/door-')))
   roots.push(root)
   return root
 }

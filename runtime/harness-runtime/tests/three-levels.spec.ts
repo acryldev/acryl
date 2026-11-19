@@ -27,12 +27,12 @@ spec:
   extends: acryl.blank
   rows:
     - id: brand
-      name: acryl-brand
+      name: @acryldev/brand
       config:
         name: Sound Stage
         accent: "#e8590c"
     - id: community-market
-      name: cordis-plugin-market
+      name: @acryldev/cordis-plugin-market
 `
 
 describe('three levels', () => {

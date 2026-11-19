@@ -65,8 +65,8 @@ describe('acryl new --from', () => {
   it('creates an app from an existing one: its own id and name, the source\'s rows, brand and plugins, and a lock re-pinned to the new definition', async () => {
     const { mkdirSync, readFileSync, writeFileSync } = await import('node:fs')
     const { createHash } = await import('node:crypto')
-    const { readBlueprintFile } = await import('acryl-harness-runtime')
-    // The format's lock digest (@webboxes/blends-core manifestDigest): lowercase hex SHA-256 of the manifest bytes.
+    const { readBlueprintFile } = await import('@acryldev/harness-runtime')
+    // The format's lock digest (@acryldev/blends-core manifestDigest): lowercase hex SHA-256 of the manifest bytes.
     const manifestDigest = (text: string): string => createHash('sha256').update(text).digest('hex')
     const root = mkdtempSync(join(tmpdir(), 'acryl-new-from-')); dirs.push(root)
     const source = join(root, 'ledger')

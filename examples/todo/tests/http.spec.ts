@@ -23,9 +23,9 @@ async function start(file: string): Promise<{ origin: string, stop: () => Promis
   return { origin, stop: async () => { await ctx.fiber.dispose(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)) } }
 }
 
-describe('acryl-todo over HTTP', () => {
+describe('@acryldev/todo over HTTP', () => {
   it('serves CRUD to a loopback client and keeps the list across a server restart', async () => {
-    const folder = mkdtempSync(join(tmpdir(), 'acryl-todo-http-'))
+    const folder = mkdtempSync(join(tmpdir(), '@acryldev/todo-http-'))
     try {
       const file = join(folder, 'todos.json')
       const first = await start(file)

@@ -64,10 +64,10 @@ describe('classifySpecifier', () => {
     expect(classifySpecifier('pg/lib/client')).toBe('driver')
     expect(classifySpecifier('@electric-sql/pglite')).toBe('driver')
     expect(classifySpecifier('acrylblends/db/sqlite')).toBe('opener')
-    expect(classifySpecifier('acryl-db-sqlite/open')).toBe('opener')
+    expect(classifySpecifier('@acryldev/db-sqlite/open')).toBe('opener')
     expect(classifySpecifier('electron')).toBe('electron')
     expect(classifySpecifier('acrylblends/db')).toBeUndefined()
-    expect(classifySpecifier('acryl-db')).toBeUndefined()
+    expect(classifySpecifier('@acryldev/db')).toBeUndefined()
     expect(classifySpecifier('pgrx')).toBeUndefined()
     expect(classifySpecifier('postgres-array')).toBeUndefined()
     expect(classifySpecifier('./pg')).toBeUndefined()
@@ -113,10 +113,10 @@ describe('findViolations', () => {
   })
   it('lets only the desktop shell import electron, and the provider plugin its own wrap', () => {
     const dir = app({
-      'plugins/desktop/main.ts': "import { app } from 'electron'\n",
-      'plugins/acryl-db-sqlite/src/index.ts':
-        "import { openDb } from './open.ts'\nimport 'acryl-db-sqlite/open'\n",
-      'plugins/mine/index.ts': "import 'electron'\nimport 'acryl-db-sqlite'\n",
+      'plugins/desktop-shell/main.ts': "import { app } from 'electron'\n",
+      'plugins/db-sqlite/src/index.ts':
+        "import { openDb } from './open.ts'\nimport '@acryldev/db-sqlite/open'\n",
+      'plugins/mine/index.ts': "import 'electron'\nimport '@acryldev/db-sqlite'\n",
     })
     expect(findViolations(dir).map((v) => `${v.file}:${v.line}:${v.kind}`)).toEqual([
       'plugins/mine/index.ts:1:electron',

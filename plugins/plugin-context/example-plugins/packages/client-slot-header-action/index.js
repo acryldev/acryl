@@ -4,7 +4,7 @@
 // Teaches:  the HOST half of a client plugin is an empty apply(); the UI lives in client.js (see that file).
 // Expect:   ACTIVE host row; a Notes button appears in the conversation header after a page reload.
 // Docs:     extending.client-slot
-// Pattern:  plugins/dsh-client-ui-brand-acryl (src/index.ts)
+// Pattern:  plugins/brand-client (src/index.ts)
 export const name = 'acryl-example-client-notes'
 
 // Host half: this package contributes browser presentation only. The browser

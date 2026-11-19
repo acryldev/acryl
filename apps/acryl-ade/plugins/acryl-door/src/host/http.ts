@@ -1,5 +1,5 @@
 /**
- * What every door route shares (moved from `acryl-agent-control`, spec 041). Two kinds of caller reach it, each with its own guard: the
+ * What every door route shares (moved from `@acryldev/agent-control`, spec 041). Two kinds of caller reach it, each with its own guard: the
  * app's own page (same origin, on a loopback address), and an operator on this machine (`.acryl/bin/acryl`, an agent's shell) presenting
  * this run's secret.
  */

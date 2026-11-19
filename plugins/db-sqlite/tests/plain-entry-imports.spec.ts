@@ -1,6 +1,6 @@
 /**
- * The plain entries import nothing from Cordis: `acryl-db-sqlite/open` and `acryl-db`'s root, their built JavaScript and declarations,
- * and every file those import. It reads this package's built `lib/` and its workspace neighbour `acryl-db`'s, so it needs
+ * The plain entries import nothing from Cordis: `@acryldev/db-sqlite/open` and `@acryldev/db`'s root, their built JavaScript and declarations,
+ * and every file those import. It reads this package's built `lib/` and its workspace neighbour `@acryldev/db`'s, so it needs
  * `pnpm run build` first.
  *
  * vendoring: skip - a copy vendored into an app (with relative imports, no build of its own) has neither `lib/`; the app's own typecheck
@@ -26,6 +26,6 @@ it('imports nothing from Cordis in the plain entries or anything they import, at
     }
   }
   const lib = (pkg: string, file: string) => new URL(`../../${pkg}/lib/${file}`, import.meta.url)
-  for (const [pkg, file] of [['acryl-db-sqlite', 'open.js'], ['acryl-db-sqlite', 'types/open.d.ts'], ['acryl-db', 'index.js'], ['acryl-db', 'types/index.d.ts']] as const) visit(lib(pkg, file))
+  for (const [pkg, file] of [['@acryldev/db-sqlite', 'open.js'], ['@acryldev/db-sqlite', 'types/open.d.ts'], ['@acryldev/db', 'index.js'], ['@acryldev/db', 'types/index.d.ts']] as const) visit(lib(pkg, file))
   expect(seen.size).toBeGreaterThan(4)
 })

@@ -1,10 +1,10 @@
 /**
  * PGlite in Electron's main process (spec 049 slice 2b's third gate): run as Electron's main script, never as Node.
  *
- *   electron --no-sandbox plugins/acryl-db-pglite/scripts/electron-main-check.mjs
+ *   electron --no-sandbox plugins/db-pglite/scripts/electron-main-check.mjs
  *
  * It opens a data folder through the built `lib/open.js`, migrates it, writes in a transaction, closes, opens it again and reads what it
- * wrote. It prints one line, `acryl-db-pglite in Electron main: ok ...`, and exits 0; any failure prints the error and exits 1. The
+ * wrote. It prints one line, `@acryldev/db-pglite in Electron main: ok ...`, and exits 0; any failure prints the error and exits 1. The
  * package must be built first. Electron comes from the caller (Desktop's own copy in CI), so this package does not download one.
  */
 
@@ -14,7 +14,7 @@ import { join } from 'node:path'
 import { app } from 'electron'
 
 // Electron's own folders (userData, its GPU caches) go to a throwaway folder, never the user's real profile; no GPU is needed.
-const userData = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-electron-user-'))
+const userData = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-electron-user-'))
 app.setPath('userData', userData)
 app.disableHardwareAcceleration()
 
@@ -23,7 +23,7 @@ const { openDb } = await import(new URL('../lib/open.js', import.meta.url).href)
 async function check() {
   if (process.type !== 'browser' || process.versions.electron === undefined) throw new Error(`not Electron's main process (process.type ${String(process.type)})`)
   if (process.env.ELECTRON_RUN_AS_NODE !== undefined) throw new Error('ELECTRON_RUN_AS_NODE is set: this would run as Node, not as Electron\'s main process')
-  const root = mkdtempSync(join(tmpdir(), 'acryl-db-pglite-electron-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-pglite-electron-'))
   try {
     const migrations = join(root, 'migrations')
     mkdirSync(migrations)
@@ -58,9 +58,9 @@ function done(code) {
 }
 
 check().then((result) => {
-  process.stdout.write(`acryl-db-pglite in Electron main: ok ${JSON.stringify(result)}\n`)
+  process.stdout.write(`@acryldev/db-pglite in Electron main: ok ${JSON.stringify(result)}\n`)
   done(0)
 }, (error) => {
-  process.stderr.write(`acryl-db-pglite in Electron main: FAILED ${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
+  process.stderr.write(`@acryldev/db-pglite in Electron main: FAILED ${error instanceof Error ? error.stack ?? error.message : String(error)}\n`)
   done(1)
 })

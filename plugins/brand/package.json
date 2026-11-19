@@ -1,5 +1,5 @@
 {
-  "name": "acryl-brand",
+  "name": "@acryldev/brand",
   "version": "0.1.0",
   "description": "Configurable brand for the Web and Desktop client: product name, mark, accent color, font and page title, set from the plugin row's config so anyone can ship ACRYL under their own name",
   "license": "MIT",
@@ -10,9 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-brand"
+    "directory": "plugins/brand"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-brand#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/brand#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

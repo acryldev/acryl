@@ -3,7 +3,7 @@
  * holds it), and a stale lock (its holder's process is gone) is taken over instead of blocking forever. Used for "one live process per app" and "one live
  * installation per profile".
  *
- * @module acryl-harness-runtime/instance/offline-lock
+ * @module @acryldev/harness-runtime/instance/offline-lock
  */
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'

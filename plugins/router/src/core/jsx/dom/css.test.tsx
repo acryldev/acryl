@@ -1,7 +1,7 @@
 /** @jsxImportSource ../ */
 import { JSDOM } from 'jsdom'
 // run tests by old style jsx default
-// acryl-router/jsx/jsx-runtime and acryl-router/jsx/dom/jsx-runtime are tested in their respective settings
+// @acryldev/router/jsx/jsx-runtime and @acryldev/router/jsx/dom/jsx-runtime are tested in their respective settings
 import { render } from './index.ts'
 import type { JSXNode } from '../index.ts'
 import { Style, createCssContext, css, rawCssString } from '../../helper/css/index.ts'

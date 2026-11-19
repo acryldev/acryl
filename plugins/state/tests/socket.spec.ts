@@ -4,10 +4,10 @@
  */
 
 import { Context } from '@deepseek-ai/cordis'
-import { Acryl, apply as routerApply, name as routerName } from 'acryl-router'
+import { Acryl, apply as routerApply, name as routerName } from '@acryldev/router'
 import { afterEach, describe, expect, it } from 'vitest'
 import WebSocket from 'ws'
-import * as nodeServer from 'acryl-node-server'
+import * as nodeServer from '@acryldev/node-server'
 import { apply, name } from '../src/index.ts'
 import { stateSocket } from '../src/socket.ts'
 

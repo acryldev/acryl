@@ -2,7 +2,7 @@
  * ACRYL's first real model-facing tool, registered as an ordinary Cordis plugin
  * on the native `ctx.tools` seam.
  *
- * @module acryl-harness-runtime/acryl-workspace-status
+ * @module @acryldev/harness-runtime/acryl-workspace-status
  *
  * This is the ACRYL hard gate: a genuine model-facing Tool that injects `tools`,
  * registers via `ctx.tools.register(defineTool(...))`, declares a canonical
@@ -18,7 +18,7 @@ import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import { selectInstance } from './instance/index.ts'
 
 /** Cordis plugin name used by loader diagnostics. */
-export const name = 'acryl-workspace-status'
+export const name = '@acryldev/workspace-status'
 
 /** Services required: the tool registry. */
 export const inject = ['tools']

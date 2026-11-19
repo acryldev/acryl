@@ -1,7 +1,7 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 // The advanced shell's slot declarations and `ctx.layout` now live in the shared workspace package.
-import type {} from 'acryl-workspace/client'
+import type {} from '@acryldev/workspace/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 // Type-only service and SlotMap convergence for the Desktop settings section.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -80,7 +80,7 @@ export const inject = [
 export function apply(ctx: ClientContext): void {
   const environment = parseDesktopClientEnvironment(window.location.hash)
   if (!environment) return
-  // ACRYL identity is composed at the Loader level (`dsh-client-ui-brand-acryl`,
+  // ACRYL identity is composed at the Loader level (`@acryldev/brand-client`,
   // a standalone swappable counterpart to `@deepseek-ai/dsh-client-ui-brand-official`
   // - see profile.ts), not applied inline from this plugin.
   applyDesktopSettings(ctx, environment)
@@ -106,6 +106,6 @@ export function apply(ctx: ClientContext): void {
       'acryl-desktop: native directory picker bridge',
     )
   }
-  // The advanced shell itself (frame, layout service, slots) is the shared `acryl-workspace` client
+  // The advanced shell itself (frame, layout service, slots) is the shared `@acryldev/workspace` client
   // plugin, so Web and Desktop render the identical shell; Desktop supplies only its native parts above.
 }

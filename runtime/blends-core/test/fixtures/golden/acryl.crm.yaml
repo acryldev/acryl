@@ -29,18 +29,18 @@ spec:
       default: 1000000
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'
       config:
         title: '{{parameters.contactTitle}}'
         org: '{{parameters.orgName}}'
         greeting: 'Hello from {{parameters.orgName}}'
     - id: tasks
-      name: '@acryl/tasks'
+      name: '@acryldev/tasks'
     - id: pipeline
-      name: '@acryl/pipeline'
+      name: '@acryldev/pipeline'
       config:
         enabled: '{{parameters.pipelineEnabled}}'
         maxDealValue: '{{parameters.maxDealValue}}'
     - id: invoicing
-      name: '@acryl/invoicing'
+      name: '@acryldev/invoicing'
       disabled: true

@@ -15,8 +15,8 @@ import {
 } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { type Context, Service } from '@deepseek-ai/cordis'
-import { findSecrets } from '@webboxes/app-persistence'
-import { digestFolder, type PluginFile } from '@webboxes/blends-core'
+import { findSecrets } from '@acryldev/app-persistence'
+import { digestFolder, type PluginFile } from '@acryldev/blends-core'
 import {
   bumpVersion,
   gitCli,
@@ -34,10 +34,10 @@ import {
   readTarball,
   sharePlugin,
   storeRootOf,
-} from '@webboxes/plugin-hub'
-import { type ExtensionInfo, NAME } from 'acryl-extensions'
-import type {} from 'acryl-instance'
-import { LOCK_FILE, writeLock } from 'acryl-manifest/lock'
+} from '@acryldev/plugin-hub-core'
+import { type ExtensionInfo, NAME } from '@acryldev/extensions'
+import type {} from '@acryldev/instance'
+import { LOCK_FILE, writeLock } from '@acryldev/manifest/lock'
 import {
   ensureNative,
   type NativeAction,

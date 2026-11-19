@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-desktop-web',
+  name: '@acryldev/desktop-web',
   entry,
   outDir: 'lib',
   format: 'esm',

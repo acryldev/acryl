@@ -1,6 +1,6 @@
 ---
 name: acryl-remove-plugin
-description: Use when the person asks to remove, delete, switch off, hide or undo a feature or plugin of acryl-control-center.
+description: Use when the person asks to remove, delete, switch off, hide or undo a feature or plugin of @acryldev/control-center.
 ---
 # Switch off or remove a plugin
 

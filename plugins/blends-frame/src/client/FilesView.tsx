@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { FileEntry, WorkspaceFilesApi } from 'acryl-workspace/ui'
+import type { FileEntry, WorkspaceFilesApi } from '@acryldev/workspace/ui'
 import { displayMatch, fuzzySearch } from './fuzzy.ts'
 
 /** The window event ⌘P sends: the Files tab is shown and its search takes the keys. */

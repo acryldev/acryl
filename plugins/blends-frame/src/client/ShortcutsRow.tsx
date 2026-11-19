@@ -5,7 +5,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
-import type { ShortcutCatalogEntry, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutCatalogEntry, Shortcuts } from '@acryldev/ui/frame'
 
 export interface ShortcutsRowInjected {
   readonly shortcuts: Shortcuts
@@ -15,14 +15,14 @@ export interface ShortcutsRowInjected {
 const SHOWN = 6
 
 /** The frame's own key: Files with its search (`index.ts`, the quick-open effect). */
-const FIND_A_FILE = { id: 'acryl-blends-frame.find-file', label: 'Find a file', keys: [navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl', 'P'] }
+const FIND_A_FILE = { id: '@acryldev/blends-frame.find-file', label: 'Find a file', keys: [navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl', 'P'] }
 
 export function shortcutList(catalog: readonly ShortcutCatalogEntry[]): { readonly id: string; readonly label: string; readonly keys: readonly string[] }[] {
   return [FIND_A_FILE, ...catalog.filter(entry => entry.keys.length > 0 && entry.conflicts.length === 0).slice(0, SHOWN - 1)]
 }
 
 export function ShortcutsRow({ shortcuts }: ShortcutsRowInjected) {
-  // DSH's store types arrive as unknown under NodeNext (acryl-shortcuts says the same); the snapshot is stated here.
+  // DSH's store types arrive as unknown under NodeNext (@acryldev/shortcuts says the same); the snapshot is stated here.
   const catalog = useSyncExternalStore(shortcuts.catalog.subscribe, shortcuts.catalog.getSnapshot) as readonly ShortcutCatalogEntry[]
   return (
     <div className="acrylBlendsShortcuts">

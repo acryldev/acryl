@@ -5,7 +5,7 @@
  * away aborts its call through the request's signal.
  */
 
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 import { UiControlError } from '../page/protocol.ts'
 import { Door, DoorError, type PublishPlanView } from './door.ts'
 import { error, INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from './http.ts'

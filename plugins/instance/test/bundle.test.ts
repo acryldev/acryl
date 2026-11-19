@@ -215,11 +215,11 @@ test('a path of the tree is served from its half: the Program from the bundle, e
   const tree: AppTree = {
     bundle: 'file:///B/app/',
     source: 'file:///S/My%20App/source/',
-    program: ['node_modules/', 'plugins/acryl-router/', 'cordis.yml'],
+    program: ['node_modules/', 'plugins/router/', 'cordis.yml'],
   }
   assert.equal(
-    servedFrom('file:///S/My%20App/source/plugins/acryl-router/src/index.ts', tree),
-    'file:///B/app/plugins/acryl-router/src/index.ts',
+    servedFrom('file:///S/My%20App/source/plugins/router/src/index.ts', tree),
+    'file:///B/app/plugins/router/src/index.ts',
   )
   assert.equal(
     servedFrom('file:///B/app/src/app.ts?generation=3', tree),
@@ -231,7 +231,7 @@ test('a path of the tree is served from its half: the Program from the bundle, e
     'file:///S/My%20App/source/plugins/notes/index.ts',
   )
   assert.equal(servedFrom('file:///elsewhere/x.js', tree), 'file:///elsewhere/x.js')
-  // `plugins/acryl-router-extra/` is not `plugins/acryl-router/`.
+  // `plugins/acryl-router-extra/` is not `plugins/router/`.
   assert.equal(inProgram(tree.program, 'plugins/acryl-router-extra/index.ts'), false)
   assert.equal(inProgram(tree.program, 'cordis.yml.bak'), false)
 })
@@ -240,12 +240,12 @@ test('framework names are the framework’s namespaces only', () => {
   for (const name of [
     'acrylblends',
     'acrylblends/cordis/router',
-    'acryl-blends-frame/app-generation',
-    'dsh-client-ui-brand-acryl',
+    '@acryldev/blends-frame/app-generation',
+    '@acryldev/brand-client',
     '@acryldev/ui',
     '@deepseek-ai/cordis',
-    '@acryl/ui',
-    '@webboxes/blends-core',
+    '@acryldev/ui',
+    '@acryldev/blends-core',
   ])
     assert.equal(isFrameworkPackage(name), true, name)
   for (const name of ['acrylblendsx', 'react', 'zod', '@types/node', 'my-acryl-thing'])

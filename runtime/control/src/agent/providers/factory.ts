@@ -38,7 +38,7 @@ function snapshotOf(request: AttachAgentRequest, runtime?: AgentTransportRuntime
 export function createProviderPlugin(options: ProviderPluginOptions) {
   const profile = PROVIDER_CAPABILITIES[options.kind]
   return {
-    name: `acryl-agent-${profile.kind}`,
+    name: `@acryldev/agent-${profile.kind}`,
     inject: ['acrAgentControl'] as const,
     apply(ctx: Context) {
       const provider: AgentProvider = {
@@ -62,7 +62,7 @@ export function createProviderPlugin(options: ProviderPluginOptions) {
       // Whatever the transport opened ends with the plugin that owns it (a child process must not outlive its Fiber).
       if (options.transport?.dispose !== undefined) {
         const transport = options.transport
-        ctx.effect(() => () => { void transport.dispose?.() }, `acryl-control: ${profile.kind} transport`)
+        ctx.effect(() => () => { void transport.dispose?.() }, `@acryldev/control: ${profile.kind} transport`)
       }
       ctx.acrAgentControl.registerProvider(ctx, provider)
     },

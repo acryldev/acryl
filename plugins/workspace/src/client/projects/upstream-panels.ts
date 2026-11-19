@@ -6,7 +6,7 @@
  * label may be text or a function of the current language) and `layout.selectPanel(id)` opens it in the main column, which the advanced frame already shows.
  */
 
-import type { MainPanelId } from '@acryl/ui/frame'
+import type { MainPanelId } from '@acryldev/ui/frame'
 
 /** One panel as the left pane shows it. */
 export interface UpstreamPanel {

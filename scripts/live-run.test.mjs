@@ -19,8 +19,8 @@ const windows = process.platform === 'win32'
 function fakeCheckout(dir) {
   cpSync(join(repo, 'scripts', 'live-run.mjs'), join(dir, 'scripts', 'live-run.mjs'))
   cpSync(join(repo, 'scripts', 'lib'), join(dir, 'scripts', 'lib'), { recursive: true })
-  cpSync(join(repo, 'runtime', 'acryl-harness-runtime', 'src', 'instance'), join(dir, 'runtime', 'acryl-harness-runtime', 'src', 'instance'), { recursive: true })
-  writeFileSync(join(dir, 'runtime', 'acryl-harness-runtime', 'package.json'), JSON.stringify({ name: 'acryl-harness-runtime', type: 'module' }))
+  cpSync(join(repo, 'runtime', 'harness-runtime', 'src', 'instance'), join(dir, 'runtime', 'harness-runtime', 'src', 'instance'), { recursive: true })
+  writeFileSync(join(dir, 'runtime', 'harness-runtime', 'package.json'), JSON.stringify({ name: '@acryldev/harness-runtime', type: 'module' }))
   mkdirSync(join(dir, 'apps', 'acryl-web', 'lib'), { recursive: true })
   writeFileSync(join(dir, 'apps', 'acryl-web', 'package.json'), JSON.stringify({ name: 'acryl-web', type: 'module' }))
   writeFileSync(join(dir, 'apps', 'acryl-web', 'lib', 'bin.js'), `

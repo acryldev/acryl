@@ -91,7 +91,7 @@ describe('one verb list', () => {
 
     // MCP: initialize, then the tool list.
     const init = await mcp(running, { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } } })
-    expect(await init.json()).toMatchObject({ result: { protocolVersion: '2025-06-18', serverInfo: { name: 'acryl-door' } } })
+    expect(await init.json()).toMatchObject({ result: { protocolVersion: '2025-06-18', serverInfo: { name: '@acryldev/door' } } })
     const list = await mcp(running, { jsonrpc: '2.0', id: 2, method: 'tools/list' })
     const mcpTools = ((await list.json()) as { result: { tools: Array<{ name: string; inputSchema: { type: string } }> } }).result.tools
     expect(mcpTools.every(tool => tool.inputSchema.type === 'object')).toBe(true)

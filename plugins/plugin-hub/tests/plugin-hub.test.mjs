@@ -3,12 +3,12 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test, { afterEach } from 'node:test'
-import { createPluginHub, findSourceFolder, missingHostServices, packFolder, PluginStore } from '@webboxes/plugin-hub'
+import { createPluginHub, findSourceFolder, missingHostServices, packFolder, PluginStore } from '@acryldev/plugin-hub-core'
 import { apply, pluginTools, runPluginCommand, sourceRoots, storeRoot } from '../index.js'
 
 const made = []
 function temp() {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-plugin-hub-')))
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), '@acryldev/plugin-hub-')))
   made.push(dir)
   return dir
 }

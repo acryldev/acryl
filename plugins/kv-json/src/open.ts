@@ -13,9 +13,9 @@
 
 import { mkdir, open, readdir, readFile, rename, rm } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
-import { checkKey, compareKeys, decodeValue, encodeValue, type Kv, type KvOpened, runChange } from 'acryl-kv'
+import { checkKey, compareKeys, decodeValue, encodeValue, type Kv, type KvOpened, runChange } from '@acryldev/kv'
 
-export type { Kv, KvOpened } from 'acryl-kv'
+export type { Kv, KvOpened } from '@acryldev/kv'
 
 export interface OpenKvOptions {
   /** The JSON file; its folder is created if missing. */
@@ -35,7 +35,7 @@ function serialize(entries: ReadonlyMap<string, string>): string {
 }
 
 function unreadable(file: string, reason: string): Error {
-  return new Error(`acryl-kv-json: ${file} is not a readable kv file (${reason}); it was not changed`)
+  return new Error(`@acryldev/kv-json: ${file} is not a readable kv file (${reason}); it was not changed`)
 }
 
 /** The entries of a file, or none when it does not exist. A file that exists and does not parse is an error: it is never started over. */
@@ -128,7 +128,7 @@ export async function openKv(options: OpenKvOptions): Promise<KvOpened> {
   let drained: Promise<void> = Promise.resolve()
 
   const guard = (): void => {
-    if (closed) throw new Error(`acryl-kv-json: ${file} is closed`)
+    if (closed) throw new Error(`@acryldev/kv-json: ${file} is closed`)
   }
 
   /** Persist a map: the file is the old one or this one, never between. */

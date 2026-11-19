@@ -1,6 +1,6 @@
 /**
  * Human and agent readable indexes generated from the manifest (ported from
- * ACRYL's acryl-plugin-context, spec 037 FR-001). Generated, never hand-edited, so an index cannot disagree with
+ * ACRYL's @acryldev/plugin-context, spec 037 FR-001). Generated, never hand-edited, so an index cannot disagree with
  * the manifest.
  */
 

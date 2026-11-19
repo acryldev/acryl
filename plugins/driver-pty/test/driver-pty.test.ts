@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { agent, memory, model, tools } from 'acryl-agent'
-import * as panel from 'acryl-agent-panel'
-import { builder } from 'acryl-builder'
-import { extensions } from 'acryl-extensions'
-import { instance, pinnedInstance } from 'acryl-instance'
-import * as router from 'acryl-router'
-import * as state from 'acryl-state'
+import { agent, memory, model, tools } from '@acryldev/agent'
+import * as panel from '@acryldev/agent-panel'
+import { builder } from '@acryldev/builder'
+import { extensions } from '@acryldev/extensions'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import * as router from '@acryldev/router'
+import * as state from '@acryldev/state'
 import * as driverPty from '../index.ts'
 import { loadNodePty, type PtyProcess, type PtySpawn } from '../spawn.ts'
 
@@ -355,7 +355,7 @@ test('without a panel the plugin is pending and offers nothing; when the panel a
     undefined,
     'no registry without the panel',
   )
-  const { createDrivers } = await import('acryl-drivers')
+  const { createDrivers } = await import('@acryldev/drivers')
   const registry = createDrivers()
   app.provide('drivers', registry)
   await sleep(50)

@@ -2,7 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import { readFile, realpath, stat } from 'node:fs/promises'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import type { Readable } from 'node:stream'
-import type { SettingsScope } from 'acryl-settings'
+import type { SettingsScope } from '@acryldev/settings'
 import { prerelease, satisfies, valid } from 'semver'
 import { parse as parseYaml } from 'yaml'
 import type { MarketInstallableResponse, MarketInstallReceipt } from '../api-types.js'
@@ -24,7 +24,7 @@ const MAX_INTENTS = 256
 const MAX_CANDIDATES = 10_000
 const MAX_RECEIPTS = 512
 const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall', 'prepare'] as const
-const BLOCKED_PRODUCT_PACKAGES = new Set(['acryl-desktop', 'cordis-plugin-market'])
+const BLOCKED_PRODUCT_PACKAGES = new Set(['acryl-desktop', '@acryldev/cordis-plugin-market'])
 const DSH_RUNTIME_VERSION = '0.1.5-alpha.1'
 // @deepseek-ai/dsh@0.1.5-alpha.1 itself declares "@deepseek-ai/cordis": "^4.0.2" -
 // this constant fell behind that when the whole repo's own package.json pins

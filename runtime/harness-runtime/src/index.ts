@@ -118,7 +118,7 @@ export {
   type PluginHealthReport,
   type PluginHealthSeverity,
 } from './plugin-doctor.ts'
-// The lifecycle vocabulary itself belongs to `acryl-control`, the domain
+// The lifecycle vocabulary itself belongs to `@acryldev/control`, the domain
 // package. Surfaces depend on this runtime, not on the domain package, so the
 // shared contract is re-exported here rather than duplicated per surface; one
 // `PluginLifecycleError` class has to be the one every surface throws and
@@ -138,7 +138,7 @@ export {
   type PluginLifecycleMountedStatus,
   type PluginLifecycleReceipt,
   type PluginLifecycleSnapshot,
-} from 'acryl-control'
+} from '@acryldev/control'
 
 import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -212,7 +212,7 @@ export async function bootAcrylHarnessProfile(
   const rootConfig = join(profile.dir, 'cordis.yml')
   writeFileSync(rootConfig, profileRoot)
   // The terminal capabilities' ACRYL packages, resolvable from this profile as the CLI and Web boots make them; without it their rows
-  // fail to import (`acryl-settings`, the account sign-in callback).
+  // fail to import (`@acryldev/settings`, the account sign-in callback).
   const tuiSurfaces = new Set(['tui'] as const)
   for (const packageName of options.capabilities?.packages(tuiSurfaces, new Set()) ?? [])
     materializeProfilePackage(profile.dir, packageName, options.capabilities?.anchors[0] ?? import.meta.url)

@@ -1,9 +1,15 @@
 {
-  "name": "settings",
+  "name": "app-settings",
   "description": "Validated settings per namespace in one YAML file in the app's home: defaults, base and stored layers, watch, update.",
-  "requires": ["instance"],
-  "inject": ["appInstance"],
-  "provides": ["settings"],
+  "requires": [
+    "instance"
+  ],
+  "inject": [
+    "appInstance"
+  ],
+  "provides": [
+    "settings"
+  ],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/schemastery": "3.18.4",

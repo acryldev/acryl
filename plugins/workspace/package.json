@@ -1,14 +1,14 @@
 {
-  "name": "acryl-workspace",
+  "name": "@acryldev/workspace",
   "version": "0.1.1",
   "description": "ACRYL's first-party workspace shell (spec 040-agentic-multiplexer-ade): a worktree-aware sidebar, a tile-based main canvas (chat/terminal/file/browser/diff/kanban/doc), and a git-aware details panel, required in advanced desktop mode",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-workspace"
+    "directory": "plugins/workspace"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-workspace#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/workspace#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -62,7 +62,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*",
+    "@acryldev/ui": "workspace:*",
     "@codemirror/language": "6.12.4",
     "@codemirror/language-data": "6.5.2",
     "@codemirror/state": "6.7.6",
@@ -74,9 +74,9 @@
     "@xterm/addon-webgl": "0.18.0",
     "@xterm/headless": "5.5.0",
     "@xterm/xterm": "5.5.0",
-    "acryl-control": "workspace:*",
-    "acryl-loopback-http": "workspace:*",
-    "acryl-settings": "workspace:*",
+    "@acryldev/control": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*",
+    "@acryldev/settings": "workspace:*",
     "codemirror": "6.0.2",
     "node-pty": "1.2.0-beta.15",
     "ws": "8.22.0"
@@ -94,7 +94,7 @@
     "react": "18.3.1"
   },
   "devDependencies": {
-    "@acryl/ui": "workspace:*",
+    "@acryldev/ui": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2",
     "@deepseek-ai/dsh-api-workspace-controller": "0.2.0-rc.2",
@@ -109,7 +109,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/ws": "8.18.1",
-    "acryl-app-shell": "workspace:*",
+    "@acryldev/app-shell": "workspace:*",
     "acrylblends": "workspace:^",
     "jsdom": "29.1.1",
     "react": "18.3.1",

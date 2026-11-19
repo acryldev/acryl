@@ -93,7 +93,7 @@ function cssEscape(value) {
     : value.replace(/[^A-Za-z0-9_-]/g, '\\$&')
 }
 
-// The ACRYL frame's view (plugins/acryl-blends-frame/src/client/frame-view.ts): the frame's canvas hides the app's own build-time controls in Build and
+// The ACRYL frame's view (plugins/blends-frame/src/client/frame-view.ts): the frame's canvas hides the app's own build-time controls in Build and
 // shows what production shows in Preview. A page opened directly has no frame parent and keeps its own behavior.
 const FRAME_VIEW = Symbol.for('acryl.frame.view')
 const FRAME_MODE_EVENT = 'acryl:frame-mode'
@@ -132,8 +132,8 @@ export function canCaptureTab(userAgent, hasDisplayCapture) {
 
 // biome-ignore lint/correctness/noUnusedVariables: ./index.ts serves this file with a call to start appended
 function start(prefix) {
-  if (document.querySelector('acryl-feedback')) return
-  const host = document.createElement('acryl-feedback')
+  if (document.querySelector('@acryldev/feedback')) return
+  const host = document.createElement('@acryldev/feedback')
   const root = host.attachShadow({ mode: 'open' })
   root.innerHTML = `<style>${STYLE}</style>
 <div class="outline"><span></span></div>

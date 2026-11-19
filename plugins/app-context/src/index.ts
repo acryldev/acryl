@@ -1,5 +1,5 @@
 /**
- * The app builder's context pack (ported from ACRYL's Extension Context Pack, `plugins/acryl-plugin-context`, spec 037). It routes the frame's agent
+ * The app builder's context pack (ported from ACRYL's Extension Context Pack, `plugins/plugin-context`, spec 037). It routes the frame's agent
  * to this package's docs and verified examples, the way pi.dev's system prompt routes its agent to its own docs: one prompt section that names the
  * docs index, the topics and the rule, never the docs themselves.
  *
@@ -18,7 +18,7 @@ import { LOOKUP_TOOL_NAME, type LookupManifest, lookupAppDocs } from './lookup.t
 import { type AppSnapshotTools, snapshotTools } from './snapshot-tools.ts'
 import { buildRouterText, type PackManifest, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './router.ts'
 
-export const name = 'acryl-app-context'
+export const name = '@acryldev/app-context'
 export const inject = ['systemPrompt']
 
 /** The package folder: `lib/` or `src/` sits one level below it. */

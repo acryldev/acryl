@@ -15,7 +15,7 @@ npm run check      # type-check
   one off with `disabled: true`. `npm run lock` writes `blend.lock.json`: the manifest's digest and a digest of
   every plugin folder, so a diff of the lock shows what changed.
 - `src/app.ts` holds the registry of plugins the code provides, and mounts the manifest's rows.
-- `src/routes.ts` is your own plugin: it builds an `App` (`import { App } from './plugins/acryl-router/src/index.ts'`) and mounts it with `ctx.router.route(prefix, app)`. Routes added to the app after it is mounted are not served. A page mounted at `/x` answers `/x`, not `/x/` (trailing slashes are strict). The router API is documented at https://acrylblends.github.io/docs/framework/the-acryl-framework and in `docs/framework` of the acrylblends repository.
+- `src/routes.ts` is your own plugin: it builds an `App` (`import { App } from './plugins/router/src/index.ts'`) and mounts it with `ctx.router.route(prefix, app)`. Routes added to the app after it is mounted are not served. A page mounted at `/x` answers `/x`, not `/x/` (trailing slashes are strict). The router API is documented at https://acrylblends.github.io/docs/framework/the-acryl-framework and in `docs/framework` of the acrylblends repository.
 - `plugins/` holds the plugins copied from the ACRYLBLENDS library. They are yours now; edit them freely.
   Add more with `acrylblends add <plugin>`.
 

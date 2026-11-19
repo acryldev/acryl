@@ -55,7 +55,7 @@ async function host() {
 
 async function boot(options: { router?: boolean } = {}) {
   const served = await host()
-  const home = mkdtempSync(join(tmpdir(), 'acryl-support-plugin-'))
+  const home = mkdtempSync(join(tmpdir(), '@acryldev/support-plugin-'))
   cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
   const ctx = new Context()
   cleanups.push(async () => { await ctx.fiber.dispose() })

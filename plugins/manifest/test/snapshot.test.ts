@@ -27,11 +27,11 @@ spec:
   runtime: cordis
   rows:
     - id: router # the routes every plugin mounts on
-      name: acryl-router
+      name: @acryldev/router
     - id: extensions
       name: extensions
     - id: server
-      name: acryl-node-server
+      name: @acryldev/node-server
 `
 
 function plugin(app: string, name: string, body = '') {
@@ -49,8 +49,8 @@ function app(id = 'board'): string {
     join(dir, 'blend.yaml'),
     BLEND.replace('id: acme.board, name: board', `id: acme.${id}, name: ${id}`),
   )
-  plugin(dir, 'acryl-router')
-  writeFileSync(join(dir, 'plugins', 'library.json'), JSON.stringify({ plugins: ['acryl-router'] }))
+  plugin(dir, '@acryldev/router')
+  writeFileSync(join(dir, 'plugins', 'library.json'), JSON.stringify({ plugins: ['@acryldev/router'] }))
   return dir
 }
 
@@ -68,7 +68,7 @@ test('capture gives every plugin folder of the app a row, keeps the comments, lo
   assert.deepEqual(
     lock.modules.map((module: { name: string; source: string }) => [module.name, module.source]),
     [
-      ['acryl-router', 'plugins/acryl-router'],
+      ['@acryldev/router', 'plugins/router'],
       ['notes', 'plugins/notes'],
     ],
   )
@@ -119,7 +119,7 @@ test('apply brings a snapshot into an app: its rows and folders come in, and app
   assert.deepEqual(
     forward.modules.map((module) => [module.name, module.status]),
     [
-      ['acryl-router', 'unchanged'],
+      ['@acryldev/router', 'unchanged'],
       ['notes', 'added'],
     ],
   )

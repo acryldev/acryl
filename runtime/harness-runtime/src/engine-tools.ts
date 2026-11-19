@@ -1,15 +1,15 @@
 /**
- * The `acrylTools` provider: ACRYL's tools port (`acryl-control`) answered by DeepSeek Harness's tool registry today. A thin delegate: a tool defined
+ * The `acrylTools` provider: ACRYL's tools port (`@acryldev/control`) answered by DeepSeek Harness's tool registry today. A thin delegate: a tool defined
  * through the port is an ordinary Harness tool (same `defineTool`, same registry), a call through `execute` runs the registry's whole pipeline, and a
  * policy registered through `policy` is a `tools/pre-execute` hook like any other. When the registry is replaced the adapter and its consumers unload
  * together and register again.
  *
- * @module acryl-harness-runtime/engine-tools
+ * @module @acryldev/harness-runtime/engine-tools
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { AcrylTools } from 'acryl-control'
+import type { AcrylTools } from '@acryldev/control'
 
 /** Provide `acrylTools` on `ctx`, which must be able to see `tools` (call it inside `ctx.inject(['tools'], ...)`). */
 export function provideAcrylTools(ctx: Context): void {
@@ -22,5 +22,5 @@ export function provideAcrylTools(ctx: Context): void {
   ctx.effect(() => {
     const dispose = ctx.reflect.provide('acrylTools', port)
     return () => { void dispose() }
-  }, 'acryl-harness-runtime: acrylTools')
+  }, '@acryldev/harness-runtime: acrylTools')
 }

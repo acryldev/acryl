@@ -4,7 +4,7 @@
  * a registry is a directory (a local clone of `acryl-ui-registry`, or any
  * directory shaped like it) with `index.json` plus `<id>/item.yaml` and source
  * per surface. This module is the TypeScript port of the standalone script
- * `plugins/acryl-ui/scripts/acryl-ui.mjs`, proven there first (real subprocess
+ * `plugins/ui/scripts/acryl-ui.mjs`, proven there first (real subprocess
  * tests against the real generated registry) before this integration.
  *
  * `add` copies an item's source into `<target>/ui/<name>/`, so the plugin owns

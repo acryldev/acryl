@@ -41,7 +41,7 @@ Boundary result: network content enters product state only after Host validation
 flowchart TB
   Root[Root Yarn workspace] --> DesktopPkg[dsh-plugin-desktop]
   Root --> Market[dsh-community-market]
-  Root --> Fabric[dsh-community-fabric]
+  Root --> Fabric[@acryldev/dsh-community-fabric]
   Root --> Upstream[deepseek-harness submodule]
   DesktopPkg --> Main[Electron bootstrap / Host services]
   DesktopPkg --> Client[Desktop Client face / native shell]

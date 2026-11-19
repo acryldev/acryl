@@ -1,7 +1,7 @@
 /**
  * App instance: everything one running app owns on this machine, decided in one place and chosen once.
  *
- * Extracted from ACRYL (`runtime/acryl-harness-runtime/src/instance/`): a sealed compartment per app (Release It!'s bulkhead), built by
+ * Extracted from ACRYL (`runtime/harness-runtime/src/instance/`): a sealed compartment per app (Release It!'s bulkhead), built by
  * factories that always produce a consistent family (home, port, run lock), chosen once in `main.ts`. `selectInstance` is the only code
  * that reads the environment; every plugin reads the `appInstance` service instead.
  *

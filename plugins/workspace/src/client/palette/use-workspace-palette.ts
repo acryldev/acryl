@@ -103,7 +103,7 @@ export function useWorkspacePalette(deps: WorkspacePaletteDeps): PaletteState {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // The key is a rebindable DSH shortcut command (`acryl-shortcuts`); this reacts to its event.
+  // The key is a rebindable DSH shortcut command (`@acryldev/shortcuts`); this reacts to its event.
   useEffect(() => startPaletteEventListener(window, () => { palette.toggle() }), [palette])
   useEffect(() => deps.config.subscribe(() => { palette.refresh() }), [palette, deps.config])
   // What exists changed under an open palette (a tab opened, an agent turned off): list it again.

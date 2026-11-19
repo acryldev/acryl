@@ -91,8 +91,8 @@ try {
     join(wsApp, 'ws-check.ts'),
     `import { Context } from '@deepseek-ai/cordis'
 import WebSocket from 'ws'
-import * as nodeServer from './plugins/acryl-node-server/src/index.ts'
-import * as router from './plugins/acryl-router/src/index.ts'
+import * as nodeServer from './plugins/node-server/src/index.ts'
+import * as router from './plugins/router/src/index.ts'
 
 const ctx = new Context()
 await ctx.plugin(router).await()
@@ -245,7 +245,7 @@ console.log('ws-check: ok')
   const rows = readFileSync(manifestFile, 'utf8')
   const withRow = rows.replace(
     '    - id: routes\n',
-    '    - id: db\n      name: acryl-db-sqlite\n      config:\n        path: data/app.sqlite\n        migrations: migrations\n    - id: routes\n',
+    '    - id: db\n      name: @acryldev/db-sqlite\n      config:\n        path: data/app.sqlite\n        migrations: migrations\n    - id: routes\n',
   )
   if (withRow === rows)
     throw new Error('the blank template no longer has a routes row where this gate adds the db row')
@@ -255,15 +255,15 @@ console.log('ws-check: ok')
   const registered = appSource
     .replace(
       'import * as nodeServer from',
-      "import * as dbSqlite from '../plugins/acryl-db-sqlite/src/index.ts'\nimport * as nodeServer from",
+      "import * as dbSqlite from '../plugins/db-sqlite/src/index.ts'\nimport * as nodeServer from",
     )
     // The registry literal may sit on one line or span several: the entry goes right after its opening brace.
     .replace(
       /export const registry = \{\s*/u,
-      (opening) => `${opening}'acryl-db-sqlite': dbSqlite, `,
+      (opening) => `${opening}'@acryldev/db-sqlite': dbSqlite, `,
     )
   if (
-    !registered.includes("'acryl-db-sqlite': dbSqlite") ||
+    !registered.includes("'@acryldev/db-sqlite': dbSqlite") ||
     !registered.includes('import * as dbSqlite')
   )
     throw new Error(

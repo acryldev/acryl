@@ -6,10 +6,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import type { PropsRenderSlots, PropsRuntime } from '@acryl/ui/frame'
+import type { PropsRenderSlots, PropsRuntime } from '@acryldev/ui/frame'
 // The `sidebar.settings` seat's type: DSH's Settings shell occupies it, the frame renders it.
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-import type { DesktopLayoutState } from 'acryl-app-shell/client'
+import type { DesktopLayoutState } from '@acryldev/app-shell/client'
 import type { AppCanvasState } from './canvas/app-canvas.ts'
 import { AppCanvas } from './canvas/AppCanvas.tsx'
 import type { AppReloadStore } from './app-reload.ts'

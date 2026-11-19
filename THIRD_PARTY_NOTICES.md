@@ -32,7 +32,7 @@ text applies to those portions.
 - Snapshot: dsh-v0.2.0-rc.2, 639ed01539 (2026-09-29)
 - License: MIT
 - Copyright (c) 2026 DeepSeek
-- Adapted: the profile package resolution in `runtime/acryl-harness-runtime/src/profile-resolution/` and its tests, and the
+- Adapted: the profile package resolution in `runtime/harness-runtime/src/profile-resolution/` and its tests, and the
   `resolvePluginResource` change in `patches/@deepseek-ai__dsh-app-boot@0.2.0-rc.2.patch`.
 
 ## MIT License text

@@ -1,6 +1,6 @@
 /**
  * The snapshot verbs: an app folder is its own Blend (`blend.yaml` + `plugins/` + `blend.lock.json`), and these keep it one that can be passed on.
- * Ported from ACRYL's Extension Context Pack (`plugins/acryl-plugin-context/lib/blend-capture.js` `captureApp`/`verifyBlend` and
+ * Ported from ACRYL's Extension Context Pack (`plugins/plugin-context/lib/blend-capture.js` `captureApp`/`verifyBlend` and
  * `lib/blend-apply.js` `applyBlend`), for an app whose plugins are folders rather than packages installed into a DSH profile.
  *
  * - `captureApp` records the app as it runs: every plugin folder of its own gets a row in `blend.yaml` if it has none yet (a live install becomes
@@ -21,7 +21,7 @@
 import { cpSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { digestFolder, FOLDER_DIGEST_SKIPPED, manifestDigest } from '@webboxes/blends-core'
+import { digestFolder, FOLDER_DIGEST_SKIPPED, manifestDigest } from '@acryldev/blends-core'
 import { isSeq, parseDocument } from 'yaml'
 import { appPluginNames } from './app-plugins.ts'
 import { LOCK_FILE, writeLock } from './lock.ts'
@@ -108,7 +108,7 @@ export function captureApp(appRoot: string): CaptureResult {
     const before =
       names.indexOf('extensions') >= 0
         ? names.indexOf('extensions')
-        : names.indexOf('acryl-node-server')
+        : names.indexOf('@acryldev/node-server')
     const at = before >= 0 ? before : rows.items.length
     rows.items.splice(at, 0, ...missing.map((name) => document.createNode({ id: name, name })))
     writeAtomic(file, String(document))

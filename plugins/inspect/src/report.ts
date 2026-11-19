@@ -2,7 +2,7 @@
  * The per-plugin contract, read from the running system (spec 046, M4). Cordis already knows a plugin's name, its state, the
  * services it requires (`inject`) and a labeled tree of everything it registered (`getEffects()`), so there is no second
  * declaration to keep in step with the code. The only convention is the label: an effect says what it is, prefixed by its
- * owner (`acryl-router: GET /a`). Pure functions over a structural view of a fiber, so they are testable without Cordis.
+ * owner (`@acryldev/router: GET /a`). Pure functions over a structural view of a fiber, so they are testable without Cordis.
  */
 
 /** The plugin states Cordis defines, by their numeric values (`FiberState`). */
@@ -47,8 +47,8 @@ export interface PluginReport {
 }
 
 const PROVIDE = /^ctx\.provide\("(.+)"\)$/
-const MOUNT = /^acryl-router: route (\S+)$/
-const SERVES = /^acryl-router: serves ([A-Z]+) (\S+)$/
+const MOUNT = /^@acryldev\/router: route (\S+)$/
+const SERVES = /^@acryldev\/router: serves ([A-Z]+) (\S+)$/
 
 function flatten(effects: readonly EffectLabel[]): string[] {
   return effects.flatMap(effect => [effect.label, ...flatten(effect.children)])

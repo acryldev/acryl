@@ -1,7 +1,7 @@
 /**
  * Profile-relative package resolution for Electron's restricted Node runtime.
  *
- * Thin wrapper over `acryl-harness-runtime`'s shared `module-resolution.ts`
+ * Thin wrapper over `@acryldev/harness-runtime`'s shared `module-resolution.ts`
  * (extracted from this file's own original implementation, first built and
  * proven here against Electron's ASAR-packaged runtime) - this file supplies
  * only the two anchors that are genuinely Desktop-specific (this
@@ -19,7 +19,7 @@
  * Electron's ASAR support.
  */
 
-import { installProfilePackageResolver as sharedInstallProfilePackageResolver } from 'acryl-harness-runtime'
+import { installProfilePackageResolver as sharedInstallProfilePackageResolver } from '@acryldev/harness-runtime'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 

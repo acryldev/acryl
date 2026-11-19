@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { currentSourcePath } from '@webboxes/plugin-hub'
+import { currentSourcePath } from '@acryldev/plugin-hub-core'
 import { installLocalPlugin, listLocalPlugins, removeLocalPlugin } from './install.js'
 import { canonical, installState } from './reconcile.js'
 import { verifyBlend } from './blend-capture.js'

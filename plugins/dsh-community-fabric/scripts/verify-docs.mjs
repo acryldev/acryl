@@ -8,7 +8,7 @@ const fail = message => { throw new Error(`verify-fabric-docs: ${message}`) }
 const read = path => readFileSync(resolve(packageRoot, path), 'utf8')
 const manifest = JSON.parse(read('package.json'))
 
-if (manifest.name !== 'dsh-community-fabric') fail('package name must remain dsh-community-fabric')
+if (manifest.name !== '@acryldev/dsh-community-fabric') fail('package name must remain @acryldev/dsh-community-fabric')
 if (manifest.private !== true) fail('the Draft scaffold must stay private until a reviewed runtime exists')
 for (const field of ['main', 'module', 'types', 'exports', 'bin', 'dsh', 'dependencies', 'optionalDependencies']) {
   if (manifest[field] !== undefined) fail(`documentation scaffold must not declare ${field}`)

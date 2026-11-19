@@ -7,7 +7,7 @@
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { basename, join } from 'node:path'
-import { FOLDER_DIGEST_SKIPPED } from '@webboxes/blends-core'
+import { FOLDER_DIGEST_SKIPPED } from '@acryldev/blends-core'
 import { type PluginStore, pluginVersion } from './plugin-store.ts'
 import { resolveFromApp, routerAliases } from './resolve.ts'
 

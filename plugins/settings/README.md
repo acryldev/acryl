@@ -1,4 +1,4 @@
-# acryl-settings
+# @acryldev/settings
 
 ACRYL's settings service: register, get, update, replace and watch a preference namespace, backed by one YAML file in the app's ACRYL home (`.acrylblends/settings`, or the home the `appInstance` service names). It is independent of DSH's own settings design, so the frame's preferences and DSH's stay separate.
 

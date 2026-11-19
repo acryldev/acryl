@@ -1,4 +1,4 @@
-# acryl-plugin-admin
+# @acryldev/plugin-admin
 
 Plugin administration for every ACRYL surface, as Cordis plugins. It was inside the Desktop app; it now serves Desktop
 and Web from one implementation (spec 040 "Surface sharing").
@@ -15,7 +15,7 @@ and Web from one implementation (spec 040 "Surface sharing").
   controller reuses it, so there is one implementation.
 
 Nothing here may import Electron or a Desktop-only service. Composed for both surfaces through the `plugin-admin` capability
-in `acryl-harness-runtime`'s `coding-capabilities.ts`.
+in `@acryldev/harness-runtime`'s `coding-capabilities.ts`.
 
 ## Layout
 

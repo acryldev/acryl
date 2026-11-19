@@ -1,10 +1,10 @@
-# acryl-workspace
+# @acryldev/workspace
 
 ACRYL's first-party workspace shell (spec `040-agentic-multiplexer-ade`): a Projects and Chats left pane, a
 tabbed canvas per git worktree with an optional split, and a right panel (Changes, Review, Checks, Files).
 
 **One implementation for Web and Desktop.** The shell (frame, layout, slots) and the workspace live here and are
-composed for both surfaces from one declaration in `acryl-harness-runtime`'s `coding-capabilities.ts`
+composed for both surfaces from one declaration in `@acryldev/harness-runtime`'s `coding-capabilities.ts`
 (`workspace` and `advanced-shell`, `surfaces: ['desktop', 'web']`). Web always runs the ACRYL shell; Desktop
 lets the user pick it or the stock frame. What differs is behind small seams: the platform (`shell/environment.ts`:
 Electron marks the page URL, a plain page is `web`), native window chrome metrics (`shell/chrome-metrics.ts`, only

@@ -6,7 +6,7 @@
  * three things that differ per surface: which entries are user-mutable, how
  * enablement is persisted, and what a just-installed bundle inserts.
  *
- * @module acryl-control/plugin/host
+ * @module @acryldev/control/plugin/host
  */
 
 import type { EntryGroup } from '@deepseek-ai/cordis-plugin-loader'

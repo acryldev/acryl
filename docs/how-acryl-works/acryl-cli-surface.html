@@ -497,7 +497,7 @@
     <p class="lead sec" style="--i:2">
       Typing <code>pnpm acryl</code> starts <strong>one Node process that owns one local
       Cordis runtime</strong>. The terminal is styled by <code>acryl-cli</code>; the runtime
-      itself is assembled and booted by <code>acryl-harness-runtime</code> — the only package
+      itself is assembled and booted by <code>@acryldev/harness-runtime</code> — the only package
       that knows how to compose the pinned DeepSeek Harness
       (<code>@deepseek-ai/dsh-*</code>) into a live profile. The TUI is a
       <strong>direct host</strong>: no server, no loopback — just a durable session log on
@@ -517,9 +517,9 @@
              └─ runAcryl() ......... cli/run.ts — args, TTY gate, probes
                  └─ runAcrylTui() .. tui-app/session.ts — session driver
                      ├─ startDirectHost() ──── host/direct.ts
-                     │    └─ <b>bootAcrylHarnessProfile()</b>  acryl-harness-runtime
+                     │    └─ <b>bootAcrylHarnessProfile()</b>  @acryldev/harness-runtime
                      │         └─ Cordis root (dsh-base + ACRYL patches)
-                     └─ <b>createAcrylSessionBridge(ctx)</b>   acryl-harness-runtime
+                     └─ <b>createAcrylSessionBridge(ctx)</b>   @acryldev/harness-runtime
                           └─ durable DSH session ⇄ TuiStore ⇄ pi-tui UI</pre>
       </div>
       <div class="facts">
@@ -532,7 +532,7 @@
 
     <div class="legend sec" style="--i:5">
       <div class="legend-item"><div class="legend-swatch" style="background:var(--ink)"></div> surface (acryl-cli)</div>
-      <div class="legend-item"><div class="legend-swatch" style="background:var(--measure)"></div> assembly (acryl-harness-runtime)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--measure)"></div> assembly (@acryldev/harness-runtime)</div>
       <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div> runtime / durable state</div>
       <div class="legend-item"><div class="legend-swatch" style="background:var(--brick)"></div> guard / rejection</div>
     </div>
@@ -578,7 +578,7 @@
         G -->|"no"| H["exit 1<br/>hint: acryl tui --json"]
         G -->|"yes"| I["runAcrylTui profile=acryl<br/>tui-app/session.ts"]
         I --> J["startDirectHost<br/>host/direct.ts"]
-        J --> K["bootAcrylHarnessProfile<br/>acryl-harness-runtime"]
+        J --> K["bootAcrylHarnessProfile<br/>@acryldev/harness-runtime"]
         K --> L["Cordis root Context<br/>dsh-base + ACRYL patches"]
         L --> M["createAcrylSessionBridge<br/>open or resume session"]
         M --> N["TuiStore seed<br/>snapshot + subscribeEvents"]
@@ -612,7 +612,7 @@
     <div id="s3" class="sec-head sec"><span class="fig">Fig. 3</span><h2>Package Topology</h2></div>
     <p class="sec-intro">
       The dependency rule: <strong>surfaces → harness-runtime → pinned harness</strong>,
-      with <code>acryl-control</code> supplying shared types. Nothing depends on a surface,
+      with <code>@acryldev/control</code> supplying shared types. Nothing depends on a surface,
       which is what makes the runtime swappable across terminal, web, and desktop.
     </p>
 
@@ -627,17 +627,17 @@
             <tr>
               <td><code>acryl-cli</code></td>
               <td>Terminal surface: CLI entry, pi-tui shell, overlays, stores. The <code>acryl</code> bin.</td>
-              <td><code>acryl-harness-runtime</code> · <code>acryl-control</code> · <code>@earendil-works/pi-tui</code> · ~24 dsh-* types/services</td>
+              <td><code>@acryldev/harness-runtime</code> · <code>@acryldev/control</code> · <code>@earendil-works/pi-tui</code> · ~24 dsh-* types/services</td>
               <td><span class="pill pill--ink">slim by design</span> never imports the web-app bundle; <code>web</code>/<code>gui</code> are hard errors</td>
             </tr>
             <tr>
-              <td><code>acryl-harness-runtime</code></td>
+              <td><code>@acryldev/harness-runtime</code></td>
               <td>Runtime assembly: boot factory, session bridge, capability patches, workspace-status tool.</td>
-              <td><strong>160</strong> <code>@deepseek-ai/dsh-*</code> + cordis-plugin-* packages · <code>acryl-control</code></td>
+              <td><strong>160</strong> <code>@deepseek-ai/dsh-*</code> + cordis-plugin-* packages · <code>@acryldev/control</code></td>
               <td><span class="pill pill--measure">the fat node</span> 5 source modules; composition needs packages resolvable by name</td>
             </tr>
             <tr>
-              <td><code>acryl-control</code></td>
+              <td><code>@acryldev/control</code></td>
               <td>Presentation-neutral contracts: snapshot/attachment types, agent providers, protocol client, lifecycle.</td>
               <td>— (types + provider factories)</td>
               <td><span class="pill pill--green">shared language</span> TUI bridge and web protocol project identical shapes</td>
@@ -663,7 +663,7 @@
       <strong>Why 160 deps in one package?</strong> Loader patch rows reference plugins by
       npm name (<code>{ id: 'session', name: '@deepseek-ai/dsh-session' }</code>). For rows
       to resolve, the packages must be resolvable from the booting package. Concentrating
-      the catalog in <code>acryl-harness-runtime</code> keeps every surface slim.
+      the catalog in <code>@acryldev/harness-runtime</code> keeps every surface slim.
     </div>
 
     <div class="card sec">
@@ -693,7 +693,7 @@
     <!-- ============ S4 RUNTIME BOOT ============ -->
     <div id="s4" class="sec-head sec"><span class="fig">Fig. 4</span><h2>Runtime Boot — bootAcrylHarnessProfile()</h2></div>
     <p class="sec-intro">
-      <code>acryl-harness-runtime/src/index.ts</code> turns a profile name into a live
+      <code>@acryldev/harness-runtime/src/index.ts</code> turns a profile name into a live
       Cordis root <code>Context</code>. The Cordis root config itself is empty
       (<code>[]</code>) — <strong>everything is ordered patch entries</strong> applied by the
       Loader, activation being service-availability driven (row order carries no load
@@ -834,7 +834,7 @@
     <div id="s6" class="sec-head sec"><span class="fig">Fig. 6</span><h2>Session Bridge — Data Flow</h2></div>
     <p class="sec-intro">
       The TUI touches the runtime only through <code>createAcrylSessionBridge()</code>
-      (types from <code>acryl-control</code>). Two channels feed the UI: raw
+      (types from <code>@acryldev/control</code>). Two channels feed the UI: raw
       <code>SessionEvent</code>s for the transcript, and periodic
       <code>AcrylSessionSnapshot</code>s for status. Both fold from the durable log —
       <strong>the log is the source of truth, the store is a cache</strong>.
@@ -932,7 +932,7 @@
             <tr><td>UI toolkit</td><td><code>@earendil-works/pi-tui</code></td><td><code>dsh-web-app</code> bundle</td><td>desktop shell + Development Canvas</td></tr>
             <tr><td>Capability patches</td><td>persona + presets + stats + authorization</td><td>authorization only</td><td>desktop profile composes its own rows</td></tr>
             <tr><td>DSH home</td><td><code>~/.dsh</code> (shared)</td><td><code>~/.dsh</code></td><td><code>~/.dsh-acryl</code> (isolated)</td></tr>
-            <tr><td>Continuity</td><td colspan="3"><code>acryl tui --resume &lt;id&gt;</code> · same <code>$DSH_HOME/sessions</code> JSONL · same snapshot types from <code>acryl-control</code></td></tr>
+            <tr><td>Continuity</td><td colspan="3"><code>acryl tui --resume &lt;id&gt;</code> · same <code>$DSH_HOME/sessions</code> JSONL · same snapshot types from <code>@acryldev/control</code></td></tr>
           </tbody>
         </table>
       </div>
@@ -966,10 +966,10 @@
             <tr><td><code>acryl-cli/src/cli/run.ts</code></td><td><code>runAcryl()</code> — commands, TTY gating, injectable dependencies</td></tr>
             <tr><td><code>acryl-cli/src/host/direct.ts</code></td><td><code>startDirectHost()</code> — one local runtime, readiness check</td></tr>
             <tr><td><code>acryl-cli/src/tui-app/session.ts</code></td><td><code>runAcrylTui()</code> — attach, overlays, slash commands</td></tr>
-            <tr><td><code>acryl-harness-runtime/src/index.ts</code></td><td><code>bootAcrylHarnessProfile()</code> / <code>bootAcrylWebProfile()</code></td></tr>
-            <tr><td><code>acryl-harness-runtime/src/coding-capabilities.ts</code></td><td>ACRYL capability patch set, surface scoping</td></tr>
-            <tr><td><code>acryl-harness-runtime/src/session-bridge.ts</code></td><td><code>createAcrylSessionBridge()</code></td></tr>
-            <tr><td><code>acryl-harness-runtime/src/plugin-acryl-workspace-status.ts</code></td><td><code>acryl_workspace_status</code> tool plugin</td></tr>
+            <tr><td><code>@acryldev/harness-runtime/src/index.ts</code></td><td><code>bootAcrylHarnessProfile()</code> / <code>bootAcrylWebProfile()</code></td></tr>
+            <tr><td><code>@acryldev/harness-runtime/src/coding-capabilities.ts</code></td><td>ACRYL capability patch set, surface scoping</td></tr>
+            <tr><td><code>@acryldev/harness-runtime/src/session-bridge.ts</code></td><td><code>createAcrylSessionBridge()</code></td></tr>
+            <tr><td><code>@acryldev/harness-runtime/src/plugin-acryl-workspace-status.ts</code></td><td><code>acryl_workspace_status</code> tool plugin</td></tr>
             <tr><td><code>@deepseek-ai/dsh-base/cordis.patch.yml</code></td><td>the one giant insert — every core service row</td></tr>
           </tbody>
         </table>

@@ -3,8 +3,8 @@
  * the app's windows and menu. One shell at a time: a new one replaces the old (the dev server restarted and the shell came back). It needs this run's secret, so no page can open it.
  */
 
-import { Acryl } from 'acryl-router'
-import { streamSSE } from 'acryl-router/helpers'
+import { Acryl } from '@acryldev/router'
+import { streamSSE } from '@acryldev/router/helpers'
 import { parseShellAnswer, ShellError, shellErrorCode, type ShellCall, type ShellRequest, type ShellResult } from '../shell/protocol.ts'
 import { error, INVALID_JSON, jsonBody, operatorOnly, readJson } from './http.ts'
 import type { PageStream } from './channel.ts'

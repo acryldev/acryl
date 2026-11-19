@@ -7,9 +7,9 @@
 
 import type { PGlite } from '@electric-sql/pglite'
 import type { Db, DbExecutor, SqlValue } from 'acrylblends/db'
-import { bindStatement } from 'acryl-db-postgres/dialect'
+import { bindStatement } from '@acryldev/db-postgres/dialect'
 
-const PROVIDER = 'acryl-db-pglite'
+const PROVIDER = '@acryldev/db-pglite'
 
 type Query = (sql: string, params: readonly SqlValue[]) => Promise<{ rows: Record<string, unknown>[]; affectedRows?: number }>
 

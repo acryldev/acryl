@@ -1,12 +1,12 @@
 {
   "plugins": [
     "instance",
-    "acryl-router",
+    "router",
     "home",
-    "acryl-state",
-    "acryl-node-server",
-    "acryl-page",
-    "acryl-web-server",
+    "state",
+    "node-server",
+    "page",
+    "web-server",
     "tasks",
     "agent",
     "openai",
@@ -17,6 +17,6 @@
     "agent-panel",
     "manifest",
     "save",
-    "acryl-door"
+    "door"
   ]
 }

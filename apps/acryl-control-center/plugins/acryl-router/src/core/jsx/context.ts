@@ -74,7 +74,7 @@ const warnIfStorelessAccess = (): void => {
   if (fallbackRendersInFlight > 0 && !warnedFallbackDefault) {
     warnedFallbackDefault = true
     console.warn(
-      'acryl-router/jsx: AsyncLocalStorage is unavailable in this runtime, so useContext() after an await in an async component falls back to the context default value during server-side rendering. To get provided values across await boundaries, use a runtime with AsyncLocalStorage (Node.js >= 20.16, Deno, Bun, or Cloudflare Workers with the nodejs_compat flag).'
+      '@acryldev/router/jsx: AsyncLocalStorage is unavailable in this runtime, so useContext() after an await in an async component falls back to the context default value during server-side rendering. To get provided values across await boundaries, use a runtime with AsyncLocalStorage (Node.js >= 20.16, Deno, Bun, or Cloudflare Workers with the nodejs_compat flag).'
     )
   }
 }

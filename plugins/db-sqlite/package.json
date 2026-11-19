@@ -1,14 +1,14 @@
 {
-  "name": "acryl-db-sqlite",
+  "name": "@acryldev/db-sqlite",
   "version": "0.1.0",
   "description": "The SQLite provider of the ACRYL db port, one Cordis plugin: opens one node:sqlite file, applies the app's numbered migrations and provides db",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-db-sqlite"
+    "directory": "plugins/db-sqlite"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-db-sqlite#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/db-sqlite#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "acryl-db": "workspace:*"
+    "@acryldev/db": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

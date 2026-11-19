@@ -10,16 +10,16 @@ export function parseIdentity(config) {
   const text = (key, max) => {
     const value = source[key]
     if (value === undefined || value === null || value === '') return undefined
-    if (typeof value !== 'string' || value.length > max) throw new Error(`acryl-brand: "${key}" must be a string of at most ${max} characters`)
+    if (typeof value !== 'string' || value.length > max) throw new Error(`@acryldev/brand: "${key}" must be a string of at most ${max} characters`)
     return value.trim()
   }
   const color = key => {
     const value = text(key, 7)
-    if (value !== undefined && !HEX.test(value)) throw new Error(`acryl-brand: "${key}" must be a #rrggbb color`)
+    if (value !== undefined && !HEX.test(value)) throw new Error(`@acryldev/brand: "${key}" must be a #rrggbb color`)
     return value
   }
   const name = text('name', 40)
-  if (name === undefined) throw new Error('acryl-brand: "name" is required')
+  if (name === undefined) throw new Error('@acryldev/brand: "name" is required')
   const accent = color('accent')
   return {
     name,

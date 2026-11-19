@@ -13,7 +13,7 @@
  * the previous one, and reading in between would see two sessions held as the main view.
  */
 
-import type { ISessions, SessionListState } from '@acryl/ui/frame'
+import type { ISessions, SessionListState } from '@acryldev/ui/frame'
 import { GLOBAL_GROUP, type WorkspaceGroups } from '../canvas/groups.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { currentSessionId, openMainSession, type MainViewNavigation } from '../sessions/main-session.ts'

@@ -148,8 +148,8 @@
           # Helper to install a built workspace package into a node_modules
           # directory, replacing any symlink/dir that the hoisted linker
           # may have created. srcDir is the workspace path (e.g.
-          # "runtime/acryl-control"), pkgName is the node_modules name
-          # (e.g. "acryl-control"). extraDirs is a list of additional
+          # "runtime/control"), pkgName is the node_modules name
+          # (e.g. "@acryldev/control"). extraDirs is a list of additional
           # subdirectories to copy (e.g. ["docs"] for packages that read
           # non-compiled assets at runtime; pass [] when not needed).
           installWorkspacePackage = srcDir: pkgName: destDir: extraDirs:
@@ -176,13 +176,13 @@
               runHook preBuild
 
               # Build the TUI dependency chain.
-              # acryl-harness-runtime imports types from acryl-control, so
-              # acryl-control must be built first. Then acryl-harness-runtime,
+              # @acryldev/harness-runtime imports types from @acryldev/control, so
+              # @acryldev/control must be built first. Then @acryldev/harness-runtime,
               # then dsh-community-market (imported by acryl-cli's /market
               # command), then acryl-cli (which depends on all three;
               # renamed from acryl-tui upstream).
-              pnpm --filter acryl-control run build
-              pnpm --filter acryl-harness-runtime run build
+              pnpm --filter @acryldev/control run build
+              pnpm --filter @acryldev/harness-runtime run build
               pnpm --filter dsh-community-market run build
               pnpm --filter acryl-cli run build
 
@@ -206,8 +206,8 @@
               # Replace workspace package symlinks/dirs with actual built
               # packages (the hoisted linker may have created symlinks for
               # workspace packages that point to source directories).
-              ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl/node_modules" []}
-              ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl/node_modules" []}
+              ${installWorkspacePackage "runtime/control" "@acryldev/control" "$out/lib/acryl/node_modules" []}
+              ${installWorkspacePackage "runtime/harness-runtime" "@acryldev/harness-runtime" "$out/lib/acryl/node_modules" []}
               ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl/node_modules" ["docs"]}
 
               # Wrap the TUI entry point
@@ -240,8 +240,8 @@
 
               # Build the full dependency chain for the desktop app.
               # Order matters: each package imports types from its deps.
-              pnpm --filter acryl-control run build
-              pnpm --filter acryl-harness-runtime run build
+              pnpm --filter @acryldev/control run build
+              pnpm --filter @acryldev/harness-runtime run build
               pnpm --filter dsh-community-market run build
 
               # Build the desktop package. Skip the generate-* scripts
@@ -271,8 +271,8 @@
               cp -a node_modules $out/lib/acryl-desktop/node_modules
 
               # Replace workspace packages with built versions
-              ${installWorkspacePackage "runtime/acryl-control" "acryl-control" "$out/lib/acryl-desktop/node_modules" []}
-              ${installWorkspacePackage "runtime/acryl-harness-runtime" "acryl-harness-runtime" "$out/lib/acryl-desktop/node_modules" []}
+              ${installWorkspacePackage "runtime/control" "@acryldev/control" "$out/lib/acryl-desktop/node_modules" []}
+              ${installWorkspacePackage "runtime/harness-runtime" "@acryldev/harness-runtime" "$out/lib/acryl-desktop/node_modules" []}
               ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl-desktop/node_modules" ["docs"]}
               ${installWorkspacePackage "apps/acryl-desktop" "acryl-desktop" "$out/lib/acryl-desktop/node_modules" []}
 

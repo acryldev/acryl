@@ -1,4 +1,4 @@
-// Bulkheads (specs/049-framework-architecture/app-storage.md in ACRYL, after ACRYL's runtime/acryl-harness-runtime/tests/bulkhead.spec.ts): no shipped code
+// Bulkheads (specs/049-framework-architecture/app-storage.md in ACRYL, after ACRYL's runtime/harness-runtime/tests/bulkhead.spec.ts): no shipped code
 // outside the AppInstance family (plugins/instance) decides where an app keeps anything. Reading the home folder, asking Electron for a path or reading a
 // placement variable anywhere else is how a run falls back to a shared folder: the Documents copy and a blanked app were both that.
 import assert from 'node:assert/strict'
@@ -11,7 +11,7 @@ const repo = fileURLToPath(new URL('../..', import.meta.url))
 
 /**
  * What ships: the plugins an app is made of, the frame's packages, the CLI. Gates under scripts/ run on a developer's machine and may read its home.
- * The frame packages shared with ACRYL (spec 051: plugins/ and runtime/ at the repository root) are under ACRYL's own bulkhead, runtime/acryl-harness-runtime/tests/bulkhead.spec.ts.
+ * The frame packages shared with ACRYL (spec 051: plugins/ and runtime/ at the repository root) are under ACRYL's own bulkhead, runtime/harness-runtime/tests/bulkhead.spec.ts.
  */
 const library = readdirSync(join(repo, '..', 'plugins'), { withFileTypes: true })
   .filter(
@@ -21,7 +21,7 @@ const library = readdirSync(join(repo, '..', 'plugins'), { withFileTypes: true }
   .map((entry) => `../plugins/${entry.name}`)
 const ROOTS = [
   ...library,
-  ...['acryl-app-context', 'acryl-blends-frame', 'acryl-versions'].map(
+  ...['@acryldev/app-context', '@acryldev/blends-frame', '@acryldev/versions'].map(
     (name) => `../plugins/${name}`,
   ),
   'packages/cli/src',
@@ -36,7 +36,7 @@ const ALLOWED = {
     "the workshop preflight checks the person's machine (pi's key in its own folder); it runs before any app exists",
   // A ratchet, not exceptions: each repeats a rule the AppInstance family owns, and app-storage.md's slices 2 and 3 (the product host on its app folders)
   // remove it. The second test fails once a file no longer needs its line, so the list only shrinks.
-  '../plugins/desktop/frame.ts':
+  '../plugins/desktop-shell/frame.ts':
     "frameHome repeats selectInstance's ACRYLBLENDS_HOME rule; slice 2 takes the home from the AppInstance",
 }
 

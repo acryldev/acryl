@@ -272,19 +272,19 @@ export class WorkspacePtyRegistry {
       ? undefined
       : this.agents?.resolve(commandId) ?? (known === undefined ? undefined : { command: known.command, args: [] })
     if (commandId !== 'shell' && agentPlan === undefined) {
-      throw new Error('acryl-workspace: unknown workspace PTY command')
+      throw new Error('@acryldev/workspace: unknown workspace PTY command')
     }
     if (cwd !== undefined && !isExistingAbsoluteDirectory(cwd)) {
-      throw new Error('acryl-workspace: workspace PTY cwd must be an existing absolute directory')
+      throw new Error('@acryldev/workspace: workspace PTY cwd must be an existing absolute directory')
     }
     const cols = size?.cols ?? DEFAULT_COLS
     const rows = size?.rows ?? DEFAULT_ROWS
     if (!Number.isInteger(cols) || !Number.isInteger(rows) || cols < 2 || cols > MAX_PTY_COLS || rows < 1 || rows > MAX_PTY_ROWS) {
-      throw new Error('acryl-workspace: workspace PTY size is out of range')
+      throw new Error('@acryldev/workspace: workspace PTY size is out of range')
     }
     const plan: WorkspacePtySpawnPlan = agentPlan ?? planWorkspacePtyCommand('shell', this.platform, this.env)
     const dirs = await this.spawnDirs
-    if (this.disposed) throw new Error('acryl-workspace: workspace PTY registry is disposed')
+    if (this.disposed) throw new Error('@acryldev/workspace: workspace PTY registry is disposed')
     const id = this.createId()
     let process: WorkspacePtyProcess
     try {
@@ -309,7 +309,7 @@ export class WorkspacePtyRegistry {
       })
     } catch (cause) {
       throw new Error(
-        `acryl-workspace: workspace PTY spawn failed: ${cause instanceof Error ? cause.message : String(cause)}`,
+        `@acryldev/workspace: workspace PTY spawn failed: ${cause instanceof Error ? cause.message : String(cause)}`,
       )
     }
     const subscriptions: { dispose(): void }[] = []
@@ -365,7 +365,7 @@ export class WorkspacePtyRegistry {
   write(id: string, data: string): void {
     const session = this.require(id)
     if (session.status !== 'running') {
-      throw new Error('acryl-workspace: workspace PTY is not running')
+      throw new Error('@acryldev/workspace: workspace PTY is not running')
     }
     session.process.write(data)
   }
@@ -443,7 +443,7 @@ export class WorkspacePtyRegistry {
   private require(id: string): LiveSession {
     const session = this.sessions.get(id)
     if (session === undefined) {
-      throw new Error('acryl-workspace: unknown workspace PTY session')
+      throw new Error('@acryldev/workspace: unknown workspace PTY session')
     }
     return session
   }

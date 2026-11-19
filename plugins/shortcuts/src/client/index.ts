@@ -1,12 +1,12 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type { ShortcutBinding, ShortcutCommandId, Shortcuts } from '@acryl/ui/frame'
+import type { ShortcutBinding, ShortcutCommandId, Shortcuts } from '@acryldev/ui/frame'
 
 /** One command as `ctx.shortcuts.register` takes it. */
 type ShortcutRegistration = Parameters<Shortcuts['register']>[0]
 import { ShortcutsSection } from './ShortcutsSection.tsx'
 import { installShortcutsStyles } from './styles.ts'
 
-export const name = 'acryl-shortcuts-client'
+export const name = '@acryldev/shortcuts-client'
 export const inject = ['shortcuts']
 
 /**
@@ -18,7 +18,7 @@ export const inject = ['shortcuts']
  * built client bundle has no statically analyzable named exports).
  */
 
-/** Window event the palette owner (`acryl-workspace`) listens for. Keep the string in step with its listener. */
+/** Window event the palette owner (`@acryldev/workspace`) listens for. Keep the string in step with its listener. */
 export const PALETTE_TOGGLE_EVENT = 'acryl:toggle-command-palette'
 
 /** Stable id in DSH's shortcut catalog. */
@@ -40,14 +40,14 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const PALETTE_BINDING: ShortcutBinding = { code: 'KeyP', modifiers: ['primary', 'shift'] }
 
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => registerPalette(ctx), 'acryl-shortcuts: toggle command palette')
+  ctx.effect(() => registerPalette(ctx), '@acryldev/shortcuts: toggle command palette')
   // A child plugin: the section waits for the Settings slots and the locale service, the shortcuts above do not.
   ctx.plugin({
-    name: 'acryl-shortcuts-settings',
+    name: '@acryldev/shortcuts-settings',
     inject: ['slots', 'locale'],
     apply(child: ClientContext): void {
-      child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { nav: 'Shortcuts' }, zh: { nav: '快捷键' } }), 'acryl-shortcuts: dictionary')
-      child.effect(() => installShortcutsStyles(), 'acryl-shortcuts: styles')
+      child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { nav: 'Shortcuts' }, zh: { nav: '快捷键' } }), '@acryldev/shortcuts: dictionary')
+      child.effect(() => installShortcutsStyles(), '@acryldev/shortcuts: styles')
       const t = child.locale.bind(LOCALE_NAMESPACE)
       child.slots.inject('settings.section', () => child.slots.register({
         name: 'settings.section',
@@ -92,7 +92,7 @@ function registerPalette(ctx: ClientContext): () => void {
   try {
     return ctx.shortcuts.register(paletteShortcut(() => { window.dispatchEvent(new CustomEvent(PALETTE_TOGGLE_EVENT)) }))
   } catch (cause) {
-    ctx.logger.warn(`acryl-shortcuts: could not register the command palette shortcut: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.warn(`@acryldev/shortcuts: could not register the command palette shortcut: ${cause instanceof Error ? cause.message : String(cause)}`)
     return () => {}
   }
 }

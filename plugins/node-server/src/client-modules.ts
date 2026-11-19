@@ -12,8 +12,8 @@
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Acryl } from 'acryl-router'
-import { basePath } from 'acryl-router/helpers'
+import { Acryl } from '@acryldev/router'
+import { basePath } from '@acryldev/router/helpers'
 import { MissingTypeScriptError, compileModule } from './transpile.ts'
 
 /** The folder the three browser files are served from, below the app's mount. A source folder of this name is not served. */

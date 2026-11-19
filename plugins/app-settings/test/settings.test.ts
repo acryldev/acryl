@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { instance, pinnedInstance } from 'acryl-instance'
+import { instance, pinnedInstance } from '@acryldev/instance'
 import { settings, z } from '../index.ts'
 
 const homes: string[] = []

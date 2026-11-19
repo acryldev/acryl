@@ -22,9 +22,9 @@ index c99a93f..9474a8f 100644
 @@ -1,7 +1,8 @@
  name: Registry
  
--# Every starter under registry/blends/ must validate with @acryl/blends-core, and registry/index.json must be what the index tool writes.
+-# Every starter under registry/blends/ must validate with @acryldev/blends-core, and registry/index.json must be what the index tool writes.
 -# A private or unlicensed entry, a misplaced folder, a repeated id or a stale index fails the check; publishing is a reviewed pull request.
-+# Every starter under registry/blends/ must validate with @acryl/blends-core, and registry/index.json must be what scripts/registry-index.ts writes (blends-core's index plus the
++# Every starter under registry/blends/ must validate with @acryldev/blends-core, and registry/index.json must be what scripts/registry-index.ts writes (blends-core's index plus the
 +# runtime each entry is for: an entry with an acryl.template.json is an app for acrylblends, every other one is for the ACRYL app). A private or unlicensed entry, a misplaced folder,
 +# a repeated id, a stale index, or an app entry that is not a sound starter fails the check; each app entry must also be creatable by create-acrylblends. Publishing is a reviewed pull request.
  
@@ -98,10 +98,10 @@ index a2a6780..acfb2b6 100644
 -- `README.md`: what it is and how to start from it.
 +## The files
  
--CI validates every entry with `@acryl/blends-core` and fails when `index.json` is stale; run the index tool locally to regenerate it. A private or unlicensed entry
+-CI validates every entry with `@acryldev/blends-core` and fails when `index.json` is stale; run the index tool locally to regenerate it. A private or unlicensed entry
 -is refused. Keeping a starter private needs no registry at all: people start from its git repository (`acryl new my-app --from git@host:you/starter.git`).
 -A company's private registry is this same layout in its own repository.
-+`index.json` is written by `scripts/registry-index.ts`: [`@acryl/blends-core`](https://github.com/acryldev/acryl/tree/main/runtime/blends-core)'s index (validation of every `blend.yaml`) plus the `runtime` of each entry. It is served as it is at <https://acrylblends.github.io/registry/index.json>.
++`index.json` is written by `scripts/registry-index.ts`: [`@acryldev/blends-core`](https://github.com/acryldev/acryl/tree/main/runtime/blends-core)'s index (validation of every `blend.yaml`) plus the `runtime` of each entry. It is served as it is at <https://acrylblends.github.io/registry/index.json>.
 diff --git a/scripts/registry-index.ts b/scripts/registry-index.ts
 new file mode 100644
 index 0000000..0c7b73c
@@ -110,7 +110,7 @@ index 0000000..0c7b73c
 @@ -0,0 +1,113 @@
 +#!/usr/bin/env bun
 +// registry-index <registry folder> [--check]
-+// What the registry's CI runs. It is @acryl/blends-core's index tool (validate every starter under blends/<id>/blend.yaml, refuse a private, unlicensed, misplaced or repeated one,
++// What the registry's CI runs. It is @acryldev/blends-core's index tool (validate every starter under blends/<id>/blend.yaml, refuse a private, unlicensed, misplaced or repeated one,
 +// write index.json) plus one thing the format does not carry: the runtime an entry is for.
 +//   - An entry with an `acryl.template.json` is a whole app for acrylblends (`runtime: acrylblends`): `npm create acrylblends@latest my-app -- --from <id>` makes it. It is checked
 +//     further: the template manifest, a package.json without install scripts, src/, no links, no node_modules or .git, size limits, and nothing that looks like a key.
@@ -232,7 +232,7 @@ index eadd253..0f7ccda 100644
  import index from "../../registry/index.json";
  import { CodeBlock, Status } from "./ui";
  
- /** One entry of registry/index.json (written by blends-registry-index from @acryl/blends-core; CI refuses a stale index). */
+ /** One entry of registry/index.json (written by blends-registry-index from @acryldev/blends-core; CI refuses a stale index). */
 -interface RegistryEntry { id: string; name: string; kind: "Blueprint" | "Blend"; version: string; path: string; license: string; category?: string; description?: string; parent?: string }
 +/** `runtime` says what the entry is for: an app for the acrylblends framework, or a starter for the ACRYL app (the index of a registry written before the field existed has none: those are ACRYL's). */
 +export type Runtime = "acrylblends" | "acryl";

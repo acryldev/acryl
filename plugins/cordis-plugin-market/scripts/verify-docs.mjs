@@ -17,7 +17,7 @@ const readJson = path => {
 }
 const manifest = JSON.parse(read('package.json'))
 
-if (manifest.name !== 'cordis-plugin-market') fail('package name must remain cordis-plugin-market')
+if (manifest.name !== '@acryldev/cordis-plugin-market') fail('package name must remain @acryldev/cordis-plugin-market')
 if (manifest.private === true) {
   fail('the Market package is now a real published dependency (Web/Desktop/CLI resolve it as such) - it must not be private')
 }

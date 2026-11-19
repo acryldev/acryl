@@ -1,5 +1,5 @@
-import type { Context } from 'acryl-router'
-import { Acryl } from 'acryl-router'
+import type { Context } from '@acryldev/router'
+import { Acryl } from '@acryldev/router'
 import { request as requestHTTP } from 'node:http'
 import type { ClientRequest, OutgoingHttpHeaders } from 'node:http'
 import type { AddressInfo } from 'node:net'

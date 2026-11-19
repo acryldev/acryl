@@ -1,4 +1,4 @@
-# acryl-control
+# @acryldev/control
 
 Host-neutral Cordis control-plane capabilities for ACRYL hosts.
 

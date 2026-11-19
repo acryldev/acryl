@@ -19,13 +19,13 @@ describe.skipIf(!existsSync(bundle))('the built client bundle', () => {
     let loaded: { id: string; factory: (req: (name: string) => unknown) => unknown } | undefined
     Object.defineProperty(window, '__ModuleLoader__', { configurable: true, value: { load: (entry: typeof loaded) => { loaded = entry } } })
     new Function(readFileSync(bundle, 'utf8'))()
-    expect(loaded?.id).toBe('acryl-workspace')
+    expect(loaded?.id).toBe('@acryldev/workspace')
     const exports = loaded?.factory((name) => {
       // The loader provides these; everything else must already be inside the bundle.
       if (name === 'react' || name === 'react/jsx-runtime') return require(name) as unknown
       return {}
     }) as { name?: string; apply?: unknown }
-    expect(exports.name).toBe('acryl-workspace-client')
+    expect(exports.name).toBe('@acryldev/workspace-client')
     expect(typeof exports.apply).toBe('function')
   })
 })

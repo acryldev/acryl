@@ -1,7 +1,7 @@
 /** The `comments` right-sidebar tab type, listed under Checks on the Start page: a dependency-gated child plugin like the Review tab. */
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import { CommentsBody, type CommentTerminals } from './CommentsBody.tsx'
 import type { CommentStore } from './comment-store.ts'
 import type { WriteText } from './use-comments.ts'
@@ -9,12 +9,12 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { CommentsGlyph } from '../chrome/panel-icons.tsx'
 
 export const COMMENTS_KIND = 'comments'
-export const COMMENTS_ID = 'acryl-workspace/comments'
+export const COMMENTS_ID = '@acryldev/workspace/comments'
 
 /** PENDING (not failed) while the upstream right sidebar is absent; both registrations unwind together. */
 export function commentsTabPlugin(shell: WorkspaceShellState, comments: CommentStore, terminals: CommentTerminals, writeText: WriteText | undefined) {
   return {
-    name: 'acryl-workspace-comments-tab',
+    name: '@acryldev/workspace-comments-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {
@@ -40,7 +40,7 @@ export function commentsTabPlugin(shell: WorkspaceShellState, comments: CommentS
           removeBody()
           removeType()
         }
-      }, 'acryl-workspace: Comments tab type')
+      }, '@acryldev/workspace: Comments tab type')
     },
   }
 }

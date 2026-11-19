@@ -183,7 +183,7 @@ async function startApp(scratch) {
   delete env.ACRYLBLENDS_MODEL_KEY
   const child = startGroup(
     process.execPath,
-    ['--import', './plugins/acryl-node-server/src/register.ts', 'src/main.ts'],
+    ['--import', './plugins/node-server/src/register.ts', 'src/main.ts'],
     { cwd: app, env },
   )
   let output = ''

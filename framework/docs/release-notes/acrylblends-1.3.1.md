@@ -18,7 +18,7 @@ Pull plugins from several people into one app: a plugin whose route or widget an
   A route under another plugin's path is its own route (`/notes/list` beside `/notes`), while a wildcard over it (`/notes/*`) is refused. The first plugin keeps its route, and in the frame the message names the route without the canvas prefix.
 - **A plugin putting its widget under another plugin's name is refused**, and the first widget stays on the home page. The message says a widget's id is the name of the plugin that puts it there.
 - **In the frame, a pulled plugin that puts a widget on the home page installs.** It was refused "needs home", because plugin-share asked for services with its caller's context.
-- **In the frame, a pull no longer restarts the app**, whatever the source: GitHub, an address, or a local file. The frame loaded the app's code again after every pull, so the plugin's route answered 404 for a few seconds and a pull in that moment was refused. Now the frame tells the app's own live writes from changes to its code by their content: a pulled plugin folder that still holds the release as pulled is not loaded again, and an edit to it is. A refused pull and a removed plugin do not restart the app either. This is `@acrylblends/blends-frame` 0.1.1.
+- **In the frame, a pull no longer restarts the app**, whatever the source: GitHub, an address, or a local file. The frame loaded the app's code again after every pull, so the plugin's route answered 404 for a few seconds and a pull in that moment was refused. Now the frame tells the app's own live writes from changes to its code by their content: a pulled plugin folder that still holds the release as pulled is not loaded again, and an edit to it is. A refused pull and a removed plugin do not restart the app either. This is `@acryldev/blends-frame` 0.1.1.
 - **A different copy of a plugin with the same name is refused, naming where the copy in the app came from** ("pulled from github:ana/hello@1.0.0", or "made in this app").
 
 ## Known limits
@@ -27,4 +27,4 @@ Pull plugins from several people into one app: a plugin whose route or widget an
 
 ## Upgrading
 
-`npx acrylblends@latest upgrade` in the app, then `npm install`. An app made with `--desktop` before this release keeps its frame pin; to take the frame fix, run `npm install @acrylblends/blends-frame@0.1.1` in it. A new app gets the 0.1.1 frame.
+`npx acrylblends@latest upgrade` in the app, then `npm install`. An app made with `--desktop` before this release keeps its frame pin; to take the frame fix, run `npm install @acryldev/blends-frame@0.1.1` in it. A new app gets the 0.1.1 frame.

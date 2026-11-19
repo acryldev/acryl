@@ -7,10 +7,10 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
-import * as router from 'acryl-router'
+import * as router from '@acryldev/router'
 import { afterAll, describe, expect, it } from 'vitest'
-import * as home from 'acryl-home'
-import { loadAppPlugins } from 'acryl-manifest/app-plugins'
+import * as home from '@acryldev/home'
+import { loadAppPlugins } from '@acryldev/manifest/app-plugins'
 
 const pack = fileURLToPath(new URL('..', import.meta.url))
 const STATES = ['pending', 'loading', 'active', 'failed', 'disposed', 'unloading']

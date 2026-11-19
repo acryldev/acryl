@@ -5,7 +5,7 @@
  * upstream are `git rev-parse` readings, and ahead/behind say whether the branch is shared.
  */
 
-/** The prefix acryl-versions mounts on the router. */
+/** The prefix @acryldev/versions mounts on the router. */
 export const VERSIONS_API_PREFIX = '/api/acryl-versions'
 export const VERSIONS_LOG_PATH = `${VERSIONS_API_PREFIX}/log`
 export const VERSIONS_SAVE_PATH = `${VERSIONS_API_PREFIX}/save`

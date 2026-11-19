@@ -15,7 +15,7 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
-import { digestFolder } from '@webboxes/blends-core'
+import { digestFolder } from '@acryldev/blends-core'
 import { parseDocument } from 'yaml'
 import { watchFolder, watchFolders } from './app-reload.ts'
 

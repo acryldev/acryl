@@ -375,7 +375,7 @@ function createAcrylSessionBridge(ctx, options) {
 * and can be read back after the fact instead of re-derived from a
 * screenshot.
 *
-* @module acryl-harness-runtime/session-log-exporter
+* @module @acryldev/harness-runtime/session-log-exporter
 */
 const LOGGER_LEVEL_WARN = 2;
 const LOGGER_LEVEL_DEBUG = 3;
@@ -437,7 +437,7 @@ function installSessionLogExporter(ctx, options) {
 * only changes the *default* the harness's own `resolveDshHome()` falls
 * back to when nothing overrides it.
 *
-* @module acryl-harness-runtime/acryl-home
+* @module @acryldev/harness-runtime/acryl-home
 */
 /** ACRYL's own root directory name under the OS home. */
 const ACRYL_HOME_DIR_NAME = ".acryl";
@@ -1786,7 +1786,7 @@ const PERMISSION_COLORS = {
 */
 function buildUpdateHintText(currentVersion, latestVersion) {
 	if (latestVersion === void 0) return "";
-	return warning$2(`⬆ ACRYL update available: v${currentVersion} → v${latestVersion}`) + dim(" (run `pnpm add -g @acryl/cli` to upgrade)");
+	return warning$2(`⬆ ACRYL update available: v${currentVersion} → v${latestVersion}`) + dim(" (run `pnpm add -g @acryldev/cli` to upgrade)");
 }
 function buildPermissionText(permission) {
 	if (permission === void 0) return "";

@@ -1,9 +1,9 @@
 /** The left panel: the app's branches, each with what is open on it, then the versions of the checked-out branch, and where the app runs. */
 
 import { Fragment, useCallback, useEffect, useState, useSyncExternalStore } from 'react'
-import { formatRelativeTime } from 'acryl-versions/client'
+import { formatRelativeTime } from '@acryldev/versions/client'
 import { branchNameProblem, type FeedbackNoteView, type FeedbackView, type FrameBranch, type FrameState } from '../contract.ts'
-import type { VersionsLogView } from 'acryl-versions'
+import type { VersionsLogView } from '@acryldev/versions'
 import { PTY_AGENTS, terminalMeta, type FrameTabs } from './tabs.ts'
 import { backText, backToMessage, chatTime, saveBeforeBackMessage, shortTime, versionNumber, type VersionsPort } from './versions.ts'
 import { branchClick, saveBeforeSwitchMessage, type BranchesApi } from './branches.ts'

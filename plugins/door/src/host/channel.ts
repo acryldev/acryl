@@ -1,6 +1,6 @@
 /**
  * The Host's side of the page channel: the connected pages of the app, and calls that go to the current one (moved from
- * `acryl-agent-control`, spec 041).
+ * `@acryldev/agent-control`, spec 041).
  *
  * The Host cannot reach into a page, so each page opens one event stream to the Host and answers calls by POST. With several pages open,
  * the one the user focused last is the one the agent drives. A page that reconnects with the same window id replaces its old stream.

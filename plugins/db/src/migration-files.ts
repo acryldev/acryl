@@ -19,12 +19,12 @@ export async function readMigrationFiles(folder: string | URL): Promise<Migratio
   const files = (await readdir(dir)).filter(name => name.endsWith('.sql')).sort()
   const numbered = files.map(name => {
     const match = FILE.exec(name)
-    if (match?.[1] === undefined) throw new Error(`acryl-db: migration file ${name} in ${dir} must be named NNN-name.sql, like 001-notes.sql`)
+    if (match?.[1] === undefined) throw new Error(`@acryldev/db: migration file ${name} in ${dir} must be named NNN-name.sql, like 001-notes.sql`)
     return { name, version: Number(match[1]) }
   }).sort((a, b) => a.version - b.version)
   numbered.forEach((file, index) => {
     if (file.version !== index + 1) {
-      throw new Error(`acryl-db: migration ${file.name} in ${dir} should be number ${String(index + 1)}; the files must be numbered 1, 2, 3, ... with no gaps or repeats`)
+      throw new Error(`@acryldev/db: migration ${file.name} in ${dir} should be number ${String(index + 1)}; the files must be numbered 1, 2, 3, ... with no gaps or repeats`)
     }
   })
   return Promise.all(numbered.map(async file => ({ version: file.version, statements: [await readFile(join(dir, file.name), 'utf8')] })))

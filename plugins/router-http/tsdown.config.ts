@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-router-http',
+  name: '@acryldev/router-http',
   entry: { index: 'src/index.ts' },
   outDir: 'lib',
   format: 'esm',

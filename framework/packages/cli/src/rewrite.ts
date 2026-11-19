@@ -2,12 +2,12 @@ import { dirname, posix } from 'node:path'
 import type { LibraryPlugin } from './library'
 
 /**
- * The framework plugins import each other by package name (`acryl-router`, `acryl-router/middleware`, `acryl-instance`): inside this repository they are workspace packages. An app has
+ * The framework plugins import each other by package name (`@acryldev/router`, `@acryldev/router/middleware`, `@acryldev/instance`): inside this repository they are workspace packages. An app has
  * no such packages, only the copied source, so `acrylblends init` and `add` rewrite those specifiers to relative paths when they copy a plugin. The file each name stands
  * for is the `entries` table of the plugin's `plugin.json`; the name is its `package.json` name, which need not equal its library folder.
  */
 
-/** `acryl-router/middleware` to `acryl-router/src/middleware/index.ts`: every importable name of every library plugin. */
+/** `@acryldev/router/middleware` to `@acryldev/router/src/middleware/index.ts`: every importable name of every library plugin. */
 export type EntryTable = ReadonlyMap<string, string>
 
 export function entryTable(library: ReadonlyMap<string, LibraryPlugin>): EntryTable {
@@ -60,7 +60,7 @@ const SPECIFIER =
 
 /**
  * Rewrite the specifiers that name another library plugin to relative paths. `file` is the path of the file inside the plugins folder (for example
- * `acryl-state/src/service.ts`). Only real import and export statements are touched: a specifier named in a comment or in a string (a documentation example) is text,
+ * `@acryldev/state/src/service.ts`). Only real import and export statements are touched: a specifier named in a comment or in a string (a documentation example) is text,
  * not a dependency. Any other `acryl-*` specifier in code is an error: a library plugin may depend only on the others and on public packages.
  */
 export function rewriteSpecifiers(
@@ -92,7 +92,7 @@ const RELATIVE = /(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(['"])(\.{1,2}\/[^'"\n
  * The inverse, for a plugin an app stops carrying and installs instead (spec 051 T011: the desktop shell and the instance): rewrite the
  * relative imports that reach into its copied files back to package specifiers. `file` is the importing file's path inside the app
  * (`src/main.ts`, `plugins/agent-panel/headless.ts`); `table` maps each importable specifier to its file under the app's plugins folder
- * (`acryl-instance/storage` -> `instance/storage.ts`), for the moved plugins only. A relative import of a moved plugin's file that no
+ * (`@acryldev/instance/storage` -> `instance/storage.ts`), for the moved plugins only. A relative import of a moved plugin's file that no
  * specifier names is an error: the package does not export it, so the app would break.
  */
 export function toPackageSpecifiers(

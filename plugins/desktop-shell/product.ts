@@ -8,9 +8,9 @@
 
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
-import type { AppInstance } from 'acryl-instance'
-import { inProgram, type Product } from 'acryl-instance/bundle'
-import type { AppStorage } from 'acryl-instance/storage'
+import type { AppInstance } from '@acryldev/instance'
+import { inProgram, type Product } from '@acryldev/instance/bundle'
+import type { AppStorage } from '@acryldev/instance/storage'
 
 /**
  * What a new app's source does not carry from the bundle besides the Program: build output, the bundle's own app data, and the carrier names the packager
@@ -84,7 +84,7 @@ export function seedSource(
       const parts = relative(bundle, path).split(sep)
       if (parts[0] === '') return true
       if (SKIPPED.has(parts[0] ?? '')) return false
-      // A folder is compared with its trailing separator, so `plugins/acryl-router` is the Program's `plugins/acryl-router/`.
+      // A folder is compared with its trailing separator, so `plugins/router` is the Program's `plugins/router/`.
       const tree = parts.join('/')
       return !inProgram(program, tree) && !inProgram(program, `${tree}/`)
     },

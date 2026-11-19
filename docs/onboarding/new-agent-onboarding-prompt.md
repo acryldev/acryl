@@ -41,21 +41,21 @@ Then read the **Cordis stack**, since all product work is Cordis plugins:
 
 ```text
 acryl              -> public npm selector/launcher (bin: acryl)
-acryl-harness-runtime -> the engine: boots/disposes the one pinned Harness
+@acryldev/harness-runtime -> the engine: boots/disposes the one pinned Harness
                          profile + Cordis root. Owns durable state.
-acryl-control      -> control plane linked by every surface: lease, protocol,
+@acryldev/control      -> control plane linked by every surface: lease, protocol,
                       inspection, lifecycle, provider-neutral agent control.
 acryl-cli          -> terminal surface (pi-tui). Never owns a Cordis root.
 acryl-web          -> standalone web surface (local HTTP/WebSocket server).
 acryl-desktop      -> Electron GUI + packaging; shrink toward Electron-only.
 acryl-development-canvas -> first ADE surface (Orca-inspired canvas).
-dsh-community-fabric     -> community interop RFC (doc scaffold, not loadable).
-cordis-plugin-market     -> optional Market provider (disabled by default).
+@acryldev/dsh-community-fabric     -> community interop RFC (doc scaffold, not loadable).
+@acryldev/cordis-plugin-market     -> optional Market provider (disabled by default).
 deepseek-harness/        -> PINNED UPSTREAM SUBMODULE. Never edit from a feature.
 ```
 
 The migration direction matters: reusable logic moves **out of** `acryl-desktop`
-and into `acryl-harness-runtime` / `acryl-control`; the desktop package shrinks
+and into `@acryldev/harness-runtime` / `@acryldev/control`; the desktop package shrinks
 toward window chrome, tray, native menu, packaging, updater, OS integration.
 
 ## 3. How to plan and track work (Spec Kit + Wayfinder SDD)

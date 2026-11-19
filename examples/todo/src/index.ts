@@ -19,7 +19,7 @@ import type {} from 'acrylblends/cordis/state'
 import { PAGE } from './page.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-todo'
+export const name = '@acryldev/todo'
 export const inject = ['router', 'state']
 
 export interface Todo { id: number, title: string, done: boolean }
@@ -58,14 +58,14 @@ function load(file: string | undefined): Todo[] {
     text = readFileSync(file, 'utf8')
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
-    throw new Error(`acryl-todo: cannot read ${file}: ${(error as Error).message}`, { cause: error })
+    throw new Error(`@acryldev/todo: cannot read ${file}: ${(error as Error).message}`, { cause: error })
   }
   try {
     const parsed: unknown = JSON.parse(text)
     if (!Array.isArray(parsed)) throw new Error('not a list')
     return parsed as Todo[]
   } catch (error) {
-    throw new Error(`acryl-todo: ${file} is not a valid todo list (${(error as Error).message}); fix or remove it, it was left untouched`, { cause: error })
+    throw new Error(`@acryldev/todo: ${file} is not a valid todo list (${(error as Error).message}); fix or remove it, it was left untouched`, { cause: error })
   }
 }
 
@@ -80,7 +80,7 @@ export function apply(ctx: Context, config: Config = {}): void {
   const todos = ctx.state.cell<readonly Todo[]>('todo.list', load(config.file))
   if (config.file !== undefined) {
     const file = config.file
-    ctx.effect(() => todos.subscribe(list => { save(file, list) }), 'acryl-todo: save to file')
+    ctx.effect(() => todos.subscribe(list => { save(file, list) }), '@acryldev/todo: save to file')
   }
   const nextId = (): number => todos.get().reduce((max, todo) => Math.max(max, todo.id), 0) + 1
 

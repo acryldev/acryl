@@ -86,7 +86,7 @@ Ideas worth taking, ranked:
 - **HIGH — Agent as a transport-neutral runtime behind a typed session/protocol boundary.**
   Replace any ACRYL "control surface middleman" with a clean protocol/service contract so
   TUI/desktop/web are thin adapters over one event source. Evidence: `agent-loop.ts`,
-  `PiServerService`, `pi-protocol`. ACRYL map: your `acryl-control` protocol + `ctx.agents`
+  `PiServerService`, `pi-protocol`. ACRYL map: your `@acryldev/control` protocol + `ctx.agents`
   event stream should be the single source of truth, and surfaces subscribe.
 - **HIGH — Swappable provider registry with pluggable auth.** Evidence:
   `packages/ai/src/providers/` + `packages/ai/src/auth/`. ACRYL map: consume DSH's
@@ -362,7 +362,7 @@ Ideas worth taking, ranked:
   by composing a different plugin tree.
 - **HIGH — Reversible effects own every resource.** Every process, socket, watcher, timer,
   PTY, subscription, route, plugin registration has exactly one owning `ctx.effect()` and an
-  ordered disposer. ACRYL's `acryl-control`/canvas must stop leaking raw resource ownership.
+  ordered disposer. ACRYL's `@acryldev/control`/canvas must stop leaking raw resource ownership.
 - **HIGH — Service/scope in, concrete provider out.** Consumers depend on stable service
   keys (`ctx.fs`, `ctx.tools`, `ctx.llm`), never concrete providers or YAML row order.
 - **MED — Typed events with explicit dispatch mode + waterfall `next()`.** ACRYL's event

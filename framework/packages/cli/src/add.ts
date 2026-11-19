@@ -100,10 +100,10 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
   const names = options.names
     .filter((name) => !external.includes(name))
     // `db` is the SQLite provider of the db port (it brings the port); a plain app opens its database with `acrylblends/db/sqlite` instead.
-    .map((name) => (name === 'db' ? 'acryl-db-sqlite' : name))
-    // `kv` is the JSON-file provider of the kv port (it brings the port); `acryl-kv-db` is the one over db.
-    .map((name) => (name === 'kv' ? 'acryl-kv-json' : name))
-    .map((name) => (name === 'desktop' && plain ? 'desktop-web' : name))
+    .map((name) => (name === 'db' ? 'db-sqlite' : name))
+    // `kv` is the JSON-file provider of the kv port (it brings the port); `kv-db` is the one over db.
+    .map((name) => (name === 'kv' ? 'kv-json' : name))
+    .map((name) => (name === 'desktop-shell' && plain ? 'desktop-web' : name))
   if (names.length === 0) return 0
   // A plugin `add` mounts whose folder is already there without its row (an upgrade brought the folder, or an older starter left it): only the row is
   // missing, so it is mounted, and nothing is copied over the folder.
@@ -166,7 +166,7 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
     const tooling = mergeTooling(appDir, plugin)
     appendGitignore(appDir, plugin.gitignore)
     // The provider is mounted from src/app.ts, which is therefore the one file that may import it (`acrylblends check-deps`).
-    if (plugin.name === 'acryl-db-sqlite') mergeOpener(appDir, 'src/app.ts')
+    if (plugin.name === 'db-sqlite') mergeOpener(appDir, 'src/app.ts')
     addedDependencies.push(...tooling.devDependencies)
     if (tooling.scripts.length > 0)
       io.stdout.write(
@@ -215,9 +215,9 @@ const SUITE_RUNNER = { vitest: '3.2.4' }
  */
 function copySuites(names: readonly string[], appDir: string, added: string[], io: Io): number {
   const copies: Array<{ from: string; to: string }> = []
-  // The suite belongs to the port: `add kv --suite` (acryl-kv-json, or acryl-kv-db) brings the suite of acryl-kv.
+  // The suite belongs to the port: `add kv --suite` (kv-json, or kv-db) brings the suite of kv.
   const ports = [
-    ...new Set(names.map((name) => name.replace(/^(acryl-(?:kv|db))(?:-.*)?$/u, '$1'))),
+    ...new Set(names.map((name) => name.replace(/^(kv|db)(?:-.*)?$/u, '$1'))),
   ]
   const library = readLibrary()
   for (const name of ports) {
@@ -238,7 +238,7 @@ function copySuites(names: readonly string[], appDir: string, added: string[], i
   return 0
 }
 
-/** The plugin folder name and the file inside it, from a path below the plugins folder (`.../plugins/acryl-kv/src/conformance.ts`). */
+/** The plugin folder name and the file inside it, from a path below the plugins folder (`.../plugins/kv/src/conformance.ts`). */
 const pluginOf = (path: string): string => path.split(sep).slice(-3, -2)[0] ?? ''
 const suiteOf = (path: string): string => path.split(sep).slice(-2).join('/')
 

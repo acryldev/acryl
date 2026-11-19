@@ -33,7 +33,7 @@ afterEach(async () => {
 })
 
 function app(): string {
-  const root = mkdtempSync(join(tmpdir(), 'acryl-db-postgres-loader-'))
+  const root = mkdtempSync(join(tmpdir(), '@acryldev/db-postgres-loader-'))
   roots.push(root)
   writeFileSync(join(root, 'row.mjs'), `export * from ${JSON.stringify(BUILT_ENTRY)}\n`)
   return root
@@ -52,7 +52,7 @@ function entryOf(ctx: Context, entryId: string) {
   return found
 }
 
-describe('acryl-db-postgres through a real Loader', () => {
+describe('@acryldev/db-postgres through a real Loader', () => {
   it('keeps a consumer PENDING until the row provides db, migrates from the app\'s folder, and serves queries', async () => {
     const root = app()
     mkdirSync(join(root, 'migrations'))

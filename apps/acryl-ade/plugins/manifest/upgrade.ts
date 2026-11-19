@@ -1,6 +1,6 @@
 /**
  * Upgrading a Blend: what happens when its Blueprint moves to a new version. The plan and its application are ACRYL's own
- * (`@webboxes/blends-core`); this file only reads the Blend and the two Blueprint files and keeps the terminal output.
+ * (`@acryldev/blends-core`); this file only reads the Blend and the two Blueprint files and keeps the terminal output.
  *
  * An upgrade is a *plan* before it is an action: what the Blueprint changed, what the Blend can no longer do on it (conflicts),
  * which changes its overrides hide, and how the rows the app mounts would differ. Only a plan with no conflicts is `safe`.
@@ -15,7 +15,7 @@ import {
   planUpgrade as planFromDocuments,
   type RowChange,
   type UpgradePlan,
-} from '@webboxes/blends-core'
+} from '@acryldev/blends-core'
 import type { LoadOptions } from './index.ts'
 
 export type { RowChange, UpgradePlan }

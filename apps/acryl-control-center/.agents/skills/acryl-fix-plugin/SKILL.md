@@ -1,6 +1,6 @@
 ---
 name: acryl-fix-plugin
-description: Use when a plugin you wrote in acryl-control-center fails - npm test or npm run check fails, the top bar says "Not reloaded", or the feature is not on the page.
+description: Use when a plugin you wrote in @acryldev/control-center fails - npm test or npm run check fails, the top bar says "Not reloaded", or the feature is not on the page.
 ---
 # Fix a plugin that does not work
 

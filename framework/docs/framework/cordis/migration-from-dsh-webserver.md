@@ -66,7 +66,7 @@ Keep domain calls unchanged until the transport change is green; do not rewrite 
 
 ## A worked example: the workspace
 
-`acryl-workspace` (files, git, terminals, projects, agents) was the largest user of the webServer: 24 exact routes. It now builds one app
+`@acryldev/workspace` (files, git, terminals, projects, agents) was the largest user of the webServer: 24 exact routes. It now builds one app
 per domain folder (`filesRoutes`, `gitRoutes`, `ptyRoutes`, ...), composes them once (`privateApi` in `src/private-route.ts`), mounts the
 result after the effect that builds its services, and serves the one prefix `/api/acryl-workspace`:
 
@@ -91,7 +91,7 @@ an `Allow` header on every route; a missing or wrong agent-hook token is 401 wit
 must be the app's own loopback address. Its routes refuse an in-process call on purpose (the guard needs a socket to check), so its tests
 run over loopback through the same adapter (`tests/serve-api.ts`), which is the "test over the Host" below.
 
-`acryl-agent-control` (the door `acryl control`, workers and the MCP config use) moved the same way and kept its trust model exactly:
+`@acryldev/agent-control` (the door `acryl control`, workers and the MCP config use) moved the same way and kept its trust model exactly:
 operator routes still answer a non-loopback peer or a missing or wrong secret with 403 `{ "error": "forbidden" }`, which `acryl control`
 reads as "refused", never the bearer middleware's 401. What changed there: an oversized body is 413 (was 400), a wrong method's `Allow`
 lists what the router serves (`GET, HEAD` for the audit log), and a page route's refusal carries `loopbackOnly`'s message instead of

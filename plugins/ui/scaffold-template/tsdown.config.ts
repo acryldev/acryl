@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown'
 import { cssModulesInline } from './build/css-modules-plugin.ts'
 
 // Rename this to your real package name before publishing; it becomes both the npm name and the
-// client module id the loader registers under. Same build chain as @acryl/ui itself (spec
+// client module id the loader registers under. Same build chain as @acryldev/ui itself (spec
 // 038-ui-component-library): a `require`-able client module, react and the app's own primitives
 // stay external, clsx is inlined, CSS Modules compile to plugin-owned <style data-plugin> tags.
 const PACKAGE_NAME = 'my-ui-plugin'

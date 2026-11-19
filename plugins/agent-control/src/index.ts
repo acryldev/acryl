@@ -9,7 +9,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-control'
+import type {} from '@acryldev/control'
 import type { Acryl } from 'acrylblends'
 import { AuditLog, auditPath, pageChannelRoutes, UiChannel } from 'acrylblends/door/host'
 import type {} from 'acrylblends/cordis/router'
@@ -28,7 +28,7 @@ import { docsRootFromLookup, removeWorkerMcpConfig, workerMcpArgs, writeWorkerMc
 import { workersRoutes } from './host/workers/route.ts'
 import { mountWorkers } from './host/workers/service.ts'
 
-export const name = 'acryl-agent-control'
+export const name = '@acryldev/agent-control'
 /**
  * The part of the runtime's `appInstance` service ACRYL plugins read (a separated interface: plugins do not import the runtime). Every plugin declares
  * exactly this shape, so the Context augmentations agree in any program that loads several of them.
@@ -50,7 +50,7 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
   const config = parseConfig(rawConfig)
   const origin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`
   const reportError = (operation: string, cause: unknown): void => {
-    ctx.logger?.error?.(`acryl-agent-control: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger?.error?.(`@acryldev/agent-control: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   // Bring-your-own agents (Claude Code): mounted as children of this Fiber, so they end with it.
   // The MCP config a Claude worker starts with exists only while the gateway is up (it names this Host and carries its secret).
@@ -102,8 +102,8 @@ export function apply(ctx: Context, rawConfig?: unknown): void {
       if (onlineSecret !== undefined) removeOnlineSecret(ctx.appInstance.home)
       channel.close()
     }
-  }, 'acryl-agent-control: page channel, tools, approval policy and secret')
-  if (built.api === undefined) throw new Error('acryl-agent-control: the routes were not built')
+  }, '@acryldev/agent-control: page channel, tools, approval policy and secret')
+  if (built.api === undefined) throw new Error('@acryldev/agent-control: the routes were not built')
   // After the effect, so an unload removes the mount first: its in-flight calls end before the secret goes and the channel closes.
   ctx.router.route('/', built.api)
   ctx.routerHttp.mount(AGENT_CONTROL_API_PREFIX)

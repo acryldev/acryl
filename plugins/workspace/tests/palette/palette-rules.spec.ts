@@ -274,7 +274,7 @@ describe('file search source', () => {
 })
 
 describe('palette toggle event', () => {
-  it('toggles on the event acryl-shortcuts dispatches and stops after disposal', async () => {
+  it('toggles on the event @acryldev/shortcuts dispatches and stops after disposal', async () => {
     const { startPaletteEventListener, PALETTE_TOGGLE_EVENT } = await import('../../src/client/palette/palette-shortcut.ts')
     const target = new EventTarget()
     const toggle = vi.fn()

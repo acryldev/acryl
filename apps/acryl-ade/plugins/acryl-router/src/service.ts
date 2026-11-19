@@ -60,7 +60,7 @@ export const Config: z<Partial<Config>, Config> = z.object({
 })
 
 /**
- * The Web adapter's service (`ctx.routerHttp`, provided by `acryl-router-http`). Declared here, beside `router`, so a plugin can ask for its routes to be
+ * The Web adapter's service (`ctx.routerHttp`, provided by `@acryldev/router-http`). Declared here, beside `router`, so a plugin can ask for its routes to be
  * served over HTTP without depending on the adapter package.
  */
 export interface RouterHttpService {
@@ -87,7 +87,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-router'
+export const name = '@acryldev/router'
 
 /**
  * What {@link Router.route} takes: any app with routes, read structurally. An `Acryl` from this package qualifies, and so does one built from
@@ -172,13 +172,13 @@ export class Router extends Service {
       if (error instanceof HTTPException) return error.getResponse()
       // A handler that gave up because its caller left or the router is closing is not a failure worth logging.
       if (c.req.raw.signal.aborted) return new Response('Client Closed Request', { status: 499 })
-      ctx.logger.error(`acryl-router: handler failed: ${error instanceof Error ? error.message : String(error)}`)
+      ctx.logger.error(`@acryldev/router: handler failed: ${error instanceof Error ? error.message : String(error)}`)
       return c.text('Internal Server Error', 500)
     }
     ctx.effect(() => async () => {
       this.state.closing = true
       await this.drain()
-    }, 'acryl-router: drain in-flight requests, then abort what is left')
+    }, '@acryldev/router: drain in-flight requests, then abort what is left')
   }
 
   /** Registrations currently held (mounts, and the router-wide error and not-found handlers); a leak check for reload tests. */
@@ -212,9 +212,9 @@ export class Router extends Service {
     const served = new Set(app.routes.map(route => `${route.method} ${mergePath(path, route.path)}`))
     const owner = this.ctx
     owner.effect(function* () {
-      for (const route of served) yield owner.effect(() => () => {}, `acryl-router: serves ${route}`)
+      for (const route of served) yield owner.effect(() => () => {}, `@acryldev/router: serves ${route}`)
       yield remove
-    }, `acryl-router: route ${path}`)
+    }, `@acryldev/router: route ${path}`)
     return () => { void remove() }
   }
 
@@ -229,7 +229,7 @@ export class Router extends Service {
     const remove = (): void => {
       if (this.state.wrappers.delete(middleware)) this.state.composed = undefined
     }
-    this.ctx.effect(() => remove, 'acryl-router: wrapper')
+    this.ctx.effect(() => remove, '@acryldev/router: wrapper')
     return remove
   }
 
@@ -305,7 +305,7 @@ export class Router extends Service {
       flight.endBody()
     }
     if (await this.settledWithin(flights, settleMs)) return
-    this.ctx.logger.warn(`acryl-router: ${String(flights.length)} request(s) did not finish ${String(settleMs)} ms after abort (${why}); continued without them`)
+    this.ctx.logger.warn(`@acryldev/router: ${String(flights.length)} request(s) did not finish ${String(settleMs)} ms after abort (${why}); continued without them`)
   }
 
   /** Turn errors no mounted app handled into responses. One handler per router; the calling plugin owns it. */
@@ -318,7 +318,7 @@ export class Router extends Service {
       this.state.errorHandler = undefined
       this.state.composed = undefined
     }
-    this.ctx.effect(() => remove, 'acryl-router: onError')
+    this.ctx.effect(() => remove, '@acryldev/router: onError')
     return remove
   }
 
@@ -332,7 +332,7 @@ export class Router extends Service {
       this.state.notFoundHandler = undefined
       this.state.composed = undefined
     }
-    this.ctx.effect(() => remove, 'acryl-router: notFound')
+    this.ctx.effect(() => remove, '@acryldev/router: notFound')
     return remove
   }
 
@@ -400,7 +400,7 @@ export class Router extends Service {
     try {
       return await this.app().fetch(request, env, executionCtx)
     } catch (error) {
-      this.ctx.logger.error(`acryl-router: request failed: ${error instanceof Error ? error.message : String(error)}`)
+      this.ctx.logger.error(`@acryldev/router: request failed: ${error instanceof Error ? error.message : String(error)}`)
       return new Response('Internal Server Error', { status: 500 })
     }
   }
@@ -438,7 +438,7 @@ export class Router extends Service {
     }
     const endEarly = (): void => {
       if (ended) return
-      reader.cancel(new Error('acryl-router: disposed')).catch(() => {})
+      reader.cancel(new Error('@acryldev/router: disposed')).catch(() => {})
       try { sink?.close() } catch { /* already closed */ }
       end()
     }

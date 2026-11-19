@@ -1,9 +1,9 @@
 /** Same-origin route for the diagnostics download. */
 
 import { Acryl } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
-import { ownPage, privateApi, type ReportError } from 'acryl-loopback-http/router'
-import type { DiagnosticsArchive } from 'acryl-diagnostics'
+import { error } from '@acryldev/loopback-http'
+import { ownPage, privateApi, type ReportError } from '@acryldev/loopback-http/router'
+import type { DiagnosticsArchive } from '@acryldev/diagnostics'
 import { SUPPORT_API_PREFIX, SUPPORT_DIAGNOSTICS_PATH } from './contract.ts'
 
 /** A file name that cannot break out of the header: letters, digits, dot, dash, underscore. */

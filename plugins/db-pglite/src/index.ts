@@ -1,8 +1,8 @@
 /**
  * The embedded Postgres provider of the `db` port (spec 049 slice 2b): PGlite, with its cluster in one folder of the app home, migrated,
- * and provided as `db`. The step between SQLite and a Postgres server: the same Postgres dialect as `acryl-db-postgres` (which this
+ * and provided as `db`. The step between SQLite and a Postgres server: the same Postgres dialect as `@acryldev/db-postgres` (which this
  * shares its `?` translation with), and no server to run. App plugins declare `inject: ['db']` and import types from `acrylblends/db` only, so
- * replacing `acrylblends/cordis/db-sqlite` with this row does not touch them. The plugin is a thin wrapper over `openDb` (`acryl-db-pglite/open`), the
+ * replacing `acrylblends/cordis/db-sqlite` with this row does not touch them. The plugin is a thin wrapper over `openDb` (`@acryldev/db-pglite/open`), the
  * same opening for code without Cordis.
  *
  * Unloading withdraws `db` first, so consumers stop calling, and then closes PGlite once the running calls finish, which writes the
@@ -21,7 +21,7 @@ export { LOCK_FILE } from './folder-lock.ts'
 export { IN_MEMORY, openDb, type OpenDb, type OpenDbOptions } from './open.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-db-pglite'
+export const name = '@acryldev/db-pglite'
 
 /**
  * What this plugin reads of the runtime's optional `appInstance` service: its home folder. The service belongs to the runtime (and to an
@@ -54,7 +54,7 @@ function resolveFromApp(ctx: Context, path: string, option: string): string {
   if (isAbsolute(path)) return path
   const base = ctx.baseUrl
   if (base === undefined || !base.startsWith('file:')) {
-    throw new Error(`acryl-db-pglite: ${option} ${JSON.stringify(path)} is relative, but this app has no file base URL to resolve it from; give an absolute path`)
+    throw new Error(`@acryldev/db-pglite: ${option} ${JSON.stringify(path)} is relative, but this app has no file base URL to resolve it from; give an absolute path`)
   }
   const appDir = base.endsWith('/') ? fileURLToPath(base) : dirname(fileURLToPath(base))
   return resolve(appDir, path)
@@ -67,7 +67,7 @@ export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void>
   let dataDir: string
   if (config.dataDir !== undefined) dataDir = resolveFromApp(ctx, config.dataDir, 'dataDir')
   else if (isAppHome(appInstance)) dataDir = join(appInstance.home, DEFAULT_FOLDER)
-  else throw new Error('acryl-db-pglite: no data folder; set `dataDir` in this row\'s config (there is no ACRYL app home to default to)')
+  else throw new Error('@acryldev/db-pglite: no data folder; set `dataDir` in this row\'s config (there is no ACRYL app home to default to)')
   const migrations = config.migrations === undefined ? undefined : resolveFromApp(ctx, config.migrations, 'migrations')
   const options = { dataDir, ...(migrations === undefined ? {} : { migrations }) }
 
@@ -76,5 +76,5 @@ export async function apply(ctx: Context, rawConfig: Config = {}): Promise<void>
     const opened = await openDb(options)
     yield () => opened.close()
     yield ctx.reflect.provide(DB_SERVICE, opened.db)
-  }, `acryl-db-pglite: ${dataDir}`)
+  }, `@acryldev/db-pglite: ${dataDir}`)
 }

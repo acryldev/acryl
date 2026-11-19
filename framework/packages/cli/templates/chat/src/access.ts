@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { connectionOf, createMiddleware } from '../plugins/acryl-router/src/helpers/index.ts'
-import type { Context } from '../plugins/acryl-router/src/index.ts'
-import { basicAuth } from '../plugins/acryl-router/src/middleware/index.ts'
+import { connectionOf, createMiddleware } from '../plugins/router/src/helpers/index.ts'
+import type { Context } from '../plugins/router/src/index.ts'
+import { basicAuth } from '../plugins/router/src/middleware/index.ts'
 
 /** Who may use the chat, and what the app prints about it at start. */
 export type Access =

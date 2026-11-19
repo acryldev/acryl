@@ -12,7 +12,7 @@ export interface Mounted {
   readonly needs: readonly string[]
   /** The row this one goes after (it goes before `routes` otherwise). */
   readonly after?: string
-  /** The `id:` of its row, when it is not the plugin's name (`db` for acryl-db-sqlite). */
+  /** The `id:` of its row, when it is not the plugin's name (`db` for @acryldev/db-sqlite). */
   readonly row?: string
   /** Its entry file inside the plugin's folder (`index.ts`, or `src/index.ts` for the plugins that keep their source in `src/`). */
   readonly entry?: string
@@ -24,7 +24,7 @@ export const MOUNTED: readonly Mounted[] = [
   { name: 'agent-panel', local: 'panel', needs: ['agent', 'extensions'] },
   { name: 'driver-pty', local: 'driverPty', needs: ['agent-panel'], after: 'agent-panel' },
   { name: 'driver-acp', local: 'driverAcp', needs: ['agent-panel'], after: 'agent-panel' },
-  { name: 'feedback', local: 'feedback', needs: ['acryl-router'] },
+  { name: 'feedback', local: 'feedback', needs: ['@acryldev/router'] },
   { name: 'showcase', local: 'showcase', needs: ['plugin-share'], after: 'plugin-share' },
   // Sharing (pull, publish): every template has it since 1.3, and an app made from an older starter gets it with `add plugin-share`.
   {
@@ -111,7 +111,7 @@ export function mount(appDir: string, plugin: Mounted): MountResult {
       const eol = eolOf(text)
       const imports = [...text.matchAll(/^import .* from '\.\.\/plugins\/[^']+'\r?\n/gmu)]
       const last = imports.at(-1)
-      // The registry as the templates write it: one entry per line, or all on one line (`{ 'acryl-router': router, routes }`).
+      // The registry as the templates write it: one entry per line, or all on one line (`{ '@acryldev/router': router, routes }`).
       const table = /^export const registry = \{(\r?\n)/mu.exec(text)
       if (last && table) {
         const line = `${registrationImport(plugin)}${eol}`

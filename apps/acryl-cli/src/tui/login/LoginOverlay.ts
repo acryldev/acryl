@@ -17,7 +17,7 @@
 
 import type { Component, TUI } from '@earendil-works/pi-tui'
 import { Key, matchesKey, fuzzyFilter } from '@earendil-works/pi-tui'
-import type { AuthMethod } from 'acryl-control'
+import type { AuthMethod } from '@acryldev/control'
 import type { TuiActions } from '../actions.js'
 import type { TuiStore } from '../store.js'
 import { emptyMiniTextField, miniTextFieldInput, renderMiniTextField, type MiniTextFieldState } from '../miniTextField.js'

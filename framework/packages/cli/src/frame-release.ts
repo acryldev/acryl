@@ -26,8 +26,15 @@ export const FRAME_SCOPE: string = release.scope
 export const FRAME_DSH_VERSION: string = release.dshVersion
 
 /** Every package the frame publishes, in the file's order. */
+const publishedName = (key: string, entry: { name?: string }): string =>
+  key.includes('/') ? key : `${release.scope}/${entry.name ?? key}`
+
 export const FRAME_RELEASE: readonly FrameReleasePackage[] = Object.entries(release.packages).map(
-  ([source, entry]) => ({ source, name: `${release.scope}/${entry.name}`, version: entry.version }),
+  ([key, entry]) => ({
+    source: publishedName(key, entry as { name?: string }),
+    name: publishedName(key, entry as { name?: string }),
+    version: entry.version,
+  }),
 )
 
 /**
@@ -94,7 +101,7 @@ export function frameProfileForInit(desktop: boolean): FrameProfileSpecs | undef
 
 /**
  * The specs for an app that may or may not be framed already: the environment first, then the app's own `package.json` (a framed app carries the DSH
- * pin, the framework and the frame packages, by their source or published names), then npm's for a desktop app (one with `plugins/desktop`).
+ * pin, the framework and the frame packages, by their source or published names), then npm's for a desktop app (one with `plugins/desktop-shell`).
  * Undefined when none applies: the caller then leaves the app on the framework alone and says why.
  */
 export function frameProfileForApp(root: string): FrameProfileSpecs | undefined {
@@ -103,7 +110,7 @@ export function frameProfileForApp(root: string): FrameProfileSpecs | undefined 
   if (fromEnv !== undefined) return fromEnv
   const fromApp = frameProfileOfManifest(root)
   if (fromApp !== undefined) return fromApp
-  // A desktop app: one carrying the shell's copy, or one that moved to the acryl-desktop-shell package (spec 051 T011).
+  // A desktop app: one carrying the shell's copy, or one that moved to the @acryldev/desktop-shell package (spec 051 T011).
   return findDesktopShell(root) !== undefined ? publishedFrameProfile() : undefined
 }
 

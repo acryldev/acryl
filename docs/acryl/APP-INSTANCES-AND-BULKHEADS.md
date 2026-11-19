@@ -1,6 +1,6 @@
 # App instances and bulkheads: many ACRYL apps on one machine
 
-Status: implemented (spec 036, commit `1b10c17`). Code: `runtime/acryl-harness-runtime/src/instance/`. Tests: `runtime/acryl-harness-runtime/tests/instance.spec.ts`,
+Status: implemented (spec 036, commit `1b10c17`). Code: `runtime/harness-runtime/src/instance/`. Tests: `runtime/harness-runtime/tests/instance.spec.ts`,
 `tests/bulkhead.spec.ts`.
 
 ## The problem, as it happened

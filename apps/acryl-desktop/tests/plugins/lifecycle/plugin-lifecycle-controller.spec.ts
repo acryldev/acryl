@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { boot } from '@deepseek-ai/dsh-app-boot'
-import { AcrPluginLifecycleService, pluginLifecyclePatches } from 'acryl-harness-runtime'
+import { AcrPluginLifecycleService, pluginLifecyclePatches } from '@acryldev/harness-runtime'
 import { PluginLifecycleController } from '../../../src/plugins/lifecycle/plugin-lifecycle-controller.ts'
 import type { DesktopBlendProjection } from '../../../src/profile/desktop-blend.ts'
 
@@ -106,7 +106,7 @@ const BLEND_PACKAGE = 'acryl-blend-row-package'
 function blendProjection(): DesktopBlendProjection {
   return {
     lockPath: join('/tmp', 'acryl-crm', '.acryl', 'blend.lock.json'),
-    generator: { name: '@webboxes/blends-core', version: '0.1.0' },
+    generator: { name: '@acryldev/blends-core', version: '0.1.0' },
     origin: { id: 'acryl.crm', kind: 'Blueprint', version: '0.1.0', digest: `sha256:${'a'.repeat(64)}` },
     rows: [{ id: 'blend-row', name: BLEND_PACKAGE }],
   }

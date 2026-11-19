@@ -16,7 +16,7 @@ import { launcherRoutes } from './route.ts'
 import { spawnRunner } from './runner.ts'
 import { LauncherService } from './service.ts'
 
-export const name = 'acryl-launcher-desktop'
+export const name = '@acryldev/launcher-desktop'
 
 /** The part of the runtime's `appInstance` service ACRYL plugins read (every plugin declares exactly this shape, so the augmentations agree). */
 interface AppInstanceService {
@@ -46,13 +46,13 @@ export function apply(ctx: Context): void {
     door: fileDoor(),
   })
   const report = (operation: string, cause: unknown): void => {
-    ctx.logger.error(`acryl-launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.error(`@acryldev/launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   // Every process this plugin started goes with it, whether it unloads or the app quits.
-  ctx.effect(() => () => { service.stopAll() }, 'acryl-launcher-desktop: apps it started')
-  // The launcher as tools, for the DSH chat and, through acryl-agent-control's gateway, for Claude Code and Codex. Optional: with no tool registry nothing is lost.
+  ctx.effect(() => () => { service.stopAll() }, '@acryldev/launcher-desktop: apps it started')
+  // The launcher as tools, for the DSH chat and, through @acryldev/agent-control's gateway, for Claude Code and Codex. Optional: with no tool registry nothing is lost.
   ctx.inject(['acrylTools'], (child) => {
-    child.effect(() => registerLauncherTools(child, service), 'acryl-launcher-desktop: launcher tools')
+    child.effect(() => registerLauncherTools(child, service), '@acryldev/launcher-desktop: launcher tools')
   })
   ctx.router.route('/', launcherRoutes(service, report))
   ctx.routerHttp.mount(LAUNCHER_API_PREFIX)

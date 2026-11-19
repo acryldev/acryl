@@ -1,5 +1,5 @@
 /**
- * The audit log: one JSON line per door call, append-only, in the app's own `.acryl/audit/` (moved from `acryl-agent-control`, spec 041).
+ * The audit log: one JSON line per door call, append-only, in the app's own `.acryl/audit/` (moved from `@acryldev/agent-control`, spec 041).
  *
  * It is the record of what the agent did to the app. It never holds text the agent typed or values it read,
  * only which control was touched and how the call ended.

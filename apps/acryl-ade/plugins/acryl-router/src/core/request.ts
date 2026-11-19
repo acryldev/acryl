@@ -384,7 +384,7 @@ export class AcrylRequest<P extends string = '/', I extends Input['out'] = {}> {
    *
    * @deprecated
    *
-   * Use matchedRoutes helper defined in "acryl-router/route" instead.
+   * Use matchedRoutes helper defined in "@acryldev/router/route" instead.
    *
    *
    * @example
@@ -414,7 +414,7 @@ export class AcrylRequest<P extends string = '/', I extends Input['out'] = {}> {
    *
    * @deprecated
    *
-   * Use routePath helper defined in "acryl-router/route" instead.
+   * Use routePath helper defined in "@acryldev/router/route" instead.
    *
    *
    * @example

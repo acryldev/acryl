@@ -6,7 +6,7 @@ changes. Today it runs from source (`npm run desktop`); packaging a distributabl
 ## Use it
 
 ```sh
-npx acrylblends init my-app --template todo --desktop     # or: acrylblends add desktop, in an app you already have
+npx acrylblends init my-app --template todo --desktop     # or: acrylblends add desktop-shell, in an app you already have
 cd my-app
 npm install
 npm run desktop
@@ -17,7 +17,7 @@ binary the first time it runs. Behind a proxy or mirror, set `ELECTRON_MIRROR` (
 
 ## A plain Acryl app
 
-In an app made by `npm create acrylblends@latest my-app -- --template nodejs`, `npx acrylblends add desktop` adds `plugins/desktop-web` instead: it imports `src/app.ts` (`export default app`), serves `app.fetch` on
+In an app made by `npm create acrylblends@latest my-app -- --template nodejs`, `npx acrylblends add desktop-shell-shell` adds `plugins/desktop-web` instead: it imports `src/app.ts` (`export default app`), serves `app.fetch` on
 `127.0.0.1` with a free port through `acrylblends/node-server`, opens the window on it and, when the window closes, closes the server and exits. The rules below are the same, with the app folder's `.acrylblends/electron` as the
 user-data folder (added to `.gitignore`).
 
@@ -34,7 +34,7 @@ user-data folder (added to `.gitignore`).
 
 ## Where the code is
 
-`plugins/desktop/`: `main.ts` (the steps above), `window.ts` (the window options), and `user-data.ts` and `shutdown.ts` (which came from ACRYL Desktop). `electron` is a development dependency, and only that folder imports it: the app's own code never does, so a different shell is a change in one place. An app with the `agent`
+`plugins/desktop-shell/`: `main.ts` (the steps above), `window.ts` (the window options), and `user-data.ts` and `shutdown.ts` (which came from ACRYL Desktop). `electron` is a development dependency, and only that folder imports it: the app's own code never does, so a different shell is a change in one place. An app with the `agent`
 template shows the agent's pages, and the routes it installs live, in the same window.
 
 ## Checking it

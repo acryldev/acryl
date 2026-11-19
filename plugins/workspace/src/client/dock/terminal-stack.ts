@@ -31,6 +31,6 @@ export function createTerminalStack(ctx: ClientContext, storage: Pick<Storage, '
       terminals.disposeAll()
       await ptyClient.dispose()
     }
-  }, 'acryl-workspace: terminals and dock')
+  }, '@acryldev/workspace: terminals and dock')
   return { ptyClient, terminals, dock, host: { controller: dock, terminals, shell } }
 }

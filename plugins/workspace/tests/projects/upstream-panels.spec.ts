@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { MainPanelId } from '@acryl/ui/frame'
+import type { MainPanelId } from '@acryldev/ui/frame'
 import { createUpstreamPanels, type PanelLayout, type PanelSlotRegistry } from '../../src/client/projects/upstream-panels.ts'
 
 type Entry = { options: { id?: unknown, order?: number, label?: string | (() => string) } }

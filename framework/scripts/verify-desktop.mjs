@@ -56,7 +56,7 @@ writeFileSync(marker, '')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const run = (cmd, args, cwd) =>
   execFileSync(cmd, args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-const entry = plain ? 'plugins/desktop-web/main.ts' : 'plugins/desktop/main.ts'
+const entry = plain ? 'plugins/desktop-web/main.ts' : 'plugins/desktop-shell/main.ts'
 /** A free port for the debugging connection (a fixed or random port could belong to another program, or to a previous run still closing). */
 const port = await new Promise((resolvePort, reject) => {
   const probe = createServer()

@@ -1,4 +1,4 @@
-// @webboxes/plugin-hub: saving, sharing and pulling Cordis plugins, host-independent (spec 044 lifecycle.md, "Built to be extracted into
+// @acryldev/plugin-hub-core: saving, sharing and pulling Cordis plugins, host-independent (spec 044 lifecycle.md, "Built to be extracted into
 // ACRYL Blends", layer 1). The Cordis service that offers these to an app, and its faces, live in the app; this package has no Cordis, DSH or
 // surface dependency, so the engine, a catalog's CI and other runtimes can use it.
 export { InvalidPluginNameError, parsePluginName, pluginNameOf, storeDirectoryOf, type PluginName } from './name.js'

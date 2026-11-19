@@ -1,5 +1,5 @@
-import type { Context, MiddlewareHandler } from 'acryl-router'
-import { Acryl } from 'acryl-router'
+import type { Context, MiddlewareHandler } from '@acryldev/router'
+import { Acryl } from '@acryldev/router'
 import { describe, it, expect, expectTypeOf, vi } from 'vitest'
 import http, { createServer } from 'node:http'
 import http2 from 'node:http2'

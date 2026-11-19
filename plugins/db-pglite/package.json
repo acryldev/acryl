@@ -1,14 +1,14 @@
 {
-  "name": "acryl-db-pglite",
+  "name": "@acryldev/db-pglite",
   "version": "0.1.0",
-  "description": "The embedded Postgres provider of the ACRYL db port, one Cordis plugin: PGlite (Postgres in WebAssembly) with its data folder in the app home, no server, applies the app's numbered migrations and provides db; openDb from acryl-db-pglite/open does the same without Cordis",
+  "description": "The embedded Postgres provider of the ACRYL db port, one Cordis plugin: PGlite (Postgres in WebAssembly) with its data folder in the app home, no server, applies the app's numbered migrations and provides db; openDb from @acryldev/db-pglite/open does the same without Cordis",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-db-pglite"
+    "directory": "plugins/db-pglite"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-db-pglite#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/db-pglite#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -54,7 +54,7 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
     "@electric-sql/pglite": "0.5.11",
-    "acryl-db-postgres": "workspace:*",
+    "@acryldev/db-postgres": "workspace:*",
     "acrylblends": "workspace:^"
   },
   "peerDependencies": {

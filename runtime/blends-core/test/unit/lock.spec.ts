@@ -24,7 +24,7 @@ describe('generateLock (FR-M2-1, FR-M2-2)', () => {
       digest: 'sha256:deadbeef',
     })
     expect(lock.formatVersion).toBe(1)
-    expect(lock.generator).toEqual({ name: '@webboxes/blends-core', version: BLENDS_CORE_VERSION })
+    expect(lock.generator).toEqual({ name: '@acryldev/blends-core', version: BLENDS_CORE_VERSION })
     expect(lock.origin).toEqual({
       id: 'acryl.crm',
       kind: 'Blueprint',
@@ -149,7 +149,7 @@ describe('generateBlendLock (formatVersion 3, spec 036)', () => {
     expect(lock.formatVersion).toBe(3)
     expect(Object.keys(lock)).toEqual(['formatVersion', 'generator', 'origin', 'lineage', 'parameters', 'rows', 'modules'])
     expect(lock).toMatchObject({
-      generator: { name: '@webboxes/blends-core', version: BLENDS_CORE_VERSION },
+      generator: { name: '@acryldev/blends-core', version: BLENDS_CORE_VERSION },
       lineage: { blueprint: 'acryl.gtd', blueprintVersion: '0.1.0', digest: 'sha256:dd' },
       rows: definition!.spec.rows,
       modules: [pulled, local],

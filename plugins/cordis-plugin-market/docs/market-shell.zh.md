@@ -4,7 +4,7 @@
 
 状态：已完成并内置于 DSH Desktop，包括 Host/Client 市场、有限 npm 安装、基于 receipt 的卸载及 direct-bundle 启用/禁用
 
-本文定义 `cordis-plugin-market` 已交付的实现边界。它刻意比完整的插件市场更小：package 只负责产品内的市场壳和适配器，不负责社区目录、包 registry 或 DSH profile 格式。
+本文定义 `@acryldev/cordis-plugin-market` 已交付的实现边界。它刻意比完整的插件市场更小：package 只负责产品内的市场壳和适配器，不负责社区目录、包 registry 或 DSH profile 格式。
 
 ## 产品目标
 

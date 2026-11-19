@@ -235,7 +235,7 @@ export function stopsHost(exec: Pick<GuardedExecution, 'name' | 'arguments'>, ho
   if (typeof command !== 'string' || !/\b(?:kill|pkill|killall|Stop-Process|taskkill)\b/iu.test(command)) return false
   // What the command names outright: the Host's id, its port, or its script (the input of a pipe may name the port, as `lsof -ti :3730 | xargs kill`).
   const named = host.hostPort === undefined ? String(host.hostPid) : `${String(host.hostPid)}|${String(host.hostPort)}`
-  if (new RegExp(`\\b(?:${named})\\b|ide-host|acryl-node-server`, 'iu').test(command)) return true
+  if (new RegExp(`\\b(?:${named})\\b|ide-host|@acryldev/node-server`, 'iu').test(command)) return true
   for (const invocation of killInvocations(command)) {
     if (invocation.verb === 'kill' && killTargets(invocation.args, host)) return true
     if (invocation.verb === 'pkill' && pkillTargets(invocation.args, host)) return true

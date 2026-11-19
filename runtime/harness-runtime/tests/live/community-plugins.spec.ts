@@ -4,14 +4,14 @@
  * blocked), and the engine is booted again, as an app restart does; then each plugin's Loader rows are read. The result is written to
  * ACRYL_LIVE_COMMUNITY_REPORT (JSON) for the spec's record. Run:
  *
- *   ACRYL_LIVE_COMMUNITY=1 ACRYL_LIVE_COMMUNITY_REPORT=/tmp/s12.json corepack pnpm --filter acryl-harness-runtime exec vitest run tests/live/community-plugins.spec.ts
+ *   ACRYL_LIVE_COMMUNITY=1 ACRYL_LIVE_COMMUNITY_REPORT=/tmp/s12.json corepack pnpm --filter @acryldev/harness-runtime exec vitest run tests/live/community-plugins.spec.ts
  */
 import { writeFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { createPluginHub, githubReleasesOverHttps, PluginStore, type InstallerPort } from '@webboxes/plugin-hub'
+import { createPluginHub, githubReleasesOverHttps, PluginStore, type InstallerPort } from '@acryldev/plugin-hub-core'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../../src/engine-host.ts'

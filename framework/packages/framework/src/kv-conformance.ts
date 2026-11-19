@@ -4,10 +4,10 @@
  *   import * as vitest from 'vitest'
  *   describeKvConformance('my-provider', open, vitest)
  */
-import { describeKvConformance as suite } from 'acryl-kv/conformance'
+import { describeKvConformance as suite } from '@acryldev/kv/conformance'
 import { bind, type VitestApi } from './vitest-binding.ts'
 
-export type { KvUnderTest } from 'acryl-kv/conformance'
+export type { KvUnderTest } from '@acryldev/kv/conformance'
 export type { VitestApi }
 
 export function describeKvConformance(

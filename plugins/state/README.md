@@ -1,4 +1,4 @@
-# acryl-state
+# @acryldev/state
 
 Observable cells owned by plugins, shared by every surface (spec 046, milestone M5).
 
@@ -32,9 +32,9 @@ export function apply(ctx: Context): void {
   a loopback `Host`, and an `Origin`, when there is one, that is exactly this app's own; a program on this machine that sends
   none is let in, and a page of another origin or a name that only resolves here (DNS rebinding) is refused with 403. `ws` is a
   dependency of the plugin and is loaded when the first socket is wanted.
-- **React.** `import { useCell } from 'acryl-state/react'` and `const value = useCell(cell)`; built on `useSyncExternalStore`.
+- **React.** `import { useCell } from '@acryldev/state/react'` and `const value = useCell(cell)`; built on `useSyncExternalStore`.
   React is an optional peer, so the core never imports it.
 - **Streams end cleanly.** The stream registers with the router's `waitUntil`; a client disconnect, a plugin unload and a
   router disposal all end it and release the subscription.
 
-Row id and package name: `acryl-state`. The reactive core (`src/cell.ts`) is about 70 lines and has no Cordis and no DOM.
+Row id and package name: `@acryldev/state`. The reactive core (`src/cell.ts`) is about 70 lines and has no Cordis and no DOM.

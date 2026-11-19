@@ -11,9 +11,9 @@
  * origin, and a name that only resolves to this machine (DNS rebinding), are not.
  */
 
-import type { Context, MiddlewareHandler } from 'acryl-router'
-import type { UpgradeWebSocket } from 'acryl-router/helpers'
-import { pageAuthority } from 'acryl-router/middleware'
+import type { Context, MiddlewareHandler } from '@acryldev/router'
+import type { UpgradeWebSocket } from '@acryldev/router/helpers'
+import { pageAuthority } from '@acryldev/router/middleware'
 import type { ReadonlyCell } from './cell.ts'
 
 /** How often the server writes a `ping`; a page gives up on a socket that is silent for three of these. */

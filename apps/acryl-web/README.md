@@ -6,7 +6,7 @@ local web UI, kept out of the lightweight `acryl` terminal CLI.
 ## Why separate
 
 `acryl` (the terminal CLI) is built from `tomowang/dsh-tui` + pi-tui and should
-be lightweight: it ships only `acryl-harness-runtime` and the TUI closure, not
+be lightweight: it ships only `@acryldev/harness-runtime` and the TUI closure, not
 the browser client. The web server (`dsh-base` + `dsh-web-app` → host + client)
 lives here instead.
 
@@ -34,6 +34,6 @@ pnpm --filter acryl-web run build
 node acryl-web/lib/bin.js
 ```
 
-`acryl-web` bundles `acryl-control` + `acryl-harness-runtime` into
+`acryl-web` bundles `@acryldev/control` + `@acryldev/harness-runtime` into
 `lib/bin.js` (self-contained) and declares the audited `@deepseek-ai/dsh-*` web
 closure as external deps, so a standalone install resolves the full runtime.

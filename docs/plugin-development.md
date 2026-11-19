@@ -1,8 +1,8 @@
 # DSH Desktop 插件开发
 
-> **当前接口与 Draft 请勿混淆：** 本文介绍现在可用的 DSH/Cordis 与 Desktop service。`dsh-community-fabric` 中的 manifest、capability 和统一事件模型仍处于[社区 RFC Draft](../dsh-community-fabric/README.zh.md)，尚不能作为依赖或发布目标。
+> **当前接口与 Draft 请勿混淆：** 本文介绍现在可用的 DSH/Cordis 与 Desktop service。`@acryldev/dsh-community-fabric` 中的 manifest、capability 和统一事件模型仍处于[社区 RFC Draft](../dsh-community-fabric/README.zh.md)，尚不能作为依赖或发布目标。
 
-> 面向 Agent 的插件文档与已验证示例见 `plugins/acryl-plugin-context/docs/README.md`(英文)。
+> 面向 Agent 的插件文档与已验证示例见 `plugins/plugin-context/docs/README.md`(英文)。
 
 ## 先理解两层插件
 

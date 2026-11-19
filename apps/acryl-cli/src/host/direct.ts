@@ -5,7 +5,7 @@ import {
   createAcrylEngineHost,
   createDshEngineDefinition,
   type AcrylEngineHost,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 import type { Context } from '@deepseek-ai/cordis'
 import { TuiCommandsService } from '../tui/tui-commands-service.ts'

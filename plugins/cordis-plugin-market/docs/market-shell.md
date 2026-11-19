@@ -4,7 +4,7 @@
 
 Status: delivered and built into DSH Desktop, including the Host/Client market, limited npm installation, receipt-backed uninstall, and direct-bundle enable/disable
 
-This document defines the delivered implementation boundary for `cordis-plugin-market`. It is deliberately narrower than a complete marketplace. The package owns an in-product shell and adapters; it does not own the community catalog, package registry, or DSH profile format.
+This document defines the delivered implementation boundary for `@acryldev/cordis-plugin-market`. It is deliberately narrower than a complete marketplace. The package owns an in-product shell and adapters; it does not own the community catalog, package registry, or DSH profile format.
 
 ## Product goals
 

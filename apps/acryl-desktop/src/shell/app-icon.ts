@@ -5,7 +5,7 @@
 
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import type { AppInstance } from 'acryl-harness-runtime'
+import type { AppInstance } from '@acryldev/harness-runtime'
 
 /** The icon an app folder may carry, next to its definition. A square PNG; on macOS it is shown as is, so it carries its own rounded tile. */
 export const APP_ICON_FILE = 'icon.png'

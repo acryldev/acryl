@@ -122,7 +122,7 @@ Per `AGENTS.md`, write these before creating a service/tool/provider/event seam:
 
 ## 6. Worked pattern (what a correct ACRYL plugin looks like)
 
-The shipped `acryl_workspace_status` (`acryl-harness-runtime/src/plugin-acryl-workspace-status.ts`)
+The shipped `acryl_workspace_status` (`@acryldev/harness-runtime/src/plugin-acryl-workspace-status.ts`)
 follows this exactly: `inject: ['tools']`, `ctx.tools.register(defineTool({...}))` with
 `output.schema`/`render` and `exec.signal`, auto-mounted on the booted `ctx.tools` seam, and
 effect-owned so it disposes with its Fiber. For a **resource-owning** plugin, use the pattern:

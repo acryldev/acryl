@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-kv-db',
+  name: '@acryldev/kv-db',
   entry: { index: 'src/index.ts', open: 'src/open.ts' },
   outDir: 'lib',
   format: 'esm',

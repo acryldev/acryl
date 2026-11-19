@@ -9,8 +9,8 @@ import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // augmentation into every program that imports this package's types. Plain side-effect import, not
 // `import type {}`, for the same reason as the two imports above: this package has no runtime exports, so an
 // empty `import type {}` is erased under `verbatimModuleSyntax` and the augmentation never reaches consumers.
-import 'acryl-app-shell/client'
-import { applyAdvancedShell, resolveShellEnvironment } from 'acryl-app-shell/client'
+import '@acryldev/app-shell/client'
+import { applyAdvancedShell, resolveShellEnvironment } from '@acryldev/app-shell/client'
 import { dockShellHooks } from './dock/dock-hooks.tsx'
 import { createAgentBridge } from './sessions/agent-bridge.ts'
 import { ChatSelection } from './chat/chat-selection.ts'
@@ -71,7 +71,7 @@ import { WorkspaceCanvas } from './canvas/WorkspaceCanvas.tsx'
  */
 export const WORKSPACE_MAIN_PRIORITY = -1
 
-export const name = 'acryl-workspace-client'
+export const name = '@acryldev/workspace-client'
 // `theme` is read by the shell's theme presenter; Cordis rejects reading a service a plugin did not declare.
 export const inject = ['slots', 'theme']
 
@@ -97,7 +97,7 @@ export function apply(ctx: ClientContext): void {
   const capabilitiesLoaded = loadWorkspaceCapabilities().then((loaded) => { capabilities = loaded; return loaded })
   // The session banner: if the browser's session ends, the retry loop cannot recover it, so the page names the way back in instead of spinning.
   const frameSession = frameSessionBannerFrom(ctx, signal => probeAdmittedSession(signal))
-  ctx.effect(() => () => frameSession.dispose(), 'acryl-workspace: the frame session banner')
+  ctx.effect(() => () => frameSession.dispose(), '@acryldev/workspace: the frame session banner')
   // A new browser tab opens at the app's own page when the Host serves one, else empty.
   const browserHome = (): string | undefined => {
     if (capabilities.appPage === undefined) return undefined
@@ -112,7 +112,7 @@ export function apply(ctx: ClientContext): void {
   // The terminals and the dock are shared by the frame (which places the dock) and the canvas (its terminal tabs).
   const terminalStack = advanced ? createTerminalStack(ctx, storage, shell) : undefined
   const frame = advanced ? applyAdvancedShell(ctx, environment, dockShellHooks(terminalStack?.host)) : undefined
-  ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), 'acryl-workspace: save tabs and view')
+  ctx.effect(() => startWorkspacePersistence({ groups, shell, storage }), '@acryldev/workspace: save tabs and view')
   // First run under a Host that serves an app: open the app's own page in the canvas and select the app's folder, so the app and its chats share one tab
   // set. A Host without an app (ACRYL Web, Desktop) advertises no page and keeps the empty canvas; a saved workspace means a previous run already chose
   // its tabs, and nothing is added to them.
@@ -163,14 +163,14 @@ export function apply(ctx: ClientContext): void {
         window.removeEventListener('pointerdown', markInteraction, { capture: true })
         window.removeEventListener('keydown', markInteraction, { capture: true })
       }
-    }, 'acryl-workspace: the app page on first run')
+    }, '@acryldev/workspace: the app page on first run')
   }
   const review = new ReviewStore(parseSavedThreads(storage?.getItem(REVIEW_STORAGE_KEY) ?? null))
-  ctx.effect(() => startReviewPersistence(review, storage), 'acryl-workspace: save review comments')
+  ctx.effect(() => startReviewPersistence(review, storage), '@acryldev/workspace: save review comments')
   const comments = new CommentStore(parseSavedComments(storage?.getItem(COMMENTS_STORAGE_KEY) ?? null))
-  ctx.effect(() => startCommentPersistence(comments, storage), 'acryl-workspace: save line comments')
+  ctx.effect(() => startCommentPersistence(comments, storage), '@acryldev/workspace: save line comments')
   // The desktop shell's Settings... menu item (Cmd/Ctrl+,) sends a window event; it opens the same Settings as the left panel's button.
-  ctx.effect(() => startOpenSettingsListener(window), 'acryl-workspace: Settings from the desktop menu')
+  ctx.effect(() => startOpenSettingsListener(window), '@acryldev/workspace: Settings from the desktop menu')
   // The frame's page has no DSH sidebar trigger: Settings opens through the layout service's keyed panel instead (the same panel).
   ctx.inject(['layout'], (inner) => {
     const layout = inner.get('layout') as unknown as { selectPanel?: (id: string) => void } | undefined
@@ -190,7 +190,7 @@ export function apply(ctx: ClientContext): void {
   const getNavigation = (): MainViewNavigation | undefined => (ctx.get as (name: string) => MainViewNavigation | undefined)('uiWorkspace')
   // The one owner of which chat is shown and which tab and worktree show it; follows DSH's sessions service as it comes and goes.
   const chats = new ChatSelection({ groups, shell, getSessions: () => ctx.get('sessions'), getNavigation, showTabs: () => { upstreamPanels.close() } })
-  ctx.inject(['sessions'], child => { child.effect(() => chats.watch(child.sessions), 'acryl-workspace: tabs follow the shown chat') })
+  ctx.inject(['sessions'], child => { child.effect(() => chats.watch(child.sessions), '@acryldev/workspace: tabs follow the shown chat') })
   // First-run model setup. The faces are DSH's own Remote namespaces; they are read inside a child fiber that declares them,
   // because a Cordis context refuses an undeclared service property. A composition without them simply never shows the card.
   // The key is written through the Host's credentials Remote, so DeepSeek Harness stores it under its home (the same store
@@ -209,8 +209,8 @@ export function apply(ctx: ClientContext): void {
     remoteFaces = (child as unknown as {
       remote: { credentials: ModelCredentialsPort; llm: ModelLlmPort; session: ModelSessionPort }
     }).remote
-    child.effect(() => connectModel.start(), 'acryl-workspace: model connection')
-    child.effect(() => () => { remoteFaces = undefined }, 'acryl-workspace: model connection cleanup')
+    child.effect(() => connectModel.start(), '@acryldev/workspace: model connection')
+    child.effect(() => () => { remoteFaces = undefined }, '@acryldev/workspace: model connection cleanup')
   })
   const rightPanel = {
     toggle(): void {
@@ -233,11 +233,11 @@ export function apply(ctx: ClientContext): void {
     },
   }
   const projectRegistry = new ProjectRegistryState(createProjectRegistryApi())
-  ctx.effect(() => { void projectRegistry.load(); return () => {} }, 'acryl-workspace: read the project list')
+  ctx.effect(() => { void projectRegistry.load(); return () => {} }, '@acryldev/workspace: read the project list')
   // Changes made elsewhere (an agent's workspace tool, another window) arrive through the Host's event stream.
-  ctx.effect(() => followProjectRegistry(view => { projectRegistry.receive(view) }), 'acryl-workspace: follow the project list')
+  ctx.effect(() => followProjectRegistry(view => { projectRegistry.receive(view) }), '@acryldev/workspace: follow the project list')
   // Projects that were chat workspaces before ACRYL owned the list are taken over once, when the chat's workspace list is known.
-  ctx.inject(['workspaces'], child => { child.effect(() => adoptLegacyProjects(projectRegistry, child.workspaces.list), 'acryl-workspace: take over earlier projects') })
+  ctx.inject(['workspaces'], child => { child.effect(() => adoptLegacyProjects(projectRegistry, child.workspaces.list), '@acryldev/workspace: take over earlier projects') })
   const projects = createProjectsControl({
     registry: projectRegistry,
     platform: environment.platform,
@@ -256,13 +256,13 @@ export function apply(ctx: ClientContext): void {
     groups,
     shell,
     showWorktree: (path) => { chats.showWorktree(path, () => { void projects.showChat(path) }) },
-  }), 'acryl-workspace: the shown workspace')
+  }), '@acryldev/workspace: the shown workspace')
   // DSH's own pages (Plugins, Automation tasks, ...) listed in the left pane: looked up when read, so a profile without them just shows none.
   // The `sidebar.panellist` slot name is declared by DSH's sidebar package, which ACRYL does not import (the frame facade stays as it is), so the registry crosses
   // into the narrow `PanelSlotRegistry` port here, at the one place that knows; the port, its tests and the live check hold the contract.
   const upstreamPanels = createUpstreamPanels({ slots: () => ctx.slots as unknown as PanelSlotRegistry, layout: () => ctx.get('layout') })
-  ctx.effect(() => startShellPolling(shell), 'acryl-workspace: git state polling')
-  ctx.effect(() => installWorkspaceStyles(), 'acryl-workspace: styles')
+  ctx.effect(() => startShellPolling(shell), '@acryldev/workspace: git state polling')
+  ctx.effect(() => installWorkspaceStyles(), '@acryldev/workspace: styles')
   ctx.plugin(changesTabPlugin(shell, gitApi))
   ctx.plugin(reviewTabPlugin(shell, review))
   ctx.plugin(checksTabPlugin(shell, gitApi))
@@ -284,17 +284,17 @@ export function apply(ctx: ClientContext): void {
     }, browserClipboard()))
     // What terminal agents report through their hooks: the attention queue reads it.
     const agentStatus = new AgentStatusState(createAgentStatusApi())
-    ctx.effect(() => agentStatus.start(), 'acryl-workspace: agent status polling')
+    ctx.effect(() => agentStatus.start(), '@acryldev/workspace: agent status polling')
     // Shared by the "+" menu, the tab icons and the Projects list.
     const agents = new AgentsState(createWorkspaceAgentsApi())
-    ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-workspace: load agents')
+    ctx.effect(() => { void agents.refresh(); return () => {} }, '@acryldev/workspace: load agents')
     // Shared by the + menu, the palette and Settings, so a change in one shows up in the others at once.
     const tabTypes = new TabTypesState(storage)
     // Plugins add tab types through this service; it lives as long as this plugin, and so do the types they registered.
     const tabRegistry = new WorkspaceTabRegistry()
-    ctx.effect(() => provideWorkspaceTabs(ctx, tabRegistry), 'acryl-workspace: workspaceTabs service')
+    ctx.effect(() => provideWorkspaceTabs(ctx, tabRegistry), '@acryldev/workspace: workspaceTabs service')
     // The workspace brief (spec 043 T011): a tab type of the workspace's own, through the same registry plugins use.
-    ctx.effect(() => tabRegistry.register(briefTabType({ api: createBriefApi(), current: () => projectRegistry.current(), workspaces: () => projectRegistry.workspaces() })), 'acryl-workspace: workspace brief tab')
+    ctx.effect(() => tabRegistry.register(briefTabType({ api: createBriefApi(), current: () => projectRegistry.current(), workspaces: () => projectRegistry.workspaces() })), '@acryldev/workspace: workspace brief tab')
     const paletteConfig = new PaletteConfigState(storage)
     ctx.plugin(settingsSharedPlugin())
     ctx.plugin(agentsSettingsPlugin(agents))
@@ -316,7 +316,7 @@ export function apply(ctx: ClientContext): void {
           }, WorkspaceCanvas)
         } catch (cause) {
           // A registration conflict must not take the left pane and the Changes tab down with it.
-          ctx.logger.warn(`acryl-workspace: could not register the canvas: ${cause instanceof Error ? cause.message : String(cause)}`)
+          ctx.logger.warn(`@acryldev/workspace: could not register the canvas: ${cause instanceof Error ? cause.message : String(cause)}`)
         }
       })
 
@@ -335,7 +335,7 @@ export function apply(ctx: ClientContext): void {
             inject: () => ({ shell, projects, chats, groups, agents, status: agentStatus, panels: upstreamPanels }),
           }, ProjectsSidebar)
         } catch (cause) {
-          ctx.logger.warn(`acryl-workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)
+          ctx.logger.warn(`@acryldev/workspace: could not register the left pane: ${cause instanceof Error ? cause.message : String(cause)}`)
         }
       })
       return () => { cancelled = true; removeSlot?.() }

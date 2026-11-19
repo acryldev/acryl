@@ -1,12 +1,12 @@
 {
-  "name": "acryl-plugin-hub",
+  "name": "@acryldev/plugin-hub",
   "version": "0.1.0",
   "description": "Save, share and pull plugins in an app: the pluginHub service (the local store, pulls checked by sha512 and by the services the app provides, installed through DSH's own plugin manager) and the /plugin chat command",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-plugin-hub"
+    "directory": "plugins/plugin-hub"
   },
   "type": "module",
   "main": "./index.js",
@@ -38,6 +38,10 @@
   "dependencies": {
     "@deepseek-ai/dsh-plugin-manager": "0.2.0-rc.2",
     "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
-    "@webboxes/plugin-hub": "workspace:*"
+    "@acryldev/plugin-hub-core": "workspace:*"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/plugin-hub#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

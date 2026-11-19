@@ -24,24 +24,24 @@ pipeline fail when either drifts. A frame package's version bump is therefore a 
 | Folder | Published as | What it is |
 | --- | --- | --- |
 | `acryl-ui` | `@acryldev/ui` | the design: themed components, semantic colour roles |
-| `dsh-client-ui-brand-acryl` | `@acryldev/brand-client` | the DSH client brand plugin that paints the mark |
-| `acryl-app-shell` | `@acryldev/app-shell` | the frame: three columns, collapsible and resizable panels, layout state, theme |
-| `acryl-workspace` | `@acryldev/workspace` | Projects, sessions, terminal tabs, the right panel's files and changes |
-| `acryl-settings` | `@acryldev/settings` | the Settings surface and its sections |
-| `acryl-sign-in` | `@acryldev/sign-in` | connect a provider by account |
-| `acryl-control` | `@acryldev/control` | the host control surface the frame talks to |
-| `acryl-diagnostics` | `@acryldev/diagnostics` | diagnostics and support bundles |
-| `acryl-plugin-admin` | `@acryldev/plugin-admin` | plugin lifecycle and architecture routes |
-| `acryl-support` | `@acryldev/support` | support routes and the diagnostics download |
-| `acryl-loopback-http` | `@acryldev/loopback-http` | the loopback HTTP helper the host uses |
-| `acryl-web-service` | `@acryldev/web` | the web host surface the frame mounts on |
-| `acryl-system-prompt` | `@acryldev/system-prompt` | the agent's prompt, as ACRYL IDE's agent has it |
-| `acryl-app-context` | `@acryldev/app-context` | the app builder's docs and verified example plugins |
-| `acryl-versions` | `@acryldev/versions` | Versions: the branch's commits as save points |
-| `acryl-blends-frame` | `@acryldev/blends-frame` | the Blends frame, the page's root |
+| `@acryldev/brand-client` | `@acryldev/brand-client` | the DSH client brand plugin that paints the mark |
+| `@acryldev/app-shell` | `@acryldev/app-shell` | the frame: three columns, collapsible and resizable panels, layout state, theme |
+| `@acryldev/workspace` | `@acryldev/workspace` | Projects, sessions, terminal tabs, the right panel's files and changes |
+| `@acryldev/settings` | `@acryldev/settings` | the Settings surface and its sections |
+| `@acryldev/sign-in` | `@acryldev/sign-in` | connect a provider by account |
+| `@acryldev/control` | `@acryldev/control` | the host control surface the frame talks to |
+| `@acryldev/diagnostics` | `@acryldev/diagnostics` | diagnostics and support bundles |
+| `@acryldev/plugin-admin` | `@acryldev/plugin-admin` | plugin lifecycle and architecture routes |
+| `@acryldev/support` | `@acryldev/support` | support routes and the diagnostics download |
+| `@acryldev/loopback-http` | `@acryldev/loopback-http` | the loopback HTTP helper the host uses |
+| `@acryldev/web` | `@acryldev/web` | the web host surface the frame mounts on |
+| `@acryldev/system-prompt` | `@acryldev/system-prompt` | the agent's prompt, as ACRYL IDE's agent has it |
+| `@acryldev/app-context` | `@acryldev/app-context` | the app builder's docs and verified example plugins |
+| `@acryldev/versions` | `@acryldev/versions` | Versions: the branch's commits as save points |
+| `@acryldev/blends-frame` | `@acryldev/blends-frame` | the Blends frame, the page's root |
 
 The owner confirmed these names on 2026-11-05 (`brand-client` because there are two brand packages, `versions` and `blends-frame` added with the
-frame, the rest dropping the `acryl-` prefix). After the first publish a rename is a new package on npm, not a one-line change. `acryl-brand` and `acryl-shortcuts` are not published: the frame mounts
+frame, the rest dropping the `acryl-` prefix). After the first publish a rename is a new package on npm, not a one-line change. `@acryldev/brand` and `@acryldev/shortcuts` are not published: the frame mounts
 neither and no frame package depends on them.
 
 ## What the pipeline checks
@@ -69,7 +69,7 @@ and the app answers at `/app`. Every server is stopped with its process group, i
 The source keeps ACRYL's package names (the port rule); the published artifact carries the configured ones everywhere a name is a module specifier:
 
 - `package.json`: the published `name`, and every dependency/peer/optional/dev entry renamed, with `workspace:` ranges turned into `^<that package's version>`.
-- the built JavaScript and declarations: import and export specifiers of a frame package are rewritten (a package built against `acryl-loopback-http` imports
+- the built JavaScript and declarations: import and export specifiers of a frame package are rewritten (a package built against `@acryldev/loopback-http` imports
   `@acryldev/loopback-http` in the tarball), so source maps point at the original source lines.
 - `cordis.patch.yml`: the row's `name:` is the published name, quoted because a scoped name starts with `@` (YAML reserves it).
 - Loader row ids stay the source package names (`- id: acryl-web-service` with `name: '@acryldev/web'`). A row id cannot contain `@` or `/` (DSH refuses to
@@ -77,7 +77,7 @@ The source keeps ACRYL's package names (the port rule); the published artifact c
   and the rows that key on an id (the Blends frame's `appPage`) keep working. The launcher's development hook imports the Blends frame by the name it is
   installed as (`@acryldev/blends-frame/app-generation`).
 
-Three packages listed `LICENSE` in `files` without carrying the file (`acryl-workspace`, `acryl-plugin-admin`, `acryl-support`); they now carry the source's MIT
+Three packages listed `LICENSE` in `files` without carrying the file (`@acryldev/workspace`, `@acryldev/plugin-admin`, `@acryldev/support`); they now carry the source's MIT
 notice (WebBoxes s.r.o.), like the other ports.
 
 ### One Cordis (settled 2026-11-05)
@@ -88,12 +88,12 @@ on more than one. Measured on the tarball install: with the app's generated pin 
 one copy, 4.0.5. Pinning `4.0.4` is not a silent second copy but a refused install (npm ERESOLVE: DSH's own `cordis-plugin-group` 1.0.5 asks `~4.0.5`).
 The exact pin stays so that a later 4.0.x on npm is a decision, not an install-time surprise.
 
-Packages written in this repository rather than ported (`acryl-versions`, `acryl-blends-frame`) carry `provenance.json` as
+Packages written in this repository rather than ported (`@acryldev/versions`, `@acryldev/blends-frame`) carry `provenance.json` as
 `{original: {repository, commit}, written}`; the pipeline accepts that shape beside the ported ones.
 
 ## After the host inversion
 
 The app is hosted by our framework (docs/plans/ide-host-inversion.md): `npm run dev` boots `scripts/ide-host.mjs`, which serves the document and the app's
-routes at `/app` on `acryl-node-server` and mounts only DSH's chat/session driver rows, with DSH's client packages as libraries. The published packages keep
+routes at `/app` on `@acryldev/node-server` and mounts only DSH's chat/session driver rows, with DSH's client packages as libraries. The published packages keep
 their provenance and names; the peer set stays what section "What a rename touches" says (the framework and DSH services are peers, util libraries are
 dependencies), and the frame's packages still depend on each other because they ship together.

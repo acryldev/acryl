@@ -1,5 +1,5 @@
 {
-  "name": "acryl-harness-runtime",
+  "name": "@acryldev/harness-runtime",
   "version": "0.2.11",
   "description": "ACRYL's runtime around the DeepSeek Harness engine: resolves and composes each surface's profile (the harness plus every ACRYL plugin it runs - the composition root), the app instance and its homes, plugin lifecycle and doctor, the pinned pnpm, and the session bridge",
   "private": false,
@@ -15,9 +15,9 @@
   },
   "scripts": {
     "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly",
-    "typecheck": "pnpm --filter @webboxes/blends-core run build && tsc -p tsconfig.json --noEmit",
-    "test": "pnpm --filter @webboxes/blends-core run build && vitest run",
-    "deps": "pnpm --filter \"acryl-harness-runtime^...\" run build",
+    "typecheck": "pnpm --filter @acryldev/blends-core run build && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm --filter @acryldev/blends-core run build && vitest run",
+    "deps": "pnpm --filter \"@acryldev/harness-runtime^...\" run build",
     "check": "pnpm run deps && pnpm run build && tsc -p tsconfig.json --noEmit && vitest run",
     "prepublishOnly": "pnpm run check"
   },
@@ -170,11 +170,11 @@
     "@deepseek-ai/dsh-workflow": "0.2.0-rc.2",
     "@deepseek-ai/dsh-workflow-ptc": "0.2.0-rc.2",
     "@deepseek-ai/schemastery": "~3.18.4",
-    "@webboxes/blends-core": "workspace:*",
-    "@webboxes/plugin-hub": "workspace:*",
-    "acryl-control": "workspace:*",
-    "acryl-web-service": "workspace:*",
-    "acrylblends": "workspace:^",
+    "@acryldev/blends-core": "workspace:*",
+    "@acryldev/plugin-hub-core": "workspace:*",
+    "@acryldev/control": "workspace:*",
+    "@acryldev/web": "workspace:*",
+    "@acryldev/blends": "workspace:^",
     "adm-zip": "^0.6.1",
     "koffi": "3.1.5",
     "pnpm": "11.11.0",
@@ -192,15 +192,24 @@
     "typescript": "6.0.3",
     "vitest": "4.1.11",
     "@acryldev/coding-capabilities": "workspace:*",
-    "acryl-sign-in": "workspace:*",
-    "acryl-plugin-admin": "workspace:*",
-    "acryl-workspace": "workspace:*",
-    "acryl-plugin-context": "workspace:*"
+    "@acryldev/sign-in": "workspace:*",
+    "@acryldev/plugin-admin": "workspace:*",
+    "@acryldev/workspace": "workspace:*",
+    "@acryldev/plugin-context": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.4"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "runtime/harness-runtime"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/runtime/harness-runtime#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

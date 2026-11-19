@@ -6,7 +6,7 @@ import { SUBPATHS, entryName } from './subpaths.mjs'
 
 const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url))
 
-/** `acryl-router` to `plugins/acryl-router/src/index.ts`, `acryl-instance` to its `index.ts`, and so on, from the `entries` of the plugin.json of every library plugin (the folders with a plugin.json; ACRYL's own plugins sit beside them). */
+/** `@acryldev/router` to `plugins/router/src/index.ts`, `@acryldev/instance` to its `index.ts`, and so on, from the `entries` of the plugin.json of every library plugin (the folders with a plugin.json; ACRYL's own plugins sit beside them). */
 function pluginAliases(): Record<string, string> {
   const plugins = here('../../../plugins')
   const aliases: Record<string, string> = {}
@@ -25,8 +25,8 @@ function pluginAliases(): Record<string, string> {
  * it is one file with no imports.
  */
 const browser = (name: string): UserConfig => ({
-  name: `acrylblends-framework browser/${name}`,
-  entry: { [`browser/${name}`]: here(`../../../plugins/acryl-router/src/browser/${name}.ts`) },
+  name: `@acryldev/framework browser/${name}`,
+  entry: { [`browser/${name}`]: here(`../../../plugins/router/src/browser/${name}.ts`) },
   outDir: 'lib',
   format: 'esm',
   platform: 'browser',
@@ -38,15 +38,15 @@ const browser = (name: string): UserConfig => ({
 })
 
 /**
- * The Node adapter and `client-modules` of `acryl-node-server` are plain modules (no Cordis), and they import the router by its package name, as in the plugin's own build. Resolved
+ * The Node adapter and `client-modules` of `@acryldev/node-server` are plain modules (no Cordis), and they import the router by its package name, as in the plugin's own build. Resolved
  * for the package, those two names mean the router's Cordis-free core and helpers, so no plain entry reaches Cordis; every other importer gets the router plugin itself.
  */
 const plainRouter = {
   name: 'plain-router',
   resolveId(source: string, importer: string | undefined) {
     if (importer === undefined || !/acryl-node-server[\\/]src[\\/](adapter[\\/]|client-modules\.ts)/u.test(importer)) return null
-    if (source === 'acryl-router') return here('../../../plugins/acryl-router/src/core/index.ts')
-    if (source === 'acryl-router/helpers') return here('../../../plugins/acryl-router/src/helpers/index.ts')
+    if (source === '@acryldev/router') return here('../../../plugins/router/src/core/index.ts')
+    if (source === '@acryldev/router/helpers') return here('../../../plugins/router/src/helpers/index.ts')
     return null
   },
 }
@@ -64,14 +64,14 @@ const suiteVitest = {
 }
 
 export default defineConfig([{
-  name: 'acrylblends-framework',
+  name: '@acryldev/framework',
   entry: Object.fromEntries(Object.entries(SUBPATHS).map(([subpath, source]) => [entryName(subpath), source])),
   outDir: 'lib',
   format: 'esm',
   platform: 'node',
   target: 'es2024',
   fixedExtension: false,
-  // Every framework plugin by its package name, to its source: the plugins import each other that way (`acryl-router`, `acryl-router/middleware`), and a build from source must
+  // Every framework plugin by its package name, to its source: the plugins import each other that way (`@acryldev/router`, `@acryldev/router/middleware`), and a build from source must
   // not pick up a plugin's own `lib/`. The table is the `entries` of each plugin's `plugin.json`. The Cordis-free modules (the Node adapter, `client-modules`) import the router's
   // core by relative path, so nothing of the plain subpaths reaches Cordis.
   alias: pluginAliases(),

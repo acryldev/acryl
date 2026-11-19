@@ -1,11 +1,11 @@
-# acryl-web-server
+# @acryldev/web-server
 
 The `webServer` port of a framework-hosted app (slice 107, `docs/plans/ide-host-inversion.md`). DSH's driver rows - the chat's
 connection and its remote gateway - register node handlers with `webServer.register` and `webServer.registerUpgrade`. This plugin
-serves them on `acryl-node-server`'s raw routes, so those rows run unchanged while the HTTP host, the page and the client-module
+serves them on `@acryldev/node-server`'s raw routes, so those rows run unchanged while the HTTP host, the page and the client-module
 serving stay the framework's.
 
-It is the inverse of [`acryl-router-http`](../acryl-router-http/README.md): there the Host's web server serves a router prefix; here
+It is the inverse of [`@acryldev/router-http`](../acryl-router-http/README.md): there the Host's web server serves a router prefix; here
 our node server presents the web-server interface a DSH row expects.
 
 - `register({ kind: 'exact' | 'prefix', path, handler })`: the handler receives the platform's `IncomingMessage`/`ServerResponse`

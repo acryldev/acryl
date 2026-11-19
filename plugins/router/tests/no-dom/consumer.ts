@@ -3,9 +3,9 @@
  * declarations stand without the DOM library, which a server plugin should not need to load.
  */
 
-import type * as Router from 'acryl-router'
-import type * as Client from 'acryl-router/client'
-import type * as Helpers from 'acryl-router/helpers'
-import type * as Middleware from 'acryl-router/middleware'
+import type * as Router from '@acryldev/router'
+import type * as Client from '@acryldev/router/client'
+import type * as Helpers from '@acryldev/router/helpers'
+import type * as Middleware from '@acryldev/router/middleware'
 
 export type Entries = [typeof Router, typeof Client, typeof Helpers, typeof Middleware]

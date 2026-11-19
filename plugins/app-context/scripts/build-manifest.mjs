@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Validates docs/docs.json against the files on disk and regenerates
- * docs/README.md and example-plugins/README.md from it (ported from ACRYL's acryl-plugin-context, spec 037 T009).
+ * docs/README.md and example-plugins/README.md from it (ported from ACRYL's @acryldev/plugin-context, spec 037 T009).
  *
  *   node scripts/build-manifest.mjs          validate, then write the indexes
  *   node scripts/build-manifest.mjs --check  validate and fail if an index is stale (gate mode)

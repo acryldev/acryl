@@ -2,9 +2,9 @@
 /**
  * `pnpm launcher gui` (alias `blend`): the ACRYL launcher inside the Blends frame (spec 050 T016), in a desktop window. Nothing is rebuilt from scratch: the frame,
  * its right panel (chat, Claude Code, Codex, Pi, terminal), its theme and its desktop window are a Blends app made by `create-acrylblends`; the launcher is its canvas.
- *   1. builds the launcher's page bundle (`plugins/acryl-launcher-desktop/lib/page.js`);
+ *   1. builds the launcher's page bundle (`plugins/launcher-desktop/lib/page.js`);
  *   2. makes the Blends app once, in `~/.acryl/control-center` (`ACRYL_LAUNCHER_APP` moves it), and on every run brings the launcher in it up to date: the page, the Host
- *      half (`blend/host` with the shared `src` sources and `plugins/acryl-launcher`), the page route and the app's `blend.yaml` row (a file is written only when it
+ *      half (`blend/host` with the shared `src` sources and `plugins/launcher`), the page route and the app's `blend.yaml` row (a file is written only when it
  *      changed, so a launcher already open is not reloaded for nothing);
  *   3. opens it with the app's own `npm run desktop`, the Blends desktop window: it starts the app's server or joins the one running, keeps one window per app
  *      (a second start brings it forward), keeps its window data in the app, and stops the server when the window closes. The page itself closes the frame's left
@@ -18,7 +18,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const pkg = join(root, 'plugins/acryl-launcher-desktop')
+const pkg = join(root, 'plugins/launcher-desktop')
 const userHome = process.env.HOME ?? process.env.USERPROFILE
 if (!userHome) { console.error('launcher blend: no HOME'); process.exit(2) }
 const launcherHome = process.env.ACRYL_LAUNCHER_HOME ?? join(userHome, '.acryl')
@@ -37,7 +37,7 @@ const put = (file, content) => {
 }
 
 console.log('launcher blend: building the launcher page')
-run('node', ['scripts/with-build-lock.mjs', 'corepack', 'pnpm', '--filter', 'acryl-launcher-desktop', 'run', 'build'], { cwd: root, stdio: ['ignore', 'ignore', 'inherit'] })
+run('node', ['scripts/with-build-lock.mjs', 'corepack', 'pnpm', '--filter', '@acryldev/launcher-desktop', 'run', 'build'], { cwd: root, stdio: ['ignore', 'ignore', 'inherit'] })
 
 if (!existsSync(join(app, 'blend.yaml'))) {
   console.log(`launcher blend: making the Blends app in ${app} (once)`)
@@ -46,13 +46,13 @@ if (!existsSync(join(app, 'blend.yaml'))) {
 }
 
 // The Host half: the Blend entry and its package, the shared sources (imports rewritten to the names a Blends app has); the launcher journeys come from
-// the published library `@acryldev/control-center`, a dependency of the app (spec 051 T010).
+// the published library `@acryldev/launcher`, a dependency of the app (spec 051 T010).
 const host = join(app, 'plugins/acryl-launcher-host')
 for (const file of ['index.ts', 'package.json']) put(join(host, file), readFileSync(join(pkg, 'blend/host', file)))
 for (const file of ['contract.ts', 'door.ts', 'registry.ts', 'route.ts', 'runner.ts', 'service.ts']) {
   put(join(host, file), readFileSync(join(pkg, 'src', file), 'utf8')
-    .replaceAll("from 'acryl-loopback-http/router'", "from '@acryldev/loopback-http/router'")
-    .replaceAll("from 'acryl-loopback-http'", "from '@acryldev/loopback-http'"))
+    .replaceAll("from '@acryldev/loopback-http/router'", "from '@acryldev/loopback-http/router'")
+    .replaceAll("from '@acryldev/loopback-http'", "from '@acryldev/loopback-http'"))
 }
 
 // The page: the bundle, served at the app's root with its API under the frame's /app prefix.
@@ -70,15 +70,15 @@ if (!routes.includes('launcherPage')) {
 const blendFile = join(app, 'blend.yaml')
 const blend = readFileSync(blendFile, 'utf8')
 if (!blend.includes('acryl-launcher-host')) {
-  const row = '    - id: server\n      name: acryl-node-server'
+  const row = '    - id: server\n      name: @acryldev/node-server'
   if (!blend.includes(row)) { console.error(`launcher blend: ${blendFile} has no server row; the Blends template changed`); process.exit(1) }
   put(blendFile, blend.replace(row, `    - id: acryl-launcher-host\n      name: acryl-launcher-host\n${row}`))
 }
 // The window, the Dock and the frame's header name the app after its package and draw its `assets/icon.png`: ACRYL, with ACRYL's icon.
 const manifestFile = join(app, 'package.json')
 const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
-const LIBRARY = '@acryldev/control-center'
-const libraryRange = `^${JSON.parse(readFileSync(join(root, 'plugins/acryl-launcher/package.json'), 'utf8')).version}`
+const LIBRARY = '@acryldev/launcher'
+const libraryRange = `^${JSON.parse(readFileSync(join(root, 'plugins/launcher/package.json'), 'utf8')).version}`
 if (manifest.name !== 'ACRYL' || manifest.dependencies?.[LIBRARY] !== libraryRange) {
   put(manifestFile, `${JSON.stringify({ ...manifest, name: 'ACRYL', dependencies: { ...manifest.dependencies, [LIBRARY]: libraryRange } }, null, 2)}\n`)
   run(npm, ['install', '--no-audit', '--no-fund'], { cwd: app, shell: process.platform === 'win32' })

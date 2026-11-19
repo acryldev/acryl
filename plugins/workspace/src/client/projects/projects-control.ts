@@ -3,9 +3,9 @@
  * Every dependency is injected so the flows are testable without a browser or a Host.
  */
 
-import type { ShellPlatform } from 'acryl-app-shell/client'
+import type { ShellPlatform } from '@acryldev/app-shell/client'
 import type { WorkspaceKind, WorkspaceSummary } from '../../projects/contract.ts'
-import type { ISessions, IWorkspaces } from '@acryl/ui/frame'
+import type { ISessions, IWorkspaces } from '@acryldev/ui/frame'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { WorkspaceGitApi } from '../git/git-api.ts'
 import { pickSession, type SessionRef } from '../sessions/session-pick.ts'
@@ -355,7 +355,7 @@ export function createProjectsControl(deps: ProjectsControlDeps): ProjectsContro
 
     openSettings() {
       // Settings keeps its open state inside a component, with no service to call. As the Cmd+, shortcut
-      // does (see acryl-shortcuts), activate its real trigger: the one dialog button with no aria-label.
+      // does (see @acryldev/shortcuts), activate its real trigger: the one dialog button with no aria-label.
       const trigger = findSettingsTrigger(document)
       if (trigger === null) return fail('Settings is not available in this window.')
       trigger.click()

@@ -17,7 +17,7 @@ repository). This spec is its decisions, checked against the real repositories.
 ## Why
 
 One product's code lives in copies across five places: acryldev/acryl (the IDE, the launcher), acrylblends/acrylblends (the framework, the
-desktop shell, the npm releases, and `ide/`, ports of acryl packages), every Blend repository (copied `plugins/desktop`, `plugins/instance`,
+desktop shell, the npm releases, and `ide/`, ports of acryl packages), every Blend repository (copied `plugins/desktop-shell`, `plugins/instance`,
 and for Control Center the launcher, rewritten with `sed`), acrylblends.github.io (another copy of each Blend) and npm. One fix ("each
 product opens only its own apps", 2026-11-18) meant editing the framework, publishing it, copying files into ADE and Control Center,
 committing and tagging each, and sometimes the registry too. Miss one copy and they disagree without a sound: that is how Windows Control
@@ -36,7 +36,7 @@ products, registry) become folders with one owner each, not repositories that ea
   out a pinned commit instead of a branch. It stays right for `deepseek-harness`, code we do not own; it is wrong for code changed daily.
 - **D3 Import with history.** `git subtree add --prefix=framework` keeps every acrylblends commit reachable (`git log` on the import's
   second parent). Done on this branch (T003).
-- **D4 Names users see do not change.** npm keeps `acrylblends`, `create-acrylblends`, `@acrylblends/*` and their version line (1.5.x), so
+- **D4 Names users see do not change.** npm keeps `acrylblends`, `create-acrylblends`, `@acryldev/*` and their version line (1.5.x), so
   existing apps, `npm create acrylblends` and installed products notice nothing. The `repository` fields point at `acryldev/acryl` with a
   `directory`.
 - **D5 What stays separate.** acrylblends.github.io (GitHub Pages serves an organisation's site only from that repository name; its registry
@@ -44,7 +44,7 @@ products, registry) become folders with one owner each, not repositories that ea
   carrying copied folders).
 - **D6 Timing.** ~~Nothing moves on `main` before the workshop (2026-11-20).~~ Changed by the owner on 2026-11-19 (about 03:00 CET):
   the branch merges to `main` the same night, once the full root `check` (clean home) and a real Desktop boot pass, and the owner tests
-  the merged `main` before the workshop. From the merge on, frame work (`plugins/acryl-blends-frame/`) happens only in acryldev/acryl;
+  the merged `main` before the workshop. From the merge on, frame work (`plugins/blends-frame/`) happens only in acryldev/acryl;
   acrylblends gets no new frame commits (a subtree pull maps only into `framework/`).
 
 ## Layout: the Pi model (owner, 2026-11-19)
@@ -55,15 +55,15 @@ works" and "code human engineers can understand and reason" about; installed app
 
 ```
 framework/   acrylblends: packages/cli, packages/create, frame/ (its library plugins live flat in plugins/, below), docs, scripts
-runtime/     ACRYL's runtime: acryl-control, acryl-harness-runtime, loopback-http, diagnostics, web-service, persistence, plugin hub
-plugins/     every Cordis plugin that is a package: ACRYL's, the Blends frame's (acryl-blends-frame, acryl-versions, acryl-app-context) and the framework library's app plugins
+runtime/     ACRYL's runtime: @acryldev/control, @acryldev/harness-runtime, loopback-http, diagnostics, web-service, persistence, plugin hub
+plugins/     every Cordis plugin that is a package: ACRYL's, the Blends frame's (@acryldev/blends-frame, @acryldev/versions, @acryldev/app-context) and the framework library's app plugins
 apps/        what people run: acryl-cli, acryl-desktop, acryl-web, acryl-launcher-tui (and, Phase 4, Control Center and ADE)
 deepseek-harness/   pinned upstream submodule (unchanged)
 ```
 
 The layers, as documentation of the graph (accepted 2026-11-18): framework foundation (acrylblends and its packages) <- ACRYL runtime <-
 plugins <- apps. `scripts/dependency-direction.mjs`, run by `scripts/verify-layout.mjs`, fails on any cycle and on any dependency that
-points the wrong way; the one named exception is `acryl-harness-runtime`, the composition root, allowed exactly its 20 plugins (T021 moves
+points the wrong way; the one named exception is `@acryldev/harness-runtime`, the composition root, allowed exactly its 20 plugins (T021 moves
 that composition up). Blend repositories depend on published npm packages only, never source copies. The map for people:
 [`docs/acryl/MONOREPO.md`](../../docs/acryl/MONOREPO.md).
 

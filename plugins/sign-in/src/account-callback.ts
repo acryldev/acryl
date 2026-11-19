@@ -7,19 +7,19 @@
  * {@link ACCOUNT_CALLBACK_REALM}; the `deepseek-account` row is patched into the same realm, so it is the only row that
  * can see the server. It listens on the first sign-in, on an ephemeral port, and closes with the row.
  *
- * It also provides `acrylAccountSignIn` (`AccountSignInPort` in `acryl-control`), which the terminal's `/login` uses.
+ * It also provides `acrylAccountSignIn` (`AccountSignInPort` in `@acryldev/control`), which the terminal's `/login` uses.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { createRequire } from 'node:module'
 import type { Socket } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
-import { ACCOUNT_SIGN_IN_SERVICE, type AccountSignInOutcome, type AccountSignInPort } from 'acryl-control'
+import { ACCOUNT_SIGN_IN_SERVICE, type AccountSignInOutcome, type AccountSignInPort } from '@acryldev/control'
 import {
   DEEPSEEK_ACCOUNT_KEY, DEEPSEEK_ACCOUNT_ROUTE, accountAttemptView,
   type DeepSeekAccountPort, type DeepSeekAccountView,
 } from './deepseek-account.ts'
 
-export const name = 'acryl-sign-in-account-callback'
+export const name = '@acryldev/sign-in-account-callback'
 export const inject = ['deepseekAccount']
 
 /** The Loader isolation label shared by this row and the `deepseek-account` row (`isolate: { webServer: <label> }`). */
@@ -52,15 +52,15 @@ export class LoopbackCallbackServer {
   }
 
   register(route: CallbackRoute): () => void {
-    if (route.kind !== 'exact') throw new Error(`acryl-sign-in: the account callback server serves exact routes only, not ${String(route.kind)}`)
-    if (this.routes.has(route.path)) throw new Error(`acryl-sign-in: route ${route.path} is already registered`)
+    if (route.kind !== 'exact') throw new Error(`@acryldev/sign-in: the account callback server serves exact routes only, not ${String(route.kind)}`)
+    if (this.routes.has(route.path)) throw new Error(`@acryldev/sign-in: route ${route.path} is already registered`)
     this.routes.set(route.path, route.handler)
     return () => { if (this.routes.get(route.path) === route.handler) this.routes.delete(route.path) }
   }
 
   /** The server's origin (`http://127.0.0.1:<port>`), listening first if it is not yet. */
   origin(): Promise<string> {
-    if (this.closed) return Promise.reject(new Error('acryl-sign-in: the account callback server is closed'))
+    if (this.closed) return Promise.reject(new Error('@acryldev/sign-in: the account callback server is closed'))
     this.listening ??= new Promise<string>((resolve, reject) => {
       const server = createServer((req, res) => { this.handle(req, res) })
       server.on('connection', (socket) => {
@@ -162,14 +162,14 @@ export function apply(ctx: Context): void {
     origin: () => server.origin(),
     version: VERSION,
   })
-  ctx.effect(() => () => server.close(), 'acryl-sign-in: account callback server')
+  ctx.effect(() => () => server.close(), '@acryldev/sign-in: account callback server')
   // `webServer` resolves into this row's isolation realm (see the module comment), so only the account row sees it.
   ctx.effect(() => {
     const dispose = ctx.reflect.provide('webServer', server)
     return () => { void dispose() }
-  }, 'acryl-sign-in: account callback webServer')
+  }, '@acryldev/sign-in: account callback webServer')
   ctx.effect(() => {
     const dispose = ctx.reflect.provide(ACCOUNT_SIGN_IN_SERVICE, signIn)
     return () => { void dispose() }
-  }, 'acryl-sign-in: acrylAccountSignIn')
+  }, '@acryldev/sign-in: acrylAccountSignIn')
 }

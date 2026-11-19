@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { Context } from '@deepseek-ai/cordis'
-import { apply as applyAcrylSettings, inject as acrylSettingsInject, name as acrylSettingsName, type SettingsScope } from 'acryl-settings'
+import { apply as applyAcrylSettings, inject as acrylSettingsInject, name as acrylSettingsName, type SettingsScope } from '@acryldev/settings'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { stringify as stringifyYaml } from 'yaml'
 import { DSH_1024STORE_ADAPTER_ID, DSH_1024STORE_PROVIDER_ID } from '../src/adapters/dsh-1024store.js'
@@ -683,7 +683,7 @@ describe('market install service', () => {
       runner(profileDir, calls, { exitCode: 1, signal: null }),
       { verify: vi.fn(async () => verification) },
     )
-    for (const reservedPackage of ['acryl-desktop', 'cordis-plugin-market']) {
+    for (const reservedPackage of ['acryl-desktop', '@acryldev/cordis-plugin-market']) {
       service.observeCatalog(snapshot({
         name: reservedPackage,
         package: { registry: 'npm', name: reservedPackage },

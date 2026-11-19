@@ -1,5 +1,5 @@
 /**
- * The plain entry imports nothing from Cordis or `pg`: `acryl-db-pglite/open`, its built JavaScript and declarations, and every file those
+ * The plain entry imports nothing from Cordis or `pg`: `@acryldev/db-pglite/open`, its built JavaScript and declarations, and every file those
  * import. No declaration names a PGlite type. It reads this package's built `lib/`, so it needs `pnpm run build` first.
  */
 

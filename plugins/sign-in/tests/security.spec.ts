@@ -4,13 +4,13 @@
  * answer or the token. The last assertion scans an app folder and its `.acryl` directory: neither holds a token string.
  *
  * This is the model of the real split: the harness's authorization and credentials services own tokens (the credentials
- * document under the harness home); `acryl-sign-in` only relays notices and prompts and asks the owner to write.
+ * document under the harness home); `@acryldev/sign-in` only relays notices and prompts and asks the owner to write.
  */
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { AuthorizationBeginRequest } from 'acryl-control'
+import type { AuthorizationBeginRequest } from '@acryldev/control'
 import { SignInController, type SignInPorts } from '../src/controller.ts'
 
 const BROWSER_CODE = 'oauth-browser-code-8f3f9c'
@@ -24,7 +24,7 @@ afterEach(() => {
 
 /** An app folder with the files a token could be mistaken into: the app's own files and the door's `.acryl` log. */
 function appFolder(): string {
-  const app = mkdtempSync(join(tmpdir(), 'acryl-sign-in-app-'))
+  const app = mkdtempSync(join(tmpdir(), '@acryldev/sign-in-app-'))
   cleanups.push(() => rmSync(app, { recursive: true, force: true }))
   mkdirSync(join(app, '.acryl'))
   writeFileSync(join(app, '.acryl', 'audit.log'), 'door: brief {"ok":true}\n')

@@ -3,11 +3,11 @@
 // The palette follows the terminal the way the ACRYL CLI does: ACRYL_TUI_THEME, then COLORFGBG, then the terminal's own report of its
 // background and its later light/dark switches.
 import { ProcessTerminal, TuiMainScreen, matchesKey } from '@earendil-works/pi-tui'
-import { nodeContext } from '@acryldev/control-center/node'
+import { nodeContext } from '@acryldev/launcher/node'
 
 // The list of apps is read and written by the same code the terminal face shows it with; the selector reaches it through this bundle.
-export { addApp, modelEnv, runAppsCommand, runModelCommand } from '@acryldev/control-center'
-import { isPaletteForced, paletteModeFromEnv, paletteTheme, schemeOfBackground } from 'acryl-ui-tui/scheme'
+export { addApp, modelEnv, runAppsCommand, runModelCommand } from '@acryldev/launcher'
+import { isPaletteForced, paletteModeFromEnv, paletteTheme, schemeOfBackground } from '@acryldev/ui-tui/scheme'
 import { createLauncherView } from './view.js'
 
 /** `home` is ACRYL's own folder (~/.acryl) and `appsFolder` where new apps are suggested (~/ACRYL): the selector decides both, this face only passes them on. */

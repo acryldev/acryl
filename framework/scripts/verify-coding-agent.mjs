@@ -226,7 +226,7 @@ process.exit(ok ? 0 : 1)
   const file = join(app, 'gate-probe.ts')
   writeFileSync(file, script)
   // The app is started the way its own scripts start it: with the register hook, so a .tsx page loads.
-  const hook = './plugins/acryl-node-server/src/register.ts'
+  const hook = './plugins/node-server/src/register.ts'
   const probe = run('node', ['--import', hook, file], app, { env, timeout: 60_000 })
   rmSync(file, { force: true })
   return probe.status === 0 ? 'ok' : 'FAIL'

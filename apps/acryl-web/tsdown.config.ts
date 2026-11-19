@@ -4,7 +4,7 @@ import { defineConfig } from 'tsdown'
  * Build for the `acryl-web` 3rd-surface distribution.
  *
  * Mirrors the CLI publish build: the internal workspace packages
- * (`acryl-control`, `acryl-harness-runtime`) are BUNDLED so the distributed
+ * (`@acryldev/control`, `@acryldev/harness-runtime`) are BUNDLED so the distributed
  * entry is self-contained, while the public `@deepseek-ai/*` runtime closure
  * stays external and is pulled by the published dependency map.
  */
@@ -16,7 +16,7 @@ const shared = {
   fixedExtension: false,
   dts: false,
   sourcemap: true,
-  noExternal: ['acryl-control', 'acryl-harness-runtime'],
+  noExternal: ['@acryldev/control', '@acryldev/harness-runtime'],
 }
 
 export default defineConfig([

@@ -33,17 +33,17 @@ describe('resolveDefinition extends (US5)', () => {
     // greeting key inherits the parent's substituted value.
     expect(rows[0]).toEqual({
       id: 'contacts',
-      name: '@acryl/contacts',
+      name: '@acryldev/contacts',
       config: { title: 'People', org: 'ACME Corp', greeting: 'Hello from My Organization' },
     })
-    expect(rows[1]).toEqual({ id: 'tasks', name: '@acryl/tasks' })
+    expect(rows[1]).toEqual({ id: 'tasks', name: '@acryldev/tasks' })
     expect(rows[2]).toEqual({
       id: 'pipeline',
-      name: '@acryl/pipeline',
+      name: '@acryldev/pipeline',
       config: { enabled: true, maxDealValue: 1000000 },
       disabled: true,
     })
-    expect(rows[3]).toEqual({ id: 'invoicing', name: '@acryl/invoicing', disabled: true })
+    expect(rows[3]).toEqual({ id: 'invoicing', name: '@acryldev/invoicing', disabled: true })
     expect(rows[4]).toEqual({ id: 'brand', name: '@acme/brand', config: { mark: 'acme' } })
   })
 
@@ -163,7 +163,7 @@ spec:
   runtime: cordis
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'
 `)
     const { definition, diagnostics } = resolveDefinition(doc, {
       getDefinition: (id) => (id === parent.metadata.id ? parent : undefined),
@@ -192,7 +192,7 @@ spec:
   runtime: cordis
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'
 `)
     const { definition, diagnostics } = resolveDefinition(doc, {
       getDefinition: (id) => (id === parent.metadata.id ? parent : undefined),

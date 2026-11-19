@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sendResponse, toRequest } from './bridge.ts'
 
-/** The slice of the router this adapter needs; `acryl-router`'s `Router` satisfies it. */
+/** The slice of the router this adapter needs; `@acryldev/router`'s `Router` satisfies it. */
 export interface FetchRouter {
   fetch(request: Request, connection?: { readonly remoteAddress?: string | undefined, readonly localPort?: number | undefined }): Promise<Response>
 }

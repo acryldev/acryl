@@ -29,7 +29,7 @@ export interface IdeProfilePackage {
 }
 
 /**
- * The agent's opening line in every Blends app (`acryl-system-prompt`'s `identity`). The package's own default is ACRYL's line; the frame states
+ * The agent's opening line in every Blends app (`@acryldev/system-prompt`'s `identity`). The package's own default is ACRYL's line; the frame states
  * what an app made with acrylblends is, so the agent knows it extends the app by writing plugins that blend.yaml composes.
  */
 export const FRAME_IDENTITY =
@@ -59,23 +59,23 @@ export function apply(ctx) {
 export const FRAME_PACKAGES: readonly IdeProfilePackage[] = [
   { name: 'acrylblends/cordis/router', spec: '', row: 'acryl-router', installed: true },
   { name: 'acrylblends/cordis/router-http', spec: '', row: 'acryl-router-http', installed: true },
-  { name: 'acryl-web-service', spec: '' },
-  { name: 'acryl-settings', spec: '' },
-  // No `acryl-shortcuts`: its Settings > Shortcuts and the command palette's key are the IDE's; the frame lists the shortcuts in General.
-  { name: 'acryl-app-shell', spec: '' },
-  { name: 'acryl-versions', spec: '' },
-  // The page's root: the Blends frame (docs/design/blends-frame-mockup.html), never the IDE's workbench (`acryl-workspace`).
-  { name: 'acryl-blends-frame', spec: '' },
-  { name: 'acryl-plugin-admin', spec: '' },
+  { name: '@acryldev/web', spec: '', row: 'acryl-web-service' },
+  { name: '@acryldev/settings', spec: '', row: 'acryl-settings' },
+  // No `@acryldev/shortcuts`: its Settings > Shortcuts and the command palette's key are the IDE's; the frame lists the shortcuts in General.
+  { name: '@acryldev/app-shell', spec: '', row: 'acryl-app-shell' },
+  { name: '@acryldev/versions', spec: '', row: 'acryl-versions' },
+  // The page's root: the Blends frame (docs/design/blends-frame-mockup.html), never the IDE's workbench (`@acryldev/workspace`).
+  { name: '@acryldev/blends-frame', spec: '', row: 'acryl-blends-frame' },
+  { name: '@acryldev/plugin-admin', spec: '', row: 'acryl-plugin-admin' },
   // The agent's prompt as ACRYL IDE's agent has it: the identity line first, every section a tagged block (pi.dev's shape), empties dropped.
-  { name: 'acryl-system-prompt', spec: '', config: { identity: FRAME_IDENTITY } },
+  { name: '@acryldev/system-prompt', spec: '', row: 'acryl-system-prompt', config: { identity: FRAME_IDENTITY } },
   // The app builder's docs, the way ACRYL IDE's agent has its plugin docs: a routed index, verified example plugins and the prompt line that sends
   // the agent to them before it writes a plugin.
-  { name: 'acryl-app-context', spec: '' },
-  { name: 'acryl-support', spec: '' },
-  { name: 'acryl-sign-in', spec: '' },
+  { name: '@acryldev/app-context', spec: '', row: 'acryl-app-context' },
+  { name: '@acryldev/support', spec: '', row: 'acryl-support' },
+  { name: '@acryldev/sign-in', spec: '', row: 'acryl-sign-in' },
   {
-    name: 'dsh-client-ui-brand-acryl',
+    name: '@acryldev/brand-client',
     spec: '',
     row: 'ui-brand-acryl',
     disables: ['ui-brand-official'],
@@ -115,7 +115,7 @@ export interface IdeProfileInput {
     readonly name: string
     readonly isolate?: Readonly<Record<string, true>>
   }[]
-  /** Whether the app carries the door at `plugins/acryl-door/src/index.ts`: a row then mounts it, and an app without one simply has no door. */
+  /** Whether the app carries the door at `plugins/door/src/index.ts`: a row then mounts it, and an app without one simply has no door. */
   readonly door?: boolean
   /** What roots the page: the Blends frame (every Blend), or the IDE's workbench for a product that is the IDE (ACRYL ADE). From `acrylblends.root` in the app's package.json. */
   readonly root?: PageRoot
@@ -309,7 +309,7 @@ export const AGENT_PRESET_ROWS: readonly {
  * The client rows the frame and the chat load: the client-module serving row plus exactly the client packages the frame's and the chat's
  * `dsh.client` inject lists name, as installed in the app, and the two services those rows wait for (`client-resources`, `ui-input-trigger`).
  * DSH's `ui-layout` client row is deliberately absent: the ACRYL frame registers the `layout` service itself (DSH's row would register it twice,
- * the failure the old overlay avoided by disabling the row); the only layout client row mounted is `acryl-app-shell`, so the document renders
+ * the failure the old overlay avoided by disabling the row); the only layout client row mounted is `@acryldev/app-shell`, so the document renders
  * the ACRYL frame.
  */
 /** One DSH client row of the frame's profile: a package, its Loader id, and the config it mounts with. */
@@ -542,9 +542,9 @@ function hostScriptOf(profile: string, frameModule: string): string {
     `agentRows.find((row) => row.id === 'preset-${AGENT_PRESET_ID}').config.plugins.push(...DSH_STANDARD_PLUGINS.map(dshStandardPlugin))`,
     'const hostLayer = anchorRows([{',
     '  insert: [',
-    "    { id: 'node-server', name: './plugins/acryl-node-server/src/index.ts', config: { hostname: chosen.host ?? '127.0.0.1', port: Number(port), scan: Number(port) === 0 ? 0 : 20 } },",
-    "    { id: 'web-server', name: './plugins/acryl-web-server/src/index.ts' },",
-    "    { id: 'page', name: './plugins/acryl-page/src/index.ts', config: { title: appTitle } },",
+    "    { id: 'node-server', name: './plugins/node-server/src/index.ts', config: { hostname: chosen.host ?? '127.0.0.1', port: Number(port), scan: Number(port) === 0 ? 0 : 20 } },",
+    "    { id: 'web-server', name: './plugins/web-server/src/index.ts' },",
+    "    { id: 'page', name: './plugins/page/src/index.ts', config: { title: appTitle } },",
     '    ...clientRows,',
     '    ...agentRows,',
     '  ],',
@@ -784,7 +784,7 @@ function overlayOf(
     ...(door
       ? [
           '    - id: acryl-door',
-          '      name: ./plugins/acryl-door/src/index.ts',
+          '      name: ./plugins/door/src/index.ts',
           '      config:',
           '        hostIndex: false',
           `        appBase: ${FRAME_PAGE_PREFIX}`,
@@ -901,9 +901,9 @@ function mergeManifest(
   // `dev` boots the launcher; `start` stays the app's own server (production).
   const scripts = {
     ...(manifest.scripts as Record<string, string> | undefined),
-    dev: 'node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs',
+    dev: 'node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs',
   }
-  // A frame package that moved scope (spec 051 T036: @acrylblends/* to @acryldev/*) is installed once, under its new name: the old one goes.
+  // A frame package that moved scope (spec 051 T036: @acryldev/* to @acryldev/*) is installed once, under its new name: the old one goes.
   const kept = Object.fromEntries(
     Object.entries((manifest.dependencies as Record<string, string> | undefined) ?? {}).filter(
       ([name]) =>
@@ -982,7 +982,7 @@ function withAppFacts(root: string, input: IdeProfileInput): IdeProfileInput {
     )
   return {
     ...input,
-    door: existsSync(join(root, 'plugins', 'acryl-door', 'src', 'index.ts')),
+    door: existsSync(join(root, 'plugins', 'door', 'src', 'index.ts')),
     ...(declared === undefined ? {} : { root: declared }),
   }
 }

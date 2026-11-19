@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { buildRegistryIndex } from '@webboxes/blends-core'
+import { buildRegistryIndex } from '@acryldev/blends-core'
 import { StartSourceError, classifyStartSource, resolveStartSource } from '../src/app/start-source.ts'
 
 const dirs: string[] = []

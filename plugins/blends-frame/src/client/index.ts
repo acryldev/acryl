@@ -1,18 +1,18 @@
 /**
  * Cordis Client plugin: the Blends frame owns the page's `root` slot and draws the workbench around the app (docs/design/blends-frame-mockup.html).
- * It composes no IDE workbench: the ACRYL IDE keeps its own root owner (`acryl-workspace` through `acryl-app-shell`), and a Blueprint mounts one
+ * It composes no IDE workbench: the ACRYL IDE keeps its own root owner (`@acryldev/workspace` through `@acryldev/app-shell`), and a Blueprint mounts one
  * of the two, never both, since `root` is a single slot.
  */
 
 // Pulls `ctx.slots` and the `root` SlotMap key augmentation into this module.
 import '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@acryl/ui/frame'
+import type {} from '@acryldev/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 // The conversation slot maps (the composer overlay the chip sits in) and the scoped input events the send hook writes through.
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { SessionInput } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { DesktopLayoutState, DesktopThemePresenter, provideDesktopLayout, stripLaunchToken } from 'acryl-app-shell/client'
-import { createVersionsApi } from 'acryl-versions/client'
+import { DesktopLayoutState, DesktopThemePresenter, provideDesktopLayout, stripLaunchToken } from '@acryldev/app-shell/client'
+import { createVersionsApi } from '@acryldev/versions/client'
 import { ChatSavesStore, createChatSavesApi } from './chat-saves.ts'
 import { TurnSaveFooter } from './TurnSaveFooter.tsx'
 import { BlendsFrame } from './BlendsFrame.tsx'
@@ -21,7 +21,7 @@ import { ChatsStore, createRealChatsApi, type MainViewNavigation, type Workspace
 import { AppReloadStore } from './app-reload.ts'
 import { FrameStateStore } from './frame-state.ts'
 import { FILES_SEARCH_EVENT } from './FilesView.tsx'
-import { AgentsState, agentsSettingsPlugin, createWorkspaceAgentsApi, settingsSharedPlugin } from 'acryl-workspace/ui'
+import { AgentsState, agentsSettingsPlugin, createWorkspaceAgentsApi, settingsSharedPlugin } from '@acryldev/workspace/ui'
 import { ShortcutsRow } from './ShortcutsRow.tsx'
 import { createBranchesApi } from './branches.ts'
 import { BranchChatsStore, createBranchChatsApi } from './branch-chats.ts'
@@ -73,7 +73,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 const LOCALE_NAMESPACE = 'acryl.blendsFrame'
 /** The Loader row that composes the app's own plugins (`frame/app-plugins.mjs`): loading it again applies a switch in `blend.yaml`. */
 
-export const name = 'acryl-blends-frame-client'
+export const name = '@acryldev/blends-frame-client'
 
 /** How often a visible frame reads its state again (branches, the newest version, unsaved files). */
 const FRAME_STATE_INTERVAL_MS = 5000
@@ -178,16 +178,16 @@ export function apply(ctx: ClientContext): void {
     },
   }
 
-  ctx.effect(() => provideDesktopLayout(ctx, layout), 'acryl-blends-frame: layout service')
+  ctx.effect(() => provideDesktopLayout(ctx, layout), '@acryldev/blends-frame: layout service')
   // DSH's views read the open keyed panel through the standard `usePanelInfo` hook, which the root supplies.
-  ctx.effect(() => ctx.slots.provideRoot({ hooks: { panelInfo: layout.panelInfo } }), 'acryl-blends-frame: panel info')
+  ctx.effect(() => ctx.slots.provideRoot({ hooks: { panelInfo: layout.panelInfo } }), '@acryldev/blends-frame: panel info')
   ctx.effect(() => {
     const dispose = ctx.reflect.provide('appCanvas', canvas)
     return () => { void dispose() }
-  }, 'acryl-blends-frame: the canvas service')
+  }, '@acryldev/blends-frame: the canvas service')
   // The app's own client plugins read the frame's mode from the canvas page: Build keeps their build-time controls out of the canvas, Preview shows
   // what production shows, and a mode change reaches them without a reload.
-  ctx.effect(() => installFrameView(canvas, view), 'acryl-blends-frame: the app page view')
+  ctx.effect(() => installFrameView(canvas, view), '@acryldev/blends-frame: the app page view')
   // DSH's right sidebar (`dsh-client-ui-sidebar-right`) is drawn inside the right panel's Panel tab: each page opened in it brings the tab forward, and
   // closing the tab collapses the sidebar, which DSH's controller owns. Until the sidebar is mounted there is nothing to collapse.
   let sidebarRight: Pick<ClientContext['sidebarRight'], 'isExpanded' | 'toggleExpanded'> | undefined
@@ -200,7 +200,7 @@ export function apply(ctx: ClientContext): void {
         stop()
         sidebarRight = undefined
       }
-    }, 'acryl-blends-frame: the right sidebar')
+    }, '@acryldev/blends-frame: the right sidebar')
   })
   const sidebar: SidebarPort = {
     close: () => { if (sidebarRight?.isExpanded() === true) sidebarRight.toggleExpanded() },
@@ -216,10 +216,10 @@ export function apply(ctx: ClientContext): void {
     const stripped = stripLaunchToken(window.location.href)
     if (stripped !== undefined) window.history.replaceState(window.history.state, '', stripped)
     return () => {}
-  }, 'acryl-blends-frame: strip the launch token')
+  }, '@acryldev/blends-frame: strip the launch token')
 
-  ctx.effect(() => installFrameStyles(), 'acryl-blends-frame: styles')
-  ctx.effect(() => installXtermStyles(), 'acryl-blends-frame: terminal styles')
+  ctx.effect(() => installFrameStyles(), '@acryldev/blends-frame: styles')
+  ctx.effect(() => installXtermStyles(), '@acryldev/blends-frame: terminal styles')
   // A terminal whose process ended, or that the Host no longer knows (it restarted), leaves the strip; its title names what it runs.
   ctx.effect(() => {
     const closeTabOf = (terminalId: string) => {
@@ -236,7 +236,7 @@ export function apply(ctx: ClientContext): void {
       offTitle()
       tools.terminals.disposeAll()
     }
-  }, 'acryl-blends-frame: terminal sessions')
+  }, '@acryldev/blends-frame: terminal sessions')
   // ⌘P (Ctrl P) anywhere in the frame: Files, with its search taking the keys.
   ctx.effect(() => {
     const quickOpen = (event: KeyboardEvent) => {
@@ -248,7 +248,7 @@ export function apply(ctx: ClientContext): void {
     }
     window.addEventListener('keydown', quickOpen, true)
     return () => { window.removeEventListener('keydown', quickOpen, true) }
-  }, 'acryl-blends-frame: quick open')
+  }, '@acryldev/blends-frame: quick open')
   ctx.slots.inject('settings.launcher', () => ctx.slots.register({ name: 'settings.launcher' }, SettingsLauncher))
   // Settings' header: a button that makes the window fill the browser window (DSH's list slot, between "Open configuration file" and the close button).
   ctx.slots.inject('settings.action', () => ctx.slots.register({ name: 'settings.action', id: 'blends-expand', order: 20 }, SettingsExpand))
@@ -263,7 +263,7 @@ export function apply(ctx: ClientContext): void {
       off()
       presenter.dispose()
     }
-  }, 'acryl-blends-frame: theme presenter')
+  }, '@acryldev/blends-frame: theme presenter')
 
   ctx.effect(() => {
     const read = () => { if (document.visibilityState === 'visible') void frameState.refresh() }
@@ -277,13 +277,13 @@ export function apply(ctx: ClientContext): void {
       document.removeEventListener('visibilitychange', read)
       window.removeEventListener('focus', read)
     }
-  }, 'acryl-blends-frame: read the frame state')
+  }, '@acryldev/blends-frame: read the frame state')
 
   ctx.effect(() => {
     const controller = new AbortController()
     void appReload.run(controller.signal)
     return () => { controller.abort() }
-  }, "acryl-blends-frame: follow the app's code")
+  }, "@acryldev/blends-frame: follow the app's code")
 
   // A chat belongs to the branch it was made on (`./branch-chats.ts`), and the chat on screen always belongs to the checked-out branch: the store makes it
   // so whenever the branch, the sessions, the chats with a turn, the map or the strip's chat tab changes (`ChatsStore.reconcile`).
@@ -316,11 +316,11 @@ export function apply(ctx: ClientContext): void {
       offChats()
       offPrune()
     }
-  }, 'acryl-blends-frame: the chat on screen is the checked-out branch\'s')
+  }, '@acryldev/blends-frame: the chat on screen is the checked-out branch\'s')
 
   // Settings → Agents: the workspace's own section, on the workspace Host's agent routes.
   const agents = new AgentsState(createWorkspaceAgentsApi())
-  ctx.effect(() => { void agents.refresh(); return () => {} }, 'acryl-blends-frame: load the agents')
+  ctx.effect(() => { void agents.refresh(); return () => {} }, '@acryldev/blends-frame: load the agents')
   ctx.plugin(settingsSharedPlugin())
   ctx.plugin(agentsSettingsPlugin(agents))
 
@@ -388,10 +388,10 @@ export function apply(ctx: ClientContext): void {
     }, NameYourApp))
   }
   ctx.plugin({
-    name: 'acryl-blends-frame-plugins-settings',
+    name: '@acryldev/blends-frame-plugins-settings',
     inject: ['slots', 'locale'],
     apply(child: ClientContext): void {
-      child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { plugins: 'Plugins', app: 'App' }, zh: { plugins: '插件', app: '应用' } }), 'acryl-blends-frame: dictionary')
+      child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { plugins: 'Plugins', app: 'App' }, zh: { plugins: '插件', app: '应用' } }), '@acryldev/blends-frame: dictionary')
       const t = child.locale.bind(LOCALE_NAMESPACE)
       if (desktop !== undefined) {
         child.slots.inject('settings.section', () => child.slots.register({
@@ -418,7 +418,7 @@ export function apply(ctx: ClientContext): void {
 
   // Settings > General: a short list of the shortcuts.
   ctx.plugin({
-    name: 'acryl-blends-frame-shortcuts-row',
+    name: '@acryldev/blends-frame-shortcuts-row',
     inject: ['slots', 'shortcuts'],
     apply(child: ClientContext): void {
       child.slots.inject('settings.general.item', () => child.slots.register({
@@ -444,14 +444,14 @@ export function apply(ctx: ClientContext): void {
   }, TurnSaveFooter))
 
   ctx.inject(['sessions'], (child) => {
-    child.effect(() => chats.watch(child.sessions), 'acryl-blends-frame: chats follow the sessions')
+    child.effect(() => chats.watch(child.sessions), '@acryldev/blends-frame: chats follow the sessions')
   })
 
   // The element picked in the canvas is what the chat is about (docs/design/blends-frame-mockup.html, scenario 2): its chip sits at the left of
   // the composer's input row, and the send gesture hands its page and selector to the frame's Host, which gives them to the agent as context for
   // that message; the person's message itself keeps exactly their words.
   ctx.plugin({
-    name: 'acryl-blends-frame-element-selection',
+    name: '@acryldev/blends-frame-element-selection',
     inject: ['slots', 'sessions'],
     apply(child: ClientContext): void {
       child.slots.inject('conversation.input.overlay', () => child.slots.register({
@@ -523,7 +523,7 @@ export function apply(ctx: ClientContext): void {
         // Every version is a captured snapshot: a plugin folder without a row gets one, and the lock is written, before the commit. A capture
         // that fails does not stop the save (the version is then the files as they are), but it says why in the console.
         save: async (path: string, message: string) => {
-          await snapshot.capture().catch((cause: unknown) => { console.warn(`acryl-blends-frame: the version was saved without a capture: ${cause instanceof Error ? cause.message : String(cause)}`) })
+          await snapshot.capture().catch((cause: unknown) => { console.warn(`@acryldev/blends-frame: the version was saved without a capture: ${cause instanceof Error ? cause.message : String(cause)}`) })
           return versionsApi.save(path, message)
         },
         // The files go back, the frame shows the new head, then the app page reloads on them (restore, state, canvas - in that order).
@@ -553,5 +553,5 @@ export function apply(ctx: ClientContext): void {
         },
       },
     }),
-  }, BlendsFrame), 'acryl-blends-frame: root slot')
+  }, BlendsFrame), '@acryldev/blends-frame: root slot')
 }

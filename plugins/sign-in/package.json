@@ -1,14 +1,14 @@
 {
-  "name": "acryl-sign-in",
+  "name": "@acryldev/sign-in",
   "version": "0.1.1",
   "description": "ACRYL sign-in: sign in to a model provider with an account (Claude, ChatGPT/OpenAI Codex and the rest of the catalog's flows; DeepSeek through DeepSeek's own account dialog) from Settings > Models on Web and Desktop, over the harness authorization flows; the terminal's DeepSeek account sign-in through its own loopback callback",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-sign-in"
+    "directory": "plugins/sign-in"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-sign-in#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/sign-in#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -58,9 +58,9 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*",
-    "acryl-control": "workspace:*",
-    "acryl-loopback-http": "workspace:*"
+    "@acryldev/ui": "workspace:*",
+    "@acryldev/control": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

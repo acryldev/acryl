@@ -6,7 +6,7 @@ export type Fetch = (url: string, init?: { readonly headers?: Record<string, str
 
 const MAX_DOWNLOAD_BYTES = 64 * 1024 * 1024
 const TIMEOUT_MS = 30_000
-const USER_AGENT = 'acryl-plugin-hub'
+const USER_AGENT = '@acryldev/plugin-hub'
 
 async function downloadBytes(fetchImpl: Fetch, url: string): Promise<Uint8Array> {
   if (!url.startsWith('https://')) throw new Error(`refusing a non-https download: ${url}`)

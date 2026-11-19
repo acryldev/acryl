@@ -1,6 +1,6 @@
 ---
 name: acryl-change-plugin
-description: Use when the person asks you to change, improve, extend or restyle a feature or plugin that already exists in acryl-control-center.
+description: Use when the person asks you to change, improve, extend or restyle a feature or plugin that already exists in @acryldev/control-center.
 ---
 # Change a plugin
 

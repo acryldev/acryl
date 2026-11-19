@@ -1,13 +1,13 @@
 # WebSocket upgrades on the router (spec 047 T009)
 
-Status: built, released in 0.11.0 (the design below was approved as written; the hub sits in `acryl-node-server/src/upgrade-hub.ts`, and `acryl-router-http` requires `acryl-node-server` for it). Requested by ACRYL's M7: its last `webServer` call sites are the workspace terminal's `registerUpgrade` and the engine-web delegate, and they cannot move until the router can take upgrades.
+Status: built, released in 0.11.0 (the design below was approved as written; the hub sits in `@acryldev/node-server/src/upgrade-hub.ts`, and `@acryldev/router-http` requires `@acryldev/node-server` for it). Requested by ACRYL's M7: its last `webServer` call sites are the workspace terminal's `registerUpgrade` and the engine-web delegate, and they cannot move until the router can take upgrades.
 
 ## What already exists (port, do not invent)
 
 The node adapter ported from `@hono/node-server` already carries the whole upgrade machinery, with its tests and provenance:
 
-- `plugins/acryl-node-server/src/adapter/websocket.ts`: `setupWebSocket({ server, fetchCallback, wss })` listens to the server's `upgrade` event, runs the request through the app's `fetch` (so ordinary middleware runs), and when the handler accepted calls `wss.handleUpgrade`; a refusal is written as a plain `HTTP/1.1 <status>` with `Connection: close` before any handshake (`rejectUpgradeRequest`). `upgradeWebSocket(...)` is the route helper (`defineWebSocketHelper`) that returns either a `Response` (a refusal) or accepts and gets `onOpen/onMessage/onClose/onError` with a `WSContext`.
-- `plugins/acryl-node-server/src/adapter/websocket-types.ts`, `tests/adapter/websocket.test.ts` (ported with the rest), `createAdaptorServer({ websocket: { server: wss } })`.
+- `plugins/node-server/src/adapter/websocket.ts`: `setupWebSocket({ server, fetchCallback, wss })` listens to the server's `upgrade` event, runs the request through the app's `fetch` (so ordinary middleware runs), and when the handler accepted calls `wss.handleUpgrade`; a refusal is written as a plain `HTTP/1.1 <status>` with `Connection: close` before any handshake (`rejectUpgradeRequest`). `upgradeWebSocket(...)` is the route helper (`defineWebSocketHelper`) that returns either a `Response` (a refusal) or accepts and gets `onOpen/onMessage/onClose/onError` with a `WSContext`.
+- `plugins/node-server/src/adapter/websocket-types.ts`, `tests/adapter/websocket.test.ts` (ported with the rest), `createAdaptorServer({ websocket: { server: wss } })`.
 - The router's `ws` helper entry (`acrylblends/ws`: `WSContext`, `defineWebSocketHelper`).
 
 What is missing is the Cordis side: `NodeServer` (`acrylblends/cordis/node-server`) never passes `websocket`, so nothing accepts an upgrade; `RouterHttp` (`acrylblends/cordis/router-http`, the adapter that mounts prefixes on the Host's `webServer`) has `mount(prefix)` for HTTP only; the sockets belong to nobody; the handler cannot see `bufferedAmount`; there is no ping, no payload cap policy, and the router's connection facts are not given to an upgrade request.
@@ -16,7 +16,7 @@ What is missing is the Cordis side: `NodeServer` (`acrylblends/cordis/node-serve
 
 ### 1. Checks before the upgrade
 
-They are ordinary middleware on the route, run by the same `router.fetch` the upgrade request goes through (`setupWebSocket` already does this). `acryl-loopback-http/router`'s `ownPage` works unchanged **if the upgrade request carries the same connection facts as an HTTP one**: today `setupWebSocket`'s bindings are `{ incoming, outgoing, wss }`; the Cordis adapters will pass `{ remoteAddress, localPort }` as well (read from `incoming.socket`, exactly as `serve()` does for HTTP), so the loopback peer, the exact `Origin` and `Host` on the real local port can be checked. Query validation (`id` required, `since` digits, at most 15) is the handler's own code before it calls `upgradeWebSocket`. A refusal returns a `Response` and is written as a plain `403`/`400` with `Connection: close` before any handshake (existing `rejectUpgradeRequest`; its headers pass through except the hop-by-hop ones).
+They are ordinary middleware on the route, run by the same `router.fetch` the upgrade request goes through (`setupWebSocket` already does this). `@acryldev/loopback-http/router`'s `ownPage` works unchanged **if the upgrade request carries the same connection facts as an HTTP one**: today `setupWebSocket`'s bindings are `{ incoming, outgoing, wss }`; the Cordis adapters will pass `{ remoteAddress, localPort }` as well (read from `incoming.socket`, exactly as `serve()` does for HTTP), so the loopback peer, the exact `Origin` and `Host` on the real local port can be checked. Query validation (`id` required, `since` digits, at most 15) is the handler's own code before it calls `upgradeWebSocket`. A refusal returns a `Response` and is written as a plain `403`/`400` with `Connection: close` before any handshake (existing `rejectUpgradeRequest`; its headers pass through except the hop-by-hop ones).
 
 A request with an `Upgrade` header that is not `websocket`, or a path the plugin does not mount, is refused too (404 / 400 through the same path): nothing is left half open. (The ported code returns for a non-WebSocket upgrade so another listener may take the socket; the Host adapter has no other listener, so there it refuses.)
 
@@ -39,8 +39,8 @@ The ported `upgradeWebSocket` handler, as is. Additions, each recorded as a devi
 
 ### 4. Where it lives
 
-- `acryl-node-server`: `NodeServer` creates the hub (its `ws` server with the options above) and passes `websocket: { server }` to `createAdaptorServer`; `server.close` closes the hub. `upgradeWebSocket` becomes usable with `app.get('/ws', upgradeWebSocket(...))` in any Cordis app on the standalone server. `acrylblends/cordis/node-server` and `acrylblends/node-server` already export the adapter pieces; `ws` becomes an optional peer (an app that never upgrades does not need it).
-- `acryl-router-http`: `mount(prefix, { upgrade })` and the hub on the Host path. The Host's `webServer.registerUpgrade` hands `(req, socket, head)`; the hub's `setupWebSocket` is given a tiny event source in place of the `Server` (it only needs `on('upgrade')` and `listenerCount`), so the same ported code serves both transports and is not copied.
+- `@acryldev/node-server`: `NodeServer` creates the hub (its `ws` server with the options above) and passes `websocket: { server }` to `createAdaptorServer`; `server.close` closes the hub. `upgradeWebSocket` becomes usable with `app.get('/ws', upgradeWebSocket(...))` in any Cordis app on the standalone server. `acrylblends/cordis/node-server` and `acrylblends/node-server` already export the adapter pieces; `ws` becomes an optional peer (an app that never upgrades does not need it).
+- `@acryldev/router-http`: `mount(prefix, { upgrade })` and the hub on the Host path. The Host's `webServer.registerUpgrade` hands `(req, socket, head)`; the hub's `setupWebSocket` is given a tiny event source in place of the `Server` (it only needs `on('upgrade')` and `listenerCount`), so the same ported code serves both transports and is not copied.
 - Subpath: `acrylblends/cordis/router-http` gets `mount`'s new option and the hub types; the hub implementation is shared from the node adapter (`acrylblends/node-server`).
 
 ## Tests

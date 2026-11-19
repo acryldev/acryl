@@ -12,7 +12,7 @@ import { INVALID_JSON, jsonBody, operatorOnly, readJson, type ReportError } from
 import { VERB_SPECS, VERBS, type Verb } from './verbs.ts'
 
 const SUPPORTED_PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'] as const
-const SERVER_INFO = { name: 'acryl-door', version: '1' } as const
+const SERVER_INFO = { name: '@acryldev/door', version: '1' } as const
 
 interface JsonRpcRequest { readonly jsonrpc: '2.0'; readonly id?: string | number | null; readonly method: string; readonly params?: unknown }
 

@@ -4,7 +4,7 @@
  * Two jobs, both failing closed:
  *  - `isolatedEnvironment` builds the child environment: a throwaway root holding HOME, the ACRYL and engine homes, and the Electron user data, with every
  *    ACRYL_/DSH_ placement variable of the caller removed first, and ACRYL_REQUIRE_ISOLATED_HOME set so the runtime itself refuses a real home
- *    (`runtime/acryl-harness-runtime/src/instance/select.ts`). HOME is moved too, so code that asks the OS for "the home" (the engine's default workspace
+ *    (`runtime/harness-runtime/src/instance/select.ts`). HOME is moved too, so code that asks the OS for "the home" (the engine's default workspace
  *    under ~/Documents, macOS Application Support, a stray ~/.dsh) lands in the throwaway root as well, and the caller's variables that point a shell
  *    or a tool at the user's own files instead of HOME (ZDOTDIR, HISTFILE, the XDG base directories) are dropped, so a terminal opened in the app
  *    neither loads the user's dotfiles nor writes their history.

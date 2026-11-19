@@ -1,6 +1,6 @@
 /**
  * Web's own `desktopProfiles`/`desktopPnpm` capabilities (spec 034 T006,
- * scoped v1) - what `cordis-plugin-market`'s install service needs to make
+ * scoped v1) - what `@acryldev/cordis-plugin-market`'s install service needs to make
  * its Installed-tab Install/Uninstall buttons do a real package operation on
  * Web, instead of the "ACRYL is required" gate it shows without them.
  *
@@ -40,19 +40,19 @@ import { type Context, Service } from '@deepseek-ai/cordis'
 import { pinnedPnpmEnv } from './pinned-pnpm.ts'
 import { reconcileProfileLayout, type PnpmProfileConfig } from './profile-layout.ts'
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopProfile` shape (`src/install/service.ts`). */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopProfile` shape (`src/install/service.ts`). */
 export interface WebMarketProfile {
   readonly name: string
   readonly dir: string
 }
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPnpmOutcome` shape. */
 export interface WebMarketPnpmOutcome {
   readonly exitCode: number | null
   readonly signal: NodeJS.Signals | null
 }
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPnpmHandle` shape. */
 export interface WebMarketPnpmHandle {
   readonly stdout: Readable
   readonly stderr: Readable
@@ -74,7 +74,7 @@ export interface WebMarketPnpmHandle {
 // these services; it never reads `ctx.get('desktopProfiles' | 'desktopPnpm')`
 // itself, so the missing consumer-side typing costs it nothing.
 
-/** Matches `cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly - the six methods it actually calls. */
+/** Matches `@acryldev/cordis-plugin-market`'s own `MarketDesktopPnpm` shape exactly - the six methods it actually calls. */
 export interface WebMarketPnpm {
   runPlugin(args: readonly string[], invokingDir: string, signal?: AbortSignal): WebMarketPnpmHandle
   installPlugin(request: {
@@ -195,7 +195,7 @@ export class WebPnpmService extends Service implements WebMarketPnpm {
 
 /**
  * Provide `desktopProfiles`/`desktopPnpm` on the host root, before
- * `cordis-plugin-market`'s own row mounts - matching the same `prepare`-hook
+ * `@acryldev/cordis-plugin-market`'s own row mounts - matching the same `prepare`-hook
  * timing `createWebEngineDefinition`'s brand/market row materialization
  * already relies on.
  * @param profileDir - the web profile's own directory (`resolveWebEngineComposition`'s `profile.dir`).

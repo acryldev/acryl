@@ -33,7 +33,7 @@ describe('GitDiffPane layouts and ranges', () => {
     expect(pairs[1]?.querySelector('[data-kind="empty"]')).toBeNull()
     expect(pairs[2]?.querySelector('[data-kind="empty"]')).not.toBeNull()
     expect(pairs[3]?.querySelector('[data-kind="empty"]')).not.toBeNull()
-    expect(window.localStorage.getItem('acryl-workspace:diff-layout')).toBe('split')
+    expect(window.localStorage.getItem('@acryldev/workspace:diff-layout')).toBe('split')
     view.unmount()
     setup()
     await screen.findAllByText('keep')

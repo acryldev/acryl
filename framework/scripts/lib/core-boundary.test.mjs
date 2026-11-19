@@ -14,7 +14,7 @@ test('the core may use Cordis, schemastery, node and its own files', () => {
     'node:fs',
     './routes.ts',
     '../acryl-router/src/index.ts',
-    '@webboxes/blends-core',
+    '@acryldev/blends-core',
     'yaml',
   ]) {
     assert.equal(forbiddenReason(name), undefined, name)
@@ -28,8 +28,8 @@ test('the agent pack, drivers, model vendors, the frame and DSH packages are out
   assert.equal(forbiddenReason('driver-pty'), 'a driver')
   assert.equal(forbiddenReason('openai'), 'a model vendor')
   assert.equal(forbiddenReason('@anthropic-ai/sdk'), 'a model vendor')
-  assert.equal(forbiddenReason('@acrylblends/blends-frame'), 'the frame')
-  assert.equal(forbiddenReason('acryl-blends-frame/client'), 'the frame')
+  assert.equal(forbiddenReason('@acryldev/blends-frame'), 'the frame')
+  assert.equal(forbiddenReason('@acryldev/blends-frame/client'), 'the frame')
   assert.equal(forbiddenReason('@deepseek-ai/dsh-agent'), 'a DSH package (the agent engine)')
   // A name that only contains the word is not the agent pack.
   assert.equal(forbiddenReason('user-agent'), undefined)

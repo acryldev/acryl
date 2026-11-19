@@ -1,5 +1,5 @@
 {
-  "name": "acryl-plugin-share",
+  "name": "@acryldev/plugin-share",
   "version": "0.1.0",
   "description": "Share plugins between people. Pull one someone released into the running app: fetched without running anything, checked by digest and for every OS, then installed live. Publish one, only as a plan a person confirmed.",
   "license": "MIT",
@@ -30,12 +30,12 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-extensions": "workspace:*",
-    "acryl-instance": "workspace:*",
-    "acryl-manifest": "workspace:*",
-    "@webboxes/app-persistence": "0.1.2",
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.2",
+    "@acryldev/extensions": "workspace:*",
+    "@acryldev/instance": "workspace:*",
+    "@acryldev/manifest": "workspace:*",
+    "@acryldev/app-persistence": "workspace:^",
+    "@acryldev/blends-core": "workspace:^",
+    "@acryldev/plugin-hub-core": "workspace:^",
     "yaml": "2.9.0"
   },
   "peerDependencies": {
@@ -44,7 +44,7 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-router": "workspace:*",
+    "@acryldev/router": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"
   },

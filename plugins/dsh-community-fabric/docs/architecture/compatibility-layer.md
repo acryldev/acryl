@@ -202,7 +202,7 @@ my-fabric-plugin/
 ### 6.2 Workflow
 
 ```sh
-yarn dlx dsh-community-fabric init
+yarn dlx @acryldev/dsh-community-fabric init
 yarn fabric validate       # schema, ID, entrypoint, capability versions
 yarn fabric generate       # exact context types from the manifest
 yarn fabric test           # fake Host, lifecycle, capability fixtures
@@ -215,7 +215,7 @@ Names are not frozen. The invariant is that one manifest drives validation, gene
 ### 6.3 Plugin code
 
 ```ts
-import { definePlugin } from 'dsh-community-fabric/sdk'
+import { definePlugin } from '@acryldev/dsh-community-fabric/sdk'
 
 export default definePlugin(async (ctx) => {
   ctx.commands.handle('com.example.hello.open', async () => {
@@ -266,7 +266,7 @@ testkit/       headless fixtures and shared conformance suites
 cli/           init, validate, generate, test, and pack
 ```
 
-Exact package names and subpaths remain unfrozen. `dsh-community-fabric` may be a lightweight plugin-facing entry, but it must not re-export the Broker or Adapter by default. Dependency direction stays one-way: schemas have no Host dependency; contracts depend only on schemas; the SDK depends on contracts; the Broker depends on schemas and contracts but not DSH; only `dsh-adapter` imports upstream runtime packages. Production Host Descriptors belong to the schema/contract boundary, while authorization is a Broker responsibility rather than a test-kit feature.
+Exact package names and subpaths remain unfrozen. `@acryldev/dsh-community-fabric` may be a lightweight plugin-facing entry, but it must not re-export the Broker or Adapter by default. Dependency direction stays one-way: schemas have no Host dependency; contracts depend only on schemas; the SDK depends on contracts; the Broker depends on schemas and contracts but not DSH; only `dsh-adapter` imports upstream runtime packages. Production Host Descriptors belong to the schema/contract boundary, while authorization is a Broker responsibility rather than a test-kit feature.
 
 Tools generate the Host Descriptor from registered implementations to prevent documentation drift. Each capability implementation runs the shared headless contract suite from `testkit`; real DSH integration tests remain owned by `dsh-adapter`. A complete Host additionally runs lifecycle and cross-capability integration tests.
 

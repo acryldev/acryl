@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { acrylRoot, appIdOf, personHome } from 'acryl-instance/home'
+import { acrylRoot, appIdOf, personHome } from '@acryldev/instance/home'
 import { appTitle, brandedElectron, iconFile } from './brand.ts'
 
 /** The sysctl that makes the sandbox fail for an Electron without an AppArmor profile; its value, or `undefined` where it does not exist (every system but a recent Ubuntu). */

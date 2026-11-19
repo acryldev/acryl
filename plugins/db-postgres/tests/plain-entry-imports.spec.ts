@@ -1,5 +1,5 @@
 /**
- * The plain entry imports nothing from Cordis or PGlite: `acryl-db-postgres/open`, its built JavaScript and declarations, and every file
+ * The plain entry imports nothing from Cordis or PGlite: `@acryldev/db-postgres/open`, its built JavaScript and declarations, and every file
  * those import. It reads this package's built `lib/`, so it needs `pnpm run build` first.
  *
  * vendoring: skip - a copy vendored into an app (with relative imports, no build of its own) has no `lib/`; the app's own typecheck is
@@ -30,7 +30,7 @@ it('imports nothing from Cordis in the plain entries or anything they import, at
   expect(seen.size).toBeGreaterThan(2)
 })
 
-it('imports nothing at all in the dialect entry, so acryl-db-pglite does not load pg through it', () => {
+it('imports nothing at all in the dialect entry, so @acryldev/db-pglite does not load pg through it', () => {
   for (const file of ['dialect.js', 'types/dialect.d.ts']) {
     const text = readFileSync(fileURLToPath(new URL(`../lib/${file}`, import.meta.url)), 'utf8')
     const bare = [...text.matchAll(/(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/gu)].map(match => match[1] ?? '').filter(spec => !spec.startsWith('.'))

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { prepareDesktopProfile } from '../../src/profile.ts'
-import { setPluginLifecycleEntryEnabled } from 'acryl-harness-runtime'
+import { setPluginLifecycleEntryEnabled } from '@acryldev/harness-runtime'
 
 const homes: string[] = []
 

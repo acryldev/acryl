@@ -7,7 +7,7 @@
  * person or the door calls.
  */
 
-/** The key the door publishes `{ windowId }` on the page's window (plugins/acryl-door/src/page/index.ts, `PAGE_KEY`). */
+/** The key the door publishes `{ windowId }` on the page's window (plugins/door/src/page/index.ts, `PAGE_KEY`). */
 export const DOOR_PAGE_KEY: symbol = Symbol.for('acryl.door.page')
 
 export interface AppCanvasView {

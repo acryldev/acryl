@@ -1,7 +1,7 @@
 # 05 — Session Bridge and the TUI
 
 The TUI never touches `ctx` services ad hoc; it goes through **one seam**:
-`createAcrylSessionBridge()` (`acryl-harness-runtime/src/session-bridge.ts`), and
+`createAcrylSessionBridge()` (`@acryldev/harness-runtime/src/session-bridge.ts`), and
 projects the durable session log into `TuiStore` (`acryl-cli/src/tui/store.ts`) which the
 pi-tui shell renders. This file documents that data flow.
 
@@ -25,7 +25,7 @@ Construction: `createAcrylSessionBridge(ctx, { profile, generationId, attachment
 - `attachment: 'owner'` — this surface **owns** the session (the alternative is an
   attached viewer, which the web protocol client uses).
 - Snapshot types (`AcrylSessionSnapshot`, `AcrylTranscriptItem`, `AcrylToolProjection`)
-  come from **`acryl-control`**, so the terminal, web, and desktop all speak the same
+  come from **`@acryldev/control`**, so the terminal, web, and desktop all speak the same
   session vocabulary.
 - The bridge wraps `ctx.agents` / `ctx.sessions` (`@deepseek-ai/dsh-agent`,
   `@deepseek-ai/dsh-session`) — it is an adapter, not a re-implementation.
@@ -133,7 +133,7 @@ deliberate sequencing contract.
 │  TuiStore ── appendEvent(SessionEvent)                                                 │
 │        ▲          └── setStatus(AcrylSessionSnapshot)                                  │
 │        │ events + snapshots                                                            │
-│  AcrylSessionBridge  (acryl-harness-runtime, types from acryl-control)                 │
+│  AcrylSessionBridge  (@acryldev/harness-runtime, types from @acryldev/control)                 │
 │    open/snapshot/events/subscribeEvents/submitPrompt/cancel                            │
 │        │ calls                                                                          │
 │  ctx.agents / ctx.sessions / ctx.tools / ctx.settings / ctx.credentials / ctx.llm      │

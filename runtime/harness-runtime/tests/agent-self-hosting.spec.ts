@@ -15,7 +15,7 @@ import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { fileURLToPath } from 'node:url'
 import { codingCapabilities } from '@acryldev/coding-capabilities'
 
-const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
+const example = fileURLToPath(new URL('../../../plugins/plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
 const initialDshHome = process.env.DSH_HOME
 const folders: string[] = []
 

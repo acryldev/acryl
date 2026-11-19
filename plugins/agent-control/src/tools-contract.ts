@@ -17,9 +17,9 @@ export const DEFAULT_EXPOSED_TOOLS: readonly string[] = [
   'acryl_prepare_publish',
   'acryl_plugin_list',
   'acryl_plugin_set_enabled',
-  // Read-only: a shared-context workspace's projects and brief (acryl-workspace, spec 043 T011).
+  // Read-only: a shared-context workspace's projects and brief (@acryldev/workspace, spec 043 T011).
   'acryl_workspace_context',
-  // The launcher (acryl-launcher-desktop, spec 050 T013): list, make, start and stop apps, pull a Blend or a plugin, and prepare (never send) a publish.
+  // The launcher (@acryldev/launcher-desktop, spec 050 T013): list, make, start and stop apps, pull a Blend or a plugin, and prepare (never send) a publish.
   'acryl_launcher_help',
   'acryl_launcher_apps',
   'acryl_launcher_blends',

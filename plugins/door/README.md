@@ -1,4 +1,4 @@
-# acryl-door
+# @acryldev/door
 
 The Door of a framework app, as one Cordis plugin (spec 049 slice 9). An agent working in the app folder can do three things through it:
 look at the running page, act on it, and add, remove or reload plugins while the app runs. Everything else (reading and writing files,
@@ -6,7 +6,7 @@ running tests, git) it does with its own file tools and shell.
 
 ```yaml
 - id: acryl-door
-  name: acryl-door
+  name: @acryldev/door
   config:
     tools:
       expose: [add]   # app tools from the `tools` service the door offers; none by default
@@ -46,7 +46,7 @@ client sends each verb to `POST /api/acryl-door/call` with the secret as a Beare
 ```
 
 The command is written each time the app starts (a moved folder or a new Node is picked up) and stays when it stops. The package's own
-`acryl-door` binary is the same client; without `--dir` it finds the app by walking up from the current folder.
+`@acryldev/door` binary is the same client; without `--dir` it finds the app by walking up from the current folder.
 
 `acryl verbs` lists the verbs, `--dir <folder>` names the app folder, and `--json` prints the value instead of the text. The exit code
 is 0 for done, 1 when the verb failed (its code and message go to stderr), 2 for a usage error and 3 when no app is running in the folder.
@@ -93,7 +93,7 @@ A page an agent writes can therefore be looked at and driven without anyone addi
 
 ## The desktop app: windows, menu and settings
 
-In the desktop app (`npm run desktop`, with or without `npm run dev` running) the door also controls what is around the page. The Electron main process connects to the door the way a page does (`plugins/desktop/door-shell.ts`, over `/api/acryl-door/shell/*`, which needs this run's secret), so it works when the window is attached to a dev server in another process.
+In the desktop app (`npm run desktop`, with or without `npm run dev` running) the door also controls what is around the page. The Electron main process connects to the door the way a page does (`plugins/desktop-shell/door-shell.ts`, over `/api/acryl-door/shell/*`, which needs this run's secret), so it works when the window is attached to a dev server in another process.
 
 ```
 acryl window list                         id, title, path, size, focused
@@ -110,5 +110,5 @@ Every call is in `.acryl/audit/ui-control.jsonl` with the window id. With no des
 
 ## How the page talks to the door
 
-A page opens one WebSocket to `<prefix>/channel/ws` and the door's calls and the page's answers (an acknowledgement as soon as a call is heard, then the result) are JSON frames on it. A WebSocket is not one of the browser's six connections per host, so a page that streams its own state in two windows cannot starve the door; the event stream (`<prefix>/channel`) is the fallback when the server has no `ws` package or a proxy cannot upgrade, and the page says so once in the console. The upgrade is refused unless its `Origin` is exactly this app's own origin (a WebSocket has no CORS). `localStorage.setItem('acryl-door-transport', 'stream')` keeps one browser to the stream. A call to a page that does not acknowledge it in 3 s (a tab in the background, a page still loading) goes to the next page, for the read-only calls (`look`, `act wait`); when none answers the door says so and what to do, instead of waiting 30 s.
+A page opens one WebSocket to `<prefix>/channel/ws` and the door's calls and the page's answers (an acknowledgement as soon as a call is heard, then the result) are JSON frames on it. A WebSocket is not one of the browser's six connections per host, so a page that streams its own state in two windows cannot starve the door; the event stream (`<prefix>/channel`) is the fallback when the server has no `ws` package or a proxy cannot upgrade, and the page says so once in the console. The upgrade is refused unless its `Origin` is exactly this app's own origin (a WebSocket has no CORS). `localStorage.setItem('@acryldev/door-transport', 'stream')` keeps one browser to the stream. A call to a page that does not acknowledge it in 3 s (a tab in the background, a page still loading) goes to the next page, for the read-only calls (`look`, `act wait`); when none answers the door says so and what to do, instead of waiting 30 s.
 

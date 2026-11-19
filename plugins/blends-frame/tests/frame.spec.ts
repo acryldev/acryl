@@ -276,7 +276,7 @@ describe('tabs per branch', () => {
 
   it('puts the tabs remembered before branches had their own lists on the first branch it sees, once', () => {
     const storage = new MemoryStorage()
-    storage.setItem('acryl-blends-frame.tabs.v1', JSON.stringify({ tabs: [{ kind: 'terminal', terminalId: 'old' }], active: 'terminal:old' }))
+    storage.setItem('@acryldev/blends-frame.tabs.v1', JSON.stringify({ tabs: [{ kind: 'terminal', terminalId: 'old' }], active: 'terminal:old' }))
     const tabs = new FrameTabs(storage)
     expect(tabs.getSnapshot().tabs[1]).toEqual({ kind: 'terminal', id: 'terminal:old', terminalId: 'old' })
     tabs.setBranch('main')
@@ -441,7 +441,7 @@ describe('fuzzy ranking', () => {
   })
 
   it('puts a word that holds the letters above a file name that scatters them', () => {
-    const paths = ['docs/framework/guides/bring-your-own-tool.md', 'plugins/acryl-router/src/browser/jsx-dom.ts', 'docs/framework/concepts/web-standard.md', 'plugins/team-board/index.ts', 'test/team-board.test.ts']
+    const paths = ['docs/framework/guides/bring-your-own-tool.md', 'plugins/router/src/browser/jsx-dom.ts', 'docs/framework/concepts/web-standard.md', 'plugins/team-board/index.ts', 'test/team-board.test.ts']
     expect(fuzzySearch('brd', paths).map(match => match.path).slice(0, 2)).toEqual(['test/team-board.test.ts', 'plugins/team-board/index.ts'])
   })
 })

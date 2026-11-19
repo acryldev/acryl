@@ -1,5 +1,5 @@
 /**
- * ACRYL UI library for the Web and Desktop client (spec 038-ui-component-library). A LIBRARY: it fills no slot itself; other client bundles `require('@acryl/ui')` after
+ * ACRYL UI library for the Web and Desktop client (spec 038-ui-component-library). A LIBRARY: it fills no slot itself; other client bundles `require('@acryldev/ui')` after
  * listing it in `dsh.client.inject`. The parts come from DSH's own source (see registry/manifest.yml for each one's origin) and read the app's `--dsw-alias-*` tokens; the two
  * colors DSH has no token for (accent, reasoning) are registered through the theme service with a light and a dark value, never through a stylesheet.
  * The client loader treats every module as a plugin, so a library exports an `apply` too.
@@ -99,8 +99,8 @@ export const inject = ['theme']
  * @param ctx - client plugin context.
  */
 export function apply(ctx: Context): void {
-  ctx.effect(() => provideAcrylChat(ctx), '@acryl/ui: the acrylChat service')
+  ctx.effect(() => provideAcrylChat(ctx), '@acryldev/ui: the acrylChat service')
   const theme = (ctx as Context & { theme?: { overrideTokens(source: string, tokens: typeof EXTRA_TOKENS): () => void } }).theme
   if (theme === undefined) return
-  ctx.effect(() => theme.overrideTokens('@acryl/ui', EXTRA_TOKENS), '@acryl/ui: extra theme tokens')
+  ctx.effect(() => theme.overrideTokens('@acryldev/ui', EXTRA_TOKENS), '@acryldev/ui: extra theme tokens')
 }

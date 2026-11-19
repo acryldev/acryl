@@ -37,8 +37,8 @@ external `npm install -g acryl` could not actually boot.
 - `acryl-tui/tsdown.publish.config.ts` (new)
 - `acryl-tui/src/cli/grammar.ts`, `acryl-tui/src/cli/run.ts`
 - `.github/workflows/release.yml`
-- `package.json`, `acryl-control/package.json`, `acryl-desktop/package.json`,
-  `acryl-harness-runtime/package.json`, `acryl-tui/package.json` (0.1.10 → 0.1.12)
+- `package.json`, `@acryldev/control/package.json`, `acryl-desktop/package.json`,
+  `@acryldev/harness-runtime/package.json`, `acryl-tui/package.json` (0.1.10 → 0.1.12)
 - `docs/DEVELOPMENT-LOG.md`, `docs/npm-test-external-user.md`,
   `docs/RELEASE-FOUNDATION-HANDOFF.md`
 
@@ -62,7 +62,7 @@ external `npm install -g acryl` could not actually boot.
 - The **release tag is the single source of truth** for the version; the
   workspace packages must equal it, and npm is published at exactly that version.
 - The `ACRYL_NPM_VERSION` publish override is now rejected if it diverges.
-- `tsdown.publish.config.ts` bundles `acryl-control` **and** `acryl-harness-runtime`
+- `tsdown.publish.config.ts` bundles `@acryldev/control` **and** `@acryldev/harness-runtime`
   (M1 MAX's local untracked copy bundles the latter; see divergence note).
 
 ## Open problems and risks

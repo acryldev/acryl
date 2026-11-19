@@ -1,4 +1,4 @@
-# acryl-launcher-desktop
+# @acryldev/launcher-desktop
 
 The **ACRYL screen**: the first screen of the desktop app (and of the Web app), the Control Center design of spec 050
 (`specs/050-acryl-launcher/design/control-center.html`). Every app made with ACRYL on this machine in one list, with its surface

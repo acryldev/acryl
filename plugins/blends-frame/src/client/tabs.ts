@@ -45,7 +45,7 @@ export interface FrameTabsSnapshot {
   readonly titles?: Readonly<Record<string, string>>
 }
 
-const STORAGE_KEY = 'acryl-blends-frame.tabs.v1'
+const STORAGE_KEY = '@acryldev/blends-frame.tabs.v1'
 const CHAT: FrameTab = { kind: 'chat', id: 'chat' }
 /** The base chat tab: always first, never closed, on every branch. */
 const isBase = (tab: FrameTab): boolean => tab.kind === 'chat' && tab.id === 'chat'

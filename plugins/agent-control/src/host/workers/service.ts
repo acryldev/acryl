@@ -14,7 +14,7 @@ import {
   claudeProvider,
   createClaudeStreamTransport,
   type AcrAgentControl,
-} from 'acryl-control'
+} from '@acryldev/control'
 import type { WorkerRequest, WorkerResponse } from '../../workers-contract.ts'
 
 export interface WorkersConfig {

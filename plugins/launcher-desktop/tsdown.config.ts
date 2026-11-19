@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-launcher-desktop'
+const PACKAGE_NAME = '@acryldev/launcher-desktop'
 
 export default defineConfig([
   {

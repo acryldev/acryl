@@ -1,16 +1,16 @@
 {
-  "name": "acryl-versions",
+  "name": "@acryldev/versions",
   "version": "0.1.1",
   "description": "ACRYL Versions, one Cordis plugin with a Host and a client half: a version is a commit, save makes one, restore brings a version back as a new commit, and share is an explicit push, all behind private same-origin routes",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-versions"
+    "directory": "plugins/versions"
   },
-  "homepage": "https://github.com/acrylblends/acrylblends/tree/main/ide/acryl-versions#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/versions#readme",
   "bugs": {
-    "url": "https://github.com/acrylblends/acrylblends/issues"
+    "url": "https://github.com/acryldev/acryl/issues"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -51,7 +51,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-loopback-http": "workspace:*"
+    "@acryldev/loopback-http": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

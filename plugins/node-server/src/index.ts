@@ -2,7 +2,7 @@
  * The framework's standalone HTTP adapter (spec 046, ported in spec 047), the standalone counterpart of the Host adapter. It owns one
  * `node:http` server built by the ported adapter in `src/adapter/` and hands every request to `ctx.router.fetch`, with the socket's peer
  * address and local port as connection facts.
- * Use it in an app that runs without the ACRYL Host; inside the Host, `acryl-router-http` mounts prefixes on the Host's own web server.
+ * Use it in an app that runs without the ACRYL Host; inside the Host, `@acryldev/router-http` mounts prefixes on the Host's own web server.
  * One adapter per runtime: a plugin keeps asking `ctx.inject(['routerHttp'], ...)` for a mount, which simply never fires here, because this
  * adapter serves the whole router.
  *
@@ -16,12 +16,12 @@ import type { AddressInfo } from 'node:net'
 import type { Duplex } from 'node:stream'
 import { Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type { ConnectionInfo, Router } from 'acryl-router'
+import type { ConnectionInfo, Router } from '@acryldev/router'
 import { Request as AdapterRequest } from './adapter/request.ts'
 import { RAW_RESPONSE_HANDLED, RAW_UPGRADE_HANDLED, type RawUpgradeRequest } from './adapter/raw.ts'
 import { createAdaptorServer } from './adapter/server.ts'
 import { UpgradeHub, type UpgradeHubOptions } from './upgrade-hub.ts'
-import type { UpgradeWebSocket } from 'acryl-router/helpers'
+import type { UpgradeWebSocket } from '@acryldev/router/helpers'
 import type { WebSocketLike } from './adapter/websocket-types.ts'
 
 export { serveStatic, type ServeStaticOptions } from './adapter/serve-static.ts'
@@ -30,7 +30,7 @@ export { testWebSocket, type TestSocket, type TestWebSocketOptions, type TestWeb
 export { UpgradeEmitter, UpgradeHub, type UpgradeHubOptions, type UpgradeRouter } from './upgrade-hub.ts'
 
 /** Stable Cordis plugin name, equal to the package name and the Loader row id. */
-export const name = 'acryl-node-server'
+export const name = '@acryldev/node-server'
 export const inject = ['router']
 
 /** A raw node handler: the request and response are the platform's, and the adapter writes nothing for them. */
@@ -216,7 +216,7 @@ export class NodeServer extends Service {
       ;(request as RawUpgradeRequest)[RAW_UPGRADE_HANDLED] = true
       Promise.resolve(handler(request, socket, head)).catch(() => socket.destroy())
     })
-    ctx.effect(() => () => this.stop(), 'acryl-node-server: close listener and open connections')
+    ctx.effect(() => () => this.stop(), '@acryldev/node-server: close listener and open connections')
   }
 
   /**
@@ -283,7 +283,7 @@ export class NodeServer extends Service {
    */
   registerRaw(route: RawRoute): () => void {
     const table = route.kind === 'exact' ? this.rawExact : this.rawPrefix
-    if (table.has(route.path)) throw new Error(`acryl-node-server: ${route.path} is already served`)
+    if (table.has(route.path)) throw new Error(`@acryldev/node-server: ${route.path} is already served`)
     table.set(route.path, route.handler)
     return () => {
       if (table.get(route.path) === route.handler) table.delete(route.path)
@@ -317,7 +317,7 @@ export class NodeServer extends Service {
    */
   registerRawUpgrade(route: RawUpgradeRoute): () => void {
     if (this.rawUpgrades.has(route.path))
-      throw new Error(`acryl-node-server: the upgrade path ${route.path} is already claimed`)
+      throw new Error(`@acryldev/node-server: the upgrade path ${route.path} is already claimed`)
     this.rawUpgrades.set(route.path, route.handler)
     return () => {
       if (this.rawUpgrades.get(route.path) !== route.handler) return
@@ -387,7 +387,7 @@ export class NodeServer extends Service {
         if (!isPortUnavailable(error)) throw error
       }
     }
-    throw new Error(`acryl-node-server: no usable port from ${String(port)} to ${String(last)} on ${hostname}: each is taken, or one a browser refuses`)
+    throw new Error(`@acryldev/node-server: no usable port from ${String(port)} to ${String(last)} on ${hostname}: each is taken, or one a browser refuses`)
   }
 }
 

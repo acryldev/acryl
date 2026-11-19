@@ -1,6 +1,6 @@
 /**
  * A Web page opened while the startup pass installs an app's own plugins (specs/001 T097, on real engines): the index served before the pass
- * settles lacks the app's client plugin, so it carries acryl-plugin-context's hold script, and the startup route answers once the pass
+ * settles lacks the app's client plugin, so it carries @acryldev/plugin-context's hold script, and the startup route answers once the pass
  * settles (cookie and origin checked like the Host API); the index served after it has the plugin and no hold.
  */
 import { cpSync, realpathSync } from 'node:fs'
@@ -9,14 +9,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { STARTUP_PATH } from 'acryl-plugin-context'
+import { STARTUP_PATH } from '@acryldev/plugin-context'
 import { afterEach, describe, expect, it } from 'vitest'
 import { planNewApp, writeNewApp } from '../src/app/new-app.ts'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { codingCapabilities } from '@acryldev/coding-capabilities'
 
-const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/client-slot-header-action/', import.meta.url))
+const example = fileURLToPath(new URL('../../../plugins/plugin-context/example-plugins/packages/client-slot-header-action/', import.meta.url))
 const PLUGIN = 'acryl-example-client-notes'
 const saved = { ...process.env }
 const temporary: string[] = []

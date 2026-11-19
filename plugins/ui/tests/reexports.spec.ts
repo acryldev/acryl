@@ -28,7 +28,7 @@ it('contracts/reexports.json is not stale', () => {
 it('every export of index.ts that is not a registry item is in the inventory', () => {
   const document = JSON.parse(readFileSync(committed, 'utf8')) as { groups: { source: string, exports: string[] }[], registryItemExports: string[] }
   const exported = document.groups.flatMap(group => group.exports)
-  // The ten names the catalogue used to file under "not yet built" while @acryl/ui shipped them.
+  // The ten names the catalogue used to file under "not yet built" while @acryldev/ui shipped them.
   for (const name of ['Button', 'Input', 'Tooltip', 'HoverCard', 'Menu', 'Toast', 'StateDot', 'ConnectionIndicator', 'Tag', 'JsonTree', 'CodeBlock']) {
     expect(exported).toContain(name)
     expect(document.registryItemExports).not.toContain(name)

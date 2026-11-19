@@ -4,7 +4,7 @@
  * `ACRYL`. A definition that cannot be read falls back to `ACRYL` here; the runtime reports the error itself when it boots.
  */
 
-import { blueprintFromEnvironment } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment } from '@acryldev/harness-runtime'
 
 export const DEFAULT_PRODUCT_NAME = 'ACRYL'
 const MAX_PRODUCT_NAME = 40

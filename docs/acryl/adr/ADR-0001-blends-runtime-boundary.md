@@ -37,7 +37,7 @@ This ADR maps each to ACRYL's actual existing primitives and states which gaps a
 
 **Evidence:**
 - `docs/cordis/cordis_system_guide_for_coding_agents.md` — authoritative guide: every disposable resource (DB connection, PTY stream, subscription, HTTP listener) must be acquired inside a `ctx.effect()` block and fully released by its disposer. Cordis guarantees the disposer runs before the Fiber unloads, so a reloaded row has a clean slate.
-- `runtime/acryl-harness-runtime/src/plugin-lifecycle.ts:177-195` — `disposeFiber(fiber)` calls `fiber.dispose()`, which walks the effect stack in reverse order and runs every registered disposer. This is the enforcement point: if a row doesn't own its resources via `ctx.effect()`, disposing the Fiber does not clean up those resources, and the next activation inherits the leaked state.
+- `runtime/harness-runtime/src/plugin-lifecycle.ts:177-195` — `disposeFiber(fiber)` calls `fiber.dispose()`, which walks the effect stack in reverse order and runs every registered disposer. This is the enforcement point: if a row doesn't own its resources via `ctx.effect()`, disposing the Fiber does not clean up those resources, and the next activation inherits the leaked state.
 - `apps/acryl-desktop/tests/desktop-plugins.spec.ts:337-360` — `correctly disposes resources when a plugin is reactivated` test confirms disposal ordering and that a reactivated row gets a fresh `ctx` (no shared state from before).
 
 **Boundary:** Services/rows that own I/O, DB, PTY, secrets, subscriptions **must** acquire them inside `ctx.effect()`. Services that own UI navigation state, in-memory config, or UI component state (rendered by the client bundle separately) **may** own state outside `ctx.effect()` as long as they handle reload (receiving a new `ctx`, re-initializing their state from persisted config, notifying subscribers of the change). The Fiber disposal path cannot revive UI state that lived only in the renderer's memory; the row must re-emit it after a reload.
@@ -98,7 +98,7 @@ This ADR maps each to ACRYL's actual existing primitives and states which gaps a
 
 They do NOT need:
 - A separate tool registry.
-- A new `@acryl/blends-tools` service.
+- A new `@acryldev/blends-tools` service.
 - Special handling for multi-engine (DSH vs. pi). The unified `AcrylSurfaceTools` already abstracts that.
 
 **Impact on B1/B2:** B1's `BlendRuntimeAdapter` interface includes a reference to how Blend-agent tools are registered (`BlendAgentTools`, per Blends spec §10), but the actual registration mechanism (the typed provider contract) is inherited from `AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md`. No new tool infrastructure is needed. B1 must cite the exact line in `AGENT_CONTROL_SURFACE_CORDIS_DESIGN.md` where a Blend tool provider would install itself.

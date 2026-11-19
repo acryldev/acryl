@@ -1,14 +1,14 @@
 {
-  "name": "acryl-plugin-admin",
+  "name": "@acryldev/plugin-admin",
   "version": "0.1.0",
   "description": "ACRYL plugin administration, one Cordis plugin for every surface: Settings > Plugins Lifecycle and Architecture tabs (Client) and their private same-origin routes (Host), driven by the shared ctx.acrPluginLifecycle service",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-plugin-admin"
+    "directory": "plugins/plugin-admin"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-plugin-admin#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/plugin-admin#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -57,9 +57,9 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryl/ui": "workspace:*",
-    "acryl-control": "workspace:*",
-    "acryl-loopback-http": "workspace:*"
+    "@acryldev/ui": "workspace:*",
+    "@acryldev/control": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

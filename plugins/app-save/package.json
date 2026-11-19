@@ -1,12 +1,12 @@
 {
-  "name": "acryl-app-save",
+  "name": "@acryldev/app-save",
   "version": "0.1.0",
   "description": "Save an ACRYL app to its own git repository from inside the app (/app save, /app connect): the secret check and the private-to-public guard, through the user's own git and gh",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-app-save"
+    "directory": "plugins/app-save"
   },
   "type": "module",
   "main": "./index.js",
@@ -33,6 +33,10 @@
     "check": "pnpm run test"
   },
   "dependencies": {
-    "@webboxes/app-persistence": "workspace:*"
+    "@acryldev/app-persistence": "workspace:*"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/app-save#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

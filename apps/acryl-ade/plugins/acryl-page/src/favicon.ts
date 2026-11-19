@@ -1,5 +1,5 @@
 /**
- * The page's own icon: the ACRYL Blends logo (plugins/desktop/assets/acrylblends-logo.png at 64 px) inside an SVG, which is what a browser tab reads at 16 px. The wordmark is
+ * The page's own icon: the ACRYL Blends logo (plugins/desktop-shell/assets/acrylblends-logo.png at 64 px) inside an SVG, which is what a browser tab reads at 16 px. The wordmark is
  * unreadable that small. The frontend package the page borrows its scripts from ships DeepSeek's whale as favicon.svg, so the page answers every icon request itself and
  * never serves that file.
  */

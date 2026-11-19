@@ -2,7 +2,7 @@
  * `acryl plugin saved | save | version | pull`: the terminal face of the plugin hub (spec 044,
  * `specs/044-extension-persistence-and-registries/lifecycle.md`, "One service, four faces").
  *
- * The operations are `@webboxes/plugin-hub`'s `createPluginHub`, the same the `/plugin` chat command drives through the `acryl-plugin-hub`
+ * The operations are `@acryldev/plugin-hub-core`'s `createPluginHub`, the same the `/plugin` chat command drives through the `@acryldev/plugin-hub`
  * plugin, so a result is the same from either face. `saved`, `save` and `version` touch only the app instance's store and the plugin's own
  * folder, so they need no engine. `pull` installs, which only the running profile's own installer (DSH's `pluginManager`) can do: it boots the
  * profile like `acryl plugin list`, and refuses while the app that owns the profile is live, as `enable` and `disable` do.
@@ -14,8 +14,8 @@ import { isAbsolute, resolve } from 'node:path'
 import {
   createPluginHub, findSourceFolder, homePluginsDir, projectPluginsDir, firstReleasePort, githubReleasesOverHttps, githubReleasesViaGh, httpsDownload, npmRegistryOverHttps, PluginStore, storeRootOf,
   type InstallerPort, type PluginHub, type PullResult, type NpmPublishResult, type SaveResult, type ShareResult, type StoredVersion, type UpdateResult, type VersionBump, firstRegistryPort, gitCli, githubCli, npmCli, npmRegistryViaCli,
-} from '@webboxes/plugin-hub'
-import { processIsAlive, readLock, resolveAcrylDshHome, runLockFileForDshHome, selectInstance } from 'acryl-harness-runtime'
+} from '@acryldev/plugin-hub-core'
+import { processIsAlive, readLock, resolveAcrylDshHome, runLockFileForDshHome, selectInstance } from '@acryldev/harness-runtime'
 import { startDirectHost } from './direct.ts'
 
 export type PluginHubAction = 'saved' | 'save' | 'version' | 'pull' | 'update' | 'share'

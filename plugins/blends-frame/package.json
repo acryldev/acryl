@@ -1,16 +1,16 @@
 {
-  "name": "acryl-blends-frame",
+  "name": "@acryldev/blends-frame",
   "version": "0.1.6",
   "description": "ACRYL Blends frame: the workbench around an app being built - a top bar, the branches and versions on the left, the app alone in the centre, and the agents on the right - as one Cordis plugin with a Host and a client half",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-blends-frame"
+    "directory": "plugins/blends-frame"
   },
-  "homepage": "https://github.com/acrylblends/acrylblends/tree/main/ide/acryl-blends-frame#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/blends-frame#readme",
   "bugs": {
-    "url": "https://github.com/acrylblends/acrylblends/issues"
+    "url": "https://github.com/acryldev/acryl/issues"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -59,12 +59,12 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@webboxes/blends-core": "0.5.0",
-    "@webboxes/plugin-hub": "0.2.2",
-    "acryl-app-shell": "workspace:*",
-    "acryl-loopback-http": "workspace:*",
-    "acryl-versions": "workspace:*",
-    "acryl-workspace": "workspace:*",
+    "@acryldev/blends-core": "workspace:^",
+    "@acryldev/plugin-hub-core": "workspace:^",
+    "@acryldev/app-shell": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*",
+    "@acryldev/versions": "workspace:*",
+    "@acryldev/workspace": "workspace:*",
     "yaml": "2.9.0"
   },
   "peerDependencies": {
@@ -77,7 +77,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@acryl/ui": "workspace:*",
+    "@acryldev/ui": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/cordis-plugin-loader": "1.0.5",
     "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",

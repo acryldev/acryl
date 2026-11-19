@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-diagnostics',
+  name: '@acryldev/diagnostics',
   entry: { index: 'src/index.ts' },
   outDir: 'lib',
   format: 'esm',

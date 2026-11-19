@@ -1,7 +1,7 @@
 /** A terminal or PTY agent tab's screen: the live session moved into the panel while the tab is shown, moved out (not ended) when it is not. */
 
 import { useEffect, useRef, useSyncExternalStore } from 'react'
-import type { TerminalRegistry } from 'acryl-workspace/ui'
+import type { TerminalRegistry } from '@acryldev/workspace/ui'
 
 export interface TerminalViewProps {
   readonly terminals: TerminalRegistry

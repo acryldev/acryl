@@ -1,4 +1,4 @@
-// Regenerates runtime/acryl-harness-runtime/src/web-favicon-data.ts from assets/brand/favicon/.
+// Regenerates runtime/harness-runtime/src/web-favicon-data.ts from assets/brand/favicon/.
 // Run: node scripts/generate-web-favicon.mjs
 import { readFileSync, writeFileSync } from 'node:fs'
 
@@ -11,4 +11,4 @@ export const FAVICON_16_BASE64 = '${b64('favicon-16x16.png')}'
 export const FAVICON_32_BASE64 = '${b64('favicon-32x32.png')}'
 export const APPLE_TOUCH_ICON_BASE64 = '${b64('apple-touch-icon.png')}'
 `
-writeFileSync(new URL('runtime/acryl-harness-runtime/src/web-favicon-data.ts', root), out)
+writeFileSync(new URL('runtime/harness-runtime/src/web-favicon-data.ts', root), out)

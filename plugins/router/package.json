@@ -1,14 +1,14 @@
 {
-  "name": "acryl-router",
+  "name": "@acryldev/router",
   "version": "0.1.0",
   "description": "The ACRYL router, one Cordis service: plugin-owned routes and middleware on Web-standard Request and Response, with an in-process fetch every surface can call",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-router"
+    "directory": "plugins/router"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-router#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/router#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

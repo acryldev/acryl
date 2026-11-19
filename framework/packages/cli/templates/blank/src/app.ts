@@ -1,9 +1,9 @@
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
-import * as door from '../plugins/acryl-door/src/index.ts'
-import * as nodeServer from '../plugins/acryl-node-server/src/index.ts'
-import * as router from '../plugins/acryl-router/src/index.ts'
+import * as door from '../plugins/door/src/index.ts'
+import * as nodeServer from '../plugins/node-server/src/index.ts'
+import * as router from '../plugins/router/src/index.ts'
 import { extensions } from '../plugins/extensions/index.ts'
 import * as home from '../plugins/home/index.ts'
 import { type AppInstance, instance } from '../plugins/instance/index.ts'
@@ -21,9 +21,9 @@ import { FRAME_MOUNT_PREFIX, routes } from './routes.ts'
 
 /** The plugins this app's code provides. `blend.yaml` chooses, orders and configures them, and adds the app's own plugins from `plugins/` by name. */
 export const registry = {
-  'acryl-router': router,
-  'acryl-node-server': nodeServer,
-  'acryl-door': door,
+  '@acryldev/router': router,
+  '@acryldev/node-server': nodeServer,
+  '@acryldev/door': door,
   home,
   extensions,
   'plugin-share': pluginShare,
@@ -80,13 +80,13 @@ export interface AppOptions {
 /** The rows the frame host provides: the app contributes only the plugins that are its own. */
 const HOST_ROWS = [
   'instance',
-  'acryl-router',
-  'acryl-node-server',
-  'acryl-web-server',
-  'acryl-page',
+  '@acryldev/router',
+  '@acryldev/node-server',
+  '@acryldev/web-server',
+  '@acryldev/page',
   'manifest',
   'save',
-  'acryl-door',
+  '@acryldev/door',
 ]
 
 /**
@@ -106,8 +106,8 @@ export async function composeInto(
   // Rows left out: the server (and the door, which needs it) when the app is reached in process or inside the frame host; the door when it is switched
   // off.
   const leaveOut = new Set<string>(options.host === true ? HOST_ROWS : [])
-  if (!own) leaveOut.add('acryl-node-server').add('acryl-door')
-  if (!doorEnabled()) leaveOut.add('acryl-door')
+  if (!own) leaveOut.add('@acryldev/node-server').add('@acryldev/door')
+  if (!doorEnabled()) leaveOut.add('@acryldev/door')
   // A pull runs a stranger's code and a publish leaves the machine: development only, like the door.
   if (process.env.NODE_ENV === 'production') leaveOut.add('plugin-share')
   const manifest = without(read, ...leaveOut)

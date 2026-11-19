@@ -13,14 +13,14 @@
  * without touching anything else. It is the user's project from the first second: nothing in it is ACRYL-branded, it gets its own git repository, and its
  * license is the user's choice (closed source and commercial included; the framework and the harness it uses are MIT). Pure file planning plus one write boundary.
  *
- * @module acryl-harness-runtime/app/new-app
+ * @module @acryldev/harness-runtime/app/new-app
  */
 
 import { spawnSync } from 'node:child_process'
 import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { manifestDigest } from '@webboxes/blends-core'
-import { HOME_PLUGINS_FOLDER, STORE_FOLDER } from '@webboxes/plugin-hub'
+import { manifestDigest } from '@acryldev/blends-core'
+import { HOME_PLUGINS_FOLDER, STORE_FOLDER } from '@acryldev/plugin-hub-core'
 import { isMap, isSeq, parseDocument, stringify } from 'yaml'
 import { brandIdentity, type BrandIdentity } from '../blueprint/brand-identity.ts'
 import { builtInCatalog, type Blueprint } from '../blueprint/blueprint.ts'
@@ -134,7 +134,7 @@ function fromExistingApp(source: { readonly manifestText: string, readonly lockT
   const rows = document.getIn(['spec', 'rows'])
   if (isSeq(rows)) {
     for (const row of rows.items) {
-      if (isMap(row) && row.get('name') === 'acryl-brand') {
+      if (isMap(row) && row.get('name') === '@acryldev/brand') {
         row.setIn(['config', 'name'], title)
         for (const [key, value] of Object.entries(brand ?? {})) if (value !== undefined) row.setIn(['config', key], value)
       }
@@ -176,9 +176,9 @@ jobs:
         with:
           node-version: 24
       - name: The app definition is valid
-        run: npx --yes --package @webboxes/blends-core@0.1 blends-validate blend.yaml
+        run: npx --yes --package @acryldev/blends-core@0.1 blends-validate blend.yaml
       - name: No secrets in the repository
-        run: npx --yes --package @webboxes/app-persistence@0.1 acryl-secret-check .
+        run: npx --yes --package @acryldev/app-persistence@0.1 acryl-secret-check .
 `
 }
 

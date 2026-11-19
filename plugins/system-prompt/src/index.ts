@@ -12,7 +12,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import Schema from '@deepseek-ai/schemastery'
 import { DEFAULT_IDENTITY, DEFAULT_STYLE, type PromptSection, STYLE_SECTION, shapeSections, upstreamSnapshot } from './transform.ts'
 
-export const name = 'acryl-system-prompt'
+export const name = '@acryldev/system-prompt'
 export const inject = ['systemPrompt']
 
 export interface Config {
@@ -45,11 +45,11 @@ export function apply(ctx: Context, config: Config): void {
   ctx.provide('acrylSystemPrompt', { lastUpstream: () => upstream })
   const systemPrompt = (ctx as unknown as { systemPrompt: SystemPrompt }).systemPrompt
   if (config.style.trim() !== '')
-    ctx.effect(() => systemPrompt.section({ ...STYLE_SECTION, text: config.style }), 'acryl-system-prompt: reply style')
+    ctx.effect(() => systemPrompt.section({ ...STYLE_SECTION, text: config.style }), '@acryldev/system-prompt: reply style')
   const on = ctx.on.bind(ctx) as unknown as (name: 'system-prompt/assemble', listener: AssembleListener) => () => void
   ctx.effect(() => on('system-prompt/assemble', async (_assembly, _context, next) => {
     const assembled = await next()
     upstream = upstreamSnapshot(assembled.sections)
     return { ...assembled, sections: shapeSections(assembled.sections, config) }
-  }), 'acryl-system-prompt: assemble listener')
+  }), '@acryldev/system-prompt: assemble listener')
 }

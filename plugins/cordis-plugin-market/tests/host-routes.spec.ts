@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Context } from '@deepseek-ai/cordis'
-import type { SettingsScope } from 'acryl-settings'
+import type { SettingsScope } from '@acryldev/settings'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   DSH_1024STORE_ADAPTER_ID,

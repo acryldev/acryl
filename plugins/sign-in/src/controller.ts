@@ -14,7 +14,7 @@ import {
   type DefaultModelAdoptionPort,
   type RouteActivationPort,
   type SignInAttemptView,
-} from 'acryl-control'
+} from '@acryldev/control'
 import type { SignInProviderView, SignInProvidersResponse } from './contract.ts'
 import {
   DEEPSEEK_ACCOUNT_KEY, DEEPSEEK_ACCOUNT_ROUTE, accountAttemptId, accountAttemptView,

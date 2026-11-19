@@ -10,7 +10,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-control'
+import type {} from '@acryldev/control'
 import type {} from 'acrylblends/cordis/router'
 import type {} from 'acrylblends/cordis/router-http'
 import { inspectCordisContext } from './architecture/inspector.ts'
@@ -20,7 +20,7 @@ import { lifecycleRoutes } from './lifecycle/route.ts'
 import { registerPluginTools } from './tools/plugin-tools.ts'
 import { PluginLifecycleView, type PluginLifecycleBlendSource } from './lifecycle/view.ts'
 
-export const name = 'acryl-plugin-admin'
+export const name = '@acryldev/plugin-admin'
 export const inject = ['router', 'routerHttp']
 
 /** Optional Desktop-provided launcher state; a surface without it falls back to {@link unlockedBlueprintSource}. */
@@ -45,7 +45,7 @@ export function unlockedBlueprintSource(rows: readonly unknown[]): PluginLifecyc
 
 function reporter(ctx: Context): (operation: string, cause: unknown) => void {
   return (operation, cause) => {
-    ctx.logger.error(`acryl-plugin-admin: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.error(`@acryldev/plugin-admin: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
 }
 
@@ -56,7 +56,7 @@ export function apply(ctx: Context): void {
   ctx.routerHttp.mount(PLUGIN_ADMIN_API_PREFIX)
 
   ctx.plugin({
-    name: 'acryl-plugin-admin-lifecycle',
+    name: '@acryldev/plugin-admin-lifecycle',
     inject: ['router', 'acrPluginLifecycle'],
     apply(child: Context): void {
       const view = new PluginLifecycleView(
@@ -72,11 +72,11 @@ export function apply(ctx: Context): void {
   // Layer 1 of Agent Control: the agent lists and switches plugins through the same lifecycle service. It is a
   // separate child so a surface without the tool registry still gets the routes above.
   ctx.plugin({
-    name: 'acryl-plugin-admin-agent-tools',
+    name: '@acryldev/plugin-admin-agent-tools',
     inject: ['acrylTools', 'acrPluginLifecycle'],
     apply(child: Context): void {
       const view = new PluginLifecycleView(child, child.acrPluginLifecycle, () => undefined)
-      child.effect(() => registerPluginTools(child, view), 'acryl-plugin-admin: plugin lifecycle agent tools')
+      child.effect(() => registerPluginTools(child, view), '@acryldev/plugin-admin: plugin lifecycle agent tools')
     },
   })
 }

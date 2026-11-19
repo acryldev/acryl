@@ -12,7 +12,7 @@ src/
   profile/       desktop profiles: discovery, selection, checkpoint, materialization, BLEND consumption
   plugins/       plugin inventory, reconcile, watch, market selection, install recovery, package manager
     lifecycle/   Desktop's lifecycle authority (which rows the user may toggle, the market bridge) and its state; the
-                 renderer-facing view, routes and Settings tabs are the shared `plugins/acryl-plugin-admin`
+                 renderer-facing view, routes and Settings tabs are the shared `plugins/plugin-admin`
   startup/       startup generation, recovery window and controller, failure routing, renderer boot health
   diagnostics/   logging, log files, secret masking, diagnostic export
   updates/       update checks, downloads, lifecycle, scheduling
@@ -22,7 +22,7 @@ src/
   windows/       Windows-only adapters for upstream agent presets and the ACL sandbox
   runtime/       web server wrapper, port policy, packaged-runtime paths
   client/        browser half (its own tsconfig): settings, plugin lifecycle, plugin architecture, workspaces.
-                 The advanced shell (frame, layout, slots) is no longer here: it moved to `plugins/acryl-workspace/src/client/shell`
+                 The advanced shell (frame, layout, slots) is no longer here: it moved to `plugins/workspace/src/client/shell`
                  so Web and Desktop share it. Desktop keeps only its native parts.
   native-ui/     framework-free HTML pages and their scripts (its own tsconfig and Vite build)
 tests/           mirrors src/ by domain; packaging and release tests stay at the root

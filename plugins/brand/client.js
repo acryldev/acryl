@@ -1,4 +1,4 @@
-// acryl-brand (browser half). A bundle without a build step: CommonJS in the module-loader wrapper, `react` from the app.
+// @acryldev/brand (browser half). A bundle without a build step: CommonJS in the module-loader wrapper, `react` from the app.
 // Reads the identity the host half published as window.__ACRYL_BRAND__ and applies it: sidebar name and mark, conversation
 // hero mark, accent color and font through the theme service, and the tab or window title.
 window.__ModuleLoader__.load({ id: 'acryl-brand', factory: (require) => {
@@ -6,7 +6,7 @@ var module = { exports: {} }; var exports = module.exports;
 
 const React = require('react')
 const h = React.createElement
-const SOURCE = 'acryl-brand'
+const SOURCE = '@acryldev/brand'
 
 function identity() {
   const value = typeof window === 'undefined' ? undefined : window.__ACRYL_BRAND__

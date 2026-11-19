@@ -27,13 +27,13 @@ const ROOTS = ['runtime', 'apps', 'plugins', 'scripts']
  * The only places allowed to look at the OS home or the placement variables, each with its reason. Anything else is a hidden Singleton.
  */
 const ALLOWED: Readonly<Record<string, string>> = {
-  'runtime/acryl-harness-runtime/src/instance/select.ts': 'the selector: the one place an app instance is chosen',
+  'runtime/harness-runtime/src/instance/select.ts': 'the selector: the one place an app instance is chosen',
   // The framework's selector for Blend apps (personHome, acrylRoot: ~/.acryl, moved by ACRYL_HOME for isolated runs), the counterpart of
   // src/instance/select.ts outside ACRYL's runtime; framework/scripts/lib/bulkhead.test.mjs owns its rule. One file, one reason: every other
   // library plugin stays under this scan.
   'plugins/instance/home.ts': 'the framework\'s instance home selector for Blend apps, the counterpart of src/instance/select.ts outside ACRYL\'s runtime',
-  'plugins/acryl-workspace/src/pty/service.ts': 'a terminal starts in the user\'s own home folder when the cwd is gone; not ACRYL state',
-  'plugins/acryl-launcher-desktop/blend/host/index.ts': 'the launcher Blend runs outside ACRYL\'s runtime (no appInstance); its home is ~/.acryl, the one home of every ACRYL app',
+  'plugins/workspace/src/pty/service.ts': 'a terminal starts in the user\'s own home folder when the cwd is gone; not ACRYL state',
+  'plugins/launcher-desktop/blend/host/index.ts': 'the launcher Blend runs outside ACRYL\'s runtime (no appInstance); its home is ~/.acryl, the one home of every ACRYL app',
   'scripts/graft-deepscan.mjs': 'a repository indexing tool; not part of any app',
   'scripts/real-home-guard.mjs': 'the gate\'s auditor: it must know the OS user\'s real homes to prove no test changed one; it only reads them, and it is not part of any app',
 }
@@ -102,13 +102,13 @@ describe('bulkhead architecture', () => {
   it('the framework selector is allowed by file, so a home read in another library plugin is still caught', async () => {
     const root = await mkdtemp(join(tmpdir(), 'bulkhead-'))
     try {
-      for (const folder of ['plugins/instance', 'plugins/desktop/src']) {
+      for (const folder of ['plugins/instance', 'plugins/desktop-shell/src']) {
         mkdirSync(join(root, folder), { recursive: true })
         writeFileSync(join(root, folder, 'home.ts'), "import { homedir } from 'node:os'\nexport const home = homedir()\n")
       }
       // plugin.json is the library marker; the exemption is a file, not a marker, so the desktop copy stays caught.
       writeFileSync(join(root, 'plugins', 'desktop', 'plugin.json'), '{}')
-      expect(offencesIn(root)).toEqual(['plugins/desktop/src/home.ts:2 homedir(): export const home = homedir()'])
+      expect(offencesIn(root)).toEqual(['plugins/desktop-shell/src/home.ts:2 homedir(): export const home = homedir()'])
     } finally {
       await rm(root, { recursive: true, force: true })
     }
@@ -160,7 +160,7 @@ describe('bulkhead behavior', () => {
     temporary.push(root)
     const app = (name: string, title: string): string => {
       const dir = join(root, name); mkdirSync(join(dir, 'plugins'), { recursive: true })
-      writeFileSync(join(dir, 'blend.yaml'), `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blend\nmetadata:\n  id: app.${name}\n  name: ${title}\n  version: 0.1.0\nspec:\n  runtime: cordis\n  lineage:\n    blueprint: acryl.blank\n    blueprintVersion: 0.1.0\n  rows:\n    - id: brand\n      name: acryl-brand\n      config:\n        name: ${title}\n`)
+      writeFileSync(join(dir, 'blend.yaml'), `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blend\nmetadata:\n  id: app.${name}\n  name: ${title}\n  version: 0.1.0\nspec:\n  runtime: cordis\n  lineage:\n    blueprint: acryl.blank\n    blueprintVersion: 0.1.0\n  rows:\n    - id: brand\n      name: @acryldev/brand\n      config:\n        name: ${title}\n`)
       return dir
     }
     const music = await bootApp(app('music-editor', 'Music Editor'))

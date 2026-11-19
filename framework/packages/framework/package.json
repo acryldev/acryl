@@ -1,5 +1,5 @@
 {
-  "name": "acrylblends-framework",
+  "name": "@acryldev/framework",
   "version": "0.5.0",
   "private": true,
   "description": "The ACRYL Framework without Cordis, as the public package acrylblends ships it: every upstream subpath, and the Node adapter at node-server.",
@@ -409,20 +409,20 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "devDependencies": {
-    "acryl-drivers": "workspace:*",
+    "@acryldev/drivers": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-db": "workspace:*",
-    "acryl-db-sqlite": "workspace:*",
-    "acryl-door": "workspace:*",
-    "acryl-inspect": "workspace:*",
-    "acryl-kv": "workspace:*",
-    "acryl-kv-db": "workspace:*",
-    "acryl-kv-json": "workspace:*",
-    "acryl-node-server": "workspace:*",
-    "acryl-router": "workspace:*",
-    "acryl-router-http": "workspace:*",
-    "acryl-state": "workspace:*",
+    "@acryldev/db": "workspace:*",
+    "@acryldev/db-sqlite": "workspace:*",
+    "@acryldev/door": "workspace:*",
+    "@acryldev/inspect": "workspace:*",
+    "@acryldev/kv": "workspace:*",
+    "@acryldev/kv-db": "workspace:*",
+    "@acryldev/kv-json": "workspace:*",
+    "@acryldev/node-server": "workspace:*",
+    "@acryldev/router": "workspace:*",
+    "@acryldev/router-http": "workspace:*",
+    "@acryldev/state": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"
   },
@@ -445,5 +445,14 @@
     "ws": {
       "optional": true
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "framework/packages/framework"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/framework/packages/framework#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

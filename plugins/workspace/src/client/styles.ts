@@ -574,7 +574,7 @@ body [data-sidebar-right-guide] { flex: 1 1 auto; min-height: 0; overflow-y: aut
 /** Install styles owned by one Workspace Client Fiber. */
 export function installWorkspaceStyles(): () => void {
   const style = document.createElement('style')
-  style.dataset.plugin = 'acryl-workspace'
+  style.dataset.plugin = '@acryldev/workspace'
   style.textContent = xtermCss + WORKSPACE_STYLES
   document.head.appendChild(style)
   return () => { style.remove() }

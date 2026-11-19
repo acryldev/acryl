@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-app-shell'
+const PACKAGE_NAME = '@acryldev/app-shell'
 
 export default defineConfig([
   {

@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useState, useSyncExternalStore } from 'react'
-import type { UseSessions } from '@acryl/ui/frame'
+import type { UseSessions } from '@acryldev/ui/frame'
 import type { KanbanBoard, KanbanColumnId, WorkspaceState, WorkspaceTile } from '../canvas/state.ts'
 import type { SessionNavigator } from '../chat/chat-selection.ts'
 import type { WorkspaceShellState } from '../worktrees/shell-state.ts'

@@ -1,5 +1,5 @@
 /**
- * A small client scope over ACRYL's Desktop preferences (`acryl-settings`, served by `/api/desktop/preferences`).
+ * A small client scope over ACRYL's Desktop preferences (`@acryldev/settings`, served by `/api/desktop/preferences`).
  *
  * DSH 0.2 removed the client `settingsScope` the Desktop settings page used to bind its namespaces. ACRYL's preferences are its own
  * now, so the page reads and writes them through the Host route with this scope: the same snapshot shape the section already renders

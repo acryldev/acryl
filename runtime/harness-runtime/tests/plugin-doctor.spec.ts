@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { PluginLifecycleEntryView, PluginLifecycleSnapshot } from 'acryl-control'
+import type { PluginLifecycleEntryView, PluginLifecycleSnapshot } from '@acryldev/control'
 import { diagnosePluginLifecycle } from '../src/plugin-doctor.ts'
 
 const roots: string[] = []
@@ -144,7 +144,7 @@ describe('diagnosePluginLifecycle', () => {
       profileName: 'acryl',
       profileDir: dir,
       statePath: statePath(),
-      snapshot: snapshot([entry('include:ui-acryl', { moduleName: '@acryl/dsh-client-ui-brand-acryl' })]),
+      snapshot: snapshot([entry('include:ui-acryl', { moduleName: '@acryldev/dsh-client-ui-brand-acryl' })]),
       resolvePackageJson: packageName => {
         if (packageName === 'acryl-plugin-gone') throw new Error('Cannot find module')
         return join(dir, 'node_modules', packageName, 'package.json')

@@ -10,7 +10,7 @@
   "omitted": {
     "reason": "not part of the port",
     "packages/chord/src/sqlite/cloudflare.ts": "a host adapter (Durable Object storage); it comes with the hosting adapters after spec 049 slice 3",
-    "packages/chord/src/sqlite/node.ts": "the driver, ported into acryl-db-sqlite",
+    "packages/chord/src/sqlite/node.ts": "the driver, ported into @acryldev/db-sqlite",
     "packages/chord/src/sqlite/index.ts": "the barrel; src/index.ts exports the port"
   },
   "files": {

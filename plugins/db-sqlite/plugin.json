@@ -1,17 +1,26 @@
 {
-  "name": "acryl-db-sqlite",
+  "name": "db-sqlite",
   "description": "The SQLite provider of the db port: one node:sqlite file in the app home (WAL), the app's numbered migrations applied on start, db provided to plugins. Vendored from ACRYL.",
-  "requires": ["acryl-db", "instance"],
+  "requires": [
+    "db",
+    "instance"
+  ],
   "inject": [],
-  "provides": ["db"],
+  "provides": [
+    "db"
+  ],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/schemastery": "3.18.4"
   },
-  "mount": "mount it after instance, either as a row in blend.yaml (`- id: db` / `name: acryl-db-sqlite` / `config: { migrations: migrations }`, registered in src/app.ts as 'acryl-db-sqlite') or as root.plugin(dbSqlite, { migrations: 'migrations' }); a relative path is read from the app's folder, and the migrations/ folder (001-name.sql, ...) sits next to src/. Then a plugin that declares inject: ['db'] calls await ctx.db.all('SELECT ...', value)",
-  "omit": ["**/*.test.*", "**/*.spec.*", "**/*.case.ts"],
+  "mount": "mount it after instance, either as a row in blend.yaml (`- id: db` / `name: @acryldev/db-sqlite` / `config: { migrations: migrations }`, registered in src/app.ts as '@acryldev/db-sqlite') or as root.plugin(dbSqlite, { migrations: 'migrations' }); a relative path is read from the app's folder, and the migrations/ folder (001-name.sql, ...) sits next to src/. Then a plugin that declares inject: ['db'] calls await ctx.db.all('SELECT ...', value)",
+  "omit": [
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/*.case.ts"
+  ],
   "imports": {
-    "#acryl-db-sqlite": "acryl-db-sqlite/src/index.ts"
+    "#acryl-db-sqlite": "db-sqlite/src/index.ts"
   },
   "entries": {
     "": "src/index.ts",

@@ -98,7 +98,7 @@ export function readTemplateDesktopPath(templateDir: string): string | undefined
   return (JSON.parse(readFileSync(file, 'utf8')) as { desktopPath?: string }).desktopPath
 }
 
-/** Record where the desktop window opens in package.json (`acrylblends.desktopPath`), read by `plugins/desktop/main.ts`. */
+/** Record where the desktop window opens in package.json (`acrylblends.desktopPath`), read by `plugins/desktop-shell/main.ts`. */
 export function writeDesktopPath(appDir: string, path: string): void {
   const file = join(appDir, 'package.json')
   const manifest = JSON.parse(readFileSync(file, 'utf8')) as {
@@ -158,7 +158,7 @@ export function mergeDependencies(
   return [...added, ...moved.map(([name]) => name)]
 }
 
-/** Add `package.json` "imports" entries (`#acryl-kv`: `./plugins/acryl-kv/src/index.ts`); an entry the app already has is kept. Returns the names added. */
+/** Add `package.json` "imports" entries (`#acryl-kv`: `./plugins/kv/src/index.ts`); an entry the app already has is kept. Returns the names added. */
 export function mergeImports(
   appDir: string,
   imports: Readonly<Record<string, string>>,

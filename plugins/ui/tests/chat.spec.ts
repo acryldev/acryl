@@ -14,7 +14,7 @@ interface SessionState {
 
 const startPage = (): SessionState => ({ blank: true, awaitingFirstTurn: true, promptAttempted: false, running: false })
 
-/** `@acryl/ui`'s client on real Cordis with DSH's session and conversation services faked down to the reads `acrylChat` makes. */
+/** `@acryldev/ui`'s client on real Cordis with DSH's session and conversation services faked down to the reads `acrylChat` makes. */
 async function mount(session: SessionState, activeTargets: Set<string> = new Set()) {
   const ctx = new Context()
   const notices: Array<[string, string]> = []

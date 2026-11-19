@@ -23,7 +23,7 @@
  * neither set the default is `<~/.acryl>/.dsh` rather than the harness's own
  * bare `~/.dsh`.
  *
- * @module acryl-harness-runtime/acryl-home
+ * @module @acryldev/harness-runtime/acryl-home
  */
 
 import { developmentInstance, instanceEnvironment, osHomeDirectory, selectInstance } from './instance/index.ts'

@@ -23,41 +23,41 @@ apps/acryl-desktop/dist/
 apps/acryl-desktop/lib/
 
 plugins/cordis-plugin-market/lib/
-plugins/dsh-client-ui-brand-acryl/lib/
-plugins/acryl-ui/lib/
-plugins/acryl-ui/registry-seed/
-plugins/acryl-mount-anchors/lib/
-plugins/acryl-command-reply/lib/
-plugins/acryl-shortcuts/lib/
-plugins/acryl-settings/lib/
-plugins/acryl-system-prompt/lib/
-plugins/acryl-sign-in/lib/
-plugins/acryl-launcher-desktop/lib/
-plugins/acryl-workspace/lib/
-plugins/acryl-plugin-admin/lib/
-plugins/acryl-support/lib/
-plugins/acryl-agent-control/lib/
-plugins/acryl-app-shell/lib/
+plugins/brand-client/lib/
+plugins/ui/lib/
+plugins/ui/registry-seed/
+plugins/mount-anchors/lib/
+plugins/command-reply/lib/
+plugins/shortcuts/lib/
+plugins/settings/lib/
+plugins/system-prompt/lib/
+plugins/sign-in/lib/
+plugins/launcher-desktop/lib/
+plugins/workspace/lib/
+plugins/plugin-admin/lib/
+plugins/support/lib/
+plugins/agent-control/lib/
+plugins/app-shell/lib/
 # The framework library's build output (spec 051 T017): its packages live flat in plugins/.
-plugins/acryl-db/lib/
-plugins/acryl-db-sqlite/lib/
-plugins/acryl-door/lib/
-plugins/acryl-inspect/lib/
-plugins/acryl-kv/lib/
-plugins/acryl-kv-db/lib/
-plugins/acryl-kv-json/lib/
-plugins/acryl-node-server/lib/
-plugins/acryl-page/lib/
-plugins/acryl-router/lib/
-plugins/acryl-router-http/lib/
-plugins/acryl-state/lib/
-plugins/acryl-web-server/lib/
+plugins/db/lib/
+plugins/db-sqlite/lib/
+plugins/door/lib/
+plugins/inspect/lib/
+plugins/kv/lib/
+plugins/kv-db/lib/
+plugins/kv-json/lib/
+plugins/node-server/lib/
+plugins/page/lib/
+plugins/router/lib/
+plugins/router-http/lib/
+plugins/state/lib/
+plugins/web-server/lib/
 plugins/agent/lib/
 plugins/drivers/lib/
 plugins/coding-capabilities/lib/
 plugins/agent-panel/lib/
 plugins/builder/lib/
-plugins/desktop/lib/
+plugins/desktop-shell/lib/
 plugins/desktop-web/lib/
 plugins/driver-acp/lib/
 plugins/driver-pty/lib/
@@ -70,15 +70,15 @@ plugins/openai/lib/
 plugins/plugin-share/lib/
 plugins/sandbox/lib/
 plugins/save/lib/
-plugins/settings/lib/
+plugins/app-settings/lib/
 plugins/showcase/lib/
 plugins/tasks/lib/
-examples/acryl-todo/lib/
-plugins/acryl-db-postgres/lib/
-plugins/acryl-db-pglite/lib/
-runtime/acryl-loopback-http/lib/
-runtime/acryl-diagnostics/lib/
-runtime/acryl-web-service/lib/
+examples/todo/lib/
+plugins/db-postgres/lib/
+plugins/db-pglite/lib/
+runtime/loopback-http/lib/
+runtime/diagnostics/lib/
+runtime/web/lib/
 
 apps/acryl-web/lib/
 release-artifacts/
@@ -100,7 +100,7 @@ release-artifacts/
 #worktrees are used by git to manage multiple working trees attached to the same repository. They are not typically needed in the main repository and can be ignored.
 .worktrees/
 
-plugins/acryl-ui/.scratch-validate-registry-tests/
+plugins/ui/.scratch-validate-registry-tests/
 
 # Throwaway ACRYL_HOME for reproducing fresh-install/cold-start behavior
 # (never-used package-fallback links, first profile creation, etc.) without
@@ -119,8 +119,8 @@ plugins/acryl-ui/.scratch-validate-registry-tests/
 # Conference presenter scripts and rehearsal screenshots: kept locally, not published (owner, 2026-10-19)
 docs/demo/
 # The Blends frame's plugins (spec 051): build output and the app-context test apps.
-plugins/acryl-app-context/lib/
-plugins/acryl-blends-frame/lib/
-plugins/acryl-versions/lib/
-plugins/acryl-app-context/tests/.apps/
-plugins/acryl-app-context/tests/.apps-*/
+plugins/app-context/lib/
+plugins/blends-frame/lib/
+plugins/versions/lib/
+plugins/app-context/tests/.apps/
+plugins/app-context/tests/.apps-*/

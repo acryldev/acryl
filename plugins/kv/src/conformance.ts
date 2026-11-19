@@ -1,6 +1,6 @@
 /**
  * The `kv` conformance suite: what every provider of the port must do, as Vitest tests. A provider passes it to be accepted
- * (`describeKvConformance('acryl-kv-json', open)` in its own tests), so the same cases run on a file and on SQL.
+ * (`describeKvConformance('@acryldev/kv-json', open)` in its own tests), so the same cases run on a file and on SQL.
  */
 
 import { afterEach, describe, expect, it } from 'vitest'

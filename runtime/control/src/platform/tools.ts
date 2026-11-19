@@ -1,10 +1,10 @@
 /**
  * The tools port of the ACRYL platform: what ACRYL's own Host plugins need to give an agent a tool, and to have a say in whether a call runs, without
  * importing a DeepSeek Harness package. A plugin injects `acrylTools` (optional where a chat may not exist), defines tools with {@link defineAcrylTool}
- * and registers them; a policy decides allow, deny or ask before a call runs. The provider is an adapter in the engine seam (`acryl-harness-runtime`),
+ * and registers them; a policy decides allow, deny or ask before a call runs. The provider is an adapter in the engine seam (`@acryldev/harness-runtime`),
  * so the registry behind it can change without touching a plugin.
  *
- * @module acryl-control/platform/tools
+ * @module @acryldev/control/platform/tools
  */
 
 /** A parameter of a tool: a JSON Schema type, whether it must be given, and a description for the model. */

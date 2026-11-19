@@ -65,6 +65,6 @@ The license of these pages and of the framework source they describe is in [LICE
 
 ## TypeScript in a Cordis app
 
-An app's `tsconfig.json` can extend `acryl-router/tsconfig.app.json` (ES2024 with the DOM types, strict). The DOM types are optional: every
+An app's `tsconfig.json` can extend `@acryldev/router/tsconfig.app.json` (ES2024 with the DOM types, strict). The DOM types are optional: every
 entry point's types also stand with only `"lib": ["ES2024"]` and `"types": ["node"]`, the setting a Host-only plugin uses so browser globals
 do not typecheck in server code (the router's `tests/no-dom` fixture checks this on every typecheck).

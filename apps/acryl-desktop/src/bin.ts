@@ -2,7 +2,7 @@
 
 import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { osHomeDirectory, selectInstance } from 'acryl-harness-runtime'
+import { osHomeDirectory, selectInstance } from '@acryldev/harness-runtime'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { exportDesktopDiagnostics } from './diagnostic-export.ts'

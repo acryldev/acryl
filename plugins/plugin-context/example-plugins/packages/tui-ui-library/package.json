@@ -2,7 +2,7 @@
   "name": "acryl-example-tui-ui-library",
   "version": "0.1.0",
   "private": true,
-  "description": "Terminal gallery of the ACRYL UI library (acryl-ui-tui): components, a Settings-style form and the color roles, opened with /gallery",
+  "description": "Terminal gallery of the ACRYL UI library (@acryldev/ui-tui): components, a Settings-style form and the color roles, opened with /gallery",
   "license": "MIT",
   "type": "module",
   "main": "./index.js",
@@ -20,7 +20,7 @@
     }
   },
   "dependencies": {
-    "acryl-ui-tui": "*"
+    "@acryldev/ui-tui": "*"
   },
   "acryl": {
     "apiVersion": 1,

@@ -376,7 +376,7 @@
       },
       {
         "id": "extension-context",
-        "name": "acryl-plugin-context"
+        "name": "@acryldev/plugin-context"
       }
     ]
   },
@@ -1021,15 +1021,15 @@
       },
       {
         "id": "ui-acryl",
-        "name": "dsh-client-ui-brand-acryl"
+        "name": "@acryldev/brand-client"
       },
       {
         "id": "community-market",
-        "name": "cordis-plugin-market"
+        "name": "@acryldev/cordis-plugin-market"
       },
       {
         "id": "extension-context",
-        "name": "acryl-plugin-context"
+        "name": "@acryldev/plugin-context"
       },
       {
         "id": "211f4ec3",

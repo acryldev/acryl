@@ -1,6 +1,6 @@
 import { Acryl } from 'acrylblends'
-import { error } from 'acryl-loopback-http'
-import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson } from 'acryl-loopback-http/router'
+import { error } from '@acryldev/loopback-http'
+import { INVALID_JSON, jsonBody, jsonContent, ownPage, readJson } from '@acryldev/loopback-http/router'
 import { RENDERER_BOOT_REPORT_PATH, type RendererBootReport } from './renderer-boot-contract.ts'
 
 export { RENDERER_BOOT_REPORT_PATH } from './renderer-boot-contract.ts'

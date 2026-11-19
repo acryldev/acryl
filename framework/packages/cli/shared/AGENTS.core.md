@@ -9,15 +9,15 @@ Start at `docs/framework/README.md`; `api/summary.md` is the one-page summary. R
 `api/context.md` (`c`), `cordis/validation.md` and `guides/validation.md`, `guides/helpers.md` (`streamSSE`), `concepts/middleware.md`, `cordis/plugin-lifecycle.md` (what a plugin
 owns and when it is unloaded), `cordis/mounting.md` and `cordis/node-server.md`. Pages marked "not yet available" describe parts that are not in this app.
 
-The docs write `import { Acryl } from 'acrylblends'` and `from 'acrylblends/<subpath>'`. In this app the framework is the vendored plugin source in `plugins/acryl-router/src`
+The docs write `import { Acryl } from 'acrylblends'` and `from 'acrylblends/<subpath>'`. In this app the framework is the vendored plugin source in `plugins/router/src`
 (read it, do not edit it: a change belongs in ACRYL, upstream), so from a file in `src/` import:
 
-- `../plugins/acryl-router/src/index.ts` for `Acryl`, `Context`, `HTTPException`, `connectionOf`, `getConnInfo` and the types;
-- `../plugins/acryl-router/src/middleware/index.ts` for every middleware (`cors`, `bodyLimit`, `trimTrailingSlash`, `loopbackOnly`, ...);
-- `../plugins/acryl-router/src/helpers/index.ts` for the helpers and validators (`streamSSE`, `schemaValidator`, `validator`, cookies, `testClient`, ...).
-- `../plugins/acryl-router/src/core/jsx/index.ts` for `acrylblends/jsx` (`jsx`, `Fragment`, the types), and `.../core/jsx/streaming.ts` for `acrylblends/jsx/streaming`.
+- `../plugins/router/src/index.ts` for `Acryl`, `Context`, `HTTPException`, `connectionOf`, `getConnInfo` and the types;
+- `../plugins/router/src/middleware/index.ts` for every middleware (`cors`, `bodyLimit`, `trimTrailingSlash`, `loopbackOnly`, ...);
+- `../plugins/router/src/helpers/index.ts` for the helpers and validators (`streamSSE`, `schemaValidator`, `validator`, cookies, `testClient`, ...).
+- `../plugins/router/src/core/jsx/index.ts` for `acrylblends/jsx` (`jsx`, `Fragment`, the types), and `.../core/jsx/streaming.ts` for `acrylblends/jsx/streaming`.
 
-**JSX: write `.tsx`.** The scripts in `package.json` run Node.js with `--import ./plugins/acryl-node-server/src/register.ts`, which compiles `.tsx` files with this app's own `typescript`; `tsconfig.json` sets `jsx: react-jsx` and `jsxImportSource: #acryl-jsx`, which `package.json`'s `imports` maps to the vendored runtime in `plugins/acryl-router`. See `src/about.tsx` (blank template) for a page and `test/app.test.ts` for how it is tested. Render a component with `.toString()` and return it with `c.html(...)`; import `jsx`, `Fragment` and the types from `../plugins/acryl-router/src/core/jsx/index.ts` when you need them. A command that starts the app without those scripts (a bare `node src/main.ts`) cannot load a `.tsx` file. Without a build step you can write the call JSX compiles to instead: `jsx('h1', { class: 'title' }, 'Hello')`, children after the props.
+**JSX: write `.tsx`.** The scripts in `package.json` run Node.js with `--import ./plugins/node-server/src/register.ts`, which compiles `.tsx` files with this app's own `typescript`; `tsconfig.json` sets `jsx: react-jsx` and `jsxImportSource: #acryl-jsx`, which `package.json`'s `imports` maps to the vendored runtime in `plugins/router`. See `src/about.tsx` (blank template) for a page and `test/app.test.ts` for how it is tested. Render a component with `.toString()` and return it with `c.html(...)`; import `jsx`, `Fragment` and the types from `../plugins/router/src/core/jsx/index.ts` when you need them. A command that starts the app without those scripts (a bare `node src/main.ts`) cannot load a `.tsx` file. Without a build step you can write the call JSX compiles to instead: `jsx('h1', { class: 'title' }, 'Hello')`, children after the props.
 
 **A plugin imports the framework by its package name**: `import { Acryl } from 'acrylblends'` (and `acrylblends/<subpath>`, for example
 `acrylblends/helpers`), which resolves to the same files as the relative paths above. Only files in `src/` use the relative paths. `App` is the
@@ -48,7 +48,7 @@ export function apply(ctx: Context) {
 ```
 
 ```yaml
-# blend.yaml, before the `acryl-node-server` row
+# blend.yaml, before the `@acryldev/node-server` row
     - id: notes
       name: notes
 ```
@@ -62,7 +62,7 @@ export function apply(ctx: Context) {
 - Something on the first screen (blank template): add `'home'` to `inject` and register a widget in an effect,
   `ctx.effect(() => ctx.home.widget({ id: 'notes', title: 'Notes', render: () => '<ul>...</ul>' }))`; it leaves the page with the plugin.
 - Data that must survive a restart goes in a file in `ctx.appInstance.home` (add `'appInstance'` to `inject`), written whole through a temporary
-  file and a rename; a variable starts again at every reload. With `plugins/acryl-state`: `ctx.state.cell<T>('notes.list', initial)` (add
+  file and a rename; a variable starts again at every reload. With `plugins/state`: `ctx.state.cell<T>('notes.list', initial)` (add
   `'state'` to `inject`), served as JSON at `/api/state/<key>` and streamed at `/api/state/<key>/events`.
 - Test it in `test/<name>.test.ts` without a socket: boot the app as `test/app.test.ts` does and use `app.root.router.request('/notes')`.
 

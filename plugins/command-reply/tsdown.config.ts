@@ -1,6 +1,6 @@
 import { defineConfig } from 'tsdown'
 
-const PACKAGE_NAME = 'acryl-command-reply'
+const PACKAGE_NAME = '@acryldev/command-reply'
 
 export default defineConfig([
   {

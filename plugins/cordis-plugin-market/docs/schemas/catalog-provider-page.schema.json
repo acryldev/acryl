@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:cordis-plugin-market:schema:catalog-provider-page:1.0.0",
+  "$id": "urn:@acryldev/cordis-plugin-market:schema:catalog-provider-page:1.0.0",
   "title": "DSH Community Market standard provider page",
   "description": "The untrusted page JSON returned by one standard HTTPS catalog endpoint. Only schemaVersion, items, and page are required. A page may contain at most 200 items and must also respect the effective requested or declared default limit. Host-observed provenance is intentionally absent and is injected only after validation.",
   "type": "object",

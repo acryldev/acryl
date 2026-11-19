@@ -1,5 +1,5 @@
 /**
- * "The agent is driving" bar with its kill switch, in plain DOM (the React one in `acryl-agent-control` shows the same states). Shown for the whole of a run asked for from
+ * "The agent is driving" bar with its kill switch, in plain DOM (the React one in `@acryldev/agent-control` shows the same states). Shown for the whole of a run asked for from
  * this page's panel (between the calls too), while a call runs, and after the person stopped the agent. Stop kills the page's control and asks the panel to stop the run (the
  * `acryl:stop-run` event on the window, which the panel listens for). It is marked as driver UI (so snapshots skip it) and as off limits to the agent (so
  * it can never press its own Stop or Allow buttons). Escape stops the agent too, while it is working.
@@ -12,7 +12,7 @@ const LABELS: Record<string, string> = { snapshot: 'looking at the page', click:
 /** Dispatched on the page's window by the Stop button: the agent panel in the same page cancels its run. */
 export const STOP_RUN_EVENT = 'acryl:stop-run'
 
-const STYLE_ID = 'acryl-door-indicator-style'
+const STYLE_ID = '@acryldev/door-indicator-style'
 const STYLES = `
 .acrylDoorBar { position: fixed; z-index: 2147483647; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
   padding: 8px 12px; border-radius: 8px; font: 13px/1.4 system-ui, sans-serif; color: #fff; background: #1f2937; box-shadow: 0 4px 16px rgba(0,0,0,.25); }

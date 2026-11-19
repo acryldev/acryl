@@ -6,10 +6,10 @@
  * 'root', and nothing above it catches the throw, so the window goes white.
  * That happens in two ways: the boot-order race (React renders before the
  * owner registers), and at any later time when the owner's plugin
- * (`acryl-workspace`, through `applyAdvancedShell`) is replaced: a hot reload
+ * (`@acryldev/workspace`, through `applyAdvancedShell`) is replaced: a hot reload
  * of its rebuilt bundle, or of any provider it injects, drops 'root' before
  * the new copy registers it again (reproduced 2026-10-13 on an isolated
- * Desktop by reloading `acryl-workspace` through the page's entry controller).
+ * Desktop by reloading `@acryldev/workspace` through the page's entry controller).
  * The assertion itself is pinned upstream behavior and stays untouched; this
  * reloads the page, which rebuilds the shell from the current bundles.
  *

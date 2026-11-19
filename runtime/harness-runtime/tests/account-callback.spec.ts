@@ -1,6 +1,6 @@
 /**
  * The terminal's DeepSeek account sign-in (`account-callback` capability, research R44) through a real Loader: the rows
- * the capability declares, the built `acryl-sign-in/account-callback`, a real loopback server, and a stand-in for DeepSeek's
+ * the capability declares, the built `@acryldev/sign-in/account-callback`, a real loopback server, and a stand-in for DeepSeek's
  * account service that uses `webServer` exactly as `dsh-deepseek-account-platform` does (`ctx.get('webServer')`, one exact
  * `/oauth/callback` route per attempt). The server must be visible to the account row only.
  */
@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import { ACCOUNT_SIGN_IN_SERVICE, type AccountSignInPort } from 'acryl-control'
+import { ACCOUNT_SIGN_IN_SERVICE, type AccountSignInPort } from '@acryldev/control'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CODING_CAPABILITY_COMPOSITIONS } from '@acryldev/coding-capabilities'
 
@@ -81,7 +81,7 @@ afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: 
 async function mount() {
   const root = mkdtempSync(join(tmpdir(), 'acryl-account-callback-'))
   roots.push(root)
-  writeFileSync(join(root, 'callback.mjs'), `export * from ${JSON.stringify(import.meta.resolve('acryl-sign-in/account-callback'))}\n`)
+  writeFileSync(join(root, 'callback.mjs'), `export * from ${JSON.stringify(import.meta.resolve('@acryldev/sign-in/account-callback'))}\n`)
   writeFileSync(join(root, 'account.mjs'), FAKE_ACCOUNT)
   writeFileSync(join(root, 'neighbor.mjs'), NEIGHBOR)
   const { callback, accountIsolate } = declaredRows()

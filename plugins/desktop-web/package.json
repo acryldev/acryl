@@ -1,5 +1,5 @@
 {
-  "name": "acryl-desktop-web",
+  "name": "@acryldev/desktop-web",
   "version": "0.1.0",
   "description": "Run a plain Acryl app (`export default app`) as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron. `acrylblends add desktop` picks this one for an app without the Blend plugins.",
   "license": "MIT",
@@ -30,7 +30,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-instance": "workspace:*",
+    "@acryldev/instance": "workspace:*",
     "acrylblends": "workspace:*"
   },
   "peerDependencies": {

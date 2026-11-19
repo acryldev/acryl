@@ -1,14 +1,14 @@
 {
-  "name": "acryl-app-settings",
+  "name": "@acryldev/app-settings",
   "version": "0.1.0",
   "description": "Validated settings per namespace in one YAML file in the app's home: defaults, base and stored layers, watch, update.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/settings"
+    "directory": "plugins/app-settings"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/settings#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/app-settings#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -26,7 +26,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-instance": "workspace:*",
+    "@acryldev/instance": "workspace:*",
     "@deepseek-ai/schemastery": "3.18.4",
     "yaml": "2.9.0"
   },

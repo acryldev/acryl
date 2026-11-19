@@ -4,10 +4,10 @@
  * live hub with exactly one owner, and the handshake answers 101 in every arrangement.
  */
 import { Context } from '@deepseek-ai/cordis'
-import { name as routerName, apply as routerApply } from 'acryl-router'
-import * as nodeServer from 'acryl-node-server'
-import * as routerHttp from 'acryl-router-http'
-import * as webServer from 'acryl-web-server'
+import { name as routerName, apply as routerApply } from '@acryldev/router'
+import * as nodeServer from '@acryldev/node-server'
+import * as routerHttp from '@acryldev/router-http'
+import * as webServer from '@acryldev/web-server'
 import WebSocket from 'ws'
 import { afterEach, describe, expect, it } from 'vitest'
 import { appFolder, removeFolders } from '../harness.ts'

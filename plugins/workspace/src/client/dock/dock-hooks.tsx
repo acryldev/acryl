@@ -1,7 +1,7 @@
-/** Adapts this package's own terminal dock to `acryl-app-shell`'s generic column-wrapper hooks - the shell
+/** Adapts this package's own terminal dock to `@acryldev/app-shell`'s generic column-wrapper hooks - the shell
  * has no concept of a dock, only that a caller may want to wrap a column (see `AdvancedShellHooks`). */
 
-import type { AdvancedShellHooks } from 'acryl-app-shell/client'
+import type { AdvancedShellHooks } from '@acryldev/app-shell/client'
 import { CenterColumn, RightColumn } from './DockColumns.tsx'
 import type { DockHost } from './dock-host.ts'
 

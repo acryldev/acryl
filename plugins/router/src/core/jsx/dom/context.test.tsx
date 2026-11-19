@@ -1,7 +1,7 @@
 /** @jsxImportSource ../ */
 import { JSDOM } from 'jsdom'
 // run tests by old style jsx default
-// acryl-router/jsx/jsx-runtime and acryl-router/jsx/dom/jsx-runtime are tested in their respective settings
+// @acryldev/router/jsx/jsx-runtime and @acryldev/router/jsx/dom/jsx-runtime are tested in their respective settings
 import { createContext as createContextDom, render, useContext as useContextDom, useState } from './index.ts' // for dom
 import {
   Suspense,

@@ -4,7 +4,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { defineAcrylTool } from 'acryl-control'
+import { defineAcrylTool } from '@acryldev/control'
 import type { ProjectRegistryView } from '../projects/contract.ts'
 
 export const WORKSPACE_CONTEXT_TOOL = 'acryl_workspace_context'

@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import type { InjectFace, PropsRuntime } from '@acryl/ui/frame'
+import type { InjectFace, PropsRuntime } from '@acryldev/ui/frame'
 import type { AgentsState } from './agents-state.ts'
 import { defaultChoices, groupAgents } from './agents-section-model.ts'
 import { AddAgentForm } from './AddAgentForm.tsx'

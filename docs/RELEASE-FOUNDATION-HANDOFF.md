@@ -48,7 +48,7 @@ versions, and the npm packages are published at that version.
 ```sh
 # 1. Dry run: gh workflow run release-cli.yml --ref main. Everything but the version check must be green, and the Windows workflow too.
 # 2. Bump the seven package versions <old> -> <new> (they must all be equal), and distribution/acryl-web-container's ARG ACRYL_VERSION:
-#    package.json, runtime/acryl-control, runtime/acryl-harness-runtime, apps/acryl-cli, apps/acryl-web, apps/acryl-desktop,
+#    package.json, runtime/control, runtime/harness-runtime, apps/acryl-cli, apps/acryl-web, apps/acryl-desktop,
 #    distribution/acryl-npm-launcher. Check: node scripts/release-manifest.mjs verify-versions <new> <the seven package.json files>
 # 3. Commit "chore(release): bump to <new>" and land it on main.
 # 4. Tag v<new> on that commit and push the tag: CLI + Web archives, Desktop, manifest, npm (the 4 acryl-cli-<target> packages, then the

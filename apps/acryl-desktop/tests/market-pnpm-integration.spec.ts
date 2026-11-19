@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { apply as routerApply, name as routerName } from 'acrylblends/cordis/router'
 import { apply as routerHttpApply, inject as routerHttpInject, name as routerHttpName } from 'acrylblends/cordis/router-http'
-import * as acrylSettings from 'acryl-settings'
+import * as acrylSettings from '@acryldev/settings'
 import type { SubprocessHandle, SubprocessRuntime, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
 import { describe, expect, it, vi } from 'vitest'
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml'
@@ -185,7 +185,7 @@ describe('desktop pnpm and community market integration', () => {
     try {
       await writeInstalledProfile(profileDir)
       await writeFile(settingsPath, stringifyYaml({
-        'cordis-plugin-market': { sources: [], installReceipts: [receipt] },
+        '@acryldev/cordis-plugin-market': { sources: [], installReceipts: [receipt] },
       }))
 
       const selectedBootstrap = bootstrap(root, profileDir)
@@ -252,9 +252,9 @@ describe('desktop pnpm and community market integration', () => {
       })
 
       const persisted = parseYaml(await readFile(settingsPath, 'utf8')) as {
-        'cordis-plugin-market': { installReceipts: unknown[] }
+        '@acryldev/cordis-plugin-market': { installReceipts: unknown[] }
       }
-      expect(persisted['cordis-plugin-market'].installReceipts).toEqual([])
+      expect(persisted['@acryldev/cordis-plugin-market'].installReceipts).toEqual([])
       const manifest = JSON.parse(await readFile(join(profileDir, 'package.json'), 'utf8')) as {
         dependencies: Record<string, string>
       }

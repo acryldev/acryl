@@ -9,7 +9,7 @@ import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 
 /** The lock file's name, beside the cluster's files in the data folder. */
-export const LOCK_FILE = 'acryl-db-pglite.lock'
+export const LOCK_FILE = '@acryldev/db-pglite.lock'
 
 interface Holder {
   readonly pid: number
@@ -56,7 +56,7 @@ export function lockFolder(folder: string): FolderLock {
       if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
       const current = readHolder(file)
       if (current !== undefined && isAlive(current.pid)) {
-        throw new Error(`acryl-db-pglite: ${folder} is already open in ${current.pid === process.pid ? 'this process' : `process ${String(current.pid)}`}; one process at a time may open a PGlite data folder`)
+        throw new Error(`@acryldev/db-pglite: ${folder} is already open in ${current.pid === process.pid ? 'this process' : `process ${String(current.pid)}`}; one process at a time may open a PGlite data folder`)
       }
       // A holder that is gone: take its place.
       rmSync(file, { force: true })
@@ -73,5 +73,5 @@ export function lockFolder(folder: string): FolderLock {
       },
     }
   }
-  throw new Error(`acryl-db-pglite: could not lock ${folder}; another process took the lock at the same moment`)
+  throw new Error(`@acryldev/db-pglite: could not lock ${folder}; another process took the lock at the same moment`)
 }

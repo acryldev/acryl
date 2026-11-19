@@ -5,9 +5,9 @@ import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
-import { tools } from 'acryl-agent'
-import { instance, pinnedInstance } from 'acryl-instance'
-import { sandboxPlugin } from 'acryl-sandbox'
+import { tools } from '@acryldev/agent'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import { sandboxPlugin } from '@acryldev/sandbox'
 import { extensions } from '../index.ts'
 
 const appRoot = fileURLToPath(new URL('..', import.meta.url))

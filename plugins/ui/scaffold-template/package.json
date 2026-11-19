@@ -2,7 +2,7 @@
   "name": "my-ui-plugin",
   "version": "0.1.0",
   "private": true,
-  "description": "Scaffold for a plugin built from @acryl/ui registry components as copied source (spec 038-ui-component-library, T039). Rename this package before publishing.",
+  "description": "Scaffold for a plugin built from @acryldev/ui registry components as copied source (spec 038-ui-component-library, T039). Rename this package before publishing.",
   "type": "module",
   "main": "./index.js",
   "exports": {

@@ -1,5 +1,5 @@
 {
-  "name": "@webboxes/app-persistence",
+  "name": "@acryldev/app-persistence",
   "version": "0.1.2",
   "description": "Saving an ACRYL app to its own git repository: the secret check, the private/public guard, commit and push, and connecting a remote through the user's own gh login. Host-independent.",
   "license": "MIT",
@@ -46,5 +46,9 @@
   },
   "bin": {
     "acryl-secret-check": "./dist/bin/secret-check.js"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/runtime/app-persistence#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
   }
 }

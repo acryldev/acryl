@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { FileExporter, LogFileSink } from 'acryl-diagnostics'
+import { FileExporter, LogFileSink } from '@acryldev/diagnostics'
 import { ElectronStderrLogger } from '../../src/diagnostics/desktop-logger.ts'
 
 const temporaryDirectories: string[] = []

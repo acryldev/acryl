@@ -170,7 +170,7 @@ function requestOnce(
       headers: {
         accept: 'application/json',
         'accept-encoding': 'identity',
-        'user-agent': 'cordis-plugin-market/0.1',
+        'user-agent': '@acryldev/cordis-plugin-market/0.1',
       },
       servername: url.hostname,
       lookup: (_hostname, options, callback) => {

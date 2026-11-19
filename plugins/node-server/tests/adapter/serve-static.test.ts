@@ -1,4 +1,4 @@
-import { Acryl } from 'acryl-router'
+import { Acryl } from '@acryldev/router'
 import type * as fs from 'node:fs'
 import {
   chmodSync,

@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, sep } from 'node:path'
-import { manifestDigest } from '@webboxes/blends-core'
+import { manifestDigest } from '@acryldev/blends-core'
 import { isMap, isSeq, parse, parseDocument, stringify } from 'yaml'
 import { canonical } from './reconcile.js'
 import { hashPackage } from './stage.js'
@@ -27,7 +27,7 @@ import { listInstalledPlugins } from './provenance.js'
  */
 
 const BASE_BUNDLES = new Set(['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', '@deepseek-ai/dsh-sdk-minimal'])
-// How a lock names its manifest is the format's rule (@webboxes/blends-core), shared with every other reader and writer of a lock.
+// How a lock names its manifest is the format's rule (@acryldev/blends-core), shared with every other reader and writer of a lock.
 const sha256 = manifestDigest
 const slug = text => String(text).toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '') || 'blend'
 
@@ -126,7 +126,7 @@ export function captureBlend(options, fs = { existsSync, readFileSync }) {
   // The v3 shape and key order of blends-core's generateBlendLock. A capture has no parameters: it records a live profile, not a template.
   const lock = {
     formatVersion: 3,
-    generator: { name: 'acryl-plugin-context', version: '0.1.0' },
+    generator: { name: '@acryldev/plugin-context', version: '0.1.0' },
     origin: { id: manifest.metadata.id, kind: manifest.kind, version: manifest.metadata.version, digest: sha256(manifestText) },
     ...(options.lineage ? { lineage: options.lineage } : {}),
     parameters: {},

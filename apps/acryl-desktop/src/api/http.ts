@@ -1,11 +1,11 @@
 /**
- * What Desktop's own private routes share, on the router: the private-route rules of `acryl-loopback-http/router` under Desktop's two
+ * What Desktop's own private routes share, on the router: the private-route rules of `@acryldev/loopback-http/router` under Desktop's two
  * prefixes, and an answer whose follow-up (a restart) must wait until the answer itself has gone out. Each context folder (settings,
  * startup, workspaces) builds its routes with these and the shared rules; `plugin.ts` serves them.
  */
 
 import type { Acryl } from 'acrylblends'
-import { privateApi } from 'acryl-loopback-http/router'
+import { privateApi } from '@acryldev/loopback-http/router'
 
 /** The prefixes Desktop's renderer calls its Host on: settings and preferences, and the boot report and directory picker. */
 export const DESKTOP_API_PREFIXES = Object.freeze(['/api/desktop', '/_dsh/desktop'] as const)

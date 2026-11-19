@@ -1,5 +1,5 @@
 {
-  "name": "acryl-router",
+  "name": "router",
   "description": "The router service as a Cordis plugin: Web-standard Request and Response, path parameters, middleware, helpers, an in-process fetch and request() for tests. Vendored from ACRYL.",
   "requires": [],
   "inject": [],

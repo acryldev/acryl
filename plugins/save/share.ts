@@ -1,7 +1,7 @@
 /**
  * Share the app: give it a repository of its own on GitHub when it has none (through the person's own `gh` login), save what changed, and push.
  * Two steps, as a plugin publish has: `planShare` says what would be sent and sends nothing; `shareApp` sends only the plan a person read, and
- * nothing when the app no longer matches it. The use cases underneath are `connectRemote` and `saveApp` of `@webboxes/app-persistence`, so the
+ * nothing when the app no longer matches it. The use cases underneath are `connectRemote` and `saveApp` of `@acryldev/app-persistence`, so the
  * same guards hold: no file that holds a secret, and a private app never goes to a public repository.
  */
 import { spawnSync } from 'node:child_process'
@@ -18,7 +18,7 @@ import {
   type SecretFinding,
   saveApp,
   type Visibility,
-} from '@webboxes/app-persistence'
+} from '@acryldev/app-persistence'
 
 /** What a share would send, and where. */
 export interface SharePlan {

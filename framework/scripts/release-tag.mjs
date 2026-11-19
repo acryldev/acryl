@@ -4,7 +4,7 @@
  *   acrylblends-v<version>         acrylblends, framework/packages/cli
  *   create-acrylblends-v<version>  create-acrylblends, framework/packages/create
  *   frame-<short>-v<version>       <scope>/<short>, the frame package framework/frame/packages.json names
- *   launcher-v<version>            @acryldev/control-center, ACRYL's plugins/acryl-launcher
+ *   launcher-v<version>            @acryldev/launcher, ACRYL's plugins/launcher
  * The version must be the one the source holds, so a tag can never publish something other than what is checked in.
  *
  *   node framework/scripts/release-tag.mjs <tag>    prints kind=, package=, version=, dir=, tarball= lines (GitHub step outputs)
@@ -56,17 +56,17 @@ export function releaseOfTag(tag, root = framework) {
       versionOf(dir),
     )
   }
-  // The launcher's journeys (ACRYL's plugins/acryl-launcher, spec 051 T010): Control Center installs it instead of a hand copy.
+  // The launcher's journeys (ACRYL's plugins/launcher, spec 051 T010): Control Center installs it instead of a hand copy.
   match = /^launcher-v(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(tag)
   if (match !== null) {
     const dir = join(root, '..', 'plugins', 'acryl-launcher')
     return expect(
       {
         kind: 'npm',
-        package: '@acryldev/control-center',
+        package: '@acryldev/launcher',
         version: match[1],
         dir,
-        tarball: tarball('@acryldev/control-center', match[1]),
+        tarball: tarball('@acryldev/launcher', match[1]),
       },
       versionOf(dir),
     )
@@ -75,8 +75,10 @@ export function releaseOfTag(tag, root = framework) {
   if (match !== null) {
     const [, short, version] = match
     const config = JSON.parse(readFileSync(join(root, 'frame', 'packages.json'), 'utf8'))
+    const publishedName = (key, entry) =>
+      key.includes('/') ? key : `${config.scope}/${entry.name ?? key}`
     const key = Object.keys(config.packages).find(
-      (folder) => config.packages[folder].name === short,
+      (folder) => publishedName(folder, config.packages[folder]).slice(config.scope.length + 1) === short,
     )
     if (key === undefined)
       throw new Error(`the tag ${tag} names ${short}, which frame/packages.json does not list`)

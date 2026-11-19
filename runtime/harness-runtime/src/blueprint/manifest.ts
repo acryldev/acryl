@@ -1,24 +1,24 @@
 /**
  * The app definition file (`blend.yaml`) is a Blends manifest (`blends.acryl.dev/v1alpha1`), so one file is both what the Blends tooling reads, captures
- * and publishes and what this runtime boots from. The format itself (schema, structural rules, lineage) is validated by `@webboxes/blends-core`, the one
+ * and publishes and what this runtime boots from. The format itself (schema, structural rules, lineage) is validated by `@acryldev/blends-core`, the one
  * reader of the format; this module is only the translation between the two vocabularies, pure and in both directions:
  *
  *   manifest -> Blueprint   `kind: Blend` grows from `spec.lineage.blueprint` (a known Blueprint); `kind: Blueprint` names one. Rows whose package is one of
- *                           ACRYL's own rows turn that capability on (or off with `disabled: true`); the `acryl-brand` row's config is the brand. Any other
+ *                           ACRYL's own rows turn that capability on (or off with `disabled: true`); the `@acryldev/brand` row's config is the brand. Any other
  *                           row is an app plugin: it lives in the app's `extensions/` and loads from there, so the Blueprint does not compose it.
  *   Blueprint -> manifest   what `acryl new` writes.
  *
- * @module acryl-harness-runtime/blueprint/manifest
+ * @module @acryldev/harness-runtime/blueprint/manifest
  */
 
-import { validateDefinition } from '@webboxes/blends-core'
+import { validateDefinition } from '@acryldev/blends-core'
 import { brandIdentity, type BrandIdentity } from './brand-identity.ts'
 import { builtInCatalog, type Blueprint, type BlueprintCatalog, type BlueprintRowId } from './blueprint.ts'
 import { blueprintRowForModule, rowForBlueprintRow } from './compose.ts'
 import { InvalidBlueprintError } from './definition.ts'
 
 export const BLENDS_API_VERSION = 'blends.acryl.dev/v1alpha1'
-export const BRAND_PACKAGE = 'acryl-brand'
+export const BRAND_PACKAGE = '@acryldev/brand'
 
 const ID = /^[a-z][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+$/u
 

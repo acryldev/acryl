@@ -10,7 +10,7 @@ const entry = Object.fromEntries(
 )
 
 export default defineConfig({
-  name: 'acryl-feedback',
+  name: '@acryldev/feedback',
   entry,
   outDir: 'lib',
   format: 'esm',

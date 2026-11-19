@@ -1,4 +1,4 @@
-# acryl-todo
+# @acryldev/todo
 
 The reference app of the ACRYL Framework: a todo list in one plugin (about 90 lines in `src/index.ts` plus a 30-line page). It uses only `router` and `state`.
 
@@ -15,7 +15,7 @@ export function apply(ctx: Context, config: { file?: string } = {}): void {
 }
 ```
 
-- `GET /todo` the page (`GET /todo/` answers 301 to it: `trimTrailingSlash`, see the framework's routing page), `GET/POST /todo/api`, `PATCH/DELETE /todo/api/:id`, `GET /todo/events` (server-sent events). Also `GET /api/state/todo.list` through `acryl-state`.
+- `GET /todo` the page (`GET /todo/` answers 301 to it: `trimTrailingSlash`, see the framework's routing page), `GET/POST /todo/api`, `PATCH/DELETE /todo/api/:id`, `GET /todo/events` (server-sent events). Also `GET /api/state/todo.list` through `@acryldev/state`.
 - Pass `config.file` to keep the list across restarts (atomic write on every change); without it the list lives in memory. A missing file is a new list; a corrupt or unreadable one stops the plugin with an error naming the file and is never overwritten.
 - Tests (`tests/todo.spec.ts`) run it with no socket and prove the restart: a second context on the same file sees the list.
 

@@ -1,11 +1,11 @@
 /**
  * Writing into the chat's composer: DSH's conversation input for a session (`conversation.input.for(scope).setDraft`), the same seam
- * `@acryl/ui`'s `acrylChat.notice` uses. The services are read at the call and checked, so a page without a chat answers false.
+ * `@acryldev/ui`'s `acrylChat.notice` uses. The services are read at the call and checked, so a page without a chat answers false.
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { DraftAttachmentId } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { ISessions } from '@acryl/ui/frame'
+import type { ISessions } from '@acryldev/ui/frame'
 
 type SessionId = Parameters<ISessions['scope']>[0]
 

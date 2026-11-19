@@ -1,14 +1,14 @@
 {
-  "name": "acryl-inspect",
+  "name": "@acryldev/inspect",
   "version": "0.1.0",
   "description": "The ACRYL inspector, one Cordis service: what every running plugin requires, provides and registers, and what unloads with it, read from the running system",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "plugins/acryl-inspect"
+    "directory": "plugins/inspect"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/acryl-inspect#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/inspect#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },
@@ -44,7 +44,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "acryl-router": "workspace:*"
+    "@acryldev/router": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

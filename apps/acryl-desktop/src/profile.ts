@@ -21,7 +21,7 @@ import {
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { blueprintFromEnvironment, composeBlueprintRows, pluginRequiredFrameworkPackages, profileRequiredFrameworkModules, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, pluginRequiredFrameworkPackages, profileRequiredFrameworkModules, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from '@acryldev/harness-runtime'
 import { ADVANCED_SHELL_PATCHES, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches } from '@acryldev/coding-capabilities'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
@@ -84,8 +84,8 @@ const DESKTOP_WEB_SERVER_ROW_ID = 'desktop-webserver'
 const DESKTOP_WEB_SERVER_PACKAGE = 'acryl-desktop/webserver'
 const CONNECTION_ROW_ID = 'connection'
 const UPSTREAM_CONNECTION_PACKAGE = '@deepseek-ai/dsh-client-connection'
-/** File name of ACRYL's own preferences inside the ACRYL home (written by the `acryl-settings` plugin). */
-const ACRYL_SETTINGS_FILENAME = 'acryl-settings.yaml'
+/** File name of ACRYL's own preferences inside the ACRYL home (written by the `@acryldev/settings` plugin). */
+const ACRYL_SETTINGS_FILENAME = '@acryldev/settings.yaml'
 const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
 const UI_SIDEBAR_PACKAGE = '@deepseek-ai/dsh-client-ui-sidebar'
@@ -169,7 +169,7 @@ export function desktopShellModeFromSettings(document: unknown, platform: NodeJS
 
 /**
  * Read startup settings from ACRYL's own preferences file.
- * @param filename - absolute path of `acryl-settings.yaml`; a missing file means every default.
+ * @param filename - absolute path of `@acryldev/settings.yaml`; a missing file means every default.
  * @returns the values projected into the startup Loader graph.
  */
 export function readDesktopStartupSettings(filename: string, platform: NodeJS.Platform = process.platform): DesktopStartupSettings {
@@ -827,11 +827,11 @@ export function prepareDesktopProfile(
   ])].filter(module => rows.get(module) === undefined && !blueprintRowIds.has(module))
   for (const module of requiredFrameworkPackages) materializeProfilePackage(profileDir, packageOfModule(module), pathToFileURL(INSTALL_ANCHOR).href)
   patches.push(...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })))
-  if (requiredFrameworkPackages.includes('acryl-app-shell') && mode !== 'advanced') {
+  if (requiredFrameworkPackages.includes('@acryldev/app-shell') && mode !== 'advanced') {
     patches.push({ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false })
   }
   // ACRYL Workspace (spec 040): composed once for both Web and Desktop through the shared capability
-  // declaration (`workspace` in `acryl-harness-runtime`'s coding-capabilities, part of
+  // declaration (`workspace` in `@acryldev/harness-runtime`'s coding-capabilities, part of
   // `sharedDesktopPatches`), not by a Desktop-only row here. Its client half takes over the frame only
   // when the shell mode is `advanced`.
   if (mode === 'advanced') {

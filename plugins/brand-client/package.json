@@ -1,5 +1,5 @@
 {
-  "name": "dsh-client-ui-brand-acryl",
+  "name": "@acryldev/brand-client",
   "version": "0.1.1",
   "description": "ACRYL brand occupants for the DSH Web client's sidebar and conversation-hero slots - the swappable counterpart to @deepseek-ai/dsh-client-ui-brand-official",
   "license": "MIT",
@@ -10,9 +10,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/acryldev/acryl.git",
-    "directory": "dsh-client-ui-brand-acryl"
+    "directory": "plugins/brand-client"
   },
-  "homepage": "https://github.com/acryldev/acryl/tree/main/dsh-client-ui-brand-acryl#readme",
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/brand-client#readme",
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
   },

@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { clientModules } from '../plugins/acryl-node-server/src/client-modules.ts'
+import { clientModules } from '../plugins/node-server/src/client-modules.ts'
 
 /** The browser builds of the DOM renderer and the typed client, shipped by the `acrylblends` package this app depends on (`clientModules` serves them). */
 const runtimeDir = join(

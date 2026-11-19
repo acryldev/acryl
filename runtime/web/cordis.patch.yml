@@ -1,3 +1,3 @@
 - insert:
     - id: acryl-web-service
-      name: acryl-web-service
+      name: @acryldev/web

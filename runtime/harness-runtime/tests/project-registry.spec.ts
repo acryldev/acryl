@@ -1,5 +1,5 @@
 /**
- * The project registry (T046 S2) on the real web engine: ACRYL's own list of project folders, kept in the ACRYL home through `acryl-settings`,
+ * The project registry (T046 S2) on the real web engine: ACRYL's own list of project folders, kept in the ACRYL home through `@acryldev/settings`,
  * served by the workspace Host plugin, and still there after the engine is torn down and booted again on the same home. The chat's workspaces are not
  * involved: nothing here needs the DSH chat.
  */
@@ -65,7 +65,7 @@ describe('the project registry on the real engine', () => {
       expect((await projects(first.origin, { op: 'add', path: projectA })).json.view.paths).toEqual([projectA])
       expect((await projects(first.origin, { op: 'add', path: projectB })).json.view.paths).toEqual([projectA, projectB])
       expect((await projects(first.origin, { op: 'add', path: '/definitely/not/here' })).json).toMatchObject({ ok: false, code: 'not-a-folder' })
-      const file = join(first.acrylHome, 'acryl-settings.yaml')
+      const file = join(first.acrylHome, '@acryldev/settings.yaml')
       expect(existsSync(file)).toBe(true)
       expect(readFileSync(file, 'utf8')).toContain(projectA)
     } finally { await first.host.dispose() }

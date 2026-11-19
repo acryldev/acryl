@@ -15,7 +15,7 @@ import {
   createProfileContext,
   createProfileRuntimeResolution,
   selectInstance,
-} from 'acryl-harness-runtime'
+} from '@acryldev/harness-runtime'
 import { DESKTOP_SETTINGS_NAMESPACE } from '../lib/index.js'
 
 // See the matching comment in verify-loader-boot.mjs.
@@ -36,9 +36,9 @@ const isolatedHome = join(home, 'home')
 mkdirSync(isolatedHome, { recursive: true })
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-process.env.ACRYL_HOME = join(home, 'acryl-home')
+process.env.ACRYL_HOME = join(home, '@acryldev/home')
 // The engine home too: this smoke must not read or write the developer's ~/.acryl-dev/.dsh, and a DSH_HOME inherited from the caller would.
-process.env.DSH_HOME = join(home, 'acryl-home', '.dsh')
+process.env.DSH_HOME = join(home, '@acryldev/home', '.dsh')
 let ctx
 let engineHost
 let releasePackageResolver
@@ -53,10 +53,10 @@ try {
     '  default: minimal',
     '',
   ].join('\n'))
-  // The desktop shell mode is an ACRYL surface preference, kept in acryl-settings.yaml in the ACRYL home (which is this folder under the legacy DSH_HOME
+  // The desktop shell mode is an ACRYL surface preference, kept in @acryldev/settings.yaml in the ACRYL home (which is this folder under the legacy DSH_HOME
   // selection below), not in the harness settings.yaml. Without it the mode is the platform default, which is `compatibility` on Linux, so this smoke only
   // passed on macOS and Windows by accident.
-  writeFileSync(join(home, 'acryl-settings.yaml'), 'dsh-desktop:\n  mode: advanced\n')
+  writeFileSync(join(home, '@acryldev/settings.yaml'), 'dsh-desktop:\n  mode: advanced\n')
   // Ensure pnpm's package linking mode matches the root workspace config, so
   // when initProfile installs required bundles into the temp home's profile,
   // packages are deep-copied rather than symlinked. Symlinks in a temp
@@ -332,7 +332,7 @@ try {
   if (tools === undefined) throw new Error('assembled desktop profile has no tool registry')
   const authored = mkdtempSync(join(tmpdir(), 'dsh-desktop-authored-'))
   try {
-    const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
+    const example = fileURLToPath(new URL('../../../plugins/plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     cpSync(example, authored, { recursive: true })
     const write = (version) => {
       const manifest = JSON.parse(readFileSync(join(example, 'package.json'), 'utf8'))

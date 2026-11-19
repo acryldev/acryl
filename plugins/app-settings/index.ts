@@ -1,7 +1,7 @@
 /**
  * The settings service (`ctx.settings`): per-namespace sections kept in one YAML file in the app's home.
  *
- * Extracted from ACRYL (`plugins/acryl-settings`). Plugins register a namespace with a schemastery schema and read the resolved value,
+ * Extracted from ACRYL (`plugins/settings`). Plugins register a namespace with a schemastery schema and read the resolved value,
  * which layers schema defaults, the registrant's `base`, and the stored section, in that order. Writes are validated, atomic (write a
  * temporary file, then rename) and run one at a time in commit order; watchers see them in that order; an event announces each change.
  */
@@ -9,7 +9,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname, join } from 'node:path'
 import { type Context, Service } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type {} from 'acryl-instance'
+import type {} from '@acryldev/instance'
 import { parseDocument, stringify } from 'yaml'
 import { cloneJsonShaped, deepEqualJson, isPlainObject, mergeLayers } from './merge.ts'
 

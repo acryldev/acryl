@@ -86,7 +86,7 @@ async function boot(options: { router?: boolean, lifecycle?: boolean } = {}) {
   return { ...served, ctx, fiber, router, get }
 }
 
-describe('acryl-plugin-admin Host plugin (one plugin for every surface)', () => {
+describe('@acryldev/plugin-admin Host plugin (one plugin for every surface)', () => {
   it('serves every route through one router mount, no exact webServer route', async () => {
     const app = await boot()
     expect(app.fiber.state).toBe(ACTIVE)

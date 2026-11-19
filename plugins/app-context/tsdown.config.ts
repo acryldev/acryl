@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  name: 'acryl-app-context',
+  name: '@acryldev/app-context',
   entry: { index: 'src/index.ts', router: 'src/router.ts', lookup: 'src/lookup.ts', 'snapshot-tools': 'src/snapshot-tools.ts' },
   outDir: 'lib',
   format: 'esm',

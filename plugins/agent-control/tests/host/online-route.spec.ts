@@ -1,5 +1,5 @@
 // A real http.Server on the loopback interface (spec 041 TB30), behind the real router adapter: proves the auth gate against a real
-// socket, not a faked one - the same convention `plugins/acryl-workspace/tests/agents/route.spec.ts` uses.
+// socket, not a faked one - the same convention `plugins/workspace/tests/agents/route.spec.ts` uses.
 import { request } from 'node:http'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { UiControlError, type UiRequest, type UiResult } from 'acrylblends/door/protocol'

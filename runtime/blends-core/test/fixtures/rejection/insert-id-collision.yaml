@@ -11,4 +11,4 @@ spec:
   extends: rejection.parent
   rows:
     - id: contacts
-      name: '@acryl/contacts'
+      name: '@acryldev/contacts'

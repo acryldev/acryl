@@ -11,7 +11,7 @@ afterEach(async () => {
 })
 
 async function folderWith(files: Record<string, string>): Promise<string> {
-  const folder = await mkdtemp(join(tmpdir(), 'acryl-db-files-'))
+  const folder = await mkdtemp(join(tmpdir(), '@acryldev/db-files-'))
   folders.push(folder)
   await Promise.all(Object.entries(files).map(([name, text]) => writeFile(join(folder, name), text)))
   return folder

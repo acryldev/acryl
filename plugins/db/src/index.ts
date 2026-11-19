@@ -1,7 +1,7 @@
 /**
- * The `db` port: what an app's code sees of its relational database, whichever provider (`acryl-db-sqlite`, `acryl-db-postgres`) serves
+ * The `db` port: what an app's code sees of its relational database, whichever provider (`@acryldev/db-sqlite`, `@acryldev/db-postgres`) serves
  * it. Plain code (an acrylblends app) opens a database with a provider's `openDb`; a Cordis plugin declares `inject: ['db']`, imports
- * `acryl-db/cordis` for the `ctx.db` type, and never imports a driver.
+ * `@acryldev/db/cordis` for the `ctx.db` type, and never imports a driver.
  *
  * Bindings are positional `?` placeholders on every provider; a provider whose database spells them differently translates them.
  * This entry imports nothing from Cordis, at runtime or in its types.

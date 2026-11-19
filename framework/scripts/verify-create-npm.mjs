@@ -51,8 +51,8 @@ function run(command, args, cwd) {
 function unpublishedFramePackages() {
   const config = JSON.parse(readFileSync(join(root, 'frame', 'packages.json'), 'utf8'))
   const missing = []
-  for (const entry of Object.values(config.packages)) {
-    const name = `${config.scope}/${entry.name}`
+  for (const [key, entry] of Object.entries(config.packages)) {
+    const name = key.includes('/') ? key : `${config.scope}/${entry.name}`
     const r = spawnSync('npm', ['view', `${name}@${entry.version}`, 'version', '--json'], {
       env,
       encoding: 'utf8',
@@ -60,7 +60,7 @@ function unpublishedFramePackages() {
     })
     if (r.status === 0 && r.stdout.trim() !== '') continue
     if (r.status === 0 || /E404|404 Not Found|No match found/u.test(`${r.stdout}${r.stderr}`))
-      missing.push({ name, short: entry.name, version: entry.version })
+      missing.push({ name, short: name.slice(config.scope.length + 1), version: entry.version })
     else fail(`npm view ${name}@${entry.version} failed:\n${r.stdout}${r.stderr}`)
   }
   return missing
@@ -165,7 +165,7 @@ try {
     'blend.yaml',
     'AGENTS.md',
     join('src', 'app.ts'),
-    join('plugins', 'acryl-door', 'src', 'index.ts'),
+    join('plugins', 'door', 'src', 'index.ts'),
   ]) {
     if (!existsSync(join(app, file)))
       fail(`the app has no ${file}; it has ${readdirSync(app).join(', ')}`)

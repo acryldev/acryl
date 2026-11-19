@@ -2,7 +2,7 @@
 
 import { DEFAULT_PALETTE_CONFIG, PALETTE_GROUPS, type PaletteConfig, type PaletteGroup } from './palette-items.ts'
 
-export const PALETTE_CONFIG_KEY = 'acryl-workspace:palette'
+export const PALETTE_CONFIG_KEY = '@acryldev/workspace:palette'
 
 type Reader = Pick<Storage, 'getItem'>
 type Writer = Pick<Storage, 'setItem'>

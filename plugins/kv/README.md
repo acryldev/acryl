@@ -1,11 +1,11 @@
-# acryl-kv
+# @acryldev/kv
 
-The `kv` port: named JSON documents for an app too small for SQL, whichever provider serves it (`acryl-kv-json` for one file, `acryl-kv-db`
+The `kv` port: named JSON documents for an app too small for SQL, whichever provider serves it (`@acryldev/kv-json` for one file, `@acryldev/kv-db`
 over the [`db` port](../acryl-db/README.md)). An app plugin declares `inject: ['kv']`, imports types from here, and never imports a provider.
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from 'acryl-kv/cordis'
+import type {} from '@acryldev/kv/cordis'
 
 export const name = 'settings-app'
 export const inject = ['kv']
@@ -34,7 +34,7 @@ Plain code (no Cordis) opens a store with a provider's `openKv`; this package's 
 Every provider passes the same suite, from its own tests:
 
 ```ts
-import { describeKvConformance } from 'acryl-kv/conformance'
+import { describeKvConformance } from '@acryldev/kv/conformance'
 
 describeKvConformance('my-provider', async () => {
   const opened = await openMyStore()

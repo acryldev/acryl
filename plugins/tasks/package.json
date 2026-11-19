@@ -1,5 +1,5 @@
 {
-  "name": "acryl-tasks",
+  "name": "@acryldev/tasks",
   "version": "0.1.0",
   "description": "Durable task records: id, owner, input, status, result, trace; appended to a log in the app's home and readable after a restart.",
   "license": "MIT",
@@ -26,7 +26,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "acryl-instance": "workspace:*"
+    "@acryldev/instance": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
@@ -34,8 +34,8 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-router": "workspace:*",
-    "acryl-state": "workspace:*",
+    "@acryldev/router": "workspace:*",
+    "@acryldev/state": "workspace:*",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"
   },

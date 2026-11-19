@@ -202,7 +202,7 @@ export class TuiStore {
   // Not part of TuiState: mid-stream assembly state for the in-flight
   // attempt, rebuilt fresh on every `agent/assistant-stream` 'start' frame.
   // Session format v2 no longer persists per-token `assistant/chunk` events
-  // in the durable log (see acryl-harness-runtime's `subscribeAssistantStream`
+  // in the durable log (see @acryldev/harness-runtime's `subscribeAssistantStream`
   // doc) — live typing now comes from this process-local frame stream instead
   // of `appendEvent`; keyed by `attemptId` (not just `{turn, step}`) so a
   // stale chunk/end from a superseded attempt at the same turn/step is

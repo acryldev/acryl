@@ -1,5 +1,5 @@
-import type { UpgradeWebSocket, WSContext } from 'acryl-router/helpers'
-import { defineWebSocketHelper } from 'acryl-router/helpers'
+import type { UpgradeWebSocket, WSContext } from '@acryldev/router/helpers'
+import { defineWebSocketHelper } from '@acryldev/router/helpers'
 import type { IncomingMessage } from 'node:http'
 import { STATUS_CODES } from 'node:http'
 import type { Duplex } from 'node:stream'

@@ -1,4 +1,4 @@
-import { openDb } from 'acryl-db-sqlite/open'
+import { openDb } from '@acryldev/db-sqlite/open'
 import { describe, expect, it } from 'vitest'
 import { kvOnDb } from '../src/open.ts'
 

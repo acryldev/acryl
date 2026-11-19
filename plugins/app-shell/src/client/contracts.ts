@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { ILayout } from '@acryl/ui/frame'
+import type { ILayout } from '@acryldev/ui/frame'
 
 /** Main-surface interface offered by the desktop advanced frame. */
 export interface DesktopMainOwnerProps {

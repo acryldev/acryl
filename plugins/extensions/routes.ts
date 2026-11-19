@@ -1,7 +1,7 @@
 /**
  * Which routes a plugin brings, and whether one of them is already served (spec 049 T025). Plugins that do not know each other share one app: the router
  * serves the first mount of a route and ignores the second without a word, so a plugin whose route is taken would look installed and answer nothing.
- * The router labels each route it serves (`acryl-router: serves GET /notes`, under the mount's effect), so the routes are read from the running system.
+ * The router labels each route it serves (`@acryldev/router: serves GET /notes`, under the mount's effect), so the routes are read from the running system.
  * Pure functions over those labels; the service reads them from the registry.
  */
 
@@ -25,7 +25,7 @@ export interface FiberRoutesView {
   getEffects(): readonly EffectView[]
 }
 
-const SERVES = /^acryl-router: serves ([A-Z]+) (\S+)$/u
+const SERVES = /^@acryldev\/router: serves ([A-Z]+) (\S+)$/u
 
 /** Every route served by the given fibers, with the plugin that holds each. `ALL` is middleware or `all`, which wraps routes rather than taking them. */
 export function servedRoutes(fibers: Iterable<FiberRoutesView>): ServedRoute[] {

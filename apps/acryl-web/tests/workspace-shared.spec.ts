@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
+import { createAcrylEngineHost, createWebEngineDefinition } from '@acryldev/harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
 import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 
@@ -43,7 +43,7 @@ describe('the ACRYL workspace on the Web surface', () => {
     })
     try {
       const rows = new Map([...host.ctx.loader.entries()].map(entry => [entry.options.id, entry]))
-      expect(rows.get('acryl-workspace')?.fiber).toBeDefined()
+      expect(rows.get('@acryldev/workspace')?.fiber).toBeDefined()
       // The stock frame is off and the sidebar and conversation are on: the same toggles Desktop's advanced mode applies.
       expect(rows.get('ui-layout')?.options.disabled).toBe(true)
       expect(rows.get('ui-sidebar')?.options.disabled).not.toBe(true)
@@ -54,11 +54,11 @@ describe('the ACRYL workspace on the Web surface', () => {
       const origin = `http://127.0.0.1:${String(server?.port)}`
       const headers = { origin, 'sec-fetch-site': 'same-origin' }
       // Plugin administration is the same shared plugin as on Desktop: composed, and its routes answer.
-      expect(rows.get('acryl-plugin-admin')?.fiber).toBeDefined()
+      expect(rows.get('@acryldev/plugin-admin')?.fiber).toBeDefined()
       const lifecycle = await fetch(`${origin}/api/acryl-plugin-admin/lifecycle`, { headers })
       expect(lifecycle.status).toBe(200)
       const snapshot = await lifecycle.json() as { entries: { entryId: string; moduleName: string }[]; blend: { locked: boolean; id: string } | null }
-      expect(snapshot.entries.some(entry => entry.moduleName === 'acryl-workspace')).toBe(true)
+      expect(snapshot.entries.some(entry => entry.moduleName === '@acryldev/workspace')).toBe(true)
       // No `dsh-desktop.blend` on Web, but every surface sets ACRYL_BLUEPRINT_ID at boot (spec 040 T083), so
       // this is an honest unlocked identity, not null - Web's answer here now agrees with what a person sees
       // in Desktop's own Lifecycle tab (a locked Blend) in kind, not in never having one to report at all.
@@ -72,7 +72,7 @@ describe('the ACRYL workspace on the Web surface', () => {
       const page = await fetch(origin, { headers: { cookie } })
       expect(page.status).toBe(200)
       const html = await page.text()
-      expect(html).toContain('acryl-workspace')
+      expect(html).toContain('@acryldev/workspace')
       const repoRoute = await fetch(`${origin}/api/acryl-workspace/git/repo?cwd=${encodeURIComponent(repo)}`, { headers })
       expect(repoRoute.status).toBe(200)
       expect(await repoRoute.json()).toMatchObject({ repo: { root: repo } })
@@ -85,7 +85,7 @@ describe('the ACRYL workspace on the Web surface', () => {
       expect(started.status).toBe(200)
       const terminal = await started.json() as { id: string }
       // Live output and keystrokes travel over the ordered stream (WebSocket), the same one the browser terminal uses.
-      const { WebSocket } = createRequire(require.resolve('acryl-workspace/package.json'))('ws') as typeof import('ws')
+      const { WebSocket } = createRequire(require.resolve('@acryldev/workspace/package.json'))('ws') as typeof import('ws')
       const socket = new WebSocket(`${origin.replace('http', 'ws')}/api/acryl-workspace/pty/stream?id=${terminal.id}&since=0`, { headers: { ...headers, origin } })
       let output = ''
       socket.on('message', (raw) => {
@@ -172,21 +172,21 @@ describe('the ACRYL workspace on the Web surface', () => {
         expect(smuggled.status).toBe(500)
       }
       // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).
-      expect(rows.get('acryl-support')?.fiber).toBeDefined()
+      expect(rows.get('@acryldev/support')?.fiber).toBeDefined()
       const support = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { ...headers, referer: `${origin}/` } })
       expect(support.status).toBe(200)
       expect(support.headers.get('content-type')).toBe('application/zip')
-      expect(support.headers.get('content-disposition')).toMatch(/^attachment; filename="acryl-diagnostics-[A-Za-z0-9_.-]+\.zip"$/)
+      expect(support.headers.get('content-disposition')).toMatch(/^attachment; filename="@acryldev\/diagnostics-[A-Za-z0-9_.-]+\.zip"$/)
       expect(Buffer.from(await support.arrayBuffer()).subarray(0, 2).toString('latin1')).toBe('PK')
       const foreign = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { 'sec-fetch-site': 'cross-site', referer: 'http://evil.example/' } })
       expect(foreign.status).toBe(403)
       const logFiles = (await readdir(join(home, '.dsh', 'logs'))).filter(name => /^dsh-\d{4}-\d{2}-\d{2}(\.error)?\.log$/.test(name))
       expect(logFiles.length).toBeGreaterThan(0)
       // Agent Control: the tools are composed, a page connects over the same-origin channel, and a call reaches it.
-      expect(rows.get('acryl-agent-control')?.fiber).toBeDefined()
+      expect(rows.get('@acryldev/agent-control')?.fiber).toBeDefined()
       const uiTools = host.ctx.tools as unknown as { get(name: string): unknown; execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: Array<{ text?: string }> }> }
       for (const toolName of ['ui_snapshot', 'ui_click', 'ui_type', 'ui_select', 'ui_press', 'ui_scroll', 'ui_wait']) expect(uiTools.get(toolName), toolName).toBeDefined()
-      // The page channel is an event stream down and POST up (acryl-door's): another site is refused, the app's own page is served.
+      // The page channel is an event stream down and POST up (@acryldev/door's): another site is refused, the app's own page is served.
       const channel = `${origin}/api/acryl-agent-control/channel`
       const foreignPage = await fetch(`${channel}?window=evil&focused=1`, { headers: { origin: 'http://evil.example', referer: 'http://evil.example/', 'sec-fetch-site': 'cross-site' } })
       expect(foreignPage.status).toBe(403)

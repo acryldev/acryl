@@ -1,6 +1,6 @@
 /** Styles for the Support settings section, installed for the plugin's lifetime. */
 
-const STYLE_ID = 'acryl-support-styles'
+const STYLE_ID = '@acryldev/support-styles'
 
 const CSS = `
 .dshSupportSection { display: grid; gap: 10px; padding: 4px 0 24px; color: var(--dsw-alias-label-primary); }

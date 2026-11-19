@@ -1,5 +1,5 @@
 /** The wire contract of the sign-in routes; the account sign-in card on Settings > Models is its client. */
-import type { SignInAttemptView } from 'acryl-control'
+import type { SignInAttemptView } from '@acryldev/control'
 
 /** Every sign-in route lives under this prefix, the one the Host's Web adapter mounts for this plugin. */
 export const SIGN_IN_API_PREFIX = '/api/acryl-sign-in'

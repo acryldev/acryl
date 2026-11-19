@@ -13,7 +13,7 @@ description: Use when the person asks for a new feature, widget, page, tool, lis
 3. Open the closest verified example in `<docs>/example-plugins/README.md` and read every file of it. Copy it to `plugins/<name>/` and change
    it: `name` equals the folder's name, `inject` names only services that exist (`router`, `home`, `appInstance`, or a row's service).
    Never guess a plugin's shape or an import path from memory.
-4. Add its row to `blend.yaml` before the `acryl-node-server` row (`- id: <name>` / `name: <name>`). Do not touch `src/app.ts`,
+4. Add its row to `blend.yaml` before the `@acryldev/node-server` row (`- id: <name>` / `name: <name>`). Do not touch `src/app.ts`,
    `src/routes.ts` or `src/frame.ts`.
 5. Write `test/<name>.test.ts` like `test/app.test.ts`: the widget is on the first screen, the routes answer, the data survives a remount.
 6. Verify (`<docs>/docs/start-here/verify-before-done.md`): `npm test`, `npm run check`, then `.acryl/bin/acryl look` shows it. Fix the

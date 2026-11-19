@@ -164,7 +164,7 @@ export function classifyRow(name, index, surfaces) {
   let info = index.get(name)
   let lookup = name
   if (!info && name.includes('/')) { const cut = name.slice(0, name.lastIndexOf('/')); if (index.has(cut)) { info = index.get(cut); lookup = cut } }
-  if (name.startsWith('cordis:') || name.startsWith('@deepseek-ai/cordis-plugin') || name === 'cordis-plugin-market' && false) {
+  if (name.startsWith('cordis:') || name.startsWith('@deepseek-ai/cordis-plugin') || name === '@acryldev/cordis-plugin-market' && false) {
     return { name, package: name, rel: 'core', description: 'Cordis loader infrastructure (entry groups, include, timer, HMR).', kind: 'core', roles: [], primary: 'core-infrastructure', provides: [], injects: [], surfaces }
   }
   if (!info) return { name, package: name, rel: '?', description: '(package not found in this checkout)', kind: 'unknown', roles: [], primary: 'unknown', provides: [], injects: [], surfaces }
@@ -424,7 +424,7 @@ export function renderEvents(events) {
     '**Dispatch modes**: `emit` (fire and forget), `parallel` (all run), `serial` and `bail` (in order until a value bails), `waterfall`',
     '(around-middleware: `ctx.on(name, async (input, next) => { const result = await next(); return result })`; a listener that only observes MUST',
     'still call `next()` and return its result; the returned value is authoritative). Working example: `example-plugins/packages/prompt-assemble-hook/` (shapes',
-    'the system prompt on `system-prompt/assemble`, the same hook `acryl-system-prompt` uses). Read `extending/event-hook.md` first.',
+    'the system prompt on `system-prompt/assemble`, the same hook `@acryldev/system-prompt` uses). Read `extending/event-hook.md` first.',
     '',
     `${events.length} events:`,
     '',

@@ -17,17 +17,17 @@ function app(): string {
 }
 
 function withCopy(dir: string): void {
-  mkdirSync(join(dir, 'plugins', 'desktop'), { recursive: true })
-  writeFileSync(join(dir, 'plugins', 'desktop', 'main.ts'), '')
+  mkdirSync(join(dir, 'plugins', 'desktop-shell'), { recursive: true })
+  writeFileSync(join(dir, 'plugins', 'desktop-shell', 'main.ts'), '')
 }
 
 function withPackage(dir: string): void {
-  const root = join(dir, 'node_modules', 'acryl-desktop-shell')
+  const root = join(dir, 'node_modules', '@acryldev/desktop-shell')
   mkdirSync(join(root, 'lib'), { recursive: true })
   writeFileSync(
     join(root, 'package.json'),
     JSON.stringify({
-      name: 'acryl-desktop-shell',
+      name: '@acryldev/desktop-shell',
       exports: { './main': './lib/main.js', './package.json': './package.json' },
     }),
   )
@@ -40,8 +40,8 @@ describe('findDesktopShell', () => {
     withCopy(dir)
     expect(findDesktopShell(dir)).toEqual({
       kind: 'copy',
-      root: join(dir, 'plugins', 'desktop'),
-      main: 'plugins/desktop/main.ts',
+      root: join(dir, 'plugins', 'desktop-shell'),
+      main: 'plugins/desktop-shell/main.ts',
     })
   })
 
@@ -50,7 +50,7 @@ describe('findDesktopShell', () => {
     withPackage(dir)
     expect(findDesktopShell(dir)).toMatchObject({
       kind: 'package',
-      main: 'node_modules/acryl-desktop-shell/lib/main.js',
+      main: 'node_modules/@acryldev/desktop-shell/lib/main.js',
     })
   })
 

@@ -42,8 +42,8 @@ const FRAME_SPECS = JSON.stringify({
   dshVersion: '0.2.0-rc.2',
   frameworkVersion: '^1.0.10',
   packages: {
-    'acryl-app-shell': 'file:/checkout/plugins/acryl-app-shell',
-    'acryl-web-service': 'file:/checkout/runtime/acryl-web-service',
+    '@acryldev/app-shell': 'file:/checkout/plugins/app-shell',
+    '@acryldev/web': 'file:/checkout/runtime/web',
   },
 })
 
@@ -128,16 +128,16 @@ describe('scaffolding a template into the frame', () => {
     expect(overlay).toContain('- id: app-routes')
     expect(overlay).toContain('name: ./src/frame.ts')
     // The frame's rows are there too.
-    expect(overlay).toContain('name: acryl-app-shell')
+    expect(overlay).toContain("name: '@acryldev/app-shell'")
     const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
     expect(String(manifest.scripts.dev)).toBe(
-      'node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs',
+      'node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs',
     )
     expect(manifest.scripts.profile).toBeUndefined()
     expect(existsSync(join(root, 'scripts', 'ide-host.mjs'))).toBe(true)
     expect(existsSync(join(root, 'cordis.yml'))).toBe(true)
     expect(manifest.dependencies['@deepseek-ai/dsh-base']).toBe('0.2.0-rc.2')
-    expect(manifest.dependencies['acryl-app-shell']).toBe('file:/checkout/plugins/acryl-app-shell')
+    expect(manifest.dependencies['@acryldev/app-shell']).toBe('file:/checkout/plugins/app-shell')
     expect(existsSync(join(root, 'app', 'runtime.mjs'))).toBe(true)
   })
 
@@ -187,7 +187,8 @@ describe('scaffolding a template into the frame', () => {
       const entry = published.get(row.name)
       expect(entry, row.name).toBeDefined()
       expect(manifest.dependencies[String(entry?.name)]).toBe(`^${String(entry?.version)}`)
-      expect(manifest.dependencies[row.name], row.name).toBeUndefined()
+      if (row.row !== undefined && row.row !== row.name)
+        expect(manifest.dependencies[row.row], row.row).toBeUndefined()
       expect(overlay).toContain(
         `- id: ${row.row ?? row.name}\n      name: '${String(entry?.name)}'`,
       )

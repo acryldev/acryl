@@ -1,5 +1,5 @@
 {
-  "name": "acryl-instance",
+  "name": "@acryldev/instance",
   "version": "0.1.0",
   "description": "Where the app keeps things (home, port, run lock), chosen once from the environment or the project folder.",
   "license": "MIT",
@@ -44,8 +44,8 @@
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@types/node": "^22.20.0",
-    "acryl-node-server": "workspace:*",
-    "acryl-router": "workspace:*",
+    "@acryldev/node-server": "workspace:*",
+    "@acryldev/router": "workspace:*",
     "yaml": "2.9.0",
     "tsdown": "0.22.2",
     "typescript": "6.0.3"

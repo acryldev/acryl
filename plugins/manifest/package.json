@@ -1,5 +1,5 @@
 {
-  "name": "acryl-manifest",
+  "name": "@acryldev/manifest",
   "version": "0.1.0",
   "description": "The app as data: blend.yaml lists ordered plugin rows with config, parameters and on/off switches; validated, composed and locked.",
   "license": "MIT",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "yaml": "2.9.0",
-    "@webboxes/blends-core": "0.5.0"
+    "@acryldev/blends-core": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

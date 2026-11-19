@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom'
 import { ErrorBoundary as ErrorBoundaryDom, Suspense as SuspenseDom, render } from './index.ts' // for dom
 import { ErrorBoundary as ErrorBoundaryCommon, Suspense as SuspenseCommon } from '../index.ts' // for common
 // run tests by old style jsx default
-// acryl-router/jsx/jsx-runtime and acryl-router/jsx/dom/jsx-runtime are tested in their respective settings
+// @acryldev/router/jsx/jsx-runtime and @acryldev/router/jsx/dom/jsx-runtime are tested in their respective settings
 import { use, useState } from '../hooks/index.ts'
 
 runner('Common', SuspenseCommon, ErrorBoundaryCommon)

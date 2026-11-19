@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@acryl/ui/frame'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@acryldev/ui/frame'
 import type {
   PluginLifecycleApi,
   PluginLifecycleClientEntryView,

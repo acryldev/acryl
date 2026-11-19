@@ -37,7 +37,7 @@ CDP, no npm install). The expensive mistakes, all made repeatedly:
   background mode, or the port is free again by the time the check runs.
 - Patch every staged `client.js` copy (`patch-gallery.sh` in the session scratch dir) and restart the
   server; a `client.js` change is not picked up otherwise.
-- **A change under `plugins/acryl-ui/src` needs `pnpm run build` before the check, and the demo change
+- **A change under `plugins/ui/src` needs `pnpm run build` before the check, and the demo change
   needs the patch script**: the app loads the built `lib/client.js`, and the gallery from the profile's
   own copies of `client.js`. Rebuilding is also what keeps `verify-artifact` green.
 - Clearing a controlled input needs React's own value setter; setting `.value` silently concatenates.

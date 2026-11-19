@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
 import { Context } from '@deepseek-ai/cordis'
-import { packFolder, type ReleasePort } from '@webboxes/plugin-hub'
-import { routeSource } from 'acryl-builder/script'
-import { extensions } from 'acryl-extensions'
-import * as home from 'acryl-home'
-import { instance, pinnedInstance } from 'acryl-instance'
-import { type PullResult, pluginShare, type SharedPluginInfo } from 'acryl-plugin-share'
-import * as router from 'acryl-router'
+import { packFolder, type ReleasePort } from '@acryldev/plugin-hub-core'
+import { routeSource } from '@acryldev/builder/script'
+import { extensions } from '@acryldev/extensions'
+import * as home from '@acryldev/home'
+import { instance, pinnedInstance } from '@acryldev/instance'
+import { type PullResult, pluginShare, type SharedPluginInfo } from '@acryldev/plugin-share'
+import * as router from '@acryldev/router'
 import * as showcase from '../index.ts'
 
 const cleanup: Array<() => Promise<void> | void> = []
@@ -51,7 +51,7 @@ async function boot(releases: ReleasePort, before?: (ctx: Context) => void) {
   // The app's definition, where a pull records where each plugin came from.
   writeFileSync(
     join(root, 'blend.yaml'),
-    'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata: { id: group.collective, name: collective, version: 0.1.0 }\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: acryl-router\n    - id: extensions\n      name: extensions\n    - id: plugin-share\n      name: plugin-share\n    - id: showcase\n      name: showcase\n',
+    'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata: { id: group.collective, name: collective, version: 0.1.0 }\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: @acryldev/router\n    - id: extensions\n      name: extensions\n    - id: plugin-share\n      name: plugin-share\n    - id: showcase\n      name: showcase\n',
   )
   const app = new Context()
   const fibers = [

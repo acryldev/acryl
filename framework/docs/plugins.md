@@ -6,9 +6,9 @@ against a real Cordis context, including disposal.
 
 | Plugin | Service | From ACRYL |
 |---|---|---|
-| [instance](#instance) | `appInstance` | `runtime/acryl-harness-runtime/src/instance/` |
-| [acryl-router](#the-framework-plugins), [acryl-router-http](#the-framework-plugins), [acryl-node-server](#the-framework-plugins), [acryl-state](#the-framework-plugins), [acryl-inspect](#the-framework-plugins) | `router`, `nodeServer`, `state`, `inspect` | `plugins/acryl-*` (the ACRYL framework) |
-| [settings](#settings) | `settings` | `plugins/acryl-settings` |
+| [instance](#instance) | `appInstance` | `runtime/harness-runtime/src/instance/` |
+| [@acryldev/router](#the-framework-plugins), [@acryldev/router-http](#the-framework-plugins), [@acryldev/node-server](#the-framework-plugins), [@acryldev/state](#the-framework-plugins), [@acryldev/inspect](#the-framework-plugins) | `router`, `nodeServer`, `state`, `inspect` | `plugins/acryl-*` (the ACRYL framework) |
+| [settings](#settings) | `settings` | `plugins/settings` |
 | [extensions](#extensions) | `extensions` | `plugins/acryl-extension-context` |
 | [builder](#builder) | tools for the agent | the agent's install tools |
 | [sandbox](#sandbox) | `sandbox` | - |
@@ -30,12 +30,12 @@ environment; it returns a frozen `AppInstance` with `root` (the project folder),
 
 ## The framework plugins
 
-`acryl-router` (`ctx.router`: mounts an `App` with `route(prefix, app)`, with the ported core's routing, middleware and validators, and an in-process `request()`), `acryl-node-server` (one `node:http` listener that sends every
-request to the router; config `{ port, hostname, scan, websocket }`, provides `ctx.nodeServer.url` and `ctx.nodeServer.upgrades()` for WebSocket routes, see [node-server](framework/cordis/node-server.md#websocket-upgrades)), `acryl-state` (observable cells, read as JSON and streamed as server-sent
-events at `/api/state/<key>` and `/api/state/<key>/events`, and followed in a page over one WebSocket with `watch` of `/api/state/client.js`), `acryl-inspect` (what every plugin requires, provides and registers) and `acryl-router-http` (mounts router prefixes on the ACRYL Host's web server, with `mount(prefix, { upgrade: [paths] })` for WebSocket upgrades owned by the mounting plugin) are ACRYL's framework, vendored here as they are. Their text is in [framework/](framework/README.md); their source is
+`@acryldev/router` (`ctx.router`: mounts an `App` with `route(prefix, app)`, with the ported core's routing, middleware and validators, and an in-process `request()`), `@acryldev/node-server` (one `node:http` listener that sends every
+request to the router; config `{ port, hostname, scan, websocket }`, provides `ctx.nodeServer.url` and `ctx.nodeServer.upgrades()` for WebSocket routes, see [node-server](framework/cordis/node-server.md#websocket-upgrades)), `@acryldev/state` (observable cells, read as JSON and streamed as server-sent
+events at `/api/state/<key>` and `/api/state/<key>/events`, and followed in a page over one WebSocket with `watch` of `/api/state/client.js`), `@acryldev/inspect` (what every plugin requires, provides and registers) and `@acryldev/router-http` (mounts router prefixes on the ACRYL Host's web server, with `mount(prefix, { upgrade: [paths] })` for WebSocket upgrades owned by the mounting plugin) are ACRYL's framework, vendored here as they are. Their text is in [framework/](framework/README.md); their source is
 `plugins/acryl-*`, whose source lives in this repository (with the history it had in ACRYL); `acrylblends init` and `add` copy their `src/` into an app.
 
-`acryl-db` (the `db` port: types, numbered migrations) and `acryl-db-sqlite` (the SQLite provider; one `node:sqlite` file, `data.sqlite` in the app home unless `path` is set,
+`@acryldev/db` (the `db` port: types, numbered migrations) and `@acryldev/db-sqlite` (the SQLite provider; one `node:sqlite` file, `data.sqlite` in the app home unless `path` is set,
 the app's `migrations/` folder applied on start) come with `acrylblends add db` in a Blend app. A plugin declares `inject: ['db']` and calls `await ctx.db.all('SELECT ...', value)`;
 the interface is the one in the [data guide](framework/guides/data.md). A plain Acryl app opens its database with `openDb` from `acrylblends/db/sqlite` instead.
 
@@ -94,7 +94,7 @@ Durable task records: `ctx.tasks.start(kind, input, { parent })` returns a handl
 an abort `signal`. Every change is appended to `<home>/tasks.jsonl` before the call returns. `cancel(id)` cancels the
 tasks it owns too. After a crash, a task that was running is marked `interrupted` and is never run again on its own,
 because a side effect may already have happened. When `tasks` is mounted, every agent run is a task owning one task per
-tool call. With `acryl-state` mounted, the latest tasks are also the state cell `tasks`, and the installed extensions the cell `extensions`: read them at
+tool call. With `@acryldev/state` mounted, the latest tasks are also the state cell `tasks`, and the installed extensions the cell `extensions`: read them at
 `/api/state/tasks` and stream them at `/api/state/tasks/events` (or follow them in a page with `watch('tasks', fn)` from `/api/state/client.js`).
 
 ## manifest
@@ -168,10 +168,10 @@ for each agent whose command is on the machine.
 
 ## desktop
 
-An Electron window on the app's own server. `acrylblends init my-app --desktop` (or `acrylblends add desktop` in an existing app) adds `plugins/desktop`, `electron` as a development
+An Electron window on the app's own server. `acrylblends init my-app --desktop` (or `acrylblends add desktop-shell` in an existing app) adds `plugins/desktop-shell`, `electron` as a development
 dependency and the script `npm run desktop`. `npm run desktop` picks the app's instance as `npm run dev` does, keeps Electron's user data inside the app's own home (`.acrylblends/electron`,
 never the user's application-data folder), starts `createApp` in the Electron main process, opens one window with a locked-down renderer (context isolation, no Node, sandbox) on the app's address
 (`/todo` for the todo template: `acrylblends.desktopPath` in `package.json`), keeps navigation on the app's own origin (other links open in the system browser), and ends the process when the window
-closes, after the server stopped. A second launch of the same app focuses the first. The app's own code never imports `electron`; only `plugins/desktop` does. `user-data.ts` and `shutdown.ts` came
+closes, after the server stopped. A second launch of the same app focuses the first. The app's own code never imports `electron`; only `plugins/desktop-shell` does. `user-data.ts` and `shutdown.ts` came
 from ACRYL Desktop. Run from source only for now; packaging a distributable app is not part of it. `npm install` does not download Electron's binary (Electron 44 dropped its install script): the
 `electron` command downloads it the first time `npm run desktop` runs (about 100 MB, once per machine; `ELECTRON_MIRROR` and `ELECTRON_CACHE` apply). If that download is blocked, run `npx install-electron` where you can reach the mirror.

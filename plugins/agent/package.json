@@ -1,5 +1,5 @@
 {
-  "name": "acryl-agent",
+  "name": "@acryldev/agent",
   "version": "0.1.0",
   "description": "An offline agent: deterministic model, tools, memory, and a child fiber per run that holds the run's step budget.",
   "license": "MIT",

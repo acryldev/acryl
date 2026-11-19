@@ -1,6 +1,6 @@
-# Maintaining acrylblends-framework
+# Maintaining @acryldev/framework
 
-The ACRYL Framework as a plain package: the web framework ported into `acryl-router` and `acryl-node-server`, built without Cordis into
+The ACRYL Framework as a plain package: the web framework ported into `@acryldev/router` and `@acryldev/node-server`, built without Cordis into
 one dependency-free `lib/` that the public `acrylblends` package ships as its root. This package is private; ACRYLBLENDS vendors its packed
 tarball and publishes it under the name `acrylblends`.
 

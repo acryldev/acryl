@@ -13,12 +13,12 @@
  */
 import { samePushPlan, type GitRemoteState, type GitSyncResult, type PushPlan } from './contract.ts'
 
-/** The part of the confined git runner (`acryl-versions`) this module uses: an argument array, never a shell. */
+/** The part of the confined git runner (`@acryldev/versions`) this module uses: an argument array, never a shell. */
 export interface SyncGit {
   run(args: readonly string[], cwd: string, acceptExit?: number, timeoutMs?: number): Promise<{ readonly stdout: string }>
 }
 
-/** A fetch or push talks to another machine: as long as the versions' own push (`acryl-versions`). */
+/** A fetch or push talks to another machine: as long as the versions' own push (`@acryldev/versions`). */
 const REMOTE_TIMEOUT_MS = 120_000
 
 /** git's own line for a failure, else the fallback: what a person reads in the Git tab. */

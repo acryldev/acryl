@@ -247,7 +247,7 @@ function injected(module: PluginModule): string[] {
 }
 
 /** The service. One instance serves one app home. */
-/** The slice of the state service this plugin uses, by name, so it imports nothing from acryl-state. */
+/** The slice of the state service this plugin uses, by name, so it imports nothing from @acryldev/state. */
 interface StateService {
   cell<T>(key: string, initial: T): { set(value: T): void }
 }

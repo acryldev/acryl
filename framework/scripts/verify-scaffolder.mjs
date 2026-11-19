@@ -180,10 +180,10 @@ try {
       '@deepseek-ai/schemastery',
       // `.tsx` pages are compiled at start by the app's own typescript (acrylblends/node-server/register), so a production install (`npm ci --omit=dev`) needs it.
       'typescript',
-      '@webboxes/app-persistence',
-      '@webboxes/blends-core',
+      '@acryldev/app-persistence',
+      '@acryldev/blends-core',
       // The builder packs a plugin and plugin-share pulls and publishes one; both are development rows, and the app's lists are one list.
-      '@webboxes/plugin-hub',
+      '@acryldev/plugin-hub-core',
       // The state plugin follows keys in a page over a WebSocket (1.1.0); a production app has it.
       'ws',
       'yaml',
@@ -450,7 +450,7 @@ try {
     fail(`npm run save did not refuse a secret: ${leak.stdout}${leak.stderr}`)
   if (capture('git', ['diff', '--cached', '--name-only'], { cwd: saved }).trim() !== '')
     fail('npm run save left files staged after refusing')
-  // The short-literal rule of @webboxes/app-persistence 0.1.1: a quoted literal assigned to a credential-named key is refused, a read from the environment is not.
+  // The short-literal rule of @acryldev/app-persistence 0.1.1: a quoted literal assigned to a credential-named key is refused, a read from the environment is not.
   rmSync(join(saved, 'leak.ts'))
   writeFileSync(join(saved, 'creds.ts'), "export const config = { password: 'x-secret' }\n")
   const literal = spawnSync(npm, ['run', '--silent', 'save', '--', 'literal'], {
@@ -526,7 +526,7 @@ spec:
   const withoutServer = blueprintText
     .replace('version: 0.1.0', 'version: 0.3.0')
     .replace(
-      / {4}- id: server\n {6}name: acryl-node-server\n {6}config:\n {8}hostname: "\{\{parameters\.hostname\}\}"\n/,
+      / {4}- id: server\n {6}name: @acryldev\/node-server\n {6}config:\n {8}hostname: "\{\{parameters\.hostname\}\}"\n/,
       '',
     )
     // The server row was the only user of the hostname parameter, and an unused parameter makes a Blueprint invalid.
@@ -607,7 +607,7 @@ spec:
     'blank',
   ])
   capture(process.execPath, [cli, 'add', 'db', '--dir', withDb])
-  for (const name of ['acryl-db', 'acryl-db-sqlite'])
+  for (const name of ['@acryldev/db', '@acryldev/db-sqlite'])
     if (!existsSync(join(withDb, 'plugins', name, 'src', 'index.ts')))
       fail(`add db: ${name} was not copied`)
   capture(npm, ['install', '--no-audit', '--no-fund'], { cwd: withDb })
@@ -622,8 +622,8 @@ spec:
     [
       "import { Context } from '@deepseek-ai/cordis'",
       "import { join } from 'node:path'",
-      "import * as sqlite from './plugins/acryl-db-sqlite/src/index.ts'",
-      "import type {} from './plugins/acryl-db/src/cordis.ts'",
+      "import * as sqlite from './plugins/db-sqlite/src/index.ts'",
+      "import type {} from './plugins/db/src/cordis.ts'",
       'const root = new Context()',
       "root.plugin(sqlite, { path: join(process.cwd(), 'probe.sqlite'), migrations: join(process.cwd(), 'migrations') })",
       'let seen = 0',
@@ -671,7 +671,7 @@ spec:
     'blank',
   ])
   capture(process.execPath, [cli, 'add', 'kv', '--dir', withKv])
-  for (const name of ['acryl-kv', 'acryl-kv-json'])
+  for (const name of ['@acryldev/kv', '@acryldev/kv-json'])
     if (!existsSync(join(withKv, 'plugins', name, 'src', 'index.ts')))
       fail(`add kv: ${name} was not copied`)
   capture(npm, ['install', '--no-audit', '--no-fund'], { cwd: withKv })
@@ -681,8 +681,8 @@ spec:
     [
       "import { Context } from '@deepseek-ai/cordis'",
       "import { join } from 'node:path'",
-      "import * as kvJson from './plugins/acryl-kv-json/src/index.ts'",
-      "import type {} from './plugins/acryl-kv/src/cordis.ts'",
+      "import * as kvJson from './plugins/kv-json/src/index.ts'",
+      "import type {} from './plugins/kv/src/cordis.ts'",
       'const root = new Context()',
       "root.plugin(kvJson, { path: join(process.cwd(), 'probe-kv.json') })",
       'let seen = 0',
@@ -733,7 +733,7 @@ spec:
     )
   for (const file of appSource(join(desktop, 'src')))
     if (/from 'electron'/.test(readFileSync(file, 'utf8')))
-      fail(`desktop: ${file} imports electron; only plugins/desktop may`)
+      fail(`desktop: ${file} imports electron; only plugins/desktop-shell may`)
   capture(npm, ['install', '--no-audit', '--no-fund'], {
     cwd: desktop,
     env: { ...process.env, ELECTRON_SKIP_BINARY_DOWNLOAD: '1' },
@@ -821,7 +821,7 @@ spec:
       process.execPath,
       [
         '--import',
-        './plugins/acryl-node-server/src/register.ts',
+        './plugins/node-server/src/register.ts',
         '--input-type=module',
         '-e',
         `import { join } from 'node:path'; import { tmpdir } from 'node:os'; import { mkdtempSync } from 'node:fs'; import { createApp } from './src/app.ts'; import { pinnedInstance, withPort } from './plugins/instance/index.ts'; const home = mkdtempSync(join(tmpdir(), 'prod-')); const app = await createApp(withPort(pinnedInstance(home, { root: process.cwd() }), 0), { database: join(home, 'x.sqlite') }); const r = await fetch(app.url + '/client/${clientFile[kind]}'); console.log(r.status, r.headers.get('content-type')); await app.stop(); process.exit(0)`,

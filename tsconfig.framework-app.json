@@ -1,5 +1,5 @@
 {
-  "//": "The framework app profile gate (spec 047), as a consumer since the framework moved to acrylblends (spec 049 slice 17): the todo example compiles against the published acrylblends under the profile a new app gets (the options of acryl-router's tsconfig.app.json, without this repository's stricter flags). Run by check:layout; acrylblends resolves from the example's own dependencies.",
+  "//": "The framework app profile gate (spec 047), as a consumer since the framework moved to acrylblends (spec 049 slice 17): the todo example compiles against the published acrylblends under the profile a new app gets (the options of @acryldev/router's tsconfig.app.json, without this repository's stricter flags). Run by check:layout; acrylblends resolves from the example's own dependencies.",
   "compilerOptions": {
     "target": "ES2024",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
@@ -10,8 +10,8 @@
     "types": ["node"],
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "typeRoots": ["./examples/acryl-todo/node_modules/@types"]
+    "typeRoots": ["./examples/todo/node_modules/@types"]
   },
-  "include": ["examples/acryl-todo/src/**/*.ts"],
+  "include": ["examples/todo/src/**/*.ts"],
   "exclude": ["**/*.test.ts"]
 }

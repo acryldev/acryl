@@ -5,7 +5,7 @@ const entry = (name: string, disabled?: boolean) => ({ options: { name, ...(disa
 
 describe('rootOwnsSettingsSeat', () => {
   it('leaves the seat to DSH when its left sidebar is composed (ACRYL Desktop)', () => {
-    expect(rootOwnsSettingsSeat([entry('acryl-workspace'), entry('@deepseek-ai/dsh-client-ui-sidebar')])).toBe(false)
+    expect(rootOwnsSettingsSeat([entry('@acryldev/workspace'), entry('@deepseek-ai/dsh-client-ui-sidebar')])).toBe(false)
   })
 
   it('owns the seat when only the right-hand sidebars are composed (ACRYL ADE)', () => {
