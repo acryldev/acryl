@@ -437,11 +437,20 @@ exports.default = async (context) => {
 const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
 // The installed app's icon (Dock, Finder, About, the installer) is the one its window wears (plugins/desktop/brand.ts iconFile): the app's own
 // assets/icon.png, else the ACRYL Blends logo. Left unset, every product showed Electron's default icon.
+// The app's desktop shell: its own copy in plugins/desktop, or the acryl-desktop-shell package it depends on (spec 051 T011).
+const { findDesktopShell } = await import(
+  pathToFileURL(join(root, 'packages/cli/src/desktop-shell.ts')).href
+)
+const shell = findDesktopShell(app)
+if (shell === undefined)
+  throw new Error(
+    `pack-blank-mac: ${app} has no desktop shell (plugins/desktop, or the acryl-desktop-shell package)`,
+  )
 const appIcon = [
   join(app, 'assets', 'icon.png'),
-  join(app, 'plugins', 'desktop', 'assets', 'acrylblends-logo.png'),
+  join(shell.root, 'assets', 'acrylblends-logo.png'),
 ].find((file) => existsSync(file))
-manifest.main = 'plugins/desktop/main.ts'
+manifest.main = shell.main
 manifest.productName = PRODUCT
 manifest.description = DESCRIPTION
 manifest.build = {

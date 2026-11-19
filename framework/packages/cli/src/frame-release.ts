@@ -4,9 +4,11 @@
  * set of specs for a checkout's unpublished build, or `none` for an app on the framework alone. An app that already carries frame packages upgrades from
  * its own pins.
  */
+
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import release from '../../../frame/packages.json' with { type: 'json' }
+import { findDesktopShell } from './desktop-shell'
 import { FRAME_PACKAGES, type IdeProfileInput, type IdeProfilePackage } from './ide-profile'
 import { VERSION } from './version'
 
@@ -101,7 +103,8 @@ export function frameProfileForApp(root: string): FrameProfileSpecs | undefined 
   if (fromEnv !== undefined) return fromEnv
   const fromApp = frameProfileOfManifest(root)
   if (fromApp !== undefined) return fromApp
-  return existsSync(join(root, 'plugins', 'desktop')) ? publishedFrameProfile() : undefined
+  // A desktop app: one carrying the shell's copy, or one that moved to the acryl-desktop-shell package (spec 051 T011).
+  return findDesktopShell(root) !== undefined ? publishedFrameProfile() : undefined
 }
 
 function frameProfileOfManifest(root: string): FrameProfileSpecs | undefined {
