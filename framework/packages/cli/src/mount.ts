@@ -91,7 +91,9 @@ export function mount(appDir: string, plugin: Mounted): MountResult {
       const found = anchor.exec(text)
       if (found) {
         const indent = found[1] as string
-        const row = `${indent}- id: ${plugin.row ?? plugin.name}${eol}${indent}  name: ${plugin.name}${eol}`
+        // A scoped package name starts with @, which YAML reads as a reserved character unless quoted.
+        const rowName = plugin.name.startsWith('@') ? `'${plugin.name}'` : plugin.name
+        const row = `${indent}- id: ${plugin.row ?? plugin.name}${eol}${indent}  name: ${rowName}${eol}`
         const at = plugin.after ? found.index + found[0].length : found.index
         text = text.slice(0, at) + row + text.slice(at)
         writeFileSync(manifestFile, text)

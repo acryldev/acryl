@@ -808,7 +808,7 @@ function overlayOf(
       : []),
     ...appRows.flatMap((row) => [
       `    - id: ${row.id}`,
-      `      name: ${row.name}`,
+      `      name: ${yamlName(row.name)}`,
       ...(row.isolate === undefined ? [] : [`      isolate: ${JSON.stringify(row.isolate)}`]),
     ]),
   ]
