@@ -5,7 +5,7 @@ name: Framework release
 #   acrylblends-v<version>           acrylblends (framework/packages/cli)
 #   create-acrylblends-v<version>    create-acrylblends (framework/packages/create)
 #   frame-<short>-v<version>         @acrylblends/<short>, a frame package (framework/frame/packages.json names its folder and version)
-#   launcher-v<version>              @acryl/launcher (plugins/acryl-launcher; Control Center installs it, spec 051 T010)
+#   launcher-v<version>              @acryldev/control-center (plugins/acryl-launcher; Control Center installs it, spec 051 T010)
 # None of these starts with `v`, so release-cli.yml (acryl's own `v*`) never fires on them, nor this one on its tags.
 # Run by hand (workflow_dispatch) it does everything except `npm publish`, so the whole path can be tried at any time.
 on:
@@ -47,8 +47,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run check:framework
       - name: The launcher's own suite (a launcher release)
-        if: steps.which.outputs.package == '@acryl/launcher'
-        run: pnpm --filter @acryl/launcher run check
+        if: steps.which.outputs.package == '@acryldev/control-center'
+        run: pnpm --filter @acryldev/control-center run check
       - name: Pack the CLI or the scaffolder (pnpm pack turns workspace ranges into real ones)
         if: steps.which.outputs.kind != 'frame'
         run: |

@@ -4,7 +4,7 @@
  *   acrylblends-v<version>         acrylblends, framework/packages/cli
  *   create-acrylblends-v<version>  create-acrylblends, framework/packages/create
  *   frame-<short>-v<version>       <scope>/<short>, the frame package framework/frame/packages.json names
- *   launcher-v<version>            @acryl/launcher, ACRYL's plugins/acryl-launcher
+ *   launcher-v<version>            @acryldev/control-center, ACRYL's plugins/acryl-launcher
  * The version must be the one the source holds, so a tag can never publish something other than what is checked in.
  *
  *   node framework/scripts/release-tag.mjs <tag>    prints kind=, package=, version=, dir=, tarball= lines (GitHub step outputs)
@@ -63,10 +63,10 @@ export function releaseOfTag(tag, root = framework) {
     return expect(
       {
         kind: 'npm',
-        package: '@acryl/launcher',
+        package: '@acryldev/control-center',
         version: match[1],
         dir,
-        tarball: tarball('@acryl/launcher', match[1]),
+        tarball: tarball('@acryldev/control-center', match[1]),
       },
       versionOf(dir),
     )

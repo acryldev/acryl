@@ -1563,7 +1563,7 @@ importers:
 
   apps/acryl-launcher-tui:
     dependencies:
-      '@acryl/launcher':
+      '@acryldev/control-center':
         specifier: workspace:*
         version: link:../../plugins/acryl-launcher
       '@earendil-works/pi-tui':
@@ -2951,7 +2951,7 @@ importers:
 
   plugins/acryl-launcher-desktop:
     dependencies:
-      '@acryl/launcher':
+      '@acryldev/control-center':
         specifier: workspace:*
         version: link:../acryl-launcher
       acryl-control:
