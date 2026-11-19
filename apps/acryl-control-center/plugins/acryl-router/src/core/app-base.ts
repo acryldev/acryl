@@ -1,0 +1,544 @@
+/**
+ * @module
+ * This module is the base module for the Acryl object.
+ */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { compose } from './compose.ts'
+import { Context } from './context.ts'
+import type { ExecutionContext } from './context.ts'
+import type { Router } from './router.ts'
+import { METHODS, METHOD_NAME_ALL, METHOD_NAME_ALL_LOWERCASE } from './router.ts'
+import type {
+  Env,
+  ErrorHandler,
+  FetchEventLike,
+  H,
+  HandlerInterface,
+  MergePath,
+  MergeSchemaPath,
+  MiddlewareHandler,
+  MiddlewareHandlerInterface,
+  Next,
+  NotFoundHandler,
+  OnHandlerInterface,
+  RouterRoute,
+  Schema,
+} from './types.ts'
+import { COMPOSED_HANDLER } from './utils/constants.ts'
+import { getPath, getPathNoStrict, mergePath } from './utils/url.ts'
+
+const notFoundHandler: NotFoundHandler = (c) => {
+  return c.text('404 Not Found', 404)
+}
+
+const errorHandler: ErrorHandler = (err, c) => {
+  if ('getResponse' in err) {
+    const res = err.getResponse()
+    return c.newResponse(res.body, res)
+  }
+  console.error(err)
+  return c.text('Internal Server Error', 500)
+}
+
+type GetPath<E extends Env> = (request: Request, options?: { env?: E['Bindings'] }) => string
+
+export type AcrylOptions<E extends Env> = {
+  /**
+   * `router` option specifies which router to use.
+   *
+   *
+   * @example
+   * ```ts
+   * const app = new Acryl({ router: new RegExpRouter() })
+   * ```
+   */
+  router?: Router<[H, RouterRoute]>
+} & (
+  | {
+      /**
+       * `strict` option specifies whether to distinguish whether the last path is a directory or not.
+       *
+       *
+       * @default true
+       */
+      strict?: true
+      /**
+       * `getPath` can handle the host header value.
+       *
+       *
+       * @example
+       * ```ts
+       * const app = new Acryl({
+       *  getPath: (req) =>
+       *   '/' + req.headers.get('host') + req.url.replace(/^https?:\/\/[^/]+(\/[^?]*)/, '$1'),
+       * })
+       *
+       * app.get('/www1.example.com/hello', () => c.text('hello www1'))
+       *
+       * // A following request will match the route:
+       * // new Request('http://www1.example.com/hello', {
+       * //  headers: { host: 'www1.example.com' },
+       * // })
+       * ```
+       */
+      getPath?: GetPath<E>
+    }
+  | {
+      /**
+       * `strict` option specifies whether to distinguish whether the last path is a directory or not.
+       * When `strict` is `false`, `getPath` is not used.
+       *
+       *
+       * @default true
+       */
+      strict: false
+      getPath?: never
+    }
+)
+
+type MountOptionHandler = (c: Context) => unknown
+type MountReplaceRequest = (originalRequest: Request) => Request
+type MountOptions =
+  | MountOptionHandler
+  | {
+      optionHandler?: MountOptionHandler
+      replaceRequest?: MountReplaceRequest | false
+    }
+
+class Acryl<
+  E extends Env = Env,
+  S extends Schema = {},
+  BasePath extends string = '/',
+  CurrentPath extends string = BasePath,
+> {
+  get!: HandlerInterface<E, 'get', S, BasePath, CurrentPath>
+  post!: HandlerInterface<E, 'post', S, BasePath, CurrentPath>
+  put!: HandlerInterface<E, 'put', S, BasePath, CurrentPath>
+  delete!: HandlerInterface<E, 'delete', S, BasePath, CurrentPath>
+  options!: HandlerInterface<E, 'options', S, BasePath, CurrentPath>
+  patch!: HandlerInterface<E, 'patch', S, BasePath, CurrentPath>
+  query!: HandlerInterface<E, 'query', S, BasePath, CurrentPath>
+  all!: HandlerInterface<E, 'all', S, BasePath, CurrentPath>
+  on: OnHandlerInterface<E, S, BasePath>
+  use: MiddlewareHandlerInterface<E, S, BasePath>
+
+  /*
+    This class is like an abstract class and does not have a router.
+    To use it, inherit the class and implement router in the constructor.
+  */
+  router!: Router<[H, RouterRoute]>
+  readonly getPath: GetPath<E>
+  // Cannot use `#` because it requires visibility at JavaScript runtime.
+  private _basePath: string = '/'
+  #path: string = '/'
+
+  routes: RouterRoute[] = []
+
+  constructor(options: AcrylOptions<E> = {}) {
+    // Implementation of app.get(...handlers[]) or app.get(path, ...handlers[])
+    const allMethods = [...METHODS, METHOD_NAME_ALL_LOWERCASE]
+    allMethods.forEach((method) => {
+      this[method] = (args1: string | H, ...args: H[]) => {
+        const methodName = method.toUpperCase()
+        if (typeof args1 === 'string') {
+          this.#path = args1
+        } else {
+          this.#addRoute(methodName, this.#path, args1)
+        }
+        args.forEach((handler) => {
+          this.#addRoute(methodName, this.#path, handler)
+        })
+        return this as any
+      }
+    })
+
+    // Implementation of app.on(method, path, ...handlers[])
+    this.on = (method: string | string[], path: string | string[], ...handlers: H[]) => {
+      for (const p of [path].flat()) {
+        this.#path = p
+        for (const m of [method].flat()) {
+          const methodName = m.toUpperCase()
+          for (const handler of handlers) {
+            this.#addRoute(methodName, this.#path, handler)
+          }
+        }
+      }
+      return this as any
+    }
+
+    // Implementation of app.use(...handlers[]) or app.use(path, ...handlers[])
+    this.use = (arg1: string | MiddlewareHandler<any>, ...handlers: MiddlewareHandler<any>[]) => {
+      if (typeof arg1 === 'string') {
+        this.#path = arg1
+      } else {
+        this.#path = '*'
+        handlers.unshift(arg1)
+      }
+      handlers.forEach((handler) => {
+        this.#addRoute(METHOD_NAME_ALL, this.#path, handler)
+      })
+      return this as any
+    }
+
+    const { strict, ...optionsWithoutStrict } = options
+    Object.assign(this, optionsWithoutStrict)
+    this.getPath = (strict ?? true) ? (options.getPath ?? getPath) : getPathNoStrict
+  }
+
+  #clone(): Acryl<E, S, BasePath, CurrentPath> {
+    const clone = new Acryl<E, S, BasePath, CurrentPath>({
+      router: this.router,
+      getPath: this.getPath,
+    })
+    clone.errorHandler = this.errorHandler
+    clone.#notFoundHandler = this.#notFoundHandler
+    clone.routes = this.routes
+    return clone
+  }
+
+  #notFoundHandler: NotFoundHandler = notFoundHandler
+  // Cannot use `#` because it requires visibility at JavaScript runtime.
+  private errorHandler: ErrorHandler = errorHandler
+
+  /**
+   * `.route()` allows grouping other Acryl instance in routes.
+   *
+   *
+   * @param {string} path - base Path
+   * @param {Acryl} app - other Acryl instance
+   * @returns {Acryl} routed Acryl instance
+   *
+   * @example
+   * ```ts
+   * const app = new Acryl()
+   * const app2 = new Acryl()
+   *
+   * app2.get("/user", (c) => c.text("user"))
+   * app.route("/api", app2) // GET /api/user
+   * ```
+   */
+  route<
+    SubPath extends string,
+    SubEnv extends Env,
+    SubSchema extends Schema,
+    SubBasePath extends string,
+    SubCurrentPath extends string,
+  >(
+    path: SubPath,
+    app: Acryl<SubEnv, SubSchema, SubBasePath, SubCurrentPath>
+  ): Acryl<E, MergeSchemaPath<SubSchema, MergePath<BasePath, SubPath>> | S, BasePath, CurrentPath> {
+    const subApp = this.basePath(path)
+    app.routes.map((r) => {
+      let handler
+      if (app.errorHandler === errorHandler) {
+        handler = r.handler
+      } else {
+        handler = async (c: Context, next: Next) =>
+          (await compose([], app.errorHandler)(c, () => r.handler(c, next))).res
+        ;(handler as any)[COMPOSED_HANDLER] = r.handler
+      }
+
+      subApp.#addRoute(r.method, r.path, handler, r.basePath)
+    })
+    return this
+  }
+
+  /**
+   * `.basePath()` allows base paths to be specified.
+   *
+   *
+   * @param {string} path - base Path
+   * @returns {Acryl} changed Acryl instance
+   *
+   * @example
+   * ```ts
+   * const api = new Acryl().basePath('/api')
+   * ```
+   */
+  basePath<SubPath extends string>(
+    path: SubPath
+  ): Acryl<E, S, MergePath<BasePath, SubPath>, MergePath<BasePath, SubPath>> {
+    const subApp = this.#clone()
+    subApp._basePath = mergePath(this._basePath, path)
+    return subApp
+  }
+
+  /**
+   * `.onError()` handles an error and returns a customized Response.
+   *
+   *
+   * @param {ErrorHandler} handler - request Handler for error
+   * @returns {Acryl} changed Acryl instance
+   *
+   * @example
+   * ```ts
+   * app.onError((err, c) => {
+   *   console.error(`${err}`)
+   *   return c.text('Custom Error Message', 500)
+   * })
+   * ```
+   */
+  onError = (handler: ErrorHandler<E>): Acryl<E, S, BasePath, CurrentPath> => {
+    this.errorHandler = handler
+    return this
+  }
+
+  /**
+   * `.notFound()` allows you to customize a Not Found Response.
+   *
+   *
+   * @param {NotFoundHandler} handler - request handler for not-found
+   * @returns {Acryl} changed Acryl instance
+   *
+   * @example
+   * ```ts
+   * app.notFound((c) => {
+   *   return c.text('Custom 404 Message', 404)
+   * })
+   * ```
+   */
+  notFound = (handler: NotFoundHandler<E>): Acryl<E, S, BasePath, CurrentPath> => {
+    this.#notFoundHandler = handler
+    return this
+  }
+
+  /**
+   * `.mount()` allows you to mount applications built with other frameworks into your Acryl application.
+   *
+   * @deprecated Use `mount()` from `acryl-router/mount` instead. `.mount()` will be removed in v5.
+   *
+   *
+   * @param {string} path - base Path
+   * @param {Function} applicationHandler - other Request Handler
+   * @param {MountOptions} [options] - options of `.mount()`
+   * @returns {Acryl} mounted Acryl instance
+   *
+   * @example
+   * ```ts
+   * import { Router as IttyRouter } from 'itty-router'
+   * import { Acryl } from 'acrylblends'
+   * // Create itty-router application
+   * const ittyRouter = IttyRouter()
+   * // GET /itty-router/hello
+   * ittyRouter.get('/hello', () => new Response('Hello from itty-router'))
+   *
+   * const app = new Acryl()
+   * app.mount('/itty-router', ittyRouter.handle)
+   * ```
+   *
+   * @example
+   * ```ts
+   * const app = new Acryl()
+   * // Send the request to another application without modification.
+   * app.mount('/app', anotherApp, {
+   *   replaceRequest: (req) => req,
+   * })
+   * ```
+   */
+  mount(
+    path: string,
+    applicationHandler: (request: Request, ...args: any) => Response | Promise<Response>,
+    options?: MountOptions
+  ): Acryl<E, S, BasePath, CurrentPath> {
+    // handle options
+    let replaceRequest: MountReplaceRequest | undefined
+    let optionHandler: MountOptionHandler | undefined
+    if (options) {
+      if (typeof options === 'function') {
+        optionHandler = options
+      } else {
+        optionHandler = options.optionHandler
+        if (options.replaceRequest === false) {
+          replaceRequest = (request) => request
+        } else {
+          replaceRequest = options.replaceRequest
+        }
+      }
+    }
+
+    // prepare handlers for request
+    const getOptions: (c: Context) => unknown[] = optionHandler
+      ? (c) => {
+          const options = optionHandler!(c)
+          return Array.isArray(options) ? options : [options]
+        }
+      : (c) => {
+          let executionContext: ExecutionContext | undefined = undefined
+          try {
+            executionContext = c.executionCtx
+          } catch {} // Do nothing
+          return [c.env, executionContext]
+        }
+    replaceRequest ||= (() => {
+      const mergedPath = mergePath(this._basePath, path)
+      const pathPrefixLength = mergedPath === '/' ? 0 : mergedPath.length
+      return (request) => {
+        const url = new URL(request.url)
+        url.pathname = this.getPath(request).slice(pathPrefixLength) || '/'
+        return new Request(url, request)
+      }
+    })()
+
+    const handler: MiddlewareHandler = async (c, next) => {
+      const res = await applicationHandler(replaceRequest(c.req.raw), ...getOptions(c))
+
+      if (res) {
+        return res
+      }
+
+      await next()
+    }
+    this.#addRoute(METHOD_NAME_ALL, mergePath(path, '*'), handler)
+    return this
+  }
+
+  #addRoute(method: string, path: string, handler: H, baseRoutePath?: string): void {
+    path = mergePath(this._basePath, path)
+    const r: RouterRoute = {
+      basePath:
+        baseRoutePath !== undefined ? mergePath(this._basePath, baseRoutePath) : this._basePath,
+      path,
+      method,
+      handler,
+    }
+    this.router.add(method, path, [handler, r])
+    this.routes.push(r)
+  }
+
+  #handleError(err: unknown, c: Context<E>): Response | Promise<Response> {
+    if (err instanceof Error) {
+      return this.errorHandler(err, c)
+    }
+    throw err
+  }
+
+  #dispatch(
+    request: Request,
+    executionCtx: ExecutionContext | FetchEventLike | undefined,
+    env: E['Bindings'],
+    method: string
+  ): Response | Promise<Response> {
+    // Handle HEAD method
+    if (method === 'HEAD') {
+      return (async () =>
+        new Response(null, await this.#dispatch(request, executionCtx, env, 'GET')))()
+    }
+
+    const path = this.getPath(request, { env })
+    const matchResult = this.router.match(method, path)
+
+    const c = new Context(request, {
+      path,
+      matchResult,
+      env,
+      executionCtx,
+      notFoundHandler: this.#notFoundHandler,
+    })
+
+    // Do not `compose` if it has only one handler
+    if (matchResult[0].length === 1) {
+      let res: ReturnType<H>
+      try {
+        res = matchResult[0][0][0][0](c, async () => {
+          c.res = await this.#notFoundHandler(c)
+        })
+      } catch (err) {
+        return this.#handleError(err, c)
+      }
+
+      return res instanceof Promise
+        ? res
+            .then(
+              (resolved: Response | undefined) =>
+                resolved || (c.finalized ? c.res : this.#notFoundHandler(c))
+            )
+            .catch((err: Error) => this.#handleError(err, c))
+        : (res ?? this.#notFoundHandler(c))
+    }
+
+    const composed = compose(matchResult[0], this.errorHandler, this.#notFoundHandler)
+
+    return (async () => {
+      try {
+        const context = await composed(c)
+        if (!context.finalized) {
+          throw new Error(
+            'Context is not finalized. Did you forget to return a Response object or `await next()`?'
+          )
+        }
+
+        return context.res
+      } catch (err) {
+        return this.#handleError(err, c)
+      }
+    })()
+  }
+
+  /**
+   * `.fetch()` will be entry point of your app.
+   *
+   *
+   * @param {Request} request - request Object of request
+   * @param {Env} env - env Object
+   * @param {ExecutionContext} executionCtx - context of execution
+   * @returns {Response | Promise<Response>} response of request
+   *
+   */
+  fetch: (
+    request: Request,
+    env?: E['Bindings'] | {},
+    executionCtx?: ExecutionContext
+  ) => Response | Promise<Response> = (request, ...rest) => {
+    return this.#dispatch(request, rest[1], rest[0], request.method)
+  }
+
+  /**
+   * `.request()` is a useful method for testing.
+   * You can pass a URL or pathname to send a GET request.
+   * app will return a Response object.
+   * ```ts
+   * test('GET /hello is ok', async () => {
+   *   const res = await app.request('/hello')
+   *   expect(res.status).toBe(200)
+   * })
+   * ```
+   */
+  request = (
+    input: Request | string | URL,
+    requestInit?: RequestInit,
+    Env?: E['Bindings'] | {},
+    executionCtx?: ExecutionContext
+  ): Response | Promise<Response> => {
+    if (input instanceof Request) {
+      return this.fetch(requestInit ? new Request(input, requestInit) : input, Env, executionCtx)
+    }
+    input = input.toString()
+    return this.fetch(
+      new Request(
+        /^https?:\/\//.test(input) ? input : `http://localhost${mergePath('/', input)}`,
+        requestInit
+      ),
+      Env,
+      executionCtx
+    )
+  }
+
+  /**
+   * `.fire()` automatically adds a global fetch event listener.
+   * This can be useful for environments that adhere to the Service Worker API, such as non-ES module Cloudflare Workers.
+   * @deprecated
+   * ACRYL ships no service-worker adapter: mount the app with `ctx.router.route(path, app)` and serve it through an ACRYL adapter instead.
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API
+   * @see https://developers.cloudflare.com/workers/reference/migrate-to-module-workers/
+   */
+  fire = (): void => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    addEventListener('fetch', (event: FetchEventLike): void => {
+      event.respondWith(this.#dispatch(event.request, event, undefined, event.request.method))
+    })
+  }
+}
+
+export { Acryl as AcrylBase }
