@@ -4,8 +4,8 @@
 // to it and reaches bash, where it dies as "bad substitution" - run 41518339598 on 2e779c3a shipped exactly that in three run scripts and all 17 frame
 // jobs failed (2026-11-02). Both checks run before a push.
 import './lib/scratch-home.mjs'
-import { readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createLinter } from 'actionlint'
 import { parse } from 'yaml'
@@ -48,11 +48,19 @@ function runScriptFindings(document, name) {
 
 const lint = await createLinter()
 let findings = 0
-const names = readdirSync(workflows)
-  .filter((name) => /\.ya?ml$/u.test(name))
-  .sort()
-for (const name of names) {
-  const source = readFileSync(join(workflows, name), 'utf8')
+// The framework's own workflows: what is left in framework/.github/workflows (its release, until the cut-over) and, inside ACRYL's monorepo
+// (spec 051), its CI at the repository root, .github/workflows/framework.yml.
+const rootWorkflow = join(workflows, '..', '..', '..', '.github', 'workflows', 'framework.yml')
+const files = [
+  ...readdirSync(workflows)
+    .filter((name) => /\.ya?ml$/u.test(name))
+    .map((name) => join(workflows, name)),
+  ...(existsSync(rootWorkflow) ? [rootWorkflow] : []),
+].sort()
+const names = files.map((file) => basename(file))
+for (const file of files) {
+  const name = basename(file)
+  const source = readFileSync(file, 'utf8')
   for (const result of lint(source, name)) {
     findings += 1
     console.error(

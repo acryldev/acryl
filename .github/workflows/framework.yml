@@ -1,16 +1,21 @@
-name: CI
+name: Framework
 
-# The framework's home (spec 049 slice 17). The jobs:
-#  - `check`: the whole gate (`pnpm run check`: lint, build, typecheck, every test, the scaffolder, the guide, the panel, the tarball) on Linux, Node 22, 24 and 26.
+# The framework (spec 049 slice 17; inside ACRYL's monorepo since spec 051). Its whole gate (lint, build, typecheck, every test, the scaffolder,
+# the guide, the panel, the tarball) runs in the root CI, as the last step of `pnpm run check`. The jobs here:
 #  - `packages`: the framework packages' own suites (the router, node server, state, inspect, db and kv providers, the door, the framework build) on Linux, macOS and Windows,
 #    Node 22, 24 and 26 (26 is what a fresh Homebrew install gives). The SQLite provider and the JSON-file store follow the operating system's file locking and rename rules, so one runner proves neither.
 #  - `frame`: the six-template framed page gate on Linux, macOS and Windows, in headless Chrome, with a local model mock and no secret.
 on:
   push:
-    branches: [main, '[0-9][0-9][0-9]-*']
+    branches: [main]
+    paths: ['framework/**', 'plugins/acryl-*/**', 'runtime/**', 'pnpm-lock.yaml', '.github/workflows/framework.yml']
   pull_request:
+    branches: [main]
+    paths: ['framework/**', 'plugins/acryl-*/**', 'runtime/**', 'pnpm-lock.yaml', '.github/workflows/framework.yml']
   workflow_dispatch:
 
+# The framework (acrylblends) inside ACRYL's monorepo (spec 051): its whole gate runs in the root CI (`pnpm run check` ends with
+# check:framework); these are its jobs on Linux, macOS and Windows. Every step runs in framework/; pnpm installs the whole workspace.
 permissions:
   contents: read
 
@@ -20,44 +25,10 @@ concurrency:
 
 defaults:
   run:
+    working-directory: framework
     shell: bash
 
 jobs:
-  check:
-    name: check (Linux, Node ${{ matrix.node }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [22, 24, 26]
-    # The router's request-signal diagnostics (service plus handler halves) append to one file per run; the failure step below uploads it.
-    env:
-      ACRYL_ROUTER_TRACE: '1'
-    steps:
-      # The release tags: verify:legacy-layouts reads every published release's scaffold from its tag, so `upgrade` knows each app a release made.
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: pnpm
-      # Bun is experimental and has one smoke gate (verify:framework runs the Bun adapter on it); the check fails when it is missing here.
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.3
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run check
-      - name: the router abort trace (only when a test fails)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: router-trace-check-node${{ matrix.node }}
-          path: ${{ runner.temp }}/acryl-router-trace.log
-          if-no-files-found: ignore
-
   packages:
     name: packages (${{ matrix.os }}, Node ${{ matrix.node }})
     runs-on: ${{ matrix.os }}
@@ -79,6 +50,8 @@ jobs:
       ACRYL_ROUTER_TRACE: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -120,6 +93,8 @@ jobs:
       ACRYL_ROUTER_TRACE: '1'
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -162,6 +137,8 @@ jobs:
         template: [blank, agent, todo, notes, chat, nodejs]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -198,6 +175,8 @@ jobs:
         template: [blank, agent, todo, notes, chat, nodejs]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -232,6 +211,8 @@ jobs:
         template: [blank, agent, todo, notes, chat, nodejs]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -271,6 +252,8 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
