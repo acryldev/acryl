@@ -44,7 +44,7 @@ const browser = (name: string): UserConfig => ({
 const plainRouter = {
   name: 'plain-router',
   resolveId(source: string, importer: string | undefined) {
-    if (importer === undefined || !/acryl-node-server[\\/]src[\\/](adapter[\\/]|client-modules\.ts)/u.test(importer)) return null
+    if (importer === undefined || !/node-server[\\/]src[\\/](adapter[\\/]|client-modules\.ts)/u.test(importer)) return null
     if (source === '@acryldev/router') return here('../../../plugins/router/src/core/index.ts')
     if (source === '@acryldev/router/helpers') return here('../../../plugins/router/src/helpers/index.ts')
     return null
