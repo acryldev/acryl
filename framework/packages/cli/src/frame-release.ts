@@ -10,7 +10,7 @@ import release from '../../../frame/packages.json' with { type: 'json' }
 import { FRAME_PACKAGES, type IdeProfileInput, type IdeProfilePackage } from './ide-profile'
 import { VERSION } from './version'
 
-/** One frame package as it publishes: its folder under `ide/` (a row package's folder is its source name), its published name, its version. */
+/** One frame package as it publishes: its folder (frame/packages.json `path`; a row package's folder is its source name), its published name, its version. */
 export interface FrameReleasePackage {
   readonly source: string
   readonly name: string

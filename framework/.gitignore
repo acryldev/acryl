@@ -172,8 +172,6 @@ plugins/acryl-*/src/**/*.d.ts
 # The upgrade tests unpack apps made by published versions (scripts/make-upgrade-fixtures.mjs).
 !packages/cli/test/fixtures/upgrade/*.tgz
 
-# Slice 0 spike build output (rebuilt by spikes/ide-slice0/run.sh)
-spikes/ide-slice0/dsh-client-ui-brand-acryl/lib/
 
 # The IDE port's packages build lib/ like the framework's; only source is committed.
 

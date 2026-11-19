@@ -233,17 +233,13 @@ describe('scaffolding a template into the frame', () => {
 
 describe('frame/packages.json, the release the CLI installs', () => {
   const frameworkRoot = join(templatesRoot(), '..', '..', '..')
-  const ide = join(frameworkRoot, 'ide')
-  // A package shared with ACRYL lives outside ide/ and the file names its folder (`path`, spec 051); every other one is ide/<key>.
+  // Each frame package names its folder (`path`, relative to the framework's root; spec 051).
   const release = JSON.parse(
     readFileSync(join(frameworkRoot, 'frame', 'packages.json'), 'utf8'),
   ) as {
-    packages: Record<string, { path?: string }>
+    packages: Record<string, { path: string }>
   }
-  const folderPath = (key: string) => {
-    const path = release.packages[key]?.path
-    return path === undefined ? join(ide, key) : join(frameworkRoot, path)
-  }
+  const folderPath = (key: string) => join(frameworkRoot, release.packages[key]?.path ?? key)
   const manifestOf = (folder: string) =>
     JSON.parse(readFileSync(join(folderPath(folder), 'package.json'), 'utf8')) as {
       name: string
@@ -258,10 +254,7 @@ describe('frame/packages.json, the release the CLI installs', () => {
   })
 
   it('is exactly the closure of the frame rows, so nothing is published that the frame does not install and nothing it installs is missing', () => {
-    const folders = new Set([
-      ...readdirSync(ide).filter((folder) => existsSync(join(ide, folder, 'package.json'))),
-      ...Object.keys(release.packages),
-    ])
+    const folders = new Set(Object.keys(release.packages))
     const folderOf = new Map([...folders].map((folder) => [manifestOf(folder).name, folder]))
     const closure = new Set<string>()
     const need = (name: string) => {

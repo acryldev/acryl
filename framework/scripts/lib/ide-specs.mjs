@@ -3,23 +3,18 @@
  * checkout, so `npm install` puts them (and their workspace dependencies, which npm does not resolve from `workspace:*`) into the app's node_modules.
  * Shared by the profile gate (`scripts/verify-ide-profile.mjs`) and the per-template gate (`scripts/verify-ide-template.mjs`).
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FRAME_PACKAGES } from '../../packages/cli/src/ide-profile.ts'
 import { frameFolders } from './frame-folders.mjs'
 
 /**
- * The frame's package folders (every one under `ide/`, plus those `frame/packages.json` places elsewhere with `path`), by package name. Throws when one
+ * The frame's package folders (each one `frame/packages.json` names with `path`), by package name. Throws when one
  * is not built (the gate's `pnpm run build` builds them first).
  */
 export function frameSpecs(root) {
   const folders = new Map()
-  const candidates = new Set([
-    ...(existsSync(join(root, 'ide'))
-      ? readdirSync(join(root, 'ide')).map((name) => join(root, 'ide', name))
-      : []),
-    ...frameFolders(root).values(),
-  ])
+  const candidates = new Set(frameFolders(root).values())
   for (const folder of candidates) {
     const manifest = join(folder, 'package.json')
     if (!existsSync(manifest)) continue

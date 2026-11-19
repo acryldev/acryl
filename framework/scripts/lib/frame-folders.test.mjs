@@ -16,9 +16,8 @@ test('every frame package has a folder named by its key, with a package.json', (
   }
 })
 
-test('a package outside ide/ is found by its path', () => {
+test('every package is found by the path it names', () => {
   const { packages } = JSON.parse(readFileSync(join(root, 'frame', 'packages.json'), 'utf8'))
   for (const [key, entry] of Object.entries(packages))
-    if (entry.path !== undefined)
-      assert.equal(frameFolders(root).get(key), resolve(root, entry.path))
+    assert.equal(frameFolders(root).get(key), resolve(root, entry.path))
 })
