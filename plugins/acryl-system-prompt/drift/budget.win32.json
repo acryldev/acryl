@@ -1,7 +1,7 @@
 {
   "web": {
     "systemChars": 9100,
-    "toolsChars": 28900
+    "toolsChars": 32400
   },
   "cli": {
     "systemChars": 6000,
