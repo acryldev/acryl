@@ -212,7 +212,7 @@ async function probeRoute(app, env) {
     ? "reply.status === 200 && /html/.test(reply.headers.get('content-type') ?? '') && /</.test(await reply.clone().text())"
     : "reply.status === 200 && typeof (await reply.clone().json()).count === 'number'"
   const script = `import { createApp } from './src/app.ts'
-import { pinnedInstance, withPort } from './plugins/instance/index.ts'
+import { pinnedInstance, withPort } from '@acryldev/instance'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'

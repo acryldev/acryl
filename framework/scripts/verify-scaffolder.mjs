@@ -182,6 +182,8 @@ try {
       'typescript',
       '@acryldev/app-persistence',
       '@acryldev/blends-core',
+      // Where the app keeps things, installed as its package (spec 051 T011).
+      '@acryldev/instance',
       // The builder packs a plugin and plugin-share pulls and publishes one; both are development rows, and the app's lists are one list.
       '@acryldev/plugin-hub-core',
       // The state plugin follows keys in a page over a WebSocket (1.1.0); a production app has it.
@@ -733,7 +735,7 @@ spec:
     )
   for (const file of appSource(join(desktop, 'src')))
     if (/from 'electron'/.test(readFileSync(file, 'utf8')))
-      fail(`desktop: ${file} imports electron; only plugins/desktop-shell may`)
+      fail(`desktop: ${file} imports electron; only the @acryldev/desktop-shell package may`)
   capture(npm, ['install', '--no-audit', '--no-fund'], {
     cwd: desktop,
     env: { ...process.env, ELECTRON_SKIP_BINARY_DOWNLOAD: '1' },
@@ -824,7 +826,7 @@ spec:
         './plugins/node-server/src/register.ts',
         '--input-type=module',
         '-e',
-        `import { join } from 'node:path'; import { tmpdir } from 'node:os'; import { mkdtempSync } from 'node:fs'; import { createApp } from './src/app.ts'; import { pinnedInstance, withPort } from './plugins/instance/index.ts'; const home = mkdtempSync(join(tmpdir(), 'prod-')); const app = await createApp(withPort(pinnedInstance(home, { root: process.cwd() }), 0), { database: join(home, 'x.sqlite') }); const r = await fetch(app.url + '/client/${clientFile[kind]}'); console.log(r.status, r.headers.get('content-type')); await app.stop(); process.exit(0)`,
+        `import { join } from 'node:path'; import { tmpdir } from 'node:os'; import { mkdtempSync } from 'node:fs'; import { createApp } from './src/app.ts'; import { pinnedInstance, withPort } from '@acryldev/instance'; const home = mkdtempSync(join(tmpdir(), 'prod-')); const app = await createApp(withPort(pinnedInstance(home, { root: process.cwd() }), 0), { database: join(home, 'x.sqlite') }); const r = await fetch(app.url + '/client/${clientFile[kind]}'); console.log(r.status, r.headers.get('content-type')); await app.stop(); process.exit(0)`,
       ],
       // The chat template is closed in production unless it is made public on purpose; this check is about the compiled client being served, so it names the chat.
       {

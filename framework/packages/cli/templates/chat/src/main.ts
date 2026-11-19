@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { selectInstance } from '../plugins/instance/index.ts'
+import { selectInstance } from '@acryldev/instance'
 import { createApp } from './app.ts'
 
 // The composition root: the one place that reads the environment and chooses where the app lives.

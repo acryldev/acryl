@@ -48,6 +48,8 @@ try {
   mkdirSync(packed)
   for (const dir of ['cli', 'create'])
     run('pnpm', ['pack', '--pack-destination', packed], join(root, 'packages', dir))
+  // A new app installs where it keeps things as a package (spec 051 T011), which may not be published yet either.
+  run('pnpm', ['pack', '--pack-destination', packed], join(root, '..', 'plugins', 'instance'))
   const tarball = (prefix) =>
     join(
       packed,
@@ -73,7 +75,17 @@ try {
       scratch,
     )
     // The new app asks for the version of acrylblends it was made with, which may not be published yet: install the tarball (npm then records it).
-    run('npm', ['install', '--no-audit', '--no-fund', tarball('acrylblends-')], app)
+    run(
+      'npm',
+      [
+        'install',
+        '--no-audit',
+        '--no-fund',
+        tarball('acrylblends-'),
+        tarball('acryldev-instance-'),
+      ],
+      app,
+    )
     run('npm', ['test'], app, { ACRYL_DOOR: 'off' })
     run('npm', ['run', 'check'], app)
     log(`${template}: made by the installed command, its tests and type-check pass`)
@@ -140,7 +152,11 @@ console.log('ws-check: ok')
   const agentApp = join(scratch, 'app-agent')
   run(bin('acrylblends'), ['init', agentApp, '--template', 'agent', '--bare', '-y'], scratch)
   run(bin('acrylblends'), ['add', 'driver-pty'], agentApp)
-  run('npm', ['install', '--no-audit', '--no-fund', tarball('acrylblends-')], agentApp)
+  run(
+    'npm',
+    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('acryldev-instance-')],
+    agentApp,
+  )
   run('npm', ['run', 'check'], agentApp)
   assertAcrylLine(agentApp)
   log(
@@ -201,7 +217,11 @@ console.log('ws-check: ok')
     [pulled, '--from', 'acrylblends.chat', '--registry', registry, '--bare', '-y'],
     scratch,
   )
-  run('npm', ['install', '--no-audit', '--no-fund', tarball('acrylblends-')], pulled)
+  run(
+    'npm',
+    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('acryldev-instance-')],
+    pulled,
+  )
   run('npm', ['test'], pulled, { ACRYL_DOOR: 'off' })
   run('npm', ['run', 'check'], pulled)
   // The refusal is run the way `npm create @acryldev/blends` runs it (`npm exec`): npm adds its own error lines, and the reason must still be on stderr.
@@ -270,7 +290,11 @@ console.log('ws-check: ok')
       'the blank template no longer has the registry where this gate registers the db provider',
     )
   writeFileSync(appFile, registered)
-  run('npm', ['install', '--no-audit', '--no-fund', tarball('acrylblends-')], dbApp)
+  run(
+    'npm',
+    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('acryldev-instance-')],
+    dbApp,
+  )
   run('npm', ['run', 'check'], dbApp)
   // The template's own test checks its rows in their order and lets a feature's row sit between them, so the added db row needs no edit to it.
   run('npm', ['test'], dbApp, { ACRYL_DOOR: 'off' })

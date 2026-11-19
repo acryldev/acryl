@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import {
-  cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { createServer } from 'node:http'
@@ -52,16 +53,14 @@ function folder(): string {
   return dir
 }
 
-/** A frame app's folder as far as `open` reads it: the app's own family (plugins/instance), which decides its home. */
+/** A frame app's folder as far as `open` reads it: the app's own family (the @acryldev/instance package it installed), which decides its home. */
 function frameApp(): string {
   const app = folder()
-  cpSync(
+  mkdirSync(join(app, 'node_modules', '@acryldev'), { recursive: true })
+  symlinkSync(
     join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'instance'),
-    join(app, 'plugins', 'instance'),
-    {
-      recursive: true,
-      filter: (source) => !/[\\/]test$/u.test(source),
-    },
+    join(app, 'node_modules', '@acryldev', 'instance'),
+    'junction',
   )
   writeFileSync(join(app, 'package.json'), '{"type":"module"}\n')
   return app

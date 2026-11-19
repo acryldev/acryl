@@ -1,11 +1,8 @@
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { type AppInstance, instance } from '@acryldev/instance'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
 import * as door from '../plugins/door/src/index.ts'
-import * as nodeServer from '../plugins/node-server/src/index.ts'
-import * as router from '../plugins/router/src/index.ts'
-import * as state from '../plugins/state/src/index.ts'
-import { type AppInstance, instance } from '../plugins/instance/index.ts'
 import {
   appPluginNames,
   blueprintsIn,
@@ -14,6 +11,9 @@ import {
   loadManifest,
   type ParameterValue,
 } from '../plugins/manifest/index.ts'
+import * as nodeServer from '../plugins/node-server/src/index.ts'
+import * as router from '../plugins/router/src/index.ts'
+import * as state from '../plugins/state/src/index.ts'
 import { doorEnabled } from './door.ts'
 import * as todo from './todo.ts'
 import { FRAME_MOUNT_PREFIX } from './todo.ts'

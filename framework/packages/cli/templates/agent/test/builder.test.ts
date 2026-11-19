@@ -5,7 +5,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { pinnedInstance, withPort } from '../plugins/instance/index.ts'
+import { pinnedInstance, withPort } from '@acryldev/instance'
 import { createApp } from '../src/app.ts'
 
 /** The plugin this test has the agent build: a name of its own, so a route the app has (a person's /hello) can never shadow it and fail the template's tests. */

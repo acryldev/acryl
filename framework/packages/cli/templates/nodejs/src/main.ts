@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { selectInstance } from '../plugins/instance/index.ts'
+import { selectInstance } from '@acryldev/instance'
 import { createApp } from './app.ts'
 import { APP_NAME } from './routes.ts'
 

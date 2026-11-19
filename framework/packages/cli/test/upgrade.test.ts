@@ -1,18 +1,10 @@
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { diffStat, unifiedDiff } from '../src/diff'
-import { type Io, parseUpgradeOptions, readLibrary, runCli, VERSION } from '../src/index'
-import { digest, hashFolder, LOCK_FILE, readHistory, readLock } from '../src/lock'
+import { type Io, parseUpgradeOptions, runCli, VERSION } from '../src/index'
+import { digest, LOCK_FILE, readHistory, readLock } from '../src/lock'
 
 const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-upgrade-test-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
@@ -54,7 +46,6 @@ describe('upgrade options', () => {
       dryRun: true,
       force: true,
       diff: true,
-      desktopPackages: false,
     })
     expect(() => parseUpgradeOptions(['--nope'])).toThrow()
   })
@@ -63,9 +54,7 @@ describe('upgrade options', () => {
 describe('the hash history', () => {
   it('knows the files of the released versions, so an app made before the lock can be upgraded', () => {
     const history = readHistory()
-    expect(Object.keys(history)).toEqual(
-      expect.arrayContaining(['router', 'door', 'extensions']),
-    )
+    expect(Object.keys(history)).toEqual(expect.arrayContaining(['router', 'door', 'extensions']))
     expect(history.router?.['src/index.ts']?.length).toBeGreaterThanOrEqual(1)
   })
 })
@@ -93,7 +82,10 @@ describe('upgrading an app made by this version', () => {
     const entry = lock.plugins.router
     expect(entry).toBeDefined()
     if (entry !== undefined) entry.files['src/index.ts'] = digest(older)
-    writeFileSync(join(app, 'plugins', LOCK_FILE), `${JSON.stringify({ version: 1, plugins: lock.plugins }, null, 2)}\n`)
+    writeFileSync(
+      join(app, 'plugins', LOCK_FILE),
+      `${JSON.stringify({ version: 1, plugins: lock.plugins }, null, 2)}\n`,
+    )
     const replace = session(app)
     expect(await runCli(['upgrade'], replace.io), replace.err()).toBe(0)
     expect(replace.out()).toContain('upgraded')
@@ -111,7 +103,10 @@ describe('upgrading an app made by this version', () => {
     const backups = readdirSync(join(app, '.acryl', 'upgrade-backup'))
     expect(backups).toHaveLength(1)
     expect(
-      readFileSync(join(app, '.acryl', 'upgrade-backup', backups[0] as string, 'router', 'src', 'index.ts'), 'utf8'),
+      readFileSync(
+        join(app, '.acryl', 'upgrade-backup', backups[0] as string, 'router', 'src', 'index.ts'),
+        'utf8',
+      ),
     ).toContain('export const mine = 1')
 
     const again = session(app)
@@ -124,7 +119,9 @@ describe('upgrading an app made by this version', () => {
     writeFileSync(join(app, 'plugins', 'extensions', 'notes-of-mine.md'), 'mine\n')
     const run = session(app)
     expect(await runCli(['upgrade'], run.io), run.err()).toBe(0)
-    expect(readFileSync(join(app, 'plugins', 'extensions', 'notes-of-mine.md'), 'utf8')).toBe('mine\n')
+    expect(readFileSync(join(app, 'plugins', 'extensions', 'notes-of-mine.md'), 'utf8')).toBe(
+      'mine\n',
+    )
   })
 })
 

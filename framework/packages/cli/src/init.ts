@@ -6,7 +6,7 @@ import { frameProfileForInit, frameProfileInput } from './frame-release'
 import { APP_PLUGINS_FILE, appFrameRows } from './frame-rows'
 import { applyIdeProfile } from './ide-profile'
 import type { Io } from './io'
-import { closure, copyPlugin, readLibrary } from './library'
+import { closure, copyPlugin, packagedDependency, readLibrary } from './library'
 import {
   addNodePreflight,
   copyFrameworkDocs,
@@ -176,9 +176,13 @@ export async function init(options: InitOptions, io: Io): Promise<number> {
   // What only the desktop shell brought (and needs), named apart so the list does not read as if the web app had asked for it.
   const forDesktop = plugins.filter((plugin) => !own.some((owned) => owned.name === plugin.name))
   for (const plugin of plugins) {
-    copyPlugin(plugin, directory)
-    if (plugin.imports) mergeImports(directory, plugin.imports, 'plugins')
-    mergeDependencies(directory, plugin.dependencies)
+    const packaged = packagedDependency(plugin)
+    if (packaged !== undefined) mergeDependencies(directory, packaged)
+    else {
+      copyPlugin(plugin, directory)
+      if (plugin.imports) mergeImports(directory, plugin.imports, 'plugins')
+      mergeDependencies(directory, plugin.dependencies)
+    }
     mergeTooling(directory, plugin)
   }
   addNodePreflight(directory)

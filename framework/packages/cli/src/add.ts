@@ -10,7 +10,9 @@ import {
   LEGACY_WARNING,
   type LibraryPlugin,
   libraryRoot,
+  PACKAGED,
   PLUGINS_DIR,
+  packagedDependency,
   pluginsFolder,
   readLibrary,
 } from './library'
@@ -58,7 +60,16 @@ const parse = (argv: readonly string[]) =>
 /** The plugins whose rows only the agent template has. */
 const AGENT_ROWS = ['agent-panel', 'driver-pty', 'driver-acp']
 
-const present = (appDir: string, name: string) => existsSync(join(pluginsFolder(appDir).dir, name))
+/** Whether the app has a library plugin: its copy, or for a packaged one (PACKAGED) the package in its dependencies. */
+const present = (appDir: string, name: string): boolean => {
+  if (existsSync(join(pluginsFolder(appDir).dir, name))) return true
+  const plugin = PACKAGED.has(name) ? readLibrary().get(name) : undefined
+  if (plugin?.packageName === undefined) return false
+  const manifest = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8')) as {
+    dependencies?: Record<string, string>
+  }
+  return manifest.dependencies?.[plugin.packageName] !== undefined
+}
 
 /**
  * Copy library plugins into an existing app, with the plugins they require, and add their npm packages to its package.json.
@@ -84,7 +95,7 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
   const folder = pluginsFolder(appDir).dir
   const plain =
     !existsSync(join(appDir, 'blend.yaml')) &&
-    (!existsSync(join(folder, 'instance')) || existsSync(join(folder, 'desktop-web')))
+    (!present(appDir, 'instance') || existsSync(join(folder, 'desktop-web')))
   if (plain && options.names.includes('db')) {
     io.stderr.write(
       'error: "db" is the Cordis plugin for a Blend app. A plain Acryl app opens its database with openDb from "@acryldev/blends/db/sqlite" (see docs/framework/guides/data.md)\n',
@@ -155,14 +166,18 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
   )
   const addedDependencies: string[] = []
   for (const plugin of toCopy) {
-    copyPlugin(plugin, appDir)
-    if (plugin.imports)
-      mergeImports(
-        appDir,
-        plugin.imports,
-        relative(appDir, pluginsFolder(appDir).dir).split(sep).join('/'),
-      )
-    addedDependencies.push(...mergeDependencies(appDir, plugin.dependencies))
+    const packaged = packagedDependency(plugin)
+    if (packaged !== undefined) addedDependencies.push(...mergeDependencies(appDir, packaged))
+    else {
+      copyPlugin(plugin, appDir)
+      if (plugin.imports)
+        mergeImports(
+          appDir,
+          plugin.imports,
+          relative(appDir, pluginsFolder(appDir).dir).split(sep).join('/'),
+        )
+      addedDependencies.push(...mergeDependencies(appDir, plugin.dependencies))
+    }
     const tooling = mergeTooling(appDir, plugin)
     appendGitignore(appDir, plugin.gitignore)
     // The provider is mounted from src/app.ts, which is therefore the one file that may import it (`acrylblends check-deps`).
@@ -216,9 +231,7 @@ const SUITE_RUNNER = { vitest: '3.2.4' }
 function copySuites(names: readonly string[], appDir: string, added: string[], io: Io): number {
   const copies: Array<{ from: string; to: string }> = []
   // The suite belongs to the port: `add kv --suite` (kv-json, or kv-db) brings the suite of kv.
-  const ports = [
-    ...new Set(names.map((name) => name.replace(/^(kv|db)(?:-.*)?$/u, '$1'))),
-  ]
+  const ports = [...new Set(names.map((name) => name.replace(/^(kv|db)(?:-.*)?$/u, '$1')))]
   const library = readLibrary()
   for (const name of ports) {
     const suite = library.get(name)?.suite

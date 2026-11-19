@@ -20,24 +20,44 @@ const posix = (path: string): string => path.split('\\').join('/')
 export function findDesktopShell(appDir: string): DesktopShell | undefined {
   const copy = join(appDir, 'plugins', 'desktop-shell')
   if (existsSync(copy)) return { kind: 'copy', root: copy, main: 'plugins/desktop-shell/main.ts' }
-  // What the app has installed, looked up the way Node finds an app's packages (its own node_modules, then each parent's), not through
-  // require.resolve: a resolution hook (the repository's workspace-source mapping) or NODE_PATH would otherwise answer for packages the app
-  // does not have (the first fresh-clone gate caught it).
+  const installed = installedPackage(appDir, DESKTOP_SHELL_PACKAGE)
+  const file = installed === undefined ? undefined : exportedFile(installed.manifest, './main')
+  if (installed === undefined || file === undefined) return undefined
+  return {
+    kind: 'package',
+    root: installed.root,
+    main: posix(relative(realpathSync(appDir), join(installed.root, file))),
+  }
+}
+
+/** A package's export of `subpath` (`.`, `./main`): its file, or undefined when it exports none. */
+export function exportedFile(manifest: PackageManifest, subpath: string): string | undefined {
+  const entry = manifest.exports?.[subpath]
+  const file =
+    typeof entry === 'string' ? entry : (entry as { default?: unknown } | undefined)?.default
+  return typeof file === 'string' ? file : undefined
+}
+
+export interface PackageManifest {
+  readonly exports?: Record<string, unknown>
+}
+
+/**
+ * The package `name` as the app in `appDir` has installed it: its real folder and manifest, looked up the way Node finds an app's packages (its own
+ * node_modules, then each parent's), not through require.resolve: a resolution hook (the repository's workspace-source mapping, vitest) or NODE_PATH
+ * would otherwise answer for packages the app does not have (the first fresh-clone gate caught it).
+ */
+export function installedPackage(
+  appDir: string,
+  name: string,
+): { readonly root: string; readonly manifest: PackageManifest } | undefined {
   for (let dir = realpathSync(appDir); ; dir = dirname(dir)) {
-    const root = join(dir, 'node_modules', DESKTOP_SHELL_PACKAGE)
+    const root = join(dir, 'node_modules', name)
     if (existsSync(join(root, 'package.json'))) {
       const real = realpathSync(root)
-      const manifest = JSON.parse(readFileSync(join(real, 'package.json'), 'utf8')) as {
-        exports?: Record<string, unknown>
-      }
-      const entry = manifest.exports?.['./main']
-      const file =
-        typeof entry === 'string' ? entry : (entry as { default?: unknown } | undefined)?.default
-      if (typeof file !== 'string') return undefined
       return {
-        kind: 'package',
         root: real,
-        main: posix(relative(realpathSync(appDir), join(real, file))),
+        manifest: JSON.parse(readFileSync(join(real, 'package.json'), 'utf8')) as PackageManifest,
       }
     }
     if (dirname(dir) === dir) return undefined

@@ -76,49 +76,14 @@ export function rewriteSpecifiers(
       if (kind[offset] !== 0) return match
       // A plugin the app installs as a package (spec 051 T011: the desktop shell, the instance) keeps its package specifier.
       // The framework package (@acryldev/blends) is an app dependency with subpaths of its own, never a library plugin copy.
-      if (installed.has(packageOf(specifier)) || packageOf(specifier) === '@acryldev/blends') return match
+      if (installed.has(packageOf(specifier)) || packageOf(specifier) === '@acryldev/blends')
+        return match
       const target = entries.get(specifier)
       if (target === undefined)
         throw new Error(`${file}: imports "${specifier}", which is not a library plugin`)
       let path = posix.relative(dirname(file), target)
       if (!path.startsWith('.')) path = `./${path}`
       return `${lead}${quote}${path}${quote}`
-    },
-  )
-}
-
-const RELATIVE = /(\bfrom\s+|\bimport\s*\(\s*|\bimport\s+)(['"])(\.{1,2}\/[^'"\n]+)\2/gu
-
-/**
- * The inverse, for a plugin an app stops carrying and installs instead (spec 051 T011: the desktop shell and the instance): rewrite the
- * relative imports that reach into its copied files back to package specifiers. `file` is the importing file's path inside the app
- * (`src/main.ts`, `plugins/agent-panel/headless.ts`); `table` maps each importable specifier to its file under the app's plugins folder
- * (`@acryldev/instance/storage` -> `instance/storage.ts`), for the moved plugins only. A relative import of a moved plugin's file that no
- * specifier names is an error: the package does not export it, so the app would break.
- */
-export function toPackageSpecifiers(
-  source: string,
-  file: string,
-  table: EntryTable,
-  moved: ReadonlySet<string>,
-): string {
-  const byFile = new Map<string, string>()
-  for (const [specifier, target] of table) byFile.set(target, specifier)
-  const kind = classify(source)
-  return source.replace(
-    RELATIVE,
-    (match, lead: string, quote: string, relative: string, offset: number) => {
-      if (kind[offset] !== 0) return match
-      const resolved = posix.normalize(posix.join(dirname(file), relative))
-      if (!resolved.startsWith('plugins/')) return match
-      const inPlugins = resolved.slice('plugins/'.length)
-      if (!moved.has(inPlugins.split('/')[0] ?? '')) return match
-      const specifier = byFile.get(inPlugins)
-      if (specifier === undefined)
-        throw new Error(
-          `${file}: imports "${relative}", a file of ${inPlugins.split('/')[0]} its package does not export`,
-        )
-      return `${lead}${quote}${specifier}${quote}`
     },
   )
 }

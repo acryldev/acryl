@@ -11,19 +11,19 @@ In an app made by `npm create @acryldev/blends@latest my-app nodejs` (or `notes`
 ```sh
 cd my-app
 npm install
-npx acrylblends add desktop-shell
+npx acrylblends add desktop-shell-shell
 npm install
 npm run desktop
 ```
 
 In a Blend app, the same two commands (`npx acrylblends add desktop-shell`, `npm install`) add the Blend form of the shell, and `npx acrylblends init my-app --template todo --desktop` creates a Blend app with it already in.
-`acrylblends add desktop-shell` chooses the right form: a Blend app (it has `plugins/instance`) or a plain Acryl app.
+`acrylblends add desktop-shell` chooses the right form: a Blend app (it depends on `@acryldev/instance`) or a plain Acryl app.
 
 ## What it adds
 
-- `plugins/desktop-web/` (a plain app) or `plugins/desktop-shell/` (a Blend app): the window code. Only this folder imports `electron`; the app's own code never does.
+- `plugins/desktop-web/` (a plain app) or the `@acryldev/desktop-shell` package (a Blend app, a dependency at the exact version of this release): the window code. Only it imports `electron`; the app's own code never does.
 - `electron` as a development dependency (pinned to 44.9.3) and the script `npm run desktop`.
-- Electron's user data (window state, cache, logs) lives under `~/.acryl/apps/<id>/` (`data/electron` for a Blend app, `cache/electron` for a plain one), outside the app folder and never in the user's application-data folder.
+- `.acrylblends/` in `.gitignore`: Electron's user data (window state, cache, logs) lives in `.acrylblends/electron` inside the app's own folder, never in the user's application-data folder.
 
 ## What `npm run desktop` does
 
@@ -39,7 +39,7 @@ projects and sessions, the right panel with Files, Changes and Review, Settings,
 same frame the browser shows; the desktop builds nothing of its own.
 
 1. When the frame already runs for this folder (`npm run dev` in another terminal), the window attaches to it: it reads the address the host keeps in
-   `frame-url.json` in the app's data folder, `~/.acryl/apps/<id>/data/` (owner-only, with the launch token), and opens it. Closing the window leaves that host running.
+   `.acrylblends/frame-url.json` (owner-only, with the launch token) and opens it. Closing the window leaves that host running.
 2. Otherwise the window starts the host itself, exactly as `npm run dev` does (the same npm and Node that ran `npm run desktop`; the host never runs inside
    Electron), and opens the address it prints. Closing the window stops that host and everything it started, including its terminals, so its port is free
    again. Ctrl-C in the terminal does the same: Electron runs in a process group of its own, and `npm run desktop` passes it exactly one signal (a second
@@ -59,7 +59,7 @@ The application menu's `Settings...` (`Cmd+,` on macOS, in the app menu; `Ctrl+,
 
 Ubuntu 23.10 and later restrict unprivileged user namespaces (`kernel.apparmor_restrict_unprivileged_userns=1`). Chromium's sandbox needs them, and an Electron unpacked by npm into `node_modules` has no AppArmor profile, so Electron stops at the start with "The SUID sandbox helper binary was found, but is not configured correctly" before the app runs.
 
-`npm run desktop` starts through `plugins/desktop-shell/launch.ts`, which reads that sysctl. **Only when it is `1` on Linux** it starts Electron with `--no-sandbox` and prints one line saying so; on macOS, on Windows and on any Linux without the restriction Electron starts with its sandbox, as it always does. The window's renderer is still locked down (context isolation, no Node in the page, web security); what is lost is Chromium's process sandbox around it.
+`npm run desktop` starts through the shell's launcher (`acryl-desktop` in a Blend app, `plugins/desktop-web/launch.ts` in a plain one), which reads that sysctl. **Only when it is `1` on Linux** it starts Electron with `--no-sandbox` and prints one line saying so; on macOS, on Windows and on any Linux without the restriction Electron starts with its sandbox, as it always does. The window's renderer is still locked down (context isolation, no Node in the page, web security); what is lost is Chromium's process sandbox around it.
 
 To keep the sandbox, give Electron an AppArmor profile that allows `userns`, as the VS Code and Chrome `.deb` packages do. Save this as `/etc/apparmor.d/my-app-electron` (the path is the one in your app's `node_modules`), then `sudo apparmor_parser -r /etc/apparmor.d/my-app-electron`:
 

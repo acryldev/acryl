@@ -32,6 +32,16 @@ import {
 } from '../src/index'
 
 const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-cli-test-'))
+/** The version of a packaged library plugin in this workspace: what a new app installs, exactly (spec 051 T011). */
+const workspaceVersion = (plugin: string): string =>
+  (
+    JSON.parse(
+      readFileSync(
+        join(import.meta.dirname, '..', '..', '..', '..', 'plugins', plugin, 'package.json'),
+        'utf8',
+      ),
+    ) as { version: string }
+  ).version
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
 
 /** A test Io: captures output, answers prompts from a list, and records install calls. */
@@ -390,7 +400,9 @@ describe('init', () => {
     const dir = join(scratch, 'plain')
     expect(manifest(dir).name).toBe('plain')
     expect(readFileSync(join(dir, 'src/routes.ts'), 'utf8')).toContain("APP_NAME = 'plain'")
-    expect(existsSync(join(dir, 'plugins/instance/index.ts'))).toBe(true)
+    // Where the app keeps things is a package it installs at the workspace's version, not a copy.
+    expect(manifest(dir).dependencies['@acryldev/instance']).toBe(workspaceVersion('instance'))
+    expect(existsSync(join(dir, 'plugins/instance'))).toBe(false)
     for (const plugin of ['router', 'node-server'])
       expect(existsSync(join(dir, 'plugins', plugin, 'src/index.ts'))).toBe(true)
     expect(existsSync(join(dir, 'plugins/agent'))).toBe(false)
@@ -406,6 +418,7 @@ describe('init', () => {
       '@deepseek-ai/schemastery': '3.18.4',
       '@acryldev/app-persistence': '0.1.2',
       '@acryldev/blends-core': '0.5.0',
+      '@acryldev/instance': workspaceVersion('instance'),
       '@acryldev/plugin-hub-core': '0.2.2',
       typescript: '6.0.3',
       yaml: '2.9.0',
@@ -467,11 +480,13 @@ describe('the desktop shell', () => {
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.devDependencies.electron).toBe('44.9.3')
     expect(pkg.dependencies.electron).toBeUndefined()
-    expect(pkg.scripts.desktop).toBe('node plugins/desktop-shell/launch.ts')
+    expect(pkg.scripts.desktop).toBe('acryl-desktop')
     expect(pkg.acrylblends).toEqual({ desktopPath: '/todo' })
-    for (const file of ['main.ts', 'window.ts', 'user-data.ts', 'shutdown.ts'])
-      expect(existsSync(join(dir, 'plugins/desktop-shell', file))).toBe(true)
-    expect(existsSync(join(dir, 'plugins/desktop-shell/plugin.json'))).toBe(false)
+    // The shell and the instance are packages at the workspace's versions, never copies.
+    expect(pkg.dependencies['@acryldev/desktop-shell']).toBe(workspaceVersion('desktop-shell'))
+    expect(pkg.dependencies['@acryldev/instance']).toBe(workspaceVersion('instance'))
+    expect(existsSync(join(dir, 'plugins/desktop-shell'))).toBe(false)
+    expect(existsSync(join(dir, 'plugins/instance'))).toBe(false)
   })
 
   it('a plain init has no electron, and add desktop brings it later without replacing a script the app has', async () => {
@@ -511,8 +526,8 @@ describe('the desktop shell in a plain Acryl app', () => {
     expect(pkg.scripts).toEqual({ desktop: 'node plugins/desktop-web/launch.ts', dev: 'x' })
     expect(pkg.devDependencies.electron).toBe('44.9.3')
     expect(existsSync(join(dir, 'plugins/desktop-web/main.ts'))).toBe(true)
-    // The instance plugin comes with it: it alone decides where the app's data lives (~/.acryl/apps/<id>/data).
-    expect(existsSync(join(dir, 'plugins/instance/index.ts'))).toBe(true)
+    // The instance comes with it, as its package: it alone decides where the app's data lives (~/.acryl/apps/<id>/data).
+    expect(pkg.dependencies['@acryldev/instance']).toBe(workspaceVersion('instance'))
     expect(existsSync(join(dir, 'plugins/desktop-shell'))).toBe(false)
     expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe('node_modules/\n.acrylblends/\n')
     // Adding it again changes nothing and is refused.
@@ -566,7 +581,8 @@ describe('add and plugins', () => {
       plugins: string[]
     }
     expect(listed.plugins).toContain('agent')
-    expect(listed.plugins).toContain('instance')
+    // A packaged plugin is a dependency, so it is not a copy the list records.
+    expect(listed.plugins).not.toContain('instance')
     const old = join(scratch, 'old')
     mkdirSync(join(old, 'src/plugins'), { recursive: true })
     writeFileSync(join(old, 'package.json'), '{"name":"old"}\n')

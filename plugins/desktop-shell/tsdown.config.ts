@@ -5,9 +5,11 @@ import { defineConfig } from 'tsdown'
 const { entries } = JSON.parse(readFileSync(new URL('./plugin.json', import.meta.url), 'utf8')) as {
   entries: Record<string, string>
 }
-const entry = Object.fromEntries(
-  Object.entries(entries).map(([, file]) => [file.replace(/.ts$/, ''), file]),
-)
+const entry = Object.fromEntries([
+  // The `acryl-desktop` bin (`npm run desktop`), not an import.
+  ['bin', 'bin.ts'],
+  ...Object.entries(entries).map(([, file]) => [file.replace(/.ts$/, ''), file]),
+])
 
 export default defineConfig({
   name: '@acryldev/desktop-shell',

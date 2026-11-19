@@ -16,7 +16,6 @@ import {
   stripRegistrations,
   withRegistrations,
 } from './app-registration.ts'
-import { upgradeDesktopPackages } from './desktop-package'
 import { diffStat, unifiedDiff } from './diff'
 import { type FrameProfileSpecs, frameProfileForApp, frameProfileInput } from './frame-release'
 import { APP_PLUGINS_FILE, appFrameRows, carriesComposeInto } from './frame-rows'
@@ -43,6 +42,8 @@ import {
   LEGACY_WARNING,
   LIBRARY_LIST,
   type LibraryPlugin,
+  PACKAGED,
+  packagedDependency,
   pluginsFolder,
   readLibrary,
   recordLibraryCopy,
@@ -51,6 +52,17 @@ import { hashFolder, readHistory, readLock, recordLock } from './lock'
 import { appendGitignore, mergeDependencies, mergeImports, mergeTooling } from './project'
 import { type Template, templateDir } from './templates'
 import { VERSION } from './version'
+
+/** The app's package.json dependencies. */
+function readManifestDependencies(appDir: string): Readonly<Record<string, string>> {
+  return (
+    (
+      JSON.parse(readText(join(appDir, 'package.json'))) as {
+        dependencies?: Record<string, string>
+      }
+    ).dependencies ?? {}
+  )
+}
 
 export interface UpgradeOptions {
   /** Library plugins to upgrade; none means every library plugin the app carries. */
@@ -62,8 +74,6 @@ export interface UpgradeOptions {
   readonly force: boolean
   /** Print the diff of every changed file, not only of the edited ones. */
   readonly diff: boolean
-  /** Move the app's desktop shell and instance copies to their @acryldev packages (spec 051 T011), and only that. */
-  readonly desktopPackages: boolean
 }
 
 /** Parse `upgrade [plugin...] [--dir <app>] [--dry-run] [--force] [--diff]`. */
@@ -80,7 +90,6 @@ export function parseUpgradeOptions(argv: readonly string[]): UpgradeOptions {
     dryRun: parsed.values['dry-run'] === true,
     force: parsed.values.force === true,
     diff: parsed.values.diff === true,
-    desktopPackages: parsed.values['desktop-packages'] === true,
   }
 }
 
@@ -94,7 +103,6 @@ const parse = (argv: readonly string[]) =>
       'dry-run': { type: 'boolean' },
       force: { type: 'boolean' },
       diff: { type: 'boolean' },
-      'desktop-packages': { type: 'boolean' },
     },
   })
 
@@ -308,8 +316,14 @@ function planFrameWrites(
     [...new Set([...HOST_PLUGINS, ...imported])].filter((plugin) => library.has(plugin)),
     library,
   )
+    // A packaged plugin (PACKAGED) is there when the app depends on its package; npm, not this, keeps it current.
+    .filter((plugin) => {
+      const packaged = packagedDependency(plugin)
+      return packaged === undefined
+        ? !existsSync(join(appDir, 'plugins', plugin.name))
+        : Object.keys(packaged).some((name) => readManifestDependencies(appDir)[name] === undefined)
+    })
     .map((plugin) => plugin.name)
-    .filter((plugin) => !existsSync(join(appDir, 'plugins', plugin)))
   const oldScript = join(appDir, OLD_PROFILE_SCRIPT)
   const removeProfileScript =
     existsSync(oldScript) && GENERATED_MARKER.test(readText(oldScript).split('\n', 1)[0] ?? '')
@@ -386,7 +400,6 @@ export async function upgrade(options: UpgradeOptions, io: Io): Promise<number> 
     )
     return 1
   }
-  if (options.desktopPackages) return upgradeDesktopPackages(appDir, options, io)
   const folder = pluginsFolder(appDir)
   if (folder.legacy) {
     io.stderr.write(
@@ -437,7 +450,8 @@ export async function upgrade(options: UpgradeOptions, io: Io): Promise<number> 
   const plans: PluginPlan[] = []
   try {
     mkdirSync(join(scratch, 'plugins'), { recursive: true })
-    const wanted = closure(selected, library)
+    // A packaged plugin is not a copy to bring up to date: npm installs its version.
+    const wanted = closure(selected, library).filter((plugin) => !PACKAGED.has(plugin.name))
     for (const plugin of wanted) copyPlugin(plugin, scratch)
     for (const plugin of wanted) {
       const here = join(folder.dir, plugin.name)
@@ -619,6 +633,12 @@ export async function upgrade(options: UpgradeOptions, io: Io): Promise<number> 
         const known = library.get(plugin)
         // A plugin the library step above just copied (a plugin of the app requires it too) is there already, with its dependencies.
         if (known === undefined || existsSync(join(folder.dir, plugin))) continue
+        const packaged = packagedDependency(known)
+        if (packaged !== undefined) {
+          addedDependencies.push(...mergeDependencies(appDir, packaged))
+          addedDependencies.push(...mergeTooling(appDir, known).devDependencies)
+          continue
+        }
         copyPlugin(known, appDir)
         if (known.imports) mergeImports(appDir, known.imports, 'plugins')
         addedDependencies.push(...mergeDependencies(appDir, known.dependencies))

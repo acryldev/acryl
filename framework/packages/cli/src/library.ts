@@ -10,6 +10,8 @@ export interface LibraryPlugin {
   readonly name: string
   /** The npm name its workspace package declares (`@acryldev/instance`), which is how the plugins import each other; absent when the plugin has no package.json, and then the name is its own. */
   readonly packageName?: string
+  /** The version its workspace package declares: what an app installs of a packaged plugin (PACKAGED). */
+  readonly packageVersion?: string
   readonly description: string
   /** Library plugins this one imports; they are copied with it. */
   readonly requires: readonly string[]
@@ -95,17 +97,35 @@ export function readLibrary(root: string = libraryRoot()): Map<string, LibraryPl
     if (plugin.name !== entry.name)
       throw new LibraryError(`plugins/${entry.name}/plugin.json names "${plugin.name}"`)
     const packageFile = join(root, entry.name, 'package.json')
-    const declared =
-      existsSync(packageFile) &&
-      (JSON.parse(readFileSync(packageFile, 'utf8')) as { name?: unknown }).name
+    const pkg = existsSync(packageFile)
+      ? (JSON.parse(readFileSync(packageFile, 'utf8')) as { name?: unknown; version?: unknown })
+      : {}
+    const declared = pkg.name
     plugins.set(plugin.name, {
       ...plugin,
       packageName: typeof declared === 'string' && declared.trim() !== '' ? declared : plugin.name,
+      ...(typeof pkg.version === 'string' ? { packageVersion: pkg.version } : {}),
       requires: plugin.requires ?? [],
       dependencies: plugin.dependencies ?? {},
     })
   }
   return plugins
+}
+
+/**
+ * The library plugins an app installs as their npm package instead of a copy (spec 051 T011): where the app keeps things and the desktop shell are
+ * the same in every app, so the app and every plugin it copies import them by package name, and an update is a version bump, not a re-copy.
+ */
+export const PACKAGED: ReadonlySet<string> = new Set(['instance', 'desktop-shell'])
+
+/** The dependency an app gets instead of a copy of `plugin` (its exact workspace version), or undefined for a plugin that is copied. */
+export function packagedDependency(plugin: LibraryPlugin): Record<string, string> | undefined {
+  if (!PACKAGED.has(plugin.name)) return undefined
+  if (plugin.packageName === undefined || plugin.packageVersion === undefined)
+    throw new LibraryError(
+      `plugins/${plugin.name} is installed as a package but has no package.json name and version`,
+    )
+  return { [plugin.packageName]: plugin.packageVersion }
 }
 
 /** The plugins to copy for `names`: each one after everything it requires, no duplicates. */
@@ -194,7 +214,8 @@ export function copyPlugin(
   // in the repository and in the installed package alike.
   const isPackage = existsSync(join(source, 'package.json'))
   const inSourceDir = (plugin.entries?.[''] ?? 'index.ts').startsWith('src/')
-  const entries = plugin.entries === undefined ? undefined : entryTable(readLibrary(root))
+  const library = plugin.entries === undefined ? undefined : readLibrary(root)
+  const entries = library === undefined ? undefined : entryTable(library)
   cpSync(source, target, {
     recursive: true,
     filter: (path) => {
@@ -217,7 +238,11 @@ export function copyPlugin(
   })
   if (entries) {
     // A package the plugin lists as a dependency is installed in the app, so its specifier stays a package specifier (spec 051 T011/T038).
-    const installed = new Set(Object.keys(plugin.dependencies))
+    // So is a packaged plugin (PACKAGED): the app installs it instead of a copy.
+    const installed = new Set([
+      ...Object.keys(plugin.dependencies),
+      ...[...PACKAGED].flatMap((name) => library?.get(name)?.packageName ?? []),
+    ])
     if (inSourceDir) rewriteTree(join(target, 'src'), plugin.name, 'src', entries, installed)
     else rewriteTree(target, plugin.name, '', entries, installed)
   }
@@ -239,7 +264,8 @@ function rewriteTree(
 ): void {
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry)
-    if (statSync(path).isDirectory()) rewriteTree(path, plugin, `${inside}/${entry}`, entries, installed)
+    if (statSync(path).isDirectory())
+      rewriteTree(path, plugin, `${inside}/${entry}`, entries, installed)
     else if (/\.(?:ts|tsx|mts)$/u.test(entry)) {
       const id = inside === '' ? `${plugin}/${entry}` : `${plugin}/${inside}/${entry}`
       writeFileSync(path, rewriteSpecifiers(readFileSync(path, 'utf8'), id, entries, installed))
