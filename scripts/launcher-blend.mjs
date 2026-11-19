@@ -50,7 +50,7 @@ const host = join(app, 'plugins/acryl-launcher-host')
 for (const file of ['index.ts', 'package.json']) put(join(host, file), readFileSync(join(pkg, 'blend/host', file)))
 for (const file of ['contract.ts', 'door.ts', 'registry.ts', 'route.ts', 'runner.ts', 'service.ts']) {
   put(join(host, file), readFileSync(join(pkg, 'src', file), 'utf8')
-    .replaceAll("from '@acryl/launcher'", "from './launcher-lib/index.js'")
+    .replaceAll("from '@acryldev/control-center'", "from './launcher-lib/index.js'")
     .replaceAll("from 'acryl-loopback-http/router'", "from '@acrylblends/loopback-http/router'")
     .replaceAll("from 'acryl-loopback-http'", "from '@acrylblends/loopback-http'"))
 }

@@ -7,7 +7,7 @@ import { basename, join } from 'node:path'
 import {
   addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, inspectApp, maskKey, modelEnv, readApps, readModelKey, removeApp, STARTERS, whereProblem,
   type AppEntry,
-} from '@acryl/launcher'
+} from '@acryldev/control-center'
 import type {
   AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
 } from './contract.ts'

@@ -35,15 +35,15 @@ test('a frame tag names the scoped package from frame/packages.json, and its tar
   assert.ok(release.dir.endsWith(key))
 })
 
-test("the launcher tag names @acryl/launcher in ACRYL's plugins/acryl-launcher", () => {
+test("the launcher tag names @acryldev/control-center in ACRYL's plugins/acryl-launcher", () => {
   const dir = join(framework, '..', 'plugins', 'acryl-launcher')
   const version = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version
   assert.deepEqual(releaseOfTag(`launcher-v${version}`), {
     kind: 'npm',
-    package: '@acryl/launcher',
+    package: '@acryldev/control-center',
     version,
     dir,
-    tarball: `acryl-launcher-${version}.tgz`,
+    tarball: `acryldev-control-center-${version}.tgz`,
   })
 })
 

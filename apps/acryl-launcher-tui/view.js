@@ -5,7 +5,7 @@
 // The view is a pi-tui component (`render(width)`, `handleInput(data)`), so a test drives it with key strings and reads what it draws,
 // without a terminal. `finish(result)` is called once: `{ command, line }` to run, or undefined to quit.
 import { SelectList, matchesKey, truncateToWidth, wrapTextWithAnsi } from '@earendil-works/pi-tui'
-import { JOURNEYS, createSession } from '@acryl/launcher'
+import { JOURNEYS, createSession } from '@acryldev/control-center'
 import { createTuiUi } from 'acryl-ui-tui'
 
 const bold = text => `\x1b[1m${text}\x1b[22m`

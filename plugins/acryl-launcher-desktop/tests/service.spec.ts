@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { addApp, saveModelKey } from '@acryl/launcher'
+import { addApp, saveModelKey } from '@acryldev/control-center'
 import { LauncherRefusal, LauncherService } from '../src/service.ts'
 import { appEnvironment, type Command, type Run } from '../src/runner.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from '../src/door.ts'
