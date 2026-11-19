@@ -345,8 +345,8 @@ try {
       '- id: app-routes',
       'name: ./src/frame.ts',
       'name: ./plugins/door/src/index.ts',
-      'name: @acryldev/app-shell',
-      'name: @acryldev/blends-frame',
+      "name: '@acryldev/app-shell'",
+      "name: '@acryldev/blends-frame'",
     ])
       if (!overlay.includes(row)) fail(`the generated overlay is missing ${JSON.stringify(row)}`)
     const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))

@@ -265,7 +265,7 @@ console.log('ws-check: ok')
   const rows = readFileSync(manifestFile, 'utf8')
   const withRow = rows.replace(
     '    - id: routes\n',
-    '    - id: db\n      name: @acryldev/db-sqlite\n      config:\n        path: data/app.sqlite\n        migrations: migrations\n    - id: routes\n',
+    '    - id: db\n      name: "@acryldev/db-sqlite"\n      config:\n        path: data/app.sqlite\n        migrations: migrations\n    - id: routes\n',
   )
   if (withRow === rows)
     throw new Error('the blank template no longer has a routes row where this gate adds the db row')

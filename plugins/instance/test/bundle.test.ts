@@ -54,7 +54,7 @@ function product(): { bundle: string; source: string } {
     recursive: true,
     filter: (path) => !path.includes(`${join('instance', 'test')}`),
   })
-  pkg(join(bundle, 'node_modules', 'acrylblends'), 'acrylblends', 'bundle')
+  pkg(join(bundle, 'node_modules', '@acryldev', 'blends'), '@acryldev/blends', 'bundle')
   pkg(join(bundle, 'node_modules', '@deepseek-ai', 'cordis'), '@deepseek-ai/cordis', 'bundle')
   pkg(join(bundle, 'node_modules', 'shared-dep'), 'shared-dep', 'bundle')
   write(join(bundle, 'plugins', 'fw', 'index.js'), "export const who = 'bundle'\n")
@@ -89,7 +89,7 @@ function product(): { bundle: string; source: string } {
       '  jsx: jsx.who,',
       "  requiredJsx: require('#fw-jsx').who,",
       "  required: require('@acryldev/blends').who,",
-      "  resolved: require.resolve('acrylblends'),",
+      "  resolved: require.resolve('@acryldev/blends'),",
       "  importResolved: import.meta.resolve('@deepseek-ai/cordis'),",
       '}',
       '',
@@ -105,8 +105,8 @@ function product(): { bundle: string; source: string } {
     "import * as a from '@acryldev/blends'\nimport * as c from '@deepseek-ai/cordis'\nexport const who = 'source'\nexport const sees = [a.who, c.who]\n",
   )
   pkg(
-    join(source, 'node_modules', 'person-dep', 'node_modules', 'acrylblends'),
-    'acrylblends',
+    join(source, 'node_modules', 'person-dep', 'node_modules', '@acryldev', 'blends'),
+    '@acryldev/blends',
     'person-dep copy',
   )
   pkg(
@@ -114,7 +114,7 @@ function product(): { bundle: string; source: string } {
     '@deepseek-ai/cordis',
     'person-dep copy',
   )
-  pkg(join(source, 'node_modules', 'acrylblends'), 'acrylblends', 'source copy')
+  pkg(join(source, 'node_modules', '@acryldev', 'blends'), '@acryldev/blends', 'source copy')
   write(join(source, 'plugins', 'fw', 'index.js'), "export const who = 'stale source copy'\n")
   return { bundle, source }
 }
@@ -163,7 +163,7 @@ function assertBundleFirst(result: ReturnType<typeof run>): void {
   )
   assert.equal(
     report.resolved,
-    join(made.bundle, 'node_modules', 'acrylblends', 'index.js'),
+    join(made.bundle, 'node_modules', '@acryldev', 'blends', 'index.js'),
     'require.resolve',
   )
   assert.equal(

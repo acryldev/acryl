@@ -40,7 +40,7 @@ function entryTree(id) {
   mkdirSync(join(dir, 'src'), { recursive: true })
   writeFileSync(
     join(dir, 'blend.yaml'),
-    `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: ${id}\n  name: "Hello"\n  version: 0.1.0\n  category: workshop\n  description: "A hello app."\n  license: MIT\n  visibility: public\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: @acryldev/router\n`,
+    `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: ${id}\n  name: "Hello"\n  version: 0.1.0\n  category: workshop\n  description: "A hello app."\n  license: MIT\n  visibility: public\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: "@acryldev/router"\n`,
   )
   writeFileSync(
     join(dir, 'package.json'),
@@ -223,7 +223,7 @@ describe('make-entry', () => {
     rmSync(join(app, 'acryl.template.json'))
     writeFileSync(
       join(app, 'blend.yaml'),
-      'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.hello\n  name: Hello App\n  version: 0.1.0\n  visibility: private\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: @acryldev/router\n',
+      'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.hello\n  name: Hello App\n  version: 0.1.0\n  visibility: private\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: "@acryldev/router"\n',
     )
     mkdirSync(join(app, 'node_modules', 'x'), { recursive: true })
     return app

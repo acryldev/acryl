@@ -107,7 +107,7 @@ test('an app has a surface: web unless said otherwise, desktop or tui when chose
 test('the Blend of a real manifest is its metadata id, not the id of a row', () => scratch(root => {
   const folder = join(root, 'shop')
   mkdirSync(folder, { recursive: true })
-  writeFileSync(join(folder, 'blend.yaml'), '# comment\napiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.shop\n  name: shop\n  version: 0.1.0\nspec:\n  rows:\n    - id: router\n      name: @acryldev/router\n')
+  writeFileSync(join(folder, 'blend.yaml'), '# comment\napiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.shop\n  name: shop\n  version: 0.1.0\nspec:\n  rows:\n    - id: router\n      name: \"@acryldev/router\"\n')
   assert.equal(blendOf(folder), 'acrylblends.shop')
   writeFileSync(join(folder, 'blend.yaml'), 'kind: Blueprint\nspec:\n  rows:\n    - id: router\n')
   assert.equal(blendOf(folder), '', 'a row id is not the Blend')

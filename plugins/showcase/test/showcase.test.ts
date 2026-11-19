@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { routeSource } from '@acryldev/builder/script'
 import { extensions } from '@acryldev/extensions'
 import * as home from '@acryldev/home'
@@ -48,10 +49,17 @@ export function apply(ctx) {
 
 async function boot(releases: ReleasePort, before?: (ctx: Context) => void) {
   const root = scratch('showcase-root-')
+  // The app's own framework copy, as every real app has installed (the scaffold's package.json depends on it).
+  mkdirSync(join(root, 'node_modules', '@acryldev'), { recursive: true })
+  symlinkSync(
+    fileURLToPath(new URL('../../../framework/packages/framework', import.meta.url)),
+    join(root, 'node_modules', '@acryldev', 'blends'),
+    'dir',
+  )
   // The app's definition, where a pull records where each plugin came from.
   writeFileSync(
     join(root, 'blend.yaml'),
-    'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata: { id: group.collective, name: collective, version: 0.1.0 }\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: @acryldev/router\n    - id: extensions\n      name: extensions\n    - id: plugin-share\n      name: plugin-share\n    - id: showcase\n      name: showcase\n',
+    'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata: { id: group.collective, name: collective, version: 0.1.0 }\nspec:\n  runtime: cordis\n  rows:\n    - id: router\n      name: "@acryldev/router"\n    - id: extensions\n      name: extensions\n    - id: plugin-share\n      name: plugin-share\n    - id: showcase\n      name: showcase\n',
   )
   const app = new Context()
   const fibers = [

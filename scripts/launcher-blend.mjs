@@ -70,7 +70,7 @@ if (!routes.includes('launcherPage')) {
 const blendFile = join(app, 'blend.yaml')
 const blend = readFileSync(blendFile, 'utf8')
 if (!blend.includes('acryl-launcher-host')) {
-  const row = '    - id: server\n      name: @acryldev/node-server'
+  const row = '    - id: server\n      name: "@acryldev/node-server"'
   if (!blend.includes(row)) { console.error(`launcher blend: ${blendFile} has no server row; the Blends template changed`); process.exit(1) }
   put(blendFile, blend.replace(row, `    - id: acryl-launcher-host\n      name: acryl-launcher-host\n${row}`))
 }
