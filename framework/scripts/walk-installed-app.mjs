@@ -4,7 +4,7 @@
  * in ACRYL)? It launches the app the way a person does, on a scratch data folder, and checks:
  *
  *   1. encapsulation  - the app's bundle is never written (a hash of every file is the same at the end as at the start), and everything the person makes
- *                       lives in the app's own folder in the OS data folder.
+ *                       lives in the app's own folder under <home>/.acryl.
  *   2. self-extension - a plugin written into the app's own `plugins/` folder (what the agent does) is served by the running app, with no restart asked for,
  *                       and an edit of it is served again.
  *   3. self-repair    - the host process killed from outside is started again by the app, on the same address, and the plugin is still served.
@@ -54,14 +54,8 @@ if (existsSync(scratch) && readdirSync(scratch).length > 0)
 const win = process.platform === 'win32'
 const home = join(scratch, win ? 'local' : 'home')
 mkdirSync(home, { recursive: true })
-const dataRoot = join(
-  home,
-  ...(process.platform === 'darwin'
-    ? ['Library', 'Application Support', 'ACRYL Blends']
-    : win
-      ? ['ACRYL Blends']
-      : ['.local', 'share', 'ACRYL Blends']),
-)
+// <home>/.acryl on every OS (plugins/instance/home.ts acrylRoot), not the OS application-data folder the app used before 2026-11-11.
+const dataRoot = join(home, '.acryl')
 const childEnv = {
   ...process.env,
   HOME: home,
@@ -73,6 +67,8 @@ const childEnv = {
   XDG_CACHE_HOME: join(home, '.cache'),
   // The walk may itself run on the app's runtime as Node; the app it starts must start as an app.
   ELECTRON_RUN_AS_NODE: undefined,
+  // A pinned ACRYL_HOME would move the app's root out of the scratch home.
+  ACRYL_HOME: undefined,
 }
 
 let failures = 0
@@ -215,13 +211,15 @@ say('INFO', `bundle hash ${bundleBefore.slice(0, 12)}`)
 launch()
 let frame = await served(90_000)
 if (!check(frame !== undefined, 'the app starts and its host serves the frame')) {
+  // Never leave the app running on a failed walk.
+  quitApp(child.pid)
   console.log(`failures: ${String(failures)}`)
   process.exit(failures)
 }
 const source = join(appsDir, frame.id, 'source')
 check(
   existsSync(join(source, '.git')) && existsSync(join(source, 'blend.yaml')),
-  `the first app "${frame.id}" is made in the OS data folder with its own repository`,
+  `the first app "${frame.id}" is made under <home>/.acryl with its own repository`,
 )
 check(
   (await until(frame, 'app/', (text) => text.includes('<h1>'), 5_000)) !== undefined,
