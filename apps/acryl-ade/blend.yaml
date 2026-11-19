@@ -1,0 +1,36 @@
+# The app as data, in ACRYL's Blend format (blends.acryl.dev/v1alpha1): which plugins it mounts, in what order, with what config.
+# Edit this, not app.ts, to switch a plugin off (disabled: true) or change its config. `npm run lock` records what the app is built from.
+apiVersion: blends.acryl.dev/v1alpha1
+kind: Blueprint
+metadata:
+  id: acryl.ade
+  name: "ACRYL ADE"
+  version: 0.1.0
+  category: ai
+  description: "ACRYL ADE, the Agent Development Environment: the ACRYL IDE as a Blend. Projects and git worktrees on the left, chats, terminals and coding agents as tabs, the changed files, review and files on the right."
+  license: MIT
+  visibility: public
+spec:
+  runtime: cordis
+  parameters:
+    # The address the server listens on.
+    hostname: { type: string, default: 127.0.0.1 }
+  rows:
+    - id: router
+      name: acryl-router
+    - id: routes
+      name: routes
+    # Plugin folders without a row of their own (a live install with the door's `plugin add`); a folder with a row is the app's and starts by it.
+    # Read-only when NODE_ENV=production.
+    - id: extensions
+      name: extensions
+    # Sharing: `npm run acryl -- plugin pull github:<owner>/<repo>@<version>` installs a plugin someone released (development only).
+    - id: plugin-share
+      name: plugin-share
+    - id: server
+      name: acryl-node-server
+      config:
+        hostname: "{{parameters.hostname}}"
+    # The door: an agent working in this folder looks at the page and acts on it through .acryl/bin/acryl. Development only: src/app.ts leaves it out when NODE_ENV=production.
+    - id: acryl-door
+      name: acryl-door

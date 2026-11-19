@@ -1,0 +1,71 @@
+{
+  "name": "acryl-ade",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#acryl-jsx/jsx-runtime": "./plugins/acryl-router/src/core/jsx/jsx-runtime.ts",
+    "#acryl-jsx/jsx-dev-runtime": "./plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "desktop": "node plugins/desktop/launch.ts",
+    "acryl": "node plugins/acryl-door/src/cli/acryl.ts",
+    "start": "node --import ./plugins/acryl-node-server/src/register.ts src/main.ts",
+    "dev": "node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs",
+    "test": "acrylblends check-deps && node --import ./plugins/acryl-node-server/src/register.ts --test \"test/**/*.test.{ts,tsx}\"",
+    "check": "tsc --noEmit && tsc --noEmit -p src/client && acrylblends check-deps",
+    "build": "acrylblends build-client",
+    "lock": "node plugins/manifest/lock.ts",
+    "snapshot": "node plugins/manifest/snapshot.ts",
+    "save": "node plugins/save/cli.ts",
+    "upgrade": "node plugins/manifest/upgrade-cli.ts",
+    "predev": "node scripts/check-node.cjs && node scripts/ade-root.mjs",
+    "prestart": "node scripts/check-node.cjs",
+    "pretest": "node scripts/check-node.cjs",
+    "precheck": "node scripts/check-node.cjs",
+    "predesktop": "node scripts/ade-root.mjs"
+  },
+  "dependencies": {
+    "@acrylblends/app-context": "^0.1.0",
+    "@acrylblends/app-shell": "^0.1.0",
+    "@acrylblends/blends-frame": "^0.1.2",
+    "@acrylblends/brand-client": "^0.1.1",
+    "@acrylblends/plugin-admin": "^0.1.0",
+    "@acrylblends/settings": "^0.1.0",
+    "@acrylblends/sign-in": "^0.1.0",
+    "@acrylblends/support": "^0.1.0",
+    "@acrylblends/system-prompt": "^0.1.0",
+    "@acrylblends/versions": "^0.1.1",
+    "@acrylblends/web": "^0.1.0",
+    "@acrylblends/workspace": "^0.1.1",
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/cordis-plugin-loader": "~1.0.6",
+    "@deepseek-ai/dsh-app-boot": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-base": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-web-app": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "3.18.4",
+    "@webboxes/app-persistence": "0.1.2",
+    "@webboxes/blends-core": "0.5.0",
+    "@webboxes/plugin-hub": "0.2.2",
+    "acrylblends": "^1.5.19",
+    "js-yaml": "^4.2.0",
+    "skill-mcp-manager": "^1.3.1",
+    "typescript": "6.0.3",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "44.9.3",
+    "ws": "8.21.3"
+  },
+  "overrides": {
+    "@deepseek-ai/libreoffice-kit-darwin-arm64": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-darwin-x64": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-wasm": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-win32-arm64": "npm:@acrylblends/absent@1.0.0",
+    "@deepseek-ai/libreoffice-kit-win32-x64": "npm:@acrylblends/absent@1.0.0"
+  }
+}
