@@ -261,7 +261,7 @@ describe('TabStrip', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))
     fireEvent.click(screen.getByRole('menuitem', { name: /Codex/ }))
     expect(onOpenPty).toHaveBeenLastCalledWith('codex', 'Codex')
-    expect(storage.getItem('@acryldev/workspace:last-tab')).toContain('codex')
+    expect(storage.getItem('acryl-workspace:last-tab')).toContain('codex')
     fireEvent.click(screen.getByRole('button', { name: 'New tab: Codex' }))
     expect(onOpenPty).toHaveBeenLastCalledWith('codex', 'Codex')
     fireEvent.click(screen.getByRole('button', { name: 'Choose what to open' }))

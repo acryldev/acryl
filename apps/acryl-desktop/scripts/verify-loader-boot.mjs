@@ -39,9 +39,9 @@ const isolatedHome = join(home, 'home')
 mkdirSync(isolatedHome, { recursive: true })
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-process.env.ACRYL_HOME = join(home, '@acryldev/home')
+process.env.ACRYL_HOME = join(home, 'acryl-home')
 // The engine home too: this smoke must not read or write the developer's ~/.acryl-dev/.dsh, and a DSH_HOME inherited from the caller would.
-process.env.DSH_HOME = join(home, '@acryldev/home', '.dsh')
+process.env.DSH_HOME = join(home, 'acryl-home', '.dsh')
 let ctx
 let mounted
 let mountedSpec

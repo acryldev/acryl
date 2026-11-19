@@ -71,7 +71,7 @@ describe('the project registry', () => {
     const first = await mount()
     const a = folder('a')
     await first.registry.add(a)
-    expect(readFileSync(join(first.home, '@acryldev/settings.yaml'), 'utf8')).toContain(a)
+    expect(readFileSync(join(first.home, 'acryl-settings.yaml'), 'utf8')).toContain(a)
     await first.ctx.fiber.dispose()
     contexts.pop()
     const second = await mount(first.home)
@@ -134,7 +134,7 @@ describe('workspaces in the project registry (spec 043)', () => {
   it('starts with Default holding every folder added before workspaces existed', async () => {
     const home = folder('home')
     const a = folder('a')
-    writeFileSync(join(home, '@acryldev/settings.yaml'), `workspace:\n  projects:\n    - ${a}\n`)
+    writeFileSync(join(home, 'acryl-settings.yaml'), `workspace:\n  projects:\n    - ${a}\n`)
     const { registry } = await mount(home)
     expect(registry.view()).toEqual({ paths: [a], adopted: false, workspaces: [{ id: 'default', name: 'Default', kind: 'individual', projects: [a] }], current: 'default' })
   })
@@ -180,7 +180,7 @@ describe('workspaces in the project registry (spec 043)', () => {
     const { current } = await first.registry.createWorkspace({ name: 'Kept', kind: 'shared' })
     const second = await mount(home)
     expect(second.registry.view()).toMatchObject({ current, workspaces: [{ id: 'default' }, { name: 'Kept', kind: 'shared' }] })
-    expect(readFileSync(join(home, '@acryldev/settings.yaml'), 'utf8')).toContain('Kept')
+    expect(readFileSync(join(home, 'acryl-settings.yaml'), 'utf8')).toContain('Kept')
   })
 })
 

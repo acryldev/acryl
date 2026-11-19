@@ -9,7 +9,7 @@ export const name = 'acryl-mount-anchors-client'
 export const inject = ['shortcuts']
 
 /** Stable id of the toggle command in DSH's shortcut catalog (Settings > Shortcuts lists and rebinds it). */
-const TOGGLE_COMMAND_ID = '@acryldev/mount-anchors.toggle' as ShortcutCommandId
+const TOGGLE_COMMAND_ID = 'acryl-mount-anchors.toggle' as ShortcutCommandId
 
 /** Window event that starts or stops picking, for a starter that is not a key (the command palette). Keep the string in step with `@acryldev/workspace`. */
 export const PICK_ELEMENT_EVENT = 'acryl:toggle-element-picker'
@@ -58,7 +58,7 @@ export function apply(ctx: ClientContext): void {
   }, '@acryldev/mount-anchors: toggle event')
   ctx.effect(() => {
     const container = document.createElement('div')
-    container.id = '@acryldev/mount-anchors-root'
+    container.id = 'acryl-mount-anchors-root'
     document.body.appendChild(container)
     const root = createRoot(container)
     root.render(createElement(MountAnchorInspector, { toggle }))

@@ -1,6 +1,6 @@
 /** Styles for the account sign-in card, installed for the plugin's lifetime. */
 
-const STYLE_ID = '@acryldev/sign-in-styles'
+const STYLE_ID = 'acryl-sign-in-styles'
 
 const CSS = `
 .acrylSignIn { display: grid; gap: 10px; margin-top: 20px; padding: 16px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 12px; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }

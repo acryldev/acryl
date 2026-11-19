@@ -49,7 +49,7 @@ export function findLauncher(from: string = dirname(fileURLToPath(import.meta.ur
  */
 function carriedLauncher(launcher: string): Record<string, LauncherFile> {
   const scripts = dirname(launcher)
-  const instanceSource = join(scripts, '..', 'runtime', '@acryldev/harness-runtime', 'src', 'instance')
+  const instanceSource = join(scripts, '..', 'runtime', 'harness-runtime', 'src', 'instance')
   const files: Record<string, LauncherFile> = {
     'launch.mjs': { from: launcher },
     'lib/instances.mjs': { from: join(scripts, 'lib', 'instances.mjs') },

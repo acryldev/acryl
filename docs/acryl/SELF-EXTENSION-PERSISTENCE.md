@@ -38,7 +38,7 @@ only the home directory differs.
 Separate from this, Electron keeps its own window state, caches and logs under its user-data folder (named `ACRYL`; the OS default location: macOS
 `~/Library/Application Support/ACRYL`, Windows `%APPDATA%\ACRYL`, Linux `~/.config/ACRYL`). Plugins are not stored there.
 The installed application (`ACRYL.app`, `C:\Program Files\ACRYL`, `/opt/ACRYL`) holds only the app itself and the read-only plugin documentation the agent reads
-(`resources/app.asar.unpacked/node_modules/@acryldev/plugin-context`).
+(`resources/app.asar.unpacked/node_modules/@acryldev/plugin-context/docs`).
 
 Other app kinds change the home: a development run uses `~/.acryl-dev`, a git worktree `~/.acryl-worktrees/<folder>`, an app made with `acryl new` its own
 folder. The source and the profile move together with that home.

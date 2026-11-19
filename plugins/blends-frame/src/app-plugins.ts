@@ -363,7 +363,7 @@ export async function switchAppPlugin(root: string, kind: 'row' | 'made', name: 
 /** The frame's own Loader rows the list shows: ACRYL's plugins around the app, not DSH's engine rows nor the rows that run the app. */
 export function isFramePlugin(moduleName: string, entryId: string): boolean {
   if (entryId.startsWith('app-') || entryId === '@acryldev/door') return false
-  return moduleName.startsWith('acryl-') || moduleName.startsWith('@acryldev/brand-client')
+  return moduleName.startsWith('@acryldev/')
 }
 
 /** A Loader row as the frame reads it: its id, module, whether it is switched off, and its fiber's state (Cordis `FiberState`). */

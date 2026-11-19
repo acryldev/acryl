@@ -622,7 +622,7 @@ describe('desktop profile composition', {
 
   it('projects YAML startup settings into the Host, Web server, and client Loader rows', () => {
     const home = temporaryHome()
-    writeFileSync(join(dirname(home), '@acryldev/settings.yaml'), 'dsh-desktop:\n  mode: advanced\n  port: 43189\n')
+    writeFileSync(join(dirname(home), 'acryl-settings.yaml'), 'dsh-desktop:\n  mode: advanced\n  port: 43189\n')
 
     const prepared = prepareDesktopProfile(undefined, home, 'darwin')
     const rows = composeEntries([prepared.patches])

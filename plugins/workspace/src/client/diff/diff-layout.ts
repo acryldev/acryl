@@ -2,7 +2,7 @@
 
 export type DiffLayout = 'unified' | 'split'
 
-const KEY = '@acryldev/workspace:diff-layout'
+const KEY = 'acryl-workspace:diff-layout'
 
 export function readDiffLayout(storage: Pick<Storage, 'getItem'> | undefined): DiffLayout {
   try {

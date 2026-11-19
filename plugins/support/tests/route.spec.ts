@@ -4,7 +4,7 @@ import { SUPPORT_DIAGNOSTICS_PATH } from '../src/contract.ts'
 import { supportRoutes } from '../src/route.ts'
 import { ORIGIN, call } from './call.ts'
 
-const archive: DiagnosticsArchive = { zip: Buffer.from('PK-zip-bytes'), fileName: '@acryldev/diagnostics-2026.zip', includedLogFiles: 1, skippedLogFiles: 0 }
+const archive: DiagnosticsArchive = { zip: Buffer.from('PK-zip-bytes'), fileName: 'acryl-diagnostics-2026.zip', includedLogFiles: 1, skippedLogFiles: 0 }
 /** A download is a same-origin navigation: fetch metadata and a Referer, no Origin. */
 const download = { origin: undefined, referer: `${ORIGIN}/settings` }
 
@@ -13,7 +13,7 @@ describe('diagnostics download route', () => {
     const res = await call(supportRoutes(() => archive), SUPPORT_DIAGNOSTICS_PATH, { headers: download })
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('application/zip')
-    expect(res.headers.get('content-disposition')).toBe('attachment; filename="@acryldev/diagnostics-2026.zip"')
+    expect(res.headers.get('content-disposition')).toBe('attachment; filename="acryl-diagnostics-2026.zip"')
     expect(res.headers.get('content-length')).toBe(String(archive.zip.byteLength))
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(res.headers.get('x-content-type-options')).toBe('nosniff')

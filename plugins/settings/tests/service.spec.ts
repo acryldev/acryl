@@ -42,7 +42,7 @@ describe('@acryldev/settings', () => {
     const { settings } = await mount(home)
     const scope = settings.register<Section>('desktop', Schema)
     expect(scope.get()).toEqual({ mode: 'compatibility', port: 3080, nested: { flag: false } })
-    expect(existsSync(join(home, '@acryldev/settings.yaml'))).toBe(false)
+    expect(existsSync(join(home, 'acryl-settings.yaml'))).toBe(false)
     expect(settings.get('desktop')).toEqual(scope.get())
     expect(settings.get('unregistered')).toBeUndefined()
   })
@@ -54,7 +54,7 @@ describe('@acryldev/settings', () => {
     await scope.update({ mode: 'advanced', nested: { flag: true } })
     expect(scope.get().mode).toBe('advanced')
     expect(scope.get().port).toBe(3080)
-    expect(readFileSync(join(home, '@acryldev/settings.yaml'), 'utf8')).toContain('mode: advanced')
+    expect(readFileSync(join(home, 'acryl-settings.yaml'), 'utf8')).toContain('mode: advanced')
 
     const second = await mount(home)
     expect(second.settings.register<Section>('desktop', Schema).get()).toEqual({
@@ -74,10 +74,10 @@ describe('@acryldev/settings', () => {
 
   it('keeps sections of namespaces nobody registered when it rewrites the file', async () => {
     const home = makeHome()
-    writeFileSync(join(home, '@acryldev/settings.yaml'), 'other:\n  keep: 1\n')
+    writeFileSync(join(home, 'acryl-settings.yaml'), 'other:\n  keep: 1\n')
     const { settings } = await mount(home)
     await settings.register<Section>('desktop', Schema).update({ port: 1234 })
-    const text = readFileSync(join(home, '@acryldev/settings.yaml'), 'utf8')
+    const text = readFileSync(join(home, 'acryl-settings.yaml'), 'utf8')
     expect(text).toContain('keep: 1')
     expect(text).toContain('port: 1234')
   })
@@ -113,7 +113,7 @@ describe('@acryldev/settings', () => {
     })
     await expect(scope.update({ mode: 'advanced' })).rejects.toThrow('not here')
     expect(scope.get().mode).toBe('compatibility')
-    expect(existsSync(join(home, '@acryldev/settings.yaml'))).toBe(false)
+    expect(existsSync(join(home, 'acryl-settings.yaml'))).toBe(false)
   })
 
   it('refuses a patch the schema rejects', async () => {
@@ -135,14 +135,14 @@ describe('@acryldev/settings', () => {
 
   it('rejects the registration when the stored section fails the schema', async () => {
     const home = makeHome()
-    writeFileSync(join(home, '@acryldev/settings.yaml'), 'desktop:\n  port: nope\n')
+    writeFileSync(join(home, 'acryl-settings.yaml'), 'desktop:\n  port: nope\n')
     const { settings } = await mount(home)
     expect(() => settings.register<Section>('desktop', Schema)).toThrow()
   })
 
   it('rejects an unreadable document at start', async () => {
     const home = makeHome()
-    writeFileSync(join(home, '@acryldev/settings.yaml'), ': : :\n  - [')
+    writeFileSync(join(home, 'acryl-settings.yaml'), ': : :\n  - [')
     const ctx = new Context()
     contexts.push(ctx)
     ctx.provide('appInstance', { home })
