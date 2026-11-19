@@ -57,12 +57,19 @@ const SPECIFIER =
  * `acryl-state/src/service.ts`). Only real import and export statements are touched: a specifier named in a comment or in a string (a documentation example) is text,
  * not a dependency. Any other `acryl-*` specifier in code is an error: a library plugin may depend only on the others and on public packages.
  */
-export function rewriteSpecifiers(source: string, file: string, entries: EntryTable): string {
+export function rewriteSpecifiers(
+  source: string,
+  file: string,
+  entries: EntryTable,
+  installed: ReadonlySet<string> = new Set(),
+): string {
   const kind = classify(source)
   return source.replace(
     SPECIFIER,
     (match, lead: string, quote: string, specifier: string, offset: number) => {
       if (kind[offset] !== 0) return match
+      // A plugin the app installs as a package (spec 051 T011: the desktop shell, the instance) keeps its package specifier.
+      if (installed.has(specifier.split('/')[0] ?? '')) return match
       const target = entries.get(specifier)
       if (target === undefined)
         throw new Error(`${file}: imports "${specifier}", which is not a library plugin`)
