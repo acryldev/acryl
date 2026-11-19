@@ -23,9 +23,9 @@ run="$(date +%Y%m%d-%H%M%S)-${commit:0:8}-$$"
 local_dir=$(mktemp -d "${TMPDIR:-/tmp}/remote-gate.XXXXXX")
 trap 'rm -rf "$local_dir"' EXIT
 
-# The commit as a bundle under a branch name of its own, so the clone can check it out.
+# The commit as a bundle under a branch name of its own, so the clone can check it out, with the tags (the legacy-layouts check reads the release tags).
 git -C "$repo" branch -f "gate/$run" "$commit" >/dev/null
-git -C "$repo" bundle create -q "$local_dir/gate.bundle" "gate/$run"
+git -C "$repo" bundle create -q "$local_dir/gate.bundle" "gate/$run" --tags
 git -C "$repo" branch -D "gate/$run" >/dev/null
 
 "${ssh_[@]}" "mkdir -p $base/runs/$run"
