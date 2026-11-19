@@ -56,7 +56,7 @@ describe('the DSH chat is optional (T043)', () => {
       const off = states(host)
       for (const id of DSH_CHAT_ROW_IDS) expect(off.get(id), id).not.toBe('ACTIVE')
       // The frame: the server, the session store, the client, the terminals and ACRYL's own rows.
-      for (const id of ['web', 'session', 'session-persistence-jsonl', 'terminal-controller', 'workspace-controller', '@acryldev/workspace', '@acryldev/agent-control', 'tools']) {
+      for (const id of ['web', 'session', 'session-persistence-jsonl', 'terminal-controller', 'workspace-controller', 'acryl-workspace', 'acryl-agent-control', 'tools']) {
         expect(off.get(id), id).toBe('ACTIVE')
       }
       // Rows that need the chat wait (PENDING) instead of failing; Cordis reactivates them when it returns.
