@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
+import { readGraph } from './dependency-direction.mjs'
 import { isolatedEnvironment } from './lib/isolated-run.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -93,16 +94,8 @@ try {
 
 /** Every workspace package reachable from acryl-web through `workspace:` dependencies, excluding acryl-web itself, with its directory. */
 function workspaceClosure() {
-  const byName = new Map()
-  for (const group of ['apps', 'runtime', 'plugins', 'examples', 'distribution']) {
-    const base = join(root, group)
-    if (!existsSync(base)) continue
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const manifest = join(base, entry.name, 'package.json')
-      if (!entry.isDirectory() || !existsSync(manifest)) continue
-      byName.set(JSON.parse(readFileSync(manifest, 'utf8')).name, join(base, entry.name))
-    }
-  }
+  // Every workspace package, as pnpm itself resolves pnpm-workspace.yaml (the framework's packages under framework/ included, spec 051).
+  const byName = new Map([...readGraph(root)].map(([name, { folder }]) => [name, join(root, folder)]))
   const seen = new Map()
   const visit = (dir) => {
     const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
