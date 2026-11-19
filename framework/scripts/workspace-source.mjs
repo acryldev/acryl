@@ -21,6 +21,26 @@ for (const name of readdirSync(plugins)) {
     sources.set(`${packageName}${subpath}`, pathToFileURL(join(plugins, name, file)).href)
 }
 
+// Workspace packages that are not library plugins (the framework CLI, the runtime packages) are imported by package name from a profile a
+// test boots in a temporary folder, where Node's own resolution finds no node_modules. Map each export to the package's built file.
+const repoRoot = join(plugins, '..')
+for (const group of ['plugins', 'runtime', 'framework/packages']) {
+  const base = join(repoRoot, group)
+  if (!existsSync(base)) continue
+  for (const name of readdirSync(base)) {
+    const file = join(base, name, 'package.json')
+    if (!existsSync(file)) continue
+    const manifest = JSON.parse(readFileSync(file, 'utf8'))
+    if (typeof manifest.name !== 'string' || manifest.exports === undefined) continue
+    for (const [subpath, target] of Object.entries(manifest.exports)) {
+      const value = typeof target === 'string' ? target : (target?.default ?? target?.import ?? target?.require)
+      if (typeof value !== 'string' || !value.startsWith('./lib/')) continue
+      const specifier = subpath === '.' ? manifest.name : `${manifest.name}/${subpath.replace(/^\.\//u, '')}`
+      if (!sources.has(specifier)) sources.set(specifier, pathToFileURL(join(base, name, value)).href)
+    }
+  }
+}
+
 registerHooks({
   resolve(specifier, context, next) {
     const source = sources.get(specifier)
