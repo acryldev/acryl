@@ -1,23 +1,21 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
-    "rootDir": "src",
+    "erasableSyntaxOnly": true,
+    "rootDir": ".",
     "outDir": "lib",
     "declaration": true,
+    "declarationDir": "lib/types",
     "esModuleInterop": true,
     "strict": true,
-    "exactOptionalPropertyTypes": true,
-    "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["*.ts"]
 }
