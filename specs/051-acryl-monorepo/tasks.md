@@ -61,7 +61,10 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [ ] T020 [boot] A real Desktop boot from this branch (isolated home), the last check before Phase 2 is called done.
 - [ ] T021 [exception] `acryl-harness-runtime` composes every plugin a surface runs (the guard's one named exception); move that
   composition up into `apps/`.
-- [ ] T022 [decision] Whether ACRYL's agent gets the door's new `reload` and `navigate` as tools (named, not registered today).
+- [ ] T022 [agents drive the app] Decided by the owner 2026-11-19: yes, and it is the baseline, not a choice - "we should have
+  functionality as it was before unification". The ACRYL chat AND every PTY driver agent (Claude Code, Pi, Codex, ...) fully control the
+  running app as a user does, like acryl-control: look, click, type, fill, select, press, scroll, wait, reload, navigate. Done when each
+  agent kind is proven on a real app: the chat through its `door_*` tools, a PTY agent through `.acryl/bin/acryl`, in dev and installed ADE.
 
 - [x] T024 [guard] The cross-package relative imports are gone (051-t017): `acrylblends-framework` imports `acryl-router` (new `/core`,
   `/connection`, `/conninfo` subpaths), `acryl-node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
