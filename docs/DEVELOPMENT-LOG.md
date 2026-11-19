@@ -1,3 +1,34 @@
+## 2026-11-19 - the framework's plugins are flat workspace packages, and the library is in the graph (spec 051 T017/T024/T027)
+
+The Pi model's flat `plugins/` folder now holds the framework's whole plugin library beside ACRYL's own: 32 folders moved with `git mv`
+from `framework/plugins/`, and every one is a workspace package. The 13 vendored packages kept their shape; the 19 app plugins became
+`acryl-agent`, `acryl-instance`, `acryl-desktop-shell`, `acryl-app-settings` (the plain names were taken by the desktop app and the root
+settings plugin), `acryl-desktop-web`, `acryl-sandbox`, `acryl-home`, `acryl-tasks`, `acryl-extensions`, `acryl-manifest`,
+`acryl-save`, `acryl-feedback`, `acryl-openai`, `acryl-builder`, `acryl-showcase`, `acryl-plugin-share`, `acryl-agent-panel`,
+`acryl-driver-acp` and `acryl-driver-pty`, each with a `package.json`, a tsdown build to `lib/` and a LICENSE.
+
+- **They import each other by package name** (`454bbcd5`): the sibling relatives (`../acryl-router/...`, `../instance/index.ts`) and the
+  framework package's `../../../plugins/acryl-router/src` paths are gone. `acryl-router` gained `/core`, `/connection` and `/conninfo`;
+  `acryl-node-server` gained `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static` and `/test-websocket`, so the Cordis-free
+  subpaths of `acrylblends` reach no optional peer (the package's own test holds that). The desktop shells load the app's `src/app.ts` by a
+  computed path instead of a relative import out of the package.
+- **The copy path is unchanged in what an app receives**: `copyPlugin` now knows both shapes a package can have (sources in `src/`, as the
+  vendored ones, and sources at the folder root, as the app plugins), copies an app plugin's source and rewrites the package names to
+  relative paths, leaving `lib/`, `package.json`, the build files and `scripts/` behind. `scripts-pack` ships only folders with a
+  `plugin.json` and includes each `package.json`; `workspace-source.mjs` maps package names to source for the node tests.
+- **The guard sees the library** (`verify-layout`): the 13 stay FOUNDATION, the 19 are the named `FRAMEWORK_PLUGINS` set with role
+  `plugin`, and every `plugins/*/plugin.json` folder must be a workspace package with a role. One named edge lets `acrylblends-framework`
+  build `acrylblends/drivers` from the agent panel's Cordis-free `drivers.ts`; runtime may not depend on a plugin except through its listed
+  composition edges. `pnpm-workspace.yaml` is `plugins/*`; 79 packages, no cycles, all dependencies point down.
+- **Lint did not lose coverage**: one root `biome.json` (the framework's settings, includes `framework/**` and the 19 moved folders)
+  replaces `framework/biome.json`, `check:layout` runs `lint:library`, and the counts are 248 framework files and 233 library files with
+  no findings. A new `framework/scripts/lib/package-install.test.mjs` copies a built package into a throwaway `node_modules` and imports it
+  there, because Node refuses to strip types inside `node_modules`: the trap that would let a source-only package pass every workspace test
+  and fail in every installed app.
+- **Proven**: the framework's `build`, `typecheck` and full `test` (409 library tests, the 13 packages' suites, the frame suites and the
+  script tests), `verify-layout`, `verify-scaffolder` (every template created, installed from the packed framework, type-checked, tested,
+  given the desktop shell) and `verify-dev-install`. `verify-ide-template` needs ACRYL's client packages built and runs in the full gate.
+
 ## 2026-11-12 - the ACRYL app screen in the terminal: a list of local apps, `acryl apps`, `acryl --tui`, `acryl --gui` (spec 050 T011)
 
 The owner asked for the launcher as the local app store and control center, with one screen called ACRYL in the terminal and on the desktop. The terminal half is built; the desktop screen is the next slice.
