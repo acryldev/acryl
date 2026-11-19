@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/app-shell",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "The generic three-column desktop/web app frame (brand sidebar, main surface, resizable details column, theme, platform title-bar spacing) any ACRYL Blend's domain plugin claims as its own main UI, the same way plugins/workspace claims it for the IDE. Extracted from @acryldev/workspace's own shell/ so the next Blueprint after the IDE does not rebuild this wiring again.",
   "license": "MIT",
   "repository": {
