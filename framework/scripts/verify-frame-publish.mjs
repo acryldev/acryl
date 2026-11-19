@@ -323,12 +323,10 @@ function pack(key) {
   if (typeof packed?.filename !== 'string')
     fail(`${folder}: npm pack did not name a tarball:\n${result.out}`)
   const tarball = join(stage, packed.filename)
-  const listing = run('tar', ['tzf', tarball])
-  if (listing.status !== 0) fail(`${folder}: the tarball cannot be listed:\n${listing.out}`)
-  const entries = listing.out
-    .split('\n')
-    .filter((line) => line.startsWith('package/') && !line.endsWith('/'))
-    .map((line) => line.slice('package/'.length))
+  // What npm packed, from its own report rather than `tar`: on Windows the tar on the PATH is Git's GNU tar, which reads C:\... as a remote host
+  // ("Cannot connect to C: resolve failed", Framework run 44487118505).
+  if (!Array.isArray(packed.files)) fail(`${folder}: npm pack listed no files:\n${result.out}`)
+  const entries = packed.files.map((entry) => String(entry.path).replaceAll('\\', '/'))
   // A "files" entry may name a directory ("contracts") or a single file; npm packs a directory as its contents.
   const covered = (file) =>
     entries.includes(file) || entries.some((entry) => entry.startsWith(`${file}/`))
@@ -338,7 +336,7 @@ function pack(key) {
         `${folder}: ${file} is named by "files" but is not in the tarball (has ${entries.join(', ')})`,
       )
   if (!entries.includes('package.json')) fail(`${folder}: the tarball has no package.json`)
-  const packedManifest = JSON.parse(run('tar', ['xzf', tarball, '-O', 'package/package.json']).out)
+  const packedManifest = { name: packed.name, version: packed.version }
   if (packedManifest.name !== published.get(key))
     fail(
       `${folder}: packed name is ${String(packedManifest.name)}, expected ${String(published.get(key))}`,

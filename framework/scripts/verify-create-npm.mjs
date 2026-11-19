@@ -88,7 +88,8 @@ function packLocally(missing) {
     missing.map(({ name, version }) => {
       const tarball = join(out, `${name.replace(/^@/u, '').replace('/', '-')}-${version}.tgz`)
       if (!existsSync(tarball)) fail(`verify-frame-publish wrote no ${tarball}`)
-      return [name, `file:${tarball}`]
+      // Forward slashes: a file: spec with C:\ backslashes is not one every package manager reads on Windows.
+      return [name, `file:${tarball.replaceAll('\\', '/')}`]
     }),
   )
 }
