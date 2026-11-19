@@ -39,6 +39,7 @@
     "@acrylblends/system-prompt": "^0.1.0",
     "@acrylblends/versions": "^0.1.1",
     "@acrylblends/web": "^0.1.0",
+    "@acryldev/control-center": "^0.1.0",
     "@deepseek-ai/cordis": "4.0.5",
     "@deepseek-ai/cordis-plugin-loader": "~1.0.6",
     "@deepseek-ai/dsh-app-boot": "0.2.0-rc.2",

@@ -13,7 +13,7 @@
  * The launcher lists and makes apps in `~/.acryl` (`ACRYL_LAUNCHER_HOME` moves it), the same home the ACRYL app uses.
  */
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -45,17 +45,15 @@ if (!existsSync(join(app, 'blend.yaml'))) {
   run('npx', ['-y', 'create-acrylblends@latest', app.split(/[\\/]/u).pop(), 'blank', '--no-start'], { cwd: dirname(app), shell: process.platform === 'win32' })
 }
 
-// The Host half: the Blend entry and its package, the shared sources (imports rewritten to the names a Blends app has), the launcher journeys.
+// The Host half: the Blend entry and its package, the shared sources (imports rewritten to the names a Blends app has); the launcher journeys come from
+// the published library `@acryldev/control-center`, a dependency of the app (spec 051 T010).
 const host = join(app, 'plugins/acryl-launcher-host')
 for (const file of ['index.ts', 'package.json']) put(join(host, file), readFileSync(join(pkg, 'blend/host', file)))
 for (const file of ['contract.ts', 'door.ts', 'registry.ts', 'route.ts', 'runner.ts', 'service.ts']) {
   put(join(host, file), readFileSync(join(pkg, 'src', file), 'utf8')
-    .replaceAll("from '@acryldev/control-center'", "from './launcher-lib/index.js'")
     .replaceAll("from 'acryl-loopback-http/router'", "from '@acrylblends/loopback-http/router'")
     .replaceAll("from 'acryl-loopback-http'", "from '@acrylblends/loopback-http'"))
 }
-const lib = join(root, 'plugins/acryl-launcher')
-for (const file of readdirSync(lib)) if (/\.(js|d\.ts)$/u.test(file)) put(join(host, 'launcher-lib', file), readFileSync(join(lib, file)))
 
 // The page: the bundle, served at the app's root with its API under the frame's /app prefix.
 put(join(app, 'public/launcher.js'), readFileSync(join(pkg, 'lib/page.js')))
@@ -79,7 +77,12 @@ if (!blend.includes('acryl-launcher-host')) {
 // The window, the Dock and the frame's header name the app after its package and draw its `assets/icon.png`: ACRYL, with ACRYL's icon.
 const manifestFile = join(app, 'package.json')
 const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'))
-if (manifest.name !== 'ACRYL') put(manifestFile, `${JSON.stringify({ ...manifest, name: 'ACRYL' }, null, 2)}\n`)
+const LIBRARY = '@acryldev/control-center'
+const libraryRange = `^${JSON.parse(readFileSync(join(root, 'plugins/acryl-launcher/package.json'), 'utf8')).version}`
+if (manifest.name !== 'ACRYL' || manifest.dependencies?.[LIBRARY] !== libraryRange) {
+  put(manifestFile, `${JSON.stringify({ ...manifest, name: 'ACRYL', dependencies: { ...manifest.dependencies, [LIBRARY]: libraryRange } }, null, 2)}\n`)
+  run(npm, ['install', '--no-audit', '--no-fund'], { cwd: app, shell: process.platform === 'win32' })
+}
 put(join(app, 'assets/icon.png'), readFileSync(join(root, 'apps/acryl-desktop/build/app-icon.png')))
 // Saved, so the frame shows the app as saved rather than every copied file as a change (nothing to save when nothing changed).
 spawnSync('git', ['add', '-A'], { cwd: app })
