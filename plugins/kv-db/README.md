@@ -6,10 +6,10 @@ The [`kv` port](../acryl-kv/README.md) over the [`db` port](../acryl-db/README.m
 
 ```yaml
 - id: acryl-db-sqlite
-  name: @acryldev/db-sqlite
+  name: '@acryldev/db-sqlite'
   config: { path: data/app.sqlite }
 - id: acryl-kv-db
-  name: @acryldev/kv-db
+  name: '@acryldev/kv-db'
   config: { table: kv }   # optional
 ```
 

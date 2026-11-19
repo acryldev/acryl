@@ -19,7 +19,7 @@ As a Cordis row, `dataDir` defaults to `pglite` in the ACRYL app home. Relative 
 
 ```yaml
 - id: acryl-db-pglite
-  name: @acryldev/db-pglite
+  name: '@acryldev/db-pglite'
   config:
     migrations: migrations
 ```

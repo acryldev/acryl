@@ -27,11 +27,11 @@ spec:
   runtime: cordis
   rows:
     - id: router # the routes every plugin mounts on
-      name: @acryldev/router
+      name: '@acryldev/router'
     - id: extensions
       name: extensions
     - id: server
-      name: @acryldev/node-server
+      name: '@acryldev/node-server'
 `
 
 function plugin(app: string, name: string, body = '') {

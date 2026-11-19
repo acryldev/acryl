@@ -11,7 +11,7 @@ an on/off switch:
 spec:
   rows:
     - id: router
-      name: @acryldev/router      # a library plugin: src/app.ts imports it into `registry`
+      name: '@acryldev/router'      # a library plugin: src/app.ts imports it into `registry`
     - id: home
       name: home              # the home page's widgets (ctx.home)
     - id: routes
@@ -21,7 +21,7 @@ spec:
     - id: extensions
       name: extensions
     - id: server
-      name: @acryldev/node-server
+      name: '@acryldev/node-server'
 ```
 
 A row's `name` is either a library plugin that `src/app.ts` imports into its `registry`, or the name of a folder in `plugins/` that is the

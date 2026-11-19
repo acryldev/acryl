@@ -26,7 +26,7 @@ against:
   disabled: true
 
 - id: ui-brand-acryl
-  name: @acryldev/brand-client
+  name: '@acryldev/brand-client'
 ```
 
 `acryl-desktop/src/profile.ts` composes exactly this pair, selected by its

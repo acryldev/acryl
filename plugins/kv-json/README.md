@@ -6,7 +6,7 @@ file. A crash leaves the old file or the new one, never half of one.
 
 ```yaml
 - id: acryl-kv-json
-  name: @acryldev/kv-json
+  name: '@acryldev/kv-json'
   config:
     path: data/kv.json   # default: kv.json in the ACRYL app home; required outside an ACRYL app
 ```

@@ -5,7 +5,7 @@ code to edit to rebrand.
 
 ```yaml
 - id: brand
-  name: @acryldev/brand
+  name: '@acryldev/brand'
   config:
     name: Orbit
     tagline: Plan your day by talking to it.
