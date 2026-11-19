@@ -8,7 +8,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "build": "pnpm -r --filter=./packages/* --filter=./plugins/acryl-* run build && node scripts/stage-framework.mjs && pnpm -r --filter=acryl-app-context... --filter=acryl-blends-frame... --filter=acryl-versions... run build",
+    "build": "pnpm -r --filter=./packages/* --filter=./plugins/acryl-* run build && node scripts/stage-framework.mjs && pnpm -r --filter=acryl-app-context... --filter=acryl-blends-frame... --filter=acryl-versions... run build && node scripts/build-frame.mjs",
     "test:driver-pty": "node --import ./scripts/workspace-source.mjs --test --test-timeout=60000 \"plugins/driver-pty/test/*.test.ts\"",
     "test:packages": "pnpm -r --filter=./plugins/acryl-* --filter=acrylblends-framework --filter=acryl-app-context --filter=acryl-blends-frame --filter=acryl-versions run test",
     "typecheck": "tsc -p tsconfig.json && tsc -p plugins/tsconfig.json && tsc -p tsconfig.frame.json",

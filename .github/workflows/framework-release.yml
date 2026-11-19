@@ -54,7 +54,6 @@ jobs:
       - name: Pack every frame package, boot a fresh app from them, keep the tagged one
         if: steps.which.outputs.kind == 'frame'
         run: |
-          pnpm --dir framework run build:frame
           pnpm --dir framework run verify:frame-publish -- --out "$RUNNER_TEMP/all"
           mkdir -p "$RUNNER_TEMP/pack"
           cp "$RUNNER_TEMP/all/${{ steps.which.outputs.tarball }}" "$RUNNER_TEMP/pack/"
