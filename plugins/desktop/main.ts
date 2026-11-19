@@ -17,6 +17,7 @@ import { type AppInstance, instanceEnv, selectInstance, withRunEnv } from 'acryl
 import { readProduct } from 'acryl-instance/bundle'
 import { type AppStorage, openProductStorage } from 'acryl-instance/storage'
 import { APP_PAGE_CHANNEL, appPageHandler } from './app-page.ts'
+import { appRootFor } from './app-root.ts'
 import { runningApp } from './attach.ts'
 import { appTitle, iconFile } from './brand.ts'
 import {
@@ -44,8 +45,8 @@ import { offerUpdates } from './update-menu.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
 import { cascade, windowOptions, windowSize } from './window.ts'
 
-/** The app shipped inside the bundle (a packaged product) or checked out by the person (an app made with `acrylblends init`). */
-const bundledRoot = fileURLToPath(new URL('../..', import.meta.url))
+/** The app shipped inside the bundle (a packaged product) or checked out by the person (an app made with `acrylblends init`); as an installed package, Electron names it. */
+const bundledRoot = appRootFor(import.meta.url, () => app.getAppPath())
 // A product build keeps its apps in its own root in the OS per-user data folder, one sealed folder each, and runs on the source of the one it opens: the
 // bundle is the read-only Program (plugins/instance/storage.ts). An app made with `acrylblends init` runs on its own folder.
 const product = app.isPackaged ? readProduct(bundledRoot) : undefined

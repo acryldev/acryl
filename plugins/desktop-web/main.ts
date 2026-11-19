@@ -9,16 +9,17 @@
 import { mkdirSync, readFileSync } from 'node:fs'
 import type { AddressInfo } from 'node:net'
 import { join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pathToFileURL } from 'node:url'
 import { serve } from 'acrylblends/node-server'
 import { app, BrowserWindow, shell } from 'electron'
 import 'acrylblends/node-server/register'
 import { appHomes } from 'acryl-instance'
+import { appRootFor } from './app-root.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
 import { windowOptions } from './window.ts'
 
-const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
+const projectRoot = appRootFor(import.meta.url, () => app.getAppPath())
 const manifest = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8')) as {
   name?: string
   acrylblends?: { desktopPath?: string }
