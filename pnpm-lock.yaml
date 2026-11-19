@@ -3154,6 +3154,9 @@ importers:
       '@acryldev/blends':
         specifier: workspace:^
         version: link:../../framework/packages/cli
+      '@acryldev/db':
+        specifier: workspace:^
+        version: link:../db
       '@acryldev/db-postgres':
         specifier: workspace:*
         version: link:../db-postgres
@@ -3188,6 +3191,9 @@ importers:
       '@acryldev/blends':
         specifier: workspace:^
         version: link:../../framework/packages/cli
+      '@acryldev/db':
+        specifier: workspace:^
+        version: link:../db
       '@deepseek-ai/schemastery':
         specifier: ~3.18.4
         version: 3.18.4

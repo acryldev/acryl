@@ -1,4 +1,4 @@
-import { describeDbConformance } from '@acryldev/blends/db/conformance'
+import { describeDbConformance } from '@acryldev/db/conformance'
 import * as vitest from 'vitest'
 import { afterAll, beforeAll } from 'vitest'
 import { openDb } from '../src/open.ts'

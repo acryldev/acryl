@@ -54,7 +54,8 @@
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
     "@acryldev/blends": "workspace:^",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "@acryldev/db": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"

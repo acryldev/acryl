@@ -55,7 +55,8 @@
     "@deepseek-ai/schemastery": "~3.18.4",
     "@electric-sql/pglite": "0.5.11",
     "@acryldev/db-postgres": "workspace:*",
-    "@acryldev/blends": "workspace:^"
+    "@acryldev/blends": "workspace:^",
+    "@acryldev/db": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2"
