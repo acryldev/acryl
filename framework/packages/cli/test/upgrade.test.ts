@@ -63,6 +63,7 @@ describe('upgrade options', () => {
       dryRun: true,
       force: true,
       diff: true,
+      desktopPackages: false,
     })
     expect(() => parseUpgradeOptions(['--nope'])).toThrow()
   })

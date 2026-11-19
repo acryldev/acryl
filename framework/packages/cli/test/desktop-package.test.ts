@@ -1,8 +1,8 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { planDesktopPackage } from '../src/desktop-package.ts'
+import { DESKTOP_PACKAGE_VERSIONS, planDesktopPackage } from '../src/desktop-package.ts'
 
 const made: string[] = []
 afterEach(() => {
@@ -73,5 +73,21 @@ describe('planDesktopPackage (spec 051 T011)', () => {
 
   it('refuses to plan a move to a package that has no published version', () => {
     expect(() => planDesktopPackage(app(copies), table, {}, always)).toThrow(/must be published/)
+  })
+})
+
+it('installs the versions the workspace packages are at', () => {
+  const at = (folder: string) =>
+    (
+      JSON.parse(
+        readFileSync(
+          new URL(`../../../../plugins/${folder}/package.json`, import.meta.url),
+          'utf8',
+        ),
+      ) as { version: string }
+    ).version
+  expect(DESKTOP_PACKAGE_VERSIONS).toEqual({
+    '@acryldev/desktop-shell': at('desktop'),
+    '@acryldev/instance': at('instance'),
   })
 })

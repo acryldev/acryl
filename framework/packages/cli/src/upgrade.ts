@@ -16,6 +16,7 @@ import {
   stripRegistrations,
   withRegistrations,
 } from './app-registration.ts'
+import { upgradeDesktopPackages } from './desktop-package'
 import { diffStat, unifiedDiff } from './diff'
 import { type FrameProfileSpecs, frameProfileForApp, frameProfileInput } from './frame-release'
 import { APP_PLUGINS_FILE, appFrameRows, carriesComposeInto } from './frame-rows'
@@ -61,6 +62,8 @@ export interface UpgradeOptions {
   readonly force: boolean
   /** Print the diff of every changed file, not only of the edited ones. */
   readonly diff: boolean
+  /** Move the app's desktop shell and instance copies to their @acryldev packages (spec 051 T011), and only that. */
+  readonly desktopPackages: boolean
 }
 
 /** Parse `upgrade [plugin...] [--dir <app>] [--dry-run] [--force] [--diff]`. */
@@ -77,6 +80,7 @@ export function parseUpgradeOptions(argv: readonly string[]): UpgradeOptions {
     dryRun: parsed.values['dry-run'] === true,
     force: parsed.values.force === true,
     diff: parsed.values.diff === true,
+    desktopPackages: parsed.values['desktop-packages'] === true,
   }
 }
 
@@ -90,6 +94,7 @@ const parse = (argv: readonly string[]) =>
       'dry-run': { type: 'boolean' },
       force: { type: 'boolean' },
       diff: { type: 'boolean' },
+      'desktop-packages': { type: 'boolean' },
     },
   })
 
@@ -381,6 +386,7 @@ export async function upgrade(options: UpgradeOptions, io: Io): Promise<number> 
     )
     return 1
   }
+  if (options.desktopPackages) return upgradeDesktopPackages(appDir, options, io)
   const folder = pluginsFolder(appDir)
   if (folder.legacy) {
     io.stderr.write(

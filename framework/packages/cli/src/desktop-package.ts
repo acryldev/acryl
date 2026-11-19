@@ -3,17 +3,33 @@
  * them as packages instead. This module only plans that move for one app; `upgrade` shows the plan and applies it. An app whose copy it
  * edited keeps the copy (a conflict, named file by file): its changes are its own and are never thrown away.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
-import { hashFolder } from './lock.ts'
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import { dirname, join, relative } from 'node:path'
+import type { Io } from './io.ts'
+import { readLibrary } from './library.ts'
+import { hashFolder, readHistory, readLock } from './lock.ts'
 import type { EntryTable } from './rewrite.ts'
-import { toPackageSpecifiers } from './rewrite.ts'
+import { entryTable, toPackageSpecifiers } from './rewrite.ts'
 
 /** The library plugins that move, by folder, and the package each is installed as. */
 export const MOVED_PLUGINS: ReadonlyMap<string, string> = new Map([
   ['desktop', '@acryldev/desktop-shell'],
   ['instance', '@acryldev/instance'],
 ])
+
+/** The version this release installs of each moved package (kept equal to the workspace packages by a test). */
+export const DESKTOP_PACKAGE_VERSIONS: Readonly<Record<string, string>> = {
+  '@acryldev/desktop-shell': '0.1.0',
+  '@acryldev/instance': '0.1.0',
+}
 
 /** Whether a file of a carried copy is exactly what some release of the library shipped (the lock's record or the library history). */
 export type Pristine = (plugin: string, file: string, hash: string) => boolean
@@ -87,4 +103,68 @@ export function planDesktopPackage(
     dependencies[pkg] = version
   }
   return { kind: 'move', remove: carried.map((name) => `plugins/${name}`), dependencies, rewrites }
+}
+
+/**
+ * `acrylblends upgrade --desktop-packages`: plan the move, report it, and unless `dryRun` apply it - the copies are saved under
+ * `.acryl/upgrade-backup/` before they are removed. Returns the exit code.
+ */
+export function upgradeDesktopPackages(
+  appDir: string,
+  options: { readonly dryRun: boolean },
+  io: Io,
+  versions: Readonly<Record<string, string>> = DESKTOP_PACKAGE_VERSIONS,
+): number {
+  const library = readLibrary()
+  const names = new Set(
+    [...MOVED_PLUGINS.keys()].map((name) => library.get(name)?.packageName ?? name),
+  )
+  const table: EntryTable = new Map(
+    [...entryTable(library)].filter(([specifier]) =>
+      [...names].some((name) => specifier === name || specifier.startsWith(`${name}/`)),
+    ),
+  )
+  const lock = readLock(join(appDir, 'plugins'))
+  const history = readHistory()
+  const pristine: Pristine = (plugin, file, hash) =>
+    lock.plugins[plugin]?.files?.[file] === hash ||
+    (history[plugin]?.[file]?.includes(hash) ?? false)
+  const plan = planDesktopPackage(appDir, table, versions, pristine)
+  if (plan.kind === 'nothing') {
+    io.stdout.write(
+      'desktop packages: the app carries no desktop shell or instance copy; nothing to move\n',
+    )
+    return 0
+  }
+  if (plan.kind === 'conflict') {
+    io.stderr.write(
+      `error: the app edited its copy (${plan.files.join(', ')}); it keeps the copy and nothing was changed. Move your change into a plugin of the app, restore the file, and run again\n`,
+    )
+    return 1
+  }
+  io.stdout.write(
+    `desktop packages: remove ${plan.remove.join(', ')}; add ${Object.entries(plan.dependencies)
+      .map(([name, version]) => `${name}@${version}`)
+      .join(
+        ', ',
+      )}; rewrite imports in ${plan.rewrites.length === 0 ? 'no file' : plan.rewrites.map((file) => file.file).join(', ')}\n`,
+  )
+  if (options.dryRun) return 0
+  const backup = join(appDir, '.acryl', 'upgrade-backup', `desktop-packages-${Date.now()}`)
+  for (const folder of plan.remove) {
+    mkdirSync(dirname(join(backup, folder)), { recursive: true })
+    cpSync(join(appDir, folder), join(backup, folder), { recursive: true })
+  }
+  for (const file of plan.rewrites) writeFileSync(join(appDir, file.file), file.text)
+  const manifestFile = join(appDir, 'package.json')
+  const manifest = JSON.parse(readFileSync(manifestFile, 'utf8')) as {
+    dependencies?: Record<string, string>
+  }
+  manifest.dependencies = { ...manifest.dependencies, ...plan.dependencies }
+  writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`)
+  for (const folder of plan.remove) rmSync(join(appDir, folder), { recursive: true, force: true })
+  io.stdout.write(
+    `the copies are saved in ${relative(appDir, backup).split('\\').join('/')}/; run npm install\n`,
+  )
+  return 0
 }

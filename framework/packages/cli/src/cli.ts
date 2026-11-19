@@ -23,6 +23,8 @@ Usage:
   acrylblends upgrade [plugin...] [--dir d] [--dry-run] [--force] [--diff]
                                       Bring the library plugins an app carries (the router, the server, the door, ...) up to this
                                       version: untouched files are replaced, an edited file stops it (diff shown) unless --force
+  acrylblends upgrade --desktop-packages [--dir d] [--dry-run]
+                                      Move the app's copies of the desktop shell and the instance to the @acryldev packages, once
   acrylblends update [--dir d] [--check] Bring the newer release of the Blend this app was made from (blend.yaml) into it from the
                                       registry, keeping your changes (a git merge); --check only says whether there is one
   acrylblends plugins                    List the plugin library
