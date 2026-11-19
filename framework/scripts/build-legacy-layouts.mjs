@@ -108,16 +108,17 @@ function frozenRelease(version) {
   return { version, layouts }
 }
 
-/** Every release with templates: version, and for each template the scaffold file contents (or undefined when that release had no such template). */
 /**
  * The prefix of the release tags. In its own repository the framework's releases are `v*`; inside ACRYL's monorepo (spec 051) `v*` are ACRYL's
- * releases, so the framework's are imported as `acrylblends-v*` (`git fetch <acrylblends> 'refs/tags/v*:refs/tags/acrylblends-v*'`).
+ * releases, so the framework's are `acrylblends-v*` (pushed to acryldev/acryl; imported with
+ * `git fetch <acrylblends> 'refs/tags/v*:refs/tags/acrylblends-v*'`).
  */
 const TAG_PREFIX =
   execFileSync('git', ['rev-parse', '--show-prefix'], { cwd: root, encoding: 'utf8' }).trim() === ''
     ? 'v'
     : 'acrylblends-v'
 
+/** Every release with templates: version, and for each template the scaffold file contents (or undefined when that release had no such template). */
 function releases() {
   const published = publishedVersions()
   for (const version of frozen.keys())
