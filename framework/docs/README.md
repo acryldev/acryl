@@ -95,6 +95,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ac
 - [Release notes create-acrylblends 1.5.19](release-notes/create-1.5.19.md) - released with acrylblends 1.5.19
 - [Release notes acrylblends 1.5.20](release-notes/acrylblends-1.5.20.md) - upgrade keeps the new acrylblends range; the packer packs apps without LibreOffice
 - [Release notes create-acrylblends 1.5.20](release-notes/create-1.5.20.md) - released with acrylblends 1.5.20
+- [Release notes acrylblends 1.6.0](release-notes/acrylblends-1.6.0.md) - the frame's packages move to @acryldev/*; upgrade moves an app
+- [Release notes create-acrylblends 1.6.0](release-notes/create-1.6.0.md) - new apps install @acryldev/*
 - [Release notes acrylblends 1.5.21](release-notes/acrylblends-1.5.21.md) - Official and Community labels and a filter in Settings > Plugins > Registry
 - [Release notes create-acrylblends 1.5.21](release-notes/create-1.5.21.md) - an app from a repository is its new owner's: own id, private, no licence claim
 - [Release notes acrylblends 1.5.11](release-notes/acrylblends-1.5.11.md) - acrylblends update (a Blend's newer release merged into an app, your changes kept) and the in-app update of packed products
