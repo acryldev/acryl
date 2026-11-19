@@ -191,3 +191,10 @@ verify and check:layout and all 23 framework check steps green before it lands.
   main ca369d52 with pnpm 12.14.0). CI does not see it because `verify:packed` runs only inside framework's `check` (Linux, macOS); the Windows
   job runs `verify:create`, which already passes `shell: true` for `.cmd` tools. Fix the same way as verify-create-npm.mjs (`shell: isWindows`),
   then run it on mbpi9win. Not a 1.6.0 blocker.
+
+- [ ] T040 [cleanup/lint, after the workshop] The @acryldev rename left the scoped name where the module keeps its own: Cordis effect labels,
+  logger prefixes, error texts and shell-script or code comments now spell `@acryldev/<x>` although the plugin's `name` export and the module
+  are still `<x>` (about 1300 lines, found by the T038 audit). Source: `t038-pairs.json` and `t038-classes.json` in the implementer's
+  `acryldev/_testfield/t038-audit/` folder (kept outside the repository; 1.5 MB), classes `cordisLabel` and `otherString`. Fix by a scripted
+  revert per class from those pairs, then add a lint rule that an effect label or log prefix uses the plugin's `name` export instead of a
+  literal package name.
