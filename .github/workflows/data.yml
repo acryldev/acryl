@@ -62,6 +62,11 @@ jobs:
         run: corepack pnpm install --frozen-lockfile --filter "acryl-db-postgres..." --filter "acryl-db-pglite..."
 
       # PGlite (a devDependency) serves the suite over its socket server, so the provider's network driver is tested with no Postgres installed.
+      # Since spec 051 the providers' acrylblends is the workspace's framework/packages/cli, not an npm package with a built lib/:
+      # build what they depend on (^... = dependencies only) before their own checks.
+      - name: Build the workspace packages the providers depend on
+        run: corepack pnpm --filter "acryl-db-postgres^..." --filter "acryl-db-pglite^..." run build
+
       - name: Build, typecheck and test the Postgres provider
         run: corepack pnpm --filter acryl-db-postgres run check
 
