@@ -1,3 +1,21 @@
+## 2026-11-19 - the surfaces compose their plugin set, and the runtime keeps only the Blueprint vocabulary (spec 051 T021)
+
+The guard's last named exception is gone: `acryl-harness-runtime` composed every plugin a surface ran, and that composition is now the surfaces'.
+
+- **`plugins/coding-capabilities`** (`789aebaf`, package `@acryldev/coding-capabilities`): the capability table moved out of the runtime with its
+  Loader rows, required packages, shell-mode split and the advanced-shell rows, plus the three composers. The runtime keeps the Blueprint
+  vocabulary (ids, surfaces/shellMode types, id + needsRouter) because Blueprint parsing is runtime domain, and its engine definitions and legacy
+  boots take a `CodingCapabilities` input: Web, CLI and Desktop pass their own composition, and Desktop imports the package directly.
+  `composeBlueprintRows` takes the app-frame rows as an argument. The runtime's 20 plugin dependencies left package.json and
+  `RUNTIME_COMPOSITION_EDGES` left the guard, its tests and MONOREPO.md.
+- **The one test edge, by field:** the runtime's integration tests boot a real surface and import the plugin under test, so it may name plugins in
+  `devDependencies` only. `readGraph` keeps production dependencies apart from the union and the guard fails a shipped plugin edge; a guard test
+  covers each side. The composition package anchors materialization at itself and `materializeFrom` tries the surface's anchor, then the package's,
+  then the runtime's, which is why the CLI boots without carrying every plugin. A runtime test holds the two capability tables equal id by id.
+- **Proven**: verify-layout (81 packages, no cycles, no exception), the package's 19 tests, the runtime's 495 tests, the web/cli/desktop suites
+  (6 / 426 / 865), all typechecks, the 132 root script tests, a real Desktop through `scripts/live-run.mjs desktop --port 3292 --inspect 9335` on
+  an isolated HOME (window and engine up, stopped cleanly, port free, real homes untouched) and an `acryl-web --json` boot on a scratch home.
+
 ## 2026-11-19 - the driver contract is a foundation package, and the framework no longer reaches into the panel (spec 051 T033)
 
 `FOUNDATION_PLUGIN_EDGES` was the one upward edge T017 had to name: `acrylblends-framework` built `acrylblends/drivers` from the agent panel's
