@@ -16,11 +16,10 @@ import {
   blueprintFromEnvironment,
   brandIdentity,
   composeBlueprintRows,
-  createAcrylCodingCapabilityPatches,
-  createAcrylShellCapabilityPatches,
   identityLine,
   selectBlueprint,
 } from '../src/index.ts'
+import { createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches } from '@acryldev/coding-capabilities'
 
 function insertedIds(patches: readonly unknown[]): string[] {
   return patches.flatMap(patch => ((patch as { insert?: { id?: string }[] }).insert ?? []).map(row => row.id ?? ''))

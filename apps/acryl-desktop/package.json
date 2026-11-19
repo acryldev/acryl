@@ -455,7 +455,8 @@
     "semver": "^7.8.5",
     "sherpa-onnx-darwin-arm64": "1.13.8",
     "sherpa-onnx-darwin-x64": "1.13.8",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "@acryldev/coding-capabilities": "workspace:*"
   },
   "peerDependencies": {
     "electron": "44.9.3"

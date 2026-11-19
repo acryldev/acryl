@@ -20,6 +20,7 @@ import { stagedInfo } from '../../../plugins/acryl-plugin-context/lib/reconcile.
 import { hashPackage } from '../../../plugins/acryl-plugin-context/lib/stage.js'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 import { fileURLToPath } from 'node:url'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const temporaryHomes: string[] = []
 const initialDshHome = process.env.DSH_HOME
@@ -38,7 +39,7 @@ describe('extension context on the web engine', () => {
     process.env.DSH_HOME = home
     const installPackageUrl = new URL('../package.json', import.meta.url).href
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(installPackageUrl)],
+      engines: [createWebEngineDefinition(installPackageUrl, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => {
         provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} })
@@ -75,7 +76,7 @@ describe('extension context on the web engine', () => {
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
-      engines: [createDshEngineDefinition('acryl-ext-test')],
+      engines: [createDshEngineDefinition('acryl-ext-test', codingCapabilities)],
       initialEngine: 'dsh',
     })
     try {
@@ -96,7 +97,7 @@ describe('/reload on the web engine', () => {
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -122,7 +123,7 @@ describe('/reload on the web engine', () => {
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -143,7 +144,7 @@ describe('/reload on the web engine', () => {
     mkdirSync(join(workspace, '.acryl-plugins'), { recursive: true })
     cpSync(source, target, { recursive: true })
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -183,7 +184,7 @@ describe('/reload on the web engine', () => {
     const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     cpSync(source, join(home, 'plugins', 'global-tool'), { recursive: true })
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -223,7 +224,7 @@ describe('/reload on the web engine', () => {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
     writeFileSync(manifestPath, JSON.stringify({ ...manifest, acryl: { apiVersion: 1, permissions: ['shell'] } }))
     const boot = () => createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -268,7 +269,7 @@ describe('/reload on the web engine', () => {
     const source = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/tool-basic/', import.meta.url))
     cpSync(source, join(workspace, '.acryl-plugins', 'blend-tool'), { recursive: true })
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -321,7 +322,7 @@ describe('/reload on the web engine', () => {
 
   it('a Blend captured on one app is re-created on a fresh app with /blend apply (round trip)', async () => {
     const boot = () => createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -396,7 +397,7 @@ describe('/reload on the web engine', () => {
     }
     write('entry-1:', 'helper-1')
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -439,7 +440,7 @@ describe('/reload on the web engine', () => {
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -511,7 +512,7 @@ describe('/reload on the web engine', () => {
     const first = plugin('first', 'second')
     const second = plugin('second', 'first')
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -577,7 +578,7 @@ describe('/reload on the web engine', () => {
     writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: acryl-probe-kept\n      name: acryl-probe-kept\n')
     writeFileSync(join(dir, 'index.js'), "export const name = 'acryl-probe-kept'\nexport const inject = ['state']\nexport function apply(ctx) { ctx.state.cell('kept', 'yes') }\n")
     const boot = () => createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -619,7 +620,7 @@ describe('/reload on the web engine', () => {
     writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: thrower\n      name: acryl-thrower\n')
     writeFileSync(join(dir, 'index.js'), "export const name = 'acryl-thrower'\nexport function apply() { throw new Error('boom-42 from the plugin') }\n")
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })

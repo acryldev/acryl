@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { planNewApp, writeNewApp } from '../src/app/new-app.ts'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const example = fileURLToPath(new URL('../../../plugins/acryl-plugin-context/example-plugins/packages/client-slot-header-action/', import.meta.url))
 const PLUGIN = 'acryl-example-client-notes'
@@ -37,7 +38,7 @@ describe('the Web index during the startup pass', () => {
     for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_WEB_HOST', 'ACRYL_WEB_TRUSTED_HOSTS', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
     process.env.ACRYL_HOME = app
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
     })

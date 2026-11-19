@@ -11,7 +11,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { composeEntries } from '@deepseek-ai/dsh-app-boot'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { ACRYL_CODING_CAPABILITIES, createAcrylEngineHost, createWebEngineDefinition, UPSTREAM_PRODUCT_ANALYTICS_OFF } from 'acryl-harness-runtime'
+import { createAcrylEngineHost, createWebEngineDefinition, UPSTREAM_PRODUCT_ANALYTICS_OFF } from 'acryl-harness-runtime'
+import { CODING_CAPABILITY_COMPOSITIONS, codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { prepareDesktopProfile } from '../src/profile.ts'
 
@@ -76,7 +77,7 @@ async function composeBoth(): Promise<{
   const previousHome = process.env.ACRYL_HOME
   process.env.ACRYL_HOME = webHome
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../../acryl-web/package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../../acryl-web/package.json', import.meta.url).href, codingCapabilitiesFor(new URL('../../acryl-web/package.json', import.meta.url).href))],
     initialEngine: 'dsh',
     prepare: (ctx) => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })
@@ -104,7 +105,7 @@ describe('Web and Desktop compose the same ACRYL features', () => {
 
   it('composes every capability declared for both surfaces, identically, on both', () => {
     const { desktop, web } = composed!
-    const sharedRowIds = ACRYL_CODING_CAPABILITIES
+    const sharedRowIds = CODING_CAPABILITY_COMPOSITIONS
       .filter(capability => capability.surfaces.includes('web') && capability.surfaces.includes('desktop') && capability.shellMode === undefined)
       .flatMap(capability => capability.loaderPatches.flatMap(patch => 'insert' in patch ? (patch.insert ?? []).map(row => row.id) : []))
       .filter((id): id is string => typeof id === 'string')

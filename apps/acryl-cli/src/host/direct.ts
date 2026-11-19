@@ -6,6 +6,7 @@ import {
   createDshEngineDefinition,
   type AcrylEngineHost,
 } from 'acryl-harness-runtime'
+import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 import type { Context } from '@deepseek-ai/cordis'
 import { TuiCommandsService } from '../tui/tui-commands-service.ts'
 import { TuiThemeService } from '../tui/tui-theme-service.ts'
@@ -41,7 +42,7 @@ const DEFAULT_ENGINE = 'dsh'
 export async function startDirectHost(options: StartDirectHostOptions): Promise<DirectHost> {
   if (options.profile.trim() === '') throw new Error('ACRYL direct host profile must not be empty')
   const host: AcrylEngineHost = await createAcrylEngineHost({
-    engines: [createDshEngineDefinition(options.profile)],
+    engines: [createDshEngineDefinition(options.profile, codingCapabilitiesFor(new URL('../../package.json', import.meta.url).href))],
     initialEngine: DEFAULT_ENGINE,
     // Provided on the bare root before any engine's Loader entries mount
     // (see createAcrylEngineHost's own prepare-timing doc comment), so a

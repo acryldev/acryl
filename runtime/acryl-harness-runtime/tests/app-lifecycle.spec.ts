@@ -16,6 +16,7 @@ import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 import { fileURLToPath } from 'node:url'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const organizer = fileURLToPath(new URL('../../../examples/acryl-organizer/', import.meta.url))
 const saved = { ...process.env }
@@ -30,7 +31,7 @@ async function start(app: string) {
   for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_WEB_HOST', 'ACRYL_WEB_TRUSTED_HOSTS', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
   process.env.ACRYL_HOME = app
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
   })

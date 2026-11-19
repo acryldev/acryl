@@ -9,6 +9,7 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const STATES = ['PENDING', 'LOADING', 'ACTIVE', 'FAILED', 'UNLOADING', 'DISPOSED']
 const homes: string[] = []
@@ -41,7 +42,7 @@ describe('blank blueprint on the Web engine', () => {
     process.env.ACRYL_BRAND_NAME = 'Orbit'
     process.env.ACRYL_BRAND_ACCENT = '#e8590c'
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -78,7 +79,7 @@ describe('blank blueprint on the Web engine', () => {
     delete process.env.ACRYL_BRAND_NAME
     delete process.env.ACRYL_BRAND_ACCENT
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
       initialEngine: 'dsh',
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
@@ -94,7 +95,7 @@ describe('blank blueprint on the CLI engine', () => {
   it('keeps the agent and the extension pack and nothing else of ACRYL\'s own rows', async () => {
     await freshHome('tui')
     process.env.ACRYL_BLUEPRINT = 'acryl.blank'
-    const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-blank-test')], initialEngine: 'dsh' })
+    const host = await createAcrylEngineHost({ engines: [createDshEngineDefinition('acryl-blank-test', codingCapabilities)], initialEngine: 'dsh' })
     try {
       const ids = rowIds(host)
       expect(ids).toEqual(expect.arrayContaining(['acryl-plugin-context', 'acryl-system-prompt', 'authorization', 'agent-preset-registry']))

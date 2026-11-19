@@ -16,6 +16,7 @@ import { createAcrylEngineHost } from '../src/engine-host.ts'
 import type { AppInstance } from '../src/instance/index.ts'
 import { fileURLToPath } from 'node:url'
 import { inBlendApp } from '../../../scripts/lib/blend-apps.mjs'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const repo = realpathSync(fileURLToPath(new URL('../../..', import.meta.url)))
 
@@ -131,7 +132,7 @@ async function bootApp(folder: string) {
   for (const key of ['DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_WEB_HOST', 'ACRYL_WEB_TRUSTED_HOSTS', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']) delete process.env[key]
   process.env.ACRYL_HOME = folder
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
   })

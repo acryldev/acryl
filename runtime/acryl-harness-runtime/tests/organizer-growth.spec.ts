@@ -14,6 +14,7 @@ import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
 import { fileURLToPath } from 'node:url'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const organizer = fileURLToPath(new URL('../../../examples/acryl-organizer/', import.meta.url))
 const temporary: string[] = []
@@ -27,7 +28,7 @@ afterEach(async () => {
 
 type Host = Awaited<ReturnType<typeof boot>>
 const boot = () => createAcrylEngineHost({
-  engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+  engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
   initialEngine: 'dsh',
   prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
 })

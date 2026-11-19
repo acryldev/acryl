@@ -52,11 +52,7 @@ import type {} from '@deepseek-ai/dsh-host-webserver'
 
 import { provideCliMarketInstall } from './cli-market-install.ts'
 import { provideCliMarketPlugins } from './cli-market-plugins.ts'
-import {
-  acrylCodingCapabilityPackages,
-  createAcrylCodingCapabilityPatches,
-  createAcrylShellCapabilityPatches,
-} from './coding-capabilities.ts'
+import type { AcrylCodingCapabilityId, AcrylShellMode, AcrylSurface } from './coding-capabilities.ts'
 import type { AcrylEngineDefinition } from './engine-host.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { blueprintFromEnvironment, composeBlueprintRows, currentModule, packageOfModule } from './blueprint/index.ts'
@@ -128,6 +124,22 @@ export interface DshEngineComposition {
    */
   readonly profileContext?: ProfileContext
 }
+/**
+ * The surface's coding-capability composition, handed to an engine definition by the app that owns it: the plugins package for the
+ * rows, the package names, the anchor they resolve from, and the rows the advanced shell replaces. `@acryldev/coding-capabilities` is
+ * the one implementation; the runtime never imports it (its Blueprint vocabulary lives in `coding-capabilities.ts`).
+ */
+export interface CodingCapabilities {
+  /** Installations whose `node_modules` may hold a package the composition names, in order (the surface's, then the composition package's). */
+  readonly anchors: readonly string[]
+  patches(surface: ReadonlySet<AcrylSurface>, existingRowIds: ReadonlySet<string>, only: ReadonlySet<AcrylCodingCapabilityId>): readonly PatchOptions[]
+  shellPatches(surface: ReadonlySet<AcrylSurface>, shellMode: AcrylShellMode, existingRowIds: ReadonlySet<string>, only: ReadonlySet<AcrylCodingCapabilityId>): readonly PatchOptions[]
+  /** The ACRYL-owned packages a surface must make resolvable for the capabilities it composes. */
+  packages(surface: ReadonlySet<AcrylSurface>, only: ReadonlySet<AcrylCodingCapabilityId>): readonly string[]
+  /** The rows the advanced shell replaces (`ADVANCED_SHELL_PATCHES`), for a Blueprint with an `app-shell` row. */
+  readonly appFramePatches: readonly PatchOptions[]
+}
+
 
 /**
  * ACRYL's own patches out of a composed list laid out as `[bundle layers..., ACRYL additions..., profile's own patches..., later ACRYL
@@ -403,7 +415,7 @@ function instanceBlueprintEnvironment(instance: AppInstance): NodeJS.ProcessEnv 
 }
 
 /** Resolve the pinned Harness `acryl` profile by name into a mountable composition (the CLI/TUI flavor). */
-async function resolveDshEngineComposition(profileName: string): Promise<DshEngineComposition> {
+async function resolveDshEngineComposition(profileName: string, capabilities: CodingCapabilities | undefined): Promise<DshEngineComposition> {
   // The composition root for the CLI surface: the app instance is chosen here, once. The pinned harness reads its home from DSH_HOME, so the instance is
   // handed across that boundary through the environment.
   const instance = selectInstance()
@@ -429,10 +441,10 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   const blueprint = blueprintFromEnvironment(instanceBlueprintEnvironment(instance))
   process.env.ACRYL_BLUEPRINT_ID = blueprint.id
   process.env.ACRYL_BLUEPRINT_NAME = blueprint.name
-  const rowsComposition = composeBlueprintRows(blueprint, 'tui', existingRowIds)
+  const rowsComposition = composeBlueprintRows(blueprint, 'tui', existingRowIds, capabilities?.appFramePatches ?? [])
   const patches = structuredClone([
     ...profileLayerPatches,
-    ...createAcrylCodingCapabilityPatches(new Set(['tui']), existingRowIds, new Set(blueprint.capabilities)),
+    ...(capabilities?.patches(new Set(['tui']), existingRowIds, new Set(blueprint.capabilities)) ?? []),
     ...profile.patches,
   ])
   const composedBeforeLater = patches.length
@@ -440,8 +452,8 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
   // terminal plugin imports, so it is only made resolvable). Rows the profile's own bundle already composes are skipped
   // by `composeBlueprintRows` (a Desktop/Web-shaped profile booted through the CLI).
   // The ACRYL packages the terminal's coding capabilities name (`acryl-settings`), resolvable from this profile like the Web surface's.
-  const tuiCapabilityPackages = acrylCodingCapabilityPackages(new Set(['tui'] as const), new Set(blueprint.capabilities))
-  for (const packageName of [...tuiCapabilityPackages, ...rowsComposition.packages]) materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  const tuiCapabilityPackages = capabilities?.packages(new Set(['tui'] as const), new Set(blueprint.capabilities)) ?? []
+  for (const packageName of [...tuiCapabilityPackages, ...rowsComposition.packages]) materializeFrom(profile.dir, packageName, [...(capabilities?.anchors ?? []), import.meta.url])
   patches.push(...rowsComposition.patches)
   patches.push(...terminalPresetPatches(existingRowIds))
   // The profile's own user overrides come from the shared store, not from this
@@ -460,11 +472,11 @@ async function resolveDshEngineComposition(profileName: string): Promise<DshEngi
  * one profile name resolved at host-creation time (a CLI `--profile`
  * argument, not something an engine swap changes later).
  */
-export function createDshEngineDefinition(profileName: string): AcrylEngineDefinition {
+export function createDshEngineDefinition(profileName: string, capabilities?: CodingCapabilities): AcrylEngineDefinition {
   if (profileName.trim() === '') throw new Error('ACRYL dsh engine profile must not be empty')
   return {
     id: 'dsh',
-    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveDshEngineComposition(profileName)),
+    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveDshEngineComposition(profileName, capabilities)),
   }
 }
 
@@ -513,6 +525,25 @@ function withDeclaredDependency(inject: unknown, name: string): string[] | Recor
  * all, just one process inheriting another, earlier process's leftover
  * dangling link.)
  */
+/**
+ * Materialize one package from the first anchor that has it: an ACRYL capability package comes from the surface's composition
+ * (`@acryldev/coding-capabilities`), while the Blueprint's framework-kit packages (`acrylblends`, `@acryl/ui`) come from the runtime's own
+ * installation. Either anchor is a real installation; the first that resolves wins (spec 051 T021).
+ */
+function materializeFrom(profileDir: string, packageName: string, anchors: readonly (string | undefined)[]): void {
+  let failure: unknown
+  for (const anchor of anchors) {
+    if (anchor === undefined) continue
+    try {
+      materializeProfilePackage(profileDir, packageName, anchor)
+      return
+    } catch (error) {
+      failure = error
+    }
+  }
+  throw failure
+}
+
 /** The installation a module belongs to: the directory of its nearest package.json (the runtime or surface package of that checkout or install). */
 function installationRoot(moduleUrl: string): string {
   const manifest = findPackageJSON(moduleUrl)
@@ -647,7 +678,7 @@ function requiredModulesOf(manifestPath: string): readonly string[] {
 }
 
 /** Resolve the pinned Harness `web` profile into a mountable composition (the Web flavor). */
-async function resolveWebEngineComposition(installPackageUrl: string): Promise<DshEngineComposition> {
+async function resolveWebEngineComposition(installPackageUrl: string, capabilities: CodingCapabilities | undefined): Promise<DshEngineComposition> {
   const profileName = 'web'
   // The composition root for the Web surface: the app instance is chosen here, once (see the CLI flavor above).
   const instance = selectInstance()
@@ -688,10 +719,10 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   process.env.ACRYL_BLUEPRINT_ID = blueprint.id
   process.env.ACRYL_BLUEPRINT_NAME = blueprint.name
   const webSurfaces = new Set(['web'] as const)
-  const capabilities = new Set(blueprint.capabilities)
-  const rowsComposition = composeBlueprintRows(blueprint, 'web', existingRowIds)
-  for (const packageName of [...acrylCodingCapabilityPackages(webSurfaces, capabilities), ...rowsComposition.packages]) {
-    materializeProfilePackage(profile.dir, packageName, installPackageUrl)
+  const enabledCapabilities = new Set(blueprint.capabilities)
+  const rowsComposition = composeBlueprintRows(blueprint, 'web', existingRowIds, capabilities?.appFramePatches ?? [])
+  for (const packageName of [...(capabilities?.packages(webSurfaces, enabledCapabilities) ?? []), ...rowsComposition.packages]) {
+    materializeFrom(profile.dir, packageName, [...(capabilities?.anchors ?? []), installPackageUrl])
   }
   // The app's own committed plugins may each need an ACRYL-owned framework package (see
   // `pluginRequiredFrameworkPackages`'s own doc comment for why this is a static row, not the dynamic
@@ -702,7 +733,7 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
     .filter(module => !existingRowIds.has(module) && !composedRowIds.has(module))
   for (const module of requiredFrameworkPackages) materializeProfilePackage(profile.dir, packageOfModule(module), installPackageUrl)
   // A Blueprint that never enables the IDE's own `workspace` capability (every Blank-grown project) keeps the
-  // stock `ui-layout` row active, because `createAcrylShellCapabilityPatches`'s disabling patch is gated behind
+  // stock `ui-layout` row active, because the advanced-shell capability's disabling patch is gated behind
   // `ACRYL_CODING_CAPABILITIES`' own capability table, which a third-party extension cannot opt into - it is
   // the IDE's, not a general extension mechanism. An extension that requires `acryl-app-shell` is claiming the
   // advanced shell exactly the same way that capability does, so it needs the identical row toggle (measured
@@ -711,8 +742,8 @@ async function resolveWebEngineComposition(installPackageUrl: string): Promise<D
   const claimsAdvancedShell = requiredFrameworkPackages.includes('acryl-app-shell')
   const patches = structuredClone([
     ...profileLayerPatches,
-    ...createAcrylCodingCapabilityPatches(webSurfaces, existingRowIds, capabilities),
-    ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced', existingRowIds, capabilities),
+    ...(capabilities?.patches(webSurfaces, existingRowIds, enabledCapabilities) ?? []),
+    ...(capabilities?.shellPatches(webSurfaces, 'advanced', existingRowIds, enabledCapabilities) ?? []),
     ...requiredFrameworkPackages.map(name => ({ insert: [{ id: name, name }] })),
     ...(claimsAdvancedShell ? [{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }] : []),
     ...profile.patches,
@@ -797,10 +828,10 @@ function connectionConfig(config: unknown): Record<string, unknown> {
  * into the profile (see {@link resolveWebEngineComposition}'s own comments
  * for why that is needed).
  */
-export function createWebEngineDefinition(installPackageUrl: string): AcrylEngineDefinition {
+export function createWebEngineDefinition(installPackageUrl: string, capabilities?: CodingCapabilities): AcrylEngineDefinition {
   return {
     id: 'dsh',
-    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveWebEngineComposition(installPackageUrl)),
+    plugin: async (ctx: Context) => mountDshEngine(ctx, await resolveWebEngineComposition(installPackageUrl, capabilities)),
   }
 }
 

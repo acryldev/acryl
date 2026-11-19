@@ -21,6 +21,7 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { createAcrylEngineHost, createWebEngineDefinition } from 'acryl-harness-runtime'
 import { afterEach, describe, expect, it } from 'vitest'
 import { serveWeb } from '../src/serve.ts'
+import { codingCapabilitiesFor } from '@acryldev/coding-capabilities'
 
 const WEB_ACCESS_KEYS = ['ACRYL_WEB_HOST', 'ACRYL_WEB_PORT', 'ACRYL_WEB_TRUSTED_HOSTS'] as const
 const freePort = (): Promise<number> => new Promise((resolve, reject) => {
@@ -91,7 +92,7 @@ describe('serveWeb', () => {
     expect(new URL(printed.url).host).toBe(`127.0.0.1:${String(port)}`)
 
     const host = await createAcrylEngineHost({
-      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+      engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilitiesFor(new URL('../package.json', import.meta.url).href))],
       initialEngine: 'dsh',
       prepare: ctx => { provideCmdline(ctx, { args: ['--no-open'], exit: () => {} }) },
     })

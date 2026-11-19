@@ -1,12 +1,11 @@
 export {
   ACRYL_CODING_CAPABILITIES,
-  acrylCodingCapabilityPackages,
-  createAcrylCodingCapabilityPatches,
-  createAcrylShellCapabilityPatches,
-  type AcrylCodingCapability,
+  type AcrylCodingCapabilityDeclaration,
+  type AcrylCodingCapabilityId,
   type AcrylShellMode,
   type AcrylSurface,
 } from './coding-capabilities.ts'
+export type { CodingCapabilities } from './engine-dsh.ts'
 export type {
   DurableSessionMessage,
   DurableSessionMessagePort,
@@ -160,12 +159,7 @@ import {
 
 import { createProfileRuntimeResolution } from './engine-dsh.ts'
 import { selectInstance, type AppInstance } from './instance/index.ts'
-import {
-  acrylCodingCapabilityPackages,
-  createAcrylCodingCapabilityPatches,
-  createAcrylShellCapabilityPatches,
-} from './coding-capabilities.ts'
-import { materializeProfilePackage } from './engine-dsh.ts'
+import { materializeProfilePackage, type CodingCapabilities } from './engine-dsh.ts'
 import { installAcrylWorkspaceStatusTool } from './plugin-acryl-workspace-status.ts'
 import { ProfilePluginPackages } from './profile-resolution/service.ts'
 import { installSessionLogExporter } from './session-log-exporter.ts'
@@ -176,6 +170,8 @@ const profileRoot = '[]\n'
 
 export interface BootAcrylHarnessProfileOptions {
   readonly profile: string
+  /** The surface's capability composition (`@acryldev/coding-capabilities`); without it only the profile's own rows compose. */
+  readonly capabilities?: CodingCapabilities
   readonly prepare?: (ctx: Context) => Promise<void> | void
 }
 
@@ -218,10 +214,11 @@ export async function bootAcrylHarnessProfile(
   // The terminal capabilities' ACRYL packages, resolvable from this profile as the CLI and Web boots make them; without it their rows
   // fail to import (`acryl-settings`, the account sign-in callback).
   const tuiSurfaces = new Set(['tui'] as const)
-  for (const packageName of acrylCodingCapabilityPackages(tuiSurfaces)) materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  for (const packageName of options.capabilities?.packages(tuiSurfaces, new Set()) ?? [])
+    materializeProfilePackage(profile.dir, packageName, options.capabilities?.anchors[0] ?? import.meta.url)
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
-    ...createAcrylCodingCapabilityPatches(tuiSurfaces),
+    ...(options.capabilities?.patches(tuiSurfaces, new Set(), new Set()) ?? []),
     ...profile.patches,
   ])
   const hmr = composeEntries([patches]).find(entry => entry.id === 'hmr')
@@ -248,6 +245,8 @@ export async function bootAcrylHarnessProfile(
 export interface BootAcrylWebProfileOptions {
   /** Inner arguments handed to the web-startup provider (e.g. `['--port', '4000']`). Defaults to no flags. */
   readonly cmdlineArgs?: readonly string[]
+  /** The surface's capability composition (`@acryldev/coding-capabilities`); without it only the profile's own rows compose. */
+  readonly capabilities?: CodingCapabilities
   /** Host setup run after Loader installation and before any config-tree entry mounts. */
   readonly prepare?: (ctx: Context) => Promise<void> | void
 }
@@ -290,13 +289,13 @@ export async function bootAcrylWebProfile(
   // Same composition as the engine-host Web path: the shared workspace and shell declarations, with the ACRYL
   // packages they name made resolvable from this profile.
   const webSurfaces = new Set(['web'] as const)
-  for (const packageName of acrylCodingCapabilityPackages(webSurfaces)) {
-    materializeProfilePackage(profile.dir, packageName, import.meta.url)
+  for (const packageName of options.capabilities?.packages(webSurfaces, new Set()) ?? []) {
+    materializeProfilePackage(profile.dir, packageName, options.capabilities?.anchors[0] ?? import.meta.url)
   }
   const patches = structuredClone([
     ...profile.layers.flatMap(layer => layer.patches),
-    ...createAcrylCodingCapabilityPatches(webSurfaces),
-    ...createAcrylShellCapabilityPatches(webSurfaces, 'advanced'),
+    ...(options.capabilities?.patches(webSurfaces, new Set(), new Set()) ?? []),
+    ...(options.capabilities?.shellPatches(webSurfaces, 'advanced', new Set(), new Set()) ?? []),
     ...profile.patches,
   ])
   const cmdlineArgs = options.cmdlineArgs ?? []

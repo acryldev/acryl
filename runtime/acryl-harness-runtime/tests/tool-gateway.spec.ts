@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { fileURLToPath } from 'node:url'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const initialDshHome = process.env.DSH_HOME
 const folders: string[] = []
@@ -30,7 +31,7 @@ async function boot(): Promise<{ host: Host, origin: string, secret: string }> {
   folders.push(home)
   process.env.DSH_HOME = home
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })

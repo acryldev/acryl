@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createDshEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 type Register = (options: unknown) => { deregister(): void }
 const nodeModule = Module as unknown as { registerHooks: Register, _resolveFilename: unknown }
@@ -44,7 +45,7 @@ describe('profile resolution across engine swaps', () => {
     const nativeResolveFilename = nodeModule._resolveFilename
 
     const host = await createAcrylEngineHost({
-      engines: [createDshEngineDefinition('acryl-swap'), { id: 'other', plugin: () => {} }],
+      engines: [createDshEngineDefinition('acryl-swap', codingCapabilities), { id: 'other', plugin: () => {} }],
       initialEngine: 'dsh',
     })
     try {

@@ -11,6 +11,7 @@ import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 
 const initialDshHome = process.env.DSH_HOME
 const initialBlueprint = process.env.ACRYL_BLUEPRINT
@@ -29,7 +30,7 @@ async function boot(home: string, blueprint: string): Promise<{ host: Host, orig
   process.env.DSH_HOME = home
   process.env.ACRYL_BLUEPRINT = blueprint
   const host = await createAcrylEngineHost({
-    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+    engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
     initialEngine: 'dsh',
     prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
   })

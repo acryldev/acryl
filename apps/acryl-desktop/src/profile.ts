@@ -21,7 +21,8 @@ import {
   type Profile,
   type ProfileManifest,
 } from '@deepseek-ai/dsh-app-boot'
-import { blueprintFromEnvironment, composeBlueprintRows, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches, pluginRequiredFrameworkPackages, profileRequiredFrameworkModules, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { blueprintFromEnvironment, composeBlueprintRows, pluginRequiredFrameworkPackages, profileRequiredFrameworkModules, materializeProfilePackage, packageOfModule, pluginLifecyclePatches, type Blueprint } from 'acryl-harness-runtime'
+import { ADVANCED_SHELL_PATCHES, createAcrylCodingCapabilityPatches, createAcrylShellCapabilityPatches } from '@acryldev/coding-capabilities'
 import { parseDocument } from 'yaml'
 import { unpackedAsarPath } from './runtime/packaged-runtime-path.ts'
 import { findOverlayPackage, resolveOverlayPackage } from './plugins/package-overlay.ts'
@@ -809,7 +810,7 @@ export function prepareDesktopProfile(
   // The selected Blueprint's ACRYL-owned rows (spec 036): brand, extension pack, prompt shaping, UI library, shortcuts and
   // mount anchors, in mount order. The packages resolve from this package's own dependency closure like the market package above.
   // Desktop's Market keeps its own provider switch, so the Blueprint never composes it here.
-  const blueprintPatches = composeBlueprintRows(blueprint, 'desktop', new Set(rows.keys())).patches
+  const blueprintPatches = composeBlueprintRows(blueprint, 'desktop', new Set(rows.keys()), ADVANCED_SHELL_PATCHES).patches
   patches.push(...blueprintPatches)
   // A row the Blueprint has just composed (the framework kit's router rows, say) is never inserted a second time for an app plugin that requires it.
   const blueprintRowIds = new Set(blueprintPatches.flatMap(patch => patch.insert ?? []).map(row => row.id))
