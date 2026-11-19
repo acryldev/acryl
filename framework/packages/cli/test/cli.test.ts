@@ -87,9 +87,9 @@ describe('templates', () => {
       for (const name of readTemplatePlugins(join(templatesRoot(), template)))
         expect(library.has(name)).toBe(true)
       // The Cordis templates made for the web also depend on the framework package, for its command (check-deps, build-client) and its browser files.
-      const web = ['nodejs', 'notes', 'chat', 'agent'].includes(template)
+      // Every template depends on the framework: a shared plugin imports it, and the app runs it.
       expect(manifest(join(templatesRoot(), template)).dependencies).toEqual({
-        ...(web ? { '@acryldev/blends': '__ACRYLBLENDS_RANGE__' } : {}),
+        '@acryldev/blends': '__ACRYLBLENDS_RANGE__',
         typescript: '6.0.3',
       })
     },
