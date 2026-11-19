@@ -1,3 +1,66 @@
+## 2026-11-19 - npm is one scope: @acryldev/<short> for 18 packages, with trusted publishing (spec 051 T036/T037/T038)
+
+The owner chose one npm scope for the whole framework. The published artifacts now carry it while the source keeps ACRYL's names (the port rule):
+row ids, module paths and what a person types (`acrylblends`, `acryl`, `npx acrylblends`) do not change.
+
+- **`@acryldev/<short>` instead of `@acrylblends/<name>`** (`c1c09faccd125cb94c19aac5ab65668e7e0b86e7`): `frame/packages.json` names the scope and
+  the short names, and every current reference switched (products, plugins, framework, docs; history left as written). An app moves with
+  `npx acrylblends upgrade` and `npm install`: the old `@acrylblends/<name>` dependency goes when its `@acryldev/<name>` is written, so nothing is
+  installed twice. npm's `@acryl` org belongs to another project, which settled the scope (`473db5c557e2dd372ce7ef791ff4ea6e9b7e022f`).
+- **The @webboxes packages followed** (`93139d58edcf90ef8a87b5203e1bdff43b27638e`): every package is `@acryldev/*` except what people type and the
+  apps' own names; the shared three publish as `@acryldev/blends-core`, `@acryldev/app-persistence` and `@acryldev/plugin-hub-core`.
+- **Trusted publishing for all 18 packages** (`ffa55891d3859faffb5614973a7655fe369d0b13`, `ca369d52fd4c9a17babe7a6ea365eb6e51738b15`): the route
+  is `npm trust github` (owner, 2FA); npm's bypass token answers 403 for the trusted path. Verified on all 18: the 17 frame packages and
+  `@acryldev/control-center`. The first release through it is 1.7.0, below.
+
+## 2026-11-19 - acrylblends and create-acrylblends 1.6.0: new apps install the frame from @acryldev/* (spec 051 T036)
+
+`e80ae541d2ccdf90dd60a766fcfe1fd088180e0b` released both packages at 1.6.0: a new app installs the frame's packages under `@acryldev/*` (formerly
+`@acrylblends/*`), at the same versions, and what a person types does not change. An existing app moves with `npx acrylblends upgrade` and
+`npm install`. A product can declare what roots its page (`"acrylblends": { "root": "workspace" }`), so a regenerated overlay keeps ACRYL ADE's
+workbench. `7b10246b96b4e863bb65bbf4725d5e87d7b15760` records the published release in the library history and in the legacy-layouts list the gates
+rebuild.
+
+## 2026-11-19 - the old @acrylblends/* names are deprecated on npm, pointing at @acryldev/*
+
+Every pre-rename frame package is marked deprecated on npm with the same message, verified today with `npm view`: "Moved to @acryldev/<name> (same
+versions). New apps: npm create @acryldev/blends my-app". The packages stay published, so an app pinned to them still installs; new apps and upgrades
+use the new names. The mark is an npm-side action with no repository commit (the release that motivated it is
+`e80ae541d2ccdf90dd60a766fcfe1fd088180e0b`), and under the owner's day-0 rule (installed legacy Blends are reinstalled, not migrated) no further
+compatibility work is planned for the old names.
+
+## 2026-11-19 - full gates run on z370n behind one script, and the tests that assumed an idle machine are fixed (spec 051 gate)
+
+The owner took full gates off the main Mac. `scripts/remote-gate.sh <commit|branch|tag>` (`ed1b26c928b9b11e516b06a0b414cb0bf94497e7`) ships the
+commit as a git bundle, so a branch is gated before it is pushed; on our own Linux machine each run gets its own clone, an empty HOME, a portable
+Node 24, the repository's pnpm through corepack shims, a shared pnpm store and nice 19, prints the log's tail and ends with `GATE_EXIT=<code>`. Two
+fixes it needed: keep the log in git's own directory before the run folder is removed (in a linked worktree `.git` is a file,
+`b2b9e566ad4d21f1be0b2386537a8662dd998203`), and drop the backticked comment inside its unquoted heredoc, which the calling shell ran as a command
+and printed pnpm's help on every run (`96a2ab43a7a0dc961266f1381c6bc97a694a2a54`). The host takes three runs at once, measured against its 16 threads
+and 62 GB (`855717bd4490f47bd7143635b25f3d783486b598`).
+
+Two tests failed only on that shared machine and are fixed at their cause: `plugins/acryl-node-server`'s serve tests listen on free ports and close
+their servers instead of the default port 3000, which the host already serves (the owner's Hermes dashboard;
+`e7f94e6b351d9a1f677f01a2d770586ce450c95d`), and the router's two SSE-on-disposal tests bound their disposal grace to 100 ms and carry an explicit
+15 s timeout, because a stream that cannot settle spent the default 2 s grace under vitest's default 5 s budget (the SSE test alone was 2010 ms, now
+110 ms; 20 consecutive suite runs green, `711255f770c6b18a4558436ac44ad0619741da12`).
+
+## 2026-11-19 - a Blend still extends itself after the unification (spec 051 T032)
+
+TODO(AcrylImplementer): T032's acceptance commit hash (Fork3's branch, lands after its gate). The acceptance itself: a fresh Blend made from the new
+packages, its agent asked to "add a plugin that shows a ledger page", cites paths that exist in the app, writes the plugin into the app's `plugins/`,
+and the plugin loads without a restart. The repository fields of `acryl-app-context`, `acryl-blends-frame` and `acryl-versions` now name
+`acryldev/acryl` (see the T015 audit in `specs/051-acryl-monorepo/t015-cutover.md`), and the monorepo's framework release workflow is the publish path.
+
+## 2026-11-19 - still owed tonight (spec 051)
+
+- TODO(AcrylImplementer): gate A and gate B, the combined fresh-clone gates for the stacked branches, with the commit each ran on and its
+  `GATE_EXIT=0` line.
+- TODO(AcrylImplementer): 1.7.0 - `@acryldev/blends` and `@acryldev/create-blends` 1.7.0 with the `acrylblends` and `create-acrylblends` aliases, the
+  docs switched to `npm create @acryldev/blends` (branch 051-create-command), and the publish verified from npm.
+- TODO(AcrylImplementer): T011's desktop-package move (`acrylblends upgrade --desktop-packages`) and its acceptance.
+- TODO(AcrylImplementer): T032's acceptance hash, per the entry above.
+
 ## 2026-11-19 - the driver contract is a foundation package, and the framework no longer reaches into the panel (spec 051 T033)
 
 `FOUNDATION_PLUGIN_EDGES` was the one upward edge T017 had to name: `acrylblends-framework` built `acrylblends/drivers` from the agent panel's
