@@ -16,7 +16,6 @@
       "!docs/design",
       "!specs/*/design",
       "!plugins/acryl-*",
-      "!ide/*",
       "!spikes/ide-slice0/dsh-client-ui-brand-acryl",
       "!plugins/driver-pty/client/vendor",
       "!plugins/driver-acp/test/acp-v1",

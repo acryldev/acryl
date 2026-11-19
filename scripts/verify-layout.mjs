@@ -80,12 +80,14 @@ packages:
   - plugins/acryl-agent-control
   - plugins/acryl-launcher
   - plugins/acryl-launcher-desktop
+  - plugins/acryl-app-context
+  - plugins/acryl-blends-frame
+  - plugins/acryl-versions
   # The framework (acrylblends), imported with its history (spec 051): its CLI and create, its library plugins and the frame's own packages. The
   # frame packages it shares with ACRYL live once, above (plugins/, runtime/), and framework/frame/packages.json names their folders.
   - framework
   - framework/packages/*
   - framework/plugins/acryl-*
-  - framework/ide/*
   - '!deepseek-harness/**'
 
 allowBuilds:
@@ -300,7 +302,10 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // Spec 051 (2026-11-18), total 137 to 138 with outside the seam unchanged: the Blends frame's acryl-app-shell came home with a Settings launcher
 // for DSH's `sidebar.settings` slot, whose types `frame.ts` now re-exports (one line); and the acrylWeb adapter moved from the engine's own
 // engine-web.ts into runtime/acryl-web-service, which ACRYL's engine and every Blends app mount, so that one file is the same seam under a new path.
-const DSH_IMPORT_CEILING = { total: 138, outsideSeam: 104 }
+// Spec 051 T018 (2026-11-19), total 138 to 146 and outside the seam 104 to 112: the Blends frame's own plugins (acryl-blends-frame,
+// acryl-app-context) moved from framework/ide into the flat plugins/ folder, so their existing DSH imports (chat, sidebars, dsh-tools, dsh-llm;
+// eight lines, none new) are counted for the first time. Routing them through @acryl/ui's seam is its own task.
+const DSH_IMPORT_CEILING = { total: 146, outsideSeam: 112 }
 const SEAM_FILES = [
   /^runtime\/acryl-harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^runtime\/acryl-web-service\/src\/index\.ts$/,

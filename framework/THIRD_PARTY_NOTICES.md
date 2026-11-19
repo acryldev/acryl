@@ -8,7 +8,7 @@ Code that is copied into this repository (vendored), with its license next to it
 | `@xterm/addon-fit` | 0.11.0 | MIT | `plugins/driver-pty/client/vendor/addon-fit.mjs`, license in `LICENSE-addon-fit` | sizes the terminal to its box |
 | [Agent Client Protocol](https://agentclientprotocol.com) v1 JSON schema (`@agentclientprotocol/sdk`, `schema/v1/schema.json`) | 2.0.2 | Apache-2.0 | `plugins/driver-acp/test/acp-v1/schema.json`, license in `LICENSE` | a test fixture: `driver-acp`'s conformance test checks every message against it; not shipped or copied into apps |
 | [cordis-plugin-graph](https://github.com/cordisplugins/cordis-plugin-graph) | e9bf6b5 | MIT (the owner's own) | ported into `ide/acryl-blends-frame/src/graph-inspect.ts` and `src/client/graph-canvas.ts`, noted in that package's `provenance.json` | the plugin graph in Settings > Plugins |
-| [Cytoscape.js](https://js.cytoscape.org) | 3.34.3 | MIT | a dependency of `ide/acryl-blends-frame`, bundled into its `lib/client.js` | draws the plugin graph |
+| [Cytoscape.js](https://js.cytoscape.org) | 3.34.3 | MIT | a dependency of `plugins/acryl-blends-frame`, bundled into its `lib/client.js` | draws the plugin graph |
 
 The files are unmodified copies from the npm tarballs. `plugins/driver-pty/client/vendor/VERSION` records the exact versions and how to update them.
 

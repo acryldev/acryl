@@ -198,7 +198,7 @@ function gitSourceOffer() {
 }
 
 if (
-  !existsSync(join(root, 'ide', 'acryl-blends-frame', 'lib')) ||
+  !existsSync(join(root, '..', 'plugins', 'acryl-blends-frame', 'lib')) ||
   !existsSync(join(root, 'packages', 'cli', 'dist'))
 )
   throw new Error('the checkout is not built: run `corepack pnpm run build` first')
@@ -216,7 +216,7 @@ const newestFile = (folder) => {
 }
 const stale = []
 for (const [pkg, out] of [
-  ['ide/acryl-blends-frame', 'lib'],
+  ['../plugins/acryl-blends-frame', 'lib'],
   ['packages/cli', 'dist'],
 ]) {
   const src = join(root, pkg, 'src')

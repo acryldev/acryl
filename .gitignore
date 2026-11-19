@@ -83,3 +83,9 @@ plugins/acryl-ui/.scratch-validate-registry-tests/
 
 # Conference presenter scripts and rehearsal screenshots: kept locally, not published (owner, 2026-10-19)
 docs/demo/
+# The Blends frame's plugins (spec 051): build output and the app-context test apps.
+plugins/acryl-app-context/lib/
+plugins/acryl-blends-frame/lib/
+plugins/acryl-versions/lib/
+plugins/acryl-app-context/tests/.apps/
+plugins/acryl-app-context/tests/.apps-*/

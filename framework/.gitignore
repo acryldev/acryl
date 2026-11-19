@@ -176,11 +176,8 @@ plugins/acryl-*/src/**/*.d.ts
 spikes/ide-slice0/dsh-client-ui-brand-acryl/lib/
 
 # The IDE port's packages build lib/ like the framework's; only source is committed.
-ide/*/lib/
 
 # The materialized frame fixture (scripts/frame-fixtures/review-fixture/setup.mjs recreates it byte-identically)
 .frame-fixture/
 
 # The app-context examples gate mounts each example in a throwaway app here.
-ide/acryl-app-context/tests/.apps/
-ide/acryl-app-context/tests/.apps-*/

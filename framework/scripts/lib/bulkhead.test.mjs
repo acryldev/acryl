@@ -13,7 +13,14 @@ const repo = fileURLToPath(new URL('../..', import.meta.url))
  * What ships: the plugins an app is made of, the frame's packages, the CLI. Gates under scripts/ run on a developer's machine and may read its home.
  * The frame packages shared with ACRYL (spec 051: plugins/ and runtime/ at the repository root) are under ACRYL's own bulkhead, tests/bulkhead.spec.ts.
  */
-const ROOTS = ['plugins', 'ide', 'packages/cli/src', 'packages/create/src']
+const ROOTS = [
+  'plugins',
+  ...['acryl-app-context', 'acryl-blends-frame', 'acryl-versions'].map(
+    (name) => `../plugins/${name}`,
+  ),
+  'packages/cli/src',
+  'packages/create/src',
+]
 
 /** The only files allowed to, each with its reason. Anything else is a hidden global. */
 const ALLOWED = {

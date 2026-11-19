@@ -92,15 +92,18 @@
     },
     "acryl-app-context": {
       "name": "app-context",
-      "version": "0.1.0"
+      "version": "0.1.0",
+      "path": "../plugins/acryl-app-context"
     },
     "acryl-versions": {
       "name": "versions",
-      "version": "0.1.1"
+      "version": "0.1.1",
+      "path": "../plugins/acryl-versions"
     },
     "acryl-blends-frame": {
       "name": "blends-frame",
-      "version": "0.1.6"
+      "version": "0.1.6",
+      "path": "../plugins/acryl-blends-frame"
     }
   },
   "plugins": {

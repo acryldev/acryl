@@ -33,10 +33,10 @@ export const FOUNDATION = new Set([
 
 /**
  * Runtime packages that may depend on ACRYL plugins, each with why. Temporary: acryl-harness-runtime composes the whole product (it mounts
- * every plugin a surface runs), which is a composition root's job; moving that composition up into apps/ is spec 051 T016.
+ * every plugin a surface runs), which is a composition root's job; moving that composition up into apps/ is spec 051 T021.
  */
 export const RUNTIME_COMPOSITION_EXCEPTIONS = new Map([
-  ['acryl-harness-runtime', 'composes every plugin a surface runs (a composition root); move it up into apps/ (spec 051 T016)'],
+  ['acryl-harness-runtime', 'composes every plugin a surface runs (a composition root); move it up into apps/ (spec 051 T021)'],
 ])
 
 /** Workspace package folders from pnpm-workspace.yaml's `packages:` list (plain folders and `<dir>/*` or `<dir>/acryl-*` globs). */

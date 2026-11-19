@@ -93,7 +93,7 @@ function cssEscape(value) {
     : value.replace(/[^A-Za-z0-9_-]/g, '\\$&')
 }
 
-// The ACRYL frame's view (ide/acryl-blends-frame/src/client/frame-view.ts): the frame's canvas hides the app's own build-time controls in Build and
+// The ACRYL frame's view (plugins/acryl-blends-frame/src/client/frame-view.ts): the frame's canvas hides the app's own build-time controls in Build and
 // shows what production shows in Preview. A page opened directly has no frame parent and keeps its own behavior.
 const FRAME_VIEW = Symbol.for('acryl.frame.view')
 const FRAME_MODE_EVENT = 'acryl:frame-mode'

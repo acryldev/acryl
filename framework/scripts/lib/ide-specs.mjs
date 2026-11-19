@@ -15,7 +15,9 @@ import { frameFolders } from './frame-folders.mjs'
 export function frameSpecs(root) {
   const folders = new Map()
   const candidates = new Set([
-    ...readdirSync(join(root, 'ide')).map((name) => join(root, 'ide', name)),
+    ...(existsSync(join(root, 'ide'))
+      ? readdirSync(join(root, 'ide')).map((name) => join(root, 'ide', name))
+      : []),
     ...frameFolders(root).values(),
   ])
   for (const folder of candidates) {
