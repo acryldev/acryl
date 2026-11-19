@@ -132,8 +132,8 @@ export function canCaptureTab(userAgent, hasDisplayCapture) {
 
 // biome-ignore lint/correctness/noUnusedVariables: ./index.ts serves this file with a call to start appended
 function start(prefix) {
-  if (document.querySelector('@acryldev/feedback')) return
-  const host = document.createElement('@acryldev/feedback')
+  if (document.querySelector('acryl-feedback')) return
+  const host = document.createElement('acryl-feedback')
   const root = host.attachShadow({ mode: 'open' })
   root.innerHTML = `<style>${STYLE}</style>
 <div class="outline"><span></span></div>

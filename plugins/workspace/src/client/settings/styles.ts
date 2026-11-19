@@ -1,6 +1,6 @@
 /** Styles for the Settings sections this package adds (Agents, Tabs, Command palette), installed for the plugin's lifetime. */
 
-const STYLE_ID = '@acryldev/workspace-settings-styles'
+const STYLE_ID = 'acryl-workspace-settings-styles'
 
 const CSS = `
 /* An agent's mark (tabs/AgentIcon.tsx): here, not in the workbench's styles, because Settings > Agents shows it wherever the section is mounted. */

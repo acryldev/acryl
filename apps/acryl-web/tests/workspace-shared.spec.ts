@@ -176,7 +176,7 @@ describe('the ACRYL workspace on the Web surface', () => {
       const support = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { ...headers, referer: `${origin}/` } })
       expect(support.status).toBe(200)
       expect(support.headers.get('content-type')).toBe('application/zip')
-      expect(support.headers.get('content-disposition')).toMatch(/^attachment; filename="@acryldev\/diagnostics-[A-Za-z0-9_.-]+\.zip"$/)
+      expect(support.headers.get('content-disposition')).toMatch(/^attachment; filename="acryl-diagnostics-[A-Za-z0-9_.-]+\.zip"$/)
       expect(Buffer.from(await support.arrayBuffer()).subarray(0, 2).toString('latin1')).toBe('PK')
       const foreign = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { 'sec-fetch-site': 'cross-site', referer: 'http://evil.example/' } })
       expect(foreign.status).toBe(403)

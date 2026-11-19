@@ -32,7 +32,7 @@ button.acrylShortcutsKeys:hover { border-color: var(--dsw-alias-border-l1); }
 /** @returns disposer, for one owning `ctx.effect`. */
 export function installShortcutsStyles(): () => void {
   const style = document.createElement('style')
-  style.id = '@acryldev/shortcuts-styles'
+  style.id = 'acryl-shortcuts-styles'
   style.textContent = CSS
   document.head.appendChild(style)
   return () => { style.remove() }

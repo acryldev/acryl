@@ -1,4 +1,4 @@
-const STYLE_ID = '@acryldev/cordis-plugin-market/styles'
+const STYLE_ID = 'cordis-plugin-market/styles'
 
 const css = `
 .dshMarketRoot {

@@ -85,7 +85,7 @@ const DESKTOP_WEB_SERVER_PACKAGE = 'acryl-desktop/webserver'
 const CONNECTION_ROW_ID = 'connection'
 const UPSTREAM_CONNECTION_PACKAGE = '@deepseek-ai/dsh-client-connection'
 /** File name of ACRYL's own preferences inside the ACRYL home (written by the `@acryldev/settings` plugin). */
-const ACRYL_SETTINGS_FILENAME = '@acryldev/settings.yaml'
+const ACRYL_SETTINGS_FILENAME = 'acryl-settings.yaml'
 const DESKTOP_SETTINGS_NAMESPACE = 'dsh-desktop'
 const UI_LAYOUT_PACKAGE = '@deepseek-ai/dsh-client-ui-layout'
 const UI_SIDEBAR_PACKAGE = '@deepseek-ai/dsh-client-ui-sidebar'
@@ -169,7 +169,7 @@ export function desktopShellModeFromSettings(document: unknown, platform: NodeJS
 
 /**
  * Read startup settings from ACRYL's own preferences file.
- * @param filename - absolute path of `@acryldev/settings.yaml`; a missing file means every default.
+ * @param filename - absolute path of `acryl-settings.yaml`; a missing file means every default.
  * @returns the values projected into the startup Loader graph.
  */
 export function readDesktopStartupSettings(filename: string, platform: NodeJS.Platform = process.platform): DesktopStartupSettings {

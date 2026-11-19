@@ -30,7 +30,7 @@ describe('generationUrl', () => {
   })
 
   it('gives the app\'s own plugins the generation, and keeps the library copies single instances', () => {
-    const plugins = { scope: 'file:///app/plugins/', library: new Set(['@acryldev/router', 'home']) }
+    const plugins = { scope: 'file:///app/plugins/', library: new Set(['router', 'home']) }
     expect(generationUrl('file:///app/plugins/notes/index.ts', scopes, 2, plugins)).toBe('file:///app/plugins/notes/index.ts?gen=2')
     expect(generationUrl('file:///app/plugins/notes/lib/store.ts', scopes, 2, plugins)).toBe('file:///app/plugins/notes/lib/store.ts?gen=2')
     expect(generationUrl('file:///app/plugins/router/src/index.ts', scopes, 2, plugins)).toBe('file:///app/plugins/router/src/index.ts')

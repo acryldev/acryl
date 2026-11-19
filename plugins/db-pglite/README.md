@@ -36,7 +36,7 @@ As a Cordis row, `dataDir` defaults to `pglite` in the ACRYL app home. Relative 
   - `bytea` comes back as a `Uint8Array`;
   - `numeric` stays exact text.
 - **One process per folder.** PGlite does not lock its folder, and two processes writing one cluster corrupt it, so the provider holds
-  `@acryldev/db-pglite.lock` in the folder (it records the holder's pid):
+  `acryl-db-pglite.lock` in the folder (it records the holder's pid):
   - A second open of the same folder fails with "already open in process N" (or "in this process").
   - A lock left by a process that is gone is taken over.
   - `close` removes the lock.

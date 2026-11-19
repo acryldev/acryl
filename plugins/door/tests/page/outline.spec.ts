@@ -57,6 +57,6 @@ describe('the door outline', () => {
     await expect(driver.handle({ op: 'click', ref: refOf(snapshot, 'Save') })).rejects.toMatchObject({ code: 'not-actionable' })
     expect(document.querySelectorAll(`.${RING}`)).toHaveLength(0)
     outlines.dispose()
-    expect(document.getElementById('@acryldev/door-outline-style')).toBeNull()
+    expect(document.getElementById('acryl-door-outline-style')).toBeNull()
   })
 })

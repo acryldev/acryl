@@ -87,7 +87,7 @@ if (copyHome !== undefined) {
 }
 // Desktop takes its port from its home's settings (`dsh-desktop.port`, default 43120, the dev app's), not from ACRYL_WEB_PORT: a run that left it
 // there took the owner's port when it started first, and the owner's app moved to the next one, with another origin's saved tabs.
-if (surface === 'desktop') pinDesktopPort(join(isolated.home, '@acryldev/settings.yaml'), port)
+if (surface === 'desktop') pinDesktopPort(join(isolated.home, 'acryl-settings.yaml'), port)
 
 /** Set `dsh-desktop.port` in a settings file, keeping every other line. */
 function pinDesktopPort(file, value) {

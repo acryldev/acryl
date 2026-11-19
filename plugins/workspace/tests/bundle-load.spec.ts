@@ -25,7 +25,7 @@ describe.skipIf(!existsSync(bundle))('the built client bundle', () => {
       if (name === 'react' || name === 'react/jsx-runtime') return require(name) as unknown
       return {}
     }) as { name?: string; apply?: unknown }
-    expect(exports.name).toBe('@acryldev/workspace-client')
+    expect(exports.name).toBe('acryl-workspace-client')
     expect(typeof exports.apply).toBe('function')
   })
 })

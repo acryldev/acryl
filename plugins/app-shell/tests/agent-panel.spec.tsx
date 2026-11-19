@@ -13,13 +13,13 @@ describe('the agent panel of a Blend app', () => {
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Hide agent panel' })) })
     expect(panel.hasAttribute('data-collapsed')).toBe(true)
     expect(screen.getByLabelText('composer')).toBeTruthy()
-    expect(localStorage.getItem('@acryldev/agent-panel:app')).toBe('collapsed')
+    expect(localStorage.getItem('acryl-agent-panel:app')).toBe('collapsed')
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Show agent panel' })) })
     expect(panel.hasAttribute('data-collapsed')).toBe(false)
   })
 
   it('starts collapsed when the app was left collapsed', () => {
-    localStorage.setItem('@acryldev/agent-panel:app', 'collapsed')
+    localStorage.setItem('acryl-agent-panel:app', 'collapsed')
     render(<AgentPanel storageKey="app" />)
     expect(screen.getByRole('complementary', { name: 'Agent' }).hasAttribute('data-collapsed')).toBe(true)
   })

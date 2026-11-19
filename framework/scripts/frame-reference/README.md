@@ -43,7 +43,7 @@ They need a project and a known git state, so both surfaces open the committed f
 
 - The ACRYL run: the same isolated desktop live run at `37f4dd9c`, with a fake provider key (a local test value) and
   `DEEPSEEK_BASE_URL` pointing at a local Anthropic-Messages mock, so the diff's "Send to agent" prompt is accepted and
-  the Review thread is recorded. A pre-seeded ACRYL home (`@acryldev/settings.yaml` with the fixture as Default's only
+  the Review thread is recorded. A pre-seeded ACRYL home (`acryl-settings.yaml` with the fixture as Default's only
   project and `adopted: true`) is passed with `--copy-home`. The run keeps its own HOME, so the terminal prompt is the
   plain default one.
 - The candidate run: the app is started with `FRAME_FIXTURE=<materialized fixture>` (the registry is seeded with the

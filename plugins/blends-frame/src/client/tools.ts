@@ -34,7 +34,7 @@ export function createFrameTools(): FrameTools {
   }
 }
 
-const XTERM_STYLE_ID = '@acryldev/blends-frame-xterm'
+const XTERM_STYLE_ID = 'acryl-blends-frame-xterm'
 
 /** xterm's own stylesheet, once per page. @returns disposer, for one owning `ctx.effect`. */
 export function installXtermStyles(): () => void {

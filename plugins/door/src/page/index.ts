@@ -64,10 +64,10 @@ export function startDoor(document: Document, base: string = DOOR_BASE): () => v
   const detachInput = clock.attach(document)
   const removeIndicator = mountIndicator(driver, document)
   const shellWindow = Number(/\bAcrylWindow\/(\d{1,9})\b/u.exec(view.navigator?.userAgent ?? '')?.[1])
-  // `localStorage.setItem('@acryldev/door-transport', 'stream')` keeps this browser to the event stream (to compare, or behind a proxy that cannot upgrade).
+  // `localStorage.setItem('acryl-door-transport', 'stream')` keeps this browser to the event stream (to compare, or behind a proxy that cannot upgrade).
   const transport = ((): 'auto' | 'stream' => {
     try {
-      return view.localStorage.getItem('@acryldev/door-transport') === 'stream' ? 'stream' : 'auto'
+      return view.localStorage.getItem('acryl-door-transport') === 'stream' ? 'stream' : 'auto'
     } catch {
       return 'auto'
     }

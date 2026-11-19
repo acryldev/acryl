@@ -16,7 +16,7 @@ import { parseDocument, stringify } from 'yaml'
 import { cloneJsonShaped, deepEqualJson, isPlainObject, mergeLayers } from './merge.ts'
 
 const NAMESPACE_PATTERN = /^[a-z][a-z0-9-]*$/
-const DEFAULT_FILENAME = '@acryldev/settings.yaml'
+const DEFAULT_FILENAME = 'acryl-settings.yaml'
 
 /** When a namespace's changes take effect for its owner. */
 export type SettingsApplies = 'live' | 'restart'
@@ -58,7 +58,7 @@ export interface SettingsScope<T> {
 
 /** Where the service keeps its file. */
 export interface Config {
-  /** Absolute path of the YAML file. Empty means `<ACRYL home>/@acryldev/settings.yaml`. */
+  /** Absolute path of the YAML file. Empty means `<ACRYL home>/acryl-settings.yaml`. */
   filename: string
 }
 

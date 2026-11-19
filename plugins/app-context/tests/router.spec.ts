@@ -12,7 +12,7 @@ describe('the prompt router', () => {
   it('names the pack, every route with its doc paths, and the plugin rule, within its budget', () => {
     const text = buildRouterText('node_modules/@acryldev/app-context', manifest)
     expect(text.startsWith(`<${ROUTER_TAG}>`)).toBe(true)
-    expect(text).toContain("This app's builder docs: node_modules/acryl-app-context.")
+    expect(text).toContain("This app's builder docs: node_modules/@acryldev/app-context.")
     for (const route of manifest.routes) expect(text).toContain(route.when)
     expect(text).toContain('extending/home-widget.md')
     expect(text).toContain('plugins/<name>/index.ts plus its row in blend.yaml')
@@ -49,7 +49,7 @@ describe('the prompt router', () => {
     // An app with the pack installed: the path is inside the app, by the package's own name.
     const app = mkdtempSync(join(root, 'tests', '.apps-'))
     try {
-      mkdirSync(join(app, 'node_modules'), { recursive: true })
+      mkdirSync(join(app, 'node_modules', '@acryldev'), { recursive: true })
       symlinkSync(root, join(app, 'node_modules', '@acryldev/app-context'), 'dir')
       expect(appContext.readablePackRoot(root, app)).toBe('node_modules/@acryldev/app-context')
     } finally {

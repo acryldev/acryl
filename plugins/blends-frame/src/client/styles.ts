@@ -1,6 +1,6 @@
 /** The frame's look, taken from the owner's mockup (docs/design/blends-frame-mockup.html): a dark workbench around the app's own light page. */
 
-const STYLE_ID = '@acryldev/blends-frame-styles'
+const STYLE_ID = 'acryl-blends-frame-styles'
 
 const CSS = `
 /* DSH's dialogs and menus on the frame's dark surface, and its active Settings section in the frame's accent: the mockup's Settings. */

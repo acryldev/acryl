@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 function writeSettings(home: string, text: string): void {
-  writeFileSync(join(dirname(home), '@acryldev/settings.yaml'), text)
+  writeFileSync(join(dirname(home), 'acryl-settings.yaml'), text)
 }
 
 describe('desktop startup settings: dsh-desktop.blend (D23)', () => {

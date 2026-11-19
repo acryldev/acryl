@@ -15,9 +15,9 @@ describe('the docs lookup', () => {
     const result = lookupAppDocs('please build a simple Notes widget', manifest, 'node_modules/@acryldev/app-context')
     if (!result.ok) throw new Error(result.error)
     expect(result.docs[0]?.id).toBe('extending.home-widget')
-    expect(result.docs.map(doc => doc.path)).toContain('node_modules/@acryldev/app-context')
+    expect(result.docs.map(doc => doc.path)).toContain('node_modules/@acryldev/app-context/docs/extending/home-widget.md')
     expect(result.examples[0]?.id).toBe('home-widget-basic')
-    expect(result.examples[0]?.path).toBe('node_modules/@acryldev/app-context')
+    expect(result.examples[0]?.path).toBe('node_modules/@acryldev/app-context/example-plugins/packages/home-widget-basic')
   })
 
   it('finds state for keeping data, and troubleshooting for an error', () => {
