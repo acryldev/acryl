@@ -122,6 +122,12 @@ verify and check:layout and all 23 framework check steps green before it lands.
   @acrylblends/system-prompt 0.2.0, @acrylblends/control 0.2.11. Apps made from main cannot install them until published (the gate takes
   them from local tarballs since ef386bca). The published create (1.5.21) is unaffected. Publish through framework-release.yml once the
   owner says go.
+- [ ] T036 [npm scope, owner decision 2026-11-19, AFTER the workshop] One scope: every frame package moves from `@acrylblends/*` to
+  `@acryl/*` with plain names (`@acryl/web`, `@acryl/system-prompt`, `@acryl/control`, `@acryl/settings`, `@acryl/workspace`,
+  `@acryl/sign-in`); `@acryl/blends-frame` is the only `blends-` name; `acrylblends`, `create-acrylblends` and `acryl` stay unscoped.
+  T011's packages go straight to `@acryl/desktop-shell`, `@acryl/instance`, `@acryl/node-server` (nothing new under `@acrylblends/`).
+  First: the owner confirms the `@acryl` org on npm is theirs (npm's site refuses automated checks). One release: publish `@acryl/*`
+  at the same versions, `acrylblends upgrade` rewrites an app's package.json and generated overlay, then deprecate `@acrylblends/*`.
 
 ## Phase 3 - packages, not copies
 
