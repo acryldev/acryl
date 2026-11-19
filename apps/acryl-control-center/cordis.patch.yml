@@ -18,7 +18,7 @@
         trailingSlash: ignore
     - id: acryl-router-http
       name: acrylblends/cordis/router-http
-    - id: acryl-web
+    - id: acryl-web-service
       name: '@acrylblends/web'
     - id: acryl-settings
       name: '@acrylblends/settings'
