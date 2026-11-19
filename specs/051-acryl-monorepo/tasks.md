@@ -104,6 +104,17 @@ verify and check:layout and all 23 framework check steps green before it lands.
   here (a subtree pull maps only framework/), so the next release needs a publish path from the monorepo; (c) that first release's
   acceptance: a fresh Blend from the new packages, its agent asked "add a plugin that shows a ledger page", cites paths that exist in the
   app, writes the plugin into the app's plugins/, and the plugin loads without a restart.
+- [ ] T033 [guard] Remove FOUNDATION_PLUGIN_EDGES (acrylblends-framework -> acryl-agent-panel, named by T017): move the Cordis-free
+  drivers contract into the foundation (acrylblends/drivers built from framework source), the agent panel imports it from there, the edge
+  goes. Owner: DS2_Fork3, its own commit after T017 merges.
+- [ ] T034 [products, overlays] The products' generated overlays (apps/acryl-ade, apps/acryl-control-center cordis.patch.yml) are in
+  practice owned by the products: a full `acrylblends upgrade` replaces their workbench root row with the Blends frame (the generator's
+  default, ide-profile.ts "never the IDE's workbench") and would silently turn ADE back into a plain Blend. Teach the generator a product's
+  root row (from blend.yaml or product.json), with a test that regenerating an overlay keeps it. Found by Fork3 and DS_Fork3, 2026-11-19.
+- [ ] T035 [publish, owner decides] Three frame package versions exist only in this repository: @acrylblends/web 0.2.0,
+  @acrylblends/system-prompt 0.2.0, @acrylblends/control 0.2.11. Apps made from main cannot install them until published (the gate takes
+  them from local tarballs since ef386bca). The published create (1.5.21) is unaffected. Publish through framework-release.yml once the
+  owner says go.
 
 ## Phase 3 - packages, not copies
 
