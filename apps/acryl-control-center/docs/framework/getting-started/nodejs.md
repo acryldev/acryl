@@ -9,7 +9,7 @@ On Node.js, Acryl runs through the Node.js adapter, `acrylblends/node-server`.
 ## 1. Setup
 
 A starter for Node.js is available.
-Start your project with "create-acrylblends" command.
+Start your project with the `npm create @acryldev/blends` command.
 Select `nodejs` template for this example.
 
 **npm**
@@ -21,7 +21,7 @@ npm create @acryldev/blends@latest my-app
 **yarn**
 
 ```sh
-yarn create acrylblends my-app
+yarn create @acryldev/blends my-app
 ```
 
 **pnpm**
@@ -33,7 +33,7 @@ pnpm create @acryldev/blends my-app
 **bun**
 
 ```sh
-bun create acrylblends@latest my-app
+bun create @acryldev/blends my-app
 ```
 
 Move to `my-app` and install the dependencies.

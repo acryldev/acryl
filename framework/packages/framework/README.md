@@ -113,7 +113,7 @@ npm install
 npm run dev
 ```
 
-The other starters in the registry (`acryl.gtd`, `acryl.blank`, ...) are for the ACRYL app: `create-acrylblends` refuses them with a line that
+The other starters in the registry (`acryl.gtd`, `acryl.blank`, ...) are for the ACRYL app: `@acryldev/create-blends` refuses them with a line that
 says so. A repository with an `acryl.template.json` works the same way (`-- --from github:you/starter`), and a team's own registry is the same
 layout in its own repository (`-- --from you.thing --registry github:you/registry`).
 
@@ -128,7 +128,7 @@ Before an app goes on a server: with `NODE_ENV=production` the door, the agent p
 
 **A starter** other people can pull is a pull request to the registry repository: add `registry/blends/<id>/` with your app as it stands (without `node_modules/`
 and `dist/`), its `blend.yaml` made public (`id`, a licence, a category and a one-line description) and an `acryl.template.json`, which is what marks it as an
-app for acrylblends. CI validates every entry, makes the app with `create-acrylblends`, and fails when `index.json` is stale, so what the site lists is what
+app for acrylblends. CI validates every entry, makes the app with `@acryldev/create-blends`, and fails when `index.json` is stale, so what the site lists is what
 passed. The layout, and how to keep a starter private without a registry at all, is in
 [the registry README](https://github.com/acrylblends/acrylblends.github.io/tree/main/registry).
 
@@ -137,8 +137,8 @@ passed. The layout, and how to keep a starter private without a registry at all,
 An app carries its framework plugins as source, so a new release moves them in place and leaves your own code alone:
 
 ```sh
-npx acrylblends@latest upgrade --dry-run   # the plan: what would be replaced
-npx acrylblends@latest upgrade             # an edited file stops it with the diff, unless --force
+npx @acryldev/blends@latest upgrade --dry-run   # the plan: what would be replaced
+npx @acryldev/blends@latest upgrade             # an edited file stops it with the diff, unless --force
 ```
 
 Write `@latest`: a bare `npx acrylblends upgrade` runs the copy the app has installed, and an app made before 1.0 has an old one with no `upgrade` verb (it prints its help and exits 0, so it looks as if it worked, or answers "unknown command" and exits 2).
@@ -151,7 +151,7 @@ An Acryl app is also a plain function from `Request` to `Response`, which needs 
 mkdir my-app && cd my-app
 npm init -y
 npm pkg set type=module
-npm install acrylblends
+npm install @acryldev/blends
 ```
 
 Write the app in `index.ts`:
@@ -397,7 +397,7 @@ plugins installed while the app runs, an agent that builds plugins, durable task
 secrets):
 
 ```sh
-npx acrylblends@latest init my-app -y
+npx @acryldev/blends@latest init my-app -y
 cd my-app && npm install && npm run dev      # the app in the ACRYL frame: chat, agents, branches, versions, Settings
 npm run desktop                               # the same in its own window
 ```

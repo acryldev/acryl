@@ -10,7 +10,7 @@ You need Node 22.19 or newer (Node runs the TypeScript directly, with no build s
 Nothing to install first: `npx` runs the `acrylblends` package from npm (to work on the framework itself, clone this repository, run `pnpm install && pnpm run build`, and use `node packages/cli/bin/acrylblends.js` in its place).
 
 ```sh
-npx acrylblends@latest init my-app -y
+npx @acryldev/blends@latest init my-app -y
 cd my-app
 npm install
 npm run dev                           # the app in the ACRYL frame (chat, agents, branches, versions, Settings); prints its URL

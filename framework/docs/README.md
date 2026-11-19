@@ -83,63 +83,63 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 1.1.0](release-notes/1.1.0.md) - a page follows its state over one WebSocket (`watch` of `/api/state/client.js`), so windows no longer use up the browser's six connections
 - [Release notes 1.2.0](release-notes/1.2.0.md) - a new app is a repository of plugin folders with snapshots; `create --from` makes a blueprint your own (name, lock, first commit); `init --desktop` installs the ACRYL frame from npm, one framework copy
 - [Release notes acrylblends 1.5.3](release-notes/acrylblends-1.5.3.md) - a new app's first run connects a model with Settings > Models in front of the person, and shows no preview notice (`@acryldev/sign-in` 0.1.1)
-- [Release notes create-acrylblends 1.5.3](release-notes/create-1.5.3.md) - asks for acrylblends 1.5.3
+- [Release notes @acryldev/create-blends 1.5.3](release-notes/create-1.5.3.md) - asks for acrylblends 1.5.3
 - [Release notes acrylblends 1.5.4](release-notes/acrylblends-1.5.4.md) - `acrylblends add plugin-share` mounts it, so an app made from a registry starter can pull, list and publish plugins
-- [Release notes create-acrylblends 1.5.4](release-notes/create-1.5.4.md) - asks for acrylblends 1.5.4; a registry starter without sharing gets it
-- [Release notes acrylblends 1.5.12](release-notes/acrylblends-1.5.12.md) - released with create-acrylblends 1.5.12
-- [Release notes create-acrylblends 1.5.12](release-notes/create-1.5.12.md) - a registry entry that already is a finished app in the frame is made again (System Monitor)
+- [Release notes @acryldev/create-blends 1.5.4](release-notes/create-1.5.4.md) - asks for acrylblends 1.5.4; a registry starter without sharing gets it
+- [Release notes acrylblends 1.5.12](release-notes/acrylblends-1.5.12.md) - released with @acryldev/create-blends 1.5.12
+- [Release notes @acryldev/create-blends 1.5.12](release-notes/create-1.5.12.md) - a registry entry that already is a finished app in the frame is made again (System Monitor)
 - [Release notes acrylblends 1.5.13](release-notes/acrylblends-1.5.13.md) - packed products open side by side (one Electron folder each)
-- [Release notes create-acrylblends 1.5.13](release-notes/create-1.5.13.md) - released with acrylblends 1.5.13
-- [Release notes create-acrylblends 1.5.14](release-notes/create-1.5.14.md) - a starter may be 64 MB (was 50 MB), so a whole game can be one; and a private GitHub source uses your own GitHub login
+- [Release notes @acryldev/create-blends 1.5.13](release-notes/create-1.5.13.md) - released with acrylblends 1.5.13
+- [Release notes @acryldev/create-blends 1.5.14](release-notes/create-1.5.14.md) - a starter may be 64 MB (was 50 MB), so a whole game can be one; and a private GitHub source uses your own GitHub login
 - [Release notes acrylblends 1.5.15](release-notes/acrylblends-1.5.15.md) - a new desktop window opens at 85% of the screen
-- [Release notes create-acrylblends 1.5.15](release-notes/create-1.5.15.md) - released with acrylblends 1.5.15
+- [Release notes @acryldev/create-blends 1.5.15](release-notes/create-1.5.15.md) - released with acrylblends 1.5.15
 - [Release notes acrylblends 1.5.16](release-notes/acrylblends-1.5.16.md) - each packed product opens only its own apps
-- [Release notes create-acrylblends 1.5.16](release-notes/create-1.5.16.md) - released with acrylblends 1.5.16
+- [Release notes @acryldev/create-blends 1.5.16](release-notes/create-1.5.16.md) - released with acrylblends 1.5.16
 - [Release notes acrylblends 1.5.17](release-notes/acrylblends-1.5.17.md) - the LibreOffice engine (153 MB) is a plugin added on demand
-- [Release notes create-acrylblends 1.5.17](release-notes/create-1.5.17.md) - released with acrylblends 1.5.17
+- [Release notes @acryldev/create-blends 1.5.17](release-notes/create-1.5.17.md) - released with acrylblends 1.5.17
 - [Release notes acrylblends 1.5.18](release-notes/acrylblends-1.5.18.md) - a pulled plugin's Settings page appears without a reload
-- [Release notes create-acrylblends 1.5.18](release-notes/create-1.5.18.md) - released with acrylblends 1.5.18
+- [Release notes @acryldev/create-blends 1.5.18](release-notes/create-1.5.18.md) - released with acrylblends 1.5.18
 - [Release notes acrylblends 1.5.19](release-notes/acrylblends-1.5.19.md) - every app has Settings > Skills & MCP (skill-mcp-manager in the frame)
-- [Release notes create-acrylblends 1.5.19](release-notes/create-1.5.19.md) - released with acrylblends 1.5.19
+- [Release notes @acryldev/create-blends 1.5.19](release-notes/create-1.5.19.md) - released with acrylblends 1.5.19
 - [Release notes acrylblends 1.5.20](release-notes/acrylblends-1.5.20.md) - upgrade keeps the new acrylblends range; the packer packs apps without LibreOffice
-- [Release notes create-acrylblends 1.5.20](release-notes/create-1.5.20.md) - released with acrylblends 1.5.20
+- [Release notes @acryldev/create-blends 1.5.20](release-notes/create-1.5.20.md) - released with acrylblends 1.5.20
 - [Release notes acrylblends 1.6.0](release-notes/acrylblends-1.6.0.md) - the frame's packages move to @acryldev/*; upgrade moves an app
-- [Release notes create-acrylblends 1.6.0](release-notes/create-1.6.0.md) - new apps install @acryldev/*
+- [Release notes @acryldev/create-blends 1.6.0](release-notes/create-1.6.0.md) - new apps install @acryldev/*
 - [Release notes acrylblends 1.5.21](release-notes/acrylblends-1.5.21.md) - Official and Community labels and a filter in Settings > Plugins > Registry
-- [Release notes create-acrylblends 1.5.21](release-notes/create-1.5.21.md) - an app from a repository is its new owner's: own id, private, no licence claim
+- [Release notes @acryldev/create-blends 1.5.21](release-notes/create-1.5.21.md) - an app from a repository is its new owner's: own id, private, no licence claim
 - [Release notes acrylblends 1.5.11](release-notes/acrylblends-1.5.11.md) - acrylblends update (a Blend's newer release merged into an app, your changes kept) and the in-app update of packed products
-- [Release notes create-acrylblends 1.5.11](release-notes/create-1.5.11.md) - released with acrylblends 1.5.11
-- [Release notes acrylblends 1.5.10](release-notes/acrylblends-1.5.10.md) - released with create-acrylblends 1.5.10
-- [Release notes create-acrylblends 1.5.10](release-notes/create-1.5.10.md) - a registry entry unpacks on Windows with Git's tar first on PATH
+- [Release notes @acryldev/create-blends 1.5.11](release-notes/create-1.5.11.md) - released with acrylblends 1.5.11
+- [Release notes acrylblends 1.5.10](release-notes/acrylblends-1.5.10.md) - released with @acryldev/create-blends 1.5.10
+- [Release notes @acryldev/create-blends 1.5.10](release-notes/create-1.5.10.md) - a registry entry unpacks on Windows with Git's tar first on PATH
 - [Release notes acrylblends 1.5.9](release-notes/acrylblends-1.5.9.md) - the workbench opens on a folder it is given (`acryl ade` in a project); @acryldev/workspace 0.1.1
-- [Release notes create-acrylblends 1.5.9](release-notes/create-1.5.9.md) - asks for acrylblends 1.5.9
+- [Release notes @acryldev/create-blends 1.5.9](release-notes/create-1.5.9.md) - asks for acrylblends 1.5.9
 - [Release notes acrylblends 1.5.8](release-notes/acrylblends-1.5.8.md) - a packed Blend product does not ask for a name, also for an app it made before
-- [Release notes create-acrylblends 1.5.8](release-notes/create-1.5.8.md) - asks for acrylblends 1.5.8
+- [Release notes @acryldev/create-blends 1.5.8](release-notes/create-1.5.8.md) - asks for acrylblends 1.5.8
 - [Release notes acrylblends 1.5.7](release-notes/acrylblends-1.5.7.md) - every registry Blend can be made in the frame again; a packed Blend product does not ask for a name
-- [Release notes create-acrylblends 1.5.7](release-notes/create-1.5.7.md) - asks for acrylblends 1.5.7; `--from` a registry Blend with its own src/app.ts finishes
+- [Release notes @acryldev/create-blends 1.5.7](release-notes/create-1.5.7.md) - asks for acrylblends 1.5.7; `--from` a registry Blend with its own src/app.ts finishes
 - [Release notes acrylblends 1.5.6](release-notes/acrylblends-1.5.6.md) - sharing pushes through your gh login whatever git protocol you chose; an app in a WebBoxes.ai box takes its model key (`@acryldev/blends-frame` 0.1.4)
-- [Release notes create-acrylblends 1.5.6](release-notes/create-1.5.6.md) - asks for acrylblends 1.5.6
+- [Release notes @acryldev/create-blends 1.5.6](release-notes/create-1.5.6.md) - asks for acrylblends 1.5.6
 - [Release notes acrylblends 1.5.5](release-notes/acrylblends-1.5.5.md) - `npm run share`: an app gets a repository of its own on GitHub and is pushed there, after a person confirms the plan (`@acryldev/blends-frame` 0.1.3)
-- [Release notes create-acrylblends 1.5.5](release-notes/create-1.5.5.md) - asks for acrylblends 1.5.5
+- [Release notes @acryldev/create-blends 1.5.5](release-notes/create-1.5.5.md) - asks for acrylblends 1.5.5
 - [Release notes acrylblends 1.5.2](release-notes/acrylblends-1.5.2.md) - an app can run behind a hosting front such as a WebBoxes.ai box (`ACRYL_PUBLIC_ORIGIN`, `ACRYL_TRUSTED_PROXY`, `ACRYLBLENDS_HOST`)
-- [Release notes create-acrylblends 1.5.2](release-notes/create-1.5.2.md) - asks for acrylblends 1.5.2
+- [Release notes @acryldev/create-blends 1.5.2](release-notes/create-1.5.2.md) - asks for acrylblends 1.5.2
 - [Release notes acrylblends 1.5.1](release-notes/acrylblends-1.5.1.md) - pnpm installs and runs an app in the frame (`pnpm-workspace.yaml` written by init and upgrade); an app made with 1.4 starts on Linux with Node 22 and later
 - [Release notes acrylblends 1.5.0](release-notes/acrylblends-1.5.0.md) - every new app opens in the ACRYL frame (`init` without `--bare`, and a registry blueprint through `--from`); `upgrade` frames a blueprint; the frame's plugin graph, Registry tab and Connect GitHub
 - [Release notes acrylblends 1.4.0](release-notes/acrylblends-1.4.0.md) - a group's app: `plugin pull --from <list>` pulls everyone's plugins in one command, each refused one named while the others run; `add showcase` shows who made what; the agent template's home page shows widgets
 - [Release notes acrylblends 1.3.2](release-notes/acrylblends-1.3.2.md) - `upgrade` works again on an untouched app made by 1.2.0, 1.3.0 or 1.3.1, and the gate fails when a release is missing from what it knows
 - [Release notes acrylblends 1.3.1](release-notes/acrylblends-1.3.1.md) - plugins from several people in one app: a taken route or widget is refused naming its plugin, the list says who released each one, and every template that installs live can pull; in the frame a pull no longer restarts the app
 - [Release notes acrylblends 1.3.0](release-notes/acrylblends-1.3.0.md) - share a plugin between people: `plugin pull` and `plugin publish`, `npm run acryl`, and upgrade moves a dependency forward
-- [Release notes create-acrylblends 1.5.1](release-notes/create-1.5.1.md) - `pnpm create @acryldev/blends` installs and starts the app in the frame (it asks for acrylblends 1.5.1)
-- [Release notes create-acrylblends 1.5.0](release-notes/create-1.5.0.md) - a registry blueprint opens in the frame (it asks for acrylblends 1.5.0)
-- [Release notes create-acrylblends 1.4.2](release-notes/create-1.4.2.md) - a new app has `pull --from`, the showcase and the agent home page (it asks for acrylblends 1.4.0)
-- [Release notes create-acrylblends 1.4.1](release-notes/create-1.4.1.md) - a new app has plugin list, remove and route removal in the frame (it asks for acrylblends 1.3.1)
-- [Release notes create-acrylblends 1.4.0](release-notes/create-1.4.0.md) - `--desktop` puts the new app inside the ACRYL frame
+- [Release notes @acryldev/create-blends 1.5.1](release-notes/create-1.5.1.md) - `pnpm create @acryldev/blends` installs and starts the app in the frame (it asks for acrylblends 1.5.1)
+- [Release notes @acryldev/create-blends 1.5.0](release-notes/create-1.5.0.md) - a registry blueprint opens in the frame (it asks for acrylblends 1.5.0)
+- [Release notes @acryldev/create-blends 1.4.2](release-notes/create-1.4.2.md) - a new app has `pull --from`, the showcase and the agent home page (it asks for acrylblends 1.4.0)
+- [Release notes @acryldev/create-blends 1.4.1](release-notes/create-1.4.1.md) - a new app has plugin list, remove and route removal in the frame (it asks for acrylblends 1.3.1)
+- [Release notes @acryldev/create-blends 1.4.0](release-notes/create-1.4.0.md) - `--desktop` puts the new app inside the ACRYL frame
 - [Release notes 1.3.0](release-notes/1.3.0.md) - `create --from` downloads only the app you asked for, checked against its sha512
 - [Release notes 1.2.1](release-notes/1.2.1.md) - `create --from` works on a registry larger than one template (it failed past 5000 files)
-- [The 1.2.0 release checklist](plans/release-1.2.0.md) - the frame's 16 packages, then acrylblends and create-acrylblends 1.2.0, the tags and the npm-release approval, with the owner's steps marked
+- [The 1.2.0 release checklist](plans/release-1.2.0.md) - the frame's 16 packages, then acrylblends and @acryldev/create-blends 1.2.0, the tags and the npm-release approval, with the owner's steps marked
 - [Release notes 1.0.4](release-notes/1.0.4.md) - act reload and navigate, the page script on every page, runs that outlive the page
 - [Release notes 1.0.3](release-notes/1.0.3.md) - Node 26, relative paths in manifest rows, a pasted GitHub address as a source
-- [Release notes 1.0.2](release-notes/1.0.2.md) - the chat template closed in production, create-acrylblends --from, the newcomer-path fixes
+- [Release notes 1.0.2](release-notes/1.0.2.md) - the chat template closed in production, @acryldev/create-blends --from, the newcomer-path fixes
 - [Release notes 1.0.1](release-notes/1.0.1.md) - a security fix for the agent template in production
 - [Release notes 1.0.0](release-notes/1.0.0.md) - the 1.0 surface, acrylblends upgrade, what runs in production
 - [Release notes 0.11.0](release-notes/0.11.0.md) - WebSocket upgrades on the router, brief prints the address
@@ -161,7 +161,7 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 0.6.1](release-notes/0.6.1.md) - add desktop for a plain Acryl app, the create version stamp
 - [Release notes 0.6.0](release-notes/0.6.0.md) - the desktop shell
 - [Release notes 0.5.1](release-notes/0.5.1.md) - the npm page: a README in the package
-- [Release notes 0.5.0](release-notes/0.5.0.md) - the framework is the package root, `create-acrylblends`, and the new docs
+- [Release notes 0.5.0](release-notes/0.5.0.md) - the framework is the package root, `@acryldev/create-blends`, and the new docs
 - [Release notes 0.4.1](release-notes/0.4.1.md) - the framework docs and an AGENTS.md inside every generated app
 - [Release notes 0.4.0](release-notes/0.4.0.md) - the App and `ctx.router.route` migration
 - [Release notes 0.3.0](release-notes/0.3.0.md) - what is breaking and how to migrate three lines of a route
