@@ -25,7 +25,7 @@ describe('buildDiagnosticsArchive', () => {
     expect(files.get('system-info.txt')).toContain('version: 1.2.3')
     expect(files.get('system-info.txt')).toContain('generated: 2026-09-27T10:00:00.000Z')
     expect(result.includedLogFiles).toBe(2)
-    expect(result.fileName).toBe('@acryldev/diagnostics-2026-09-27T10-00-00-000Z.zip')
+    expect(result.fileName).toBe('acryl-diagnostics-2026-09-27T10-00-00-000Z.zip')
   })
 
   it('never follows a link out of the log directory', () => {

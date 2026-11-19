@@ -43,7 +43,7 @@ describe('the ACRYL workspace on the Web surface', () => {
     })
     try {
       const rows = new Map([...host.ctx.loader.entries()].map(entry => [entry.options.id, entry]))
-      expect(rows.get('@acryldev/workspace')?.fiber).toBeDefined()
+      expect(rows.get('acryl-workspace')?.fiber).toBeDefined()
       // The stock frame is off and the sidebar and conversation are on: the same toggles Desktop's advanced mode applies.
       expect(rows.get('ui-layout')?.options.disabled).toBe(true)
       expect(rows.get('ui-sidebar')?.options.disabled).not.toBe(true)
@@ -54,7 +54,7 @@ describe('the ACRYL workspace on the Web surface', () => {
       const origin = `http://127.0.0.1:${String(server?.port)}`
       const headers = { origin, 'sec-fetch-site': 'same-origin' }
       // Plugin administration is the same shared plugin as on Desktop: composed, and its routes answer.
-      expect(rows.get('@acryldev/plugin-admin')?.fiber).toBeDefined()
+      expect(rows.get('acryl-plugin-admin')?.fiber).toBeDefined()
       const lifecycle = await fetch(`${origin}/api/acryl-plugin-admin/lifecycle`, { headers })
       expect(lifecycle.status).toBe(200)
       const snapshot = await lifecycle.json() as { entries: { entryId: string; moduleName: string }[]; blend: { locked: boolean; id: string } | null }
@@ -172,7 +172,7 @@ describe('the ACRYL workspace on the Web surface', () => {
         expect(smuggled.status).toBe(500)
       }
       // Web keeps log files and serves a diagnostics archive (Settings > Support downloads it).
-      expect(rows.get('@acryldev/support')?.fiber).toBeDefined()
+      expect(rows.get('acryl-support')?.fiber).toBeDefined()
       const support = await fetch(`${origin}/api/acryl-support/diagnostics`, { headers: { ...headers, referer: `${origin}/` } })
       expect(support.status).toBe(200)
       expect(support.headers.get('content-type')).toBe('application/zip')
@@ -183,7 +183,7 @@ describe('the ACRYL workspace on the Web surface', () => {
       const logFiles = (await readdir(join(home, '.dsh', 'logs'))).filter(name => /^dsh-\d{4}-\d{2}-\d{2}(\.error)?\.log$/.test(name))
       expect(logFiles.length).toBeGreaterThan(0)
       // Agent Control: the tools are composed, a page connects over the same-origin channel, and a call reaches it.
-      expect(rows.get('@acryldev/agent-control')?.fiber).toBeDefined()
+      expect(rows.get('acryl-agent-control')?.fiber).toBeDefined()
       const uiTools = host.ctx.tools as unknown as { get(name: string): unknown; execute(input: { callId: string; name: string; arguments: unknown; signal: AbortSignal }): Promise<{ isError?: boolean; content?: Array<{ text?: string }> }> }
       for (const toolName of ['ui_snapshot', 'ui_click', 'ui_type', 'ui_select', 'ui_press', 'ui_scroll', 'ui_wait']) expect(uiTools.get(toolName), toolName).toBeDefined()
       // The page channel is an event stream down and POST up (@acryldev/door's): another site is refused, the app's own page is served.

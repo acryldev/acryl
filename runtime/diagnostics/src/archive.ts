@@ -93,5 +93,5 @@ export function buildDiagnosticsArchive(input: DiagnosticsArchiveInput): Diagnos
   ].join('\n'), 'utf8'))
   zip.addFile('README.txt', Buffer.from('Secrets such as API keys, tokens and passwords are masked in these logs, but read them before sharing.\n', 'utf8'))
   const stamp = now.toISOString().replace(/[:.]/g, '-')
-  return { zip: zip.toBuffer(), fileName: `@acryldev/diagnostics-${stamp}.zip`, includedLogFiles: included, skippedLogFiles: skipped }
+  return { zip: zip.toBuffer(), fileName: `acryl-diagnostics-${stamp}.zip`, includedLogFiles: included, skippedLogFiles: skipped }
 }

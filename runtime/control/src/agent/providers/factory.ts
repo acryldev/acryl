@@ -38,7 +38,7 @@ function snapshotOf(request: AttachAgentRequest, runtime?: AgentTransportRuntime
 export function createProviderPlugin(options: ProviderPluginOptions) {
   const profile = PROVIDER_CAPABILITIES[options.kind]
   return {
-    name: `@acryldev/agent-${profile.kind}`,
+    name: `acryl-agent-${profile.kind}`,
     inject: ['acrAgentControl'] as const,
     apply(ctx: Context) {
       const provider: AgentProvider = {
