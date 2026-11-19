@@ -181,6 +181,8 @@ try {
       // `.tsx` pages are compiled at start by the app's own typescript (acrylblends/node-server/register), so a production install (`npm ci --omit=dev`) needs it.
       'typescript',
       '@acryldev/app-persistence',
+      // Every template depends on the framework: a shared plugin imports it, and the app runs it.
+      '@acryldev/blends',
       '@acryldev/blends-core',
       // Where the app keeps things, installed as its package (spec 051 T011).
       '@acryldev/instance',
