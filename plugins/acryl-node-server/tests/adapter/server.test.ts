@@ -1303,17 +1303,24 @@ describe('Memory leak test', () => {
 describe('serve', () => {
   const app = new Acryl()
   app.get('/', (c) => c.newResponse(null, 200))
-  serve(app)
+  const servers: ServerType[] = []
+  // A free port each, never the default 3000: a shared gate machine already runs something there (EADDRINUSE on z370n, 2026-11-19).
+  const listen = (options: { hostname?: string }) =>
+    new Promise<number>((resolve) => {
+      servers.push(serve({ fetch: app.fetch, port: 0, ...options }, (info) => resolve(info.port)))
+    })
+  afterAll(async () => {
+    await Promise.all(servers.map((server) => new Promise((resolve) => server.close(resolve))))
+  })
 
   it('should serve on ipv4', async () => {
-    const response = await fetch('http://localhost:3000')
+    const port = await listen({})
+    const response = await fetch(`http://localhost:${port}`)
     expect(response.status).toBe(200)
   })
 
   it('should serve on ipv6 when asked with hostname ::', async () => {
-    const port = await new Promise<number>((resolve) => {
-      serve({ fetch: app.fetch, hostname: '::', port: 0 }, (info) => resolve(info.port))
-    })
+    const port = await listen({ hostname: '::' })
     const response = await fetch(`http://[::1]:${port}`)
     expect(response.status).toBe(200)
   })
