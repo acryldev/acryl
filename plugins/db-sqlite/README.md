@@ -5,7 +5,7 @@ The SQLite provider of the [`db` port](../acryl-db/README.md), one Cordis plugin
 
 ```yaml
 - id: acryl-db-sqlite
-  name: @acryldev/db-sqlite
+  name: '@acryldev/db-sqlite'
   config:
     path: data/app.sqlite   # default: data.sqlite in the ACRYL app home; required outside an ACRYL app
     migrations: migrations  # a folder of 001-name.sql, 002-name.sql, ...

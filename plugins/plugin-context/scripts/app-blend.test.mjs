@@ -23,7 +23,7 @@ spec:
     blueprintVersion: 0.1.0
   rows:
     - id: brand # the product name lives here
-      name: @acryldev/brand
+      name: '@acryldev/brand'
       config:
         name: Stage Sound
 `

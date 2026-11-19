@@ -1024,8 +1024,8 @@ test('required framework modules: an acrylblends module is mounted through live.
   try {
     writeFileSync(join(profileDir, 'package.json'), JSON.stringify({ dsh: { profile: { bundles: [] } } }))
     const modules = {
-      '@acryldev/state': { module: '@acryldev/blends/cordis/state', packageName: 'acrylblends', mounted: false },
-      '@acryldev/blends/cordis/router': { module: '@acryldev/blends/cordis/router', packageName: 'acrylblends', mounted: true },
+      '@acryldev/state': { module: '@acryldev/blends/cordis/state', packageName: '@acryldev/blends', mounted: false },
+      '@acryldev/blends/cordis/router': { module: '@acryldev/blends/cordis/router', packageName: '@acryldev/blends', mounted: true },
     }
     const required = []
     let fail = false
@@ -1064,8 +1064,8 @@ test('required framework modules: a package is linked, registered and started; a
     const linked = []
     const started = []
     const modules = {
-      '@acryldev/router': { module: '@acryldev/blends/cordis/router', packageName: 'acrylblends', mounted: true },
-      '@acryldev/blends/cordis/db': { module: '@acryldev/blends/cordis/db', packageName: 'acrylblends', mounted: false },
+      '@acryldev/router': { module: '@acryldev/blends/cordis/router', packageName: '@acryldev/blends', mounted: true },
+      '@acryldev/blends/cordis/db': { module: '@acryldev/blends/cordis/db', packageName: '@acryldev/blends', mounted: false },
       '@acryldev/app-shell': { module: '@acryldev/app-shell', packageName: '@acryldev/app-shell', mounted: false },
     }
     const services = {
@@ -1079,7 +1079,7 @@ test('required framework modules: a package is linked, registered and started; a
     // Only a package is a bundle: the profile's bundle list never names a module inside a package.
     assert.deepEqual(JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')).dsh.profile.bundles, ['@acryldev/app-shell'])
     assert.equal(result.errors.length, 1)
-    assert.match(result.errors[0], /"acrylblends\/cordis\/db" is not mounted in this app .* plugins\/ folder, and it mounts at the next start/)
+    assert.match(result.errors[0], /"@acryldev\/blends\/cordis\/db" is not mounted in this app .* plugins\/ folder, and it mounts at the next start/)
   } finally {
     rmSync(profileDir, { recursive: true, force: true })
   }

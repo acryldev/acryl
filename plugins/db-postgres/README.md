@@ -16,7 +16,7 @@ As a Cordis row, `url` defaults to the `DATABASE_URL` environment variable, and 
 
 ```yaml
 - id: acryl-db-postgres
-  name: @acryldev/db-postgres
+  name: '@acryldev/db-postgres'
   config:
     migrations: migrations
 ```

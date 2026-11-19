@@ -146,7 +146,7 @@ CREATE TABLE tags (
 
 ```yaml
     - id: db
-      name: @acryldev/db-sqlite
+      name: '@acryldev/db-sqlite'
       config:
         path: data/app.sqlite
         migrations: migrations

@@ -6,7 +6,7 @@ running tests, git) it does with its own file tools and shell.
 
 ```yaml
 - id: acryl-door
-  name: @acryldev/door
+  name: '@acryldev/door'
   config:
     tools:
       expose: [add]   # app tools from the `tools` service the door offers; none by default
