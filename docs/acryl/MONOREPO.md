@@ -11,20 +11,22 @@ the core is a plugin.
 ## The folders
 
 ```
-framework/   acrylblends, the framework apps are made with: its CLI and create, the frame's release list, its own app plugins
-             (framework/plugins/: the plugins `acrylblends add` copies into an app), docs, tests and scripts
+framework/   acrylblends, the framework apps are made with: its CLI and create, the frame's release list, docs, tests and
+             scripts. Its library plugins (what `acrylblends add` copies into an app) live flat in plugins/, below
 runtime/     ACRYL's runtime: the control plane, the harness runtime, loopback HTTP, diagnostics, persistence, the plugin hub
-plugins/     Cordis plugins, each replaceable on its own: ACRYL's (ui, workspace, settings, sign-in, launcher, market, ...) and the
-             Blends frame's (acryl-blends-frame, acryl-versions, acryl-app-context)
+plugins/     Cordis plugins, each replaceable on its own: ACRYL's (ui, workspace, settings, sign-in, launcher, market, ...), the
+             Blends frame's (acryl-blends-frame, acryl-versions, acryl-app-context) and the framework library's app plugins
+             (acryl-instance, acryl-extensions, acryl-desktop-shell, ...)
 apps/        what people run: the acryl command, the desktop app, the web app, the terminal launcher
 examples/    demo packages that ship nothing production-facing
 distribution/ release shims (the `acryl` npm launcher)
 deepseek-harness/  the pinned upstream harness (code we do not own; never edited here)
 ```
 
-One word, one meaning: a **plugin** is a Cordis plugin. `plugins/` holds ACRYL's and the frame's. The framework's own plugins stay in
-`framework/plugins/` for now, because they import each other as siblings (`../acryl-router/...`), exactly as they sit in an app once
-`acrylblends` copies them in; they join the flat `plugins/` when they become packages (spec 051 Phase 3).
+One word, one meaning: a **plugin** is a Cordis plugin. `plugins/` holds ACRYL's, the frame's and the framework library's: every
+folder with a `plugin.json` is one of the library's plugins (`acrylblends add` copies it into an app), and each is a workspace package
+that imports the others by package name (spec 051 T017). Inside an app the same plugins are source, and `acrylblends` rewrites those
+names to relative paths as it copies them.
 
 ## Which way dependencies point
 
@@ -33,7 +35,7 @@ The picture, bottom to top. It is documentation of the graph, not a folder rule:
 ```
 apps            acryl-cli, acryl-desktop, acryl-web, acryl-launcher-tui, examples
   ^ compose
-plugins         @acryl/ui, acryl-workspace, acryl-settings, acryl-sign-in, acryl-launcher, acryl-blends-frame, ...
+plugins         @acryl/ui, acryl-workspace, acryl-settings, acryl-sign-in, acryl-launcher, acryl-blends-frame, acryl-instance, ...
   ^ use
 runtime         acryl-control, acryl-loopback-http, acryl-diagnostics, acryl-web-service, blends-core, plugin-hub, ...
   ^ rests on
@@ -44,10 +46,13 @@ foundation      acrylblends (the framework) and its packages: acryl-router, acry
 
 1. **No cycles** between workspace packages, so there is one straight build order, foundation first.
 2. **Nothing points the wrong way:** the foundation depends only on itself; the runtime depends only on the foundation and itself;
-   nothing depends on an app. The foundation is named package by package (a foundation package keeps its protection wherever it
-   moves); runtime and app are read from the folder (`runtime/`, `apps/`, `examples/`).
-3. **One named exception:** `acryl-harness-runtime` composes every plugin a surface runs (a composition root), so it may depend on
-   exactly the 20 plugins it lists today; a 21st fails. Moving that composition up into `apps/` is spec 051 T021.
+   nothing depends on an app. The foundation and the framework's app plugins are named package by package (they keep their role
+   wherever they move); runtime and app are read from the folder (`runtime/`, `apps/`, `examples/`). Every library plugin (a
+   `plugins/*/plugin.json` folder) must be a workspace package with a role.
+3. **Two named exceptions, each by edge:** `acryl-harness-runtime` composes every plugin a surface runs (a composition root), so it
+   may depend on exactly the 20 plugins it lists today; a 21st fails (moving that composition up into `apps/` is spec 051 T021).
+   `acrylblends-framework` builds `acrylblends/drivers` from the agent panel's Cordis-free `drivers.ts`, so the foundation may depend
+   on exactly `acryl-agent-panel`; any other plugin edge fails.
 
 A Blend repository outside this one depends on published npm packages, never on copied source.
 
@@ -58,6 +63,7 @@ A Blend repository outside this one depends on published npm packages, never on 
 | `acrylblends` (framework/packages/cli) | the framework (`import { Acryl } from 'acrylblends'`) and the `acrylblends` command: add, upgrade, update plugins | depend on any ACRYL package (the frame's packages it names only by their published names, in `frame/packages.json`) |
 | `create-acrylblends` | `npm create acrylblends`: a new app from a template | carry the framework itself (it installs it) |
 | `acryl-router`, `acryl-router-http` | routes and middleware on Web-standard Request/Response; mounting them on the web server | own any product route |
+| the framework's app plugins (`acryl-instance`, `acryl-extensions`, `acryl-agent-panel`, `acryl-desktop-shell`, ...) | the features an app is made with, each one `acrylblends add` copies into `plugins/`: where data lives, extensions, the agent panel, the desktop shell | ship inside ACRYL Desktop; be imported by the foundation (the one named edge above) |
 | `acryl-door` | how an agent in the app folder looks at the running app and acts on it, with approval | decide which tools the agent gets |
 | `acryl-db`, `acryl-kv` (+ their providers) | the storage ports an app plugin injects, and their conformance suites | choose a database for the app |
 | `acryl-state`, `acryl-inspect` | observable state cells; what every running plugin requires and provides | render UI |

@@ -54,9 +54,9 @@ folders, and the layers live only in the dependency graph** that the package.jso
 works" and "code human engineers can understand and reason" about; installed apps do not matter (they are rebuilt and reinstalled).
 
 ```
-framework/   acrylblends: packages/cli, packages/create, frame/, its own app plugins (framework/plugins/), docs, scripts
+framework/   acrylblends: packages/cli, packages/create, frame/ (its library plugins live flat in plugins/, below), docs, scripts
 runtime/     ACRYL's runtime: acryl-control, acryl-harness-runtime, loopback-http, diagnostics, web-service, persistence, plugin hub
-plugins/     every Cordis plugin that is a package: ACRYL's and the Blends frame's (acryl-blends-frame, acryl-versions, acryl-app-context)
+plugins/     every Cordis plugin that is a package: ACRYL's, the Blends frame's (acryl-blends-frame, acryl-versions, acryl-app-context) and the framework library's app plugins
 apps/        what people run: acryl-cli, acryl-desktop, acryl-web, acryl-launcher-tui (and, Phase 4, Control Center and ADE)
 deepseek-harness/   pinned upstream submodule (unchanged)
 ```

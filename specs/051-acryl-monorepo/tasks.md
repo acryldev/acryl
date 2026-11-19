@@ -40,11 +40,12 @@ Folders stay flat and the layers live only in the dependency graph, like earendi
 verify and check:layout and all 23 framework check steps green before it lands.
 
 - [x] T016 [pnpm] Develop with pnpm 12.14.0 (root and framework); the pnpm the app ships to users stays 11.11.0. Done eb96faea.
-- [ ] T017 [flat plugins] Deferred to Phase 3 (T011). Tried 2026-11-19 and undone on purpose: the framework's 32 plugins import each other as siblings
-  (`../acryl-router/...`), exactly as they sit in an app's `plugins/` folder once the CLI copies them in, so they must stay in one folder
-  (`framework/plugins/`). Splitting them broke those imports (typecheck), and the 19 plain ones develop against the framework's own
-  dependencies, which ACRYL's root does not install. They join the flat `plugins/` in Phase 3 (T011), when they become packages that import
-  each other by name.
+- [x] T017 [flat plugins] The framework's 32 plugins moved from `framework/plugins/` into the flat root `plugins/` (branch 051-t017,
+  2026-11-19): the 13 were packages already, the 19 app plugins (`agent`, `instance`, `desktop`, `sandbox`, ...) are now workspace
+  packages (`acryl-agent`, `acryl-instance`, `acryl-desktop-shell`, ...; two names differ where the plain name was taken). They import
+  each other by package name, build to `lib/` with tsdown, and the CLI keeps copying their source into an app's `plugins/` by rewriting
+  those names to relative paths (`copyPlugin` handles both the `src/` packages and the app plugins that keep their files at the folder
+  root). `pnpm-workspace.yaml` is `plugins/*`; `framework/plugins/` is gone.
 - [x] T018 [frame plugins] The Blends frame's three packages (`acryl-blends-frame`, `acryl-versions`, `acryl-app-context`) are Cordis
   plugins, not apps: they move from `framework/ide/` into the flat `plugins/` folder, and `framework/ide/` is gone. Their eight existing DSH
   imports are now counted by ACRYL's guard (ceiling 138 to 146, none new). Done b04eed6c (26 of 26 checks green).
@@ -62,16 +63,20 @@ verify and check:layout and all 23 framework check steps green before it lands.
   composition up into `apps/`.
 - [ ] T022 [decision] Whether ACRYL's agent gets the door's new `reload` and `navigate` as tools (named, not registered today).
 
-- [ ] T024 [guard] Relative imports that cross packages are invisible to the direction guard (examples: the framework package's
-  `../../../plugins/acryl-router/src`, acryl-app-context's tests into `framework/plugins`). Teach the guard to see them, or remove them when
-  the framework's plugins become packages (Phase 3).
+- [x] T024 [guard] The cross-package relative imports are gone (051-t017): `acrylblends-framework` imports `acryl-router` (new `/core`,
+  `/connection`, `/conninfo` subpaths), `acryl-node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
+  `/test-websocket`), `acryl-db/conformance` and `acryl-kv/conformance` by name, with the packages declared; acryl-app-context's tests
+  import `acryl-home` and `acryl-manifest/app-plugins`. The desktop shells load the app's `src/app.ts` by a computed path instead of a
+  relative import out of the package.
 - [x] T025 [row id] Rename the Loader row `acryl-web` to `acryl-web-service` (its package name; the shared-slot exception no longer fits,
   and installed apps are reinstalled). Touches the frame overlay apps get (`ide-profile.ts`).
 - [x] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
   (`ubuntu-24.04-arm`, `macos-26`, `macos-15-intel`) and it does not know `vars`: configure those, then lint all.
-- [ ] T027 [graph] The framework's 17 plain app plugins (agent, desktop, instance, sandbox, ...) are not workspace packages, so the
-  direction guard never sees them. They enter the graph when they become packages (Phase 3, T011); until then the framework's own
-  core-boundary check is what guards them.
+- [x] T027 [graph] The framework's 19 plain app plugins are workspace packages, so the direction guard sees every edge (051-t017). The
+  13 stay FOUNDATION; the 19 are the named `FRAMEWORK_PLUGINS` set with role `plugin` (they depend on the runtime's blends-core and
+  plugin-hub). `verify-layout` fails when a `plugins/*/plugin.json` folder is not a workspace package or has no role, so the library
+  cannot drift out of the graph again. One named foundation edge: `acrylblends-framework` builds `acrylblends/drivers` from the agent
+  panel's `drivers.ts`.
 - [x] T028 [review 2] Second adversarial pass (Fork3, 2026-11-19): the fixes hold, nothing weakened. Fixed: the legacy-layouts check no
   longer turns ACRYL's CI red on every new acrylblends release (inside the monorepo it records releases up to the version it holds);
   framework.yml triggers on every frame input; the docs say roles are named for the foundation and read from the folder for runtime and

@@ -173,10 +173,10 @@ Current groups and what belongs in each:
 - `distribution/` — release/publish shims (`acryl-npm-launcher`), never
   product logic.
 - `framework/` — acrylblends, the framework apps are made with (imported
-  with its history, spec 051): its CLI and create, the frame's release list,
-  and its own app plugins in `framework/plugins/` (they import each other as
-  siblings, as in an app, so they stay together until they become packages).
-  Its packages are the foundation everything else rests on.
+  with its history, spec 051): its CLI and create, and the frame's release
+  list. Its library packages live flat in the root `plugins/` folder beside
+  ACRYL's own (spec 051 T017), importing each other by package name; its
+  packages are the foundation everything else rests on.
 - `deepseek-harness/` (pinned submodule), `docs/`, `specs/`, `scripts/`,
   `patches/`, `assets/` stay at root — they are not workspace packages.
 
