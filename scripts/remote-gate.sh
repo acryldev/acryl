@@ -77,11 +77,11 @@ until "${ssh_[@]}" "test -f $base/runs/$run/DONE"; do
   sleep 60
   if [ $(( $(date +%s) - started )) -gt 10800 ]; then echo "remote-gate: no result after 3 hours; the run is left in $base/runs/$run"; exit 124; fi
 done
-"${scp_[@]}" "$host:_projects/acryl-gates/runs/$run/check.log" "$local_dir/check.log"
+# The log is saved here before the run folder goes; in a worktree `.git` is a file, so the git directory comes from git.
+log="${GATE_LOG:-$(git -C "$repo" rev-parse --absolute-git-dir)/remote-gate-${commit:0:8}.log}"
+"${scp_[@]}" "$host:_projects/acryl-gates/runs/$run/check.log" "$log"
 code=$("${ssh_[@]}" "cat $base/runs/$run/DONE")
 "${ssh_[@]}" "rm -rf $base/runs/$run"
-log="${GATE_LOG:-$repo/.git/remote-gate-${commit:0:8}.log}"
-cp "$local_dir/check.log" "$log"
 tail -n 15 "$log"
 echo "remote-gate: $commit on $host, $(( ($(date +%s) - started) / 60 )) min, full log $log"
 exit "$code"
