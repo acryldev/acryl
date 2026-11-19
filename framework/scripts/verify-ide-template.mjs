@@ -73,8 +73,15 @@ function filesContaining(folder, needle, include = () => true) {
       if (info.isDirectory()) {
         if (!include(`${path}${sep}`)) continue
         walk(path)
-      } else if (info.size < 1024 * 1024 && include(path) && readFileSync(path).includes(needle))
-        found.push(path)
+      } else if (info.size < 1024 * 1024 && include(path)) {
+        let text
+        try {
+          text = readFileSync(path)
+        } catch {
+          continue // the running host can remove a file (its door.json) between the stat and the read
+        }
+        if (text.includes(needle)) found.push(path)
+      }
     }
   }
   walk(folder)
