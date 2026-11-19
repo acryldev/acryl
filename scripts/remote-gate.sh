@@ -52,7 +52,7 @@ export PATH=\$run/bin:\$node/bin:/usr/bin:/bin COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 # bash, as on a CI runner: the account's zsh with an empty HOME opens its first-run wizard inside the terminal tests (zsh-newuser-install).
 export SHELL=/bin/bash
 mkdir -p \$HOME \$run/bin
-# The check's own scripts call a bare `pnpm` (the guard, nested steps): corepack's shims, pinned by the repository's packageManager.
+# The check's own scripts call a bare pnpm (the guard, nested steps): corepack's shims, pinned by the repository's packageManager.
 corepack enable --install-directory \$run/bin pnpm
 code=0
 {
