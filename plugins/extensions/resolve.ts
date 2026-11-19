@@ -78,6 +78,25 @@ export function frameworkSpecifiers(): Record<string, string> {
   return map
 }
 
+/** The framework's plugin copies under an app's plugins/ (their folder is the package's short name, spec 051 T038). */
+const FRAMEWORK_PLUGIN_FOLDERS = new Set([
+  'db',
+  'db-pglite',
+  'db-postgres',
+  'db-sqlite',
+  'door',
+  'inspect',
+  'kv',
+  'kv-db',
+  'kv-json',
+  'node-server',
+  'page',
+  'router',
+  'router-http',
+  'state',
+  'web-server',
+])
+
 export function routerAliases(): Record<string, string> {
   const src = new URL('../acryl-router/src/', import.meta.url)
   const aliases: Record<string, string> = {}
@@ -94,13 +113,17 @@ export function routerAliases(): Record<string, string> {
   // provider of your own for example, imports them by name and gets the very modules the app runs.
   const plugins = new URL('../', import.meta.url)
   for (const folder of readdirSync(fileURLToPath(plugins), { withFileTypes: true })) {
-    if (!folder.isDirectory() || !folder.name.startsWith('acryl-')) continue
+    // The framework's plugin copies are the ones that carry the ports and providers a live-installed plugin imports by package
+    // name (spec 051 T038: the folder is the short name; the package is @acryldev/<short>, and an app's import key stays #acryl-<short>).
+    if (!folder.isDirectory() || !FRAMEWORK_PLUGIN_FOLDERS.has(folder.name)) continue
+    const pkg = `@acryldev/${folder.name}`
+    const key = `#acryl-${folder.name}`
     const entry = fileURLToPath(new URL(`${folder.name}/src/index.ts`, plugins))
     if (!existsSync(entry)) continue
-    // The bare name, and the app's own `#name` (a `package.json` "imports" entry that `acrylblends add` writes): a staged copy lives in the app's home, which may be
+    // The package name, and the app's own `#name` (a `package.json` "imports" entry that `acrylblends add` writes): a staged copy lives in the app's home, which may be
     // outside the app folder, where Node would not find that entry.
-    aliases[folder.name] ??= entry
-    aliases[`#${folder.name}`] = entry
+    aliases[pkg] ??= entry
+    aliases[key] = entry
     // Its other top-level modules by subpath, as its package exports them (`@acryldev/node-server/client-modules`): the door imports one before any extension is installed.
     for (const file of readdirSync(fileURLToPath(new URL(`${folder.name}/src/`, plugins)))) {
       if (
@@ -110,12 +133,12 @@ export function routerAliases(): Record<string, string> {
         file.endsWith('.d.ts')
       )
         continue
-      aliases[`${folder.name}/${file.slice(0, -3)}`] ??= fileURLToPath(
+      aliases[`${pkg}/${file.slice(0, -3)}`] ??= fileURLToPath(
         new URL(`${folder.name}/src/${file}`, plugins),
       )
     }
     const suite = fileURLToPath(new URL(`${folder.name}/src/conformance.ts`, plugins))
-    if (existsSync(suite)) aliases[`#${folder.name}/conformance`] = suite
+    if (existsSync(suite)) aliases[`${key}/conformance`] = suite
   }
   return aliases
 }
