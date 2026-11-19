@@ -37,6 +37,15 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 // auto-managed `minimumReleaseAgeExclude:` list (every currently-resolved
 // package, regenerated on install) after this point, which is pnpm's
 // responsibility to keep correct, not a hand-authored policy this gate owns.
+// The products as Blend apps (spec 051 T013, D5): Control Center and ACRYL ADE live in apps/ with their history, but they are Blends, not
+// workspace packages. Each installs the framework's published packages with npm, exactly as a person's Blend does, and carries the library
+// plugins acrylblends copies into every Blend (plugins/library.lock.json) until those are packages (spec 051 T011). So they are not in
+// pnpm-workspace.yaml, not in the dependency-direction graph, and the source ratchets below (DSH imports, web registrations) do not count
+// their copies. This is a rule, checked here, not an accident of the folder list: a Blend app must have blend.yaml and must not be a
+// workspace package.
+const BLEND_APPS = ['apps/acryl-control-center', 'apps/acryl-ade']
+const inBlendApp = path => BLEND_APPS.some(app => path === app || path.startsWith(`${app}/`))
+
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
@@ -323,7 +332,7 @@ const dshImports = { total: 0, outsideSeam: 0 }
 for (const group of ['runtime', 'apps', 'plugins', 'framework/packages', 'framework/plugins']) {
   for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
     const src = resolve(root, group, entry.name, 'src')
-    if (!entry.isDirectory() || !existsSync(src)) continue
+    if (!entry.isDirectory() || !existsSync(src) || inBlendApp(`${group}/${entry.name}`)) continue
     for (const file of sourceFiles(src)) {
       const count = (readFileSync(file, 'utf8').match(/from '@deepseek-ai\/dsh[^']*'/g) ?? []).length
       if (count === 0) continue
@@ -351,7 +360,7 @@ let webRegistrations = 0
 // The foundation's own folders, by package name (pnpm's list), so a look-alike folder elsewhere is not exempt.
 const foundationFolders = [...readGraph(root)].filter(([name]) => FOUNDATION.has(name)).map(([, { folder }]) => folder)
 for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/plugins', 'framework/packages']).split('\n')) {
-  if (file === '' || NOT_SHIPPED.test(file) || !existsSync(resolve(root, file))) continue
+  if (file === '' || NOT_SHIPPED.test(file) || inBlendApp(file) || !existsSync(resolve(root, file))) continue
   // The framework foundation implements the web layer (acryl-router-http mounts routers on the web server, acryl-page serves the page): the
   // rule is for code that uses it.
   if (foundationFolders.some(folder => file.startsWith(`${folder}/`))) continue
@@ -407,6 +416,11 @@ for (const path of testFiles) {
 // Dependency direction (spec 051, the Pi model): no cycles between workspace packages, and nothing points the wrong way
 // (scripts/dependency-direction.mjs says which rules and why).
 const packageGraph = readGraph(root)
+for (const app of BLEND_APPS) {
+  if (!existsSync(resolve(root, app, 'blend.yaml'))) fail(`${app} is listed as a Blend app but has no blend.yaml`)
+  const asPackage = [...packageGraph].find(([, { folder }]) => folder === app)
+  if (asPackage !== undefined) fail(`${app} is a Blend app (it installs published packages with npm) but pnpm lists it as the workspace package ${asPackage[0]}; take it out of pnpm-workspace.yaml`)
+}
 const cycles = findCycles(packageGraph)
 if (cycles.length > 0) fail(`dependency cycles between workspace packages (each must point one way):\n${cycles.map(cycle => `  ${cycle.join(' -> ')}`).join('\n')}`)
 const unlisted = unlistedFoundation(packageGraph)
