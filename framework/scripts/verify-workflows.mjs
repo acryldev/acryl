@@ -46,21 +46,25 @@ function runScriptFindings(document, name) {
   return found
 }
 
-const lint = await createLinter()
 let findings = 0
-// The framework's own workflows: what is left in framework/.github/workflows (its release, until the cut-over) and, inside ACRYL's monorepo
-// (spec 051), its CI at the repository root, .github/workflows/framework.yml.
-const rootWorkflow = join(workflows, '..', '..', '..', '.github', 'workflows', 'framework.yml')
+// The framework's own workflows: what is left in framework/.github/workflows (its old release, until the cut-over) and, inside ACRYL's monorepo
+// (spec 051), its CI and its release at the repository root, .github/workflows/framework.yml and framework-release.yml.
+const rootWorkflows = ['framework.yml', 'framework-release.yml']
+  .map((name) => join(workflows, '..', '..', '..', '.github', 'workflows', name))
+  .filter((file) => existsSync(file))
 const files = [
   ...readdirSync(workflows)
     .filter((name) => /\.ya?ml$/u.test(name))
     .map((name) => join(workflows, name)),
-  ...(existsSync(rootWorkflow) ? [rootWorkflow] : []),
+  ...rootWorkflows,
 ].sort()
 const names = files.map((file) => basename(file))
 for (const file of files) {
   const name = basename(file)
   const source = readFileSync(file, 'utf8')
+  // A fresh linter per file: actionlint's wasm build reuses its memory between calls and throws "offset is out of bounds" once the
+  // files it has read add up past its first allocation (found when a fourth workflow joined the list, spec 051 T032).
+  const lint = await createLinter()
   for (const result of lint(source, name)) {
     findings += 1
     console.error(

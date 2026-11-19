@@ -1,0 +1,99 @@
+name: Framework release
+
+# The framework's npm releases, from the monorepo (spec 051 T032). GitHub runs only the root .github/, so framework/.github/workflows/release.yml
+# no longer runs here; this is its successor. A pushed tag publishes the one package it names, with npm trusted publishing (no token anywhere):
+#   acrylblends-v<version>           acrylblends (framework/packages/cli)
+#   create-acrylblends-v<version>    create-acrylblends (framework/packages/create)
+#   frame-<short>-v<version>         @acrylblends/<short>, a frame package (framework/frame/packages.json names its folder and version)
+# None of these starts with `v`, so release-cli.yml (acryl's own `v*`) never fires on them, nor this one on its tags.
+# Run by hand (workflow_dispatch) it does everything except `npm publish`, so the whole path can be tried at any time.
+on:
+  push:
+    tags: ['acrylblends-v*', 'create-acrylblends-v*', 'frame-*-v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag a release would push (e.g. acrylblends-v1.5.22, frame-app-shell-v0.1.2); the dry run checks and packs it
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      # Every tag: the framework check's legacy-layouts step rebuilds each published release from its acrylblends-v* tag.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - id: which
+        name: Which package, and does the tag match its version
+        env:
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: node framework/scripts/release-tag.mjs "$TAG" >> "$GITHUB_OUTPUT"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check:framework
+      - name: Pack the CLI or the scaffolder (pnpm pack turns workspace ranges into real ones)
+        if: steps.which.outputs.kind != 'frame'
+        run: |
+          mkdir -p "$RUNNER_TEMP/pack"
+          pnpm --dir "${{ steps.which.outputs.dir }}" pack --pack-destination "$RUNNER_TEMP/pack"
+      # A frame package publishes the tarball the frame's publish gate packed and booted with every other frame package, not a second pack.
+      - name: Pack every frame package, boot a fresh app from them, keep the tagged one
+        if: steps.which.outputs.kind == 'frame'
+        run: |
+          pnpm --dir framework run build:frame
+          pnpm --dir framework run verify:frame-publish -- --out "$RUNNER_TEMP/all"
+          mkdir -p "$RUNNER_TEMP/pack"
+          cp "$RUNNER_TEMP/all/${{ steps.which.outputs.tarball }}" "$RUNNER_TEMP/pack/"
+      - name: Exactly one tarball, the tagged package and version
+        run: |
+          ls "$RUNNER_TEMP/pack"
+          test "$(ls "$RUNNER_TEMP/pack" | wc -l)" -eq 1
+          cp "$RUNNER_TEMP"/pack/*.tgz "$GITHUB_WORKSPACE/"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: tarball
+          path: '*.tgz'
+          if-no-files-found: error
+      - name: Dry run of npm publish (no credentials needed)
+        run: |
+          # On a version already on npm (a dry run of the current release) npm refuses only because of that; every other refusal fails the run.
+          if ! npm publish ./*.tgz --access public --dry-run 2> "$RUNNER_TEMP/dry.log"; then
+            cat "$RUNNER_TEMP/dry.log"
+            grep -q "cannot publish over the previously published" "$RUNNER_TEMP/dry.log" && echo "dry run: the packed version is already on npm; the tarball itself was accepted" || exit 1
+          fi
+
+  publish:
+    # Only a pushed tag reaches this job, and only after the owner approves the `npm-release` environment.
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write # lets the job ask GitHub for the OIDC token npm exchanges for a publish credential
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: tarball
+      - name: Publish the tarball that passed the checks, with provenance
+        run: |
+          npm --version
+          npm publish ./*.tgz --access public --provenance

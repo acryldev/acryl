@@ -20,6 +20,7 @@
     "verify:core-boundary": "node scripts/verify-core-boundary.mjs",
     "try": "node scripts/try-from-checkout.mjs",
     "verify:ide-host": "node --import ./scripts/workspace-source.mjs scripts/verify-ide-host.mjs",
+    "build:frame": "node scripts/build-frame.mjs",
     "verify:frame-publish": "node --import ./scripts/workspace-source.mjs scripts/verify-frame-publish.mjs",
     "verify:ide-template": "node --import ./scripts/workspace-source.mjs scripts/verify-ide-template.mjs blank",
     "check": "pnpm run lint && pnpm run verify:workflows && pnpm run build && pnpm run verify:framework && pnpm run verify:secrets && pnpm run typecheck && pnpm run typecheck:packages && pnpm run test && pnpm run verify:scaffolder && pnpm run verify:core-boundary && pnpm run verify:ide-host && pnpm run verify:ide-template && pnpm run verify:legacy-layouts && pnpm run verify:upgrade-frame && pnpm run verify:byo && pnpm run verify:panel && pnpm run verify:door && pnpm run verify:dev-install && pnpm run verify:production && pnpm run verify:driver-pty && pnpm run verify:packed && pnpm run verify:tarball && pnpm run verify:vitest-peer",

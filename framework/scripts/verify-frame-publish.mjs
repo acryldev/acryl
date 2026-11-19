@@ -3,7 +3,10 @@
 // contents check, the peer rule, and a fresh app installed from those tarballs that boots the frame. Dry run only: this script never publishes and never
 // logs in; publishing is the owner's step once the npm org named in frame/packages.json exists.
 //
-//   node --import ./scripts/workspace-source.mjs scripts/verify-frame-publish.mjs [--skip-tests] [--only <short>] [--keep]
+//   node --import ./scripts/workspace-source.mjs scripts/verify-frame-publish.mjs [--skip-tests] [--only <short>] [--keep] [--out <dir>]
+//
+// --out copies each packed tarball into <dir>: the release workflow (.github/workflows/framework-release.yml) publishes exactly the tarball
+// this script checked, not a second pack of the source (the published one carries rewritten names a plain `npm pack` would not).
 //
 // The package names come from frame/packages.json, one `scope` value plus each folder's short name, so a naming decision is a one-line change there.
 import './lib/scratch-home.mjs'
@@ -19,7 +22,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FRAME_PACKAGES } from '../packages/cli/src/ide-profile.ts'
 import { frameFolders } from './lib/frame-folders.mjs'
@@ -66,6 +69,10 @@ const skipTests = argv.includes('--skip-tests')
 const keep = argv.includes('--keep')
 const onlyAt = argv.indexOf('--only')
 const only = onlyAt === -1 ? undefined : argv[onlyAt + 1]
+const outAt = argv.indexOf('--out')
+const out = outAt === -1 ? undefined : argv[outAt + 1]
+if (outAt !== -1 && (out === undefined || out.startsWith('--')))
+  fail('--out needs a folder, e.g. --out "$RUNNER_TEMP/pack"')
 const selected = folders.filter((folder) => only === undefined || shortOf[folder] === only)
 if (selected.length === 0) fail(`--only ${String(only)} matches no package in frame/packages.json`)
 
@@ -351,6 +358,10 @@ try {
     const tested = skipTests ? 'tests skipped (--skip-tests)' : test(path)
     const result = pack(folder)
     packed.push({ folder, ...result })
+    if (out !== undefined) {
+      mkdirSync(out, { recursive: true })
+      cpSync(result.tarball, join(resolve(out), basename(result.tarball)))
+    }
     log(
       `${published.get(folder)} ${result.manifest.version}: ${tested}, packed ${String(result.entries.length)} files`,
     )
