@@ -135,8 +135,11 @@ verify and check:layout and all 23 framework check steps green before it lands.
   workflow's publish step 404s because nothing is configured on npm's side) and move publishing into the workflows.
 ## Phase 3 - packages, not copies
 
-- [ ] T010 [launcher] acryl's `plugins/acryl-launcher` is published as a package; Control Center depends on it and its
-  `launcher-lib/` hand copy (8 files) is deleted.
+- [x] T010 [launcher] acryl's `plugins/acryl-launcher` is published as a package; Control Center depends on it and its
+  `launcher-lib/` hand copy (8 files) is deleted. Done 2026-11-19: renamed to `@acryldev/control-center` (64ae202f, owner chose the
+  @acryldev scope; also fixed the root filter that matched no package, so its 24 tests now run), published 0.1.0 by webboxescom with the
+  owner's go, installed and imported from npm (29 exports); Control Center depends on it (a4c20622), proven by an npm install of the app,
+  its typecheck and tests, and its host's launcher routes answering 200.
 - [ ] T011 [desktop, instance] The desktop shell and the instance become packages; `acrylblends upgrade desktop` moves an app from the copied
   folder to the package once; ADE and Control Center switch.
 
