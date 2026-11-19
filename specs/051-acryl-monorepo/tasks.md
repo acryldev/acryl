@@ -122,13 +122,17 @@ verify and check:layout and all 23 framework check steps green before it lands.
   @acrylblends/system-prompt 0.2.0, @acrylblends/control 0.2.11. Apps made from main cannot install them until published (the gate takes
   them from local tarballs since ef386bca). The published create (1.5.21) is unaffected. Publish through framework-release.yml once the
   owner says go.
-- [ ] T036 [npm scope, owner decision 2026-11-19, AFTER the workshop] One scope: every frame package moves from `@acrylblends/*` to
-  `@acryl/*` with plain names (`@acryl/web`, `@acryl/system-prompt`, `@acryl/control`, `@acryl/settings`, `@acryl/workspace`,
-  `@acryl/sign-in`); `@acryl/blends-frame` is the only `blends-` name; `acrylblends`, `create-acrylblends` and `acryl` stay unscoped.
-  T011's packages go straight to `@acryl/desktop-shell`, `@acryl/instance`, `@acryl/node-server` (nothing new under `@acrylblends/`).
-  First: the owner confirms the `@acryl` org on npm is theirs (npm's site refuses automated checks). One release: publish `@acryl/*`
-  at the same versions, `acrylblends upgrade` rewrites an app's package.json and generated overlay, then deprecate `@acrylblends/*`.
-
+- [ ] T036 [npm scope, owner decision 2026-11-19, AFTER the workshop] One scope: `@acryldev/*` (the npm org `@acryl` belongs to an
+  unrelated project since 2019, checked by the owner). Plain names, one name per package everywhere (folder `plugins/web`, package and
+  import `@acryldev/web`): `@acryldev/web`, `system-prompt`, `control`, `settings`, `workspace`, `sign-in`, `app-shell`, `ui`, `versions`,
+  ... and `@acryldev/blends-frame` the only `blends-` name. T011's packages go straight to `@acryldev/desktop-shell`, `instance`,
+  `node-server`. What people type stays unscoped: `acryl`, `acrylblends`, `create-acrylblends`. First: the npm user `acryldev` is
+  converted to an org (owner `musichen`, members incl. `webboxescom`) or gets its own publish token - a user scope accepts no other
+  publisher. One release: publish `@acryldev/*` at the same versions, `acrylblends upgrade` rewrites an app's package.json and
+  generated overlay, then deprecate `@acrylblends/*`. Open: row ids = short names (CLAUDE.md row-id rule change, owner decides).
+- [ ] T037 [npm, deadline 2027-01] npm stops direct publishing with 2FA-bypass tokens in January 2027 (banner on npmjs.com, seen
+  2026-11-19); every release here uses one. Set up npm trusted publishing for each package (GitHub Actions OIDC; today the release
+  workflow's publish step 404s because nothing is configured on npm's side) and move publishing into the workflows.
 ## Phase 3 - packages, not copies
 
 - [ ] T010 [launcher] acryl's `plugins/acryl-launcher` is published as a package; Control Center depends on it and its
