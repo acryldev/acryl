@@ -3,7 +3,7 @@
 #   scripts/remote-gate.sh <commit, branch or tag>        e.g. scripts/remote-gate.sh HEAD   |   scripts/remote-gate.sh 051-t021
 # The commit need not be pushed: it travels as a `git bundle` made here, so a branch is checked before it is pushed (gate, then push).
 # On z370n each run gets its own folder (the clone and an empty HOME) under ~/_projects/acryl-gates/runs, runs at nice 19 with a portable
-# Node 24 and the repository's own pnpm (corepack), and is deleted afterwards; the log comes back here. At most two runs at once there.
+# Node 24 and the repository's own pnpm (corepack), and is deleted afterwards; the log comes back here. At most three runs at once there (16 threads, 62 GB).
 # The pnpm store (content-addressed, so safe to share) stays in ~/_projects/acryl-gates/pnpm-store: a run downloads only what is new.
 # Prints the run's last lines and ends with `GATE_EXIT=<code>` (0 = green), the pass line a gate report quotes; exits with that code.
 # GATE_HOST=user@host and GATE_KEY=<ssh key> point it at another machine.
@@ -36,7 +36,7 @@ git -C "$repo" branch -D "gate/$run" >/dev/null
 set -eu
 base=\$HOME/_projects/acryl-gates; run=\$base/runs/$run
 running=\$(ls \$base/runs/*/RUNNING 2>/dev/null | wc -l)
-if [ "\$running" -ge 2 ]; then echo "remote-gate: two runs are already going on this machine; try again later"; rm -rf "\$run"; exit 75; fi
+if [ "\$running" -ge 3 ]; then echo "remote-gate: three runs are already going on this machine; try again later"; rm -rf "\$run"; exit 75; fi
 # Node once per machine, in the gates folder (the system's Node is older than ACRYL needs).
 node=\$base/node-$node_version-linux-x64
 if [ ! -x \$node/bin/node ]; then
