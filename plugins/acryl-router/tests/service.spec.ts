@@ -34,9 +34,10 @@ function root(): Context {
 const provider = { name, apply }
 const config: Config = { trailingSlash: 'strict', disposeGraceMs: 2000 }
 
-async function mountRouter(): Promise<{ ctx: Context, router: Router }> {
+/** A router with the shared config, with fields a test needs to bound (a short disposal grace) overridden. */
+async function mountRouter(overrides: Partial<Config> = {}): Promise<{ ctx: Context, router: Router }> {
   const ctx = root()
-  ctx.plugin(provider, config)
+  ctx.plugin(provider, { ...config, ...overrides })
   await settle()
   return { ctx, router: ctx.router }
 }
@@ -343,7 +344,9 @@ describe('acryl-router lifecycle through Cordis', () => {
 
   it('ends a server-sent-event stream when the router is disposed: the stream\'s abort cleanup runs and the reader sees the end', async () => {
     const ctx = root()
-    const fiber = ctx.plugin(provider, config)
+    // A stream never settles on its own: the disposal grace is dead time here, and its default two seconds made the test's budget depend on machine
+    // load (it failed inside a loaded full workspace run). The abort path is the subject, so the grace is short.
+    const fiber = ctx.plugin(provider, { ...config, disposeGraceMs: 100 })
     await settle()
     let cleaned = false
     ctx.router.route('/', new Acryl().get('/events', c => streamSSE(c, async stream => {
@@ -359,10 +362,11 @@ describe('acryl-router lifecycle through Cordis', () => {
     await fiber.dispose()
     expect(cleaned).toBe(true)
     await expect(reader.read()).resolves.toMatchObject({ done: true })
-  })
+  }, 15_000)
 
   it('ends the stream a plugin opened when that plugin unloads, and leaves another plugin\'s request running', async () => {
-    const { ctx, router } = await mountRouter()
+    // The stream never settles on its own; a short grace keeps the test about the abort path, not about a two-second timer under load.
+    const { ctx, router } = await mountRouter({ disposeGraceMs: 100 })
     let cleaned = false
     let otherAborted = false
     let release!: () => void
@@ -401,7 +405,7 @@ describe('acryl-router lifecycle through Cordis', () => {
     expect(otherAborted).toBe(false)
     release()
     expect(await (await slow).text()).toBe('done')
-  })
+  }, 15_000)
 
   it('aborts a request still inside an unloading plugin\'s middleware, but not one that middleware already passed on', async () => {
     const { ctx, router } = await mountRouter()
