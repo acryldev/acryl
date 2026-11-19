@@ -1,5 +1,4 @@
 import { describeDbConformance } from '@acryldev/db/conformance'
-import * as vitest from 'vitest'
 import { afterAll, beforeAll } from 'vitest'
 import { openDb } from '../src/open.ts'
 import { startTestServer, type TestServer } from './server.ts'
@@ -9,4 +8,4 @@ let server: TestServer
 beforeAll(async () => { server = await startTestServer() })
 afterAll(async () => { await server.stop() })
 
-describeDbConformance('@acryldev/db-postgres', async () => openDb({ url: await server.fresh() }), vitest)
+describeDbConformance('@acryldev/db-postgres', async () => openDb({ url: await server.fresh() }))
