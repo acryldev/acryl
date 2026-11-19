@@ -81,15 +81,31 @@ function main(argv) {
       current.kill('SIGTERM')
     })
   let timer
+  // One restart at a time: a burst that settles while a host is still stopping (up to GRACE_MS) is checked again after that restart, never in
+  // parallel with it, which would start two hosts on one port.
+  let busy = false
+  let again = false
   const check = async () => {
-    const next = snapshot(paths)
-    if (!changed(files, next)) return
-    files = next
-    restarting = true
-    console.log(`Restarting '${script}'`)
-    await stopChild()
-    restarting = false
-    start()
+    if (busy) {
+      again = true
+      return
+    }
+    busy = true
+    try {
+      do {
+        again = false
+        const next = snapshot(paths)
+        if (!changed(files, next)) continue
+        files = next
+        restarting = true
+        console.log(`Restarting '${script}'`)
+        await stopChild()
+        restarting = false
+        start()
+      } while (again)
+    } finally {
+      busy = false
+    }
   }
   for (const path of paths) {
     let recursive

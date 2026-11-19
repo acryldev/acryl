@@ -76,3 +76,40 @@ test('the watcher restarts the host once for one real edit, and never for an acc
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('edits that land while a slow host is still stopping never leave two hosts running', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'watch-host-slow-'))
+  const blend = join(dir, 'blend.yaml')
+  const host = join(dir, 'host.mjs')
+  const events = join(dir, 'events.log')
+  writeFileSync(blend, 'rows: []\n')
+  writeFileSync(events, '')
+  // A host that takes a second to end on SIGTERM, as a server closing its sockets does; it logs its start and its end.
+  writeFileSync(
+    host,
+    `import { appendFileSync } from 'node:fs'\nconst log = (what) => appendFileSync(${JSON.stringify(events)}, what + ' ' + process.pid + '\\n')\nlog('start')\nprocess.on('SIGTERM', () => setTimeout(() => { log('end'); process.exit(0) }, 1_000))\nsetInterval(() => {}, 1_000_000)\n`,
+  )
+  const watcher = spawn(process.execPath, [WATCH_HOST, `--watch-path=${blend}`, '--', host], {
+    stdio: 'ignore',
+  })
+  const lines = () =>
+    readFileSync(events, 'utf8')
+      .split('\n')
+      .filter((line) => line !== '')
+  const alive = () =>
+    lines().filter((l) => l.startsWith('start')).length -
+    lines().filter((l) => l.startsWith('end')).length
+  try {
+    for (let i = 0; i < 50 && lines().length === 0; i += 1) await sleep(100)
+    writeFileSync(blend, 'rows: [one]\n')
+    await sleep(300)
+    writeFileSync(blend, 'rows: [one, two]\n')
+    // The first restart waits a second for the old host; the second edit is checked after it, not beside it.
+    await sleep(4_000)
+    assert.equal(alive(), 1, `hosts running: ${lines().join(', ')}`)
+  } finally {
+    watcher.kill('SIGTERM')
+    await new Promise((done) => watcher.once('exit', done))
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
