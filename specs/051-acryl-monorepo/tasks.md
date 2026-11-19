@@ -177,3 +177,8 @@ verify and check:layout and all 23 framework check steps green before it lands.
   No tag yet: both entries stay byte-identical (first live deploy 2026-11-19 logged that for both). The download path first runs at the first tag.
 - [ ] T015 [cut-over] acrylblends/acrylblends: README and description point to `acryldev/acryl/tree/main/framework`; then a read-only mirror
   filled by `git subtree split`, or archived; open issues transferred; npm `repository` fields name `acryldev/acryl` with `directory`.
+- [ ] T039 [gates, Windows] `framework/scripts/verify-packed.mjs` cannot run on Windows: it starts `npm` (and `pnpm`) through `execFileSync`
+  without a shell, and on Windows those are `.cmd` files Node only starts through one (`spawnSync npm ENOENT`, seen on mbpi9win 2026-11-19 from
+  main ca369d52 with pnpm 12.14.0). CI does not see it because `verify:packed` runs only inside framework's `check` (Linux, macOS); the Windows
+  job runs `verify:create`, which already passes `shell: true` for `.cmd` tools. Fix the same way as verify-create-npm.mjs (`shell: isWindows`),
+  then run it on mbpi9win. Not a 1.6.0 blocker.
