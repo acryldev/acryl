@@ -4,10 +4,10 @@
  *   import * as vitest from 'vitest'
  *   describeDbConformance('my-provider', open, vitest)
  */
-import { describeDbConformance as suite } from '../../../plugins/acryl-db/src/conformance.ts'
+import { describeDbConformance as suite } from 'acryl-db/conformance'
 import { bind, type VitestApi } from './vitest-binding.ts'
 
-export type { DbUnderTest } from '../../../plugins/acryl-db/src/conformance.ts'
+export type { DbUnderTest } from 'acryl-db/conformance'
 export type { VitestApi }
 
 export function describeDbConformance(

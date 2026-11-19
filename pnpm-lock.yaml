@@ -190,6 +190,9 @@ importers:
 
   .:
     devDependencies:
+      '@biomejs/biome':
+        specifier: 2.5.15
+        version: 2.5.15
       '@types/react':
         specifier: 18.3.31
         version: 18.3.31
@@ -2239,6 +2242,12 @@ importers:
       '@whatwg-node/fetch':
         specifier: 0.9.23
         version: 0.9.23
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../plugins/extensions
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../plugins/instance
       actionlint:
         specifier: 2.0.6
         version: 2.0.6
@@ -2332,440 +2341,48 @@ importers:
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1
-      acryl-router:
+      acryl-agent-panel:
         specifier: workspace:*
-        version: link:../../plugins/acryl-router
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-
-  framework/plugins/acryl-db:
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-db-sqlite:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ~3.18.4
-        version: 3.18.4
+        version: link:../../../plugins/agent-panel
       acryl-db:
         specifier: workspace:*
-        version: link:../acryl-db
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-door:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ~3.18.4
-        version: 3.18.4
-      acryl-node-server:
-        specifier: workspace:*
-        version: link:../acryl-node-server
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@deepseek-ai/dsh-host-webserver':
-        specifier: 0.2.0-rc.2
-        version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(supports-color@7.2.0)
-      '@types/jsdom':
-        specifier: 21.1.7
-        version: 21.1.7
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      acryl-router-http:
-        specifier: workspace:*
-        version: link:../acryl-router-http
-      acryl-web-server:
-        specifier: workspace:*
-        version: link:../acryl-web-server
-      jsdom:
-        specifier: 29.1.1
-        version: 29.1.1(@noble/hashes@2.3.0)
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-inspect:
-    dependencies:
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-kv:
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-kv-db:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ~3.18.4
-        version: 3.18.4
-      acryl-db:
-        specifier: workspace:*
-        version: link:../acryl-db
-      acryl-kv:
-        specifier: workspace:*
-        version: link:../acryl-kv
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
+        version: link:../../../plugins/acryl-db
       acryl-db-sqlite:
         specifier: workspace:*
-        version: link:../acryl-db-sqlite
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-kv-json:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ~3.18.4
-        version: 3.18.4
+        version: link:../../../plugins/acryl-db-sqlite
+      acryl-door:
+        specifier: workspace:*
+        version: link:../../../plugins/acryl-door
+      acryl-inspect:
+        specifier: workspace:*
+        version: link:../../../plugins/acryl-inspect
       acryl-kv:
         specifier: workspace:*
-        version: link:../acryl-kv
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-node-server:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ~3.18.4
-        version: 3.18.4
-      acryl-router:
+        version: link:../../../plugins/acryl-kv
+      acryl-kv-db:
         specifier: workspace:*
-        version: link:../acryl-router
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      '@types/ws':
-        specifier: 8.18.2
-        version: 8.18.2
-      '@whatwg-node/fetch':
-        specifier: 0.9.23
-        version: 0.9.23
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-      ws:
-        specifier: 8.21.3
-        version: 8.21.3
-
-  framework/plugins/acryl-page:
-    dependencies:
-      acryl-web-server:
+        version: link:../../../plugins/acryl-kv-db
+      acryl-kv-json:
         specifier: workspace:*
-        version: link:../acryl-web-server
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/dsh-web-frontend':
-        specifier: 0.2.0-rc.2
-        version: 0.2.0-rc.2
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
+        version: link:../../../plugins/acryl-kv-json
       acryl-node-server:
         specifier: workspace:*
-        version: link:../acryl-node-server
+        version: link:../../../plugins/acryl-node-server
       acryl-router:
         specifier: workspace:*
-        version: link:../acryl-router
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/plugins/acryl-router:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: ~3.18.4
-        version: 3.18.4
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/cordis-plugin-loader':
-        specifier: 1.0.5
-        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
-      '@types/jsdom':
-        specifier: 21.1.7
-        version: 21.1.7
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      jsdom:
-        specifier: 22.1.0
-        version: 22.1.0(supports-color@7.2.0)
-      msw:
-        specifier: 2.15.0
-        version: 2.15.0(@types/node@22.20.1)(typescript@6.0.3)
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@22.1.0(supports-color@7.2.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-      zod:
-        specifier: 3.25.76
-        version: 3.25.76
-
-  framework/plugins/acryl-router-http:
-    dependencies:
-      acryl-node-server:
-        specifier: workspace:*
-        version: link:../acryl-node-server
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@deepseek-ai/dsh-host-webserver':
-        specifier: 0.2.0-rc.2
-        version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(supports-color@7.2.0)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      '@types/ws':
-        specifier: 8.18.2
-        version: 8.18.2
-      acryl-state:
-        specifier: workspace:*
-        version: link:../acryl-state
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-      ws:
-        specifier: 8.21.3
-        version: 8.21.3
-
-  framework/plugins/acryl-state:
-    dependencies:
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@testing-library/dom':
-        specifier: ^10.4.1
-        version: 10.4.1
-      '@testing-library/react':
-        specifier: ^16.3.2
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      '@types/react':
-        specifier: ^18
-        version: 18.3.31
-      '@types/react-dom':
-        specifier: ^18
-        version: 18.3.7(@types/react@18.3.31)
-      '@types/ws':
-        specifier: 8.18.2
-        version: 8.18.2
-      acryl-node-server:
-        specifier: workspace:*
-        version: link:../acryl-node-server
-      jsdom:
-        specifier: 29.1.1
-        version: 29.1.1(@noble/hashes@2.3.0)
-      react:
-        specifier: 18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: 18.3.1
-        version: 18.3.1(react@18.3.1)
-      tsdown:
-        specifier: 0.22.2
-        version: 0.22.2(typescript@6.0.3)
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-      ws:
-        specifier: 8.21.3
-        version: 8.21.3
-
-  framework/plugins/acryl-web-server:
-    dependencies:
-      acryl-node-server:
-        specifier: workspace:*
-        version: link:../acryl-node-server
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: 4.0.4
-        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
-      '@types/node':
-        specifier: ^22.20.0
-        version: 22.20.1
-      '@types/ws':
-        specifier: 8.18.2
-        version: 8.18.2
-      acryl-router:
-        specifier: workspace:*
-        version: link:../acryl-router
+        version: link:../../../plugins/acryl-router
       acryl-router-http:
         specifier: workspace:*
-        version: link:../acryl-router-http
+        version: link:../../../plugins/acryl-router-http
+      acryl-state:
+        specifier: workspace:*
+        version: link:../../../plugins/acryl-state
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
-      vitest:
-        specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
-      ws:
-        specifier: 8.21.3
-        version: 8.21.3
 
   plugins/acryl-agent-control:
     dependencies:
@@ -2842,9 +2459,15 @@ importers:
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
+      acryl-home:
+        specifier: workspace:*
+        version: link:../home
+      acryl-manifest:
+        specifier: workspace:*
+        version: link:../manifest
       acryl-router:
         specifier: workspace:*
-        version: link:../../framework/plugins/acryl-router
+        version: link:../acryl-router
       acrylblends:
         specifier: workspace:*
         version: link:../../framework/packages/cli
@@ -3047,6 +2670,24 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
+  plugins/acryl-db:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
   plugins/acryl-db-pglite:
     dependencies:
       '@deepseek-ai/schemastery':
@@ -3111,6 +2752,191 @@ importers:
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-db-sqlite:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+      acryl-db:
+        specifier: workspace:*
+        version: link:../acryl-db
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-door:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@deepseek-ai/dsh-host-webserver':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(supports-color@7.2.0)
+      '@types/jsdom':
+        specifier: 21.1.7
+        version: 21.1.7
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/ws':
+        specifier: 8.18.2
+        version: 8.18.2
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../acryl-router-http
+      acryl-web-server:
+        specifier: workspace:*
+        version: link:../acryl-web-server
+      jsdom:
+        specifier: 29.1.1
+        version: 29.1.1(@noble/hashes@2.3.0)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
+
+  plugins/acryl-inspect:
+    dependencies:
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-kv:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-kv-db:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+      acryl-db:
+        specifier: workspace:*
+        version: link:../acryl-db
+      acryl-kv:
+        specifier: workspace:*
+        version: link:../acryl-kv
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-db-sqlite:
+        specifier: workspace:*
+        version: link:../acryl-db-sqlite
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-kv-json:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+      acryl-kv:
+        specifier: workspace:*
+        version: link:../acryl-kv
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
@@ -3211,6 +3037,74 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-node-server:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/ws':
+        specifier: 8.18.2
+        version: 8.18.2
+      '@whatwg-node/fetch':
+        specifier: 0.9.23
+        version: 0.9.23
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
+
+  plugins/acryl-page:
+    dependencies:
+      acryl-web-server:
+        specifier: workspace:*
+        version: link:../acryl-web-server
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/dsh-web-frontend':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
       tsdown:
         specifier: 0.22.2
         version: 0.22.2(typescript@6.0.3)
@@ -3330,6 +3224,80 @@ importers:
       '@webboxes/plugin-hub':
         specifier: workspace:*
         version: link:../../runtime/plugin-hub
+
+  plugins/acryl-router:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: ~3.18.4
+        version: 3.18.4
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/cordis-plugin-loader':
+        specifier: 1.0.5
+        version: 1.0.5(patch_hash=c1562b88bd2389606e44e9420bfaeff4beca379deff5e0a0ce07b833f093230d)(@deepseek-ai/cordis@4.0.4)
+      '@types/jsdom':
+        specifier: 21.1.7
+        version: 21.1.7
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      jsdom:
+        specifier: 22.1.0
+        version: 22.1.0(supports-color@7.2.0)
+      msw:
+        specifier: 2.15.0
+        version: 2.15.0(@types/node@22.20.1)(typescript@6.0.3)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@22.1.0(supports-color@7.2.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
+
+  plugins/acryl-router-http:
+    dependencies:
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@deepseek-ai/dsh-host-webserver':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(supports-color@7.2.0)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/ws':
+        specifier: 8.18.2
+        version: 8.18.2
+      acryl-state:
+        specifier: workspace:*
+        version: link:../acryl-state
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
 
   plugins/acryl-settings:
     dependencies:
@@ -3459,6 +3427,58 @@ importers:
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/acryl-state:
+    dependencies:
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@testing-library/dom':
+        specifier: ^10.4.1
+        version: 10.4.1
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^18
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18
+        version: 18.3.7(@types/react@18.3.31)
+      '@types/ws':
+        specifier: 8.18.2
+        version: 8.18.2
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      jsdom:
+        specifier: 29.1.1
+        version: 29.1.1(@noble/hashes@2.3.0)
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
 
   plugins/acryl-support:
     dependencies:
@@ -3698,6 +3718,40 @@ importers:
         specifier: 5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@24.13.3)(typescript@6.0.3))(vite@8.2.4(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0))
 
+  plugins/acryl-web-server:
+    dependencies:
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/ws':
+        specifier: 8.18.2
+        version: 8.18.2
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      acryl-router-http:
+        specifier: workspace:*
+        version: link:../acryl-router-http
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
+
   plugins/acryl-workspace:
     dependencies:
       '@acryl/ui':
@@ -3821,6 +3875,101 @@ importers:
       vitest:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
+
+  plugins/agent:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/agent-panel:
+    dependencies:
+      acryl-agent:
+        specifier: workspace:*
+        version: link:../agent
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../extensions
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/jsdom':
+        specifier: 30.0.0
+        version: 30.0.0
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@types/ws':
+        specifier: 8.18.2
+        version: 8.18.2
+      acryl-state:
+        specifier: workspace:*
+        version: link:../acryl-state
+      jsdom:
+        specifier: 29.1.1
+        version: 29.1.1(@noble/hashes@2.3.0)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
+
+  plugins/builder:
+    dependencies:
+      '@webboxes/blends-core':
+        specifier: 0.5.0
+        version: 0.5.0
+      '@webboxes/plugin-hub':
+        specifier: 0.2.2
+        version: 0.2.2
+      acryl-agent:
+        specifier: workspace:*
+        version: link:../agent
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../extensions
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-plugin-share:
+        specifier: workspace:*
+        version: link:../plugin-share
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
   plugins/cordis-plugin-market:
     dependencies:
@@ -4012,6 +4161,142 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
+  plugins/desktop:
+    dependencies:
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      electron:
+        specifier: 44.9.3
+        version: 44.9.3(supports-color@7.2.0)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/desktop-web:
+    dependencies:
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acrylblends:
+        specifier: workspace:*
+        version: link:../../framework/packages/cli
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      electron:
+        specifier: 44.9.3
+        version: 44.9.3(supports-color@7.2.0)
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/driver-acp:
+    dependencies:
+      acryl-agent-panel:
+        specifier: workspace:*
+        version: link:../agent-panel
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-agent:
+        specifier: workspace:*
+        version: link:../agent
+      acryl-builder:
+        specifier: workspace:*
+        version: link:../builder
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../extensions
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      acryl-state:
+        specifier: workspace:*
+        version: link:../acryl-state
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/driver-pty:
+    dependencies:
+      acryl-agent-panel:
+        specifier: workspace:*
+        version: link:../agent-panel
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../extensions
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      node-pty:
+        specifier: 1.2.0-beta.15
+        version: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-agent:
+        specifier: workspace:*
+        version: link:../agent
+      acryl-builder:
+        specifier: workspace:*
+        version: link:../builder
+      acryl-door:
+        specifier: workspace:*
+        version: link:../acryl-door
+      acryl-state:
+        specifier: workspace:*
+        version: link:../acryl-state
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
   plugins/dsh-client-ui-brand-acryl:
     devDependencies:
       '@deepseek-ai/cordis':
@@ -4058,6 +4343,306 @@ importers:
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
   plugins/dsh-community-fabric: {}
+
+  plugins/extensions:
+    dependencies:
+      '@webboxes/blends-core':
+        specifier: 0.5.0
+        version: 0.5.0
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-sandbox:
+        specifier: workspace:*
+        version: link:../sandbox
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-agent:
+        specifier: workspace:*
+        version: link:../agent
+      acryl-home:
+        specifier: workspace:*
+        version: link:../home
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/feedback:
+    dependencies:
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/home:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/instance:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-node-server:
+        specifier: workspace:*
+        version: link:../acryl-node-server
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+
+  plugins/manifest:
+    dependencies:
+      '@webboxes/blends-core':
+        specifier: 0.5.0
+        version: 0.5.0
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/openai:
+    dependencies:
+      acryl-agent:
+        specifier: workspace:*
+        version: link:../agent
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/plugin-share:
+    dependencies:
+      '@webboxes/app-persistence':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@webboxes/blends-core':
+        specifier: 0.5.0
+        version: 0.5.0
+      '@webboxes/plugin-hub':
+        specifier: 0.2.2
+        version: 0.2.2
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../extensions
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      acryl-manifest:
+        specifier: workspace:*
+        version: link:../manifest
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/sandbox:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/save:
+    dependencies:
+      '@webboxes/app-persistence':
+        specifier: 0.1.2
+        version: 0.1.2
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/settings:
+    dependencies:
+      '@deepseek-ai/schemastery':
+        specifier: 3.18.4
+        version: 3.18.4
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/showcase:
+    dependencies:
+      acryl-extensions:
+        specifier: workspace:*
+        version: link:../extensions
+      acryl-plugin-share:
+        specifier: workspace:*
+        version: link:../plugin-share
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      '@webboxes/plugin-hub':
+        specifier: 0.2.2
+        version: 0.2.2
+      acryl-builder:
+        specifier: workspace:*
+        version: link:../builder
+      acryl-home:
+        specifier: workspace:*
+        version: link:../home
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  plugins/tasks:
+    dependencies:
+      acryl-instance:
+        specifier: workspace:*
+        version: link:../instance
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: 4.0.4
+        version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
+      '@types/node':
+        specifier: ^22.20.0
+        version: 22.20.1
+      acryl-router:
+        specifier: workspace:*
+        version: link:../acryl-router
+      acryl-state:
+        specifier: workspace:*
+        version: link:../acryl-state
+      tsdown:
+        specifier: 0.22.2
+        version: 0.22.2(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
   runtime/acryl-control:
     devDependencies:

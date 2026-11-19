@@ -16,6 +16,8 @@ import { describe, expect, it } from 'vitest'
 import { CLASS, NOT_YET_AVAILABLE, PACKAGE } from '../../scripts/lib/names.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
+/** The library: the framework's plugins live in the root plugins/ folder since spec 051 T017, beside ACRYL's own. */
+const library = resolve(root, '..', 'plugins')
 /** The framework docs: docs/framework, or another folder when a branch of the docs is being checked before it is synced. */
 const docsRoot = resolve(process.env.FRAMEWORK_DOCS || join(root, 'docs', 'framework'))
 const out = join(root, 'docs', '.generated', 'framework-code')
@@ -120,7 +122,7 @@ describe('framework docs: code', () => {
     // errors that only say a placeholder is undefined are ignored. Everything else (a wrong import, a missing export, a method that does not exist) still fails.
     writeFileSync(
       join(out, 'blocks', 'ambient.d.ts'),
-      `// The Cordis side of the docs (ctx.router, ctx.routerHttp) is the vendored acryl-router plugin's declaration of those services.\nimport type {} from '${join(root, 'plugins', 'acryl-router', 'src', 'index.ts')}'\ndeclare global {\n  const app: import('${PACKAGE}').${CLASS}<any, any, any>\n}\nexport {}\n`,
+      `// The Cordis side of the docs (ctx.router, ctx.routerHttp) is the vendored acryl-router plugin's declaration of those services.\nimport type {} from '${join(library, 'acryl-router', 'src', 'index.ts')}'\ndeclare global {\n  const app: import('${PACKAGE}').${CLASS}<any, any, any>\n}\nexport {}\n`,
     )
     // A block that augments the package's interfaces (`declare module`) changes the types of every other block in the same program, so each one is checked alone.
     const augments = (block: Block) => /declare (module|global)/.test(block.code)
@@ -137,20 +139,19 @@ describe('framework docs: code', () => {
     const pluginPaths: Record<string, string[]> = Object.fromEntries(
       Object.entries(appPaths).map(([key, targets]) => [
         key,
-        targets.map((t) =>
-          join(root, 'plugins', 'acryl-router', t.replace('./plugins/acryl-router/', '')),
-        ),
+        targets.map((t) => join(library, 'acryl-router', t.replace('./plugins/acryl-router/', ''))),
       ]),
     )
     // The framework plugins by their package names (`acryl-state`, `acryl-router/middleware`): the source in plugins/, from each plugin's `entries`.
-    for (const name of readdirSync(join(root, 'plugins')).filter((n) => n.startsWith('acryl-'))) {
-      const manifest = join(root, 'plugins', name, 'plugin.json')
+    for (const name of readdirSync(library)) {
+      const manifest = join(library, name, 'plugin.json')
       if (!existsSync(manifest)) continue
+      const packageName = JSON.parse(readFileSync(join(library, name, 'package.json'), 'utf8')).name
       const entries =
         (JSON.parse(readFileSync(manifest, 'utf8')) as { entries?: Record<string, string> })
           .entries ?? {}
       for (const [subpath, file] of Object.entries(entries))
-        pluginPaths[`${name}${subpath}`] = [join(root, 'plugins', name, file)]
+        pluginPaths[`${packageName}${subpath}`] = [join(library, name, file)]
     }
     const programs: {
       name: string

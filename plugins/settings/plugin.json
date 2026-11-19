@@ -1,0 +1,16 @@
+{
+  "name": "settings",
+  "description": "Validated settings per namespace in one YAML file in the app's home: defaults, base and stored layers, watch, update.",
+  "requires": ["instance"],
+  "inject": ["appInstance"],
+  "provides": ["settings"],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/schemastery": "3.18.4",
+    "yaml": "2.9.0"
+  },
+  "mount": "mount it after instance: root.plugin(settings, {}); then ctx.settings.register('my-plugin', Schema)",
+  "entries": {
+    "": "index.ts"
+  }
+}

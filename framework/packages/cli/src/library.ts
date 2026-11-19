@@ -6,7 +6,10 @@ import { type EntryTable, entryTable, rewriteSpecifiers } from './rewrite'
 
 /** One entry of the plugin library: `plugins/<name>/plugin.json` in this repository. */
 export interface LibraryPlugin {
+  /** The library name, equal to its folder: what `acrylblends add` takes. */
   readonly name: string
+  /** The npm name its workspace package declares (`acryl-instance`), which is how the plugins import each other; absent when the plugin has no package.json, and then the name is its own. */
+  readonly packageName?: string
   readonly description: string
   /** Library plugins this one imports; they are copied with it. */
   readonly requires: readonly string[]
@@ -91,8 +94,13 @@ export function readLibrary(root: string = libraryRoot()): Map<string, LibraryPl
     const plugin = JSON.parse(readFileSync(manifest, 'utf8')) as LibraryPlugin
     if (plugin.name !== entry.name)
       throw new LibraryError(`plugins/${entry.name}/plugin.json names "${plugin.name}"`)
+    const packageFile = join(root, entry.name, 'package.json')
+    const declared =
+      existsSync(packageFile) &&
+      (JSON.parse(readFileSync(packageFile, 'utf8')) as { name?: unknown }).name
     plugins.set(plugin.name, {
       ...plugin,
+      packageName: typeof declared === 'string' && declared.trim() !== '' ? declared : plugin.name,
       requires: plugin.requires ?? [],
       dependencies: plugin.dependencies ?? {},
     })
@@ -155,6 +163,19 @@ export function recordLibraryCopy(folder: string, name: string): void {
   writeFileSync(file, `${JSON.stringify({ plugins: names.sort() }, null, 2)}\n`)
 }
 
+/** Files at a plugin's root that are the repository's or the package manager's, never the app's. */
+const PACKAGE_ONLY = new Set([
+  'package.json',
+  'node_modules',
+  'lib',
+  'dist',
+  '.git',
+  // The package's build, not the app's copy of its source.
+  'scripts',
+  'tsdown.config.ts',
+  'tsconfig.json',
+])
+
 /** Copy one library plugin's source into `<app>/plugins/<name>/`. Throws when that folder already exists. */
 export function copyPlugin(
   plugin: LibraryPlugin,
@@ -168,9 +189,11 @@ export function copyPlugin(
       `${relativeName(appDir, target)} already exists; remove it first to copy a fresh one`,
     )
   const source = join(root, plugin.name)
-  // A framework package (it has a package.json in the repository) is copied as its source: `src/` and the licence; the package shipped by npm already holds only that. Its
-  // `plugin.json` lists `entries`, and the imports of such a plugin are rewritten to relative paths, in the repository and in the installed package alike.
+  // A framework package (it has a package.json in the repository) is copied as its source: a plugin whose entry lives in `src/` (the vendored ones) contributes `src/` and the
+  // licence, the app plugins keep their files at the folder root. The package's `plugin.json` lists `entries`, and the imports of such a plugin are rewritten to relative paths,
+  // in the repository and in the installed package alike.
   const isPackage = existsSync(join(source, 'package.json'))
+  const inSourceDir = (plugin.entries?.[''] ?? 'index.ts').startsWith('src/')
   const entries = plugin.entries === undefined ? undefined : entryTable(readLibrary(root))
   cpSync(source, target, {
     recursive: true,
@@ -179,14 +202,12 @@ export function copyPlugin(
         .slice(source.length + 1)
         .split(sep)
         .join('/')
-      if (
-        isPackage &&
-        inside !== '' &&
-        inside !== 'LICENSE' &&
-        inside !== 'src' &&
-        !inside.startsWith('src/')
-      )
+      if (isPackage && inSourceDir) {
+        if (inside !== '' && inside !== 'LICENSE' && inside !== 'src' && !inside.startsWith('src/'))
+          return false
+      } else if (isPackage && inside !== '' && PACKAGE_ONLY.has(inside.split('/')[0] ?? '')) {
         return false
+      }
       return (
         !(dirname(path) === source && LIBRARY_ONLY.has(inside)) &&
         !isOmitted(inside, plugin.omit) &&
@@ -194,7 +215,10 @@ export function copyPlugin(
       )
     },
   })
-  if (entries) rewriteTree(join(target, 'src'), plugin.name, 'src', entries)
+  if (entries) {
+    if (inSourceDir) rewriteTree(join(target, 'src'), plugin.name, 'src', entries)
+    else rewriteTree(target, plugin.name, '', entries)
+  }
   if (!folder.legacy) {
     recordLibraryCopy(folder.dir, plugin.name)
     // The hashes of the files as copied: `acrylblends upgrade` tells an untouched file from an edited one by them.
@@ -208,11 +232,10 @@ function rewriteTree(dir: string, plugin: string, inside: string, entries: Entry
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry)
     if (statSync(path).isDirectory()) rewriteTree(path, plugin, `${inside}/${entry}`, entries)
-    else if (/\.(?:ts|tsx|mts)$/u.test(entry))
-      writeFileSync(
-        path,
-        rewriteSpecifiers(readFileSync(path, 'utf8'), `${plugin}/${inside}/${entry}`, entries),
-      )
+    else if (/\.(?:ts|tsx|mts)$/u.test(entry)) {
+      const id = inside === '' ? `${plugin}/${entry}` : `${plugin}/${inside}/${entry}`
+      writeFileSync(path, rewriteSpecifiers(readFileSync(path, 'utf8'), id, entries))
+    }
   }
 }
 

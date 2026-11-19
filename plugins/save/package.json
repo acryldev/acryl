@@ -1,0 +1,43 @@
+{
+  "name": "acryl-save",
+  "version": "0.1.0",
+  "description": "Save the app to its own git repository, and share it: a repository of its own on GitHub, created and pushed only after a person confirms the plan. Refuses a file that holds a secret, and a private app going to a public remote.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/save"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/save#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@webboxes/app-persistence": "0.1.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

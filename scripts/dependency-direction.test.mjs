@@ -55,9 +55,31 @@ test('a framework package must be named foundation or tool', () => {
   const graph = graphOf([
     ['acrylblends', 'framework/packages/cli', []],
     ['create-acrylblends', 'framework/packages/create', []],
-    ['acryl-surprise', 'framework/plugins/acryl-surprise', []],
+    ['acryl-surprise', 'framework/packages/acryl-surprise', []],
   ])
   assert.deepEqual(unlistedFoundation(graph), [
-    'acryl-surprise (framework/plugins/acryl-surprise) is a framework package but neither FOUNDATION nor FRAMEWORK_TOOLS names it',
+    'acryl-surprise (framework/packages/acryl-surprise) is a framework package but neither FOUNDATION nor FRAMEWORK_TOOLS names it',
+  ])
+})
+
+test('a framework app plugin has the plugin role, so the runtime cannot depend on it', () => {
+  const graph = graphOf([
+    ['acryl-instance', 'plugins/instance', ['acrylblends']],
+    ['acrylblends', 'framework/packages/cli', []],
+    ['acryl-control', 'runtime/acryl-control', ['acryl-instance']],
+  ])
+  assert.deepEqual(directionViolations(graph), [
+    'acryl-control is ACRYL runtime and depends on acryl-instance: the runtime depends only on the foundation and itself',
+  ])
+})
+
+test('the foundation reaches the agent panel only through its one named build edge', () => {
+  const graph = graphOf([
+    ['acrylblends-framework', 'framework/packages/framework', ['acryl-agent-panel']],
+    ['acryl-agent-panel', 'plugins/agent-panel', []],
+    ['acryl-door', 'plugins/acryl-door', ['acryl-agent-panel']],
+  ])
+  assert.deepEqual(directionViolations(graph), [
+    'acryl-door is framework foundation and depends on acryl-agent-panel: the foundation depends only on itself',
   ])
 })

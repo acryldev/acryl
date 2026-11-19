@@ -1,0 +1,43 @@
+{
+  "name": "acryl-openai",
+  "version": "0.1.0",
+  "description": "A real model for the agent: any OpenAI-compatible chat API (OpenAI, DeepSeek, Ollama, LM Studio) over fetch, with tool calls. No SDK.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/openai"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/openai#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "acryl-agent": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

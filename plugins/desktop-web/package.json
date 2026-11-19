@@ -1,0 +1,49 @@
+{
+  "name": "acryl-desktop-web",
+  "version": "0.1.0",
+  "description": "Run a plain Acryl app (`export default app`) as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron. `acrylblends add desktop` picks this one for an app without the Blend plugins.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/desktop-web"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/desktop-web#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/launch.js",
+  "types": "./lib/types/launch.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/launch.d.ts",
+      "default": "./lib/launch.js"
+    },
+    "./main": {
+      "types": "./lib/types/main.d.ts",
+      "default": "./lib/main.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "acryl-instance": "workspace:*",
+    "acrylblends": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "electron": "44.9.3",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "framework/**",
+      "plugins/agent/**",
+      "plugins/agent-panel/**",
+      "plugins/builder/**",
+      "plugins/desktop/**",
+      "plugins/desktop-web/**",
+      "plugins/driver-acp/**",
+      "plugins/driver-pty/**",
+      "plugins/extensions/**",
+      "plugins/feedback/**",
+      "plugins/home/**",
+      "plugins/instance/**",
+      "plugins/manifest/**",
+      "plugins/openai/**",
+      "plugins/plugin-share/**",
+      "plugins/sandbox/**",
+      "plugins/save/**",
+      "plugins/settings/**",
+      "plugins/showcase/**",
+      "plugins/tasks/**",
+      "!**/dist",
+      "!plugins/*/lib",
+      "!**/node_modules",
+      "!**/*.md",
+      "!framework/docs/design",
+      "!framework/specs/*/design",
+      "!plugins/acryl-*",
+      "!plugins/driver-pty/client/vendor",
+      "!plugins/driver-acp/test/acp-v1",
+      "!framework/packages/framework",
+      "!framework/packages/cli/lib",
+      "!framework/packages/cli/legacy",
+      "!framework/packages/cli/templates/todo/src/todo.ts",
+      "!framework/packages/cli/templates/todo/src/page.ts",
+      "!plugins/desktop/user-data.ts",
+      "!plugins/desktop/shutdown.ts",
+      "!plugins/desktop-web/user-data.ts",
+      "!plugins/desktop-web/shutdown.ts"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all"
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        "noExplicitAny": "warn"
+      },
+      "style": {
+        "useImportType": "error",
+        "noNonNullAssertion": "off"
+      }
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}

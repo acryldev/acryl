@@ -34,7 +34,8 @@
     "test:architecture-gates": "node --test scripts/market-dependency-direction.test.mjs",
     "check:architecture": "pnpm run test:architecture-gates && node scripts/verify-market-dependency-direction.mjs",
     "check:docs-secrets": "node scripts/verify-docs-secrets.mjs",
-    "check:layout": "pnpm run check:bilingual-docs && pnpm run check:architecture && pnpm run check:framework-app && node scripts/verify-layout.mjs",
+    "check:layout": "pnpm run lint:library && pnpm run check:bilingual-docs && pnpm run check:architecture && pnpm run check:framework-app && node scripts/verify-layout.mjs",
+    "lint:library": "biome check plugins/agent plugins/agent-panel plugins/builder plugins/desktop plugins/desktop-web plugins/driver-acp plugins/driver-pty plugins/extensions plugins/feedback plugins/home plugins/instance plugins/manifest plugins/openai plugins/plugin-share plugins/sandbox plugins/save plugins/settings plugins/showcase plugins/tasks",
     "check:workflows": "pnpm --dir framework run verify:workflows",
     "check:framework-app": "pnpm --filter acryl-todo exec tsc -p ../../tsconfig.framework-app.json",
     "check:features": "node scripts/check-features.mjs --launch",
@@ -80,6 +81,7 @@
     "check:foundation": "pnpm --filter \"acrylblends...\" run build"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@types/react": "18.3.31"
   }
 }

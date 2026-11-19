@@ -1,0 +1,19 @@
+{
+  "name": "manifest",
+  "description": "The app as data: blend.yaml lists ordered plugin rows with config, parameters and on/off switches; validated, composed and locked.",
+  "requires": [],
+  "inject": [],
+  "provides": [],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "yaml": "2.9.0",
+    "@webboxes/blends-core": "0.5.0"
+  },
+  "mount": "in src/app.ts: const manifest = loadManifest(join(chosen.root, 'blend.yaml')); await compose(root, manifest, registry)",
+  "entries": {
+    "": "index.ts",
+    "/lock": "lock.ts",
+    "/snapshot": "snapshot.ts",
+    "/app-plugins": "app-plugins.ts"
+  }
+}

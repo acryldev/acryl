@@ -3,5 +3,5 @@
  * (`connectionOf`, and `getConnInfo` over it). An app served by `acrylblends/node-server` takes `getConnInfo` from there instead.
  */
 
-export type * from '../../../plugins/acryl-router/src/core/helper/conninfo/index.ts'
-export { connectionOf, getConnInfo, type ConnectionInfo, type RouterBindings, type RouterEnv } from '../../../plugins/acryl-router/src/connection.ts'
+export type * from 'acryl-router/conninfo'
+export { connectionOf, getConnInfo, type ConnectionInfo, type RouterBindings, type RouterEnv } from 'acryl-router/connection'

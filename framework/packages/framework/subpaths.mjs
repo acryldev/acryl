@@ -11,15 +11,15 @@ import { fileURLToPath } from 'node:url'
 import { INTERNAL } from './api-surface.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const ROUTER = '../../plugins/acryl-router/src'
+const ROUTER = '../../../plugins/acryl-router/src'
 const CORE = `${ROUTER}/core`
-const NODE = '../../plugins/acryl-node-server/src/adapter'
-const DB = '../../plugins/acryl-db/src'
-const DB_SQLITE = '../../plugins/acryl-db-sqlite/src'
-const KV = '../../plugins/acryl-kv/src'
-const KV_JSON = '../../plugins/acryl-kv-json/src'
-const KV_DB = '../../plugins/acryl-kv-db/src'
-const P = '../../plugins'
+const NODE = '../../../plugins/acryl-node-server/src/adapter'
+const DB = '../../../plugins/acryl-db/src'
+const DB_SQLITE = '../../../plugins/acryl-db-sqlite/src'
+const KV = '../../../plugins/acryl-kv/src'
+const KV_JSON = '../../../plugins/acryl-kv-json/src'
+const KV_DB = '../../../plugins/acryl-kv-db/src'
+const P = '../../../plugins'
 
 const MIDDLEWARE = [
   'basic-auth', 'bearer-auth', 'body-limit', 'cache', 'combine', 'compress', 'context-storage', 'cors', 'csrf', 'etag', 'ip-restriction',
@@ -80,7 +80,7 @@ export const SUBPATHS = {
   'node-server/serve-static': `${NODE}/serve-static.ts`,
   'node-server/conninfo': `${NODE}/conninfo.ts`,
   // ACRYL's addition: `node --import acrylblends/node-server/register app.tsx` compiles JSX files with the app's own typescript.
-  'node-server/register': '../../plugins/acryl-node-server/src/register.ts',
+  'node-server/register': '../../../plugins/acryl-node-server/src/register.ts',
   // Data (spec 049): the `db` port and its plain SQLite opener, without Cordis. `acrylblends/db/sqlite` is the opener, not the Cordis plugin.
   'db': `${DB}/index.ts`,
   'db/sqlite': `${DB_SQLITE}/open.ts`,

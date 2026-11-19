@@ -9,8 +9,8 @@ import { createSnapshotApi } from '../src/client/snapshot.ts'
 import { remoteChips } from '../src/client/git-sync.ts'
 import { frameRoutes } from '../src/index.ts'
 
-/** The repository root holds the template's `plugins/manifest/snapshot.ts`: the verbs every new app is made with. */
-const repoRoot = fileURLToPath(new URL('../../../framework', import.meta.url))
+/** The repository root holds the framework library's `plugins/manifest/snapshot.ts`: the verbs every new app is made with. */
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url))
 
 const dirs: string[] = []
 afterEach(() => {

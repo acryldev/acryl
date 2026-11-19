@@ -1,0 +1,48 @@
+{
+  "name": "acryl-extensions",
+  "version": "0.1.0",
+  "description": "Install, update, remove and reload plugins while the app runs; a failed update brings the previous version back; a ledger of every change.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/extensions"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/extensions#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "acryl-instance": "workspace:*",
+    "acryl-sandbox": "workspace:*",
+    "@webboxes/blends-core": "0.5.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-agent": "workspace:*",
+    "acryl-home": "workspace:*",
+    "acryl-router": "workspace:*",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

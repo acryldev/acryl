@@ -1,0 +1,15 @@
+{
+  "name": "extensions",
+  "description": "Install, update, remove and reload plugins while the app runs; a failed update brings the previous version back; a ledger of every change.",
+  "requires": ["instance", "sandbox"],
+  "inject": ["appInstance"],
+  "provides": ["extensions"],
+  "dependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@webboxes/blends-core": "0.5.0"
+  },
+  "mount": "mount it after instance: root.plugin(extensions, { sources: [{ dir: join(root, 'plugins'), trust: 'install' }] })",
+  "entries": {
+    "": "index.ts"
+  }
+}

@@ -322,7 +322,9 @@ describe('make-entry', () => {
       "export const name = 'notes2'\nexport function apply() {}\n",
     )
     writeFileSync(join(app, 'plugins', 'notes2', 'lib', 'store.ts'), 'export const notes = []\n')
-    const { captureApp } = await import(join(repo, '..', 'plugins', 'manifest', 'snapshot.ts'))
+    const { captureApp } = await import(
+      join(repo, '..', '..', 'plugins', 'manifest', 'snapshot.ts')
+    )
     captureApp(app)
     return app
   }
@@ -364,7 +366,9 @@ describe('make-entry', () => {
       'plugins/notes2 changed since the last capture; run npm run snapshot capture (or Save point in the frame) and try again',
     )
     assert.equal(existsSync(join(registry, 'blends')), false)
-    const { captureApp } = await import(join(repo, '..', 'plugins', 'manifest', 'snapshot.ts'))
+    const { captureApp } = await import(
+      join(repo, '..', '..', 'plugins', 'manifest', 'snapshot.ts')
+    )
     captureApp(app)
     writeFileSync(
       join(app, 'blend.yaml'),

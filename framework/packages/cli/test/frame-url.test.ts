@@ -56,7 +56,7 @@ function folder(): string {
 function frameApp(): string {
   const app = folder()
   cpSync(
-    join(import.meta.dirname, '..', '..', '..', 'plugins', 'instance'),
+    join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'instance'),
     join(app, 'plugins', 'instance'),
     {
       recursive: true,

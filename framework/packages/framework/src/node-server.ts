@@ -4,9 +4,9 @@
  * `UpgradeHub` is the WebSocket upgrade hub (needs the optional `ws` peer): `new UpgradeHub()`, `hub.attach(server, router)` and `hub.upgradeWebSocketFor(owner)`.
  */
 
-export * from '../../../plugins/acryl-node-server/src/adapter/index.ts'
-export { serveStatic, type ServeStaticOptions } from '../../../plugins/acryl-node-server/src/adapter/serve-static.ts'
-export { getConnInfo } from '../../../plugins/acryl-node-server/src/adapter/conninfo.ts'
-export { buildClientModules, clientModules, type BuildClientModulesOptions, type ClientModulesOptions } from '../../../plugins/acryl-node-server/src/client-modules.ts'
-export { UpgradeEmitter, UpgradeHub, type Owner, type UpgradeHubOptions, type UpgradeRouter } from '../../../plugins/acryl-node-server/src/upgrade-hub.ts'
-export { testWebSocket, type TestSocket, type TestWebSocketOptions, type TestWebSocketResult } from '../../../plugins/acryl-node-server/src/test-websocket.ts'
+export * from 'acryl-node-server/adapter'
+export { serveStatic, type ServeStaticOptions } from 'acryl-node-server/serve-static'
+export { testWebSocket, type TestSocket, type TestWebSocketOptions, type TestWebSocketResult } from 'acryl-node-server/test-websocket'
+export { UpgradeEmitter, UpgradeHub, type Owner, type UpgradeHubOptions, type UpgradeRouter } from 'acryl-node-server/upgrade-hub'
+export { buildClientModules, clientModules, type BuildClientModulesOptions, type ClientModulesOptions } from 'acryl-node-server/client-modules'
+export { getConnInfo } from 'acryl-node-server/conninfo'

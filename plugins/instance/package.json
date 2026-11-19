@@ -1,0 +1,56 @@
+{
+  "name": "acryl-instance",
+  "version": "0.1.0",
+  "description": "Where the app keeps things (home, port, run lock), chosen once from the environment or the project folder.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/instance"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/instance#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./storage": {
+      "types": "./lib/types/storage.d.ts",
+      "default": "./lib/storage.js"
+    },
+    "./bundle": {
+      "types": "./lib/types/bundle.d.ts",
+      "default": "./lib/bundle.js"
+    },
+    "./home": {
+      "types": "./lib/types/home.d.ts",
+      "default": "./lib/home.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-node-server": "workspace:*",
+    "acryl-router": "workspace:*",
+    "yaml": "2.9.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

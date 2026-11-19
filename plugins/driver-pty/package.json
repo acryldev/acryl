@@ -1,0 +1,54 @@
+{
+  "name": "acryl-driver-pty",
+  "version": "0.1.0",
+  "description": "A coding agent (claude, codex, pi, any program) in a real terminal inside the running app: the panel gets a terminal tab, the agent builds through the door in its own interactive mode. Development only; needs the agent panel; opt-in with acrylblends add driver-pty.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/driver-pty"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/driver-pty#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "acryl-agent-panel": "workspace:*",
+    "acryl-node-server": "workspace:*",
+    "acryl-router": "workspace:*",
+    "node-pty": "1.2.0-beta.15",
+    "acryl-instance": "workspace:*",
+    "acryl-extensions": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-agent": "workspace:*",
+    "acryl-builder": "workspace:*",
+    "acryl-door": "workspace:*",
+    "acryl-extensions": "workspace:*",
+    "acryl-instance": "workspace:*",
+    "acryl-state": "workspace:*",
+    "typescript": "6.0.3",
+    "tsdown": "0.22.2"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly && node scripts/copy-assets.mjs"
+  }
+}

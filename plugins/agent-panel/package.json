@@ -1,0 +1,68 @@
+{
+  "name": "acryl-agent-panel",
+  "version": "0.1.0",
+  "description": "A chat panel inside the running app: the person writes what they want, the app's own agent (or Claude Code, Codex or pi started in the app folder) builds it through the same door, and the page reloads when a plugin was installed, with no restart. Development only; opt-in with acrylblends add agent-panel.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/agent-panel"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/agent-panel#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./drivers": {
+      "types": "./lib/types/drivers.d.ts",
+      "default": "./lib/drivers.js"
+    },
+    "./headless": {
+      "types": "./lib/types/headless.d.ts",
+      "default": "./lib/headless.js"
+    },
+    "./registry": {
+      "types": "./lib/types/registry.d.ts",
+      "default": "./lib/registry.js"
+    },
+    "./mount": {
+      "types": "./lib/types/mount.d.ts",
+      "default": "./lib/mount.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "acryl-agent": "workspace:*",
+    "acryl-extensions": "workspace:*",
+    "acryl-instance": "workspace:*",
+    "acryl-node-server": "workspace:*",
+    "acryl-router": "workspace:*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-state": "workspace:*",
+    "jsdom": "29.1.1",
+    "@types/jsdom": "30.0.0",
+    "ws": "8.21.3",
+    "@types/ws": "8.18.2",
+    "typescript": "6.0.3",
+    "tsdown": "0.22.2"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly && node scripts/copy-assets.mjs"
+  }
+}

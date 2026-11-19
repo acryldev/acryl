@@ -18,85 +18,109 @@
     ],
     "paths": {
       "acryl-db": [
-        "../../plugins/acryl-db/src/index.ts"
+        "../../../plugins/acryl-db/src/index.ts"
       ],
       "acryl-db/cordis": [
-        "../../plugins/acryl-db/src/cordis.ts"
+        "../../../plugins/acryl-db/src/cordis.ts"
       ],
       "acryl-db/conformance": [
-        "../../plugins/acryl-db/src/conformance.ts"
+        "../../../plugins/acryl-db/src/conformance.ts"
       ],
       "acryl-db-sqlite": [
-        "../../plugins/acryl-db-sqlite/src/index.ts"
+        "../../../plugins/acryl-db-sqlite/src/index.ts"
       ],
       "acryl-db-sqlite/open": [
-        "../../plugins/acryl-db-sqlite/src/open.ts"
+        "../../../plugins/acryl-db-sqlite/src/open.ts"
       ],
       "acryl-door": [
-        "../../plugins/acryl-door/src/index.ts"
+        "../../../plugins/acryl-door/src/index.ts"
       ],
       "acryl-inspect": [
-        "../../plugins/acryl-inspect/src/index.ts"
+        "../../../plugins/acryl-inspect/src/index.ts"
       ],
       "acryl-kv": [
-        "../../plugins/acryl-kv/src/index.ts"
+        "../../../plugins/acryl-kv/src/index.ts"
       ],
       "acryl-kv/cordis": [
-        "../../plugins/acryl-kv/src/cordis.ts"
+        "../../../plugins/acryl-kv/src/cordis.ts"
       ],
       "acryl-kv/conformance": [
-        "../../plugins/acryl-kv/src/conformance.ts"
+        "../../../plugins/acryl-kv/src/conformance.ts"
       ],
       "acryl-kv-db": [
-        "../../plugins/acryl-kv-db/src/index.ts"
+        "../../../plugins/acryl-kv-db/src/index.ts"
       ],
       "acryl-kv-db/open": [
-        "../../plugins/acryl-kv-db/src/open.ts"
+        "../../../plugins/acryl-kv-db/src/open.ts"
       ],
       "acryl-kv-json": [
-        "../../plugins/acryl-kv-json/src/index.ts"
+        "../../../plugins/acryl-kv-json/src/index.ts"
       ],
       "acryl-kv-json/open": [
-        "../../plugins/acryl-kv-json/src/open.ts"
+        "../../../plugins/acryl-kv-json/src/open.ts"
       ],
       "acryl-node-server": [
-        "../../plugins/acryl-node-server/src/index.ts"
+        "../../../plugins/acryl-node-server/src/index.ts"
       ],
       "acryl-node-server/client-modules": [
-        "../../plugins/acryl-node-server/src/client-modules.ts"
+        "../../../plugins/acryl-node-server/src/client-modules.ts"
+      ],
+      "acryl-node-server/adapter": [
+        "../../../plugins/acryl-node-server/src/adapter/index.ts"
+      ],
+      "acryl-node-server/conninfo": [
+        "../../../plugins/acryl-node-server/src/adapter/conninfo.ts"
+      ],
+      "acryl-node-server/upgrade-hub": [
+        "../../../plugins/acryl-node-server/src/upgrade-hub.ts"
       ],
       "acryl-router": [
-        "../../plugins/acryl-router/src/index.ts"
+        "../../../plugins/acryl-router/src/index.ts"
+      ],
+      "acryl-router/core": [
+        "../../../plugins/acryl-router/src/core/index.ts"
+      ],
+      "acryl-router/conninfo": [
+        "../../../plugins/acryl-router/src/core/helper/conninfo/index.ts"
       ],
       "acryl-router/middleware": [
-        "../../plugins/acryl-router/src/middleware/index.ts"
+        "../../../plugins/acryl-router/src/middleware/index.ts"
       ],
       "acryl-router/helpers": [
-        "../../plugins/acryl-router/src/helpers/index.ts"
+        "../../../plugins/acryl-router/src/helpers/index.ts"
       ],
       "acryl-router/client": [
-        "../../plugins/acryl-router/src/client.ts"
+        "../../../plugins/acryl-router/src/client.ts"
       ],
       "acryl-router/jsx": [
-        "../../plugins/acryl-router/src/core/jsx/index.ts"
+        "../../../plugins/acryl-router/src/core/jsx/index.ts"
       ],
       "acryl-router/jsx/jsx-runtime": [
-        "../../plugins/acryl-router/src/core/jsx/jsx-runtime.ts"
+        "../../../plugins/acryl-router/src/core/jsx/jsx-runtime.ts"
       ],
       "acryl-router/jsx/jsx-dev-runtime": [
-        "../../plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"
+        "../../../plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"
       ],
       "acryl-router/jsx/streaming": [
-        "../../plugins/acryl-router/src/core/jsx/streaming.ts"
+        "../../../plugins/acryl-router/src/core/jsx/streaming.ts"
       ],
       "acryl-router-http": [
-        "../../plugins/acryl-router-http/src/index.ts"
+        "../../../plugins/acryl-router-http/src/index.ts"
       ],
       "acryl-state": [
-        "../../plugins/acryl-state/src/index.ts"
+        "../../../plugins/acryl-state/src/index.ts"
       ],
       "acryl-state/react": [
-        "../../plugins/acryl-state/src/react.ts"
+        "../../../plugins/acryl-state/src/react.ts"
+      ],
+      "acryl-router/connection": [
+        "../../../plugins/acryl-router/src/connection.ts"
+      ],
+      "acryl-node-server/serve-static": [
+        "../../../plugins/acryl-node-server/src/adapter/serve-static.ts"
+      ],
+      "acryl-node-server/test-websocket": [
+        "../../../plugins/acryl-node-server/src/test-websocket.ts"
       ]
     },
     "noEmit": true
@@ -107,13 +131,6 @@
     "src/node-server.ts"
   ],
   "include": [
-    "../../plugins/acryl-*/src/**/*.ts",
-    "../../plugins/acryl-*/src/**/*.tsx"
-  ],
-  "exclude": [
-    "../../plugins/**/*.test.ts",
-    "../../plugins/**/*.test.tsx",
-    "../../plugins/**/*.case.ts",
-    "../../plugins/acryl-state/src/react.ts"
+    "src/**/*.ts"
   ]
 }

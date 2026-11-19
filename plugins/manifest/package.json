@@ -1,0 +1,57 @@
+{
+  "name": "acryl-manifest",
+  "version": "0.1.0",
+  "description": "The app as data: blend.yaml lists ordered plugin rows with config, parameters and on/off switches; validated, composed and locked.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/manifest"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/manifest#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./lock": {
+      "types": "./lib/types/lock.d.ts",
+      "default": "./lib/lock.js"
+    },
+    "./snapshot": {
+      "types": "./lib/types/snapshot.d.ts",
+      "default": "./lib/snapshot.js"
+    },
+    "./app-plugins": {
+      "types": "./lib/types/app-plugins.d.ts",
+      "default": "./lib/app-plugins.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "yaml": "2.9.0",
+    "@webboxes/blends-core": "0.5.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "ajv": "^8.20.0",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

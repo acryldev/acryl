@@ -1,21 +1,20 @@
 import { dirname, posix } from 'node:path'
+import type { LibraryPlugin } from './library'
 
 /**
- * The framework plugins import each other by package name (`acryl-router`, `acryl-router/middleware`): inside this repository they are workspace packages. An app has
+ * The framework plugins import each other by package name (`acryl-router`, `acryl-router/middleware`, `acryl-instance`): inside this repository they are workspace packages. An app has
  * no such packages, only the copied source, so `acrylblends init` and `add` rewrite those specifiers to relative paths when they copy a plugin. The file each name stands
- * for is the `entries` table of the plugin's `plugin.json`.
+ * for is the `entries` table of the plugin's `plugin.json`; the name is its `package.json` name, which need not equal its library folder.
  */
 
 /** `acryl-router/middleware` to `acryl-router/src/middleware/index.ts`: every importable name of every library plugin. */
 export type EntryTable = ReadonlyMap<string, string>
 
-export function entryTable(
-  library: ReadonlyMap<string, { readonly entries?: Readonly<Record<string, string>> | undefined }>,
-): EntryTable {
+export function entryTable(library: ReadonlyMap<string, LibraryPlugin>): EntryTable {
   const table = new Map<string, string>()
-  for (const [plugin, { entries }] of library)
+  for (const [name, { packageName, entries }] of library)
     for (const [subpath, file] of Object.entries(entries ?? {}))
-      table.set(`${plugin}${subpath}`, `${plugin}/${file}`)
+      table.set(`${packageName ?? name}${subpath}`, `${name}/${file}`)
   return table
 }
 

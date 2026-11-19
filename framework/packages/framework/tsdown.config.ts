@@ -6,15 +6,16 @@ import { SUBPATHS, entryName } from './subpaths.mjs'
 
 const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url))
 
-/** `acryl-router` to `plugins/acryl-router/src/index.ts`, `acryl-router/middleware` to its middleware entry, and so on, from the `entries` of the plugin.json of every framework plugin. */
+/** `acryl-router` to `plugins/acryl-router/src/index.ts`, `acryl-instance` to its `index.ts`, and so on, from the `entries` of the plugin.json of every library plugin (the folders with a plugin.json; ACRYL's own plugins sit beside them). */
 function pluginAliases(): Record<string, string> {
-  const plugins = here('../../plugins')
+  const plugins = here('../../../plugins')
   const aliases: Record<string, string> = {}
-  for (const name of readdirSync(plugins).filter((entry) => entry.startsWith('acryl-')).sort()) {
+  for (const name of readdirSync(plugins).sort()) {
     const manifest = join(plugins, name, 'plugin.json')
     if (!existsSync(manifest)) continue
     const { entries = {} } = JSON.parse(readFileSync(manifest, 'utf8')) as { entries?: Record<string, string> }
-    for (const [subpath, file] of Object.entries(entries)) aliases[`${name}${subpath}`] = join(plugins, name, file)
+    const { name: packageName } = JSON.parse(readFileSync(join(plugins, name, 'package.json'), 'utf8')) as { name: string }
+    for (const [subpath, file] of Object.entries(entries)) aliases[`${packageName}${subpath}`] = join(plugins, name, file)
   }
   return aliases
 }
@@ -25,7 +26,7 @@ function pluginAliases(): Record<string, string> {
  */
 const browser = (name: string): UserConfig => ({
   name: `acrylblends-framework browser/${name}`,
-  entry: { [`browser/${name}`]: here(`../../plugins/acryl-router/src/browser/${name}.ts`) },
+  entry: { [`browser/${name}`]: here(`../../../plugins/acryl-router/src/browser/${name}.ts`) },
   outDir: 'lib',
   format: 'esm',
   platform: 'browser',
@@ -44,8 +45,8 @@ const plainRouter = {
   name: 'plain-router',
   resolveId(source: string, importer: string | undefined) {
     if (importer === undefined || !/acryl-node-server[\\/]src[\\/](adapter[\\/]|client-modules\.ts)/u.test(importer)) return null
-    if (source === 'acryl-router') return here('../../plugins/acryl-router/src/core/index.ts')
-    if (source === 'acryl-router/helpers') return here('../../plugins/acryl-router/src/helpers/index.ts')
+    if (source === 'acryl-router') return here('../../../plugins/acryl-router/src/core/index.ts')
+    if (source === 'acryl-router/helpers') return here('../../../plugins/acryl-router/src/helpers/index.ts')
     return null
   },
 }

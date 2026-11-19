@@ -33,6 +33,39 @@ export const FOUNDATION = new Set([
 ])
 
 /**
+ * The framework's app plugins, which live in the root `plugins/` folder beside ACRYL's own (spec 051 T017): the desktop shell, the instance, the agent panel and
+ * so on. They are workspace packages that import each other by package name, and they depend on the runtime (`@webboxes/blends-core`, `plugin-hub`), so they are
+ * the plugins layer, not the foundation. Named here so the guard knows them and a new one cannot slip in without a role.
+ */
+export const FRAMEWORK_PLUGINS = new Set([
+  'acryl-agent',
+  'acryl-agent-panel',
+  'acryl-app-settings',
+  'acryl-builder',
+  'acryl-desktop-shell',
+  'acryl-desktop-web',
+  'acryl-driver-acp',
+  'acryl-driver-pty',
+  'acryl-extensions',
+  'acryl-feedback',
+  'acryl-home',
+  'acryl-instance',
+  'acryl-manifest',
+  'acryl-openai',
+  'acryl-plugin-share',
+  'acryl-sandbox',
+  'acryl-save',
+  'acryl-showcase',
+  'acryl-tasks',
+])
+
+/**
+ * The foundation's one build input from the plugins layer, by name: `acrylblends-framework` builds `acrylblends/drivers` from the agent panel's
+ * Cordis-free `drivers.ts` (the contract the panel and the driver plugins write against). Listing the edge keeps a second one from slipping in.
+ */
+export const FOUNDATION_PLUGIN_EDGES = new Map([['acrylblends-framework', new Set(['acryl-agent-panel'])]])
+
+/**
  * The only runtime -> plugin dependencies allowed, each edge by name: acryl-harness-runtime composes every plugin a surface runs, which is a
  * composition root's job (moving that composition up into apps/ is spec 051 T021). Listing the edges, not the package, means a 21st plugin
  * fails the guard instead of passing silently.
@@ -93,6 +126,7 @@ export function findCycles(graph) {
 /** The role a package plays, from its name and folder. */
 export function roleOf(name, folder) {
   if (FOUNDATION.has(name)) return 'foundation'
+  if (FRAMEWORK_PLUGINS.has(name)) return 'plugin'
   if (folder.startsWith('apps/') || folder.startsWith('examples/')) return 'app'
   if (folder.startsWith('runtime/')) return 'runtime'
   return 'other'
@@ -107,9 +141,9 @@ export function directionViolations(graph) {
       const depRole = roleOf(dep, graph.get(dep).folder)
       if (depRole === 'app')
         violations.push(`${name} depends on ${dep}, an app: apps are the top, nothing depends on them`)
-      else if (role === 'foundation' && depRole !== 'foundation')
+      else if (role === 'foundation' && depRole !== 'foundation' && !FOUNDATION_PLUGIN_EDGES.get(name)?.has(dep))
         violations.push(`${name} is framework foundation and depends on ${dep}: the foundation depends only on itself`)
-      else if (role === 'runtime' && depRole === 'other' && !RUNTIME_COMPOSITION_EDGES.get(name)?.has(dep))
+      else if (role === 'runtime' && depRole !== 'foundation' && depRole !== 'runtime' && !RUNTIME_COMPOSITION_EDGES.get(name)?.has(dep))
         violations.push(`${name} is ACRYL runtime and depends on ${dep}: the runtime depends only on the foundation and itself`)
     }
   }

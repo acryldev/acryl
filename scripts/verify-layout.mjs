@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
-import { directionViolations, findCycles, FOUNDATION, readGraph, unlistedFoundation } from './dependency-direction.mjs'
+import { directionViolations, findCycles, FOUNDATION, FRAMEWORK_PLUGINS, readGraph, unlistedFoundation } from './dependency-direction.mjs'
 import { BLEND_APPS, inBlendApp } from './lib/blend-apps.mjs'
 
 const root = resolve(import.meta.dirname, '..')
@@ -59,38 +59,12 @@ packages:
   - apps/acryl-web
   - apps/acryl-desktop
   - apps/acryl-launcher-tui
-  - plugins/dsh-client-ui-brand-acryl
-  - plugins/dsh-community-fabric
-  - plugins/cordis-plugin-market
-  - plugins/acryl-plugin-context
-  - plugins/acryl-system-prompt
-  - plugins/acryl-ui
-  - plugins/acryl-ui-tui
-  - plugins/acryl-mount-anchors
-  - plugins/acryl-command-reply
-  - plugins/acryl-shortcuts
-  - plugins/acryl-settings
-  - plugins/acryl-db-postgres
-  - plugins/acryl-db-pglite
-  - plugins/acryl-sign-in
-  - plugins/acryl-brand
-  - plugins/acryl-app-save
-  - plugins/acryl-plugin-hub
-  - plugins/acryl-app-shell
-  - plugins/acryl-workspace
-  - plugins/acryl-plugin-admin
-  - plugins/acryl-support
-  - plugins/acryl-agent-control
-  - plugins/acryl-launcher
-  - plugins/acryl-launcher-desktop
-  - plugins/acryl-app-context
-  - plugins/acryl-blends-frame
-  - plugins/acryl-versions
-  # The framework (acrylblends), imported with its history (spec 051): its CLI and create, its library plugins and the frame's own packages. The
-  # frame packages it shares with ACRYL live once, above (plugins/, runtime/), and framework/frame/packages.json names their folders.
+  # Every Cordis plugin package: ACRYL's own and the framework library's app plugins (spec 051 T017, the Pi model's flat plugins folder).
+  - plugins/*
+  # The framework (acrylblends), imported with its history (spec 051): its CLI and create, and the frame's own packages. The frame packages it shares with ACRYL live once,
+  # above (plugins/, runtime/), and framework/frame/packages.json names their folders.
   - framework
   - framework/packages/*
-  - framework/plugins/acryl-*
   - '!deepseek-harness/**'
 
 allowBuilds:
@@ -323,7 +297,7 @@ const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(e
   return /\.(ts|tsx|mts)$/.test(entry.name) && !entry.name.endsWith('.d.ts') ? [path] : []
 })
 const dshImports = { total: 0, outsideSeam: 0 }
-for (const group of ['runtime', 'apps', 'plugins', 'framework/packages', 'framework/plugins']) {
+for (const group of ['runtime', 'apps', 'plugins', 'framework/packages']) {
   for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
     const src = resolve(root, group, entry.name, 'src')
     if (!entry.isDirectory() || !existsSync(src) || inBlendApp(`${group}/${entry.name}`)) continue
@@ -353,7 +327,7 @@ const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/
 let webRegistrations = 0
 // The foundation's own folders, by package name (pnpm's list), so a look-alike folder elsewhere is not exempt.
 const foundationFolders = [...readGraph(root)].filter(([name]) => FOUNDATION.has(name)).map(([, { folder }]) => folder)
-for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/plugins', 'framework/packages']).split('\n')) {
+for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/packages']).split('\n')) {
   if (file === '' || NOT_SHIPPED.test(file) || inBlendApp(file) || !existsSync(resolve(root, file))) continue
   // The framework foundation implements the web layer (acryl-router-http mounts routers on the web server, acryl-page serves the page): the
   // rule is for code that uses it.
@@ -382,7 +356,7 @@ for (const directory of scriptDirectories) {
 // a committed bundle goes stale the moment its source changes without a rebuild in the same commit. Packages without a build script keep
 // hand-written sources in `lib/` (acryl-plugin-context, acryl-brand, acryl-system-prompt) and are not affected.
 const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**', ':(glob)framework/*/*/lib/**']).split('\n').filter(Boolean)
-for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples', 'framework/packages', 'framework/plugins']) {
+for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples', 'framework/packages']) {
   if (!existsSync(resolve(root, group))) continue
   for (const name of readdirSync(resolve(root, group))) {
     const manifest = resolve(root, group, name, 'package.json')
@@ -419,6 +393,22 @@ const cycles = findCycles(packageGraph)
 if (cycles.length > 0) fail(`dependency cycles between workspace packages (each must point one way):\n${cycles.map(cycle => `  ${cycle.join(' -> ')}`).join('\n')}`)
 const unlisted = unlistedFoundation(packageGraph)
 if (unlisted.length > 0) fail(`framework packages with no role (scripts/dependency-direction.mjs):\n${unlisted.map(line => `  ${line}`).join('\n')}`)
+// The plugin library (spec 051 T027): every plugins/<name> folder with a plugin.json is a workspace package with a role, so the copy source and the graph
+// cannot drift apart again (until T017 the plain app plugins were not packages and the direction guard never saw them).
+const libraryProblems = []
+const pluginsRoot = resolve(root, 'plugins')
+for (const entry of readdirSync(pluginsRoot, { withFileTypes: true })) {
+  if (!entry.isDirectory() || !existsSync(resolve(pluginsRoot, entry.name, 'plugin.json'))) continue
+  const manifest = resolve(pluginsRoot, entry.name, 'package.json')
+  if (!existsSync(manifest)) {
+    libraryProblems.push(`plugins/${entry.name} has a plugin.json but no package.json`)
+    continue
+  }
+  const name = readJson(`plugins/${entry.name}/package.json`).name
+  if (!packageGraph.has(name)) libraryProblems.push(`${name} (plugins/${entry.name}) is not a workspace package`)
+  else if (!FOUNDATION.has(name) && !FRAMEWORK_PLUGINS.has(name)) libraryProblems.push(`${name} (plugins/${entry.name}) is a library plugin but neither FOUNDATION nor FRAMEWORK_PLUGINS names it`)
+}
+if (libraryProblems.length > 0) fail(`library plugins outside the graph (scripts/dependency-direction.mjs):\n${libraryProblems.map(line => `  ${line}`).join('\n')}`)
 const wrongWay = directionViolations(packageGraph)
 if (wrongWay.length > 0) fail(`dependencies that point the wrong way:\n${wrongWay.map(line => `  ${line}`).join('\n')}`)
 

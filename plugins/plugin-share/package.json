@@ -1,0 +1,54 @@
+{
+  "name": "acryl-plugin-share",
+  "version": "0.1.0",
+  "description": "Share plugins between people. Pull one someone released into the running app: fetched without running anything, checked by digest and for every OS, then installed live. Publish one, only as a plan a person confirmed.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "plugins/plugin-share"
+  },
+  "homepage": "https://github.com/acryldev/acryl/tree/main/plugins/plugin-share#readme",
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package": {
+      "types": "./lib/types/package.d.ts",
+      "default": "./lib/package.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "acryl-extensions": "workspace:*",
+    "acryl-instance": "workspace:*",
+    "acryl-manifest": "workspace:*",
+    "@webboxes/app-persistence": "0.1.2",
+    "@webboxes/blends-core": "0.5.0",
+    "@webboxes/plugin-hub": "0.2.2",
+    "yaml": "2.9.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@types/node": "^22.20.0",
+    "acryl-router": "workspace:*",
+    "tsdown": "0.22.2",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly"
+  }
+}

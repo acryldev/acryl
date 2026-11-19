@@ -4,7 +4,21 @@
     "rootDir": "../..",
     "noEmit": true,
     "emitDeclarationOnly": false,
-    "types": ["node", "vitest/globals"]
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "paths": {
+      "acryl-home": [
+        "../../plugins/home/index.ts"
+      ],
+      "acryl-manifest/app-plugins": [
+        "../../plugins/manifest/app-plugins.ts"
+      ]
+    }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ]
 }
