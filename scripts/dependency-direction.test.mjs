@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { buildOrder, directionViolations, findCycles } from './dependency-direction.mjs'
+import { buildOrder, directionViolations, findCycles, unlistedFoundation } from './dependency-direction.mjs'
 
 const graphOf = entries => new Map(entries.map(([name, folder, deps]) => [name, { folder, deps: new Set(deps) }]))
 
@@ -28,7 +28,8 @@ test('each wrong-way dependency is named', () => {
   const graph = graphOf([
     ['acrylblends', 'framework/packages/cli', ['acryl-ui']],
     ['acryl-control', 'runtime/acryl-control', ['acryl-ui']],
-    ['acryl-harness-runtime', 'runtime/acryl-harness-runtime', ['acryl-ui']],
+    ['acryl-harness-runtime', 'runtime/acryl-harness-runtime', ['@acryl/ui']],
+    ['@acryl/ui', 'plugins/acryl-ui', []],
     ['acryl-ui', 'plugins/acryl-ui', ['acryl-desktop']],
     ['acryl-desktop', 'apps/acryl-desktop', []],
   ])
@@ -36,5 +37,27 @@ test('each wrong-way dependency is named', () => {
     'acrylblends is framework foundation and depends on acryl-ui: the foundation depends only on itself',
     'acryl-control is ACRYL runtime and depends on acryl-ui: the runtime depends only on the foundation and itself',
     'acryl-ui depends on acryl-desktop, an app: apps are the top, nothing depends on them',
+  ])
+})
+
+test('the harness-runtime exception allows its listed plugins only, not a new one', () => {
+  const graph = graphOf([
+    ['acryl-harness-runtime', 'runtime/acryl-harness-runtime', ['acryl-workspace', 'acryl-new-plugin']],
+    ['acryl-workspace', 'plugins/acryl-workspace', []],
+    ['acryl-new-plugin', 'plugins/acryl-new-plugin', []],
+  ])
+  assert.deepEqual(directionViolations(graph), [
+    'acryl-harness-runtime is ACRYL runtime and depends on acryl-new-plugin: the runtime depends only on the foundation and itself',
+  ])
+})
+
+test('a framework package must be named foundation or tool', () => {
+  const graph = graphOf([
+    ['acrylblends', 'framework/packages/cli', []],
+    ['create-acrylblends', 'framework/packages/create', []],
+    ['acryl-surprise', 'framework/plugins/acryl-surprise', []],
+  ])
+  assert.deepEqual(unlistedFoundation(graph), [
+    'acryl-surprise (framework/plugins/acryl-surprise) is a framework package but neither FOUNDATION nor FRAMEWORK_TOOLS names it',
   ])
 })

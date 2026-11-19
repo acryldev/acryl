@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
-import { directionViolations, findCycles, readGraph } from './dependency-direction.mjs'
+import { directionViolations, findCycles, readGraph, unlistedFoundation } from './dependency-direction.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const readJson = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
@@ -402,6 +402,8 @@ for (const path of testFiles) {
 const packageGraph = readGraph(root)
 const cycles = findCycles(packageGraph)
 if (cycles.length > 0) fail(`dependency cycles between workspace packages (each must point one way):\n${cycles.map(cycle => `  ${cycle.join(' -> ')}`).join('\n')}`)
+const unlisted = unlistedFoundation(packageGraph)
+if (unlisted.length > 0) fail(`framework packages with no role (scripts/dependency-direction.mjs):\n${unlisted.map(line => `  ${line}`).join('\n')}`)
 const wrongWay = directionViolations(packageGraph)
 if (wrongWay.length > 0) fail(`dependencies that point the wrong way:\n${wrongWay.map(line => `  ${line}`).join('\n')}`)
 

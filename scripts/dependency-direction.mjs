@@ -9,8 +9,9 @@
  *
  * The picture for people (docs/acryl/MONOREPO.md): framework foundation (0) <- ACRYL runtime (1) <- ACRYL plugins (2) <- apps (3).
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { join, relative } from 'node:path'
 
 /** The framework's foundation: acrylblends and its library packages. They depend on nothing else in the repository. */
 export const FOUNDATION = new Set([
@@ -32,33 +33,25 @@ export const FOUNDATION = new Set([
 ])
 
 /**
- * Runtime packages that may depend on ACRYL plugins, each with why. Temporary: acryl-harness-runtime composes the whole product (it mounts
- * every plugin a surface runs), which is a composition root's job; moving that composition up into apps/ is spec 051 T021.
+ * The only runtime -> plugin dependencies allowed, each edge by name: acryl-harness-runtime composes every plugin a surface runs, which is a
+ * composition root's job (moving that composition up into apps/ is spec 051 T021). Listing the edges, not the package, means a 21st plugin
+ * fails the guard instead of passing silently.
  */
-export const RUNTIME_COMPOSITION_EXCEPTIONS = new Map([
-  ['acryl-harness-runtime', 'composes every plugin a surface runs (a composition root); move it up into apps/ (spec 051 T021)'],
+export const RUNTIME_COMPOSITION_EDGES = new Map([
+  [
+    'acryl-harness-runtime',
+    new Set([
+      '@acryl/ui', 'acryl-agent-control', 'acryl-app-save', 'acryl-app-shell', 'acryl-brand', 'acryl-command-reply', 'acryl-launcher-desktop',
+      'acryl-mount-anchors', 'acryl-plugin-admin', 'acryl-plugin-context', 'acryl-plugin-hub', 'acryl-settings', 'acryl-shortcuts', 'acryl-sign-in',
+      'acryl-support', 'acryl-system-prompt', 'acryl-ui-tui', 'acryl-workspace', 'cordis-plugin-market', 'dsh-client-ui-brand-acryl',
+    ]),
+  ],
 ])
 
-/** Workspace package folders from pnpm-workspace.yaml's `packages:` list (plain folders and `<dir>/*` or `<dir>/acryl-*` globs). */
+/** Workspace package folders, as pnpm itself resolves pnpm-workspace.yaml (quoting, globs and `!` negations included); the root is not one. */
 export function workspaceFolders(root) {
-  const text = readFileSync(join(root, 'pnpm-workspace.yaml'), 'utf8')
-  const block = text.split(/^packages:\s*$/m)[1]?.split(/^\S/m)[0] ?? ''
-  const folders = []
-  for (const line of block.split('\n')) {
-    const match = /^\s+-\s+'?([^'#\s]+)'?/.exec(line)
-    if (match === null || match[1].startsWith('!')) continue
-    const pattern = match[1]
-    const star = pattern.indexOf('*')
-    if (star === -1) folders.push(pattern)
-    else {
-      const parent = pattern.slice(0, pattern.lastIndexOf('/', star))
-      const prefix = pattern.slice(parent.length + 1, star)
-      if (!existsSync(join(root, parent))) continue
-      for (const entry of readdirSync(join(root, parent), { withFileTypes: true }))
-        if (entry.isDirectory() && entry.name.startsWith(prefix)) folders.push(`${parent}/${entry.name}`)
-    }
-  }
-  return folders.filter(folder => existsSync(join(root, folder, 'package.json')))
+  const listed = JSON.parse(execFileSync('corepack', ['pnpm', 'ls', '-r', '--depth', '-1', '--json'], { cwd: root, encoding: 'utf8' }))
+  return listed.map(entry => relative(root, entry.path).replaceAll('\\', '/')).filter(folder => folder !== '')
 }
 
 /** Every workspace package: name, folder, and the workspace packages it depends on. */
@@ -116,11 +109,22 @@ export function directionViolations(graph) {
         violations.push(`${name} depends on ${dep}, an app: apps are the top, nothing depends on them`)
       else if (role === 'foundation' && depRole !== 'foundation')
         violations.push(`${name} is framework foundation and depends on ${dep}: the foundation depends only on itself`)
-      else if (role === 'runtime' && depRole === 'other' && !RUNTIME_COMPOSITION_EXCEPTIONS.has(name))
+      else if (role === 'runtime' && depRole === 'other' && !RUNTIME_COMPOSITION_EDGES.get(name)?.has(dep))
         violations.push(`${name} is ACRYL runtime and depends on ${dep}: the runtime depends only on the foundation and itself`)
     }
   }
   return violations
+}
+
+/**
+ * Framework packages missing from FOUNDATION: every workspace package under framework/ is foundation unless it is a tool that builds or
+ * scaffolds apps (create, and the framework's own private root), so a new one cannot slip in without the foundation's protection.
+ */
+export const FRAMEWORK_TOOLS = new Set(['create-acrylblends', 'acrylblends-monorepo'])
+export function unlistedFoundation(graph) {
+  return [...graph]
+    .filter(([name, { folder }]) => folder.startsWith('framework/') && !FOUNDATION.has(name) && !FRAMEWORK_TOOLS.has(name))
+    .map(([name, { folder }]) => `${name} (${folder}) is a framework package but neither FOUNDATION nor FRAMEWORK_TOOLS names it`)
 }
 
 /** A build order that follows the graph (dependencies first), for the docs and for a reader checking the direction. */
