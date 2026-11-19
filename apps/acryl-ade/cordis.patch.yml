@@ -4,9 +4,6 @@
       name: ./app/runtime.mjs
     - id: acryl-door
       name: ./plugins/acryl-door/src/index.ts
-      config:
-        hostIndex: false
-        appBase: /app
     - id: app-plugins
       name: ./frame/app-plugins.mjs
       isolate: {"extensions":true}

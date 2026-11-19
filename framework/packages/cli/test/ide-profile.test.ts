@@ -402,3 +402,19 @@ test('an upgraded app installs a frame package once, under its new scope (spec 0
   assert.equal(deps['@acrylblends/unrelated'], '1.0.0')
   assert.equal(deps['left-pad'], '1.0.0')
 })
+
+test('the door drives the canvas page of a framed app, and the window itself of a workbench product (spec 051 T022)', () => {
+  const doorRow = (overlay: string) =>
+    (parse(overlay) as { insert?: { id: string; config?: Record<string, unknown> }[] }[])
+      .flatMap((block) => block.insert ?? [])
+      .find((row) => row.id === 'acryl-door')
+  // A Blend: the frame's page is not the app, so the script stays out of it and paths go to the canvas prefix.
+  assert.deepEqual(doorRow(ideProfilePlan({ ...input, door: true }).overlay)?.config, {
+    hostIndex: false,
+    appBase: '/app',
+  })
+  // ACRYL ADE: the window is the app the chat and the terminal agents drive, so the door's defaults put its script in that page.
+  const workbench = doorRow(ideProfilePlan({ ...input, door: true, root: 'workspace' }).overlay)
+  assert.equal(workbench?.id, 'acryl-door')
+  assert.equal(workbench?.config, undefined)
+})
