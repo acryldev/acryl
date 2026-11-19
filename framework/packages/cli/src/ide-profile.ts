@@ -781,13 +781,19 @@ function overlayOf(
     '      name: ./app/runtime.mjs',
     // The frame's index is not the app: the door drives the app's page in the canvas, never the frame around it (an agent's navigate would leave the frame).
     // The canvas prefix goes with it: `act navigate --path /board` reaches the app's /board at the canvas prefix, the same path it has on its own server.
+    // A workspace root (ACRYL ADE) has no frame around anything: its window is the app the agents drive, as ACRYL's own window was before the
+    // unification (spec 051 T022), so the door keeps its defaults and puts its script in that index.
     ...(door
       ? [
           '    - id: acryl-door',
           '      name: ./plugins/acryl-door/src/index.ts',
-          '      config:',
-          '        hostIndex: false',
-          `        appBase: ${FRAME_PAGE_PREFIX}`,
+          ...(root === 'workspace'
+            ? []
+            : [
+                '      config:',
+                '        hostIndex: false',
+                `        appBase: ${FRAME_PAGE_PREFIX}`,
+              ]),
         ]
       : []),
     ...appRows.flatMap((row) => [
