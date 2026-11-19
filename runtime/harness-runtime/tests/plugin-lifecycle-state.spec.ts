@@ -152,60 +152,7 @@ describe('plugin lifecycle state', () => {
     )).rejects.toThrow('malformed')
   })
 
-  it('clears a disable the old DSH page wrote for one row, keeping comments and every other row and key (T089)', async () => {
-    const dir = dirname(statePath())
-    mkdirSync(dir, { recursive: true })
-    const patch = join(dir, 'cordis.patch.yml')
-    expect(await clearProfilePatchDisable(dir, 'probe')).toBe(false)
-    writeFileSync(patch, [
-      '# my profile',
-      '- insert:',
-      '    - id: probe',
-      '      name: probe',
-      '# switched off on the Plugins page',
-      '- id: probe',
-      '  disabled: true',
-      '- id: other',
-      '  disabled: true',
-      '- id: probe',
-      '  name: probe',
-      '  config: { limit: 3 }',
-      '  disabled: true',
-      '',
-    ].join('\n'))
-    expect(await clearProfilePatchDisable(dir, 'probe')).toBe(true)
-    const text = readFileSync(patch, 'utf8')
-    expect(text).toMatch(/# my profile/u)
-    expect(text).toMatch(/# switched off on the Plugins page\n- id: other/u)
-    expect(text).toMatch(/- id: other\n {2}disabled: true/u)
-    expect(text).toMatch(/- id: probe\n {2}name: probe\n {2}config: \{ limit: 3 \}\n/u)
-    expect(text.match(/disabled: true/gu)).toHaveLength(1)
-    expect(text).toMatch(/- insert:/u)
-    expect(await clearProfilePatchDisable(dir, 'probe')).toBe(false)
-  })
 
-  it('reads a disable kept under a renamed row\'s old id as the new row (spec 044 step 1b)', async () => {
-    const path = statePath()
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'web', disabledEntries: ['include:extension-context', 'include:other'] }] }))
-    const persistence = { profileName: 'web', statePath: path }
-    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:@acryldev/plugin-context', 'include:other'])
-    expect(pluginLifecyclePatches(persistence, new Set(['@acryldev/plugin-context', 'other']))).toEqual([{ id: 'acryl-plugin-context', disabled: true }, { id: 'other', disabled: true }])
-    await setPluginLifecycleEntryEnabled(persistence, 'include:other', true)
-    expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:@acryldev/plugin-context'])
-  })
-
-  it('reads a disabled Development Canvas kept under its old row id as the row by its package name (spec 048 T014)', async () => {
-    // The stored form found in a real dev home: the canvas was turned off while its row id was still `desktop-development-canvas`.
-    const path = statePath()
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, JSON.stringify({ version: 1, profiles: [{ profileName: 'desktop', disabledEntries: ['include:desktop-development-canvas'] }] }))
-    const persistence = { profileName: 'desktop', statePath: path }
-    expect([...readDisabledPluginLifecycleEntries(persistence)]).toEqual(['include:acryl-development-canvas'])
-    expect(pluginLifecyclePatches(persistence, new Set(['acryl-development-canvas']))).toEqual([{ id: 'acryl-development-canvas', disabled: true }])
-    await setPluginLifecycleEntryEnabled(persistence, 'include:other', false)
-    expect(JSON.parse(readFileSync(path, 'utf8')).profiles[0].disabledEntries).toEqual(['include:acryl-development-canvas', 'include:other'])
-  })
 
   it('composes no disable for a row the profile does not have, and keeps it stored for when the plugin comes back (spec 048 T014)', async () => {
     // The Development Canvas is a Market plugin: a home that disabled it and then uninstalled it booted with

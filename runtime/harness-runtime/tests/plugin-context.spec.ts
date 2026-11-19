@@ -477,11 +477,11 @@ describe('/reload on the web engine', () => {
     }
   }, 180_000)
 
-  it('a plugin that requires acrylblends/cordis/state in an app without it gets the row live, shared by a second plugin and removed with the last (spec 049 T001)', async () => {
+  it('a plugin that requires @acryldev/blends/cordis/state in an app without it gets the row live, shared by a second plugin and removed with the last (spec 049 T001)', async () => {
     const home = await mkdtemp(join(tmpdir(), 'acryl-module-row-'))
     temporaryHomes.push(home)
     process.env.DSH_HOME = home
-    // An app whose Blueprint has no framework kit: nothing mounts `acrylblends/cordis/state` at start.
+    // An app whose Blueprint has no framework kit: nothing mounts `@acryldev/blends/cordis/state` at start.
     const blueprint = join(home, 'no-kit.yaml')
     writeFileSync(blueprint, 'id: test.no-kit\nextends: acryl.blank\nrows: [plugin-context, system-prompt, ui-library, app-save, plugin-hub]\n')
     const previousBlueprint = process.env.ACRYL_BLUEPRINT
@@ -496,7 +496,7 @@ describe('/reload on the web engine', () => {
         name: `acryl-probe-${id}`, version: '0.1.0', type: 'module', main: './index.js',
         exports: { '.': './index.js', './package.json': './package.json' },
         peerDependencies: { acrylblends: '*' },
-        dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['acrylblends/cordis/state'] },
+        dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['@acryldev/blends/cordis/state'] },
       }))
       writeFileSync(join(dir, 'cordis.patch.yml'), `- insert:\n    - id: acryl-probe-${id}\n      name: acryl-probe-${id}\n`)
       writeFileSync(join(dir, 'index.js'), [
@@ -519,7 +519,7 @@ describe('/reload on the web engine', () => {
     const bridge = createAcrylSessionBridge(host.ctx, { profile: 'web', generationId: 'module-row', attachment: 'owner', cwd: workspace })
     try {
       const loader = (host.ctx as unknown as { loader: { entries(): Iterable<{ id: string, options: { name: string } }> } }).loader
-      const stateRows = () => [...loader.entries()].filter(entry => entry.options.name === 'acrylblends/cordis/state').map(entry => entry.id)
+      const stateRows = () => [...loader.entries()].filter(entry => entry.options.name === '@acryldev/blends/cordis/state').map(entry => entry.id)
       expect(stateRows()).toEqual([])
       const sessionId = await bridge.open()
       const agent = (host.ctx as unknown as { agents: { get(id: unknown): unknown } }).agents.get(SessionId(sessionId))
@@ -536,15 +536,15 @@ describe('/reload on the web engine', () => {
       }
 
       expect(await installLocalPlugin({ path: first }, services)).toMatchObject({ ok: true, status: 'active', action: 'installed' })
-      expect(stateRows()).toEqual(['include:acrylblends/cordis/state'])
+      expect(stateRows()).toEqual(['include:@acryldev/blends/cordis/state'])
       expect([await run('/probe-first'), await run('/probe-first')]).toEqual(['1:-', '2:-'])
 
       expect(await installLocalPlugin({ path: second }, services)).toMatchObject({ ok: true, status: 'active', action: 'installed' })
-      expect(stateRows()).toEqual(['include:acrylblends/cordis/state'])
+      expect(stateRows()).toEqual(['include:@acryldev/blends/cordis/state'])
       expect(await run('/probe-second')).toBe('1:2')
 
       expect(await removeLocalPlugin({ package: 'acryl-probe-first' }, services)).toMatchObject({ ok: true })
-      expect(stateRows()).toEqual(['include:acrylblends/cordis/state'])
+      expect(stateRows()).toEqual(['include:@acryldev/blends/cordis/state'])
       expect(await run('/probe-second')).toBe('2:-')
 
       expect(await removeLocalPlugin({ package: 'acryl-probe-second' }, services)).toMatchObject({ ok: true })
@@ -573,7 +573,7 @@ describe('/reload on the web engine', () => {
       name: 'acryl-probe-kept', version: '0.1.0', type: 'module', main: './index.js',
       exports: { '.': './index.js', './package.json': './package.json' },
       peerDependencies: { acrylblends: '*' },
-      dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['acrylblends/cordis/state'] },
+      dsh: { bundle: { patch: './cordis.patch.yml' }, requiresAcrylPackages: ['@acryldev/blends/cordis/state'] },
     }))
     writeFileSync(join(dir, 'cordis.patch.yml'), '- insert:\n    - id: acryl-probe-kept\n      name: acryl-probe-kept\n')
     writeFileSync(join(dir, 'index.js'), "export const name = 'acryl-probe-kept'\nexport const inject = ['state']\nexport function apply(ctx) { ctx.state.cell('kept', 'yes') }\n")
@@ -583,7 +583,7 @@ describe('/reload on the web engine', () => {
       prepare: hostCtx => { provideCmdline(hostCtx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
     })
     type Live = { loader: { entries(): Iterable<{ options: { name: string }, fiber?: { state: number } }> }, state?: { find(key: string): { get(): unknown } | undefined } }
-    const stateRowStates = (ctx: unknown) => [...(ctx as Live).loader.entries()].filter(entry => entry.options.name === 'acrylblends/cordis/state').map(entry => entry.fiber?.state)
+    const stateRowStates = (ctx: unknown) => [...(ctx as Live).loader.entries()].filter(entry => entry.options.name === '@acryldev/blends/cordis/state').map(entry => entry.fiber?.state)
     try {
       const first = await boot()
       try {

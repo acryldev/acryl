@@ -55,7 +55,7 @@ describe('acryl_workspace_status tool (the ACRYL Cordis Tool gate)', () => {
 
   it('is a proper Cordis plugin entry (name/inject/apply)', async () => {
     const mod = await import('../src/plugin-acryl-workspace-status.ts')
-    expect(mod.name).toBe('@acryldev/workspace-status')
+    expect(mod.name).toBe('acryl-workspace-status')
     expect(mod.inject).toEqual(['tools'])
     expect(typeof mod.apply).toBe('function')
     expect(typeof mod.installAcrylWorkspaceStatusTool).toBe('function')

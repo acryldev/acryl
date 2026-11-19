@@ -112,17 +112,6 @@ const TUI_LIBRARY_PACKAGE = '@acryldev/ui-tui'
  */
 export const RENAMED_MODULES: Readonly<Record<string, string>> = Object.freeze({
   'acryl-extension-context': '@acryldev/plugin-context',
-  'acrylblends/cordis/router': frameworkRow('router').module,
-  'acrylblends/cordis/router-http': frameworkRow('router-http').module,
-  'acrylblends/cordis/state': frameworkRow('state').module,
-  'acrylblends/cordis/inspect': frameworkRow('inspect').module,
-  'acrylblends/cordis/node-server': frameworkRow('node-server').module,
-  'acrylblends/cordis/door': frameworkRow('door').module,
-  'acrylblends/cordis/db': frameworkRow('db').module,
-  'acrylblends/cordis/db-sqlite': frameworkRow('db-sqlite').module,
-  'acrylblends/cordis/kv': frameworkRow('kv').module,
-  'acrylblends/cordis/kv-json': frameworkRow('kv-json').module,
-  'acrylblends/cordis/kv-db': frameworkRow('kv-db').module,
   '@acryldev/router': frameworkRow('router').module,
   '@acryldev/router-http': frameworkRow('router-http').module,
   '@acryldev/state': frameworkRow('state').module,

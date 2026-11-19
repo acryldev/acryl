@@ -44,7 +44,7 @@ describe('an import of a moved framework package', () => {
 
     const router = failure(() => resolve('@acryldev/router'))
     expect(router).toContain("'@acryldev/router' is part of acrylblends")
-    expect(router).toContain("'acrylblends/cordis/router'")
+    expect(router).toContain("'@acryldev/blends/cordis/router'")
     expect(failure(() => resolve('@acryldev/router/middleware'))).toContain("'@acryldev/blends/body-limit'")
     // Any other missing package fails as before.
     expect(failure(() => resolve('not-a-framework-package'))).not.toContain('acrylblends')
@@ -55,7 +55,7 @@ describe('an import of a moved framework package', () => {
 
   it('names a replacement for every package that moved', () => {
     for (const old of ['@acryldev/router', '@acryldev/router-http', '@acryldev/state', '@acryldev/inspect', '@acryldev/node-server', '@acryldev/door', '@acryldev/db', '@acryldev/db-sqlite', '@acryldev/kv', '@acryldev/kv-json', '@acryldev/kv-db']) {
-      expect(MOVED_FRAMEWORK_IMPORTS[old], old).toMatch(/'acrylblends(\/[a-z/-]+)?'/u)
+      expect(MOVED_FRAMEWORK_IMPORTS[old], old).toMatch(/'@acryldev\/blends(\/[a-z/-]+)?'/u)
     }
   })
 })

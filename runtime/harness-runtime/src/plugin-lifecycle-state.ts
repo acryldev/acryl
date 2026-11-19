@@ -94,13 +94,10 @@ export function isPluginLifecycleEntryId(value: unknown): value is string {
 }
 
 /**
- * Loader rows that were renamed, old entry id to new: a disable kept under the old id applies to the row by its new id, and is written
- * back under the new id on the next change. `extension-context` became `@acryldev/plugin-context` in spec 044 step 1b; the Development
- * Canvas row `desktop-development-canvas` took its package name `acryl-development-canvas` under the row-id rule (spec 048 T014).
+ * A Loader row that was renamed before this state format settled: a disable kept under the old entry id applies to the row by its current id.
+ * The Development Canvas row `desktop-development-canvas` took its package name `acryl-development-canvas` under the row-id rule (spec 048 T014).
  */
 const RENAMED_ENTRY_IDS: Readonly<Record<string, string>> = Object.freeze({
-  'include:extension-context': 'include:@acryldev/plugin-context',
-  'extension-context': '@acryldev/plugin-context',
   'include:desktop-development-canvas': 'include:acryl-development-canvas',
   'desktop-development-canvas': 'acryl-development-canvas',
 })
@@ -177,7 +174,7 @@ function parseState(value: unknown, validateProfileName: ProfileNameValidator): 
     // id, and the Loader treats an unknown-id patch as a warning, not a fault.
     profiles.push({
       profileName: profile.profileName,
-      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isPluginLifecycleEntryId).map(entryId => RENAMED_ENTRY_IDS[entryId] ?? entryId))]
+      disabledEntries: [...new Set((profile.disabledEntries as unknown[]).filter(isPluginLifecycleEntryId).map(entryId => entryId))]
         .sort(stableCompare),
     })
   }
@@ -214,7 +211,7 @@ export function readDisabledPluginLifecycleEntries(
   validatorOf(persistence)(persistence.profileName)
   const profile = readState(persistence).profiles
     .find(candidate => candidate.profileName === persistence.profileName)
-  return new Set(profile?.disabledEntries ?? [])
+  return new Set((profile?.disabledEntries ?? []).map(entry => RENAMED_ENTRY_IDS[entry] ?? entry))
 }
 
 /**

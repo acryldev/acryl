@@ -112,8 +112,8 @@ describe('reading a Blends manifest', () => {
   it('an app written before the framework moved to acrylblends still names its packages, read as the acrylblends modules (spec 049 slice 17)', () => {
     expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: '@acryldev/inspect', disabled: true }])).rows).not.toContain('framework-kit')
     expect(blueprintFromManifest(blend([{ id: 'acryl-inspect', name: '@acryldev/inspect' }])).rows).toContain('framework-kit')
-    expect(blueprintFromManifest(blend([{ id: 'acrylblends/cordis/inspect', name: 'acrylblends/cordis/inspect', disabled: true }])).rows).not.toContain('framework-kit')
-    // Written today: each row under its module, never an old name.
+    // Written today: each row under its module, never an old name. A row written before the module moved (spec 051 T038) is not read as today's
+    // module: day 0 reinstalls old apps instead of aliasing their names.
     const written = appManifest({ id: 'app.y', name: 'Y', blueprint: BLANK_BLUEPRINT, brand: brandIdentity({ name: 'Y' }) }) as { spec: { rows: { id: string, name: string }[] } }
     expect(written.spec.rows).toContainEqual({ id: 'acrylblends/cordis/inspect', name: '@acryldev/blends/cordis/inspect' })
     expect(written.spec.rows.map(row => row.name).filter(name => Object.hasOwn(RENAMED_MODULES, name))).toEqual([])
