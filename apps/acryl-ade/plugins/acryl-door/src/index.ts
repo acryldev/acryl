@@ -17,9 +17,9 @@ import type { UpgradeWebSocket } from '../../acryl-router/src/helpers/index.ts'
 import { clientModules } from '../../acryl-node-server/src/client-modules.ts'
 import { auditPath, AuditLog } from './host/audit.ts'
 import { UiChannel } from './host/channel.ts'
-import { registerChatTools } from './host/chat-tools.ts'
+import { registerChatTools, registerDshChatTools } from './host/chat-tools.ts'
 import { PAGE_VERBS, VERBS } from './host/verbs.ts'
-import { Door, type ExtensionsPort, type PluginSharePort, type ToolsPort } from './host/door.ts'
+import { Door, isDshTools, type DshToolsPort, type ExtensionsPort, type PluginSharePort, type ToolsPort } from './host/door.ts'
 import { assertDoorIsFree, newSecret, removeDoorFile, stateDir, writeDoorFile } from './host/door-file.ts'
 import { DOOR_PREFIX, privateApi } from './host/http.ts'
 import { mcpRoutes } from './host/mcp-routes.ts'
@@ -183,7 +183,7 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
     ...(appBase === '' ? {} : { appBase }),
     extensions: () => ctx.get('extensions') as unknown as ExtensionsPort | undefined,
     pluginShare: () => ctx.get('pluginShare') as unknown as PluginSharePort | undefined,
-    tools: () => ctx.get('tools') as unknown as ToolsPort | undefined,
+    tools: () => ctx.get('tools') as unknown as ToolsPort | DshToolsPort | undefined,
     expose: config.tools?.expose ?? [],
     reloadOnChange: config.reloadOnChange !== false,
   })
@@ -301,7 +301,12 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
   ))
   // The built-in chat's agent reads the `tools` registry: the verbs are in it while both are up.
   ctx.inject(['tools'], (inner) => {
-    inner.effect(() => registerChatTools(inner.get('tools') as unknown as ToolsPort, door, pageOnly ? PAGE_VERBS : VERBS), 'acryl-door: the verbs in the tools registry')
+    inner.effect(() => {
+      const tools: unknown = inner.get('tools')
+      const verbs = pageOnly ? PAGE_VERBS : VERBS
+      // DSH's registry (the ACRYL chat in a framed app and in ADE) takes definition objects; the framework agent's takes a name and a tool.
+      return isDshTools(tools) ? registerDshChatTools(tools, door, verbs) : registerChatTools(tools as ToolsPort, door, verbs)
+    }, 'acryl-door: the verbs in the tools registry')
   })
   ctx.effect(function* () {
     yield ctx.reflect.provide('door', door)

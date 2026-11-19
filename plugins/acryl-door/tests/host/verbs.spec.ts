@@ -179,3 +179,37 @@ describe('plugin pull on the command line', () => {
     expect(() => parseInvocation(['plugin', 'pull', '--from'])).toThrow(/--from needs a value/)
   })
 })
+
+/** DSH's registry as the ACRYL chat's agent reads it (`ctx.tools`): one definition object, refused without an output render, listed by `schemas()`. */
+function dshToolsRegistry() {
+  const table = new Map<string, { description: string; output: { render(args: unknown, value: unknown): unknown }; execute(args: unknown, exec: { signal?: AbortSignal }): Promise<unknown> }>()
+  return {
+    register(definition: { name: string; description: string; output?: { render?: unknown }; execute(args: unknown, exec: { signal?: AbortSignal }): Promise<unknown> }) {
+      if (typeof definition !== 'object' || typeof definition.output?.render !== 'function') throw new TypeError(`tool "${String((definition as { name?: string }).name)}" must declare output { schema, render, presentationMeta? }`)
+      if (table.has(definition.name)) throw new Error(`tool "${definition.name}" is already registered`)
+      table.set(definition.name, definition as never)
+      return () => void table.delete(definition.name)
+    },
+    schemas: () => [...table.entries()].map(([name, tool]) => ({ name, description: tool.description })),
+    async execute(name: string, args: unknown) {
+      const tool = table.get(name)
+      if (tool === undefined) throw new Error(`unknown tool "${name}"`)
+      return tool.output.render(args, await tool.execute(args, { signal: new AbortController().signal }))
+    },
+  }
+}
+
+describe("the ACRYL chat's registry (DSH's)", () => {
+  it('holds every verb as a door tool that answers what the terminal command answers (spec 051 T022)', async () => {
+    const tools = dshToolsRegistry()
+    const running = await startApp({ services: { tools } })
+    apps.push(running)
+    await until(() => tools.schemas().filter(tool => isDoorToolName(tool.name)).length === VERBS.length, "the door tools in DSH's registry")
+    const cli = await operator(running.root, ['brief'])
+    expect(cli.code).toBe(0)
+    expect(await tools.execute(chatToolName('brief'), {})).toEqual([{ type: 'text', text: cli.out.trimEnd() }])
+    // The door's own tool list reads the same registry instead of failing.
+    const listed = await operator(running.root, ['tool', 'list'])
+    expect(listed.code, listed.err).toBe(0)
+  })
+})

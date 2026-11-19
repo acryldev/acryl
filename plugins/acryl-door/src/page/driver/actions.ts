@@ -95,12 +95,29 @@ export function typeText(env: ActionEnvironment, request: Request<'type'>): UiAc
     setNativeValue(element, clear ? request.text : element.value + request.text)
     element.dispatchEvent(new Event('input', { bubbles: true }))
     element.dispatchEvent(new Event('change', { bubbles: true }))
-  } else {
+  } else if (!insertEditableText(element as HTMLElement, request.text, clear)) {
     element.textContent = clear ? request.text : (element.textContent ?? '') + request.text
     element.dispatchEvent(new Event('input', { bubbles: true }))
   }
   if (request.submit === true) pressKey(env, { op: 'press', key: 'Enter', ref: request.ref })
   return { ok: true, target: target(role, name), detail: `typed ${String(request.text.length)} characters` }
+}
+
+/**
+ * Type into a contenteditable as a person does: the browser's own insertText on a selection, which fires the beforeinput and input a rich editor
+ * (the ACRYL chat's composer, Lexical, ProseMirror) keeps its model from. Setting textContent bypasses that model: the editor draws over the text and
+ * its send button stays disabled (found driving ADE's chat, spec 051 T022). False when the browser has no execCommand (a test DOM): the caller sets the text.
+ */
+function insertEditableText(element: HTMLElement, text: string, clear: boolean): boolean {
+  const doc = element.ownerDocument
+  const selection = doc.getSelection()
+  if (selection === null || typeof doc.execCommand !== 'function') return false
+  const range = doc.createRange()
+  range.selectNodeContents(element)
+  if (!clear) range.collapse(false)
+  selection.removeAllRanges()
+  selection.addRange(range)
+  return doc.execCommand('insertText', false, text)
 }
 
 export function selectOption(env: ActionEnvironment, request: Request<'select'>): UiActionResult {
