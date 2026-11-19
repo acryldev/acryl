@@ -68,10 +68,10 @@ describe('what each Blueprint composes', () => {
 
   it('full ACRYL keeps today\'s web rows in mount order', () => {
     const { patches, packages } = composeBlueprintRows(IDE_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'community-market', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/shortcuts', '@acryldev/mount-anchors', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['ui-acryl', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'community-market', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-shortcuts', 'acryl-mount-anchors', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('@acryldev/brand-client')
     // The Market injects `router` and `routerHttp`, so their rows come with it, once and just before it (spec 046).
-    expect(packages).toEqual(expect.arrayContaining(['acrylblends', '@acryldev/cordis-plugin-market']))
+    expect(packages).toEqual(expect.arrayContaining(['@acryldev/blends', '@acryldev/cordis-plugin-market']))
   })
 
   it('does not mount the router rows twice when the profile already has them', () => {
@@ -83,7 +83,7 @@ describe('what each Blueprint composes', () => {
 
   it('blank web: brand, extension pack, prompt shaping, UI library and the start-page command reply only', () => {
     const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web')
-    expect(insertedIds(patches)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
     const capabilities = new Set(BLANK_BLUEPRINT.capabilities)
     const capabilityIds = insertedIds(createAcrylCodingCapabilityPatches(new Set(['web']), new Set(), capabilities))
     expect(capabilityIds).toEqual(['authorization', 'acryl-settings'])
@@ -92,16 +92,16 @@ describe('what each Blueprint composes', () => {
 
   it('blank keeps the agent essentials on the terminal and adds no browser rows', () => {
     const { patches, packages } = composeBlueprintRows(BLANK_BLUEPRINT, 'tui')
-    expect(insertedIds(patches)).toEqual(['@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/plugin-hub/manager'])
+    expect(insertedIds(patches)).toEqual(['acryl-plugin-context', 'acryl-system-prompt', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-plugin-hub/manager'])
     expect(packages).toContain('@acryldev/ui-tui')
     const tui = insertedIds(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(), new Set(BLANK_BLUEPRINT.capabilities)))
     expect(tui).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings'])
   })
 
   it('a custom brand carries into the system prompt identity, and a row the profile already has is not composed twice', () => {
-    const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web', new Set(['@acryldev/plugin-context']))
-    expect(insertedIds(patches)).not.toContain('@acryldev/plugin-context')
-    const prompt = patches.flatMap(patch => patch.insert ?? []).find(row => row.id === '@acryldev/system-prompt')
+    const { patches } = composeBlueprintRows(BLANK_BLUEPRINT, 'web', new Set(['acryl-plugin-context']))
+    expect(insertedIds(patches)).not.toContain('acryl-plugin-context')
+    const prompt = patches.flatMap(patch => patch.insert ?? []).find(row => row.id === 'acryl-system-prompt')
     expect(String((prompt?.config as { identity?: string }).identity)).toContain('inside Blank')
   })
 

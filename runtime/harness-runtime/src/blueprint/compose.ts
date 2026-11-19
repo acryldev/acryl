@@ -41,9 +41,25 @@ function frameworkRow(plugin: string): RowModule {
   return { rowId: `${LEGACY_FRAMEWORK_PACKAGE}/cordis/${plugin}`, module, packageName: FRAMEWORK_PACKAGE }
 }
 
-/** A row whose module is its own package, under the package's name. */
+/**
+ * The row id each package-backed row had before spec 051 T038 renamed the packages: a row id is persisted (a composition
+ * override names it), so it keeps the name the row was mounted under while the module it loads moves to the scoped package.
+ */
+const LEGACY_PACKAGE_ROW_IDS: Readonly<Record<string, string>> = Object.freeze({
+  '@acryldev/plugin-context': 'acryl-plugin-context',
+  '@acryldev/system-prompt': 'acryl-system-prompt',
+  '@acryldev/ui': '@acryl/ui',
+  '@acryldev/app-save': 'acryl-app-save',
+  '@acryldev/plugin-hub': 'acryl-plugin-hub',
+  '@acryldev/shortcuts': 'acryl-shortcuts',
+  '@acryldev/mount-anchors': 'acryl-mount-anchors',
+  '@acryldev/command-reply': 'acryl-command-reply',
+  '@acryldev/app-shell': 'acryl-app-shell',
+})
+
+/** A row whose module is its own package, under the package's name; its row id is the one it had before the rename. */
 function packageRow(packageName: string): RowModule {
-  return { rowId: packageName, module: packageName, packageName }
+  return { rowId: LEGACY_PACKAGE_ROW_IDS[packageName] ?? packageName, module: packageName, packageName }
 }
 
 /** The router (`ctx.router`) and its Web adapter (`ctx.routerHttp`), which the Market injects (spec 046). */
@@ -83,7 +99,9 @@ export const DSH_CHAT_ROW_IDS: readonly string[] = ['agent', 'llm', 'llm-pi-ai']
 
 /** DSH's base-bundle row providing `pluginManager`, and the hub's row that takes its place (its id is its module, by the row-naming rule). */
 export const DSH_PLUGIN_MANAGER_ROW_ID = 'plugin-manager'
-export const PLUGIN_MANAGER_ROW_ID = '@acryldev/plugin-hub/manager'
+/** The plugin manager row's id, from before the rename (persisted); the module it mounts is the scoped package's subpath. */
+export const PLUGIN_MANAGER_ROW_ID = 'acryl-plugin-hub/manager'
+const PLUGIN_MANAGER_MODULE = '@acryldev/plugin-hub/manager'
 
 /** The terminal library is a differently named package than the browser one. */
 const TUI_LIBRARY_PACKAGE = '@acryldev/ui-tui'
@@ -94,6 +112,17 @@ const TUI_LIBRARY_PACKAGE = '@acryldev/ui-tui'
  */
 export const RENAMED_MODULES: Readonly<Record<string, string>> = Object.freeze({
   'acryl-extension-context': '@acryldev/plugin-context',
+  'acrylblends/cordis/router': frameworkRow('router').module,
+  'acrylblends/cordis/router-http': frameworkRow('router-http').module,
+  'acrylblends/cordis/state': frameworkRow('state').module,
+  'acrylblends/cordis/inspect': frameworkRow('inspect').module,
+  'acrylblends/cordis/node-server': frameworkRow('node-server').module,
+  'acrylblends/cordis/door': frameworkRow('door').module,
+  'acrylblends/cordis/db': frameworkRow('db').module,
+  'acrylblends/cordis/db-sqlite': frameworkRow('db-sqlite').module,
+  'acrylblends/cordis/kv': frameworkRow('kv').module,
+  'acrylblends/cordis/kv-json': frameworkRow('kv-json').module,
+  'acrylblends/cordis/kv-db': frameworkRow('kv-db').module,
   '@acryldev/router': frameworkRow('router').module,
   '@acryldev/router-http': frameworkRow('router-http').module,
   '@acryldev/state': frameworkRow('state').module,
@@ -198,7 +227,7 @@ export function composeBlueprintRows(
   // With the plugin hub, DSH's own plugin manager is replaced by the hub's subclass of it, so DSH's "Add plugin" box installs a git address as
   // that repository's released, checked version (spec 044 D7). Swapped, never doubled: Cordis refuses a second `pluginManager` provider.
   if (blueprint.rows.includes('plugin-hub') && !existingRowIds.has(PLUGIN_MANAGER_ROW_ID)) {
-    patches.push({ id: DSH_PLUGIN_MANAGER_ROW_ID, disabled: true }, { insert: [{ id: PLUGIN_MANAGER_ROW_ID, name: PLUGIN_MANAGER_ROW_ID }] })
+    patches.push({ id: DSH_PLUGIN_MANAGER_ROW_ID, disabled: true }, { insert: [{ id: PLUGIN_MANAGER_ROW_ID, name: PLUGIN_MANAGER_MODULE }] })
   }
   return { packages: [...new Set(packages)], patches: structuredClone(patches) }
 }

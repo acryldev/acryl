@@ -90,11 +90,11 @@ describe('parseBlueprint', () => {
     for (const surface of ['web', 'desktop'] as const) {
       const { packages, patches } = composeBlueprintRows(blueprint, surface, new Set(), ADVANCED_SHELL_PATCHES)
       expect(packages).toContain('@acryldev/app-shell')
-      expect(patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toContain('@acryldev/app-shell')
+      expect(patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toContain('acryl-app-shell')
       expect(patches).toEqual(expect.arrayContaining([{ id: 'ui-layout', disabled: true }, { id: 'ui-sidebar', disabled: false }, { id: 'ui-conversation', disabled: false }]))
     }
     const tui = composeBlueprintRows(blueprint, 'tui')
-    expect(tui.packages).not.toContain('@acryldev/app-shell')
+    expect(tui.packages).not.toContain('acryl-app-shell')
     expect(tui.patches).not.toContainEqual({ id: 'ui-layout', disabled: true })
     expect(blueprintRowForModule('@acryldev/app-shell')).toBe('app-shell')
   })
@@ -109,8 +109,8 @@ describe('a blueprint file selected from the environment', () => {
     const sample = fileURLToPath(new URL('../../../specs/036-cordis-ecosystem-and-acryl-blends/samples/private-brand.blueprint.yaml', import.meta.url))
     const blueprint = blueprintFromEnvironment({ ACRYL_BLUEPRINT: sample })
     expect(blueprint.id).toBe('acme.notes')
-    expect(blueprint.rows).not.toContain('@acryldev/workspace' as never)
-    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', '@acryldev/plugin-context', '@acryldev/system-prompt', '@acryldev/ui', '@acryldev/app-save', '@acryldev/plugin-hub', '@acryldev/command-reply', '@acryldev/plugin-hub/manager'])
+    expect(blueprint.rows).not.toContain('acryl-workspace' as never)
+    expect(composeBlueprintRows(blueprint, 'web').patches.flatMap(patch => patch.insert ?? []).map(row => row.id)).toEqual(['brand', 'acrylblends/cordis/router', 'acrylblends/cordis/router-http', 'acrylblends/cordis/state', 'acrylblends/cordis/inspect', 'acryl-plugin-context', 'acryl-system-prompt', '@acryl/ui', 'acryl-app-save', 'acryl-plugin-hub', 'acryl-command-reply', 'acryl-plugin-hub/manager'])
   })
 
   it('is read, validated and rebranded like a built-in', () => {

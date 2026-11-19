@@ -47,9 +47,9 @@ describe('extension context on the web engine', () => {
     })
     try {
       const rows = [...host.ctx.loader.entries()]
-      expect(rows.some(entry => entry.options.id === '@acryldev/plugin-context')).toBe(true)
-      // The UI library (spec 038-ui-component-library) is a Loader row on the web engine, so every client bundle can require('@acryldev/ui').
-      expect(rows.some(entry => entry.options.id === '@acryldev/ui')).toBe(true)
+      expect(rows.some(entry => entry.options.id === 'acryl-plugin-context')).toBe(true)
+      // The UI library (spec 038-ui-component-library) is a Loader row on the web engine, so every client bundle can require('@acryl/ui').
+      expect(rows.some(entry => entry.options.id === '@acryl/ui')).toBe(true)
 
       const context = host.ctx.get('pluginContext' as never) as { root: string } | undefined
       expect(context).toBeDefined()
@@ -81,7 +81,7 @@ describe('extension context on the web engine', () => {
     })
     try {
       const rows = [...host.ctx.loader.entries()]
-      expect(rows.some(entry => entry.options.id === '@acryldev/plugin-context')).toBe(true)
+      expect(rows.some(entry => entry.options.id === 'acryl-plugin-context')).toBe(true)
       const assembly = await host.ctx.get('systemPrompt')!.assemble()
       expect(assembly.sections.some(section => section.name === 'acryl:plugin-router')).toBe(true)
       expect(assembly.tools.map(tool => tool.name)).toEqual(expect.arrayContaining(['acryl_install_plugin']))
