@@ -34,7 +34,7 @@ pipeline fail when either drifts. A frame package's version bump is therefore a 
 | `acryl-plugin-admin` | `@acrylblends/plugin-admin` | plugin lifecycle and architecture routes |
 | `acryl-support` | `@acrylblends/support` | support routes and the diagnostics download |
 | `acryl-loopback-http` | `@acrylblends/loopback-http` | the loopback HTTP helper the host uses |
-| `acryl-web` | `@acrylblends/web` | the web host surface the frame mounts on |
+| `acryl-web-service` | `@acrylblends/web` | the web host surface the frame mounts on |
 | `acryl-system-prompt` | `@acrylblends/system-prompt` | the agent's prompt, as ACRYL IDE's agent has it |
 | `acryl-app-context` | `@acrylblends/app-context` | the app builder's docs and verified example plugins |
 | `acryl-versions` | `@acrylblends/versions` | Versions: the branch's commits as save points |
@@ -72,7 +72,7 @@ The source keeps ACRYL's package names (the port rule); the published artifact c
 - the built JavaScript and declarations: import and export specifiers of a frame package are rewritten (a package built against `acryl-loopback-http` imports
   `@acrylblends/loopback-http` in the tarball), so source maps point at the original source lines.
 - `cordis.patch.yml`: the row's `name:` is the published name, quoted because a scoped name starts with `@` (YAML reserves it).
-- Loader row ids stay the source package names (`- id: acryl-web` with `name: '@acrylblends/web'`). A row id cannot contain `@` or `/` (DSH refuses to
+- Loader row ids stay the source package names (`- id: acryl-web-service` with `name: '@acrylblends/web'`). A row id cannot contain `@` or `/` (DSH refuses to
   parse the overlay), and keeping the source name means a checkout app and a published app have the same rows, so an upgrade between them renames nothing
   and the rows that key on an id (the Blends frame's `appPage`) keep working. The launcher's development hook imports the Blends frame by the name it is
   installed as (`@acrylblends/blends-frame/app-generation`).

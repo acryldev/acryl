@@ -25,7 +25,7 @@ function fakeWebServer(ctx: Context) {
 
 describe('the acrylWeb service', () => {
   it('follows the web server it is bound to, and leaves when the plugin unloads', async () => {
-    expect(name).toBe('acryl-web')
+    expect(name).toBe('acryl-web-service')
     expect(inject).toEqual(['webServer'])
     const ctx = new Context()
     const server = fakeWebServer(ctx)

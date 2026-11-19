@@ -65,7 +65,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [ ] T024 [guard] Relative imports that cross packages are invisible to the direction guard (examples: the framework package's
   `../../../plugins/acryl-router/src`, acryl-app-context's tests into `framework/plugins`). Teach the guard to see them, or remove them when
   the framework's plugins become packages (Phase 3).
-- [ ] T025 [row id] Rename the Loader row `acryl-web` to `acryl-web-service` (its package name; the shared-slot exception no longer fits,
+- [x] T025 [row id] Rename the Loader row `acryl-web` to `acryl-web-service` (its package name; the shared-slot exception no longer fits,
   and installed apps are reinstalled). Touches the frame overlay apps get (`ide-profile.ts`).
 - [x] T026 [ci] Lint every root workflow with actionlint (today only the framework's). Its built-in runner list is older than GitHub's
   (`ubuntu-24.04-arm`, `macos-26`, `macos-15-intel`) and it does not know `vars`: configure those, then lint all.

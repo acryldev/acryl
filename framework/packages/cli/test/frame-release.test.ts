@@ -41,7 +41,7 @@ describe('the frame specs of an existing app', () => {
     expect(specs?.frameworkVersion).toBe(`^${VERSION}`)
     const input = frameProfileInput(specs ?? publishedFrameProfile(), 'on-npm', [])
     expect(input.dependencies?.[String(web?.name)]).toBe('^0.1.0')
-    const row = input.packages?.find((entry) => entry.row === 'acryl-web')
+    const row = input.packages?.find((entry) => entry.row === 'acryl-web-service')
     expect(row?.name).toBe(web?.name)
   })
 
@@ -56,8 +56,8 @@ describe('the frame specs of an existing app', () => {
       'file:/checkout/runtime/acryl-web-service',
     )
     expect(input.frameworkVersion).toBe('file:/checkout/packages/cli')
-    // The row keeps its id: an app made before the package moved to runtime/ (spec 051) composes the same row.
-    expect(input.packages?.find((entry) => entry.row === 'acryl-web')?.name).toBe(
+    // The row id is the package name (T025), so a checkout app and a published one compose the same row.
+    expect(input.packages?.find((entry) => entry.row === 'acryl-web-service')?.name).toBe(
       'acryl-web-service',
     )
   })

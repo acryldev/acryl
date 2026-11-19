@@ -1,5 +1,3 @@
-# Row id acryl-web, not the package name: the shared-slot exception of the row-id rule (CLAUDE.md). Every Blends app made before spec 051
-# composes this row as acryl-web, and ACRYL's own apps/acryl-web is a different package that already owns the name acryl-web.
 - insert:
-    - id: acryl-web
+    - id: acryl-web-service
       name: acryl-web-service

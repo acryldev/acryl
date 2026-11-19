@@ -23,7 +23,7 @@ source after that commit, measured with `git rev-list --count <commit>..origin/m
 | acryl-support | plugins/acryl-support @ 37f4dd9c | 1 | 1 file, +2 |
 | acryl-system-prompt | plugins/acryl-system-prompt @ f6538891 | 1 | 1 file, +1 -1 |
 | acryl-ui | plugins/acryl-ui @ 37f4dd9c | 1 | 1 file, +3 -1 |
-| acryl-web | runtime/acryl-harness-runtime/src/engine-web.ts, runtime/acryl-control/src/platform/web.ts @ 37f4dd9c | 0 | none |
+| acryl-web-service | runtime/acryl-harness-runtime/src/engine-web.ts, runtime/acryl-control/src/platform/web.ts @ 37f4dd9c | 0 | none |
 | acryl-workspace | plugins/acryl-workspace @ 37f4dd9c | 2 | 2 files, +2 -2 |
 | acryl-blends-frame, acryl-versions, dsh-client-ui-brand-acryl | written in acrylblends (no acryl source) | - | - |
 

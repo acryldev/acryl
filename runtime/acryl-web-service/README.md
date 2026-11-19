@@ -6,7 +6,7 @@ touching them. The carrier today is DSH's `webServer`; routes and upgrades go th
 The service type is declared once, in `acryl-control` (`src/platform/web.ts`).
 
 One package for both products (spec 051): ACRYL's engine mounts it on the Web and Desktop surfaces (`runtime/acryl-harness-runtime/src/engine-dsh.ts`),
-and every Blends app mounts it as the frame row `acryl-web`, installed as `@acrylblends/web`. Its row id stays `acryl-web` so apps made before the
-move keep their composition; the package name differs because `apps/acryl-web` (ACRYL's browser app) already owns that name.
+and every Blends app mounts it as the frame row `acryl-web-service`, installed as `@acrylblends/web`. The row id is the package name (CLAUDE.md's
+row-id rule); apps installed before the rename are reinstalled, not migrated.
 
 Provided inside one effect: a replaced carrier re-binds the service and unloading the plugin removes it. `pnpm test` pins that contract.
