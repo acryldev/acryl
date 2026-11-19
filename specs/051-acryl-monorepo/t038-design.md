@@ -18,15 +18,18 @@ publish-time map (`framework/frame/packages.json`); T038 removes the map's reaso
 | `plugins/acryl-settings` (frame Settings) / `plugins/settings` (`acryl-app-settings`) | `@acryldev/settings` / `@acryldev/app-settings` | the frame's keeps its published name |
 | `plugins/acryl-save` is `acryl-app-save`; `plugins/save` is `acryl-save` | `@acryldev/app-save` / `@acryldev/save` | each keeps its package name's short part |
 | `plugins/acryl-brand` / `plugins/dsh-client-ui-brand-acryl` | `@acryldev/brand` / `@acryldev/brand-client` | the latter's published name |
-| `plugins/acryl-plugin-hub` / `runtime/plugin-hub` (`@webboxes/plugin-hub`) | `@acryldev/plugin-hub` / stays `@webboxes/plugin-hub` | see "stays" |
+| `plugins/acryl-plugin-hub` / `runtime/plugin-hub` (`@webboxes/plugin-hub`) | `@acryldev/plugin-hub` / `@acryldev/plugin-hub-core` (folder `runtime/plugin-hub-core`) | owner 2026-11-19: all @acryldev |
 | `runtime/acryl-web-service` / `apps/acryl-web` | `@acryldev/web` / app keeps `acryl-web` | apps keep their names (below) |
 
 ## Stays as it is
 
+Owner 2026-11-19: every package in this repository is `@acryldev/*` (the `@webboxes/*` three included: `@acryldev/blends-core`,
+`@acryldev/app-persistence`, `@acryldev/plugin-hub-core`), except:
+
+
 - What people type and install as a product: `acryl` (root and `distribution/acryl-npm-launcher`), `acrylblends`, `create-acrylblends`,
   and the apps in `apps/` (`acryl-desktop`, `acryl-web`, `acryl-cli`, `acryl-launcher-tui`): product names, not libraries.
 - Ecosystem-convention names: `cordis-plugin-market`, `dsh-community-fabric` (Cordis/DSH name their plugin kinds by prefix).
-- `@webboxes/*` (`blends-core`, `plugin-hub`, `app-persistence`): WebBoxes s.r.o.'s packages; the owner decides separately.
 - Loader row ids: unchanged. They are persisted in people's composition overrides (cordis.yml keys); renaming them breaks installed apps.
   The CLAUDE.md row-id rule ("row id = package name") gets the note that a scoped package's row id is its existing id.
 - `examples/*`, `framework` (`acrylblends-monorepo`), the private `acrylblends-framework`: internal, renamed only if trivial.
