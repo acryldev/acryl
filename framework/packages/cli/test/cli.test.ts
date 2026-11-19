@@ -441,6 +441,8 @@ describe('init', () => {
     expect(existsSync(join(dir, 'template.json'))).toBe(false)
     expect(manifest(dir).dependencies).toEqual({
       '@deepseek-ai/cordis': '4.0.4',
+      // Every template depends on the framework: a shared plugin imports it, and the app runs it.
+      '@acryldev/blends': `^${VERSION}`,
       '@deepseek-ai/schemastery': '3.18.4',
       '@acryldev/app-persistence': workspaceVersion('app-persistence', 'runtime'),
       '@acryldev/blends-core': workspaceVersion('blends-core', 'runtime'),

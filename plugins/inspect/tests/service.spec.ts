@@ -40,7 +40,7 @@ const byName = (reports: readonly PluginReport[], pluginName: string): PluginRep
   return found
 }
 
-describe('@acryldev/inspect', () => {
+describe('acryl-inspect', () => {
   it('counts what an inline ctx.inject callback registers as the owning plugin\'s', async () => {
     const ctx = await system()
     ctx.plugin({
@@ -61,8 +61,8 @@ describe('@acryldev/inspect', () => {
     await settle()
     const reports = ctx.inspect.plugins()
 
-    expect(byName(reports, '@acryldev/router')).toMatchObject({ state: 'ACTIVE', requires: [], provides: ['router'] })
-    expect(byName(reports, '@acryldev/inspect')).toMatchObject({ state: 'ACTIVE', provides: ['inspect'] })
+    expect(byName(reports, 'acryl-router')).toMatchObject({ state: 'ACTIVE', requires: [], provides: ['router'] })
+    expect(byName(reports, 'acryl-inspect')).toMatchObject({ state: 'ACTIVE', provides: ['inspect'] })
     const demo = byName(reports, 'demo-market')
     expect(demo).toMatchObject({
       state: 'ACTIVE',
@@ -115,7 +115,7 @@ describe('@acryldev/inspect', () => {
     contexts.push(ctx)
     ctx.plugin({ name, apply })
     await settle()
-    expect(byName(ctx.inspect.plugins(), '@acryldev/inspect').routes).toEqual([])
-    expect(ctx.inspect.render()).toContain('@acryldev/inspect (ACTIVE)')
+    expect(byName(ctx.inspect.plugins(), 'acryl-inspect').routes).toEqual([])
+    expect(ctx.inspect.render()).toContain('acryl-inspect (ACTIVE)')
   })
 })

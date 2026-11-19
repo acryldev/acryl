@@ -67,18 +67,23 @@ export const FRAME_PACKAGES: readonly IdeProfilePackage[] = [
   { name: '@acryldev/web', spec: '', row: 'acryl-web-service' },
   { name: '@acryldev/settings', spec: '', row: 'acryl-settings' },
   // No `@acryldev/shortcuts`: its Settings > Shortcuts and the command palette's key are the IDE's; the frame lists the shortcuts in General.
-  { name: '@acryldev/app-shell', spec: '' },
-  { name: '@acryldev/versions', spec: '' },
+  { name: '@acryldev/app-shell', spec: '', row: 'acryl-app-shell' },
+  { name: '@acryldev/versions', spec: '', row: 'acryl-versions' },
   // The page's root: the Blends frame (docs/design/blends-frame-mockup.html), never the IDE's workbench (`@acryldev/workspace`).
-  { name: '@acryldev/blends-frame', spec: '' },
-  { name: '@acryldev/plugin-admin', spec: '' },
+  { name: '@acryldev/blends-frame', spec: '', row: 'acryl-blends-frame' },
+  { name: '@acryldev/plugin-admin', spec: '', row: 'acryl-plugin-admin' },
   // The agent's prompt as ACRYL IDE's agent has it: the identity line first, every section a tagged block (pi.dev's shape), empties dropped.
-  { name: '@acryldev/system-prompt', spec: '', config: { identity: FRAME_IDENTITY } },
+  {
+    name: '@acryldev/system-prompt',
+    spec: '',
+    row: 'acryl-system-prompt',
+    config: { identity: FRAME_IDENTITY },
+  },
   // The app builder's docs, the way ACRYL IDE's agent has its plugin docs: a routed index, verified example plugins and the prompt line that sends
   // the agent to them before it writes a plugin.
-  { name: '@acryldev/app-context', spec: '' },
-  { name: '@acryldev/support', spec: '' },
-  { name: '@acryldev/sign-in', spec: '' },
+  { name: '@acryldev/app-context', spec: '', row: 'acryl-app-context' },
+  { name: '@acryldev/support', spec: '', row: 'acryl-support' },
+  { name: '@acryldev/sign-in', spec: '', row: 'acryl-sign-in' },
   {
     name: '@acryldev/brand-client',
     spec: '',
@@ -827,7 +832,7 @@ function overlayOf(
     // Blend: its agent keeps the prompt's own identity, never the frame's "inside an ACRYL Blends app" line.
     if (
       entry.config !== undefined &&
-      !(root === 'workspace' && (entry.row ?? entry.name) === '@acryldev/system-prompt')
+      !(root === 'workspace' && (entry.row ?? entry.name) === 'acryl-system-prompt')
     )
       lines.push(
         '      config:',
@@ -840,7 +845,7 @@ function overlayOf(
       lines.push('      config:', `        appPage: ${FRAME_PAGE_PREFIX}`)
     // The app is mounted under the canvas prefix, and a person (or a link) writes its root as `/app/` as often as `/app`: the frame's router reads a
     // trailing slash as the same path, so both answer the app's root and a relative link on it stays in the app.
-    if ((entry.row ?? entry.name) === '@acryldev/router')
+    if ((entry.row ?? entry.name) === 'acryl-router')
       lines.push('      config:', '        trailingSlash: ignore')
   }
   // The chat driver's connection registers node routes on the framework's webServer port; it needs no DSH web runtime, so the row's
