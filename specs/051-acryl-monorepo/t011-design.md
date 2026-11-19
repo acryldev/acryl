@@ -12,7 +12,13 @@ node_modules) and gets fixes through its package manager.
   (`framework/scripts/pack-blank-*.mjs`) owns finding the Electron entry. Neither is a new framework.
 
 ## 2. Provides and consumes
-- Unchanged services and Loader rows; the row's `name` changes from the app path (`./plugins/desktop`) to the package name.
+- Unchanged services. Apps do not reach these two through cordis.yml rows: they import them by relative path - the app's own
+  `src/main.ts` has `import { selectInstance } from '../plugins/instance/index.ts'`, and copied plugins (agent-panel, builder,
+  desktop-web) import `'../instance/...'`, because copyPlugin rewrites package names to relative paths at copy time.
+- So an app after T011 is mixed: most plugins copied as source, desktop and instance installed. Two consequences:
+  (a) copyPlugin must keep imports of package-delivered plugins as package specifiers (`acryl-instance/storage`), not relative paths;
+  (b) upgrade's migration rewrites the app's own imports of `../plugins/instance/...` and `../plugins/desktop/...` to the package names,
+      and the copied plugins' `../instance/...` imports likewise.
 - The app's package.json gains `acryl-desktop-shell` and `acryl-instance` dependencies (exact versions from the CLI's release, like the
   frame packages' pins).
 
@@ -20,7 +26,6 @@ node_modules) and gets fixes through its package manager.
 - None new at runtime. `upgrade` writes files; it plans first and refuses conflicts without `--force`, like every other upgrade step.
 
 ## 4. Configuration and composition
-- Loader row ids unchanged (`desktop`, `instance`), so an app's own overrides keep their keys.
 - Electron entry: `package.json` `main` (dev) and the packer's `manifest.main` (today hard-coded `plugins/desktop/main.ts`,
   pack-blank-mac.mjs:425) resolve the entry: the app's own `plugins/desktop/main.ts` when the app still carries the copy (old apps keep
   working untouched), else `require.resolve('acryl-desktop-shell/main')` from the app (the package's `lib/main.js`).
@@ -28,7 +33,7 @@ node_modules) and gets fixes through its package manager.
 
 ## 5. Migration (`acrylblends upgrade`), once per app
 - Planned step `desktop-package`: if the app's plugins/desktop and plugins/instance match the library copy of the version it records
-  (the existing `same` state for every file), remove both folders, add the two dependencies, rewrite the two cordis.yml rows. Any file the
+  (the existing `same` state for every file), remove both folders, add the two dependencies, rewrite the imports named in 2(b). Any file the
   app edited -> `conflict`, named, refused without `--force` (with `--force` the edited copy is kept and the step is skipped, not
   overwritten: an app that changed its shell keeps it).
 - Idempotent: an app without the folders and with the dependencies is `same`.
