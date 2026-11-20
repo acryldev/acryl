@@ -255,6 +255,23 @@ describe('sharing a local plugin', () => {
     }
   })
 
+  it('a registry share is listed where the app is in the Blends store: its package.json placement keywords travel with the plugin', async () => {
+    const { root, home } = appWithPlugin()
+    try {
+      writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'books', keywords: ['acrylblends-blend', 'acrylblends-category-business', 'acrylblends-subcategory-finance'] }))
+      const { ports } = standIn({})
+      const listed = await planAppPluginShare(root, home, 'hello-share', { owner: 'inboxxobni', registry: true }, ports)
+      expect(listed.placement).toEqual({ category: 'business', subcategory: 'finance' })
+      const keywords = JSON.parse(readFileSync(join(pluginPackagesOf(home), 'hello-share', 'package.json'), 'utf8')).keywords
+      expect(keywords).toEqual(['cordis', 'cordis-plugin', 'acrylblends', 'acrylblends-category-business', 'acrylblends-subcategory-finance'])
+      // Not listed: no place, and a plan whose place changed is not the one confirmed.
+      expect((await planAppPluginShare(root, home, 'hello-share', { owner: 'inboxxobni', visibility: 'public' }, ports)).placement).toBeUndefined()
+      await expect(shareAppPlugin(root, home, 'hello-share', { ...listed, placement: { category: 'gaming' } }, { owner: 'inboxxobni' }, ports)).rejects.toThrow('changed since you confirmed')
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it('is private unless the person chose public, and publishes with the visibility they confirmed', async () => {
     const { root, home } = appWithPlugin()
     try {

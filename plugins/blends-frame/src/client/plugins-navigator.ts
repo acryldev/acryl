@@ -75,6 +75,7 @@ export function shareDetails(plan: SharePlan): string[] {
     `Repository: ${plan.owner}/${plan.repo} on GitHub (${plan.createsRepository ? 'a new one' : 'it exists'}), ${plan.visibility}`,
     ...(plan.license === undefined ? [] : [`License: ${plan.license}`]),
     ...(plan.registry === true ? ['Topic: cordis-plugin, which cordisplugins.github.io lists within about an hour'] : []),
+    ...(plan.placement === undefined ? [] : [`Category: ${plan.placement.category}${plan.placement.subcategory === undefined ? '' : ` › ${plan.placement.subcategory}`}, where this app is in the Blends store`]),
   ]
 }
 

@@ -12,7 +12,7 @@ import { isAbsolute, join, relative } from 'node:path'
 import { createRequire } from 'node:module'
 import { promisify } from 'node:util'
 import { dirname } from 'node:path'
-import { bumpVersion, gitCli, githubCli, parseVersion, PluginStore, savePlugin, sharePlugin, StoreConflictError, storeRootOf, type PublishGitPort, type RepositoryHostPort } from '@acryldev/plugin-hub-core'
+import { bumpVersion, gitCli, githubCli, parseVersion, type Placement, placementOf, PluginStore, savePlugin, sharePlugin, StoreConflictError, storeRootOf, type PublishGitPort, type RepositoryHostPort, withPlacement } from '@acryldev/plugin-hub-core'
 import { samePlan, type AppPluginView, type FramePluginState, type FramePluginView, type SavedPluginResult, type SavedPluginView, type ShareVisibility, type SharedPluginView, type SharePlan } from './contract.ts'
 
 /** One row of `blend.yaml`'s `spec.rows`: where its block starts and ends (line indexes, end exclusive). */
@@ -426,7 +426,7 @@ export async function readFramePlugins(root: string, rows: readonly FrameRow[]):
 
 /** The package.json a local plugin is shared with: the fields the builder's package_plugin writes (plugins/builder/index.ts), plus the Loader
  * patch the plugin-hub's share requires so the package can also be installed as a row. */
-export function pluginPackageManifest(name: string, description: string, version = '0.1.0', license?: string): Record<string, unknown> {
+export function pluginPackageManifest(name: string, description: string, version = '0.1.0', license?: string, placement?: Placement): Record<string, unknown> {
   return {
     name,
     version,
@@ -438,7 +438,7 @@ export function pluginPackageManifest(name: string, description: string, version
     // A host package under dependencies brings a second copy of the framework and its services stop matching after a restart (ACRYL measured it);
     // a peer names the version and installs nothing.
     peerDependencies: { '@deepseek-ai/cordis': '4.0.4' },
-    keywords: ['cordis', 'cordis-plugin', 'acrylblends'],
+    keywords: withPlacement(['cordis', 'cordis-plugin', 'acrylblends'], placement),
     // The plugin-hub refuses a package it cannot install; this names the row that mounts the plugin in a Loader app.
     dsh: { bundle: { patch: './cordis.patch.yml' } },
   }
@@ -477,7 +477,7 @@ export async function recordShare(file: string, name: string, shared: SharedPlug
 export const pluginPackagesOf = (home: string): string => join(home, 'plugin-packages')
 
 /** Copy one local plugin into its package folder under `packages`, the way the builder's package_plugin does; answers the folder. */
-export async function packageAppPlugin(root: string, name: string, packages: string, license?: string): Promise<string> {
+export async function packageAppPlugin(root: string, name: string, packages: string, license?: string, placement?: Placement): Promise<string> {
   if (!(await madePlugins(root)).includes(name)) throw new Error(`plugins/ has no local plugin "${name}"`)
   const source = join(root, 'plugins', name)
   const target = join(packages, name)
@@ -496,7 +496,7 @@ export async function packageAppPlugin(root: string, name: string, packages: str
     filter: (path) => !/(^|[\\/])(node_modules|\.git)([\\/]|$)/u.test(path.slice(source.length)),
   })
   const description = await packageDescription(source)
-  writeFileSync(join(target, 'package.json'), `${JSON.stringify(pluginPackageManifest(name, description, version, license), null, 2)}\n`)
+  writeFileSync(join(target, 'package.json'), `${JSON.stringify(pluginPackageManifest(name, description, version, license, placement), null, 2)}\n`)
   // The row a Loader install mounts (the plugin-hub reads this patch); a Blends app adds the folder through its extensions row instead.
   writeFileSync(join(target, 'cordis.patch.yml'), `- insert:\n    - id: ${name}\n      name: ./index.ts\n`)
   if (!existsSync(join(target, 'README.md'))) {
@@ -566,7 +566,9 @@ export async function planAppPluginShare(root: string, home: string, name: strin
   const registry = options.registry === true
   const visibility: ShareVisibility = registry ? 'public' : options.visibility ?? 'private'
   const license = visibility === 'public' ? (options.license ?? 'MIT') : undefined
-  const dir = await packageAppPlugin(root, name, pluginPackagesOf(home), license)
+  // A registry share is listed where the app itself is in the Blends store (its package.json keywords, written by the app's share), when it is.
+  const placement = registry ? appPlacement(root) : undefined
+  const dir = await packageAppPlugin(root, name, pluginPackagesOf(home), license, placement)
   const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8')) as { version?: unknown }
   const current = typeof manifest.version === 'string' && parseVersion(manifest.version) !== undefined ? manifest.version : undefined
   if (current === undefined) throw new Error(`${name}: its package has no semantic version`)
@@ -583,6 +585,15 @@ export async function planAppPluginShare(root: string, home: string, name: strin
     ...(released ? { released: current } : {}),
     ...(license === undefined ? {} : { license }),
     ...(registry ? { registry } : {}),
+    ...(placement === undefined ? {} : { placement }),
+  }
+}
+
+function appPlacement(root: string): Placement | undefined {
+  try {
+    return placementOf((JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { keywords?: unknown }).keywords)
+  } catch {
+    return undefined
   }
 }
 
