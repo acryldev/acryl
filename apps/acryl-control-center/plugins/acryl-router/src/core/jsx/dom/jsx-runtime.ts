@@ -1,6 +1,6 @@
 /**
  * @module
- * This module provides the `@acryldev/router/jsx/dom` runtime.
+ * This module provides the `acryl-router/jsx/dom` runtime.
  */
 
 export { jsxDEV as jsx, Fragment } from './jsx-dev-runtime.ts'

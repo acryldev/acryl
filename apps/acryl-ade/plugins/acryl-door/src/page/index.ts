@@ -17,7 +17,7 @@ export const DOOR_BASE = '/api/acryl-door'
 export const PAGE_KEY = Symbol.for('acryl.door.page')
 
 /** Where the page keeps its tab's id: per tab, kept across reloads and moves within the app, never shared with another tab. */
-const TAB_KEY = '@acryldev/door-tab'
+const TAB_KEY = 'acryl-door-tab'
 
 /**
  * This tab's id: the page that replaces this one in the same tab (a reload, a move to another path) says the same, so the Host keeps driving that tab for a run asked from it.
@@ -39,7 +39,7 @@ function tabOf(view: Window): string | undefined {
 /** Start the door on `document`. @returns the disposer. */
 export function startDoor(document: Document, base: string = DOOR_BASE): () => void {
   const view = document.defaultView
-  if (view === null) throw new Error('@acryldev/door: the document has no window')
+  if (view === null) throw new Error('acryl-door: the document has no window')
   const clock = new UserInputClock()
   const appBase = appBaseOf(document)
   // The ring on whatever the agent touches, drawn in this page (the frame's canvas and production's assistant both get it).

@@ -1,6 +1,6 @@
 import { doorEnabled } from './door.ts'
 
-/** A page written in JSX: Node.js runs it through plugins/node-server/src/register.ts (see the scripts in package.json), which compiles .tsx with this app's own typescript. */
+/** A page written in JSX: Node.js runs it through plugins/acryl-node-server/src/register.ts (see the scripts in package.json), which compiles .tsx with this app's own typescript. */
 const About = () => (
   <main>
     <h1>About</h1>

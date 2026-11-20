@@ -11,15 +11,15 @@
     "jsxImportSource": "@acryldev/blends/jsx/dom",
     "types": [],
     "paths": {
-      "@acryldev/blends/jsx/dom": ["../../plugins/router/src/browser/jsx-dom.ts"],
+      "@acryldev/blends/jsx/dom": ["../../plugins/acryl-router/src/browser/jsx-dom.ts"],
       "@acryldev/blends/jsx/dom/jsx-runtime": [
-        "../../plugins/router/src/core/jsx/dom/jsx-runtime.ts"
+        "../../plugins/acryl-router/src/core/jsx/dom/jsx-runtime.ts"
       ],
       "@acryldev/blends/jsx/dom/jsx-dev-runtime": [
-        "../../plugins/router/src/core/jsx/dom/jsx-dev-runtime.ts"
+        "../../plugins/acryl-router/src/core/jsx/dom/jsx-dev-runtime.ts"
       ],
-      "@acryldev/blends/jsx/dom/client": ["../../plugins/router/src/browser/jsx-dom.ts"],
-      "@acryldev/blends/client": ["../../plugins/router/src/browser/client.ts"]
+      "@acryldev/blends/jsx/dom/client": ["../../plugins/acryl-router/src/browser/jsx-dom.ts"],
+      "@acryldev/blends/client": ["../../plugins/acryl-router/src/browser/client.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"]

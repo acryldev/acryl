@@ -1,5 +1,5 @@
 /**
- * All types exported from "@acryldev/router/jsx" are in this file.
+ * All types exported from "acryl-router/jsx" are in this file.
  */
 import type { Child, JSXNode } from './base.ts'
 import type { JSX } from './intrinsic-elements.ts'

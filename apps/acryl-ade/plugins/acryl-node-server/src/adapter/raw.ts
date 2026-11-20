@@ -9,10 +9,10 @@
 import type { IncomingMessage } from 'node:http'
 
 /** Returned by a raw-aware fetch callback: the node response is already owned, do not write. */
-export const RAW_RESPONSE_HANDLED: unique symbol = Symbol.for('@acryldev/node-server.raw-response')
+export const RAW_RESPONSE_HANDLED: unique symbol = Symbol.for('acryl-node-server.raw-response')
 
 /** Set on an upgrade request a raw handler took over; the adapter's WebSocket setup skips it. */
-export const RAW_UPGRADE_HANDLED: unique symbol = Symbol.for('@acryldev/node-server.raw-upgrade')
+export const RAW_UPGRADE_HANDLED: unique symbol = Symbol.for('acryl-node-server.raw-upgrade')
 
 /** An upgrade request a raw handler took over. */
 export type RawUpgradeRequest = IncomingMessage & { [RAW_UPGRADE_HANDLED]?: true }

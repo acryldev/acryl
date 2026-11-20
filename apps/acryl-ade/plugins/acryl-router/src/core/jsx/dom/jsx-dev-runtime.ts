@@ -1,6 +1,6 @@
 /**
  * @module
- * This module provides the `@acryldev/router/jsx/dom` dev runtime.
+ * This module provides the `acryl-router/jsx/dom` dev runtime.
  */
 
 import type { JSXNode, Props } from '../base.ts'

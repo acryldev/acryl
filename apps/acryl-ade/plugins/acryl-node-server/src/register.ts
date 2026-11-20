@@ -13,7 +13,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { compileModule, usePackagesOfProgram } from './transpile.ts'
 
 /** The JSX runtime the docs set up; an app's tsconfig.json (or a file's own `@jsxImportSource` pragma) chooses another. */
-const DEFAULT_IMPORT_SOURCE = '@acryldev/blends/jsx'
+const DEFAULT_IMPORT_SOURCE = 'acrylblends/jsx'
 const JSX_FILE = /\.[jt]sx$/u
 
 process.setSourceMapsEnabled(true)
@@ -29,7 +29,7 @@ registerHooks({
 })
 
 /**
- * The framework's names for a file of the app: in an app the framework plugins are source under `plugins/`, not packages, so `acrylblends`, `acrylblends/body-limit` or `@acryldev/router`
+ * The framework's names for a file of the app: in an app the framework plugins are source under `plugins/`, not packages, so `acrylblends`, `acrylblends/body-limit` or `acryl-router`
  * have nowhere to resolve from. A plugin installed while the app runs gets them from the extensions plugin; a plugin that is a ROW of `blend.yaml` is imported by `src/app.ts` before
  * any of that exists, so the same names are resolved here, in the preload every `dev`, `start` and `test` script runs. Only a name that Node cannot resolve itself, only for the
  * app's own files (never for something in `node_modules`), and only in an app that has the framework as vendored source: the published package resolves its own names.
@@ -46,7 +46,7 @@ if (existsSync(fileURLToPath(family))) {
   if (appTree(process.env, fileURLToPath(appRoot)) !== undefined) usePackagesOfProgram(fileURLToPath(appRoot))
 }
 const resolver = new URL('extensions/resolve.ts', plugins)
-if (existsSync(fileURLToPath(new URL('router/src/index.ts', plugins))) && existsSync(fileURLToPath(resolver))) {
+if (existsSync(fileURLToPath(new URL('acryl-router/src/index.ts', plugins))) && existsSync(fileURLToPath(resolver))) {
   const { routerAliases } = (await import(resolver.href)) as { routerAliases(): Record<string, string> }
   const aliases = routerAliases()
   registerHooks({

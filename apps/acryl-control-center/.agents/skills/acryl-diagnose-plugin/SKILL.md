@@ -1,6 +1,6 @@
 ---
 name: acryl-diagnose-plugin
-description: Use when a feature of @acryldev/control-center misbehaves and the cause is unclear - nothing shows, buttons do nothing, data is lost, the top bar says Not reloaded, or a check fails in a way you do not understand.
+description: Use when a feature of acryl-control-center misbehaves and the cause is unclear - nothing shows, buttons do nothing, data is lost, the top bar says Not reloaded, or a check fails in a way you do not understand.
 ---
 # Diagnose a plugin methodically
 

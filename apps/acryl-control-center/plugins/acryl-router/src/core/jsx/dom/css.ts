@@ -1,6 +1,6 @@
 /**
  * @module
- * This module provides APIs that enable `@acryldev/router/jsx/dom` to support.
+ * This module provides APIs that enable `acryl-router/jsx/dom` to support.
  */
 
 import type { FC, PropsWithChildren } from '../index.ts'
