@@ -62,7 +62,8 @@ try {
     given ??
     join(
       packed,
-      readdirSync(packed).find((name) => /^acrylblends-.*\.tgz$/u.test(name)) ?? fail('no tarball'),
+      readdirSync(packed).find((name) => /^acryldev-blends-.*\.tgz$/u.test(name)) ??
+        fail('no tarball'),
     )
 
   // 1. The package declares none.
@@ -103,7 +104,7 @@ try {
       private: true,
       version: '0.0.0',
       dependencies: {
-        acrylblends: `file:${tarball}`,
+        '@acryldev/blends': `file:${tarball}`,
         '@deepseek-ai/cordis': '4.0.4',
         '@deepseek-ai/schemastery': '3.18.4',
       },
@@ -144,7 +145,7 @@ try {
       private: true,
       version: '0.0.0',
       type: 'module',
-      dependencies: { acrylblends: `file:${tarball}` },
+      dependencies: { '@acryldev/blends': `file:${tarball}` },
       devDependencies: { vitest: '4.1.11' },
     }),
   )

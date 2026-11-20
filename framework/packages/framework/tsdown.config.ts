@@ -58,7 +58,7 @@ const plainRouter = {
 const suiteVitest = {
   name: 'suite-vitest',
   resolveId(source: string, importer: string | undefined) {
-    if (source !== 'vitest' || importer === undefined || !/acryl-(?:kv|db)[\\/]src[\\/]conformance\.ts$/u.test(importer)) return null
+    if (source !== 'vitest' || importer === undefined || !/(?:^|[\\/])(?:kv|db)[\\/]src[\\/]conformance\.ts$/u.test(importer)) return null
     return here('./src/vitest-binding.ts')
   },
 }

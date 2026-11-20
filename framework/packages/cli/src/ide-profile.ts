@@ -1008,7 +1008,7 @@ function withAppFacts(root: string, input: IdeProfileInput): IdeProfileInput {
     )
   return {
     ...input,
-    door: existsSync(join(root, 'plugins', '@acryldev/door', 'src', 'index.ts')),
+    door: existsSync(join(root, 'plugins', 'door', 'src', 'index.ts')),
     ...(declared === undefined ? {} : { root: declared }),
   }
 }

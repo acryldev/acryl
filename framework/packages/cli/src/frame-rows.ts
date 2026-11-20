@@ -16,13 +16,13 @@ import { FRAME_PAGE_PREFIX } from './ide-profile'
 /** Rows the host mounts itself: an app's manifest may name them, but the generated layer does not. */
 export const HOST_PROVIDED_IDS: ReadonlySet<string> = new Set([
   'instance',
-  '@acryldev/router',
-  '@acryldev/node-server',
-  '@acryldev/web-server',
-  '@acryldev/page',
+  'acryl-router',
+  'acryl-node-server',
+  'acryl-web-server',
+  'acryl-page',
   'manifest',
   'save',
-  '@acryldev/door',
+  'acryl-door',
 ])
 
 /**

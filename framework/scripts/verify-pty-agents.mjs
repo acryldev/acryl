@@ -182,8 +182,8 @@ try {
         "import * as panel from '../plugins/agent-panel/index.ts'\nimport * as driverPty from '../plugins/driver-pty/index.ts'\nimport * as door from",
       )
       .replace(
-        "  '@acryldev/door': door,",
-        "  '@acryldev/door': door,\n  'agent-panel': panel,\n  'driver-pty': driverPty,",
+        "  'acryl-door': door,",
+        "  'acryl-door': door,\n  'agent-panel': panel,\n  'driver-pty': driverPty,",
       ),
   )
   run('npm', ['install', '--no-audit', '--no-fund'], app)

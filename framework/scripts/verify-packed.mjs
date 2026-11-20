@@ -60,7 +60,13 @@ try {
   writeFileSync(join(tools, 'package.json'), '{"name":"tools","private":true}\n')
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('create-acrylblends-')],
+    [
+      'install',
+      '--no-audit',
+      '--no-fund',
+      tarball('acryldev-blends-'),
+      tarball('acryldev-create-blends-'),
+    ],
     tools,
   )
   const bin = (name) => join(tools, 'node_modules', '.bin', name)
