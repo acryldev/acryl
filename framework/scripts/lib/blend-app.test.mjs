@@ -86,7 +86,7 @@ test('a pulled Blend is refused for what the engine lacks, and its manifest beco
     mkdirSync(join(seed, 'plugins'), { recursive: true })
     writeFileSync(
       join(seed, 'plugins', 'library.lock.json'),
-      JSON.stringify({ plugins: { '@acryldev/router': {}, '@acryldev/db': {} } }),
+      JSON.stringify({ plugins: { router: {}, db: {} } }),
     )
     writeFileSync(
       join(seed, 'package.json'),
@@ -97,7 +97,7 @@ test('a pulled Blend is refused for what the engine lacks, and its manifest beco
       }),
     )
     assert.deepEqual(seedProblems({ seed, program: ['plugins/router/'], modules }), [
-      'the framework plugin @acryldev/db is not in the engine',
+      'the framework plugin db is not in the engine',
       'the package left is not in the engine',
     ])
     assert.deepEqual(
