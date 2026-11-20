@@ -118,9 +118,9 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
     share.plan(request).then(plan => { setStep({ kind: 'plan', plan }) }, (cause: unknown) => { setStep({ kind: 'ask' }); fail(cause) })
   }
   /** A new place or licence: the plan is read again, so the yes covers exactly what is shown. */
-  const replace = (change: NonNullable<AppShareRequest['list']>, current: AppStoreListingView): void => {
-    const next = { category: current.placement.category, ...(current.placement.subcategory === undefined ? {} : { subcategory: current.placement.subcategory }), license: current.license, ...change }
-    if (next.subcategory === undefined) delete (next as { subcategory?: string }).subcategory
+  const replace = (change: { readonly category?: string; readonly subcategory?: string | undefined; readonly license?: string }, current: AppStoreListingView): void => {
+    const subcategory = 'subcategory' in change ? change.subcategory : current.placement.subcategory
+    const next = { category: change.category ?? current.placement.category, ...(subcategory === undefined ? {} : { subcategory }), license: change.license ?? current.license }
     setList(next)
     setFailure(undefined)
     setStep({ kind: 'busy' })
