@@ -45,6 +45,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
   const [github, setGithub] = useState<Github>({ status: 'checking' })
   const [details, setDetails] = useState(false)
   const [copied, setCopied] = useState<string | undefined>(undefined)
+  const [owner, setOwner] = useState('')
 
   useEffect(() => {
     let live = true
@@ -56,6 +57,8 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
   }, [readGithub])
 
   const share = plugin.share
+  // Blank means the person's own account; a name (their organization, a workshop's) is carried in the plan and again in the share, which the Host checks against each other.
+  const ownerAsked = owner.trim() === '' ? undefined : owner.trim()
   const blocked = github.status === 'missing' || github.status === 'signed-out'
   const idle = state.step === 'choose' || state.step === 'failed' || state.step === 'done'
 
@@ -76,7 +79,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
     setDetails(false)
     setState({ step: 'working', what: 'Checking…' })
     try {
-      setState({ step: 'confirm', plan: await share.plan(target) })
+      setState({ step: 'confirm', plan: await share.plan(target, ownerAsked) })
     } catch (cause) {
       setState(failed(cause))
     }
@@ -86,7 +89,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
     if (share === undefined) return
     setState({ step: 'working', what: 'Sharing…' })
     try {
-      const shared = await share.publish(plan)
+      const shared = await share.publish(plan, ownerAsked)
       onShared(shared)
       const address = colleagueAddress(shared)
       setState({
@@ -129,6 +132,12 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
           </div>
         )
         : (
+          <>
+          {share !== undefined && (
+            <p>
+              <input className="acrylBlendsSearch" aria-label="GitHub account or organization" placeholder="GitHub account or organization (blank: yours)" value={owner} onChange={(event) => { setOwner(event.target.value) }} />
+            </p>
+          )}
           <ul>
             {choices.map(choice => (
               <li key={choice.title}>
@@ -137,6 +146,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
               </li>
             ))}
           </ul>
+          </>
         )}
       {state.step === 'confirm' || state.step === 'working' ? null : (
         <GithubNote github={github} copy={copy} connect={connectGithub} onConnected={() => { void readGithub().then(setGithub, () => {}) }} />

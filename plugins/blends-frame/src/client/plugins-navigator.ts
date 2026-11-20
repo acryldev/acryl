@@ -12,8 +12,9 @@ export type ShareTarget = ShareVisibility | 'registry'
 
 /** Sharing a local plugin: first what it would do, then, on the person's yes, exactly that. */
 export interface PluginShare {
-  plan(target?: ShareTarget): Promise<SharePlan>
-  publish(confirmed: SharePlan): Promise<SharedPluginView>
+  /** `owner`: the GitHub account or organization to share to; absent means the person's own. */
+  plan(target?: ShareTarget, owner?: string): Promise<SharePlan>
+  publish(confirmed: SharePlan, owner?: string): Promise<SharedPluginView>
 }
 
 /** What the person can do with one local plugin besides sharing it: keep a packed copy on this machine, and look at its code. */
@@ -173,9 +174,9 @@ export interface AppPluginsApi {
   read(): Promise<AppPluginsView>
   switch(kind: AppPluginKind, name: string, on: boolean): Promise<void>
   /** What sharing one local plugin would do (private unless `visibility` says public); nothing is sent. */
-  planShare(name: string, target?: ShareTarget): Promise<SharePlan>
+  planShare(name: string, target?: ShareTarget, owner?: string): Promise<SharePlan>
   /** Share one local plugin as the person confirmed it; answers where it went. */
-  share(name: string, confirmed: SharePlan): Promise<SharedPluginView>
+  share(name: string, confirmed: SharePlan, owner?: string): Promise<SharedPluginView>
   /** Keep a packed copy of one local plugin on this machine. */
   save(name: string): Promise<SavedPluginResult>
 }
@@ -198,12 +199,12 @@ export function createAppPluginsApi(fetcher: FetchLike = (input, init) => fetch(
       })
       if (!response.ok) return errorOf(response)
     },
-    async planShare(name, target) {
+    async planShare(name, target, owner) {
       const response = await fetcher(FRAME_PLUGINS_SHARE_PLAN_PATH, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(target === undefined ? { name } : target === 'registry' ? { name, registry: true } : { name, visibility: target }),
+        body: JSON.stringify({ ...(target === undefined ? { name } : target === 'registry' ? { name, registry: true } : { name, visibility: target }), ...(owner === undefined ? {} : { owner }) }),
       })
       if (!response.ok) return errorOf(response)
       return parseSharePlan(await response.json())
@@ -218,12 +219,12 @@ export function createAppPluginsApi(fetcher: FetchLike = (input, init) => fetch(
       if (!response.ok) return errorOf(response)
       return parseSavedPlugin(await response.json())
     },
-    async share(name, confirmed) {
+    async share(name, confirmed, owner) {
       const response = await fetcher(FRAME_PLUGINS_SHARE_PATH, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ name, confirm: confirmed }),
+        body: JSON.stringify({ name, confirm: confirmed, ...(owner === undefined ? {} : { owner }) }),
       })
       if (!response.ok) return errorOf(response)
       const body = await response.json() as Record<string, unknown>

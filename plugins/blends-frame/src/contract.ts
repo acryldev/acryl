@@ -327,6 +327,15 @@ export function parseAppShared(value: unknown): AppSharedView {
   return { remote: value.remote, created: value.created, ...(listed === undefined ? {} : { listed }) }
 }
 
+/**
+ * The GitHub account or organization a person typed to share a plugin to (blank: theirs). `undefined` when none was asked, `null` when what came is not a GitHub name
+ * (it goes to a command line: only a name that cannot start with a dash or hold a space or a slash).
+ */
+export function parseShareOwner(value: unknown): string | undefined | null {
+  if (value === undefined || value === '') return undefined
+  return typeof value === 'string' && GITHUB_NAME.test(value) ? value : null
+}
+
 export function parseAppShareRequest(value: unknown): AppShareRequest | undefined {
   if (!isRecord(value)) return undefined
   const { owner, visibility, list } = value

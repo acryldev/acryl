@@ -338,6 +338,66 @@ describe('sharing a local plugin', () => {
     expect(shares).toEqual([plan])
   })
 
+  it('carries the GitHub account or organization typed by the person, in the plan request and again in the share', async () => {
+    const calls: Array<{ url: string; body: Record<string, unknown> }> = []
+    const api = createAppPluginsApi(async (url, init) => {
+      calls.push({ url, body: JSON.parse(String(init?.body)) as Record<string, unknown> })
+      return new Response(JSON.stringify(url.endsWith('/share-plan') ? plan : { url: where.url, version: where.version, owner: 'acrylworkshop', repo: 'hello-share', tag: 'v0.1.0' }), { status: 200 })
+    })
+    await api.planShare('hello-share', 'public', 'acrylworkshop')
+    await api.share('hello-share', plan, 'acrylworkshop')
+    await api.planShare('hello-share', 'public')
+    expect(calls.map(call => call.body)).toEqual([
+      { name: 'hello-share', visibility: 'public', owner: 'acrylworkshop' },
+      { name: 'hello-share', confirm: plan, owner: 'acrylworkshop' },
+      { name: 'hello-share', visibility: 'public' },
+    ])
+  })
+
+  it('the Host lets the typed owner win over the configured one, and refuses a name that is not a GitHub name', async () => {
+    const seen: Array<{ step: string; owner: string | undefined }> = []
+    const app = frameRoutes({
+      state: () => Promise.reject(new Error('not asked')),
+      plugins: {
+        connect: { start: () => Promise.reject(new Error('not asked')), state: () => ({ status: 'idle' as const }), cancel: () => {} },
+        read: () => Promise.reject(new Error('not asked')),
+        switch: () => Promise.reject(new Error('not asked')),
+        planShare: async (_name, _visibility, _registry, owner) => { seen.push({ step: 'plan', owner }); return plan },
+        share: async (_name, _confirmed, owner) => { seen.push({ step: 'share', owner }); return { ...where, owner: owner ?? 'tester', repo: 'hello-share', tag: 'v0.1.0' } },
+        save: () => Promise.reject(new Error('not asked')),
+        registry: () => Promise.reject(new Error('not asked')),
+        pull: () => Promise.reject(new Error('not asked')),
+        github: () => Promise.reject(new Error('not asked')),
+      },
+    })
+    const post = (path: string, body: unknown) => app.fetch(new Request(`http://127.0.0.1:43120${path}`, {
+      method: 'POST',
+      headers: { host: '127.0.0.1:43120', origin: 'http://127.0.0.1:43120', 'sec-fetch-site': 'same-origin', 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    }), { connection: { remoteAddress: '127.0.0.1', localPort: 43120 } })
+    expect((await post('/api/acryl-blends-frame/plugins/share-plan', { name: 'hello-share', owner: 'acrylworkshop' })).status).toBe(200)
+    expect((await post('/api/acryl-blends-frame/plugins/share', { name: 'hello-share', confirm: plan, owner: 'acrylworkshop' })).status).toBe(200)
+    expect((await post('/api/acryl-blends-frame/plugins/share-plan', { name: 'hello-share', owner: '' })).status).toBe(200)
+    expect(seen).toEqual([{ step: 'plan', owner: 'acrylworkshop' }, { step: 'share', owner: 'acrylworkshop' }, { step: 'plan', owner: undefined }])
+    for (const owner of ['--delete', 'a b', 'org/x', 7]) {
+      expect((await post('/api/acryl-blends-frame/plugins/share-plan', { name: 'hello-share', owner })).status).toBe(400)
+      expect((await post('/api/acryl-blends-frame/plugins/share', { name: 'hello-share', confirm: plan, owner })).status).toBe(400)
+    }
+    expect(seen).toHaveLength(3)
+  })
+
+  it('a share to another owner than the plan named sends nothing: a changed owner is a changed plan', async () => {
+    const { root, home } = appWithPlugin()
+    try {
+      const { ports, did } = standIn()
+      const confirmedForTester = await planAppPluginShare(root, home, 'hello-share', {}, ports)
+      await expect(shareAppPlugin(root, home, 'hello-share', confirmedForTester, { owner: 'acrylworkshop' }, ports)).rejects.toThrow('nothing was sent')
+      expect(did.filter(step => step !== 'login')).toEqual([])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
   it('bumps a package folder one patch and writes it back', async () => {
     const root = mkdtempSync(join(tmpdir(), 'frame-bump-'))
     try {

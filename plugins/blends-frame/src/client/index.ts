@@ -351,7 +351,7 @@ export function apply(ctx: ClientContext): void {
             await appPlugins.switch(plugin.kind, plugin.name, on)
             canvas.reload()
           },
-          plugin.kind === 'made' ? { plan: target => appPlugins.planShare(plugin.name, target), publish: confirmed => appPlugins.share(plugin.name, confirmed) } : undefined,
+          plugin.kind === 'made' ? { plan: (target, owner) => appPlugins.planShare(plugin.name, target, owner), publish: (confirmed, owner) => appPlugins.share(plugin.name, confirmed, owner) } : undefined,
           undefined,
           {
             ...(plugin.kind === 'made' ? { save: () => appPlugins.save(plugin.name) } : {}),
