@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { placementLabel, placementOf, placementProblem, readCategories, withPlacement } from '../src/placement.js'
+import { placementLabel, placementOf, placementProblem, readCategories, suggestPlacement, withPlacement } from '../src/placement.js'
 
 const categories = readCategories({
   categories: [
@@ -35,5 +35,14 @@ describe('placement keywords', () => {
     expect(placementProblem({ category: 'gaming', subcategory: 'productivity' }, categories)).toMatch(/not a subcategory of Gaming/u)
     expect(placementLabel({ category: 'gaming', subcategory: 'games' }, categories)).toBe('Gaming › Games')
     expect(readCategories({})).toMatch(/no categories/u)
+  })
+})
+
+describe('suggestPlacement', () => {
+  it('reads a starter category word as a category or as a subcategory of one', () => {
+    expect(suggestPlacement('gaming', categories)).toEqual({ category: 'gaming' })
+    expect(suggestPlacement('Productivity', categories)).toEqual({ category: 'application', subcategory: 'productivity' })
+    expect(suggestPlacement('cooking', categories)).toBeUndefined()
+    expect(suggestPlacement(undefined, categories)).toBeUndefined()
   })
 })

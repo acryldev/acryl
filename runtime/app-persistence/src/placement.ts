@@ -76,3 +76,15 @@ export function placementLabel(placement: Placement, categories: readonly Catalo
   const sub = category?.subs.find((s) => s.slug === placement.subcategory)
   return [category?.name ?? placement.category, ...(placement.subcategory === undefined ? [] : [sub?.name ?? placement.subcategory])].join(' › ')
 }
+
+/**
+ * A sensible place for an app from the word its blend.yaml `metadata.category` carries (a starter's): a category's slug (`gaming`), else a
+ * subcategory's slug (`finance`, under Business), the first category holding it. Undefined when the word names neither.
+ */
+export function suggestPlacement(word: unknown, categories: readonly CatalogCategory[]): Placement | undefined {
+  if (typeof word !== 'string') return undefined
+  const wanted = word.trim().toLowerCase()
+  if (categories.some((c) => c.slug === wanted)) return { category: wanted }
+  const holder = categories.find((c) => c.subs.some((s) => s.slug === wanted))
+  return holder === undefined ? undefined : { category: holder.slug, subcategory: wanted }
+}

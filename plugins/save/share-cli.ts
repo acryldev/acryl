@@ -5,12 +5,15 @@
  *   --confirm <plan>   send exactly this plan (the JSON `--json` printed, as it is or base64url-encoded so no shell can change it), and nothing when
  *                      the app no longer matches it: for a person's own surface that showed them the plan and took their yes (the ACRYL
  *                      launcher's Share)
+ *   --list             list it in the Blends store too (public only), as Community under your name; --category <address> and
+ *                      --subcategory <address> place it (default: its earlier place, else its starter's category), --license <id> (default MIT)
  * Exits 1 when the share was refused.
  */
 import { realpathSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
+import { CATEGORIES_URL, type CatalogCategory, readCategories } from '@acryldev/app-persistence'
 import { planShare, renderSharePlan, type SharePlan, type ShareResult, shareApp } from './share.ts'
 
 function report(result: ShareResult): number {
@@ -21,6 +24,12 @@ function report(result: ShareResult): number {
     return 1
   }
   console.log(`shared to ${result.remote}${result.created ? ' (created)' : ''}`)
+  if (result.listed !== undefined)
+    console.log(
+      result.listed.created
+        ? `listed in the Blends store from ${result.listed.tag}: acrylblends.github.io shows it within about an hour`
+        : `${result.listed.tag} was already tagged, so the store keeps that version: raise the version in package.json to list this one`,
+    )
   return 0
 }
 
@@ -44,6 +53,17 @@ function readPlan(text: string): unknown {
   return undefined
 }
 
+/** The store's category list; without it (offline) a place is not checked here, and the store's sync still is. */
+async function publishedCategories(): Promise<{ categories?: readonly CatalogCategory[] }> {
+  try {
+    const response = await fetch(CATEGORIES_URL, { signal: AbortSignal.timeout(10_000) })
+    const categories = response.ok ? readCategories(await response.json()) : 'unreachable'
+    return typeof categories === 'string' ? {} : { categories }
+  } catch {
+    return {}
+  }
+}
+
 async function main(argv: readonly string[]): Promise<number> {
   const appRoot = fileURLToPath(new URL('../..', import.meta.url))
   const { values } = parseArgs({
@@ -54,6 +74,10 @@ async function main(argv: readonly string[]): Promise<number> {
       visibility: { type: 'string' },
       json: { type: 'boolean' },
       confirm: { type: 'string' },
+      list: { type: 'boolean' },
+      category: { type: 'string' },
+      subcategory: { type: 'string' },
+      license: { type: 'string' },
     },
   })
   if (
@@ -64,7 +88,18 @@ async function main(argv: readonly string[]): Promise<number> {
     console.error('not shared: --visibility is private or public')
     return 1
   }
+  const listing = values.list === true || values.category !== undefined
   const options = {
+    ...(listing
+      ? {
+          list: {
+            ...(values.category === undefined ? {} : { category: values.category }),
+            ...(values.subcategory === undefined ? {} : { subcategory: values.subcategory }),
+            ...(values.license === undefined ? {} : { license: values.license }),
+          },
+          ...(await publishedCategories()),
+        }
+      : {}),
     ...(values.owner === undefined ? {} : { owner: values.owner }),
     ...(values.visibility === undefined
       ? {}

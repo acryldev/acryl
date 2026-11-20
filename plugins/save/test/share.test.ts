@@ -60,7 +60,17 @@ function ports(
       return `https://github.com/${name}.git`
     },
   }
-  return { calls, git, hosting, account: () => state.account, pending: () => pending }
+  return {
+    calls,
+    git,
+    hosting,
+    account: () => state.account,
+    pending: () => pending,
+    list: (repository, tag) => {
+      calls.push(`list ${repository} ${tag}`)
+      return true
+    },
+  }
 }
 
 test('an app with no remote plans a new repository under the signed-in account, named after the app, and sends nothing', () => {
@@ -241,6 +251,61 @@ test('npm run share --json prints the plan of a real folder and sends nothing; a
       (error: { stdout?: string }) =>
         /the app changed since this plan was shown/u.test(error.stdout ?? ''),
     )
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+const storeCategories = [
+  { slug: 'business', name: 'Business', subs: [{ slug: 'finance', name: 'Finance' }, { slug: 'crm', name: 'CRM' }] },
+  { slug: 'gaming', name: 'Gaming', subs: [{ slug: 'games', name: 'Games' }] },
+]
+
+/** A public app made from a starter: its blend.yaml keeps the starter's category word and description, it has no licence yet. */
+function madeApp(category = 'finance'): string {
+  const dir = mkdtempSync(join(tmpdir(), 'share-list-'))
+  writeFileSync(
+    join(dir, 'blend.yaml'),
+    `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.books\n  name: books\n  version: 0.1.0\n  category: ${category}\n  description: Invoices and expenses.\n  visibility: public\nspec:\n  runtime: cordis\n`,
+  )
+  writeFileSync(join(dir, 'package.json'), `${JSON.stringify({ name: 'books', version: '1.2.0', keywords: ['notes'] }, null, 2)}\n`)
+  return dir
+}
+
+test('listing in the Blends store: the place comes from the starter, MIT by default, and the share writes what the store reads', () => {
+  const dir = madeApp()
+  try {
+    const fake = ports({ account: 'ana', pending: 1 })
+    const options = { list: {}, categories: storeCategories }
+    const plan = planShare(dir, options, fake)
+    assert.ok(!('ok' in plan))
+    assert.deepEqual(plan.listing, { placement: { category: 'business', subcategory: 'finance' }, license: 'MIT', tag: 'v1.2.0' })
+    assert.match(renderSharePlan(plan), /Blends store as Community under business › finance \(licence MIT, people start from v1\.2\.0\)/u)
+    const result = shareApp(dir, plan, options, fake)
+    assert.ok(result.ok)
+    assert.deepEqual(result.listed, { tag: 'v1.2.0', created: true })
+    assert.equal(fake.calls.at(-1), 'list ana/books v1.2.0')
+    const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { keywords: string[] }
+    assert.deepEqual(pkg.keywords, ['notes', 'acrylblends-blend', 'acrylblends-category-business', 'acrylblends-subcategory-finance'])
+    assert.equal(readAppIdentity(readFileSync(join(dir, 'blend.yaml'), 'utf8')).license, 'MIT')
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'acryl.template.json'), 'utf8')), { name: 'books', description: 'Invoices and expenses.' })
+    assert.match(readFileSync(join(dir, 'LICENSE'), 'utf8'), /Copyright \(c\) \d{4} ana/u)
+    // A second share keeps the place the first one chose, even when the starter word says otherwise.
+    assert.deepEqual((planShare(dir, { list: {} }, fake) as { listing?: unknown }).listing, { placement: { category: 'business', subcategory: 'finance' }, license: 'MIT', tag: 'v1.2.0' })
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('listing is refused for a private app, a place not on the list, and an app the starter word cannot place', () => {
+  const dir = madeApp('cooking')
+  try {
+    const fake = ports({ account: 'ana' })
+    assert.match(String((planShare(dir, { list: {}, visibility: 'private' }, fake) as { reason?: string }).reason), /only a public app/u)
+    assert.match(String((planShare(dir, { list: {}, categories: storeCategories }, fake) as { reason?: string }).reason), /choose its category/u)
+    assert.match(String((planShare(dir, { list: { category: 'gaming', subcategory: 'crm' }, categories: storeCategories }, fake) as { reason?: string }).reason), /crm is not a subcategory of Gaming/u)
+    const chosen = planShare(dir, { list: { category: 'gaming', subcategory: 'games', license: 'Apache-2.0' }, categories: storeCategories }, fake)
+    assert.deepEqual((chosen as { listing?: unknown }).listing, { placement: { category: 'gaming', subcategory: 'games' }, license: 'Apache-2.0', tag: 'v1.2.0' })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

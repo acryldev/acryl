@@ -8,6 +8,11 @@ export interface AppIdentity {
   readonly name?: string
   readonly visibility: Visibility
   readonly license?: string
+  /** What the app is, in a sentence: what a store lists it with. */
+  readonly description?: string
+  /** The word its starter placed it by (`gaming`, `finance`); see placement.ts suggestPlacement. */
+  readonly category?: string
+  readonly version?: string
 }
 
 export function readAppIdentity(manifestText: string): AppIdentity {
@@ -19,6 +24,9 @@ export function readAppIdentity(manifestText: string): AppIdentity {
     // Anything but an explicit `public` is private: a missing or mistyped value must never make work public.
     visibility: metadata.visibility === 'public' ? 'public' : 'private',
     ...(typeof metadata.license === 'string' ? { license: metadata.license } : {}),
+    ...(typeof metadata.description === 'string' && metadata.description.trim() !== '' ? { description: metadata.description } : {}),
+    ...(typeof metadata.category === 'string' ? { category: metadata.category } : {}),
+    ...(typeof metadata.version === 'string' ? { version: metadata.version } : {}),
   }
 }
 
@@ -27,8 +35,17 @@ export function readAppIdentity(manifestText: string): AppIdentity {
  * stay as they were; a manifest that cannot be read is refused rather than rewritten.
  */
 export function withVisibility(manifestText: string, visibility: Visibility): string {
+  return withMetadata(manifestText, 'visibility', visibility)
+}
+
+/** The manifest with `metadata.license` set (an SPDX id such as MIT), kept as a YAML document as {@link withVisibility} does. */
+export function withLicense(manifestText: string, license: string): string {
+  return withMetadata(manifestText, 'license', license)
+}
+
+function withMetadata(manifestText: string, key: string, value: string): string {
   const document = parseDocument(manifestText)
   if (document.errors.length > 0) throw new Error(`blend.yaml could not be read: ${document.errors[0]?.message ?? 'invalid YAML'}`)
-  document.setIn(['metadata', 'visibility'], visibility)
+  document.setIn(['metadata', key], value)
   return String(document)
 }
