@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/sign-in",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "ACRYL sign-in: sign in to a model provider with an account (Claude, ChatGPT/OpenAI Codex and the rest of the catalog's flows; DeepSeek through DeepSeek's own account dialog) from Settings > Models on Web and Desktop, over the harness authorization flows; the terminal's DeepSeek account sign-in through its own loopback callback",
   "license": "MIT",
   "repository": {
@@ -58,17 +58,18 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryldev/ui": "workspace:*",
     "@acryldev/control": "workspace:*",
-    "@acryldev/loopback-http": "workspace:*"
+    "@acryldev/loopback-http": "workspace:*",
+    "@acryldev/ui": "workspace:*"
   },
   "peerDependencies": {
+    "@acryldev/blends": "^1.0.0",
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
-    "@acryldev/blends": "^1.0.0",
     "react": "18.3.1"
   },
   "devDependencies": {
+    "@acryldev/blends": "workspace:^",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
@@ -77,7 +78,6 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@acryldev/blends": "workspace:^",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

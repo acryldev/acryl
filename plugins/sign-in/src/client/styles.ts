@@ -26,7 +26,7 @@ const CSS = `
 .acrylSignInOptions { display: grid; gap: 6px; }
 
 .acrylConnectBackdrop { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.45); }
-.acrylConnect { display: grid; gap: 14px; width: min(760px, 100%); max-height: 100%; overflow-y: auto; padding: 24px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 16px; background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-label-primary); font: 14px/1.5 ui-sans-serif, system-ui, sans-serif; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6); }
+.acrylConnect { display: grid; gap: 14px; width: min(760px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 24px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 16px; background: var(--dsw-alias-bg-base, #fff); color: var(--dsw-alias-label-primary); font: 14px/1.5 ui-sans-serif, system-ui, sans-serif; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6); }
 .acrylConnectTitle { margin: 0; font-size: 20px; line-height: 28px; font-weight: 500; }
 .acrylConnectModels { min-width: 0; }
 .acrylConnectFoot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
