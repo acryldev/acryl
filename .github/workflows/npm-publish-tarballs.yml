@@ -41,7 +41,7 @@ jobs:
           while read -r t; do
             [ -n "$t" ] || continue
             for try in 1 2 3 4 5 6; do
-              if npm publish "pack/$t" --access public --tag "${{ inputs.dist_tag }}" --userconfig "$RUNNER_TEMP/.npmrc" > out.log 2>&1; then echo "published $t"; break; fi
+              if npm publish "./pack/$t" --access public --tag "${{ inputs.dist_tag }}" --userconfig "$RUNNER_TEMP/.npmrc" > out.log 2>&1; then echo "published $t"; break; fi
               if grep -qE "cannot publish over|previously published" out.log; then echo "already there $t"; break; fi
               if grep -q E429 out.log; then echo "E429 $t, waiting $((try*60))s"; sleep $((try*60)); continue; fi
               echo "FAIL $t"; grep -E "npm error" out.log | head -3; failed=1; break
