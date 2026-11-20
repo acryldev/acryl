@@ -3,7 +3,7 @@ import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH,
   SURFACES, type AppSharePlanRequest, type AppSharePlanView, type AppShareRequest, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
 } from './contract.ts'
 import { RegistryUnavailable } from './registry.ts'
@@ -66,11 +66,15 @@ function parsePublish(value: unknown): PublishRequest | undefined {
 
 function parseSharePlan(value: unknown): AppSharePlanRequest | undefined {
   const body = record(value)
-  if (body === undefined || !onlyKeys(body, ['id', 'owner'])) return undefined
+  if (body === undefined || !onlyKeys(body, ['id', 'owner', 'visibility'])) return undefined
   const id = text(body.id)
   const owner = optional(body.owner)
-  return id === undefined || owner === null ? undefined : { id, ...owner === undefined ? {} : { owner } }
+  if (body.visibility !== undefined && body.visibility !== 'private' && body.visibility !== 'public') return undefined
+  const visibility = body.visibility as 'private' | 'public' | undefined
+  return id === undefined || owner === null ? undefined : { id, ...owner === undefined ? {} : { owner }, ...visibility === undefined ? {} : { visibility } }
 }
+
+const nothing = (value: unknown): {} | undefined => (record(value) !== undefined && Object.keys(value as object).length === 0 ? {} : undefined)
 
 function parseShare(value: unknown): AppShareRequest | undefined {
   const body = record(value)
@@ -136,6 +140,10 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
   ask(LAUNCHER_PUBLISH_PATH, parsePublish, request => service.publish(request), 'publish a plugin')
   ask(LAUNCHER_SHARE_PLAN_PATH, parseSharePlan, request => service.sharePlan(request), 'plan a share')
   ask(LAUNCHER_SHARE_PATH, parseShare, request => service.share(request), 'share an app')
+  ask(LAUNCHER_GITHUB_PATH, nothing, () => Promise.resolve(service.github()), 'read the GitHub connection')
+  ask(LAUNCHER_GITHUB_START_PATH, nothing, () => service.githubStart(), 'start the GitHub sign-in')
+  ask(LAUNCHER_GITHUB_POLL_PATH, nothing, () => service.githubPoll(), 'check the GitHub sign-in')
+  ask(LAUNCHER_GITHUB_DISCONNECT_PATH, nothing, () => Promise.resolve(service.githubDisconnect()), 'disconnect GitHub')
 
   /** A change: same-origin JSON in, the new state out. A refusal is 409 with its reason; anything else is reported and 500. */
   const change = <T>(path: string, parse: (value: unknown) => T | undefined, run: (request: T) => void, operation: string): void => {

@@ -30,6 +30,22 @@ export function blendOf(folder) {
   } catch { return '' }
 }
 
+/**
+ * Set who may see the app (`metadata.visibility` of its blend.yaml, the one place the save plugin reads it): the line is replaced, or added after
+ * `metadata:` when there is none. Only that line changes; the rest of the file is kept byte for byte.
+ */
+export function setBlendVisibility(folder, visibility) {
+  if (visibility !== 'private' && visibility !== 'public') throw new Error(`visibility is private or public, not ${String(visibility)}`)
+  const file = join(folder, APP_MARKER)
+  const text = readFileSync(file, 'utf8')
+  const line = /^(metadata:[^\S\n]*\n(?:[ \t]+\S.*\n|[ \t]*\n)*?)([ \t]+)visibility:[^\n]*/mu
+  const next = line.test(text)
+    ? text.replace(line, `$1$2visibility: ${visibility}`)
+    : text.replace(/^metadata:[^\S\n]*\n([ \t]+)/mu, (head, indent) => `${head}visibility: ${visibility}\n${indent}`)
+  if (next === text && !text.includes(`visibility: ${visibility}`)) throw new Error('this app\'s blend.yaml has no metadata section')
+  if (next !== text) writeFileSync(file, next)
+}
+
 /** The version of the Blend an app was made from (`metadata.version` of its blend.yaml), or '' when it records none. */
 export function blendVersionOf(folder) {
   try {

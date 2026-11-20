@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/launcher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The ACRYL launcher's journeys (create an app, install a Blend, pull or share a plugin, update, check this machine, open ACRYL ADE) and the session every face walks them with (spec 050)",
   "license": "MIT",
   "repository": {
@@ -28,6 +28,7 @@
     "apps-registry.js",
     "apps-command.js",
     "model-key.js",
+    "github-login.js",
     "node-context.js",
     "README.md"
   ],

@@ -5,10 +5,12 @@
  */
 import { basename, join } from 'node:path'
 import {
-  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, inspectApp, maskKey, modelEnv, readApps, readModelKey, removeApp, STARTERS, whereProblem,
+  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
+  readApps, readGithub, readModelKey, removeApp, setBlendVisibility, startGithubSignIn, STARTERS, whereProblem,
   type AppEntry,
 } from '@acryldev/launcher'
 import type {
+  GithubPollView, GithubStartView, GithubView,
   AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
 } from './contract.ts'
 import { ACCOUNT_NAME, BLEND_ID, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
@@ -83,6 +85,7 @@ export class LauncherService {
   #job: Job | undefined
   #blends: { at: number, list: readonly BlendView[] } | undefined
 
+  #signIn: { readonly clientId: string, readonly deviceCode: string, readonly until: number } | undefined
   constructor(ports: LauncherPorts) { this.#ports = ports }
 
   state(): StateResponse {
@@ -331,6 +334,10 @@ export class LauncherService {
     if (!this.#ports.exists(join(entry.path, SHARE_COMMAND))) {
       throw new LauncherRefusal(`This app was made before apps could share themselves. In ${entry.path} run "npx acrylblends@latest upgrade", then try again.`)
     }
+    // The person's choice is kept where the app's own share reads it, so the plan, the share and every later save agree.
+    if (request.visibility !== undefined && confirm === undefined) {
+      try { setBlendVisibility(entry.path, request.visibility) } catch (cause) { throw new LauncherRefusal(`Could not set who may see it: ${cause instanceof Error ? cause.message : String(cause)}`) }
+    }
     // The plan goes back base64url-encoded: on Windows the command starts through a shell, which would take JSON's quotes.
     const args = [SHARE_COMMAND, '--json', ...request.owner === undefined ? [] : ['--owner', request.owner], ...confirm === undefined ? [] : ['--confirm', Buffer.from(JSON.stringify(confirm), 'utf8').toString('base64url')]]
     const run = this.#ports.runner({ program: 'node', args, cwd: entry.path, env: this.#environment() })
@@ -382,8 +389,48 @@ export class LauncherService {
 
   #environment(): Record<string, string | undefined> {
     const inherited = this.#ports.environment()
-    // `modelEnv` returns only what to add (the saved key, unless the environment already names one).
-    return appEnvironment({ ...inherited, ...modelEnv(this.#ports.home, inherited) })
+    // `modelEnv` and `githubEnv` return only what to add (the saved key or GitHub token, unless the environment already names one).
+    return appEnvironment({ ...inherited, ...modelEnv(this.#ports.home, inherited), ...githubEnv(this.#ports.home, inherited) })
+  }
+
+  /** Who is signed in to GitHub here (the token apps get as GH_TOKEN), never the token. */
+  github(): GithubView {
+    return { available: githubClientId(this.#ports.environment()) !== undefined, login: readGithub(this.#ports.home)?.login ?? null }
+  }
+
+  /** Start GitHub's device sign-in: the code for the person; the device code stays here until it is approved, refused or expires. */
+  async githubStart(): Promise<GithubStartView> {
+    const clientId = githubClientId(this.#ports.environment())
+    if (clientId === undefined) throw new LauncherRefusal('this build of Control Center has no GitHub app to sign in with')
+    try {
+      const started = await startGithubSignIn(clientId)
+      this.#signIn = { clientId, deviceCode: started.deviceCode, until: Date.now() + started.expiresIn * 1000 }
+      return { userCode: started.userCode, verificationUri: started.verificationUri, interval: started.interval }
+    } catch (cause) {
+      throw new LauncherRefusal(`GitHub sign-in could not start: ${cause instanceof Error ? cause.message : String(cause)}. Check the network and try again.`)
+    }
+  }
+
+  /** One poll of the sign-in under way: pending, connected (the token is saved and every app started from now on gets it), or failed. */
+  async githubPoll(): Promise<GithubPollView> {
+    const signIn = this.#signIn
+    if (signIn === undefined) return { state: 'failed', reason: 'no GitHub sign-in is under way: start it again' }
+    if (Date.now() > signIn.until) { this.#signIn = undefined; return { state: 'failed', reason: 'the code expired: start the sign-in again' } }
+    try {
+      const answer = await pollGithubSignIn(this.#ports.home, signIn.clientId, signIn.deviceCode)
+      if (answer.state !== 'pending') this.#signIn = undefined
+      return answer
+    } catch {
+      // A network blip between polls: keep waiting; the code's own expiry ends a sign-in that never comes back.
+      return { state: 'pending' }
+    }
+  }
+
+  /** Forget the GitHub connection on this machine. Apps started from now on no longer get the token. */
+  githubDisconnect(): GithubView {
+    this.#signIn = undefined
+    clearGithub(this.#ports.home)
+    return this.github()
   }
 
   /**

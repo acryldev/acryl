@@ -272,8 +272,8 @@ function Detail({ api, app, onStart, onUpdate, onStop, onRemove, openExternal }:
         <dt>Runs</dt><dd>{runsLine(app)}</dd>
       </dl>
       {app.state === 'starting' ? <><p className="acrylHomeNote" role="status">Starting {app.name}: {app.output === undefined ? 'waiting for its first output.' : 'what it prints, live:'}</p>{app.output === undefined ? null : <pre className="acrylHomeLog">{app.output}</pre>}</> : null}
-      {sharing ? <SharePanel key={app.id} api={api} app={app} onClose={() => { setSharing(false) }} /> : null}
-      {running ? <PluginsPanel api={api} app={app} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
+      {sharing ? <SharePanel key={app.id} api={api} app={app} onClose={() => { setSharing(false) }} openExternal={openExternal} /> : null}
+      {running ? <PluginsPanel api={api} app={app} openExternal={openExternal} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
       {app.failure === undefined ? null : <p className="acrylHomeNote" data-error>It stopped on its own:{'\n'}{app.failure}</p>}
     </div>
   )
@@ -282,8 +282,64 @@ function Detail({ api, app, onStart, onUpdate, onStop, onRemove, openExternal }:
 /** Where a remote lives on the web, for a person to read: `https://github.com/me/shop.git` is `github.com/me/shop`. */
 const remoteLabel = (remote: string): string => remote.replace(/^https?:\/\//u, '').replace(/\.git$/u, '')
 
+/**
+ * The GitHub connection sharing and publishing need: GitHub's device sign-in (a code the person types at github.com/login/device), so no terminal
+ * login is asked of anyone. Connected, it says who; apps started from then on get the connection.
+ */
+function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: (url: string) => void }): ReactNode {
+  const [github, setGithub] = useState<{ available: boolean, login: string | null } | undefined>(undefined)
+  const [code, setCode] = useState<{ userCode: string, verificationUri: string, interval: number } | undefined>(undefined)
+  const [note, setNote] = useState<string | undefined>(undefined)
+  useEffect(() => { void api.github().then(setGithub, (cause: unknown) => { setNote(message(cause)) }) }, [api])
+  useEffect(() => {
+    if (code === undefined) return undefined
+    let stop = false
+    let wait = code.interval
+    const tick = (): void => {
+      if (stop) return
+      void api.githubPoll().then((answer) => {
+        if (stop) return
+        if (answer.state === 'connected') { setCode(undefined); setGithub({ available: true, login: answer.login }); return }
+        if (answer.state === 'failed') { setCode(undefined); setNote(answer.reason); return }
+        if (answer.interval !== undefined) wait = answer.interval
+        timer = setTimeout(tick, wait * 1000)
+      }, () => { if (!stop) timer = setTimeout(tick, wait * 1000) })
+    }
+    let timer = setTimeout(tick, wait * 1000)
+    return () => { stop = true; clearTimeout(timer) }
+  }, [api, code])
+  if (github === undefined || !github.available) return note === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{note}</p>
+  if (github.login !== null) {
+    return (
+      <p className="acrylHomeNote" role="status">GitHub: signed in as <span className="acrylHomeMeta">{github.login === '' ? 'your account' : github.login}</span>.{' '}
+        <button type="button" className="acrylHomeBtn" data-small onClick={() => { void api.githubDisconnect().then(setGithub) }}>Disconnect</button>
+      </p>
+    )
+  }
+  return (
+    <div className="acrylHomeNote" role="group" aria-label="Connect GitHub">
+      {code === undefined ? (
+        <>
+          <p>Sharing sends the app to your own GitHub account. Connect it once on this computer.</p>
+          <button type="button" className="acrylHomeBtn" data-primary onClick={() => {
+            setNote(undefined)
+            void api.githubStart().then((started) => { setCode(started); openExternal(started.verificationUri) }, (cause: unknown) => { setNote(message(cause)) })
+          }}>Connect GitHub</button>
+        </>
+      ) : (
+        <>
+          <p>On the GitHub page that just opened, enter this code and approve ACRYL Control Center:</p>
+          <p className="acrylHomeName" aria-label="GitHub code" style={{ fontSize: '1.6em', letterSpacing: '0.12em' }}>{code.userCode}</p>
+          <p>The page did not open? Go to <a href={code.verificationUri} onClick={(event) => { event.preventDefault(); openExternal(code.verificationUri) }}>{code.verificationUri}</a>. Waiting for your approval...</p>
+        </>
+      )}
+      {note === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{note}</p>}
+    </div>
+  )
+}
+
 /** Share a whole app: the app's own plan (which repository, how visible, what is saved first), then the person's yes. The app need not be running. */
-function SharePanel({ api, app, onClose }: { api: LauncherApi, app: AppView, onClose: () => void }): ReactNode {
+function SharePanel({ api, app, onClose, openExternal }: { api: LauncherApi, app: AppView, onClose: () => void, openExternal: (url: string) => void }): ReactNode {
   const [owner, setOwner] = useState('')
   const [plan, setPlan] = useState<AppSharePlanView | undefined>(undefined)
   const [done, setDone] = useState<AppShareResponse | undefined>(undefined)
@@ -294,18 +350,24 @@ function SharePanel({ api, app, onClose }: { api: LauncherApi, app: AppView, onC
     setNote(undefined)
     try { await work() } catch (cause) { setNote(message(cause)) } finally { setBusy(false) }
   }
+  const [visibility, setVisibility] = useState<'private' | 'public'>('private')
   const owner_ = owner.trim() === '' ? {} : { owner: owner.trim() }
   return (
     <div className="acrylHomePanel" role="group" aria-label={`Share ${app.name}`}>
       <div className="acrylHomePanelTop"><h3>Share {app.name}</h3><button type="button" className="acrylHomeBtn" data-small onClick={onClose}>Close</button></div>
+      <GithubConnect api={api} openExternal={openExternal} />
       {done !== undefined ? (
         <p className="acrylHomeNote" role="status">Shared to <span className="acrylHomeMeta">{remoteLabel(done.remote)}</span>{done.created ? ' (a new repository)' : ''}. Someone you give access makes their own copy with <span className="acrylHomeMeta">git clone {done.remote}</span></p>
       ) : plan === undefined ? (
         <form className="acrylHomeRow" onSubmit={(event) => {
           event.preventDefault()
-          void run(async () => { setPlan(await api.sharePlan({ id: app.id, ...owner_ })) })
+          void run(async () => { setPlan(await api.sharePlan({ id: app.id, ...owner_, visibility })) })
         }}>
           <input className="acrylHomeInput" style={{ flex: '1 1 240px' }} value={owner} placeholder="GitHub account (blank: yours)" aria-label="GitHub account" onChange={(event) => { setOwner(event.target.value) }} />
+          <select className="acrylHomeInput" value={visibility} aria-label="Who can see it" onChange={(event) => { setVisibility(event.target.value === 'public' ? 'public' : 'private') }}>
+            <option value="private">Private: only you and people you invite</option>
+            <option value="public">Public: anyone, listed as Community</option>
+          </select>
           <button type="submit" className="acrylHomeBtn" data-primary disabled={busy}>Review what would be sent</button>
         </form>
       ) : (
@@ -328,7 +390,7 @@ function SharePanel({ api, app, onClose }: { api: LauncherApi, app: AppView, onC
 }
 
 /** The plugins of a running app: what it has, pulling one from a registry, and sharing one made here (the app's plan, then the person's yes). */
-function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNode {
+function PluginsPanel({ api, app, openExternal }: { api: LauncherApi, app: AppView, openExternal: (url: string) => void }): ReactNode {
   const [plugins, setPlugins] = useState<readonly PluginView[] | undefined>(undefined)
   const [source, setSource] = useState('')
   const [sharing, setSharing] = useState<string | undefined>(undefined)
@@ -395,6 +457,7 @@ function PluginsPanel({ api, app }: { api: LauncherApi, app: AppView }): ReactNo
       {sharing === undefined ? null : (
         <div className="acrylHomePanel" role="group" aria-label={`Share ${sharing}`}>
           <div className="acrylHomePanelTop"><h3>Share {sharing}</h3><button type="button" className="acrylHomeBtn" data-small onClick={() => { setSharing(undefined); setPlan(undefined); setDone(undefined) }}>Close</button></div>
+          <GithubConnect api={api} openExternal={openExternal} />
           {done !== undefined ? (
             <>
               <p className="acrylHomeNote">Published: <span className="acrylHomeMeta">{done.releaseUrl}</span></p>

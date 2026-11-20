@@ -32,6 +32,8 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
     state: vi.fn(async () => initial),
     blends: vi.fn(async () => BLENDS),
     assistantFolder: vi.fn(async () => '/h/ACRYL'), plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
+    github: vi.fn(async () => ({ available: false, login: null })), githubStart: vi.fn(async () => ({ userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device', interval: 5 })),
+    githubPoll: vi.fn(async () => ({ state: 'pending' as const })), githubDisconnect: vi.fn(async () => ({ available: true, login: null })),
     sharePlan: vi.fn(async () => SHARE_PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/o/shop.git', created: true })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
@@ -216,12 +218,37 @@ describe('the plugins of a running app', () => {
     expect(await screen.findByText('github.com/o/shop (a new repository)')).toBeTruthy()
     expect(screen.getByText('Only you and people you invite (private)')).toBeTruthy()
     expect(screen.getByText('2 changed files are saved first, then every saved version')).toBeTruthy()
-    expect(api.sharePlan).toHaveBeenCalledWith({ id: 'shop', owner: 'o' })
+    expect(api.sharePlan).toHaveBeenCalledWith({ id: 'shop', owner: 'o', visibility: 'private' })
     expect(api.share).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Yes, share shop' }))
     await waitFor(() => { expect(api.share).toHaveBeenCalledWith({ id: 'shop', owner: 'o', plan: SHARE_PLAN }) })
     expect(await screen.findByText('git clone https://github.com/o/shop.git')).toBeTruthy()
   })
+
+  it('shares publicly when the person picks Public', async () => {
+    const api = fake(state([app({})]))
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Who can see it' }), { target: { value: 'public' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review what would be sent' }))
+    await waitFor(() => { expect(api.sharePlan).toHaveBeenCalledWith({ id: 'shop', visibility: 'public' }) })
+  })
+
+  it('connects GitHub in the app: the code to type, the GitHub page opened, and who is signed in once approved', async () => {
+    let polls = 0
+    const api = fake(state([app({})]), {
+      github: vi.fn(async () => ({ available: true, login: null })),
+      githubStart: vi.fn(async () => ({ userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device', interval: 0.01 })),
+      githubPoll: vi.fn(async () => { polls += 1; return polls < 2 ? { state: 'pending' as const, interval: 0.01 } : { state: 'connected' as const, login: 'ana' } }),
+    })
+    const opened: string[] = []
+    render(<LauncherScreen api={api} visibility={new LauncherVisibility(true)} openExternal={(url) => { opened.push(url) }} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Connect GitHub' }))
+    expect((await screen.findByLabelText('GitHub code')).textContent).toBe('ABCD-1234')
+    expect(opened).toEqual(['https://github.com/login/device'])
+    expect(await screen.findByText('ana', {}, { timeout: 8000 })).toBeTruthy()
+  }, 10000)
 
   it('says in words why an app cannot be shared', async () => {
     const api = fake(state([app({})]), { sharePlan: vi.fn(async () => { throw new Error('Not shared: you are not signed in to GitHub on this computer') }) })

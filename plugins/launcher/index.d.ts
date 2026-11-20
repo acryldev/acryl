@@ -20,3 +20,15 @@ export const maskKey: (key: string) => string
 export function modelEnv(home: string, env?: Record<string, string | undefined>): Record<string, string | undefined>
 export function appNameProblem(name: string, context: { exists(path: string): boolean }, answers?: { where?: string }): string | undefined
 export function saveModelKey(home: string, key: string, provider?: string): void
+export const GITHUB_FILE: string
+export const GITHUB_CLIENT_ID: string
+export function githubClientId(env?: Record<string, string | undefined>): string | undefined
+export function readGithub(home: string): { readonly token: string, readonly login: string } | undefined
+export function saveGithub(home: string, token: string, login: string): void
+export function clearGithub(home: string): boolean
+export function githubEnv(home: string, env?: Record<string, string | undefined>): Record<string, string | undefined>
+export interface GithubSignIn { readonly deviceCode: string, readonly userCode: string, readonly verificationUri: string, readonly interval: number, readonly expiresIn: number }
+export function startGithubSignIn(clientId: string, fetchImpl?: typeof fetch): Promise<GithubSignIn>
+export type GithubPoll = { readonly state: 'pending', readonly interval?: number } | { readonly state: 'connected', readonly login: string } | { readonly state: 'failed', readonly reason: string }
+export function pollGithubSignIn(home: string, clientId: string, deviceCode: string, fetchImpl?: typeof fetch): Promise<GithubPoll>
+export function setBlendVisibility(folder: string, visibility: 'private' | 'public'): void

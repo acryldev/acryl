@@ -20,6 +20,10 @@ export const LAUNCHER_PUBLISH_PLAN_PATH = `${LAUNCHER_API_PREFIX}/publish-plan`
 export const LAUNCHER_PUBLISH_PATH = `${LAUNCHER_API_PREFIX}/publish`
 export const LAUNCHER_SHARE_PLAN_PATH = `${LAUNCHER_API_PREFIX}/share-plan`
 export const LAUNCHER_SHARE_PATH = `${LAUNCHER_API_PREFIX}/share`
+export const LAUNCHER_GITHUB_PATH = `${LAUNCHER_API_PREFIX}/github`
+export const LAUNCHER_GITHUB_START_PATH = `${LAUNCHER_API_PREFIX}/github-start`
+export const LAUNCHER_GITHUB_POLL_PATH = `${LAUNCHER_API_PREFIX}/github-poll`
+export const LAUNCHER_GITHUB_DISCONNECT_PATH = `${LAUNCHER_API_PREFIX}/github-disconnect`
 
 /** The three kinds of app (spec 050 D10): a web app, a desktop window, and the lightest, a terminal app, which is listed but not yet made. */
 export type Surface = 'web' | 'desktop' | 'tui'
@@ -186,7 +190,29 @@ export interface AppSharePlanRequest {
   readonly id: string
   /** The account that owns a new repository; absent means the signed-in one. */
   readonly owner?: string
+  /** Who may see it: written to the app's blend.yaml (metadata.visibility, the one place it is kept) before the plan is read; absent keeps it. */
+  readonly visibility?: 'private' | 'public'
 }
+
+/** The GitHub connection Control Center hands its apps (as GH_TOKEN): who is signed in, never the token. */
+export interface GithubView {
+  /** False when this build has no GitHub app to sign in with. */
+  readonly available: boolean
+  readonly login: string | null
+}
+
+/** A sign-in under way: the code the person types at GitHub. The device code stays in the service. */
+export interface GithubStartView {
+  readonly userCode: string
+  readonly verificationUri: string
+  /** Seconds between polls. */
+  readonly interval: number
+}
+
+export type GithubPollView =
+  | { readonly state: 'pending', readonly interval?: number }
+  | { readonly state: 'connected', readonly login: string }
+  | { readonly state: 'failed', readonly reason: string }
 
 /** The person's yes: the plan they read, sent back as it was. */
 export interface AppShareRequest extends AppSharePlanRequest {
