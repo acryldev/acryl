@@ -2,9 +2,7 @@
   "name": "save",
   "description": "Save the app to its own git repository, and share it: a repository of its own on GitHub, created and pushed only after a person confirms the plan. Refuses a file that holds a secret, and a private app going to a public remote.",
   "requires": [],
-  "inject": [
-    "appInstance"
-  ],
+  "inject": ["appInstance"],
   "provides": [],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
