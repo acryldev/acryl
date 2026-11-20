@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { installRecovery, isRecoverable, RELOAD_GAP_MS } from '../src/client/recover.ts'
+import { installRecovery, installRecoveryOnce, isRecoverable, RELOAD_GAP_MS } from '../src/client/recover.ts'
 
 function fakeWindow() {
   const listeners: Record<string, ((event: { error?: unknown; reason?: unknown }) => void)[]> = { error: [], unhandledrejection: [] }
@@ -36,5 +36,13 @@ describe('recovering a blank page', () => {
     w.fire('error', { error: known })
     expect(w.reloads).toBe(2)
     expect(isRecoverable('nothing')).toBe(false)
+  })
+
+  it('installs once per page and stays installed: the race unloads the plugin that installed it', () => {
+    const w = fakeWindow()
+    installRecoveryOnce(w, () => 5_000_000)
+    installRecoveryOnce(w, () => 5_000_000)
+    w.fire('error', { error: new Error("scope 'session-maybe' rendered without an installed adapter") })
+    expect(w.reloads).toBe(1)
   })
 })

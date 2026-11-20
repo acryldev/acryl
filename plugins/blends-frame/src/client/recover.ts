@@ -39,3 +39,17 @@ export function installRecovery(target: RecoverWindow, now: () => number = Date.
     target.removeEventListener('unhandledrejection', listener)
   }
 }
+
+const INSTALLED = Symbol.for('acrylBlends.recovery')
+
+/**
+ * Install the recovery once for the page, never removed. Not owned by the plugin's lifecycle on purpose: the race that blanks the page is DSH
+ * replacing the slots service, which unloads the frame's client plugin (it injects `slots`), and an effect-owned listener was gone at exactly the
+ * moment the error fired (seen on Windows with 0.2.2). A second call (the plugin applied again) finds the first listener and adds nothing.
+ */
+export function installRecoveryOnce(target: RecoverWindow, now: () => number = Date.now): void {
+  const marked = target as RecoverWindow & { [INSTALLED]?: true }
+  if (marked[INSTALLED]) return
+  marked[INSTALLED] = true
+  installRecovery(target, now)
+}
