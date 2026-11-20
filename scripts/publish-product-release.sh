@@ -25,4 +25,6 @@ if gh release view "$VERSION" -R "$REPO" >/dev/null 2>&1; then
 else
   gh release create "$VERSION" -R "$REPO" --title "$NAME $VERSION" --notes "$NOTES" --latest "$WORK"/*
 fi
-echo "published $COUNT files: https://github.com/$REPO/releases/tag/$VERSION"
+# A run that stopped half way (a timeout while downloading) leaves the release without the Latest mark: set it every time, after every file is up.
+gh release edit "$VERSION" -R "$REPO" --latest >/dev/null
+echo "published $COUNT files: https://github.com/$REPO/releases/tag/$VERSION (Latest)"
