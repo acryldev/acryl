@@ -17,9 +17,9 @@ ACRYL Control Center lists your apps, makes new ones and starts them. Download i
 
 | | Apple Silicon / ARM | Intel / x64 |
 | --- | --- | --- |
-| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-mac-x64.dmg) |
-| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-win-x64.exe) |
-| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-linux-x64.deb) |
+| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-x64.dmg) |
+| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-x64.deb) |
 
 The apps are not signed yet: on macOS the first start is right-click > Open; on Windows SmartScreen may ask, More info > Run anyway; on Linux
 `sudo apt install ./ACRYL-Control-Center-linux-x64.deb`. Or, with Node.js installed, start it without a download:

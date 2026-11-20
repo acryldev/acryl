@@ -10,13 +10,13 @@
 
 ## Download
 
-The app, ready to install (release 0.2.2, <https://github.com/acryldev/acryl/releases/tag/control-center-v0.2.2>):
+The app, ready to install (the latest release, <https://github.com/acrylblends/63-acryl-control-center/releases/latest>):
 
 | | Apple Silicon / ARM | Intel / x64 |
 |---|---|---|
-| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-mac-x64.dmg) |
-| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-win-x64.exe) |
-| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acryldev/acryl/releases/download/control-center-v0.2.2/ACRYL-Control-Center-linux-x64.deb) |
+| macOS | [ACRYL-Control-Center-mac-arm64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-arm64.dmg) | [ACRYL-Control-Center-mac-x64.dmg](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-mac-x64.dmg) |
+| Windows | [ACRYL-Control-Center-win-arm64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-arm64.exe) | [ACRYL-Control-Center-win-x64.exe](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-Control-Center-linux-arm64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-arm64.deb) | [ACRYL-Control-Center-linux-x64.deb](https://github.com/acrylblends/63-acryl-control-center/releases/latest/download/ACRYL-Control-Center-linux-x64.deb) |
 
 The apps are not signed yet. macOS: the first start is right-click > Open. Windows: SmartScreen may ask, More info > Run anyway.
 Linux: `sudo apt install ./ACRYL-Control-Center-linux-x64.deb`. On Windows and Linux it uses the git on your machine.
