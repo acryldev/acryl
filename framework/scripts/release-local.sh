@@ -4,6 +4,9 @@
 # publishing is not set up for the unscoped names (spec 051 T037); framework-release.yml takes over once it is.
 #   bash framework/scripts/release-local.sh         print-only (the default): packs everything, checks it, prints every outward step, publishes nothing
 #   bash framework/scripts/release-local.sh --go    the same checks, then publishes, tags, cancels the tag-triggered release runs, and proves both create commands
+#   --tag <name>   the npm dist-tag every publish uses (default latest). `--tag next` publishes the release without moving what `npm create acrylblends` gets.
+#   --promote      after a `--tag next` release is proven from npm: moves `latest` to this release, for exactly the packages whose `next` is the workspace's
+#                  version (the ones this release published), and prints each one's latest after. Print-only without --go, like the rest.
 # The version is the CLI's package.json version. Run it from an acryl checkout whose HEAD is a landed main commit (clean tree, on origin/main).
 # Checks: every @acryldev dependency of the CLI, the library plugins, the frame (framework/frame/packages.json), the templates, ADE and Control
 # Center is on npm with the same content or is packed and published first, in dependency order; a package whose npm copy differs at the same
@@ -12,11 +15,23 @@
 # Tokens are read from ~/.secure-storage/npm/npm.json into temporary 0600 userconfigs that are deleted on exit; no token is ever printed or stored here.
 set -euo pipefail
 
-GO=0; [ "${1:-}" = "--go" ] && GO=1
-repo=$(git rev-parse --show-toplevel)
-cd "$repo"
 step() { printf '\n== %s\n' "$*"; }
 die() { printf 'release: STOP: %s\n' "$*" >&2; exit 1; }
+GO=0; TAG=latest; PROMOTE=0
+while [ $# -gt 0 ]; do
+  case $1 in
+    --go) GO=1 ;;
+    --tag) [ $# -ge 2 ] || die "--tag needs a name"; TAG=$2; shift ;;
+    --promote) PROMOTE=1 ;;
+    *) die "unknown argument $1 (use --go, --tag <name>, --promote)" ;;
+  esac
+  shift
+done
+# npm refuses a tag that parses as a version range; keep to plain names.
+[[ $TAG =~ ^[a-z][a-z0-9-]*$ ]] || die "--tag $TAG: use a plain name such as latest or next"
+[ "$PROMOTE" = 0 ] || [ "$TAG" = latest ] || die "--promote moves latest; it takes no --tag"
+repo=$(git rev-parse --show-toplevel)
+cd "$repo"
 # shellcheck disable=SC2329
 outward() { if [ "$GO" = 1 ]; then echo "+ $*"; "$@"; else echo "would run: $*"; fi; }
 
@@ -52,6 +67,46 @@ cfg_acryldev="$work/acryldev.npmrc"; cfg_webboxes="$work/webboxes.npmrc"
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/packed" "$work/cache"
 export npm_config_cache="$work/cache"
+tokens() {
+  step "tokens (temporary 0600 userconfigs, never printed)"
+  ( umask 077
+    python3 - "$cfg_acryldev" "$cfg_webboxes" <<'PY'
+import json, os, sys
+d = json.load(open(os.path.expanduser('~/.secure-storage/npm/npm.json')))
+for path, key in ((sys.argv[1], 'npm_accesstoken_acryldevadmin_of_org_acryldev_bypass_2fa'), (sys.argv[2], 'npm_accesstoken_webboxes_bypass_2fa')):
+    with open(path, 'w') as f: f.write('//registry.npmjs.org/:_authToken=' + d[key] + '\n')
+PY
+  )
+  echo "acryldev token: $(npm whoami --userconfig "$cfg_acryldev" 2>&1 | tail -1)"
+  echo "webboxes token: $(npm whoami --userconfig "$cfg_webboxes" 2>&1 | tail -1)"
+}
+# Every public workspace package: name, folder.
+git ls-files '*package.json' | grep -v node_modules | while read -r f; do
+  node -e 'const m=require(process.argv[1]); if (m.name && !m.private) console.log(m.name + "\t" + require("path").dirname(process.argv[1]))' "$repo/$f" 2>/dev/null || true
+done > "$work/workspace.tsv"
+
+if [ "$PROMOTE" = 1 ]; then
+  # This release's packages: every public workspace package whose npm `next` is its workspace version. A package an earlier release published, or one
+  # this release found on npm already, has another `next` (or none) and is left alone.
+  step "promote: the packages whose next is this release's version"
+  : > "$work/promote.txt"
+  while IFS=$'\t' read -r n dir; do
+    v=$(node -p 'require(process.argv[1]).version' "$dir/package.json")
+    next=$(npm view "$n" dist-tags.next 2>/dev/null || true)
+    [ "$next" = "$v" ] && echo "$n $v" >> "$work/promote.txt"
+  done < "$work/workspace.tsv"
+  for n in $ALL_NAMES; do grep -q "^$n $version\$" "$work/promote.txt" || die "$n: npm's next is not $version; publish with --tag next first"; done
+  echo "$(wc -l < "$work/promote.txt" | tr -d ' ') packages:"; sed 's/^/  /' "$work/promote.txt"
+  [ "$GO" = 0 ] || tokens
+  while read -r n v; do
+    case "$n" in @acryldev/*) c=$cfg_acryldev ;; acrylblends|create-acrylblends) c=$cfg_webboxes ;; *) die "$n: no npm account owns it here" ;; esac
+    outward npm dist-tag add "$n@$v" latest --userconfig "$c"
+    [ "$GO" = 1 ] && echo "$n latest: $(npm view "$n" dist-tags.latest)"
+  done < "$work/promote.txt"
+  step "done"
+  [ "$GO" = 1 ] && echo "latest is $version for every package above" || echo "print-only run; run again with --promote --go to move latest"
+  exit 0
+fi
 
 step "pack (pnpm pack turns workspace: ranges into versions; prepack builds)"
 for d in "${DIRS[@]}"; do
@@ -85,9 +140,6 @@ done
 echo "module types ok"
 # The dependency closure: an @acryldev dependency that is neither in this release nor on npm at a matching version, but is a workspace
 # package, is packed and published first (acryldevadmin token), with its own dependencies before it. Anything still missing stops the release.
-git ls-files '*package.json' | grep -v node_modules | while read -r f; do
-  node -e 'const m=require(process.argv[1]); if (m.name && !m.private) console.log(m.name + "\t" + require("path").dirname(process.argv[1]))' "$repo/$f" 2>/dev/null || true
-done > "$work/workspace.tsv"
 ws_dir_of() { awk -F'\t' -v n="$1" '$1 == n { print $2; exit }' "$work/workspace.tsv"; }
 deps_of_tgz() { tar -xzOf "$1" package/package.json | node -e 'const d=JSON.parse(require("fs").readFileSync(0)).dependencies??{};for(const[k,v]of Object.entries(d))if(k.startsWith("@acryldev/"))console.log(k+" "+v)'; }
 EXTRA=""        # dependency-first order of extra packages to publish
@@ -220,17 +272,8 @@ for d in "${DIRS[@]}"; do
 done
 echo "none of the four is on npm at $version yet"
 
-step "tokens (temporary 0600 userconfigs, never printed)"
-umask 077
-python3 - "$cfg_acryldev" "$cfg_webboxes" <<'PY'
-import json, os, sys
-d = json.load(open(os.path.expanduser('~/.secure-storage/npm/npm.json')))
-for path, key in ((sys.argv[1], 'npm_accesstoken_acryldevadmin_of_org_acryldev_bypass_2fa'), (sys.argv[2], 'npm_accesstoken_webboxes_bypass_2fa')):
-    with open(path, 'w') as f: f.write('//registry.npmjs.org/:_authToken=' + d[key] + '\n')
-PY
+tokens
 cfg() { [ "$(owner_of "$1")" = acryldev ] && echo "$cfg_acryldev" || echo "$cfg_webboxes"; }
-echo "acryldev token: $(npm whoami --userconfig "$cfg_acryldev" 2>&1 | tail -1)"
-echo "webboxes token: $(npm whoami --userconfig "$cfg_webboxes" 2>&1 | tail -1)"
 
 step "publish (missing @acryldev dependencies, then the scoped two, then the aliases that depend on them)"
 visible() { # $1 name, $2 version: wait for the registry (it lags a few minutes; a dependent installed before it would fail)
@@ -239,11 +282,11 @@ visible() { # $1 name, $2 version: wait for the registry (it lags a few minutes;
   echo "$1@$2 is on npm"
 }
 for t in $EXTRA_TGZ; do
-  outward npm publish "$t" --access public --userconfig "$cfg_acryldev"
+  outward npm publish "$t" --access public --tag "$TAG" --userconfig "$cfg_acryldev"
   [ "$GO" = 1 ] && visible "$(tar -xzOf "$t" package/package.json | node -p 'JSON.parse(require("fs").readFileSync(0)).name')" "$(tar -xzOf "$t" package/package.json | node -p 'JSON.parse(require("fs").readFileSync(0)).version')"
 done
 for d in "${DIRS[@]}"; do
-  outward npm publish "$(tgz_of "$d")" --access public --userconfig "$(cfg "$d")"
+  outward npm publish "$(tgz_of "$d")" --access public --tag "$TAG" --userconfig "$(cfg "$d")"
   [ "$GO" = 1 ] && visible "$(name_of "$d")" "$version"
 done
 
@@ -294,4 +337,4 @@ else
 fi
 
 step "done"
-[ "$GO" = 1 ] && echo "release $version published, tagged and proven from npm" || echo "print-only run: every check passed; run again with --go to release $version"
+[ "$GO" = 1 ] && echo "release $version published under the npm tag $TAG, tagged and proven from npm" || echo "print-only run: every check passed; run again with --go to release $version (npm tag $TAG)"
