@@ -138,7 +138,7 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
           </div>
         </>
       ) : (
-        <form className="acrylBlendsAppRow" onSubmit={review}>
+        <form className="acrylBlendsAppRow" data-wide="" onSubmit={review}>
           <b>Share to GitHub</b>
           <span className="acrylBlendsAppControls">
             <input className="acrylBlendsSearch" aria-label="GitHub account" placeholder="GitHub account (blank: yours)" value={owner} onChange={(event) => { setOwner(event.target.value) }} />

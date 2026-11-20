@@ -33,6 +33,7 @@ import { appPluginRow, createAppPluginsApi, framePluginRow, type NavigatorPlugin
 import { PluginsSection } from './PluginsSection.tsx'
 import { createRegistryApi } from './registry-api.ts'
 import { AppSection } from './AppSection.tsx'
+import { installRecovery } from './recover.ts'
 import { createShareAppApi, ShareAppSection } from './ShareAppSection.tsx'
 import { desktopApp } from './desktop-app.ts'
 import { NameYourApp } from './NameYourApp.tsx'
@@ -95,6 +96,8 @@ function pageStorage(): ViewStorage | undefined {
 }
 
 export function apply(ctx: ClientContext): void {
+  // A blank page after an agent's edit (a known slot-assembly race while rows reload) reloads itself: ./recover.ts.
+  ctx.effect(() => installRecovery(window as unknown as Parameters<typeof installRecovery>[0]), '@acryldev/blends-frame: recover a blank page')
   const layout = new DesktopLayoutState()
   const canvas = new AppCanvasState()
   const selection = new SelectionStore()
