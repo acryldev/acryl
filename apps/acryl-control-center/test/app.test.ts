@@ -176,7 +176,7 @@ test('the manifest decides what is mounted: a parameter changes the server, an u
   const { readManifest } = await import('../src/app.ts')
   const manifest = readManifest()
   // The template's rows, in their order; a feature's row (plugins/<name>/) may sit between them.
-  const library = ['router', 'home', 'routes', 'extensions', 'server', '@acryldev/door']
+  const library = ['router', 'home', 'routes', 'extensions', 'server', 'acryl-door']
   assert.deepEqual(
     manifest.plugins.map((row) => row.id).filter((id) => library.includes(id)),
     library,

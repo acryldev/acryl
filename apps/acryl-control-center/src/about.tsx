@@ -2,7 +2,7 @@
 const About = () => (
   <main>
     <h1>About</h1>
-    <p>Rendered on the server with the JSX runtime in plugins/router.</p>
+    <p>Rendered on the server with the JSX runtime in plugins/acryl-router.</p>
   </main>
 )
 

@@ -52,7 +52,7 @@ plugins like in every Blend.
 
 Most of this app is not written here:
 
-- **The library plugins** (`plugins/door`, `@acryldev/router`, `desktop`, `instance`, `plugin-share` and the others named in
+- **The library plugins** (`plugins/acryl-door`, `acryl-router`, `desktop`, `instance`, `plugin-share` and the others named in
   `plugins/library.json`) are copies of the acrylblends library, from <https://github.com/acrylblends/acrylblends>.
   `plugins/library.lock.json` records the release each came from and a hash of every file. `npx acrylblends upgrade` brings them to the
   newest release; when a file was changed here, it stops, shows the diff and changes nothing (`--force` replaces it and keeps a backup in
