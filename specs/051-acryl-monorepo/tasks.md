@@ -31,8 +31,9 @@ Branch `051-acryl-monorepo` (worktree `acryl.worktrees/051-acryl-monorepo`). Not
   `scripts/verify-layout.mjs`. No cycles between workspace packages, and three "never depends on" rules by package role (the framework
   foundation depends only on itself; ACRYL's runtime only on the foundation and itself; nothing depends on an app). 60 packages, 0 cycles,
   0 wrong-way dependencies. Done 80aeab6a.
-- [ ] T009 [mirror] acrylblends/acrylblends stays live until the cut-over: changes made there are brought in with
+- [x] T009 [mirror] acrylblends/acrylblends stays live until the cut-over: changes made there are brought in with
   `git subtree pull --prefix=framework`, never copied by hand. First pull done 2026-11-19 (acrylblends 7711a4ce: release 1.5.21).
+  Ended 2026-11-20: acrylblends/acrylblends is a pointer to this repository and archived (owner go 06:29, T015).
 
 ### Tonight's restructure, the Pi model (owner 2026-11-19)
 
@@ -192,15 +193,20 @@ verify and check:layout and all 23 framework check steps green before it lands.
   unchanged. It found the host restart loop (an access-time change from `git diff` restarted node --watch; fixed by plugins/desktop-shell/watch-host.mjs,
   branch 051-walk-acryl-home). Before the first product tag: the same install check on Windows (mbpi9win) and Ubuntu (z370n).
 
-- [ ] T041 [products, no installs] A participant installs nothing but Control Center. Done on main 15dfac4d: on a computer without Node.js
+- [x] T041 [products, no installs] A participant installs nothing but Control Center. Done on main 15dfac4d: on a computer without Node.js
   22.19+ (with npm) or gh, Control Center fetches them once from nodejs.org and github.com/cli/cli, checks each against its published SHA-256
   list, unpacks them into `~/.acryl/tools` and puts them first on every app's PATH (`plugins/launcher/tools.js`, @acryldev/launcher 0.1.2); git
   comes with the product (dugite). Proven on macOS (Node 24.22.3, npm 11.19, gh 2.105 in 8 s). Open: the Windows (.zip through System32 tar)
   and Linux walks.
-- [ ] T042 [share, owner 2026-11-20] Publish Blend apps and Cordis plugins to the person's own GitHub from the GUI. Done: Connect GitHub in
+  Proven 2026-11-20 with the release installers control-center-v0.2.0/v0.2.1 on macOS arm64, Windows x64 (mbpi9win) and Linux x64
+  (z370n), scratch home, no Node on PATH: Node and gh fetched into ~/.acryl/tools, Make an app from a Blueprint runs.
+- [x] T042 [share, owner 2026-11-20] Publish Blend apps and Cordis plugins to the person's own GitHub from the GUI. Done: Connect GitHub in
   Control Center (GitHub device sign-in with ACRYL's own OAuth app, token handed to apps as GH_TOKEN; 75642b47), Private/Public on Share,
   Settings > Share in every app (frame 0.2.1, CLI 1.7.3; bcd27361) beside the existing Settings > Plugins share; proven by a fresh 1.7.3 app
   sharing itself privately to inboxxobni/s2 through the route. Open: the GUI walk with a person approving the device code.
+  Proven 2026-11-20 on macOS, Windows and Linux up to GitHub's device-code screen (the approval is the person's step), from Control
+  Center (Share) and from inside the app (Settings > Share; frame 0.2.2 fixed its label layout); a real private share to inboxxobni/s2
+  passed earlier. Deploy to WebBoxes.ai is T045.
 - [x] T043 [registries, owner 2026-11-20] "community" vs "official": both registries carry `origin` (acrylblends.github.io a34c1c2,
   cordisplugins.github.io already); Control Center's store shows Official/Community (380252ce) and lists the community Blends the registry found
   on GitHub, made from their own release with a "not reviewed" note (9258c4ae); the store filters All/Official/Community (0aa399bc). Released in
@@ -213,6 +219,15 @@ verify and check:layout and all 23 framework check steps green before it lands.
   Center v0.2.0 on macOS. Archives agent/chat/notes-desktop rebuilt from the current templates (acrylblends.github.io 29f40c5).
 - [x] T045 [deploy] Control Center's "Deploy to WebBoxes.ai" opens webboxes.ai's New WebBox form with the shared app's GitHub repository
   filled in (f8648075; webboxesai d333da3 prefill), enabled once the app has a github.com origin. Released in control-center-v0.2.1.
+
+- [ ] T046 [archives] Every registry Blueprint (acrylblends.github.io registry/blends, runtime acrylblends) regenerated with
+  @acryldev/blends 1.7.4 so an app made from it passes its own `npm test` / `npm run check`: today the archive's test pins the manifest
+  rows without plugin-share (which create adds) and its old plugins/instance copy clashes with @acryldev/instance (TS2717). Owner: Fork6,
+  per-archive proof (install, test, check, the frame serves).
+- [x] T047 [walk findings 2026-11-20] Fixed and released: the blank page after an agent's edit on Windows reloads itself (frame 0.2.2 +
+  0.2.3, 4ca0db75, 1fd916e8); the Connect a model dialog fits small windows (sign-in 0.2.1, 1a3892b8); a just-made app's card says
+  starting while npm install runs (launcher-desktop 0.1.5, 14157dc6, control-center-v0.2.2). Open: ADE shows the sign-in dialog and the
+  workspace's model card at once (two plugins; after the workshop); Enter once left a chat message unsent (Send worked; not reproduced).
 
 ## Phase 5 - registry and the old repository
 
