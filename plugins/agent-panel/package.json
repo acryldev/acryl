@@ -23,10 +23,6 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
-    "./drivers": {
-      "types": "./lib/types/drivers.d.ts",
-      "default": "./lib/drivers.js"
-    },
     "./headless": {
       "types": "./lib/types/headless.d.ts",
       "default": "./lib/headless.js"

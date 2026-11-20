@@ -69,7 +69,6 @@
       "@acryldev/plugin-share": ["../plugins/plugin-share/index.ts"],
       "@acryldev/plugin-share/package": ["../plugins/plugin-share/package.ts"],
       "@acryldev/agent-panel": ["../plugins/agent-panel/index.ts"],
-      "@acryldev/agent-panel/drivers": ["../plugins/agent-panel/drivers.ts"],
       "@acryldev/agent-panel/headless": ["../plugins/agent-panel/headless.ts"],
       "@acryldev/agent-panel/registry": ["../plugins/agent-panel/registry.ts"],
       "@acryldev/agent-panel/mount": ["../plugins/agent-panel/mount.ts"],
