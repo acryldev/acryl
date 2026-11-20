@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { statSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { isAbsolute, join } from 'node:path'
+import { extname, isAbsolute, join } from 'node:path'
 import type { AgentId, WorkspacePtyCommandId, WorkspacePtyStatus, WorkspacePtyView } from './contract.ts'
 import { knownAgent } from '../agents/known-agents.ts'
 import { STATUS_ENV, statusHookArgs } from '../agents/status/claude-hooks.ts'
@@ -90,9 +90,11 @@ export function resolveWorkspacePtyCommand(
   platform: NodeJS.Platform,
 ): string | undefined {
   if (isAbsolute(command) || command.includes('/') || command.includes('\\')) return command
-  const names = platform === 'win32'
-    ? [command, `${command}.exe`, `${command}.cmd`, `${command}.bat`]
-    : [command]
+  // Windows runs only these; npm also puts an extensionless shell shim (`pi`) beside `pi.cmd`, and spawning that fails.
+  const runnable = ['.exe', '.cmd', '.bat', '.com']
+  const names = platform !== 'win32'
+    ? [command]
+    : runnable.includes(extname(command).toLowerCase()) ? [command] : runnable.map((ext) => `${command}${ext}`)
   for (const dir of dirs) {
     for (const name of names) {
       try {
