@@ -170,7 +170,7 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
             const listing = step.plan.listing
             const category = categories.find(c => c.slug === listing.placement.category)
             return (
-              <div className="acrylBlendsAppRow">
+              <div className="acrylBlendsAppRow" data-wide="">
                 <b>Blends store</b>
                 {categories.length > 0 && (
                   <span className="acrylBlendsAppControls">
