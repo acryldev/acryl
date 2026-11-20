@@ -54,7 +54,7 @@ answers before reporting it live. See [Extending a running app](agent/extending-
 
 ```sh
 npx acrylblends plugins             # the library
-npx acrylblends add settings        # copy one into this app, with what it requires
+npx acrylblends add app-settings    # copy one into this app, with what it requires
 npm install                                                       # new dependencies, if it added any
 ```
 

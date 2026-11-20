@@ -8,7 +8,7 @@ against a real Cordis context, including disposal.
 |---|---|---|
 | [instance](#instance) | `appInstance` | `runtime/harness-runtime/src/instance/` |
 | [@acryldev/router](#the-framework-plugins), [@acryldev/router-http](#the-framework-plugins), [@acryldev/node-server](#the-framework-plugins), [@acryldev/state](#the-framework-plugins), [@acryldev/inspect](#the-framework-plugins) | `router`, `nodeServer`, `state`, `inspect` | `plugins/acryl-*` (the ACRYL framework) |
-| [settings](#settings) | `settings` | `plugins/settings` |
+| [app-settings](#app-settings) | `settings` | `plugins/settings` |
 | [extensions](#extensions) | `extensions` | `plugins/acryl-extension-context` |
 | [builder](#builder) | tools for the agent | the agent's install tools |
 | [sandbox](#sandbox) | `sandbox` | - |
@@ -39,7 +39,7 @@ events at `/api/state/<key>` and `/api/state/<key>/events`, and followed in a pa
 the app's `migrations/` folder applied on start) come with `acrylblends add db` in a Blend app. A plugin declares `inject: ['db']` and calls `await ctx.db.all('SELECT ...', value)`;
 the interface is the one in the [data guide](framework/guides/data.md). A plain Acryl app opens its database with `openDb` from `acrylblends/db/sqlite` instead.
 
-## settings
+## app-settings
 
 `ctx.settings.register(namespace, schema, { base, applies, validate })` returns a scope with `get`, `watch`, `update`
 and `replace`. The value layers the schemastery schema's defaults, then `base`, then what is stored in

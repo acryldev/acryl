@@ -585,18 +585,18 @@ spec:
     '--template',
     'blank',
   ])
-  capture(process.execPath, [cli, 'add', 'settings', '--dir', grown])
+  capture(process.execPath, [cli, 'add', 'app-settings', '--dir', grown])
   const grownDeps = Object.keys(
     JSON.parse(readFileSync(join(grown, 'package.json'), 'utf8')).dependencies,
   )
   for (const name of ['@deepseek-ai/cordis', '@deepseek-ai/schemastery', 'yaml']) {
-    if (!grownDeps.includes(name)) fail(`add settings: ${name} was not added to package.json`)
+    if (!grownDeps.includes(name)) fail(`add app-settings: ${name} was not added to package.json`)
   }
-  if (!existsSync(join(grown, 'plugins', 'settings', 'index.ts')))
-    fail('add settings: the plugin was not copied')
+  if (!existsSync(join(grown, 'plugins', 'app-settings', 'index.ts')))
+    fail('add app-settings: the plugin was not copied')
   capture(npm, ['install', '--no-audit', '--no-fund'], { cwd: grown })
   capture(npm, ['run', 'check'], { cwd: grown })
-  log('add settings: copied, dependencies added, installed, type-checks')
+  log('add app-settings: copied, dependencies added, installed, type-checks')
   // `add db`: the port and the SQLite provider arrive with their npm packages; the provider migrates and serves `db` to a plugin that injects it.
   const withDb = join(scratch, 'with-db')
   capture(process.execPath, [
