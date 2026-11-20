@@ -33,6 +33,7 @@ import { appPluginRow, createAppPluginsApi, framePluginRow, type NavigatorPlugin
 import { PluginsSection } from './PluginsSection.tsx'
 import { createRegistryApi } from './registry-api.ts'
 import { AppSection } from './AppSection.tsx'
+import { AppIconSection } from './AppIconRow.tsx'
 import { installRecoveryOnce } from './recover.ts'
 import { createShareAppApi, ShareAppSection } from './ShareAppSection.tsx'
 import { desktopApp } from './desktop-app.ts'
@@ -410,6 +411,16 @@ export function apply(ctx: ClientContext): void {
           locale: LOCALE_NAMESPACE,
           inject: () => ({ app: desktop }),
         }, AppSection))
+      } else {
+        // An app people make runs without the product's desktop bridge: its App page is the one thing that needs no bridge, its icon.
+        child.slots.inject('settings.section', () => child.slots.register({
+          name: 'settings.section',
+          id: 'acryl-blends-app',
+          order: 5,
+          label: () => t('app'),
+          locale: LOCALE_NAMESPACE,
+          inject: () => ({}),
+        }, AppIconSection))
       }
       // Every app, in a window or a browser tab: send the whole app to the person's own GitHub.
       const shareApp = createShareAppApi()

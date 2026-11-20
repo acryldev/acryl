@@ -1,7 +1,7 @@
 /**
  * Settings > App > Icon: the app's own icon. The picked image (PNG, JPEG, SVG, WebP...) is drawn on a 512 px square in the page and sent as a PNG to
- * the frame's host, which keeps it as assets/icon.png: the browser tab shows it at once, the desktop window too, and the Dock on macOS from the
- * window's next start.
+ * the frame's host, which keeps it as assets/icon.png: the browser tab shows it at once, and so do the desktop window and the Dock (the desktop
+ * shell watches the file).
  */
 
 import { type ChangeEvent, useState } from 'react'
@@ -62,7 +62,7 @@ export function AppIconRow() {
         const next = Date.now()
         setVersion(next)
         refreshTabIcon(next)
-        setNote({ text: 'Saved. The window shows it now; the Dock on a Mac from the next start.', error: false })
+        setNote({ text: 'Saved. The tab and the window show it now.', error: false })
       } catch (cause) {
         setNote({ text: cause instanceof Error ? cause.message : String(cause), error: true })
       } finally {
@@ -86,6 +86,17 @@ export function AppIconRow() {
           <span role={note.error ? 'alert' : 'status'} {...(note.error ? { 'data-error': '' } : {})}>{note.text}</span>
         )}
       </small>
+    </div>
+  )
+}
+
+/** Settings > App in an app without the product's desktop bridge (every app people make): its icon. */
+export function AppIconSection() {
+  return (
+    <div className="acrylBlendsApp">
+      <h3>App</h3>
+      <p className="acrylBlendsPluginsSub">This app's own look.</p>
+      <AppIconRow />
     </div>
   )
 }

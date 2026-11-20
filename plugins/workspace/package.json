@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/workspace",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "ACRYL's first-party workspace shell (spec 040-agentic-multiplexer-ade): a worktree-aware sidebar, a tile-based main canvas (chat/terminal/file/browser/diff/kanban/doc), and a git-aware details panel, required in advanced desktop mode",
   "license": "MIT",
   "repository": {
@@ -62,6 +62,9 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
+    "@acryldev/control": "workspace:*",
+    "@acryldev/loopback-http": "workspace:*",
+    "@acryldev/settings": "workspace:*",
     "@acryldev/ui": "workspace:*",
     "@codemirror/language": "6.12.4",
     "@codemirror/language-data": "6.5.2",
@@ -74,14 +77,12 @@
     "@xterm/addon-webgl": "0.18.0",
     "@xterm/headless": "5.5.0",
     "@xterm/xterm": "5.5.0",
-    "@acryldev/control": "workspace:*",
-    "@acryldev/loopback-http": "workspace:*",
-    "@acryldev/settings": "workspace:*",
     "codemirror": "6.0.2",
     "node-pty": "1.2.0-beta.15",
     "ws": "8.22.0"
   },
   "peerDependencies": {
+    "@acryldev/blends": "^1.0.0",
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2",
     "@deepseek-ai/dsh-api-workspace-controller": "0.2.0-rc.2",
@@ -90,10 +91,11 @@
     "@deepseek-ai/dsh-client-ui-session": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
     "@deepseek-ai/dsh-session": "0.2.0-rc.2",
-    "@acryldev/blends": "^1.0.0",
     "react": "18.3.1"
   },
   "devDependencies": {
+    "@acryldev/app-shell": "workspace:*",
+    "@acryldev/blends": "workspace:^",
     "@acryldev/ui": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2",
@@ -109,8 +111,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/ws": "8.18.1",
-    "@acryldev/app-shell": "workspace:*",
-    "@acryldev/blends": "workspace:^",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",

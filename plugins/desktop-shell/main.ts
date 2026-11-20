@@ -8,7 +8,7 @@
  * another app or with the real user's data.
  */
 
-import { mkdirSync, readFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, unwatchFile, watchFile } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, shell } from 'electron'
@@ -147,6 +147,16 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(async () => {
     // The Dock shows the app's own icon even when the bundle could not be branded (brand.ts); a no-op where there is no Dock.
     app.dock?.setIcon(iconFile(projectRoot))
+    // An icon chosen in Settings > App (written to assets/icon.png by the frame's host) shows at once, in the Dock and on every window.
+    const ownIcon = join(projectRoot, 'assets', 'icon.png')
+    watchFile(ownIcon, { interval: 1000 }, () => {
+      const icon = iconFile(projectRoot)
+      app.dock?.setIcon(icon)
+      for (const open of BrowserWindow.getAllWindows()) if (!open.isDestroyed()) open.setIcon(icon)
+    })
+    app.on('will-quit', () => {
+      unwatchFile(ownIcon)
+    })
     // The hook above is registered before the app's modules are loaded, so the app may have .tsx pages: they are loaded here, not as a static import.
     // A dev server is already running from this folder (`npm run dev`): the door allows one process per folder, so the window opens on that server instead of starting a second one,
     // and closing the window leaves it running.
