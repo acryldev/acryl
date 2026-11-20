@@ -917,8 +917,8 @@
     "index.ts": ["48f96cde6c73e781e3e6", "87f0933285eb83af7ad0"],
     "LICENSE": ["0f98259ccb0f4cafebe9"],
     "README.md": ["3ca5c183f7ea0bdf6b95"],
-    "share-cli.ts": ["2201fe37cbbc5d167e17", "97cdb3ceaf2c73327454"],
-    "share.ts": ["458a795e3298eb69eb82", "353ea9b5e115787c595f"]
+    "share-cli.ts": ["2201fe37cbbc5d167e17", "97cdb3ceaf2c73327454", "5027a88554b2a654c563"],
+    "share.ts": ["458a795e3298eb69eb82", "353ea9b5e115787c595f", "71410a74dbcc3161b433"]
   },
   "showcase": {
     "cards.ts": ["c1e376b316660e5b37e9"],

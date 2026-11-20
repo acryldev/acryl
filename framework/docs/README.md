@@ -68,6 +68,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 0.10.0](release-notes/0.10.0.md) - driver-pty: a coding agent in a real terminal in the app, the panel's drivers as a registry
 - [Release notes 1.0.5](release-notes/1.0.5.md) - the app's own agent drives the page with a real model; the agent template's tests no longer collide with /hello
 - [Release notes 1.0.6](release-notes/1.0.6.md) - the desktop app's windows and menu as door verbs (window, menu, --window), guarded against ending the session; a clean tarball
+- [Release notes @acryldev/blends 1.7.9](release-notes/blends-1.7.9.md) - npm run share in every app, with --help
+- [Release notes @acryldev/create-blends 1.7.9](release-notes/create-blends-1.7.9.md) - create adds the save plugin's scripts
 - [Release notes @acryldev/blends 1.7.8](release-notes/blends-1.7.8.md) - a shared app can be listed in the Blends store under its category
 - [Release notes @acryldev/create-blends 1.7.8](release-notes/create-blends-1.7.8.md) - released with @acryldev/blends 1.7.8
 - [Release notes @acryldev/blends 1.7.7](release-notes/blends-1.7.7.md) - coding agents start on Windows; the icon in every app
