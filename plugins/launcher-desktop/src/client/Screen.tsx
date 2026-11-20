@@ -2,7 +2,7 @@
  * The ACRYL screen: the Control Center design (spec 050 `design/control-center.html`) as the first screen of the desktop app. It draws what the Host
  * lists and sends what a person asks for; the rules (what an app is, what a name may be, how an app starts) are the Host's.
  */
-import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { MAKEABLE_SURFACES, SURFACES, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
@@ -290,7 +290,10 @@ function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: 
   const [github, setGithub] = useState<{ available: boolean, login: string | null } | undefined>(undefined)
   const [code, setCode] = useState<{ userCode: string, verificationUri: string, interval: number } | undefined>(undefined)
   const [note, setNote] = useState<string | undefined>(undefined)
+  const box = useRef<HTMLDivElement>(null)
   useEffect(() => { void api.github().then(setGithub, (cause: unknown) => { setNote(message(cause)) }) }, [api])
+  // The code is what the person comes back for from GitHub's page: keep it in view.
+  useEffect(() => { if (code !== undefined) box.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' }) }, [code])
   useEffect(() => {
     if (code === undefined) return undefined
     let stop = false
@@ -317,7 +320,7 @@ function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: 
     )
   }
   return (
-    <div className="acrylHomeNote" role="group" aria-label="Connect GitHub">
+    <div className="acrylHomeNote" role="group" aria-label="Connect GitHub" ref={box}>
       {code === undefined ? (
         <>
           <p>Sharing sends the app to your own GitHub account. Connect it once on this computer.</p>
@@ -351,9 +354,12 @@ function SharePanel({ api, app, onClose, openExternal }: { api: LauncherApi, app
     try { await work() } catch (cause) { setNote(message(cause)) } finally { setBusy(false) }
   }
   const [visibility, setVisibility] = useState<'private' | 'public'>('private')
+  const panel = useRef<HTMLDivElement>(null)
+  // The panel opens below the app's details, often under the fold: bring it into view.
+  useEffect(() => { panel.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }) }, [])
   const owner_ = owner.trim() === '' ? {} : { owner: owner.trim() }
   return (
-    <div className="acrylHomePanel" role="group" aria-label={`Share ${app.name}`}>
+    <div className="acrylHomePanel" role="group" aria-label={`Share ${app.name}`} ref={panel}>
       <div className="acrylHomePanelTop"><h3>Share {app.name}</h3><button type="button" className="acrylHomeBtn" data-small onClick={onClose}>Close</button></div>
       <GithubConnect api={api} openExternal={openExternal} />
       {done !== undefined ? (
