@@ -83,6 +83,9 @@ describe('a starter already in the frame by its packages', () => {
   it('is one that declares the desktop shell and mounts the Blends frame', () => {
     expect(isFramedByPackages(framed('f1', shell, "- name: '@acryldev/blends-frame'\n"))).toBe(true)
   })
+  it('also when the page root is the IDE workbench, as ADE and SDE have it', () => {
+    expect(isFramedByPackages(framed('f5', shell, "- name: '@acryldev/workspace'\n"))).toBe(true)
+  })
   it('is not one that lacks either: create then frames it as before', () => {
     expect(isFramedByPackages(framed('f2', shell))).toBe(false)
     expect(isFramedByPackages(framed('f3', {}, "- name: '@acryldev/blends-frame'\n"))).toBe(false)
