@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/drivers",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The driver contract the agent panel and the driver plugins are written against: chat and terminal drivers, their events, and the registry, with no dependency on Cordis.",
   "license": "MIT",
   "repository": {

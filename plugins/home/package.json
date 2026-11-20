@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/home",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The app's home page as a place plugins put their widgets: a plugin registers a widget in ctx.effect, the page renders it, and it leaves with the plugin.",
   "license": "MIT",
   "repository": {

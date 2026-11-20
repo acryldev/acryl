@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/plugin-context",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Extension Context Pack: routed docs, verified examples and authoring skills that let the ACRYL agent write its own plugins (spec 037)",
   "license": "MIT",
   "publishConfig": {
@@ -28,7 +28,9 @@
     "docs/**",
     "example-plugins/**",
     "skills/**",
-    "scripts/lib/**"
+    "scripts/lib/**",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "sync:corpus": "node scripts/sync-corpus.mjs",

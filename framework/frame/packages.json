@@ -14,7 +14,7 @@
   },
   "omit": {
     "//": "What the frame inherits from DSH but does not install: DSH's web app composes the Office-to-PDF converter, whose LibreOffice engine is 153 MB per OS (measured 2026-11-18, about a third of a frame app's packages). Every app gets an npm override that swaps each engine package for `placeholder` (an empty package), and the converter's row is switched off; the document preview's Office part then waits for the converter and every other preview works. The Office preview plugin in the plugin registry brings the engine back on demand. packages/cli/src/frame-omit.ts reads this.",
-    "placeholder": "@acryldev/absent@1.0.0",
+    "placeholder": "@acryldev/absent@1.0.1",
     "rows": ["office-to-pdf"],
     "packages": [
       "@deepseek-ai/libreoffice-kit-darwin-arm64",
@@ -30,19 +30,19 @@
       "path": "../plugins/ui"
     },
     "@acryldev/brand-client": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/brand-client"
     },
     "@acryldev/app-shell": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/app-shell"
     },
     "@acryldev/workspace": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/workspace"
     },
     "@acryldev/settings": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/settings"
     },
     "@acryldev/sign-in": {
@@ -58,11 +58,11 @@
       "path": "../runtime/diagnostics"
     },
     "@acryldev/plugin-admin": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/plugin-admin"
     },
     "@acryldev/support": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/support"
     },
     "@acryldev/loopback-http": {
@@ -70,7 +70,7 @@
       "path": "../runtime/loopback-http"
     },
     "@acryldev/web": {
-      "version": "0.3.0",
+      "version": "0.3.1",
       "path": "../runtime/web"
     },
     "@acryldev/system-prompt": {

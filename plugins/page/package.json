@@ -1,6 +1,7 @@
 {
   "name": "@acryldev/page",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "license": "MIT",
   "description": "The page of a framework-hosted app: the ACRYL frame's own minimal document, its index taps applied per request, and the built client assets the client runtime boots from, served by @acryldev/web-server",
   "type": "module",
   "main": "lib/index.js",
@@ -14,7 +15,8 @@
   "files": [
     "lib",
     "README.md",
-    "plugin.json"
+    "plugin.json",
+    "LICENSE"
   ],
   "scripts": {
     "build": "node scripts/clean.mjs && tsdown && tsc -p tsconfig.json --emitDeclarationOnly",

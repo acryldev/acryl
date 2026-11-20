@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/instance",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Where the app keeps things (home, port, run lock), chosen once from the environment or the project folder.",
   "license": "MIT",
   "repository": {
@@ -21,7 +21,8 @@
   "files": [
     "lib/**",
     "!lib/**/*.map",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "exports": {
     ".": {

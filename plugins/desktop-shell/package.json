@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/desktop-shell",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Run the app as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron.",
   "license": "MIT",
   "repository": {
@@ -24,7 +24,8 @@
   "files": [
     "lib/**",
     "!lib/**/*.map",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "exports": {
     ".": {
