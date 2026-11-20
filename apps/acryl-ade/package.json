@@ -32,7 +32,7 @@
     "@acryldev/app-context": "^0.2.0",
     "@acryldev/app-persistence": "0.1.2",
     "@acryldev/app-shell": "^0.2.0",
-    "@acryldev/blends": "^1.5.19",
+    "@acryldev/blends": "^1.7.2",
     "@acryldev/blends-core": "0.6.0",
     "@acryldev/blends-frame": "^0.2.0",
     "@acryldev/brand-client": "^0.2.0",
