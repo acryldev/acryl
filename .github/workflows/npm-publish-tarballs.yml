@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
@@ -31,6 +32,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release download "${{ inputs.release }}" -R "${{ github.repository }}" -D pack
+      # A tarball packed without its prepack step (--ignore-scripts) lacks what its "files" names: 1.7.1 shipped with no docs/ and plugins/,
+      # desktop-shell 0.1.1 with no watch-host.mjs. Nothing is published unless every tarball is whole.
+      - name: Every tarball holds what its package.json files names
+        run: node scripts/check-tarball-files.mjs pack/*.tgz
       - name: Publish in order, paced, skipping what is already on npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACRYLDEV_TOKEN }}

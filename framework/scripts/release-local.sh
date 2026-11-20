@@ -124,6 +124,8 @@ for d in "${DIRS[@]}"; do
 done
 
 step "tarball checks"
+# Every "files" entry is in its tarball: a pack that skipped prepack shipped 1.7.1 without docs/ and plugins/.
+node scripts/check-tarball-files.mjs "$work"/packed/*.tgz || die "a tarball lacks what its package.json files names (above)"
 manifest() { tar -xzOf "$(tgz_of "$1")" package/package.json; }
 for d in "${DIRS[@]}"; do
   m=$(manifest "$d")
