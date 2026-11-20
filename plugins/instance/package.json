@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/instance",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Where the app keeps things (home, port, run lock), chosen once from the environment or the project folder.",
   "license": "MIT",
   "repository": {
