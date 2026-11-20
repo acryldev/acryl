@@ -201,9 +201,18 @@ verify and check:layout and all 23 framework check steps green before it lands.
   Control Center (GitHub device sign-in with ACRYL's own OAuth app, token handed to apps as GH_TOKEN; 75642b47), Private/Public on Share,
   Settings > Share in every app (frame 0.2.1, CLI 1.7.3; bcd27361) beside the existing Settings > Plugins share; proven by a fresh 1.7.3 app
   sharing itself privately to inboxxobni/s2 through the route. Open: the GUI walk with a person approving the device code.
-- [ ] T043 [registries, owner 2026-11-20] "community" vs "official": both registries carry `origin` (acrylblends.github.io a34c1c2,
+- [x] T043 [registries, owner 2026-11-20] "community" vs "official": both registries carry `origin` (acrylblends.github.io a34c1c2,
   cordisplugins.github.io already); Control Center's store shows Official/Community (380252ce) and lists the community Blends the registry found
-  on GitHub, made from their own release with a "not reviewed" note (9258c4ae). Open: an All/Official/Community filter in the store.
+  on GitHub, made from their own release with a "not reviewed" note (9258c4ae); the store filters All/Official/Community (0aa399bc). Released in
+  control-center-v0.2.1.
+
+- [x] T044 [frame, regression found 2026-11-20] Apps made from a registry Blueprint came out without the Blends frame in 1.7.0-1.7.3 (no chat,
+  no Settings > Share; 1.6.0 framed them): the frame step needed an installed desktop-shell (create runs it before npm install) and the host
+  rows named plugins/node-server etc. while archives carry plugins/acryl-*. Fixed 1cdfbc88 (Fork3), released @acryldev/blends 1.7.4; proven:
+  `create --from acrylblends.link-shortener` serves the frame, /app and the share route, and so does Make an app in the released Control
+  Center v0.2.0 on macOS. Archives agent/chat/notes-desktop rebuilt from the current templates (acrylblends.github.io 29f40c5).
+- [x] T045 [deploy] Control Center's "Deploy to WebBoxes.ai" opens webboxes.ai's New WebBox form with the shared app's GitHub repository
+  filled in (f8648075; webboxesai d333da3 prefill), enabled once the app has a github.com origin. Released in control-center-v0.2.1.
 
 ## Phase 5 - registry and the old repository
 
