@@ -124,8 +124,8 @@ export interface BlendsResponse {
 }
 
 /** A Blend id as `acryl new --from` takes it: it starts with a letter or digit, so it can never read as an option. */
-/** The New WebBox page of webboxes.ai, which takes `github` and `name` to fill its form. */
-export const WEBBOXES_NEW_BOX = 'https://webboxes.ai/dashboard/webboxes/new'
+/** WebBoxes.ai's WebBoxes page: with `github` (a public https://github.com/owner/repo) and `name` it opens the New WebBox form filled in. */
+export const WEBBOXES_NEW_BOX = 'https://webboxes.ai/dashboard/webboxes'
 
 export const BLEND_ID = /^[a-z0-9][a-z0-9._-]{0,127}$/u
 

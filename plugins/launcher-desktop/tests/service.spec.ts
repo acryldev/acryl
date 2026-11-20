@@ -93,6 +93,15 @@ describe('the list', () => {
   })
 })
 
+describe('the plugins of an app from an older Blueprint', () => {
+  it('says where its plugins are in words for a person, not the door\'s words for an agent', async () => {
+    const { service, makeApp, doorAnswers } = setup()
+    makeApp('shop')
+    doorAnswers.set('plugin-list', { ok: false, message: 'this door has no extensions plugin to drive. In ACRYL\'s frame none is needed' })
+    await expect(service.plugins('shop')).rejects.toThrow(/open it, then Settings > Plugins/u)
+  })
+})
+
 describe('the tools apps need', () => {
   it('refuses to start or make an app in words while Node.js and gh are being fetched, then starts it on the fetched tools', async () => {
     let finish: () => void = () => {}

@@ -242,7 +242,7 @@ describe('the plugins of a running app', () => {
     const shared = { ...app({}), github: 'https://github.com/ana/shop' }
     render(<LauncherScreen api={fake(state([shared]))} visibility={new LauncherVisibility(true)} openExternal={(url) => { opened.push(url) }} />)
     fireEvent.click(await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }))
-    expect(opened).toEqual(['https://webboxes.ai/dashboard/webboxes/new?github=https%3A%2F%2Fgithub.com%2Fana%2Fshop&name=shop'])
+    expect(opened).toEqual(['https://webboxes.ai/dashboard/webboxes?github=https%3A%2F%2Fgithub.com%2Fana%2Fshop&name=shop'])
     cleanup()
     render(<LauncherScreen api={fake(state([app({})]))} visibility={new LauncherVisibility(true)} openExternal={() => {}} />)
     expect((await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }) as HTMLButtonElement).disabled).toBe(true)

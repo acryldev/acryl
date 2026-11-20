@@ -304,7 +304,16 @@ export class LauncherService {
 
   /** The plugins of a running app: the ones its people made (shareable) and the ones pulled from a registry. */
   async plugins(id: string): Promise<readonly PluginView[]> {
-    const answer = await this.#door(id, (door, folder) => door.call(folder, 'plugin-list', {}))
+    let answer: DoorAnswer
+    try {
+      answer = await this.#door(id, (door, folder) => door.call(folder, 'plugin-list', {}))
+    } catch (cause) {
+      // An app from an older Blueprint has neither plugin-share nor extensions: its door says so in words meant for an agent. Say it for a person.
+      if (cause instanceof LauncherRefusal && /no extensions plugin to drive/u.test(cause.message)) {
+        throw new LauncherRefusal('This app keeps its plugins in its own page: open it, then Settings > Plugins. Pulling a plugin from here needs an app made with a newer Blueprint.')
+      }
+      throw cause
+    }
     const list = Array.isArray(answer.value) ? answer.value as Array<Record<string, unknown>> : []
     return list.filter(plugin => typeof plugin.name === 'string').map(plugin => ({
       name: String(plugin.name), version: typeof plugin.version === 'string' ? plugin.version : '', state: typeof plugin.state === 'string' ? plugin.state : '',
