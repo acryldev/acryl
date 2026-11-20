@@ -45,7 +45,7 @@ export async function startByoApp(app, env, acrylblends) {
     run(acrylblends, ['add', 'kv', '--suite'])
     run('npm', ['install', '--no-audit', '--no-fund'])
     const files = guideFiles()
-    for (const path of ['plugins/kv/index.ts', 'plugins/visits/index.ts']) {
+    for (const path of ['plugins/kv-default/index.ts', 'plugins/visits/index.ts']) {
       if (!files.has(path)) throw new Error(`the guide has no block for ${path}`)
       mkdirSync(dirname(join(app, path)), { recursive: true })
       writeFileSync(join(app, path), files.get(path))
@@ -65,7 +65,7 @@ export async function startByoApp(app, env, acrylblends) {
       if (!url) await sleep(300)
     }
     if (!url) throw new Error(`the app did not start: ${output.slice(-300)}`)
-    for (const name of ['kv', 'visits']) {
+    for (const name of ['kv-default', 'visits']) {
       const added = door(app, env, 'plugin', 'add', `plugins/${name}`)
       if (!added.value?.ok) throw new Error(`plugin add plugins/${name}: ${JSON.stringify(added)}`)
     }
@@ -98,9 +98,9 @@ export async function probeByo(app, env, running) {
   const plugins = Array.isArray(list) ? list : []
   const visits = plugins.find((p) => p.name === 'visits')
   step('the consumer (visits) is active', visits?.state === 'active', JSON.stringify(visits))
-  step('the old provider is out of the running app', !plugins.some((p) => p.name === 'kv'))
+  step('the old provider is out of the running app', !plugins.some((p) => p.name === 'kv-default'))
   const providers = plugins.filter(
-    (p) => !['kv', 'visits'].includes(p.name) && p.state === 'active',
+    (p) => !['kv-default', 'visits'].includes(p.name) && p.state === 'active',
   )
   step(
     "a provider of the agent's own is installed and active",

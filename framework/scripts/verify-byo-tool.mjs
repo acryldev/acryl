@@ -37,7 +37,7 @@ for (const { lang, text } of blocks) {
 for (const need of [
   'plugins/kv-lowdb/index.ts',
   'test/kv-lowdb.spec.ts',
-  'plugins/kv/index.ts',
+  'plugins/kv-default/index.ts',
   'plugins/visits/index.ts',
 ])
   if (!files.has(need)) fail(`the guide has no code block for ${need}`)
@@ -54,9 +54,9 @@ for (const expected of [
   'npx acrylblends add kv --suite',
   'npm install lowdb',
   'npx vitest run test/kv-lowdb.spec.ts',
-  '.acryl/bin/acryl plugin add plugins/kv',
+  '.acryl/bin/acryl plugin add plugins/kv-default',
   '.acryl/bin/acryl plugin add plugins/visits',
-  '.acryl/bin/acryl plugin remove kv',
+  '.acryl/bin/acryl plugin remove kv-default',
   '.acryl/bin/acryl plugin add plugins/kv-lowdb',
 ])
   if (!commands.includes(expected)) fail(`the guide no longer lists the command: ${expected}`)
@@ -136,7 +136,7 @@ try {
   server = running.child
   const pid = running.child.pid
   if (!existsSync(door)) fail('the running app did not write .acryl/bin/acryl')
-  for (const arg of ['kv', 'visits']) {
+  for (const arg of ['kv-default', 'visits']) {
     const added = doorCall('plugin', 'add', `plugins/${arg}`)
     if (!added.ok || added.state !== 'active')
       fail(`plugin add plugins/${arg}: ${JSON.stringify(added)}`)
@@ -156,7 +156,7 @@ try {
   if ((await visits(running.url)) !== 4) fail('the refused install changed the running app')
   log('a second provider next to the first is refused and nothing changes')
 
-  doorCall('plugin', 'remove', 'kv')
+  doorCall('plugin', 'remove', 'kv-default')
   const during = doorCall('plugin', 'list').find((p) => p.name === 'visits')
   if (during?.state !== 'pending' || !during.missing.includes('kv'))
     fail(`visits is not pending without a kv provider: ${JSON.stringify(during)}`)

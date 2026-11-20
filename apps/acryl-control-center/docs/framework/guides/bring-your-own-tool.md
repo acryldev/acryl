@@ -159,15 +159,15 @@ A provider that the app's code mounts at start (a row of `blend.yaml`) is fixed 
 names the default:
 
 ```ts no-check
-// plugins/kv/index.ts
+// plugins/kv-default/index.ts
 export { apply, Config } from '#acryl-kv-json'
-export const name = 'kv'
+export const name = 'kv-default'
 ```
 
 Start the app and open it in a browser (`npm run dev`). The door is the command `.acryl/bin/acryl` in the app folder:
 
 ```sh
-.acryl/bin/acryl plugin add plugins/kv
+.acryl/bin/acryl plugin add plugins/kv-default
 ```
 
 Any plugin that declares `inject: ['kv']` now has a store. This one counts visits:
@@ -200,7 +200,7 @@ curl <the address npm run dev printed>/visits       # {"visits":1}, then 2, then
 Now swap. Two providers of one service cannot run together (the second is refused and nothing changes), so take the default out and put yours in:
 
 ```sh
-.acryl/bin/acryl plugin remove kv
+.acryl/bin/acryl plugin remove kv-default
 .acryl/bin/acryl plugin list            # visits: pending, missing kv
 .acryl/bin/acryl plugin add plugins/kv-lowdb
 curl <the address>/visits       # {"visits":1}: served again, by the same process
