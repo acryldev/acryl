@@ -46,6 +46,19 @@ export function setBlendVisibility(folder, visibility) {
   if (next !== text) writeFileSync(file, next)
 }
 
+/**
+ * The app's repository on GitHub, as `https://github.com/<owner>/<repo>`, from the `origin` remote in its `.git/config` (what a share sets);
+ * undefined when it has none or it is not on github.com. Read from the file, so listing apps starts no git process.
+ */
+export function githubOf(folder) {
+  let text
+  try { text = readFileSync(join(folder, '.git', 'config'), 'utf8') } catch { return undefined }
+  const section = /^\[remote "origin"\][^\S\n]*\n((?:[ \t]+.*\n?)*)/mu.exec(text)?.[1] ?? ''
+  const url = /^[ \t]*url[ \t]*=[ \t]*(\S+)/mu.exec(section)?.[1] ?? ''
+  const match = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([A-Za-z0-9-]+)\/([A-Za-z0-9._-]+?)(?:\.git)?\/?$/u.exec(url)
+  return match === null ? undefined : `https://github.com/${match[1]}/${match[2]}`
+}
+
 /** The version of the Blend an app was made from (`metadata.version` of its blend.yaml), or '' when it records none. */
 export function blendVersionOf(folder) {
   try {

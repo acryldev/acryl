@@ -5,7 +5,7 @@
  */
 import { basename, join } from 'node:path'
 import {
-  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
+  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
   readApps, readGithub, readModelKey, removeApp, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
   type AppEntry,
 } from '@acryldev/launcher'
@@ -130,6 +130,7 @@ export class LauncherService {
     const blend = entry.blend === '' ? blendOf(entry.path) : entry.blend
     const version = missing ? '' : blendVersionOf(entry.path)
     const latest = this.#blends?.list.find(listed => listed.id === blend)?.version
+    const github = missing ? undefined : githubOf(entry.path)
     return {
       id: entry.id, name: basename(entry.path), path: entry.path, blend, madeBy: entry.madeBy, surface: entry.surface, state,
       ...version === '' ? {} : { version },
@@ -137,6 +138,7 @@ export class LauncherService {
       ...started?.address === undefined ? {} : { address: started.address },
       ...started === undefined || started.address !== undefined || started.output === '' ? {} : { output: started.output.trimEnd() },
       ...failure === undefined || state !== 'stopped' ? {} : { failure },
+      ...github === undefined ? {} : { github },
     }
   }
 

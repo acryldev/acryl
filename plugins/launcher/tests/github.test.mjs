@@ -59,3 +59,20 @@ test('setBlendVisibility changes only metadata.visibility, or adds it', async ()
     assert.throws(() => setBlendVisibility(dir, 'everyone'))
   } finally { rmSync(dir, { recursive: true, force: true }) }
 })
+
+test('githubOf reads the app\'s GitHub repository from its origin remote, in https, ssh or scp form', async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('node:fs')
+  const { githubOf } = await import('../apps-registry.js')
+  const dir = mkdtempSync(join(tmpdir(), 'acryl-gh-of-'))
+  try {
+    assert.equal(githubOf(dir), undefined)
+    mkdirSync(join(dir, '.git'))
+    const config = url => writeFileSync(join(dir, '.git', 'config'), `[core]\n\tbare = false\n[remote "upstream"]\n\turl = https://github.com/other/x.git\n[remote "origin"]\n\turl = ${url}\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n`)
+    config('https://github.com/ana/shop.git')
+    assert.equal(githubOf(dir), 'https://github.com/ana/shop')
+    config('git@github.com:ana/shop.git')
+    assert.equal(githubOf(dir), 'https://github.com/ana/shop')
+    config('https://gitlab.com/ana/shop.git')
+    assert.equal(githubOf(dir), undefined)
+  } finally { rmSync(dir, { recursive: true, force: true }) }
+})

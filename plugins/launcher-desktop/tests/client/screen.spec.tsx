@@ -175,7 +175,7 @@ describe('the ACRYL screen', () => {
     expect(await screen.findByText('Node 24.19.0')).toBeTruthy()
     expect(screen.getByText(/saved once for every app \(sk-\.\.\.6789\)/u)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'WebBoxes.ai' }))
-    expect(screen.getByText(/Deploying an app to WebBoxes.ai from its card is coming/u)).toBeTruthy()
+    expect(screen.getByText(/Share it to GitHub as Public .* then press Deploy to WebBoxes.ai on its card/u)).toBeTruthy()
   })
 })
 
@@ -229,10 +229,23 @@ describe('the plugins of a running app', () => {
     const api = fake(state([]))
     open(api)
     fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Community (1)' }))
+    expect(screen.queryByText('Notes')).toBeNull()
     const card = (await screen.findByText('Accounting')).closest('.acrylHomeApp') as HTMLElement
     fireEvent.click(within(card).getByRole('button', { name: 'Make an app' }))
     expect((await screen.findByRole('note')).textContent).toMatch(/not reviewed/u)
     expect(screen.getByText(/--from github:ana\/accounting#v0.2.0/u)).toBeTruthy()
+  })
+
+  it('deploys a shared app to WebBoxes.ai by opening its New WebBox form with the repository filled in; an app not shared yet cannot', async () => {
+    const opened: string[] = []
+    const shared = { ...app({}), github: 'https://github.com/ana/shop' }
+    render(<LauncherScreen api={fake(state([shared]))} visibility={new LauncherVisibility(true)} openExternal={(url) => { opened.push(url) }} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }))
+    expect(opened).toEqual(['https://webboxes.ai/dashboard/webboxes/new?github=https%3A%2F%2Fgithub.com%2Fana%2Fshop&name=shop'])
+    cleanup()
+    render(<LauncherScreen api={fake(state([app({})]))} visibility={new LauncherVisibility(true)} openExternal={() => {}} />)
+    expect((await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('shares publicly when the person picks Public', async () => {

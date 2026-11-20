@@ -43,3 +43,4 @@ export interface ToolOptions { readonly platform?: NodeJS.Platform, readonly arc
 export function installNode(home: string, options?: ToolOptions): Promise<string>
 export function installGh(home: string, options?: ToolOptions): Promise<string>
 export function prepareTools(home: string, env: Readonly<Record<string, string | undefined>>, options?: ToolOptions): Promise<readonly ('node' | 'gh')[]>
+export function githubOf(folder: string): string | undefined

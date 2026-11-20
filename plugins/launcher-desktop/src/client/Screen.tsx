@@ -3,7 +3,7 @@
  * lists and sends what a person asks for; the rules (what an app is, what a name may be, how an app starts) are the Host's.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { MAKEABLE_SURFACES, SURFACES, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
+import { MAKEABLE_SURFACES, SURFACES, webboxesDeployUrl, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
@@ -116,7 +116,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
         {view === 'updates' && <UpdatesView apps={apps.filter(app => app.update !== undefined)} onUpdate={id => act(() => api.update(id))} />}
         {view === 'store' && <StoreView api={api} state={state} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
-        {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Deploying an app to WebBoxes.ai from its card is coming (`acryl deploy`). Nothing of yours is there yet." />}
+        {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Put an app online at <name>.webboxes.ai: Share it to GitHub as Public (its card, Share), then press Deploy to WebBoxes.ai on its card. WebBoxes.ai opens with the app filled in: sign in, press Create, then Publish." />}
         {view === 'health' && <HealthView api={api} />}
         {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} skin={skin} onSkin={(next) => { setSkin(next); saveSkin(next) }} />}
       </main>
@@ -257,7 +257,9 @@ function Detail({ api, app, onStart, onUpdate, onStop, onRemove, openExternal }:
             ? <><button type="button" className="acrylHomeBtn" data-primary={app.surface === 'desktop' ? undefined : ''} disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open in the browser</button><button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
             : <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing'} onClick={() => { void onStart(app.id) }}>Start</button>}
           {app.update === undefined ? null : <button type="button" className="acrylHomeBtn" data-primary title={`${app.blend} ${app.update} is out: bring it into this app, keeping your changes (a git merge), then npm install`} onClick={() => { void onUpdate(app.id) }}>Update to {app.update}</button>}
-          <button type="button" className="acrylHomeBtn" disabled title="coming: acryl deploy">Deploy to WebBoxes.ai</button>
+          <button type="button" className="acrylHomeBtn" disabled={app.github === undefined}
+            title={app.github === undefined ? 'Share the app to GitHub first (Public), then deploy it from there' : `Opens WebBoxes.ai with ${app.github} filled in`}
+            onClick={() => { if (app.github !== undefined) openExternal(webboxesDeployUrl(app.github, app.name)) }}>Deploy to WebBoxes.ai</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
           <button type="button" className="acrylHomeBtn" disabled title="coming">Open folder</button>
           <button type="button" className="acrylHomeBtn" onClick={() => { void onRemove(app.id) }} title="Takes it off this list; the folder stays">Remove from list</button>
@@ -546,6 +548,7 @@ function StoreView({ api, state, onCreate }: { api: LauncherApi, state: StateRes
   const [blends, setBlends] = useState<readonly BlendView[] | undefined>(undefined)
   const [failed, setFailed] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')
+  const [origin, setOrigin] = useState<'all' | BlendView['origin']>('all')
   const [chosen, setChosen] = useState<BlendView | undefined>(undefined)
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
@@ -555,13 +558,19 @@ function StoreView({ api, state, onCreate }: { api: LauncherApi, state: StateRes
     return () => { live = false }
   }, [api, attempt])
   const needle = search.trim().toLowerCase()
-  const shown = (blends ?? []).filter(blend => needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle))
+  const shown = (blends ?? []).filter(blend => (origin === 'all' || blend.origin === origin) && (needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle)))
+  const count = (which: BlendView['origin']): number => (blends ?? []).filter(blend => blend.origin === which).length
   return (
     <section className="acrylHomeForm">
       <h3 style={{ margin: 0 }}>Blends store</h3>
       <p className="acrylHomeNote">Ready-made apps from the public registry (acrylblends.github.io/blends). Making one is the same as <span className="acrylHomeMeta">acryl new &lt;name&gt; --from &lt;id&gt;</span>.</p>
       {chosen !== undefined && state !== undefined ? <NewAppForm key={chosen.id} state={state} blend={chosen} onCreate={onCreate} onCancel={() => { setChosen(undefined) }} /> : null}
       <input className="acrylHomeSearch" type="search" value={search} placeholder="Search Blends..." aria-label="Search Blends" onChange={(event) => { setSearch(event.target.value) }} />
+      <div className="acrylHomeRow" role="group" aria-label="Who released it">
+        <button type="button" className="acrylHomeChip" aria-pressed={origin === 'all'} onClick={() => { setOrigin('all') }}>All</button>
+        <button type="button" className="acrylHomeChip" aria-pressed={origin === 'official'} title="Released by the ACRYL project" onClick={() => { setOrigin('official') }}>Official ({count('official')})</button>
+        <button type="button" className="acrylHomeChip" aria-pressed={origin === 'community'} title="Released by people outside the ACRYL project; their code is not reviewed" onClick={() => { setOrigin('community') }}>Community ({count('community')})</button>
+      </div>
       {failed !== undefined ? <p className="acrylHomeNote" data-error role="alert">{failed} <button type="button" className="acrylHomeBtn" data-small onClick={() => { setAttempt(attempt + 1) }}>Try again</button></p> : null}
       {blends === undefined && failed === undefined ? <p className="acrylHomeNote">Reading the registry...</p> : null}
       {blends !== undefined && shown.length === 0 ? <p className="acrylHomeNote">No Blend matches.</p> : null}

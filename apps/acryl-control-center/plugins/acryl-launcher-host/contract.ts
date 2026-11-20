@@ -53,6 +53,16 @@ export interface AppView {
   readonly version?: string
   /** A newer release of that Blend in the registry: `acrylblends update` brings it in, keeping the person's changes. */
   readonly update?: string
+  /** Where the app was shared to (`https://github.com/<owner>/<repo>`), from its origin remote; what WebBoxes.ai deploys from. */
+  readonly github?: string
+}
+
+/** WebBoxes.ai's New WebBox form, opened with the app's repository filled in (the person signs in and presses Create there). */
+export function webboxesDeployUrl(github: string, name: string): string {
+  const url = new URL(WEBBOXES_NEW_BOX)
+  url.searchParams.set('github', github)
+  url.searchParams.set('name', name.toLowerCase().replace(/[^a-z0-9-]+/gu, '-').replace(/^-+|-+$/gu, '').slice(0, 40))
+  return url.href
 }
 
 export interface StarterView {
@@ -114,6 +124,9 @@ export interface BlendsResponse {
 }
 
 /** A Blend id as `acryl new --from` takes it: it starts with a letter or digit, so it can never read as an option. */
+/** The New WebBox page of webboxes.ai, which takes `github` and `name` to fill its form. */
+export const WEBBOXES_NEW_BOX = 'https://webboxes.ai/dashboard/webboxes/new'
+
 export const BLEND_ID = /^[a-z0-9][a-z0-9._-]{0,127}$/u
 
 /** A Blend released on GitHub, as `--from` takes it (create-acrylblends `github:owner/repo#ref`): what a community Blend is made from. */
