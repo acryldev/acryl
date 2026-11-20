@@ -313,7 +313,7 @@ describe('sharing a local plugin', () => {
     const app = frameRoutes({
       state: () => Promise.reject(new Error('not asked')),
       plugins: {
-        connect: { start: () => Promise.reject(new Error('not asked')), state: () => ({ status: 'idle' as const }), cancel: () => {} },
+        connect: { start: () => Promise.reject(new Error('not asked')), state: () => ({ status: 'idle' as const }), cancel: () => {}, disconnect: () => Promise.reject(new Error('not asked')) },
         read: () => Promise.reject(new Error('not asked')),
         switch: () => Promise.reject(new Error('not asked')),
         planShare: async () => plan,
@@ -359,7 +359,7 @@ describe('sharing a local plugin', () => {
     const app = frameRoutes({
       state: () => Promise.reject(new Error('not asked')),
       plugins: {
-        connect: { start: () => Promise.reject(new Error('not asked')), state: () => ({ status: 'idle' as const }), cancel: () => {} },
+        connect: { start: () => Promise.reject(new Error('not asked')), state: () => ({ status: 'idle' as const }), cancel: () => {}, disconnect: () => Promise.reject(new Error('not asked')) },
         read: () => Promise.reject(new Error('not asked')),
         switch: () => Promise.reject(new Error('not asked')),
         planShare: async (_name, _visibility, _registry, owner) => { seen.push({ step: 'plan', owner }); return plan },

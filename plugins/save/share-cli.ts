@@ -13,7 +13,12 @@ import { realpathSync } from 'node:fs'
 import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import { CATEGORIES_URL, type CatalogCategory, readCategories } from '@acryldev/app-persistence'
+import {
+  adoptGithubToken,
+  CATEGORIES_URL,
+  type CatalogCategory,
+  readCategories,
+} from '@acryldev/app-persistence'
 import { planShare, renderSharePlan, type SharePlan, type ShareResult, shareApp } from './share.ts'
 
 function report(result: ShareResult): number {
@@ -79,6 +84,8 @@ const HELP = `npm run share [-- options]: send this app to a GitHub repository o
 Example: npm run share -- --visibility public --list --category business --subcategory crm`
 
 async function main(argv: readonly string[]): Promise<number> {
+  // The GitHub sign-in made in Control Center or in an app (`~/.acryl/github.json`) is this share's login: gh and git start with it, and fall back to their own login without it.
+  adoptGithubToken()
   const appRoot = fileURLToPath(new URL('../..', import.meta.url))
   const { values } = parseArgs({
     args: [...argv],

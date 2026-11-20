@@ -17,3 +17,20 @@ export {
   type CatalogCategory,
   type Placement,
 } from './placement.js'
+export {
+  adoptGithubToken,
+  clearGithub,
+  GITHUB_CLIENT_ID,
+  GITHUB_FILE,
+  GITHUB_SCOPE,
+  githubClientId,
+  githubEnv,
+  githubHome,
+  pollGithubSignIn,
+  readGithub,
+  saveGithub,
+  startGithubSignIn,
+  type GithubConnection,
+  type GithubSignInPoll,
+  type GithubSignInStart,
+} from './github-login.js'

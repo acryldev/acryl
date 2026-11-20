@@ -59,6 +59,7 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
+    "@acryldev/app-persistence": "workspace:^",
     "@acryldev/app-shell": "workspace:*",
     "@acryldev/blends-core": "workspace:^",
     "@acryldev/loopback-http": "workspace:*",

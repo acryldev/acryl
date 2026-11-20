@@ -214,7 +214,21 @@ export function GithubNote({ github, copy, connect, onConnected }: {
     }
   }, [connect, waiting, onConnected])
 
-  if (github.status === 'checking' || github.status === 'ready') return null
+  if (github.status === 'checking') return null
+  // Connected: who, and (for the connection ACRYL made, shared with Control Center) a way to forget it.
+  if (github.status === 'ready') {
+    return (
+      <p className="acrylBlendsNote acrylBlendsConnected" role="status">
+        Connected as @{github.account}
+        {github.via === 'acryl' && connect !== undefined && (
+          <>
+            {' · '}
+            <button type="button" className="acrylBlendsShareButton" onClick={() => { void connect.disconnect().then(onConnected, () => {}) }}>Disconnect</button>
+          </>
+        )}
+      </p>
+    )
+  }
   const start = (): void => {
     if (connect === undefined) return
     setConnecting({ status: 'starting' })
@@ -248,9 +262,9 @@ export function GithubNote({ github, copy, connect, onConnected }: {
               </button>
             </p>
           )}
-          {github.status === 'signed-out' && (
+          {github.status === 'signed-out' && connect === undefined && (
             <p className="acrylBlendsConnectAlt">
-              {connect === undefined ? 'Open the Terminal and run:' : 'Or in the Terminal:'}{' '}
+              Open the Terminal and run:{' '}
               <code>{github.command}</code>{' '}
               <button type="button" className="acrylBlendsShareButton" onClick={() => { copyText(github.command, 'command') }}>{copied === 'command' ? 'Copied' : 'Copy'}</button>
             </p>

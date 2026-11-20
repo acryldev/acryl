@@ -747,7 +747,8 @@ export function parsePulledPlugin(value: unknown): PulledPluginView {
 
 /** Whether the person can share to GitHub now, and when not, the single thing to do about it. */
 export type GithubReadiness =
-  | { readonly status: 'ready'; readonly account: string }
+  /** `via: 'acryl'`: the connection made with ACRYL's own sign-in (shared with Control Center), which the person can disconnect; absent: gh's own login or the person's own token. */
+  | { readonly status: 'ready'; readonly account: string; readonly via?: 'acryl' }
   | { readonly status: 'signed-out'; readonly say: string; readonly command: string }
   | { readonly status: 'missing'; readonly say: string; readonly link: string }
   | { readonly status: 'unavailable'; readonly say: string }
@@ -776,7 +777,7 @@ export function parseGithubConnectState(value: unknown): GithubConnectState {
 /** @throws when the value is not a GitHub readiness. */
 export function parseGithubReadiness(value: unknown): GithubReadiness {
   if (!isRecord(value)) throw new Error('github: not a readiness')
-  if (value.status === 'ready' && typeof value.account === 'string') return { status: 'ready', account: value.account }
+  if (value.status === 'ready' && typeof value.account === 'string') return { status: 'ready', account: value.account, ...(value.via === 'acryl' ? { via: 'acryl' as const } : {}) }
   if (value.status === 'signed-out' && typeof value.say === 'string' && typeof value.command === 'string') return { status: 'signed-out', say: value.say, command: value.command }
   if (value.status === 'missing' && typeof value.say === 'string' && typeof value.link === 'string') return { status: 'missing', say: value.say, link: value.link }
   if (value.status === 'unavailable' && typeof value.say === 'string') return { status: 'unavailable', say: value.say }

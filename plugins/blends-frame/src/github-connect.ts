@@ -1,115 +1,114 @@
 /**
- * Connect GitHub from the app, for a person who has never opened a terminal: GitHub's own browser sign-in (`gh auth login --web`), started by a button.
- *
- * gh prints a one-time code and the address github.com/login/device, then waits until the person enters the code there and says yes. This module runs
- * that one gh process, reads the code from what it prints, and reports where the sign-in is. No password or token passes through the app: the person
- * signs in on github.com, and gh keeps its credential where it always does. When the sign-in succeeded, `gh auth setup-git` lets git push over HTTPS
- * with the same account, which a share needs.
+ * Connect GitHub from the app, for a person who has never opened a terminal: the same GitHub sign-in ACRYL Control Center has (one implementation, in
+ * `@acryldev/app-persistence`), started by a button. GitHub's device flow gives a one-time code and the address github.com/login/device; this module shows them,
+ * asks GitHub every few seconds whether the person approved, and then the token is in `<ACRYL home>/github.json`, the file Control Center reads too, so signing
+ * in once counts in both. The token never passes through the page. The process's own `GH_TOKEN` is then that token, so the `gh` and `git` a share starts use it.
  *
  * One sign-in at a time. The owner (the frame's Host) disposes it with the plugin, which ends a sign-in still waiting.
  */
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
+import { clearGithub, githubClientId, pollGithubSignIn, readGithub, startGithubSignIn, type GithubConnection } from '@acryldev/app-persistence'
 import type { GithubConnectState } from './contract.ts'
 
 export type { GithubConnectState }
 
-/** What this module needs from the computer: start gh's sign-in, and run one gh command to the end. Tests give their own. */
+type FetchLike = typeof fetch
+
+/** What this module needs from the computer. Tests give their own. */
 export interface GithubConnectPorts {
-  /** Start `gh auth login --web`; undefined when gh is not installed. */
-  readonly startLogin: () => ChildProcess | undefined
-  /** Run `gh <args>` to the end; the exit status (non-zero when gh is missing). */
-  readonly run: (args: readonly string[]) => number
+  /** ACRYL's home: where `github.json` is, the same one Control Center uses. */
+  readonly home: string
+  /** The process environment: its `GH_TOKEN` is what the `gh` and `git` a share starts read. */
+  readonly env: Record<string, string | undefined>
+  /** The OAuth client id; undefined when none is valid. */
+  readonly clientId?: () => string | undefined
+  readonly fetch?: FetchLike
 }
 
-const DEVICE_URL = 'https://github.com/login/device'
-const CODE = /\b([A-Z0-9]{4}-[A-Z0-9]{4})\b/u
-const URL_IN_TEXT = /https:\/\/github\.com\/login\/device\b/u
-/** How long a code stays usable on GitHub's side (15 minutes); after that this gives up and the person starts again. */
-const GIVE_UP_MS = 15 * 60_000
-
-export const GITHUB_CONNECT_MISSING =
-  'Connecting needs a free helper program from GitHub, and it is not installed on this computer. Install it from cli.github.com, then try again.'
-
-/** The gh this computer has, without a terminal: no prompts, no browser opened by gh itself (the page offers the link). */
-export function githubConnectPorts(): GithubConnectPorts {
-  const env = { ...process.env, GH_BROWSER: 'true', GH_PROMPT_DISABLED: '1', GIT_TERMINAL_PROMPT: '0' }
-  return {
-    startLogin: () => {
-      const probe = spawnSync('gh', ['--version'], { env, encoding: 'utf8' })
-      if (probe.error !== undefined) return undefined
-      return spawn('gh', ['auth', 'login', '--hostname', 'github.com', '--git-protocol', 'https', '--web', '--skip-ssh-key'], {
-        env,
-        stdio: ['pipe', 'pipe', 'pipe'],
-      })
-    },
-    run: args => {
-      const result = spawnSync('gh', [...args], { env, encoding: 'utf8' })
-      return result.error !== undefined ? 1 : (result.status ?? 1)
-    },
-  }
+export interface GithubConnectOptions {
+  /** How long a code is waited for before giving up (GitHub's own is 15 minutes). */
+  readonly giveUpMs?: number
+  /** Milliseconds between asking GitHub; GitHub's own interval when absent (a test sets it short). */
+  readonly pollMs?: number
 }
+
+export const GITHUB_CONNECT_UNAVAILABLE = 'GitHub could not be reached. Check your internet connection and try again.'
+export const GITHUB_CONNECT_NO_CLIENT = 'GitHub sign-in is not set up in this copy of ACRYL.'
 
 export class GithubConnect {
   private current: GithubConnectState = { status: 'idle' }
-  private child: ChildProcess | undefined
   private timer: ReturnType<typeof setTimeout> | undefined
+  private giveUp: ReturnType<typeof setTimeout> | undefined
+  /** Counts sign-ins: a poll still in flight when the sign-in ended or a new one began must not touch the state. */
+  private generation = 0
   private disposed = false
+  /** The token this process took into its environment from the file; a token the person's own environment named is never replaced. */
+  private adopted: string | undefined
 
-  constructor(private readonly ports: GithubConnectPorts, private readonly giveUpMs = GIVE_UP_MS) {}
+  constructor(private readonly ports: GithubConnectPorts, private readonly options: GithubConnectOptions = {}) {}
 
   state(): GithubConnectState {
     return this.current
   }
 
+  /** The stored connection, `{ token, login }`, or undefined. */
+  connection(): GithubConnection | undefined {
+    return readGithub(this.ports.home)
+  }
+
   /**
-   * Start a sign-in, or return the one already waiting. Resolves when the code is known (or the start failed), which is well before the person
-   * finishes on github.com; ask `state()` for the rest.
+   * Make the stored connection the one `gh` and `git` use in this process, unless the environment already names a token of the person's own.
+   * Returns whether the stored connection is the one in use.
    */
+  adopt(): boolean {
+    const stored = readGithub(this.ports.home)
+    if (stored === undefined) return false
+    const env = this.ports.env
+    if (env['GITHUB_TOKEN'] || (env['GH_TOKEN'] && env['GH_TOKEN'] !== this.adopted && env['GH_TOKEN'] !== stored.token)) return false
+    env['GH_TOKEN'] = stored.token
+    this.adopted = stored.token
+    return true
+  }
+
+  /** Forget the connection for every ACRYL place, and stop this process using it. Returns whether there was one. */
+  disconnect(): boolean {
+    const stored = readGithub(this.ports.home)
+    const had = clearGithub(this.ports.home)
+    const env = this.ports.env
+    if (stored !== undefined && (env['GH_TOKEN'] === stored.token || env['GH_TOKEN'] === this.adopted)) delete env['GH_TOKEN']
+    this.adopted = undefined
+    return had
+  }
+
+  /** Start a sign-in, or return the one already waiting. Resolves when the code is known (or the start failed); ask `state()` for the rest. */
   async start(): Promise<GithubConnectState> {
     if (this.disposed) return this.current
-    if (this.child !== undefined) return this.waitForCode()
-    const child = this.ports.startLogin()
-    if (child === undefined) {
-      this.current = { status: 'failed', say: GITHUB_CONNECT_MISSING }
+    if (this.current.status === 'code' || this.current.status === 'starting') return this.current
+    const clientId = (this.ports.clientId ?? githubClientId)()
+    if (clientId === undefined) {
+      this.current = { status: 'failed', say: GITHUB_CONNECT_NO_CLIENT }
       return this.current
     }
-    this.child = child
+    const mine = ++this.generation
     this.current = { status: 'starting' }
-    let said = ''
-    const read = (chunk: Buffer | string): void => {
-      said += String(chunk)
-      if (this.current.status !== 'starting') return
-      const code = CODE.exec(said)?.[1]
-      if (code !== undefined) this.current = { status: 'code', code, url: URL_IN_TEXT.exec(said)?.[0] ?? DEVICE_URL }
+    try {
+      const code = await startGithubSignIn(clientId, this.ports.fetch)
+      if (mine !== this.generation) return this.current
+      const url = code.verificationUri.startsWith('https://github.com/') ? code.verificationUri : 'https://github.com/login/device'
+      this.current = { status: 'code', code: code.userCode, url }
+      this.giveUp = setTimeout(() => {
+        this.finish({ status: 'failed', say: 'The code ran out before GitHub was connected. Press Connect GitHub to get a new one.' })
+      }, this.options.giveUpMs ?? Math.min(code.expiresIn * 1000, 15 * 60_000))
+      this.schedule(clientId, code.deviceCode, this.options.pollMs ?? code.interval * 1000, mine)
+    } catch (cause) {
+      if (mine !== this.generation) return this.current
+      this.current = { status: 'failed', say: GITHUB_CONNECT_UNAVAILABLE, details: cause instanceof Error ? cause.message : String(cause) }
     }
-    child.stdout?.on('data', read)
-    child.stderr?.on('data', read)
-    // In a terminal gh asks for Enter before it shows the code; without one it shows it at once. Either way one Enter is harmless.
-    child.stdin?.on('error', () => {})
-    child.stdin?.write('\n')
-    child.on('error', cause => this.finish({ status: 'failed', say: GITHUB_CONNECT_MISSING, details: cause.message }))
-    child.on('exit', status => {
-      if (status === 0) {
-        // Let git push over HTTPS with the account just signed in; a share pushes the plugin's repository.
-        this.ports.run(['auth', 'setup-git'])
-        this.finish({ status: 'connected' })
-      } else if (this.current.status !== 'failed') {
-        this.finish({
-          status: 'failed',
-          say: 'GitHub did not finish connecting. Press Connect GitHub to try again.',
-          details: said.trim().split('\n').at(-1) ?? '',
-        })
-      }
-    })
-    this.timer = setTimeout(() => {
-      this.finish({ status: 'failed', say: 'The code ran out before GitHub was connected. Press Connect GitHub to get a new one.' })
-    }, this.giveUpMs)
-    return this.waitForCode()
+    return this.current
   }
 
   /** End a waiting sign-in (the person closed the chooser, or the plugin unloads). Nothing on GitHub changes. */
   cancel(): void {
-    if (this.child === undefined) return
+    if (this.current.status !== 'code' && this.current.status !== 'starting') return
     this.finish({ status: 'idle' })
   }
 
@@ -118,20 +117,37 @@ export class GithubConnect {
     this.cancel()
   }
 
-  private finish(next: GithubConnectState): void {
-    if (this.timer !== undefined) clearTimeout(this.timer)
-    this.timer = undefined
-    const child = this.child
-    this.child = undefined
-    if (child !== undefined && child.exitCode === null && child.signalCode === null) child.kill()
-    this.current = next
+  private schedule(clientId: string, deviceCode: string, waitMs: number, mine: number): void {
+    this.timer = setTimeout(() => { void this.poll(clientId, deviceCode, waitMs, mine) }, waitMs)
   }
 
-  /** The code usually arrives within a second; give up waiting for it after a few, and let the page ask again. */
-  private async waitForCode(): Promise<GithubConnectState> {
-    for (let waited = 0; waited < 5_000 && this.current.status === 'starting'; waited += 50) {
-      await new Promise(resolve => setTimeout(resolve, 50))
+  private async poll(clientId: string, deviceCode: string, waitMs: number, mine: number): Promise<void> {
+    if (mine !== this.generation) return
+    try {
+      const answer = await pollGithubSignIn(this.ports.home, clientId, deviceCode, this.ports.fetch)
+      if (mine !== this.generation) return
+      if (answer.state === 'pending') {
+        this.schedule(clientId, deviceCode, answer.interval === undefined || this.options.pollMs !== undefined ? waitMs : answer.interval * 1000, mine)
+      } else if (answer.state === 'connected') {
+        this.adopt()
+        this.finish({ status: 'connected' })
+      } else {
+        this.finish({ status: 'failed', say: `GitHub was not connected: ${answer.reason}. Press Connect GitHub to try again.` })
+      }
+    } catch (cause) {
+      if (mine !== this.generation) return
+      // A network hiccup while the person is still on github.com: ask again until the code runs out.
+      this.schedule(clientId, deviceCode, waitMs, mine)
+      void cause
     }
-    return this.current
+  }
+
+  private finish(next: GithubConnectState): void {
+    this.generation += 1
+    if (this.timer !== undefined) clearTimeout(this.timer)
+    if (this.giveUp !== undefined) clearTimeout(this.giveUp)
+    this.timer = undefined
+    this.giveUp = undefined
+    this.current = next
   }
 }

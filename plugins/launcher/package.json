@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/launcher",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "The ACRYL launcher's journeys (create an app, install a Blend, pull or share a plugin, update, check this machine, open ACRYL ADE) and the session every face walks them with (spec 050)",
   "license": "MIT",
   "repository": {
@@ -42,5 +42,8 @@
   },
   "bugs": {
     "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "dependencies": {
+    "@acryldev/app-persistence": "workspace:^"
   }
 }

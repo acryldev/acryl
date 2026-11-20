@@ -275,7 +275,7 @@ describe('the Host routes of the registry', () => {
     planShare: () => Promise.reject(rejects('plan')),
     share: () => Promise.reject(rejects('share')),
     save: () => Promise.reject(rejects('save')),
-    connect: { start: () => Promise.reject(rejects('connect')), state: () => ({ status: 'idle' as const }), cancel: () => {} },
+    connect: { start: () => Promise.reject(rejects('connect')), state: () => ({ status: 'idle' as const }), cancel: () => {}, disconnect: () => Promise.reject(new Error('not asked')) },
   })
   const routes = (pull: (source: string) => Promise<unknown>) => frameRoutes({
     state: () => Promise.reject(new Error('not asked')),
@@ -291,6 +291,27 @@ describe('the Host routes of the registry', () => {
     headers: { host: '127.0.0.1:43120', origin: 'http://127.0.0.1:43120', 'sec-fetch-site': 'same-origin', 'content-type': 'application/json' },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   }), { connection: { remoteAddress: '127.0.0.1', localPort: 43120 } })
+
+  it('disconnects GitHub through the Host: DELETE on the readiness route answers with what is left', async () => {
+    let disconnected = 0
+    const app = frameRoutes({
+      state: () => Promise.reject(new Error('not asked')),
+      plugins: {
+        ...stub(what => new Error(`not asked: ${what}`)),
+        connect: { start: () => Promise.reject(new Error('not asked')), state: () => ({ status: 'idle' as const }), cancel: () => {}, disconnect: async () => { disconnected += 1; return { status: 'signed-out' as const, say: 'GitHub is not connected.', command: 'gh auth login' } } },
+        registry: () => Promise.reject(new Error('not asked')),
+        github: () => Promise.reject(new Error('not asked')),
+        pull: () => Promise.reject(new Error('not asked')),
+      },
+    })
+    const answer = await app.fetch(new Request('http://127.0.0.1:43120/api/acryl-blends-frame/plugins/github', {
+      method: 'DELETE',
+      headers: { host: '127.0.0.1:43120', origin: 'http://127.0.0.1:43120', 'sec-fetch-site': 'same-origin' },
+    }), { connection: { remoteAddress: '127.0.0.1', localPort: 43120 } })
+    expect(answer.status).toBe(200)
+    expect(await answer.json()).toMatchObject({ status: 'signed-out' })
+    expect(disconnected).toBe(1)
+  })
 
   it('reads the registry and GitHub, and adds a plugin only for a released github address', async () => {
     const pulled: string[] = []

@@ -97,7 +97,8 @@ import {
   type GitSyncResult,
 } from './contract.ts'
 import { GitSync, upstreamHead } from './git-sync.ts'
-import { GithubConnect, githubConnectPorts } from './github-connect.ts'
+import { githubHome } from '@acryldev/app-persistence'
+import { GithubConnect } from './github-connect.ts'
 import { createAppSnapshot, type AppSnapshotService } from './app-snapshot.ts'
 
 /**
@@ -262,6 +263,8 @@ export interface PluginsPort {
     start(): Promise<GithubConnectState>
     state(): GithubConnectState
     cancel(): void
+    /** Forget the connection ACRYL made, for every ACRYL place; answers with the readiness that is left. */
+    disconnect(): Promise<GithubReadiness>
   }
 }
 
@@ -736,6 +739,14 @@ export function frameRoutes({ state, report = () => {}, plugins, graph, feedback
     // Connecting GitHub opens GitHub's own sign-in in the person's browser; the app only shows the code GitHub gave and never sees a credential.
     app.post(FRAME_PLUGINS_GITHUB_CONNECT_PATH, ownPage, async (c) => c.json(await plugins.connect.start()))
     app.get(FRAME_PLUGINS_GITHUB_CONNECT_PATH, ownPage, (c) => c.json(plugins.connect.state()))
+    app.delete(FRAME_PLUGINS_GITHUB_PATH, ownPage, async (c) => {
+      try {
+        return c.json(await plugins.connect.disconnect())
+      } catch (cause) {
+        report(cause)
+        return c.json(error('GitHub could not be disconnected'), 500)
+      }
+    })
     app.delete(FRAME_PLUGINS_GITHUB_CONNECT_PATH, ownPage, (c) => {
       plugins.connect.cancel()
       return c.json(plugins.connect.state())
@@ -970,7 +981,15 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       return [...loader.entries()].map(entry => ({ id: entry.options.id, name: entry.options.name, disabled: entry.disabled, fiberState: entry.fiber?.state }))
     }
     // One GitHub sign-in at a time, owned by this effect: unloading the frame ends one still waiting.
-    const githubConnect = new GithubConnect(githubConnectPorts())
+    const githubConnect = new GithubConnect({ home: githubHome(process.env), env: process.env })
+    // A person who connected GitHub in Control Center (or in another app) is connected here: the stored token becomes this process's GH_TOKEN, for gh and git.
+    githubConnect.adopt()
+    const githubNow = async (): Promise<GithubReadiness> => {
+      const stored = githubConnect.connection()
+      const inUse = stored !== undefined && process.env['GH_TOKEN'] === stored.token
+      const ready = githubReadiness(() => (inUse && stored.login !== '' ? stored.login : githubSharePorts().host.login()))
+      return ready.status === 'ready' && inUse ? { ...ready, via: 'acryl' } : ready
+    }
     ctx.effect(() => () => {
       githubConnect.dispose()
     }, '@acryldev/blends-frame: connecting GitHub')
@@ -993,8 +1012,8 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       planShare: async (name, visibility, registry, owner) => planAppPluginShare(root, ctx.appInstance.home, name, { ...shareTo, ...(owner === undefined ? {} : { owner }), ...(visibility === undefined ? {} : { visibility }), ...(registry === true ? { registry } : {}) }, githubSharePorts()),
       share: async (name, confirmed, owner) => shareAppPlugin(root, ctx.appInstance.home, name, confirmed, { ...shareTo, ...(owner === undefined ? {} : { owner }) }, githubSharePorts()),
       save: async (name) => saveAppPlugin(root, ctx.appInstance.home, name),
-      github: async () => githubReadiness(() => githubSharePorts().host.login()),
-      connect: githubConnect,
+      github: githubNow,
+      connect: { start: () => githubConnect.start(), state: () => githubConnect.state(), cancel: () => { githubConnect.cancel() }, disconnect: async () => { githubConnect.disconnect(); return githubNow() } },
       registry: async () => readRegistryView(registryRead, async () => registryMarks()),
       pull: async (source) => {
         const share = pluginShareOf(() => ctx.get('pluginShare'))
@@ -1014,7 +1033,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       const repos = new Set<string>(listed.flatMap(info => (info.pulledFrom === undefined ? [] : [repoOfSource(info.pulledFrom) ?? ''])).filter(repo => repo !== ''))
       // Who the person is on GitHub: the share account, else the one signed in (asked at most once a minute; no one signed in is no account).
       if (signedIn === undefined || Date.now() - signedIn.at > 60_000) {
-        const ready = githubReadiness(() => githubSharePorts().host.login())
+        const ready = await githubNow()
         signedIn = { at: Date.now(), account: ready.status === 'ready' ? ready.account : undefined }
       }
       const accounts = new Set<string>([...(shareOwner === undefined ? [] : [shareOwner.toLowerCase()]), ...(signedIn.account === undefined ? [] : [signedIn.account.toLowerCase()])])

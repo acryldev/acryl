@@ -8,7 +8,7 @@
   "provides": [],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@acryldev/app-persistence": "0.1.4"
+    "@acryldev/app-persistence": "0.1.5"
   },
   "mount": "mount the plugin to give the agent a save_app tool; its scripts (npm run save, npm run share) are added to package.json with it",
   "entries": {

@@ -21,6 +21,8 @@ export interface GithubConnectApi {
   start(): Promise<GithubConnectState>
   /** Where the sign-in is now. */
   state(): Promise<GithubConnectState>
+  /** Forget the GitHub connection ACRYL made (in Control Center too); answers with the readiness that is left. */
+  disconnect(): Promise<GithubReadiness>
 }
 
 export function createRegistryApi(fetcher: FetchLike = (input, init) => fetch(input, init)): RegistryApi {
@@ -39,6 +41,11 @@ export function createRegistryApi(fetcher: FetchLike = (input, init) => fetch(in
         return parseGithubConnectState(await response.json())
       },
       state: async () => parseGithubConnectState(await get(FRAME_PLUGINS_GITHUB_CONNECT_PATH)),
+      async disconnect() {
+        const response = await fetcher(FRAME_PLUGINS_GITHUB_PATH, { method: 'DELETE', credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        if (!response.ok) throw await failureOf(response)
+        return parseGithubReadiness(await response.json())
+      },
     },
     async add(source) {
       const response = await fetcher(FRAME_PLUGINS_PULL_PATH, {
