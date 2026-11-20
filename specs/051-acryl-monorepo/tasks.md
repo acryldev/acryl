@@ -71,6 +71,18 @@ verify and check:layout and all 23 framework check steps green before it lands.
   functionality as it was before unification". The ACRYL chat AND every PTY driver agent (Claude Code, Pi, Codex, ...) fully control the
   running app as a user does, like @acryldev/control: look, click, type, fill, select, press, scroll, wait, reload, navigate. Done when each
   agent kind is proven on a real app: the chat through its `door_*` tools, a PTY agent through `.acryl/bin/acryl`, in dev and installed ADE.
+  Proven 2026-11-20 on macOS and Linux (z370n). The app was link-shortener from create-acrylblends 1.7.4 in @acryldev/blends-frame 0.2.2, run
+  with `npm run dev` under a scratch HOME. The proof: create a short link through the app's own form, then see it top of Recent links with
+  Active links one higher.
+  - Pi (right-panel PTY tab, DeepSeek): proven on both OSes from one plain prompt: `acryl look`, `act type` x2, `act click`, back to
+    Overview, look again. The only extra step is Pi's own one-time "Trust project folder?".
+  - Claude Code: proven on both OSes with the user's own login (run in the app folder, allowed tools limited to `.acryl/bin/acryl`).
+    The panel tab starts it fine, but the frame gives PTY agents the app's HOME. In a HOME without a Claude login it stops at "Select
+    login method", which a real user's HOME does not.
+  - Codex: needs the user's own login (same HOME reason); not run.
+  - ACRYL chat: drives the app (look, click), but it chose Bash with `.acryl/bin/acryl`, not its `door_*` tools.
+  - "Page: not open" is the door reporting that no app page is connected (none open, or reloading); not a door bug.
+  Open: the installed ADE, and the chat driving through its `door_*` tools.
 
 - [x] T024 [guard] The cross-package relative imports are gone (051-t017): `@acryldev/framework` imports `@acryldev/router` (new `/core`,
   `/connection`, `/conninfo` subpaths), `@acryldev/node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
