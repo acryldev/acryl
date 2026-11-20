@@ -204,7 +204,7 @@ function gitSourceOffer() {
     `  The build scripts: https://github.com/desktop/dugite-native/tree/${GIT.release}`,
     '',
     'For at least three years from the day you received this app, the publisher of ACRYL Blends will also send a complete machine-readable copy of',
-    'that source code, for no more than the cost of making and sending it, to anyone who asks at https://github.com/acrylblends/acrylblends/issues.',
+    'that source code, for no more than the cost of making and sending it, to anyone who asks at https://github.com/acryldev/acryl/issues.',
     '',
   ].join('\n')
 }

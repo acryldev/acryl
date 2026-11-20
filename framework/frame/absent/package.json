@@ -1,12 +1,12 @@
 {
   "name": "@acryldev/absent",
   "version": "1.0.0",
-  "description": "An empty package that stands in for a package an ACRYLBLENDS app does not install (the LibreOffice engines DSH brings). See frame/packages.json `omit` in the acrylblends repository.",
+  "description": "An empty package that stands in for a package an ACRYLBLENDS app does not install (the LibreOffice engines DSH brings). See frame/packages.json `omit` in the framework folder of the acryl repository.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acrylblends/acrylblends.git",
-    "directory": "frame/absent"
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "framework/frame/absent"
   },
   "files": [
     "README.md"

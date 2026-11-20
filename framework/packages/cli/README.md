@@ -414,7 +414,7 @@ See the [ACRYLBLENDS documentation](https://github.com/acrylblends/acrylblends/b
 | Framework documentation | https://github.com/acrylblends/acrylblends/blob/main/docs/framework/README.md |
 | ACRYLBLENDS website | https://acrylblends.github.io |
 | ACRYL website | https://acryl.dev |
-| This package's source and issues | https://github.com/acrylblends/acrylblends ([issues](https://github.com/acrylblends/acrylblends/issues)) |
+| This package's source and issues | https://github.com/acryldev/acryl/tree/main/framework ([issues](https://github.com/acryldev/acryl/issues)) |
 | The framework's source | https://github.com/acryldev/acryl (`plugins/router`, `plugins/node-server`) |
 | For coding agents | https://github.com/acrylblends/acrylblends/blob/main/docs/framework/agents/index.md |
 | npm | https://www.npmjs.com/package/acrylblends |
