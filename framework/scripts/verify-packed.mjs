@@ -87,14 +87,14 @@ try {
       [app, '--template', template, '--bare', '--no-install', '--no-start', '-y'],
       scratch,
     )
-    // The new app asks for the version of acrylblends it was made with, which may not be published yet: install the tarball (npm then records it).
+    // The new app asks for the version of @acryldev/blends it was made with, which may not be published yet: install the tarball (npm then records it).
     run(
       'npm',
       [
         'install',
         '--no-audit',
         '--no-fund',
-        tarball('acrylblends-'),
+        tarball('acryldev-blends-'),
         tarball('acryldev-instance-'),
       ],
       app,
@@ -167,7 +167,7 @@ console.log('ws-check: ok')
   run(bin('acrylblends'), ['add', 'driver-pty'], agentApp)
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('acryldev-instance-')],
+    ['install', '--no-audit', '--no-fund', tarball('acryldev-blends-'), tarball('acryldev-instance-')],
     agentApp,
   )
   run('npm', ['run', 'check'], agentApp)
@@ -232,7 +232,7 @@ console.log('ws-check: ok')
   )
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('acryldev-instance-')],
+    ['install', '--no-audit', '--no-fund', tarball('acryldev-blends-'), tarball('acryldev-instance-')],
     pulled,
   )
   run('npm', ['test'], pulled, { ACRYL_DOOR: 'off' })
@@ -305,7 +305,7 @@ console.log('ws-check: ok')
   writeFileSync(appFile, registered)
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acrylblends-'), tarball('acryldev-instance-')],
+    ['install', '--no-audit', '--no-fund', tarball('acryldev-blends-'), tarball('acryldev-instance-')],
     dbApp,
   )
   run('npm', ['run', 'check'], dbApp)
