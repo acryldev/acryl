@@ -195,8 +195,18 @@ verify and check:layout and all 23 framework check steps green before it lands.
   per product it asks git/matching-refs for its tag prefix (no tag cap), takes the highest tag, copies apps/<product>/ from the monorepo tarball
   into registry/blends/<id>/ under the README's file rules, sets metadata.version, rewrites index.json and re-runs registry-index --check.
   No tag yet: both entries stay byte-identical (first live deploy 2026-11-19 logged that for both). The download path first runs at the first tag.
-- [ ] T015 [cut-over] acrylblends/acrylblends: README and description point to `acryldev/acryl/tree/main/framework`; then a read-only mirror
+- [x] T015 [cut-over] acrylblends/acrylblends: README and description point to `acryldev/acryl/tree/main/framework`; then a read-only mirror
   filled by `git subtree split`, or archived; open issues transferred; npm `repository` fields name `acryldev/acryl` with `directory`.
+  Done 2026-11-20. Main was already fully in framework/ (acrylblends f5ad1a69, subtree pull 47edaaed). Repository pointer commit
+  acrylblends ffefcbc (README, LICENSE kept, one-line description), then archived (isArchived=true). Open issues: none. The two open PRs
+  (#4 Ctrl-C lets the host finish stopping, #5 data lives in ~/.acryl/apps/<id>/, both by smrifat1411) were already in framework/ as
+  51f09720 and e20c6a58 with that author, so nothing was applied; the PRs are left open and uncommented. Monorepo 54a7ebdf: the last
+  package.json naming the old repository (@acryldev/absent) now names acryldev/acryl with `directory`, the macOS Git source offer and the cli
+  and framework READMEs' issues line point at acryldev/acryl (the other framework packages already did). Not changed: documentation links
+  in the framework README prose still point at the archived repo's docs/ tree, which stays readable. The 13 side branches with commits
+  not on main stay on the archived repo (readable; unarchive to use): 020-blueprints, 106-ide-slice6-boot, 106-ide-slice6-upgrade,
+  125-frame-redesign, 125-port-inventory, 125-slice1, 125-slice2, 129-merge-proof, blueprints/batch-01-tasks, blueprints/batch-02-tasks,
+  workshop-guide-connect, workshop-preflight, workshop-readiness-windows.
 - [ ] T039 [gates, Windows] `framework/scripts/verify-packed.mjs` cannot run on Windows: it starts `npm` (and `pnpm`) through `execFileSync`
   without a shell, and on Windows those are `.cmd` files Node only starts through one (`spawnSync npm ENOENT`, seen on mbpi9win 2026-11-19 from
   main ca369d52 with pnpm 12.14.0). CI does not see it because `verify:packed` runs only inside framework's `check` (Linux, macOS); the Windows
