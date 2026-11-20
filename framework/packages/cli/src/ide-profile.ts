@@ -127,6 +127,8 @@ export interface IdeProfileInput {
   }[]
   /** Whether the app carries the door at `plugins/door/src/index.ts`: a row then mounts it, and an app without one simply has no door. */
   readonly door?: boolean
+  /** The door's folder under plugins/ when it is not `door` (an app made before the folders were renamed carries `acryl-door`). */
+  readonly doorFolder?: string
   /** What roots the page: the Blends frame (every Blend), or the IDE's workbench for a product that is the IDE (ACRYL ADE). From `acrylblends.root` in the app's package.json. */
   readonly root?: PageRoot
 }
@@ -460,6 +462,8 @@ function hostScriptOf(profile: string, frameModule: string): string {
     'const chosen = selectInstance({ projectRoot: frameworkRoot, env: process.env })',
     'const appRoot = chosen.root',
     'const home = chosen.home',
+    "// A host plugin's folder as the app has it: plugins/<id>, or plugins/acryl-<id> in an app made before the folders were renamed (registry Blueprints).",
+    "const hostPlugin = (id) => (existsSync(join(appRoot, 'plugins', id)) ? id : `acryl-${id}`)",
     `const profileName = '${profile}'`,
     "// The page and its tab are named for the app: the package's name, as the frame's header says it, else the folder's.",
     'const appTitle = (() => {',
@@ -552,9 +556,9 @@ function hostScriptOf(profile: string, frameModule: string): string {
     `agentRows.find((row) => row.id === 'preset-${AGENT_PRESET_ID}').config.plugins.push(...DSH_STANDARD_PLUGINS.map(dshStandardPlugin))`,
     'const hostLayer = anchorRows([{',
     '  insert: [',
-    "    { id: 'node-server', name: './plugins/node-server/src/index.ts', config: { hostname: chosen.host ?? '127.0.0.1', port: Number(port), scan: Number(port) === 0 ? 0 : 20 } },",
-    "    { id: 'web-server', name: './plugins/web-server/src/index.ts' },",
-    "    { id: 'page', name: './plugins/page/src/index.ts', config: { title: appTitle } },",
+    "    { id: 'node-server', name: `./plugins/${hostPlugin('node-server')}/src/index.ts`, config: { hostname: chosen.host ?? '127.0.0.1', port: Number(port), scan: Number(port) === 0 ? 0 : 20 } },",
+    "    { id: 'web-server', name: `./plugins/${hostPlugin('web-server')}/src/index.ts` },",
+    "    { id: 'page', name: `./plugins/${hostPlugin('page')}/src/index.ts`, config: { title: appTitle } },",
     '    ...clientRows,',
     '    ...agentRows,',
     '  ],',
@@ -782,7 +786,7 @@ const yamlName = (name: string): string => (name.startsWith('@') ? `'${name}'` :
 
 function overlayOf(
   packages: readonly IdeProfilePackage[],
-  door = false,
+  door: string | undefined = undefined,
   root: PageRoot = 'frame',
   appRows: readonly {
     readonly id: string
@@ -803,10 +807,10 @@ function overlayOf(
     // The canvas prefix goes with it: `act navigate --path /board` reaches the app's /board at the canvas prefix, the same path it has on its own server.
     // A workspace root (ACRYL ADE) has no frame around anything: its window is the app the agents drive, as ACRYL's own window was before the
     // unification (spec 051 T022), so the door keeps its defaults and puts its script in that index.
-    ...(door
+    ...(door !== undefined
       ? [
           '    - id: acryl-door',
-          '      name: ./plugins/door/src/index.ts',
+          `      name: ./plugins/${door}/src/index.ts`,
           ...(root === 'workspace'
             ? []
             : [
@@ -906,7 +910,12 @@ export function ideProfilePlan(input: IdeProfileInput, existing?: string): IdePr
       : JSON.parse(existing)
   return {
     profile,
-    overlay: overlayOf(packages, input.door === true, input.root, input.rows ?? []),
+    overlay: overlayOf(
+      packages,
+      input.door === true ? (input.doorFolder ?? 'door') : undefined,
+      input.root,
+      input.rows ?? [],
+    ),
     packageJson: `${JSON.stringify(mergeManifest(manifest, dependencies), null, 2)}\n`,
     rootConfig: '[]\n',
     hostScript: hostScriptOf(profile, frameModuleOf(packages)),
@@ -999,6 +1008,13 @@ export interface IdeProfileWritePlan {
 
 /** The door is app source, not a registry package: the row exists when the app carries it, and nothing fails when it does not. */
 /** What the app's own files say about its profile: whether it carries the door, and what roots its page (`acrylblends.root` in package.json). */
+function doorOf(root: string): { door: boolean; doorFolder?: string } {
+  for (const folder of ['door', 'acryl-door'])
+    if (existsSync(join(root, 'plugins', folder, 'src', 'index.ts')))
+      return folder === 'door' ? { door: true } : { door: true, doorFolder: folder }
+  return { door: false }
+}
+
 function withAppFacts(root: string, input: IdeProfileInput): IdeProfileInput {
   const manifest = join(root, 'package.json')
   const declared = existsSync(manifest)
@@ -1011,7 +1027,7 @@ function withAppFacts(root: string, input: IdeProfileInput): IdeProfileInput {
     )
   return {
     ...input,
-    door: existsSync(join(root, 'plugins', 'door', 'src', 'index.ts')),
+    ...doorOf(root),
     ...(declared === undefined ? {} : { root: declared }),
   }
 }

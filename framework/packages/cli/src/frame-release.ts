@@ -8,7 +8,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import release from '../../../frame/packages.json' with { type: 'json' }
-import { findDesktopShell } from './desktop-shell'
+import { DESKTOP_SHELL_PACKAGE, findDesktopShell } from './desktop-shell'
 import { FRAME_PACKAGES, type IdeProfileInput, type IdeProfilePackage } from './ide-profile'
 import { VERSION } from './version'
 
@@ -110,8 +110,22 @@ export function frameProfileForApp(root: string): FrameProfileSpecs | undefined 
   if (fromEnv !== undefined) return fromEnv
   const fromApp = frameProfileOfManifest(root)
   if (fromApp !== undefined) return fromApp
-  // A desktop app: one carrying the shell's copy, or one that moved to the @acryldev/desktop-shell package (spec 051 T011).
-  return findDesktopShell(root) !== undefined ? publishedFrameProfile() : undefined
+  // A desktop app: one carrying the shell's copy, or one that moved to the @acryldev/desktop-shell package (spec 051 T011). The package counts
+  // once package.json names it, installed or not: create runs `add desktop-shell` and `upgrade` before its npm install.
+  return findDesktopShell(root) !== undefined || dependsOn(root, DESKTOP_SHELL_PACKAGE)
+    ? publishedFrameProfile()
+    : undefined
+}
+
+function dependsOn(root: string, name: string): boolean {
+  try {
+    const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, unknown>
+    }
+    return typeof manifest.dependencies?.[name] === 'string'
+  } catch {
+    return false
+  }
 }
 
 function frameProfileOfManifest(root: string): FrameProfileSpecs | undefined {

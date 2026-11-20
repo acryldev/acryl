@@ -63,6 +63,10 @@ describe('the frame specs of an existing app', () => {
   it('a desktop app with no frame yet gets the published frame; a web app and ACRYLBLENDS_FRAME_PACKAGES=none stay on the framework alone', () => {
     expect(frameProfileForApp(app('desktop', {}, true))).toEqual(publishedFrameProfile())
     expect(frameProfileForApp(app('web', {}))).toBeUndefined()
+    // create runs `add desktop-shell` then `upgrade` before npm install: the declared package already makes it a desktop app.
+    expect(
+      frameProfileForApp(app('desktop-declared', { '@acryldev/desktop-shell': '0.1.2' })),
+    ).toEqual(publishedFrameProfile())
     process.env.ACRYLBLENDS_FRAME_PACKAGES = 'none'
     expect(frameProfileForApp(app('desktop-none', {}, true))).toBeUndefined()
   })
