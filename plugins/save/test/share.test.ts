@@ -425,7 +425,7 @@ test("the share command runs gh with the stored GitHub token, and with gh's own 
             encoding: 'utf8',
             stdio: ['ignore', 'pipe', 'pipe'],
             env: {
-              PATH: `${bin}:${process.env['PATH'] ?? ''}`,
+              PATH: `${bin}:${process.env.PATH ?? ''}`,
               HOME: home,
               ACRYL_LAUNCHER_HOME: home,
               ...extra,
