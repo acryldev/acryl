@@ -3,6 +3,15 @@
 A Cordis app on the ACRYL framework: TypeScript that Node 22.19 or newer runs directly (no build step; erasable syntax only, so no enums and no
 parameter properties). Every part of it is a Cordis plugin.
 
+## Using the interface is not changing the app
+
+A request to click, open, close, collapse, expand, show, hide, scroll, select or type something on screen ("collapse the left panel", "open Settings",
+"click Save", "show the chart", "type milk in the search") is done by operating the interface, never by changing code. Use `.acryl/bin/acryl`:
+`look` first (it also says what the ACRYL frame shows), then `act` for anything inside the app's page, and `frame` for the ACRYL frame around the
+app, which is not part of the app: its left panel (branches and versions), its right panel (the agents), Build and Preview, and Settings
+(`frame close left`, `frame open right`, `frame settings Share`, `frame preview`). Change code only when the person asks to change the app
+("add", "build", "make it", "fix", "change how it works").
+
 ## The framework's API is in `docs/framework/`
 
 Start at `docs/framework/README.md`; `api/summary.md` is the one-page summary. Read before you write routes: `api/routing.md` (the `Acryl` app), `api/request.md` (`c.req`),

@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/blends-frame",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "ACRYL Blends frame: the workbench around an app being built - a top bar, the branches and versions on the left, the app alone in the centre, and the agents on the right - as one Cordis plugin with a Host and a client half",
   "license": "MIT",
   "repository": {

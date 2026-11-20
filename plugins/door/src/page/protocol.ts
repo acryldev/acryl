@@ -6,12 +6,33 @@
  * lives with the page code and has no Node imports.
  */
 
+/**
+ * The ACRYL frame around a canvas page: its own panels, mode and Settings, which are not part of the app's page. The frame publishes a
+ * {@link FrameControl} on its window under {@link FRAME_CONTROL_KEY}; the door's page script, running in the canvas, reaches it as `window.parent`.
+ */
+export const FRAME_CONTROL_KEY: symbol = Symbol.for('acryl.frame.control')
+export const FRAME_ACTIONS = ['state', 'open', 'close', 'toggle', 'settings', 'build', 'preview'] as const
+export type FrameAction = (typeof FRAME_ACTIONS)[number]
+export type FramePanel = 'left' | 'right'
+/** What the frame shows: its left panel (branches and versions), its right panel (the agents), its mode, and whether Settings is open. */
+export interface FrameState {
+  readonly left: boolean
+  readonly right: boolean
+  readonly mode: 'build' | 'preview'
+  readonly settings: boolean
+}
+export interface FrameControl {
+  state(): FrameState
+  /** Do one frame action; the answer says what changed. @throws Error with a reason a person can read. */
+  run(request: Extract<UiRequest, { readonly op: 'frame' }>): string | Promise<string>
+}
+
 /** The operations the driver performs on the page. */
-export const UI_OPS = ['snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait', 'reload', 'navigate'] as const
+export const UI_OPS = ['snapshot', 'click', 'type', 'select', 'press', 'scroll', 'wait', 'reload', 'navigate', 'frame'] as const
 export type UiOp = (typeof UI_OPS)[number]
 
 /** Operations that change the page, so each call needs approval. `snapshot`, `scroll` and `wait` only look. */
-export const MUTATING_OPS: readonly UiOp[] = ['click', 'type', 'select', 'press', 'reload', 'navigate']
+export const MUTATING_OPS: readonly UiOp[] = ['click', 'type', 'select', 'press', 'reload', 'navigate', 'frame']
 
 /** A place in the app to go to: a path on the page's own origin (`/demo`, `/notes?q=a#top`), never another site and never a `//host` address. */
 export const APP_PATH = /^\/(?![/\\])[^\0\\]{0,2000}$/u
@@ -72,6 +93,8 @@ export interface UiSnapshot {
   readonly total: number
   /** Pass to the next snapshot call to continue, or absent when this is everything. */
   readonly nextCursor?: number
+  /** The ACRYL frame around this page, when the page is in one. */
+  readonly frame?: FrameState
 }
 
 export type UiRequest =
@@ -84,6 +107,7 @@ export type UiRequest =
   | { readonly op: 'wait'; readonly text?: string; readonly role?: string; readonly name?: string; readonly gone?: boolean; readonly timeoutMs?: number }
   | { readonly op: 'reload' }
   | { readonly op: 'navigate'; readonly path: string }
+  | { readonly op: 'frame'; readonly action: FrameAction; readonly panel?: FramePanel; readonly section?: string }
 
 /** What the page did, and to which control (for the audit log and the approval prompt). */
 export interface UiActionResult {
@@ -180,6 +204,17 @@ export function parseUiRequest(value: unknown): UiRequest {
       only(['path'])
       if (typeof value.path !== 'string' || !APP_PATH.test(value.path)) return invalid('path must be a path of this app, such as /demo (it starts with one /, and names no other site)')
       return { op, path: value.path }
+    }
+    case 'frame': {
+      only(['action', 'panel', 'section'])
+      const action = value.action === undefined ? 'state' : value.action
+      if (!FRAME_ACTIONS.includes(action as FrameAction)) return invalid(`frame action must be one of ${FRAME_ACTIONS.join(', ')}`)
+      const panel = value.panel
+      if (panel !== undefined && panel !== 'left' && panel !== 'right') return invalid('panel must be left or right')
+      if ((action === 'open' || action === 'close' || action === 'toggle') && panel === undefined) return invalid(`frame ${String(action)} needs a panel: left (branches and versions) or right (the agents)`)
+      const section = value.section === undefined ? undefined : text(value.section, 80)
+      if (section !== undefined && action !== 'settings') return invalid('section goes with settings')
+      return { op, action: action as FrameAction, ...(panel === undefined ? {} : { panel }), ...(section === undefined ? {} : { section }) }
     }
     default: return invalid(`unknown op ${String(op)}`)
   }

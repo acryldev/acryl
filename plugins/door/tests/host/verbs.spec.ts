@@ -62,6 +62,7 @@ const CLI_FORMS: Readonly<Record<Verb, readonly string[]>> = {
   'brief': ['brief'],
   'look': ['look'],
   'act': ['act', 'click', '--ref', '1.1'],
+  'frame': ['frame', 'close', 'left'],
   'plugin-list': ['plugin', 'list'],
   'plugin-add': ['plugin', 'add', 'plugins/pomodoro'],
   'plugin-pull': ['plugin', 'pull', 'github:someone/pomodoro@0.1.0'],
@@ -211,5 +212,17 @@ describe("the ACRYL chat's registry (DSH's)", () => {
     // The door's own tool list reads the same registry instead of failing.
     const listed = await operator(running.root, ['tool', 'list'])
     expect(listed.code, listed.err).toBe(0)
+  })
+})
+
+describe('the frame verb', () => {
+  it('reads the frame forms from the terminal', () => {
+    expect(parseInvocation(['frame']).args).toEqual({ action: 'state' })
+    expect(parseInvocation(['frame', 'close', 'left']).args).toEqual({ action: 'close', panel: 'left' })
+    expect(parseInvocation(['frame', 'toggle', 'right']).args).toEqual({ action: 'toggle', panel: 'right' })
+    expect(parseInvocation(['frame', 'settings', 'Share']).args).toEqual({ action: 'settings', section: 'Share' })
+    expect(parseInvocation(['frame', 'preview']).args).toEqual({ action: 'preview' })
+    expect(() => parseInvocation(['frame', 'close'])).toThrow('needs left')
+    expect(() => parseInvocation(['frame', 'shrink'])).toThrow('frame needs')
   })
 })

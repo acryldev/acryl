@@ -4,7 +4,7 @@
  * `.acryl/door.json` upward, or `--dir`), never through PATH or a machine-wide registry, so it reaches only the app running from that
  * folder. The secret is read from that file and sent as a `Bearer` header; it is never printed.
  *
- *   acryl brief | look | act <op> ... | plugin list|add|remove|reload | tool list|call | window list|open|focus|close|resize | menu list|click | verbs      (--json for the raw value)
+ *   acryl brief | look | act <op> ... | frame ... | plugin list|add|remove|reload | tool list|call | window list|open|focus|close|resize | menu list|click | verbs      (--json for the raw value)
  *   acryl control <...>   the same, the ACRYL Host form (`control snapshot`, `control click`, ... are look and act)
  *
  * Exit codes: 0 done, 1 the verb failed (its code and message are printed), 2 a usage error, 3 no running app in this folder.
@@ -43,6 +43,7 @@ const USAGE = `usage: acryl <verb> [options] [--json] [--dir <app folder>]
   act navigate --path <path of the app, e.g. /demo>
   act wait (--text <t> | --role <role> [--name <n>]) [--gone] [--timeout-ms <ms>]
   (look and every act take --window <n>: the desktop window whose page it is for; window list prints the numbers)
+  frame [open|close|toggle left|right | settings [<section>] | build | preview]   (the ACRYL frame around the app; alone, what is open)
   plugin list | plugin add <folder> | plugin pull <source> | plugin publish <name> [--owner <account>] [--license <id>] | plugin remove <name> | plugin reload
   window list | window open [--path <p>] | window focus --id <n> | window close --id <n> [--force]
   window resize --id <n> --width <px> --height <px>
@@ -135,6 +136,16 @@ export function parseInvocation(argv: readonly string[], env: NodeJS.ProcessEnv 
         ...(set.has('--no-clear') ? { clear: false } : {}),
         ...(set.has('--gone') ? { gone: true } : {}),
       })
+    }
+    case 'frame': {
+      const action = second ?? 'state'
+      if (action === 'open' || action === 'close' || action === 'toggle') {
+        if (third !== 'left' && third !== 'right') throw new UsageError(`frame ${action} needs left (branches and versions) or right (the agents)`)
+        return make('frame', { action, panel: third })
+      }
+      if (action === 'settings') return make('frame', { action, ...(third === undefined ? {} : { section: words.slice(2).join(' ') }) })
+      if (action === 'state' || action === 'build' || action === 'preview') return make('frame', { action })
+      throw new UsageError(`frame needs open|close|toggle left|right, settings [section], build or preview\n${USAGE}`)
     }
     case 'plugin': {
       if (second === 'list' || second === 'reload') return make(`plugin-${second}`)

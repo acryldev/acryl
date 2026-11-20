@@ -7,9 +7,9 @@ import { MAX_SNAPSHOT_NODES, MAX_WAIT_MS } from '../page/protocol.ts'
 
 /** Every verb, in the order `brief` lists them. */
 /** The verbs that only use the page: what a page-only door (a production assistant) offers. */
-export const PAGE_VERBS = ['look', 'act'] as const satisfies readonly Verb[]
+export const PAGE_VERBS = ['look', 'act', 'frame'] as const satisfies readonly Verb[]
 
-export const VERBS = ['brief', 'look', 'act', 'plugin-list', 'plugin-add', 'plugin-pull', 'plugin-publish', 'plugin-remove', 'plugin-reload', 'tool-list', 'tool-call', 'window-list', 'window-open', 'window-focus', 'window-close', 'window-resize', 'menu-list', 'menu-click'] as const
+export const VERBS = ['brief', 'look', 'act', 'frame', 'plugin-list', 'plugin-add', 'plugin-pull', 'plugin-publish', 'plugin-remove', 'plugin-reload', 'tool-list', 'tool-call', 'window-list', 'window-open', 'window-focus', 'window-close', 'window-resize', 'menu-list', 'menu-click'] as const
 export type Verb = (typeof VERBS)[number]
 
 /** The JSON Schema of a verb's arguments, as MCP lists it. */
@@ -73,6 +73,19 @@ export const VERB_SPECS: Readonly<Record<Verb, VerbSpec>> = {
         window: { type: 'integer', minimum: 1, description: 'a desktop window (the id window-list prints); default: the page used last' },
       },
       required: ['op'],
+      additionalProperties: false,
+    },
+  },
+  'frame': {
+    usage: 'frame [open|close|toggle left|right | settings [<section>] | build | preview]: the ACRYL frame around the app (its panels, mode, Settings); alone, its state',
+    description: 'Operate the ACRYL frame around the app, which is not part of the app\'s page: open, close or toggle its left panel (branches and versions) or right panel (the agents), open Settings (optionally at a section such as App or Share), or switch Build and Preview. Without an action it says what is open (look says it too). A request to collapse, open or show these is done here, never by editing the app.',
+    arguments: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['state', 'open', 'close', 'toggle', 'settings', 'build', 'preview'], description: 'default: state' },
+        panel: { type: 'string', enum: ['left', 'right'], description: 'open, close, toggle: left is branches and versions, right is the agents' },
+        section: { type: 'string', description: 'settings: the section to show, e.g. App, Share, Plugins' },
+      },
       additionalProperties: false,
     },
   },

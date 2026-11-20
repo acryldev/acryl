@@ -10,6 +10,7 @@ import { UiDriver } from './driver/driver.ts'
 import { mountIndicator } from './indicator.ts'
 import { mountOutlines } from './outline.ts'
 import { UserInputClock } from './user-input.ts'
+import { FRAME_CONTROL_KEY, type FrameControl } from './protocol.ts'
 
 export const DOOR_BASE = '/api/acryl-door'
 
@@ -48,6 +49,16 @@ export function startDoor(document: Document, base: string = DOOR_BASE): () => v
     document: () => document,
     msSinceUserInput: clock.msSince,
     touched: (element) => { outlines.touched(element) },
+    // The ACRYL frame publishes its control on its own window; this page is its canvas (same origin). A page on its own has no parent and no frame.
+    frame: () => {
+      try {
+        if (view.parent === view) return undefined
+        const control = (view.parent as unknown as Record<symbol, FrameControl | undefined>)[FRAME_CONTROL_KEY]
+        return typeof control?.run === 'function' && typeof control.state === 'function' ? control : undefined
+      } catch {
+        return undefined
+      }
+    },
     // A host that serves the app under a prefix (the ACRYL frame's canvas) marks its pages: an app path navigates under that prefix, so the same
     // `act navigate --path /board` reaches the app's /board in the frame and on the app's own server.
     ...(appBase === '' ? {} : {

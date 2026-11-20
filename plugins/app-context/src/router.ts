@@ -33,6 +33,7 @@ export function buildRouterText(root: string, manifest: PackManifest): string {
     '- Paths below are under docs/; indexes: docs/README.md, example-plugins/README.md (verified plugins); start with start-here/this-app.md',
     `- When asked about: ${topics.join('; ')}`,
     "- Read .md files completely and the nearest example, follow links before implementing; never guess a plugin's shape or an import path from memory",
+    '- A request to click, open, close, collapse, show, scroll or type on screen is done by operating the interface, never by editing code; change code only when the person asks to change the app. Use .acryl/bin/acryl look, then act for the app page, and frame for the ACRYL frame around the app (its left panel of branches and versions, its right panel of agents, Build and Preview, Settings: frame close left). The frame is not part of the app: when this app\'s door has no frame verb, do not build a replacement; tell the person which frame button does it (the panel buttons at the top left and top right, the gear for Settings)',
     '- Every feature is a Cordis plugin: plugins/<name>/index.ts plus its row in blend.yaml. Never wire a feature into src/frame.ts, src/app.ts or src/routes.ts. Done means npm test, npm run check and .acryl/bin/acryl look all agree (start-here/verify-before-done.md)',
     `</${ROUTER_TAG}>`,
   ].join('\n')

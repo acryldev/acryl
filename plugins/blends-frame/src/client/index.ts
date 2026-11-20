@@ -52,6 +52,7 @@ import { createFrameTools, installXtermStyles } from './tools.ts'
 import { createSharedVersionsApi } from './versions.ts'
 import { createGitSyncApi, type GitSyncPort } from './git-sync.ts'
 import { createSnapshotApi } from './snapshot.ts'
+import { installFrameControl } from './frame-control.ts'
 import { FrameViewState, type ViewStorage } from './view-state.ts'
 import { ThemeSwitch } from './theme-switch.ts'
 
@@ -194,6 +195,8 @@ export function apply(ctx: ClientContext): void {
   // The app's own client plugins read the frame's mode from the canvas page: Build keeps their build-time controls out of the canvas, Preview shows
   // what production shows, and a mode change reaches them without a reload.
   ctx.effect(() => installFrameView(canvas, view), '@acryldev/blends-frame: the app page view')
+  // The frame's own panels, mode and Settings for the agent (the door's frame verb), reached from the canvas page as window.parent.
+  ctx.effect(() => installFrameControl(view), '@acryldev/blends-frame: frame control')
   // DSH's right sidebar (`dsh-client-ui-sidebar-right`) is drawn inside the right panel's Panel tab: each page opened in it brings the tab forward, and
   // closing the tab collapses the sidebar, which DSH's controller owns. Until the sidebar is mounted there is nothing to collapse.
   let sidebarRight: Pick<ClientContext['sidebarRight'], 'isExpanded' | 'toggleExpanded'> | undefined

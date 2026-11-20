@@ -191,6 +191,11 @@ export class Door {
         const result = await this.act(input, signal, scope)
         return { value: result, text: `done${result.target === undefined ? '' : `: ${result.target.role} "${result.target.name}"`}${result.detail === undefined ? '' : ` (${result.detail})`}; look again before the next act` }
       }
+      case 'frame': {
+        const { window, rest } = this.windowOf(input, scope)
+        const result = await this.callPage('frame', this.parse({ ...rest, op: 'frame' }), signal, window, scope.page) as UiActionResult
+        return { value: result, text: result.detail ?? 'done' }
+      }
       case 'plugin-list': return this.plugin(plugins => plugins.list(), false, this.installed())
       case 'plugin-add': return this.plugin(extensions => extensions.install(this.insideApp(input.folder)))
       case 'plugin-pull': return input.from === undefined ? this.pull(input.source) : this.pullList(input.from, input.source)
@@ -230,6 +235,7 @@ export class Door {
       read.length === 0 ? 'No AGENTS.md or skill in the folder.' : `Read first: ${read.join(', ')}.`,
       `Page: ${value.page}${value.page === 'not open' ? ' (open the app in a browser to look and act)' : ''}.`,
       `Live plugins: ${value.plugins}.`,
+      'Asked to click, open, close, collapse, show or type on screen? Operate the interface (look, then act inside the page, frame for the ACRYL frame around it); never edit code for it unless the person asks to change the app.',
       'Verbs:',
       ...value.verbs.map(line => `  ${line}`),
     ].join('\n')

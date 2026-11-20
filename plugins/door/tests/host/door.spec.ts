@@ -79,7 +79,7 @@ describe('the door in a framework app', () => {
     expect(tools).toMatchObject({ code: 0, err: '' })
     expect(tools.out).toMatch(/no app tools are offered/u)
     const verbs = await operator(running.root, ['verbs', '--json'])
-    expect(JSON.parse(verbs.out)).toEqual(['brief', 'look', 'act', 'plugin-list', 'plugin-add', 'plugin-pull', 'plugin-publish', 'plugin-remove', 'plugin-reload', 'tool-list', 'tool-call', 'window-list', 'window-open', 'window-focus', 'window-close', 'window-resize', 'menu-list', 'menu-click'])
+    expect(JSON.parse(verbs.out)).toEqual(['brief', 'look', 'act', 'frame', 'plugin-list', 'plugin-add', 'plugin-pull', 'plugin-publish', 'plugin-remove', 'plugin-reload', 'tool-list', 'tool-call', 'window-list', 'window-open', 'window-focus', 'window-close', 'window-resize', 'menu-list', 'menu-click'])
     writeFileSync(join(running.root, 'AGENTS.md'), '# demo\n')
     const brief = await operator(running.root, ['brief'])
     expect(brief.code).toBe(0)

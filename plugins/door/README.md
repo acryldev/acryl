@@ -77,6 +77,10 @@ The verbs are one table, `src/host/verbs.ts`, and each face reads it, so a verb 
 
 `tests/host/verbs.spec.ts` lists the verbs from each face of a running app and compares them.
 
+## The frame around the page
+
+In the ACRYL frame the page is the canvas; the frame's own UI (the left panel of branches and versions, the right panel of agents, Build and Preview, Settings) is not part of it. `frame` operates that UI: `acryl frame close left`, `frame open right`, `frame toggle left`, `frame settings Share`, `frame build`, `frame preview`; `acryl frame` alone says what is open, and `look` starts with the same line. The frame publishes a small control on its own window under `Symbol.for('acryl.frame.control')` and the page script reaches it as `window.parent` (same origin), so the verb goes the way `act` goes and needs nothing else. A page opened on its own has no frame: `frame` is refused and `look` says nothing of one. A request to collapse, open or show something on screen is done this way, never by editing the app.
+
 ## Reload and navigate
 
 `act reload` reloads the page and `act navigate --path /settings` goes to another path of the app (a path that starts with one `/`, never another site). Both answer first and `act navigate` also says what the app answered at the path (`404 at /nope`, `200 at /settings`). In development a path the app does not serve, opened as a page, answers its 404 with a small page that names the missing path, links back to `/` and carries the door's script, so a mistyped path never leaves the window where nothing can be looked at; a script's `fetch` and an app's own JSON 404 are untouched.

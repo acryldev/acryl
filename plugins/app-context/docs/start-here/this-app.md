@@ -77,6 +77,11 @@ this app: `import type` lines are erased when the code runs, every other import 
 `.acryl/bin/acryl look` prints the page in the canvas as text with refs; `.acryl/bin/acryl act click --ref <ref>` acts on it; `brief` says what
 the door can do. Use it to see that your feature is on the page. See [verify before done](verify-before-done.md).
 
+A request to click, open, close, collapse, show, scroll or type on screen is done with the door, never by editing code. The ACRYL frame around
+the app (its left panel of branches and versions, its right panel of agents, Build and Preview, Settings) is not part of the app: `look` says what
+it shows, and `.acryl/bin/acryl frame close left` (or `open`, `toggle`, `left`/`right`, `settings [section]`, `build`, `preview`) operates it.
+Change code only when the person asks to change the app.
+
 ## Read next
 
 - [The feature plugin](../extending/feature-plugin.md), then the page for what the feature needs: [routes and pages](../extending/routes-and-pages.md),

@@ -15,5 +15,6 @@ export function renderSnapshot(snapshot: UiSnapshot, more: (cursor: number) => s
     return `${'  '.repeat(Math.min(node.depth, 8))}- ${node.role}${node.name === '' ? '' : ` ${JSON.stringify(node.name)}`}${level}${states}${value}${options} [ref=${node.ref}]`
   })
   const rest = snapshot.nextCursor === undefined ? '' : `\n(${String(snapshot.total - snapshot.nextCursor)} more elements; ${more(snapshot.nextCursor)})`
-  return `Page: ${snapshot.title || '(untitled)'}\nSnapshot ${String(snapshot.generation)}, ${String(snapshot.nodes.length)} of ${String(snapshot.total)} elements:\n${lines.join('\n')}${rest}`
+  const frame = snapshot.frame === undefined ? '' : `Frame (the ACRYL window around the app, not part of the app): left panel (branches, versions) ${snapshot.frame.left ? 'open' : 'closed'}, right panel (agents) ${snapshot.frame.right ? 'open' : 'closed'}, ${snapshot.frame.mode} mode${snapshot.frame.settings ? ', Settings open' : ''}. Operate it with frame (open|close|toggle left|right, settings [section], build, preview), never by editing code.\n`
+  return `${frame}Page: ${snapshot.title || '(untitled)'}\nSnapshot ${String(snapshot.generation)}, ${String(snapshot.nodes.length)} of ${String(snapshot.total)} elements:\n${lines.join('\n')}${rest}`
 }

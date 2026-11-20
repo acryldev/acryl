@@ -5,7 +5,7 @@
  * shows. It touches only the document it is given, never another window and never the OS.
  */
 
-import { UiControlError, MUTATING_OPS, type UiActionResult, type UiRequest, type UiResult } from '../protocol.ts'
+import { UiControlError, MUTATING_OPS, type FrameControl, type FrameState, type UiActionResult, type UiRequest, type UiResult } from '../protocol.ts'
 import { click, pressKey, scroll, selectOption, typeText, wait, type ActionEnvironment } from './actions.ts'
 import { RefTable } from './ref-table.ts'
 import { SnapshotBuilder } from './snapshot.ts'
@@ -39,6 +39,8 @@ export interface UiDriverOptions {
   readonly touched?: (element: Element) => void
   /** Leave the page: reload it, or go to a path of the app. Default: the document's own `location`, a moment after the answer is sent. */
   readonly leave?: (to: { readonly reload: true } | { readonly path: string }) => void
+  /** The ACRYL frame around the page, when there is one: `look` reports it and `frame` operates it. */
+  readonly frame?: () => FrameControl | undefined
 }
 
 function realSleep(ms: number, signal: AbortSignal): Promise<void> {
@@ -151,7 +153,17 @@ export class UiDriver {
 
   private async run(request: UiRequest, signal: AbortSignal): Promise<UiResult> {
     switch (request.op) {
-      case 'snapshot': return this.snapshots.snapshot({ ...(request.cursor === undefined ? {} : { cursor: request.cursor }), ...(request.maxNodes === undefined ? {} : { maxNodes: request.maxNodes }) })
+      case 'snapshot': {
+        const snapshot = this.snapshots.snapshot({ ...(request.cursor === undefined ? {} : { cursor: request.cursor }), ...(request.maxNodes === undefined ? {} : { maxNodes: request.maxNodes }) })
+        const frame = this.frameState()
+        return frame === undefined ? snapshot : { ...snapshot, frame }
+      }
+      case 'frame': {
+        const control = this.options.frame?.()
+        if (control === undefined) throw new UiControlError('not-actionable', 'this page is not inside the ACRYL frame (it runs on its own), so there is no frame to operate')
+        const detail = await control.run(request)
+        return { ok: true, detail }
+      }
       case 'click': return await this.watchLeaving(() => click(this.env, request), signal)
       case 'type': return await this.watchLeaving(() => typeText(this.env, request), signal)
       case 'select': return selectOption(this.env, request)
@@ -160,6 +172,15 @@ export class UiDriver {
       case 'wait': return wait(this.env, request, signal)
       case 'reload': return this.leave({ reload: true }, 'reloading')
       case 'navigate': return this.leave({ path: request.path }, `going to ${request.path}`)
+    }
+  }
+
+  /** The frame's state, or undefined when the page is not in a frame or the frame cannot be read. */
+  private frameState(): FrameState | undefined {
+    try {
+      return this.options.frame?.()?.state()
+    } catch {
+      return undefined
     }
   }
 

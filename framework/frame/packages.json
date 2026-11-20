@@ -78,7 +78,7 @@
       "path": "../plugins/system-prompt"
     },
     "@acryldev/app-context": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/app-context"
     },
     "@acryldev/versions": {
@@ -86,7 +86,7 @@
       "path": "../plugins/versions"
     },
     "@acryldev/blends-frame": {
-      "version": "0.2.8",
+      "version": "0.2.9",
       "path": "../plugins/blends-frame"
     }
   },
