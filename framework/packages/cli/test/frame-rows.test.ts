@@ -8,7 +8,10 @@ import { Acryl } from '@acryldev/blends'
 import * as router from '@acryldev/blends/cordis/router'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import { appPluginsRow } from '../src/frame-rows'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { appFrameRows, appPluginsRow } from '../src/frame-rows'
 
 const row = appPluginsRow('/app')
 
@@ -94,5 +97,25 @@ describe('the generated app-plugins row', () => {
     expect(await (await host.router.request('/app/timer')).json()).toEqual({ from: 'timer' })
     await timer.dispose()
     expect((await host.router.request('/app/timer')).status).toBe(404)
+  })
+})
+
+describe('the app-plugins row isolates only the services of the app\'s own plugins', () => {
+  it("leaves the host's router out: the blank template's router row is the host's, even with plugins/router in the app", () => {
+    const app = mkdtempSync(join(tmpdir(), 'frame-rows-'))
+    try {
+      const template = join(import.meta.dirname, '..', 'templates', 'blank')
+      writeFileSync(join(app, 'blend.yaml'), readFileSync(join(template, 'blend.yaml'), 'utf8'))
+      const plugin = (folder: string, text: string) => {
+        mkdirSync(join(app, 'plugins', folder), { recursive: true })
+        writeFileSync(join(app, 'plugins', folder, 'index.ts'), text)
+      }
+      plugin('router', "ctx.provide('router')")
+      plugin('home', "super(ctx, 'home')")
+      const { rows } = appFrameRows(app, { appTs: 'export async function composeInto() {}', hasFrame: true })
+      expect(rows.find((row) => row.id === 'app-plugins')?.isolate).toEqual({ home: true })
+    } finally {
+      rmSync(app, { recursive: true, force: true })
+    }
   })
 })

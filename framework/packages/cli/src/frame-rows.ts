@@ -13,9 +13,14 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FRAME_PAGE_PREFIX } from './ide-profile'
 
-/** Rows the host mounts itself: an app's manifest may name them, but the generated layer does not. */
+/**
+ * Rows the host mounts itself: an app's manifest may name them, but the generated layer does not. Both spellings of each: the vendored folder's
+ * (`acryl-router`) and the blank template's row id (`router`, `server`), whose `plugins/<id>` folder is the host's own plugin, never the app's.
+ */
 export const HOST_PROVIDED_IDS: ReadonlySet<string> = new Set([
   'instance',
+  'router',
+  'server',
   'acryl-router',
   'acryl-node-server',
   'acryl-web-server',
