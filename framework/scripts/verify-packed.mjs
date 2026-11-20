@@ -83,7 +83,7 @@ try {
     const app = join(scratch, `app-${template}`)
     // Only the files (the plain app): the tarball is installed next, as acrylblends may not be published yet.
     run(
-      bin('create-acrylblends'),
+      bin('create-blends'),
       [app, '--template', template, '--bare', '--no-install', '--no-start', '-y'],
       scratch,
     )
@@ -226,7 +226,7 @@ console.log('ws-check: ok')
   )
   const pulled = join(scratch, 'app-pulled')
   run(
-    bin('create-acrylblends'),
+    bin('create-blends'),
     [pulled, '--from', 'acrylblends.chat', '--registry', registry, '--bare', '-y'],
     scratch,
   )

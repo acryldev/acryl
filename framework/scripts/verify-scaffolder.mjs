@@ -530,7 +530,7 @@ spec:
   const withoutServer = blueprintText
     .replace('version: 0.1.0', 'version: 0.3.0')
     .replace(
-      / {4}- id: server\n {6}name: '?@acryldev\/node-server'?\n {6}config:\n {8}hostname: "\{\{parameters\.hostname\}\}"\n/,
+      / {4}- id: server\n {6}name: acryl-node-server\n {6}config:\n {8}hostname: "\{\{parameters\.hostname\}\}"\n/,
       '',
     )
     // The server row was the only user of the hostname parameter, and an unused parameter makes a Blueprint invalid.
