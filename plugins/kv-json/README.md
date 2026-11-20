@@ -1,6 +1,6 @@
 # @acryldev/kv-json
 
-The JSON-file provider of the [`kv` port](../acryl-kv/README.md), one Cordis plugin. The whole store is one file, read into memory when it
+The JSON-file provider of the [`kv` port](../kv/README.md), one Cordis plugin. The whole store is one file, read into memory when it
 opens, and rewritten **atomically** on every write: the new content goes to a temporary file in the same folder, is flushed, and is renamed over the
 file. A crash leaves the old file or the new one, never half of one.
 

@@ -1,6 +1,6 @@
 # @acryldev/kv-db
 
-The [`kv` port](../acryl-kv/README.md) over the [`db` port](../acryl-db/README.md), one Cordis plugin: the documents are rows of a `kv` table
+The [`kv` port](../kv/README.md) over the [`db` port](../db/README.md), one Cordis plugin: the documents are rows of a `kv` table
 (`key TEXT PRIMARY KEY, value TEXT NOT NULL`) in the app's own SQL database, so an app that grows from a JSON file into SQL keeps its data
 (`copyKv` imports the file). The plugin injects `db`, stays PENDING until a `db` provider is active, and provides `kv`.
 

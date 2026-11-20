@@ -161,7 +161,8 @@ for (const [name, action, manifest, , code, tests] of details) {
       ),
     ),
   )
-  const framework = manifest.dependencies?.['@acryldev/blends'] ?? manifest.peerDependencies?.['@acryldev/blends']
+  const framework =
+    manifest.dependencies?.['@acryldev/blends'] ?? manifest.peerDependencies?.['@acryldev/blends']
   const client = manifest.dsh?.client
   const dshImports = [
     ...new Set(
@@ -200,7 +201,8 @@ say('## The peer-dependency fix, scoped')
 say()
 const toPeer = details
   .filter(
-    ([, action, manifest]) => action === 'port' && manifest.dependencies?.['@acryldev/blends'] !== undefined,
+    ([, action, manifest]) =>
+      action === 'port' && manifest.dependencies?.['@acryldev/blends'] !== undefined,
   )
   .map(([name]) => `\`${name}\``)
 say(

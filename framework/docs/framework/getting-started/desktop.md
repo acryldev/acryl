@@ -11,7 +11,7 @@ In an app made by `npm create @acryldev/blends@latest my-app nodejs` (or `notes`
 ```sh
 cd my-app
 npm install
-npx acrylblends add desktop-shell-shell
+npx acrylblends add desktop
 npm install
 npm run desktop
 ```

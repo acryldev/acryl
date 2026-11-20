@@ -258,7 +258,7 @@ console.log('ws-check: ok')
         'exec',
         '--no',
         '--',
-        'create-acrylblends',
+        'create-blends',
         join(scratch, 'app-refused'),
         '--from',
         'acryl.gtd',

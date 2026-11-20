@@ -1,7 +1,7 @@
 # @acryldev/kv
 
 The `kv` port: named JSON documents for an app too small for SQL, whichever provider serves it (`@acryldev/kv-json` for one file, `@acryldev/kv-db`
-over the [`db` port](../acryl-db/README.md)). An app plugin declares `inject: ['kv']`, imports types from here, and never imports a provider.
+over the [`db` port](../db/README.md)). An app plugin declares `inject: ['kv']`, imports types from here, and never imports a provider.
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'

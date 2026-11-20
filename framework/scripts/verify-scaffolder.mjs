@@ -723,7 +723,7 @@ spec:
     desktopPackage.dependencies?.electron !== undefined
   )
     fail('desktop: electron must be a development dependency only')
-  if (!/node plugins\/desktop\/launch\.ts/.test(desktopPackage.scripts?.desktop ?? ''))
+  if (desktopPackage.scripts?.desktop !== 'acryl-desktop')
     fail('desktop: the desktop script is missing')
   if (desktopPackage.acrylblends?.desktopPath !== '/todo')
     fail('desktop: the todo window must open on /todo')
@@ -811,7 +811,7 @@ spec:
       env: { ...process.env, ELECTRON_SKIP_BINARY_DOWNLOAD: '1' },
     })
     if (
-      !existsSync(join(notes, 'plugins', 'desktop', 'main.ts')) ||
+      !existsSync(join(notes, 'node_modules', '@acryldev', 'desktop-shell', 'package.json')) ||
       !existsSync(join(notes, 'blend.yaml')) ||
       !existsSync(join(notes, 'plugins', 'library.json'))
     )

@@ -1,6 +1,6 @@
 # @acryldev/db-sqlite
 
-The SQLite provider of the [`db` port](../acryl-db/README.md), one Cordis plugin. It opens one file with Node's built-in `node:sqlite`
+The SQLite provider of the [`db` port](../db/README.md), one Cordis plugin. It opens one file with Node's built-in `node:sqlite`
 (WAL journal, `synchronous = NORMAL`, a busy timeout), applies the app's numbered migrations, and provides `db`.
 
 ```yaml
