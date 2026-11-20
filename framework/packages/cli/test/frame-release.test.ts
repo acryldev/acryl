@@ -8,6 +8,7 @@ import {
   FRAME_RELEASE,
   frameProfileForApp,
   frameProfileInput,
+  isFramedByPackages,
   publishedFrameProfile,
 } from '../src/frame-release.ts'
 import { VERSION } from '../src/version.ts'
@@ -69,5 +70,22 @@ describe('the frame specs of an existing app', () => {
     ).toEqual(publishedFrameProfile())
     process.env.ACRYLBLENDS_FRAME_PACKAGES = 'none'
     expect(frameProfileForApp(app('desktop-none', {}, true))).toBeUndefined()
+  })
+})
+
+describe('a starter already in the frame by its packages', () => {
+  const framed = (name: string, dependencies: Record<string, string>, patch?: string): string => {
+    const root = app(name, dependencies)
+    if (patch !== undefined) writeFileSync(join(root, 'cordis.patch.yml'), patch)
+    return root
+  }
+  const shell = { '@acryldev/desktop-shell': '0.1.3' }
+  it('is one that declares the desktop shell and mounts the Blends frame', () => {
+    expect(isFramedByPackages(framed('f1', shell, "- name: '@acryldev/blends-frame'\n"))).toBe(true)
+  })
+  it('is not one that lacks either: create then frames it as before', () => {
+    expect(isFramedByPackages(framed('f2', shell))).toBe(false)
+    expect(isFramedByPackages(framed('f3', {}, "- name: '@acryldev/blends-frame'\n"))).toBe(false)
+    expect(isFramedByPackages(framed('f4', {}))).toBe(false)
   })
 })

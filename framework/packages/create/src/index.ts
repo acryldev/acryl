@@ -17,6 +17,7 @@ import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { findSecrets } from '@acryldev/app-persistence'
+import { isFramedByPackages } from '@acryldev/blends/cli'
 import { CLASS, CREATE, PACKAGE, TEMPLATE_MANIFEST } from './names'
 import {
   openPublicRegistry,
@@ -472,7 +473,8 @@ async function createFromSource(
     // In the frame: the framework's own commands do it, as for an app made before the frame. `add desktop` brings the window; `upgrade` brings the starter's
     // library plugins to this release (its data then lives under ~/.acryl) and writes the frame around the starter's own frame row. Before the first
     // commit, so the app's first version is the app as made.
-    if (options.desktop) {
+    // A starter that is in the frame already by its packages (it declares the desktop shell and mounts the frame) is left as it is.
+    if (options.desktop && !isFramedByPackages(target)) {
       const framework = (args: string[]) =>
         io.run(process.execPath, [acrylblendsBin(), ...args, '--dir', target], io.cwd)
       // The upgrade runs on the starter as it was published, before anything here edits src/app.ts: it recognizes a released scaffold only unedited.

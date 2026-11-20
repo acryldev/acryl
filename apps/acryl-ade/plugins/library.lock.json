@@ -9,9 +9,9 @@
         "src/host/api.ts": "0626ef27ad2065b3b379",
         "src/host/audit.ts": "fb718ee832bdcbaf13e4",
         "src/host/channel.ts": "1152afb1155be64f4707",
-        "src/host/chat-tools.ts": "6bd12694b28b34b92b12",
+        "src/host/chat-tools.ts": "364221a07c1e7d09cfe9",
         "src/host/door-file.ts": "bd02e76eba5e1f14bffe",
-        "src/host/door.ts": "7379a74db8c78ccee3a7",
+        "src/host/door.ts": "316ec6b6051f52ddaa73",
         "src/host/http.ts": "e894092402938071b346",
         "src/host/mcp-routes.ts": "d139b336307d391d0696",
         "src/host/operator-routes.ts": "474e20dc429e546b852f",
@@ -20,12 +20,12 @@
         "src/host/shell.ts": "c1d49a1ce31b900a53f2",
         "src/host/shim.ts": "5d262506a024163e1f61",
         "src/host/verbs.ts": "7a4037b23640feb08a1e",
-        "src/index.ts": "a3b5985a71bce353971a",
+        "src/index.ts": "9098e3ff427557e30631",
         "src/page/api.ts": "5644cb5607452893bc11",
         "src/page/base.ts": "6604aa244a127f938bca",
         "src/page/channel.ts": "8a4ee9fbc63340c8da56",
         "src/page/driver/accessibility.ts": "f79e2c5a2c80b569d9d7",
-        "src/page/driver/actions.ts": "7e649965ccf69b0c2a22",
+        "src/page/driver/actions.ts": "5b6ad0cf71a1873ff035",
         "src/page/driver/driver.ts": "05facbe2d7704091fd8e",
         "src/page/driver/ref-table.ts": "ee4372af68a383ffe91a",
         "src/page/driver/sensitivity.ts": "699111c1e667ce4a5645",
@@ -64,7 +64,7 @@
         "src/adapter/utils.ts": "9b86a115a971464c59c5",
         "src/adapter/websocket-types.ts": "9dbe10d817290c0ce9e6",
         "src/adapter/websocket.ts": "2facb3ec849915d0f54f",
-        "src/client-modules.ts": "7eac7365a589762cbf7e",
+        "src/client-modules.ts": "5fd675294651ef4185f6",
         "src/index.ts": "fd5721ade0aa3eb6615c",
         "src/register.ts": "a1728e110962650d4a01",
         "src/test-websocket.ts": "a91e1e4b4b37e7b77bf2",
@@ -290,12 +290,12 @@
       "from": "1.5.19",
       "files": {
         "browser.ts": "1098d5b0127ac0b03365",
-        "index.ts": "a177c53bce60b8762124",
+        "index.ts": "6eaaec1dc9c16ac54850",
         "ledger.ts": "2af8407a66e314b9bbbb",
-        "plugin-store.ts": "0d27e449b793694662c6",
-        "resolve.ts": "2c63681eff98555f4a81",
-        "routes.ts": "9c065d0356c13870c1fc",
-        "stage.ts": "036dc2a0d2cedc123b99"
+        "plugin-store.ts": "169e775c384b00a7d792",
+        "resolve.ts": "f9c2292b1bd754957429",
+        "routes.ts": "0db353e3f1b1a1e7743d",
+        "stage.ts": "cdf25642be13f41dd461"
       }
     },
     "manifest": {
@@ -303,21 +303,21 @@
       "files": {
         "app-plugins.ts": "9066deec796c90af1a4f",
         "index.ts": "d8ab43c9964c46454e05",
-        "lock.ts": "03f8033bbdffad3f9431",
-        "snapshot.ts": "047c2a1a545bdc7e8880",
+        "lock.ts": "36e3ad4828acc07d020c",
+        "snapshot.ts": "e54ad193674fa4c4a9c2",
         "upgrade-cli.ts": "636628cfbaffe019472f",
-        "upgrade.ts": "1e0b1851f1542741d083"
+        "upgrade.ts": "402e151490b7d6e1f672"
       }
     },
     "plugin-share": {
       "from": "1.5.19",
       "files": {
-        "README.md": "db92a6810c4c05434fd9",
-        "index.ts": "25b8a4803934640c6d9a",
-        "native.ts": "0839d2ebaa90b40183f4",
-        "package.ts": "4659bc3aafdce32d031c",
-        "publish.ts": "26aed5dfdd2be96e8cae",
-        "pull-check.ts": "0c4255567c41c01d66f5",
+        "README.md": "1cc6db66ee2e8cdd2e2c",
+        "index.ts": "ab1aca71130607f781b3",
+        "native.ts": "174e05294e88b0c2a54b",
+        "package.ts": "45abb650fed6093be1a4",
+        "publish.ts": "6aaabfd6c452b240095b",
+        "pull-check.ts": "80ec29321a6ef1a51f4d",
         "pull-list.ts": "1701ddea0bf9cae260d5",
         "pulled-records.ts": "9a9aa2a26014da112735"
       }
@@ -325,17 +325,17 @@
     "sandbox": {
       "from": "1.5.19",
       "files": {
-        "index.ts": "c1c60f42d30c0417a6fc",
-        "runner.mjs": "6437184989f4848075ba"
+        "index.ts": "d4a51ddd3c9ebe48ef48",
+        "runner.mjs": "962a5e0ac6d53e23011c"
       }
     },
     "save": {
       "from": "1.5.19",
       "files": {
         "cli.ts": "fccad83af5a41bde542b",
-        "index.ts": "48f96cde6c73e781e3e6",
+        "index.ts": "fe63d95fc798324d89d7",
         "share-cli.ts": "2201fe37cbbc5d167e17",
-        "share.ts": "458a795e3298eb69eb82"
+        "share.ts": "f154970e353a64f55ade"
       }
     }
   }

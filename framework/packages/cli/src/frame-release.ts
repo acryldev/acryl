@@ -117,6 +117,20 @@ export function frameProfileForApp(root: string): FrameProfileSpecs | undefined 
     : undefined
 }
 
+/**
+ * Whether the app is in the frame already, by its packages: it depends on the desktop shell package and its `cordis.patch.yml` mounts the Blends frame. A starter
+ * built that way (ACRYL ADE and Control Center, made from the monorepo) needs neither `add desktop-shell` nor the framing `upgrade`: both would refuse it (the
+ * shell is declared, and its library plugin copies are newer than the lock) and nothing is missing. `create` asks here.
+ */
+export function isFramedByPackages(appDir: string): boolean {
+  if (!dependsOn(appDir, DESKTOP_SHELL_PACKAGE)) return false
+  try {
+    return readFileSync(join(appDir, 'cordis.patch.yml'), 'utf8').includes('@acryldev/blends-frame')
+  } catch {
+    return false
+  }
+}
+
 function dependsOn(root: string, name: string): boolean {
   try {
     const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
