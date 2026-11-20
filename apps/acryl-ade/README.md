@@ -1,6 +1,6 @@
 # ACRYL ADE
 
-**ACRYL ADE**, the Agent Development Environment: the ACRYL IDE (<https://github.com/acryldev/acryl>) as one Blend. Registry id `acryl.ade`. Source: <https://github.com/acrylblends/05-acryl-ade>. Page: <https://acrylblends.github.io/blends/ai/ade/acryl.ade>.
+**ACRYL ADE**, the Agent Development Environment: the ACRYL IDE (<https://github.com/acryldev/acryl>) as one Blend. Registry id `acryl.ade`. Source: <https://github.com/acryldev/acryl/tree/main/apps/acryl-ade> (the ACRYL monorepo). Page: <https://acrylblends.github.io/blends/ai/ade/acryl.ade>.
 
 It opens the IDE's workbench, ported into the Blends framework as `@acryldev/workspace`:
 
@@ -12,13 +12,13 @@ The chat is the same agent ACRYL IDE runs, with its shell, file tools and jobs. 
 
 ## Download
 
-The app, ready to install (the latest release, <https://github.com/acrylblends/05-acryl-ade/releases/latest>):
+The app, ready to install (release 0.2.1, <https://github.com/acryldev/acryl/releases/tag/ade-v0.2.1>):
 
 | | Apple Silicon / ARM | Intel / x64 |
 |---|---|---|
-| macOS | [ACRYL-ADE-mac-arm64.dmg](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-mac-arm64.dmg) | [ACRYL-ADE-mac-x64.dmg](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-mac-x64.dmg) |
-| Windows | [ACRYL-ADE-win-arm64.exe](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-win-arm64.exe) | [ACRYL-ADE-win-x64.exe](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-win-x64.exe) |
-| Linux (Debian, Ubuntu) | [ACRYL-ADE-linux-arm64.deb](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-linux-arm64.deb) | [ACRYL-ADE-linux-x64.deb](https://github.com/acrylblends/05-acryl-ade/releases/latest/download/ACRYL-ADE-linux-x64.deb) |
+| macOS | [ACRYL-ADE-mac-arm64.dmg](https://github.com/acryldev/acryl/releases/download/ade-v0.2.1/ACRYL-ADE-mac-arm64.dmg) | [ACRYL-ADE-mac-x64.dmg](https://github.com/acryldev/acryl/releases/download/ade-v0.2.1/ACRYL-ADE-mac-x64.dmg) |
+| Windows | [ACRYL-ADE-win-arm64.exe](https://github.com/acryldev/acryl/releases/download/ade-v0.2.1/ACRYL-ADE-win-arm64.exe) | [ACRYL-ADE-win-x64.exe](https://github.com/acryldev/acryl/releases/download/ade-v0.2.1/ACRYL-ADE-win-x64.exe) |
+| Linux (Debian, Ubuntu) | [ACRYL-ADE-linux-arm64.deb](https://github.com/acryldev/acryl/releases/download/ade-v0.2.1/ACRYL-ADE-linux-arm64.deb) | [ACRYL-ADE-linux-x64.deb](https://github.com/acryldev/acryl/releases/download/ade-v0.2.1/ACRYL-ADE-linux-x64.deb) |
 
 The apps are not signed yet. macOS: the first start is right-click > Open. Windows: SmartScreen may ask, More info > Run anyway.
 Linux: `sudo apt install ./ACRYL-ADE-linux-x64.deb`. On Windows and Linux ACRYL ADE uses the git on your machine.
@@ -32,12 +32,6 @@ npm create @acryldev/blends@latest my-ade -- --from acryl.ade
 cd my-ade && npm run dev
 ```
 
-Or run it straight from this repository, <https://github.com/acrylblends/05-acryl-ade>:
-
-```bash
-git clone https://github.com/acrylblends/05-acryl-ade.git
-cd 05-acryl-ade && npm install && npm run dev
-```
 
 The first screen asks for a model key (Settings > Models). Add a project with the `+` next to Projects.
 
