@@ -11,7 +11,7 @@ export interface OpenComment extends LineComment {
   readonly createdAt: number
 }
 
-export const COMMENTS_STORAGE_KEY = '@acryldev/workspace:comments:v1'
+export const COMMENTS_STORAGE_KEY = 'acryl-workspace:comments:v1'
 export const MAX_COMMENTS_PER_WORKTREE = 200
 const MAX_TEXT = 4000
 const MAX_LINES = 200

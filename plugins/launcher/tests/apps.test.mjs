@@ -123,6 +123,6 @@ test('the list has its own file: the framework rewriting apps.json does not lose
   const other = join(root, 'other'); mkdirSync(other); writeFileSync(join(other, 'blend.yaml'), 'name: other\n')
   addApp(home, { path: other })
   // The framework restarts and writes only its own record into apps.json.
-  writeFileSync(join(home, 'apps.json'), JSON.stringify({ apps: [{ id: '@acryldev/control-center-7234', name: 'ACRYL Control Center', created: 't' }] }))
+  writeFileSync(join(home, 'apps.json'), JSON.stringify({ apps: [{ id: 'acryl-control-center-7234', name: 'ACRYL Control Center', created: 't' }] }))
   assert.deepEqual(readApps(home).map(app => app.id), ['csv', 'other'])
 }))

@@ -20,7 +20,7 @@ provider whose harness flow offers an account sign-in (GitHub Copilot, ...). API
   returns to the Host's own `/oauth/callback` on the origin these routes are served on; a successful sign-in makes the
   `deepseek-account` model route the default when the current default cannot answer. DeepSeek's account flow on
   `ctx.authorization` is never started as a flow.
-- **Terminal** (`src/account-callback.ts`, entry `@acryldev/sign-in/account-callback`, row `@acryldev/sign-in-account-callback`): the
+- **Terminal** (`src/account-callback.ts`, entry `@acryldev/sign-in/account-callback`, row `acryl-sign-in-account-callback`): the
   terminal has no web server for DeepSeek's browser callback, and DSH's would also wake the API gateway. This row serves
   `/oauth/callback` on its own loopback port (listening from the first sign-in, closed with the row), as `webServer` in the
   Loader realm `acryl-account-callback` that only the `deepseek-account` row shares, and provides `acrylAccountSignIn`

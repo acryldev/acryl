@@ -20,7 +20,7 @@ import type { KanbanBoard, KanbanCard, KanbanColumnId } from './state.ts'
 import type { ShellMode } from '../worktrees/shell-state.ts'
 import type { WorkspaceGroups } from './groups.ts'
 
-export const STORAGE_KEY = '@acryldev/workspace:v1'
+export const STORAGE_KEY = 'acryl-workspace:v1'
 
 const MAX_TEXT = 200_000
 const MAX_TOTAL = 1_000_000

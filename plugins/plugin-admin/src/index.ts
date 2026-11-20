@@ -56,7 +56,7 @@ export function apply(ctx: Context): void {
   ctx.routerHttp.mount(PLUGIN_ADMIN_API_PREFIX)
 
   ctx.plugin({
-    name: '@acryldev/plugin-admin-lifecycle',
+    name: 'acryl-plugin-admin-lifecycle',
     inject: ['router', 'acrPluginLifecycle'],
     apply(child: Context): void {
       const view = new PluginLifecycleView(
@@ -72,7 +72,7 @@ export function apply(ctx: Context): void {
   // Layer 1 of Agent Control: the agent lists and switches plugins through the same lifecycle service. It is a
   // separate child so a surface without the tool registry still gets the routes above.
   ctx.plugin({
-    name: '@acryldev/plugin-admin-agent-tools',
+    name: 'acryl-plugin-admin-agent-tools',
     inject: ['acrylTools', 'acrPluginLifecycle'],
     apply(child: Context): void {
       const view = new PluginLifecycleView(child, child.acrPluginLifecycle, () => undefined)

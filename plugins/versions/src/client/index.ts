@@ -21,7 +21,7 @@ export interface AcrylVersionsService {
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
-    /** The Versions section and its API, provided by `@acryldev/versions-client`. */
+    /** The Versions section and its API, provided by `acryl-versions-client`. */
     acrylVersions: AcrylVersionsService
   }
 }

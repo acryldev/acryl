@@ -21,7 +21,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** The sections' shared dictionary and styles, registered once for all of them. */
 export function settingsSharedPlugin() {
   return {
-    name: '@acryldev/workspace-settings-shared',
+    name: 'acryl-workspace-settings-shared',
     inject: ['locale'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => ctx.locale.register(SETTINGS_LOCALE_NAMESPACE, { zh, en }), '@acryldev/workspace settings: dictionaries')

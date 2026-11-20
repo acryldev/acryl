@@ -52,7 +52,7 @@ One `ctx.effect` owns the runner and both registrations.
 
 ## Client
 
-Client plugin `@acryldev/versions-client`, platform `web`. It provides the `acrylVersions` service:
+Client plugin `acryl-versions-client`, platform `web`. It provides the `acrylVersions` service:
 
 ```ts
 { api: VersionsApi, Section: ComponentType<{ path: string }> }

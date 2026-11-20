@@ -9,12 +9,12 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { CommentsGlyph } from '../chrome/panel-icons.tsx'
 
 export const COMMENTS_KIND = 'comments'
-export const COMMENTS_ID = '@acryldev/workspace/comments'
+export const COMMENTS_ID = 'acryl-workspace/comments'
 
 /** PENDING (not failed) while the upstream right sidebar is absent; both registrations unwind together. */
 export function commentsTabPlugin(shell: WorkspaceShellState, comments: CommentStore, terminals: CommentTerminals, writeText: WriteText | undefined) {
   return {
-    name: '@acryldev/workspace-comments-tab',
+    name: 'acryl-workspace-comments-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {

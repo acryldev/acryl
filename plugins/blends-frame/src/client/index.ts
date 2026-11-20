@@ -390,7 +390,7 @@ export function apply(ctx: ClientContext): void {
     }, NameYourApp))
   }
   ctx.plugin({
-    name: '@acryldev/blends-frame-plugins-settings',
+    name: 'acryl-blends-frame-plugins-settings',
     inject: ['slots', 'locale'],
     apply(child: ClientContext): void {
       child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { plugins: 'Plugins', app: 'App' }, zh: { plugins: '插件', app: '应用' } }), '@acryldev/blends-frame: dictionary')
@@ -420,7 +420,7 @@ export function apply(ctx: ClientContext): void {
 
   // Settings > General: a short list of the shortcuts.
   ctx.plugin({
-    name: '@acryldev/blends-frame-shortcuts-row',
+    name: 'acryl-blends-frame-shortcuts-row',
     inject: ['slots', 'shortcuts'],
     apply(child: ClientContext): void {
       child.slots.inject('settings.general.item', () => child.slots.register({
@@ -453,7 +453,7 @@ export function apply(ctx: ClientContext): void {
   // the composer's input row, and the send gesture hands its page and selector to the frame's Host, which gives them to the agent as context for
   // that message; the person's message itself keeps exactly their words.
   ctx.plugin({
-    name: '@acryldev/blends-frame-element-selection',
+    name: 'acryl-blends-frame-element-selection',
     inject: ['slots', 'sessions'],
     apply(child: ClientContext): void {
       child.slots.inject('conversation.input.overlay', () => child.slots.register({

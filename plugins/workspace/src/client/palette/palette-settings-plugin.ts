@@ -6,5 +6,5 @@ import { PaletteSection } from './PalettePanel.tsx'
 
 /** @param config - what the palette lists, shared with the palette itself. */
 export function paletteSettingsPlugin(config: PaletteConfigState) {
-  return settingsSectionPlugin('@acryldev/workspace-palette-settings', 'palette', 42, (ctx, base) => ctx.slots.register({ ...base, inject: () => ({ config }) }, PaletteSection))
+  return settingsSectionPlugin('acryl-workspace-palette-settings', 'palette', 42, (ctx, base) => ctx.slots.register({ ...base, inject: () => ({ config }) }, PaletteSection))
 }

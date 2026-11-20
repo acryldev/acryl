@@ -4,12 +4,12 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "jsxImportSource": "@acryldev/router-jsx",
+    "jsxImportSource": "acryl-router-jsx",
     "paths": {
-      "@acryldev/router-jsx/jsx-runtime": [
+      "acryl-router-jsx/jsx-runtime": [
         "./src/core/jsx/jsx-runtime.ts"
       ],
-      "@acryldev/router-jsx/jsx-dev-runtime": [
+      "acryl-router-jsx/jsx-dev-runtime": [
         "./src/core/jsx/jsx-dev-runtime.ts"
       ]
     },

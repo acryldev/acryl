@@ -23,7 +23,7 @@ describe('split ratio', () => {
     expect(readSplitRatio(storage)).toBe(SPLIT_DEFAULT)
     writeSplitRatio(storage, 0.65)
     expect(readSplitRatio(storage)).toBe(0.65)
-    data.set('@acryldev/workspace:split-ratio', 'garbage')
+    data.set('acryl-workspace:split-ratio', 'garbage')
     expect(readSplitRatio(storage)).toBe(SPLIT_DEFAULT)
     const broken = { getItem: () => { throw new Error('blocked') }, setItem: () => { throw new Error('blocked') } }
     expect(readSplitRatio(broken)).toBe(SPLIT_DEFAULT)

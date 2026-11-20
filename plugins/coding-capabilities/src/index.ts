@@ -209,7 +209,7 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
     surfaces: ['tui'],
     requiresPackages: ['@acryldev/sign-in'],
     loaderPatches: [
-      { insert: [{ id: '@acryldev/sign-in-account-callback', name: '@acryldev/sign-in/account-callback', isolate: { webServer: 'acryl-account-callback' } }] },
+      { insert: [{ id: 'acryl-sign-in-account-callback', name: '@acryldev/sign-in/account-callback', isolate: { webServer: 'acryl-account-callback' } }] },
       { id: 'deepseek-account', name: '@deepseek-ai/dsh-deepseek-account-platform', isolate: { webServer: 'acryl-account-callback' } },
     ],
   },

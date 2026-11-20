@@ -14,7 +14,7 @@ import {
 } from './dock-model.ts'
 import { DockGroups, parseSavedDockGroups, serializeDockGroups } from './dock-tabs.ts'
 
-export const DOCK_STORAGE_KEY = '@acryldev/workspace:dock'
+export const DOCK_STORAGE_KEY = 'acryl-workspace:dock'
 
 type StorageLike = Pick<Storage, 'getItem' | 'setItem'>
 
