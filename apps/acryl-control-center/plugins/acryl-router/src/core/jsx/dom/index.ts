@@ -1,6 +1,6 @@
 /**
  * @module
- * This module provides APIs for `@acryldev/router/jsx/dom`.
+ * This module provides APIs for `acryl-router/jsx/dom`.
  */
 
 import { isValidElement, reactAPICompatVersion, shallowEqual } from '../base.ts'

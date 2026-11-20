@@ -6,8 +6,8 @@ import type { GetConnInfo } from '../../helper/conninfo/index.ts'
  * @returns Connection information including remote address
  * @example
  * ```ts
- * import { Acryl } from '@acryldev/blends'
- * import { handle, getConnInfo } from '@acryldev/blends/cloudflare-pages'
+ * import { Acryl } from 'acrylblends'
+ * import { handle, getConnInfo } from 'acrylblends/cloudflare-pages'
  *
  * const app = new Acryl()
  *

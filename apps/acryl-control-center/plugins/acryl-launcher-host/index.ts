@@ -1,6 +1,6 @@
 /**
  * The launcher's Host half as a plugin of a Blends app (spec 050 T016), copied into the app by `scripts/launcher-blend.mjs` next to the shared sources of
- * `plugins/launcher-desktop/src`. Cordis Host plugin: the routes behind the ACRYL screen, the first screen of the desktop app (spec 050 T012). It lists the apps in the ACRYL home's
+ * `plugins/acryl-launcher-desktop/src`. Cordis Host plugin: the routes behind the ACRYL screen, the first screen of the desktop app (spec 050 T012). It lists the apps in the ACRYL home's
  * `apps.json`, adds, removes, makes, starts and stops them, and stops everything it started when it unloads.
  * Capability boundary: the list and what runs on this machine (one service, `LauncherService`); the drawing is the Client half.
  */
@@ -8,8 +8,8 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@acryldev/blends/cordis/router'
-import type {} from '@acryldev/blends/cordis/router-http'
+import type {} from 'acrylblends/cordis/router'
+import type {} from 'acrylblends/cordis/router-http'
 import { LAUNCHER_API_PREFIX } from './contract.ts'
 import { fileDoor } from './door.ts'
 import { readBlends } from './registry.ts'
@@ -36,10 +36,10 @@ export function apply(ctx: Context): void {
     door: fileDoor(),
   })
   const report = (operation: string, cause: unknown): void => {
-    ctx.logger.error(`@acryldev/launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger.error(`acryl-launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   // Every process this plugin started goes with it, whether it unloads or the app quits.
-  ctx.effect(() => () => { service.stopAll() }, '@acryldev/launcher-desktop: apps it started')
+  ctx.effect(() => () => { service.stopAll() }, 'acryl-launcher-desktop: apps it started')
   ctx.router.route('/', launcherRoutes(service, report))
   ctx.routerHttp.mount('/app' + LAUNCHER_API_PREFIX)
 }

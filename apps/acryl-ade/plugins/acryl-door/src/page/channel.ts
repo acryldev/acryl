@@ -115,7 +115,7 @@ export class PageChannel {
     if (this.source !== source) return
     this.socketAllowed = false
     const warn = this.options.warn ?? ((message: string) => { console.warn(message) })
-    warn('@acryldev/door: the page channel could not open a WebSocket (the server has no upgrade route, or a proxy refused it); using server-sent events, which count against the browser\'s six connections per host')
+    warn('acryl-door: the page channel could not open a WebSocket (the server has no upgrade route, or a proxy refused it); using server-sent events, which count against the browser\'s six connections per host')
     this.stop()
     this.connect()
   }

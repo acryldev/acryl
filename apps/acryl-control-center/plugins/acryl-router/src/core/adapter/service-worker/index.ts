@@ -15,8 +15,8 @@ import type { HandleOptions } from './handler.ts'
  * @param options - Options for handling requests (fetch defaults to undefined)
  * @example
  * ```ts
- * import { Acryl } from '@acryldev/blends'
- * import { fire } from '@acryldev/blends/service-worker'
+ * import { Acryl } from 'acrylblends'
+ * import { fire } from 'acrylblends/service-worker'
  *
  * const app = new Acryl()
  *

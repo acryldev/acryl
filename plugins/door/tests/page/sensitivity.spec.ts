@@ -2,7 +2,7 @@
 /** What counts as a secret: decided by what a field is (its type, its autocomplete, the shape of its value), and by the label only when the label says so in plain words. */
 
 import { describe, expect, it } from 'vitest'
-import { isSensitive, looksLikeSecret } from '../../src/page/driver/sensitivity.ts'
+import { isProtected, isSensitive, looksLikeSecret } from '../../src/page/driver/sensitivity.ts'
 
 const field = (html: string): Element => {
   document.body.innerHTML = html
@@ -73,5 +73,13 @@ describe('a field is a secret by what it is', () => {
       expect(isSensitive(input), value).toBe(false)
     }
     expect(looksLikeSecret('sk-short')).toBe(false)
+  })
+})
+
+describe('a control is out of the agent\'s reach by the region it sits in', () => {
+  it('refuses a button inside a region named after Agent Control or the door, by their plugin names', () => {
+    for (const region of ['acryl-agent-control', 'acryl-door', 'Kill switch'])
+      expect(isProtected(field(`<div data-region="${region}"><button>Stop</button></div>`).querySelector('button') as Element), region).toBe(true)
+    expect(isProtected(field('<div data-region="Todo list"><button>Add</button></div>').querySelector('button') as Element)).toBe(false)
   })
 })

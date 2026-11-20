@@ -1,6 +1,6 @@
 /**
  * @module
- * This module provides APIs for `@acryldev/router/jsx/dom/client`, which is compatible with `react-dom/client`.
+ * This module provides APIs for `acryl-router/jsx/dom/client`, which is compatible with `react-dom/client`.
  */
 
 import type { Child } from '../base.ts'
@@ -67,7 +67,7 @@ export const createRoot = (
 
 /**
  * Create a root object and hydrate app to the target element.
- * In @acryldev/router/jsx/dom, hydrate is equivalent to render.
+ * In acryl-router/jsx/dom, hydrate is equivalent to render.
  * @param element Render target
  * @param reactNode A JSXNode to render
  * @param options Options for createRoot (not supported yet)

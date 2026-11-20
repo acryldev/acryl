@@ -1,10 +1,10 @@
 /**
- * `@acryldev/door`: the Door of the five nouns, as a Cordis plugin of a framework app (spec 049 slice 9). An agent working in the app folder
+ * `acryl-door`: the Door of the five nouns, as a Cordis plugin of a framework app (spec 049 slice 9). An agent working in the app folder
  * looks at the running page, acts on it, and installs plugins live, through `.acryl/bin/acryl`; everything else it does with its own
  * file tools and shell.
  *
- * The page loads `/api/door/page.js` (one script tag) and keeps an event stream open to the Host; the Host sends it calls. An
- * operator on this machine reaches `/api/door/call` with the secret from `<app>/.acryl/door.json`. One effect owns the channel and
+ * The page loads `/api/acryl-door/page.js` (one script tag) and keeps an event stream open to the Host; the Host sends it calls. An
+ * operator on this machine reaches `/api/acryl-door/call` with the secret from `<app>/.acryl/door.json`. One effect owns the channel and
  * the audit, the routes are mounted after it, and a second effect writes the connection file last, so disposal removes the file first,
  * then the routes (their in-flight calls end), then closes the channel (every pending call settles).
  */
@@ -12,9 +12,9 @@
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { Acryl } from '../../router/src/index.ts'
-import type { UpgradeWebSocket } from '../../router/src/helpers/index.ts'
-import { clientModules } from '../../node-server/src/client-modules.ts'
+import { Acryl } from '../../acryl-router/src/index.ts'
+import type { UpgradeWebSocket } from '../../acryl-router/src/helpers/index.ts'
+import { clientModules } from '../../acryl-node-server/src/client-modules.ts'
 import { auditPath, AuditLog } from './host/audit.ts'
 import { UiChannel } from './host/channel.ts'
 import { registerChatTools, registerDshChatTools } from './host/chat-tools.ts'
@@ -156,9 +156,9 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
       return undefined
     }
   }
-  if (typeof app?.root !== 'string') throw new Error('@acryldev/door: the appInstance service has no app folder (root)')
+  if (typeof app?.root !== 'string') throw new Error('acryl-door: the appInstance service has no app folder (root)')
   const reportError = (operation: string, cause: unknown): void => {
-    ctx.logger?.error?.(`@acryldev/door: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    ctx.logger?.error?.(`acryl-door: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   const address: { url: string } = { url: '' }
   // The rival check runs at activation, not in the deferred write: a folder another live process serves fails the row at once (the write waits for a bound port).
@@ -187,8 +187,8 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
     expose: config.tools?.expose ?? [],
     reloadOnChange: config.reloadOnChange !== false,
   })
-  ctx.effect(() => () => { channel.close() }, '@acryldev/door: page channel')
-  ctx.effect(() => () => { shell.close() }, '@acryldev/door: desktop shell channel')
+  ctx.effect(() => () => { channel.close() }, 'acryl-door: page channel')
+  ctx.effect(() => () => { shell.close() }, 'acryl-door: desktop shell channel')
   // One script tag for the page (`page.js`): it imports the module tree served below it.
   const pageModule = new Acryl()
     .get(`${DOOR_PREFIX}/page.js`, c => c.body(`import '${DOOR_PREFIX}/page/main.ts'\n`, 200, { 'content-type': 'text/javascript; charset=utf-8' }))
@@ -229,7 +229,7 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
         if (html.includes(`${DOOR_PREFIX}/page.js`)) return html
         return html.includes('</body>') ? html.replace('</body>', `${tag}</body>`) : html + tag
       })
-    }, '@acryldev/door: the page script in the host index')
+    }, 'acryl-door: the page script in the host index')
   })
   // The page channel also runs over a WebSocket, which is not one of the browser's six connections per host. Without `ws` or an adapter that
   // upgrades, the pages use the stream. The socket route is mounted ONCE here, ahead of the private routes, so it keeps its precedence when the host
@@ -269,7 +269,7 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
         remove()
         if (pageUpgrade === allow) pageUpgrade = undefined
         nodeFallback()
-      }, '@acryldev/door: the page socket via routerHttp')
+      }, 'acryl-door: the page socket via routerHttp')
     } catch (cause) {
       reportError('open the page channel over a WebSocket (the pages use the event stream)', cause)
     }
@@ -286,7 +286,7 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
         off()
         endNodeOwner()
       }
-    }, '@acryldev/door: the page socket on the node server')
+    }, 'acryl-door: the page socket on the node server')
   })
   ctx.router.route('/', pageSocketRoutes(channel, { prefix: DOOR_PREFIX, upgrade: () => pageUpgrade }))
   ctx.router.route('/', privateApi(
@@ -306,11 +306,11 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
       const verbs = pageOnly ? PAGE_VERBS : VERBS
       // DSH's registry (the ACRYL chat in a framed app and in ADE) takes definition objects; the framework agent's takes a name and a tool.
       return isDshTools(tools) ? registerDshChatTools(tools, door, verbs) : registerChatTools(tools as ToolsPort, door, verbs)
-    }, '@acryldev/door: the verbs in the tools registry')
+    }, 'acryl-door: the verbs in the tools registry')
   })
   ctx.effect(function* () {
     yield ctx.reflect.provide('door', door)
-  }, '@acryldev/door: the door service')
+  }, 'acryl-door: the door service')
   // A page-only door leaves no file and no command for an operator.
   if (pageOnly) return
   // The carrier binds asynchronously (DSH's webServer, the node server before it): the address and the file are written once it reports a real port.
@@ -320,13 +320,13 @@ export function apply(ctx: Context, rawConfig: Config = {}): void {
       await new Promise((done) => setTimeout(done, 10))
       bound = carrier()
     }
-    if (bound === undefined) throw new Error('@acryldev/door: no carrier bound the app (neither acrylWeb nor nodeServer answered)')
+    if (bound === undefined) throw new Error('acryl-door: no carrier bound the app (neither acrylWeb nor nodeServer answered)')
     address.url = loopbackUrl(`http://${bound.host}:${String(bound.port)}`)
     writeDoorFile(app.root, address.url, secret)
     // A shim that cannot be replaced (Windows, held open by a running `acryl`) leaves the old one in place; it must not stop the app from starting.
     try { writeShims(app.root, shimTarget()) } catch (cause) { reportError('write .acryl/bin', cause) }
     return () => { removeDoorFile(app.root, secret) }
-  }, '@acryldev/door: .acryl/door.json and .acryl/bin/acryl')
+  }, 'acryl-door: .acryl/door.json and .acryl/bin/acryl')
 }
 
 export { Door, DoorError, type VerbAnswer } from './host/door.ts'

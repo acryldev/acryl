@@ -1,5 +1,5 @@
 /**
- * "The agent is driving" bar with its kill switch, in plain DOM (the React one in `@acryldev/agent-control` shows the same states). Shown for the whole of a run asked for from
+ * "The agent is driving" bar with its kill switch, in plain DOM (the React one in `acryl-agent-control` shows the same states). Shown for the whole of a run asked for from
  * this page's panel (between the calls too), while a call runs, and after the person stopped the agent. Stop kills the page's control and asks the panel to stop the run (the
  * `acryl:stop-run` event on the window, which the panel listens for). It is marked as driver UI (so snapshots skip it) and as off limits to the agent (so
  * it can never press its own Stop or Allow buttons). Escape stops the agent too, while it is working.

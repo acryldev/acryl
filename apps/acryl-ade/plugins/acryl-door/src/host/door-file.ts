@@ -77,7 +77,7 @@ function alive(pid: number): boolean {
 export function assertDoorIsFree(appRoot: string): void {
   const existing = readDoorFile(appRoot)
   if (existing !== undefined && existing.pid !== process.pid && alive(existing.pid)) {
-    throw new Error(`@acryldev/door: another process (pid ${String(existing.pid)}) serves the door of ${appRoot}; stop it first`)
+    throw new Error(`acryl-door: another process (pid ${String(existing.pid)}) serves the door of ${appRoot}; stop it first`)
   }
 }
 

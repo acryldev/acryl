@@ -5,7 +5,7 @@
  *
  * @example
  * ```ts
- * import { Acryl } from '@acryldev/blends'
+ * import { Acryl } from 'acrylblends'
  * const app = new Acryl()
  *
  * app.get('/', (c) => c.text('Acryl!'))

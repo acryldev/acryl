@@ -306,7 +306,7 @@ class Acryl<
   /**
    * `.mount()` allows you to mount applications built with other frameworks into your Acryl application.
    *
-   * @deprecated Use `mount()` from `@acryldev/router/mount` instead. `.mount()` will be removed in v5.
+   * @deprecated Use `mount()` from `acryl-router/mount` instead. `.mount()` will be removed in v5.
    *
    *
    * @param {string} path - base Path
@@ -317,7 +317,7 @@ class Acryl<
    * @example
    * ```ts
    * import { Router as IttyRouter } from 'itty-router'
-   * import { Acryl } from '@acryldev/blends'
+   * import { Acryl } from 'acrylblends'
    * // Create itty-router application
    * const ittyRouter = IttyRouter()
    * // GET /itty-router/hello
