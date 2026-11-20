@@ -500,12 +500,13 @@ function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse
   const [starter, setStarter] = useState(state.starters[0]?.value ?? 'blank')
   const [surface, setSurface] = useState<Surface>('web')
   const [busy, setBusy] = useState(false)
-  const line = `cd ${where} && acryl new ${name === '' ? '<name>' : name} ${blend === undefined ? starter : `--from ${blend.id}`}`
+  const line = `cd ${where} && acryl new ${name === '' ? '<name>' : name} ${blend === undefined ? starter : `--from ${blend.source ?? blend.id}`}`
   return (
-    <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); setBusy(true); void onCreate({ where, name, surface, ...blend === undefined ? { starter } : { blend: blend.id } }).finally(() => { setBusy(false) }) }}>
+    <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); setBusy(true); void onCreate({ where, name, surface, ...blend === undefined ? { starter } : { blend: blend.source ?? blend.id } }).finally(() => { setBusy(false) }) }}>
       <div className="acrylHomePanelTop"><h3>{blend === undefined ? 'New app' : `New app from ${blend.name}`}</h3></div>
       <label className="acrylHomeField"><span>Where does it go?</span><input className="acrylHomeInput" data-mono value={where} onChange={(event) => { setWhere(event.target.value) }} aria-label="Where does it go" /></label>
       <label className="acrylHomeField"><span>Name</span><input className="acrylHomeInput" value={name} placeholder="my-app" autoFocus onChange={(event) => { setName(event.target.value) }} aria-label="Name" /></label>
+      {blend !== undefined && blend.origin === 'community' ? <p className="acrylHomeNote" data-warn role="note">A Community Blend: released by someone outside the ACRYL project, from {blend.source}. Its code is not reviewed; make it only if you trust who released it.</p> : null}
       {blend !== undefined ? <p className="acrylHomeNote">{blend.description}</p> : <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="acrylHomeField"><span>Starter</span></legend>
         <div className="acrylHomeChoices">

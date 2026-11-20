@@ -13,7 +13,7 @@ import type {
   GithubPollView, GithubStartView, GithubView,
   AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
 } from './contract.ts'
-import { ACCOUNT_NAME, BLEND_ID, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
+import { ACCOUNT_NAME, BLEND_ID, BLEND_SOURCE, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
 import { appEnvironment, type Run, type Runner } from './runner.ts'
 
@@ -246,7 +246,7 @@ export class LauncherService {
     if (problem !== undefined) throw new LauncherRefusal(problem)
     if ((request.starter === undefined) === (request.blend === undefined)) throw new LauncherRefusal('choose a starter or a Blend, not both')
     if (request.starter !== undefined && !STARTERS.some(starter => starter.value === request.starter)) throw new LauncherRefusal(`there is no starter "${request.starter}"`)
-    if (request.blend !== undefined && !BLEND_ID.test(request.blend)) throw new LauncherRefusal(`"${request.blend}" is not a Blend id (for example acrylblends.notes)`)
+    if (request.blend !== undefined && !BLEND_ID.test(request.blend) && !BLEND_SOURCE.test(request.blend)) throw new LauncherRefusal(`"${request.blend}" is not a Blend id (for example acrylblends.notes) or a Blend on GitHub (github:owner/repo#tag)`)
     if (!MAKEABLE_SURFACES.includes(request.surface)) throw new LauncherRefusal('CLI (TUI) apps are coming: choose Web or Desktop')
     const folder = join(request.where, request.name)
     if (this.#ports.exists(folder)) throw new LauncherRefusal(`there is already a folder named ${request.name} in ${request.where}`)

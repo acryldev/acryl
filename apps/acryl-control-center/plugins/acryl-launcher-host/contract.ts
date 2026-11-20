@@ -105,6 +105,8 @@ export interface BlendView {
   readonly description: string
   /** Who released it: the ACRYL project (`official`) or anyone else (`community`, not reviewed); the registry's `origin`. */
   readonly origin: 'official' | 'community'
+  /** A community Blend's release on GitHub (`github:owner/repo#tag`), what `--from` takes for a Blend outside the public registry; absent: `--from <id>`. */
+  readonly source?: string
 }
 
 export interface BlendsResponse {
@@ -113,6 +115,9 @@ export interface BlendsResponse {
 
 /** A Blend id as `acryl new --from` takes it: it starts with a letter or digit, so it can never read as an option. */
 export const BLEND_ID = /^[a-z0-9][a-z0-9._-]{0,127}$/u
+
+/** A Blend released on GitHub, as `--from` takes it (create-acrylblends `github:owner/repo#ref`): what a community Blend is made from. */
+export const BLEND_SOURCE = /^github:[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}(?:#[A-Za-z0-9._/-]{1,100})?$/u
 
 /** The app to make: from a starter (`acryl new <name> <starter>`) or from a registry Blend (`acryl new <name> --from <id>`), never both. */
 export interface NewAppRequest {

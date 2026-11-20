@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/launcher-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The ACRYL screen of the desktop app (spec 050): every app made with ACRYL on this machine, the surface of each (Web, Desktop, CLI/TUI), and New app, Add a folder, Start and Stop. The Host half serves the list and runs the commands; the Client half draws the Control Center design as the first screen",
   "license": "MIT",
   "repository": {
@@ -51,10 +51,10 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
+    "@acryldev/blends": "workspace:^",
     "@acryldev/control": "workspace:*",
     "@acryldev/launcher": "workspace:*",
-    "@acryldev/loopback-http": "workspace:*",
-    "@acryldev/blends": "workspace:^"
+    "@acryldev/loopback-http": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",
@@ -62,6 +62,8 @@
     "react": "18.3.1"
   },
   "devDependencies": {
+    "@acryldev/blends": "workspace:^",
+    "@acryldev/ui": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/dsh-client-modules": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
@@ -70,14 +72,12 @@
     "@types/node": "^22.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@acryldev/blends": "workspace:^",
     "jsdom": "29.1.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "tsdown": "0.22.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.11",
-    "@acryldev/ui": "workspace:*"
+    "vitest": "4.1.11"
   },
   "acryl": {
     "schemaVersion": 1,

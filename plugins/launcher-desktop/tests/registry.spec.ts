@@ -1,10 +1,35 @@
 /** The registry reader: only Blends an ACRYL app can be made from, by name, and a reason in words when it cannot be read. */
 import { describe, expect, it } from 'vitest'
-import { readBlends, RegistryUnavailable } from '../src/registry.ts'
+import { readBlends, REGISTRY_DISCOVERED, REGISTRY_INDEX, RegistryUnavailable } from '../src/registry.ts'
 
 const answer = (body: unknown, status = 200) => async () => ({ ok: status < 400, status, json: async () => body })
 
+const byUrl = (bodies: Record<string, unknown>) => async (url: string) => (url in bodies
+  ? { ok: true, status: 200, json: async () => bodies[url] }
+  : { ok: false, status: 404, json: async () => ({}) })
+
 describe('readBlends', () => {
+  it('adds the community Blends the registry found on GitHub, each made from its source; one without a source or with an official id is left out', async () => {
+    const blends = await readBlends(byUrl({
+      [REGISTRY_INDEX]: { entries: [{ id: 'acrylblends.notes', name: 'Notes', runtime: 'acrylblends', origin: 'official' }] },
+      [REGISTRY_DISCOVERED]: { entries: [
+        { id: 'inboxxobni.team-notes', name: 'Team Notes', runtime: 'acrylblends', origin: 'community', source: 'github:inboxxobni/team-notes#v0.1.0' },
+        { id: 'ana.no-source', name: 'No source', runtime: 'acrylblends' },
+        { id: 'ana.bad', name: 'Bad', runtime: 'acrylblends', source: 'https://evil.example/x.tgz' },
+        { id: 'acrylblends.notes', name: 'Fake Notes', runtime: 'acrylblends', source: 'github:mallory/notes' },
+      ] },
+    }))
+    expect(blends.map(blend => [blend.name, blend.origin, blend.source])).toEqual([
+      ['Notes', 'official', undefined],
+      ['Team Notes', 'community', 'github:inboxxobni/team-notes#v0.1.0'],
+    ])
+  })
+
+  it('still lists the public registry when the community list cannot be read', async () => {
+    const blends = await readBlends(byUrl({ [REGISTRY_INDEX]: { entries: [{ id: 'acrylblends.notes', name: 'Notes', runtime: 'acrylblends', origin: 'official' }] } }))
+    expect(blends.map(blend => blend.id)).toEqual(['acrylblends.notes'])
+  })
+
   it('keeps the acrylblends runtime, sorts by name and fills what an entry leaves out', async () => {
     const blends = await readBlends(answer({ entries: [
       { id: 'acryl.core', name: 'Core', runtime: 'acryl' },

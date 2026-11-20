@@ -17,7 +17,7 @@ const state = (apps: AppView[], job: StateResponse['job'] = null): StateResponse
 
 const BLENDS = [
   { id: 'acrylblends.notes-desktop', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' as const },
-  { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary', origin: 'community' as const },
+  { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary', origin: 'community' as const, source: 'github:ana/accounting#v0.2.0' },
 ]
 
 const PLUGINS = [
@@ -223,6 +223,16 @@ describe('the plugins of a running app', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Yes, share shop' }))
     await waitFor(() => { expect(api.share).toHaveBeenCalledWith({ id: 'shop', owner: 'o', plan: SHARE_PLAN }) })
     expect(await screen.findByText('git clone https://github.com/o/shop.git')).toBeTruthy()
+  })
+
+  it('makes an app from a community Blend from its GitHub source, and says its code is not reviewed', async () => {
+    const api = fake(state([]))
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    const card = (await screen.findByText('Accounting')).closest('.acrylHomeApp') as HTMLElement
+    fireEvent.click(within(card).getByRole('button', { name: 'Make an app' }))
+    expect((await screen.findByRole('note')).textContent).toMatch(/not reviewed/u)
+    expect(screen.getByText(/--from github:ana\/accounting#v0.2.0/u)).toBeTruthy()
   })
 
   it('shares publicly when the person picks Public', async () => {
