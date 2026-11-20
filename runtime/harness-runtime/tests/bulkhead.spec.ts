@@ -33,6 +33,7 @@ const ALLOWED: Readonly<Record<string, string>> = {
   // library plugin stays under this scan.
   'plugins/instance/home.ts': 'the framework\'s instance home selector for Blend apps, the counterpart of src/instance/select.ts outside ACRYL\'s runtime',
   'plugins/workspace/src/pty/service.ts': 'a terminal starts in the user\'s own home folder when the cwd is gone; not ACRYL state',
+  'runtime/app-persistence/src/github-login.ts': 'the one GitHub connection every ACRYL app and Control Center share lives in the person\'s ~/.acryl (ACRYL_LAUNCHER_HOME moves it), the launcher\'s own rule; it is a credential of the person, not app state',
   'plugins/launcher-desktop/blend/host/index.ts': 'the launcher Blend runs outside ACRYL\'s runtime (no appInstance); its home is ~/.acryl, the one home of every ACRYL app',
   'scripts/graft-deepscan.mjs': 'a repository indexing tool; not part of any app',
   'scripts/real-home-guard.mjs': 'the gate\'s auditor: it must know the OS user\'s real homes to prove no test changed one; it only reads them, and it is not part of any app',
