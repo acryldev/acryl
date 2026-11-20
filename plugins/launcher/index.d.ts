@@ -32,3 +32,14 @@ export function startGithubSignIn(clientId: string, fetchImpl?: typeof fetch): P
 export type GithubPoll = { readonly state: 'pending', readonly interval?: number } | { readonly state: 'connected', readonly login: string } | { readonly state: 'failed', readonly reason: string }
 export function pollGithubSignIn(home: string, clientId: string, deviceCode: string, fetchImpl?: typeof fetch): Promise<GithubPoll>
 export function setBlendVisibility(folder: string, visibility: 'private' | 'public'): void
+export const TOOLS_FOLDER: string
+export const NODE_MINIMUM: readonly [number, number]
+export function nodeIsNewEnough(version: string | undefined): boolean
+export function toolDirs(home: string, platform?: NodeJS.Platform): { readonly node: string, readonly gh: string }
+export function toolsEnv(home: string, env: Readonly<Record<string, string | undefined>>, platform?: NodeJS.Platform): Record<string, string | undefined>
+export function versionOf(program: string, env: Readonly<Record<string, string | undefined>>, platform?: NodeJS.Platform): string | undefined
+export function listedSum(sums: string, file: string): string | undefined
+export interface ToolOptions { readonly platform?: NodeJS.Platform, readonly arch?: string, readonly fetchImpl?: typeof fetch }
+export function installNode(home: string, options?: ToolOptions): Promise<string>
+export function installGh(home: string, options?: ToolOptions): Promise<string>
+export function prepareTools(home: string, env: Readonly<Record<string, string | undefined>>, options?: ToolOptions): Promise<readonly ('node' | 'gh')[]>

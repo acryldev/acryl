@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { addApp, saveModelKey } from '@acryldev/launcher'
-import { LauncherRefusal, LauncherService } from '../src/service.ts'
+import { LauncherRefusal, LauncherService, type LauncherPorts } from '../src/service.ts'
 import { appEnvironment, type Command, type Run } from '../src/runner.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from '../src/door.ts'
 
@@ -18,7 +18,7 @@ interface FakeRun extends Run {
 const roots: string[] = []
 afterEach(() => { while (roots.length > 0) rmSync(roots.pop()!, { recursive: true, force: true }) })
 
-function setup() {
+function setup(extra: Partial<LauncherPorts> = {}) {
   const root = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-'))
   roots.push(root)
   const home = join(root, '.acryl')
@@ -52,6 +52,7 @@ function setup() {
     makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
     door,
     blends: async () => { registry.calls += 1; return [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' as const }] },
+    ...extra
   })
   const makeApp = (name: string, surface: 'web' | 'desktop' | 'tui' = 'web', installed = true): string => {
     const folder = join(root, 'ACRYL', name)
@@ -89,6 +90,31 @@ describe('the list', () => {
     expect(service.state().apps).toEqual([])
     expect(() => service.remove('shop')).toThrow(/no app "shop"/u)
     expect(service.add(shop).id).toBe('shop')
+  })
+})
+
+describe('the tools apps need', () => {
+  it('refuses to start or make an app in words while Node.js and gh are being fetched, then starts it on the fetched tools', async () => {
+    let finish: () => void = () => {}
+    const { service, makeApp, runs, home } = setup({ prepareTools: () => new Promise((resolve) => { finish = () => { resolve(['node']) } }) })
+    makeApp('shop')
+    const preparing = service.prepareTools()
+    expect(() => { service.start('shop') }).toThrow(/Getting Node.js and GitHub's tool ready/u)
+    expect(runs).toHaveLength(0)
+    const fetched = join(home, 'tools', 'node', 'bin')
+    mkdirSync(fetched, { recursive: true })
+    finish()
+    await preparing
+    service.start('shop')
+    expect(runs[0]?.command.env.PATH?.split(':')[0]).toBe(fetched)
+  })
+
+  it('lets apps try the computer\'s own tools when fetching failed', async () => {
+    const { service, makeApp, runs } = setup({ prepareTools: () => Promise.reject(new Error('offline')) })
+    makeApp('shop')
+    await service.prepareTools()
+    service.start('shop')
+    expect(runs).toHaveLength(1)
   })
 })
 

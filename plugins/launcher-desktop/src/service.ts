@@ -6,7 +6,7 @@
 import { basename, join } from 'node:path'
 import {
   addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
-  readApps, readGithub, readModelKey, removeApp, setBlendVisibility, startGithubSignIn, STARTERS, whereProblem,
+  readApps, readGithub, readModelKey, removeApp, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
   type AppEntry,
 } from '@acryldev/launcher'
 import type {
@@ -34,6 +34,11 @@ export interface LauncherPorts {
   readonly blends: () => Promise<readonly BlendView[]>
   /** The running apps' doors: what lists, pulls and publishes their plugins. */
   readonly door: Door
+  /**
+   * Fetch whatever of Node.js (with npm) and gh this computer lacks into `<home>/tools` (`prepareTools` of @acryldev/launcher); absent, the
+   * computer's own tools are used as they are (tests, and a launcher run from a terminal).
+   */
+  readonly prepareTools?: () => Promise<readonly string[]>
 }
 
 /** The address an app prints, with the token it needs: `http://127.0.0.1:3999/?token=...`. */
@@ -86,7 +91,27 @@ export class LauncherService {
   #blends: { at: number, list: readonly BlendView[] } | undefined
 
   #signIn: { readonly clientId: string, readonly deviceCode: string, readonly until: number } | undefined
+  /** The tools apps need: being fetched (the first start on a computer without them), ready, or not had (apps then try the computer's own). */
+  #tools: { readonly state: 'preparing' } | { readonly state: 'ready' } | { readonly state: 'failed', readonly reason: string } = { state: 'ready' }
   constructor(ports: LauncherPorts) { this.#ports = ports }
+
+  /** Start fetching what this computer lacks of Node.js and gh; apps wait for it (`#toolsReady`). Called once, when the launcher starts. */
+  prepareTools(): Promise<void> {
+    const prepare = this.#ports.prepareTools
+    if (prepare === undefined) return Promise.resolve()
+    this.#tools = { state: 'preparing' }
+    return prepare().then(
+      () => { this.#tools = { state: 'ready' } },
+      (cause: unknown) => { this.#tools = { state: 'failed', reason: cause instanceof Error ? cause.message : String(cause) } },
+    )
+  }
+
+  /** Refuse, in words, to start anything while the tools are still being fetched; a failed fetch lets apps try the computer's own tools. */
+  #toolsReady(): void {
+    if (this.#tools.state === 'preparing') {
+      throw new LauncherRefusal('Getting Node.js and GitHub\'s tool ready for your apps (only on the first start on this computer, about a minute). Try again in a moment.')
+    }
+  }
 
   state(): StateResponse {
     // The registry's versions mark the apps with a newer Blend release; a stale list is read again in the background for the next state.
@@ -133,6 +158,7 @@ export class LauncherService {
    * browser), a Desktop app with `npm run desktop`, which starts the same app and opens it in its own window (Electron is fetched the first time).
    */
   start(id: string, surface?: Surface): void {
+    this.#toolsReady()
     const entry = readApps(this.#ports.home).find(app => app.id === id)
     if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
     if (inspectApp(entry).state === 'missing') throw new LauncherRefusal(`the folder ${entry.path} is gone: remove it from the list, or put it back`)
@@ -177,6 +203,7 @@ export class LauncherService {
    * install). A running app is stopped first and started again after.
    */
   update(id: string): void {
+    this.#toolsReady()
     if (this.#job?.status === 'running') throw new LauncherRefusal(`${this.#job.name} is still being worked on: wait for it to finish`)
     const entry = readApps(this.#ports.home).find(app => app.id === id)
     if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
@@ -213,6 +240,7 @@ export class LauncherService {
    * so the process it began is the app's running process: when its blend.yaml appears the app is listed and that process is adopted as the app's.
    */
   create(request: NewAppRequest): void {
+    this.#toolsReady()
     if (this.#job?.status === 'running') throw new LauncherRefusal(`${this.#job.name} is still being made: wait for it to finish`)
     const problem = whereProblem(request.where) ?? (APP_NAME.test(request.name) ? undefined : appNameProblem(request.name, this.#ports))
     if (problem !== undefined) throw new LauncherRefusal(problem)
@@ -329,6 +357,7 @@ export class LauncherService {
    * The app need not be running. An app made before that command has none, and is told how to get it.
    */
   async #shareCommand(request: AppSharePlanRequest, confirm: AppSharePlanView | undefined): Promise<Record<string, unknown>> {
+    this.#toolsReady()
     const entry = this.#entry(request.id)
     if (request.owner !== undefined && !ACCOUNT_NAME.test(request.owner)) throw new LauncherRefusal(`"${request.owner}" is not a GitHub account name`)
     if (!this.#ports.exists(join(entry.path, SHARE_COMMAND))) {
@@ -390,7 +419,8 @@ export class LauncherService {
   #environment(): Record<string, string | undefined> {
     const inherited = this.#ports.environment()
     // `modelEnv` and `githubEnv` return only what to add (the saved key or GitHub token, unless the environment already names one).
-    return appEnvironment({ ...inherited, ...modelEnv(this.#ports.home, inherited), ...githubEnv(this.#ports.home, inherited) })
+    // The fetched tools come first on PATH, so an app runs on the Node.js the launcher made sure of.
+    return appEnvironment(toolsEnv(this.#ports.home, { ...inherited, ...modelEnv(this.#ports.home, inherited), ...githubEnv(this.#ports.home, inherited) }))
   }
 
   /** Who is signed in to GitHub here (the token apps get as GH_TOKEN), never the token. */
