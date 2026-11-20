@@ -456,7 +456,7 @@ function hostScriptOf(profile: string, frameModule: string): string {
     "// The framework's files (this launcher, the composition it reads) sit next to it; the app is chosen by the app's own family: this folder, or the",
     '// source a desktop product names when it runs the framework from its bundle. Its home and its port come with it, decided once.',
     "const frameworkRoot = join(dirname(fileURLToPath(import.meta.url)), '..')",
-    "const { selectInstance } = await import(new URL('../plugins/instance/index.ts', import.meta.url).href)",
+    "const { selectInstance } = await import('@acryldev/instance')",
     'const chosen = selectInstance({ projectRoot: frameworkRoot, env: process.env })',
     'const appRoot = chosen.root',
     'const home = chosen.home',
