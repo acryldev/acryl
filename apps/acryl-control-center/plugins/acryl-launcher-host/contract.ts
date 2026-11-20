@@ -117,6 +117,8 @@ export interface BlendView {
   readonly origin: 'official' | 'community'
   /** A community Blend's release on GitHub (`github:owner/repo#tag`), what `--from` takes for a Blend outside the public registry; absent: `--from <id>`. */
   readonly source?: string
+  /** A community Blend's GitHub owner, shown as "by @owner". */
+  readonly publisher?: string
 }
 
 export interface BlendsResponse {

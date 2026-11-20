@@ -13,7 +13,7 @@ describe('readBlends', () => {
     const blends = await readBlends(byUrl({
       [REGISTRY_INDEX]: { entries: [{ id: 'acrylblends.notes', name: 'Notes', runtime: 'acrylblends', origin: 'official' }] },
       [REGISTRY_DISCOVERED]: { entries: [
-        { id: 'inboxxobni.team-notes', name: 'Team Notes', runtime: 'acrylblends', origin: 'community', source: 'github:inboxxobni/team-notes#v0.1.0' },
+        { id: 'inboxxobni.team-notes', name: 'Team Notes', runtime: 'acrylblends', origin: 'community', source: 'github:inboxxobni/team-notes#v0.1.0', category: 'notes', publisher: 'inboxxobni', placement: { category: 'Application', subcategory: 'Productivity' } },
         { id: 'ana.no-source', name: 'No source', runtime: 'acrylblends' },
         { id: 'ana.bad', name: 'Bad', runtime: 'acrylblends', source: 'https://evil.example/x.tgz' },
         { id: 'acrylblends.notes', name: 'Fake Notes', runtime: 'acrylblends', source: 'github:mallory/notes' },
@@ -23,6 +23,8 @@ describe('readBlends', () => {
       ['Notes', 'official', undefined],
       ['Team Notes', 'community', 'github:inboxxobni/team-notes#v0.1.0'],
     ])
+    // Shown where the store placed it, with its author.
+    expect(blends[1]).toMatchObject({ category: 'Application › Productivity', publisher: 'inboxxobni' })
   })
 
   it('still lists the public registry when the community list cannot be read', async () => {

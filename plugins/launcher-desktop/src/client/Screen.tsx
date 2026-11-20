@@ -585,7 +585,7 @@ function StoreView({ api, state, onCreate }: { api: LauncherApi, state: StateRes
             <div className="acrylHomeCardFoot">
               <div className="acrylHomeRow">{blend.origin === 'official'
                 ? <span className="acrylHomePill" title="Released by the ACRYL project">Official</span>
-                : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
+                : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.publisher === undefined ? null : <span className="acrylHomeMeta">by @{blend.publisher}</span>}{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
               <button type="button" className="acrylHomeBtn" data-small data-primary disabled={state === undefined} onClick={() => { setChosen(blend) }}>Make an app</button>
             </div>
           </div>

@@ -50,7 +50,11 @@ export async function readBlends(fetchImpl: Fetch = (input, init) => fetch(input
     const source = text(entry.source)
     if (!BLEND_SOURCE.test(source)) continue
     ids.add(entry.id)
-    blends.push({ id: entry.id, name: text(entry.name) || entry.id, version: text(entry.version), category: text(entry.category), description: text(entry.description), origin: 'community', source })
+    // Its place in the store's categories (the sync reads it from the Blend's own package.json keywords), else the word its blend.yaml carries.
+    const placement = record(entry.placement)
+    const category = text(placement?.category) === '' ? text(entry.category) : [text(placement?.category), text(placement?.subcategory)].filter(Boolean).join(' › ')
+    const publisher = text(entry.publisher)
+    blends.push({ id: entry.id, name: text(entry.name) || entry.id, version: text(entry.version), category, description: text(entry.description), origin: 'community', source, ...(publisher === '' ? {} : { publisher }) })
   }
   return blends.sort((a, b) => a.name.localeCompare(b.name))
 }
