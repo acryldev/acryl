@@ -10,7 +10,7 @@ import { MUTATING_OPS, parseUiRequest, UiControlError, type AuditEntry, type UiA
 import { renderSnapshot, type AuditLog, type UiChannel } from '@acryldev/blends/door/host'
 
 /**
- * The tool name for each operation. `reload` and `navigate` came with the framework's door after 1.0.0 (spec 051 put ACRYL on the framework's own
+ * The tool name for each operation. `reload`, `navigate` and `frame` came with the framework's door after 1.0.0 (spec 051 put ACRYL on the framework's own
  * source): they are named so the online channel's audit trail reads them, but they are not model tools here - registering them would change what
  * ACRYL's agent can do and its tool budget, a product decision of its own.
  */
@@ -24,6 +24,7 @@ export const TOOL_NAMES: Readonly<Record<UiOp, string>> = {
   wait: 'ui_wait',
   reload: 'ui_reload',
   navigate: 'ui_navigate',
+  frame: 'ui_frame',
 }
 
 /** The operations the model has a tool for, in the order they are registered. */
