@@ -114,7 +114,7 @@
     "door-shell.ts": ["9b879028326971973bd3", "3e535eff746a41525dbb", "399d6ff1b66596d66c69"],
     "frame.ts": ["191f21e3dc14e1a6d2d8", "0b856f73720a4b6bb2bf", "ee2a89ff711b9c6fe268"],
     "git.ts": ["94d70b10792693ce54db"],
-    "host-supervisor.ts": ["e69994399fa32dbb1cfc"],
+    "host-supervisor.ts": ["e69994399fa32dbb1cfc", "3bd694189bff93e8d0c3"],
     "launch.ts": [
       "d7468b2289b0d6b99706",
       "b6650e0d33533bff9614",
@@ -137,7 +137,8 @@
       "bd42ccc572a08e50040b",
       "c8aa493e2753e8e04ac9",
       "a4363ad4e36cf36ab36e",
-      "a966b97329fe5124d65f"
+      "a966b97329fe5124d65f",
+      "6650cffd23fc17b3292f"
     ],
     "menu.ts": ["9b88cda709178fffc66d"],
     "preload.cjs": ["c7de936c2213786f2b00"],
@@ -917,7 +918,12 @@
     "index.ts": ["48f96cde6c73e781e3e6", "87f0933285eb83af7ad0"],
     "LICENSE": ["0f98259ccb0f4cafebe9"],
     "README.md": ["3ca5c183f7ea0bdf6b95"],
-    "share-cli.ts": ["2201fe37cbbc5d167e17", "97cdb3ceaf2c73327454", "5027a88554b2a654c563"],
+    "share-cli.ts": [
+      "2201fe37cbbc5d167e17",
+      "97cdb3ceaf2c73327454",
+      "5027a88554b2a654c563",
+      "a988fa0fe4949092eeda"
+    ],
     "share.ts": ["458a795e3298eb69eb82", "353ea9b5e115787c595f", "71410a74dbcc3161b433"]
   },
   "showcase": {
