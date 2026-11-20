@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/blends-frame",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "ACRYL Blends frame: the workbench around an app being built - a top bar, the branches and versions on the left, the app alone in the centre, and the agents on the right - as one Cordis plugin with a Host and a client half",
   "license": "MIT",
   "repository": {
@@ -59,24 +59,25 @@
     "prepack": "pnpm run check"
   },
   "dependencies": {
-    "@acryldev/blends-core": "workspace:^",
-    "@acryldev/plugin-hub-core": "workspace:^",
     "@acryldev/app-shell": "workspace:*",
+    "@acryldev/blends-core": "workspace:^",
     "@acryldev/loopback-http": "workspace:*",
+    "@acryldev/plugin-hub-core": "workspace:^",
     "@acryldev/versions": "workspace:*",
     "@acryldev/workspace": "workspace:*",
     "yaml": "2.9.0"
   },
   "peerDependencies": {
+    "@acryldev/blends": "^1.0.0",
     "@deepseek-ai/cordis": "^4.0.2",
     "@deepseek-ai/dsh-client-ui-renderer": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
     "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
-    "@acryldev/blends": "^1.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@acryldev/blends": "workspace:*",
     "@acryldev/ui": "workspace:*",
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/cordis-plugin-loader": "1.0.5",
@@ -93,7 +94,6 @@
     "@types/node": "^24.0.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@acryldev/blends": "workspace:*",
     "cytoscape": "3.34.3",
     "jsdom": "29.1.1",
     "react": "18.3.1",

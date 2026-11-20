@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import type { GitPort, HostingPort } from '../index.ts'
+import { type GitPort, type HostingPort, readAppIdentity } from '../index.ts'
 import { planShare, renderSharePlan, type SharePorts, shareApp } from '../share.ts'
 
 const manifest = (visibility: 'private' | 'public') =>
@@ -109,6 +109,31 @@ test('the confirmed plan creates the repository, saves what changed and pushes',
       'commit',
       'push',
     ])
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a share with a visibility plans and creates the repository that way and records it in blend.yaml, comments kept', () => {
+  const dir = app('private')
+  try {
+    writeFileSync(
+      join(dir, 'blend.yaml'),
+      `# the app\n${readFileSync(join(dir, 'blend.yaml'), 'utf8')}`,
+    )
+    const fake = ports({ account: 'ana', pending: 1 })
+    const plan = planShare(dir, { visibility: 'public' }, fake)
+    assert.ok(!('ok' in plan))
+    assert.equal(plan.visibility, 'public')
+    const result = shareApp(dir, plan, { visibility: 'public' }, fake)
+    assert.equal(result.ok, true)
+    const text = readFileSync(join(dir, 'blend.yaml'), 'utf8')
+    assert.match(text, /^# the app/u)
+    assert.equal(readAppIdentity(text).visibility, 'public')
+    assert.ok(
+      fake.calls.some((call) => call.includes('public')),
+      fake.calls.join(' | '),
+    )
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

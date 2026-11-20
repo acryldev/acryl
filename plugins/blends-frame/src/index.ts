@@ -24,6 +24,7 @@ import * as workspaceHost from '@acryldev/workspace'
 import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
 import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
 import { appFallbackTarget, appNavigationTarget } from './app-urls.ts'
+import { AppShareRefused, appShareCommand, type AppSharePort } from './app-share.ts'
 import { FRAME_GRAPH_EVENTS_PATH, FRAME_GRAPH_PATH } from './graph-contract.ts'
 import { githubReadiness, PlainError, plainPullRefusal, plainShareProblem, type Plain } from './plain.ts'
 import { createGraphPort, type GraphPort } from './plugin-graph.ts'
@@ -63,6 +64,11 @@ import {
   FRAME_PLUGINS_SAVE_PATH,
   FRAME_PLUGINS_SHARE_PATH,
   FRAME_PLUGINS_SHARE_PLAN_PATH,
+  FRAME_APP_SHARE_PATH,
+  FRAME_APP_SHARE_PLAN_PATH,
+  parseAppSharePlan,
+  parseAppShareRequest,
+  type AppSharePlanView,
   FRAME_PLUGINS_SWITCH_PATH,
   FRAME_STATE_PATH,
   FRAME_VERSIONS_SHARED_PATH,
@@ -406,10 +412,47 @@ export interface FrameRoutesDeps {
   readonly appReload?: AppReloadPort
   /** The element picks waiting for the step that reads the message they belong to (./selection-context.ts). */
   readonly selection?: SelectionInbox
+  /** Share the whole app to GitHub (Settings > Share), through the app's own share command. */
+  readonly appShare?: AppSharePort
 }
 
-export function frameRoutes({ state, report = () => {}, plugins, graph, feedback, branches, branchChats, chatSaves, shared, realChats, gitSync, snapshot, appReload, selection }: FrameRoutesDeps): Acryl {
+export function frameRoutes({ state, report = () => {}, plugins, graph, feedback, branches, branchChats, chatSaves, shared, realChats, gitSync, snapshot, appReload, selection, appShare }: FrameRoutesDeps): Acryl {
   const app = new Acryl()
+  if (appShare !== undefined) {
+    const refusal = (cause: unknown) => cause instanceof AppShareRefused
+      ? { say: cause.message }
+      : { say: 'The app could not be shared. Nothing was sent.', details: cause instanceof Error ? cause.message : String(cause) }
+    app.post(FRAME_APP_SHARE_PLAN_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      const request = body === INVALID_JSON ? undefined : parseAppShareRequest(body)
+      if (request === undefined) return c.json(error('invalid share request'), 400)
+      try {
+        return c.json(await appShare.plan(request))
+      } catch (cause) {
+        if (!(cause instanceof AppShareRefused)) report(cause)
+        return c.json(plainBody(refusal(cause)), 409)
+      }
+    })
+    // A share leaves the computer under the person's name: only a plan they read and confirmed is sent.
+    app.post(FRAME_APP_SHARE_PATH, ownPage, jsonBody(), async (c) => {
+      const body = await readJson(c)
+      const fields = body === INVALID_JSON || body === null || typeof body !== 'object' ? undefined : body as Record<string, unknown>
+      const request = fields === undefined ? undefined : parseAppShareRequest({ owner: fields.owner, visibility: fields.visibility })
+      if (request === undefined) return c.json(error('invalid share request'), 400)
+      let confirmed: AppSharePlanView
+      try {
+        confirmed = parseAppSharePlan(fields?.confirm)
+      } catch {
+        return c.json(error('an app is shared only after the person confirms its plan'), 400)
+      }
+      try {
+        return c.json(await appShare.share(request, confirmed))
+      } catch (cause) {
+        if (!(cause instanceof AppShareRefused)) report(cause)
+        return c.json(plainBody(refusal(cause)), 409)
+      }
+    })
+  }
   if (appReload !== undefined) {
     app.get(FRAME_APP_PATH, ownPage, async (c) => {
       const after = Number(c.req.query('after'))
@@ -1012,6 +1055,8 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       },
       plugins,
       graph: graph.port,
+      // Settings > Share: the app's own share command, with the environment this host runs in (git, gh and a GitHub token Control Center gave it).
+      appShare: appShareCommand(root),
       // The app's feedback service may be isolated to its own composition (the template isolates it under the app-plugins row); read it from that
       // row's scope first, then from the frame's own, so both an isolated and an unisolated app answer.
       feedback: feedbackPort(() => {

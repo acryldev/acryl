@@ -251,6 +251,55 @@ export function parseFrameState(value: unknown): FrameState {
 export const FRAME_PLUGINS_PATH = `${FRAME_API_PREFIX}/plugins`
 export const FRAME_PLUGINS_SWITCH_PATH = `${FRAME_API_PREFIX}/plugins/switch`
 /** POST `{ name }`: what sharing this local plugin would do (a {@link SharePlan}); nothing leaves the machine. */
+/** POST `{ owner?, visibility? }`: what sharing the whole app to GitHub would send (Settings > Share); sends nothing. */
+export const FRAME_APP_SHARE_PLAN_PATH = `${FRAME_API_PREFIX}/app/share-plan`
+/** POST `{ owner?, visibility?, confirm }`: share the app exactly as the confirmed plan says, or nothing. */
+export const FRAME_APP_SHARE_PATH = `${FRAME_API_PREFIX}/app/share`
+
+/** Who may see a shared app, and under which account; both optional (the signed-in account, blend.yaml's visibility). */
+export interface AppShareRequest {
+  readonly owner?: string
+  readonly visibility?: 'private' | 'public'
+}
+
+/** What sharing the app sends: the save plugin's plan, shown before anything leaves the computer. */
+export interface AppSharePlanView {
+  /** `owner/name` of a repository the share creates, or the address of the one the app already pushes to. */
+  readonly repository: string
+  readonly create: boolean
+  readonly visibility: 'private' | 'public'
+  /** Files changed since the last save; the share saves them first. */
+  readonly changes: number
+}
+
+/** Where the app went. */
+export interface AppSharedView {
+  readonly remote: string
+  readonly created: boolean
+}
+
+export function parseAppSharePlan(value: unknown): AppSharePlanView {
+  if (!isRecord(value)) throw new Error('app share plan: not a plan')
+  const { repository, create, visibility, changes } = value
+  if (typeof repository !== 'string' || repository === '' || typeof create !== 'boolean') throw new Error('app share plan: repository')
+  if (visibility !== 'private' && visibility !== 'public') throw new Error('app share plan: visibility')
+  if (typeof changes !== 'number' || !Number.isSafeInteger(changes) || changes < 0) throw new Error('app share plan: changes')
+  return { repository, create, visibility, changes }
+}
+
+export function parseAppShared(value: unknown): AppSharedView {
+  if (!isRecord(value) || typeof value.remote !== 'string' || typeof value.created !== 'boolean') throw new Error('app share: where it went')
+  return { remote: value.remote, created: value.created }
+}
+
+export function parseAppShareRequest(value: unknown): AppShareRequest | undefined {
+  if (!isRecord(value)) return undefined
+  const { owner, visibility } = value
+  if (owner !== undefined && (typeof owner !== 'string' || !GITHUB_NAME.test(owner))) return undefined
+  if (visibility !== undefined && visibility !== 'private' && visibility !== 'public') return undefined
+  return { ...(owner === undefined ? {} : { owner }), ...(visibility === undefined ? {} : { visibility }) }
+}
+
 export const FRAME_PLUGINS_SHARE_PLAN_PATH = `${FRAME_API_PREFIX}/plugins/share-plan`
 /** POST `{ name, confirm }`: publish it, only when `confirm` is the plan the person said yes to and it still holds. */
 export const FRAME_PLUGINS_SHARE_PATH = `${FRAME_API_PREFIX}/plugins/share`

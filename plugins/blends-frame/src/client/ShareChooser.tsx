@@ -30,7 +30,7 @@ type Step =
   | { readonly step: 'done'; readonly text: string; readonly address?: string }
   | { readonly step: 'failed'; readonly say: string; readonly details?: string }
 
-type Github = GithubReadiness | { readonly status: 'checking' }
+export type Github = GithubReadiness | { readonly status: 'checking' }
 
 const failed = (cause: unknown): Step => cause instanceof PlainFailure
   ? { step: 'failed', say: cause.message, ...(cause.details === undefined ? {} : { details: cause.details }) }
@@ -175,7 +175,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
 const CONNECT_POLL_MS = 2_000
 
 /** Why the three GitHub choices are greyed out, and the one thing to do about it: Connect GitHub (or, without it, the Terminal command). */
-function GithubNote({ github, copy, connect, onConnected }: {
+export function GithubNote({ github, copy, connect, onConnected }: {
   readonly github: Github
   readonly copy: (text: string) => Promise<boolean>
   readonly connect: GithubConnectApi | undefined

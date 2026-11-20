@@ -1,5 +1,6 @@
 /**
- * `npm run share [-- --owner <account>]`: show what sharing this app would send, and ask. Only a plain yes at the terminal sends it.
+ * `npm run share [-- --owner <account>] [--visibility private|public]`: show what sharing this app would send, and ask. Only a plain yes at the
+ * terminal sends it. --visibility decides who may see a new repository and is kept in blend.yaml (metadata.visibility).
  *   --json             print the plan as JSON and send nothing (what a program, or an agent, reads)
  *   --confirm <plan>   send exactly this plan (the JSON `--json` printed, as it is or base64url-encoded so no shell can change it), and nothing when
  *                      the app no longer matches it: for a person's own surface that showed them the plan and took their yes (the ACRYL
@@ -48,9 +49,27 @@ async function main(argv: readonly string[]): Promise<number> {
   const { values } = parseArgs({
     args: [...argv],
     strict: true,
-    options: { owner: { type: 'string' }, json: { type: 'boolean' }, confirm: { type: 'string' } },
+    options: {
+      owner: { type: 'string' },
+      visibility: { type: 'string' },
+      json: { type: 'boolean' },
+      confirm: { type: 'string' },
+    },
   })
-  const options = values.owner === undefined ? {} : { owner: values.owner }
+  if (
+    values.visibility !== undefined &&
+    values.visibility !== 'private' &&
+    values.visibility !== 'public'
+  ) {
+    console.error('not shared: --visibility is private or public')
+    return 1
+  }
+  const options = {
+    ...(values.owner === undefined ? {} : { owner: values.owner }),
+    ...(values.visibility === undefined
+      ? {}
+      : { visibility: values.visibility as 'private' | 'public' }),
+  }
   if (values.confirm !== undefined) {
     const confirmed = readPlan(values.confirm)
     if (!isPlan(confirmed)) {

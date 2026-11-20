@@ -5,7 +5,7 @@
  * same guards hold: no file that holds a secret, and a private app never goes to a public repository.
  */
 import { spawnSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import {
   connectRemote,
@@ -18,6 +18,7 @@ import {
   type SecretFinding,
   saveApp,
   type Visibility,
+  withVisibility,
 } from '@acryldev/app-persistence'
 
 /** What a share would send, and where. */
@@ -50,6 +51,8 @@ export type ShareResult =
 export interface ShareOptions {
   /** The GitHub account or organization for a new repository; the signed-in account when absent. */
   readonly owner?: string
+  /** Who may see a new repository; blend.yaml's metadata.visibility when absent. A share with it records it there, so later saves agree. */
+  readonly visibility?: Visibility
 }
 
 /** What a share needs from the computer; tests give their own. */
@@ -100,18 +103,19 @@ export function planShare(
   ports: SharePorts = sharePorts(appRoot),
 ): SharePlan | ShareRefused {
   const identity = readAppIdentity(manifestOf(appRoot))
+  const visibility = options.visibility ?? identity.visibility
   const changes = ports.pending()
   const remote = ports.git.remoteUrl()
   if (remote !== undefined) {
     const known = ports.hosting.visibilityOf(remote)
-    if (identity.visibility === 'private' && known === 'public')
+    if (visibility === 'private' && known === 'public')
       return refused(
         `this app is private (blend.yaml metadata.visibility) but its remote ${remote} is public. Make the remote private, or set visibility: public if you mean to open it`,
       )
     return {
       repository: remote,
       create: false,
-      visibility: known === 'unknown' ? identity.visibility : known,
+      visibility: known === 'unknown' ? visibility : known,
       changes,
     }
   }
@@ -125,7 +129,7 @@ export function planShare(
   const name = repositoryName(identity.name ?? basename(appRoot))
   if (name === '')
     return refused('the app has no name to call its repository by (blend.yaml metadata.name)')
-  return { repository: `${owner}/${name}`, create: true, visibility: identity.visibility, changes }
+  return { repository: `${owner}/${name}`, create: true, visibility, changes }
 }
 
 export const sameSharePlan = (a: SharePlan, b: SharePlan): boolean =>
@@ -147,7 +151,14 @@ export function shareApp(
     return refused(
       'the app changed since this plan was shown, so nothing was sent. Read the new plan and confirm it',
     )
-  const manifestText = manifestOf(appRoot)
+  let manifestText = manifestOf(appRoot)
+  if (
+    options.visibility !== undefined &&
+    readAppIdentity(manifestText).visibility !== options.visibility
+  ) {
+    manifestText = withVisibility(manifestText, options.visibility)
+    writeFileSync(join(appRoot, 'blend.yaml'), manifestText)
+  }
   try {
     let remote = now.repository
     if (now.create) {

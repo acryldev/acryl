@@ -33,6 +33,7 @@ import { appPluginRow, createAppPluginsApi, framePluginRow, type NavigatorPlugin
 import { PluginsSection } from './PluginsSection.tsx'
 import { createRegistryApi } from './registry-api.ts'
 import { AppSection } from './AppSection.tsx'
+import { createShareAppApi, ShareAppSection } from './ShareAppSection.tsx'
 import { desktopApp } from './desktop-app.ts'
 import { NameYourApp } from './NameYourApp.tsx'
 import { SelectionChip, type SelectionChipInjected } from './SelectionChip.tsx'
@@ -66,7 +67,7 @@ declare module '@deepseek-ai/cordis' {
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
-    'acryl.blendsFrame': 'plugins' | 'app'
+    'acryl.blendsFrame': 'plugins' | 'app' | 'share'
   }
 }
 
@@ -393,7 +394,7 @@ export function apply(ctx: ClientContext): void {
     name: 'acryl-blends-frame-plugins-settings',
     inject: ['slots', 'locale'],
     apply(child: ClientContext): void {
-      child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { plugins: 'Plugins', app: 'App' }, zh: { plugins: '插件', app: '应用' } }), '@acryldev/blends-frame: dictionary')
+      child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { plugins: 'Plugins', app: 'App', share: 'Share' }, zh: { plugins: '插件', app: '应用', share: '分享' } }), '@acryldev/blends-frame: dictionary')
       const t = child.locale.bind(LOCALE_NAMESPACE)
       if (desktop !== undefined) {
         child.slots.inject('settings.section', () => child.slots.register({
@@ -406,6 +407,17 @@ export function apply(ctx: ClientContext): void {
           inject: () => ({ app: desktop }),
         }, AppSection))
       }
+      // Every app, in a window or a browser tab: send the whole app to the person's own GitHub.
+      const shareApp = createShareAppApi()
+      child.slots.inject('settings.section', () => child.slots.register({
+        name: 'settings.section',
+        id: 'acryl-blends-share',
+        // After App (5), before Models (10).
+        order: 6,
+        label: () => t('share'),
+        locale: LOCALE_NAMESPACE,
+        inject: () => ({ share: shareApp, registry }),
+      }, ShareAppSection))
       child.slots.inject('settings.section', () => child.slots.register({
         name: 'settings.section',
         id: 'acryl-blends-plugins',
