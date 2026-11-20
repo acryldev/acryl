@@ -311,3 +311,9 @@ test('listing is refused for a private app, a place not on the list, and an app 
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('npm run share --help says what it does and sends nothing', () => {
+  const out = execFileSync(process.execPath, [join(import.meta.dirname, '..', 'share-cli.ts'), '--help'], { encoding: 'utf8' })
+  assert.match(out, /--list +also list it in the Blends store/u)
+  assert.match(out, /nothing is sent until you type yes/u)
+})

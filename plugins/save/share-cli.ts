@@ -64,6 +64,20 @@ async function publishedCategories(): Promise<{ categories?: readonly CatalogCat
   }
 }
 
+const HELP = `npm run share [-- options]: send this app to a GitHub repository of your own (through your gh login). The plan comes first; nothing is sent until you type yes.
+
+  --owner <account>           the GitHub account or organization for a new repository (default: yours)
+  --visibility private|public who may see a new repository (default: blend.yaml metadata.visibility, else private); kept in blend.yaml
+  --list                      also list it in the Blends store (acrylblends.github.io and Control Center), as Community under your name; public only
+  --category <address>        its category, one of acrylblends.github.io/blends (default: its earlier place, else its starter's category)
+  --subcategory <address>     a subcategory of that category
+  --license <id>              its licence when listed, an SPDX id (default MIT)
+  --json                      print the plan as JSON and send nothing
+  --confirm <plan>            send exactly this plan (the JSON --json printed); for a surface that showed a person the plan
+  -h, --help                  this text
+
+Example: npm run share -- --visibility public --list --category business --subcategory crm`
+
 async function main(argv: readonly string[]): Promise<number> {
   const appRoot = fileURLToPath(new URL('../..', import.meta.url))
   const { values } = parseArgs({
@@ -78,8 +92,13 @@ async function main(argv: readonly string[]): Promise<number> {
       category: { type: 'string' },
       subcategory: { type: 'string' },
       license: { type: 'string' },
+      help: { type: 'boolean', short: 'h' },
     },
   })
+  if (values.help === true) {
+    console.log(HELP)
+    return 0
+  }
   if (
     values.visibility !== undefined &&
     values.visibility !== 'private' &&

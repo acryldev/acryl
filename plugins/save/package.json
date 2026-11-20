@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/save",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Save the app to its own git repository, and share it: a repository of its own on GitHub, created and pushed only after a person confirms the plan. Refuses a file that holds a secret, and a private app going to a public remote.",
   "license": "MIT",
   "repository": {

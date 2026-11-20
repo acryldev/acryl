@@ -17,7 +17,7 @@ import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { findSecrets } from '@acryldev/app-persistence'
-import { isFramedByPackages } from '@acryldev/blends/cli'
+import { isFramedByPackages, mergeTooling, readLibrary } from '@acryldev/blends/cli'
 import { CLASS, CREATE, PACKAGE, TEMPLATE_MANIFEST } from './names'
 import {
   openPublicRegistry,
@@ -493,6 +493,10 @@ async function createFromSource(
         return 1
       }
     }
+    // A starter that carries the save plugin gets its commands (npm run save, npm run share), whatever release it was published with: one framed by its
+    // packages skips the upgrade that would add them. The scripts are the library plugin's own (plugins/save/plugin.json); one the app has is kept.
+    const save = readLibrary().get('save')
+    if (save?.scripts !== undefined && existsSync(join(target, 'plugins', 'save'))) mergeTooling(target, { scripts: save.scripts })
     startRepository(target)
     io.stdout.write(
       `created ${name} from ${entry ? `${entry.id} ${entry.version}` : manifest.name} (${manifest.description}) in ${target}: ${files.length} files, ${CLASS} docs in docs/framework\n`,
