@@ -161,7 +161,7 @@ for (const [name, action, manifest, , code, tests] of details) {
       ),
     ),
   )
-  const framework = manifest.dependencies?.acrylblends ?? manifest.peerDependencies?.acrylblends
+  const framework = manifest.dependencies?.['@acryldev/blends'] ?? manifest.peerDependencies?.['@acryldev/blends']
   const client = manifest.dsh?.client
   const dshImports = [
     ...new Set(
@@ -180,7 +180,7 @@ for (const [name, action, manifest, , code, tests] of details) {
     `- Workspace: ${workspace.length === 0 ? 'none' : workspace.map((n) => `\`${n}\`${WANTED.some(([w]) => w === n) ? '' : ' (not in the table)'}`).join(', ')}`,
   )
   say(
-    `- Framework: ${framework === undefined ? 'does not use `acrylblends`' : `declares \`acrylblends\` ${framework} (${manifest.dependencies?.acrylblends ? 'a dependency: make it a peer' : 'already a peer'})`}`,
+    `- Framework: ${framework === undefined ? 'does not use `@acryldev/blends`' : `declares \`@acryldev/blends\` ${framework} (${manifest.dependencies?.['@acryldev/blends'] ? 'a dependency: make it a peer' : 'already a peer'})`}`,
   )
   say(
     `- DSH client: ${client === undefined ? 'no client bundle' : `platform ${client.platform ?? 'web'}, inject ${(client.inject ?? []).map((n) => `\`${n}\``).join(', ') || 'none'}`}`,
@@ -200,7 +200,7 @@ say('## The peer-dependency fix, scoped')
 say()
 const toPeer = details
   .filter(
-    ([, action, manifest]) => action === 'port' && manifest.dependencies?.acrylblends !== undefined,
+    ([, action, manifest]) => action === 'port' && manifest.dependencies?.['@acryldev/blends'] !== undefined,
   )
   .map(([name]) => `\`${name}\``)
 say(

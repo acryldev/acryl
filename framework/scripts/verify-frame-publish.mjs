@@ -419,9 +419,9 @@ try {
   const cliVersion = JSON.parse(
     readFileSync(join(root, 'packages', 'cli', 'package.json'), 'utf8'),
   ).version
-  if (manifest.dependencies?.acrylblends !== `^${cliVersion}`)
+  if (manifest.dependencies?.['@acryldev/blends'] !== `^${cliVersion}`)
     fail(
-      `init --desktop asks for acrylblends ${String(manifest.dependencies?.acrylblends)}, not ^${cliVersion}`,
+      `init --desktop asks for @acryldev/blends ${String(manifest.dependencies?.['@acryldev/blends'])}, not ^${cliVersion}`,
     )
   if (manifest.dependencies?.['@deepseek-ai/dsh-base'] !== config.dshVersion)
     fail(
