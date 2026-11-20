@@ -262,6 +262,19 @@ export const FRAME_APP_ICON_PATH = `${FRAME_API_PREFIX}/app/icon`
 export interface AppShareRequest {
   readonly owner?: string
   readonly visibility?: 'private' | 'public'
+  /** List it in the Blends store; a part not given is the app's own (its earlier place, else its starter's category; MIT). */
+  readonly list?: { readonly category?: string; readonly subcategory?: string; readonly license?: string }
+}
+
+/** The Blends store's categories (published by acrylblends.github.io; @acryldev/app-persistence CATEGORIES_URL names the same list). */
+export const STORE_CATEGORIES_URL = 'https://acrylblends.github.io/categories.json'
+
+/** How the Blends store will list the app (the save plugin's StoreListing): its id, place (category slugs), licence and the tag people start from. */
+export interface AppStoreListingView {
+  readonly id: string
+  readonly placement: { readonly category: string; readonly subcategory?: string }
+  readonly license: string
+  readonly tag: string
 }
 
 /** What sharing the app sends: the save plugin's plan, shown before anything leaves the computer. */
@@ -272,12 +285,28 @@ export interface AppSharePlanView {
   readonly visibility: 'private' | 'public'
   /** Files changed since the last save; the share saves them first. */
   readonly changes: number
+  readonly listing?: AppStoreListingView
 }
 
 /** Where the app went. */
 export interface AppSharedView {
   readonly remote: string
   readonly created: boolean
+  /** The tag the store lists, and whether this share made it (an existing tag is kept). */
+  readonly listed?: { readonly tag: string; readonly created: boolean }
+}
+
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u
+const LICENSE = /^[A-Za-z0-9][A-Za-z0-9.+-]*$/u
+
+function parseListing(value: unknown): AppStoreListingView | undefined {
+  if (value === undefined) return undefined
+  if (!isRecord(value) || !isRecord(value.placement)) throw new Error('app share plan: listing')
+  const { id, license, tag } = value
+  const { category, subcategory } = value.placement
+  if (typeof id !== 'string' || typeof license !== 'string' || typeof tag !== 'string' || typeof category !== 'string') throw new Error('app share plan: listing')
+  if (subcategory !== undefined && typeof subcategory !== 'string') throw new Error('app share plan: listing subcategory')
+  return { id, placement: { category, ...(subcategory === undefined ? {} : { subcategory }) }, license, tag }
 }
 
 export function parseAppSharePlan(value: unknown): AppSharePlanView {
@@ -286,20 +315,34 @@ export function parseAppSharePlan(value: unknown): AppSharePlanView {
   if (typeof repository !== 'string' || repository === '' || typeof create !== 'boolean') throw new Error('app share plan: repository')
   if (visibility !== 'private' && visibility !== 'public') throw new Error('app share plan: visibility')
   if (typeof changes !== 'number' || !Number.isSafeInteger(changes) || changes < 0) throw new Error('app share plan: changes')
-  return { repository, create, visibility, changes }
+  const listing = parseListing(value.listing)
+  return { repository, create, visibility, changes, ...(listing === undefined ? {} : { listing }) }
 }
 
 export function parseAppShared(value: unknown): AppSharedView {
   if (!isRecord(value) || typeof value.remote !== 'string' || typeof value.created !== 'boolean') throw new Error('app share: where it went')
-  return { remote: value.remote, created: value.created }
+  const listed = isRecord(value.listed) && typeof value.listed.tag === 'string' && typeof value.listed.created === 'boolean'
+    ? { tag: value.listed.tag, created: value.listed.created }
+    : undefined
+  return { remote: value.remote, created: value.created, ...(listed === undefined ? {} : { listed }) }
 }
 
 export function parseAppShareRequest(value: unknown): AppShareRequest | undefined {
   if (!isRecord(value)) return undefined
-  const { owner, visibility } = value
+  const { owner, visibility, list } = value
   if (owner !== undefined && (typeof owner !== 'string' || !GITHUB_NAME.test(owner))) return undefined
   if (visibility !== undefined && visibility !== 'private' && visibility !== 'public') return undefined
-  return { ...(owner === undefined ? {} : { owner }), ...(visibility === undefined ? {} : { visibility }) }
+  if (list !== undefined && !isRecord(list)) return undefined
+  const asked = list === undefined ? undefined : { category: list.category, subcategory: list.subcategory, license: list.license }
+  // Passed to a command line: only addresses and a licence id, never anything a shell or the parser could take as a flag.
+  if (asked !== undefined && ([asked.category, asked.subcategory].some(slug => slug !== undefined && (typeof slug !== 'string' || !SLUG.test(slug)))
+    || (asked.license !== undefined && (typeof asked.license !== 'string' || !LICENSE.test(asked.license))))) return undefined
+  if (asked !== undefined && asked.category === undefined && asked.subcategory !== undefined) return undefined
+  return {
+    ...(owner === undefined ? {} : { owner }),
+    ...(visibility === undefined ? {} : { visibility }),
+    ...(asked === undefined ? {} : { list: Object.fromEntries(Object.entries(asked).filter(([, v]) => v !== undefined)) as NonNullable<AppShareRequest['list']> }),
+  }
 }
 
 export const FRAME_PLUGINS_SHARE_PLAN_PATH = `${FRAME_API_PREFIX}/plugins/share-plan`

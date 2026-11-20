@@ -8,7 +8,7 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { type AppSharePlanView, type AppShareRequest, type AppSharedView, parseAppSharePlan } from './contract.ts'
+import { type AppSharePlanView, type AppShareRequest, type AppSharedView, parseAppShared, parseAppSharePlan } from './contract.ts'
 
 export const SHARE_COMMAND = join('plugins', 'save', 'share-cli.ts')
 
@@ -50,6 +50,10 @@ function lastJson(text: string): Record<string, unknown> | undefined {
 const requestArgs = (request: AppShareRequest): string[] => [
   ...(request.owner === undefined ? [] : ['--owner', request.owner]),
   ...(request.visibility === undefined ? [] : ['--visibility', request.visibility]),
+  ...(request.list === undefined ? [] : ['--list']),
+  ...(request.list?.category === undefined ? [] : ['--category', request.list.category]),
+  ...(request.list?.subcategory === undefined ? [] : ['--subcategory', request.list.subcategory]),
+  ...(request.list?.license === undefined ? [] : ['--license', request.list.license]),
 ]
 
 export function appShareCommand(root: string, env: NodeJS.ProcessEnv = process.env, run: Run = runCommand(root, env)): AppSharePort {
@@ -74,7 +78,7 @@ export function appShareCommand(root: string, env: NodeJS.ProcessEnv = process.e
       // base64url: on Windows a command can pass through a shell, which would take JSON's quotes.
       const answer = await ask([...requestArgs(request), '--confirm', Buffer.from(JSON.stringify(confirmed), 'utf8').toString('base64url')])
       if (answer.ok !== true || typeof answer.remote !== 'string') throw new Error('the app did not say where it was shared')
-      return { remote: answer.remote, created: answer.created === true }
+      return parseAppShared(answer)
     },
   }
 }

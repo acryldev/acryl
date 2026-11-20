@@ -6,6 +6,7 @@
 
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import {
+  type AppStoreListingView,
   type AppSharedView,
   type AppSharePlanView,
   type AppShareRequest,
@@ -13,6 +14,7 @@ import {
   FRAME_APP_SHARE_PLAN_PATH,
   parseAppShared,
   parseAppSharePlan,
+  STORE_CATEGORIES_URL,
 } from '../contract.ts'
 import { failureOf, PlainFailure } from './plain-failure.ts'
 import type { RegistryApi } from './registry-api.ts'
@@ -57,6 +59,28 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+interface StoreCategory { readonly slug: string; readonly name: string; readonly subs: readonly { readonly slug: string; readonly name: string }[] }
+
+/** The store's categories for the two selects; empty when the list cannot be read (the plan still names the place). */
+async function storeCategories(): Promise<readonly StoreCategory[]> {
+  try {
+    const response = await fetch(STORE_CATEGORIES_URL)
+    const list = response.ok ? ((await response.json()) as { categories?: unknown }).categories : undefined
+    return Array.isArray(list) ? (list as StoreCategory[]) : []
+  } catch {
+    return []
+  }
+}
+
+const LICENSES = ['MIT', 'Apache-2.0', 'BSD-3-Clause', 'GPL-3.0-or-later', 'MPL-2.0']
+
+/** Where the store lists it, in words: `Application › Productivity`. */
+function placeWords(listing: AppStoreListingView, categories: readonly StoreCategory[]): string {
+  const category = categories.find(c => c.slug === listing.placement.category)
+  const sub = category?.subs.find(s => s.slug === listing.placement.subcategory)
+  return [category?.name ?? listing.placement.category, ...(listing.placement.subcategory === undefined ? [] : [sub?.name ?? listing.placement.subcategory])].join(' › ')
+}
+
 /** `github.com/ana/shop` from a remote address, for reading. */
 const readable = (remote: string): string => remote.replace(/^git\+/u, '').replace(/^https?:\/\//u, '').replace(/\.git$/u, '')
 
@@ -72,6 +96,9 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
   const [owner, setOwner] = useState('')
   const [visibility, setVisibility] = useState<'private' | 'public'>('private')
   const [step, setStep] = useState<Step>({ kind: 'ask' })
+  const [list, setList] = useState<AppShareRequest['list'] | undefined>(undefined)
+  const [categories, setCategories] = useState<readonly StoreCategory[]>([])
+  useEffect(() => { if (list !== undefined && categories.length === 0) void storeCategories().then(setCategories) }, [list, categories.length])
   const [failure, setFailure] = useState<string | undefined>(undefined)
 
   const readGithub = useCallback(() => {
@@ -79,7 +106,8 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
   }, [registry])
   useEffect(() => { readGithub() }, [readGithub])
 
-  const request: AppShareRequest = { ...(owner.trim() === '' ? {} : { owner: owner.trim() }), visibility }
+  const listed = visibility === 'public' && list !== undefined
+  const request: AppShareRequest = { ...(owner.trim() === '' ? {} : { owner: owner.trim() }), visibility, ...(listed ? { list } : {}) }
   const fail = (cause: unknown): void => {
     setFailure(cause instanceof PlainFailure || cause instanceof Error ? cause.message : String(cause))
   }
@@ -88,6 +116,15 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
     setFailure(undefined)
     setStep({ kind: 'busy' })
     share.plan(request).then(plan => { setStep({ kind: 'plan', plan }) }, (cause: unknown) => { setStep({ kind: 'ask' }); fail(cause) })
+  }
+  /** A new place or licence: the plan is read again, so the yes covers exactly what is shown. */
+  const replace = (change: NonNullable<AppShareRequest['list']>, current: AppStoreListingView): void => {
+    const next = { category: current.placement.category, ...(current.placement.subcategory === undefined ? {} : { subcategory: current.placement.subcategory }), license: current.license, ...change }
+    if (next.subcategory === undefined) delete (next as { subcategory?: string }).subcategory
+    setList(next)
+    setFailure(undefined)
+    setStep({ kind: 'busy' })
+    share.plan({ ...request, list: next }).then(plan => { setStep({ kind: 'plan', plan }) }, (cause: unknown) => { setStep({ kind: 'ask' }); fail(cause) })
   }
   const send = (plan: AppSharePlanView): void => {
     setFailure(undefined)
@@ -111,6 +148,13 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
             later version is saved there too. Someone you give access makes their own copy with{' '}
             <code>{`git clone ${step.shared.remote.replace(/^git\+/u, '')}`}</code>
           </small>
+          {step.shared.listed !== undefined && (
+            <small role="status">
+              {step.shared.listed.created
+                ? `Listed in the Blends store from ${step.shared.listed.tag}: acrylblends.github.io and Control Center show it within about an hour.`
+                : `${step.shared.listed.tag} was already listed, so the store keeps that version. Raise the version in package.json to list this one.`}
+            </small>
+          )}
         </div>
       ) : step.kind === 'plan' || step.kind === 'sending' ? (
         <>
@@ -120,8 +164,34 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
           </div>
           <div className="acrylBlendsAppRow">
             <b>Who can see it</b>
-            <small>{step.plan.visibility === 'private' ? 'Only you and people you invite (private)' : 'Anyone (public); listed in the Blends registry as Community'}</small>
+            <small>{step.plan.visibility === 'private' ? 'Only you and people you invite (private)' : 'Anyone (public)'}</small>
           </div>
+          {step.plan.listing !== undefined && (() => {
+            const listing = step.plan.listing
+            const category = categories.find(c => c.slug === listing.placement.category)
+            return (
+              <div className="acrylBlendsAppRow">
+                <b>Blends store</b>
+                {categories.length > 0 && (
+                  <span className="acrylBlendsAppControls">
+                    <select className="acrylBlendsSearch" aria-label="Category" disabled={step.kind === 'sending'} value={listing.placement.category} onChange={(event) => { replace({ category: event.target.value, subcategory: undefined }, listing) }}>
+                      {categories.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+                    </select>
+                    <select className="acrylBlendsSearch" aria-label="Subcategory" disabled={step.kind === 'sending'} value={listing.placement.subcategory ?? ''} onChange={(event) => { replace({ subcategory: event.target.value === '' ? undefined : event.target.value }, listing) }}>
+                      <option value="">No subcategory</option>
+                      {(category?.subs ?? []).map(s => <option key={s.slug} value={s.slug}>{s.name}</option>)}
+                    </select>
+                    <select className="acrylBlendsSearch" aria-label="Licence" disabled={step.kind === 'sending'} value={listing.license} onChange={(event) => { replace({ license: event.target.value }, listing) }}>
+                      {[...new Set([listing.license, ...LICENSES])].map(id => <option key={id} value={id}>{`Licence: ${id}`}</option>)}
+                    </select>
+                  </span>
+                )}
+                <small>
+                  Listed as {listing.id} under {placeWords(listing, categories)}, marked Community with your name, licence {listing.license}. People start from {listing.tag}.
+                </small>
+              </div>
+            )
+          })()}
           <div className="acrylBlendsAppRow">
             <b>What is sent</b>
             <small>{step.plan.changes === 0 ? 'The versions saved so far' : `${String(step.plan.changes)} changed ${step.plan.changes === 1 ? 'file is' : 'files are'} saved first, then every saved version`}</small>
@@ -144,8 +214,13 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
             <input className="acrylBlendsSearch" aria-label="GitHub account" placeholder="GitHub account (blank: yours)" value={owner} onChange={(event) => { setOwner(event.target.value) }} />
             <select className="acrylBlendsSearch" aria-label="Who can see it" value={visibility} onChange={(event) => { setVisibility(event.target.value === 'public' ? 'public' : 'private') }}>
               <option value="private">Private: only you and people you invite</option>
-              <option value="public">Public: anyone, listed as Community</option>
+              <option value="public">Public: anyone can see it</option>
             </select>
+            {visibility === 'public' && (
+              <label className="acrylBlendsMeta">
+                <input type="checkbox" checked={list !== undefined} onChange={(event) => { setList(event.target.checked ? {} : undefined) }} /> List it in the Blends store
+              </label>
+            )}
             <button type="submit" className="acrylBlendsAppButton" disabled={!ready || step.kind === 'busy'}>{step.kind === 'busy' ? 'Reading…' : 'Review what would be sent'}</button>
           </span>
           <small>{ready ? 'The plan comes first: which repository, who can see it, and what is saved first.' : 'Connect GitHub first (above).'}</small>

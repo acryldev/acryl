@@ -441,7 +441,7 @@ export function frameRoutes({ state, report = () => {}, plugins, graph, feedback
     app.post(FRAME_APP_SHARE_PATH, ownPage, jsonBody(), async (c) => {
       const body = await readJson(c)
       const fields = body === INVALID_JSON || body === null || typeof body !== 'object' ? undefined : body as Record<string, unknown>
-      const request = fields === undefined ? undefined : parseAppShareRequest({ owner: fields.owner, visibility: fields.visibility })
+      const request = fields === undefined ? undefined : parseAppShareRequest({ owner: fields.owner, visibility: fields.visibility, list: fields.list })
       if (request === undefined) return c.json(error('invalid share request'), 400)
       let confirmed: AppSharePlanView
       try {

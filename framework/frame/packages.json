@@ -86,7 +86,7 @@
       "path": "../plugins/versions"
     },
     "@acryldev/blends-frame": {
-      "version": "0.2.5",
+      "version": "0.2.6",
       "path": "../plugins/blends-frame"
     }
   },
