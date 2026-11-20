@@ -6,6 +6,7 @@
  */
 
 import { createServer } from 'node:net'
+import { isRestrictedPort } from '@acryldev/blends/cordis/node-server'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
 const HOST = '127.0.0.1'
@@ -27,12 +28,12 @@ export function loopbackPortIsFree(port: number, host: string = HOST): Promise<b
   })
 }
 
-/** The first free port at or after `start`. `probe` is injectable so the scan is testable without sockets. */
+/** The first free port at or after `start` that a browser may open (the Fetch standard's bad ports are skipped; an app's stable port is hashed into 3100..3999, which holds 3659). `probe` is injectable so the scan is testable without sockets. */
 export async function findFreeWebPort(start: number, probe: (port: number) => Promise<boolean> = loopbackPortIsFree, attempts = WEB_PORT_ATTEMPTS): Promise<number> {
   for (let offset = 0; offset < attempts; offset += 1) {
     const port = start + offset
     if (port > 65_535) break
-    if (await probe(port)) return port
+    if (!isRestrictedPort(port) && await probe(port)) return port
   }
   throw new Error(`no free web port from ${String(start)} to ${String(Math.min(start + attempts - 1, 65_535))}; set ACRYL_WEB_PORT to another starting port`)
 }
