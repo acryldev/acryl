@@ -612,7 +612,7 @@ spec:
   ])
   capture(process.execPath, [cli, 'add', 'db', '--dir', withDb])
   for (const name of ['@acryldev/db', '@acryldev/db-sqlite'])
-    if (!existsSync(join(withDb, 'plugins', name, 'src', 'index.ts')))
+    if (!existsSync(join(withDb, 'plugins', name.split('/').at(-1), 'src', 'index.ts')))
       fail(`add db: ${name} was not copied`)
   capture(npm, ['install', '--no-audit', '--no-fund'], { cwd: withDb })
   capture(npm, ['run', 'check'], { cwd: withDb })
@@ -676,7 +676,7 @@ spec:
   ])
   capture(process.execPath, [cli, 'add', 'kv', '--dir', withKv])
   for (const name of ['@acryldev/kv', '@acryldev/kv-json'])
-    if (!existsSync(join(withKv, 'plugins', name, 'src', 'index.ts')))
+    if (!existsSync(join(withKv, 'plugins', name.split('/').at(-1), 'src', 'index.ts')))
       fail(`add kv: ${name} was not copied`)
   capture(npm, ['install', '--no-audit', '--no-fund'], { cwd: withKv })
   capture(npm, ['run', 'check'], { cwd: withKv })
@@ -771,7 +771,7 @@ spec:
   capture('pnpm', ['pack', '--pack-destination', packed], { cwd: cliDir })
   const frameworkTarball = join(
     packed,
-    readdirSync(packed).find((f) => /^acrylblends-.*\.tgz$/.test(f)) ?? '',
+    readdirSync(packed).find((f) => /^acryldev-blends-\d.*\.tgz$/.test(f)) ?? '',
   )
   const clientFile = { nodejs: 'counter.tsx', notes: 'counter.tsx', chat: 'chat.tsx' }
   for (const kind of ['nodejs', 'notes', 'chat']) {
@@ -797,7 +797,11 @@ spec:
     testsInCodexSandbox(notes, kind)
     capture(
       process.execPath,
-      [join(notes, 'node_modules', 'acrylblends', 'bin', 'acrylblends.js'), 'add', 'desktop'],
+      [
+        join(notes, 'node_modules', '@acryldev', 'blends', 'bin', 'acrylblends.js'),
+        'add',
+        'desktop',
+      ],
       {
         cwd: notes,
       },

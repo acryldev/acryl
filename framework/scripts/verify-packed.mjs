@@ -167,7 +167,13 @@ console.log('ws-check: ok')
   run(bin('acrylblends'), ['add', 'driver-pty'], agentApp)
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acryldev-blends-'), tarball('acryldev-instance-')],
+    [
+      'install',
+      '--no-audit',
+      '--no-fund',
+      tarball('acryldev-blends-'),
+      tarball('acryldev-instance-'),
+    ],
     agentApp,
   )
   run('npm', ['run', 'check'], agentApp)
@@ -202,7 +208,7 @@ console.log('ws-check: ok')
       '--only',
       'acrylblends.chat',
       '--cli',
-      join(tools, 'node_modules', 'acrylblends', 'bin', 'acrylblends.js'),
+      join(tools, 'node_modules', '@acryldev', 'blends', 'bin', 'acrylblends.js'),
     ],
     scratch,
   )
@@ -232,7 +238,13 @@ console.log('ws-check: ok')
   )
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acryldev-blends-'), tarball('acryldev-instance-')],
+    [
+      'install',
+      '--no-audit',
+      '--no-fund',
+      tarball('acryldev-blends-'),
+      tarball('acryldev-instance-'),
+    ],
     pulled,
   )
   run('npm', ['test'], pulled, { ACRYL_DOOR: 'off' })
@@ -305,7 +317,13 @@ console.log('ws-check: ok')
   writeFileSync(appFile, registered)
   run(
     'npm',
-    ['install', '--no-audit', '--no-fund', tarball('acryldev-blends-'), tarball('acryldev-instance-')],
+    [
+      'install',
+      '--no-audit',
+      '--no-fund',
+      tarball('acryldev-blends-'),
+      tarball('acryldev-instance-'),
+    ],
     dbApp,
   )
   run('npm', ['run', 'check'], dbApp)
