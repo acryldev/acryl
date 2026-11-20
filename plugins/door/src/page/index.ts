@@ -17,7 +17,7 @@ export const DOOR_BASE = '/api/acryl-door'
 export const PAGE_KEY = Symbol.for('acryl.door.page')
 
 /** Where the page keeps its tab's id: per tab, kept across reloads and moves within the app, never shared with another tab. */
-const TAB_KEY = '@acryldev/door-tab'
+const TAB_KEY = 'acryl-door-tab'
 
 /**
  * This tab's id: the page that replaces this one in the same tab (a reload, a move to another path) says the same, so the Host keeps driving that tab for a run asked from it.

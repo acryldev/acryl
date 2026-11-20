@@ -8,7 +8,7 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { ReviewGlyph } from '../chrome/panel-icons.tsx'
 
 export const REVIEW_KIND = 'review'
-export const REVIEW_ID = '@acryldev/workspace/review'
+export const REVIEW_ID = 'acryl-workspace/review'
 
 /**
  * PENDING (not failed) while the upstream right sidebar is absent; both registrations live in one
@@ -16,7 +16,7 @@ export const REVIEW_ID = '@acryldev/workspace/review'
  */
 export function reviewTabPlugin(shell: WorkspaceShellState, review: ReviewStore) {
   return {
-    name: '@acryldev/workspace-review-tab',
+    name: 'acryl-workspace-review-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {

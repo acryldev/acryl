@@ -43,7 +43,7 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => registerPalette(ctx), '@acryldev/shortcuts: toggle command palette')
   // A child plugin: the section waits for the Settings slots and the locale service, the shortcuts above do not.
   ctx.plugin({
-    name: '@acryldev/shortcuts-settings',
+    name: 'acryl-shortcuts-settings',
     inject: ['slots', 'locale'],
     apply(child: ClientContext): void {
       child.effect(() => child.locale.register(LOCALE_NAMESPACE, { en: { nav: 'Shortcuts' }, zh: { nav: '快捷键' } }), '@acryldev/shortcuts: dictionary')

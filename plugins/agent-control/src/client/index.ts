@@ -85,7 +85,7 @@ export function apply(ctx: ClientContext): void {
 
   ctx.slots.inject('shell.overlay', () => ctx.slots.register({
     name: 'shell.overlay',
-    id: '@acryldev/agent-control-indicator',
+    id: 'acryl-agent-control-indicator',
     order: 1000,
     inject: () => ({ driver }),
   }, AgentDrivingIndicator))

@@ -16,8 +16,8 @@ import { CodeGlyph } from '../chrome/panel-icons.tsx'
 export const DSH_FILES_KIND = 'files'
 /** The kind ACRYL's tree had before the takeover; still registered (with no start-page entry) so a tab the user kept open still shows. */
 export const FILES_KIND = 'worktree-files'
-export const FILES_ID = '@acryldev/workspace/files'
-export const FILES_TAKEOVER_ID = '@acryldev/workspace/files-takeover'
+export const FILES_ID = 'acryl-workspace/files'
+export const FILES_TAKEOVER_ID = 'acryl-workspace/files-takeover'
 
 /**
  * PENDING (not failed) while the upstream right sidebar is absent; every registration unwinds together.
@@ -26,7 +26,7 @@ export const FILES_TAKEOVER_ID = '@acryldev/workspace/files-takeover'
  */
 export function filesTabPlugin(shell: WorkspaceShellState, filesApi: WorkspaceFilesApi, gitApi: WorkspaceGitApi, takeOver = false) {
   return {
-    name: '@acryldev/workspace-files-tab',
+    name: 'acryl-workspace-files-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {

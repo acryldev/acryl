@@ -69,7 +69,7 @@ export type ModelConnectState =
 export const DEFAULT_MODEL_KEY_REF = 'DEEPSEEK_API_KEY'
 
 /** Where the dismissal is kept (browser storage, per viewer, like the workspace's other conveniences). */
-export const MODEL_CONNECT_DISMISSED_KEY = '@acryldev/workspace:model-connect'
+export const MODEL_CONNECT_DISMISSED_KEY = 'acryl-workspace:model-connect'
 
 /** The same reference derivation the Models page uses for a hand-declared provider (`deriveKeyRef`). */
 export function deriveModelKeyRef(provider: string): string {

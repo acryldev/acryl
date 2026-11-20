@@ -15,7 +15,7 @@ export interface ShortcutsRowInjected {
 const SHOWN = 6
 
 /** The frame's own key: Files with its search (`index.ts`, the quick-open effect). */
-const FIND_A_FILE = { id: '@acryldev/blends-frame.find-file', label: 'Find a file', keys: [navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl', 'P'] }
+const FIND_A_FILE = { id: 'acryl-blends-frame.find-file', label: 'Find a file', keys: [navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl', 'P'] }
 
 export function shortcutList(catalog: readonly ShortcutCatalogEntry[]): { readonly id: string; readonly label: string; readonly keys: readonly string[] }[] {
   return [FIND_A_FILE, ...catalog.filter(entry => entry.keys.length > 0 && entry.conflicts.length === 0).slice(0, SHOWN - 1)]

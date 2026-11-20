@@ -8,12 +8,12 @@ import type { WorkspaceShellState } from '../worktrees/shell-state.ts'
 import { ChecksGlyph } from '../chrome/panel-icons.tsx'
 
 export const CHECKS_KIND = 'checks'
-export const CHECKS_ID = '@acryldev/workspace/checks'
+export const CHECKS_ID = 'acryl-workspace/checks'
 
 /** PENDING (not failed) while the upstream right sidebar is absent; both registrations unwind together. */
 export function checksTabPlugin(shell: WorkspaceShellState, gitApi: WorkspaceGitApi) {
   return {
-    name: '@acryldev/workspace-checks-tab',
+    name: 'acryl-workspace-checks-tab',
     inject: ['sidebarRightTabs', 'slots'],
     apply(ctx: ClientContext): void {
       ctx.effect(() => {

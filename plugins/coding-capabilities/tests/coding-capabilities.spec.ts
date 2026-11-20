@@ -28,7 +28,7 @@ const SURFACES: readonly AcrylSurface[] = ['tui', 'web', 'desktop']
 const expectedComposition: Record<AcrylSurface, PatchShape> = {
   tui: {
     idRows: ['system-prompt', 'deepseek-account'],
-    insertedIds: ['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', '@acryldev/sign-in-account-callback'],
+    insertedIds: ['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-sign-in-account-callback'],
   },
   web: { idRows: [], insertedIds: ['authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-sign-in', 'acryl-launcher-desktop', 'acryl-support', 'acryl-agent-control'] },
   desktop: { idRows: [], insertedIds: ['authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-sign-in', 'acryl-launcher-desktop', 'acryl-agent-control'] },
@@ -121,7 +121,7 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
     const all = shapeOf(createAcrylCodingCapabilityPatches(new Set(SURFACES)))
     expect(all.idRows).toEqual(['system-prompt', 'deepseek-account'])
-    expect(all.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-sign-in', 'acryl-launcher-desktop', '@acryldev/sign-in-account-callback', 'acryl-support', 'acryl-agent-control'])
+    expect(all.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-app-shell', 'acryl-workspace', 'acryl-plugin-admin', 'acryl-sign-in', 'acryl-launcher-desktop', 'acryl-sign-in-account-callback', 'acryl-support', 'acryl-agent-control'])
   })
 
   it('composes nothing for a surface set no capability declares', () => {
@@ -136,19 +136,19 @@ describe('createAcrylCodingCapabilityPatches', () => {
     // the same row id a second time and throw `duplicate loader entry id` at
     // boot - the existingRowIds filter is what this test guards.
     const withoutExisting = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui'])))
-    expect(withoutExisting.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', '@acryldev/sign-in-account-callback'])
+    expect(withoutExisting.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-sign-in-account-callback'])
 
     const withExisting = shapeOf(
       createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['agent-preset-registry'])),
     )
-    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization', 'acryl-settings', '@acryldev/sign-in-account-callback'])
+    expect(withExisting.insertedIds).toEqual(['session-stats', 'authorization', 'acryl-settings', 'acryl-sign-in-account-callback'])
   })
 
   it('drops every insert of a fully-provided capability, not just its first row', () => {
     const allProvided = shapeOf(
       createAcrylCodingCapabilityPatches(
         new Set(['tui']),
-        new Set(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', '@acryldev/sign-in-account-callback']),
+        new Set(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-sign-in-account-callback']),
       ),
     )
     expect(allProvided).toEqual({ idRows: ['system-prompt', 'deepseek-account'], insertedIds: [] })
@@ -156,7 +156,7 @@ describe('createAcrylCodingCapabilityPatches', () => {
 
   it('still inserts a row existingRowIds does not name', () => {
     const patches = shapeOf(createAcrylCodingCapabilityPatches(new Set(['tui']), new Set(['some-other-row'])))
-    expect(patches.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', '@acryldev/sign-in-account-callback'])
+    expect(patches.insertedIds).toEqual(['agent-preset-registry', 'session-stats', 'authorization', 'acryl-settings', 'acryl-sign-in-account-callback'])
   })
 
   it('returns fresh patches a caller may mutate without affecting the next surface', () => {
