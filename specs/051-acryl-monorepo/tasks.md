@@ -205,3 +205,9 @@ verify and check:layout and all 23 framework check steps green before it lands.
   Fixed 2026-11-19 (AcrylImplementer): verify-packed's runner starts npm and pnpm through `npmSpawn` / the new `pnpmSpawn` in
   framework/scripts/lib/platform.mjs (Windows: through the shell, pnpm named bare so PATHEXT finds pnpm.cmd or pnpm.exe); unit-tested in
   platform.test.mjs on macOS. NOT yet proven on Windows: mbpi9win is off the network tonight; open until `pnpm run verify:packed` passes there.
+
+- [ ] T040 [release, after the 2026-11-20 workshop] framework/scripts/release-local.sh waits for npm visibility once, after the last publish and
+  before the tags and proofs, not after every package. Found 2026-11-20 by the coordinator during the 1.7.0 publish: the per-package `visible`
+  wait (up to 6 min each, about 2.5 min in practice) made 28 packages take over an hour, and `npm publish` does not need its dependencies
+  visible. The coordinator's scratch copy `release-fast.sh` did this for 1.7.0; make it the script's default and keep the final wait for every
+  published name@version before the proof from npm.
