@@ -15,8 +15,9 @@ on:
         type: string
         default: next
 
+# write: a draft release is visible only to a token that may push.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
