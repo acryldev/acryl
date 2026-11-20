@@ -1,5 +1,6 @@
 import { cpSync } from 'node:fs'
 
+// The build runs this after tsdown, and prepack runs it again: a lib/ rebuilt by tsdown alone (clean) lost these three, and 0.1.1 shipped without watch-host.mjs.
 cpSync(new URL('../preload.cjs', import.meta.url), new URL('../lib/preload.cjs', import.meta.url))
 // frame.ts starts the packaged host through it, from next to itself.
 cpSync(

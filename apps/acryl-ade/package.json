@@ -36,7 +36,7 @@
     "@acryldev/blends-core": "0.6.0",
     "@acryldev/blends-frame": "^0.2.0",
     "@acryldev/brand-client": "^0.2.0",
-    "@acryldev/desktop-shell": "0.1.1",
+    "@acryldev/desktop-shell": "0.1.2",
     "@acryldev/instance": "0.1.1",
     "@acryldev/plugin-admin": "^0.2.0",
     "@acryldev/plugin-hub-core": "0.2.2",

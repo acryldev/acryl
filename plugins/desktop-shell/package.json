@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/desktop-shell",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Run the app as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron.",
   "license": "MIT",
   "repository": {
@@ -53,6 +53,7 @@
     "typescript": "6.0.3"
   },
   "scripts": {
-    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly && node scripts/copy-assets.mjs"
+    "build": "tsdown && tsc -p tsconfig.json --emitDeclarationOnly && node scripts/copy-assets.mjs",
+    "prepack": "node scripts/copy-assets.mjs"
   }
 }
