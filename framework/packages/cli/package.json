@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/blends",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "The Acryl web framework (import { Acryl } from \"acrylblends\") and the acrylblends command that scaffolds Cordis apps.",
   "license": "MIT",
   "type": "module",
@@ -433,8 +433,8 @@
   ],
   "private": false,
   "devDependencies": {
-    "@deepseek-ai/cordis": "4.0.4",
     "@acryldev/framework": "workspace:*",
+    "@deepseek-ai/cordis": "4.0.4",
     "tsdown": "0.23.0",
     "vitest": "5.0.3"
   },

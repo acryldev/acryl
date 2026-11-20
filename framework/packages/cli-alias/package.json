@@ -1,6 +1,6 @@
 {
   "name": "acrylblends",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "The short name for @acryldev/blends: the same CLI, forwarded.",
   "license": "MIT",
   "bin": {
