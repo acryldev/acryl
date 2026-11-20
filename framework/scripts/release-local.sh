@@ -108,6 +108,11 @@ if [ "$PROMOTE" = 1 ]; then
   exit 0
 fi
 
+step "build (a fresh clone has no lib/: the framework build makes every package this release packs, the frame packages included)"
+# The build lock: every package's build rewrites its lib/, so a second build in this checkout (a launcher, a gate) waits instead of colliding.
+node scripts/with-build-lock.mjs nice -n 10 corepack pnpm --dir framework run build > "$work/build.log" 2>&1 || { tail -30 "$work/build.log"; die "the framework build failed (log above)"; }
+echo "built"
+
 step "pack (pnpm pack turns workspace: ranges into versions; prepack builds)"
 for d in "${DIRS[@]}"; do
   (cd "framework/packages/$d" && nice -n 10 corepack pnpm pack --pack-destination "$work/packed" >/dev/null)
