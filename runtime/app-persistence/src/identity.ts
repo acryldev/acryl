@@ -43,6 +43,11 @@ export function withLicense(manifestText: string, license: string): string {
   return withMetadata(manifestText, 'license', license)
 }
 
+/** The manifest with `metadata.id` set, kept as a YAML document as {@link withVisibility} does. */
+export function withId(manifestText: string, id: string): string {
+  return withMetadata(manifestText, 'id', id)
+}
+
 function withMetadata(manifestText: string, key: string, value: string): string {
   const document = parseDocument(manifestText)
   if (document.errors.length > 0) throw new Error(`blend.yaml could not be read: ${document.errors[0]?.message ?? 'invalid YAML'}`)

@@ -279,8 +279,8 @@ test('listing in the Blends store: the place comes from the starter, MIT by defa
     const options = { list: {}, categories: storeCategories }
     const plan = planShare(dir, options, fake)
     assert.ok(!('ok' in plan))
-    assert.deepEqual(plan.listing, { placement: { category: 'business', subcategory: 'finance' }, license: 'MIT', tag: 'v1.2.0' })
-    assert.match(renderSharePlan(plan), /Blends store as Community under business › finance \(licence MIT, people start from v1\.2\.0\)/u)
+    assert.deepEqual(plan.listing, { id: 'ana.books', placement: { category: 'business', subcategory: 'finance' }, license: 'MIT', tag: 'v1.2.0' })
+    assert.match(renderSharePlan(plan), /Blends store as ana\.books, Community, under business › finance \(licence MIT, people start from v1\.2\.0\)/u)
     const result = shareApp(dir, plan, options, fake)
     assert.ok(result.ok)
     assert.deepEqual(result.listed, { tag: 'v1.2.0', created: true })
@@ -288,10 +288,11 @@ test('listing in the Blends store: the place comes from the starter, MIT by defa
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { keywords: string[] }
     assert.deepEqual(pkg.keywords, ['notes', 'acrylblends-blend', 'acrylblends-category-business', 'acrylblends-subcategory-finance'])
     assert.equal(readAppIdentity(readFileSync(join(dir, 'blend.yaml'), 'utf8')).license, 'MIT')
+    assert.equal(readAppIdentity(readFileSync(join(dir, 'blend.yaml'), 'utf8')).id, 'ana.books')
     assert.deepEqual(JSON.parse(readFileSync(join(dir, 'acryl.template.json'), 'utf8')), { name: 'books', description: 'Invoices and expenses.' })
     assert.match(readFileSync(join(dir, 'LICENSE'), 'utf8'), /Copyright \(c\) \d{4} ana/u)
     // A second share keeps the place the first one chose, even when the starter word says otherwise.
-    assert.deepEqual((planShare(dir, { list: {} }, fake) as { listing?: unknown }).listing, { placement: { category: 'business', subcategory: 'finance' }, license: 'MIT', tag: 'v1.2.0' })
+    assert.deepEqual((planShare(dir, { list: {} }, fake) as { listing?: unknown }).listing, { id: 'ana.books', placement: { category: 'business', subcategory: 'finance' }, license: 'MIT', tag: 'v1.2.0' })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
@@ -305,7 +306,7 @@ test('listing is refused for a private app, a place not on the list, and an app 
     assert.match(String((planShare(dir, { list: {}, categories: storeCategories }, fake) as { reason?: string }).reason), /choose its category/u)
     assert.match(String((planShare(dir, { list: { category: 'gaming', subcategory: 'crm' }, categories: storeCategories }, fake) as { reason?: string }).reason), /crm is not a subcategory of Gaming/u)
     const chosen = planShare(dir, { list: { category: 'gaming', subcategory: 'games', license: 'Apache-2.0' }, categories: storeCategories }, fake)
-    assert.deepEqual((chosen as { listing?: unknown }).listing, { placement: { category: 'gaming', subcategory: 'games' }, license: 'Apache-2.0', tag: 'v1.2.0' })
+    assert.deepEqual((chosen as { listing?: unknown }).listing, { id: 'ana.books', placement: { category: 'gaming', subcategory: 'games' }, license: 'Apache-2.0', tag: 'v1.2.0' })
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }

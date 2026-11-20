@@ -25,6 +25,7 @@ import {
   saveApp,
   suggestPlacement,
   type Visibility,
+  withId,
   withLicense,
   withPlacement,
   withVisibility,
@@ -35,6 +36,8 @@ export const BLEND_TOPIC = 'acrylblends-blend'
 
 /** Where and how the Blends store lists the app: shown in the plan, written by the share. */
 export interface StoreListing {
+  /** Its id in the store, under its owner's name (`ana.notes`): an app made from a starter is `acrylblends.<name>`, which only official owners may list. */
+  readonly id: string
   readonly placement: Placement
   /** An SPDX licence id (MIT): a public Blend names its terms. */
   readonly license: string
@@ -175,7 +178,9 @@ function planListing(appRoot: string, identity: AppIdentity, visibility: Visibil
   const license = asked.license ?? identity.license ?? 'MIT'
   if (!LICENSE_ID.test(license)) return refused(`"${license}" is not a licence id (such as MIT or Apache-2.0)`)
   const version = typeof pkg.version === 'string' ? pkg.version : identity.version ?? '0.1.0'
-  return { placement, license, tag: `v${version}` }
+  const name = (identity.id ?? '').split('.').slice(1).join('.') || repository.split('/')[1] || ''
+  const id = `${(repository.split('/')[0] ?? '').toLowerCase()}.${name.toLowerCase()}`
+  return { id, placement, license, tag: `v${version}` }
 }
 
 const MIT = (year: number, holder: string) => `MIT License
@@ -208,10 +213,9 @@ SOFTWARE.
 function writeListing(appRoot: string, manifestText: string, listing: StoreListing, repository: string): string {
   const identity = readAppIdentity(manifestText)
   let text = manifestText
-  if (identity.license !== listing.license) {
-    text = withLicense(text, listing.license)
-    writeFileSync(join(appRoot, 'blend.yaml'), text)
-  }
+  if (identity.id !== listing.id) text = withId(text, listing.id)
+  if (identity.license !== listing.license) text = withLicense(text, listing.license)
+  if (text !== manifestText) writeFileSync(join(appRoot, 'blend.yaml'), text)
   const pkg = packageOf(appRoot) ?? {}
   const before = Array.isArray(pkg.keywords) ? pkg.keywords.filter((word): word is string => typeof word === 'string') : []
   const keywords = withPlacement(before.includes(BLEND_TOPIC) ? before : [...before, BLEND_TOPIC], listing.placement)
@@ -344,7 +348,7 @@ export function renderSharePlan(plan: SharePlan): string {
       : `${String(plan.changes)} changed ${plan.changes === 1 ? 'file' : 'files'}, saved first, and the versions saved so far`
   const listed = plan.listing === undefined
     ? ''
-    : ` Listed in the Blends store as Community under ${placementWords(plan.listing.placement)} (licence ${plan.listing.license}, people start from ${plan.listing.tag}).`
+    : ` Listed in the Blends store as ${plan.listing.id}, Community, under ${placementWords(plan.listing.placement)} (licence ${plan.listing.license}, people start from ${plan.listing.tag}).`
   return `Share this app to ${where}: ${what}.${listed}`
 }
 
