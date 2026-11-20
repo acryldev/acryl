@@ -91,6 +91,8 @@ export class LauncherService {
   #blends: { at: number, list: readonly BlendView[] } | undefined
 
   #signIn: { readonly clientId: string, readonly deviceCode: string, readonly until: number } | undefined
+  /** Apps just made whose `npm install` is running (`#install`), by id. */
+  readonly #installing = new Map<string, Job>()
   /** The tools apps need: being fetched (the first start on a computer without them), ready, or not had (apps then try the computer's own). */
   #tools: { readonly state: 'preparing' } | { readonly state: 'ready' } | { readonly state: 'failed', readonly reason: string } = { state: 'ready' }
   constructor(ports: LauncherPorts) { this.#ports = ports }
@@ -125,7 +127,8 @@ export class LauncherService {
   #view(entry: AppEntry): AppView {
     const started = this.#started.get(entry.id)
     const missing = inspectApp(entry).state === 'missing'
-    const state: AppRunState = missing ? 'missing' : started === undefined ? 'stopped' : started.address === undefined ? 'starting' : 'running'
+    const installing = this.#installing.get(entry.id)
+    const state: AppRunState = missing ? 'missing' : started === undefined ? (installing !== undefined ? 'starting' : 'stopped') : started.address === undefined ? 'starting' : 'running'
     const failure = this.#failures.get(entry.id)
     const blend = entry.blend === '' ? blendOf(entry.path) : entry.blend
     const version = missing ? '' : blendVersionOf(entry.path)
@@ -137,6 +140,7 @@ export class LauncherService {
       ...version !== '' && latest !== undefined && newerVersion(latest, version) ? { update: latest } : {},
       ...started?.address === undefined ? {} : { address: started.address },
       ...started === undefined || started.address !== undefined || started.output === '' ? {} : { output: started.output.trimEnd() },
+      ...started === undefined && installing !== undefined && installing.output !== '' ? { output: installing.output.trimEnd() } : {},
       ...failure === undefined || state !== 'stopped' ? {} : { failure },
       ...github === undefined ? {} : { github },
     }
@@ -527,6 +531,8 @@ export class LauncherService {
 
   /** `npm install` in the new app's folder, as the job's second step; the job is still running while it does, and says so. */
   #install(appId: string, folder: string, job: Job): void {
+    // The app is listed already; until its install ends its card shows it starting, with the install's lines, not as stopped.
+    this.#installing.set(appId, job)
     job.step = 'Step 2 of 3: installing its dependencies (npm install, about a minute). Next: starting it.'
     job.output = ''
     // `--loglevel http` makes npm print each download, so the screen shows it working instead of a silent minute.
@@ -535,6 +541,7 @@ export class LauncherService {
     let output = ''
     run.onOutput((text) => { output = tail(`${output}${text}`); job.output = output })
     run.onEnd((end) => {
+      this.#installing.delete(appId)
       if (job.run !== run) return
       if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.' } else if (end.code === 0) this.#finish(appId, job)
       else { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'npm install ended before the app could run.') : output.trimEnd() }

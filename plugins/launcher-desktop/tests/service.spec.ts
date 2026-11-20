@@ -321,6 +321,8 @@ describe('+ New app', () => {
     runs[1]!.say('npm http fetch GET 200 b\nnpm http fe')
     runs[1]!.say('tch GET 200 c\n')
     expect(service.state().job?.output).toBe('npm http fetch GET 200 a\nnpm http fetch GET 200 b\nnpm http fetch GET 200 c')
+    // Its card says it is starting, with the install's lines, not that it is stopped.
+    expect(service.state().apps[0]).toMatchObject({ state: 'starting', output: expect.stringContaining('npm http fetch GET 200 c') })
     mkdirSync(join(where, 'notes', 'node_modules'))
     runs[1]!.end(0)
     expect(service.state().job?.status).toBe('done')
