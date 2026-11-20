@@ -613,10 +613,10 @@ export async function upgrade(options: UpgradeOptions, io: Io): Promise<number> 
       dependencies?: Record<string, string>
     }
     if (
-      manifest.dependencies?.acrylblends !== undefined &&
-      manifest.dependencies.acrylblends !== `^${VERSION}`
+      manifest.dependencies?.['@acryldev/blends'] !== undefined &&
+      manifest.dependencies['@acryldev/blends'] !== `^${VERSION}`
     ) {
-      manifest.dependencies.acrylblends = `^${VERSION}`
+      manifest.dependencies['@acryldev/blends'] = `^${VERSION}`
       writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`)
     }
     // The frame last: the app's scaffold, the frame row, the generated composition row, the host plugins and the launcher/overlay write as `init` writes

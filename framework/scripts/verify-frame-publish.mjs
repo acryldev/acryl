@@ -454,7 +454,7 @@ try {
   // Every frame package as a direct tarball dependency: npm resolves a frame package's own @acryldev dependencies to these, as it will to the registry's.
   for (const entry of packed)
     manifest.dependencies[published.get(entry.folder)] = `file:${entry.tarball}`
-  manifest.dependencies.acrylblends = `file:${cliTarball}`
+  manifest.dependencies['@acryldev/blends'] = `file:${cliTarball}`
   writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`)
   const installed = run(...npm(['install', '--no-audit', '--no-fund']), {
     cwd: app,

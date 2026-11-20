@@ -203,7 +203,7 @@ describe('scaffolding a template into the frame', () => {
     expect(overlay).toContain(
       `name: '${FRAME_SCOPE}/system-prompt'\n      config:\n        identity: ${JSON.stringify(FRAME_IDENTITY)}`,
     )
-    expect(manifest.dependencies.acrylblends).toBe(`^${VERSION}`)
+    expect(manifest.dependencies['@acryldev/blends']).toBe(`^${VERSION}`)
     expect(manifest.dependencies['@deepseek-ai/dsh-base']).toBe(FRAME_DSH_VERSION)
     // The launcher's development hook is the Blends frame's, by the name it installs as.
     expect(readFileSync(join(root, 'scripts', 'ide-host.mjs'), 'utf8')).toContain(

@@ -125,7 +125,7 @@ function frameProfileOfManifest(root: string): FrameProfileSpecs | undefined {
   }
   const dependencies = manifest.dependencies ?? {}
   const dshVersion = dependencies['@deepseek-ai/dsh-base']
-  const frameworkVersion = dependencies.acrylblends
+  const frameworkVersion = dependencies['@acryldev/blends']
   if (typeof dshVersion !== 'string' || typeof frameworkVersion !== 'string') return undefined
   const publishedOf = new Map(FRAME_RELEASE.map((entry) => [entry.source, entry.name]))
   const packages: Record<string, string> = {}

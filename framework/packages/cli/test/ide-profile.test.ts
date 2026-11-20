@@ -187,7 +187,9 @@ test("the manifest carries the DSH pin, the framework, the frame packages, and k
   assert.equal(manifest.dependencies['@deepseek-ai/dsh-base'], '0.2.0-rc.2')
   assert.equal(manifest.dependencies['@deepseek-ai/dsh-web-app'], '0.2.0-rc.2')
   assert.equal(manifest.dependencies['@deepseek-ai/dsh'], undefined)
-  assert.equal(manifest.dependencies.acrylblends, '^1.0.10')
+  assert.equal(manifest.dependencies['@acryldev/blends'], '^1.0.10')
+  // One framework copy: the profile pins the package the templates depend on, never the acrylblends alias beside it.
+  assert.equal(manifest.dependencies.acrylblends, undefined)
   assert.equal(manifest.dependencies['@acryldev/web'], 'file:../@acryldev-web')
   assert.equal(manifest.dependencies.yaml, '^2.9.0')
   assert.equal(manifest.scripts.start, 'node src/main.ts')

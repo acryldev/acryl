@@ -894,7 +894,7 @@ export function ideProfilePlan(input: IdeProfileInput, existing?: string): IdePr
     '@deepseek-ai/dsh-app-boot': input.dshVersion,
     '@deepseek-ai/dsh-base': input.dshVersion,
     '@deepseek-ai/dsh-web-app': input.dshVersion,
-    acrylblends: input.frameworkVersion,
+    '@acryldev/blends': input.frameworkVersion,
     'js-yaml': '^4.2.0',
     ...input.dependencies,
   }

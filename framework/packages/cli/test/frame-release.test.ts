@@ -32,7 +32,7 @@ describe('the frame specs of an existing app', () => {
   it('an app on the published frame upgrades from its own pins, by the names it installed', () => {
     const root = app('on-npm', {
       '@deepseek-ai/dsh-base': '0.2.0-rc.2',
-      acrylblends: '^1.2.0',
+      '@acryldev/blends': '^1.2.0',
       [String(web?.name)]: '^0.1.0',
     })
     const specs = frameProfileForApp(root)
@@ -48,7 +48,7 @@ describe('the frame specs of an existing app', () => {
   it('a checkout app keeps its file: specs under the source names', () => {
     const root = app('on-checkout', {
       '@deepseek-ai/dsh-base': '0.2.0-rc.2',
-      acrylblends: 'file:/checkout/packages/cli',
+      '@acryldev/blends': 'file:/checkout/packages/cli',
       '@acryldev/web': 'file:/checkout/runtime/web',
     })
     const input = frameProfileInput(frameProfileForApp(root) ?? publishedFrameProfile(), 'x', [])
