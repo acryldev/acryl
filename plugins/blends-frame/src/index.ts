@@ -25,6 +25,7 @@ import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
 import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
 import { appFallbackTarget, appNavigationTarget } from './app-urls.ts'
 import { AppShareRefused, appShareCommand, type AppSharePort } from './app-share.ts'
+import { AppIconRefused, APP_ICON_MAX_BYTES, iconBytes, saveAppIcon } from './app-icon.ts'
 import { FRAME_GRAPH_EVENTS_PATH, FRAME_GRAPH_PATH } from './graph-contract.ts'
 import { githubReadiness, PlainError, plainPullRefusal, plainShareProblem, type Plain } from './plain.ts'
 import { createGraphPort, type GraphPort } from './plugin-graph.ts'
@@ -41,6 +42,7 @@ import { branchChatsFile, createBranchChatsStore, type BranchChatsRecord } from 
 import {
   FRAME_API_PREFIX,
   FRAME_APP_PATH,
+  FRAME_APP_ICON_PATH,
   branchNameProblem,
   FRAME_BRANCHES_NEW_PATH,
   FRAME_CHAT_SAVES_PATH,
@@ -414,9 +416,11 @@ export interface FrameRoutesDeps {
   readonly selection?: SelectionInbox
   /** Share the whole app to GitHub (Settings > Share), through the app's own share command. */
   readonly appShare?: AppSharePort
+  /** The app's folder, where Settings > App writes its icon. */
+  readonly appIconRoot?: string
 }
 
-export function frameRoutes({ state, report = () => {}, plugins, graph, feedback, branches, branchChats, chatSaves, shared, realChats, gitSync, snapshot, appReload, selection, appShare }: FrameRoutesDeps): Acryl {
+export function frameRoutes({ state, report = () => {}, plugins, graph, feedback, branches, branchChats, chatSaves, shared, realChats, gitSync, snapshot, appReload, selection, appShare, appIconRoot }: FrameRoutesDeps): Acryl {
   const app = new Acryl()
   if (appShare !== undefined) {
     const refusal = (cause: unknown) => cause instanceof AppShareRefused
@@ -450,6 +454,19 @@ export function frameRoutes({ state, report = () => {}, plugins, graph, feedback
       } catch (cause) {
         if (!(cause instanceof AppShareRefused)) report(cause)
         return c.json(plainBody(refusal(cause)), 409)
+      }
+    })
+  }
+  if (appIconRoot !== undefined) {
+    app.post(FRAME_APP_ICON_PATH, ownPage, jsonBody(APP_ICON_MAX_BYTES * 2), async (c) => {
+      const body = await readJson(c)
+      try {
+        await saveAppIcon(appIconRoot, iconBytes(body === INVALID_JSON || body === null || typeof body !== 'object' ? undefined : (body as { png?: unknown }).png))
+        return c.json({ ok: true })
+      } catch (cause) {
+        if (cause instanceof AppIconRefused) return c.json(error(cause.message), 400)
+        report(cause)
+        return c.json(error('the icon could not be saved'), 500)
       }
     })
   }
@@ -1057,6 +1074,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       graph: graph.port,
       // Settings > Share: the app's own share command, with the environment this host runs in (git, gh and a GitHub token Control Center gave it).
       appShare: appShareCommand(root),
+      appIconRoot: root,
       // The app's feedback service may be isolated to its own composition (the template isolates it under the app-plugins row); read it from that
       // row's scope first, then from the frame's own, so both an isolated and an unisolated app answer.
       feedback: feedbackPort(() => {

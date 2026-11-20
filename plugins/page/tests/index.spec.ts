@@ -1,5 +1,6 @@
 /** The page over a real socket: our document with the taps, the built assets, and no way out of the asset folder. */
-import { readdirSync } from 'node:fs'
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
 import { apply as routerApply, name as routerName } from '@acryldev/router'
@@ -13,13 +14,13 @@ afterEach(async () => {
   while (contexts.length > 0) await contexts.pop()?.fiber.dispose()
 })
 
-async function boot(): Promise<Context> {
+async function boot(config: Partial<page.Config> = {}): Promise<Context> {
   const ctx = new Context()
   contexts.push(ctx)
   await ctx.plugin({ name: routerName, apply: routerApply })
   await ctx.plugin(nodeServer, { port: 0, scan: 0 })
   await ctx.plugin(webServer)
-  await ctx.plugin(page, { title: 'Test App' })
+  await ctx.plugin(page, { title: 'Test App', icon: join(tmpdir(), 'no-such-app', 'assets', 'icon.png'), ...config })
   return ctx
 }
 
@@ -49,7 +50,7 @@ describe('@acryldev/page', () => {
   it('answers every icon request with the ACRYL Blends logo, never the frontend package\'s DeepSeek whale', async () => {
     const ctx = await boot()
     const html = await (await fetch(ctx.nodeServer.url)).text()
-    expect(html).toContain('<link rel="icon" type="image/svg+xml" href="/favicon.svg" />')
+    expect(html).toContain('<link rel="icon" href="/favicon.svg" />')
     const icons = await Promise.all(['/favicon.ico', '/favicon.svg', '/favicon-dark.svg'].map(async path => fetch(ctx.nodeServer.url + path)))
     for (const icon of icons) {
       expect(icon.status).toBe(200)
@@ -61,6 +62,24 @@ describe('@acryldev/page', () => {
     }
     const manifest = await (await fetch(ctx.nodeServer.url + '/manifest.webmanifest')).json() as { name: string }
     expect(manifest.name).toBe('Test App')
+  })
+
+  it('answers with the app\'s own icon when it has one, read per request so a new one shows at once', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'page-icon-'))
+    try {
+      const icon = join(dir, 'icon.png')
+      const ctx = await boot({ icon })
+      expect((await fetch(ctx.nodeServer.url + '/favicon.ico')).headers.get('content-type')).toBe('image/svg+xml')
+      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
+      writeFileSync(icon, png)
+      for (const path of ['/favicon.ico', '/favicon.svg']) {
+        const answer = await fetch(ctx.nodeServer.url + path)
+        expect(answer.headers.get('content-type')).toBe('image/png')
+        expect(Buffer.from(await answer.arrayBuffer())).toEqual(png)
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('writes an app name as text, never as markup', () => {

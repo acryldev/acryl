@@ -341,6 +341,7 @@ button.acrylBlendsFrow:hover { background: var(--bf-surface-2); }
 .acrylBlendsAppRow small { grid-column: 1 / -1; color: var(--bf-dim); font-size: 11.5px; }
 .acrylBlendsAppControls { grid-row: 1; grid-column: 2; display: inline-flex; align-items: center; gap: 8px; }
 .acrylBlendsAppRow .acrylBlendsAppName { width: 220px; }
+.acrylBlendsAppIcon { width: 28px; height: 28px; border-radius: 6px; object-fit: contain; border: 1px solid var(--bf-border); }
 .acrylBlendsAppRow[data-wide] .acrylBlendsAppControls { grid-row: 2; grid-column: 1 / -1; flex-wrap: wrap; }
 .acrylBlendsAppButton { padding: 4px 10px; border: 1px solid #34343a; border-radius: 6px; background: var(--bf-surface-2); color: #e8e8ea; font: inherit; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .acrylBlendsAppButton:hover:not(:disabled) { border-color: #4a4a52; color: #fff; }

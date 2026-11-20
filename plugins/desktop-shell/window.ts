@@ -9,6 +9,8 @@ export interface WindowSpec {
   readonly y?: number
   /** A product's preload (`preload.cjs`): the narrow bridge its App pages use. Sandboxed, isolated, main frame only. */
   readonly preload?: string
+  /** The window's icon (the taskbar and title bar on Windows and Linux; macOS takes the Dock's): the app's own `assets/icon.png`, else the logo. */
+  readonly icon?: string
 }
 
 export interface Rect {
@@ -90,6 +92,7 @@ export interface WindowOptions {
   readonly x?: number
   readonly y?: number
   readonly show: boolean
+  readonly icon?: string
   readonly webPreferences: {
     readonly contextIsolation: boolean
     readonly nodeIntegration: boolean
@@ -108,6 +111,7 @@ export function windowOptions(spec: WindowSpec): WindowOptions {
     minHeight: WINDOW_MIN_SIZE.height,
     ...(spec.x === undefined || spec.y === undefined ? {} : { x: spec.x, y: spec.y }),
     show: false,
+    ...(spec.icon === undefined ? {} : { icon: spec.icon }),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

@@ -5,6 +5,7 @@
  */
 
 import { type FormEvent, useEffect, useState, useSyncExternalStore } from 'react'
+import { AppIconRow } from './AppIconRow.tsx'
 import { type DesktopApp, type DesktopAppSize, formatSize } from './desktop-app.ts'
 
 export interface AppSectionInjected {
@@ -81,6 +82,8 @@ export function AppSection({ app }: AppSectionInjected) {
         </span>
         <small>A label only: renaming never moves the app's folder.</small>
       </form>
+
+      <AppIconRow />
 
       <div className="acrylBlendsAppRow">
         <b>Folder</b>

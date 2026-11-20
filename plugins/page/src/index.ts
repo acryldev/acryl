@@ -5,6 +5,7 @@
  * `dist/assets/` files are served beside our document. No DSH web server, web runtime or web-startup row is involved.
  */
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, normalize, sep } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
@@ -21,6 +22,8 @@ export const inject = ['webServer']
 export interface Config {
   /** The document's title. */
   title: string
+  /** The app's own icon, a PNG (`<app>/assets/icon.png`, the file the desktop window shows too): the tab's icon when it exists. Default: that path under the folder the host runs in. */
+  icon?: string
 }
 
 const CONTENT_TYPES: Readonly<Record<string, string>> = {
@@ -74,7 +77,7 @@ export function pageDocument(tags: string, title: string, taps: (html: string) =
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${text}</title>
     <meta name="application-name" content="${text}" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     ${tags}
   </head>
@@ -149,10 +152,20 @@ export function apply(ctx: Context, config: Partial<Config> = {}): void {
       await serveFile(assets, pathname.slice('/assets'.length), res, req.method ?? 'GET')
     },
   })
-  // Browsers ask for /favicon.ico unconditionally. The icon is ours (the ACRYL mark), never the frontend package's DeepSeek whale.
+  // Browsers ask for /favicon.ico unconditionally. The icon is the app's own when it has one (read per request, so one chosen in Settings shows at
+  // once), else ours (the ACRYL mark), never the frontend package's DeepSeek whale.
+  const ownIcon = config.icon ?? resolve('assets', 'icon.png')
   const sendIcon = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
-    res.writeHead(200, { 'content-type': 'image/svg+xml', 'content-length': String(Buffer.byteLength(ACRYL_FAVICON_SVG)), 'cache-control': 'no-cache' })
-    res.end(req.method === 'HEAD' ? undefined : ACRYL_FAVICON_SVG)
+    let body: Uint8Array | string = ACRYL_FAVICON_SVG
+    let type = 'image/svg+xml'
+    try {
+      body = await readFile(ownIcon)
+      type = 'image/png'
+    } catch {
+      // no icon of its own
+    }
+    res.writeHead(200, { 'content-type': type, 'content-length': String(typeof body === 'string' ? Buffer.byteLength(body) : body.byteLength), 'cache-control': 'no-cache' })
+    res.end(req.method === 'HEAD' ? undefined : body)
   }
   for (const path of ['/favicon.ico', '/favicon.svg', '/favicon-dark.svg'])
     ctx.webServer.register({ kind: 'exact', path, handler: sendIcon })

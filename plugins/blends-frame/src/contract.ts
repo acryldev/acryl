@@ -255,6 +255,8 @@ export const FRAME_PLUGINS_SWITCH_PATH = `${FRAME_API_PREFIX}/plugins/switch`
 export const FRAME_APP_SHARE_PLAN_PATH = `${FRAME_API_PREFIX}/app/share-plan`
 /** POST `{ owner?, visibility?, confirm }`: share the app exactly as the confirmed plan says, or nothing. */
 export const FRAME_APP_SHARE_PATH = `${FRAME_API_PREFIX}/app/share`
+/** POST `{ png: base64 }`: the app's own icon (assets/icon.png), drawn by the page at 512 px. */
+export const FRAME_APP_ICON_PATH = `${FRAME_API_PREFIX}/app/icon`
 
 /** Who may see a shared app, and under which account; both optional (the signed-in account, blend.yaml's visibility). */
 export interface AppShareRequest {

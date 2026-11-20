@@ -42,6 +42,8 @@ test('two windows are never exactly on top of each other, and a window with no p
   assert.equal('x' in windowOptions({ title: 'a' }), false)
   // A preload only when the product gives one, and never at the cost of the sandbox or the isolation.
   assert.equal('preload' in windowOptions({ title: 'a' }).webPreferences, false)
+  assert.equal('icon' in windowOptions({ title: 'a' }), false)
+  assert.equal(windowOptions({ title: 'a', icon: '/app/assets/icon.png' }).icon, '/app/assets/icon.png')
   assert.deepEqual(windowOptions({ title: 'a', preload: '/b/preload.cjs' }).webPreferences, {
     contextIsolation: true,
     nodeIntegration: false,

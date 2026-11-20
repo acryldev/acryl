@@ -318,6 +318,7 @@ if (!app.requestSingleInstanceLock()) {
           title: chosen.name,
           ...size,
           ...where,
+          icon: iconFile(projectRoot),
           // A product's window page gets the bridge of its App pages (Settings > App, Name your app).
           ...(appPage ? { preload: fileURLToPath(new URL('./preload.cjs', import.meta.url)) } : {}),
         }),

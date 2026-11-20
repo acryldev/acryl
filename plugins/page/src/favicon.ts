@@ -14,6 +14,6 @@ export function pageManifest(title: string): string {
     start_url: './',
     scope: './',
     display: 'standalone',
-    icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+    icons: [{ src: 'favicon.svg', sizes: 'any', purpose: 'any' }],
   })
 }
