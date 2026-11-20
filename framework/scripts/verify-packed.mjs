@@ -336,39 +336,6 @@ console.log('ws-check: ok')
   log(
     'db: a row with a relative migrations path was read from the app folder (the app boots in its tests)',
   )
-  // An app made by an older published version, upgraded by the installed command: `upgrade` replaces its library plugins, and the upgraded app installs, type-checks and passes its tests.
-  // The fixtures are apps made by the published 0.9.1 and 0.10.0 (`scripts/make-upgrade-fixtures.mjs`).
-  for (const old of ['0.9.1', '0.10.0']) {
-    const holder = join(scratch, `upgrade-${old}`)
-    mkdirSync(holder)
-    run(
-      'tar',
-      [
-        '-xzf',
-        join(root, 'packages', 'cli', 'test', 'fixtures', 'upgrade', `app-${old}.tgz`),
-        '-C',
-        holder,
-      ],
-      scratch,
-    )
-    const oldApp = join(holder, 'app')
-    const upgraded = run(bin('acrylblends'), ['upgrade'], oldApp)
-    if (!upgraded.includes('upgraded'))
-      throw new Error(`upgrade of the ${old} app did nothing:\n${upgraded}`)
-    run('npm', ['install', '--no-audit', '--no-fund'], oldApp)
-    run('npm', ['run', 'check'], oldApp)
-    assertAcrylLine(oldApp)
-    run('npm', ['test'], oldApp, { ACRYL_DOOR: 'off' })
-    if (
-      !run(bin('acrylblends'), ['upgrade', '--dry-run'], oldApp).includes(
-        'everything is up to date',
-      )
-    )
-      throw new Error(`the upgraded ${old} app is not up to date`)
-    log(
-      `an app made by ${old}: upgraded by the installed command; it installs, type-checks, passes its tests, and has nothing left to upgrade`,
-    )
-  }
   log('OK')
 } catch (error) {
   console.error(

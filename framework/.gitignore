@@ -167,8 +167,6 @@ demos/
 # Build output of the framework packages (rebuilt by pnpm run build)
 packages/framework/lib/
 
-# The upgrade tests unpack apps made by published versions (scripts/make-upgrade-fixtures.mjs).
-!packages/cli/test/fixtures/upgrade/*.tgz
 
 
 # The IDE port's packages build lib/ like the framework's; only source is committed.
