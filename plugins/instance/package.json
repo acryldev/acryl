@@ -40,6 +40,10 @@
       "types": "./lib/types/home.d.ts",
       "default": "./lib/home.js"
     },
+    "./bundle-overlay": {
+      "types": "./lib/types/bundle-overlay.d.ts",
+      "default": "./lib/bundle-overlay.js"
+    },
     "./package.json": "./package.json"
   },
   "dependencies": {},

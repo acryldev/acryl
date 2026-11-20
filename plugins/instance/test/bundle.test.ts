@@ -121,18 +121,24 @@ function product(): { bundle: string; source: string } {
 
 const made = product()
 
-/** Run the bundle's Program file as the frame host runs: the overlay preloaded from the bundle, in the source, with the source named. */
+/** Run the bundle's Program file as the frame host runs: the overlay preloaded, in the source, with the source and the bundle named. */
 function run(runtime: string, extraEnv: Record<string, string> = {}) {
   return spawnSync(
     runtime,
     [
       '--import',
-      pathToFileURL(join(made.bundle, 'plugins', 'instance', 'bundle-overlay.ts')).href,
+      // The installed package's overlay, told where the bundle is: its own location is node_modules, not the bundle (spec 051 T011).
+      new URL('../bundle-overlay.ts', import.meta.url).href,
       join(made.bundle, 'frame', 'entry.mjs'),
     ],
     {
       cwd: made.source,
-      env: { ...process.env, ACRYLBLENDS_ROOT: made.source, ...extraEnv },
+      env: {
+        ...process.env,
+        ACRYLBLENDS_ROOT: made.source,
+        ACRYLBLENDS_PROGRAM: made.bundle,
+        ...extraEnv,
+      },
       encoding: 'utf8',
     },
   )
@@ -202,10 +208,14 @@ test('outside a product the overlay is not installed: the app is one folder and 
     process.execPath,
     [
       '--import',
-      pathToFileURL(join(made.bundle, 'plugins', 'instance', 'bundle-overlay.ts')).href,
+      new URL('../bundle-overlay.ts', import.meta.url).href,
       join(made.bundle, 'frame', 'entry.mjs'),
     ],
-    { cwd: made.bundle, env: { ...process.env, ACRYLBLENDS_ROOT: '' }, encoding: 'utf8' },
+    {
+      cwd: made.bundle,
+      env: { ...process.env, ACRYLBLENDS_ROOT: '', ACRYLBLENDS_PROGRAM: '' },
+      encoding: 'utf8',
+    },
   )
   assert.equal(result.status, 0, result.stderr)
   assert.deepEqual(JSON.parse(result.stdout.trim()), { from: 'bundle src' })

@@ -37,14 +37,10 @@ registerHooks({
 const plugins = new URL('../../', import.meta.url)
 const appRoot = new URL('../', plugins).href
 // A desktop product's frame host runs the Program from the bundle on an app's source, which holds only the person's files: their JSX compiles with the
-// Program's `typescript` (the instance family says whether this is such a host; a published framework has no family beside it).
-const family = new URL('instance/bundle.ts', plugins)
-if (existsSync(fileURLToPath(family))) {
-  const { appTree } = (await import(family.href)) as {
-    appTree(env: NodeJS.ProcessEnv, bundle: string): unknown
-  }
-  if (appTree(process.env, fileURLToPath(appRoot)) !== undefined) usePackagesOfProgram(fileURLToPath(appRoot))
-}
+// Program's `typescript`. The desktop shell names the bundle in ACRYLBLENDS_PROGRAM (@acryldev/instance PROGRAM_ENV); this loader is then the installed
+// package, so its own location says nothing about the bundle.
+const program = process.env.ACRYLBLENDS_PROGRAM?.trim()
+if (program) usePackagesOfProgram(program)
 const resolver = new URL('extensions/resolve.ts', plugins)
 if (existsSync(fileURLToPath(new URL('router/src/index.ts', plugins))) && existsSync(fileURLToPath(resolver))) {
   const { routerAliases } = (await import(resolver.href)) as { routerAliases(): Record<string, string> }

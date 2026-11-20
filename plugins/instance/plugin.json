@@ -11,6 +11,7 @@
     "": "index.ts",
     "/storage": "storage.ts",
     "/bundle": "bundle.ts",
-    "/home": "home.ts"
+    "/home": "home.ts",
+    "/bundle-overlay": "bundle-overlay.ts"
   }
 }

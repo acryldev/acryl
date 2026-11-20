@@ -8,7 +8,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { connect } from 'node:net'
 import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { appDataHome } from '@acryldev/instance'
+import { appDataHome, PROGRAM_ENV } from '@acryldev/instance'
 
 /** The launcher every frame app has; without it the app runs on its own server (made before the frame). */
 export const HOST_SCRIPT = join('scripts', 'ide-host.mjs')
@@ -173,7 +173,7 @@ export interface FrameHostLaunch {
   readonly runtime?: string
   /**
    * Where the Program is when it is not in the app folder: a product's bundle. The host, its loader and the resolver that serves the Program from there
-   * and the person's files from the app's source (plugins/instance/bundle-overlay.ts) start from it; the host still runs in the app folder.
+   * and the person's files from the app's source (@acryldev/instance/bundle-overlay, told where by ACRYLBLENDS_PROGRAM) start from it; the host still runs in the app folder.
    */
   readonly program?: string
 }
@@ -185,6 +185,13 @@ export interface FrameHostLaunch {
  * the app) and the app's data are not among them.
  */
 export const WATCHED_IN_SOURCE = ['src', 'plugins', 'blend.yaml'] as const
+
+/**
+ * The packaged host's preloads, from the packages this shell depends on, never from the app's folders: an app's copy of a framework plugin may be
+ * named differently or absent (a product's bundle has @acryldev/instance installed, not copied; spec 051 T011 and T038), and the host never started.
+ */
+export const HOST_LOADER = import.meta.resolve('@acryldev/node-server/register')
+export const BUNDLE_OVERLAY = import.meta.resolve('@acryldev/instance/bundle-overlay')
 
 /** The packaged host's watcher (watch-host.mjs, next to this file): node --watch's restarts, on a real change of a file only, never an access-time event. */
 export const WATCH_HOST = fileURLToPath(new URL('./watch-host.mjs', import.meta.url))
@@ -208,13 +215,8 @@ export function packagedHostArgs(
     '--',
     // The loader first and the overlay second: a hook registered later runs first, so the overlay sees every import before the loader's aliases.
     '--import',
-    pathToFileURL(join(program, 'plugins', 'node-server', 'src', 'register.ts')).href,
-    ...(program === root
-      ? []
-      : [
-          '--import',
-          pathToFileURL(join(program, 'plugins', 'instance', 'bundle-overlay.ts')).href,
-        ]),
+    HOST_LOADER,
+    ...(program === root ? [] : ['--import', BUNDLE_OVERLAY]),
     join(program, HOST_SCRIPT),
   ]
 }
@@ -240,6 +242,7 @@ export function startFrameHost(
       ...(launch.runtime === undefined
         ? { ELECTRON_RUN_AS_NODE: undefined }
         : { ELECTRON_RUN_AS_NODE: '1' }),
+      ...(launch.runtime !== undefined && program !== root ? { [PROGRAM_ENV]: program } : {}),
     },
     stdio: ['ignore', 'pipe', 'pipe'],
     shell: command.shell,

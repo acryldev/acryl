@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import {
   frameHome,
   hostAddress,
@@ -226,6 +227,10 @@ test("a packaged product watches the person's files and serves the Program from 
   assert.match(args.at(-1) ?? '', /ide-host\.mjs$/u)
   // The Program in the app folder itself has no overlay to load.
   assert.equal(packagedHostArgs('/app', '/app').filter((arg) => arg === '--import').length, 1)
+  // Each preload is a file that exists: the host once named plugins/node-server and plugins/instance in the bundle, which a product does not have.
+  for (const [index, arg] of args.entries())
+    if (arg === '--import')
+      assert.ok(existsSync(fileURLToPath(args[index + 1] ?? '')), args[index + 1])
 })
 
 test("a packaged host watches the person's src, plugins and blend.yaml whole, so a new plugin folder is seen, and never .git or data", () => {

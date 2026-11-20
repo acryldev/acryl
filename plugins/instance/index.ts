@@ -64,6 +64,12 @@ export const HOME_ENV = 'ACRYLBLENDS_HOME'
  */
 export const ROOT_ENV = 'ACRYLBLENDS_ROOT'
 export const PORT_ENV = 'ACRYLBLENDS_PORT'
+/**
+ * The Program's folder (a product's bundle) when the frame host runs it on an app's `source`: the preloads that serve the Program from there
+ * (bundle-overlay.ts, the node server's register) are installed packages, so their own location does not say where the bundle is. Set by the
+ * desktop shell's packaged host only (frame.ts startFrameHost).
+ */
+export const PROGRAM_ENV = 'ACRYLBLENDS_PROGRAM'
 /** The app's name, for a process that runs from the bundle on the app's `source` folder: the folder's own name says nothing (`source`). Set by `instanceEnv`. */
 export const NAME_ENV = 'ACRYLBLENDS_NAME'
 export const HOST_ENV = 'ACRYLBLENDS_HOST'

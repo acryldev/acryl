@@ -3,8 +3,9 @@
  * resolves from the bundle and the person's files from the app's source. A no-op in an app made with `acrylblends init`, which is one folder.
  */
 import { registerHooks } from 'node:module'
-import { fileURLToPath } from 'node:url'
 import { appTree, overlayResolve } from './bundle.ts'
+import { PROGRAM_ENV } from './index.ts'
 
-const tree = appTree(process.env, fileURLToPath(new URL('../../', import.meta.url)))
+const program = process.env[PROGRAM_ENV]?.trim()
+const tree = program ? appTree(process.env, program) : undefined
 if (tree !== undefined) registerHooks({ resolve: overlayResolve(tree) })
