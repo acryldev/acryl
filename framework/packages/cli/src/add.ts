@@ -114,6 +114,8 @@ export async function add(options: AddOptions, io: Io): Promise<number> {
     .map((name) => (name === 'db' ? 'db-sqlite' : name))
     // `kv` is the JSON-file provider of the kv port (it brings the port); `kv-db` is the one over db.
     .map((name) => (name === 'kv' ? 'kv-json' : name))
+    // `desktop` is the desktop shell's short name (the 1.6.0 command); a plain app gets the shell for `export default app`.
+    .map((name) => (name === 'desktop' ? 'desktop-shell' : name))
     .map((name) => (name === 'desktop-shell' && plain ? 'desktop-web' : name))
   if (names.length === 0) return 0
   // A plugin `add` mounts whose folder is already there without its row (an upgrade brought the folder, or an older starter left it): only the row is

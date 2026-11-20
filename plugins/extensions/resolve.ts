@@ -98,7 +98,7 @@ const FRAMEWORK_PLUGIN_FOLDERS = new Set([
 ])
 
 export function routerAliases(): Record<string, string> {
-  const src = new URL('../acryl-router/src/', import.meta.url)
+  const src = new URL('../router/src/', import.meta.url)
   const aliases: Record<string, string> = {}
   const add = (specifier: string, file: string) => {
     const path = fileURLToPath(new URL(file, src))

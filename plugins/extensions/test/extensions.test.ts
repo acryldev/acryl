@@ -375,6 +375,15 @@ test("a plugin installed live can import the ports and providers beside it, by n
   assert.ok(aliases['#acryl-kv/conformance']?.endsWith('kv/src/conformance.ts'))
 })
 
+test('a plugin installed live can import the framework as acrylblends, as plugins released for 1.6.0 do: the router beside it in plugins/router', () => {
+  const aliases = routerAliases()
+  for (const specifier of ['acrylblends', 'acrylblends/cors', 'acrylblends/jsx/jsx-runtime'])
+    assert.ok(
+      aliases[specifier]?.includes('/router/src/') && existsSync(aliases[specifier]),
+      `${specifier} resolves to the router's source`,
+    )
+})
+
 test("a plugin installed live from a home outside the app imports the port by its #name and gets the app's own module", async () => {
   const { root, folder } = await boot()
   const dir = join(folder, 'portuser')

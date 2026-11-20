@@ -549,7 +549,8 @@ describe('the desktop shell in a plain Acryl app', () => {
     )
     writeFileSync(join(dir, 'src/app.ts'), 'export default {}\n')
     writeFileSync(join(dir, '.gitignore'), 'node_modules/\n')
-    expect(await runCli(['add', 'desktop-shell', '--dir', dir], fakeIo().io)).toBe(0)
+    // `desktop`, the command 1.6.0 documents, is the desktop shell's short name.
+    expect(await runCli(['add', 'desktop', '--dir', dir], fakeIo().io)).toBe(0)
     const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
     expect(pkg.scripts).toEqual({ desktop: 'node plugins/desktop-web/launch.ts', dev: 'x' })
     expect(pkg.devDependencies.electron).toBe('44.9.3')
