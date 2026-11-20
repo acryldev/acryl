@@ -99,6 +99,8 @@ export interface BlendView {
   readonly version: string
   readonly category: string
   readonly description: string
+  /** Who released it: the ACRYL project (`official`) or anyone else (`community`, not reviewed); the registry's `origin`. */
+  readonly origin: 'official' | 'community'
 }
 
 export interface BlendsResponse {

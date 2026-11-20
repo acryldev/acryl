@@ -27,7 +27,7 @@ function setup() {
     home, appsFolder: join(root, 'ACRYL'),
     runner: (command): Run => { commands.push(command); return { onOutput: () => {}, onEnd: () => {}, stop: () => {} } },
     environment: () => ({}), exists: path => existsSync(path), makeFolder: path => { mkdirSync(path, { recursive: true }) },
-    blends: async () => [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' }, { id: 'acrylblends.accounting', name: 'Accounting', version: '0.1.0', category: 'finance', description: 'invoices' }],
+    blends: async () => [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' as const }, { id: 'acrylblends.accounting', name: 'Accounting', version: '0.1.0', category: 'finance', description: 'invoices', origin: 'official' as const }],
     door,
   })
   const app = (name: string): string => {

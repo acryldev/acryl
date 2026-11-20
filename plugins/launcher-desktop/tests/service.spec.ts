@@ -51,7 +51,7 @@ function setup() {
     exists: path => existsSync(path),
     makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
     door,
-    blends: async () => { registry.calls += 1; return [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' }] },
+    blends: async () => { registry.calls += 1; return [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' as const }] },
   })
   const makeApp = (name: string, surface: 'web' | 'desktop' | 'tui' = 'web', installed = true): string => {
     const folder = join(root, 'ACRYL', name)

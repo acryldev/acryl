@@ -8,13 +8,13 @@ describe('readBlends', () => {
   it('keeps the acrylblends runtime, sorts by name and fills what an entry leaves out', async () => {
     const blends = await readBlends(answer({ entries: [
       { id: 'acryl.core', name: 'Core', runtime: 'acryl' },
-      { id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', runtime: 'acrylblends' },
+      { id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', runtime: 'acrylblends', origin: 'official' },
       { id: 'acrylblends.accounting', runtime: 'acrylblends' },
       { name: 'No id', runtime: 'acrylblends' },
     ] }))
     expect(blends).toEqual([
-      { id: 'acrylblends.accounting', name: 'acrylblends.accounting', version: '', category: '', description: '' },
-      { id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' },
+      { id: 'acrylblends.accounting', name: 'acrylblends.accounting', version: '', category: '', description: '', origin: 'community' },
+      { id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' },
     ])
   })
 

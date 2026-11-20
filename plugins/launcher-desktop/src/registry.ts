@@ -28,7 +28,7 @@ export async function readBlends(fetchImpl: Fetch = (input, init) => fetch(input
   for (const raw of entries) {
     const entry = record(raw)
     if (entry === undefined || entry.runtime !== 'acrylblends' || typeof entry.id !== 'string' || entry.id === '') continue
-    blends.push({ id: entry.id, name: text(entry.name) || entry.id, version: text(entry.version), category: text(entry.category), description: text(entry.description) })
+    blends.push({ id: entry.id, name: text(entry.name) || entry.id, version: text(entry.version), category: text(entry.category), description: text(entry.description), origin: entry.origin === 'official' ? 'official' : 'community' })
   }
   return blends.sort((a, b) => a.name.localeCompare(b.name))
 }

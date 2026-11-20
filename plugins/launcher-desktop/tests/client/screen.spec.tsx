@@ -16,8 +16,8 @@ const STARTERS = [{ value: 'blank', label: 'Blank', description: 'the smallest a
 const state = (apps: AppView[], job: StateResponse['job'] = null): StateResponse => ({ apps, appsFolder: '/h/ACRYL', starters: STARTERS, job })
 
 const BLENDS = [
-  { id: 'acrylblends.notes-desktop', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app' },
-  { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary' },
+  { id: 'acrylblends.notes-desktop', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' as const },
+  { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary', origin: 'community' as const },
 ]
 
 const PLUGINS = [
@@ -292,6 +292,9 @@ describe('the Blends store', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
     expect(await screen.findByText('Accounting')).toBeTruthy()
     expect(screen.getByText('Notes')).toBeTruthy()
+    // Each card says who released it: the ACRYL project (official) or someone else (community, not reviewed).
+    expect(screen.getByText('Official').getAttribute('title')).toBe('Released by the ACRYL project')
+    expect(screen.getByText('Community').getAttribute('title')).toMatch(/not reviewed/u)
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search Blends' }), { target: { value: 'vat' } })
     expect(screen.queryByText('Notes')).toBeNull()
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search Blends' }), { target: { value: '' } })
