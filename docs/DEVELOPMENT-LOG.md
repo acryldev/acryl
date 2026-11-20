@@ -7097,3 +7097,38 @@ Owner: "it's time to make acryl default CLI tool entry point for everything for 
 - **ADE Settings:** the workbench root had no `settings.launcher` filler, so DSH Settings was never drawn. `@acrylblends/app-shell` 0.1.1 fills it with a hidden fallback trigger; the Blends frame's gear still wins.
 - **Verified:** fresh `create-acrylblends --from acryl.ade` + install: Settings opens. Blank Blend: one gear, Settings opens. Launcher from a clone and from the registry: ADE card made, installed and served ADE, Settings opens. Packed `acryl@0.2.9` in a scratch home: `acryl --web` made, installed and served the launcher. Selector 33/33, launcher-desktop 62/62.
 - **Not yet:** `npx acryl --gui` walked from npm (window), Windows; the launcher window is titled `launcher` (create renames the package after its folder); registry entries agent, chat and notes-desktop cannot be made with create-acrylblends 1.5.6 (T025).
+
+## 2026-11-20 - 051: every @acryldev package on npm, Control Center for people who install nothing, Share in every app
+
+Commits: `ededc4a9e3e28dac994de4b8c2f3bf8ca3a40b37` (dev-script hook), `88ba4797d43822984a688cb58316453cafa73bd3` (exports only at built files),
+`380252ce049ca54c41f5ed75fcb33f3897d76dc7` (Official/Community in the store), `75642b471e0a8adcc34e9eff143993fd756db009` (Connect GitHub, Private/Public),
+`daa3abef2a2bda2df18c54e0688e75df7acd0da0` (desktop-shell prepack), `3a79bef5581e687fc994adbfd5239d03593348d3` (CLI 1.7.2),
+`575bc4f142caf8fd584d381acae5e37f61ac2672` (products require ^1.7.2), `4d47dd17a7c815f96485465a7d978e8234987800` (tarball guard in the release script),
+`9626f5764e5ae45f8a5ebee32b70fbb371ce8cc1` (one-off publish workflow removed), `15dfac4d97379ce65fc534bd2f88de0ee61a1852` (Node and gh fetched),
+`bcd27361f1f4757d05382d69aac87db22453d4b7` (Settings > Share, CLI 1.7.3), `54a7ebdfd8ee63c64234ef40883bc795420e3f12` and
+`0823337719282c387cffd8c037e5e9431fc0f63e` (T015: acrylblends/acrylblends points here and is archived).
+
+Owner: participants (partly non-coders) use only the Control Center GUI on macOS, Windows and Linux, "the commands underneath must also work";
+"all @acryldev/** published"; publish Blend apps and Cordis plugins "to their own GitHub", "community" vs "official"; share the running app "in its
+settings pane"; and before sleeping: "finish unification whole plan, everything, release all, prepare that it is all working for all 3 OS".
+
+- **npm:** all 70 public @acryldev packages of main are on npm. npm limits how many NEW packages one account may create (E429 "as user undefined" is
+  that limit, not an IP limit): acryldevadmin hit it, webboxescom (also an owner of the scope) published the last 28. Publishing from GitHub's runners
+  did not help and was removed. `latest`: @acryldev/blends, @acryldev/create-blends and the short names at 1.7.3.
+- **Packing:** 1.7.1 and desktop-shell 0.1.1 were packed with `--ignore-scripts`, so their prepack never copied the framework docs (every new app
+  stopped: "cannot find the framework docs") or the shell's preload and watch-host (no packaged product opened a window). Fixed in 1.7.2 and 0.1.2;
+  `scripts/check-tarball-files.mjs` now refuses any tarball that lacks a `files` entry, in `framework/scripts/release-local.sh`. Rule: never pack a
+  release with `--ignore-scripts`.
+- **Control Center for people who install nothing:** on a computer without Node.js 22.19+ (Ubuntu's apt has 18) or gh, it fetches them once from
+  nodejs.org and github.com/cli/cli, checks each against its published SHA-256 list and unpacks them into `~/.acryl/tools`, first on every app's PATH
+  (`plugins/launcher/tools.js`); until then Make an app says so in words. Git comes with the product (dugite). Connect GitHub is GitHub's device
+  sign-in with ACRYL's own OAuth app (client id in the code, no secret); the token reaches every app as GH_TOKEN, which gh and git read.
+- **Share in every app:** Settings > Share (frame 0.2.1) sends the whole app to the person's own GitHub, private or public, plan first and sent only on
+  their yes, through the app's own `npm run share` (now with `--visibility`, kept in blend.yaml by app-persistence `withVisibility`, comments kept).
+  Cordis plugins were already shared from Settings > Plugins.
+- **Verified:** fresh apps from npm with 1.7.2 and 1.7.3 on macOS and Ubuntu (create, `npm test` 7/7, the server answers); a fresh 1.7.3 app shared
+  itself privately to inboxxobni/s2 through Settings > Share's route; Node 24.22.3 + npm 11.19 + gh 2.105 fetched and run in 8 s on macOS;
+  webboxes.ai deploy of a 1.7.2 app from a public repo: Running in 37 s, Publish, public address, chat answers with the workshop key.
+- **Not yet (this run continues):** the Control Center and ADE walks on Windows and Linux with the builds from bcd27361, the tools fetch on Windows
+  (tar of a .zip) and Linux, the product tags `control-center-v*` / `ade-v*`, the WorkshopPanel downloads. Test repos left in inboxxobni (s2,
+  ws-proof-1120, ws-proof-1120b): this Mac's gh token cannot delete repositories.
