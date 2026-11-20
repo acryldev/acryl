@@ -386,9 +386,9 @@ function dshStandardPlugin(id) {
 agentRows.find((row) => row.id === 'preset-acryl-blends').config.plugins.push(...DSH_STANDARD_PLUGINS.map(dshStandardPlugin))
 const hostLayer = anchorRows([{
   insert: [
-    { id: 'node-server', name: './plugins/node-server/src/index.ts', config: { hostname: chosen.host ?? '127.0.0.1', port: Number(port), scan: Number(port) === 0 ? 0 : 20 } },
-    { id: 'web-server', name: './plugins/web-server/src/index.ts' },
-    { id: 'page', name: './plugins/page/src/index.ts', config: { title: appTitle } },
+    { id: 'node-server', name: './plugins/acryl-node-server/src/index.ts', config: { hostname: chosen.host ?? '127.0.0.1', port: Number(port), scan: Number(port) === 0 ? 0 : 20 } },
+    { id: 'web-server', name: './plugins/acryl-web-server/src/index.ts' },
+    { id: 'page', name: './plugins/acryl-page/src/index.ts', config: { title: appTitle } },
     ...clientRows,
     ...agentRows,
   ],

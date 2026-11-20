@@ -1,4 +1,4 @@
-/** A page written in JSX: the scripts in package.json run Node.js with the vendored register hook (plugins/node-server/src/register.ts), which compiles .tsx with this app's own typescript. */
+/** A page written in JSX: the scripts in package.json run Node.js with the vendored register hook (plugins/acryl-node-server/src/register.ts), which compiles .tsx with this app's own typescript. */
 const About = () => (
   <main>
     <h1>About</h1>

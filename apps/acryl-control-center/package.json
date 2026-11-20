@@ -4,18 +4,18 @@
   "private": true,
   "type": "module",
   "imports": {
-    "#acryl-jsx/jsx-runtime": "./plugins/router/src/core/jsx/jsx-runtime.ts",
-    "#acryl-jsx/jsx-dev-runtime": "./plugins/router/src/core/jsx/jsx-dev-runtime.ts"
+    "#acryl-jsx/jsx-runtime": "./plugins/acryl-router/src/core/jsx/jsx-runtime.ts",
+    "#acryl-jsx/jsx-dev-runtime": "./plugins/acryl-router/src/core/jsx/jsx-dev-runtime.ts"
   },
   "engines": {
     "node": ">=22.19.0"
   },
   "scripts": {
     "desktop": "acryl-desktop",
-    "acryl": "node plugins/door/src/cli/acryl.ts",
-    "start": "node --import ./plugins/node-server/src/register.ts src/main.ts",
-    "dev": "node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs",
-    "test": "node --import ./plugins/node-server/src/register.ts --test \"test/**/*.test.{ts,tsx}\"",
+    "acryl": "node plugins/acryl-door/src/cli/acryl.ts",
+    "start": "node --import ./plugins/acryl-node-server/src/register.ts src/main.ts",
+    "dev": "node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs",
+    "test": "node --import ./plugins/acryl-node-server/src/register.ts --test \"test/**/*.test.{ts,tsx}\"",
     "check": "tsc --noEmit",
     "lock": "node plugins/manifest/lock.ts",
     "snapshot": "node plugins/manifest/snapshot.ts",

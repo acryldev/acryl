@@ -1,10 +1,10 @@
 {
   "plugins": [
-    "@acryldev/door",
-    "@acryldev/node-server",
-    "@acryldev/page",
-    "@acryldev/router",
-    "@acryldev/web-server",
+    "acryl-door",
+    "acryl-node-server",
+    "acryl-page",
+    "acryl-router",
+    "acryl-web-server",
     "extensions",
     "manifest",
     "plugin-share",

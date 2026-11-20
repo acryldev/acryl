@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs'
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from '../plugins/router/src/index.ts'
+import { Acryl } from '../plugins/acryl-router/src/index.ts'
 import { type Home, renderWidgets } from '../plugins/home/index.ts'
 import { aboutPage } from './about.tsx'
 import { FIRST_PAGE_MARKER } from './first-page.ts'
 
-export const APP_NAME = '@acryldev/control-center'
+export const APP_NAME = 'acryl-control-center'
 
 /**
  * The only place the app's mount prefix is named. On its own server (production, `npm start`) the app mounts at the root and
