@@ -14,6 +14,11 @@ describe('finding a free port', () => {
     expect(await findFreeWebPort(3081, async port => !taken.has(port))).toBe(3083)
   })
 
+  it('skips a port the Fetch standard blocks, so a browser and fetch can open the page', async () => {
+    expect(await findFreeWebPort(3659, async () => true)).toBe(3660)
+    expect(await findFreeWebPort(3658, async port => port !== 3658)).toBe(3660)
+  })
+
   it('gives up with a message that says what to change, and never passes 65535', async () => {
     await expect(findFreeWebPort(3081, async () => false)).rejects.toThrow(/ACRYL_WEB_PORT/)
     expect(WEB_PORT_ATTEMPTS).toBeGreaterThan(1)
