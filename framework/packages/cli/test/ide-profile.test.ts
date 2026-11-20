@@ -419,3 +419,20 @@ test('the door drives the canvas page of a framed app, and the window itself of 
   assert.equal(workbench?.id, 'acryl-door')
   assert.equal(workbench?.config, undefined)
 })
+
+test("the dev script loads the TypeScript hook from the server plugin folder the app's own scripts use", () => {
+  // ACRYL Control Center and ADE carry plugins/acryl-node-server; generating their profile must not point dev at plugins/node-server.
+  const product = JSON.stringify({
+    name: 'acryl-control-center',
+    scripts: { start: 'node --import ./plugins/acryl-node-server/src/register.ts src/main.ts' },
+  })
+  assert.equal(
+    JSON.parse(ideProfilePlan(input, product).packageJson).scripts.dev,
+    'node --import ./plugins/acryl-node-server/src/register.ts scripts/ide-host.mjs',
+  )
+  const plain = JSON.stringify({ name: 'my-app', scripts: { start: 'node src/main.ts' } })
+  assert.equal(
+    JSON.parse(ideProfilePlan(input, plain).packageJson).scripts.dev,
+    'node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs',
+  )
+})

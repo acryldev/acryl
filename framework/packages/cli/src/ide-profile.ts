@@ -925,10 +925,13 @@ function mergeManifest(
     Object.entries(dependencies).sort(([a], [b]) => a.localeCompare(b)),
   )
   // `dev` boots the launcher; `start` stays the app's own server (production).
-  const scripts = {
-    ...(manifest.scripts as Record<string, string> | undefined),
-    dev: 'node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs',
-  }
+  const own = manifest.scripts as Record<string, string> | undefined
+  // The dev script loads the same TypeScript hook the app's own scripts load: an app keeps the server plugin's folder it has
+  // (ACRYL ADE and Control Center carry plugins/acryl-node-server), a new app gets plugins/node-server.
+  const hook =
+    /--import (\S+\/src\/register\.ts)/u.exec(own?.start ?? own?.dev ?? '')?.[1] ??
+    './plugins/node-server/src/register.ts'
+  const scripts = { ...own, dev: `node --import ${hook} scripts/ide-host.mjs` }
   // A frame package that moved scope (spec 051 T036: @acryldev/* to @acryldev/*) is installed once, under its new name: the old one goes.
   const kept = Object.fromEntries(
     Object.entries((manifest.dependencies as Record<string, string> | undefined) ?? {}).filter(
