@@ -165,7 +165,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   @acryldev scope; also fixed the root filter that matched no package, so its 24 tests now run), published 0.1.0 by webboxescom with the
   owner's go, installed and imported from npm (29 exports); Control Center depends on it (a4c20622), proven by an npm install of the app,
   its typecheck and tests, and its host's launcher routes answering 200.
-- [ ] T011 [desktop, instance] The desktop shell and the instance become packages; ADE and Control Center switch. The one-time
+- [x] T011 [desktop, instance] The desktop shell and the instance become packages; ADE and Control Center switch. The one-time
   `upgrade --desktop-packages` move is dropped (day 0, owner 2026-11-19: installed apps are remade, never migrated).
   Done on branch 051-t011-packages (43a9475d, 9cfebac5): `init` and `add` write `@acryldev/instance` and `@acryldev/desktop-shell` as dependencies at
   their exact workspace versions (library.ts PACKAGED) instead of copying them; the shell's `acryl-desktop` bin is `npm run desktop`; templates,
@@ -173,6 +173,10 @@ verify and check:layout and all 23 framework check steps green before it lands.
   and installed from local tarballs (check passes; the desktop window opens from node_modules). Open: publish both packages in the release
   (the release script's closure has them as roots), then prove the ADE and Control Center packs; and the T038 Cordis-name fix, without which
   a made app fails its own tests.
+  Done 2026-11-20: both published (@acryldev/desktop-shell 0.1.3, @acryldev/instance 0.1.2 with Fork6's README/types fixes; 0.1.1/0.1.2 of the
+  shell were the start-path fix 05183d31 and the prepack fix daa3abef), Control Center and ADE pin them and build from npm (product-release runs
+  44685244987 / 44685248538 from bcd27361); a fresh `npm create @acryldev/blends@1.7.3` app on macOS and Ubuntu installs them, passes its own
+  tests (7/7) and serves. The T038 Cordis-name issue no longer shows: the made app's tests pass.
 
 ## Phase 4 - products
 
@@ -187,6 +191,19 @@ verify and check:layout and all 23 framework check steps green before it lands.
   Linux x64/arm64) in runs 44484087307 and 44500345827 (main 3696d3b3). Mac install of that DMG: starts, serves in 2 s, quits clean, bundle
   unchanged. It found the host restart loop (an access-time change from `git diff` restarted node --watch; fixed by plugins/desktop-shell/watch-host.mjs,
   branch 051-walk-acryl-home). Before the first product tag: the same install check on Windows (mbpi9win) and Ubuntu (z370n).
+
+- [ ] T041 [products, no installs] A participant installs nothing but Control Center. Done on main 15dfac4d: on a computer without Node.js
+  22.19+ (with npm) or gh, Control Center fetches them once from nodejs.org and github.com/cli/cli, checks each against its published SHA-256
+  list, unpacks them into `~/.acryl/tools` and puts them first on every app's PATH (`plugins/launcher/tools.js`, @acryldev/launcher 0.1.2); git
+  comes with the product (dugite). Proven on macOS (Node 24.22.3, npm 11.19, gh 2.105 in 8 s). Open: the Windows (.zip through System32 tar)
+  and Linux walks.
+- [ ] T042 [share, owner 2026-11-20] Publish Blend apps and Cordis plugins to the person's own GitHub from the GUI. Done: Connect GitHub in
+  Control Center (GitHub device sign-in with ACRYL's own OAuth app, token handed to apps as GH_TOKEN; 75642b47), Private/Public on Share,
+  Settings > Share in every app (frame 0.2.1, CLI 1.7.3; bcd27361) beside the existing Settings > Plugins share; proven by a fresh 1.7.3 app
+  sharing itself privately to inboxxobni/s2 through the route. Open: the GUI walk with a person approving the device code.
+- [ ] T043 [registries, owner 2026-11-20] "community" vs "official": both registries carry `origin` (acrylblends.github.io a34c1c2,
+  cordisplugins.github.io already); Control Center's store shows Official/Community (380252ce) and lists the community Blends the registry found
+  on GitHub, made from their own release with a "not reviewed" note (9258c4ae). Open: an All/Official/Community filter in the store.
 
 ## Phase 5 - registry and the old repository
 
