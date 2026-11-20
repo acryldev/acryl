@@ -61,3 +61,11 @@ export function appendHostLog(dir: string, text: string, now: Date = new Date())
 export function hostCrashed(output: string): boolean {
   return /Failed running '/u.test(output)
 }
+
+/**
+ * Whether the watcher ended or restarted the host (a saved file, or the product copying its new source in on the first start after an update): the
+ * host that comes back is a new process with a new process token, so a page signed in to the old one gets 401 and 404 until it loads again.
+ */
+export function hostRestarting(output: string): boolean {
+  return /Completed running '|Restarting '/u.test(output)
+}

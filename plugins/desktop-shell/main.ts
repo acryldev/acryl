@@ -29,6 +29,7 @@ import {
 import {
   type FrameHost,
   type HostEnd,
+  hostAddress,
   isFrameApp,
   navigation,
   openFrameSettings,
@@ -37,7 +38,7 @@ import {
   withoutToken,
 } from './frame.ts'
 import { productGit, withGitFirst } from './git.ts'
-import { appendHostLog, hostCrashed, nextRestart } from './host-supervisor.ts'
+import { appendHostLog, hostCrashed, hostRestarting, nextRestart } from './host-supervisor.ts'
 import { hasSettings, settingsPlacement } from './menu.ts'
 import { openProductApp, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
@@ -178,6 +179,19 @@ if (!app.requestSingleInstanceLock()) {
           process.stdout.write(text)
           // The watcher that runs the host stays alive when the host crashes (it waits for a saved file): that line is the death.
           recent = (recent + text).slice(-3000)
+          // The watcher brought the host back as a new process: the windows sign in to it again, or every call they make answers 401.
+          if (serving && hostRestarting(text)) restarting = true
+          const again = restarting ? hostAddress(text) : undefined
+          if (again !== undefined) {
+            restarting = false
+            for (const shown of BrowserWindow.getAllWindows())
+              if (!shown.isDestroyed())
+                shown.loadURL(again).catch((cause: unknown) => {
+                  console.warn(
+                    `desktop: the window could not load the restarted host: ${cause instanceof Error ? cause.message : String(cause)}`,
+                  )
+                })
+          }
           if (serving && hostCrashed(text))
             void started.stop().then(() => recover(started, crashedEnd(recent)))
         },
@@ -188,6 +202,7 @@ if (!app.requestSingleInstanceLock()) {
       host = started
       let serving = false
       let recent = ''
+      let restarting = false
       // Watched once it serves: a host that ends before that fails the start itself (the caller quits with the reason).
       return started.ready.then((address) => {
         serving = true

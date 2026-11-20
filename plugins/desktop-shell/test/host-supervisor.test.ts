@@ -3,7 +3,13 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSy
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { appendHostLog, hostCrashed, nextRestart, RESTART_POLICY } from '../host-supervisor.ts'
+import {
+  appendHostLog,
+  hostCrashed,
+  hostRestarting,
+  nextRestart,
+  RESTART_POLICY,
+} from '../host-supervisor.ts'
 
 test('a host that stops is restarted after a short wait that grows, and given up on when it keeps stopping', () => {
   const now = 1_000_000
@@ -42,4 +48,16 @@ test("the watcher's report that the host crashed is a death; its other lines are
     false,
   )
   assert.equal(hostCrashed("Gracefully restarted '/app/scripts/ide-host.mjs'"), false)
+})
+
+test('the watcher ending or restarting the host is a restart the windows must sign in to again', () => {
+  assert.equal(
+    hostRestarting(
+      "Completed running '/app/scripts/ide-host.mjs'. Waiting for file changes before restarting...",
+    ),
+    true,
+  )
+  assert.equal(hostRestarting("Restarting '/app/scripts/ide-host.mjs'"), true)
+  assert.equal(hostRestarting('acrylblends host: http://127.0.0.1:3816/?token=abc'), false)
+  assert.equal(hostRestarting("Failed running '/app/scripts/ide-host.mjs'"), false)
 })

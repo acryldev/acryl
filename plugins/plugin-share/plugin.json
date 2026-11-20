@@ -8,7 +8,7 @@
     "@deepseek-ai/cordis": "4.0.4",
     "@acryldev/app-persistence": "0.1.4",
     "@acryldev/blends-core": "0.6.0",
-    "@acryldev/plugin-hub-core": "0.2.2",
+    "@acryldev/plugin-hub-core": "0.2.3",
     "yaml": "2.9.0"
   },
   "mount": "mount it after extensions, in development builds: root.plugin(pluginShare, { dir: join(root, 'plugins') }); dir must be an extensions source",
