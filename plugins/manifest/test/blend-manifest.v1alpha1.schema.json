@@ -41,6 +41,11 @@
         "visibility": {
           "enum": ["private", "public"],
           "description": "Who may see this definition. A private app is never pushed to a public remote or published to a registry."
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the app came from, written by create-blends: a registry Blend at a version (acrylblends.notes#0.3.1) or a GitHub repository at a tag (github:ana/notes#v0.2.0); acrylblends update reads it."
         }
       }
     },

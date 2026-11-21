@@ -6,7 +6,7 @@
   "provides": ["extensions"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@acryldev/blends-core": "0.6.0"
+    "@acryldev/blends-core": "0.6.1"
   },
   "mount": "mount it after instance: root.plugin(extensions, { sources: [{ dir: join(root, 'plugins'), trust: 'install' }] })",
   "entries": {

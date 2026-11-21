@@ -330,3 +330,12 @@ test('and the schema rejects what this plugin rejects, so the two agree on a doc
     validate(document, ['greeter']).some((d) => d.path === 'spec.parameters.greeting.description'),
   )
 })
+
+test('an app made from a Blend or a repository records where it came from (metadata.from), and both validators accept it', () => {
+  const document = parse(GOOD)
+  document.metadata.from = 'github:ana/notes#v0.2.0'
+  assert.equal(accepts(document), true, JSON.stringify(accepts.errors))
+  assert.deepEqual(validate(document, ['greeter']).filter((d) => d.path.startsWith('metadata')), [])
+  document.metadata.from = ''
+  assert.ok(validate(document, ['greeter']).some((d) => d.path === 'metadata.from'))
+})

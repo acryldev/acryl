@@ -6,7 +6,7 @@
   "provides": [],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@acryldev/blends-core": "0.6.0",
+    "@acryldev/blends-core": "0.6.1",
     "@acryldev/plugin-hub-core": "0.2.3"
   },
   "mount": "mount it after agent and extensions: root.plugin(builder, { dir: join(root, 'plugins') }); dir must be an extensions source",

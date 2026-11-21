@@ -68,6 +68,11 @@ export interface Metadata {
   readonly license?: string
   /** Anything but an explicit `public` is private: `save` never pushes a private app to a public remote. */
   readonly visibility?: 'private' | 'public'
+  /**
+   * Where the app came from, written by @acryldev/create-blends: a registry Blend at a version (`acrylblends.notes#0.3.1`) or a GitHub
+   * repository at a tag (`github:ana/notes#v0.2.0`). `acrylblends update` brings that source's newer releases in.
+   */
+  readonly from?: string
 }
 
 /** Which Blueprint, at which version, a Blend was made from. */
@@ -142,6 +147,7 @@ const METADATA_FIELDS = new Set([
   'description',
   'license',
   'visibility',
+  'from',
 ])
 const SPEC_FIELDS = new Set(['runtime', 'extends', 'lineage', 'parameters', 'rows', 'overrides'])
 const ROW_FIELDS = new Set(['id', 'name', 'config', 'disabled'])
@@ -208,6 +214,8 @@ export function validate(document: unknown, known?: Iterable<string>): Diagnosti
       metadata.visibility !== 'public'
     )
       add('schema-error', 'metadata.visibility', "must be 'private' or 'public'")
+    if (metadata.from !== undefined && (typeof metadata.from !== 'string' || metadata.from.trim() === ''))
+      add('schema-error', 'metadata.from', "must name a source such as 'acrylblends.notes#0.3.1' or 'github:ana/notes#v0.2.0'")
   }
 
   const spec = document.spec

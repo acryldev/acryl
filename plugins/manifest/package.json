@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/manifest",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The app as data: blend.yaml lists ordered plugin rows with config, parameters and on/off switches; validated, composed and locked.",
   "license": "MIT",
   "repository": {
