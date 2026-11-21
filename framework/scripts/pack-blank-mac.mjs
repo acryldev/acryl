@@ -31,7 +31,7 @@ import {
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { createSource } from './lib/create-source.mjs'
+import { createSource, repositoryOnlyIn } from './lib/create-source.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 /**
@@ -623,6 +623,7 @@ execFileSync(
     '--ignore-unmatch',
     '--',
     ...program.map((path) => path.replace(/\/$/u, '')),
+    ...repositoryOnlyIn(app),
   ],
   { cwd: app, stdio: 'inherit' },
 )
@@ -645,6 +646,10 @@ execFileSync(
   ],
   { cwd: app, stdio: 'inherit' },
 )
+// The Blend repository's own files (its release workflow) are not the person's app: out of the folder and out of the first commit's tree.
+const repositoryOnly = repositoryOnlyIn(app)
+for (const path of repositoryOnly) rmSync(join(app, path), { recursive: true, force: true })
+if (repositoryOnly.length > 0) log(`left out the repository's own ${repositoryOnly.join(', ')}`)
 // The scaffold's repository travels as `template-git` (the packager drops `.git`), with that commit in it.
 if (existsSync(join(app, '.git')))
   rmSync(join(app, 'template-git'), { recursive: true, force: true })

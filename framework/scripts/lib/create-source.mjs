@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 
 /**
  * The `--from` a packer hands to create: an existing folder as an absolute path, anything else (a registry id such as acrylblends.small-crm) as given.
@@ -9,4 +9,16 @@ import { resolve } from 'node:path'
 export function createSource(from, cwd = process.cwd()) {
   const folder = resolve(cwd, from)
   return existsSync(folder) ? folder : from
+}
+
+/**
+ * What a Blend's repository carries for itself, not for the app made from it: `.github/` (its release workflow). create copies a folder source whole,
+ * so the packer takes these out of the product's app and its first commit; left in, a fresh install showed the bundle's missing workflow as an unsaved
+ * deletion ("v2 · 1 unsaved").
+ */
+export const REPOSITORY_ONLY = ['.github']
+
+/** The repository-only paths present in an app folder. */
+export function repositoryOnlyIn(app) {
+  return REPOSITORY_ONLY.filter((path) => existsSync(join(app, path)))
 }
