@@ -65,6 +65,21 @@ export function webboxesDeployUrl(github: string, name: string): string {
   return url.href
 }
 
+/**
+ * WebBoxes.ai's New WebBox form for a store Blend: with `?blend=<id>` the form opens on that registry Blend (the person signs in and presses
+ * Create there). A community Blend that lives on GitHub rather than in the registry (`source` is `github:owner/repo#tag`) deploys from its
+ * repository, as a shared app does.
+ */
+export function webboxesDeployBlendUrl(blend: { readonly id: string, readonly source?: string | undefined }): string {
+  const name = (blend.id.split('.').pop() ?? blend.id).toLowerCase().replace(/[^a-z0-9-]+/gu, '-').replace(/^-+|-+$/gu, '').slice(0, 40)
+  const repository = /^github:([A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9_.-]+)(?:#.*)?$/u.exec(blend.source ?? '')
+  if (repository?.[1] !== undefined) return webboxesDeployUrl(`https://github.com/${repository[1]}`, name)
+  const url = new URL(WEBBOXES_NEW_BOX)
+  url.searchParams.set('blend', blend.id)
+  url.searchParams.set('name', name)
+  return url.href
+}
+
 export interface StarterView {
   readonly value: string
   readonly label: string

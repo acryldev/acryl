@@ -3,7 +3,7 @@
  * lists and sends what a person asks for; the rules (what an app is, what a name may be, how an app starts) are the Host's.
  */
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { MAKEABLE_SURFACES, SURFACES, webboxesDeployUrl, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
+import { MAKEABLE_SURFACES, SURFACES, webboxesDeployBlendUrl, webboxesDeployUrl, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
@@ -115,7 +115,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
         {view === 'updates' && <UpdatesView apps={apps.filter(app => app.update !== undefined)} onUpdate={id => act(() => api.update(id))} />}
-        {view === 'store' && <StoreView api={api} state={state} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
+        {view === 'store' && <StoreView api={api} state={state} openExternal={openExternal} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
         {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Put an app online at <name>.webboxes.ai: Share it to GitHub as Public (its card, Share), then press Deploy to WebBoxes.ai on its card. WebBoxes.ai opens with the app filled in: sign in, press Create, then Publish." />}
         {view === 'health' && <HealthView api={api} />}
         {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} skin={skin} onSkin={(next) => { setSkin(next); saveSkin(next) }} />}
@@ -544,7 +544,7 @@ function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse
 }
 
 /** The public registry's Blends, read when the store opens; "Make an app" opens the New app form for the chosen one. */
-function StoreView({ api, state, onCreate }: { api: LauncherApi, state: StateResponse | undefined, onCreate: (request: NewAppRequest) => Promise<boolean> }): ReactNode {
+function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, state: StateResponse | undefined, onCreate: (request: NewAppRequest) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const [blends, setBlends] = useState<readonly BlendView[] | undefined>(undefined)
   const [failed, setFailed] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')
@@ -586,6 +586,7 @@ function StoreView({ api, state, onCreate }: { api: LauncherApi, state: StateRes
               <div className="acrylHomeRow">{blend.origin === 'official'
                 ? <span className="acrylHomePill" title="Released by the ACRYL project">Official</span>
                 : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.publisher === undefined ? null : <span className="acrylHomeMeta">by @{blend.publisher}</span>}{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
+              <button type="button" className="acrylHomeBtn" data-small title={`Opens WebBoxes.ai on ${blend.name}: sign in, press Create, then Publish`} onClick={() => { openExternal(webboxesDeployBlendUrl(blend)) }}>Deploy to WebBoxes.ai</button>
               <button type="button" className="acrylHomeBtn" data-small data-primary disabled={state === undefined} onClick={() => { setChosen(blend) }}>Make an app</button>
             </div>
           </div>

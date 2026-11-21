@@ -248,6 +248,20 @@ describe('the plugins of a running app', () => {
     expect((await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
+  it('deploys a store Blend to WebBoxes.ai with ?blend=<id>; a community Blend from GitHub deploys from its repository', async () => {
+    const opened: string[] = []
+    render(<LauncherScreen api={fake(state([]))} visibility={new LauncherVisibility(true)} openExternal={(url) => { opened.push(url) }} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    const buttons = await screen.findAllByRole('button', { name: 'Deploy to WebBoxes.ai' })
+    expect(buttons).toHaveLength(2)
+    fireEvent.click(buttons[0] as HTMLElement)
+    fireEvent.click(buttons[1] as HTMLElement)
+    expect(opened).toEqual([
+      'https://webboxes.ai/dashboard/webboxes?blend=acrylblends.notes-desktop&name=notes-desktop',
+      'https://webboxes.ai/dashboard/webboxes?github=https%3A%2F%2Fgithub.com%2Fana%2Faccounting&name=accounting',
+    ])
+  })
+
   it('shares publicly when the person picks Public', async () => {
     const api = fake(state([app({})]))
     open(api)
