@@ -483,10 +483,14 @@ if (shell === undefined)
   throw new Error(
     `pack-blank-mac: ${app} has no desktop shell (plugins/desktop-shell, or the @acryldev/desktop-shell package)`,
   )
+// The app's own icon, else ACRYL Blends' (the published desktop-shell carries it in lib/assets, its source in assets). Without one, electron-builder
+// silently used Electron's own icon on every OS.
 const appIcon = [
   join(app, 'assets', 'icon.png'),
+  join(shell.root, 'lib', 'assets', 'acrylblends-logo.png'),
   join(shell.root, 'assets', 'acrylblends-logo.png'),
 ].find((file) => existsSync(file))
+if (appIcon === undefined) throw new Error(`no icon: neither ${join(app, 'assets', 'icon.png')} nor ACRYL Blends' logo in ${shell.root}`)
 manifest.main = shell.main
 manifest.productName = PRODUCT
 manifest.description = DESCRIPTION
