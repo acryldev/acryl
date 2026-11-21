@@ -451,8 +451,22 @@ async function createFromSource(
         existsSync(sourcePackage) ? readFileSync(sourcePackage, 'utf8') : undefined,
       )
       if (starter !== undefined) renameApp(staged, starter, name)
-      const manifestText = ownManifest(starterText, name, from)
+      const manifestText = ownManifest(starterText, name)
       writeFileSync(join(staged, 'blend.yaml'), manifestText)
+      // Where the app came from goes into package.json (`acryl.from`), not blend.yaml: an app's own copy of the manifest checker may predate
+      // the field, and a starter shared before it would then fail its own tests.
+      const stagedPackage = join(staged, 'package.json')
+      if (from !== undefined && existsSync(stagedPackage)) {
+        const pkg = JSON.parse(readFileSync(stagedPackage, 'utf8')) as Record<string, unknown>
+        const acryl =
+          typeof pkg.acryl === 'object' && pkg.acryl !== null
+            ? (pkg.acryl as Record<string, unknown>)
+            : {}
+        writeFileSync(
+          stagedPackage,
+          `${JSON.stringify({ ...pkg, acryl: { ...acryl, from } }, null, 2)}\n`,
+        )
+      }
       if (existsSync(join(staged, 'blend.lock.json')))
         writeFileSync(
           join(staged, 'blend.lock.json'),

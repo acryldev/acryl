@@ -24,7 +24,7 @@ Usage:
   acrylblends upgrade [plugin...] [--dir d] [--dry-run] [--force] [--diff]
                                       Bring the library plugins an app carries (the router, the server, the door, ...) up to this
                                       version: untouched files are replaced, an edited file stops it (diff shown) unless --force
-  acrylblends update [--dir d] [--check] Bring the newer release of what this app was made from (blend.yaml metadata.from: a registry
+  acrylblends update [--dir d] [--check] Bring the newer release of what this app was made from (package.json acryl.from: a registry
                                       Blend, or a shared GitHub repository's newest vX.Y.Z tag) into it, keeping your changes
                                       (a git merge); --check only says whether there is one
   acrylblends plugins                    List the plugin library

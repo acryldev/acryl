@@ -97,6 +97,14 @@ describe('acrylblends update', () => {
         'a\trefs/tags/v0.1.0\nb\trefs/tags/v0.10.0\nc\trefs/tags/v0.9.1\nd\trefs/tags/nightly\n',
       ),
     ).toBe('v0.10.0')
+    // package.json acryl.from wins (create-blends 1.7.16+): an older manifest checker in the app never sees the field.
+    expect(
+      sourceOfApp(own, JSON.stringify({ name: 'csv', acryl: { from: 'github:ben/csv#v1.0.0' } })),
+    ).toEqual({ source: 'github:ben/csv', current: '1.0.0' })
+    expect(sourceOfApp(fromRepository, '{ not json')).toEqual({
+      source: 'github:ana/notes',
+      current: '0.2.0',
+    })
     expect(newestTag('')).toBeUndefined()
   })
 

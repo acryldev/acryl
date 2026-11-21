@@ -53,7 +53,7 @@ export function blendOfApp(yaml: string): { id: string; version: string } | unde
 }
 
 /**
- * Where an app's updates come from: the source create recorded in `metadata.from` (`acrylblends.notes#0.3.1`, a registry Blend at a version, or
+ * Where an app's updates come from: the source create recorded in package.json `acryl.from` (`acrylblends.notes#0.3.1`, a registry Blend at a version, or
  * `github:ana/notes#v0.2.0`, a shared repository at a tag), else the app's own id and version (an app made before `from` existed, or a Blend
  * itself). `current` is the version the app is on.
  */
@@ -62,14 +62,26 @@ export interface UpdateSource {
   readonly current: string
 }
 
-export function sourceOfApp(yaml: string): UpdateSource | undefined {
+export function sourceOfApp(yaml: string, packageJson?: string): UpdateSource | undefined {
   const blend = blendOfApp(yaml)
   if (blend === undefined) return undefined
   const metadata = /^metadata:\n((?:[ \t]+.*\n?)*)/mu.exec(yaml)?.[1] ?? ''
-  const from = /^[ \t]+from:[ \t]*["']?([^"'\s]+)/mu.exec(metadata)?.[1]
+  // package.json `acryl.from` (create-blends 1.7.16 and newer), else blend.yaml `metadata.from` (1.7.13 to 1.7.15).
+  const from =
+    fromOfPackage(packageJson) ?? /^[ \t]+from:[ \t]*["']?([^"'\s]+)/mu.exec(metadata)?.[1]
   if (from === undefined) return { source: blend.id, current: blend.version }
   const [source = blend.id, release] = from.split('#')
   return { source, current: release === undefined ? blend.version : release.replace(/^v/u, '') }
+}
+
+function fromOfPackage(text: string | undefined): string | undefined {
+  if (text === undefined) return undefined
+  try {
+    const from = (JSON.parse(text) as { acryl?: { from?: unknown } }).acryl?.from
+    return typeof from === 'string' && from.trim() !== '' ? from.trim() : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /** The newest `vX.Y.Z` (or `X.Y.Z`) tag among `git ls-remote --tags` lines, as tagged. */
@@ -136,7 +148,7 @@ export function registryWorld(io: Io): UpdateWorld {
         const { file, args } = packageManagerInvocation('npm', [
           'exec',
           '--yes',
-          // The create of this CLI's own release: an older @latest would not record metadata.from, and the merge would drop it.
+          // The create of this CLI's own release: an older @latest would not record acryl.from, and the merge would drop it.
           `@acryldev/create-blends@${VERSION}`,
           '--',
           name,
@@ -169,7 +181,11 @@ export async function update(
     throw new Error(
       `${app} has no blend.yaml: it was not made from a Blend, so there is nothing to update from`,
     )
-  const origin = sourceOfApp(readFileSync(manifest, 'utf8'))
+  const packagePath = join(app, 'package.json')
+  const origin = sourceOfApp(
+    readFileSync(manifest, 'utf8'),
+    existsSync(packagePath) ? readFileSync(packagePath, 'utf8') : undefined,
+  )
   if (origin === undefined) throw new Error(`${manifest} names no metadata id and version`)
   const fromRepository = origin.source.startsWith('github:')
   // `blend` names the source in every line below and in the merge commits.

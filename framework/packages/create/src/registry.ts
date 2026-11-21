@@ -245,11 +245,7 @@ export function pickEntry(entries: readonly RegistryEntry[], id: string): Regist
  * Give a pulled starter to its new owner: the manifest names the app (`acrylblends.<name>`, private), because the registry's id and its public visibility belong to the starter,
  * not to the app made from it. Changes the `metadata` lines of `blend.yaml` (the id, the name, the visibility; the licence is dropped) and nothing else; a manifest it cannot read that way is left as it is.
  */
-/**
- * Make a pulled starter the new app's own manifest. `from` records where it came from (`acrylblends.notes#0.3.1`, `github:ana/notes#v0.2.0`):
- * `acrylblends update` reads it to bring that source's newer releases in, since the app's own id and version are now its owner's.
- */
-export function ownManifest(text: string, name: string, from?: string): string {
+export function ownManifest(text: string, name: string): string {
   const lines = text.split('\n')
   const start = lines.findIndex((line) => /^metadata:\s*$/.test(line))
   if (start < 0) return text
@@ -267,15 +263,6 @@ export function ownManifest(text: string, name: string, from?: string): string {
   set('id', `acrylblends.${name}`)
   set('name', name)
   set('visibility', 'private')
-  if (from !== undefined) {
-    const at = lines.slice(start + 1, end).findIndex((line) => /^\s+from:/.test(line))
-    const indent = /^(\s+)\S/.exec(lines[start + 1] ?? '')?.[1] ?? '  '
-    if (at >= 0) lines[start + 1 + at] = `${indent}from: "${from}"`
-    else {
-      lines.splice(end, 0, `${indent}from: "${from}"`)
-      end += 1
-    }
-  }
   // The starter's licence is the starter's: the new app names none until its owner chooses one.
   for (let at = end - 1; at > start; at -= 1)
     if (/^\s+license:/.test(lines[at] ?? '')) lines.splice(at, 1)
