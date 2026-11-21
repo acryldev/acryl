@@ -9,3 +9,7 @@ Released 2026-11-21.
 - `pack` ships `lib/deb.mjs` in the published package, which the two fixes need.
 
 Proven: ACRYL Control Center packed with these files, `apt install` in an ubuntu:24.04 container, `dpkg -l acryl-control-center`, app started.
+
+Also released: **@acryldev/plugin-share 0.1.6**. When GitHub refuses an anonymous pull for its rate limit (60 an hour per address, as in a workshop
+room), the pull retries with the person's own `gh` login, and a refusal says to run `gh auth login` (0ac50ede; apps made with 1.7.23 already carry
+this in their library copy).
