@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { hasSettings, type MenuNode, settingsPlacement } from '../menu.ts'
+import {
+  aboutPlacement,
+  aboutText,
+  hasSettings,
+  type MenuNode,
+  settingsPlacement,
+} from '../menu.ts'
 
 const item = (label: string, extra: Partial<MenuNode> = {}): MenuNode => ({ label, ...extra })
 const separator = item('', { type: 'separator' })
@@ -54,4 +60,28 @@ test('an existing Settings or Preferences item is found at any depth', () => {
   assert.equal(hasSettings(mac), false)
   assert.equal(hasSettings([submenu('File', [item('Settings...')])]), true)
   assert.equal(hasSettings([submenu('app', [submenu('More', [item('Preferences')])])]), true)
+})
+
+test('on Windows and Linux About goes at the end of the Help menu, once; macOS and a menu without Help get none', () => {
+  const help = submenu('Help', [item('Learn More')])
+  const withHelp = [...other, help]
+  assert.equal(aboutPlacement(withHelp, 'win32'), 3)
+  assert.equal(aboutPlacement([item('x', { role: 'help', submenu: { items: [] } })], 'linux'), 0)
+  assert.equal(aboutPlacement(withHelp, 'darwin'), undefined)
+  assert.equal(aboutPlacement(other, 'linux'), undefined)
+  assert.equal(
+    aboutPlacement([submenu('Help', [item('About app', { role: 'about' })])], 'linux'),
+    undefined,
+  )
+})
+
+test('the About text names the product and its version, then the runtime', () => {
+  assert.deepEqual(
+    aboutText('ACRYL ADE', '1.2.3', { electron: '40.0.0', chrome: '140.0.1', node: '24.1.0' }),
+    {
+      message: 'ACRYL ADE',
+      detail: 'Version 1.2.3\nElectron 40.0.0\nChromium 140.0.1\nNode.js 24.1.0',
+    },
+  )
+  assert.equal(aboutText('App', '0.1.0', {}).detail, 'Version 0.1.0')
 })

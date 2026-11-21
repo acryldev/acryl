@@ -39,7 +39,7 @@ import {
 } from './frame.ts'
 import { productGit, withGitFirst } from './git.ts'
 import { appendHostLog, hostCrashed, hostRestarting, nextRestart } from './host-supervisor.ts'
-import { hasSettings, settingsPlacement } from './menu.ts'
+import { aboutPlacement, aboutText, hasSettings, settingsPlacement } from './menu.ts'
 import { openProductApp, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
 import { offerUpdates } from './update-menu.ts'
@@ -472,6 +472,24 @@ if (!app.requestSingleInstanceLock()) {
     }
     if (product?.releases !== undefined)
       offerUpdates(product.releases, () => live()[0], join(userData, 'updates'))
+    // Windows and Linux: Help > About <name> shows the version (macOS has the About panel).
+    const helpMenu = Menu.getApplicationMenu()
+    const aboutAt = helpMenu === null ? undefined : aboutPlacement(helpMenu.items, process.platform)
+    if (helpMenu !== null && aboutAt !== undefined) {
+      helpMenu.items[aboutAt]?.submenu?.append(
+        new MenuItem({
+          label: `About ${app.getName()}`,
+          click: () => {
+            const about = aboutText(app.getName(), app.getVersion(), process.versions)
+            const owner = BrowserWindow.getFocusedWindow() ?? live()[0]
+            const options = { type: 'info' as const, buttons: ['OK'], ...about }
+            if (owner === undefined) void dialog.showMessageBox(options)
+            else void dialog.showMessageBox(owner, options)
+          },
+        }),
+      )
+      Menu.setApplicationMenu(helpMenu)
+    }
     stopDoorShell = startDoorShell(chosen.root, { desktop, log: console.log })
 
     if (appPage && storage !== undefined && product !== undefined) {

@@ -58,3 +58,35 @@ export function hasSettings(items: readonly MenuNode[]): boolean {
       (item.submenu?.items !== undefined && hasSettings(item.submenu.items)),
   )
 }
+
+/**
+ * Windows and Linux have no application menu, so nothing there says which version runs (macOS has the About panel). Returns the index of the Help menu, where
+ * "About <name>" goes last, or nothing on macOS, in a menu with no Help, or in one that already has an About item.
+ */
+export function aboutPlacement(
+  items: readonly MenuNode[],
+  platform: NodeJS.Platform,
+): number | undefined {
+  if (platform === 'darwin') return undefined
+  const help = items.findIndex((item) => item.role === 'help' || /^&?help$/iu.test(item.label))
+  if (help === -1 || items[help]?.submenu == null) return undefined
+  const entries = items[help].submenu.items
+  return entries.some((item) => item.role === 'about' || /^about\b/iu.test(item.label))
+    ? undefined
+    : help
+}
+
+/** What the About dialog says: the product and its version first, then the runtime it runs on (what a bug report needs). */
+export function aboutText(
+  name: string,
+  version: string,
+  versions: Readonly<Record<string, string | undefined>>,
+): { readonly message: string; readonly detail: string } {
+  const runtime = (['electron', 'chrome', 'node'] as const)
+    .filter((key) => versions[key] !== undefined)
+    .map(
+      (key) =>
+        `${key === 'chrome' ? 'Chromium' : key === 'node' ? 'Node.js' : 'Electron'} ${versions[key]}`,
+    )
+  return { message: name, detail: [`Version ${version}`, ...runtime].join('\n') }
+}
