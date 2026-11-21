@@ -62,7 +62,7 @@ export function appRow(app, tick = 0) {
  * @param {boolean} options.color  false under NO_COLOR: no color at all, the gradients included
  * @param {() => number} options.rows  the terminal's height
  */
-export function createControlCenterView({ service, model, deployUrl, open = () => {}, theme, color = true, rows = () => 40, requestRender = () => {}, finish, schedule = setTimeout }) {
+export function createControlCenterView({ service, model, deployUrl, open = () => {}, theme, color = true, rows = () => 40, requestRender = () => {}, finish, schedule = setTimeout, version }) {
   const c = role => (color ? theme.color(role) : text => text)
   const listTheme = {
     selectedPrefix: text => c('primary')(text),
@@ -386,7 +386,9 @@ export function createControlCenterView({ service, model, deployUrl, open = () =
 
   function header(width) {
     const options = { mode: theme.mode, color, shimmer: shimmerAt(tick) }
-    const tagline = color ? c('muted')(TAGLINE) : TAGLINE
+    // The running acryl's version, always in view: a stale npm cache or registry mirror shows at a glance.
+    const line = version ? `${TAGLINE}  v${version}` : TAGLINE
+    const tagline = color ? c('muted')(line) : line
     if (fullHeader(width)) {
       const center = text => ' '.repeat(Math.max(0, Math.floor((width - visibleWidth(text)) / 2))) + text
       return ['', ...markLines(width, options), '', center(wordmark(options)), center(tagline), '']

@@ -26,7 +26,7 @@ export function openTarget(target, platform = process.platform) {
 }
 
 /** `home` is ACRYL's own folder (~/.acryl); new apps are suggested beside it in ~/ACRYL. The selector decides the home, this face only passes it on. */
-export function runLauncher({ env = process.env, terminal = new ProcessTerminal(), home, open = openTarget } = {}) {
+export function runLauncher({ env = process.env, terminal = new ProcessTerminal(), home, open = openTarget, version } = {}) {
   const tui = new TuiMainScreen(terminal)
   const color = colorEnabled(env, true)
   let mode = paletteModeFromEnv(env)
@@ -42,6 +42,7 @@ export function runLauncher({ env = process.env, terminal = new ProcessTerminal(
 
   return new Promise(resolve => {
     const view = createControlCenterView({
+      version,
       service,
       model: { problem: (key, provider) => keyProblem(key, provider), save: (key, provider) => saveModelKey(home, key, provider) },
       deployUrl: webboxesDeployUrl,

@@ -46,7 +46,7 @@ function fakeService(state = {}) {
   }
 }
 
-function open({ state, rows = 40, color = false, mode = 'dark' } = {}) {
+function open({ state, rows = 40, color = false, mode = 'dark', version } = {}) {
   const service = fakeService(state)
   const results = []
   const opened = []
@@ -62,6 +62,7 @@ function open({ state, rows = 40, color = false, mode = 'dark' } = {}) {
     rows: () => rows,
     schedule: fn => scheduled.push(fn),
     finish: result => results.push(result),
+    ...(version === undefined ? {} : { version }),
   })
   const press = async (...keys) => { for (const key of keys) { view.handleInput(key); await view.settled } }
   const pick = async label => {
@@ -230,4 +231,10 @@ test('pure helpers: the app row, the shelves and the WebBoxes link of a store Bl
   assert.equal(categoryLabel('api-sdk'), 'API SDK')
   assert.equal(categoryLabel('aerospace-aviation'), 'Aerospace aviation')
   assert.equal(storeShelves([{ category: 'application' }, { category: 'Application › Notes' }]).at(-1).label, 'Application (2)')
+})
+
+test('the header always shows the running acryl version, so a stale cache or mirror shows at a glance', () => {
+  const { screen, view } = open({ version: '0.3.2' })
+  assert.match(screen(), /Everything is a plugin\. Build agentic apps\.\s+v0\.3\.2/)
+  for (const width of [40, 80, 120]) for (const line of view.render(width)) assert.ok(visibleWidth(line) <= width, `wider than ${width}: ${line}`)
 })

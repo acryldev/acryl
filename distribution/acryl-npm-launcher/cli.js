@@ -85,7 +85,7 @@ async function listCreatedApp(commandArgs, cwd) {
 /** `acryl` or `acryl --tui` in a terminal: ACRYL Control Center; a command it hands back (the terminal agent) then runs exactly as if it had been typed. */
 async function openLauncher() {
   const { runLauncher } = await loadLauncher()
-  const chosen = await runLauncher({ home: ACRYL_HOME })
+  const chosen = await runLauncher({ home: ACRYL_HOME, version: selectorVersion })
   if (!chosen) return
   const target = launcherCommand(await desktopWhenListed(chosen.command), {
     env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, bin: fileURLToPath(new URL('./bin.js', import.meta.url)), exists: existsSync,
