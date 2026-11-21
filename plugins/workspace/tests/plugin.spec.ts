@@ -78,8 +78,9 @@ async function host() {
   return { port, origin: `http://127.0.0.1:${String(port)}`, prefixes, exact, upgrades, webServer, acrylWeb }
 }
 
-async function boot(options: { router?: boolean } = {}) {
+async function boot(options: { router?: boolean, acrylHost?: string } = {}) {
   const served = await host()
+  if (options.acrylHost !== undefined) served.acrylWeb.host = options.acrylHost
   const home = mkdtempSync(join(tmpdir(), 'acryl-workspace-plugin-'))
   cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
   const ctx = new Context()
@@ -217,6 +218,11 @@ describe('the workspace Host plugin', () => {
     const app = await boot()
     expect((await app.get(WORKSPACE_CAPABILITIES_PATH, { origin: 'http://evil.test', 'sec-fetch-site': 'cross-site' })).status).toBe(403)
     expect((await app.get(WORKSPACE_CAPABILITIES_PATH, {})).status).toBe(403)
+  })
+
+  it('refuses a Web server beyond loopback when the app has no trusted front', async () => {
+    // A terminal is a shell as the person: with the server listening on every interface and no front to hold requests to, it is not served.
+    await expect(boot({ acrylHost: '0.0.0.0' })).rejects.toThrow('requires a loopback Web server')
   })
 
   it('stays PENDING without a router and activates when one appears', async () => {

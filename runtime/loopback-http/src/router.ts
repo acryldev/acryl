@@ -6,7 +6,7 @@
 
 import { Acryl, type Context, type MiddlewareHandler } from '@acryldev/blends'
 import { bodyLimit } from '@acryldev/blends/body-limit'
-import { loopbackAuthority, loopbackOnly } from '@acryldev/blends/loopback-only'
+import { loopbackOnly, pageAuthority } from '@acryldev/blends/loopback-only'
 import { methodNotAllowed } from '@acryldev/blends/method-not-allowed'
 import { DEFAULT_MAX_BODY_BYTES, error } from './index.ts'
 
@@ -25,9 +25,11 @@ export const ownPage: MiddlewareHandler = loopbackOnly({ callers: 'own-page', ho
 /**
  * A WebSocket upgrade from the app's own page: {@link ownPage}, and always the exact `Origin`. A browser sends `Origin` on every handshake, and a
  * socket changes things (keystrokes go up it), so the `Referer` a read may show instead is not enough. A refusal is a plain 403 before any handshake.
+ * The page is the one {@link ownPage} accepts: on loopback, or, for a hosted app that configures a trusted front (`ACRYL_PUBLIC_ORIGIN` and
+ * `ACRYL_TRUSTED_PROXY`), the front's public origin reached only through the front's own address.
  */
 export const ownPageSocket: MiddlewareHandler = async (c, next) => {
-  const authority = loopbackAuthority(c, OWN_HOSTNAMES)
+  const authority = pageAuthority(c, OWN_HOSTNAMES)
   if (authority === undefined || c.req.header('origin') !== authority.origin) return c.json(error('forbidden'), 403)
   return ownPage(c, next)
 }

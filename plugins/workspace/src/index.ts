@@ -5,6 +5,7 @@ import { basename } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/control'
 import type { Acryl } from '@acryldev/blends'
+import { trustedFront } from '@acryldev/blends/loopback-only'
 import type {} from '@acryldev/blends/cordis/router'
 import type {} from '@acryldev/blends/cordis/router-http'
 import { agentRoutes } from './agents/route.ts'
@@ -73,8 +74,11 @@ export const inject = ['acrylWeb', 'appInstance', 'acrylSettings', 'router', 'ro
  * @param ctx - Host context for this generation.
  */
 export function apply(ctx: Context, config: WorkspaceConfig = {}): void {
-  if (ctx.acrylWeb.host !== '127.0.0.1') {
-    throw new Error('@acryldev/workspace: requires a loopback Web server')
+  // A terminal is a shell as the person: it is served only where every request is held to the own-page rule. That is a loopback server, or a hosted
+  // app's server (it listens beyond loopback) whose trusted front is configured (`ACRYL_PUBLIC_ORIGIN`, `ACRYL_TRUSTED_PROXY`): the routes then answer
+  // the front's own address under the public host, and loopback, and nothing else. A server beyond loopback with no front is refused.
+  if (ctx.acrylWeb.host !== '127.0.0.1' && trustedFront() === undefined) {
+    throw new Error('@acryldev/workspace: requires a loopback Web server, or a hosted app with a trusted front (ACRYL_PUBLIC_ORIGIN and ACRYL_TRUSTED_PROXY)')
   }
   const appPage = typeof config.appPage === 'string' && config.appPage.startsWith('/') ? config.appPage : undefined
   const rendererOrigin = `http://127.0.0.1:${String(ctx.acrylWeb.port)}`

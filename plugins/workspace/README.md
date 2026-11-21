@@ -12,6 +12,13 @@ Electron platforms reserve space), and adding a project (`projects/projects-cont
 picker on Windows, otherwise the upstream Add workspace flow, which browses the server's folders on Web).
 Nothing here may import Electron or a Desktop-only service.
 
+**Hosted apps (WebBoxes.ai).** The Host half serves only where every request is held to the own-page rule: a loopback
+Web server, or a Web server that listens beyond loopback (a hosted app's does, so its front can reach it) **and** whose
+app has a trusted front, `ACRYL_PUBLIC_ORIGIN` plus `ACRYL_TRUSTED_PROXY`. Then every route and the terminal's socket
+answer the front's public address and loopback, and nothing else: the peer must be the front's exact address, the `Host`
+the public host, and the `Origin` that same public origin. A server beyond loopback with no front is refused at
+activation. The front itself must only pass on a signed-in owner (a terminal is a shell as the person).
+
 ## Code layout
 
 Folders are named after the domain concept they own, not after a technical layer (see the engineering
