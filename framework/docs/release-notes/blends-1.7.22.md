@@ -1,6 +1,6 @@
 # @acryldev/blends 1.7.22
 
-Released 2026-11-21.
+Staged under `next` on 2026-11-21 and never made `latest`: 1.7.23 replaced it the same day with the fix below. Install 1.7.23.
 
 ## Added
 
