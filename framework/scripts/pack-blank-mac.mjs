@@ -5,7 +5,7 @@
  *
  *   node scripts/pack-blank-mac.mjs [--out <dir>] [--arch arm64|x64]
  *   node scripts/pack-blank-mac.mjs --from acrylblends.small-crm [--product "Small CRM"]     a registry blueprint as its own product
- *   node scripts/pack-blank-mac.mjs --from ../apps/acryl-ade --product "ACRYL ADE" --tag-prefix ade-v  a product of a repository that releases several
+ *   node scripts/pack-blank-mac.mjs --from ../my-blend --product "My Blend" --tag-prefix my-blend-v  a product of a repository that releases several
  *   npx @acryldev/blends pack --from . --product "ACRYL ADE"     the same from a Blend's own repository, with the published packages
  *
  * The DMG carries the app itself: the frame and the Blank app it builds in, with Electron's own Node, so it needs no Node, npm or git. The bundle is

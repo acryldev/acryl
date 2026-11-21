@@ -2,7 +2,6 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from 'node:fs'
 import { relative, resolve } from 'node:path'
 import { directionViolations, findCycles, FOUNDATION, FRAMEWORK_PLUGINS, readGraph, unlistedFoundation } from './dependency-direction.mjs'
-import { BLEND_APPS, inBlendApp } from './lib/blend-apps.mjs'
 import { uncoveredLibraryPlugins } from './lint-coverage.mjs'
 
 const root = resolve(import.meta.dirname, '..')
@@ -39,7 +38,6 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 // auto-managed `minimumReleaseAgeExclude:` list (every currently-resolved
 // package, regenerated on install) after this point, which is pnpm's
 // responsibility to keep correct, not a hand-authored policy this gate owns.
-// The products as Blend apps (scripts/lib/blend-apps.mjs): not workspace packages, not counted by the source ratchets below; checked at the end.
 
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
@@ -301,7 +299,7 @@ const dshImports = { total: 0, outsideSeam: 0 }
 for (const group of ['runtime', 'apps', 'plugins', 'framework/packages']) {
   for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
     const src = resolve(root, group, entry.name, 'src')
-    if (!entry.isDirectory() || !existsSync(src) || inBlendApp(`${group}/${entry.name}`)) continue
+    if (!entry.isDirectory() || !existsSync(src)) continue
     for (const file of sourceFiles(src)) {
       const count = (readFileSync(file, 'utf8').match(/from '@deepseek-ai\/dsh[^']*'/g) ?? []).length
       if (count === 0) continue
@@ -329,7 +327,7 @@ let webRegistrations = 0
 // The foundation's own folders, by package name (pnpm's list), so a look-alike folder elsewhere is not exempt.
 const foundationFolders = [...readGraph(root)].filter(([name]) => FOUNDATION.has(name)).map(([, { folder }]) => folder)
 for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/packages']).split('\n')) {
-  if (file === '' || NOT_SHIPPED.test(file) || inBlendApp(file) || !existsSync(resolve(root, file))) continue
+  if (file === '' || NOT_SHIPPED.test(file) || !existsSync(resolve(root, file))) continue
   // The framework foundation implements the web layer (@acryldev/router-http mounts routers on the web server, @acryldev/page serves the page): the
   // rule is for code that uses it.
   if (foundationFolders.some(folder => file.startsWith(`${folder}/`))) continue
@@ -385,10 +383,11 @@ for (const path of testFiles) {
 // Dependency direction (spec 051, the Pi model): no cycles between workspace packages, and nothing points the wrong way
 // (scripts/dependency-direction.mjs says which rules and why).
 const packageGraph = readGraph(root)
-for (const app of BLEND_APPS) {
-  if (!existsSync(resolve(root, app, 'blend.yaml'))) fail(`${app} is listed as a Blend app but has no blend.yaml`)
-  const asPackage = [...packageGraph].find(([, { folder }]) => folder === app)
-  if (asPackage !== undefined) fail(`${app} is a Blend app (it installs published packages with npm) but pnpm lists it as the workspace package ${asPackage[0]}; take it out of pnpm-workspace.yaml`)
+// A Blend app is a product: it lives in its own acrylblends repository, which holds its source and builds its releases from the published packages
+// (`acrylblends pack`). The monorepo keeps only the building blocks (owner, 2026-11-21: ACRYL Control Center and ACRYL ADE moved out).
+for (const entry of readdirSync(resolve(root, 'apps'), { withFileTypes: true })) {
+  if (entry.isDirectory() && existsSync(resolve(root, 'apps', entry.name, 'blend.yaml')))
+    fail(`apps/${entry.name} is a Blend app (it has a blend.yaml): a product lives in its own acrylblends repository, not in the monorepo`)
 }
 const cycles = findCycles(packageGraph)
 if (cycles.length > 0) fail(`dependency cycles between workspace packages (each must point one way):\n${cycles.map(cycle => `  ${cycle.join(' -> ')}`).join('\n')}`)

@@ -8,9 +8,9 @@ import { createSource, repositoryOnlyIn } from './create-source.mjs'
 test('a --from folder reaches create as an absolute existing folder, written bare, with ./ or absolute; a registry id is left as given', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'create-source-'))
   try {
-    const folder = join(cwd, 'apps', 'acryl-ade')
+    const folder = join(cwd, 'apps', 'my-blend')
     mkdirSync(folder, { recursive: true })
-    for (const written of ['apps/acryl-ade', './apps/acryl-ade', folder]) {
+    for (const written of ['apps/my-blend', './apps/my-blend', folder]) {
       const source = createSource(written, cwd)
       assert.equal(source, folder, written)
       assert.ok(isAbsolute(source), written)

@@ -252,9 +252,9 @@ while read -r dep ver path; do
   [ "$wsv" = "$ver" ] || die "framework/frame/packages.json says $dep $ver, the workspace has $wsv: keep them in step"
   need "the frame" "$dep" "$ver"
 done < <(node -e 'for (const [n, e] of Object.entries(require(process.argv[1]).packages)) console.log(n + " " + e.version + " " + e.path)' "$repo/framework/frame/packages.json")
-# The templates (their own @acryldev dependencies; a placeholder like __ACRYLBLENDS_RANGE__ is the CLI, checked above) and the two products.
+# The templates (their own @acryldev dependencies; a placeholder like __ACRYLBLENDS_RANGE__ is the CLI, checked above).
 while read -r who dep range; do [ -n "$dep" ] && need "$who" "$dep" "$range"; done < <(
-  for f in framework/packages/cli/templates/*/package.json apps/acryl-ade/package.json apps/acryl-control-center/package.json; do
+  for f in framework/packages/cli/templates/*/package.json; do
     node -e 'const f=process.argv[1]; for (const [k, v] of Object.entries(require(f).dependencies ?? {})) if (k.startsWith("@acryldev/") && !v.startsWith("__")) console.log(f.split("/").slice(-2, -1)[0] + " " + k + " " + v)' "$repo/$f"
   done | sort -u)
 [ -z "$UNPACKABLE" ] || echo "unpackable (their prepack check fails):$UNPACKABLE"

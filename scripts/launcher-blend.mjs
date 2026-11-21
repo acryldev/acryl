@@ -115,12 +115,12 @@ const desktop = spawn(npm, ['run', face], { cwd: app, stdio: 'inherit', shell: p
 desktop.on('exit', (code, signal) => process.exit(code ?? (signal === null ? 0 : 1)))
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => { /* npm and the window end on the same signal; this waits for them */ })
 
-/** The README of the Blend `acryl.control-center` (registry entry; its source is apps/acryl-control-center); made here, edited here. */
+/** The README of the Blend `acryl.control-center` (registry entry; its source is acrylblends/63-acryl-control-center); made here, edited here. */
 function launcherReadme() {
   return `# ACRYL Control Center
 
-**ACRYL Control Center** as a Blend: the control center of your ACRYL apps. Registry id \`acryl.control-center\`. Source:
-<https://github.com/acryldev/acryl/tree/main/apps/acryl-control-center> (the ACRYL monorepo).
+**ACRYL Control Center** as a Blend: the control center of your ACRYL apps. Registry id \`acryl.control-center\`. Source and releases:
+<https://github.com/acrylblends/63-acryl-control-center>.
 
 - your apps, with their surface (web or desktop), started and stopped from one list;
 - a new app from a starter or from a Blend of the registry;
@@ -147,7 +147,7 @@ npx acryl --gui    # in its own window
 npx acryl --web    # in your browser
 \`\`\`
 
-The first start makes it in \`~/.acryl/control-center\` and installs it (about a minute). Its source is \`apps/acryl-control-center\` in the monorepo.
+The first start makes it in \`~/.acryl/control-center\` and installs it (about a minute). Its source is <https://github.com/acrylblends/63-acryl-control-center>.
 
 The apps it lists live in \`~/.acryl/apps.json\`; new apps are suggested in \`~/ACRYL\`.
 
