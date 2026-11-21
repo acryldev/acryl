@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/door",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The door of an ACRYL framework app, one Cordis plugin: an agent working in the app folder looks at the running page (snapshots with refs), acts on it (click, type, select, press, scroll, wait) and installs plugins live, through .acryl/bin/acryl; loopback only, with a per-run secret in .acryl/door.json, an audit log, and an in-page indicator with a kill switch",
   "license": "MIT",
   "repository": {
