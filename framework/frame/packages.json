@@ -46,11 +46,11 @@
       "path": "../plugins/settings"
     },
     "@acryldev/sign-in": {
-      "version": "0.2.2",
+      "version": "0.2.3",
       "path": "../plugins/sign-in"
     },
     "@acryldev/control": {
-      "version": "0.3.0",
+      "version": "0.3.1",
       "path": "../runtime/control"
     },
     "@acryldev/diagnostics": {
