@@ -17,6 +17,7 @@ import { parseArgs } from 'node:util'
 import { UsageError } from './init'
 import type { Io } from './io'
 import { packageManagerInvocation } from './spawn'
+import { VERSION } from './version'
 
 /** The public registry's index, as its site serves it (@acryldev/create-blends reads the same one). */
 export const REGISTRY_INDEX = 'https://acrylblends.github.io/registry/index.json'
@@ -135,7 +136,8 @@ export function registryWorld(io: Io): UpdateWorld {
         const { file, args } = packageManagerInvocation('npm', [
           'exec',
           '--yes',
-          '@acryldev/create-blends@latest',
+          // The create of this CLI's own release: an older @latest would not record metadata.from, and the merge would drop it.
+          `@acryldev/create-blends@${VERSION}`,
           '--',
           name,
           '--from',
@@ -222,7 +224,7 @@ export async function update(
 
   const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-'))
   try {
-    say(`Getting ${blend.id} ${newest} (@acryldev/create-blends@latest, as the app was made)...`)
+    say(`Getting ${blend.id} ${newest} (@acryldev/create-blends@${VERSION}, as the app was made)...`)
     const name = basename(app)
     if ((await world.make(blend.id, name, scratch, newest)) !== 0)
       throw new Error(`${blend.id} ${latest} could not be made; the app is unchanged`)

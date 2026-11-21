@@ -68,6 +68,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 0.10.0](release-notes/0.10.0.md) - driver-pty: a coding agent in a real terminal in the app, the panel's drivers as a registry
 - [Release notes 1.0.5](release-notes/1.0.5.md) - the app's own agent drives the page with a real model; the agent template's tests no longer collide with /hello
 - [Release notes 1.0.6](release-notes/1.0.6.md) - the desktop app's windows and menu as door verbs (window, menu, --window), guarded against ending the session; a clean tarball
+- [Release notes @acryldev/blends 1.7.14](release-notes/blends-1.7.14.md) - share releases the next version by itself; update keeps metadata.from; agent tabs in a WebBox
+- [Release notes @acryldev/create-blends 1.7.14](release-notes/create-blends-1.7.14.md) - released with blends 1.7.14
 - [Release notes @acryldev/blends 1.7.13](release-notes/blends-1.7.13.md) - update pulls the newer release of a store Blend or a shared GitHub repository
 - [Release notes @acryldev/create-blends 1.7.13](release-notes/create-blends-1.7.13.md) - apps record where they came from (metadata.from)
 - [Release notes @acryldev/blends 1.7.12](release-notes/blends-1.7.12.md) - acrylblends pack: a Blend's repository releases its own installers
