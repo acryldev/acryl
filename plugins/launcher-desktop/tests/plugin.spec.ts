@@ -5,14 +5,14 @@
  * reloads without duplicates.
  */
 
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { delimiter, dirname, join } from 'node:path'
 import { createServer, request, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { Context, type FiberState } from '@deepseek-ai/cordis'
 import { apply as applyRouter, name as routerName } from '@acryldev/blends/cordis/router'
 import * as routerHttpPlugin from '@acryldev/blends/cordis/router-http'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import * as launcher from '../src/index.ts'
 import { LAUNCHER_API_PREFIX, LAUNCHER_NEW_PATH, LAUNCHER_STATE_PATH } from '../src/contract.ts'
 
@@ -55,6 +55,19 @@ async function host() {
   }
   return { port, origin: `http://127.0.0.1:${String(port)}`, prefixes, exact, mounts: () => mounts, webServer, acrylWeb }
 }
+
+// The plugin fetches a missing `gh` when it starts (prepareTools). On a computer without one the tests would download it from github.com and, until it arrived,
+// the launcher would refuse every route with "getting Node.js and GitHub's tool ready" (the Linux gate machine has no gh). A stand-in first on PATH keeps them offline.
+const standIn = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-gh-'))
+writeFileSync(join(standIn, 'gh'), '#!/bin/sh\necho "gh version 2.0.0"\n', { mode: 0o755 })
+writeFileSync(join(standIn, 'gh.cmd'), '@echo gh version 2.0.0\r\n')
+const pathBefore = process.env.PATH
+process.env.PATH = `${standIn}${delimiter}${pathBefore ?? ''}`
+afterAll(() => {
+  if (pathBefore === undefined) delete process.env.PATH
+  else process.env.PATH = pathBefore
+  rmSync(standIn, { recursive: true, force: true })
+})
 
 const home = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-home-'))
 cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
