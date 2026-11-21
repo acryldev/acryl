@@ -1,5 +1,7 @@
 # 3. The IDE builds its own plugins
 
+> **IDE era, superseded by [01-setup.md](01-setup.md) and `npx acryl@latest`.** The steps below describe the earlier in-repository CLI and IDE; the current way to make, run and share an app is `npx acryl@latest` (Control Center, `acryl new|make|share`).
+
 About 30 minutes. Start ACRYL Desktop from your clone (`corepack pnpm run dev`) or in the browser (`corepack pnpm run web`).
 
 ## 3.1 ACRYL as a daily IDE

@@ -1,5 +1,7 @@
 # 4. Share and pull plugins
 
+> **IDE era, superseded by [01-setup.md](01-setup.md) and `npx acryl@latest`.** The steps below describe the earlier in-repository CLI and IDE; the current way to make, run and share an app is `npx acryl@latest` (Control Center, `acryl new|make|share`).
+
 About 25 minutes. You need `gh` signed in, and a GitHub organization or account made for testing (sharing creates repositories and releases). For the
 optional npm part, an npm login (`npm login`) and a scope you own.
 

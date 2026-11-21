@@ -1,5 +1,7 @@
 # 2. Blend apps: from scratch, from a starter, change it, copy it
 
+> **IDE era, superseded by [01-setup.md](01-setup.md) and `npx acryl@latest`.** The steps below describe the earlier in-repository CLI and IDE; the current way to make, run and share an app is `npx acryl@latest` (Control Center, `acryl new|make|share`).
+
 About 45 minutes. You need the `acryl` command from your clone on your PATH ([guide 1, "Get the acryl command"](01-setup.md#get-the-acryl-command));
 check with `command -v acryl`. Then make a folder for your test apps, outside the clone:
 
