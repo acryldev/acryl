@@ -52,9 +52,22 @@ The same in the app: Settings > Plugins > My plugins > **Share...** on the plugi
 | --- | --- | --- |
 | GitHub | `plugin publish`, or Share publicly / Share privately | a repository and a release holding exactly the plugin's files, and the pull line |
 | The public registry | `plugin publish` (always public), or **List in the registry** | the repository has the topic `cordis-plugin`; cordisplugins.github.io lists it at its next sync (hourly) |
-| npm | not offered by the framework's `plugin publish` | a plugin is pulled from GitHub or the registry; the ACRYL IDE's own `/plugin share <name> npm` is a separate flow |
+| npm | `plugin publish <name> --to npm` | the package `@<scope>/<name>` on the npm registry (see below) |
 
 A plugin that holds a secret is refused, naming the file.
+
+### To npm
+
+```sh
+npm run acryl -- plugin publish hello-ana --to npm                       # as @<the account npm is signed in as>/hello-ana
+npm run acryl -- plugin publish hello-ana --to npm --scope acme          # as @acme/hello-ana
+npm run acryl -- plugin publish hello-ana --to npm --registry https://npm.example.com/   # another registry
+```
+
+It uses **your own** npm login and nothing else: it asks `npm whoami`, and when you are not signed in the plan is refused with `npm login`. The plan shows
+the package, the registry, the version and the license before the `yes`; a version npm already has makes it the next patch. The package is public, named
+`@scope/name` (the plugin's folder name is `name`). To try it without publishing, run the same command with `npm_config_dry_run=true` in the environment of
+the running app: npm then stops before sending the package.
 
 ## 3. Pull it
 
@@ -63,7 +76,11 @@ npm run acryl -- plugin pull github:<owner>/hello-ana              # the latest 
 npm run acryl -- plugin pull github:<owner>/hello-ana@0.1.0        # one version
 npm run acryl -- plugin pull github:<owner>/hello-ana@0.1.0@sha256:<digest>   # exactly these bytes (the line the publisher gave)
 npm run acryl -- plugin pull registry:hello-ana                    # the registry's id, checked against the integrity the registry lists
+npm run acryl -- plugin pull npm:@acme/hello-ana                   # from npm: the latest version, or @0.1.1, and @sha256:<digest> to name the bytes
 ```
+
+An npm package `@acme/hello-ana` is installed in the folder `plugins/hello-ana`; the checksum npm lists for the version must match the bytes that arrive. A
+public package needs no login; a private scope or registry is read through your own npm configuration.
 
 In the app: Settings > Plugins > **Registry**, search, **Add to my app** (it says it runs someone else's code and asks first); or **Add by address** for
 a `github:` line from a colleague. The plugin is live at once; `blend.yaml` records where it came from, so a copy of the app fetches the same bytes.
