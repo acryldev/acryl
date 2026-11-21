@@ -12,6 +12,7 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
 
 /** The framework's foundation: acrylblends and its library packages. They depend on nothing else in the repository. */
 export const FOUNDATION = new Set([
@@ -62,7 +63,7 @@ export const FRAMEWORK_PLUGINS = new Set([
 
 /** Workspace package folders, as pnpm itself resolves pnpm-workspace.yaml (quoting, globs and `!` negations included); the root is not one. */
 export function workspaceFolders(root) {
-  const listed = JSON.parse(execFileSync('corepack', ['pnpm', 'ls', '-r', '--depth', '-1', '--json'], { cwd: root, encoding: 'utf8' }))
+  const listed = JSON.parse(execFileSync(corepackCommand(process.platform), ['pnpm', 'ls', '-r', '--depth', '-1', '--json'], { cwd: root, encoding: 'utf8', ...corepackSpawnOptions(process.platform) }))
   return listed.map(entry => relative(root, entry.path).replaceAll('\\', '/')).filter(folder => folder !== '')
 }
 
