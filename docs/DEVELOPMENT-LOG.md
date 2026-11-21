@@ -1,3 +1,15 @@
+## 2026-11-21 - four small fixes after the workshop (About, missing PTY agent, inherited descriptors, one model prompt)
+
+- **Help > About on Windows and Linux** (`115504a7a82c45480d62d0661ccf5323753a0f5e`, `@acryldev/desktop-shell`): `aboutPlacement` puts "About <name>" last in Help (once, never on macOS, which has its own panel) and
+  `aboutText` gives the product, its version and the Electron, Chromium and Node versions.
+- **A PTY agent that is not installed** (`9a848cd5d839b0d28590367c1c371470ad0cf544`, `@acryldev/workspace`): `KnownAgent.installCommand` (pi, claude, codex) is appended to the "not found in PATH" error.
+- **Inherited descriptors** (`6c8cf30931739e5421e39693973f4a5d59cce07e`, `@acryldev/desktop-shell`, `@acryldev/launcher-desktop`): reproduced on Linux (z370n, Electron 44.9.3, headless): a `sleep`
+  spawned from Electron main held 36 descriptors, 10 of them sockets (Chromium's, among them the DevTools port); started through bash with the descriptors above 2 closed it held 3 (the standard streams).
+  macOS does not leak (libuv closes all but the standard streams there; checked with the same probe). Windows was not tested. The same helper is in `inherited.ts` and `runner.ts` (the packages share no code).
+- **One model prompt on first start** (`3e17e6beb5629838e98f077af8053ba5ff5001ae`, `@acryldev/sign-in`, `@acryldev/workspace`): the sign-in dialog sets `data-acryl-connect-dialog` on the page while open; the
+  workspace card hides while it is set and shows after the dialog closes.
+- Not run: the full `pnpm run check`, a packed app. `plugins/workspace/tests/shell/tab-kinds.spec.ts` needs the pinned upstream checkout, which a worktree does not have.
+
 ## 2026-11-19 - the surfaces compose their plugin set, and the runtime keeps only the Blueprint vocabulary (spec 051 T021)
 
 The guard's last named exception is gone: `acryl-harness-runtime` composed every plugin a surface ran, and that composition is now the surfaces'.
