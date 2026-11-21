@@ -5,7 +5,7 @@ const PACKAGE_NAME = '@acryldev/launcher-desktop'
 export default defineConfig([
   {
     name: PACKAGE_NAME,
-    entry: { index: 'src/index.ts' },
+    entry: { index: 'src/index.ts', node: 'src/node.ts' },
     outDir: 'lib',
     format: 'esm',
     platform: 'node',

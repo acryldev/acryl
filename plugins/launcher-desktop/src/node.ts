@@ -1,0 +1,33 @@
+/**
+ * The Control Center's service wired to this machine: real processes, the running apps' doors, the public registry, and the tools fetch. One wiring for
+ * every face that runs the Control Center in a Node process: the Cordis Host plugin (index.ts) and the terminal Control Center (`acryl`, bundled from
+ * apps/acryl-launcher-tui), so the window, the browser and the terminal do the same thing with the same code.
+ */
+import { existsSync, mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { prepareTools } from '@acryldev/launcher'
+import { fileDoor } from './door.ts'
+import { readBlends } from './registry.ts'
+import { spawnRunner } from './runner.ts'
+import { LauncherService } from './service.ts'
+
+/** `home` is ACRYL's home (`~/.acryl`); new apps are suggested in the visible folder beside it (`~/ACRYL`): the home's parent, never a looked-up user folder. */
+export function createNodeLauncher(home: string, environment: () => Readonly<Record<string, string | undefined>> = () => process.env): LauncherService {
+  return new LauncherService({
+    home,
+    appsFolder: join(dirname(home), 'ACRYL'),
+    runner: spawnRunner,
+    environment,
+    exists: path => existsSync(path),
+    makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
+    blends: () => readBlends(),
+    door: fileDoor(),
+    // A computer without Node.js 22.19+ or gh gets them once, from their makers, into the home's tools folder.
+    prepareTools: () => prepareTools(home, process.env),
+  })
+}
+
+export { LauncherRefusal, LauncherService } from './service.ts'
+export { readBlends, RegistryUnavailable } from './registry.ts'
+export { webboxesDeployUrl } from './contract.ts'
+export type { AppView, BlendView, GithubPollView, GithubStartView, JobView, PluginView, StateResponse, Surface } from './contract.ts'

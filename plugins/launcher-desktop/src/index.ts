@@ -3,19 +3,13 @@
  * `apps.json`, adds, removes, makes, starts and stops them, and stops everything it started when it unloads.
  * Capability boundary: the list and what runs on this machine (one service, `LauncherService`); the drawing is the Client half.
  */
-import { existsSync, mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { prepareTools } from '@acryldev/launcher'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/blends/cordis/router'
 import type {} from '@acryldev/blends/cordis/router-http'
 import { LAUNCHER_API_PREFIX } from './contract.ts'
-import { fileDoor } from './door.ts'
-import { readBlends } from './registry.ts'
+import { createNodeLauncher } from './node.ts'
 import { registerLauncherTools } from './tools.ts'
 import { launcherRoutes } from './route.ts'
-import { spawnRunner } from './runner.ts'
-import { LauncherService } from './service.ts'
 
 export const name = 'acryl-launcher-desktop'
 
@@ -34,20 +28,7 @@ declare module '@deepseek-ai/cordis' {
 export const inject = ['router', 'routerHttp', 'appInstance']
 
 export function apply(ctx: Context): void {
-  const home = ctx.appInstance.home
-  const service = new LauncherService({
-    home,
-    // The visible folder next to ACRYL's hidden home (`~/.acryl` and `~/ACRYL`): the home's parent, never a looked-up user folder.
-    appsFolder: join(dirname(home), 'ACRYL'),
-    runner: spawnRunner,
-    environment: () => process.env,
-    exists: path => existsSync(path),
-    makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
-    blends: () => readBlends(),
-    door: fileDoor(),
-    // A computer without Node.js 22.19+ or gh gets them once, from their makers, into the home's tools folder.
-    prepareTools: () => prepareTools(home, process.env),
-  })
+  const service = createNodeLauncher(ctx.appInstance.home)
   void service.prepareTools()
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`@acryldev/launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
