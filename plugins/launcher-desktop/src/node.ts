@@ -1,7 +1,7 @@
 /**
  * The Control Center's service wired to this machine: real processes, the running apps' doors, the public registry, and the tools fetch. One wiring for
  * every face that runs the Control Center in a Node process: the Cordis Host plugin (index.ts) and the terminal Control Center (`acryl`, bundled from
- * apps/acryl-launcher-tui), so the window, the browser and the terminal do the same thing with the same code.
+ * distribution/acryl-npm-launcher/tui), so the window, the browser and the terminal do the same thing with the same code.
  */
 import { existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'

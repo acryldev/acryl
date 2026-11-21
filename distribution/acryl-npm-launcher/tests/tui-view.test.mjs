@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { visibleWidth } from '@earendil-works/pi-tui'
 import { paletteTheme } from '@acryldev/ui-tui/scheme'
-import { appRow, categoryLabel, createControlCenterView, storeShelves, webboxesBlendUrl } from '../view.js'
+import { appRow, categoryLabel, createControlCenterView, storeShelves, webboxesBlendUrl } from '../tui/view.js'
 
 const KEY = { enter: '\r', down: '\x1b[B', up: '\x1b[A', esc: '\x1b', ctrlC: '\x03', backspace: '\x7f' }
 // biome-ignore lint/suspicious/noControlCharactersInRegex: terminal escape sequences

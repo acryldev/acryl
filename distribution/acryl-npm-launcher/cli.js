@@ -57,7 +57,7 @@ async function runDesktop(desktopArgs) {
   if (noOpen) console.log('use --no-open to download without launching')
 }
 
-/** The launcher (spec 050), bundled into this package as one file at pack time (apps/acryl-launcher-tui/scripts/bundle.mjs). */
+/** The launcher (spec 050), bundled into this package as one file at pack time (tui/bundle.mjs). */
 const LAUNCHER = fileURLToPath(new URL('./launcher.js', import.meta.url))
 
 /** ACRYL's own folder: the list of apps, the keys, the Blends acryl keeps (new apps are suggested beside it, in ~/ACRYL). HOME moves it, which is how tests isolate. */

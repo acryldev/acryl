@@ -52,6 +52,14 @@
   "license": "MIT",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "prepack": "corepack pnpm --filter @acryldev/app-persistence run build && node ../../apps/acryl-launcher-tui/scripts/bundle.mjs launcher.js"
+    "prepack": "corepack pnpm --filter @acryldev/app-persistence run build && node tui/bundle.mjs launcher.js"
+  },
+  "devDependencies": {
+    "@acryldev/launcher": "workspace:*",
+    "@acryldev/launcher-desktop": "workspace:*",
+    "@acryldev/ui-tui": "workspace:*",
+    "@earendil-works/pi-tui": "1.1.0",
+    "node-pty": "1.2.0-beta.15",
+    "rolldown": "1.2.15"
   }
 }

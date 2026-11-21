@@ -57,7 +57,6 @@ packages:
   - apps/acryl-cli
   - apps/acryl-web
   - apps/acryl-desktop
-  - apps/acryl-launcher-tui
   # Every Cordis plugin package: ACRYL's own and the framework library's app plugins (spec 051 T017, the Pi model's flat plugins folder).
   - plugins/*
   # The framework (acrylblends), imported with its history (spec 051): its CLI and create, and the frame's own packages. The frame packages it shares with ACRYL live once,

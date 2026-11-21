@@ -130,7 +130,7 @@ export function createControlCenterView({ service, model, deployUrl, open = () =
         { value: 'model', label: key ? `Model key: ${key}` : 'Set up a model', description: 'your DeepSeek or OrcaRouter key, once, for every app', run: modelKey },
         { value: 'ade', label: 'ACRYL ADE', description: 'the agent development environment: browser, window or terminal', run: ade },
         { value: 'health', label: 'Health', description: 'Node, npm, the model key, GitHub, the folders', run: health },
-        { value: 'quit', label: 'Quit', description: 'apps started here stop with it', run: quit },
+        { value: 'quit', label: 'Quit', description: 'web apps started here stop with it; a desktop app keeps its window', run: quit },
       ]
     }, { detail: () => { const row = list?.getSelectedItem(); const entry = row?.value.startsWith('app:') ? app(row.value.slice(4)) : undefined; return entry ? appDetail(entry) : [] } })
   }

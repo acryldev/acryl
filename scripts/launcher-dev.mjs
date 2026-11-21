@@ -58,7 +58,7 @@ function tui() {
   const home = join(scratch, 'tui-home')
   mkdirSync(home, { recursive: true })
   console.log(`tui: isolated home ${home} (apps are suggested in ${join(scratch, 'tui-apps')})`)
-  const result = spawnSync('node', ['apps/acryl-launcher-tui/scripts/dev.mjs'], { cwd: root, stdio: 'inherit', env: { ...process.env, ACRYL_LAUNCHER_HOME: home, ACRYL_LAUNCHER_APPS: join(scratch, 'tui-apps') } })
+  const result = spawnSync('node', ['distribution/acryl-npm-launcher/tui/dev.mjs'], { cwd: root, stdio: 'inherit', env: { ...process.env, ACRYL_LAUNCHER_HOME: home, ACRYL_LAUNCHER_APPS: join(scratch, 'tui-apps') } })
   return result.status ?? 0
 }
 

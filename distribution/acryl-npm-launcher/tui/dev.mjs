@@ -3,7 +3,7 @@
 // ~/.acryl; new apps are suggested beside it). It imports @acryldev/launcher-desktop/node, so build that package first. It prints what was handed back
 // and does not run it.
 import { mkdirSync } from 'node:fs'
-import { runLauncher } from '../run.js'
+import { runLauncher } from './run.js'
 
 const home = process.env.ACRYL_LAUNCHER_HOME
 if (!home) {

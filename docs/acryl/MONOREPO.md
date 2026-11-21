@@ -33,7 +33,7 @@ names to relative paths as it copies them.
 The picture, bottom to top. It is documentation of the graph, not a folder rule:
 
 ```
-apps            acryl-cli, acryl-desktop, acryl-web, acryl-launcher-tui, examples
+apps            acryl-cli, acryl-desktop, acryl-web, examples; distribution/acryl-npm-launcher (the `acryl` command, its terminal Control Center in tui/)
   ^ compose
 plugins         @acryldev/ui, @acryldev/workspace, @acryldev/settings, @acryldev/sign-in, acryl-launcher, @acryldev/blends-frame, @acryldev/instance, ...
   ^ use

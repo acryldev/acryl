@@ -1568,28 +1568,6 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
-  apps/acryl-launcher-tui:
-    dependencies:
-      '@acryldev/launcher':
-        specifier: workspace:*
-        version: link:../../plugins/launcher
-      '@acryldev/launcher-desktop':
-        specifier: workspace:*
-        version: link:../../plugins/launcher-desktop
-      '@acryldev/ui-tui':
-        specifier: workspace:*
-        version: link:../../plugins/ui-tui
-      '@earendil-works/pi-tui':
-        specifier: 1.1.0
-        version: 1.1.0(patch_hash=cafd73997964c16b4eb13f7220af2c9046a6de820cf652bbd1f181ca494fb1ee)
-    devDependencies:
-      node-pty:
-        specifier: 1.2.0-beta.15
-        version: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
-      rolldown:
-        specifier: 1.2.15
-        version: 1.2.15
-
   apps/acryl-web:
     dependencies:
       '@acryldev/agent-control':
@@ -2179,7 +2157,26 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@22.20.1)(typescript@6.0.3))(vite@8.2.4(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0))
 
-  distribution/acryl-npm-launcher: {}
+  distribution/acryl-npm-launcher:
+    devDependencies:
+      '@acryldev/launcher':
+        specifier: workspace:*
+        version: link:../../plugins/launcher
+      '@acryldev/launcher-desktop':
+        specifier: workspace:*
+        version: link:../../plugins/launcher-desktop
+      '@acryldev/ui-tui':
+        specifier: workspace:*
+        version: link:../../plugins/ui-tui
+      '@earendil-works/pi-tui':
+        specifier: 1.1.0
+        version: 1.1.0(patch_hash=cafd73997964c16b4eb13f7220af2c9046a6de820cf652bbd1f181ca494fb1ee)
+      node-pty:
+        specifier: 1.2.0-beta.15
+        version: 1.2.0-beta.15(patch_hash=76ba48ec629e2a6ebc193ec734b522f890287419a74efee65d80ee1652de1e0d)
+      rolldown:
+        specifier: 1.2.15
+        version: 1.2.15
 
   examples/blend-demo: {}
 

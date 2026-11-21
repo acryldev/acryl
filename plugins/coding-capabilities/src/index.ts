@@ -192,7 +192,7 @@ export const CODING_CAPABILITY_COMPOSITIONS: readonly CodingCapabilityCompositio
   {
     // The ACRYL screen (spec 050 T012): every app made with ACRYL on this machine, with New app, Add a folder, Start and Stop. A full-window layer over the
     // workspace in the frame's `shell.overlay` seat, open when the desktop app starts; the Host half lists, makes, starts and stops apps through the machine's
-    // Node and npm. On Web and Desktop alike (surface sharing, spec 040); the terminal has its own screen (`acryl-launcher-tui`) over the same list.
+    // Node and npm. On Web and Desktop alike (surface sharing, spec 040); the terminal has its own screen (distribution/acryl-npm-launcher/tui) over the same list.
     id: 'launcher-screen',
     surfaces: ['desktop', 'web'],
     requiresPackages: ['@acryldev/launcher-desktop'],

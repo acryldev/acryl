@@ -5,7 +5,7 @@ import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { bundleLauncher } from '../apps/acryl-launcher-tui/scripts/bundle.mjs'
+import { bundleLauncher } from '../distribution/acryl-npm-launcher/tui/bundle.mjs'
 import { execShim, tarCommand } from './lib/portable-commands.mjs'
 import { CLI_TARGETS, targetPackageName } from './release-contract.mjs'
 import { MINIMUM as MINIMUM_NODE } from '../distribution/acryl-npm-launcher/node-version.js'
@@ -43,8 +43,9 @@ function targetManifest(target) {
 }
 
 function selectorManifest() {
-  // The package's own manifest (what `npm publish` in its folder sends too), without the scripts that only build it.
-  const { scripts: _scripts, ...manifest } = selectorPackage
+  // The package's own manifest (what `npm publish` in its folder sends too), without the scripts and the dev dependencies that only build it
+  // (the terminal Control Center is bundled into launcher.js).
+  const { scripts: _scripts, devDependencies: _bundled, ...manifest } = selectorPackage
   return {
     ...manifest,
     private: false,
