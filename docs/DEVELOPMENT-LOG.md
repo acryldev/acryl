@@ -1,3 +1,11 @@
+## 2026-11-21 - the sharing work verified live with create-blends 1.7.18, and what the live run found
+
+Run for real with a scratch HOME and the real page (Chrome): an app made by `@acryldev/create-blends@1.7.18`, a copy of `inboxxobni/sh1121-ana` pulled at v0.1.0 plus a file of its own.
+
+- **Registry tab, update:** the row showed "Update to v0.1.2", the question said the person's changes are kept, and the answer was "Done. sh1121-ana is updated to v0.1.2 and running now"; the plugin served v0.1.2 and the own file was still there; `blend.yaml` named 0.1.2.
+- **Share... > Publish to npm (npm in dry-run mode; `whoami` answered by a stand-in on PATH because this machine has no npm login and no token of ours is used):** the plan read "Publish sh1121-clock to npm as @dryrun-ana/sh1121-clock", Details named the registry, version and license, Cancel was the default, and the confirm went through; `npm view` of the package still answers 404, so nothing reached npm.
+- **Found and fixed (`81cb96c0a12dd4375a8c10bf2a2f42cf58d20d8d`):** the signed-out refusal showed npm's pointer to a log file instead of saying "not signed in" (an earlier attempt to fix it had silently not applied); the frame showed GitHub's "Connect GitHub" note under an npm refusal and a generic "could not be shared", and now says "npm is not signed in on this computer. Open a terminal, run npm login, then press Publish to npm again"; an npm share was forgotten on reload and its card said "Shared on GitHub", and it now says "Shared on npm" with the package's pull line.
+
 ## 2026-11-21 - sharing a Cordis plugin between people: the cycle run as two, what broke, what was fixed
 
 Run for real as two people (Ana and Ben: two scratch homes, apps made with `@acryldev/create-blends` 1.7.12) against `inboxxobni`: Ana made `sh1121-ana`, published it, Ben pulled it, Ana published the next versions, Ben updated.
