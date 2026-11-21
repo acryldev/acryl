@@ -16,10 +16,12 @@ is one part of your app, and our own IDE is one app built on it.
 
 | Command | What opens |
 | --- | --- |
-| `npx acryl` | ACRYL Control Center in this terminal |
-| `npx acryl --tui` | the same: ACRYL Control Center in this terminal |
-| `npx acryl --gui` | ACRYL Control Center in its own window |
-| `npx acryl --web` | ACRYL Control Center in your browser |
+| `npx acryl@latest` | ACRYL Control Center in this terminal |
+| `npx acryl@latest --tui` | the same: ACRYL Control Center in this terminal |
+| `npx acryl@latest --gui` | ACRYL Control Center in its own window |
+| `npx acryl@latest --web` | ACRYL Control Center in your browser |
+
+Always `@latest`: an old npm cache or a slow registry mirror can otherwise start an older ACRYL. `npx acryl@latest --version` shows which one runs.
 
 In the terminal, ACRYL Control Center does what the window does, with the same code underneath:
 
@@ -64,12 +66,12 @@ Without a terminal (a script, a pipe, an agent), a bare `acryl` prints the help.
 2. **The agent builds with those blocks.** ACRYL's chat, and Claude Code, Codex or Pi, operate the app through its door. The core code stays untouched.
 3. **Sandboxed per person.** Every app runs in its own instance, on your machine or in your own [WebBox](https://webboxes.ai), with your rights only.
 4. **Your change is a versioned layer: a Blend.** Save, roll back, share it to GitHub, list it in the store.
-5. **The foundation keeps shipping.** `npx acrylblends update` merges new releases under your layer, and your changes stay.
+5. **The foundation keeps shipping.** `npx acryl@latestblends update` merges new releases under your layer, and your changes stay.
 
 ## Where things go
 
 Everything ACRYL keeps (the list of apps, your keys, the Control Center and ADE copies) is in `~/.acryl`. New apps are suggested in `~/ACRYL`.
-`npx acryl` downloads only this small package (Node.js 22.19 or later); the rest is fetched the first time you use it.
+`npx acryl@latest` downloads only this small package (Node.js 22.19 or later); the rest is fetched the first time you use it.
 
 ## Links
 
