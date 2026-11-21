@@ -436,3 +436,16 @@ test("the dev script loads the TypeScript hook from the server plugin folder the
     'node --import ./plugins/node-server/src/register.ts scripts/ide-host.mjs',
   )
 })
+
+test("an installed app (no plugin folders on disk, the bundle overlay resolves them) gets plugins/<id>; only an app with plugins/acryl-<id> keeps that name", async () => {
+  const line = ideProfilePlan(input).hostScript.split('\n').find((l) => l.startsWith('const hostPlugin = '))
+  assert.ok(line)
+  const { mkdirSync } = await import('node:fs')
+  const hostPluginIn = (appRoot: string) =>
+    new Function('existsSync', 'join', 'appRoot', `${line}\nreturn hostPlugin`)(existsSync, join, appRoot) as (id: string) => string
+  const installed = folder()
+  assert.equal(hostPluginIn(installed)('node-server'), 'node-server')
+  const old = folder()
+  mkdirSync(join(old, 'plugins', 'acryl-node-server'), { recursive: true })
+  assert.equal(hostPluginIn(old)('node-server'), 'acryl-node-server')
+})
