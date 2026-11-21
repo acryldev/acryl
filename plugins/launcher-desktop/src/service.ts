@@ -78,6 +78,8 @@ interface Job {
 
 interface Started {
   readonly run: Run
+  /** Started with `npm run desktop`: once it serves, its own window is open, and it stays when this app quits. */
+  readonly desktop: boolean
   address: string | undefined
   output: string
 }
@@ -172,13 +174,14 @@ export class LauncherService {
     this.#failures.delete(id)
     // An app whose dependencies are not installed (one pulled from the registry in a terminal, or copied) cannot run: install them first, shown as "starting".
     if (!this.#ports.exists(join(entry.path, 'node_modules'))) { this.#installThenStart(id, entry.path, surface); return }
-    const run = this.#ports.runner({ program: 'npm', args: ['run', (surface ?? entry.surface) === 'desktop' ? 'desktop' : 'dev'], cwd: entry.path, env: this.#environment() })
-    this.#watch(id, run, undefined)
+    const desktop = (surface ?? entry.surface) === 'desktop'
+    const run = this.#ports.runner({ program: 'npm', args: ['run', desktop ? 'desktop' : 'dev'], cwd: entry.path, env: this.#environment(), ...(desktop ? { log: this.#appLog(id) } : {}) })
+    this.#watch(id, run, undefined, desktop)
   }
 
   #installThenStart(id: string, folder: string, surface: Surface | undefined): void {
     const run = this.#ports.runner({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: folder, env: this.#environment() })
-    const started: Started = { run, address: undefined, output: '' }
+    const started: Started = { run, desktop: false, address: undefined, output: '' }
     this.#started.set(id, started)
     run.onOutput((text) => { started.output = tail(`${started.output}${text}`) })
     run.onEnd((end) => {
@@ -236,9 +239,26 @@ export class LauncherService {
     })
   }
 
-  stopAll(): void {
-    for (const started of this.#started.values()) started.run.stop()
+  /**
+   * When this app quits (or the plugin unloads): stop everything it started, except a Desktop app whose window is open. That window is the person's
+   * own, and closing it stops the app; a Web app has no window, so it would run on unseen. Returns the names of the apps left open.
+   */
+  stopAll(): string[] {
+    const kept: string[] = []
+    for (const [id, started] of this.#started) {
+      if (started.desktop && started.address !== undefined) kept.push(id)
+      else started.run.stop()
+    }
     this.#job?.run.stop()
+    for (const job of this.#installing.values()) job.run.stop()
+    return kept
+  }
+
+  /** Where a Desktop app's output goes (`<home>/logs/apps/<id>.log`): a file, so the app does not depend on this process to write it. */
+  #appLog(id: string): string {
+    const folder = join(this.#ports.home, 'logs', 'apps')
+    this.#ports.makeFolder(folder)
+    return join(folder, `${id}.log`)
   }
 
   /**
@@ -482,8 +502,8 @@ export class LauncherService {
    * Follow one process. For an app being started, `id` is known; for one being made it is not until the folder has its blend.yaml, which is when the app
    * is listed and the process becomes that app's.
    */
-  #watch(id: string | undefined, run: Run, making: { folder: string, surface: Surface, job: Job } | undefined): void {
-    const started: Started = { run, address: undefined, output: '' }
+  #watch(id: string | undefined, run: Run, making: { folder: string, surface: Surface, job: Job } | undefined, desktop = false): void {
+    const started: Started = { run, desktop, address: undefined, output: '' }
     let appId = id
     if (appId !== undefined) this.#started.set(appId, started)
     run.onOutput((text) => {

@@ -223,8 +223,21 @@ describe('start and stop', () => {
     expect(() => service.start('gone')).toThrow(/is gone/u)
     makeApp('a'); makeApp('b')
     service.start('a'); service.start('b')
-    service.stopAll()
+    expect(service.stopAll()).toEqual([])
     expect(runs.map(run => run.stopped)).toEqual([true, true])
+  })
+
+  it('on quit leaves a Desktop app whose window is up, with its output in a file, and stops a Web app and a Desktop app still starting', () => {
+    const { service, makeApp, runs, home } = setup()
+    makeApp('site'); makeApp('notes', 'desktop'); makeApp('draw', 'desktop')
+    service.start('site'); service.start('notes'); service.start('draw')
+    expect(runs[0]?.command.log).toBeUndefined()
+    expect(runs[1]?.command).toMatchObject({ args: ['run', 'desktop'], log: join(home, 'logs', 'apps', 'notes.log') })
+    expect(existsSync(join(home, 'logs', 'apps'))).toBe(true)
+    runs[0]!.say('listening on http://127.0.0.1:4001/?token=a\n')
+    runs[1]!.say('acrylblends host: http://127.0.0.1:4002/?token=b\n')
+    expect(service.stopAll()).toEqual(['notes'])
+    expect(runs.map(run => run.stopped)).toEqual([true, false, true])
   })
 })
 

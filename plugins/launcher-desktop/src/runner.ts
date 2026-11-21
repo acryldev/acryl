@@ -4,7 +4,8 @@
  * (`npm run dev` starts a server below npm).
  */
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { closeSync, existsSync, openSync, readSync } from 'node:fs'
+import { StringDecoder } from 'node:string_decoder'
 
 export interface Run {
   /** Output so far is delivered in chunks, stdout and stderr together. */
@@ -19,6 +20,9 @@ export interface Command {
   readonly args: readonly string[]
   readonly cwd: string
   readonly env: Readonly<Record<string, string | undefined>>
+  /** A file for the command's output instead of a pipe into this process: a command that may outlive this process (a Desktop app's window) needs it,
+   * since a write into a pipe whose reader has gone kills the writer (EPIPE). Its output still reaches `onOutput`, read from the file as it grows. */
+  readonly log?: string
 }
 
 export type Runner = (command: Command) => Run
@@ -62,20 +66,43 @@ function stopTree(pid: number, platform: NodeJS.Platform): void {
   } catch { /* already gone */ }
 }
 
+/** Read a file as it grows, until the returned function is called (it reads what is left first). */
+function follow(file: string, emit: (text: string) => void): () => void {
+  const fd = openSync(file, 'r')
+  const decoder = new StringDecoder('utf8')
+  const buffer = Buffer.alloc(64 * 1024)
+  let at = 0
+  const read = (): void => {
+    for (let n = readSync(fd, buffer, 0, buffer.length, at); n > 0; n = readSync(fd, buffer, 0, buffer.length, at)) {
+      at += n
+      emit(decoder.write(buffer.subarray(0, n)))
+    }
+  }
+  const timer = setInterval(read, 250)
+  timer.unref()
+  return () => { clearInterval(timer); read(); closeSync(fd) }
+}
+
 export const spawnRunner: Runner = (command) => {
   const win = process.platform === 'win32'
   // `npm` and `npx` are .cmd files on Windows, which only a shell starts.
   const start = win ? { program: command.program, args: command.args } : withoutInheritedDescriptors(command.program, command.args)
-  const child = spawn(start.program, [...start.args], { cwd: command.cwd, env: command.env as NodeJS.ProcessEnv, shell: win, detached: !win, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+  const log = command.log === undefined ? undefined : openSync(command.log, 'w')
+  const output = log ?? 'pipe'
+  const child = spawn(start.program, [...start.args], { cwd: command.cwd, env: command.env as NodeJS.ProcessEnv, shell: win, detached: !win, windowsHide: true, stdio: ['ignore', output, output] })
+  if (log !== undefined) closeSync(log)
   const outputs: Array<(text: string) => void> = []
+  const emit = (text: string): void => { for (const listener of outputs) listener(text) }
+  const unfollow = command.log === undefined ? () => {} : follow(command.log, emit)
   const ends: Array<(end: { code: number | null, notFound: boolean, error?: string }) => void> = []
   let ended = false
   const finish = (end: { code: number | null, notFound: boolean, error?: string }): void => {
     if (ended) return
     ended = true
+    unfollow()
     for (const listener of ends) listener(end)
   }
-  for (const stream of [child.stdout, child.stderr]) stream.on('data', (chunk: Buffer) => { for (const listener of outputs) listener(chunk.toString('utf8')) })
+  for (const stream of [child.stdout, child.stderr]) stream?.on('data', (chunk: Buffer) => { emit(chunk.toString('utf8')) })
   child.on('error', (cause: NodeJS.ErrnoException) => { finish({ code: null, notFound: cause.code === 'ENOENT', error: cause.message }) })
   // 127 is "not found" from a shell (Unix), 1 with this text is cmd.exe's.
   child.on('close', (code) => { finish({ code, notFound: code === 127 }) })

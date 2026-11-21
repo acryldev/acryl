@@ -39,7 +39,10 @@ export function apply(ctx: Context): void {
     ctx.logger.error(`@acryldev/launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
   }
   // Every process this plugin started goes with it, whether it unloads or the app quits.
-  ctx.effect(() => () => { service.stopAll() }, '@acryldev/launcher-desktop: apps it started')
+  ctx.effect(() => () => {
+    const kept = service.stopAll()
+    if (kept.length > 0) ctx.logger.info(`left open (a Desktop app with its window up; closing the window stops it): ${kept.join(', ')}`)
+  }, '@acryldev/launcher-desktop: apps it started')
   ctx.router.route('/', launcherRoutes(service, report))
   ctx.routerHttp.mount('/app' + LAUNCHER_API_PREFIX)
 }

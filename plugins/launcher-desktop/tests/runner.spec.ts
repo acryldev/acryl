@@ -1,7 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { closeSync, openSync } from 'node:fs'
+import { closeSync, mkdtempSync, openSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { withoutInheritedDescriptors } from '../src/runner.ts'
+import { spawnRunner, withoutInheritedDescriptors } from '../src/runner.ts'
 
 describe('what a started app inherits from the Electron main process', () => {
   it('only Linux with bash gets the wrapper; every other case starts the command as it is', () => {
@@ -26,6 +28,25 @@ describe('what a started app inherits from the Electron main process', () => {
       expect(clean.stdout.trim()).toBe('fd3 closed [a b]')
     } finally {
       closeSync(fd)
+    }
+  })
+})
+
+describe('a command with a log file', () => {
+  it('writes its output to the file, not a pipe, and the run still hears it and its end', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'acryl-runner-log-'))
+    try {
+      const log = join(folder, 'app.log')
+      const run = spawnRunner({ program: process.execPath, args: ['-e', "console.log('served on http://127.0.0.1:1/'); console.error('é done')"], cwd: folder, env: process.env, log })
+      let heard = ''
+      run.onOutput((text) => { heard += text })
+      const end = await new Promise<{ code: number | null }>((done) => { run.onEnd(done) })
+      expect(end.code).toBe(0)
+      expect(heard).toContain('served on http://127.0.0.1:1/')
+      expect(heard).toContain('é done')
+      expect(readFileSync(log, 'utf8')).toBe(heard)
+    } finally {
+      rmSync(folder, { recursive: true, force: true })
     }
   })
 })

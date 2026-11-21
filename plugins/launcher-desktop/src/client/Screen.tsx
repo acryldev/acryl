@@ -622,7 +622,7 @@ function RunningView({ apps, openExternal, onStop }: { apps: readonly AppView[],
           ))}
         </div>
       )}
-      <p className="acrylHomeNote">Apps this screen started stop when ACRYL quits.</p>
+      <p className="acrylHomeNote">When ACRYL quits, the Web apps it started stop with it. A Desktop app keeps its window open; closing the window stops it.</p>
     </section>
   )
 }
