@@ -490,7 +490,10 @@ const appIcon = [
   join(shell.root, 'lib', 'assets', 'acrylblends-logo.png'),
   join(shell.root, 'assets', 'acrylblends-logo.png'),
 ].find((file) => existsSync(file))
-if (appIcon === undefined) throw new Error(`no icon: neither ${join(app, 'assets', 'icon.png')} nor ACRYL Blends' logo in ${shell.root}`)
+if (appIcon === undefined)
+  throw new Error(
+    `no icon: neither ${join(app, 'assets', 'icon.png')} nor ACRYL Blends' logo in ${shell.root}`,
+  )
 manifest.main = shell.main
 manifest.productName = PRODUCT
 manifest.description = DESCRIPTION
