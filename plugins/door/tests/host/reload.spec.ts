@@ -271,6 +271,7 @@ describe('act navigate says what the app answered at the path', () => {
     const answer = await d.run('plugin-publish', { name: 'hello', confirm: plan, yes: true }, never)
     expect(answer.value).toEqual(plan)
     expect(answer.text).toContain('Publish to inboxxobni/hello (a new repository), public, version 0.1.0, license MIT.')
+    expect(answer.text).toContain('the public plugin registry (cordisplugins.github.io) lists it within about an hour')
     expect(answer.text).toContain('Only a person can say yes')
     expect(answer.text).toContain(plan.pullLine)
     expect(published).toEqual([])

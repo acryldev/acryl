@@ -145,6 +145,7 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes @acryldev/create-blends 1.5.8](release-notes/create-1.5.8.md) - asks for acrylblends 1.5.8
 - [Release notes acrylblends 1.5.7](release-notes/acrylblends-1.5.7.md) - every registry Blend can be made in the frame again; a packed Blend product does not ask for a name
 - [Release notes @acryldev/create-blends 1.5.7](release-notes/create-1.5.7.md) - asks for acrylblends 1.5.7; `--from` a registry Blend with its own src/app.ts finishes
+- [Share a plugin](framework/guides/share-plugins.md) - make, publish (GitHub, the public registry), pull (`github:`, `registry:<id>`, the Registry tab), and update a plugin while keeping your own edits, with the commands that were run as two people
 - [Release notes acrylblends 1.5.6](release-notes/acrylblends-1.5.6.md) - sharing pushes through your gh login whatever git protocol you chose; an app in a WebBoxes.ai box takes its model key (`@acryldev/blends-frame` 0.1.4)
 - [Release notes @acryldev/create-blends 1.5.6](release-notes/create-1.5.6.md) - asks for acrylblends 1.5.6
 - [Release notes acrylblends 1.5.5](release-notes/acrylblends-1.5.5.md) - `npm run share`: an app gets a repository of its own on GitHub and is pushed there, after a person confirms the plan (`@acryldev/blends-frame` 0.1.3)

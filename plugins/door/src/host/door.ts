@@ -80,6 +80,8 @@ export function renderPublishPlan(plan: PublishPlanView): string {
   return [
     `Publish to ${plan.owner}/${plan.repo}${plan.createsRepository ? ' (a new repository)' : ''}, ${plan.visibility}, version ${plan.version}, license ${plan.license}.`,
     `Files: ${plan.files.join(', ')}.`,
+    // A public repository carries the topic the plugin registry (cordisplugins.github.io) lists by: said before the yes, not found out after.
+    `The repository gets the topic cordis-plugin, so the public plugin registry (cordisplugins.github.io) lists it within about an hour.`,
     `A friend gets exactly these bytes with: ${plan.pullLine}`,
   ].join('\n')
 }

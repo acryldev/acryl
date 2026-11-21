@@ -54,6 +54,7 @@ They are enabled as they are built.
 | Look up a call | [API](api/index.md), [Routing](api/routing.md), [Context](api/context.md), [Request](api/request.md), [API summary](api/summary.md) |
 | Understand the design | [Concepts](concepts/motivation.md) |
 | Copy a pattern | [Guides](guides/best-practices.md), [Validation](guides/validation.md), [Testing](guides/testing.md), [Data, migrations and choosing a store](guides/data.md), [Forms, sessions and a database](guides/forms-and-sessions.md), [Client components without a bundler](guides/client-modules.md), [Bring your own tool](guides/bring-your-own-tool.md) |
+| Share a plugin with other people: publish, pull from GitHub or the registry, update | [Share a plugin](guides/share-plugins.md) |
 | Run the 90-minute workshop | [Workshop](workshop/README.md), and the room around it in [Facilitator notes](workshop/facilitator.md) |
 | Use Acryl inside a Cordis app | [Acryl in a Cordis app](cordis/acryl-in-a-cordis-app.md), [Plugin lifecycle](cordis/plugin-lifecycle.md), [Mounting](cordis/mounting.md) |
 | Move from the 0.3 router calls | [Migration from 0.3](cordis/migration-from-0-3.md) |

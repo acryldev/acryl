@@ -107,7 +107,7 @@ A plugin the agent builds lives in the app's own `plugins/` (internal). To share
 `plugin-packages/<name>/` and its release file `plugin-packages/<name>-<version>.tgz`, with `@deepseek-ai/cordis` as a peer
 dependency (never a second installed copy) and the same bytes on every OS. Any app takes an external plugin in with
 `acrylblends add <folder>`, which copies it into that app's `plugins/`, where it installs at the next start through the same
-checks. A plugin someone released comes in live with `plugin pull github:<owner>/<repo>[@<version>][@sha256:<digest>]`.
+checks. A plugin someone released comes in live with `plugin pull github:<owner>/<repo>[@<version>][@sha256:<digest>]`, or `plugin pull registry:<id>` for one the public registry lists; a newer release of a pulled plugin updates it in place and keeps the person's own edits (guide: `docs/framework/guides/share-plugins.md`).
 A group's plugins come in together with `plugin pull --from <list>`: the list is a file in the app (e.g. `group.txt`) or an
 https address of one (a gist's raw link), one source per line, `#` starts a comment. Each source is pulled on its own, so one
 that is refused (a route or name another plugin already has, a wrong digest) is named with its reason while the others come in
