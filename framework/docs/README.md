@@ -70,6 +70,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 1.0.6](release-notes/1.0.6.md) - the desktop app's windows and menu as door verbs (window, menu, --window), guarded against ending the session; a clean tarball
 - [Release notes @acryldev/blends 1.7.18](release-notes/blends-1.7.18.md) - Cordis plugins share to GitHub, the registry and npm, and update in place
 - [Release notes @acryldev/create-blends 1.7.18](release-notes/create-blends-1.7.18.md) - released with blends 1.7.18
+- [Release notes @acryldev/blends 1.7.24](release-notes/blends-1.7.24.md) - a Linux .deb is named after the product and depends on the sound library
+- [Release notes @acryldev/create-blends 1.7.24](release-notes/create-blends-1.7.24.md) - released with blends 1.7.24
 - [Release notes @acryldev/blends 1.7.23](release-notes/blends-1.7.23.md) - an installed app's Host finds its server plugin; app versions shown
 - [Release notes @acryldev/create-blends 1.7.23](release-notes/create-blends-1.7.23.md) - released with blends 1.7.23
 - [Release notes @acryldev/blends 1.7.22](release-notes/blends-1.7.22.md) - staged only, replaced by 1.7.23
