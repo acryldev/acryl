@@ -890,7 +890,7 @@ interface SessionEvents {
 /** The Host's process group, as `ps` reports it; undefined where the platform has no `ps`, and the guard then refuses group kills outright. */
 function processGroupId(pid: number): number | undefined {
   try {
-    const value = Number(execFileSync('ps', ['-o', 'pgid=', '-p', String(pid)], { encoding: 'utf8' }).trim())
+    const value = Number(execFileSync('ps', ['-o', 'pgid=', '-p', String(pid)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim())
     return Number.isInteger(value) && value > 0 ? value : undefined
   } catch {
     return undefined
