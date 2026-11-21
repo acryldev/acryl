@@ -8,17 +8,15 @@ import type { Io } from './io'
  * packages, so a Blend's own repository releases its product without ACRYL's source. The packer is ACRYL's framework/scripts/pack-blank-mac.mjs, which
  * the published package carries in pack/ (scripts-pack.mjs copies it); in ACRYL's checkout the CLI runs it from there.
  */
-export function pack(args: readonly string[], io: Io): number {
+export function pack(args: readonly string[], io: Io, file = 'pack-blank-mac.mjs'): number {
   const script = [
-    new URL('../pack/pack-blank-mac.mjs', import.meta.url),
-    new URL('../../../scripts/pack-blank-mac.mjs', import.meta.url),
+    new URL(`../pack/${file}`, import.meta.url),
+    new URL(`../../../scripts/${file}`, import.meta.url),
   ]
     .map((url) => fileURLToPath(url))
     .find((file) => existsSync(file))
   if (script === undefined) {
-    io.stderr.write(
-      'error: this copy of @acryldev/blends carries no packer (pack/pack-blank-mac.mjs)\n',
-    )
+    io.stderr.write(`error: this copy of @acryldev/blends carries no packer (pack/${file})\n`)
     return 1
   }
   return spawnSync(process.execPath, [script, ...args], { stdio: 'inherit' }).status ?? 1

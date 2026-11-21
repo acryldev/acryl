@@ -224,7 +224,9 @@ export async function update(
 
   const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-'))
   try {
-    say(`Getting ${blend.id} ${newest} (@acryldev/create-blends@${VERSION}, as the app was made)...`)
+    say(
+      `Getting ${blend.id} ${newest} (@acryldev/create-blends@${VERSION}, as the app was made)...`,
+    )
     const name = basename(app)
     if ((await world.make(blend.id, name, scratch, newest)) !== 0)
       throw new Error(`${blend.id} ${latest} could not be made; the app is unchanged`)

@@ -34,7 +34,10 @@ Usage:
                                       (and on Windows PowerShell and long paths); one line per check, PASS or the fix
   acrylblends pack --from <dir> [--product "Name"] [--arch arm64|x64] [--out d]
                                       The app in <dir> as an installer for this OS (DMG, NSIS .exe, .deb), made
-                                      with the published packages; updates come from <dir>'s GitHub releases
+                                      with the published packages; updates come from <dir>'s GitHub releases;
+                                      on Linux also a portable .tar.gz (Arch Linux, Omarchy)
+  acrylblends pkgbuild --dir <d> --product "Name" --version x.y.z --repo owner/name
+                                      The PKGBUILD (Arch Linux, Omarchy) for a release whose Linux .tar.gz files are in <d>
   acrylblends build-client [root] [out]  Compile the client modules once for production (src/client to dist/client)
   acrylblends kv import <kv.json> <db>   Move a JSON-file kv store into the kv table of a SQLite database [--overwrite] [--table t] [--migrations dir]
   acrylblends check-deps [dir]           Fail when app code imports a database driver or opener outside the file named in
@@ -81,6 +84,7 @@ export async function runCli(argv: readonly string[], io: Io = processIo()): Pro
     if (command === 'open') return await openFrame(args, io)
     if (command === 'preflight') return await runPreflight(io)
     if (command === 'pack') return pack(args, io)
+    if (command === 'pkgbuild') return pack(args, io, 'pkgbuild.mjs')
     throw new UsageError(`unknown command "${command}"`)
   } catch (error) {
     if (error instanceof UsageError) {

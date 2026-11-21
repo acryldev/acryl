@@ -31,6 +31,7 @@ import {
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { desktopEntry, launcherScript, tarballName } from './lib/arch-linux.mjs'
 import { createSource, repositoryOnlyIn } from './lib/create-source.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -450,6 +451,8 @@ const DESCRIPTION =
     : `${PRODUCT}, an ACRYL Blends app (${from}), in the frame: change it from the chat.`
 const FILE_NAME =
   from === undefined ? 'ACRYL-Blends-Blank' : PRODUCT.replace(/[^A-Za-z0-9]+/gu, '-')
+/** The program's name on Linux: acryl-control-center. */
+const EXE = FILE_NAME.toLowerCase()
 // Seal the bundle ad hoc, after the builder has laid it out and before the DMG is made. With no signing step the main program keeps Electron's linker
 // signature (identifier `Electron`, no sealed resources, Info.plist not bound), so the bundle was not sealed and `codesign --verify --deep --strict` failed.
 // An ad hoc seal makes every file of the bundle part of the signature: an app that writes into its own bundle shows at once. No hardened runtime: the
@@ -514,6 +517,8 @@ manifest.build = {
     category: 'Development',
     icon: appIcon,
     maintainer: 'ACRYL Blends <build@acryldev.dev>',
+    // One name for the program on every Linux: the .deb's, the tarball's launcher and the PKGBUILD's (acryl-control-center).
+    executableName: EXE,
   },
   ...(platform === 'mac' ? { afterPack: join(work, 'seal-bundle.cjs') } : {}),
 }
@@ -695,4 +700,27 @@ for (const file of readdirSync(out))
   if (file.endsWith(EXTENSION)) rmSync(join(out, file), { force: true })
 const target = join(out, `${FILE_NAME}-${platform}-${arch}${EXTENSION}`)
 cpSync(join(app, 'dist', produced[0]), target)
+// 7. On Linux also a portable tarball (Arch Linux, Omarchy, any distribution without dpkg): the app folder the builder laid out for the .deb, under
+// lib/, with a launcher, a menu entry and the icon (lib/arch-linux.mjs). `acrylblends pkgbuild` makes the PKGBUILD that installs it.
+if (platform === 'linux') {
+  const unpacked = readdirSync(join(app, 'dist')).find((name) => /^linux.*-unpacked$/u.test(name))
+  if (unpacked === undefined)
+    throw new Error('electron-builder left no linux-unpacked folder for the tarball')
+  const portable = join(work, 'portable', EXE)
+  rmSync(join(work, 'portable'), { recursive: true, force: true })
+  mkdirSync(portable, { recursive: true })
+  execFileSync('cp', ['-a', join(app, 'dist', unpacked), join(portable, 'lib')])
+  writeFileSync(join(portable, EXE), launcherScript(EXE), { mode: 0o755 })
+  writeFileSync(
+    join(portable, `${EXE}.desktop`),
+    desktopEntry({ exe: EXE, product: PRODUCT, description: DESCRIPTION }),
+  )
+  cpSync(appIcon, join(portable, `${EXE}.png`))
+  // The app's licence, which the PKGBUILD installs where Arch looks for it (/usr/share/licenses).
+  if (existsSync(join(app, 'LICENSE'))) cpSync(join(app, 'LICENSE'), join(portable, 'LICENSE'))
+  const tarball = join(out, tarballName(FILE_NAME, arch))
+  rmSync(tarball, { force: true })
+  execFileSync('tar', ['-czf', tarball, '-C', join(work, 'portable'), EXE])
+  log(`portable: ${tarball} (${String(Math.round(statSync(tarball).size / 1024 / 1024))} MB)`)
+}
 log(`done: ${target} (${String(Math.round(statSync(target).size / 1024 / 1024))} MB)`)
