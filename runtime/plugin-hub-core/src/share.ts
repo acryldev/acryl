@@ -33,6 +33,9 @@ export type PluginKind = 'loader-bundle' | 'source-plugin'
 
 const LABELS: Readonly<Record<PluginKind, readonly string[]>> = { 'loader-bundle': PLUGIN_LABELS, 'source-plugin': ['cordis-plugin'] }
 
+/** The labels a plugin of this kind is listed by. */
+export const labelsOf = (kind: PluginKind): readonly string[] => LABELS[kind]
+
 /** The git host, through the user's own login. */
 export interface RepositoryHostPort {
   /** The signed-in user, the default owner. */

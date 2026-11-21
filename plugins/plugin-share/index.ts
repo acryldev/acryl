@@ -21,17 +21,24 @@ import type {} from '@acryldev/instance'
 import { LOCK_FILE, writeLock } from '@acryldev/manifest/lock'
 import {
   bumpVersion,
+  firstRegistryPort,
   gitCli,
   githubCli,
   githubReleasesOverHttps,
   httpsDownload,
   InvalidPluginSourceError,
+  NPM_REGISTRY,
+  npmCli,
+  npmRegistryOverHttps,
+  npmRegistryViaCli,
   type PluginSource,
   PluginStore,
   PullError,
   packFolder,
   parsePluginSource,
+  publishToNpm,
   pullPlugin,
+  type RegistryPort,
   type ReleasePort,
   readTarball,
   sharePlugin,
@@ -52,6 +59,7 @@ import {
 } from './native.ts'
 import { packagePlugin } from './package.ts'
 import {
+  npmPullLineOf,
   type PublishOptions,
   type PublishPlan,
   type PublishPorts,
@@ -94,7 +102,9 @@ export interface PluginShareConfig {
   /** How an https address is read: a release `.tgz` and a list of sources. Defaults to HTTPS with the hub's size and time limits. */
   download?: (url: string) => Promise<Uint8Array>
   /** Where `registry:<id>` reads the plugin registry's index. Defaults to cordisplugins.github.io. */
-  registry?: string
+  registryIndex?: string
+  /** Where an `npm:` source reads packages. Defaults to the public registry over HTTPS, then the person's own npm (a private scope or registry). */
+  npm?: RegistryPort
   /** How a plugin's native package is downloaded and unpacked (native.ts). Defaults to the npm registry and the system's tar. */
   native?: NativePorts
 }
@@ -192,6 +202,8 @@ function releaseOf(folder: string): string | undefined {
 /** The license a new public plugin is offered under; the plan shows it before the person says yes. */
 const DEFAULT_LICENSE = 'MIT'
 const LICENSE_ID = /^[A-Za-z0-9][A-Za-z0-9.+-]*$/u
+/** An npm scope: what follows `@`. */
+const NPM_SCOPE = /^[a-z0-9][a-z0-9._~-]*$/u
 
 const publishRefused = (reason: string, next: string): PublishRefused => ({
   ok: false,
@@ -199,7 +211,8 @@ const publishRefused = (reason: string, next: string): PublishRefused => ({
   next,
 })
 
-const SOURCE_FORMS = 'github:<owner>/<repo>[@<version>], registry:<id> or a .tgz path or address'
+const SOURCE_FORMS =
+  'github:<owner>/<repo>[@<version>], npm:<package>[@<version>], registry:<id> or a .tgz path or address'
 
 /** Read what a person wrote. A `.tgz` path may be relative to the app folder; the hub only takes absolute ones. */
 function readSource(
@@ -209,7 +222,12 @@ function readSource(
   const { source, digest } = splitDigest(input.trim())
   const isLocalTarball = /\.(?:tgz|tar\.gz)$/iu.test(source) && !/^[a-z][a-z0-9+]+:/iu.test(source)
   const parsed = parsePluginSource(isLocalTarball ? resolve(root, source) : source)
-  if (parsed.kind !== 'github' && parsed.kind !== 'tarball-file' && parsed.kind !== 'tarball-url') {
+  if (
+    parsed.kind !== 'github' &&
+    parsed.kind !== 'npm' &&
+    parsed.kind !== 'tarball-file' &&
+    parsed.kind !== 'tarball-url'
+  ) {
     const named = parsed.kind === 'name' ? 'a bare name' : parsed.kind
     throw new InvalidPluginSourceError(
       input,
@@ -222,12 +240,20 @@ function readSource(
 /** The source as another machine can fetch it: the version pinned; a file on this machine names nothing. */
 function recordedSource(source: PluginSource, version: string): string | undefined {
   if (source.kind === 'github') return `github:${source.owner}/${source.repo}@${version}`
+  if (source.kind === 'npm') return `npm:${source.name.full}@${version}`
   return source.kind === 'tarball-url' ? source.url : undefined
 }
 
-/** `owner/repo` (lower case) of a recorded `github:<owner>/<repo>@<version>` source: two releases of one plugin share it. */
-const repoOf = (source: string): string | undefined =>
-  /^github:([^/@]+\/[^/@]+)@/u.exec(source)?.[1]?.toLowerCase()
+/** What two releases of one plugin share in a recorded source: `github:<owner>/<repo>` or `npm:<package>`, lower case. */
+const repoOf = (source: string): string | undefined => {
+  const github = /^(github:[^/@]+\/[^/@]+)@/u.exec(source)?.[1]
+  const npm = /^(npm:(?:@[^/@]+\/)?[^/@]+)@/u.exec(source)?.[1]
+  return (github ?? npm)?.toLowerCase()
+}
+
+/** A package's folder in `plugins/`: the name after its scope (`@ana/clock` is `clock`). */
+const folderOf = (packageName: string): string =>
+  packageName.includes('/') ? packageName.slice(packageName.lastIndexOf('/') + 1) : packageName
 
 const treeOf = (files: readonly PluginFile[]): Tree =>
   new Map(files.map((file) => [file.path, file.bytes]))
@@ -254,7 +280,8 @@ export class PluginShare extends Service {
   private readonly dir: string
   private readonly releases: ReleasePort
   private readonly download: (url: string) => Promise<Uint8Array>
-  private readonly registry: string
+  private readonly registryIndex: string
+  private readonly npmRegistry: RegistryPort
   private readonly ports: PublishPorts
   /** One at a time: two pulls of one name must not race for its folder, nor two publishes for its package. */
   private queue: Promise<unknown> = Promise.resolve()
@@ -276,7 +303,8 @@ export class PluginShare extends Service {
     this.dir = resolve(config.dir ?? join(ctx.appInstance.root, 'plugins'))
     this.releases = config.releases ?? githubReleasesOverHttps()
     this.download = config.download ?? httpsDownload()
-    this.registry = config.registry ?? REGISTRY_INDEX_URL
+    this.registryIndex = config.registryIndex ?? REGISTRY_INDEX_URL
+    this.npmRegistry = config.npm ?? firstRegistryPort(npmRegistryOverHttps(), npmRegistryViaCli())
     this.nativeWork = config.native ?? nativePorts()
     this.ports = config.publish ?? { host: githubCli(), git: gitCli() }
     // Removing a plugin removes its record. Listened to here, not asked of each caller: every way of removing it goes through extensions.
@@ -420,6 +448,7 @@ export class PluginShare extends Service {
           'look at the new plan and say yes again',
         )
       }
+      if (plan.target === 'npm') return this.publishNpm(name, plan)
       const { home } = this.own.appInstance
       try {
         const shared = await sharePlugin(
@@ -594,6 +623,7 @@ export class PluginShare extends Service {
         `this app has no plugin "${name}" in plugins/`,
         'name a folder of plugins/',
       )
+    if (options.to === 'npm') return this.planNpm(name, source, options)
     try {
       const { host } = this.ports
       const owner = options.owner ?? host.login()
@@ -647,6 +677,113 @@ export class PluginShare extends Service {
     }
   }
 
+  /**
+   * What publishing to npm would do, read without sending anything: the account is the person's own npm login (`npm whoami`), the package is
+   * `@<scope>/<name>` (the scope defaults to that account), and a version npm already has makes the plan name the next patch, as a GitHub release does.
+   */
+  private async planNpm(
+    name: string,
+    source: string,
+    options: PublishOptions,
+  ): Promise<PublishPlan | PublishRefused> {
+    const npm = this.ports.npm ?? npmCli()
+    const registry = options.registry ?? NPM_REGISTRY
+    try {
+      const account = npm.login(registry)
+      const scope = (options.scope ?? account).replace(/^@/u, '').toLowerCase()
+      if (!NPM_SCOPE.test(scope))
+        return publishRefused(
+          `"${scope}" is not an npm scope`,
+          'write letters, digits and dashes, for example --scope acme',
+        )
+      const license = options.license ?? DEFAULT_LICENSE
+      if (!LICENSE_ID.test(license))
+        return publishRefused(
+          `"${license}" is not a license id`,
+          'write one such as MIT or Apache-2.0',
+        )
+      const packageName = `@${scope}/${name}`
+      const description = `The ${name} Cordis plugin.`
+      const pack = (version?: string) =>
+        packagePlugin(source, this.packages, name, description, {
+          release: { license },
+          packageName,
+          ...(version === undefined ? {} : { version }),
+        })
+      let packaged = await pack()
+      const released = npm.hasVersion(packageName, packaged.version, registry)
+        ? packaged.version
+        : undefined
+      if (released !== undefined) packaged = await pack(bumpVersion(released, 'patch'))
+      const secrets = findSecrets(
+        readTarball(packFolder(packaged.dir).tarball).map((file) => ({
+          path: file.path,
+          text: Buffer.from(file.content).toString('utf8'),
+        })),
+      )
+      if (secrets.length > 0) {
+        return publishRefused(
+          `the secret check found ${String(secrets.length)} possible secret(s) in ${secrets.map((secret) => secret.path).join(', ')}; nothing was sent`,
+          "take them out of the plugin and read them from the app's settings",
+        )
+      }
+      return {
+        target: 'npm',
+        package: packageName,
+        registry,
+        owner: scope,
+        repo: name,
+        version: packaged.version,
+        visibility: 'public',
+        license,
+        createsRepository: false,
+        ...(released === undefined ? {} : { released }),
+        files: packaged.files,
+        integrity: packaged.integrity,
+        digest: packaged.digest,
+        pullLine: npmPullLineOf(packageName, packaged.version, packaged.digest),
+      }
+    } catch (cause) {
+      return publishRefused(
+        reasonOf(cause),
+        'fix it, or sign in with: npm login (--registry <address> for another registry); nothing was sent',
+      )
+    }
+  }
+
+  /** The confirmed npm plan, published with the person's own npm: the files are the ones planned, or nothing is sent. */
+  private async publishNpm(name: string, plan: PublishPlan): Promise<PublishResult> {
+    const { home } = this.own.appInstance
+    const registry = plan.registry ?? NPM_REGISTRY
+    try {
+      const published = await publishToNpm(
+        join(this.packages, name),
+        { registry, visibility: 'public', kind: 'source-plugin' },
+        { npm: this.ports.npm ?? npmCli(), store: new PluginStore(storeRootOf(home)) },
+      )
+      if (published.status === 'refused')
+        return publishRefused(published.reason, 'fix what it names; nothing was sent')
+      const url =
+        registry === NPM_REGISTRY
+          ? `https://www.npmjs.com/package/${published.name}`
+          : `${registry.replace(/\/$/u, '')}/${published.name}`
+      return {
+        ok: true,
+        url,
+        releaseUrl: url,
+        version: published.version,
+        integrity: published.integrity,
+        digest: plan.digest,
+        pullLine: plan.pullLine,
+      }
+    } catch (cause) {
+      return publishRefused(
+        reasonOf(cause),
+        'look at the registry; part of this publish may have been sent',
+      )
+    }
+  }
+
   /** A `registry:<id>` source turned into the release it lists, with the integrity the registry lists for it; any other source as it is. */
   private async resolveRegistry(
     input: string,
@@ -668,7 +805,7 @@ export class PluginShare extends Service {
     }
     let index: string
     try {
-      index = Buffer.from(await this.download(this.registry)).toString('utf8')
+      index = Buffer.from(await this.download(this.registryIndex)).toString('utf8')
     } catch (cause) {
       return refuse(
         'fetch',
@@ -713,6 +850,7 @@ export class PluginShare extends Service {
           {
             store: new PluginStore(scratch),
             releases: this.releases,
+            registry: this.npmRegistry,
             download: this.download,
           },
           expectIntegrity === undefined ? {} : { expectIntegrity },
@@ -724,18 +862,21 @@ export class PluginShare extends Service {
           'check the source with the person who released it; nothing was installed',
         )
       }
+      // An npm package is `@scope/name` and lives in the folder `name`; a package from any other source must already be named for a folder.
+      const folderIn = (packageName: string): string =>
+        read.source.kind === 'npm' ? folderOf(packageName) : packageName
       const files: PluginFile[] = readTarball(readFileSync(pulled.stored.path)).map(
         ({ path, content }) => ({ path, bytes: content, kind: 'file' }),
       )
       const refused = pullRefusal(pulled.manifest, files, {
         digest: read.digest,
-        nameFits: (name) => NAME.test(name),
+        nameFits: (name) => NAME.test(folderIn(name)),
         hasService: (service) => this.own.get(service as never) !== undefined,
       })
       if (refused !== undefined) return refused
       const declared = nativesOf(pulled.manifest)
       return await this.install(
-        pulled.stored.name,
+        folderIn(pulled.stored.name),
         pulled.stored.version,
         pulled.stored.integrity,
         files,
@@ -766,7 +907,12 @@ export class PluginShare extends Service {
       try {
         const pulled = await pullPlugin(
           readSource(before.source, this.own.appInstance.root).source,
-          { store: new PluginStore(scratch), releases: this.releases, download: this.download },
+          {
+            store: new PluginStore(scratch),
+            releases: this.releases,
+            registry: this.npmRegistry,
+            download: this.download,
+          },
           { expectIntegrity: before.integrity },
         )
         base = treeOf(

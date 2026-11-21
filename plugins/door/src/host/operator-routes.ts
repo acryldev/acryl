@@ -39,7 +39,7 @@ export function operatorRoutes(prefix: string, secret: string, door: Door, repor
     // secret could still reach it: the door keeps honest agents from publishing by accident, the person's account is the real boundary.
     .post(`${prefix}/publish-confirmed`, operatorOnly(secret), jsonBody, async (c) => {
       const body = await readJson(c)
-      const { name, confirm, owner, license } = (body === INVALID_JSON || typeof body !== 'object' || body === null ? {} : body) as { name?: unknown; confirm?: unknown; owner?: unknown; license?: unknown }
+      const { name, confirm, owner, license, to, scope, registry } = (body === INVALID_JSON || typeof body !== 'object' || body === null ? {} : body) as { name?: unknown; confirm?: unknown; owner?: unknown; license?: unknown; to?: unknown; scope?: unknown; registry?: unknown }
       if (typeof name !== 'string' || typeof confirm !== 'object' || confirm === null) {
         return c.json({ ok: false, code: 'invalid', message: 'the body is { name, confirm }' } satisfies CallResponse, 400)
       }
@@ -47,6 +47,9 @@ export function operatorRoutes(prefix: string, secret: string, door: Door, repor
         const value = await door.publishConfirmed(name, confirm as PublishPlanView, {
           ...(typeof owner === 'string' ? { owner } : {}),
           ...(typeof license === 'string' ? { license } : {}),
+          ...(to === 'npm' ? { to } : {}),
+          ...(typeof scope === 'string' ? { scope } : {}),
+          ...(typeof registry === 'string' ? { registry } : {}),
         })
         return c.json({ ok: true, value, text: JSON.stringify(value, null, 2) } satisfies CallResponse)
       } catch (cause) {

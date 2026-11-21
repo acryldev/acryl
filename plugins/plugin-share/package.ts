@@ -30,10 +30,15 @@ export function packageManifest(
       ? {}
       : {
           license: release.license,
-          repository: {
-            type: 'git',
-            url: `git+https://github.com/${release.owner}/${release.repo}.git`,
-          },
+          // An npm package has no repository of its own to name.
+          ...(release.owner === undefined || release.repo === undefined
+            ? {}
+            : {
+                repository: {
+                  type: 'git',
+                  url: `git+https://github.com/${release.owner}/${release.repo}.git`,
+                },
+              }),
         }),
     type: 'module',
     exports: { '.': './index.ts', './package.json': './package.json' },
@@ -47,8 +52,9 @@ export function packageManifest(
 
 /** Where a package is going to be released: written in now, so what is planned is byte for byte what is released. */
 export interface PackageRelease {
-  readonly owner: string
-  readonly repo: string
+  /** The GitHub repository the package is released from; absent for npm. */
+  readonly owner?: string
+  readonly repo?: string
   readonly license: string
 }
 
@@ -56,6 +62,8 @@ export interface PackageOptions {
   /** This version, instead of the one already packaged. */
   readonly version?: string
   readonly release?: PackageRelease
+  /** The name in the package's `package.json` when it is not the plugin's folder name (npm: `@scope/name`). */
+  readonly packageName?: string
 }
 
 export interface PackagedPlugin {
@@ -142,7 +150,7 @@ export async function packagePlugin(
   try {
     writeFileSync(
       join(target, 'package.json'),
-      `${JSON.stringify(packageManifest(name, description, version, options.release), null, 2)}\n`,
+      `${JSON.stringify(packageManifest(options.packageName ?? name, description, version, options.release), null, 2)}\n`,
     )
     if (!existsSync(join(target, 'README.md'))) {
       writeFileSync(

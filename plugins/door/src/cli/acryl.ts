@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 import { readDoorFile, STATE_DIR, DOOR_FILE } from '../host/door-file.ts'
 
 const ACT_OPS = new Set(['click', 'type', 'select', 'press', 'scroll', 'wait', 'reload', 'navigate'])
-const VALUED = new Set(['--dir', '--owner', '--license', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms', '--id', '--width', '--height', '--window', '--tool', '--args', '--path', '--from'])
+const VALUED = new Set(['--dir', '--owner', '--license', '--to', '--scope', '--registry', '--ref', '--text', '--option', '--key', '--direction', '--amount', '--cursor', '--max-nodes', '--role', '--name', '--timeout-ms', '--id', '--width', '--height', '--window', '--tool', '--args', '--path', '--from'])
 const FLAGS = new Set(['--json', '--submit', '--no-clear', '--gone', '--force', '--help'])
 
 export class UsageError extends Error {}
@@ -44,7 +44,7 @@ const USAGE = `usage: acryl <verb> [options] [--json] [--dir <app folder>]
   act wait (--text <t> | --role <role> [--name <n>]) [--gone] [--timeout-ms <ms>]
   (look and every act take --window <n>: the desktop window whose page it is for; window list prints the numbers)
   frame [open|close|toggle left|right | settings [<section>] | build | preview]   (the ACRYL frame around the app; alone, what is open)
-  plugin list | plugin add <folder> | plugin pull <source> | plugin publish <name> [--owner <account>] [--license <id>] | plugin remove <name> | plugin reload
+  plugin list | plugin add <folder> | plugin pull <source> | plugin publish <name> [--owner <account>] [--license <id>] [--to npm [--scope <scope>] [--registry <address>]] | plugin remove <name> | plugin reload
   window list | window open [--path <p>] | window focus --id <n> | window close --id <n> [--force]
   window resize --id <n> --width <px> --height <px>
   menu list | menu click --path "File>New Note" [--force]
@@ -160,7 +160,11 @@ export function parseInvocation(argv: readonly string[], env: NodeJS.ProcessEnv 
         if (third === undefined) throw new UsageError('plugin publish needs a plugin name, e.g. plugin publish pomodoro')
         const owner = values.get('--owner')
         const license = values.get('--license')
-        return make('plugin-publish', { name: third, ...(owner === undefined ? {} : { owner }), ...(license === undefined ? {} : { license }) })
+        const to = values.get('--to')
+        if (to !== undefined && to !== 'npm') throw new UsageError('plugin publish --to takes npm (GitHub is the default), e.g. plugin publish pomodoro --to npm')
+        const scope = values.get('--scope')
+        const registry = values.get('--registry')
+        return make('plugin-publish', { name: third, ...(owner === undefined ? {} : { owner }), ...(license === undefined ? {} : { license }), ...(to === undefined ? {} : { to }), ...(scope === undefined ? {} : { scope }), ...(registry === undefined ? {} : { registry }) })
       }
       if (second === 'remove') { if (third === undefined) throw new UsageError('plugin remove needs a plugin name'); return make('plugin-remove', { name: third }) }
       throw new UsageError(`plugin needs list, add, pull, publish, remove or reload\n${USAGE}`)
@@ -285,6 +289,8 @@ const isPlan = (value: unknown): value is PlanAsked =>
 
 /** What the prompt names. */
 interface PlanAsked {
+  /** npm: the package it publishes. */
+  readonly package?: string
   readonly owner: string
   readonly repo: string
   readonly version: string
@@ -300,9 +306,9 @@ async function confirmPublish(
   url: string,
   headers: Record<string, string>,
 ): Promise<number> {
-  const yes = await io.ask?.(`Publish ${plan.owner}/${plan.repo} v${plan.version} under ${plan.license}? Type yes to send it: `)
+  const yes = await io.ask?.(`Publish ${plan.package ?? `${plan.owner}/${plan.repo}`} v${plan.version} under ${plan.license}? Type yes to send it: `)
   if (yes !== true) { io.out('Nothing was sent.\n'); return 0 }
-  const response = await request(url, { method: 'POST', headers, body: JSON.stringify({ name: invocation.args.name, owner: invocation.args.owner, license: invocation.args.license, confirm: plan }) })
+  const response = await request(url, { method: 'POST', headers, body: JSON.stringify({ name: invocation.args.name, owner: invocation.args.owner, license: invocation.args.license, to: invocation.args.to, scope: invocation.args.scope, registry: invocation.args.registry, confirm: plan }) })
   const body = await response.json().catch(() => undefined) as { ok?: boolean; message?: string; value?: { ok?: boolean; releaseUrl?: string; pullLine?: string; reason?: string; next?: string } } | undefined
   const result = body?.value
   if (body?.ok !== true || result?.ok !== true) {

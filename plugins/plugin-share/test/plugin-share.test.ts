@@ -22,6 +22,7 @@ import {
   integrityOf,
   type PublishGitPort,
   packFolder,
+  type RegistryPort,
   type ReleasePort,
   type RepositoryHostPort,
   readTarball,
@@ -101,7 +102,8 @@ async function boot({
   publish?: PublishPorts
   download?: (url: string) => Promise<Uint8Array>
   native?: NativePorts
-  registry?: string
+  npm?: RegistryPort
+  registryIndex?: string
   root?: string
 } = {}) {
   const app = new Context()
@@ -293,8 +295,10 @@ test('a package with no entry file or a name no folder can hold is refused', asy
 })
 
 test('sources other than a release or a .tgz are refused by name', async () => {
-  const { share, untouched } = await boot()
-  refused(await share.pull('npm:hello'), 'source', /npm/)
+  const { share, untouched } = await boot({
+    npm: { resolve: async () => undefined, download: async () => new Uint8Array() },
+  })
+  refused(await share.pull('npm:hello'), 'fetch', /npm has no hello/)
   refused(await share.pull('store:hello'), 'source', /store/)
   refused(await share.pull('hello'), 'source', /github:/)
   refused(await share.pull('git+https://github.com/someone/hello.git'), 'source', /no release/)
@@ -1129,7 +1133,7 @@ test('registry:<id> pulls the release the registry lists, checked against the in
         integrity: release.integrity,
       },
     ]),
-    registry: REGISTRY,
+    registryIndex: REGISTRY,
     root,
   })
   const result = await share.pull('registry:hello')
@@ -1154,7 +1158,7 @@ test('registry:<id> refuses an id the registry does not list, a registry that ca
   const { share, untouched } = await boot({
     releases: releasesByTag({ 'v1.0.0': release.tarball }),
     download: registryOf(listed),
-    registry: REGISTRY,
+    registryIndex: REGISTRY,
   })
   refused(await share.pull('registry:nothing'), 'source', /lists no plugin nothing/)
   // The registry listed other bytes than the release holds now: refused, nothing installed.
@@ -1166,13 +1170,187 @@ test('registry:<id> refuses an id the registry does not list, a registry that ca
     download: async () => {
       throw new Error('offline')
     },
-    registry: REGISTRY,
+    registryIndex: REGISTRY,
   })
   refused(
     await unreachable.share.pull('registry:hello'),
     'fetch',
     /registry could not be read: offline/,
   )
-  const notAnIndex = await boot({ download: async () => Buffer.from('<html>'), registry: REGISTRY })
+  const notAnIndex = await boot({
+    download: async () => Buffer.from('<html>'),
+    registryIndex: REGISTRY,
+  })
   refused(await notAnIndex.share.pull('registry:hello'), 'source', /does not understand/)
+})
+
+// npm as a target: the person's own npm login (`npm whoami`), the same plan and yes, and a pull that checks the integrity npm lists.
+function fakeNpm(login: string | null = 'ana') {
+  const registry = new Map<string, Buffer>()
+  const sent: string[] = []
+  const port: NonNullable<PublishPorts['npm']> = {
+    login: () => {
+      if (login === null) throw new Error('npm whoami failed: ENEEDAUTH (sign in with: npm login)')
+      return login
+    },
+    hasVersion: (name, version) => registry.has(`${name}@${version}`),
+    publish(tarballPath, registryAddress, access) {
+      const bytes = readFileSync(tarballPath)
+      const manifest = JSON.parse(
+        Buffer.from(
+          readTarball(bytes).find((file) => file.path === 'package.json')?.content ?? [],
+        ).toString('utf8'),
+      ) as { name: string; version: string }
+      registry.set(`${manifest.name}@${manifest.version}`, bytes)
+      sent.push(`publish ${manifest.name}@${manifest.version} ${access} ${registryAddress}`)
+    },
+  }
+  // What an app pulling `npm:` reads: the version npm lists with the integrity it computed.
+  const reads = {
+    async resolve(name: string, version?: string) {
+      const wanted =
+        version ??
+        [...registry.keys()]
+          .filter((key) => key.startsWith(`${name}@`))
+          .at(-1)
+          ?.slice(name.length + 1)
+      const bytes = wanted === undefined ? undefined : registry.get(`${name}@${wanted}`)
+      return bytes === undefined || wanted === undefined
+        ? undefined
+        : { version: wanted, tarball: `npm:${name}@${wanted}`, integrity: integrityOf(bytes) }
+    },
+    async download(spec: string) {
+      return registry.get(spec.replace(/^npm:/u, '')) ?? new Uint8Array()
+    },
+  }
+  return { port, reads, registry, sent }
+}
+
+async function bootForNpm(npm: ReturnType<typeof fakeNpm>) {
+  const hub = fakeHost()
+  const booted = await boot({ publish: { host: hub.host, git: hub.git, npm: npm.port } })
+  mkdirSync(join(booted.root, 'plugins', 'hello'), { recursive: true })
+  writeFileSync(join(booted.root, 'plugins', 'hello', 'index.ts'), ROUTE)
+  return { ...booted, hub }
+}
+
+test("an npm plan names the package under the account of the person's npm login, and sends nothing", async () => {
+  const npm = fakeNpm('ana')
+  const { share, hub } = await bootForNpm(npm)
+  const plan = planned(await share.planPublish('hello', { to: 'npm' }))
+  assert.deepEqual(
+    [plan.target, plan.package, plan.owner, plan.version, plan.license, plan.registry],
+    ['npm', '@ana/hello', 'ana', '0.1.0', 'MIT', 'https://registry.npmjs.org/'],
+  )
+  assert.equal(
+    plan.pullLine,
+    `npm run acryl -- plugin pull npm:@ana/hello@0.1.0@sha256:${plan.digest}`,
+  )
+  assert.equal(
+    planned(await share.planPublish('hello', { to: 'npm', scope: '@acme' })).package,
+    '@acme/hello',
+  )
+  refusedPublish(
+    await share.planPublish('hello', { to: 'npm', scope: 'Not A Scope' }),
+    /not an npm scope/,
+  )
+  assert.deepEqual([...npm.sent, ...hub.sent], [])
+})
+
+test('without an npm login nothing is planned, and the refusal says how to sign in', async () => {
+  const { share } = await bootForNpm(fakeNpm(null))
+  refusedPublish(await share.planPublish('hello', { to: 'npm' }), /ENEEDAUTH/)
+})
+
+test('publishing the confirmed npm plan sends exactly the planned bytes; the next publish is the next patch', async () => {
+  const npm = fakeNpm('ana')
+  const { share, root } = await bootForNpm(npm)
+  const plan = planned(await share.planPublish('hello', { to: 'npm' }))
+  const result = await share.publish('hello', plan, { to: 'npm' })
+  assert.ok(result.ok, JSON.stringify(result))
+  assert.equal(result.integrity, plan.integrity)
+  assert.equal(result.url, 'https://www.npmjs.com/package/@ana/hello')
+  assert.deepEqual(npm.sent, ['publish @ana/hello@0.1.0 public https://registry.npmjs.org/'])
+  const bytes = npm.registry.get('@ana/hello@0.1.0')
+  assert.ok(bytes)
+  assert.equal(integrityOf(bytes), plan.integrity)
+  const manifest = JSON.parse(
+    Buffer.from(
+      readTarball(bytes).find((file) => file.path === 'package.json')?.content ?? [],
+    ).toString('utf8'),
+  )
+  assert.deepEqual([manifest.name, manifest.license], ['@ana/hello', 'MIT'])
+  assert.ok(manifest.keywords.includes('cordis-plugin'))
+
+  writeFileSync(
+    join(root, 'plugins', 'hello', 'index.ts'),
+    routeSource('hello', '/hello', 'Hello again'),
+  )
+  const next = planned(await share.planPublish('hello', { to: 'npm' }))
+  assert.deepEqual([next.version, next.released], ['0.1.1', '0.1.0'])
+  assert.ok((await share.publish('hello', next, { to: 'npm' })).ok)
+  assert.ok(npm.registry.has('@ana/hello@0.1.1'))
+})
+
+test('a plan confirmed for npm is not published once the person asks for another scope', async () => {
+  const npm = fakeNpm('ana')
+  const { share } = await bootForNpm(npm)
+  const plan = planned(await share.planPublish('hello', { to: 'npm' }))
+  const refusedResult = await share.publish('hello', plan, { to: 'npm', scope: 'acme' })
+  assert.equal(refusedResult.ok, false)
+  assert.deepEqual(npm.sent, [])
+})
+
+test('npm:<package> pulls what npm lists, checked against the integrity it lists, and a newer version updates it in place', async () => {
+  const npm = fakeNpm('ana')
+  const author = await bootForNpm(npm)
+  const first = planned(await author.share.planPublish('hello', { to: 'npm' }))
+  assert.ok((await author.share.publish('hello', first, { to: 'npm' })).ok)
+
+  const root = appFolder()
+  const reader = await boot({ npm: npm.reads, root })
+  const pulled = await reader.share.pull(`npm:@ana/hello@0.1.0@sha256:${first.digest}`)
+  assert.ok(pulled.ok, JSON.stringify(pulled))
+  assert.equal(pulled.name, 'hello')
+  assert.deepEqual((await reader.get('/hello')).body, { text: 'Hello' })
+  assert.equal(recordsIn(root).hello?.source, 'npm:@ana/hello@0.1.0')
+
+  writeFileSync(
+    join(author.root, 'plugins', 'hello', 'index.ts'),
+    routeSource('hello', '/hello', 'Hello 0.1.1'),
+  )
+  const next = planned(await author.share.planPublish('hello', { to: 'npm' }))
+  assert.ok((await author.share.publish('hello', next, { to: 'npm' })).ok)
+  const updated = await reader.share.pull('npm:@ana/hello')
+  assert.ok(
+    updated.ok && updated.action === 'updated' && updated.version === '0.1.1',
+    JSON.stringify(updated),
+  )
+  assert.deepEqual((await reader.get('/hello')).body, { text: 'Hello 0.1.1' })
+})
+
+test('npm:<package> refuses bytes whose checksum is not the one npm lists, and a package npm does not have', async () => {
+  const npm = fakeNpm('ana')
+  const author = await bootForNpm(npm)
+  assert.ok(
+    (
+      await author.share.publish(
+        'hello',
+        planned(await author.share.planPublish('hello', { to: 'npm' })),
+        { to: 'npm' },
+      )
+    ).ok,
+  )
+  const tampered: typeof npm.reads = {
+    ...npm.reads,
+    resolve: async (name, version) => {
+      const found = await npm.reads.resolve(name, version)
+      return found === undefined ? undefined : { ...found, integrity: 'sha512-someoneelse' }
+    },
+  }
+  const reader = await boot({ npm: tampered })
+  refused(await reader.share.pull('npm:@ana/hello'), 'fetch', /checksum/)
+  await reader.untouched()
+  const empty = await boot({ npm: npm.reads })
+  refused(await empty.share.pull('npm:@ana/nothing'), 'fetch', /npm has no @ana\/nothing/)
 })

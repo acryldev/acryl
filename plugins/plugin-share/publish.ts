@@ -1,10 +1,20 @@
 /**
  * Publishing a plugin: what a person is asked to say yes to, and the comparison that makes the yes mean exactly that. Pure; the service does the I/O.
  */
-import type { PublishGitPort, RepositoryHostPort } from '@acryldev/plugin-hub-core'
+import type {
+  NpmLoginPort,
+  NpmPublishPort,
+  PublishGitPort,
+  RepositoryHostPort,
+} from '@acryldev/plugin-hub-core'
 
 /** Everything that leaves the machine, named before anything does. */
 export interface PublishPlan {
+  /** Where it goes: a GitHub release (absent) or an npm registry. For npm `owner` is the scope and `repo` the plugin's name. */
+  readonly target?: 'npm'
+  /** npm: the package's name (`@scope/name`) and the registry it is published to. */
+  readonly package?: string
+  readonly registry?: string
   readonly owner: string
   readonly repo: string
   readonly version: string
@@ -46,17 +56,29 @@ export interface PublishOptions {
   readonly owner?: string
   /** The license the plugin is offered under, as an SPDX id; MIT when absent. The plan shows it before the person says yes. */
   readonly license?: string
+  /** `npm`: publish to an npm registry with the person's own npm login instead of to GitHub. */
+  readonly to?: 'npm'
+  /** npm: the scope of the package; the account npm is signed in as when absent. */
+  readonly scope?: string
+  /** npm: the registry; the public one when absent. */
+  readonly registry?: string
 }
 
 /** Where a publish goes through: the person's own `gh` and `git`. A test passes stand-ins, so no test publishes. */
 export interface PublishPorts {
   readonly host: RepositoryHostPort
   readonly git: PublishGitPort
+  /** The person's own npm (`npm whoami`, `npm publish`); the default is their installed npm. A test passes a stand-in. */
+  readonly npm?: NpmPublishPort & NpmLoginPort
 }
 
 /** The line a friend copies: it names the bytes, so the check comes for free. */
 export const pullLineOf = (owner: string, repo: string, version: string, digest: string): string =>
   `npm run acryl -- plugin pull github:${owner}/${repo}@${version}@sha256:${digest}`
+
+/** The line a friend copies for an npm package. */
+export const npmPullLineOf = (name: string, version: string, digest: string): string =>
+  `npm run acryl -- plugin pull npm:${name}@${version}@sha256:${digest}`
 
 /**
  * The same plan: what the person confirmed is what would be published now. `released` only explains the version, and is gone once the next one is packaged.
@@ -64,6 +86,9 @@ export const pullLineOf = (owner: string, repo: string, version: string, digest:
  */
 export function samePlan(a: PublishPlan, b: PublishPlan): boolean {
   return (
+    a.target === b.target &&
+    a.package === b.package &&
+    a.registry === b.registry &&
     a.owner === b.owner &&
     a.repo === b.repo &&
     a.version === b.version &&

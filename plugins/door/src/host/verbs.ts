@@ -105,9 +105,9 @@ export const VERB_SPECS: Readonly<Record<Verb, VerbSpec>> = {
     arguments: { type: 'object', properties: { source: { type: 'string', description: 'github:<owner>/<repo>[@<version>][@sha256:<digest>], or a .tgz path or https address' }, from: { type: 'string', description: 'instead of source: a list of sources, a file in the app (e.g. group.txt) or an https address' } }, additionalProperties: false },
   },
   'plugin-publish': {
-    usage: 'plugin publish <name> [--owner <account>] [--license <id>]: show what publishing this plugin would send; in a person\'s own terminal, ask them',
+    usage: 'plugin publish <name> [--owner <account>] [--license <id>] [--to npm [--scope <scope>] [--registry <address>]]: show what publishing this plugin would send; in a person\'s own terminal, ask them',
     description: 'Show what publishing a plugin would send: the account, repository, version, license, files and the line a friend pulls it with. Sends nothing. Only a person can say yes, in their own terminal or with Share in the frame; tell them the plan and how.',
-    arguments: { type: 'object', properties: { name: { type: 'string', description: 'a plugin of plugins/' }, owner: { type: 'string', description: 'the GitHub account or organization; the signed-in one when absent' }, license: { type: 'string', description: 'an SPDX license id; MIT when absent' } }, required: ['name'], additionalProperties: false },
+    arguments: { type: 'object', properties: { name: { type: 'string', description: 'a plugin of plugins/' }, owner: { type: 'string', description: 'the GitHub account or organization; the signed-in one when absent' }, license: { type: 'string', description: 'an SPDX license id; MIT when absent' }, to: { type: 'string', enum: ['npm'], description: 'npm: publish to an npm registry with the person\'s own npm login instead of GitHub' }, scope: { type: 'string', description: 'with to npm: the package scope; the npm login\'s account when absent' }, registry: { type: 'string', description: 'with to npm: the registry address; the public one when absent' } }, required: ['name'], additionalProperties: false },
   },
   'plugin-remove': {
     usage: 'plugin remove <name>: stop and remove an installed plugin',

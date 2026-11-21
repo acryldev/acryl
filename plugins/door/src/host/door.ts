@@ -60,10 +60,17 @@ export type PullListView =
 export interface PublishOptionsView {
   readonly owner?: string
   readonly license?: string
+  /** `npm`: publish to an npm registry with the person's own npm login. */
+  readonly to?: 'npm'
+  readonly scope?: string
+  readonly registry?: string
 }
 
 /** A plan as the door shows it. The service owns it; the door passes it back unchanged. */
 export interface PublishPlanView {
+  readonly target?: 'npm'
+  readonly package?: string
+  readonly registry?: string
   readonly owner: string
   readonly repo: string
   readonly version: string
@@ -77,11 +84,19 @@ export interface PublishPlanView {
 
 /** What a plan says, for a person deciding. */
 export function renderPublishPlan(plan: PublishPlanView): string {
+  const where =
+    plan.target === 'npm'
+      ? `Publish to npm as ${plan.package ?? plan.repo} (registry ${plan.registry ?? 'https://registry.npmjs.org/'}, signed in as the account of your own npm login), ${plan.visibility}, version ${plan.version}, license ${plan.license}.`
+      : `Publish to ${plan.owner}/${plan.repo}${plan.createsRepository ? ' (a new repository)' : ''}, ${plan.visibility}, version ${plan.version}, license ${plan.license}.`
   return [
-    `Publish to ${plan.owner}/${plan.repo}${plan.createsRepository ? ' (a new repository)' : ''}, ${plan.visibility}, version ${plan.version}, license ${plan.license}.`,
+    where,
     `Files: ${plan.files.join(', ')}.`,
     // A public repository carries the topic the plugin registry (cordisplugins.github.io) lists by: said before the yes, not found out after.
-    `The repository gets the topic cordis-plugin, so the public plugin registry (cordisplugins.github.io) lists it within about an hour.`,
+    ...(plan.target === 'npm'
+      ? []
+      : [
+          `The repository gets the topic cordis-plugin, so the public plugin registry (cordisplugins.github.io) lists it within about an hour.`,
+        ]),
     `A friend gets exactly these bytes with: ${plan.pullLine}`,
   ].join('\n')
 }
@@ -409,11 +424,14 @@ export class Door {
 
   /** Only a plan: no argument of any verb can publish, so an agent never says yes for a person. */
   private async planPublish(input: Record<string, unknown>): Promise<VerbAnswer> {
-    const { name, owner, license } = input
+    const { name, owner, license, to, scope, registry } = input
     if (typeof name !== 'string' || name === '') throw new DoorError('invalid', 'plugin publish needs a plugin name, e.g. plugin publish pomodoro')
     const value = await this.share().planPublish(name, {
       ...(typeof owner === 'string' && owner !== '' ? { owner } : {}),
       ...(typeof license === 'string' && license !== '' ? { license } : {}),
+      ...(to === 'npm' ? { to } : {}),
+      ...(typeof scope === 'string' && scope !== '' ? { scope } : {}),
+      ...(typeof registry === 'string' && registry !== '' ? { registry } : {}),
     })
     if ('ok' in value) throw new DoorError('refused', `${value.reason}. ${value.next}.`)
     return { value, text: `${renderPublishPlan(value)}\nNothing was sent. Only a person can say yes: they run \`npm run acryl -- plugin publish ${name}\` in their own terminal, or press Share in the frame. \`--license <id>\` changes the license before the yes.` }
@@ -422,7 +440,7 @@ export class Door {
   /** The person's yes, from their own terminal. Not a verb: MCP and the chat do not have it. */
   async publishConfirmed(name: string, confirmed: PublishPlanView, options: PublishOptionsView): Promise<unknown> {
     const value = await this.share().publish(name, confirmed, options)
-    this.deps.audit.record({ at: new Date().toISOString(), tool: 'plugin-publish', target: { role: 'plugin', name: `${confirmed.owner}/${confirmed.repo}@${confirmed.version}` }, outcome: value.ok ? 'ok' : 'refused', approval: 'token' })
+    this.deps.audit.record({ at: new Date().toISOString(), tool: 'plugin-publish', target: { role: 'plugin', name: `${confirmed.package ?? `${confirmed.owner}/${confirmed.repo}`}@${confirmed.version}` }, outcome: value.ok ? 'ok' : 'refused', approval: 'token' })
     return value
   }
 

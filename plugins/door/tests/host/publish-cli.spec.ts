@@ -14,12 +14,12 @@ afterEach(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true })
 })
 
-async function run(ask?: (question: string) => Promise<boolean>, answer: unknown = plan) {
+async function run(ask?: (question: string) => Promise<boolean>, answer: unknown = plan, extra: string[] = []) {
   const cwd = mkdtempSync(join(tmpdir(), 'publish-cli-'))
   folders.push(cwd)
   mkdirSync(join(cwd, '.acryl'))
   writeFileSync(join(cwd, '.acryl', 'door.json'), JSON.stringify({ version: 1, url: 'http://door.test', secret: 's', pid: process.pid }))
-  const calls: Array<{ url: string; body: { name?: string; owner?: string; confirm?: unknown } }> = []
+  const calls: Array<{ url: string; body: { name?: string; owner?: string; to?: string; scope?: string; confirm?: unknown } }> = []
   const fake = (async (url: string, init?: RequestInit) => {
     calls.push({ url, body: JSON.parse(String(init?.body)) })
     if (url.endsWith('/publish-confirmed')) {
@@ -28,7 +28,7 @@ async function run(ask?: (question: string) => Promise<boolean>, answer: unknown
     return Response.json({ ok: true, value: answer, text: 'the plan' })
   }) as unknown as typeof fetch
   let out = ''
-  const code = await main(['plugin', 'publish', 'hello', '--owner', 'inboxxobni', '--license', 'Apache-2.0'], {
+  const code = await main(['plugin', 'publish', 'hello', '--owner', 'inboxxobni', '--license', 'Apache-2.0', ...extra], {
     cwd,
     out: (text) => { out += text },
     err: (text) => { out += text },
@@ -58,6 +58,21 @@ describe('plugin publish at a terminal', () => {
     expect(asked).toContain('inboxxobni/hello v0.1.0 under Apache-2.0')
     expect(confirmed.map((call) => call.body)).toEqual([{ name: 'hello', owner: 'inboxxobni', license: 'Apache-2.0', confirm: plan }])
     expect(out).toContain('the pull line')
+  })
+
+  it('--to npm names the package in the question and sends the target and scope with the plan that was shown', async () => {
+    const npmPlan = { target: 'npm', package: '@acme/hello', owner: 'acme', repo: 'hello', version: '0.1.0', license: 'Apache-2.0' }
+    let asked = ''
+    const { code, confirmed } = await run(async (question) => { asked = question; return true }, npmPlan, ['--to', 'npm', '--scope', 'acme'])
+    expect(code).toBe(0)
+    expect(asked).toContain('@acme/hello v0.1.0 under Apache-2.0')
+    expect(confirmed.map((call) => call.body)).toEqual([{ name: 'hello', owner: 'inboxxobni', license: 'Apache-2.0', to: 'npm', scope: 'acme', confirm: npmPlan }])
+  })
+
+  it('--to takes npm and nothing else', async () => {
+    const { code, out } = await run(undefined, plan, ['--to', 'gitlab'])
+    expect(code).not.toBe(0)
+    expect(out).toContain('--to takes npm')
   })
 
   it('a refused plan is not asked about', async () => {

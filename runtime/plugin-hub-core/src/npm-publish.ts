@@ -8,7 +8,7 @@ import type { SecretFinding } from '@acryldev/app-persistence'
 import { syncServiceContract } from './contract.js'
 import { parsePluginName } from './name.js'
 import { bundleProblem, packFolder } from './pack.js'
-import { PLUGIN_LABELS, secretsIn, type Visibility } from './share.js'
+import { labelsOf, type PluginKind, secretsIn, type Visibility } from './share.js'
 import type { PluginStore } from './store.js'
 
 /** The registry, through the user's own `npm` (an adapter in npm-cli.ts; a test fake otherwise). */
@@ -24,6 +24,8 @@ export interface NpmPublishOptions {
   readonly registry?: string
   /** Default: the plugin's `acryl.visibility`, else private. */
   readonly visibility?: Visibility
+  /** Default `loader-bundle` (ACRYL's own plugins). A `source-plugin` is a Cordis plugin folder with no Loader patch, labelled `cordis-plugin` only. */
+  readonly kind?: PluginKind
 }
 
 export type NpmPublishResult =
@@ -49,7 +51,7 @@ export async function publishToNpm(folder: string, options: NpmPublishOptions, p
   const manifest = JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')) as Record<string, unknown>
   const updatedManifest: string[] = contract.written ? ['service contract and slots'] : []
   const keywords = Array.isArray(manifest['keywords']) ? manifest['keywords'].filter((word): word is string => typeof word === 'string') : []
-  const missing = PLUGIN_LABELS.filter(label => !keywords.includes(label))
+  const missing = labelsOf(options.kind ?? 'loader-bundle').filter(label => !keywords.includes(label))
   if (missing.length > 0) {
     manifest['keywords'] = [...keywords, ...missing]
     writeFileSync(join(folder, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`)
@@ -57,7 +59,7 @@ export async function publishToNpm(folder: string, options: NpmPublishOptions, p
   }
 
   const packed = packFolder(folder)
-  const notBundle = bundleProblem(packed)
+  const notBundle = (options.kind ?? 'loader-bundle') === 'loader-bundle' ? bundleProblem(packed) : undefined
   if (notBundle !== undefined) return refuse(notBundle)
   const secrets = secretsIn(packed)
   if (secrets.length > 0) return refuse(`the secret check found ${String(secrets.length)} possible secret(s) in the files that would be published; nothing was sent`, secrets)
