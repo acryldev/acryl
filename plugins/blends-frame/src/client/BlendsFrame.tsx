@@ -140,6 +140,11 @@ export function BlendsFrame({ layout, sidebar, canvas, selection, frameState, ap
   const appName = label ?? (state.status === 'ready' ? state.state.appName : '')
   const saved = state.status === 'ready' ? savedLabel(state.state.unsaved) : undefined
   const barLabel = [versionLabel, saved].filter((part): part is string => part !== undefined).join(' · ')
+  const appVersions = state.status === 'ready' ? state.state.appVersions : undefined
+  // The Blend's version and the framework's, small at the bar's end: Windows has no About window to read them in, only Settings > Installed apps.
+  const versionsLabel = [appVersions?.blend === undefined ? undefined : `Blend ${appVersions.blend}`, appVersions?.framework === undefined ? undefined : `ACRYL Blends ${appVersions.framework}`]
+    .filter((part): part is string => part !== undefined)
+    .join(' · ')
   const preview = frameView.mode === 'preview'
   const selected = useStore(selection).selection
   // Preview is what users see: the frame's own controls, the select control among them, leave the picture.
@@ -225,6 +230,11 @@ export function BlendsFrame({ layout, sidebar, canvas, selection, frameState, ap
           </span>
         )}
         <span className="acrylBlendsGrow" />
+        {versionsLabel !== '' && (
+          <small className="acrylBlendsVersions" title="Your Blend's version (blend.yaml) and the ACRYL Blends framework it runs on">
+            {versionsLabel}
+          </small>
+        )}
         {/* The select control sits in the frame's bar, never over the app: the canvas holds only the app. */}
         {!preview && (
           <button

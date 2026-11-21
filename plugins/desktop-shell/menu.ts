@@ -76,17 +76,25 @@ export function aboutPlacement(
     : help
 }
 
-/** What the About dialog says: the product and its version first, then the runtime it runs on (what a bug report needs). */
+/**
+ * What the About dialog says: the product's version (a packed app's own; an app run from its folder has none, and Electron's is never shown as it),
+ * the Blend's version and the ACRYL Blends framework's, then the runtime it runs on (what a bug report needs).
+ */
 export function aboutText(
   name: string,
-  version: string,
+  app: { readonly product?: string; readonly blend?: string; readonly framework?: string },
   versions: Readonly<Record<string, string | undefined>>,
 ): { readonly message: string; readonly detail: string } {
+  const own = [
+    ...(app.product === undefined ? [] : [`Version ${app.product}`]),
+    ...(app.blend === undefined ? [] : [`Blend ${app.blend}`]),
+    ...(app.framework === undefined ? [] : [`ACRYL Blends ${app.framework}`]),
+  ]
   const runtime = (['electron', 'chrome', 'node'] as const)
     .filter((key) => versions[key] !== undefined)
     .map(
       (key) =>
         `${key === 'chrome' ? 'Chromium' : key === 'node' ? 'Node.js' : 'Electron'} ${versions[key]}`,
     )
-  return { message: name, detail: [`Version ${version}`, ...runtime].join('\n') }
+  return { message: name, detail: [...own, ...runtime].join('\n') }
 }

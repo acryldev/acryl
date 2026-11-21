@@ -1294,6 +1294,9 @@ importers:
 
   plugins/desktop-shell:
     dependencies:
+      '@acryldev/blends-core':
+        specifier: workspace:^
+        version: link:../../runtime/blends-core
       '@acryldev/instance':
         specifier: workspace:*
         version: link:../instance

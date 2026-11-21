@@ -11,6 +11,7 @@
 import { mkdirSync, readFileSync, unwatchFile, watchFile } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { readAppVersions } from '@acryldev/blends-core'
 import {
   app,
   BrowserWindow,
@@ -94,11 +95,36 @@ try {
 const projectRoot = chosen.root
 /** Where the Program is: the bundle of a product (its apps' sources hold only the person's files), else the app folder itself. */
 const programRoot = storage === undefined ? projectRoot : bundledRoot
-if (git !== undefined)
+/** The versions the About window shows: a packed app's own (Electron's stands in for it in an app run from its folder, so none then), its Blend's and the framework's. */
+function ownVersions(): {
+  readonly product?: string
+  readonly blend?: string
+  readonly framework?: string
+} {
+  return {
+    ...(app.isPackaged ? { product: app.getVersion() } : {}),
+    ...readAppVersions(chosen.root, programRoot),
+  }
+}
+{
+  const own = ownVersions()
+  // macOS's About panel: the version, then in parentheses the Blend's and the framework's.
   app.setAboutPanelOptions({
-    credits:
-      'Includes Git, free software under the GNU GPL version 2. Its licence and the offer of its source are in Settings > App.',
+    applicationVersion: own.product ?? own.blend ?? '',
+    version: [
+      own.product === undefined || own.blend === undefined ? undefined : `Blend ${own.blend}`,
+      own.framework === undefined ? undefined : `ACRYL Blends ${own.framework}`,
+    ]
+      .filter((part): part is string => part !== undefined)
+      .join(' · '),
+    ...(git === undefined
+      ? {}
+      : {
+          credits:
+            'Includes Git, free software under the GNU GPL version 2. Its licence and the offer of its source are in Settings > App.',
+        }),
   })
+}
 
 /** Where the window opens: `acrylblends.desktopPath` in package.json (the todo template sets `/todo`), else the root. */
 function startPath(): string {
@@ -499,7 +525,7 @@ if (!app.requestSingleInstanceLock()) {
         new MenuItem({
           label: `About ${app.getName()}`,
           click: () => {
-            const about = aboutText(app.getName(), app.getVersion(), process.versions)
+            const about = aboutText(app.getName(), ownVersions(), process.versions)
             const owner = BrowserWindow.getFocusedWindow() ?? live()[0]
             const options = { type: 'info' as const, buttons: ['OK'], ...about }
             if (owner === undefined) void dialog.showMessageBox(options)

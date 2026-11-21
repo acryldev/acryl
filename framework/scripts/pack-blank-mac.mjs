@@ -28,11 +28,13 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { desktopEntry, launcherScript, tarballName } from './lib/arch-linux.mjs'
 import { createSource, repositoryOnlyIn } from './lib/create-source.mjs'
+import { osVersion } from './lib/os-version.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 /**
@@ -532,6 +534,23 @@ manifest.build = {
 // A Debian package names its maintainer and the app's home page; electron-builder reads both from the manifest.
 manifest.author ??= { name: 'ACRYL Blends', email: 'build@acryldev.dev' }
 manifest.homepage ??= 'https://acrylblends.github.io'
+// The version the OS shows in Installed apps and the About window: the Blend's own when the person raised it past package.json's (lib/os-version.mjs).
+// The packer has no dependencies; the app's own yaml (the frame's) reads blend.yaml.
+const blendVersion = await (async () => {
+  try {
+    const { parse } = await import(
+      pathToFileURL(createRequire(join(app, 'package.json')).resolve('yaml')).href
+    )
+    const version = parse(readFileSync(join(app, 'blend.yaml'), 'utf8'))?.metadata?.version
+    return typeof version === 'string' ? version : undefined
+  } catch {
+    return undefined
+  }
+})()
+manifest.version = osVersion(manifest.version, blendVersion)
+log(
+  `version ${manifest.version}${blendVersion === undefined ? '' : ` (package.json and the Blend's ${blendVersion})`}`,
+)
 // 4a. The product's own git (app-storage.md, "Git on a clean machine"): a clean Mac has only the shim that asks to install the Command Line Tools, and
 // versions, export, the terminals and the agents all run `git`. It lies beside the app in Resources/git, and the desktop shell puts it first on the
 // frame host's PATH (plugins/desktop-shell/git.ts).

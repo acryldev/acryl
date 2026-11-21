@@ -216,6 +216,8 @@ export interface FrameState {
   readonly unsaved?: number
   /** The commit the checked-out branch's upstream points at, as last fetched or pushed; absent without one. A change means the shared marks changed. */
   readonly upstreamHead?: string
+  /** The Blend's own version (blend.yaml `metadata.version`) and the ACRYL Blends framework's it runs on; each absent when it cannot be read. */
+  readonly appVersions?: { readonly blend?: string; readonly framework?: string }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -225,7 +227,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /** @throws an Error naming the field when the answer is not a frame state. */
 export function parseFrameState(value: unknown): FrameState {
   if (!isRecord(value)) throw new Error('frame state: not an object')
-  const { appName, appRoot, appPage, branches, head, unsaved, upstreamHead } = value
+  const { appName, appRoot, appPage, branches, head, unsaved, upstreamHead, appVersions } = value
   if (typeof appName !== 'string' || appName === '') throw new Error('frame state: appName')
   if (typeof appRoot !== 'string' || appRoot === '') throw new Error('frame state: appRoot')
   if (appPage !== undefined && (typeof appPage !== 'string' || !appPage.startsWith('/'))) throw new Error('frame state: appPage')
@@ -233,6 +235,7 @@ export function parseFrameState(value: unknown): FrameState {
   if (head !== undefined && (typeof head !== 'string' || head === '')) throw new Error('frame state: head')
   if (unsaved !== undefined && (typeof unsaved !== 'number' || !Number.isInteger(unsaved) || unsaved < 0)) throw new Error('frame state: unsaved')
   if (upstreamHead !== undefined && (typeof upstreamHead !== 'string' || upstreamHead === '')) throw new Error('frame state: upstreamHead')
+  if (appVersions !== undefined && (!isRecord(appVersions) || [appVersions.blend, appVersions.framework].some(v => v !== undefined && typeof v !== 'string'))) throw new Error('frame state: appVersions')
   const parsed = branches.map((branch: unknown) => {
     if (!isRecord(branch) || typeof branch.name !== 'string' || typeof branch.current !== 'boolean') throw new Error('frame state: branch')
     return { name: branch.name, current: branch.current }
@@ -245,6 +248,7 @@ export function parseFrameState(value: unknown): FrameState {
     ...(head === undefined ? {} : { head }),
     ...(unsaved === undefined ? {} : { unsaved }),
     ...(upstreamHead === undefined ? {} : { upstreamHead }),
+    ...(appVersions === undefined ? {} : { appVersions: appVersions as { blend?: string; framework?: string } }),
   }
 }
 

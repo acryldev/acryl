@@ -62,6 +62,12 @@ describe('parseFrameState', () => {
     expect(() => parseFrameState(null)).toThrow('not an object')
     expect(() => parseFrameState({ ...state, unsaved: -1 })).toThrow('unsaved')
     expect(() => parseFrameState({ ...state, head: '' })).toThrow('head')
+    expect(() => parseFrameState({ ...state, appVersions: { blend: 1 } })).toThrow('appVersions')
+  })
+
+  it('keeps the Blend and framework versions', () => {
+    const appVersions = { blend: '0.1.4', framework: '1.7.21' }
+    expect(parseFrameState({ ...state, appVersions })).toEqual({ ...state, appVersions })
   })
 })
 

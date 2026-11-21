@@ -11,6 +11,7 @@ import { execFileSync } from 'node:child_process'
 import { realpathSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
+import { readAppVersions } from '@acryldev/blends-core'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@acryldev/blends/cordis/router'
 import type {} from '@acryldev/blends/cordis/router-http'
@@ -973,7 +974,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
     const chatsFile = createBranchChatsStore(branchChatsFile(ctx.appInstance.home))
     const state = async (): Promise<FrameState> => {
       const [appName, branches, worktree, upstream] = await Promise.all([readAppName(root), readBranches(git, root), readWorktree(git, root), upstreamHead(git, root)])
-      return { appName, appRoot: root, ...(appPage === undefined ? {} : { appPage }), branches, ...worktree, ...(upstream === undefined ? {} : { upstreamHead: upstream }) }
+      return { appName, appRoot: root, ...(appPage === undefined ? {} : { appPage }), branches, ...worktree, ...(upstream === undefined ? {} : { upstreamHead: upstream }), appVersions: readAppVersions(root) }
     }
     // The plugin graph of this Host's context, and the recording of its fibers' changes that the browser waits on.
     const graph = createGraphPort(ctx, root)

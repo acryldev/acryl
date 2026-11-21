@@ -39,6 +39,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@acryldev/blends-core": "workspace:^",
     "@acryldev/instance": "workspace:*",
     "@acryldev/node-server": "workspace:*"
   },

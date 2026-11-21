@@ -77,11 +77,22 @@ test('on Windows and Linux About goes at the end of the Help menu, once; macOS a
 
 test('the About text names the product and its version, then the runtime', () => {
   assert.deepEqual(
-    aboutText('ACRYL ADE', '1.2.3', { electron: '40.0.0', chrome: '140.0.1', node: '24.1.0' }),
+    aboutText(
+      'ACRYL ADE',
+      { product: '1.2.3', blend: '0.1.0', framework: '1.7.21' },
+      { electron: '40.0.0', chrome: '140.0.1', node: '24.1.0' },
+    ),
     {
       message: 'ACRYL ADE',
-      detail: 'Version 1.2.3\nElectron 40.0.0\nChromium 140.0.1\nNode.js 24.1.0',
+      detail:
+        'Version 1.2.3\nBlend 0.1.0\nACRYL Blends 1.7.21\nElectron 40.0.0\nChromium 140.0.1\nNode.js 24.1.0',
     },
   )
-  assert.equal(aboutText('App', '0.1.0', {}).detail, 'Version 0.1.0')
+  // An app run from its folder: no product version, so Electron's never stands in as the app's.
+  assert.equal(
+    aboutText('csv-explorer', { blend: '0.1.4', framework: '1.7.21' }, { electron: '44.9.3' })
+      .detail,
+    'Blend 0.1.4\nACRYL Blends 1.7.21\nElectron 44.9.3',
+  )
+  assert.equal(aboutText('App', {}, {}).detail, '')
 })

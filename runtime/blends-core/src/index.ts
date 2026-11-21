@@ -6,6 +6,7 @@ import schemaJson from './schema/blend-manifest.v1alpha1.schema.json' with { typ
 
 // The five contract functions.
 export { parseDefinition } from './parse.js'
+export { appVersions, appVersionsLine, FRAMEWORK_PACKAGE, readAppVersions, type AppVersions } from './app-versions.js'
 export { validateDefinition, type ValidationMode } from './validate.js'
 export { resolveDefinition, resolutionParentOf, type ResolveOptions, type ResolveResult } from './resolve.js'
 export { compileDefinition, type CompileResult } from './compile.js'

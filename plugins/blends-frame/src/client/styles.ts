@@ -39,6 +39,8 @@ body[data-dsh-desktop-platform="darwin"] .acrylBlendsBar { padding-left: 78px; }
 .acrylBlendsAppName small { color: var(--bf-dim); font-weight: 400; margin-left: 6px; font-size: 12px; }
 .acrylBlendsAppError { min-width: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--bf-error); }
 .acrylBlendsGrow { flex: 1; }
+.acrylBlendsVersions { color: var(--bf-dim); font-size: 11px; white-space: nowrap; margin-right: 8px; user-select: text; }
+@media (max-width: 640px) { .acrylBlendsVersions { display: none; } }
 .acrylBlendsIconButton { width: 28px; height: 26px; display: grid; place-items: center; border-radius: 6px; border: 0; background: transparent; color: var(--bf-text-2); cursor: pointer; }
 .acrylBlendsIconButton:hover:not(:disabled) { background: var(--bf-surface-2); }
 .acrylBlendsIconButton[aria-pressed="true"] { color: var(--bf-strong); background: var(--bf-surface-2); }

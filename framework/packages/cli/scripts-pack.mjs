@@ -68,6 +68,7 @@ if (process.argv[2] === 'copy') {
     ['pkgbuild.mjs', 'pkgbuild.mjs'],
     ['lib/create-source.mjs', 'lib/create-source.mjs'],
     ['lib/arch-linux.mjs', 'lib/arch-linux.mjs'],
+    ['lib/os-version.mjs', 'lib/os-version.mjs'],
   ])
     cpSync(fileURLToPath(new URL(`../../scripts/${from}`, import.meta.url)), join(packTo, to))
 }
