@@ -1,14 +1,14 @@
 ## 2026-11-21 - four small fixes after the workshop (About, missing PTY agent, inherited descriptors, one model prompt)
 
-- **Help > About on Windows and Linux** (`115504a7a82c45480d62d0661ccf5323753a0f5e`, `@acryldev/desktop-shell`): `aboutPlacement` puts "About <name>" last in Help (once, never on macOS, which has its own panel) and
+- **Help > About on Windows and Linux** (`823e53c2a4f052739f26280424f4e7bffa7ef31c`, `@acryldev/desktop-shell`): `aboutPlacement` puts "About <name>" last in Help (once, never on macOS, which has its own panel) and
   `aboutText` gives the product, its version and the Electron, Chromium and Node versions.
-- **A PTY agent that is not installed** (`9a848cd5d839b0d28590367c1c371470ad0cf544`, `@acryldev/workspace`): `KnownAgent.installCommand` (pi, claude, codex) is appended to the "not found in PATH" error.
-- **Inherited descriptors** (`6c8cf30931739e5421e39693973f4a5d59cce07e`, `@acryldev/desktop-shell`, `@acryldev/launcher-desktop`): reproduced on Linux (z370n, Electron 44.9.3, headless): a `sleep`
+- **A PTY agent that is not installed** (`050433a6dc508d5548a5eb8d70c819660153430a`, `@acryldev/workspace`): `KnownAgent.installCommand` (pi, claude, codex) is appended to the "not found in PATH" error.
+- **Inherited descriptors** (`8fb57d6e98b6ad9fddbaff2b9b14fbeda5f0633f`, `@acryldev/desktop-shell`, `@acryldev/launcher-desktop`): reproduced on Linux (z370n, Electron 44.9.3, headless): a `sleep`
   spawned from Electron main held 36 descriptors, 10 of them sockets (Chromium's, among them the DevTools port); started through bash with the descriptors above 2 closed it held 3 (the standard streams).
   macOS does not leak (libuv closes all but the standard streams there; checked with the same probe). Windows was not tested. The same helper is in `inherited.ts` and `runner.ts` (the packages share no code).
-- **One model prompt on first start** (`3e17e6beb5629838e98f077af8053ba5ff5001ae`, `@acryldev/sign-in`, `@acryldev/workspace`): the sign-in dialog sets `data-acryl-connect-dialog` on the page while open; the
+- **One model prompt on first start** (`797e866816531a94b0f16841b862c5118ec235fb`, `@acryldev/sign-in`, `@acryldev/workspace`): the sign-in dialog sets `data-acryl-connect-dialog` on the page while open; the
   workspace card hides while it is set and shows after the dialog closes.
-- **A flaky spec found by the gate** (see the next commit of `plugins/launcher-desktop/tests/plugin.spec.ts`): it booted the real plugin, which fetches a missing `gh` on start, so on z370n (no gh) the launcher answered "getting Node.js and GitHub's tool ready" instead of the route's reason; a stand-in `gh` keeps the spec offline. Reproduced here with a PATH without gh.
+- **A flaky spec found by the gate** (`plugins/launcher-desktop/tests/plugin.spec.ts`, `63712ab777fdd3fe046e4786b35e6887938dd940`): it booted the real plugin, which fetches a missing `gh` on start, so on z370n (no gh) the launcher answered "getting Node.js and GitHub's tool ready" instead of the route's reason; a stand-in `gh` keeps the spec offline. Reproduced here with a PATH without gh.
 - Not run on the Mac: the full `pnpm run check` (it ran on z370n, see the gate), a packed app. `plugins/workspace/tests/shell/tab-kinds.spec.ts` needs the pinned upstream checkout, which a worktree does not have.
 
 ## 2026-11-19 - the surfaces compose their plugin set, and the runtime keeps only the Blueprint vocabulary (spec 051 T021)
