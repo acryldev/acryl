@@ -48,6 +48,7 @@ import { whoamiProblem } from '../npm-login.ts'
 import { splitDigest } from '../pull-check.ts'
 import { parsePullList, pullListLocation } from '../pull-list.ts'
 import { pulledRecords } from '../pulled-records.ts'
+import { releasesWithLoginFallback } from '../releases-fallback.ts'
 
 const cleanup: Array<() => Promise<void> | void> = []
 afterEach(async () => {
@@ -1371,4 +1372,69 @@ test("a signed-out npm says so in words, without npm's pointer to a log file", (
   )
   assert.match(other, /ECONNREFUSED/)
   assert.doesNotMatch(other, /complete log/)
+})
+
+test("GitHub refusing the anonymous request for its limit falls back to the person's own login, which downloads its own assets", async () => {
+  const release = pack({ 'index.ts': ROUTE })
+  const asked: string[] = []
+  const anonymous: ReleasePort = {
+    release: async () => {
+      asked.push('anonymous')
+      throw new Error('GitHub answered 403 for someone/hello')
+    },
+    download: async () => {
+      throw new Error('the anonymous port must not download what only the login can see')
+    },
+  }
+  const signedIn: ReleasePort = {
+    release: async () => {
+      asked.push('login')
+      return { tag: 'v1.0.0', assets: [{ name: 'hello-1.0.0.tgz', url: 'api:asset' }] }
+    },
+    download: async (url) => {
+      asked.push(`download ${url}`)
+      return release.tarball
+    },
+  }
+  const port = releasesWithLoginFallback(anonymous, () => signedIn)
+  const found = await port.release('someone', 'hello', 'v1.0.0')
+  assert.equal(found?.tag, 'v1.0.0')
+  assert.deepEqual(await port.download('api:asset'), release.tarball)
+  assert.deepEqual(asked, ['anonymous', 'login', 'download api:asset'])
+  // Without a login the person is told what GitHub said, not what gh could not do.
+  const nobody = releasesWithLoginFallback(anonymous, () => ({
+    release: async () => {
+      throw new Error('gh is not available here')
+    },
+    download: async () => new Uint8Array(),
+  }))
+  await assert.rejects(() => nobody.release('someone', 'hello'), /GitHub answered 403/)
+  // Another failure is not a limit: nothing is retried with a login.
+  const down: ReleasePort = {
+    release: async () => {
+      throw new Error('GitHub answered 500 for someone/hello')
+    },
+    download: async () => new Uint8Array(),
+  }
+  await assert.rejects(
+    () =>
+      releasesWithLoginFallback(down, () => {
+        throw new Error('must not be asked')
+      }).release('someone', 'hello'),
+    /answered 500/,
+  )
+})
+
+test('a pull refused for GitHub\'s anonymous limit says how to sign in, not "ask the person who released it"', async () => {
+  const limited: ReleasePort = {
+    release: async () => {
+      throw new Error('GitHub answered 403 for someone/hello')
+    },
+    download: async () => new Uint8Array(),
+  }
+  const { share, untouched } = await boot({ releases: limited })
+  const result = await share.pull('github:someone/hello@1.0.0')
+  refused(result, 'fetch', /GitHub answered 403/)
+  assert.match(result.ok ? '' : result.next, /gh auth login/)
+  await untouched()
 })

@@ -24,7 +24,6 @@ import {
   firstRegistryPort,
   gitCli,
   githubCli,
-  githubReleasesOverHttps,
   httpsDownload,
   InvalidPluginSourceError,
   NPM_REGISTRY,
@@ -77,6 +76,7 @@ import {
 import { LIST_MAX_BYTES, parsePullList, pullListLocation } from './pull-list.ts'
 import { type PulledRecord, pulledRecords, withPulledRecord } from './pulled-records.ts'
 import { lookUpRegistry, REGISTRY_INDEX_URL } from './registry-source.ts'
+import { LIMITED, releasesWithLoginFallback } from './releases-fallback.ts'
 
 export type {
   PublishOptions,
@@ -300,7 +300,7 @@ export class PluginShare extends Service {
     super(ctx, 'pluginShare')
     this.own = ctx
     this.dir = resolve(config.dir ?? join(ctx.appInstance.root, 'plugins'))
-    this.releases = config.releases ?? githubReleasesOverHttps()
+    this.releases = config.releases ?? releasesWithLoginFallback()
     this.download = config.download ?? httpsDownload()
     this.registryIndex = config.registryIndex ?? REGISTRY_INDEX_URL
     this.npmRegistry = config.npm ?? firstRegistryPort(npmRegistryOverHttps(), npmRegistryViaCli())
@@ -870,10 +870,13 @@ export class PluginShare extends Service {
           expectIntegrity === undefined ? {} : { expectIntegrity },
         )
       } catch (cause) {
+        const reason = reasonOf(cause)
         return refuse(
           'fetch',
-          reasonOf(cause),
-          'check the source with the person who released it; nothing was installed',
+          reason,
+          LIMITED.test(reason)
+            ? 'GitHub limits requests that are not signed in (60 an hour per address): sign in with `gh auth login`, or wait an hour, and run the same line again; nothing was installed'
+            : 'check the source with the person who released it; nothing was installed',
         )
       }
       // An npm package is `@scope/name` and lives in the folder `name`; a package from any other source must already be named for a folder.
