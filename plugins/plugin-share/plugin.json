@@ -6,7 +6,7 @@
   "provides": ["pluginShare"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@acryldev/app-persistence": "0.1.5",
+    "@acryldev/app-persistence": "0.1.6",
     "@acryldev/blends-core": "0.6.0",
     "@acryldev/plugin-hub-core": "0.2.3",
     "yaml": "2.9.0"

@@ -27,6 +27,7 @@ import {
   type Visibility,
   withId,
   withLicense,
+  withVersion,
   withPlacement,
   withVisibility,
 } from '@acryldev/app-persistence'
@@ -101,6 +102,8 @@ export interface SharePorts {
   pending(): number
   /** Label `owner/repo` for the Blends store and push the tag; false when the tag already existed (it is never moved). */
   list(repository: string, tag: string): boolean
+  /** Whether release `tag` exists here: `none`, `current` (it is this commit), or `older` (versions were saved since). */
+  released(tag: string): 'none' | 'current' | 'older'
 }
 
 /** The person's own git and gh, in the app's folder. */
@@ -119,6 +122,12 @@ export function sharePorts(appRoot: string): SharePorts {
     pending: () => {
       const result = run('git', ['status', '--porcelain'])
       return result.status === 0 ? result.stdout.split('\n').filter(Boolean).length : 0
+    },
+    released: (tag) => {
+      const tagged = run('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}^{commit}`])
+      if (tagged.status !== 0) return 'none'
+      const head = run('git', ['rev-parse', '-q', '--verify', 'HEAD'])
+      return head.status === 0 && head.stdout.trim() === tagged.stdout.trim() ? 'current' : 'older'
     },
     list: (repository, tag) => {
       const must = (command: string, args: readonly string[], what: string) => {
@@ -183,6 +192,12 @@ const packageOf = (appRoot: string): PackageJson | undefined => {
   }
 }
 
+/** `1.2.0` -> `1.2.1`; a version that is not three numbers gets `.1` added, so it still moves on. */
+export const nextPatch = (version: string): string => {
+  const parts = /^(\d+)\.(\d+)\.(\d+)$/u.exec(version)
+  return parts === null ? `${version}.1` : `${parts[1]}.${parts[2]}.${Number(parts[3]) + 1}`
+}
+
 /** The store listing a share asked for, as the person will read it, or why it cannot be listed. */
 function planListing(
   appRoot: string,
@@ -190,6 +205,7 @@ function planListing(
   visibility: Visibility,
   repository: string | undefined,
   options: ShareOptions,
+  ports: SharePorts,
 ): StoreListing | ShareRefused | undefined {
   const asked = options.list
   if (asked === undefined) return undefined
@@ -225,7 +241,13 @@ function planListing(
   const license = asked.license ?? identity.license ?? 'MIT'
   if (!LICENSE_ID.test(license))
     return refused(`"${license}" is not a licence id (such as MIT or Apache-2.0)`)
-  const version = typeof pkg.version === 'string' ? pkg.version : (identity.version ?? '0.1.0')
+  // A release is never moved: when this version is already tagged and the app changed since, the share releases the next patch version.
+  let version = typeof pkg.version === 'string' ? pkg.version : (identity.version ?? '0.1.0')
+  for (let guard = 0; guard < 100; guard += 1) {
+    const released = ports.released(`v${version}`)
+    if (released === 'none' || (released === 'current' && ports.pending() === 0)) break
+    version = nextPatch(version)
+  }
   const name = (identity.id ?? '').split('.').slice(1).join('.') || repository.split('/')[1] || ''
   const id = `${(repository.split('/')[0] ?? '').toLowerCase()}.${name.toLowerCase()}`
   return { id, placement, license, tag: `v${version}` }
@@ -268,8 +290,12 @@ function writeListing(
   let text = manifestText
   if (identity.id !== listing.id) text = withId(text, listing.id)
   if (identity.license !== listing.license) text = withLicense(text, listing.license)
-  if (text !== manifestText) writeFileSync(join(appRoot, 'blend.yaml'), text)
   const pkg = packageOf(appRoot) ?? {}
+  // The release this share tags: when planListing moved past an existing tag, the app carries the new version in both files.
+  const version = listing.tag.replace(/^v/u, '')
+  const bumped = typeof pkg.version === 'string' && pkg.version !== version
+  if (bumped || (pkg.version === undefined && identity.version !== version)) text = withVersion(text, version)
+  if (text !== manifestText) writeFileSync(join(appRoot, 'blend.yaml'), text)
   const before = Array.isArray(pkg.keywords)
     ? pkg.keywords.filter((word): word is string => typeof word === 'string')
     : []
@@ -277,10 +303,10 @@ function writeListing(
     before.includes(BLEND_TOPIC) ? before : [...before, BLEND_TOPIC],
     listing.placement,
   )
-  if (JSON.stringify(keywords) !== JSON.stringify(pkg.keywords))
+  if (bumped || JSON.stringify(keywords) !== JSON.stringify(pkg.keywords))
     writeFileSync(
       join(appRoot, 'package.json'),
-      `${JSON.stringify({ ...pkg, keywords }, null, 2)}\n`,
+      `${JSON.stringify({ ...pkg, ...(bumped ? { version } : {}), keywords }, null, 2)}\n`,
     )
   const template = join(appRoot, 'acryl.template.json')
   if (!existsSync(template))
@@ -313,6 +339,7 @@ export function planShare(
     plan.visibility,
     plan.create ? plan.repository : githubRepository(plan.repository),
     options,
+    ports,
   )
   if (listing !== undefined && 'ok' in listing) return listing
   return listing === undefined ? plan : { ...plan, listing }

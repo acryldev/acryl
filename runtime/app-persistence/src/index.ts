@@ -1,5 +1,5 @@
 export { findSecrets, type SecretFinding } from './secrets.js'
-export { readAppIdentity, withId, withLicense, withVisibility, type AppIdentity, type Visibility } from './identity.js'
+export { readAppIdentity, withId, withLicense, withVersion, withVisibility, type AppIdentity, type Visibility } from './identity.js'
 export type { GitPort, HostingPort } from './ports.js'
 export { saveApp, type SaveResult } from './save.js'
 export { connectRemote, type ConnectResult } from './connect.js'

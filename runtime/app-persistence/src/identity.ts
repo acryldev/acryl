@@ -48,6 +48,11 @@ export function withId(manifestText: string, id: string): string {
   return withMetadata(manifestText, 'id', id)
 }
 
+/** The manifest with `metadata.version` set (a share's next release), kept as a YAML document as {@link withVisibility} does. */
+export function withVersion(manifestText: string, version: string): string {
+  return withMetadata(manifestText, 'version', version)
+}
+
 function withMetadata(manifestText: string, key: string, value: string): string {
   const document = parseDocument(manifestText)
   if (document.errors.length > 0) throw new Error(`blend.yaml could not be read: ${document.errors[0]?.message ?? 'invalid YAML'}`)
