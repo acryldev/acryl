@@ -28,7 +28,7 @@ test('fetched tools go first on PATH, keeping the variable spelling Windows uses
     assert.deepEqual(toolsEnv(home, { Path: 'C:\\Windows' }, 'win32'), { Path: `${dirs.node};${dirs.gh};C:\\Windows` })
     const unix = toolDirs(home, 'linux')
     mkdirSync(unix.node, { recursive: true })
-    assert.equal(toolsEnv(home, { PATH: '/usr/bin' }, 'linux').PATH.split(':')[0], unix.node)
+    assert.ok(toolsEnv(home, { PATH: '/usr/bin' }, 'linux').PATH.startsWith(`${unix.node}:`))
   } finally { rmSync(home, { recursive: true, force: true }) }
 })
 

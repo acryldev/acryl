@@ -1,7 +1,7 @@
 /** The ACRYL screen's rules, against a fake process runner and a scratch home: nothing starts, nothing touches the real home. */
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { addApp, saveModelKey } from '@acryldev/launcher'
 import { LauncherRefusal, LauncherService, type LauncherPorts } from '../src/service.ts'
@@ -115,7 +115,7 @@ describe('the tools apps need', () => {
     finish()
     await preparing
     service.start('shop')
-    expect(runs[0]?.command.env.PATH?.split(':')[0]).toBe(fetched)
+    expect(runs[0]?.command.env.PATH?.split(delimiter)[0]).toBe(fetched)
   })
 
   it('lets apps try the computer\'s own tools when fetching failed', async () => {

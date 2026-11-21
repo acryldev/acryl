@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { closeSync, mkdtempSync, openSync, readFileSync, rmSync } from 'node:fs'
+import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -37,7 +37,9 @@ describe('a command with a log file', () => {
     const folder = mkdtempSync(join(tmpdir(), 'acryl-runner-log-'))
     try {
       const log = join(folder, 'app.log')
-      const run = spawnRunner({ program: process.execPath, args: ['-e', "console.log('served on http://127.0.0.1:1/'); console.error('é done')"], cwd: folder, env: process.env, log })
+      // A script file and `node` from PATH: on Windows the runner starts commands through cmd.exe, which would split an -e text and a Program Files path.
+      writeFileSync(join(folder, 'app.js'), "console.log('served on http://127.0.0.1:1/'); console.error('é done')\n")
+      const run = spawnRunner({ program: 'node', args: ['app.js'], cwd: folder, env: process.env, log })
       let heard = ''
       run.onOutput((text) => { heard += text })
       const end = await new Promise<{ code: number | null }>((done) => { run.onEnd(done) })

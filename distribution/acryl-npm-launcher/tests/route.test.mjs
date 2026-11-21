@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import { controlCenterArgs, desktopEntryExec, firstAddress, installedControlCenter, opensBrowser } from '../control-center.js'
 import { createdAppName, forwardCommand } from '../forward.js'
@@ -65,11 +66,11 @@ test('--web opens the first tokenized address the Control Center prints, unless 
 
 test('one Control Center copy in the ACRYL home: made once, then only started; --update merges its newer release first', () => {
   const context = { env: {}, platform: 'linux', execPath: '/node', exists: () => false }
-  const made = path => path === '/h/.acryl/control-center/blend.yaml' || path.endsWith('.package-lock.json')
+  const made = path => path === join('/h/.acryl', 'control-center', 'blend.yaml') || path.endsWith('.package-lock.json')
   const first = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: () => false })
   assert.deepEqual(first.map(step => step.label.split(' ')[0]), ['making', 'installing', 'starting'])
   const later = managedSteps(MANAGED.launcher, 'gui', { home: '/h/.acryl', context, exists: made })
-  assert.deepEqual(later.map(step => [step.args.join(' '), step.cwd]), [['run desktop', '/h/.acryl/control-center']])
+  assert.deepEqual(later.map(step => [step.args.join(' '), step.cwd]), [['run desktop', join('/h/.acryl', 'control-center')]])
   const updated = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: made, update: true })
   assert.deepEqual(updated.map(step => step.args.join(' ')), ['exec --yes acrylblends@latest -- update', 'run dev'])
 })
