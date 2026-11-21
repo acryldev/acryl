@@ -7152,3 +7152,20 @@ settings pane"; and before sleeping: "finish unification whole plan, everything,
 - **Change (`2b5276af`).** The workspace Host half is served beyond loopback only when the app has a trusted front (`ACRYL_PUBLIC_ORIGIN` and `ACRYL_TRUSTED_PROXY`), so a server beyond loopback with no front is still refused. Every route was already held to the own-page rule that accepts loopback or the front's exact peer address under the exact public `Host`; the terminal's socket (`ownPageSocket` in `@acryldev/loopback-http`) used loopback only and now uses `pageAuthority`, like the door's page socket. Tests: `runtime/loopback-http/tests/router-front.spec.ts` (upgrade through the front, loopback, wrong peer, wrong host, wrong or missing Origin), `plugins/workspace/tests/hosted.spec.ts` (activation beyond loopback with a front, a real terminal through the public address, refusals) and a refusal case in `plugin.spec.ts`; the two new specs fail on the old code.
 - **Versions:** `@acryldev/loopback-http` 0.2.1, `@acryldev/workspace` 0.2.3, `@acryldev/blends-frame` 0.2.10 (its exact pin of the workspace), `framework/frame/packages.json` updated. To publish in this order, then create-blends and `@acryldev/blends` with those pins.
 - **Verified on webboxes.ai** with a throwaway account and a box from the 1.7.11 image with the patched files copied in: Terminal, Pi (workshop key), Claude Code and Codex start through the gate; an anonymous visitor of the published address gets 404 on every workspace route and the socket. Details in the webboxesai log of 2026-11-21.
+
+## 2026-11-21 - acryl 0.3.0: `npx acryl` is ACRYL Control Center in the terminal, a window or the browser
+
+- **What (`078d09095268ed65a260be50ac641e055a5a398c`, `62ff41f1a3bd7d9a3fcd21c07cd33bac4b607038`, `24b3861b4aa17df44cb125153f73e224c03954e5`).** A bare `acryl` (and `acryl --tui`)
+  opens a terminal Control Center on the window's own service: `@acryldev/launcher-desktop/node` (`createNodeLauncher`), which the Host plugin now uses too,
+  so the three faces run one implementation. Apps (start web or desktop, stop, open, update), the Blends store by category with Official/Community and
+  search, new app, share to GitHub, Deploy to WebBoxes.ai, plugin pull and publish, GitHub device sign-in, the model key, ACRYL ADE, Health. The look:
+  the ACRYL mark in acryl.dev's spectrum, gradient titles, a start shimmer and spinners, light/dark palettes, NO_COLOR, 80 columns.
+- **`--gui` / `--web`:** the installed ACRYL Control Center app when there is one (`ACRYL_CONTROL_CENTER=blend` skips it), else the Blend copy in
+  `~/.acryl/control-center`; `--web` opens the browser at the tokenized address it prints; `--update` runs `acrylblends update` in the copy first.
+- **Scripts:** `acryl --help`, `acryl make <name> --from <id>`, `acryl store [words]`; without a terminal a bare `acryl` prints the help.
+- **Found on the way:** `npx --package=<tgz> acryl --web` failed with "create-acrylblends@latest: command not found": npx leaves `npm_config_package`
+  in the environment and the nested `npm exec` read it. The selector now drops it.
+- **Verified** from the packed tarball under a scratch HOME: `--version`, `--help`, `store`, the TUI in a pty (dark, light, NO_COLOR, 80x24), `--web`
+  made, installed and served the Control Center (HTTP 200, the Control Center page), `--gui` started Electron from the scratch home, both stopped after.
+- **Publish:** `@acryldev/launcher-desktop` 0.1.8 (the `./node` export), then `acryl` 0.3.0 (`npm publish` in distribution/acryl-npm-launcher; its
+  prepack builds app-persistence and bundles launcher.js).
