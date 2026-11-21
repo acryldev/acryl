@@ -101,6 +101,7 @@ async function boot({
   publish?: PublishPorts
   download?: (url: string) => Promise<Uint8Array>
   native?: NativePorts
+  registry?: string
   root?: string
 } = {}) {
   const app = new Context()
