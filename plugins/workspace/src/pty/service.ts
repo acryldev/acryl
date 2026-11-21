@@ -292,7 +292,8 @@ export class WorkspacePtyRegistry {
     try {
       const resolved = resolveWorkspacePtyCommand(plan.command, dirs, this.platform)
       if (resolved === undefined && !plan.command.includes('/') && !plan.command.includes('\\')) {
-        throw new Error(`workspace PTY command not found in PATH: ${plan.command}`)
+        const install = known?.installCommand
+        throw new Error(`workspace PTY command not found in PATH: ${plan.command}${install === undefined ? '' : ` - install it with: ${install}`}`)
       }
       // An agent that reports through hooks gets the reporting launch settings and the terminal's own credentials.
       const reporting = plan.statusHooks !== undefined && this.agentStatus !== undefined

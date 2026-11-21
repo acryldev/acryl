@@ -21,6 +21,8 @@ export interface KnownAgent {
   readonly yoloEnv?: Readonly<Record<string, string>>
   /** Where the agent's install instructions live. */
   readonly homepageUrl: string
+  /** The one command that installs it, shown when the executable is not on PATH (only agents that have a single npm install). */
+  readonly installCommand?: string
   /** How this agent reports what it is doing, when it can (hooks): its own launch settings carry the reporting. */
   readonly statusHooks?: 'claude'
   /** The letter and colour of its tab icon when no drawn mark exists. */
@@ -29,21 +31,22 @@ export interface KnownAgent {
 
 const agent = (
   id: string, label: string, command: string, homepageUrl: string, color: string,
-  yoloArgs: readonly string[] = [], yoloEnv?: Readonly<Record<string, string>>,
+  yoloArgs: readonly string[] = [], yoloEnv?: Readonly<Record<string, string>>, installCommand?: string,
 ): KnownAgent => ({
   id, label, command, homepageUrl, yoloArgs, ...(yoloEnv === undefined ? {} : { yoloEnv }),
+  ...(installCommand === undefined ? {} : { installCommand }),
   badge: { letter: [...label][0]?.toUpperCase() ?? '?', color },
 })
 
 /** In the order the lists show them. Ids of agents that shipped earlier keep their spelling. */
 export const KNOWN_AGENTS = [
-  { ...agent('claude', 'Claude', 'claude', 'https://code.claude.com/docs', '#d97757', ['--dangerously-skip-permissions']), statusHooks: 'claude' as const },
-  agent('codex', 'Codex', 'codex', 'https://github.com/openai/codex', '#10a37f', ['--dangerously-bypass-approvals-and-sandbox']),
+  { ...agent('claude', 'Claude', 'claude', 'https://code.claude.com/docs', '#d97757', ['--dangerously-skip-permissions'], undefined, 'npm i -g @anthropic-ai/claude-code'), statusHooks: 'claude' as const },
+  agent('codex', 'Codex', 'codex', 'https://github.com/openai/codex', '#10a37f', ['--dangerously-bypass-approvals-and-sandbox'], undefined, 'npm i -g @openai/codex'),
   agent('grok', 'Grok', 'grok', 'https://x.ai/cli', '#94a3b8', ['--permission-mode', 'bypassPermissions']),
   agent('copilot', 'GitHub Copilot', 'copilot', 'https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli', '#a78bfa', ['--yolo']),
   agent('opencode', 'OpenCode', 'opencode', 'https://opencode.ai/docs/cli/', '#94a3b8'),
   agent('ante', 'Ante', 'ante', 'https://github.com/AntigmaLabs/ante-preview', '#fb923c', ['--yolo']),
-  agent('pi', 'Pi', 'pi', 'https://pi.dev', '#a78bfa'),
+  agent('pi', 'Pi', 'pi', 'https://pi.dev', '#a78bfa', [], undefined, 'npm i -g @earendil-works/pi-coding-agent'),
   agent('omp', 'OMP', 'omp', 'https://omp.sh', '#a78bfa'),
   agent('gemini', 'Gemini', 'gemini', 'https://github.com/google-gemini/gemini-cli', '#4285f4', ['--yolo']),
   agent('antigravity', 'Antigravity', 'agy', 'https://antigravity.google/docs/cli-overview', '#4285f4', ['--dangerously-skip-permissions']),
