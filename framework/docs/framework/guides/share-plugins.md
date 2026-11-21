@@ -4,8 +4,7 @@ A plugin is a folder in `plugins/`. Another person's app takes it from a GitHub 
 [cordisplugins.github.io](https://cordisplugins.github.io), from npm, or from a list your group keeps. To share a whole app instead, see [Share a Blend](share-blends.md).
 
 Every command and every output below was run on 2026-11-21 as two people, Ana (publishes) and Ben (pulls), each with an app and a home folder of their own, made with
-`@acryldev/blends` 1.7.21, against the GitHub organization `inboxxobni`. Outputs are pasted as they came, with the `npm run` banner lines left out. The npm steps
-ran in npm's own dry run (see "To npm"), so nothing was published to npm. Commands run in the app's folder with the app running (`npm run dev`, or the desktop
+`@acryldev/blends` 1.7.21, against the GitHub organization `inboxxobni`. Outputs are pasted as they came, with the `npm run` banner lines left out. The npm steps (see "To npm") were a real publish to npm on 2026-11-22 of a throwaway package. Commands run in the app's folder with the app running (`npm run dev`, or the desktop
 app): a pull installs into the running app. You need `gh` signed in (`gh auth login`) to publish; pulling a public plugin needs no login.
 
 ## 1. Make the plugin
@@ -182,23 +181,61 @@ the same as the command.
 ## To npm
 
 ```sh
-npm run acryl -- plugin publish sh-guide-clock --to npm --scope guide-test
+npm run acryl -- plugin publish sh-guide-clock --to npm --scope <your-npm-account>
 ```
 
-It uses **your own** npm login and nothing else: it asks `npm whoami`. The scope is the account of that login, or `--scope`; `--registry <address>` names another
-registry. A version npm already has makes it the next patch. The plan and the `yes` are the same as for GitHub:
+It uses **your own** npm login and nothing else: it asks `npm whoami`. The package is named `@<scope>/<plugin folder>`: the scope is the account of that login,
+or `--scope`. (The door publishes scoped names only; `plugin pull` also takes an unscoped package.) `--registry <address>` names another registry. A version npm
+already has makes it the next patch. The plan and the `yes` are the same as for GitHub. This is the real run of 2026-11-22, a throwaway plugin
+`acryl-share-proof-1122` published by the npm account `webboxescom` (nothing was simulated; the package was deprecated afterwards):
 
 ```
-Publish to npm as @guide-test/sh-guide-clock (registry https://registry.npmjs.org/, signed in as the account of your own npm login), public, version 0.1.1, license MIT.
+Publish to npm as @webboxescom/acryl-share-proof-1122 (registry https://registry.npmjs.org/, signed in as the account of your own npm login), public, version 0.1.0, license MIT.
 Files: README.md, index.ts, package.json.
-A friend gets exactly these bytes with: npm run acryl -- plugin pull npm:@guide-test/sh-guide-clock@0.1.1@sha256:5af6caf8b8086985f0094c113aa81ce687e8fab1f204609e46ef69a8d5801e13
-Publish @guide-test/sh-guide-clock v0.1.1 under MIT? Type yes to send it: yes
-Published: https://www.npmjs.com/package/@guide-test/sh-guide-clock
+A friend gets exactly these bytes with: npm run acryl -- plugin pull npm:@webboxescom/acryl-share-proof-1122@0.1.0@sha256:1e09c3ba3253cb78ac8457c75e5ec417a9fbddb30a2b84140f0e3a4daf42c6ec
+Publish @webboxescom/acryl-share-proof-1122 v0.1.0 under MIT? Type yes to send it: yes
+Published: https://www.npmjs.com/package/@webboxescom/acryl-share-proof-1122
 ```
 
-That run was a **dry run**: the app was started with `npm_config_dry_run=true` in its environment, which makes npm stop before it sends the package (the line
-`Published:` is the app's, and `npm view @guide-test/sh-guide-clock` still answered `E404 Not Found`). The computer had no npm login, so `npm whoami` was answered by
-a stand-in program first on the `PATH` that printed an account name; everything else was the real npm. Use the same two settings to try it without publishing.
+npm answered the upload with `202` ("your package is being processed and may take a few minutes to become available"): the package was listed about five minutes
+later (0.1.1 about three minutes later), and until then `npm view` and a pull say `404` / "npm has no ...". Wait, then pull. Ben, in his own app with no npm login:
+
+```sh
+npm run acryl -- plugin pull npm:@webboxescom/acryl-share-proof-1122
+```
+
+```
+{
+  "ok": true,
+  "name": "acryl-share-proof-1122",
+  "version": "0.1.0",
+  "integrity": "sha512-2UZh8hxoOnZoordA3z3/CgDv/S85t0VMfpo308q77ztkSiqOtPFDCXC7vXPqPqks1GctZ3uAC4JkEgAE1OzIwA==",
+  "digest": "1e09c3ba3253cb78ac8457c75e5ec417a9fbddb30a2b84140f0e3a4daf42c6ec",
+  "action": "installed",
+  "state": "active",
+  "remembered": true
+}
+```
+
+The digest is the one the publisher's plan printed, and the plugin answered at once (`{"text":"proof, v0.1.0"}`). An update works as for GitHub: Ana published 0.1.1 (the
+plan named the next patch itself); Ben, who had added `BEN.md` and a comment line to `index.ts`, pulled again and kept both:
+
+```
+{
+  "ok": true,
+  "name": "acryl-share-proof-1122",
+  "version": "0.1.1",
+  "integrity": "sha512-QGHk5W2SUip3AUGBO9UbI7kzMlJsLwLJvUoQtCICgVIJiV01rSA/6JCA7RILxiey1ddcHMemkbcOnd+Iz9oo0A==",
+  "digest": "0f4385f83e9efaa80430762ca89b6248a38fdff9bdd11f4243d3202f4c14fedd",
+  "action": "updated",
+  "state": "active",
+  "remembered": true,
+  "kept": [
+    "BEN.md",
+    "index.ts"
+  ]
+}
+```
 
 Signed out, the plan is refused and says how to sign in:
 
@@ -207,8 +244,9 @@ refused: npm whoami failed: you are not signed in to npm on https://registry.npm
 ```
 
 In the app, Settings > Plugins > **Share...** > **Publish to npm** does the same (the account field is the scope), and the card then reads "Shared on npm" with a
-copyable pull line. `plugin pull npm:` was **not run** against the real npm registry: there is no public plugin in this form on npm yet. It is covered by tests,
-which publish and pull a package, check the integrity npm lists, refuse a wrong one, and update in place.
+copyable pull line. Taking a package back: `npm unpublish <package> --force` works within 72 hours, but npm refuses it for an access token that skips two-factor
+(`403 ... Granular access tokens that bypass two-factor authentication may not perform this action`), so run it signed in with two-factor, or use
+`npm deprecate <package> "<message>"`, which that token may do.
 
 ## Try it without touching your own account
 
