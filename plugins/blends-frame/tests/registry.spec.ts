@@ -6,7 +6,7 @@ import { planAppPluginShare, shareAppPlugin, type SharePorts } from '../src/app-
 import { parseGithubReadiness, parsePulledPlugin, parseRegistryView, parseSharePlan, type RegistryEntryView, type SharePlan } from '../src/contract.ts'
 import { frameRoutes } from '../src/index.ts'
 import { githubReadiness, plainPullRefusal, plainShareProblem, PlainError } from '../src/plain.ts'
-import { bareName, createRegistryReader, downloadFor, readRegistryView, registryEntries, repoOfSource, type RegistryMarks } from '../src/registry.ts'
+import { bareName, createRegistryReader, downloadFor, newerVersion, readRegistryView, registryEntries, repoOfSource, type RegistryMarks } from '../src/registry.ts'
 import { createRegistryApi } from '../src/client/registry-api.ts'
 import { addedText, addQuestion, cleanAddress, entryByline, filterRegistry } from '../src/client/registry-list.ts'
 import { colleagueAddress, shareButton, shareDetails, shareQuestion, shareSentence } from '../src/client/plugins-navigator.ts'
@@ -48,6 +48,25 @@ describe('the registry as the frame reads it', () => {
     expect(bareName('@owner/Notes')).toBe('notes')
     expect(repoOfSource('github:Owner/Repo@1.0.0')).toBe('owner/repo')
     expect(repoOfSource('./local')).toBeUndefined()
+  })
+
+  it('offers an update only when the registry lists a newer release than the one the app pulled, comparing numbers and not text', () => {
+    const entries = registryEntries(index([
+      listed('newer', 'someone', { version: '1.10.0' }),
+      listed('same', 'someone'),
+      listed('older', 'someone', { version: '0.9.0' }),
+      listed('fresh', 'someone', { version: '2.0.0' }),
+    ]), {
+      names: new Set(),
+      repos: new Set(['someone/newer', 'someone/same', 'someone/older']),
+      pulled: new Map([['someone/newer', '1.9.0'], ['someone/same', '1.0.0'], ['someone/older', '1.0.0']]),
+      accounts: new Set(),
+    })
+    expect(Object.fromEntries(entries.map(entry => [entry.name, entry.updateFrom]))).toEqual({ newer: '1.9.0', same: undefined, older: undefined, fresh: undefined })
+    expect(newerVersion('1.10.0', '1.9.0')).toBe(true)
+    expect(newerVersion('1.0.0', '1.0.0')).toBe(false)
+    expect(newerVersion('2.0.0-beta', '1.9.9')).toBe(true)
+    expect(newerVersion('x', '1.0.0')).toBe(false)
   })
 
   it('reads once in a while, shows the earlier copy when a later read fails, and says why in plain words when there is none', async () => {

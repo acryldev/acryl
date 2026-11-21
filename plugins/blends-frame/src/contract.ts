@@ -703,6 +703,8 @@ export interface RegistryEntryView {
   readonly installed: boolean
   /** The account the person is signed in to GitHub with (or shares to) released it. */
   readonly mine: boolean
+  /** The version the app pulled it at, when the registry lists a newer one: the row offers the update. */
+  readonly updateFrom?: string
   /** Bytes it downloads besides itself for this computer (a native package, plugin-share/native.ts), when the index says. */
   readonly download?: number
 }
@@ -722,10 +724,10 @@ export function parseRegistryView(value: unknown): RegistryView {
   if (value.status !== 'ready' || !Array.isArray(value.entries) || typeof value.readAt !== 'string') throw new Error('registry: not a view')
   const entries = value.entries.map((entry: unknown): RegistryEntryView => {
     if (!isRecord(entry)) throw new Error('registry: entry')
-    const { name, description, owner, url, version, published, compatibility, origin, source, installed, mine, download } = entry
+    const { name, description, owner, url, version, published, compatibility, origin, source, installed, mine, updateFrom, download } = entry
     if (typeof name !== 'string' || typeof description !== 'string' || typeof owner !== 'string' || typeof url !== 'string' || typeof version !== 'string'
       || typeof compatibility !== 'string' || typeof source !== 'string' || typeof installed !== 'boolean' || typeof mine !== 'boolean') throw new Error('registry: entry')
-    return { name, description, owner, url, version, ...(typeof published === 'string' ? { published } : {}), compatibility, origin: origin === 'official' ? 'official' : 'community', source, installed, mine, ...(typeof download === 'number' && download > 0 ? { download } : {}) }
+    return { name, description, owner, url, version, ...(typeof published === 'string' ? { published } : {}), compatibility, origin: origin === 'official' ? 'official' : 'community', source, installed, mine, ...(typeof updateFrom === 'string' ? { updateFrom } : {}), ...(typeof download === 'number' && download > 0 ? { download } : {}) }
   })
   return { status: 'ready', entries, readAt: value.readAt }
 }

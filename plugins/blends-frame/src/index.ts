@@ -1031,13 +1031,19 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       const listed = share?.list() ?? []
       const names = new Set<string>([...frameRows().map(row => bareName(row.name)), ...listed.map(info => bareName(info.name))])
       const repos = new Set<string>(listed.flatMap(info => (info.pulledFrom === undefined ? [] : [repoOfSource(info.pulledFrom) ?? ''])).filter(repo => repo !== ''))
+      // The version each pulled plugin was pulled at, so a newer release in the registry is offered as an update.
+      const pulled = new Map<string, string>(listed.flatMap((info): [string, string][] => {
+        const repo = info.pulledFrom === undefined ? undefined : repoOfSource(info.pulledFrom)
+        const version = info.pulledFrom === undefined ? undefined : /@([0-9][0-9A-Za-z.+-]*)$/u.exec(info.pulledFrom)?.[1]
+        return repo === undefined || version === undefined ? [] : [[repo, version]]
+      }))
       // Who the person is on GitHub: the share account, else the one signed in (asked at most once a minute; no one signed in is no account).
       if (signedIn === undefined || Date.now() - signedIn.at > 60_000) {
         const ready = await githubNow()
         signedIn = { at: Date.now(), account: ready.status === 'ready' ? ready.account : undefined }
       }
       const accounts = new Set<string>([...(shareOwner === undefined ? [] : [shareOwner.toLowerCase()]), ...(signedIn.account === undefined ? [] : [signedIn.account.toLowerCase()])])
-      return { names, repos, accounts }
+      return { names, repos, pulled, accounts }
     }
     // The chat's agent finished a turn that changed files: save a version by itself (./auto-save.ts), and remember which turn it was.
     const store = new SaveStore(join(ctx.appInstance.dshHome, 'chat-saves.json'), report)

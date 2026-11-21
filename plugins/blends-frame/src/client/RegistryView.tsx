@@ -21,6 +21,8 @@ type Load =
 
 /** What is about to be added, waiting for the person's yes. */
 interface Asking {
+  /** The version the app has, when this is an update of it. */
+  readonly updateFrom?: string
   readonly source: string
   readonly name: string
   readonly owner: string
@@ -94,11 +96,11 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
 
   const question = (item: Asking) => (
     <div className="acrylBlendsShareAsk" role="alertdialog" aria-label={`Add ${item.name}`}>
-      <p>{addQuestion(item.name, item.owner, item.download, item.origin)}</p>
+      <p>{item.updateFrom === undefined ? addQuestion(item.name, item.owner, item.download, item.origin) : `Update ${item.name} from v${item.updateFrom}? Changes you made to its folder are kept; if the new release changes the same lines, nothing is changed and it says which file.`}</p>
       <div className="acrylBlendsShareRow">
         {/* Cancel is the default: Enter or a stray click adds nothing. */}
         <button type="button" className="acrylBlendsShareCancel" autoFocus onClick={() => { setAsking(undefined) }}>Cancel</button>
-        <button type="button" className="acrylBlendsShareConfirm" onClick={() => { void add(item.source) }}>Add to my app</button>
+        <button type="button" className="acrylBlendsShareConfirm" onClick={() => { void add(item.source) }}>{item.updateFrom === undefined ? 'Add to my app' : 'Update'}</button>
       </div>
     </div>
   )
@@ -113,11 +115,11 @@ export function RegistryView({ api, onAdded }: RegistryViewProps) {
           <span className="acrylBlendsPlugBy" data-origin={entry.origin} title={entry.origin === 'official' ? 'Released by the ACRYL project' : 'Released by someone outside the ACRYL project; its code is not reviewed'}>{entry.origin === 'official' ? 'Official' : 'Community'}</span>
           {entry.mine && <span className="acrylBlendsPlugBy">Yours</span>}
           {forOtherApps(entry) && <span className="acrylBlendsPlugBy" title="Made for another kind of app; it may not run in this one">other apps</span>}
-          {entry.installed
+          {entry.installed && entry.updateFrom === undefined
             ? <span className="acrylBlendsRegAdded" role="status">Added</span>
             : (
-              <button type="button" className="acrylBlendsRegAdd" disabled={adding !== undefined} onClick={() => { setSaid(undefined); setAsking({ source: entry.source, name: entry.name, owner: entry.owner, origin: entry.origin, ...(entry.download === undefined ? {} : { download: entry.download }) }) }}>
-                {adding === entry.source ? 'Adding…' : 'Add to my app'}
+              <button type="button" className="acrylBlendsRegAdd" disabled={adding !== undefined} onClick={() => { setSaid(undefined); setAsking({ source: entry.source, name: entry.name, owner: entry.owner, origin: entry.origin, ...(entry.updateFrom === undefined ? {} : { updateFrom: entry.updateFrom }), ...(entry.download === undefined ? {} : { download: entry.download }) }) }}>
+                {adding === entry.source ? (entry.updateFrom === undefined ? 'Adding…' : 'Updating…') : entry.updateFrom === undefined ? 'Add to my app' : `Update to v${entry.version}`}
               </button>
             )}
         </div>

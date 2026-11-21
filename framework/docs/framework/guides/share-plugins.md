@@ -85,6 +85,8 @@ patch (0.1.1) and says so. Ben runs the same pull line he used before:
 npm run acryl -- plugin pull github:<owner>/hello-ana@0.1.1
 ```
 
+In the app, Settings > Plugins > Registry shows **Update to v0.1.1** instead of "Added" when the registry lists a newer release than the one pulled; it asks first and does the same as the command.
+
 - A folder Ben never touched is replaced by the new release, live.
 - A folder Ben changed is merged: the release he pulled is fetched again as the common ancestor, a file only he changed keeps his change, a file of his own stays, and
   a file both changed is merged line by line. The answer names the files that kept something of his (`kept`).

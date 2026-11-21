@@ -27,8 +27,22 @@ export interface RegistryMarks {
   readonly names: ReadonlySet<string>
   /** `owner/repo` (lower case) of every plugin the app pulled. */
   readonly repos: ReadonlySet<string>
+  /** `owner/repo` (lower case) to the version the app pulled it at: a newer one in the registry is an update. */
+  readonly pulled?: ReadonlyMap<string, string>
   /** GitHub accounts that are the person's own (signed in, or the share account), lower case. */
   readonly accounts: ReadonlySet<string>
+}
+
+/** Whether dotted version `a` is newer than `b` (numbers, left to right; a pre-release suffix is ignored): `1.10.0` is newer than `1.9.0`. */
+export function newerVersion(a: string, b: string): boolean {
+  const parts = (version: string): number[] => version.split(/[-+]/u)[0]?.split('.').map(Number) ?? []
+  const [x, y] = [parts(a), parts(b)]
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const [p, q] = [x[i] ?? 0, y[i] ?? 0]
+    if (Number.isNaN(p) || Number.isNaN(q)) return false
+    if (p !== q) return p > q
+  }
+  return false
 }
 
 /** `owner/repo` of a `github:` source, lower case; undefined for any other source. */
@@ -67,6 +81,7 @@ export function registryEntries(index: unknown, marks: RegistryMarks): RegistryE
     const owner = where[1] ?? ''
     const repository = repoOfSource(source)
     const download = downloadFor(native)
+    const pulledAt = repository === undefined ? undefined : marks.pulled?.get(repository)
     entries.push({
       name,
       description: typeof description === 'string' ? description : '',
@@ -80,6 +95,7 @@ export function registryEntries(index: unknown, marks: RegistryMarks): RegistryE
       source,
       installed: marks.names.has(bareName(name)) || (repository !== undefined && marks.repos.has(repository)),
       mine: marks.accounts.has(owner.toLowerCase()),
+      ...(pulledAt !== undefined && newerVersion(version, pulledAt) ? { updateFrom: pulledAt } : {}),
       ...(download === undefined ? {} : { download }),
     })
   }
