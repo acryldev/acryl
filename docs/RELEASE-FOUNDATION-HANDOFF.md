@@ -1,93 +1,59 @@
-# ACRYL distribution foundation - release handoff
+# ACRYL distribution - how a release is made
 
-Status (2026-10-29): one tag `v<version>` runs `.github/workflows/release-cli.yml`, which builds the 4 CLI and 4 Web archives, calls
-`release-desktop.yml` for the 5 Desktop installers, publishes the npm packages and promotes the GitHub release, and does none of the
-irreversible steps unless every surface built. A `workflow_dispatch` run on `main` is the non-publishing dry run; it must be green before a tag.
-The sections after "Release procedure" below are the history of the first release work and name the workflow by its old file name.
+State of 2026-11-21. `npx acryl@latest` is the way in: the `acryl` npm package opens ACRYL Control Center (terminal, window or browser). The products are not built
+here any more: this repository holds the reusable building blocks and the `acryl` selector; the terminal agent has its own repository.
 
-## Remaining verification
+| What | Where it is built and released | Released by |
+|---|---|---|
+| `acryl`, the selector and the terminal Control Center (npm) | this repository, `distribution/acryl-npm-launcher` | tag `v<selector version>`: `.github/workflows/release.yml` |
+| The terminal coding agent `acryl-cli` and the earlier browser surface `acryl-web` | https://github.com/acryldev/acryl-terminal | tag `v<version>` there: its `.github/workflows/release.yml` |
+| The `@acryldev/*` building blocks (control, harness-runtime, plugins ...) | this repository | published by hand, in dependency order |
+| acrylblends (`@acryldev/blends`, create-blends, the frame) | this repository, `framework/` | `.github/workflows/framework-release.yml` (tags that do not start with `v`) |
+| ACRYL Control Center, ADE, SDE (installable apps) | their own repositories | `acrylblends pack` |
 
-1. **npm round trip** - `scripts/npm-round-trip.mjs` packs this machine's CLI target and the selector, installs them with
-   `npm install --global` into a scratch prefix, and runs `acryl --version`. CI (Linux) and the Windows workflow run it on every change; 0.2.5
-   shipped a Windows selector that could not start its runtime, because the release smoke runs each archive's launcher, never npm. (`acryl --web`
-   and `--gui` now make the launcher Blend instead of downloading a Web runtime, spec 050 T024.)
-2. **After publishing** - a clean `npm install -g acryl` with `acryl --version`, `acryl --web` and `acryl control list` on macOS, Windows
-   and Linux.
+## How the pieces find each other
 
-## Verified deliverables (goal's completion list)
+- The selector never reads a GitHub release. It installs the agent's runtime from npm, into `~/.acryl/runtime/<acrylRuntime>`, the first time someone opens it
+  (`acryl ade --tui`, or any words the selector does not own, after a `y`): `npm install --prefix ... acryl-cli-<target>@<acrylRuntime>`. `acrylRuntime` in
+  `distribution/acryl-npm-launcher/package.json` names the acryl-terminal release the runtime comes from; the selector's own version moves on its own.
+- `acryl-cli-<target>` (darwin-arm64, linux-arm64, linux-x64, windows-x64) are the npm tarballs acryl-terminal's release builds from its CLI archives
+  (`scripts/pack-npm-runtimes.mjs`), attached to its GitHub release.
+- acryl-terminal depends on the published `@acryldev/*` packages with exact pins, and on nothing in this checkout.
 
-1. **Release cannot publish unverified builds** — `.github/workflows/release.yml`:
-   - `build` matrix (macos-arm64, macos-x64, linux-arm64, linux-x64, windows-x64) runs
-     `check:layout` + typecheck + test **before** electron-builder packages/upload.
-   - `cli` matrix (darwin-arm64/x64, linux-arm64/x64, windows-x64) smoke-tests the
-     extracted archive (bundled `acryl --version`, `acryl tui --json`, no host
-     Node) **before** upload. The Windows archive builder uses `corepack.cmd`;
-     each CLI job also runs the TUI typecheck/tests and platform-helper test.
-   - `release` job `needs: [build, cli]`; any failed matrix job prevents GitHub
-     Release creation. Every desktop matrix job now also runs
-     `corepack pnpm --filter acryl-desktop run verify:closure`.
-2. **Fresh gates pass** — `corepack pnpm run verify` green locally. CI-side readiness
-   confirmed: committed `upstream.json` (`b150a551…`) == committed submodule pointer
-   (`b150a551…`), so `check:layout` passes on a clean checkout; `pnpm install
-   --frozen-lockfile` passes (rc 0, "Lockfile is up to date"). The local dirty
-   `deepseek-harness` submodule is a working-tree artifact, not a CI blocker.
-3. **Portable CLI archive smoke-tested without host runtime** — darwin-arm64 proven:
-   `acryl --version` → 0.1.9, `acryl tui --json` boots with `PATH=/usr/bin:/bin`.
-   `acryl-cli-windows-x64.zip` assembly verified locally; linux targets structured
-   for CI.
-4. **Checksums** — `release-artifacts/checksums.txt` (darwin + windows) verifies `OK`;
-   the release job regenerates it from all uploaded CLI archives at publish time.
-5. **Ledger** — `docs/DEVELOPMENT-LOG.md` updated through the deferred-channels record.
-6. **Commits / results / targets / blockers / next task** — see below.
+## Release procedure
 
-## Release procedure (version-synced; npm auto-published)
+1. **acryl-terminal** (when the agent or the browser surface changed). Bump the root and both apps to `<new>` (they must be equal), land it on main, wait for its CI
+   (Linux, macOS, Windows), tag `v<new>`. The release workflow builds the CLI and Web archives for the 4 targets, smokes each from a clean extraction, validates one
+   manifest, packs the four `acryl-cli-<target>-<new>.tgz` and creates the GitHub release only when every surface built. A tag that failed before anything was published
+   may be deleted and re-created on a fixed commit.
+2. **Publish the runtimes.** Download the four `.tgz` from the release and `npm publish ./<file> --access public` each (under `--tag next` first). The registry shows
+   tarballs this size (125-150 MB) 20-35 minutes after publish returns; `curl -I https://registry.npmjs.org/acryl-cli-<target>/-/acryl-cli-<target>-<new>.tgz` answers 200
+   when it is really there. npm refuses a version that exists, so a retry is safe.
+3. **The selector.** In `distribution/acryl-npm-launcher/package.json` set `version` (the tag) and `acrylRuntime` (`<new>`), land it, then
+   `node scripts/pack-npm-selector.mjs <out-dir>` (needs `pnpm install` and the build of `@acryldev/app-persistence`; the terminal Control Center is bundled into `launcher.js`)
+   and `npm publish ./<out-dir>/acryl-<version>.tgz --access public`. Pushing the tag `v<version>` runs the selector tests and the npm round trip on three OSes
+   and attaches the tarball to a GitHub release; it publishes to npm only when the repository variable `ACRYL_PUBLISH_SELECTOR_NPM` is `true` (with the `NPM_TOKEN` secret).
+4. **Prove it from npm** under a scratch HOME on a machine that is not the one you built on: `npx acryl@<version> --version`, `--help`, the terminal Control Center in a
+   terminal, and `acryl ade --tui --version` (it downloads the runtime from npm, then prints `<new>`). Then promote the tags to `latest`.
 
-The release tag is the single source of truth for the version. The workflow's manifest job checks that the tag equals all seven package
-versions, and the npm packages are published at that version.
+A push that changes `.github/workflows` needs SSH (`git@github.com:acryldev/...`): the GitHub CLI's OAuth token has no `workflow` scope.
 
-```sh
-# 1. Dry run: gh workflow run release-cli.yml --ref main. Everything but the version check must be green, and the Windows workflow too.
-# 2. Bump the seven package versions <old> -> <new> (they must all be equal), and distribution/acryl-web-container's ARG ACRYL_VERSION:
-#    package.json, runtime/control, runtime/harness-runtime, acryl-terminal/apps/acryl-cli, acryl-terminal/apps/acryl-web, apps/acryl-desktop,
-#    distribution/acryl-npm-launcher. Check: node scripts/release-manifest.mjs verify-versions <new> <the seven package.json files>
-# 3. Commit "chore(release): bump to <new>" and land it on main.
-# 4. Tag v<new> on that commit and push the tag: CLI + Web archives, Desktop, manifest, npm (the 4 acryl-cli-<target> packages, then the
-#    acryl selector), then the GitHub release. About 30 minutes. Before npm publish a failed run may be fixed and the tag recreated; never after.
-# 5. Confirm: npm view acryl version == <new> (the target tarballs can lag 10-35 minutes behind it: curl -I each acryl-cli-<target> tarball until it answers 200), a clean install on the three OSes, the release
-#    marked Latest with no draft left, release notes, node scripts/sync-release-readme.mjs v<new>, and the DEVELOPMENT-LOG entry.
-```
+## What is checked on every change
 
-Prerequisite for the npm auto-publish: a valid `NPM_TOKEN` stored as a GitHub Actions secret on the repository.
+- `corepack pnpm run check` here (layout and dependency direction, typecheck, tests, build) and CI on Linux; the Windows workflow runs the repository's script tests and
+  `scripts/selector-round-trip.mjs` (pack the selector, `npm install --global` it into a scratch prefix, `acryl --version` and `--help`). 0.2.5 shipped a Windows selector that
+  could not start its runtime because the release smoke ran each archive's launcher, never npm.
+- acryl-terminal's CI runs the same on Linux, macOS and Windows, and its release smokes every archive.
 
 ## Supported targets
 
-- Desktop: macOS ARM64 DMG, macOS Intel DMG, Windows x64 EXE, Linux x64 DEB, Linux ARM64 DEB (`acryl-desktop-*`, with `.blockmap`).
-- CLI, 4 targets: darwin-arm64, linux-arm64, linux-x64 (`acryl-cli-<target>.tar.gz`) and windows-x64 (`acryl-cli-windows-x64.zip`). darwin-x64
-  is not built (no x64 macOS runner can build its natives); Intel Mac users build it with `scripts/build-darwin-x64-from-source.sh`.
-- Web, the same 4 targets (`acryl-web-<target>.tar.gz`), downloaded by `acryl web` from the release's `acryl-release-manifest.json`.
-- npm: `npm install -g acryl`, the selector, which installs the matching `acryl-cli-<target>` package as an optional dependency.
-- Installer seam: `acryl-terminal/apps/acryl-cli/scripts/acryl-cli-install.sh` (SHA-256 verify, user-owned dir, no sudo/GUI/Web), not advertised.
+- Terminal agent and browser surface: darwin-arm64, linux-arm64, linux-x64 (`.tar.gz`) and windows-x64 (`acryl-cli-windows-x64.zip`, `acryl-web-windows-x64.tar.gz`).
+  darwin-x64 is not built (no x64 macOS runner can build its natives); Intel Mac users build it with `scripts/build-darwin-x64-from-source.sh` in acryl-terminal.
+- The earlier ACRYL desktop is superseded: its source is https://github.com/acryldev/acryl-desktop, its installers stay at https://github.com/acryldev/acryl/releases, and
+  `acryl desktop --installer` still downloads one.
+- The standalone terminal installer (`curl https://acryl.dev/install | bash`) is retired: the script prints a pointer to `npx acryl@latest`.
 
-## Deferred (recorded, not built)
+## Open
 
-AppImage, RPM, auto-update manifests, code signing/notarization for the CLI,
-Homebrew, Scoop, Chocolatey, Pacman/AUR, mise, Nix.
-
-## Commits (goal work, all on `main`)
-
-`9c442facf129d4440e74d9f01611378f3c3576ec` removes the obsolete Release
-Candidate workflow, makes the release-workflow assertion match its matrix, and
-renames the Windows-incompatible methodology path.
-
-`5d268c7f0dbbae33c4b262f0e85ce343104d7f6d` selects the Windows Corepack shim
-and gates each CLI archive with TUI verification. `02d3ff2` supplies the required
-Windows shell spawn option for that `.cmd` shim.
-
-`933ee2e` rename → `5558721` CLI version/entrypoint fixes → `16ba098` CLI archive
-build + matrix → `d196df0` installer seam → `5a509a6` verify-before-upload →
-`30b2c15` README canonical npm → `f6c3f20` windows CLI target → `feb2e4f` checksums
-format → `e92b9b3` deferred channels.
-
-## Next task
-
-Release 0.2.6: the dry run on `main`, then the procedure above.
+- `flake.nix` and the nix workflows (manual-only, pinned to v0.1.36, building a CLI that no longer lives here): owner decision, retire or move to acryl-terminal.
+- Deferred, not built: AppImage, RPM, auto-update manifests, signing and notarization of the agent runtime, Homebrew, Scoop, Chocolatey, Pacman/AUR, mise.

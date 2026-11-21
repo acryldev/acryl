@@ -5,7 +5,7 @@ what to report when you do not see it.
 
 | Step | Guide | What you prove |
 |---|---|---|
-| 1 | [Set up](01-setup.md) | ACRYL builds and starts from a clean clone on your machine |
+| 1 | [Set up](01-setup.md) | `npx acryl@latest` opens ACRYL Control Center on your machine, and a clean clone of the repository builds and passes its gate |
 | 2 | [Blend apps](02-blend-apps.md) | You can create an app from scratch and from a starter, run it, operate it in plain language, change it, save and copy it |
 | 3 | [The IDE builds its own plugins](03-ide-plugins.md) | ACRYL as a daily IDE, and the agent writing a plugin into the running app |
 | 4 | [Share and pull plugins](04-share-and-pull.md) | A plugin goes from your app to GitHub or npm and into another app, checked |
@@ -26,9 +26,10 @@ Copy this into your report and tick what worked.
 
 ```
 Setup
+[ ] npx acryl@latest opens Control Center (terminal, --gui and --web)
+[ ] acryl ade --tui downloads and starts the terminal agent
 [ ] clone, install and build finish without errors (time: ___)
 [ ] the check suite passes (corepack pnpm run check)
-[ ] ACRYL Desktop starts in its isolated home (corepack pnpm run dev)
 
 Blend apps
 [ ] a Blank app is created and starts; its window shows the app's name
