@@ -34,6 +34,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { desktopEntry, launcherScript, tarballName } from './lib/arch-linux.mjs'
 import { createSource, repositoryOnlyIn } from './lib/create-source.mjs'
+import { DEB_DEPENDS, debPackageName } from './lib/deb.mjs'
 import { osVersion } from './lib/os-version.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -529,6 +530,9 @@ manifest.build = {
     // One name for the program on every Linux: the .deb's, the tarball's launcher and the PKGBUILD's (acryl-control-center).
     executableName: EXE,
   },
+  // The .deb is named after the product (acryl-control-center), not after package.json's `name` (`blend` for every Blend), and depends on the sound library
+  // Electron loads at start (lib/deb.mjs).
+  deb: { packageName: debPackageName(EXE), depends: DEB_DEPENDS },
   ...(platform === 'mac' ? { afterPack: join(work, 'seal-bundle.cjs') } : {}),
 }
 // A Debian package names its maintainer and the app's home page; electron-builder reads both from the manifest.
