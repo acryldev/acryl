@@ -177,4 +177,33 @@ describe('@acryldev/sign-in Host plugin', () => {
     await finished
     expect(saved).toEqual([{ provider: 'anthropic', model: 'claude-sonnet-5' }])
   })
+
+  it('says how to give a provider without a credential one, in the chat, and stops saying it when it unloads', async () => {
+    const app = await boot({ services: false })
+    app.ctx.provide('llm' as never, { listProviders: () => [{ id: 'anthropic', name: 'Anthropic' }], listConfigurableProviders: () => [] } as never)
+    app.ctx.provide('credentials' as never, credentials as never)
+    app.ctx.provide('authorization' as never, {
+      list: () => [{ key: 'llm-pi-ai/anthropic', label: 'Anthropic', methods: [{ id: 'oauth', label: 'Anthropic (Claude Pro/Max)' }] }],
+      begin: async () => ({ status: 'cancelled' }),
+    } as never)
+    await app.fiber
+    expect(app.fiber.state).toBe(ACTIVE)
+    // What `dsh-llm-pi-ai` ends a request with when the route's profile names an API key that is not stored.
+    const harness = { type: 'finish', reason: { kind: 'error', failure: { code: 'MISSING_CREDENTIAL', message: 'llm-pi-ai: no credential for provider route "anthropic"; its profile resolves ANTHROPIC_API_KEY, which is not set' } } }
+    const other = { type: 'finish', reason: { kind: 'error', failure: { code: 'AUTH', message: '401' } } }
+    const stream = async (chunk: unknown) => {
+      async function* adapter() { yield { type: 'text', text: '' }; yield chunk }
+      const seen: unknown[] = []
+      const waterfall = (app.ctx as unknown as { waterfall(self: unknown, name: string, options: unknown, next: () => AsyncIterable<unknown>): AsyncIterable<unknown> }).waterfall
+      for await (const item of waterfall.call(app.ctx, {}, 'llm/stream', { provider: 'anthropic' }, adapter)) seen.push(item)
+      return seen
+    }
+    expect((await stream(harness))[1]).toEqual({ type: 'finish', reason: { kind: 'error', failure: {
+      code: 'MISSING_CREDENTIAL',
+      message: 'Anthropic has no API key on this computer. Add an API key in Settings > Models, or sign in with Claude under Settings > Models > Sign in with an account.',
+    } } })
+    expect((await stream(other))[1]).toEqual(other)
+    await app.fiber.dispose()
+    expect((await stream(harness))[1]).toEqual(harness)
+  })
 })

@@ -141,6 +141,24 @@ describe('readableFailure', () => {
     expect(readableFailure(new Error('Token exchange failed: {"error":"invalid_grant","error_description":"Invalid code."}'))).toBe('Token exchange failed: Invalid code.')
   })
 
+  // The two ways a Claude sign-in ended on the person's screen after the browser had said "authentication completed": pi-ai's
+  // own message, with its url, details and two stack traces, was shown whole.
+  const piAi = (details: string) => new Error(`Token exchange request failed. url=https://platform.claude.com/v1/oauth/token; redirect_uri=http://localhost:53692/callback; response_type=authorization_code; details=${details}; stack=Error: x\n    at postJson (anthropic.ts:171:25)`)
+
+  it('reads the provider\'s sentence out of a pi-ai token exchange chain', () => {
+    expect(readableFailure(piAi('Error: HTTP request failed. status=400; url=https://platform.claude.com/v1/oauth/token; body={"error":"invalid_grant","error_description":"Invalid code"}')))
+      .toBe('Token exchange request failed: Invalid code')
+  })
+
+  it('says a pi-ai token exchange could not reach the provider, without the stack', () => {
+    const said = readableFailure(piAi('TypeError: fetch failed; cause=Error: connect ETIMEDOUT 160.79.104.10:443; code=ETIMEDOUT'))
+    expect(said).toBe('Token exchange request failed: this computer could not reach the provider (connect ETIMEDOUT 160.79.104.10:443). The browser step worked, so a proxy, VPN or firewall may let the browser through but not this app.')
+  })
+
+  it('keeps the innermost reason of any other pi-ai chain', () => {
+    expect(readableFailure(piAi('Error: Token exchange returned invalid JSON'))).toBe('Token exchange request failed: Token exchange returned invalid JSON')
+  })
+
   it('leaves a plain message, an unparsable body and an empty failure readable', () => {
     expect(readableFailure(new Error('Network unreachable'))).toBe('Network unreachable')
     expect(readableFailure(new Error('Bad answer: {not json'))).toBe('Bad answer: {not json')

@@ -83,6 +83,10 @@ describe('isRouteUsable', () => {
   it('counts a sign-in record', async () => {
     expect(await isRouteUsable(usability({ records: ['llm-pi-ai/deepseek'] }), 'deepseek')).toBe(true)
   })
+
+  it('does not count a sign-in record while the profile names an API key that is not stored (the engine fails on the key first)', async () => {
+    expect(await isRouteUsable(usability({ apiKeyEnv: 'DEEPSEEK_API_KEY', records: ['llm-pi-ai/deepseek'] }), 'deepseek')).toBe(false)
+  })
 })
 
 describe('AuthorizationService with default-model adoption', () => {

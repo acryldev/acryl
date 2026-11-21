@@ -113,6 +113,8 @@ export async function isRouteUsable(services: RouteUsabilityServices, provider: 
   const value = (descriptor === undefined ? undefined : getAtPath(descriptor.value, entry.settingsPath)) as StoredProviderProfileLike | undefined
   const apiKeyRef = value?.apiKeyEnv ?? (options.deriveApiKeyRef ?? deriveApiKeyRef)(provider)
   if ((await services.credentials.describe(apiKeyRef)).configured) return true
+  // `dsh-llm-pi-ai` resolves a profile's named `apiKeyEnv` before any sign-in record: unset, it fails every request.
+  if (value?.apiKeyEnv !== undefined) return false
   return (await services.credentials.describeRecord(`${options.loginRecordScope ?? 'llm-pi-ai'}/${provider}`)).configured
 }
 

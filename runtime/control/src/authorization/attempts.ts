@@ -72,22 +72,50 @@ interface Live {
  * own lead-in and the provider's sentence, drop the JSON around it.
  */
 export function readableFailure(cause: unknown): string {
-  const message = cause instanceof Error ? cause.message.trim() : ''
-  if (message === '') return 'Sign-in failed.'
+  const raw = cause instanceof Error ? cause.message.trim() : ''
+  if (raw === '') return 'Sign-in failed.'
+  // pi-ai's flows append the whole chain: "Token exchange request failed. url=...; details=Error: ...; cause=...; stack=...".
+  const chained = /^(?<lead>[^.;]+)\.\s.*?;\sdetails=(?<details>.*)$/su.exec(raw.split('; stack=')[0]!)?.groups
+  if (chained !== undefined) return chainedFailure(chained.lead!.trim(), chained.details!)
+  return providerSentence(raw)
+}
+
+/** The network failures that mean this computer could not reach the provider at all. */
+const UNREACHABLE = /\b(?:ETIMEDOUT|ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|ENETUNREACH|EHOSTUNREACH|UND_ERR_CONNECT_TIMEOUT|CERT_|SELF_SIGNED|UNABLE_TO_VERIFY)\w*/u
+
+/** A pi-ai chain's lead-in and its innermost reason: the provider's sentence from a `body={...}`, else the last `cause=`. */
+function chainedFailure(lead: string, details: string): string {
+  const body = /\bbody=(?<json>\{.*\})/su.exec(details)?.groups?.json
+  const said = body === undefined ? undefined : sentenceIn(body)
+  if (said !== undefined) return `${lead}: ${said}`
+  const innermost = details.split('; cause=').at(-1)!.split(';')[0]!.replace(/^\w*Error:\s*/u, '').trim()
+  if (UNREACHABLE.test(details)) {
+    return `${lead}: this computer could not reach the provider (${innermost}). The browser step worked, so a proxy, VPN or firewall may let the browser through but not this app.`
+  }
+  return `${lead}: ${innermost}`
+}
+
+/** A message quoting a provider's JSON body, as its lead-in and the provider's own sentence. */
+function providerSentence(message: string): string {
   const start = message.indexOf('{')
-  if (start === -1) return message
+  const said = start === -1 ? undefined : sentenceIn(message.slice(start))
+  if (said === undefined) return message
+  const lead = message.slice(0, start).trim().replace(/:$/u, '')
+  return lead === '' ? said : `${lead}: ${said}`
+}
+
+/** The person-readable sentence of a provider's JSON error body, or `undefined` when the text is no such body. */
+function sentenceIn(json: string): string | undefined {
   let body: unknown
   try {
-    body = JSON.parse(message.slice(start))
+    body = JSON.parse(json)
   } catch {
-    return message
+    return undefined
   }
   const record = (value: unknown): Record<string, unknown> | undefined => typeof value === 'object' && value !== null ? value as Record<string, unknown> : undefined
   const nested = record(record(body)?.error)
   const said = [nested?.message, record(body)?.error_description, record(body)?.message, record(body)?.error].find(value => typeof value === 'string' && value.trim() !== '')
-  if (typeof said !== 'string') return message
-  const lead = message.slice(0, start).trim().replace(/:$/u, '')
-  return lead === '' ? said.trim() : `${lead}: ${said.trim()}`
+  return typeof said === 'string' ? said.trim() : undefined
 }
 
 export class SignInAttempts {
