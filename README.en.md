@@ -2,145 +2,87 @@
   <img src="acryl-logo.png" alt="ACRYL logo" width="128" height="128">
 </p>
 
-<h1 align="center">ACRYL — the development environment your agents live in</h1>
+<h1 align="center">ACRYL: everything is a plugin. Build agentic apps.</h1>
 
 <p align="center">
-  <strong>ACRYL is a living Agentic Development Environment and runtime for your agents — infinitely adaptive to you, yours to shape, extend and grow into any workflow, any idea, from the inside out, where everything is a plugin.</strong><br>
-  Bring any coding agent, it plugs in as a replaceable worker, and every decision, diff, and session survives the swap.
+  <strong>Let your users build the product they need.</strong><br>
+  Every ACRYL app has its own agent. Your users say "add XYZ", and seconds later the change is live for them and their team.
+  You keep shipping the foundation; they keep their layer.
 </p>
 
 <p align="center">
-  <a href="https://github.com/acryldev/acryl">⭐ Star ACRYL</a> ·
   <a href="https://acryl.dev/">Website</a> ·
-  <a href="https://acryl.dev/docs">Documentation</a> ·
-  <a href="https://github.com/acryldev/acryl/releases/tag/v0.2.7">Download v0.2.7</a> ·
+  <a href="https://acryl.dev/start">Get started</a> ·
+  <a href="https://acrylblends.github.io">Blends store</a> ·
+  <a href="https://cordisplugins.github.io">Cordis Plugins</a> ·
   <a href="https://discord.gg/cY9KXMex69">Discord</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/acryldev/acryl"><img src="https://img.shields.io/github/stars/acryldev/acryl?style=social" alt="Star ACRYL on GitHub"></a>
+  <a href="https://www.npmjs.com/package/acryl"><img src="https://img.shields.io/npm/v/acryl?label=npx%20acryl&color=28A745" alt="acryl on npm"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2EA44F?style=flat" alt="MIT License"></a>
   <a href="https://discord.gg/cY9KXMex69"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&amp;logo=discord&amp;logoColor=white" alt="Join Discord"></a>
-  <img src="https://img.shields.io/badge/version-0.2.0-28A745?style=flat" alt="Version 0.2.0">
 </p>
 
-> [!IMPORTANT]
-> ACRYL is in active early development. Interfaces, workflows, and packaging may change while the first public foundation is established.
+## What ACRYL is
 
-## Why ACRYL?
+Build agentic apps from plugins. Start blank, grow with an agent, share what you make. ACRYL is the open platform and framework underneath:
+the agent is one part of your app, and our own IDE (ACRYL ADE) is one app built on it.
 
-You don't use one coding agent anymore. You use Claude Code for this, Codex for that, a terminal agent for the quick fix — and every switch costs you the context, the setup, and the thread of the work.
+## Start in one command
 
-ACRYL flips the relationship. Instead of your project living inside one agent's chat, agents live inside your project:
+You need Node.js 22.19 or newer, npm and git. Nothing to install first: `npx` fetches ACRYL when you run it.
 
-```text
-Same project
-Same context
-Same work
-Different agents
-```
-
-Claude Code, Codex, OpenCode, Pi, Gemini CLI, DeepSeek Harness agents, ACP-compatible agents, plain PTY tools — even agents that don't know ACRYL exists. They are replaceable workers entering and leaving one persistent development scene. ACRYL owns the workspace, the context, the tasks, and the handoffs.
-
-## What you get
-
-**🖼️ A real canvas, not a chat window.** Projects and git worktrees on the left, a tabbed canvas in the middle: agent sessions, native terminals, a file editor, diffs with line-by-line review comments you can send straight back to the agent, a draggable kanban for your notes, docs, and checks. Panes are tiles — open, close, and arrange the environment around the work.
-
-**🤖 Every agent, one roster.** A built-in catalog of 33 coding agents you can launch into any project, plus your own custom agent definitions. An attention queue tells you the moment an agent needs you (Claude Code hooks ship today), so you can run several and stop babysitting terminals.
-
-**🎮 Agents that can drive the app.** Agent Control gives the agent inside ACRYL computer-use-style command of ACRYL itself: it reads the accessibility tree, clicks, types, opens panels, enables or disables plugins — every mutating action approved by you per call, recorded in an audit log, stoppable with one key. From the outside, the same power in your terminal: `acryl control` drives a running app, and `acryl doctor` / `acryl repair` diagnose and fix an install that won't boot, with backups and undo.
-
-**🧩 Everything is a plugin — really.** Built on [Cordis](https://github.com/cordiverse/cordis), the meta-framework of spatiotemporal composability. Install and hot-reload plugins live across all three surfaces without restarting. Plugins can contribute their own canvas tab types, tools, slots, and services. Browse the ecosystem at [cordisplugins.github.io](https://cordisplugins.github.io).
-
-**🥤 Blends: whole setups, shareable.** A Blend is a complete, pullable composition of plugins — an entire opinionated environment as one unit. ACRYL itself is just one Blend, the maxed-out one. Yours can be another. See [acrylblends.github.io](https://acrylblends.github.io).
-
-**🖥️ Three surfaces, one brain.** Desktop (Electron), local Web (`acryl web`), and the terminal UI are peers rendering the same runtime — same project model, same plugins, same capabilities. Use whichever fits the moment; the work is the same.
-
-## Install ACRYL v0.2.7
-
-The three surfaces are deliberately separate installs — installing one never silently installs or starts another.
-
-### Desktop GUI
-
-| Platform | Desktop download |
+| Command | What it opens |
 | --- | --- |
-| macOS — Apple Silicon | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.7/acryl-desktop-mac-arm64-v0.2.7.dmg) |
-| macOS — Intel | [DMG](https://github.com/acryldev/acryl/releases/download/v0.2.7/acryl-desktop-mac-x64-v0.2.7.dmg) |
-| Windows — x64 | [Installer](https://github.com/acryldev/acryl/releases/download/v0.2.7/acryl-desktop-win-x64-v0.2.7.exe) |
-| Linux — x64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.7/acryl-desktop-linux-amd64-v0.2.7.deb) |
-| Linux — arm64 / Debian | [DEB](https://github.com/acryldev/acryl/releases/download/v0.2.7/acryl-desktop-linux-arm64-v0.2.7.deb) |
+| `npx acryl` | ACRYL Control Center in your terminal: your apps, the Blends store, make, start, share, pull, deploy |
+| `npx acryl --gui` | ACRYL Control Center as a desktop app |
+| `npx acryl --web` | ACRYL Control Center in your browser |
+| `npx acryl new my-app` | A blank app with the agent inside it |
+| `npx acryl new my-app --from acrylblends.csv-explorer` | An app made from a Blend in the store, yours to change |
 
-The Desktop app carries the runtime it needs; it does not add `acryl` to your PATH or leave a web server running after exit.
+`npx acryl --tui` is the same as `npx acryl`. Prefer a download? ACRYL Control Center for macOS, Windows and Linux:
+[Releases](https://github.com/acrylblends/63-acryl-control-center/releases/latest).
 
-### CLI terminal
+## How your users build: five steps
 
-One command, no Node.js required, adds `acryl` to your PATH and verifies the checksum:
+1. **Building blocks, not source code.** Every app is assembled from Cordis plugins: UI, data and actions behind stable services.
+2. **The agent builds with those blocks.** ACRYL's chat, and Claude Code, Codex or Pi, operate the app through its door. The core code stays untouched.
+3. **Sandboxed per person.** Every app runs in its own instance, on your machine or in your own [WebBox](https://webboxes.ai), with your rights only.
+4. **Your change is a versioned layer: a Blend.** Save, roll back, share it to GitHub, list it in the store.
+5. **The foundation keeps shipping.** `npx acrylblends update` merges new releases under your layer, and your changes stay.
 
-```bash
-curl -fsSL https://acryl.dev/install | bash
-acryl
-```
+Stop selling features. Sell a platform your customers finish themselves.
 
-Prefer npm? It works, but npm 11+ prints advisory `install-scripts` warnings for ACRYL's native dependencies (`node-pty`, `koffi`, and others). These are npm security notices, not ACRYL errors. To install without them:
+## Five nouns: the whole model
 
-```bash
-npm install -g acryl --allow-scripts=@deepseek-ai/dsh-subprocess-local,@google/genai,koffi,node-pty,protobufjs
-acryl
-```
+| Noun | What it is |
+| --- | --- |
+| **App** | A folder: `blend.yaml`, its plugins, its data. Copy the folder, copy the app. |
+| **Host** | One process per app. It loads plugins and swaps them while the app runs. |
+| **Plugin** | The only unit of capability: a page, a tool, a service. |
+| **Surface** | Web or Desktop. It draws what the Host serves and owns no logic. |
+| **Driver** | An agent working inside the app. The built-in chat is one of many. |
 
-### Local Web surface
+## Share and pull
 
-```bash
-acryl web
-```
+- **Blends (whole apps):** share your app to your own GitHub repository and list it in the store as Community (`npm run share -- --visibility public --list`).
+  Anyone makes an app from it (`npx acryl new their-app --from github:you/your-app#v0.1.0`) and later brings in your next release with
+  `npx acrylblends update`, keeping their own changes.
+- **Cordis plugins (single capabilities):** publish a plugin to your GitHub (`npm run acryl -- plugin publish <name>`) and pull anyone's into your app
+  by its address (`npm run acryl -- plugin pull github:owner/repo@version`).
+- **WebBoxes:** deploy any Blend to your own hosted box at [webboxes.ai](https://webboxes.ai), with its agents.
 
-Starts a local web runtime, prints its URL, and serves until you stop it. It is not a hosted cloud service.
+## What is in this repository
 
-### Nix (Flake, community-contributed)
+The reusable building blocks of the platform: the framework (`framework/`: `@acryldev/blends`, `@acryldev/create-blends`, the frame), the runtime
+(`runtime/`), the plugins (`plugins/`) and the `acryl` command (`distribution/acryl-npm-launcher`). Products built on them live in their own
+Blend repositories: [ACRYL Control Center](https://github.com/acrylblends/63-acryl-control-center), [ACRYL ADE](https://github.com/acrylblends/05-acryl-ade),
+[ACRYL SDE](https://github.com/acrylblends/05-acryl-sde). Framework documentation: [`framework/docs`](framework/docs/README.md).
 
-This route is maintained by a contributor and is not part of the release checks, so it can lag behind a release (its dependency hash is refreshed by hand when the lockfile changes). Prefer the installers above; if the Flake fails to build, please open an issue.
-
-```bash
-nix run github:acryldev/acryl              # TUI, built from source
-nix run github:acryldev/acryl#acryl-desktop # Desktop GUI
-nix profile install github:acryldev/acryl  # install to your profile
-```
-
-The flake exposes `packages.<system>.acryl` (also `#default`), `.prebuilt` (prebuilt binary with bundled Node runtime; `x86_64-linux`, `aarch64-linux`, `aarch64-darwin`), `.acryl-desktop`, and `devShells.<system>.default`.
-
-## Core principles
-
-1. **Agent sessions are disposable. Project context is persistent.**
-2. **ACRYL owns continuity. Agents perform work.**
-3. **Canonical state is durable and agent-independent.**
-4. **Agent-specific context is a projection, not the source of truth.**
-5. **Everything practical is a plugin or replaceable capability.**
-6. **Capabilities are versioned, permissioned, testable, and auditable.**
-
-## Architecture at a glance
-
-```text
-              ACRYL product surfaces
-         Desktop  ·  CLI terminal  ·  Local Web
-                        |
-              ACRYL-owned capabilities
-       (workspace, agent control, continuity)
-                        |
-        DeepSeek Harness capability substrate
-       (sessions, agents, tools, LLMs, PTYs)
-                        |
-      Cordis lifecycle and composition runtime
-                        |
-            Node.js / Electron / OS
-```
-
-The trusted kernel stays small and boring. New functionality arrives as versioned capability packages that can be validated, activated, observed, and rolled back without touching the core.
-
-## DeepSeek Harness lineage
-
-ACRYL builds on an unmodified, pinned [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) checkout as its capability substrate — sessions, tools, PTYs, sandboxing, Web composition — while remaining an independent product with a broader goal: persistent, cross-agent development continuity. The pinned upstream lives read-only in `deepseek-harness/`.
-
-ACRYL is not affiliated with, authorized by, or endorsed by DeepSeek.
+ACRYL builds on [Cordis](https://github.com/cordiverse/cordis), the meta-framework of composable plugins, and on a pinned
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) checkout for its chat agent. ACRYL is not affiliated with, authorized by, or endorsed by DeepSeek.
 
 ## Run from source
 
@@ -149,16 +91,15 @@ Requirements: Node.js `^22.19.0` or `>=24.0.0`, Corepack (selects the pinned PNP
 ```sh
 corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
-corepack pnpm dev
+corepack pnpm run verify
 ```
 
-`corepack pnpm dev` builds and launches the isolated local Desktop (own `~/.acryl-dev` home, advanced mode, Development Canvas). Other essentials:
+Essentials:
 
-- `corepack pnpm run verify` — fast headless loop (typecheck + tests)
-- `corepack pnpm run check` — complete headless gate, use before handoff
-- `corepack pnpm run web` / `corepack pnpm run tui` — the other surfaces
+- `corepack pnpm run verify` - fast headless loop (typecheck + tests)
+- `corepack pnpm run check` - complete headless gate, use before handoff
 
-Repository layout: `apps/` (the surfaces), `runtime/` (the stable core), `plugins/` (replaceable capability packages), `distribution/` (release shims), `deepseek-harness/` (pinned upstream submodule — never edited from a feature branch).
+Repository layout: `framework/` (the Blends framework and its packages), `runtime/` (the stable core), `plugins/` (replaceable capability packages), `distribution/` (the `acryl` command), `deepseek-harness/` (pinned upstream submodule, never edited from a feature branch). `scripts/verify-layout.mjs` enforces it.
 
 ## Project links
 
@@ -172,6 +113,21 @@ Repository layout: `apps/` (the surfaces), `runtime/` (the stable core), `plugin
 ACRYL welcomes contributors interested in agent interoperability, persistent context, Cordis plugins, developer tooling, terminals, editors, dynamic UI, security, and self-extensible software.
 
 Before contributing, read [`AGENTS.md`](AGENTS.md), the [ACRYL orientation](docs/onboarding/orientation_spec_acryl.md), and the [Cordis specification](docs/cordis/cordis_spec.md). Join the [Discord](https://discord.gg/cY9KXMex69) to discuss the project.
+
+## Contributors
+
+Thanks to everyone building ACRYL - every report, idea, and PR counts:
+
+<p>
+  <a href="https://github.com/musichen" title="musichen"><img src="https://github.com/musichen.png?size=120" width="60" height="60" alt="musichen" style="border-radius:50%" /></a>
+  <a href="https://github.com/levonk" title="levonk"><img src="https://github.com/levonk.png?size=120" width="60" height="60" alt="levonk" style="border-radius:50%" /></a>
+  <a href="https://github.com/kuishou68" title="kuishou68"><img src="https://github.com/kuishou68.png?size=120" width="60" height="60" alt="kuishou68" style="border-radius:50%" /></a>
+  <a href="https://github.com/smrifat1411" title="smrifat1411"><img src="https://github.com/smrifat1411.png?size=120" width="60" height="60" alt="smrifat1411" style="border-radius:50%" /></a>
+</p>
+
+[All contributors on GitHub](https://github.com/acryldev/acryl/graphs/contributors).
+
+Who did what, by name: [CONTRIBUTORS.md](CONTRIBUTORS.md) ([中文](CONTRIBUTORS.zh.md)). Your name belongs here - see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
