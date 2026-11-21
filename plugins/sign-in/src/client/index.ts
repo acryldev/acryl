@@ -1,6 +1,6 @@
 /**
  * Cordis Client plugin: the account sign-in card at the foot of Settings > Models, on every surface that hosts this
- * package. It owns its dictionaries and styles, each inside one effect, and talks to its Host half over the private
+ * package, and the chat's row for a failed turn (a provider's refusal in plain words, with the fix when it is known). It owns its dictionaries and styles, each inside one effect, and talks to its Host half over the private
  * same-origin routes.
  */
 
@@ -10,6 +10,7 @@ import { en, zh, type SignInLocaleKey } from './locales.ts'
 import { ConnectChoice } from './ConnectChoice.tsx'
 import { SignInCard, type SignInCardInjected } from './SignInCard.tsx'
 import { SkipPreviewNotice } from './SkipPreviewNotice.tsx'
+import { TurnFailureView } from './TurnFailureView.tsx'
 import { createSignInApi } from './sign-in-api.ts'
 import { installSignInStyles } from './styles.ts'
 
@@ -66,6 +67,17 @@ export function apply(ctx: ClientContext): void {
     priority: -1,
     inject: () => ({}),
   }, SkipPreviewNotice))
+  // A failed turn in plain words (the provider's sentence, a known fix, the raw text behind Details) in place of DeepSeek's row, which prints the
+  // provider's JSON body whole. `conversation.chat.node` is declared by `@deepseek-ai/dsh-client-ui-chat`, which this package does not depend on, so
+  // the slot is named without its types; a lower priority shadows DeepSeek's `turn-error` entry in either registration order.
+  const chat = ctx.slots as unknown as { inject(name: string, register: () => unknown): void, register(entry: object, component: unknown): unknown }
+  chat.inject('conversation.chat.node', () => chat.register({
+    name: 'conversation.chat.node',
+    key: 'turn-error',
+    priority: -1,
+    locale: SIGN_IN_LOCALE_NAMESPACE,
+    inject: () => ({ openExternal }),
+  }, TurnFailureView))
 }
 
 export { SignInCard } from './SignInCard.tsx'

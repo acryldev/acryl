@@ -31,6 +31,18 @@ const CSS = `
 .acrylConnectModels { min-width: 0; }
 .acrylConnectFoot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .acrylConnectHint { color: var(--dsw-alias-label-secondary, inherit); font-size: 12.5px; }
+
+.acrylTurnFailure { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 2px 0; font-size: var(--dsh-content-font-size-secondary, 13px); line-height: calc(20px + var(--dsh-content-font-delta-secondary, 0px)); }
+.acrylTurnFailureDot { width: 6px; height: 6px; margin: 7px 0 0 2px; border-radius: 50%; background: var(--dsw-alias-state-error-primary, #f87171); }
+.acrylTurnFailureCopy { min-width: 0; overflow-wrap: anywhere; }
+.acrylTurnFailureTitle { margin-right: 6px; color: var(--dsw-alias-state-error-primary, #f87171); font-weight: 600; }
+.acrylTurnFailureText { color: var(--dsw-alias-label-secondary, inherit); }
+.acrylTurnFailure a { color: var(--dsw-alias-label-link, #4d6bfe); text-decoration: underline; cursor: pointer; }
+.acrylTurnFailureHint { margin: 4px 0 0; color: var(--dsw-alias-label-primary, inherit); }
+.acrylTurnFailureDetails { margin-top: 4px; color: var(--dsw-alias-label-tertiary, inherit); }
+.acrylTurnFailureDetails summary { width: fit-content; cursor: pointer; }
+.acrylTurnFailureDetails code { display: block; margin-top: 4px; white-space: pre-wrap; font: var(--dsw-font-markdown-code-block-small, 12px ui-monospace, monospace); }
+.acrylTurnFailureCode { color: var(--dsw-alias-label-tertiary, inherit); font: var(--dsw-font-markdown-code-block-small, 12px ui-monospace, monospace); }
 `
 
 /** @returns disposer, for one owning `ctx.effect`. */

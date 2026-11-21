@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { apply } from '../../src/client/index.ts'
 import { SkipPreviewNotice } from '../../src/client/SkipPreviewNotice.tsx'
 
-/** A frame that declares the three list/single slots this plugin registers into, over the real slot registry. */
+/** A frame that declares the slots this plugin registers into, over the real slot registry. */
 function frame() {
   const core = new SlotCore()
   const Frame = (() => null) as never
@@ -15,6 +15,7 @@ function frame() {
       'settings.models.footer': { kind: 'list', scope: 'root' },
       'settings.models.sign-in': { kind: 'single', scope: 'root' },
       'settings.onboarding': { kind: 'list', scope: 'root' },
+      'conversation.chat.node': { kind: 'keyed', scope: 'session' },
     },
   } as never, Frame)
   const ctx = {

@@ -9,10 +9,17 @@ provider whose harness flow offers an account sign-in (GitHub Copilot, ...). API
   sign-in page (the system browser on Desktop, a new tab on Web; a pop-up opened without a click is blocked by browsers, so
   "Open sign-in page" stays on the card), shows the question a flow asks (paste a code or a redirect URL, choose browser or
   device login), and reads a failure in the provider's words.
+- **Failed chat turns** (`src/client/TurnFailureView.tsx`, `src/client/turn-failure.ts`): the chat's `turn-error` row
+  (`conversation.chat.node`, shadowing DeepSeek's at priority -1). It reads the provider's sentence out of the JSON body the
+  harness recorded (`400 {"type":"error","error":{...,"message":"..."}}` becomes "Claude: ..."), makes web addresses links that
+  open outside the app, adds a hint for a refusal whose fix is known (Anthropic billing third-party apps to extra usage), and
+  keeps the raw text behind Details. A request whose provider has no credential (`MISSING_CREDENTIAL`) is reworded on the Host,
+  in the `llm/stream` waterfall: add an API key, or sign in with the provider's account when it offers one.
 - **Host** (`src/index.ts`, `src/controller.ts`): the providers are the harness's own authorization flows (`ctx.authorization`,
   registered by `dsh-llm-pi-ai`); nothing here knows a protocol. The terminal's `/login` drives the same flows.
   `@acryldev/control`'s `SignInAttempts` holds the one running conversation; `createRouteActivation` makes the provider usable
-  once it succeeds, and `createDefaultModelAdoption` makes it the default for new sessions when the current default cannot
+  once it succeeds (a new route is named for the provider, Claude for `anthropic`; an `apiKeyEnv` naming a key that is not stored
+  is removed, since the harness would try it before the sign-in and fail), and `createDefaultModelAdoption` makes it the default for new sessions when the current default cannot
   answer (its provider has no credential or is not live; a default that works is never replaced). The starting model per
   provider is `STARTING_MODELS` in `@acryldev/control`, else the route's first model.
 - **DeepSeek account** (`src/deepseek-account.ts`): DeepSeek's own account dialog registers only inside DeepSeek's Desktop

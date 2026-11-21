@@ -6,6 +6,8 @@ export type SignInLocaleKey =
   | 'browserTitle' | 'browserText' | 'openPage' | 'copyLink' | 'copied' | 'working' | 'continue' | 'cancel'
   | 'failed' | 'tryAgain' | 'done' | 'unavailable'
   | 'connectTitle' | 'connectIntro' | 'connectSettingsText' | 'connectSettingsAction' | 'connectLater'
+  | 'turnFailed' | 'turnStopped' | 'failureAuth' | 'failureAccountSignedOut' | 'failureAccountSignInRequired' | 'failureQuota'
+  | 'failureDetails' | 'hintClaudeExtraUsage'
 
 export const en: Record<SignInLocaleKey, string> = {
   heading: 'Sign in with an account',
@@ -38,6 +40,14 @@ export const en: Record<SignInLocaleKey, string> = {
   connectSettingsText: 'Settings > Models has more providers and every option; you can change all of this there at any time.',
   connectSettingsAction: 'More providers in Settings',
   connectLater: 'Later',
+  turnFailed: 'This turn failed',
+  turnStopped: 'Task stopped',
+  failureAuth: 'API key is invalid',
+  failureAccountSignedOut: 'Stopped because you signed out of DeepSeek.',
+  failureAccountSignInRequired: 'Sign in to DeepSeek and ensure the request destination supports account authentication.',
+  failureQuota: 'Request quota exhausted.',
+  failureDetails: 'Details',
+  hintClaudeExtraUsage: 'Your Claude plan does not cover apps like ACRYL. Turn on extra usage at claude.ai/settings/usage, or choose another model.',
 }
 
 export const zh: Record<SignInLocaleKey, string> = {
@@ -71,4 +81,12 @@ export const zh: Record<SignInLocaleKey, string> = {
   connectSettingsText: '设置 > 模型里有更多提供方和全部选项，之后可随时在那里更改。',
   connectSettingsAction: '在设置中查看更多提供方',
   connectLater: '稍后',
+  turnFailed: '本轮运行失败',
+  turnStopped: '任务已停止',
+  failureAuth: 'API 密钥无效',
+  failureAccountSignedOut: '任务已因退出 DeepSeek 登录而停止。',
+  failureAccountSignInRequired: '请先登录 DeepSeek，并确认请求地址支持账号认证。',
+  failureQuota: '当前请求的额度已用尽',
+  failureDetails: '详情',
+  hintClaudeExtraUsage: '你的 Claude 套餐不包含 ACRYL 这类应用的用量。请在 claude.ai/settings/usage 开启额外用量，或选择其他模型。',
 }
