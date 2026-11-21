@@ -7206,3 +7206,23 @@ settings pane"; and before sleeping: "finish unification whole plan, everything,
   made, installed and served the Control Center (HTTP 200, the Control Center page), `--gui` started Electron from the scratch home, both stopped after.
 - **Publish:** `@acryldev/launcher-desktop` 0.1.8 (the `./node` export), then `acryl` 0.3.0 (`npm publish` in distribution/acryl-npm-launcher; its
   prepack builds app-persistence and bundles launcher.js).
+
+## 2026-11-21 - ACRYL Blends 1.7.23: every app shows its versions; one coordinated release with the products
+
+- **What (`108e4a238c3e3c0a189fa3b838843f7d16c58f83`).** Each app shows the version of its Blend (`metadata.version` in blend.yaml) and of the ACRYL Blends
+  framework (the installed `@acryldev/blends`). It appears in the frame's top bar ("Blend 0.1.4 · ACRYL Blends 1.7.23", hidden at phone width) and in
+  Help > About / the macOS About panel, which add the product version when the app is packed (never Electron's version as the app's). One reader,
+  `readAppVersions` in `@acryldev/blends-core`, feeds both. The frame state field is `appVersions`, because `versions` already means save points there.
+  The packer stamps the higher of package.json's version and the Blend's into Info.plist.
+- **Releases (`ffb74b1c6fc9a54c243850a5ad339cd082f2254e`, `870f2739cfb0996ea4ebe434b8f8af01a9ae5dfe`,
+  `072db26667b222256c8773b686f85a49899fc501`).** 1.7.22 was staged under `next` and then superseded, never made latest, because the fix for an installed
+  app's blank window (9d048c4e) landed after the cut. 1.7.23 carries both. Also moved to latest together: blends-core 0.6.2, blends-frame 0.2.14,
+  desktop-shell 0.1.9, control 0.3.1, sign-in 0.2.3, ui 0.4.0, diagnostics 0.2.0 and system-prompt 0.3.0.
+- **Found in the from-npm proof:** the published workspace 0.2.3, plugin-admin 0.2.1 and support 0.2.1 pinned control 0.3.0 exactly, so a new app
+  carried two copies of control and missed the 0.3.1 failed-turn fix. Patch releases workspace 0.2.4, plugin-admin 0.2.2 and support 0.2.2 are built on
+  0.3.1; now an app resolves a single control.
+- **Verified from npm** under a scratch HOME: an app made with create-blends 1.7.23 (npm test 7/7; frame state `{blend 0.1.0, framework 1.7.23}`;
+  `plugin pull github:inboxxobni/sh-guide-clock@0.1.0@sha256:...` installed and active). A Control Center DMG packed with 1.7.23, copied out and run with
+  a scratch HOME and user data, showed the Control Center (not a blank window) with the label. Gate on z370n green before the push.
+- **Products pinned and tagged:** ACRYL Control Center v0.2.10, ACRYL ADE v0.2.7, ACRYL SDE v0.1.6; their release.yml packs with
+  `@acryldev/blends@1.7.23`.
