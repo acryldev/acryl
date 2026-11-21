@@ -9,9 +9,9 @@ import { test } from 'node:test'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import pty from 'node-pty'
-import { bundleLauncher } from '../tui/bundle.mjs'
+import { bundleLauncher } from '../../tui/bundle.mjs'
 
-const selectorSource = fileURLToPath(new URL('..', import.meta.url))
+const selectorSource = fileURLToPath(new URL('../..', import.meta.url))
 // biome-ignore lint/suspicious/noControlCharactersInRegex: terminal escape sequences
 const plain = text => text.replace(/\x1b\[[0-9;?<>=]*[A-Za-z]|\x1b\][^\x07]*\x07|\x1b[PX^_][^\x1b]*\x1b\\/gu, '')
 

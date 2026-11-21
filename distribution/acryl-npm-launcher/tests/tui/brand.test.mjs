@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { visibleWidth } from '@earendil-works/pi-tui'
-import { MARK_WIDTH, SPINNER, colorEnabled, gradient, markLines, sectionTitle, shimmerAt, spectrumAt, spinnerFrame, wordmark } from '../tui/brand.js'
+import { MARK_WIDTH, SPINNER, colorEnabled, gradient, markLines, sectionTitle, shimmerAt, spectrumAt, spinnerFrame, wordmark } from '../../tui/brand.js'
 
 // biome-ignore lint/suspicious/noControlCharactersInRegex: terminal escape sequences
 const plain = text => text.replace(/\x1b\[[0-9;]*m/gu, '')

@@ -51,7 +51,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests/*.test.mjs tests/tui/*.test.mjs",
     "prepack": "corepack pnpm --filter @acryldev/app-persistence run build && node tui/bundle.mjs launcher.js"
   },
   "devDependencies": {
