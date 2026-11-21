@@ -1573,6 +1573,9 @@ importers:
       '@acryldev/launcher':
         specifier: workspace:*
         version: link:../../plugins/launcher
+      '@acryldev/launcher-desktop':
+        specifier: workspace:*
+        version: link:../../plugins/launcher-desktop
       '@acryldev/ui-tui':
         specifier: workspace:*
         version: link:../../plugins/ui-tui

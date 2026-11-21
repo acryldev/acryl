@@ -43,8 +43,11 @@ function targetManifest(target) {
 }
 
 function selectorManifest() {
+  // The package's own manifest (what `npm publish` in its folder sends too), without the scripts that only build it.
+  const { scripts: _scripts, ...manifest } = selectorPackage
   return {
-    name: 'acryl', version, private: false, type: 'module', bin: { acryl: './bin.js' },
+    ...manifest,
+    private: false,
     files: selectorFiles,
     // No runtime dependency: `npx acryl` downloads only the selector and the launcher. The terminal agent's runtime (`acryl-cli-<target>`, about
     // 450 MB) is installed into ~/.acryl/runtime the first time someone opens it (spec 050 D14, T009). A full release ships both at one version; a
@@ -52,9 +55,6 @@ function selectorManifest() {
     acrylRuntime: selectorOnly ? selectorPackage.acrylRuntime : version,
     // The same minimum bin.js checks before anything loads (distribution/acryl-npm-launcher/node-version.js).
     engines: { node: `>=${MINIMUM_NODE}` },
-    description: 'A persistent, agent-agnostic coding environment. Keep your context, change your agent.',
-    keywords: ['ai', 'coding-agent', 'agent', 'agentic-development', 'cli', 'tui', 'developer-tools', 'context', 'agent-context', 'multi-agent', 'cordis', 'deepseek-harness'],
-    homepage: 'https://acryl.dev', repository: 'github:acryldev/acryl', license: 'MIT',
   }
 }
 

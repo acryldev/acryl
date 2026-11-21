@@ -1,8 +1,8 @@
-// spec 050 T003: a bare `acryl` in a real pseudo-terminal opens the launcher, and Enter alone makes an app. The selector is the real one
-// (distribution/acryl-npm-launcher) with the real bundle beside it, as npm installs it; only the create package is a local stand-in
-// (ACRYL_CREATE, the selector's own override) so the test needs no network and records exactly what `acryl new` was asked.
+// A bare `acryl` in a real pseudo-terminal opens ACRYL Control Center with the apps on this computer, and the script commands keep working beside it.
+// The selector is the real one (distribution/acryl-npm-launcher) with the real bundle beside it, as npm installs it; only the create package is a local
+// stand-in (ACRYL_CREATE, the selector's own override) so the test records exactly what `acryl make` was asked.
 import assert from 'node:assert/strict'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -12,9 +12,10 @@ import pty from 'node-pty'
 import { bundleLauncher } from '../scripts/bundle.mjs'
 
 const selectorSource = fileURLToPath(new URL('../../../distribution/acryl-npm-launcher', import.meta.url))
+// biome-ignore lint/suspicious/noControlCharactersInRegex: terminal escape sequences
 const plain = text => text.replace(/\x1b\[[0-9;?<>=]*[A-Za-z]|\x1b\][^\x07]*\x07|\x1b[PX^_][^\x1b]*\x1b\\/gu, '')
 
-test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is listed, and acryl apps and acryl --tui show it', { timeout: 120_000 }, async () => {
+test('acryl make lists the app, acryl apps and the terminal Control Center show it, q quits; the model key and the help work over a pipe', { timeout: 120_000 }, async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'acryl-launcher-pty-')))
   try {
     const selector = join(root, 'acryl')
@@ -36,37 +37,11 @@ test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is liste
     mkdirSync(home)
     const env = { ...process.env, HOME: home, USERPROFILE: home, ACRYL_CREATE: create, ACRYL_TEST_MARKER: marker, ACRYL_TUI_THEME: 'dark', npm_config_cache: join(root, 'npm-cache') }
     delete env.npm_execpath
-    const terminal = pty.spawn(process.execPath, [join(selector, 'bin.js')], { name: 'xterm-256color', cols: 80, rows: 30, cwd: work, env })
-    let screen = ''
-    terminal.onData(data => { screen += data })
-    const exited = new Promise(resolve => terminal.onExit(resolve))
-    const waitFor = async (text, ms = 30_000) => {
-      const until = Date.now() + ms
-      while (!plain(screen).includes(text)) {
-        if (Date.now() > until) throw new Error(`waited for "${text}"; the screen shows:\n${plain(screen).slice(-2000)}`)
-        await new Promise(resolve => setTimeout(resolve, 50))
-      }
-    }
-    try {
-      await waitFor('No apps yet')
-      terminal.write('\r')
-      await waitFor('Which folder should it live in')
-      terminal.write('\r')
-      await waitFor('Name of the app')
-      terminal.write('\r')
-      await waitFor('Start from')
-      terminal.write('\r')
-      await waitFor('This runs now')
-      terminal.write('\r')
-      const { exitCode } = await exited
-      assert.equal(exitCode, 0, plain(screen).slice(-2000))
-    } finally {
-      terminal.kill()
-    }
-    assert.ok(existsSync(marker), `the create package never ran; the screen shows:\n${plain(screen).slice(-2000)}`)
-    assert.deepEqual(JSON.parse(readFileSync(marker, 'utf8')), ['my-app', 'blank'])
-    const made = join(realpathSync(home), 'ACRYL', 'my-app')
-    assert.ok(existsSync(join(made, 'blend.yaml')), 'the app was made in the suggested folder, which the selector created')
+    delete env.NO_COLOR
+
+    const made = spawnSync(process.execPath, [join(selector, 'bin.js'), 'make', 'my-app', '--from', 'acrylblends.blank'], { cwd: work, env, encoding: 'utf8' })
+    assert.equal(made.status, 0, made.stderr)
+    assert.deepEqual(JSON.parse(readFileSync(marker, 'utf8')), ['my-app', '--from', 'acrylblends.blank'])
     const listed = JSON.parse(readFileSync(join(home, '.acryl', 'control-center-apps.json'), 'utf8')).apps
     assert.deepEqual(listed.map(entry => [entry.id, entry.blend, entry.madeBy]), [['my-app', 'acrylblends.blank', 'person']])
 
@@ -74,18 +49,33 @@ test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is liste
     const apps = spawnSync(process.execPath, [join(selector, 'bin.js'), 'apps'], { cwd: work, env, encoding: 'utf8' })
     assert.equal(apps.status, 0, apps.stderr)
     assert.match(apps.stdout, /^my-app {2}ready {2}acrylblends\.blank {2}/u)
-    // `acryl --tui` opens the app screen with it; without a terminal it says what to do instead.
-    const second = pty.spawn(process.execPath, [join(selector, 'bin.js'), '--tui'], { name: 'xterm-256color', cols: 80, rows: 30, cwd: work, env })
-    let again = ''
-    second.onData(data => { again += data })
+
+    // A bare `acryl` in a terminal: ACRYL Control Center with the app, in color, at 80 columns; q quits (nothing was started, so nothing to ask).
+    const terminal = pty.spawn(process.execPath, [join(selector, 'bin.js')], { name: 'xterm-256color', cols: 80, rows: 40, cwd: work, env })
+    let screen = ''
+    terminal.onData(data => { screen += data })
+    const exited = new Promise(resolve => terminal.onExit(resolve))
     try {
       const until = Date.now() + 30_000
-      while (!plain(again).includes('Your apps (1)')) {
-        if (Date.now() > until) throw new Error(`waited for the app list; the screen shows:\n${plain(again).slice(-2000)}`)
+      while (!plain(screen).includes('YOUR APPS (1)')) {
+        if (Date.now() > until) throw new Error(`waited for the app list; the screen shows:\n${plain(screen).slice(-2000)}`)
         await new Promise(resolve => setTimeout(resolve, 50))
       }
-      assert.match(plain(again), /my-app +ready +Web +acrylblends\.blank/u)
-    } finally { second.kill() }
+      assert.match(plain(screen), /my-app +stopped +Web +acrylblends\.blank/u)
+      assert.match(plain(screen), /▄█▀█▄/u, 'the ACRYL mark')
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: terminal escape sequences
+      assert.match(screen, /\x1b\[38;2;/u, 'drawn in color')
+      terminal.write('q')
+      assert.equal((await exited).exitCode, 0, plain(screen).slice(-2000))
+    } finally { terminal.kill() }
+
+    // Without a terminal a bare `acryl` prints the help (an agent or a script reads what it can do), and --tui says what to do instead.
+    const help = spawnSync(process.execPath, [join(selector, 'bin.js')], { cwd: work, env, encoding: 'utf8' })
+    assert.equal(help.status, 0, help.stderr)
+    assert.match(help.stdout, /acryl --gui/u)
+    const noTerminal = spawnSync(process.execPath, [join(selector, 'bin.js'), '--tui'], { cwd: work, env, encoding: 'utf8' })
+    assert.equal(noTerminal.status, 2)
+    assert.match(noTerminal.stderr, /--tui needs a terminal/u)
     // `acryl model set deepseek` over a pipe (a script) stores the key owner-only and never prints it; the status shows only its tail.
     const KEY = 'sk-0123456789abcdef0123456789abcdef'
     const stored = spawnSync(process.execPath, [join(selector, 'bin.js'), 'model', 'set', 'deepseek'], { cwd: work, env, input: KEY, encoding: 'utf8' })
@@ -119,9 +109,6 @@ test('Enter five times: acryl new my-app blank runs in ~/ACRYL, the app is liste
     const started = spawnSync(process.execPath, [join(selector, 'bin.js'), 'new', 'other-app'], { cwd: work, env: { ...env, ACRYL_TEST_SEEN: seen }, encoding: 'utf8' })
     assert.equal(started.status, 0, started.stderr)
     assert.equal(readFileSync(seen, 'utf8'), KEY)
-    const noTerminal = spawnSync(process.execPath, [join(selector, 'bin.js'), '--tui'], { cwd: work, env, encoding: 'utf8' })
-    assert.equal(noTerminal.status, 1)
-    assert.match(noTerminal.stderr, /--tui needs a terminal/u)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

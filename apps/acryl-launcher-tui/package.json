@@ -1,7 +1,7 @@
 {
   "name": "acryl-launcher-tui",
   "version": "0.1.0",
-  "description": "The ACRYL launcher in a terminal (spec 050): every step offered with pi-tui and @acryldev/ui-tui; bundled into the acryl npm package, opened by a bare `acryl`",
+  "description": "ACRYL Control Center in a terminal: the Control Center service of @acryldev/launcher-desktop drawn with pi-tui, @acryldev/ui-tui and the ACRYL spectrum; bundled into the acryl npm package, opened by a bare `acryl`",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -19,6 +19,7 @@
   "dependencies": {
     "@earendil-works/pi-tui": "1.1.0",
     "@acryldev/launcher": "workspace:*",
+    "@acryldev/launcher-desktop": "workspace:*",
     "@acryldev/ui-tui": "workspace:*"
   },
   "devDependencies": {

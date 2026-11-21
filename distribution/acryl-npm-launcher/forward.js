@@ -1,6 +1,6 @@
 // The short commands of `acryl`: each runs a part that already exists, with the same flags, and no `--` in front of them.
 //
-//   acryl new <name> [starter]    makes an app: create-acrylblends (the app, in the frame, installed and started)
+//   acryl new <name> [starter]    makes an app: create-acrylblends (the app, in the frame, installed and started); `make` means the same
 //   acryl plugin <verb> ...       inside an app: the app's own door (publish, pull, ...); `plugins` means the same
 //   acryl blends <command> ...    the acrylblends command (add, upgrade, open, preflight, ...)
 //   acryl update                  acrylblends upgrade, in the app
@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs'
 import { basename, dirname, join, resolve, win32 } from 'node:path'
 
 /** The commands this module answers. `acryl` with anything else keeps its old meaning. */
-export const FORWARDED = ['new', 'create', 'plugin', 'plugins', 'blends', 'update']
+export const FORWARDED = ['new', 'make', 'create', 'plugin', 'plugins', 'blends', 'update']
 
 /** The package `acryl new` runs. `ACRYL_CREATE` pins another (a version, a tarball) without a new flag. */
 export const CREATE_SPEC = 'create-acrylblends@latest'
@@ -70,7 +70,7 @@ export function forwardCommand(argv, context) {
   const [command, ...rest] = argv
   if (!FORWARDED.includes(command)) return undefined
   const { env, cwd } = context
-  if (command === 'new' || command === 'create')
+  if (command === 'new' || command === 'make' || command === 'create')
     return npmExec(context, env.ACRYL_CREATE?.trim() || CREATE_SPEC, rest)
   if (command === 'blends') return npmExec(context, BLENDS_SPEC, rest)
   if (command === 'update') return npmExec(context, BLENDS_SPEC, ['upgrade', ...rest])
@@ -91,7 +91,7 @@ export function forwardCommand(argv, context) {
  */
 export function createdAppName(argv) {
   const [command, ...rest] = argv
-  if (command !== 'new' && command !== 'create') return undefined
+  if (command !== 'new' && command !== 'make' && command !== 'create') return undefined
   for (let i = 0; i < rest.length; i += 1) {
     if (rest[i] === '--from') { i += 1; continue }
     if (!rest[i].startsWith('-')) return rest[i]

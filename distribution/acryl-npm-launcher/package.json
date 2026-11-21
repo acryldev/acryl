@@ -1,8 +1,7 @@
 {
   "name": "acryl",
-  "version": "0.2.11",
-  "description": "ACRYL, a persistent, agent-agnostic coding environment: the acryl command as npm installs it (npx acryl)",
-  "private": true,
+  "version": "0.3.0",
+  "description": "ACRYL: everything is a plugin. Build agentic apps. One command for the whole platform: ACRYL Control Center in the terminal, a window or the browser (npx acryl)",
   "acrylRuntime": "0.2.7",
   "type": "module",
   "bin": {
@@ -11,6 +10,9 @@
   "files": [
     "bin.js",
     "cli.js",
+    "route.js",
+    "help.js",
+    "control-center.js",
     "secret-input.js",
     "node-version.js",
     "forward.js",
@@ -22,7 +24,34 @@
     "package.json",
     "README.md"
   ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "keywords": [
+    "acryl",
+    "agentic-apps",
+    "ai",
+    "agent",
+    "plugins",
+    "cordis",
+    "blends",
+    "control-center",
+    "cli",
+    "tui",
+    "developer-tools"
+  ],
+  "homepage": "https://acryl.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acryldev/acryl.git",
+    "directory": "distribution/acryl-npm-launcher"
+  },
+  "bugs": {
+    "url": "https://github.com/acryldev/acryl/issues"
+  },
+  "license": "MIT",
   "scripts": {
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "prepack": "corepack pnpm --filter @acryldev/app-persistence run build && node ../../apps/acryl-launcher-tui/scripts/bundle.mjs launcher.js"
   }
 }

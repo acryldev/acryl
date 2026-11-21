@@ -6,6 +6,9 @@ import { existsSync } from 'node:fs'
 import { join, relative, isAbsolute } from 'node:path'
 import { CREATE_SPEC, npmCommand, npmExec } from './forward.js'
 
+/** What updates a Blend copy from its newer release (the acrylblends command; the Control Center window runs the same). */
+export const UPDATE_SPEC = 'acrylblends@latest'
+
 /** The apps acryl keeps in its own home: registry id, folder under ~/.acryl, name a person reads. */
 export const MANAGED = Object.freeze({
   ade: Object.freeze({ id: 'acryl.ade', folder: 'ade', title: 'ACRYL ADE' }),
@@ -35,12 +38,15 @@ export function surfaceFrom(args) {
  * npm writes `node_modules/.package-lock.json` last, so an install cut short is done again instead of starting a broken app.
  * @returns {{ label: string, command: string, args: string[], cwd: string, shell?: boolean }[]}
  */
-export function managedSteps(app, surface, { home, context, exists = existsSync }) {
+export function managedSteps(app, surface, { home, context, exists = existsSync, update = false }) {
   const folder = join(home, app.folder)
   const steps = []
   if (!exists(join(folder, 'blend.yaml'))) {
     const create = context.env.ACRYL_CREATE?.trim() || CREATE_SPEC
     steps.push({ label: `making ${app.title} in ${folder} (once)`, ...npmExec(context, create, [app.folder, '--from', app.id, '--no-start']), cwd: home })
+  } else if (update) {
+    // The copy made earlier, brought up to its Blend's newest release: a merge that keeps local changes, then npm install (the window's "Update to").
+    steps.push({ label: `updating ${app.title} to the newest release`, ...npmExec(context, UPDATE_SPEC, ['update']), cwd: folder })
   }
   if (!exists(join(folder, 'node_modules', '.package-lock.json'))) {
     steps.push({ label: `installing ${app.title} (once, about a minute)`, ...npmCommand(context, ['install', '--no-audit', '--no-fund']), cwd: folder })

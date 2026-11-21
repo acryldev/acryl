@@ -12,12 +12,18 @@ import { readSecret } from './secret-input.js'
 import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor, targetPackageName } from './runtime.js'
 import { MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
+import { firstAddress, installedControlCenter, opensBrowser } from './control-center.js'
+import { HELP } from './help.js'
+import { routeArgs } from './route.js'
 
 const require = createRequire(import.meta.url)
 const selectorVersion = require('./package.json').version
 /** The release the prepared runtimes (terminal agent, old Web, desktop installer) come from; it moves only when they are rebuilt (spec 050 D14). */
 const runtimeVersion = require('./package.json').acrylRuntime ?? selectorVersion
 const args = process.argv.slice(2)
+// `npx --package=<spec> acryl` leaves the package list in the environment, and every `npm exec <package>` acryl starts (create-acrylblends, acrylblends)
+// would read it and run its argument as a command instead ("create-acrylblends@latest: command not found"). It names this package, never theirs.
+delete process.env.npm_config_package
 
 function run({ command, args: commandArgs }) {
   const child = spawn(command, commandArgs, { stdio: 'inherit' })
@@ -33,7 +39,7 @@ function run({ command, args: commandArgs }) {
   })
 }
 
-function openInstaller(path) {
+function openPath(path) {
   const opener = process.platform === 'darwin' ? ['open', [path]]
     : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', path]]
     : ['xdg-open', [path]]
@@ -45,7 +51,7 @@ async function runDesktop(desktopArgs) {
   const noOpen = desktopArgs.includes('--no-open')
   const result = await acquireDesktopInstaller({
     version: runtimeVersion,
-    ...(noOpen ? {} : { open: openInstaller }),
+    ...(noOpen ? {} : { open: openPath }),
   })
   console.log(`ACRYL desktop installer ${result.version}: ${result.path}`)
   if (noOpen) console.log('use --no-open to download without launching')
@@ -54,9 +60,8 @@ async function runDesktop(desktopArgs) {
 /** The launcher (spec 050), bundled into this package as one file at pack time (apps/acryl-launcher-tui/scripts/bundle.mjs). */
 const LAUNCHER = fileURLToPath(new URL('./launcher.js', import.meta.url))
 
-/** ACRYL's own folder (the list of apps lives here) and the visible folder new apps are suggested in (spec 050 D8). HOME moves both, which is how tests isolate. */
+/** ACRYL's own folder: the list of apps, the keys, the Blends acryl keeps (new apps are suggested beside it, in ~/ACRYL). HOME moves it, which is how tests isolate. */
 const ACRYL_HOME = join(homedir(), '.acryl')
-const APPS_FOLDER = join(homedir(), 'ACRYL')
 
 const loadLauncher = () => import(pathToFileURL(LAUNCHER).href)
 
@@ -73,10 +78,10 @@ async function listCreatedApp(commandArgs, cwd) {
   }
 }
 
-/** `acryl` or `acryl --tui` in a terminal: the ACRYL app screen; what the person chose then runs exactly as if they had typed it. */
+/** `acryl` or `acryl --tui` in a terminal: ACRYL Control Center; a command it hands back (the terminal agent) then runs exactly as if it had been typed. */
 async function openLauncher() {
   const { runLauncher } = await loadLauncher()
-  const chosen = await runLauncher({ home: ACRYL_HOME, appsFolder: APPS_FOLDER })
+  const chosen = await runLauncher({ home: ACRYL_HOME })
   if (!chosen) return
   const target = launcherCommand(await desktopWhenListed(chosen.command), {
     env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, bin: fileURLToPath(new URL('./bin.js', import.meta.url)), exists: existsSync,
@@ -151,10 +156,61 @@ async function runSteps(steps, env) {
   return 0
 }
 
-/** `acryl --gui` / `acryl --web`: ACRYL Control Center, the Blend acryl.control-center kept in ~/.acryl/control-center, in a window or the browser; made and installed on first use. */
-async function openLauncherBlend(surface) {
+/**
+ * Run the steps; the last one (the app starting in the browser) also has its output read, and the first address it prints, with its token, opens in the
+ * browser. Its output still reaches this terminal as it comes.
+ */
+async function runStepsOpening(steps, env) {
+  const code = await runSteps(steps.slice(0, -1), env)
+  if (code !== 0) return code
+  const step = steps.at(-1)
+  console.log(`acryl: ${step.label}`)
+  return new Promise(done => {
+    const child = spawn(step.command, step.args, { stdio: ['inherit', 'pipe', 'pipe'], cwd: step.cwd, shell: step.shell === true, env })
+    const stopForwarding = forwardStopSignals(child)
+    const open = opensBrowser(process.env)
+    let seen = false
+    const read = to => chunk => {
+      to.write(chunk)
+      const address = seen ? undefined : firstAddress(chunk.toString('utf8'))
+      if (!address) return
+      seen = true
+      console.log(`acryl: it is up at ${address}${open ? ', opening your browser' : ''}`)
+      if (open) openPath(address)
+    }
+    child.stdout.on('data', read(process.stdout))
+    child.stderr.on('data', read(process.stderr))
+    child.once('error', cause => { stopForwarding(); console.error(`acryl: ${cause.message}`); done(1) })
+    child.once('exit', exitCode => { stopForwarding(); done(exitCode ?? 1) })
+  })
+}
+
+/**
+ * `acryl --gui` / `acryl --web`: ACRYL Control Center. In a window it is the installed app when there is one; otherwise, and always in the browser, the Blend
+ * acryl.control-center kept in ~/.acryl/control-center, made and installed on first use, brought up to date with --update.
+ */
+async function openLauncherBlend({ surface, update }) {
+  const installed = surface === 'gui' && !update ? installedControlCenter({ platform: process.platform, env: process.env }) : undefined
+  if (installed) {
+    console.log(`acryl: opening ${MANAGED.launcher.title} (${installed.at})`)
+    const child = spawn(installed.command, installed.args, { stdio: 'ignore', detached: true, windowsHide: true })
+    child.once('error', cause => fail(new Error(`${MANAGED.launcher.title} did not open: ${cause.message}`)))
+    child.unref()
+    return
+  }
   mkdirSync(ACRYL_HOME, { recursive: true })
-  process.exitCode = await runSteps(managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context() }), await appEnvironment())
+  const steps = managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context(), update })
+  process.exitCode = surface === 'web' ? await runStepsOpening(steps, await appEnvironment()) : await runSteps(steps, await appEnvironment())
+}
+
+/** `acryl store [words]`: the Blends `acryl make <name> --from <id>` can make, one per line (id, name, category, Official or Community), the words narrowing it. */
+async function runStore(words) {
+  if (!existsSync(LAUNCHER)) throw new Error('the store is not part of this install; install acryl from npm')
+  const { readBlends } = await loadLauncher()
+  const query = words.join(' ').toLowerCase()
+  const blends = (await readBlends()).filter(blend => query === '' || `${blend.id} ${blend.name} ${blend.category} ${blend.description}`.toLowerCase().includes(query))
+  for (const blend of blends) console.log([blend.source ?? blend.id, blend.name, blend.category || '-', blend.origin === 'official' ? 'Official' : 'Community'].join('\t'))
+  if (blends.length === 0) console.error(query === '' ? 'acryl store: the store is empty' : `acryl store: no Blend matches "${query}"`)
 }
 
 /** `acryl ade [--web | --gui | --tui]`: ACRYL ADE, kept in ~/.acryl/ade, made and installed on first use. */
@@ -214,36 +270,22 @@ if (forwarded?.error) {
       void listCreatedApp(args, forwarded.cwd ?? process.cwd())
     })
   }, fail)
-} else if (args.length === 1 && (args[0] === '--version' || args[0] === '-v')) {
-  // The selector's own version: it is what `npx acryl` installed, and it answers without the terminal agent.
-  console.log(selectorVersion)
-} else if (args[0] === 'model') {
-  runModel(args.slice(1)).catch(fail)
-} else if (args[0] === 'apps') {
-  runApps(args.slice(1)).catch(fail)
-} else if (args[0] === '--gui' || args[0] === '--web' || args[0] === 'web') {
-  // `acryl --gui` and `acryl --web`: ACRYL Control Center (spec 050 T024), the same Blend in its own window or in the browser.
-  const extra = args.slice(1)
-  if (extra.length > 0) fail(new Error(`acryl ${args[0]} takes no other words (${extra.join(' ')})`))
-  else openLauncherBlend(args[0] === '--gui' ? 'gui' : 'web').catch(fail)
-} else if (args[0] === '--tui') {
-  if (!stdin.isTTY || !process.stdout.isTTY) fail(new Error('acryl --tui needs a terminal; to open the app window instead run: acryl --gui'))
-  else if (!existsSync(LAUNCHER)) fail(new Error('the terminal screen is not part of this install; install acryl from npm'))
-  else openLauncher().catch(fail)
-} else if (args[0] === 'desktop') {
-  runDesktop(args.slice(1)).catch(cause => {
-    console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
-    process.exitCode = 1
-  })
-} else if (args.length === 0 && stdin.isTTY && process.stdout.isTTY && existsSync(LAUNCHER)) {
-  openLauncher().catch(cause => {
-    console.error(`acryl: ${cause instanceof Error ? cause.message : String(cause)}`)
-    process.exitCode = 1
-  })
-} else if (args[0] === 'ade' || args[0] === 'code') {
-  // `acryl ade` is ACRYL ADE (spec 050 D14): the Blend in the browser, `--gui` in a window, `--tui` the terminal agent. `acryl code` is its earlier name.
-  openAde(args.slice(1)).catch(fail)
 } else {
-  // Any other words (`acryl -p "..."`), or a bare `acryl` with no terminal: the terminal agent, as before.
-  openTerminalAgent(args).catch(fail)
+  const route = routeArgs(args, { terminal: Boolean(stdin.isTTY && process.stdout.isTTY) })
+  if (route.kind === 'error') { console.error(`acryl: ${route.message}`); process.exitCode = 2 }
+  // The selector's own version: it is what `npx acryl` installed, and it answers without the terminal agent.
+  else if (route.kind === 'version') console.log(selectorVersion)
+  else if (route.kind === 'help') process.stdout.write(HELP)
+  else if (route.kind === 'tui') {
+    if (!existsSync(LAUNCHER)) fail(new Error('the terminal Control Center is not part of this install; install acryl from npm'))
+    else openLauncher().catch(fail)
+  } else if (route.kind === 'control-center') openLauncherBlend(route).catch(fail)
+  else if (route.kind === 'model') runModel(route.args).catch(fail)
+  else if (route.kind === 'apps') runApps(route.args).catch(fail)
+  else if (route.kind === 'store') runStore(route.args).catch(fail)
+  else if (route.kind === 'desktop') runDesktop(route.args).catch(fail)
+  // `acryl ade` is ACRYL ADE (spec 050 D14): the Blend in the browser, `--gui` in a window, `--tui` the terminal agent. `acryl code` is its earlier name.
+  else if (route.kind === 'ade') openAde(route.args).catch(fail)
+  // Any other words (`acryl -p "..."`): the terminal agent, as before.
+  else openTerminalAgent(route.args).catch(fail)
 }
