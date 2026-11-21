@@ -25,6 +25,15 @@ describe('a pulled starter becomes the new app', () => {
     expect(owned).not.toMatch(/license/)
   })
 
+  it("drops the starter's own origin (metadata.from), which belongs to the starter, not the new app", () => {
+    const withFrom = STARTER.replace(
+      'metadata:\n',
+      'metadata:\n  from: "acrylblends.notes#0.1.0"\n',
+    )
+    expect(withFrom).toContain('from:')
+    expect(ownManifest(withFrom, 'my-notes')).not.toMatch(/from:/)
+  })
+
   it('keeps its lock true to that manifest, and leaves a lock it cannot read alone', () => {
     const owned = ownManifest(STARTER, 'my-notes')
     const modules = [

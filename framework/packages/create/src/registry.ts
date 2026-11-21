@@ -263,9 +263,10 @@ export function ownManifest(text: string, name: string): string {
   set('id', `acrylblends.${name}`)
   set('name', name)
   set('visibility', 'private')
-  // The starter's licence is the starter's: the new app names none until its owner chooses one.
+  // The starter's licence is the starter's: the new app names none until its owner chooses one. So is its own origin (blend.yaml
+  // metadata.from, written by create-blends 1.7.13 to 1.7.15): the new app records its own in package.json.
   for (let at = end - 1; at > start; at -= 1)
-    if (/^\s+license:/.test(lines[at] ?? '')) lines.splice(at, 1)
+    if (/^\s+(license|from):/.test(lines[at] ?? '')) lines.splice(at, 1)
   return lines.join('\n')
 }
 
