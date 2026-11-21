@@ -10,7 +10,7 @@ import { bareName, createRegistryReader, downloadFor, newerVersion, readRegistry
 import { createRegistryApi } from '../src/client/registry-api.ts'
 import { npmShareOf, planNpmShare, shareNpm } from '../src/npm-share.ts'
 import { addedText, addQuestion, cleanAddress, entryByline, filterRegistry } from '../src/client/registry-list.ts'
-import { colleagueAddress, shareButton, shareDetails, shareQuestion, shareSentence } from '../src/client/plugins-navigator.ts'
+import { colleagueAddress, pullCommand, sharedOn, shareButton, shareDetails, shareQuestion, shareSentence } from '../src/client/plugins-navigator.ts'
 import { PlainFailure } from '../src/client/plain-failure.ts'
 
 const NONE: RegistryMarks = { names: new Set(), repos: new Set(), accounts: new Set() }
@@ -390,5 +390,22 @@ describe('sharing to npm from the frame', () => {
     await expect(planNpmShare(refusing as never, 'clock')).rejects.toThrow('npm login')
     await expect(planNpmShare(undefined, 'clock')).rejects.toThrow('no plugin-share')
     expect(npmShareOf(() => undefined)).toBeUndefined()
+  })
+})
+
+describe('what the frame says about an npm share that went wrong or went through', () => {
+  it('says plainly that npm is not signed in, before anything about GitHub', () => {
+    const said = plainShareProblem(new Error('npm whoami failed: you are not signed in to npm on https://registry.npmjs.org/ (sign in with: npm login --registry https://registry.npmjs.org/). fix it, or sign in with: npm login; nothing was sent.'))
+    expect(said.say).toContain('npm is not signed in')
+    expect(said.say).toContain('npm login')
+    expect(said.say).not.toContain('GitHub')
+  })
+
+  it('names npm, not GitHub, for a plugin shared there, and gives the pull line of its package', () => {
+    const shared = { url: 'https://www.npmjs.com/package/@ana/clock', version: '0.1.1' }
+    expect(sharedOn(shared)).toBe('npm')
+    expect(sharedOn({ url: 'https://github.com/ana/clock', version: '0.1.1' })).toBe('GitHub')
+    expect(pullCommand(shared)).toBe('npm run acryl -- plugin pull npm:@ana/clock@0.1.1')
+    expect(pullCommand({ url: 'https://github.com/ana/clock', version: '0.1.1' })).toBe('npm run acryl -- plugin pull github:ana/clock@0.1.1')
   })
 })

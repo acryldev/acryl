@@ -44,6 +44,7 @@ import {
 } from '../index.ts'
 import { mergeTrees } from '../merge-edits.ts'
 import { type NativePorts, nativePorts, nativeStore } from '../native.ts'
+import { whoamiProblem } from '../npm-login.ts'
 import { splitDigest } from '../pull-check.ts'
 import { parsePullList, pullListLocation } from '../pull-list.ts'
 import { pulledRecords } from '../pulled-records.ts'
@@ -1353,4 +1354,21 @@ test('npm:<package> refuses bytes whose checksum is not the one npm lists, and a
   await reader.untouched()
   const empty = await boot({ npm: npm.reads })
   refused(await empty.share.pull('npm:@ana/nothing'), 'fetch', /npm has no @ana\/nothing/)
+})
+
+test("a signed-out npm says so in words, without npm's pointer to a log file", () => {
+  const signedOut = whoamiProblem(
+    'npm error code ENEEDAUTH\nnpm error need auth This command requires you to be logged in.\nnpm error A complete log of this run can be found in: /x/_logs/1.log\n',
+    'https://registry.npmjs.org/',
+  )
+  assert.equal(
+    signedOut,
+    'npm whoami failed: you are not signed in to npm on https://registry.npmjs.org/ (sign in with: npm login --registry https://registry.npmjs.org/)',
+  )
+  const other = whoamiProblem(
+    'npm error code ECONNREFUSED\nnpm error connect ECONNREFUSED 127.0.0.1:4873\nnpm error A complete log of this run can be found in: /x/_logs/1.log\n',
+    'http://localhost:4873/',
+  )
+  assert.match(other, /ECONNREFUSED/)
+  assert.doesNotMatch(other, /complete log/)
 })

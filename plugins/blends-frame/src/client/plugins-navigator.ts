@@ -27,9 +27,14 @@ export interface PluginActions {
 
 /** The command another app runs to take a shared plugin, from its repository address and version. */
 export function pullCommand(shared: SharedPluginView): string | undefined {
+  const onNpm = /^https:\/\/www\.npmjs\.com\/package\/(.+)$/u.exec(shared.url)
+  if (onNpm !== null) return `npm run acryl -- plugin pull npm:${onNpm[1] ?? ''}@${shared.version}`
   const where = /^https:\/\/github\.com\/([^/]+)\/([^/#?]+)/u.exec(shared.url)
   return where === null ? undefined : `npm run acryl -- plugin pull github:${where[1] ?? ''}/${where[2] ?? ''}@${shared.version}`
 }
+
+/** Where a share went, in words: npm or GitHub. */
+export const sharedOn = (shared: SharedPluginView): string => (/^https:\/\/www\.npmjs\.com\//u.test(shared.url) ? 'npm' : 'GitHub')
 
 /** What to send a colleague so they can add a shared plugin: the address the Registry tab's "Add by address" takes. */
 export function colleagueAddress(shared: SharedPluginView): string | undefined {

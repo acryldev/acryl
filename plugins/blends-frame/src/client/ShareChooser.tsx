@@ -46,6 +46,8 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
   const [details, setDetails] = useState(false)
   const [copied, setCopied] = useState<string | undefined>(undefined)
   const [owner, setOwner] = useState('')
+  // The last thing asked was npm: GitHub's connect note has nothing to do with a refusal from npm.
+  const [askedNpm, setAskedNpm] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -77,6 +79,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
   const ask = async (target: ShareTarget) => {
     if (share === undefined) return
     setDetails(false)
+    setAskedNpm(target === 'npm')
     setState({ step: 'working', what: 'Checking…' })
     try {
       setState({ step: 'confirm', plan: await share.plan(target, ownerAsked) })
@@ -151,7 +154,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
           </ul>
           </>
         )}
-      {state.step === 'confirm' || state.step === 'working' ? null : (
+      {state.step === 'confirm' || state.step === 'working' || (state.step === 'failed' && askedNpm) ? null : (
         <GithubNote github={github} copy={copy} connect={connectGithub} onConnected={() => { void readGithub().then(setGithub, () => {}) }} />
       )}
       {state.step === 'working' && <p className="acrylBlendsNote" role="status">{state.what}</p>}

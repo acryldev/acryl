@@ -11,6 +11,19 @@ export interface NpmPort extends NpmPublishPort {
   login(registry: string): string
 }
 
+/** Why `npm whoami` failed, in words: not signed in (with the command), or what npm said without its pointer to a log file. */
+export function whoamiProblem(stderr: string, registry: string): string {
+  const said = stderr
+    .split('\n')
+    .map((line) => line.replace(/^npm error\s*/u, '').trim())
+    .filter((line) => line !== '' && !/^npm (notice|warn)|A complete log of this run/iu.test(line))
+  const signedOut =
+    /ENEEDAUTH|E401|E403|need auth|Unauthorized|not logged in/iu.test(stderr) || said.length === 0
+  return signedOut
+    ? `npm whoami failed: you are not signed in to npm on ${registry} (sign in with: npm login --registry ${registry})`
+    : `npm whoami failed: ${said.slice(0, 2).join(' ')} (sign in with: npm login --registry ${registry})`
+}
+
 export function npmWithLogin(): NpmPort {
   return {
     ...npmCli(),
@@ -27,15 +40,7 @@ export function npmWithLogin(): NpmPort {
         )
       const account = (result.stdout ?? '').trim()
       if (result.status !== 0 || account === '') {
-        const last =
-          (result.stderr ?? '')
-            .trim()
-            .split('\n')
-            .filter((line) => !/^npm (notice|warn)/iu.test(line))
-            .at(-1) ?? 'not signed in'
-        throw new Error(
-          `npm whoami failed: ${last} (sign in with: npm login --registry ${registry})`,
-        )
+        throw new Error(whoamiProblem(result.stderr ?? '', registry))
       }
       return account
     },

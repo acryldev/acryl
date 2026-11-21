@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { GraphView, type GraphViewInjected } from './GraphView.tsx'
 import { installGraphStyles } from './graph-styles.ts'
-import { filterPlugins, pullCommand, type NavigatorPlugin, type PluginGroup } from './plugins-navigator.ts'
+import { filterPlugins, pullCommand, sharedOn, type NavigatorPlugin, type PluginGroup } from './plugins-navigator.ts'
 import type { RegistryApi } from './registry-api.ts'
 import { RegistryView } from './RegistryView.tsx'
 import { ShareChooser } from './ShareChooser.tsx'
@@ -202,7 +202,7 @@ export function PluginsSection({ loadPlugins, graph, registry, close }: PluginsS
                   )
                   : (
                     <>
-                      Shared on GitHub:{' '}
+                      Shared on {sharedOn(plugin.shared)}:{' '}
                       <a className="acrylBlendsShared" href={plugin.shared.url} target="_blank" rel="noreferrer">
                         {plugin.shared.url.replace(/^https:\/\//u, '')} · v{plugin.shared.version}
                       </a>

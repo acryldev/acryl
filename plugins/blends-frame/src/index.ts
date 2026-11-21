@@ -22,7 +22,7 @@ import { GitRunner, Versions } from '@acryldev/versions'
 import * as workspaceHost from '@acryldev/workspace'
 // `ctx.loader`: the frame lists its Loader rows and starts the app's plugins again after a switch.
 import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
-import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
+import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, recordShare, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
 import { appFallbackTarget, appNavigationTarget } from './app-urls.ts'
 import { AppShareRefused, appShareCommand, type AppSharePort } from './app-share.ts'
 import { AppIconRefused, APP_ICON_MAX_BYTES, iconBytes, saveAppIcon } from './app-icon.ts'
@@ -1012,7 +1012,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       // ACRYL plugin share uses, with the user's own gh and git doing the publishing.
       // The owner the person typed wins over the one the frame is configured with; a changed owner is a changed plan, so the confirm check still holds.
       planShare: async (name, visibility, registry, owner, npm) => npm === true ? planNpmShare(npmShareOf(() => ctx.get('pluginShare')), name, owner) : planAppPluginShare(root, ctx.appInstance.home, name, { ...shareTo, ...(owner === undefined ? {} : { owner }), ...(visibility === undefined ? {} : { visibility }), ...(registry === true ? { registry } : {}) }, githubSharePorts()),
-      share: async (name, confirmed, owner) => confirmed.npm !== undefined ? shareNpm(npmShareOf(() => ctx.get('pluginShare')), name, confirmed, owner) : shareAppPlugin(root, ctx.appInstance.home, name, confirmed, { ...shareTo, ...(owner === undefined ? {} : { owner }) }, githubSharePorts()),
+      share: async (name, confirmed, owner) => confirmed.npm !== undefined ? shareNpm(npmShareOf(() => ctx.get('pluginShare')), name, confirmed, owner).then(async (shared) => { await recordShare(join(ctx.appInstance.home, 'shared-plugins.json'), name, { url: shared.url, version: shared.version }); return shared }) : shareAppPlugin(root, ctx.appInstance.home, name, confirmed, { ...shareTo, ...(owner === undefined ? {} : { owner }) }, githubSharePorts()),
       save: async (name) => saveAppPlugin(root, ctx.appInstance.home, name),
       github: githubNow,
       connect: { start: () => githubConnect.start(), state: () => githubConnect.state(), cancel: () => { githubConnect.cancel() }, disconnect: async () => { githubConnect.disconnect(); return githubNow() } },

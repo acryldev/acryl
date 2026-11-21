@@ -59,6 +59,8 @@ export function githubReadiness(login: () => string): GithubReadiness {
 /** A share that could not be planned or sent, in words a person can act on. */
 export function plainShareProblem(cause: unknown): Plain {
   const message = cause instanceof Error ? cause.message : String(cause)
+  // npm's own sign-in problem first: its message names `npm login`, which is not GitHub's.
+  if (/npm whoami failed|sign in with: npm login/iu.test(message)) return { say: 'npm is not signed in on this computer. Open a terminal, run npm login, then press Publish to npm again. Nothing was sent.', details: message }
   const setup = githubProblemOf(message)
   if (setup === 'missing') {
     return /\bgit is not available/iu.test(message)
