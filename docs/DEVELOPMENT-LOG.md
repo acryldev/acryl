@@ -1,3 +1,17 @@
+## 2026-11-21 - sharing a Cordis plugin between people: the cycle run as two, what broke, what was fixed
+
+Run for real as two people (Ana and Ben: two scratch homes, apps made with `@acryldev/create-blends` 1.7.12) against `inboxxobni`: Ana made `sh1121-ana`, published it, Ben pulled it, Ana published the next versions, Ben updated.
+
+- **GitHub (CLI `plugin publish` / `plugin pull github:`):** worked as it was; the pull line's digest was checked.
+- **Registry:** a CLI publish already sets the `cordis-plugin` topic and the sync listed the plugin (version 0.1.1, then 0.1.2 after a run dispatched by hand), but the plan did not say so. The plan now says it (`97f22717be3080f17ef029865d10edc02437ada3` and the docs commit `1bbfbb99e5fd470878d6a73c74cadda1776571bc`).
+- **Update (broke):** a newer release of a pulled plugin was always refused ("holds a different copy... remove it and pull again"), edited folder or not. `plugins/plugin-share` now updates in place: an untouched folder is replaced, an edited one is merged three ways against the release the person pulled (fetched again, integrity-checked), overlapping changes are refused naming the file with the folder untouched (`97f22717be3080f17ef029865d10edc02437ada3`, `merge-edits.ts`).
+- **From the registry by id (missing):** `plugin pull registry:<id>` added (`registry-source.ts`), checked against the integrity the registry lists.
+- **Registry panel (GUI):** shows Update to vX when the registry lists a newer release than the one pulled (`26ce974aba88a078b7b556e244bfe6e3e1aefa9b`); it was "Added" with no way to update. Not seen live: the frame bundle in the scratch apps is the published one; covered by unit tests only.
+- **Share dialog (GUI):** Settings > Plugins > Share... > List in the registry worked as published (plan, then confirm, release v0.1.2, the `cordis-plugin` topic).
+- **npm:** the framework's `plugin publish` and `plugin pull` do not offer it (the ACRYL IDE's `/plugin share <name> npm` does, in `@acryldev/plugin-hub-core`); nothing was published to npm.
+- Docs: `framework/docs/framework/guides/share-plugins.md`, with the commands that were run.
+- Test repo left in the org (no `delete_repo` scope): `inboxxobni/sh1121-ana` (public, with releases v0.1.0 to v0.1.2; listed in the registry until it is deleted).
+
 ## 2026-11-21 - four small fixes after the workshop (About, missing PTY agent, inherited descriptors, one model prompt)
 
 - **Help > About on Windows and Linux** (`823e53c2a4f052739f26280424f4e7bffa7ef31c`, `@acryldev/desktop-shell`): `aboutPlacement` puts "About <name>" last in Help (once, never on macOS, which has its own panel) and
