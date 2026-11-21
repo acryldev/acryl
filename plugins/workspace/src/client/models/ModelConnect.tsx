@@ -6,18 +6,29 @@
 import { useState, useSyncExternalStore } from 'react'
 import type { ModelConnectControl } from './model-connect.ts'
 
+/** Set on the page by the sign-in plugin's first-run dialog while it is open (plugins/sign-in, ConnectChoice.tsx); that dialog asks for the key itself. */
+export const CONNECT_DIALOG_ATTRIBUTE = 'data-acryl-connect-dialog'
+
+function watchConnectDialog(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: [CONNECT_DIALOG_ATTRIBUTE] })
+  return () => { observer.disconnect() }
+}
+const connectDialogOpen = (): boolean => document.documentElement.hasAttribute(CONNECT_DIALOG_ATTRIBUTE)
+
 export interface ModelConnectProps {
   readonly control: ModelConnectControl
 }
 
 /**
  * @param props.control - the workspace's model-connection controller.
- * @returns the card while no model can serve a request, and nothing otherwise.
+ * @returns the card while no model can serve a request and the first-run dialog is not open, and nothing otherwise.
  */
 export function ModelConnect({ control }: ModelConnectProps) {
   const state = useSyncExternalStore(control.subscribe, control.getSnapshot)
+  const dialogOpen = useSyncExternalStore(watchConnectDialog, connectDialogOpen, () => false)
   const [key, setKey] = useState('')
-  if (state.status !== 'needs-key') return null
+  if (state.status !== 'needs-key' || dialogOpen) return null
   return (
     <section className="dshWorkspaceConnect" aria-label="Connect a model">
       <div className="dshWorkspaceConnectHead">

@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ConnectChoice } from '../../src/client/ConnectChoice.tsx'
+import { CONNECT_DIALOG_ATTRIBUTE, ConnectChoice } from '../../src/client/ConnectChoice.tsx'
 import { en } from '../../src/client/locales.ts'
 
 afterEach(cleanup)
@@ -36,5 +36,12 @@ describe('ConnectChoice (the first-run step)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Later' }))
     fireEvent.click(screen.getByRole('button', { name: 'More providers in Settings' }))
     expect(complete).toHaveBeenCalledTimes(2)
+  })
+
+  it('marks the page while it is open, and only then (the workspace card waits for it)', () => {
+    const { unmount } = render(<ConnectChoice {...base} complete={() => {}} useApiKey={() => {}} modelsSection={() => undefined} />)
+    expect(document.documentElement.hasAttribute(CONNECT_DIALOG_ATTRIBUTE)).toBe(true)
+    unmount()
+    expect(document.documentElement.hasAttribute(CONNECT_DIALOG_ATTRIBUTE)).toBe(false)
   })
 })

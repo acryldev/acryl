@@ -3,11 +3,17 @@
  * sign-in at its foot), so everything can be done right here, and a button opens Settings for the rest. It fills the `settings.models.sign-in` seat the
  * first-run dialog renders before its own key editor; saving a credential makes a provider ready, which ends the step by itself.
  */
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import type { InjectFace, PropsLocale } from '@acryldev/ui/frame'
 import { ModelsPane, type RegisteredSection } from './ModelsPane.tsx'
 import { openModelsSettings } from './open-settings.ts'
 import { SignInCard, type SignInCardInjected } from './SignInCard.tsx'
+
+/**
+ * The attribute the dialog puts on the page while it is open. The workspace's own "Connect a model" card reads it (plugins/workspace, ModelConnect.tsx) and
+ * stays out of the way, so a first start asks for a key once, not twice. Plugins share no code here, so the name is the contract.
+ */
+export const CONNECT_DIALOG_ATTRIBUTE = 'data-acryl-connect-dialog'
 
 export interface ConnectChoiceOwner {
   /** Ends the step without a credential (the first-run dialog goes away). */
@@ -24,6 +30,10 @@ export interface ConnectChoiceInjected extends SignInCardInjected {
 export type ConnectChoiceProps = ConnectChoiceOwner & PropsLocale<'acryl.sign-in'> & InjectFace<ConnectChoiceInjected>
 
 export function ConnectChoice({ complete, api, openExternal, copy, language, modelsSection, t }: ConnectChoiceProps): ReactNode {
+  useEffect(() => {
+    document.documentElement.setAttribute(CONNECT_DIALOG_ATTRIBUTE, '')
+    return () => { document.documentElement.removeAttribute(CONNECT_DIALOG_ATTRIBUTE) }
+  }, [])
   return (
     <div className="acrylConnectBackdrop">
       <div className="acrylConnect" role="dialog" aria-modal="true" aria-label={t('connectTitle')}>

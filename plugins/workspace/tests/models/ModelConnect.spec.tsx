@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ModelConnect } from '../../src/client/models/ModelConnect.tsx'
+import { CONNECT_DIALOG_ATTRIBUTE, ModelConnect } from '../../src/client/models/ModelConnect.tsx'
 import {
   DEFAULT_MODEL_KEY_REF,
   ModelConnectControl,
@@ -61,5 +61,19 @@ describe('ModelConnect', () => {
     render(<ModelConnect control={subject} />)
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
     await waitFor(() => { expect(screen.queryByLabelText('API key')).toBeNull() })
+  })
+
+  it('stays out of the way while the first-run dialog is open, and shows after it closes', async () => {
+    const subject = control()
+    await subject.refresh()
+    document.documentElement.setAttribute(CONNECT_DIALOG_ATTRIBUTE, '')
+    try {
+      render(<ModelConnect control={subject} />)
+      expect(screen.queryByLabelText('API key')).toBeNull()
+      document.documentElement.removeAttribute(CONNECT_DIALOG_ATTRIBUTE)
+      await waitFor(() => { expect(screen.getByLabelText('API key')).toBeTruthy() })
+    } finally {
+      document.documentElement.removeAttribute(CONNECT_DIALOG_ATTRIBUTE)
+    }
   })
 })
