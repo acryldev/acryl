@@ -7226,3 +7226,33 @@ settings pane"; and before sleeping: "finish unification whole plan, everything,
   a scratch HOME and user data, showed the Control Center (not a blank window) with the label. Gate on z370n green before the push.
 - **Products pinned and tagged:** ACRYL Control Center v0.2.10, ACRYL ADE v0.2.7, ACRYL SDE v0.1.6; their release.yml packs with
   `@acryldev/blends@1.7.23`.
+
+## 2026-11-21 - the terminal agent and the earlier browser surface leave the monorepo (acryldev/acryl-terminal)
+
+- **Rule (owner):** only reusable building blocks stay in acryldev/acryl; products leave. `apps/acryl-cli`, `apps/acryl-web` and
+  `distribution/acryl-web-container` are now https://github.com/acryldev/acryl-terminal (public, MIT; history kept with `git subtree split` per folder: 96, 86
+  and 7 commits). It builds on the published `@acryldev/*` packages only (exact pins, its own lockfile) and releases itself.
+- **acryl-terminal v0.3.0:** CI green on Linux, macOS and Windows; the release has the archives of `acryl-cli` and `acryl-web` for darwin-arm64, linux-arm64,
+  linux-x64 and windows-x64, one release manifest and the four `acryl-cli-<target>-0.3.0.tgz` npm tarballs. pnpm 12's `deploy --legacy` works, so the old pnpm 11.8
+  workaround is gone. Proven from the release assets on clean machines (z370n, AION, mbpi9win): the receipt and payload hash validate with the selector's own
+  contract, `--version`, `tui --json` and `acryl-web --json`.
+- **In acryl-terminal:** `acryl new` prints a pointer to `npx acryl@latest new|make|share` (it needed the monorepo's launcher); `acryl save`, `remote connect` and `acryl ui`
+  stay (their tests now build their own fixtures). Three tests fixed rather than skipped: the palette header (a quoting bug of mine), the market overlay (fixed 20 ms sleeps,
+  flaky under load, now waits for states) and the workspace-shared spec (the PTY started the login shell, whose first-run wizard hid the prompt; the test sets SHELL).
+  `live-run.mjs` with `isolated-run` and `build-outputs` live there now: it boots the built surface in a throwaway root and proves the real homes untouched
+  (AGENTS.md here names it). `@acryldev/coding-capabilities` is one copy, published from this repository (below).
+- **Commit `69def2e0ecab0d3cdf3b689077a47a8cefaf0c2a` (this repository):** removes the apps and the container, the archive, receipt, manifest and Web-entrypoint scripts and
+  tests, `install.sh` and `sync-release-readme`, the dev launchers of the moved apps (`blank.mjs`, `acryl-blank-*.sh`, `check-features.mjs`, which drove a desktop run
+  `live-run` no longer had), `live-run.mjs` and its helpers, `release-cli.yml` (now a selector-only `release.yml`), the workspace entries, root scripts and gate
+  filters, and the `apps/` group of `verify-layout` (DSH import ceilings follow: 77 total, 47 outside the seam). Kept and adapted: `scripts/pack-npm-selector.mjs`,
+  `scripts/selector-round-trip.mjs` (CI and Windows), `scripts/corepack-platform.mjs`, the terminal palette generator now in `plugins/ui-tui/scripts`, and
+  `@acryldev/coding-capabilities` (made publishable; the harness-runtime tests import it). The full `pnpm run check` was green on z370n on exactly that commit.
+  `flake.nix` and the nix workflows are untouched (manual-only, pinned to v0.1.36, an open question for the owner).
+- **Selector (`30484064d57e70f9d6c17caece7e5abab72bc806`):** `acryl` 0.3.3 installs the agent runtime from 0.3.0 (`acrylRuntime`), published after acryl-terminal's
+  release; proven under a scratch HOME from the packed tarball (`--version`, `--help`, the Control Center in a pty, `acryl ade --tui --version`).
+  acryl.dev `install` and `install.sh` are retired: the script prints a pointer to `npx acryl@latest` and exits 1 (acryldev.github.io `306b7f9`).
+- **Also on main in the same run:** `9d048c4ee6102088e880eb0677cf165b0a8c5267` (an installed app's Host finds its server plugin: `hostPlugin` picks `plugins/acryl-<id>`
+  only when that old folder exists, else `plugins/<id>`; the old fallback started a packaged product with no node server and a blank window, found smoking CC v0.2.8) and
+  `2c1753998bed12b47e6032f12c43dc84c91ff021` (`@acryldev/coding-capabilities` writes its declarations to `lib/types`, where `types` and `exports` point; the first
+  publish lacked `lib/types/index.d.ts`). 9d048c4e left two files unformatted; 69def2e0 formats them.
+- **Pushing:** the gh OAuth token has no `workflow` scope, so a push that touches `.github/workflows` goes over SSH (`git@github.com:acryldev/...`).
