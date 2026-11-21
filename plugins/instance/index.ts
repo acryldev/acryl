@@ -70,7 +70,7 @@ export const PORT_ENV = 'ACRYLBLENDS_PORT'
  * desktop shell's packaged host only (frame.ts startFrameHost).
  */
 export const PROGRAM_ENV = 'ACRYLBLENDS_PROGRAM'
-/** The app's name, for a process that runs from the bundle on the app's `source` folder: the folder's own name says nothing (`source`). Set by `instanceEnv`. */
+/** The app's name, for a process that runs from the bundle on the app's `source` folder (the folder's own name says nothing: `source`), or in a hosted box (its folder is called by the image). Set by `instanceEnv`, or by whoever hosts the app. */
 export const NAME_ENV = 'ACRYLBLENDS_NAME'
 export const HOST_ENV = 'ACRYLBLENDS_HOST'
 /** The names hosting platforms set: used when `ACRYLBLENDS_PORT` and `ACRYLBLENDS_HOST` are not. */
@@ -138,7 +138,8 @@ export function projectInstance(
   platform: NodeJS.Platform = process.platform,
 ): AppInstance {
   const root = resolve(projectRoot)
-  const name = declaredName(root) ?? plainName(root)
+  // The environment's name wins, as it does for a pinned home: a hosting platform (a WebBox) names the app, whose folder is called whatever its image called it.
+  const name = env[NAME_ENV]?.trim() || declaredName(root) || plainName(root)
   const folders = appHomes(root, platform, env, personHome(env, platform))
   // An app made before the data moved still has `<app>/.acrylblends`: it is moved once, here, at start. A move that fails stops the app with the old folder intact.
   const moved = migrateOldHome(root, folders.data)
