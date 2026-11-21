@@ -27,8 +27,8 @@ import {
   type Visibility,
   withId,
   withLicense,
-  withVersion,
   withPlacement,
+  withVersion,
   withVisibility,
 } from '@acryldev/app-persistence'
 
@@ -294,7 +294,8 @@ function writeListing(
   // The release this share tags: when planListing moved past an existing tag, the app carries the new version in both files.
   const version = listing.tag.replace(/^v/u, '')
   const bumped = typeof pkg.version === 'string' && pkg.version !== version
-  if (bumped || (pkg.version === undefined && identity.version !== version)) text = withVersion(text, version)
+  if (bumped || (pkg.version === undefined && identity.version !== version))
+    text = withVersion(text, version)
   if (text !== manifestText) writeFileSync(join(appRoot, 'blend.yaml'), text)
   const before = Array.isArray(pkg.keywords)
     ? pkg.keywords.filter((word): word is string => typeof word === 'string')

@@ -457,19 +457,32 @@ test('a second share of a changed app releases the next version, written into pa
   const dir = madeApp()
   try {
     const options = { list: {}, categories: storeCategories }
-    const changed = ports({ account: 'ana', pending: 2, released: { 'v1.2.0': 'older', 'v1.2.1': 'older' } })
+    const changed = ports({
+      account: 'ana',
+      pending: 2,
+      released: { 'v1.2.0': 'older', 'v1.2.1': 'older' },
+    })
     const plan = planShare(dir, options, changed)
     assert.ok(!('ok' in plan))
     assert.equal(plan.listing?.tag, 'v1.2.2')
     const result = shareApp(dir, plan, options, changed)
     assert.ok(result.ok)
     assert.deepEqual(result.listed, { tag: 'v1.2.2', created: true })
-    assert.equal((JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { version: string }).version, '1.2.2')
+    assert.equal(
+      (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { version: string }).version,
+      '1.2.2',
+    )
     assert.equal(readAppIdentity(readFileSync(join(dir, 'blend.yaml'), 'utf8')).version, '1.2.2')
     const same = ports({ account: 'ana', pending: 0, released: { 'v1.2.2': 'current' } })
-    assert.equal((planShare(dir, options, same) as { listing?: { tag: string } }).listing?.tag, 'v1.2.2')
+    assert.equal(
+      (planShare(dir, options, same) as { listing?: { tag: string } }).listing?.tag,
+      'v1.2.2',
+    )
     const edited = ports({ account: 'ana', pending: 1, released: { 'v1.2.2': 'current' } })
-    assert.equal((planShare(dir, options, edited) as { listing?: { tag: string } }).listing?.tag, 'v1.2.3')
+    assert.equal(
+      (planShare(dir, options, edited) as { listing?: { tag: string } }).listing?.tag,
+      'v1.2.3',
+    )
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
