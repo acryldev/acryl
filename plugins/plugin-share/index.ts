@@ -15,7 +15,7 @@ import {
 } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { findSecrets } from '@acryldev/app-persistence'
-import { digestFolder, type PluginFile } from '@acryldev/blends-core'
+import { digestFolder, type PluginFile, pluginFiles } from '@acryldev/blends-core'
 import { type ExtensionInfo, NAME } from '@acryldev/extensions'
 import type {} from '@acryldev/instance'
 import { LOCK_FILE, writeLock } from '@acryldev/manifest/lock'
@@ -38,6 +38,7 @@ import {
   storeRootOf,
 } from '@acryldev/plugin-hub-core'
 import { type Context, Service } from '@deepseek-ai/cordis'
+import { type MergedTrees, mergeTrees, type Tree } from './merge-edits.ts'
 import {
   ensureNative,
   type NativeAction,
@@ -68,6 +69,7 @@ import {
 } from './pull-check.ts'
 import { LIST_MAX_BYTES, parsePullList, pullListLocation } from './pull-list.ts'
 import { type PulledRecord, pulledRecords, withPulledRecord } from './pulled-records.ts'
+import { lookUpRegistry, REGISTRY_INDEX_URL } from './registry-source.ts'
 
 export type {
   PublishOptions,
@@ -91,6 +93,8 @@ export interface PluginShareConfig {
   publish?: PublishPorts
   /** How an https address is read: a release `.tgz` and a list of sources. Defaults to HTTPS with the hub's size and time limits. */
   download?: (url: string) => Promise<Uint8Array>
+  /** Where `registry:<id>` reads the plugin registry's index. Defaults to cordisplugins.github.io. */
+  registry?: string
   /** How a plugin's native package is downloaded and unpacked (native.ts). Defaults to the npm registry and the system's tar. */
   native?: NativePorts
 }
@@ -108,6 +112,8 @@ export type PullResult =
       readonly state: string
       /** Whether the app's `blend.yaml` and lock now name this source, so a copy of the app can fetch it. A local file names nothing to fetch. */
       readonly remembered: boolean
+      /** The files of an older pulled copy that kept the person's own changes when this release updated it in place. */
+      readonly kept?: readonly string[]
       /** The native package the plugin brought for this computer (native.ts), and what installing it did. */
       readonly native?: {
         readonly package: string
@@ -193,7 +199,7 @@ const publishRefused = (reason: string, next: string): PublishRefused => ({
   next,
 })
 
-const SOURCE_FORMS = 'github:<owner>/<repo>[@<version>] or a .tgz path or address'
+const SOURCE_FORMS = 'github:<owner>/<repo>[@<version>], registry:<id> or a .tgz path or address'
 
 /** Read what a person wrote. A `.tgz` path may be relative to the app folder; the hub only takes absolute ones. */
 function readSource(
@@ -219,6 +225,24 @@ function recordedSource(source: PluginSource, version: string): string | undefin
   return source.kind === 'tarball-url' ? source.url : undefined
 }
 
+/** `owner/repo` (lower case) of a recorded `github:<owner>/<repo>@<version>` source: two releases of one plugin share it. */
+const repoOf = (source: string): string | undefined =>
+  /^github:([^/@]+\/[^/@]+)@/u.exec(source)?.[1]?.toLowerCase()
+
+const treeOf = (files: readonly PluginFile[]): Tree =>
+  new Map(files.map((file) => [file.path, file.bytes]))
+
+/** Make a plugin folder hold exactly `to`, having held `from`: files only `from` had go, every file of `to` is written. */
+function applyTree(folder: string, from: Tree, to: Tree): void {
+  for (const path of from.keys())
+    if (!to.has(path)) rmSync(join(folder, ...path.split('/')), { force: true })
+  for (const [path, bytes] of to) {
+    const file = join(folder, ...path.split('/'))
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, bytes)
+  }
+}
+
 const reasonOf = (cause: unknown): string => {
   if (cause instanceof PullError || cause instanceof InvalidPluginSourceError) return cause.reason
   return cause instanceof Error ? cause.message : String(cause)
@@ -230,6 +254,7 @@ export class PluginShare extends Service {
   private readonly dir: string
   private readonly releases: ReleasePort
   private readonly download: (url: string) => Promise<Uint8Array>
+  private readonly registry: string
   private readonly ports: PublishPorts
   /** One at a time: two pulls of one name must not race for its folder, nor two publishes for its package. */
   private queue: Promise<unknown> = Promise.resolve()
@@ -251,6 +276,7 @@ export class PluginShare extends Service {
     this.dir = resolve(config.dir ?? join(ctx.appInstance.root, 'plugins'))
     this.releases = config.releases ?? githubReleasesOverHttps()
     this.download = config.download ?? httpsDownload()
+    this.registry = config.registry ?? REGISTRY_INDEX_URL
     this.nativeWork = config.native ?? nativePorts()
     this.ports = config.publish ?? { host: githubCli(), git: gitCli() }
     // Removing a plugin removes its record. Listened to here, not asked of each caller: every way of removing it goes through extensions.
@@ -621,8 +647,52 @@ export class PluginShare extends Service {
     }
   }
 
+  /** A `registry:<id>` source turned into the release it lists, with the integrity the registry lists for it; any other source as it is. */
+  private async resolveRegistry(
+    input: string,
+    expectIntegrity?: string,
+  ): Promise<{ readonly input: string; readonly expectIntegrity?: string } | PullRefused> {
+    const text = input.trim()
+    if (!/^registry:/iu.test(text))
+      return { input, ...(expectIntegrity === undefined ? {} : { expectIntegrity }) }
+    // A digest written after the id (`registry:<id>@sha256:<digest>`) is not part of the id: it travels on to the release's source.
+    let named: ReturnType<typeof splitDigest>
+    try {
+      named = splitDigest(text)
+    } catch (cause) {
+      return refuse(
+        'source',
+        reasonOf(cause),
+        'write the 64 hex digits the plugin page shows after @sha256:',
+      )
+    }
+    let index: string
+    try {
+      index = Buffer.from(await this.download(this.registry)).toString('utf8')
+    } catch (cause) {
+      return refuse(
+        'fetch',
+        `the registry could not be read: ${reasonOf(cause)}`,
+        'check the internet connection and pull again, or pull github:<owner>/<repo>',
+      )
+    }
+    const found = lookUpRegistry(index, named.source.slice('registry:'.length))
+    if (!found.ok) return refuse('source', found.reason, found.next)
+    return {
+      input:
+        named.digest === undefined
+          ? found.hit.source
+          : `${found.hit.source}@sha256:${named.digest}`,
+      expectIntegrity: expectIntegrity ?? found.hit.integrity,
+    }
+  }
+
   private async pullNow(input: string, expectIntegrity?: string): Promise<PullResult> {
     const { home, root } = this.own.appInstance
+    const resolved = await this.resolveRegistry(input, expectIntegrity)
+    if ('refusal' in resolved) return resolved
+    input = resolved.input
+    expectIntegrity = resolved.expectIntegrity
     let read: ReturnType<typeof readSource>
     try {
       read = readSource(input, root)
@@ -677,6 +747,55 @@ export class PluginShare extends Service {
     }
   }
 
+  /**
+   * What the folder holds once a newer release of its pulled plugin comes in, the person's own changes kept: the release they pulled is the base of a
+   * three-way merge (fetched again from where it came from, checked against its recorded integrity, unless the folder is untouched and is the base).
+   * Refused, and nothing written, when the release and the person changed the same lines.
+   */
+  private async planUpdate(
+    name: string,
+    before: PulledRecord,
+    held: string,
+    release: readonly PluginFile[],
+    target: string,
+  ): Promise<{ readonly mine: Tree; readonly merged: MergedTrees } | PullRefused> {
+    const mine = treeOf(pluginFiles(target))
+    let base = mine
+    if (held !== before.digest) {
+      const scratch = mkdtempSync(join(this.own.appInstance.home, 'plugin-base-'))
+      try {
+        const pulled = await pullPlugin(
+          readSource(before.source, this.own.appInstance.root).source,
+          { store: new PluginStore(scratch), releases: this.releases, download: this.download },
+          { expectIntegrity: before.integrity },
+        )
+        base = treeOf(
+          readTarball(readFileSync(pulled.stored.path)).map(({ path, content }) => ({
+            path,
+            bytes: content,
+            kind: 'file' as const,
+          })),
+        )
+      } catch (cause) {
+        return refuse(
+          'folder-exists',
+          `plugins/${name} has changes of your own, and the release it was pulled from could not be fetched to keep them: ${reasonOf(cause)}`,
+          `check the internet connection and pull again, or move plugins/${name} out of plugins/ and pull again`,
+        )
+      } finally {
+        rmSync(scratch, { recursive: true, force: true })
+      }
+    }
+    const merged = mergeTrees(base, mine, treeOf(release))
+    if (merged.conflicts.length > 0)
+      return refuse(
+        'folder-exists',
+        `plugins/${name} has changes of your own to ${merged.conflicts.join(', ')}, and the new release changes ${merged.conflicts.length === 1 ? 'it' : 'them'} too`,
+        `plugins/${name} is untouched: move it out of plugins/ and pull again, then bring your changes back by hand`,
+      )
+    return { mine, merged }
+  }
+
   /** Put the files in `plugins/<name>/` and install them; whatever does not end running takes its folder with it. */
   private async install(
     name: string,
@@ -700,22 +819,36 @@ export class PluginShare extends Service {
       const wrote = !existsSync(target)
       const before = this.recorded(name)
       const held = wrote ? undefined : digestFolder(target)
+      let update: { readonly mine: Tree; readonly merged: MergedTrees } | undefined
       if (held !== undefined && held !== digest) {
-        const holder = before === undefined ? 'made in this app' : `pulled from ${before.source}`
-        // Only an untouched pulled copy goes with `plugin remove`; anything else is someone's work, which the person moves themselves.
-        const next =
-          before !== undefined && held === before.digest
-            ? `keep it, or remove it (npm run acryl -- plugin remove ${name}) and pull again`
-            : `keep it, or move plugins/${name} out of plugins/ and pull again`
-        return refuse(
-          'folder-exists',
-          `plugins/${name} holds a different copy of this plugin, ${holder}`,
-          next,
-        )
+        // A newer release of the plugin pulled here updates it in place, the person's own changes kept; anything else in the folder is someone's work.
+        const sameRepo =
+          before !== undefined &&
+          source !== undefined &&
+          repoOf(before.source) !== undefined &&
+          repoOf(before.source) === repoOf(source)
+        if (before !== undefined && sameRepo && before.digest !== digest) {
+          const planned = await this.planUpdate(name, before, held, files, target)
+          if ('refusal' in planned) return planned
+          update = planned
+        } else {
+          const holder = before === undefined ? 'made in this app' : `pulled from ${before.source}`
+          // Only an untouched pulled copy goes with `plugin remove`; anything else is someone's work, which the person moves themselves.
+          const next =
+            before !== undefined && held === before.digest
+              ? `keep it, or remove it (npm run acryl -- plugin remove ${name}) and pull again`
+              : `keep it, or move plugins/${name} out of plugins/ and pull again`
+          return refuse(
+            'folder-exists',
+            `plugins/${name} holds a different copy of this plugin, ${holder}`,
+            next,
+          )
+        }
       }
       const liveBefore = this.live.get(name)
       this.live.set(name, digest)
       if (wrote) renameSync(incoming, target)
+      else if (update !== undefined) applyTree(target, update.mine, update.merged.files)
       // Remembered as the folder appears, before it is installed, so whoever sees the folder can tell it is these released bytes (the frame then does
       // not load the app again for a plugin the app installs live); a pull that does not end running puts back what was remembered before.
       const remembered = source !== undefined && this.remember(name, { source, integrity, digest })
@@ -726,6 +859,7 @@ export class PluginShare extends Service {
         if (native !== undefined && (nativeAction === 'downloaded' || nativeAction === 'linked'))
           releaseNative(native, this.places, nativeAction === 'linked')
         if (wrote) rmSync(target, { recursive: true, force: true })
+        else if (update !== undefined) applyTree(target, update.merged.files, update.mine)
         if (remembered) this.remember(name, before)
         if (liveBefore === undefined) this.live.delete(name)
         else this.live.set(name, liveBefore)
@@ -771,6 +905,9 @@ export class PluginShare extends Service {
         action: result.action,
         state: result.state,
         remembered,
+        ...(update === undefined || update.merged.kept.length === 0
+          ? {}
+          : { kept: update.merged.kept }),
         ...this.keepNative(name, native, nativeBefore, nativeAction),
       }
     } finally {

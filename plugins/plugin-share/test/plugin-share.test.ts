@@ -41,6 +41,7 @@ import {
   type SharedPluginInfo,
   type SharedRemoveResult,
 } from '../index.ts'
+import { mergeTrees } from '../merge-edits.ts'
 import { type NativePorts, nativePorts, nativeStore } from '../native.ts'
 import { splitDigest } from '../pull-check.ts'
 import { parsePullList, pullListLocation } from '../pull-list.ts'
@@ -998,4 +999,179 @@ test('at the next start a pulled plugin links its native package again, from the
   await second.restored()
   assert.ok(existsSync(join(engine.link(root), 'package.json')))
   assert.equal(engine.downloads.length, 1)
+})
+
+/** Releases of one plugin by tag, on a pretend GitHub: a source `@1.1.0` reads `v1.1.0`, no tag reads the newest. */
+const releasesByTag = (byTag: Record<string, Uint8Array>): ReleasePort => ({
+  release: async (_owner, _repo, tag) => {
+    const chosen = tag ?? Object.keys(byTag).at(-1)
+    return chosen === undefined || byTag[chosen] === undefined
+      ? undefined
+      : {
+          tag: chosen,
+          assets: [{ name: `hello-${chosen.slice(1)}.tgz`, url: `fixture:${chosen}` }],
+        }
+  },
+  download: async (url) => byTag[url.slice('fixture:'.length)] ?? new Uint8Array(),
+})
+
+const NOTES_V1 = 'one\ntwo\nthree\nfour\nfive\nsix\nseven\n'
+
+function twoReleases(v2: Record<string, string>) {
+  const v1 = pack({ 'index.ts': ROUTE, 'notes.md': NOTES_V1 })
+  const next = pack(
+    { 'index.ts': routeSource('hello', '/hello', 'Hello 1.1'), ...v2 },
+    { version: '1.1.0' },
+  )
+  return releasesByTag({ 'v1.0.0': v1.tarball, 'v1.1.0': next.tarball })
+}
+
+test('a newer release of an untouched pulled plugin updates it in place, live', async () => {
+  const root = appFolder()
+  const { share, get } = await boot({ releases: twoReleases({ 'notes.md': NOTES_V1 }), root })
+  assert.ok((await share.pull('github:someone/hello@1.0.0')).ok)
+  assert.deepEqual((await get('/hello')).body, { text: 'Hello' })
+
+  const updated = await share.pull('github:someone/hello@1.1.0')
+  assert.ok(updated.ok, JSON.stringify(updated))
+  assert.equal(updated.action, 'updated')
+  assert.equal(updated.kept, undefined)
+  assert.deepEqual((await get('/hello')).body, { text: 'Hello 1.1' })
+  assert.equal(recordsIn(root).hello?.source, 'github:someone/hello@1.1.0')
+})
+
+test("a newer release keeps the person's own edits: a file only they changed stays, a file both changed is merged, a file of their own stays", async () => {
+  const theirNotes = NOTES_V1.replace('seven\n', 'seven\neight\n')
+  const root = appFolder()
+  const { share, get } = await boot({ releases: twoReleases({ 'notes.md': theirNotes }), root })
+  assert.ok((await share.pull('github:someone/hello@1.0.0')).ok)
+  const folder = join(root, 'plugins', 'hello')
+  writeFileSync(join(folder, 'notes.md'), NOTES_V1.replace('one\n', 'ONE\n'))
+  writeFileSync(join(folder, 'mine.md'), 'a file of my own\n')
+
+  const updated = await share.pull('github:someone/hello@1.1.0')
+  assert.ok(updated.ok, JSON.stringify(updated))
+  assert.equal(updated.action, 'updated')
+  assert.deepEqual(updated.kept, ['mine.md', 'notes.md'])
+  assert.equal(
+    readFileSync(join(folder, 'notes.md'), 'utf8'),
+    'ONE\ntwo\nthree\nfour\nfive\nsix\nseven\neight\n',
+  )
+  assert.equal(readFileSync(join(folder, 'mine.md'), 'utf8'), 'a file of my own\n')
+  assert.deepEqual((await get('/hello')).body, { text: 'Hello 1.1' })
+  // The record names the release, so the next update merges against this one and `plugin remove` keeps the folder as the person's.
+  assert.equal(recordsIn(root).hello?.digest, share.pulledDigest('hello'))
+  const removed = await share.remove('hello')
+  assert.ok(removed.ok && removed.folder === 'kept', JSON.stringify(removed))
+})
+
+test("a person and a release that changed the same lines are refused, and the person's folder is exactly as it was", async () => {
+  const root = appFolder()
+  const { share, get } = await boot({
+    releases: twoReleases({ 'notes.md': NOTES_V1.replace('one\n', 'UNO\n') }),
+    root,
+  })
+  assert.ok((await share.pull('github:someone/hello@1.0.0')).ok)
+  const folder = join(root, 'plugins', 'hello')
+  writeFileSync(join(folder, 'notes.md'), NOTES_V1.replace('one\n', 'ONE\n'))
+
+  const result = await share.pull('github:someone/hello@1.1.0')
+  refused(result, 'folder-exists', /changes of your own to notes\.md/)
+  assert.equal(readFileSync(join(folder, 'notes.md'), 'utf8'), NOTES_V1.replace('one\n', 'ONE\n'))
+  assert.equal(readFileSync(join(folder, 'index.ts'), 'utf8'), ROUTE)
+  assert.deepEqual((await get('/hello')).body, { text: 'Hello' })
+})
+
+test('the merge of three trees: one side changed takes that change, both changed is merged or a conflict, a removal against an edit is a conflict', () => {
+  const tree = (entries: Record<string, string>) =>
+    new Map(Object.entries(entries).map(([path, text]) => [path, Buffer.from(text)]))
+  const text = (bytes: Uint8Array | undefined) =>
+    bytes === undefined ? undefined : Buffer.from(bytes).toString()
+  const lineMerge = (_base: Uint8Array, mine: Uint8Array, theirs: Uint8Array) =>
+    Buffer.from(`${Buffer.from(mine)}+${Buffer.from(theirs)}`)
+  const result = mergeTrees(
+    tree({ a: '1', b: '1', c: '1', d: '1', e: '1' }),
+    tree({ a: '1', b: 'mine', c: 'mine', e: 'mine' }),
+    tree({ a: 'theirs', b: '1', c: 'theirs', d: '1', f: 'new' }),
+    lineMerge,
+  )
+  assert.deepEqual(
+    Object.fromEntries([...result.files].map(([path, bytes]) => [path, text(bytes)])),
+    { a: 'theirs', b: 'mine', c: 'mine+theirs', f: 'new' },
+  )
+  assert.deepEqual(result.kept, ['b', 'c', 'd'])
+  assert.deepEqual(result.conflicts, ['e'])
+})
+
+// registry:<id>: a plugin the public registry lists, pulled by its id; the integrity the registry lists is the check the release must pass.
+const REGISTRY = 'fixture:registry'
+
+function registryOf(entries: unknown[]): (url: string) => Promise<Uint8Array> {
+  return async (url) => {
+    if (url !== REGISTRY) throw new Error(`not served: ${url}`)
+    return Buffer.from(JSON.stringify({ formatVersion: 1, entries }))
+  }
+}
+
+test('registry:<id> pulls the release the registry lists, checked against the integrity it lists, and records the GitHub source', async () => {
+  const release = pack({ 'index.ts': ROUTE })
+  const root = appFolder()
+  const { share, get } = await boot({
+    releases: releasesByTag({ 'v1.0.0': release.tarball }),
+    download: registryOf([
+      { id: 'other', repo: 'https://github.com/x/other', version: '9.9.9', integrity: 'sha512-no' },
+      {
+        id: 'hello',
+        name: '@someone/hello',
+        repo: 'https://github.com/someone/hello',
+        version: '1.0.0',
+        integrity: release.integrity,
+      },
+    ]),
+    registry: REGISTRY,
+    root,
+  })
+  const result = await share.pull('registry:hello')
+  assert.ok(result.ok, JSON.stringify(result))
+  assert.deepEqual((await get('/hello')).body, { text: 'Hello' })
+  assert.equal(recordsIn(root).hello?.source, 'github:someone/hello@1.0.0')
+  // The package name finds it too, and the same bytes are already there.
+  const again = await share.pull('registry:@someone/hello')
+  assert.ok(again.ok && again.action === 'unchanged', JSON.stringify(again))
+})
+
+test('registry:<id> refuses an id the registry does not list, a registry that cannot be read, and a release the registry did not see', async () => {
+  const release = pack({ 'index.ts': ROUTE })
+  const listed = [
+    {
+      id: 'hello',
+      repo: 'https://github.com/someone/hello',
+      version: '1.0.0',
+      integrity: 'sha512-other',
+    },
+  ]
+  const { share, untouched } = await boot({
+    releases: releasesByTag({ 'v1.0.0': release.tarball }),
+    download: registryOf(listed),
+    registry: REGISTRY,
+  })
+  refused(await share.pull('registry:nothing'), 'source', /lists no plugin nothing/)
+  // The registry listed other bytes than the release holds now: refused, nothing installed.
+  const changed = await share.pull('registry:hello')
+  assert.equal(changed.ok, false, JSON.stringify(changed))
+  await untouched()
+
+  const unreachable = await boot({
+    download: async () => {
+      throw new Error('offline')
+    },
+    registry: REGISTRY,
+  })
+  refused(
+    await unreachable.share.pull('registry:hello'),
+    'fetch',
+    /registry could not be read: offline/,
+  )
+  const notAnIndex = await boot({ download: async () => Buffer.from('<html>'), registry: REGISTRY })
+  refused(await notAnIndex.share.pull('registry:hello'), 'source', /does not understand/)
 })

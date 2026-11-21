@@ -8,7 +8,13 @@ Share plugins between people. Pull a plugin someone released into your running a
 npm run acryl -- plugin pull github:<owner>/<repo>@<version>
 ```
 
+`registry:<id>` pulls what the public plugin registry (cordisplugins.github.io) lists under that id, checked against the integrity it lists.
+
 The line someone gives you after publishing also carries `@sha256:<digest>`. Then a release with different bytes is refused, with exit 1, and nothing changes.
+
+A newer release of a plugin you already pulled updates it in place. A folder you never touched is replaced. A folder you changed is merged three ways
+(the release you pulled, your folder, the new release; `merge-edits.ts`): a file only you changed keeps your change, a file both changed is merged line by
+line with git, and when the same lines changed nothing is written and the pull is refused naming the file. The answer lists the files that kept your changes (`kept`).
 
 The app must be running (`npm run dev`), because the pull installs into it live. A stopped app never installs offline: the line exits 3 and asks you to start the app and run the same line again.
 
