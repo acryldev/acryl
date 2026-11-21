@@ -7,8 +7,9 @@ import { type ChildProcess, spawn, spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { connect } from 'node:net'
 import { join, resolve } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import { appDataHome, PROGRAM_ENV } from '@acryldev/instance'
+import { withoutInheritedDescriptors } from './inherited.ts'
 
 /** The launcher every frame app has; without it the app runs on its own server (made before the frame). */
 export const HOST_SCRIPT = join('scripts', 'ide-host.mjs')
@@ -234,8 +235,12 @@ export function startFrameHost(
     launch.runtime === undefined
       ? hostCommand(env, platform)
       : { file: launch.runtime, args: packagedHostArgs(program, root), shell: false }
+  // Nothing of Electron's own descriptors (its DevTools port) goes on to the host (inherited.ts); a command that needs the Windows shell is left as it is.
+  const start = command.shell
+    ? { program: command.file, args: command.args }
+    : withoutInheritedDescriptors(command.file, command.args, platform)
   // The host leads its own process group on macOS and Linux, so a stop reaches npm, the host and every terminal it runs; Windows stops the tree with taskkill.
-  const child: ChildProcess = spawn(command.file, command.args, {
+  const child: ChildProcess = spawn(start.program, [...start.args], {
     cwd: root,
     env: {
       ...env,

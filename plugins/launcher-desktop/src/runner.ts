@@ -4,6 +4,7 @@
  * (`npm run dev` starts a server below npm).
  */
 import { spawn, spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 
 export interface Run {
   /** Output so far is delivered in chunks, stdout and stderr together. */
@@ -37,6 +38,22 @@ export function appEnvironment(base: Readonly<Record<string, string | undefined>
   return env
 }
 
+/**
+ * What a child of the Electron main process inherits. On Linux Chromium opens its DevTools port (`--remote-debugging-port`), its sockets and its files without
+ * close-on-exec and Node's spawn passes every one on, so an app started from here kept the port bound after this app quit. macOS closes all but the standard streams
+ * when it starts a process, and Windows does not inherit a socket, so only Linux needs it. bash's `exec 12>&-` closes a descriptor of any number (dash takes one
+ * digit); the command then replaces bash, so the process id and group stay the child's. The same text is in plugins/desktop-shell/inherited.ts; keep them equal.
+ */
+// biome-ignore lint/suspicious/noTemplateCurlyInString: shell parameter expansion, not a JavaScript template
+const CLOSE_AND_RUN = 'for f in /proc/self/fd/*; do n=${f##*/}; if [ "$n" -gt 2 ]; then eval "exec $n>&-"; fi; done; exec "$@"'
+const BASH = '/bin/bash'
+
+/** The program and arguments to spawn so the child holds no descriptor above 2: the command itself where that is already so, or where bash is not there. */
+export function withoutInheritedDescriptors(program: string, args: readonly string[], platform: NodeJS.Platform = process.platform, hasBash: boolean = existsSync(BASH)): { readonly program: string, readonly args: readonly string[] } {
+  if (platform !== 'linux' || !hasBash) return { program, args }
+  return { program: BASH, args: ['-c', CLOSE_AND_RUN, 'acryl-spawn', program, ...args] }
+}
+
 /** Stop a command and everything it started: a process group on Unix, `taskkill /t` on Windows. */
 function stopTree(pid: number, platform: NodeJS.Platform): void {
   try {
@@ -48,7 +65,8 @@ function stopTree(pid: number, platform: NodeJS.Platform): void {
 export const spawnRunner: Runner = (command) => {
   const win = process.platform === 'win32'
   // `npm` and `npx` are .cmd files on Windows, which only a shell starts.
-  const child = spawn(command.program, [...command.args], { cwd: command.cwd, env: command.env as NodeJS.ProcessEnv, shell: win, detached: !win, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+  const start = win ? { program: command.program, args: command.args } : withoutInheritedDescriptors(command.program, command.args)
+  const child = spawn(start.program, [...start.args], { cwd: command.cwd, env: command.env as NodeJS.ProcessEnv, shell: win, detached: !win, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
   const outputs: Array<(text: string) => void> = []
   const ends: Array<(end: { code: number | null, notFound: boolean, error?: string }) => void> = []
   let ended = false
