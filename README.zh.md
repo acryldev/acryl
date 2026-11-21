@@ -38,13 +38,15 @@
 
 | 命令 | 打开什么 |
 | --- | --- |
-| `npx acryl` | 终端里的 ACRYL Control Center：你的应用、Blends 商店，以及创建、启动、分享、拉取、部署 |
-| `npx acryl --gui` | 桌面应用形式的 ACRYL Control Center |
-| `npx acryl --web` | 浏览器里的 ACRYL Control Center |
-| `npx acryl new my-app` | 一个内置智能体的空白应用 |
-| `npx acryl new my-app --from acrylblends.csv-explorer` | 用商店里的某个 Blend 创建的应用，可以随意修改 |
+| `npx acryl@latest` | 终端里的 ACRYL Control Center：你的应用、Blends 商店，以及创建、启动、分享、拉取、部署 |
+| `npx acryl@latest --gui` | 桌面应用形式的 ACRYL Control Center |
+| `npx acryl@latest --web` | 浏览器里的 ACRYL Control Center |
+| `npx acryl@latest new my-app` | 一个内置智能体的空白应用 |
+| `npx acryl@latest new my-app --from acrylblends.csv-explorer` | 用商店里的某个 Blend 创建的应用，可以随意修改 |
 
-`npx acryl --tui` 与 `npx acryl` 相同。更想下载安装？macOS、Windows 和 Linux 版的 ACRYL Control Center 在
+请始终带上 `@latest`：旧的 npm 缓存或较慢的镜像源，可能会启动旧版本的 ACRYL。
+
+`npx acryl@latest --tui` 与 `npx acryl@latest` 相同。更想下载安装？macOS、Windows 和 Linux 版的 ACRYL Control Center 在
 [Releases](https://github.com/acrylblends/63-acryl-control-center/releases/latest)。
 
 ## 你的用户如何构建：五步
@@ -70,7 +72,7 @@
 ## 分享与拉取
 
 - **Blends（整个应用）：** 把你的应用分享到你自己的 GitHub 仓库，并作为 Community 上架到商店（`npm run share -- --visibility public --list`）。
-  任何人都可以用它创建应用（`npx acryl new their-app --from github:you/your-app#v0.1.0`），之后用
+  任何人都可以用它创建应用（`npx acryl@latest new their-app --from github:you/your-app#v0.1.0`），之后用
   `npx acrylblends@latest update` 取得你的下一个版本，同时保留自己的改动。
 - **Cordis 插件（单项能力）：** 把插件发布到你的 GitHub（`npm run acryl -- plugin publish <name>`），
   并通过地址把别人的插件拉进你的应用（`npm run acryl -- plugin pull github:owner/repo@version`）。

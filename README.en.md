@@ -36,13 +36,15 @@ You need Node.js 22.19 or newer, npm and git. Nothing to install first: `npx` fe
 
 | Command | What it opens |
 | --- | --- |
-| `npx acryl` | ACRYL Control Center in your terminal: your apps, the Blends store, make, start, share, pull, deploy |
-| `npx acryl --gui` | ACRYL Control Center as a desktop app |
-| `npx acryl --web` | ACRYL Control Center in your browser |
-| `npx acryl new my-app` | A blank app with the agent inside it |
-| `npx acryl new my-app --from acrylblends.csv-explorer` | An app made from a Blend in the store, yours to change |
+| `npx acryl@latest` | ACRYL Control Center in your terminal: your apps, the Blends store, make, start, share, pull, deploy |
+| `npx acryl@latest --gui` | ACRYL Control Center as a desktop app |
+| `npx acryl@latest --web` | ACRYL Control Center in your browser |
+| `npx acryl@latest new my-app` | A blank app with the agent inside it |
+| `npx acryl@latest new my-app --from acrylblends.csv-explorer` | An app made from a Blend in the store, yours to change |
 
-`npx acryl --tui` is the same as `npx acryl`. Prefer a download? ACRYL Control Center for macOS, Windows and Linux:
+Always `@latest`: an old npm cache or a slow registry mirror can otherwise start an older ACRYL.
+
+`npx acryl@latest --tui` is the same as `npx acryl@latest`. Prefer a download? ACRYL Control Center for macOS, Windows and Linux:
 [Releases](https://github.com/acrylblends/63-acryl-control-center/releases/latest).
 
 ## How your users build: five steps
@@ -68,7 +70,7 @@ Stop selling features. Sell a platform your customers finish themselves.
 ## Share and pull
 
 - **Blends (whole apps):** share your app to your own GitHub repository and list it in the store as Community (`npm run share -- --visibility public --list`).
-  Anyone makes an app from it (`npx acryl new their-app --from github:you/your-app#v0.1.0`) and later brings in your next release with
+  Anyone makes an app from it (`npx acryl@latest new their-app --from github:you/your-app#v0.1.0`) and later brings in your next release with
   `npx acrylblends@latest update`, keeping their own changes.
 - **Cordis plugins (single capabilities):** publish a plugin to your GitHub (`npm run acryl -- plugin publish <name>`) and pull anyone's into your app
   by its address (`npm run acryl -- plugin pull github:owner/repo@version`).

@@ -90,7 +90,7 @@ Next:
 `cd ben-notes && npm install && npm run dev` starts it. The app is Ben's: its history starts at one commit, and it remembers where it came from
 (`package.json` `acryl.from`) so that it can be updated.
 
-An official starter has a short id (`npx acryl new my-app --from acrylblends.csv-explorer`). A Community Blend has the id the store shows
+An official starter has a short id (`npx acryl@latest new my-app --from acrylblends.csv-explorer`). A Community Blend has the id the store shows
 (`inboxxobni.sh-guide-notes`), and that works the same way: the id is looked up in the store's list of Community Blends and the app is made from the release
 the store lists, as if you had written its `github:` form. The app remembers that release, so `update` works. When neither the starters nor the Community list
 know an id, the error says so.
