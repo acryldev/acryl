@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { addApp, saveModelKey } from '@acryldev/launcher'
+import { addApp, saveModelKey, toolDirs } from '@acryldev/launcher'
 import { LauncherRefusal, LauncherService, type LauncherPorts } from '../src/service.ts'
 import { appEnvironment, type Command, type Run } from '../src/runner.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from '../src/door.ts'
@@ -110,7 +110,7 @@ describe('the tools apps need', () => {
     const preparing = service.prepareTools()
     expect(() => { service.start('shop') }).toThrow(/Getting Node.js and GitHub's tool ready/u)
     expect(runs).toHaveLength(0)
-    const fetched = join(home, 'tools', 'node', 'bin')
+    const fetched = toolDirs(home).node
     mkdirSync(fetched, { recursive: true })
     finish()
     await preparing

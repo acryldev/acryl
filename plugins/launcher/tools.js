@@ -5,7 +5,7 @@
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
-import { delimiter, join } from 'node:path'
+import { join } from 'node:path'
 
 export const TOOLS_FOLDER = 'tools'
 /** The oldest Node.js ACRYL apps run on (acrylblends checks the same at create). */
@@ -38,7 +38,7 @@ export function toolsEnv(home, env, platform = process.platform) {
   const dirs = Object.values(toolDirs(home, platform)).filter(dir => existsSync(dir))
   if (dirs.length === 0) return { ...env }
   const key = Object.keys(env).find(name => name.toUpperCase() === 'PATH') ?? 'PATH'
-  const sep = platform === 'win32' ? ';' : delimiter
+  const sep = platform === 'win32' ? ';' : ':'
   const have = (env[key] ?? '').split(sep).filter(dir => dir !== '' && !dirs.includes(dir))
   return { ...env, [key]: [...dirs, ...have].join(sep) }
 }
