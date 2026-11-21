@@ -26,7 +26,8 @@ export function runDevLocal(argv = process.argv.slice(2), environment = process.
     const child = spawn(process.execPath, [join(repoRoot, 'scripts/launcher-blend.mjs'), ...argv], {
       stdio: 'inherit',
       cwd: repoRoot,
-      env: { ...environment, ACRYL_LAUNCHER_HOME: environment.ACRYL_LAUNCHER_HOME ?? instance.home },
+      // ACRYL_HOME: the Blends desktop window keeps its Electron copy and window data under it (else ~/.acryl); the launcher lists apps in ACRYL_LAUNCHER_HOME.
+      env: { ...environment, ACRYL_HOME: environment.ACRYL_HOME ?? instance.home, ACRYL_LAUNCHER_HOME: environment.ACRYL_LAUNCHER_HOME ?? instance.home },
     })
     child.once('error', reject)
     child.once('exit', (code, signal) => resolveExit(code ?? (signal === null ? 1 : 128)))
