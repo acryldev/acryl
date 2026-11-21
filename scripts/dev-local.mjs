@@ -1,91 +1,38 @@
 #!/usr/bin/env node
-/** Isolated local Desktop launch: own DSH home + Electron userData, away from the installed app. */
+/**
+ * `pnpm dev` (also `pnpm desktop`, `pnpm gui`): ACRYL Control Center from this checkout's source, in its desktop window (scripts/launcher-blend.mjs), on an
+ * isolated home: never the installed app's `~/.acryl`. The earlier ACRYL desktop this used to start moved to https://github.com/acryldev/acryl-desktop.
+ */
 
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { withBuildLock } from './lib/build-lock.mjs'
-import { instanceEnvironment, osHomeDirectory, selectInstance } from './lib/instance-module.mjs'
+import { osHomeDirectory, selectInstance } from './lib/instance-module.mjs'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 /**
- * The app instance this Desktop launch runs as, from the runtime's instance module (spec 036, "Self-containment"): an app or home the caller pinned, else
- * this checkout's worktree instance, else the main checkout's isolated development app (`~/.acryl-dev`, Electron "ACRYL Development"). Never the installed
- * app's `~/.acryl`.
+ * The home this launch runs in, from the runtime's instance module (spec 036, "Self-containment"): an app or home the caller pinned, else this checkout's
+ * worktree instance, else the main checkout's isolated development home (`~/.acryl-dev`). Never the installed app's `~/.acryl`.
  */
 export function localDesktopInstance(environment = process.env, osHome = osHomeDirectory(), checkout = repoRoot) {
   return selectInstance({ env: environment, osHome, checkout, development: true })
 }
 
-/**
- * Isolated ACRYL homes start in advanced mode so Development Canvas is visible.
- * @param dshHome - resolved DSH_HOME for this launch
- */
-export function ensureLocalAdvancedMode(dshHome) {
-  mkdirSync(dshHome, { recursive: true, mode: 0o700 })
-  const settingsPath = join(dshHome, 'settings.yaml')
-  if (!existsSync(settingsPath)) {
-    writeFileSync(settingsPath, 'dsh-desktop:\n  mode: advanced\n', { encoding: 'utf8', mode: 0o600 })
-    return 'created'
-  }
-  const text = readFileSync(settingsPath, 'utf8')
-  if (/\bmode:\s*advanced\b/u.test(text)) return 'already-advanced'
-  if (/\bmode:\s*compatibility\b/u.test(text)) {
-    writeFileSync(settingsPath, text.replace(/\bmode:\s*compatibility\b/u, 'mode: advanced'), { encoding: 'utf8' })
-    return 'switched'
-  }
-  writeFileSync(
-    settingsPath,
-    `${text.replace(/\s*$/u, '')}\n\ndsh-desktop:\n  mode: advanced\n`,
-    { encoding: 'utf8' },
-  )
-  return 'appended'
-}
-
-function corepackCommand() {
-  return process.platform === 'win32' ? 'corepack.cmd' : 'corepack'
-}
-
-function runPnpm(args, env) {
+export function runDevLocal(argv = process.argv.slice(2), environment = process.env) {
+  const instance = localDesktopInstance(environment)
+  process.stdout.write(`dev: ACRYL Control Center from source, home=${instance.home} (${instance.kind})\n`)
   return new Promise((resolveExit, reject) => {
-    const child = spawn(corepackCommand(), ['pnpm', ...args], {
+    const child = spawn(process.execPath, [join(repoRoot, 'scripts/launcher-blend.mjs'), ...argv], {
       stdio: 'inherit',
-      env,
-      cwd: resolve(fileURLToPath(new URL('..', import.meta.url))),
+      cwd: repoRoot,
+      env: { ...environment, ACRYL_LAUNCHER_HOME: environment.ACRYL_LAUNCHER_HOME ?? instance.home },
     })
     child.once('error', reject)
-    child.once('exit', (code, signal) => {
-      resolveExit(code ?? (signal === null ? 1 : 128))
-    })
+    child.once('exit', (code, signal) => resolveExit(code ?? (signal === null ? 1 : 128)))
+    // The window ends on the same signal and stops its server; this waits for it.
+    for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, () => {})
   })
-}
-
-export async function runDevLocal(argv = process.argv.slice(2), environment = process.env) {
-  const skipBuild = argv.includes('--skip-build')
-  const instance = localDesktopInstance(environment)
-  // Electron's user data lives inside the instance's own home (the Desktop main process carries an older OS-folder copy over once).
-  const userData = instance.userDataDir
-  mkdirSync(instance.dshHome, { recursive: true, mode: 0o700 })
-  // The development app starts in advanced mode so Development Canvas is visible; an app keeps its own defaults.
-  const mode = instance.kind === 'development' || instance.kind === 'worktree' ? ensureLocalAdvancedMode(instance.dshHome) : 'app-default'
-  process.stdout.write(`dev:local app=${instance.id} (${instance.kind}) home=${instance.home}\n`)
-  process.stdout.write(`dev:local userData=${userData}\n`)
-  process.stdout.write(`dev:local desktop mode=${mode}\n`)
-  const env = { ...environment, ...instanceEnvironment(instance) }
-  if (!skipBuild) {
-    // The market and what it is built from, in dependency order (it needs `@acryldev/settings` built first); a bare `--filter @acryldev/cordis-plugin-market` failed
-    // on a fresh checkout with "Cannot find module '@acryldev/settings'", because nothing before it had built that package.
-    // It holds the checkout's build lock like every other launcher: without it, `pnpm web` started alongside rebuilt (and so wiped) `@acryldev/settings`
-    // while this compiled the market against it ("Could not find a declaration file for module '@acryldev/settings'").
-    const root = resolve(fileURLToPath(new URL('..', import.meta.url)))
-    const marketCode = await withBuildLock(root, 'desktop launcher (market)', () =>
-      runPnpm(['--filter', '@acryldev/cordis-plugin-market...', '--workspace-concurrency=1', 'run', 'build'], env))
-    if (marketCode !== 0) return marketCode
-    return runPnpm(['--filter', 'acryl-desktop', 'run', 'dev'], env)
-  }
-  return runPnpm(['--filter', 'acryl-desktop', 'run', 'start'], env)
 }
 
 const invoked = process.argv[1] === undefined ? undefined : resolve(process.argv[1])

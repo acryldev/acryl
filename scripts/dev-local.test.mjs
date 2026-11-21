@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { ensureLocalAdvancedMode, localDesktopInstance } from './dev-local.mjs'
+import { localDesktopInstance } from './dev-local.mjs'
 
 const temp = run => { const dir = mkdtempSync(join(tmpdir(), 'dev-local-')); try { return run(dir) } finally { rmSync(dir, { recursive: true, force: true }) } }
 
@@ -30,11 +30,4 @@ test('a worktree checkout and an app each get their own home and Electron user d
   assert.equal(pinned.kind, 'app')
   assert.match(pinned.userDataName, /^ACRYL orbit-[0-9a-f]{4}$/u)
   assert.equal(pinned.userDataDir, join(pinned.home, 'desktop-data'))
-}))
-
-test('seeds advanced mode so Development Canvas can mount', () => temp(home => {
-  assert.equal(ensureLocalAdvancedMode(home), 'created')
-  assert.match(readFileSync(join(home, 'settings.yaml'), 'utf8'), /mode: advanced/u)
-  writeFileSync(join(home, 'settings.yaml'), 'dsh-desktop:\n  mode: compatibility\n')
-  assert.equal(ensureLocalAdvancedMode(home), 'switched')
 }))

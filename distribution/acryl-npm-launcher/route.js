@@ -4,7 +4,7 @@
 //   acryl --gui, acryl --web      ACRYL Control Center in a window, in the browser (`--update` first)
 //   acryl --help, -h, help        the help          acryl --version, -v       this package's version
 //   acryl apps | model | store    the list of apps, the model key, the store's Blends
-//   acryl ade [...]               ACRYL ADE         acryl desktop             the earlier ACRYL desktop installer
+//   acryl ade [...]               ACRYL ADE         acryl desktop             where the earlier desktop went (--installer: its installer)
 //   anything else                 the terminal coding agent with those words (`acryl -p "..."`)
 // The short commands forwarded to the part that owns them (new, make, plugin, blends, update) are decided before this, by forward.js.
 import { controlCenterArgs } from './control-center.js'

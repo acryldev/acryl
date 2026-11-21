@@ -43,7 +43,7 @@ function entryFile(manifest) {
 /**
  * The first missing built output a surface needs.
  * @param {string} root - the checkout's root folder.
- * @param {string} surfaceDir - the surface package's folder, relative to `root` (for example `apps/acryl-desktop`).
+ * @param {string} surfaceDir - the surface package's folder, relative to `root` (for example `apps/acryl-web`).
  * @param {readonly string[]} [surfaceFiles] - files of the surface itself that are run directly, relative to its folder (for example `lib/bin.js`).
  * @returns {{ packageName: string, file: string } | undefined} the package and the missing file (relative to `root`), or undefined when all exist.
  */

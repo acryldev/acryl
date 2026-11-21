@@ -1,6 +1,6 @@
 name: Release CLI
 
-# The one release: CLI + Web archives, the five Desktop installers (built by release-desktop.yml, called below) and the npm packages, all under the same
+# The one release: CLI + Web archives and the npm packages (the earlier desktop moved to acryldev/acryl-desktop), all under the same
 # `v<version>` tag. Nothing irreversible happens (npm, the GitHub release) unless every surface built.
 on:
   push:
@@ -145,17 +145,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  desktop:
-    name: desktop
-    uses: ./.github/workflows/release-desktop.yml
-    # The macOS signing and notarization secrets (all optional: without them the build is sealed ad hoc, not signed).
-    secrets: inherit
-    permissions:
-      contents: read
-
   manifest:
     name: verify complete release
-    needs: [cli, web, desktop]
+    needs: [cli, web]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -163,8 +155,8 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: artifacts
-          # Every surface's artifacts: 4 CLI + 4 Web + 5 Desktop receipts, each beside the file it describes.
-          pattern: 'acryl-{cli,web,desktop}-*'
+          # Every surface's artifacts: 4 CLI + 4 Web receipts, each beside the file it describes.
+          pattern: 'acryl-{cli,web}-*'
       - name: Generate and validate authoritative release manifest
         shell: bash
         env:
@@ -173,7 +165,7 @@ jobs:
           set -euo pipefail
           # A real tag must equal the packages' version. A manual run on a branch (the dry run) has no release version, so it checks everything else.
           if [ "$GITHUB_REF_TYPE" = tag ]; then
-            node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json runtime/control/package.json runtime/harness-runtime/package.json apps/acryl-cli/package.json apps/acryl-web/package.json apps/acryl-desktop/package.json distribution/acryl-npm-launcher/package.json
+            node scripts/release-manifest.mjs verify-versions "${RELEASE_TAG#v}" package.json runtime/control/package.json runtime/harness-runtime/package.json apps/acryl-cli/package.json apps/acryl-web/package.json distribution/acryl-npm-launcher/package.json
           fi
           mapfile -t RECEIPTS < <(find artifacts -name release-receipt.json -type f | sort)
           test "${#RECEIPTS[@]}" -eq 13
@@ -188,7 +180,7 @@ jobs:
 
   npm-publish:
     name: publish npm target packages then selector
-    needs: [manifest, desktop]
+    needs: [manifest]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -238,7 +230,7 @@ jobs:
 
   release:
     name: promote complete GitHub release
-    needs: [manifest, npm-publish, desktop]
+    needs: [manifest, npm-publish]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:

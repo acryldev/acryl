@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "exclude": [],
-  "include": [
-    "src/client/**/*.ts",
-    "src/client/**/*.tsx"
-  ]
-}

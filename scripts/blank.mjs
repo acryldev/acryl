@@ -4,7 +4,7 @@
  *
  *   node scripts/blank.mjs web --dir ~/apps/orbit          an app `acryl new` created (its bin/acryl runs exactly this)
  *   node scripts/blank.mjs web [--instance orbit]          a managed app in ~/.acryl-instances/<name>, from the blank Blueprint (default name: blank)
- *   options: --port <n>  --name <brand name>  --accent '#rrggbb'  --blueprint <file.yaml>        surfaces: web | desktop | cli
+ *   options: --port <n>  --name <brand name>  --accent '#rrggbb'  --blueprint <file.yaml>        surfaces: web | cli
  *
  * Where the app lives, its port, its Electron user data and its project scope come from the runtime's instance module; this launcher claims the app (one
  * live process per app), announces it in the Registry, hands the family to the app through the environment contract, and releases it on exit.
@@ -25,7 +25,7 @@ const FLAG_TO_ENV = { name: 'ACRYL_BRAND_NAME', tagline: 'ACRYL_BRAND_TAGLINE', 
 const PLACEMENT = ['ACRYL_HOME', 'DSH_HOME', 'ACRYL_WEB_PORT', 'ACRYL_INSTANCE', 'ACRYL_LOCAL_PRODUCT_NAME', 'ACRYL_BLUEPRINT']
 
 /** Pure: what to run, in which environment, for one surface and app. */
-export function blankLaunchPlan(surface, flags, environment, osHome = osHomeDirectory(), root = resolve(dirname(fileURLToPath(import.meta.url)), '..'), runningSurfaces = []) {
+export function blankLaunchPlan(surface, flags, environment, osHome = osHomeDirectory(), root = resolve(dirname(fileURLToPath(import.meta.url)), '..')) {
   let instance
   try {
     instance = flags.dir === undefined ? managedApp(String(flags.instance ?? DEFAULT_INSTANCE), osHome) : appFolder(String(flags.dir), osHome)
@@ -47,12 +47,7 @@ export function blankLaunchPlan(surface, flags, environment, osHome = osHomeDire
   }
   if (surface === 'web') return { ...base, surface, command: process.execPath, args: [join(root, 'apps/acryl-web/bin/dev-run.mjs'), '--no-open'], env }
   if (surface === 'cli') return { ...base, surface, command: process.execPath, args: [join(root, 'apps/acryl-cli/bin/dev-run.mjs')], env }
-  if (surface === 'desktop') {
-    // Every Desktop app runs the same built Electron app (apps/acryl-desktop/lib); building cleans that folder, so a second one starts from the existing build.
-    const alreadyRunning = runningSurfaces.includes('desktop')
-    return { ...base, surface, skipBuild: alreadyRunning, command: process.execPath, args: [join(root, 'scripts/dev-local.mjs'), ...(alreadyRunning ? ['--skip-build'] : [])], env }
-  }
-  throw new InstanceError(`unknown surface ${JSON.stringify(surface)}; use web, cli or desktop`)
+  throw new InstanceError(`unknown surface ${JSON.stringify(surface)}; use web or cli (the earlier desktop moved to acryldev/acryl-desktop)`)
 }
 
 export function parseFlags(argv) {
@@ -70,7 +65,7 @@ if (isMainModule(import.meta.url)) {
   const [surface = '', ...rest] = process.argv.slice(2)
   try {
     const running = listInstances().filter(app => app.running)
-    const plan = blankLaunchPlan(surface, parseFlags(rest), process.env, undefined, undefined, running.map(app => app.surface))
+    const plan = blankLaunchPlan(surface, parseFlags(rest), process.env)
     // The process that serves the app claims it and announces it with its real port (spec 048 T011), so the launcher only refuses early, with the same
     // wording, when the Registry already shows the app running; a race between two launches is still settled by the claim inside the app.
     const already = running.find(app => app.id === plan.instance.id)

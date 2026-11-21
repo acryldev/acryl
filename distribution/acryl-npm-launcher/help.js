@@ -31,3 +31,11 @@ Agents and keys
 
 Everything ACRYL keeps is in ~/.acryl; new apps go in ~/ACRYL. https://acryl.dev
 `
+
+/** What `acryl desktop` says: the earlier ACRYL desktop moved to its own repository and is superseded; its installer is still offered. */
+export const DESKTOP_MOVED = `The earlier ACRYL desktop is superseded. Use:
+  ACRYL Control Center   acryl --gui, or https://github.com/acrylblends/63-acryl-control-center/releases/latest
+  ACRYL ADE              acryl ade, or https://github.com/acrylblends/05-acryl-ade/releases/latest
+
+Its source moved to https://github.com/acryldev/acryl-desktop; its installers stay at https://github.com/acryldev/acryl/releases.
+To download and open that installer anyway: acryl desktop --installer [--no-open]`

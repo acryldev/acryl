@@ -17,7 +17,6 @@ const workspace = readJson('package.json')
 const pnpmWorkspace = readFileSync(resolve(root, 'pnpm-workspace.yaml'), 'utf8')
 const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
-const plugin = readJson('apps/acryl-desktop/package.json')
 const control = readJson('runtime/control/package.json')
 const harness = readJson('runtime/harness-runtime/package.json')
 const cli = readJson('apps/acryl-cli/package.json')
@@ -42,7 +41,6 @@ if (!npmrc.includes('TUI owns its independent React 19 graph.')) {
 const OWNED_WORKSPACE_POLICY = `nodeLinker: isolated
 
 packages:
-  - examples/blend-demo
   - examples/framework-starter
   - examples/todo
   - runtime/control
@@ -56,7 +54,6 @@ packages:
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web
-  - apps/acryl-desktop
   # Every Cordis plugin package: ACRYL's own and the framework library's app plugins (spec 051 T017, the Pi model's flat plugins folder).
   - plugins/*
   # The framework (acrylblends), imported with its history (spec 051): its CLI and create, and the frame's own packages. The frame packages it shares with ACRYL live once,
@@ -140,7 +137,6 @@ supportedArchitectures:
   fail('pnpm-workspace.yaml must define the universal macOS/native-build policy')
 }
 for (const [name, manifest] of [
-  ['acryl-desktop', plugin],
   ['@acryldev/control', control],
   ['@acryldev/harness-runtime', harness],
   ['acryl-npm-launcher', readJson('distribution/acryl-npm-launcher/package.json')],
@@ -171,8 +167,6 @@ for (const obsoleteFile of [
   'yarn.lock',
   '.yarnrc.yml',
   '.yarn',
-  'apps/acryl-desktop/yarn.lock',
-  'apps/acryl-desktop/.yarnrc.yml',
   'runtime/control/yarn.lock',
   'runtime/control/.yarnrc.yml',
   'runtime/harness-runtime/yarn.lock',
@@ -198,7 +192,6 @@ if (typeof upstreamPackage.packageManager !== 'string' || !upstreamPackage.packa
 
 for (const [owner, manifest] of [
   ['root', workspace],
-  ['desktop', plugin],
   ['control', control],
   ['harness-runtime', harness],
   ['cli', cli],
@@ -236,7 +229,6 @@ if (upstreamPackage.version !== upstream.sourceVersion) {
   fail('deepseek-harness package version differs from upstream.json')
 }
 for (const [owner, manifest] of [
-  ['desktop', plugin],
   ['harness-runtime', harness],
   ['cli', cli],
   ['web', web],
@@ -280,13 +272,11 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // Spec 051 T018 (2026-11-19), total 138 to 146 and outside the seam 104 to 112: the Blends frame's own plugins (@acryldev/blends-frame,
 // @acryldev/app-context) moved from framework/ide into the flat plugins/ folder, so their existing DSH imports (chat, sidebars, dsh-tools, dsh-llm;
 // eight lines, none new) are counted for the first time. Routing them through @acryldev/ui's seam is its own task.
-const DSH_IMPORT_CEILING = { total: 146, outsideSeam: 112 }
+const DSH_IMPORT_CEILING = { total: 106, outsideSeam: 76 }
 const SEAM_FILES = [
   /^runtime\/harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^runtime\/web\/src\/index\.ts$/,
   /^runtime\/harness-runtime\/src\/profile-resolution\/[a-z-]+\.ts$/,
-  /^apps\/acryl-desktop\/src\/(main|electron-runtime|preload|engine-[a-z-]+)\.ts$/,
-  /^apps\/acryl-desktop\/src\/shell\/electron-[a-z-]+\.ts$/,
   /^plugins\/ui\/src\/(frame\.ts|client\/(contract-adapters\.tsx|chat\.ts|registry\/.*))$/,
 ]
 const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(entry => {

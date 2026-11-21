@@ -13,7 +13,7 @@ import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor, targetP
 import { MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { firstAddress, installedControlCenter, opensBrowser } from './control-center.js'
-import { HELP } from './help.js'
+import { DESKTOP_MOVED, HELP } from './help.js'
 import { routeArgs } from './route.js'
 
 const require = createRequire(import.meta.url)
@@ -48,13 +48,17 @@ function openPath(path) {
 }
 
 async function runDesktop(desktopArgs) {
+  if (!desktopArgs.includes('--installer')) {
+    console.log(DESKTOP_MOVED)
+    return
+  }
   const noOpen = desktopArgs.includes('--no-open')
   const result = await acquireDesktopInstaller({
     version: runtimeVersion,
     ...(noOpen ? {} : { open: openPath }),
   })
   console.log(`ACRYL desktop installer ${result.version}: ${result.path}`)
-  if (noOpen) console.log('use --no-open to download without launching')
+  if (noOpen) console.log("downloaded only (--no-open)")
 }
 
 /** The launcher (spec 050), bundled into this package as one file at pack time (tui/bundle.mjs). */

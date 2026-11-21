@@ -94,7 +94,7 @@
             hash = "sha256-UEV9oC6cve7yNPxTYHnfZCfG1bKICKpkXMaXj0CKWsQ=";
           };
 
-          # Shared flags for both TUI and desktop derivations.
+          # Shared flags for the TUI derivation.
           commonDerivationAttrs = {
             inherit version src pnpmDeps pnpm;
 
@@ -222,88 +222,6 @@
               homepage = "https://github.com/acryldev/acryl";
               license = licenses.mit;
               mainProgram = "acryl";
-              platforms = platforms.unix;
-            };
-          });
-
-          acryl-desktop = pkgs.stdenv.mkDerivation (finalAttrs: {
-            pname = "acryl-desktop";
-            inherit (commonDerivationAttrs) version src pnpmDeps pnpm nativeBuildInputs preConfigure dontPnpmBuild dontStrip dontFixup;
-            env.ESBUILD_BINARY_PATH = commonDerivationAttrs.env.ESBUILD_BINARY_PATH;
-
-            # Electron is needed at build time for vite and at runtime.
-            # nixpkgs electron (43.1.0) is close to the project's 43.4.0.
-            buildInputs = [ pkgs.electron ];
-
-            buildPhase = ''
-              runHook preBuild
-
-              # Build the full dependency chain for the desktop app.
-              # Order matters: each package imports types from its deps.
-              pnpm --filter @acryldev/control run build
-              pnpm --filter @acryldev/harness-runtime run build
-              pnpm --filter dsh-community-market run build
-
-              # Build the desktop package. Skip the generate-* scripts
-              # (they use sharp for image processing) since the build/
-              # directory with pre-generated assets is already tracked
-              # in git. Run tsdown, vite, and tsc directly.
-              pnpm --filter acryl-desktop exec tsdown
-              pnpm --filter acryl-desktop exec vite build --config vite.native-ui.config.ts
-              pnpm --filter acryl-desktop exec tsc -p tsconfig.json --emitDeclarationOnly
-              pnpm --filter acryl-desktop exec tsc -p tsconfig.client.json --emitDeclarationOnly
-
-              runHook postBuild
-            '';
-
-            installPhase = ''
-              runHook preInstall
-
-              mkdir -p $out/lib/acryl-desktop $out/bin
-
-              # Copy the built desktop package
-              cp -r apps/acryl-desktop/lib $out/lib/acryl-desktop/lib
-              cp -r apps/acryl-desktop/build $out/lib/acryl-desktop/build
-              cp apps/acryl-desktop/package.json $out/lib/acryl-desktop/
-              cp apps/acryl-desktop/cordis.patch.yml $out/lib/acryl-desktop/ 2>/dev/null || true
-
-              # Copy node_modules (hoisted, flat layout)
-              cp -a node_modules $out/lib/acryl-desktop/node_modules
-
-              # Replace workspace packages with built versions
-              ${installWorkspacePackage "runtime/control" "@acryldev/control" "$out/lib/acryl-desktop/node_modules" []}
-              ${installWorkspacePackage "runtime/harness-runtime" "@acryldev/harness-runtime" "$out/lib/acryl-desktop/node_modules" []}
-              ${installWorkspacePackage "plugins/dsh-community-market" "dsh-community-market" "$out/lib/acryl-desktop/node_modules" ["docs"]}
-              ${installWorkspacePackage "apps/acryl-desktop" "acryl-desktop" "$out/lib/acryl-desktop/node_modules" []}
-
-              # Create a shim for the 'electron' npm package that exports
-              # the nixpkgs electron path. The desktop launcher does
-              # `import('electron')` to get the binary path; the real npm
-              # package downloads a platform binary via postinstall (blocked
-              # by --ignore-scripts), so we replace it with a CJS module
-              # that returns the nixpkgs electron path.
-              rm -rf $out/lib/acryl-desktop/node_modules/electron
-              mkdir -p $out/lib/acryl-desktop/node_modules/electron
-              cat > $out/lib/acryl-desktop/node_modules/electron/index.js <<ELECTRON_SHIM
-              module.exports = "${pkgs.electron}/bin/electron"
-              ELECTRON_SHIM
-              cat > $out/lib/acryl-desktop/node_modules/electron/package.json <<'ELECTRON_PKG'
-              { "name": "electron", "version": "43.1.0", "main": "index.js" }
-              ELECTRON_PKG
-
-              # Wrap the desktop launcher. The launcher (bin.ts) imports
-              # 'electron' to get the path, then spawns it with main.js.
-              makeWrapper ${pkgs.nodejs_22}/bin/node $out/bin/acryl-desktop \
-                --add-flags "$out/lib/acryl-desktop/lib/bin.js"
-
-              runHook postInstall
-            '';
-
-            meta = with pkgs.lib; {
-              description = "ACRYL local-first plugin-native agent workspace (Desktop)";
-              homepage = "https://github.com/acryldev/acryl";
-              license = licenses.mit;
-              mainProgram = "acryl-desktop";
               platforms = platforms.unix;
             };
           });

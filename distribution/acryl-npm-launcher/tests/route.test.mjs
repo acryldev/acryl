@@ -73,3 +73,9 @@ test('one Control Center copy in the ACRYL home: made once, then only started; -
   const updated = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: made, update: true })
   assert.deepEqual(updated.map(step => step.args.join(' ')), ['exec --yes acrylblends@latest -- update', 'run dev'])
 })
+
+test('acryl desktop says where the earlier desktop went and still offers its installer', async () => {
+  const { DESKTOP_MOVED } = await import('../help.js')
+  for (const where of ['63-acryl-control-center/releases/latest', '05-acryl-ade/releases/latest', 'acryldev/acryl-desktop', 'acryldev/acryl/releases', 'acryl desktop --installer'])
+    assert.ok(DESKTOP_MOVED.includes(where), where)
+})

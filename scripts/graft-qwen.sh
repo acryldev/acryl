@@ -43,7 +43,6 @@ ONLY_DIRS=(
   apps/acryl-cli/scripts
   apps/acryl-cli/src
   apps/acryl-cli/tests
-  apps/acryl-desktop
   apps/acryl-web
   distribution
   examples

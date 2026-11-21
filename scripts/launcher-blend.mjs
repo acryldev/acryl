@@ -83,7 +83,7 @@ if (manifest.name !== 'ACRYL' || manifest.dependencies?.[LIBRARY] !== libraryRan
   put(manifestFile, `${JSON.stringify({ ...manifest, name: 'ACRYL', dependencies: { ...manifest.dependencies, [LIBRARY]: libraryRange } }, null, 2)}\n`)
   run(npm, ['install', '--no-audit', '--no-fund'], { cwd: app, shell: process.platform === 'win32' })
 }
-put(join(app, 'assets/icon.png'), readFileSync(join(root, 'apps/acryl-desktop/build/app-icon.png')))
+put(join(app, 'assets/icon.png'), readFileSync(join(pkg, 'blend/app-icon.png')))
 // Saved, so the frame shows the app as saved rather than every copied file as a change (nothing to save when nothing changed).
 spawnSync('git', ['add', '-A'], { cwd: app })
 spawnSync('git', ['commit', '-qm', 'ACRYL launcher'], { cwd: app })

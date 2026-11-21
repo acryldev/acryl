@@ -26,7 +26,7 @@
  * @module @acryldev/harness-runtime/acryl-home
  */
 
-import { developmentInstance, instanceEnvironment, osHomeDirectory, selectInstance } from './instance/index.ts'
+import { selectInstance } from './instance/index.ts'
 
 /** ACRYL's own root directory name under the OS home. */
 export const ACRYL_HOME_DIR_NAME = '.acryl'
@@ -61,43 +61,4 @@ export function resolveAcrylHome(env: Record<string, string | undefined> = proce
  */
 export function resolveAcrylDshHome(env: Record<string, string | undefined> = process.env): string {
   return selectInstance({ env }).dshHome
-}
-
-/**
- * The isolated local-dev DSH home (`~/.acryl-dev/.dsh`) — a third root,
- * deliberately sibling to (not nested inside) both `resolveAcrylDshHome`'s
- * packaged-install default (`~/.acryl/.dsh`) and the stock DSH Desktop's
- * plain `~/.dsh`, so a dev run never collides with either.
- *
- * `scripts/dev-local.mjs` at the repo root is this value's one canonical,
- * hand-written definition (it runs before any workspace package builds, so
- * it cannot import this module) and is what actually sets `$DSH_HOME` for
- * `pnpm run dev`. Every *other* desktop dev-mode entry point - `apps/
- * acryl-desktop/scripts/launch-dev.mjs`, `verify-loader-boot.mjs`,
- * `verify-profile-boot.mjs` - runs strictly after that package already
- * built, so they import this exported copy instead of re-deriving it, and
- * default `$DSH_HOME` to it when unset. That is what makes running the
- * desktop package's own script directly (`pnpm --filter acryl-desktop run
- * dev`, bypassing the root orchestrator) resolve the identical isolated
- * home rather than silently falling back to `resolveAcrylDshHome`'s
- * packaged-install default - a real, reproduced footgun (2026-09-14) that
- * this function exists to close for good.
- */
-export const ACRYL_DEV_HOME_DIR_NAME = '.acryl-dev'
-
-/** The isolated local-dev DSH home - see {@link ACRYL_DEV_HOME_DIR_NAME}'s doc comment. */
-export function resolveAcrylDevDshHome(): string {
-  return developmentInstance(osHomeDirectory()).dshHome
-}
-
-/**
- * Default `$DSH_HOME` (in-place, on the given env) to the isolated
- * local-dev home when neither `$ACRYL_HOME` nor `$DSH_HOME` is already set.
- * Call this once, at the very top of a desktop dev-mode script, before
- * anything else reads the environment.
- */
-export function applyIsolatedDevHomeDefault(env: Record<string, string | undefined> = process.env): void {
-  // Nothing chosen yet (the default instance): become the isolated development app, the same family `scripts/dev-local.mjs` launches.
-  if (selectInstance({ env }).kind !== 'default') return
-  Object.assign(env, instanceEnvironment(developmentInstance(osHomeDirectory())))
 }

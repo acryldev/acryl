@@ -37,14 +37,13 @@ corepack pnpm run dev     # launch the application when a graphical session is a
 ### Repository boundaries (please read before starting)
 
 - `deepseek-harness/` is the pinned upstream submodule. **Desktop development never edits files inside it**; upstream updates land through separate pin commits.
-- Desktop code lives in `apps/acryl-desktop/`. `plugins/dsh-community-fabric/` is the documentation-first community-standard draft, and `plugins/cordis-plugin-market/` holds the market package and its design docs. All three are part of the outer PNPM workspace.
+- The earlier desktop moved to https://github.com/acryldev/acryl-desktop. `plugins/dsh-community-fabric/` is the documentation-first community-standard draft, and `plugins/cordis-plugin-market/` holds the market package and its design docs. Both are part of the outer PNPM workspace.
 - Builds, typechecks, unit tests, and smoke checks must stay headless-safe.
 
 ### Commits and pull requests
 
 - Use conventional commit messages (for example `fix(desktop): ...`, `docs: ...`).
 - Run `corepack pnpm run check` and keep it green before committing.
-- After changing production dependencies, run `corepack pnpm --filter acryl-desktop run verify:notices` to refresh the third-party notices and commit the updated `apps/acryl-desktop/THIRD_PARTY_NOTICES.md`.
 - Documentation changes should stay bilingual and update the `README.i18n.yaml` hash record.
 - Describe the change, its motivation, and how it was verified in the PR; merge after CI passes.
 

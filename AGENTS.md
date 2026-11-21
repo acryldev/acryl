@@ -16,17 +16,14 @@ Where an ACRYL app keeps anything (home, engine home, port, Electron user data, 
 
 ## Build, run, and verify
 
-- Start the isolated local Desktop (own `~/.acryl-dev` home, advanced mode, Development Canvas) with `corepack pnpm run dev` (alias: `corepack pnpm run desktop`) or `corepack pnpm run local`.
-- Use `corepack pnpm run dev:shared` only when you intentionally want the installed app's `~/.dsh` home.
+- Open ACRYL Control Center from this checkout's source, in its desktop window, on an isolated home (`~/.acryl-dev`, or `~/.acryl-worktrees/<name>` in a worktree; never the installed app's `~/.acryl`) with `corepack pnpm run dev` (aliases: `desktop`, `gui`). `corepack pnpm launcher web | tui` shows its other faces. The earlier ACRYL desktop moved to https://github.com/acryldev/acryl-desktop.
 - Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
-- Typecheck, test, then isolated GUI: `corepack pnpm run lifecycle`.
-- Build the desktop package with `corepack pnpm run build`.
-- Build an installable Desktop for the host you are on: `corepack pnpm build:mac` (unsigned DMG for this Mac's CPU only, `apps/acryl-desktop/dist/mac-<arch>`, about 0.7 GB installed; `build:mac:universal` builds both CPUs into `dist/mac-smoke`, about 1.2 GB installed), `corepack pnpm build:windows` (NSIS installer), `corepack pnpm build:linux` (Debian `.deb`, `apps/acryl-desktop/dist/linux-<arch>`). Each needs its native OS; the signed and notarized macOS release is `dist:mac` and needs a Developer ID certificate in the Keychain.
+- Build every workspace package with `corepack pnpm run build`.
+- Installable desktop apps (ACRYL Control Center, ADE, SDE) are built and released from their own repositories with `acrylblends pack`; this repository builds none.
 - Run the complete headless gate with `corepack pnpm run check`. Every package's build wipes and rewrites its `lib/` in place, so two builds in one checkout collide (a package that depends on the one being rebuilt cannot find its output for a few seconds): run a gate or any long build as `node scripts/with-build-lock.mjs corepack pnpm run check`; the launchers (`pnpm web`, `pnpm acryl`, Desktop `dev`) take the same lock around their build and wait for each other.
 - Run upstream operations through the root scripts, such as `corepack pnpm run upstream:build`.
 
 - `deepseek-harness/` is a pinned upstream Git submodule. Never edit files inside it from a desktop feature branch.
-- `apps/acryl-desktop/` owns the Cordis Host and Client faces, Electron bootstrap, packaging, and release tests.
 - `plugins/dsh-community-fabric/` owns the community interoperability RFC. Until schemas and a reviewed reference adapter exist, it remains a private documentation scaffold and must not declare loadable DSH or package entry points.
 - `plugins/cordis-plugin-market/` is an implemented private Host/Client package. It is an optional Desktop Market provider, disabled by default, and must continue to use ordinary DSH/Cordis, profile, and Desktop service contracts rather than a parallel plugin runtime.
 - The outer repository and all owned packages use the root PNPM release with `node-linker=isolated`.
@@ -159,7 +156,7 @@ one, and a repo that looks abandoned gets treated like one.
 
 Current groups and what belongs in each:
 
-- `apps/` — the swappable surfaces (`acryl-cli`, `acryl-web`, `acryl-desktop`).
+- `apps/` — the swappable surfaces (`acryl-cli`, `acryl-web`).
   A new terminal/web/desktop-shaped entry point goes here.
 - `runtime/` — the stable core every surface depends on
   (`@acryldev/control`, `@acryldev/harness-runtime`). Nothing here may depend on

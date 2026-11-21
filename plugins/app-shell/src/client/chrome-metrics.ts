@@ -1,8 +1,7 @@
 /**
  * Native window chrome the shell leaves room for, in CSS pixels. Only the Electron platforms have any;
- * on Web and Linux the frame reserves nothing. These are the same numbers Electron's main process uses to
- * size the title-bar overlay (`apps/acryl-desktop/src/shell/window-chrome.ts`), and a test compares the two
- * files so they cannot drift.
+ * on Web and Linux the frame reserves nothing. They were the numbers the earlier ACRYL desktop's main process
+ * used to size its title-bar overlay (now https://github.com/acryldev/acryl-desktop, src/shell/window-chrome.ts).
  */
 
 /** Height reserved above the macOS sidebar content. */

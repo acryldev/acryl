@@ -1,7 +1,6 @@
 nodeLinker: isolated
 
 packages:
-  - examples/blend-demo
   - examples/framework-starter
   - examples/todo
   - runtime/control
@@ -15,7 +14,6 @@ packages:
   - distribution/acryl-npm-launcher
   - apps/acryl-cli
   - apps/acryl-web
-  - apps/acryl-desktop
   # Every Cordis plugin package: ACRYL's own and the framework library's app plugins (spec 051 T017, the Pi model's flat plugins folder).
   - plugins/*
   # The framework (acrylblends), imported with its history (spec 051): its CLI and create, and the frame's own packages. The frame packages it shares with ACRYL live once,
@@ -93,8 +91,6 @@ patchedDependencies:
   '@deepseek-ai/dsh-web-app@0.2.0-rc.2': patches/@deepseek-ai__dsh-web-app@0.2.0-rc.2.patch
   '@earendil-works/pi-ai@1.1.0': patches/@earendil-works__pi-ai@1.1.0.patch
   '@earendil-works/pi-tui@1.1.0': patches/@earendil-works__pi-tui@1.1.0.patch
-  app-builder-lib@26.15.7: patches/app-builder-lib@26.15.7.patch
-  dshmarket@1.17.1: patches/dshmarket@1.17.1.patch
   node-pty@1.2.0-beta.15: patches/node-pty@1.2.0-beta.15.patch
 
 supportedArchitectures:

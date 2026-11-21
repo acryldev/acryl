@@ -54,7 +54,7 @@ const read = file => { try { return readFileSync(file, 'utf8') } catch { return 
 /** Every `interface SlotMap` entry declared in source: name, kind, scope, owner, first doc line, declaring package. */
 export function collectSlots(repo, index) {
   const slots = new Map()
-  const roots = [join(repo, 'deepseek-harness/packages/client'), join(repo, 'apps/acryl-desktop/src/client'), join(repo, 'plugins')]
+  const roots = [join(repo, 'deepseek-harness/packages/client'), join(repo, 'plugins')]
   const files = []
   for (const root of roots) walk(root, 7, (file, name) => { if (/\.(ts|tsx)$/u.test(name) && !/\.(test|spec)\./u.test(name)) files.push(file) })
   const packageOf = file => {

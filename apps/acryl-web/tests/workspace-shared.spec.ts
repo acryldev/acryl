@@ -106,7 +106,7 @@ describe('the ACRYL workspace on the Web surface', () => {
         body: JSON.stringify({ id: terminal.id }),
       })
       // Launching agents is covered here with POSIX fixtures (/bin/echo, a #!/bin/sh stub, `sh -c` hooks). Windows launches them through
-      // PowerShell and has its own specs in apps/acryl-desktop/tests/windows, so this segment runs on POSIX hosts only.
+      // PowerShell (the earlier desktop's specs covered that; it moved to acryldev/acryl-desktop), so this segment runs on POSIX hosts only.
       if (process.platform !== 'win32') {
         // A custom agent is added by the user, saved in the ACRYL home, and started by id only.
         const added = await fetch(`${origin}/api/acryl-workspace/agents`, {
