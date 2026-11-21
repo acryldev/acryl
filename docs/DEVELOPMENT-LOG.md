@@ -8,7 +8,8 @@
   macOS does not leak (libuv closes all but the standard streams there; checked with the same probe). Windows was not tested. The same helper is in `inherited.ts` and `runner.ts` (the packages share no code).
 - **One model prompt on first start** (`3e17e6beb5629838e98f077af8053ba5ff5001ae`, `@acryldev/sign-in`, `@acryldev/workspace`): the sign-in dialog sets `data-acryl-connect-dialog` on the page while open; the
   workspace card hides while it is set and shows after the dialog closes.
-- Not run: the full `pnpm run check`, a packed app. `plugins/workspace/tests/shell/tab-kinds.spec.ts` needs the pinned upstream checkout, which a worktree does not have.
+- **A flaky spec found by the gate** (see the next commit of `plugins/launcher-desktop/tests/plugin.spec.ts`): it booted the real plugin, which fetches a missing `gh` on start, so on z370n (no gh) the launcher answered "getting Node.js and GitHub's tool ready" instead of the route's reason; a stand-in `gh` keeps the spec offline. Reproduced here with a PATH without gh.
+- Not run on the Mac: the full `pnpm run check` (it ran on z370n, see the gate), a packed app. `plugins/workspace/tests/shell/tab-kinds.spec.ts` needs the pinned upstream checkout, which a worktree does not have.
 
 ## 2026-11-19 - the surfaces compose their plugin set, and the runtime keeps only the Blueprint vocabulary (spec 051 T021)
 
