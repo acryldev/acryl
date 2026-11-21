@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # On main a started run finishes (only the queued one is replaced), so a busy push stream still yields a completed result for a head.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   DSH_TELEMETRY_DISABLED: '1'
