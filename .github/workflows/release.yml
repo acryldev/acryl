@@ -1,0 +1,82 @@
+name: Release
+
+# The `acryl` selector (distribution/acryl-npm-launcher), under a `v<version>` tag equal to its package version. The terminal agent it installs on first use
+# (acryl-cli-<target>) and the earlier browser surface are acryldev/acryl-terminal's own releases. Nothing irreversible happens unless the selector round-trips on
+# every OS: the GitHub release carries the packed tarball, and npm publication is off unless the repository variable ACRYL_PUBLISH_SELECTOR_NPM is 'true'.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  selector:
+    name: selector-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Enable Git longpaths
+        shell: bash
+        run: git config --global core.longpaths true
+      - uses: actions/checkout@v5
+        with: { submodules: recursive }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24, package-manager-cache: false }
+      - name: Enable Corepack and the pnpm version the repository pins
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
+      - run: corepack pnpm install --frozen-lockfile
+      - name: A tag must equal the selector's version
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: test "${GITHUB_REF_NAME#v}" = "$(node -p "require('./distribution/acryl-npm-launcher/package.json').version")"
+      - name: Selector tests and round trip
+        shell: bash
+        run: |
+          node --test "distribution/acryl-npm-launcher/tests/*.test.mjs" scripts/pack-npm-selector.test.mjs
+          node scripts/selector-round-trip.mjs
+
+  publish:
+    name: pack the selector, attach it, publish when switched on
+    needs: [selector]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive }
+      - uses: actions/setup-node@v5
+        with: { node-version: 24, package-manager-cache: false, registry-url: 'https://registry.npmjs.org' }
+      - name: Enable Corepack and the pnpm version the repository pins
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@$(grep '"packageManager"' package.json | grep -o '[0-9.]*' | head -1) --activate
+      - run: corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm --filter @acryldev/app-persistence run build
+      - run: node scripts/pack-npm-selector.mjs npm-packages
+      - name: Attach the tarball to the GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: acryl ${{ github.ref_name }}
+          files: npm-packages/*.tgz
+      - name: Publish the selector to npm
+        if: vars.ACRYL_PUBLISH_SELECTOR_NPM == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish ./npm-packages/acryl-*.tgz --access public

@@ -9,7 +9,7 @@
 //           The CLI's own palette is compiled into the app and NOT readable by a plugin, so a plugin carries its own.
 // Expect:   `/themed` opens a small centered popup with a colored title and a list; Enter or Esc closes it.
 // Docs:     extending.tui-components
-// Pattern:  apps/acryl-cli/src/tui/piTheme.ts and tui/theme.ts (the same shape), tui-commands-service.ts (open/close)
+// Pattern:  acryl-terminal/apps/acryl-cli/src/tui/piTheme.ts and tui/theme.ts (the same shape), tui-commands-service.ts (open/close)
 import { Container, SelectList, Text, truncateToWidth } from '@earendil-works/pi-tui'
 
 export const name = 'acryl-example-tui-themed'

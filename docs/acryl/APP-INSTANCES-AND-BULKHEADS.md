@@ -53,7 +53,7 @@ address) and ACRYL_WEB_TRUSTED_HOSTS (comma-separated `host[:port]` names, such 
 a container behind its own sign-in (`distribution/acryl-web-container/`); the launch token still guards the index.
 
 Where it is chosen (each is a composition root): the Web and CLI engine compositions (`engine-dsh.ts`), the direct boots (`bootAcrylHarnessProfile`,
-`bootAcrylWebProfile`), Desktop's `main.ts`, the dev launchers (`scripts/dev-local.mjs`, `scripts/blank.mjs`, the Web and CLI `bin/dev-run.mjs` through
+`bootAcrylWebProfile`), Desktop's `main.ts`, the dev launchers (`scripts/dev-local.mjs`, the Web and CLI `bin/dev-run.mjs` through
 `scripts/lib/checkout-isolation.mjs`) and the Desktop smokes. The engine provides it to plugins as the `appInstance` Cordis service; a plugin declares the
 shape it reads (`{ home, dshHome }`) as a separated interface instead of importing the runtime.
 
@@ -69,8 +69,8 @@ DSH creates the chat's first workspace in the operating system's Documents folde
 A run that is not a user launching their own app (a gate, a packed-app smoke, a live run with a real model) must never reach a real ACRYL or DSH home. Three layers, one idea, so a forgotten override ends in an error and not in a write to the installed app:
 
 - **The selector refuses.** With `ACRYL_REQUIRE_ISOLATED_HOME` set, `selectInstance` throws `IsolationRequiredError` for any instance the caller did not pin, and for a pinned home inside `~/.acryl`, `~/.acryl-dev`, `~/.acryl-worktrees`, `~/.acryl-instances` or `~/.dsh`. `createAcrylEngineHost` selects its instance before anything mounts, so the refusal stops the host on every surface (inside a plugin it would only have failed that plugin and the app would have exited 0).
-- **Scripts build their environment with `scripts/lib/isolated-run.mjs`.** `isolatedEnvironment` gives a throwaway root with its own `HOME` (so the engine's default workspace under `~/Documents`, macOS Application Support and any stray `~/.dsh` land there too), ACRYL and engine homes, Electron user data, and the requirement above. `scripts/verify-layout.mjs` fails any `verify-*` script that can boot an app without using it or pinning a home.
-- **Live runs go through `scripts/live-run.mjs web|desktop|tui`.** It injects the model key into the process environment only, snapshots the real homes first, and on exit stops its processes, checks its port is free and fails if a real home changed (an app of yours running meanwhile can also write there: the message names the newest file). Stop it with Ctrl-C, SIGTERM (macOS, Linux), or `node scripts/live-run.mjs stop [root]` from anywhere; on Windows, where one process cannot signal another, that command is the way, and the run ends its app's whole process tree.
+- **Scripts build their environment with `scripts/lib/isolated-run.mjs` of acryldev/acryl-terminal.** `isolatedEnvironment` gives a throwaway root with its own `HOME` (so the engine's default workspace under `~/Documents`, macOS Application Support and any stray `~/.dsh` land there too), ACRYL and engine homes, Electron user data, and the requirement above. `scripts/verify-layout.mjs` fails any `verify-*` script that can boot an app without using it or pinning a home.
+- **Live runs go through `scripts/live-run.mjs web|tui` of acryldev/acryl-terminal.** It injects the model key into the process environment only, snapshots the real homes first, and on exit stops its processes, checks its port is free and fails if a real home changed (an app of yours running meanwhile can also write there: the message names the newest file). Stop it with Ctrl-C, SIGTERM (macOS, Linux), or `node acryl-terminal/scripts/live-run.mjs stop [root]` from anywhere; on Windows, where one process cannot signal another, that command is the way, and the run ends its app's whole process tree.
 
 Never test the guard, or anything that boots an app, with a command that can fall back to the real home: move `HOME` as well.
 

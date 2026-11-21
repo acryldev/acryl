@@ -5,4 +5,4 @@ with `ctx.get('tuiCommands')` (optional, absent on web and desktop, never `injec
 `commands.register({ command: '/name', description, packageName, open({ tui, close }) => Component })`,
 inside `ctx.effect` (it returns a disposer). A `Component` is a pi-tui object:
 `render(width) => string[]`, `handleInput?(data)`, `invalidate()`. Name collisions never throw; they are
-addressed as `/name:<package>`. Source: `apps/acryl-cli/src/tui/tui-commands-service.ts`.
+addressed as `/name:<package>`. Source: `acryl-terminal/apps/acryl-cli/src/tui/tui-commands-service.ts`.

@@ -17,7 +17,7 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
    - macOS: open System Settings, Privacy & Security, scroll down and choose "Open Anyway" for ACRYL. Or run `xattr -dr com.apple.quarantine /Applications/ACRYL.app` once.
    - Windows: SmartScreen shows "More info", then "Run anyway".
 3. Have a DeepSeek API key ready. It is entered once in the app (below). Do not paste it on screen: set it before the talk.
-4. Do one full dry run. For a rehearsal that cannot touch your real ACRYL data, from a source checkout run `node scripts/live-run.mjs web` (isolated home, the key is read from `~/.secure-storage/llmproviders/deepseek/deepseek.json` and passed by environment only), and open the URL it prints.
+4. Do one full dry run. For a rehearsal that cannot touch your real ACRYL data, from a source checkout run `node acryl-terminal/scripts/live-run.mjs web` (isolated home, the key is read from `~/.secure-storage/llmproviders/deepseek/deepseek.json` and passed by environment only), and open the URL it prints.
 
 ## First launch, in order
 
@@ -61,4 +61,4 @@ You install ACRYL from a download, with no dev server and no source checkout. Yo
 ## How this was verified
 
 - `apps/acryl-desktop/scripts/verify-packaged-self-extension.mjs` boots a packaged app (macOS `.app`, Windows install, Linux `.deb`) and drives the agent's own tools without a model: verify, install, call the new tool, rewrite and update it, call it again, remove it. It runs for every release on each OS.
-- The model run above used `scripts/live-run.mjs web` and a headless browser, with the model key passed by environment only; the run checked afterwards that the real ACRYL homes were untouched.
+- The model run above used `acryl-terminal/scripts/live-run.mjs web` and a headless browser, with the model key passed by environment only; the run checked afterwards that the real ACRYL homes were untouched.

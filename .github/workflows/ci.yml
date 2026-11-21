@@ -70,6 +70,6 @@ jobs:
         run: corepack pnpm run check
 
       # The `acryl` npm package as a user installs it (pack, npm install --global, --version). 0.2.5 shipped a Windows selector that could not start;
-      # the release's own smoke runs the archive's launcher, never npm. Windows runs it too.
-      - name: npm round trip of the acryl CLI
-        run: node scripts/npm-round-trip.mjs
+      # Windows runs it too. (The terminal agent's own release and smoke are acryldev/acryl-terminal's.)
+      - name: npm round trip of the acryl selector
+        run: node scripts/selector-round-trip.mjs

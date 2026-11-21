@@ -6,7 +6,7 @@ name: Framework release
 #   create-blends-v<version>    create-acrylblends (framework/packages/create)
 #   frame-<short>-v<version>         @acryldev/<short>, a frame package (framework/frame/packages.json names its folder and version)
 #   launcher-v<version>              @acryldev/launcher (plugins/launcher; Control Center installs it, spec 051 T010)
-# None of these starts with `v`, so release-cli.yml (acryl's own `v*`) never fires on them, nor this one on its tags.
+# None of these starts with `v`, so release.yml (acryl's own `v*`) never fires on them, nor this one on its tags.
 # Run by hand (workflow_dispatch) it does everything except `npm publish`, so the whole path can be tried at any time.
 on:
   push:

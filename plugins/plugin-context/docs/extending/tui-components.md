@@ -32,7 +32,7 @@ commands (`ctx.commands`) and prompts, which have no visual design.
 - Keep a semantic `PALETTE` (primary, secondary, muted, success, warning, error, info) in one object and build the theme
   objects from it (the example does). Use 24-bit color (`\x1b[38;2;r;g;bm`); do not assume a light or dark terminal.
 - The CLI's own palette is generated from the semantic role file `plugins/ui/contracts/tokens.json` (the same roles the web library uses) into
-  `apps/acryl-cli/src/tui/palette.generated.ts`, read through `apps/acryl-cli/src/tui/theme.ts` and adapted to pi-tui in `tui/piTheme.ts`. It has a dark and a
+  `acryl-terminal/apps/acryl-cli/src/tui/palette.generated.ts`, read through `acryl-terminal/apps/acryl-cli/src/tui/theme.ts` and adapted to pi-tui in `tui/piTheme.ts`. It has a dark and a
   light palette for nine roles (dark: `primary #4F6BFE`, `secondary #38BDF8`, `accent #818CF8`, `reasoning #A855F7`, `success #34D399`, `warning #FBBF24`,
   `error #F87171`, `info #4F6BFE`, `muted #94A3B8`). The palette follows the terminal: at startup ACRYL asks the terminal whether its background is light or dark and follows it when it changes;
 `ACRYL_TUI_THEME=dark|light` pins it, `COLORFGBG` is the fallback, dark the default. A plugin reads it through the read-only `tuiTheme` service (`ctx.get('tuiTheme')`: `mode`, `hex(role)`, `color(role)`,
@@ -40,8 +40,8 @@ commands (`ctx.commands`) and prompts, which have no visual design.
 
 ## Branding in the terminal (source change and rebuild)
 
-Banner and wordmark: `apps/acryl-cli/src/tui/acrylMark.ts` (half-block art), `bannerText.ts`, `logoArt.generated.ts`, the mascot in
-`apps/acryl-cli/src/yly/`, the palette in `tui/theme.ts`. Changing these means editing the repository and rebuilding
+Banner and wordmark: `acryl-terminal/apps/acryl-cli/src/tui/acrylMark.ts` (half-block art), `bannerText.ts`, `logoArt.generated.ts`, the mascot in
+`acryl-terminal/apps/acryl-cli/src/yly/`, the palette in `tui/theme.ts`. Changing these means editing the repository and rebuilding
 (`corepack pnpm run tui` runs the dev build). Only when working inside the ACRYL repository; an installed CLI cannot be restyled by a
 plugin. Say that, and offer a themed overlay instead.
 

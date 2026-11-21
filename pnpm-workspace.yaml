@@ -12,8 +12,6 @@ packages:
   - runtime/loopback-http
   - runtime/web
   - distribution/acryl-npm-launcher
-  - apps/acryl-cli
-  - apps/acryl-web
   # Every Cordis plugin package: ACRYL's own and the framework library's app plugins (spec 051 T017, the Pi model's flat plugins folder).
   - plugins/*
   # The framework (acrylblends), imported with its history (spec 051): its CLI and create, and the frame's own packages. The frame packages it shares with ACRYL live once,
@@ -45,7 +43,7 @@ overrides:
 
 # Published DSH client packages declare React types in generated public APIs but
 # omit the type package from their manifests. Their web surface is React 18;
-# acryl-cli separately owns Ink's React 19 types.
+# the terminal agent (acryldev/acryl-terminal) separately owns its React 19 types.
 packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@0.2.0-rc.2':
     dependencies:

@@ -12,7 +12,7 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
-import { corepackCommand, corepackSpawnOptions } from './cli-archive-platform.mjs'
+import { corepackCommand, corepackSpawnOptions } from './corepack-platform.mjs'
 
 /** The framework's foundation: acrylblends and its library packages. They depend on nothing else in the repository. */
 export const FOUNDATION = new Set([

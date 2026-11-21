@@ -4,7 +4,7 @@
 // Teaches:  ctx.get('tuiCommands') exists only in the CLI host: read it OPTIONALLY, never inject it. Register returns a disposer; wrap it in ctx.effect.
 // Expect:   ACTIVE everywhere; the /hello command exists only on tui.
 // Docs:     extending.tui-command
-// Pattern:  apps/acryl-cli/src/tui/tui-commands-service.ts
+// Pattern:  acryl-terminal/apps/acryl-cli/src/tui/tui-commands-service.ts
 export const name = 'acryl-example-tui-command'
 
 export function apply(ctx) {

@@ -8,7 +8,6 @@ on:
   push:
     branches: [main, ci-windows]
     paths:
-      - 'apps/**'
       - 'runtime/**'
       - 'plugins/**'
       - 'scripts/**'
@@ -20,7 +19,6 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'apps/**'
       - 'runtime/**'
       - 'plugins/**'
       - 'scripts/**'
@@ -125,11 +123,11 @@ jobs:
         if: success() || failure()
         run: corepack pnpm $(node scripts/root-chain-filters.mjs) --workspace-concurrency=1 run build
 
-      # The `acryl` npm package as a Windows user installs it (pack, npm install --global, --version, web --yes through a release redirect, stop).
-      # 0.2.5 shipped a selector that could not start any runtime on Windows; the release's own smoke runs the archive's launcher, never npm.
-      - name: npm round trip of the acryl CLI
+      # The `acryl` npm package as a Windows user installs it (pack, npm install --global, --version, --help).
+      # 0.2.5 shipped a selector that could not start any runtime on Windows.
+      - name: npm round trip of the acryl selector
         if: success() || failure()
-        run: node scripts/npm-round-trip.mjs
+        run: node scripts/selector-round-trip.mjs
 
       - name: Typecheck, as the release does before its tests
         if: success() || failure()

@@ -1,5 +1,5 @@
 // Light or dark: which palette a terminal gets, and the theme object the components take. The rules are the ACRYL CLI's
-// (apps/acryl-cli/src/tui/theme.ts resolvePaletteMode and themeDetection.ts schemeOfBackground); spec 050 T008 moves the CLI onto this file.
+// (acryl-terminal/apps/acryl-cli/src/tui/theme.ts resolvePaletteMode and themeDetection.ts schemeOfBackground); spec 050 T008 moves the CLI onto this file.
 import { palettes } from './palette.js'
 
 const ESC = '\x1b'

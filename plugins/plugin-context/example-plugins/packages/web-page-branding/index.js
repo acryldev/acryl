@@ -11,7 +11,7 @@
 //           at call time, never assume it exists.
 // Expect:   the served index.html gets <title>My Studio</title>, a favicon link and a style row.
 // Docs:     extending.ui-branding
-// Pattern:  apps/acryl-web (tapIndex sets <title>ACRYL</title>), deepseek-harness/packages/host/webserver/src/injections.ts
+// Pattern:  acryl-terminal/apps/acryl-web (tapIndex sets <title>ACRYL</title>), deepseek-harness/packages/host/webserver/src/injections.ts
 export const name = 'acryl-example-page-branding'
 
 const TITLE = 'My Studio'

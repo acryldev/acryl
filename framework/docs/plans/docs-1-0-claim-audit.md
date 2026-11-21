@@ -64,7 +64,7 @@ Where a claim rests on a count or a flag, the source is named below.
 | # | Claim | Checked against | Verdict |
 | --- | --- | --- | --- |
 | D1 | `/blends` exists and shows the registry | `src/pages/BlendsPage.tsx` reads `registry/index.json` live and says "Source of truth: acrylblends.github.io" | **confirmed** |
-| D2 | `/blends` "Save your app with `acryl save`, then open a pull request to the registry repository" | `apps/acryl-cli/src/cli/grammar.ts` has a `save` verb; the registry flow is the PR in `registry/README.md` | **confirmed** |
+| D2 | `/blends` "Save your app with `acryl save`, then open a pull request to the registry repository" | `acryl-terminal/apps/acryl-cli/src/cli/grammar.ts` has a `save` verb; the registry flow is the PR in `registry/README.md` | **confirmed** |
 | D3 | `/docs` is the framework docs | `FrameworkDocsPage` renders the synced copy; it is at 0.11.0 | **fixed by sync** (same run as B1) |
 | D4 | `/docs/platform` ("ACRYL is an agent-agnostic desktop and lifecycle environment built as a clean plugin layer over DeepSeek Harness", "Install a standard DSH package", the DSH compatibility contract) | still true of the desktop product today, but it is the pre-framework framing and not part of the framework docs | **open, owner's call**; untouched |
 

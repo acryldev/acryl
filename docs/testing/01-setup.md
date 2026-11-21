@@ -41,7 +41,7 @@ On first start, open **Settings** (bottom left) or the "Add an API key" prompt a
 
 ## Get the `acryl` command
 
-The `acryl` command is the CLI you just built: `apps/acryl-cli/lib/bin.js` in your clone. Every other guide uses it (`acryl new my-app`,
+The `acryl` command is the CLI you just built: `acryl-terminal/apps/acryl-cli/lib/bin.js` in your clone. Every other guide uses it (`acryl new my-app`,
 `acryl plugin pull ...`), so put it on your PATH once.
 
 Do **not** use `npm install -g acryl` for these tests: the published package (0.2.5) runs ACRYL, but it cannot create Blend apps yet (`acryl new`
@@ -71,7 +71,7 @@ After you pull new commits, run `corepack pnpm run build` again: the `acryl` com
 
 ## If something goes wrong
 
-- `acryl doctor` diagnoses an app from its files and logs, even when it cannot start: `node apps/acryl-cli/lib/bin.js doctor`.
+- `acryl doctor` diagnoses an app from its files and logs, even when it cannot start: `node acryl-terminal/apps/acryl-cli/lib/bin.js doctor`.
 - Builds write each package's `lib/` in place; never run two builds at once in the same checkout. For a long build use
   `node scripts/with-build-lock.mjs corepack pnpm run check`.
 - Write down the command, the last 30 lines of its output and your OS and Node version (guide 5).

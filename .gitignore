@@ -78,7 +78,6 @@ runtime/loopback-http/lib/
 runtime/diagnostics/lib/
 runtime/web/lib/
 
-apps/acryl-web/lib/
 release-artifacts/
 
 # codegraph artifacts

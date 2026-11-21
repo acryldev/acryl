@@ -48,7 +48,7 @@ versions, and the npm packages are published at that version.
 ```sh
 # 1. Dry run: gh workflow run release-cli.yml --ref main. Everything but the version check must be green, and the Windows workflow too.
 # 2. Bump the seven package versions <old> -> <new> (they must all be equal), and distribution/acryl-web-container's ARG ACRYL_VERSION:
-#    package.json, runtime/control, runtime/harness-runtime, apps/acryl-cli, apps/acryl-web, apps/acryl-desktop,
+#    package.json, runtime/control, runtime/harness-runtime, acryl-terminal/apps/acryl-cli, acryl-terminal/apps/acryl-web, apps/acryl-desktop,
 #    distribution/acryl-npm-launcher. Check: node scripts/release-manifest.mjs verify-versions <new> <the seven package.json files>
 # 3. Commit "chore(release): bump to <new>" and land it on main.
 # 4. Tag v<new> on that commit and push the tag: CLI + Web archives, Desktop, manifest, npm (the 4 acryl-cli-<target> packages, then the
@@ -66,7 +66,7 @@ Prerequisite for the npm auto-publish: a valid `NPM_TOKEN` stored as a GitHub Ac
   is not built (no x64 macOS runner can build its natives); Intel Mac users build it with `scripts/build-darwin-x64-from-source.sh`.
 - Web, the same 4 targets (`acryl-web-<target>.tar.gz`), downloaded by `acryl web` from the release's `acryl-release-manifest.json`.
 - npm: `npm install -g acryl`, the selector, which installs the matching `acryl-cli-<target>` package as an optional dependency.
-- Installer seam: `apps/acryl-cli/scripts/acryl-cli-install.sh` (SHA-256 verify, user-owned dir, no sudo/GUI/Web), not advertised.
+- Installer seam: `acryl-terminal/apps/acryl-cli/scripts/acryl-cli-install.sh` (SHA-256 verify, user-owned dir, no sudo/GUI/Web), not advertised.
 
 ## Deferred (recorded, not built)
 

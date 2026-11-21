@@ -39,11 +39,6 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Real source roots, minus the committed lib-publish bundles.
 ONLY_DIRS=(
-  apps/acryl-cli/bin
-  apps/acryl-cli/scripts
-  apps/acryl-cli/src
-  apps/acryl-cli/tests
-  apps/acryl-web
   distribution
   examples
   plugins

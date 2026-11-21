@@ -9,7 +9,7 @@ test('acryl runs on Node 22.19 and later only', () => {
 })
 
 test('the published engines field is this same minimum', () => {
-  const publish = readFileSync(new URL('../../../scripts/publish-npm-cli.mjs', import.meta.url), 'utf8')
+  const publish = readFileSync(new URL('../../../scripts/pack-npm-selector.mjs', import.meta.url), 'utf8')
   assert.match(publish, /import \{ MINIMUM as MINIMUM_NODE \} from '\.\.\/distribution\/acryl-npm-launcher\/node-version\.js'/)
   assert.match(publish, /engines: \{ node: `>=\$\{MINIMUM_NODE\}` \}/)
 })

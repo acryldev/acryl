@@ -19,8 +19,6 @@ const npmrc = readFileSync(resolve(root, '.npmrc'), 'utf8')
 const upstream = readJson('upstream.json')
 const control = readJson('runtime/control/package.json')
 const harness = readJson('runtime/harness-runtime/package.json')
-const cli = readJson('apps/acryl-cli/package.json')
-const web = readJson('apps/acryl-web/package.json')
 const fabric = readJson('plugins/dsh-community-fabric/package.json')
 const market = readJson('plugins/cordis-plugin-market/package.json')
 const upstreamPackage = readJson('deepseek-harness/package.json')
@@ -52,8 +50,6 @@ packages:
   - runtime/loopback-http
   - runtime/web
   - distribution/acryl-npm-launcher
-  - apps/acryl-cli
-  - apps/acryl-web
   # Every Cordis plugin package: ACRYL's own and the framework library's app plugins (spec 051 T017, the Pi model's flat plugins folder).
   - plugins/*
   # The framework (acrylblends), imported with its history (spec 051): its CLI and create, and the frame's own packages. The frame packages it shares with ACRYL live once,
@@ -85,7 +81,7 @@ overrides:
 
 # Published DSH client packages declare React types in generated public APIs but
 # omit the type package from their manifests. Their web surface is React 18;
-# acryl-cli separately owns Ink's React 19 types.
+# the terminal agent (acryldev/acryl-terminal) separately owns its React 19 types.
 packageExtensions:
   '@deepseek-ai/dsh-client-ui-primitives@${upstream.runtimePackageVersion}':
     dependencies:
@@ -140,8 +136,6 @@ for (const [name, manifest] of [
   ['@acryldev/control', control],
   ['@acryldev/harness-runtime', harness],
   ['acryl-npm-launcher', readJson('distribution/acryl-npm-launcher/package.json')],
-  ['acryl-cli', cli],
-  ['acryl-web', web],
   ['@acryldev/dsh-community-fabric', fabric],
   ['@acryldev/cordis-plugin-market', market],
 ]) {
@@ -149,8 +143,6 @@ for (const [name, manifest] of [
 }
 if (control.name !== '@acryldev/control') fail('the control workspace must own @acryldev/control')
 if (readJson('distribution/acryl-npm-launcher/package.json').name !== 'acryl') fail('the npm selector workspace must own the public acryl selector package')
-if (cli.name !== 'acryl-cli') fail('the CLI workspace must own acryl-cli')
-if (web.name !== 'acryl-web') fail('the Web workspace must own acryl-web')
 if (fabric.name !== '@acryldev/dsh-community-fabric') fail('the Fabric workspace must own @acryldev/dsh-community-fabric')
 if (market.name !== '@acryldev/cordis-plugin-market') fail('the market workspace must own @acryldev/cordis-plugin-market')
 const claudePath = resolve(root, 'CLAUDE.md')
@@ -171,8 +163,6 @@ for (const obsoleteFile of [
   'runtime/control/.yarnrc.yml',
   'runtime/harness-runtime/yarn.lock',
   'runtime/harness-runtime/.yarnrc.yml',
-  'apps/acryl-cli/yarn.lock',
-  'apps/acryl-cli/.yarnrc.yml',
   'plugins/dsh-community-fabric/yarn.lock',
   'plugins/dsh-community-fabric/.yarnrc.yml',
   'plugins/cordis-plugin-market/yarn.lock',
@@ -194,8 +184,6 @@ for (const [owner, manifest] of [
   ['root', workspace],
   ['control', control],
   ['harness-runtime', harness],
-  ['cli', cli],
-  ['web', web],
   ['fabric', fabric],
   ['market', market],
 ]) {
@@ -230,8 +218,6 @@ if (upstreamPackage.version !== upstream.sourceVersion) {
 }
 for (const [owner, manifest] of [
   ['harness-runtime', harness],
-  ['cli', cli],
-  ['web', web],
   ['control', control],
   ['market', market],
 ]) {
@@ -272,7 +258,7 @@ for (const preset of ['standard', 'ptc', 'minimal', 'cordis']) {
 // Spec 051 T018 (2026-11-19), total 138 to 146 and outside the seam 104 to 112: the Blends frame's own plugins (@acryldev/blends-frame,
 // @acryldev/app-context) moved from framework/ide into the flat plugins/ folder, so their existing DSH imports (chat, sidebars, dsh-tools, dsh-llm;
 // eight lines, none new) are counted for the first time. Routing them through @acryldev/ui's seam is its own task.
-const DSH_IMPORT_CEILING = { total: 106, outsideSeam: 76 }
+const DSH_IMPORT_CEILING = { total: 77, outsideSeam: 47 }
 const SEAM_FILES = [
   /^runtime\/harness-runtime\/src\/engine-[a-z-]+\.ts$/,
   /^runtime\/web\/src\/index\.ts$/,
@@ -285,7 +271,7 @@ const sourceFiles = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap(e
   return /\.(ts|tsx|mts)$/.test(entry.name) && !entry.name.endsWith('.d.ts') ? [path] : []
 })
 const dshImports = { total: 0, outsideSeam: 0 }
-for (const group of ['runtime', 'apps', 'plugins', 'framework/packages']) {
+for (const group of ['runtime', 'plugins', 'framework/packages']) {
   for (const entry of readdirSync(resolve(root, group), { withFileTypes: true })) {
     const src = resolve(root, group, entry.name, 'src')
     if (!entry.isDirectory() || !existsSync(src)) continue
@@ -315,7 +301,7 @@ const NOT_SHIPPED = /\/tests?\/|\/lib\/|lib-publish\/|\.md$|\/docs\/|\/scripts\/
 let webRegistrations = 0
 // The foundation's own folders, by package name (pnpm's list), so a look-alike folder elsewhere is not exempt.
 const foundationFolders = [...readGraph(root)].filter(([name]) => FOUNDATION.has(name)).map(([, { folder }]) => folder)
-for (const file of run('git', ['ls-files', '--', 'apps', 'plugins', 'runtime', 'framework/packages']).split('\n')) {
+for (const file of run('git', ['ls-files', '--', 'plugins', 'runtime', 'framework/packages']).split('\n')) {
   if (file === '' || NOT_SHIPPED.test(file) || !existsSync(resolve(root, file))) continue
   // The framework foundation implements the web layer (@acryldev/router-http mounts routers on the web server, @acryldev/page serves the page): the
   // rule is for code that uses it.
@@ -326,17 +312,17 @@ if (webRegistrations > WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb re
 if (webRegistrations < WEB_REGISTRATION_CEILING) fail(`webServer and acrylWeb registration call sites are ${webRegistrations}, below the ceiling ${WEB_REGISTRATION_CEILING}: lower WEB_REGISTRATION_CEILING to ${webRegistrations} in scripts/verify-layout.mjs`)
 
 // Isolation fails closed (spec 001, T058). A `verify-*` script that spawns a process able to boot an app (a packed or built bin, Electron, a launcher) must
-// either build its environment with `scripts/lib/isolated-run.mjs` or visibly pin a throwaway HOME / ACRYL_HOME / DSH_HOME: the packed-web smoke once booted
+// visibly pin a throwaway HOME / ACRYL_HOME / DSH_HOME: the packed-web smoke once booted
 // against the machine's real ~/.acryl because nothing made it say where its home was. A new script that does neither fails here, in the gate that runs everywhere.
 const BOOTS_AN_APP = /\b(spawn|spawnSync|execFile|execFileSync|fork)\b[\s\S]*(acryl-web|acryl-cli|lib\/bin\.js|launch-dev|electron|ELECTRON_RUN_AS_NODE|\.bin)/u
 const PINS_A_HOME = /isolated-run|\bHOME:|\bACRYL_HOME\b|\bDSH_HOME\b|\bDSH_DESKTOP_USER_DATA\b/u
-const scriptDirectories = ['scripts', ...['apps', 'runtime', 'plugins', 'distribution', 'examples'].flatMap(group => (existsSync(resolve(root, group)) ? readdirSync(resolve(root, group)).map(name => `${group}/${name}/scripts`) : []))]
+const scriptDirectories = ['scripts', ...['runtime', 'plugins', 'distribution', 'examples'].flatMap(group => (existsSync(resolve(root, group)) ? readdirSync(resolve(root, group)).map(name => `${group}/${name}/scripts`) : []))]
 for (const directory of scriptDirectories) {
   if (!existsSync(resolve(root, directory))) continue
   for (const name of readdirSync(resolve(root, directory))) {
     if (!/^verify-.*\.(mjs|ts)$/u.test(name) || name === 'verify-layout.mjs') continue
     const text = readFileSync(resolve(root, directory, name), 'utf8')
-    if (BOOTS_AN_APP.test(text) && !PINS_A_HOME.test(text)) fail(`${directory}/${name} can boot an app but pins no home: build its environment with scripts/lib/isolated-run.mjs (isolatedEnvironment) so it can never reach a real ACRYL or DSH home`)
+    if (BOOTS_AN_APP.test(text) && !PINS_A_HOME.test(text)) fail(`${directory}/${name} can boot an app but pins no home: pin a throwaway HOME / ACRYL_HOME / DSH_HOME (scripts/live-run.mjs in acryldev/acryl-terminal shows the isolated environment to build) so it can never reach a real ACRYL or DSH home`)
   }
 }
 
@@ -344,7 +330,7 @@ for (const directory of scriptDirectories) {
 // a committed bundle goes stale the moment its source changes without a rebuild in the same commit. Packages without a build script keep
 // hand-written sources in `lib/` (@acryldev/plugin-context, @acryldev/brand, @acryldev/system-prompt) and are not affected.
 const trackedLib = run('git', ['ls-files', '--', ':(glob)*/*/lib/**', ':(glob)framework/*/*/lib/**']).split('\n').filter(Boolean)
-for (const group of ['runtime', 'apps', 'plugins', 'distribution', 'examples', 'framework/packages']) {
+for (const group of ['runtime', 'plugins', 'distribution', 'examples', 'framework/packages']) {
   if (!existsSync(resolve(root, group))) continue
   for (const name of readdirSync(resolve(root, group))) {
     const manifest = resolve(root, group, name, 'package.json')
@@ -372,12 +358,9 @@ for (const path of testFiles) {
 // Dependency direction (spec 051, the Pi model): no cycles between workspace packages, and nothing points the wrong way
 // (scripts/dependency-direction.mjs says which rules and why).
 const packageGraph = readGraph(root)
-// A Blend app is a product: it lives in its own acrylblends repository, which holds its source and builds its releases from the published packages
-// (`acrylblends pack`). The monorepo keeps only the building blocks (owner, 2026-11-21: ACRYL Control Center and ACRYL ADE moved out).
-for (const entry of readdirSync(resolve(root, 'apps'), { withFileTypes: true })) {
-  if (entry.isDirectory() && existsSync(resolve(root, 'apps', entry.name, 'blend.yaml')))
-    fail(`apps/${entry.name} is a Blend app (it has a blend.yaml): a product lives in its own acrylblends repository, not in the monorepo`)
-}
+// There is no apps/ group any more: the terminal agent and the earlier browser surface are products and live in acryldev/acryl-terminal, a Blend app in its own
+// acrylblends repository. The monorepo keeps only the building blocks (owner, 2026-11-21: ACRYL Control Center and ACRYL ADE moved out).
+if (existsSync(resolve(root, 'apps'))) fail('apps/ is gone: a product lives in its own repository (acryldev/acryl-terminal, an acrylblends app repository), not in the monorepo')
 const cycles = findCycles(packageGraph)
 if (cycles.length > 0) fail(`dependency cycles between workspace packages (each must point one way):\n${cycles.map(cycle => `  ${cycle.join(' -> ')}`).join('\n')}`)
 const unlisted = unlistedFoundation(packageGraph)

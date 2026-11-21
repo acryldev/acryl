@@ -463,7 +463,7 @@ function hostScriptOf(profile: string, frameModule: string): string {
     'const appRoot = chosen.root',
     'const home = chosen.home',
     "// A host plugin's folder as the app has it: plugins/acryl-<id> only in an app made before the folders were renamed (registry Blueprints), else",
-    "// plugins/<id>. An installed app has neither on disk (the bundle overlay resolves it), so the current name is the default.",
+    '// plugins/<id>. An installed app has neither on disk (the bundle overlay resolves it), so the current name is the default.',
     "const hostPlugin = (id) => (existsSync(join(appRoot, 'plugins', `acryl-${id}`)) ? `acryl-${id}` : id)",
     `const profileName = '${profile}'`,
     "// The page and its tab are named for the app: the package's name, as the frame's header says it, else the folder's.",

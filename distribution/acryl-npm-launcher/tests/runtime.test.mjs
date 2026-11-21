@@ -60,9 +60,7 @@ test('starts the CLI runtime through its launcher, and on Windows runs what the 
   assert.deepEqual(runtimeCommand(launcher, ['tui', '100%'], { platform: 'linux' }), { command: launcher, args: ['tui', '100%'] })
   const windows = runtimeCommand(join('/r', 'runtime', 'bin', 'acryl.cmd'), ['tui', '100%'], { platform: 'win32', node: 'node.exe' })
   assert.deepEqual(windows, { command: 'node.exe', args: ['--expose-internals', join('/r', 'runtime', 'lib', 'bin.js'), 'tui', '100%'] })
-  // The .cmd in the archive must keep running the same thing, or the two ways of starting the CLI drift apart.
-  const cmd = readFileSync(new URL('../../../apps/acryl-cli/scripts/acryl-cli-launcher.cmd', import.meta.url), 'utf8')
-  assert.match(cmd, /^node --expose-internals "%DIR%\.\.\\lib\\bin\.js" %\*\r?$/mu)
+  // The .cmd in the runtime archive (acryldev/acryl-terminal, apps/acryl-cli/scripts/acryl-cli-launcher.cmd) runs the same thing; its own test pins that line.
 })
 
 // The receipt of a Windows runtime is made on one machine and checked on another, so its file names must not depend on the separator.

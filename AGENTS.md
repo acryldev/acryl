@@ -19,7 +19,8 @@ Where an ACRYL app keeps anything (home, engine home, port, Electron user data, 
 - Open ACRYL Control Center from this checkout's source, in its desktop window, on an isolated home (`~/.acryl-dev`, or `~/.acryl-worktrees/<name>` in a worktree; never the installed app's `~/.acryl`) with `corepack pnpm run dev` (aliases: `desktop`, `gui`). `corepack pnpm launcher web | tui` shows its other faces. The earlier ACRYL desktop moved to https://github.com/acryldev/acryl-desktop.
 - Fast headless loop: `corepack pnpm run typecheck`, `corepack pnpm run test`, or both via `corepack pnpm run verify`.
 - Build every workspace package with `corepack pnpm run build`.
-- Installable desktop apps (ACRYL Control Center, ADE, SDE) are built and released from their own repositories with `acrylblends pack`; this repository builds none.
+- Installable desktop apps (ACRYL Control Center, ADE, SDE) are built and released from their own repositories with `acrylblends pack`; this repository builds none. The terminal coding agent (`acryl-cli`) and the earlier browser surface (`acryl-web`) are built and released from https://github.com/acryldev/acryl-terminal, on the published `@acryldev/*` packages.
+- Never boot an app on a real home to test a guard or a change. The tool for it is `node scripts/live-run.mjs web|tui` in https://github.com/acryldev/acryl-terminal: it runs the built surface in a throwaway root (own `HOME`, ACRYL and engine homes, `ACRYL_REQUIRE_ISOLATED_HOME`), snapshots the real homes, and fails on stop if one changed. To prove a change made here, build acryl-terminal against it (override the `@acryldev/*` package it needs with a `file:` or `link:` of this checkout's built package) and run live-run there.
 - Run the complete headless gate with `corepack pnpm run check`. Every package's build wipes and rewrites its `lib/` in place, so two builds in one checkout collide (a package that depends on the one being rebuilt cannot find its output for a few seconds): run a gate or any long build as `node scripts/with-build-lock.mjs corepack pnpm run check`; the launchers (`pnpm web`, `pnpm acryl`, Desktop `dev`) take the same lock around their build and wait for each other.
 - Run upstream operations through the root scripts, such as `corepack pnpm run upstream:build`.
 
@@ -156,14 +157,13 @@ one, and a repo that looks abandoned gets treated like one.
 
 Current groups and what belongs in each:
 
-- `apps/` — the swappable surfaces (`acryl-cli`, `acryl-web`).
-  A new terminal/web/desktop-shaped entry point goes here.
+- There is no `apps/` group: a surface or a product is its own repository (acryldev/acryl-terminal, an acrylblends app repository) built on the published packages of this one.
 - `runtime/` — the stable core every surface depends on
   (`@acryldev/control`, `@acryldev/harness-runtime`). Nothing here may depend on
-  anything under `apps/`.
+  a product or a surface.
 - `plugins/` — independently replaceable Cordis/DSH plugins
   (`@acryldev/brand-client`, `@acryldev/dsh-community-fabric`, `@acryldev/cordis-plugin-market`).
-  A new installable capability package goes here, not next to `apps/` or
+  A new installable capability package goes here, not next to
   `runtime/`.
 - `examples/` — demo/reference packages (`@acryldev/blend-demo`) that ship
   nothing production-facing.
@@ -179,7 +179,7 @@ Current groups and what belongs in each:
 
 The folders stay flat; the layers live only in the dependency graph the
 package.json files declare (the Pi model, owner 2026-11-19): foundation
-(acrylblends and its packages) <- runtime <- plugins <- apps.
+(acrylblends and its packages) <- runtime <- plugins (products live in their own repositories).
 `scripts/dependency-direction.mjs` (run by `verify-layout.mjs`) fails on any
 cycle and on any dependency that points the wrong way; its one exception,
 `@acryldev/harness-runtime` as the composition root, lists its plugins by name.

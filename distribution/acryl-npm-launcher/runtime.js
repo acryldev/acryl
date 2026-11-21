@@ -39,7 +39,7 @@ export function runtimeLauncher({ require = createRequire(import.meta.url), plat
 /**
  * How to start the CLI runtime whose launcher `runtimeLauncher` returned. Elsewhere that is the launcher itself. On Windows the launcher is a
  * `.cmd`, which Node starts only through cmd.exe (CVE-2024-27980), where the user's arguments would be parsed again (`%`, `^`, `"`) and Ctrl-C
- * asks "Terminate batch job (Y/N)?". So what the `.cmd` runs (apps/acryl-cli/scripts/acryl-cli-launcher.cmd) is run directly: this Node, with
+ * asks "Terminate batch job (Y/N)?". So what the `.cmd` runs (acryl-terminal/apps/acryl-cli/scripts/acryl-cli-launcher.cmd) is run directly: this Node, with
  * --expose-internals, on the runtime's lib/bin.js.
  * @returns {{ command: string, args: string[] }}
  */
@@ -53,7 +53,7 @@ export const STOP_SIGNALS = Object.freeze(['SIGINT', 'SIGTERM', 'SIGHUP'])
 /**
  * Pass the stop signals this process receives on to the runtime it started, and stay alive until that runtime exits. A supervisor or `kill`
  * signals this process alone, and the runtime (the Web server, holding its port) outlived it. A terminal's Ctrl-C reaches both, so the runtime
- * gets it twice and must take a repeated signal calmly (apps/acryl-web/src/serve.ts does). On Windows nothing is passed on: the console sends
+ * gets it twice and must take a repeated signal calmly (acryl-terminal/apps/acryl-web/src/serve.ts does). On Windows nothing is passed on: the console sends
  * Ctrl-C to both processes itself, Node can only end a child there, not signal it, and the child is in a job that ends with this process.
  * @returns {() => void} removes the handlers
  */
