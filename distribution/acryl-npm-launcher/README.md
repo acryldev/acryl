@@ -58,14 +58,13 @@ Every screen has a command a script or a coding agent can type:
 
 Without a terminal (a script, a pipe, an agent), a bare `acryl` prints the help.
 
-## How it works
+## How your users build: five steps
 
-1. **Building blocks.** An ACRYL app is made of Cordis plugins: small parts with their own lifecycle that can be added, replaced and removed while the
-   app runs.
-2. **An agent builds with them.** The agent works through the app's door, with the same blocks: ACRYL chat, Claude Code, Codex or Pi.
-3. **Sandboxed per person.** Each person's changes run in their own space, so one user's "add XYZ" never breaks anyone else's app.
-4. **Your change is a layer.** It is a versioned Blend: save it, roll it back, share it to GitHub, list it in the store.
-5. **The foundation keeps shipping.** When a new release comes out, `acrylblends update` merges it in and keeps every layer.
+1. **Building blocks, not source code.** Every app is assembled from Cordis plugins: UI, data and actions behind stable services.
+2. **The agent builds with those blocks.** ACRYL's chat, and Claude Code, Codex or Pi, operate the app through its door. The core code stays untouched.
+3. **Sandboxed per person.** Every app runs in its own instance, on your machine or in your own [WebBox](https://webboxes.ai), with your rights only.
+4. **Your change is a versioned layer: a Blend.** Save, roll back, share it to GitHub, list it in the store.
+5. **The foundation keeps shipping.** `npx acrylblends update` merges new releases under your layer, and your changes stay.
 
 ## Where things go
 
