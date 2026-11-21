@@ -1,12 +1,8 @@
 /**
  * Publishing a plugin: what a person is asked to say yes to, and the comparison that makes the yes mean exactly that. Pure; the service does the I/O.
  */
-import type {
-  NpmLoginPort,
-  NpmPublishPort,
-  PublishGitPort,
-  RepositoryHostPort,
-} from '@acryldev/plugin-hub-core'
+import type { PublishGitPort, RepositoryHostPort } from '@acryldev/plugin-hub-core'
+import type { NpmPort } from './npm-login.ts'
 
 /** Everything that leaves the machine, named before anything does. */
 export interface PublishPlan {
@@ -69,7 +65,7 @@ export interface PublishPorts {
   readonly host: RepositoryHostPort
   readonly git: PublishGitPort
   /** The person's own npm (`npm whoami`, `npm publish`); the default is their installed npm. A test passes a stand-in. */
-  readonly npm?: NpmPublishPort & NpmLoginPort
+  readonly npm?: NpmPort
 }
 
 /** The line a friend copies: it names the bytes, so the check comes for free. */

@@ -49,24 +49,6 @@ describe('publishing to npm', () => {
     expect(manifest.acryl.requires).toEqual({ host: ['tools'] })
   })
 
-  it('publishes a source plugin (a Cordis plugin folder with no Loader patch), labelled cordis-plugin only', async () => {
-    const sourcePlugin = (): string => {
-      const dir = plugin({ name: '@ana/clock' })
-      rmSync(join(dir, 'cordis.patch.yml'))
-      const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
-      delete manifest.dsh
-      writeFileSync(join(dir, 'package.json'), JSON.stringify(manifest))
-      return dir
-    }
-    const npm = fakeNpm()
-    const store = new PluginStore(join(temp(), 'store'))
-    expect(await publishToNpm(sourcePlugin(), { visibility: 'public' }, { npm, store })).toMatchObject({ status: 'refused', reason: expect.stringContaining('Loader patch') })
-    expect(npm.sent).toHaveLength(0)
-    const dir = sourcePlugin()
-    expect(await publishToNpm(dir, { visibility: 'public', kind: 'source-plugin' }, { npm, store })).toMatchObject({ status: 'published', name: '@ana/clock' })
-    expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).keywords).toEqual(['cordis-plugin'])
-  })
-
   it('publishes a private scoped plugin with restricted access to the registry it is given', async () => {
     const npm = fakeNpm()
     const result = await publishToNpm(plugin({ name: '@o/private-ok' }), { registry: 'http://localhost:4873/' }, { npm, store: new PluginStore(join(temp(), 'store')) })

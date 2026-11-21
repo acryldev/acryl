@@ -18,4 +18,4 @@ export { placementOf, withPlacement, type Placement } from '@acryldev/app-persis
 export { PLUGIN_LABELS, type PluginKind, sharePlugin, type PublishGitPort, type RepositoryHostPort, type ShareOptions, type ShareResult, type Visibility } from './share.js'
 export { firstReleasePort, gitCli, githubCli, githubReleasesViaGh, ToolError } from './github-cli.js'
 export { NPM_REGISTRY, publishToNpm, type NpmPublishOptions, type NpmPublishPort, type NpmPublishResult } from './npm-publish.js'
-export { firstRegistryPort, type NpmLoginPort, npmCli, npmRegistryViaCli } from './npm-cli.js'
+export { firstRegistryPort, npmCli, npmRegistryViaCli } from './npm-cli.js'

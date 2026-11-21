@@ -28,7 +28,6 @@ import {
   httpsDownload,
   InvalidPluginSourceError,
   NPM_REGISTRY,
-  npmCli,
   npmRegistryOverHttps,
   npmRegistryViaCli,
   type PluginSource,
@@ -36,7 +35,6 @@ import {
   PullError,
   packFolder,
   parsePluginSource,
-  publishToNpm,
   pullPlugin,
   type RegistryPort,
   type ReleasePort,
@@ -57,6 +55,7 @@ import {
   nativesOf,
   releaseNative,
 } from './native.ts'
+import { npmWithLogin } from './npm-login.ts'
 import { packagePlugin } from './package.ts'
 import {
   npmPullLineOf,
@@ -686,7 +685,7 @@ export class PluginShare extends Service {
     source: string,
     options: PublishOptions,
   ): Promise<PublishPlan | PublishRefused> {
-    const npm = this.ports.npm ?? npmCli()
+    const npm = this.ports.npm ?? npmWithLogin()
     const registry = options.registry ?? NPM_REGISTRY
     try {
       const account = npm.login(registry)
@@ -703,13 +702,7 @@ export class PluginShare extends Service {
           'write one such as MIT or Apache-2.0',
         )
       const packageName = `@${scope}/${name}`
-      const description = `The ${name} Cordis plugin.`
-      const pack = (version?: string) =>
-        packagePlugin(source, this.packages, name, description, {
-          release: { license },
-          packageName,
-          ...(version === undefined ? {} : { version }),
-        })
+      const pack = (version?: string) => this.packNpm(source, name, packageName, license, version)
       let packaged = await pack()
       const released = npm.hasVersion(packageName, packaged.version, registry)
         ? packaged.version
@@ -751,28 +744,49 @@ export class PluginShare extends Service {
     }
   }
 
-  /** The confirmed npm plan, published with the person's own npm: the files are the ones planned, or nothing is sent. */
+  /** The plugin as the npm package `packageName`: a package of its own folder, the same bytes whenever it is made again for the same version. */
+  private packNpm(
+    source: string,
+    name: string,
+    packageName: string,
+    license: string,
+    version?: string,
+  ) {
+    return packagePlugin(source, this.packages, name, `The ${name} Cordis plugin.`, {
+      release: { license },
+      packageName,
+      ...(version === undefined ? {} : { version }),
+    })
+  }
+
+  /** The confirmed npm plan, published with the person's own npm: the package is made again, and only the bytes that were planned are sent. */
   private async publishNpm(name: string, plan: PublishPlan): Promise<PublishResult> {
-    const { home } = this.own.appInstance
     const registry = plan.registry ?? NPM_REGISTRY
+    const packageName = plan.package ?? `@${plan.owner}/${plan.repo}`
     try {
-      const published = await publishToNpm(
-        join(this.packages, name),
-        { registry, visibility: 'public', kind: 'source-plugin' },
-        { npm: this.ports.npm ?? npmCli(), store: new PluginStore(storeRootOf(home)) },
+      const packed = await this.packNpm(
+        join(this.dir, name),
+        name,
+        packageName,
+        plan.license,
+        plan.version,
       )
-      if (published.status === 'refused')
-        return publishRefused(published.reason, 'fix what it names; nothing was sent')
+      if (packed.integrity !== plan.integrity)
+        return publishRefused(
+          `the package made now is not the one that was planned (${packageName} v${plan.version}); nothing was sent`,
+          'look at the new plan and say yes again',
+        )
+      ;(this.ports.npm ?? npmWithLogin()).publish(packed.tarball, registry, 'public')
       const url =
         registry === NPM_REGISTRY
-          ? `https://www.npmjs.com/package/${published.name}`
-          : `${registry.replace(/\/$/u, '')}/${published.name}`
+          ? `https://www.npmjs.com/package/${packageName}`
+          : `${registry.replace(/\/$/u, '')}/${packageName}`
       return {
         ok: true,
         url,
         releaseUrl: url,
-        version: published.version,
-        integrity: published.integrity,
+        version: packed.version,
+        integrity: packed.integrity,
         digest: plan.digest,
         pullLine: plan.pullLine,
       }

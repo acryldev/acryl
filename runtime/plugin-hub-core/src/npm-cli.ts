@@ -26,20 +26,8 @@ function failure(what: string, stderr: string, registry?: string): ToolError {
   return new ToolError(`npm ${what} failed: ${last}${/E401|E403|ENEEDAUTH|need auth|unauthorized|login/iu.test(stderr) ? ` (${signInHint(registry)})` : ''}`)
 }
 
-/** The registry's login, from the user's own npm (`npm whoami`): never a token, never stored. */
-export interface NpmLoginPort {
-  /** The account the user's npm is signed in as on `registry`. @throws a ToolError naming `npm login` when it is not signed in. */
-  login(registry: string): string
-}
-
-export function npmCli(): NpmPublishPort & NpmLoginPort {
+export function npmCli(): NpmPublishPort {
   return {
-    login(registry) {
-      const result = npm(['whoami', '--registry', registry])
-      const account = result.stdout.trim()
-      if (result.status !== 0 || account === '') throw failure('whoami', result.stderr || 'not signed in', registry)
-      return account
-    },
     hasVersion(name, version, registry) {
       const result = npm(['view', `${name}@${version}`, 'version', '--registry', registry])
       if (result.status === 0) return result.stdout.trim() !== ''
