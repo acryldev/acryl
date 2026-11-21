@@ -407,6 +407,8 @@ async function createFromSource(
     const name = nameFrom(target)
     const fetchers = io.fetchers ?? realFetchers
     let entry: RegistryEntry | undefined
+    // Where the app came from, kept in its manifest so `acrylblends update` can bring that source's newer releases in.
+    let from: string | undefined
     if (REGISTRY_ID.test(options.source!)) {
       // A registry id: read the registry's index, pick the entry (only an app for this runtime), and take its folder as the template.
       const reading = { scratch, fetchers }
@@ -416,11 +418,14 @@ async function createFromSource(
           : await openNamedRegistry(options.registry, io.cwd, reading)
       entry = pickEntry(registry.entries, options.source!)
       await registry.takeEntry(entry, join(scratch, 'source'))
+      from = `${entry.id}#${entry.version}`
     } else {
       const source = parseSource(options.source!, io.cwd)
       if (!source)
         throw new UsageError(`unknown template source "${options.source}" (${SOURCE_FORMS})`)
       await fetchTemplate(source, join(scratch, 'source'), join(scratch, 'download'), fetchers)
+      if (source.kind === 'github')
+        from = `github:${source.owner}/${source.repo}${source.ref === undefined ? '' : `#${source.ref}`}`
     }
     const manifest = readManifest(join(scratch, 'source'))
     const staged = join(scratch, 'app')
@@ -446,7 +451,7 @@ async function createFromSource(
         existsSync(sourcePackage) ? readFileSync(sourcePackage, 'utf8') : undefined,
       )
       if (starter !== undefined) renameApp(staged, starter, name)
-      const manifestText = ownManifest(starterText, name)
+      const manifestText = ownManifest(starterText, name, from)
       writeFileSync(join(staged, 'blend.yaml'), manifestText)
       if (existsSync(join(staged, 'blend.lock.json')))
         writeFileSync(

@@ -4,7 +4,15 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import type { Io } from '../src/io'
-import { BLEND_REF, blendOfApp, isNewerVersion, type UpdateWorld, update } from '../src/update'
+import {
+  BLEND_REF,
+  blendOfApp,
+  isNewerVersion,
+  newestTag,
+  sourceOfApp,
+  type UpdateWorld,
+  update,
+} from '../src/update'
 
 const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-test-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
@@ -19,9 +27,15 @@ const manifest = (version: string) =>
   `apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.csv-explorer\n  name: csv\n  version: ${version}\nspec:\n  rows: []\n`
 
 /** Write the Blend at `version` into `dir` as create-acrylblends makes it: a repository with one commit. */
-function makeBlend(dir: string, version: string, files: Record<string, string>) {
+function makeBlend(dir: string, version: string, files: Record<string, string>, from?: string) {
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'blend.yaml'), manifest(version))
+  const text = manifest(version)
+  writeFileSync(
+    join(dir, 'blend.yaml'),
+    from === undefined
+      ? text
+      : text.replace(`  version: ${version}\n`, `  version: ${version}\n  from: "${from}"\n`),
+  )
   for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text)
   git(dir, 'init', '-q')
   git(dir, 'add', '-A')
@@ -55,6 +69,65 @@ describe('acrylblends update', () => {
     expect(blendOfApp('kind: Blueprint\n')).toBeUndefined()
     expect(isNewerVersion('0.2.0', '0.1.9')).toBe(true)
     expect(isNewerVersion('0.1.0', '0.1.0')).toBe(false)
+  })
+
+  it('takes its updates from where it was made: metadata.from, else its own id', () => {
+    const own = manifest('0.1.0')
+    expect(sourceOfApp(own)).toEqual({ source: 'acrylblends.csv-explorer', current: '0.1.0' })
+    const fromRegistry = own.replace(
+      '  version: 0.1.0\n',
+      '  version: 0.1.0\n  from: "acrylblends.link-shortener#0.3.1"\n',
+    )
+    expect(sourceOfApp(fromRegistry)).toEqual({
+      source: 'acrylblends.link-shortener',
+      current: '0.3.1',
+    })
+    const fromRepository = own.replace(
+      '  version: 0.1.0\n',
+      '  version: 0.1.0\n  from: "github:ana/notes#v0.2.0"\n',
+    )
+    expect(sourceOfApp(fromRepository)).toEqual({ source: 'github:ana/notes', current: '0.2.0' })
+    const noTag = own.replace(
+      '  version: 0.1.0\n',
+      '  version: 0.1.0\n  from: "github:ana/notes"\n',
+    )
+    expect(sourceOfApp(noTag)).toEqual({ source: 'github:ana/notes', current: '0.1.0' })
+    expect(
+      newestTag(
+        'a\trefs/tags/v0.1.0\nb\trefs/tags/v0.10.0\nc\trefs/tags/v0.9.1\nd\trefs/tags/nightly\n',
+      ),
+    ).toBe('v0.10.0')
+    expect(newestTag('')).toBeUndefined()
+  })
+
+  it("brings a shared repository's newer tag into an app made from it", async () => {
+    const root = join(scratch, 'repo-made')
+    const app = join(root, 'csv')
+    makeBlend(app, '0.1.0', v1, 'github:ana/csv#v0.1.0')
+    const asked: string[] = []
+    const world: UpdateWorld = {
+      latest: async (source) => {
+        asked.push(source)
+        return 'v0.2.0'
+      },
+      make: async (source, name, folder, release) => {
+        asked.push(`${source}#${release}`)
+        const made = join(folder, name)
+        makeBlend(
+          made,
+          '0.1.0',
+          { ...v1, 'chart.ts': 'export const bars = 9\n' },
+          'github:ana/csv#v0.2.0',
+        )
+        return 0
+      },
+    }
+    const { io, out } = session(app)
+    expect(await update({ directory: undefined, check: false }, io, world)).toBe(0)
+    expect(asked).toEqual(['github:ana/csv', 'github:ana/csv#v0.2.0'])
+    expect(readFileSync(join(app, 'chart.ts'), 'utf8')).toContain('bars = 9')
+    expect(readFileSync(join(app, 'blend.yaml'), 'utf8')).toContain('github:ana/csv#v0.2.0')
+    expect(out()).toContain('Updated to github:ana/csv 0.2.0')
   })
 
   it("merges the Blend's newer release into the app and keeps the person's change, twice in a row", async () => {

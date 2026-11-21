@@ -25,6 +25,15 @@ describe('a pulled starter becomes the new app', () => {
     expect(owned).not.toMatch(/license/)
   })
 
+  it("records where it came from, once, so the app can take that source's updates", () => {
+    const owned = ownManifest(STARTER, 'my-notes', 'github:ana/notes#v0.2.0')
+    expect(owned).toMatch(/^ {2}from: "github:ana\/notes#v0\.2\.0"$/m)
+    const again = ownManifest(owned, 'my-notes', 'github:ana/notes#v0.3.0')
+    expect(again.match(/from:/g)).toHaveLength(1)
+    expect(again).toMatch(/^ {2}from: "github:ana\/notes#v0\.3\.0"$/m)
+    expect(again.indexOf('from:')).toBeLessThan(again.indexOf('spec:'))
+  })
+
   it('keeps its lock true to that manifest, and leaves a lock it cannot read alone', () => {
     const owned = ownManifest(STARTER, 'my-notes')
     const modules = [

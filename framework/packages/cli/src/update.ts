@@ -51,6 +51,41 @@ export function blendOfApp(yaml: string): { id: string; version: string } | unde
   return id === undefined || version === undefined ? undefined : { id, version }
 }
 
+/**
+ * Where an app's updates come from: the source create recorded in `metadata.from` (`acrylblends.notes#0.3.1`, a registry Blend at a version, or
+ * `github:ana/notes#v0.2.0`, a shared repository at a tag), else the app's own id and version (an app made before `from` existed, or a Blend
+ * itself). `current` is the version the app is on.
+ */
+export interface UpdateSource {
+  readonly source: string
+  readonly current: string
+}
+
+export function sourceOfApp(yaml: string): UpdateSource | undefined {
+  const blend = blendOfApp(yaml)
+  if (blend === undefined) return undefined
+  const metadata = /^metadata:\n((?:[ \t]+.*\n?)*)/mu.exec(yaml)?.[1] ?? ''
+  const from = /^[ \t]+from:[ \t]*["']?([^"'\s]+)/mu.exec(metadata)?.[1]
+  if (from === undefined) return { source: blend.id, current: blend.version }
+  const [source = blend.id, release] = from.split('#')
+  return { source, current: release === undefined ? blend.version : release.replace(/^v/u, '') }
+}
+
+/** The newest `vX.Y.Z` (or `X.Y.Z`) tag among `git ls-remote --tags` lines, as tagged. */
+export function newestTag(lsRemote: string): string | undefined {
+  const tags = lsRemote
+    .split('\n')
+    .map((line) => /refs\/tags\/(v?\d+\.\d+\.\d+)$/u.exec(line.trim())?.[1])
+    .filter((tag): tag is string => tag !== undefined)
+  return tags.reduce<string | undefined>(
+    (best, tag) =>
+      best === undefined || isNewerVersion(tag.replace(/^v/u, ''), best.replace(/^v/u, ''))
+        ? tag
+        : best,
+    undefined,
+  )
+}
+
 /** `0.2.0` is newer than `0.1.9`; anything that is not three numbers is never newer. */
 export function isNewerVersion(candidate: string, current: string): boolean {
   const parse = (text: string) => /^(\d+)\.(\d+)\.(\d+)$/u.exec(text)?.slice(1).map(Number)
@@ -64,21 +99,38 @@ export function isNewerVersion(candidate: string, current: string): boolean {
 
 /** What the update needs outside the app folder. Tests pass their own. */
 export interface UpdateWorld {
-  /** The registry's version of Blend `id`, or undefined when the registry does not list it. */
-  latest(id: string): Promise<string | undefined>
-  /** Make Blend `id` as a new app named `name` inside `folder` (git repository, no install); resolves to the exit code. */
-  make(id: string, name: string, folder: string): Promise<number>
+  /** The newest release of `source` (a registry id: its version; `github:owner/repo`: its newest version tag), or undefined when there is none. */
+  latest(source: string): Promise<string | undefined>
+  /** Make `source` at `release` as a new app named `name` inside `folder` (git repository, no install); resolves to the exit code. */
+  make(source: string, name: string, folder: string, release: string): Promise<number>
 }
 
 export function registryWorld(io: Io): UpdateWorld {
   return {
     async latest(id) {
+      if (id.startsWith('github:')) {
+        const run = spawnSync(
+          'git',
+          ['ls-remote', '--tags', '--refs', `https://github.com/${id.slice('github:'.length)}.git`],
+          {
+            encoding: 'utf8',
+            windowsHide: true,
+            timeout: 30_000,
+            env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          },
+        )
+        if (run.status !== 0)
+          throw new Error(
+            `${id} could not be read: ${(run.stderr ?? '').trim() || 'git ls-remote failed'}`,
+          )
+        return newestTag(run.stdout ?? '')
+      }
       const answer = await fetch(REGISTRY_INDEX, { signal: AbortSignal.timeout(20_000) })
       if (!answer.ok) throw new Error(`the registry answered ${answer.status} (${REGISTRY_INDEX})`)
       const index = (await answer.json()) as { entries?: { id?: string; version?: string }[] }
       return index.entries?.find((entry) => entry.id === id)?.version
     },
-    make: (id, name, folder) =>
+    make: (id, name, folder, release) =>
       new Promise((done) => {
         const { file, args } = packageManagerInvocation('npm', [
           'exec',
@@ -87,7 +139,7 @@ export function registryWorld(io: Io): UpdateWorld {
           '--',
           name,
           '--from',
-          id,
+          id.startsWith('github:') ? `${id}#${release}` : id,
           '--no-install',
         ])
         const run = spawnSync(file, args, {
@@ -115,19 +167,24 @@ export async function update(
     throw new Error(
       `${app} has no blend.yaml: it was not made from a Blend, so there is nothing to update from`,
     )
-  const blend = blendOfApp(readFileSync(manifest, 'utf8'))
-  if (blend === undefined) throw new Error(`${manifest} names no metadata id and version`)
+  const origin = sourceOfApp(readFileSync(manifest, 'utf8'))
+  if (origin === undefined) throw new Error(`${manifest} names no metadata id and version`)
+  const fromRepository = origin.source.startsWith('github:')
+  // `blend` names the source in every line below and in the merge commits.
+  const blend = { id: origin.source, version: origin.current }
   say(
-    `${basename(app)} was made from ${blend.id} ${blend.version}. Asking the registry for its latest release...`,
+    `${basename(app)} was made from ${blend.id} ${blend.version}. Asking ${fromRepository ? 'the repository' : 'the registry'} for its latest release...`,
   )
-  const latest = await world.latest(blend.id)
-  if (latest === undefined) {
-    // An app made from a starter (blank, notes...) or shared from a repository has no registry releases: its updates come with git pull.
+  const newest = await world.latest(blend.id)
+  if (newest === undefined) {
     say(
-      `${blend.id} is not a Blend in the registry, so there is nothing to update from it. An app shared from a repository gets its changes with git pull.`,
+      fromRepository
+        ? `${blend.id} has no release tags (vX.Y.Z), so there is nothing to update from it yet.`
+        : `${blend.id} is not a Blend in the registry, so there is nothing to update from it.`,
     )
     return 0
   }
+  const latest = newest.replace(/^v/u, '')
   if (!isNewerVersion(latest, blend.version)) {
     say(`${blend.id} ${blend.version} is the latest release: nothing to update.`)
     return 0
@@ -165,9 +222,9 @@ export async function update(
 
   const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-'))
   try {
-    say(`Getting ${blend.id} ${latest} (@acryldev/create-blends@latest, as the app was made)...`)
+    say(`Getting ${blend.id} ${newest} (@acryldev/create-blends@latest, as the app was made)...`)
     const name = basename(app)
-    if ((await world.make(blend.id, name, scratch)) !== 0)
+    if ((await world.make(blend.id, name, scratch, newest)) !== 0)
       throw new Error(`${blend.id} ${latest} could not be made; the app is unchanged`)
     const made = join(scratch, name)
     const fetched = git(['fetch', '-q', '--no-tags', made, 'HEAD'])
@@ -179,7 +236,7 @@ export async function update(
       '-p',
       base,
       '-m',
-      `${blend.id} ${latest} from the registry`,
+      `${blend.id} ${latest} from ${fromRepository ? 'its repository' : 'the registry'}`,
     ]).out
     if (!release) throw new Error('the new release could not be recorded in the app')
 
