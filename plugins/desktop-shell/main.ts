@@ -11,7 +11,7 @@
 import { mkdirSync, readFileSync, unwatchFile, watchFile } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, session, shell } from 'electron'
 import '@acryldev/node-server/register'
 import { type AppInstance, instanceEnv, selectInstance, withRunEnv } from '@acryldev/instance'
 import { readProduct } from '@acryldev/instance/bundle'
@@ -126,8 +126,17 @@ if (!app.requestSingleInstanceLock()) {
       await running?.stop()
       // The frame host this window started (never one it attached to) goes with the window, with every terminal it runs.
       await host?.stop()
+      // What the window stored is written now: the process may end at `quit`, before Chromium's own late teardown would write it.
+      session.defaultSession.flushStorageData()
+      await session.defaultSession.cookies.flushStore()
     },
     (code) => {
+      // Electron emits `quit` as its last step and then ends its message loop; on macOS that loop sometimes keeps running with nothing left (no
+      // window, no helper process, every disposer done), about one SIGTERM in six for ACRYL ADE, so the process stayed up forever. It ends here
+      // instead. process.exit in Electron's main process goes back into app.exit, which is already under way; reallyExit is Node's plain exit.
+      app.once('quit', () => {
+        ;(process as NodeJS.Process & { reallyExit(code: number): never }).reallyExit(code)
+      })
       app.exit(code)
     },
   )
