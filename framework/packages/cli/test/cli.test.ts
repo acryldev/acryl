@@ -695,6 +695,18 @@ describe('build-client', () => {
   })
 })
 
+describe('a blank app made under another folder name', () => {
+  // `create-acrylblends --from <entry>` and a WebBox make the app in a folder of their own and only rename package.json's name, so what the app calls itself is the
+  // instance's name (the app answers with it), never the APP_NAME the template was written with. A test that compared the two failed in every such app.
+  it('has a first test that expects the app\'s own name, the instance\'s, not the template constant', async () => {
+    expect(await runCli(['init', 'renamed-later', '--template', 'blank', '--bare', '-y'], fakeIo().io)).toBe(0)
+    const test = readFileSync(join(scratch, 'renamed-later', 'test', 'app.test.ts'), 'utf8')
+    expect(test).not.toContain('{ app: APP_NAME')
+    expect(test).not.toContain('<h1>${APP_NAME}</h1>')
+    expect(test).toContain("appInstance")
+  })
+})
+
 describe('add agent-panel and driver-pty', () => {
   it('refuses a blank app before copying anything, and says which rows it lacks and where they come from', async () => {
     expect(await runCli(['init', 'blank-panel', '--template', 'blank', '-y'], fakeIo().io)).toBe(0)
