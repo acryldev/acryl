@@ -13,7 +13,8 @@ export function debPackageName(product) {
     .toLowerCase()
     .replace(/[^a-z0-9+.]+/gu, '-')
     .replace(/^[^a-z0-9]+|-+$/gu, '')
-  if (name.length < 2) throw new Error(`no Debian package name can be made from ${JSON.stringify(product)}`)
+  if (name.length < 2)
+    throw new Error(`no Debian package name can be made from ${JSON.stringify(product)}`)
   return name
 }
 
