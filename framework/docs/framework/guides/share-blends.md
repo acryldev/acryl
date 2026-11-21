@@ -145,15 +145,22 @@ error: you and github:inboxxobni/sh-guide-notes 0.1.2 both changed the same line
 
 ## 6. Put it online on WebBoxes.ai
 
-[WebBoxes.ai](https://webboxes.ai) runs ACRYL apps for you. In ACRYL Control Center, an app you shared to GitHub as Public has a **Deploy to WebBoxes.ai**
-button on its card, and a Blend in the store has one on its card too. The button only opens WebBoxes.ai in your browser with the repository filled in
-(`https://github.com/<owner>/<repo>` and a name made of lower case letters, digits and dashes); there you sign in, press Create, then Publish.
+[WebBoxes.ai](https://webboxes.ai) runs ACRYL apps for you. **Proven 2026-11-21 by the WebBoxes team, not run for this guide** (it needs a WebBoxes.ai
+account); what follows is what they reported, in their words shortened, and what WebBoxes.ai does is that product's own.
 
-This part was **not run** for this guide: it needs a WebBoxes.ai account, and what happens on WebBoxes.ai (including how a box takes a newer release of the
-Blend) is that product's own and is not described here.
+1. **Start the deploy.** From the Blend's card in the store, `webboxes.ai/blueprints` has a **Deploy** button; ACRYL Control Center's store cards have **Deploy to WebBoxes.ai**,
+   which opens the New WebBox form with the Blend filled in: `https://webboxes.ai/dashboard/webboxes?blend=<id>&name=<name>` for a Blend in the store, or `?github=<owner>/<repo>` for
+   your own repository (a Blend you shared to GitHub in step 2). If you are signed out, it goes to sign-in and comes back to the form.
+2. **Create.** The box ran in under two minutes for a store Blend (88 seconds in their run) and in 17 seconds for a repository, and opens the app inside the ACRYL
+   frame. **Open app** shows it; the right panel has **Terminal**, **Claude Code**, **Codex** and **Pi** tabs, which work in the box's `/workspace`.
+3. **Publish** gives the box an address of its own. An anonymous visitor of that address gets the app, and gets nothing of the workspace (the terminal and agent
+   routes answer 404 to anyone but the owner).
+4. **Update.** When the Blend you made the box from has a newer release (a newer version in the store, or a newer tag of the repository), the box shows **Update to X**.
+   It runs `npx acrylblends@latest update`, which is step 5 above (your edits are kept), then `npm install`, then restarts the box, and shows the command's output.
+   The button appears only when `update --check` itself says a newer release exists.
 
 ## What this guide does not cover
 
 - Sharing to a private repository works with the same command and `--visibility private`; the store lists public Blends only. It was not run here.
-- A Blend is shared through GitHub only. npm is a target for single plugins, not for whole apps: see [Share a plugin](share-plugins.md).
+- A Blend is shared through GitHub only. npm is a target for single plugins, not for whole apps: see [Share a plugin](share-plugins.md). A box made before `@acryldev/blends` 1.7.21 keeps its older CLI for the app inside it, so a repository with a `blend.yaml` and no `acryl.template.json` may not update there.
 - Control Center and the frame have buttons for these steps; the guide shows the commands because they can be copied and run once.
