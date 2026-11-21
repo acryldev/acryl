@@ -14,6 +14,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { readAppIdentity } from '@acryldev/app-persistence'
 import { PACKAGE, TEMPLATE_MANIFEST } from './names'
 
 export type Source =
@@ -281,6 +282,14 @@ async function downloadGithub(
 /** Read and check `acryl.template.json`; a source without it is not a template. */
 export function readManifest(dir: string): Manifest {
   const file = join(dir, TEMPLATE_MANIFEST)
+  // An ACRYL app shared to GitHub is a template by its blend.yaml alone: its name and description come from there.
+  const blend = join(dir, 'blend.yaml')
+  if (!existsSync(file) && existsSync(blend)) {
+    const identity = readAppIdentity(readFileSync(blend, 'utf8'))
+    const name = identity.name?.trim()
+    if (name !== undefined && name !== '')
+      return { name, description: identity.description ?? '', plugins: [] }
+  }
   if (!existsSync(file))
     throw new SourceError(
       `this source has no ${TEMPLATE_MANIFEST}, so it is not a template: add one with a name and a description (see the @acryldev/create-blends guide)`,

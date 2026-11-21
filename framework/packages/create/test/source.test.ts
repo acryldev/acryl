@@ -17,6 +17,7 @@ import { type Io, runCreate, TEMPLATE_MANIFEST } from '../src/index'
 import {
   type Fetchers,
   parseSource,
+  readManifest,
   realFetchers,
   SourceError,
   TEMPLATE_LIMITS,
@@ -839,5 +840,22 @@ describe('tarCommand', () => {
     expect(tarCommand('win32', undefined)).toBe(join('C:\\Windows', 'System32', 'tar.exe'))
     expect(tarCommand('linux')).toBe('tar')
     expect(tarCommand('darwin')).toBe('tar')
+  })
+})
+
+describe('an ACRYL app shared without acryl.template.json', () => {
+  it('is a template by its blend.yaml: name and description come from its metadata', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'create-blend-only-'))
+    try {
+      writeFileSync(
+        join(dir, 'blend.yaml'),
+        'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: ana.notes\n  name: notes\n  version: 0.2.0\n  description: My notes.\nspec:\n  runtime: cordis\n',
+      )
+      expect(readManifest(dir)).toEqual({ name: 'notes', description: 'My notes.', plugins: [] })
+      rmSync(join(dir, 'blend.yaml'))
+      expect(() => readManifest(dir)).toThrow(SourceError)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
