@@ -174,6 +174,85 @@ describe('template sources', () => {
     )
   })
 
+  describe('the id of a Community Blend the store lists', () => {
+    const INDEX = 'https://acrylblends.github.io/registry/index.json'
+    const LISTING = 'https://acrylblends.github.io/registry/discovered.json'
+    const starter = {
+      ...app(),
+      'blend.yaml':
+        'metadata:\n  id: someone.team-notes\n  name: Team Notes\n  version: 0.1.1\n  license: MIT\n  visibility: public\nspec:\n  runtime: cordis\n',
+    }
+    const listed = (...entries: object[]) =>
+      JSON.stringify({ generatedAt: 'now', topic: 'acrylblends-blend', searched: 1, entries })
+    /** The store as the public registry answers: no starter of that id, the listing as given, GitHub's tarball. */
+    function store(listing: string | undefined) {
+      const tgz = pack(starter, 'team-notes-v0.1.1')
+      const urls: string[] = []
+      const s = fakeIo({
+        download: async (url) => {
+          urls.push(url)
+          if (url === INDEX) return Buffer.from(JSON.stringify({ formatVersion: 1, entries: [] }))
+          if (url === LISTING) {
+            if (listing === undefined) throw new Error('could not reach the store')
+            return Buffer.from(listing)
+          }
+          return new Uint8Array(readFileSync(tgz))
+        },
+      })
+      return { s, urls }
+    }
+
+    it('makes the app from the release the store lists, and remembers that release so update works', async () => {
+      const { s, urls } = store(
+        listed({
+          id: 'someone.team-notes',
+          origin: 'community',
+          source: 'github:someone/team-notes#v0.1.1',
+        }),
+      )
+      expect(
+        await runCreate(['from-store-id', '--from', 'someone.team-notes', '-y'], s.io),
+        s.err(),
+      ).toBe(0)
+      expect(urls).toContain('https://codeload.github.com/someone/team-notes/tar.gz/v0.1.1')
+      const dir = join(scratch, 'from-store-id')
+      expect(readFileSync(join(dir, 'blend.yaml'), 'utf8')).toContain(
+        'id: acrylblends.from-store-id',
+      )
+      expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).acryl.from).toBe(
+        'github:someone/team-notes#v0.1.1',
+      )
+    })
+
+    it('says so when neither the starters nor the Community list know the id, and creates nothing', async () => {
+      const { s } = store(
+        listed({ id: 'other.thing', origin: 'community', source: 'github:other/thing#v1' }),
+      )
+      expect(await runCreate(['nothing-here', '--from', 'someone.team-notes', '-y'], s.io)).toBe(1)
+      expect(s.err()).toContain(
+        'no starter "someone.team-notes" in this registry and no Community Blend listed in the store',
+      )
+      expect(existsSync(join(scratch, 'nothing-here'))).toBe(false)
+    })
+
+    it('says the list could not be read when the store does not answer, rather than that the Blend does not exist', async () => {
+      const { s } = store(undefined)
+      expect(await runCreate(['store-down', '--from', 'someone.team-notes', '-y'], s.io)).toBe(1)
+      expect(s.err()).toContain("the store's list of Community Blends could not be read just now")
+    })
+
+    it('does not trust a listing entry that is not a Community GitHub release', async () => {
+      const { s, urls } = store(
+        listed(
+          { id: 'someone.team-notes', origin: 'official', source: 'github:someone/team-notes#v1' },
+          { id: 'someone.team-notes', origin: 'community', source: 'https://evil.example/x.tgz' },
+        ),
+      )
+      expect(await runCreate(['untrusted', '--from', 'someone.team-notes', '-y'], s.io)).toBe(1)
+      expect(urls.filter((url) => url.includes('evil') || url.includes('codeload'))).toEqual([])
+    })
+  })
+
   it('packs an npm source without running its scripts', async () => {
     const tgz = pack(app())
     const packed: string[] = []

@@ -35,6 +35,42 @@ const PUBLIC_REGISTRY = 'https://acrylblends.github.io/registry/'
 export const ACRYL_APP = 'https://acryl.dev'
 
 /** A registry id: dotted, lower case (`acryl.gtd`, `acrylblends.notes-desktop`, `login.thing`). */
+/** What the store publishes for the Community Blends it lists: each one's id and the `github:owner/repo#tag` release to start from. */
+export const COMMUNITY_LISTING = 'https://acrylblends.github.io/registry/discovered.json'
+
+export type CommunityLookup =
+  | { readonly found: true; readonly source: string }
+  | { readonly found: false; readonly reason: 'not listed' | 'unreadable' }
+
+const GITHUB_RELEASE = /^github:[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9_.-]+#\S+$/u
+
+/** The release a Community Blend's id names, from the store's own listing. Never throws: an unreadable listing is a reason, not a failure. */
+export async function communitySource(
+  reading: RegistryReading,
+  id: string,
+): Promise<CommunityLookup> {
+  let entries: unknown
+  try {
+    entries = (
+      JSON.parse(
+        Buffer.from(await reading.fetchers.download(COMMUNITY_LISTING)).toString('utf8'),
+      ) as {
+        entries?: unknown
+      }
+    ).entries
+  } catch {
+    return { found: false, reason: 'unreadable' }
+  }
+  if (!Array.isArray(entries)) return { found: false, reason: 'unreadable' }
+  const entry = entries.find(
+    (candidate: { id?: unknown; origin?: unknown }) =>
+      candidate?.id === id && candidate.origin === 'community',
+  ) as { source?: unknown } | undefined
+  return typeof entry?.source === 'string' && GITHUB_RELEASE.test(entry.source)
+    ? { found: true, source: entry.source }
+    : { found: false, reason: 'not listed' }
+}
+
 export const REGISTRY_ID = /^[a-z0-9][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*)+$/
 
 export interface RegistryEntry {
@@ -224,14 +260,18 @@ export async function openPublicRegistry(reading: RegistryReading): Promise<Open
 }
 
 /** The entry for an id. An ACRYL app starter is refused in one line; an unknown id lists the starters this package can make. */
-export function pickEntry(entries: readonly RegistryEntry[], id: string): RegistryEntry {
+export function pickEntry(
+  entries: readonly RegistryEntry[],
+  id: string,
+  alsoLooked = '',
+): RegistryEntry {
   const entry = entries.find((candidate) => candidate.id === id)
   if (!entry) {
     const mine = entries
       .filter((candidate) => candidate.runtime === 'acrylblends')
       .map((candidate) => candidate.id)
     throw new SourceError(
-      `no starter "${id}" in this registry${mine.length > 0 ? `; starters for @acryldev/create-blends: ${mine.join(', ')}` : ''}`,
+      `no starter "${id}" in this registry${alsoLooked}${mine.length > 0 ? `; starters for @acryldev/create-blends: ${mine.join(', ')}` : ''}`,
     )
   }
   if (entry.runtime !== 'acrylblends')

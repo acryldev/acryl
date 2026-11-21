@@ -20,6 +20,7 @@ import { findSecrets } from '@acryldev/app-persistence'
 import { isFramedByPackages, mergeTooling, readLibrary } from '@acryldev/blends/cli'
 import { CLASS, CREATE, PACKAGE, TEMPLATE_MANIFEST } from './names'
 import {
+  communitySource,
   openPublicRegistry,
   openRegistry,
   ownLock,
@@ -97,7 +98,7 @@ A source makes the app from someone else's template (it is downloaded and unpack
 A template is a folder with an ${TEMPLATE_MANIFEST} (name, description, plugins).
 
 A starter from the registry is pulled by its id:
-  --from <id | source>   a registry id such as acrylblends.notes-desktop, or any of the sources above
+  --from <id | source>   a registry id such as acrylblends.notes-desktop, the id of a Community Blend the store lists (inboxxobni.notes), or any of the sources above
   --registry <source>    read the starters from this registry instead of the public one (github:owner/repo, an https:// address, or a folder)
 Only starters made for ${CLASS} (runtime: ${PACKAGE}) are apps this command can make; an ACRYL app starter is refused with a line saying so.
 
@@ -409,6 +410,14 @@ async function createFromSource(
     let entry: RegistryEntry | undefined
     // Where the app came from, kept in its manifest so `acrylblends update` can bring that source's newer releases in.
     let from: string | undefined
+    // A source of the `github:owner/repo#tag` kind, fetched as a template; the app remembers it so that `acrylblends update` can bring its newer releases in.
+    const fromGithub = async (text: string) => {
+      const source = parseSource(text, io.cwd)
+      if (!source) throw new UsageError(`unknown template source "${text}" (${SOURCE_FORMS})`)
+      await fetchTemplate(source, join(scratch, 'source'), join(scratch, 'download'), fetchers)
+      if (source.kind === 'github')
+        from = `github:${source.owner}/${source.repo}${source.ref === undefined ? '' : `#${source.ref}`}`
+    }
     if (REGISTRY_ID.test(options.source!)) {
       // A registry id: read the registry's index, pick the entry (only an app for this runtime), and take its folder as the template.
       const reading = { scratch, fetchers }
@@ -416,16 +425,30 @@ async function createFromSource(
         options.registry === undefined
           ? await openPublicRegistry(reading)
           : await openNamedRegistry(options.registry, io.cwd, reading)
-      entry = pickEntry(registry.entries, options.source!)
-      await registry.takeEntry(entry, join(scratch, 'source'))
-      from = `${entry.id}#${entry.version}`
+      let alsoLooked = ''
+      if (!registry.entries.some((candidate) => candidate.id === options.source)) {
+        // Not a starter: the public store also lists Community Blends, which live in their authors' repositories. The id the store shows starts the app
+        // from that repository's release, exactly as `--from github:owner/repo#tag` does.
+        if (options.registry === undefined) {
+          const community = await communitySource(reading, options.source!)
+          if (community.found) {
+            await fromGithub(community.source)
+            entry = undefined
+          } else {
+            alsoLooked =
+              community.reason === 'unreadable'
+                ? " (the store's list of Community Blends could not be read just now)"
+                : ' and no Community Blend listed in the store'
+          }
+        }
+      }
+      if (from === undefined) {
+        entry = pickEntry(registry.entries, options.source!, alsoLooked)
+        await registry.takeEntry(entry, join(scratch, 'source'))
+        from = `${entry.id}#${entry.version}`
+      }
     } else {
-      const source = parseSource(options.source!, io.cwd)
-      if (!source)
-        throw new UsageError(`unknown template source "${options.source}" (${SOURCE_FORMS})`)
-      await fetchTemplate(source, join(scratch, 'source'), join(scratch, 'download'), fetchers)
-      if (source.kind === 'github')
-        from = `github:${source.owner}/${source.repo}${source.ref === undefined ? '' : `#${source.ref}`}`
+      await fromGithub(options.source!)
     }
     const manifest = readManifest(join(scratch, 'source'))
     const staged = join(scratch, 'app')
