@@ -46,7 +46,7 @@ npm run acryl -- plugin pull github:<owner>/hello-ana@0.1.0@sha256:<digest>
 ```
 
 The same in the app: Settings > Plugins > My plugins > **Share...** on the plugin, then one of **Save here** (this computer only), **Share privately**,
-**Share publicly** or **List in the registry**. It shows the plan and asks again before it sends anything; the account field is empty for your own account.
+**Share publicly**, **Publish to npm** or **List in the registry**. It shows the plan and asks again before it sends anything; the account field is empty for your own account.
 
 | Target | How | Result |
 | --- | --- | --- |
@@ -66,7 +66,7 @@ npm run acryl -- plugin publish hello-ana --to npm --registry https://npm.exampl
 
 It uses **your own** npm login and nothing else: it asks `npm whoami`, and when you are not signed in the plan is refused with `npm login`. The plan shows
 the package, the registry, the version and the license before the `yes`; a version npm already has makes it the next patch. The package is public, named
-`@scope/name` (the plugin's folder name is `name`). To try it without publishing, run the same command with `npm_config_dry_run=true` in the environment of
+`@scope/name` (the plugin's folder name is `name`). The same is the **Publish to npm** button of Share... (the account field is the scope; blank is your npm login's account). To try it without publishing, run the same command with `npm_config_dry_run=true` in the environment of
 the running app: npm then stops before sending the package.
 
 ## 3. Pull it

@@ -410,6 +410,8 @@ export interface SharePlan {
   readonly license?: string
   /** The public registry (cordisplugins.github.io) lists it: the share sets the `cordis-plugin` topic. Only a public share can be listed. */
   readonly registry?: boolean
+  /** npm, not GitHub: the package, the registry and the digest of the bytes that were planned. `owner` is the package's scope and `repo` the plugin's name. */
+  readonly npm?: { readonly package: string; readonly registry: string; readonly digest: string }
   /** Where the registry lists it (category slugs of acrylblends.github.io/blends): the app's own store place, written as package.json keywords. */
   readonly placement?: { readonly category: string; readonly subcategory?: string }
 }
@@ -419,18 +421,22 @@ const GITHUB_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/u
 /** @throws when the value is not a share plan. */
 export function parseSharePlan(value: unknown): SharePlan {
   if (!isRecord(value)) throw new Error('share plan: not a plan')
-  const { owner, repo, version, visibility, createsRepository, released, license, registry, placement } = value
+  const { owner, repo, version, visibility, createsRepository, released, license, registry, placement, npm } = value
   if (typeof owner !== 'string' || !GITHUB_NAME.test(owner) || typeof repo !== 'string' || !GITHUB_NAME.test(repo)) throw new Error('share plan: repository')
   if (typeof version !== 'string' || version === '' || (released !== undefined && (typeof released !== 'string' || released === ''))) throw new Error('share plan: version')
   if ((visibility !== 'private' && visibility !== 'public') || typeof createsRepository !== 'boolean') throw new Error('share plan: visibility')
   if (license !== undefined && (typeof license !== 'string' || !/^[A-Za-z0-9.+-]+$/u.test(license))) throw new Error('share plan: license')
   if (registry !== undefined && typeof registry !== 'boolean') throw new Error('share plan: registry')
   if (registry === true && visibility !== 'public') throw new Error('share plan: only a public share can be listed in the registry')
+  const onNpm = npm === undefined ? undefined : isRecord(npm) && typeof npm.package === 'string' && npm.package !== '' && typeof npm.registry === 'string' && /^https?:\/\//u.test(npm.registry) && typeof npm.digest === 'string' && /^[0-9a-f]{64}$/u.test(npm.digest)
+    ? { package: npm.package, registry: npm.registry, digest: npm.digest }
+    : null
+  if (onNpm === null) throw new Error('share plan: npm')
   const place = placement === undefined ? undefined : isRecord(placement) && typeof placement.category === 'string' && (placement.subcategory === undefined || typeof placement.subcategory === 'string')
     ? { category: placement.category, ...(typeof placement.subcategory === 'string' ? { subcategory: placement.subcategory } : {}) }
     : null
   if (place === null) throw new Error('share plan: placement')
-  return { owner, repo, version, visibility, createsRepository, ...(released === undefined ? {} : { released }), ...(license === undefined ? {} : { license }), ...(registry === true ? { registry } : {}), ...(place === undefined ? {} : { placement: place }) }
+  return { owner, repo, version, visibility, createsRepository, ...(released === undefined ? {} : { released }), ...(license === undefined ? {} : { license }), ...(registry === true ? { registry } : {}), ...(onNpm === undefined ? {} : { npm: onNpm }), ...(place === undefined ? {} : { placement: place }) }
 }
 
 /** @throws when the value is not what a save answers. */
@@ -444,6 +450,7 @@ export function parseSavedPlugin(value: unknown): SavedPluginResult {
 export function samePlan(a: SharePlan, b: SharePlan): boolean {
   return a.owner === b.owner && a.repo === b.repo && a.version === b.version && a.visibility === b.visibility
     && a.createsRepository === b.createsRepository && a.released === b.released && a.license === b.license && (a.registry === true) === (b.registry === true)
+    && a.npm?.package === b.npm?.package && a.npm?.registry === b.npm?.registry && a.npm?.digest === b.npm?.digest
     && a.placement?.category === b.placement?.category && a.placement?.subcategory === b.placement?.subcategory
 }
 

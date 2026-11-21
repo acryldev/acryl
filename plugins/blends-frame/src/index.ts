@@ -29,6 +29,7 @@ import { AppIconRefused, APP_ICON_MAX_BYTES, iconBytes, saveAppIcon } from './ap
 import { FRAME_GRAPH_EVENTS_PATH, FRAME_GRAPH_PATH } from './graph-contract.ts'
 import { githubReadiness, PlainError, plainPullRefusal, plainShareProblem, type Plain } from './plain.ts'
 import { createGraphPort, type GraphPort } from './plugin-graph.ts'
+import { npmShareOf, planNpmShare, shareNpm } from './npm-share.ts'
 import { bareName, createRegistryReader, pluginShareOf, readRegistryView, repoOfSource, type RegistryMarks } from './registry.ts'
 import { lookAtLog, RealChats } from './real-chats.ts'
 import { appGeneration } from './app-generation.ts'
@@ -247,7 +248,7 @@ export interface PluginsPort {
   read(): Promise<AppPluginsView>
   switch(kind: AppPluginKind, name: string, on: boolean): Promise<void>
   /** What sharing one local plugin would do (repository, version, visibility); nothing is sent. */
-  planShare(name: string, visibility?: ShareVisibility, registry?: boolean, owner?: string): Promise<SharePlan>
+  planShare(name: string, visibility?: ShareVisibility, registry?: boolean, owner?: string, npm?: boolean): Promise<SharePlan>
   /** Publish one local plugin to its GitHub repository and release, through the plugin-hub path: only the plan the person confirmed. */
   share(name: string, confirmed: SharePlan, owner?: string): Promise<ShareAppPluginResult>
   /** Keep a packed copy of one local plugin on this machine (the app's plugin store); nothing leaves the machine. */
@@ -689,7 +690,8 @@ export function frameRoutes({ state, report = () => {}, plugins, graph, feedback
         const listed = (body as Record<string, unknown>).registry === true
         const owner = parseShareOwner((body as Record<string, unknown>).owner)
         if (owner === null) return c.json(error('the GitHub account or organization is not a GitHub name'), 400)
-        return c.json(await plugins.planShare(name, listed ? 'public' : asked === 'public' || asked === 'private' ? asked : undefined, listed, owner))
+        const onNpm = (body as Record<string, unknown>).npm === true
+        return c.json(await plugins.planShare(name, listed || onNpm ? 'public' : asked === 'public' || asked === 'private' ? asked : undefined, listed, owner, onNpm))
       } catch (cause) {
         report(cause)
         return c.json(plainBody(plainShareProblem(cause)), 409)
@@ -1009,8 +1011,8 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       // A local plugin goes to GitHub through the plugin-hub path: the same pack, secret check, repository, release and local store an
       // ACRYL plugin share uses, with the user's own gh and git doing the publishing.
       // The owner the person typed wins over the one the frame is configured with; a changed owner is a changed plan, so the confirm check still holds.
-      planShare: async (name, visibility, registry, owner) => planAppPluginShare(root, ctx.appInstance.home, name, { ...shareTo, ...(owner === undefined ? {} : { owner }), ...(visibility === undefined ? {} : { visibility }), ...(registry === true ? { registry } : {}) }, githubSharePorts()),
-      share: async (name, confirmed, owner) => shareAppPlugin(root, ctx.appInstance.home, name, confirmed, { ...shareTo, ...(owner === undefined ? {} : { owner }) }, githubSharePorts()),
+      planShare: async (name, visibility, registry, owner, npm) => npm === true ? planNpmShare(npmShareOf(() => ctx.get('pluginShare')), name, owner) : planAppPluginShare(root, ctx.appInstance.home, name, { ...shareTo, ...(owner === undefined ? {} : { owner }), ...(visibility === undefined ? {} : { visibility }), ...(registry === true ? { registry } : {}) }, githubSharePorts()),
+      share: async (name, confirmed, owner) => confirmed.npm !== undefined ? shareNpm(npmShareOf(() => ctx.get('pluginShare')), name, confirmed, owner) : shareAppPlugin(root, ctx.appInstance.home, name, confirmed, { ...shareTo, ...(owner === undefined ? {} : { owner }) }, githubSharePorts()),
       save: async (name) => saveAppPlugin(root, ctx.appInstance.home, name),
       github: githubNow,
       connect: { start: () => githubConnect.start(), state: () => githubConnect.state(), cancel: () => { githubConnect.cancel() }, disconnect: async () => { githubConnect.disconnect(); return githubNow() } },

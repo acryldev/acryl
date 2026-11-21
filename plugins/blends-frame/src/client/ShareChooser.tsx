@@ -94,7 +94,9 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
       const address = colleagueAddress(shared)
       setState({
         step: 'done',
-        text: plan.registry === true
+        text: plan.npm !== undefined
+          ? `Done. ${plugin.name} is published to npm as ${plan.npm.package}. Others take it with: npm run acryl -- plugin pull npm:${plan.npm.package}@${shared.version}`
+          : plan.registry === true
           ? `Done. ${plugin.name} is shared. The registry lists new plugins within about an hour, then anyone can find it there.`
           : plan.visibility === 'public' ? `Done. ${plugin.name} is shared with everyone.` : `Done. ${plugin.name} is shared with your team.`,
         ...(address === undefined ? {} : { address }),
@@ -112,6 +114,7 @@ export function ShareChooser({ plugin, readGithub, connectGithub, copy, onSaved,
     { title: 'This computer', say: 'Keep a copy here. Only you can see it. Nothing is sent anywhere.', button: 'Save here', disabled: plugin.actions?.save === undefined },
     { title: 'My GitHub, private', say: 'Share with your team. Only people you invite on GitHub can add it.', button: 'Share privately', target: 'private', disabled: share === undefined || blocked },
     { title: 'My GitHub, public', say: 'Anyone with the link can add it to their app.', button: 'Share publicly', target: 'public', disabled: share === undefined || blocked },
+    { title: 'npm', say: 'Publish it as an npm package under the account above (blank: your npm login), sent with your own npm login (npm login in a terminal). Public.', button: 'Publish to npm', target: 'npm', disabled: share === undefined },
     { title: 'Public registry', say: 'List it for everyone to search and add with one click. Public.', button: 'List in the registry', target: 'registry', disabled: share === undefined || blocked },
   ]
 

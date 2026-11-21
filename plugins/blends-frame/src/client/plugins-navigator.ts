@@ -8,7 +8,7 @@ import { failureOf } from './plain-failure.ts'
 import { FRAME_PLUGINS_PATH, FRAME_PLUGINS_SAVE_PATH, FRAME_PLUGINS_SHARE_PATH, FRAME_PLUGINS_SHARE_PLAN_PATH, FRAME_PLUGINS_SWITCH_PATH, parseAppPluginsView, parseSavedPlugin, parseSharePlan, type AppPluginKind, type AppPluginsView, type AppPluginView, type FramePluginView, type SavedPluginResult, type SavedPluginView, type ShareVisibility, type SharedPluginView, type SharePlan } from '../contract.ts'
 
 /** Where a share goes: a private repository (the team), a public one (everyone), or a public one the registry lists. */
-export type ShareTarget = ShareVisibility | 'registry'
+export type ShareTarget = ShareVisibility | 'registry' | 'npm'
 
 /** Sharing a local plugin: first what it would do, then, on the person's yes, exactly that. */
 export interface PluginShare {
@@ -43,6 +43,10 @@ export function colleagueAddress(shared: SharedPluginView): string | undefined {
  */
 export function shareQuestion(plan: SharePlan): string {
   const name = plan.repo
+  if (plan.npm !== undefined) {
+    const sent = plan.released === undefined ? '' : ` This sends version ${plan.version}, because ${plan.released} was already published.`
+    return `Publish ${plan.repo} to npm as ${plan.npm.package}? Anyone can find it there and add it to their own app. It is published with your own npm login.${sent}`
+  }
   const who = plan.registry === true
     ? `List ${name} in the public registry? Anyone can search for it and add it with one click.`
     : plan.visibility === 'public'
@@ -54,11 +58,13 @@ export function shareQuestion(plan: SharePlan): string {
 
 /** The words on the one big button that confirms a share. */
 export function shareButton(plan: SharePlan): string {
+  if (plan.npm !== undefined) return 'Publish to npm'
   return plan.registry === true ? 'List in the registry' : plan.visibility === 'public' ? 'Share with everyone' : 'Share with my team'
 }
 
 /** The exact sentence of what a share does, for the "Details" of the confirmation: the repository, whether it is created, the version and who can see it. */
 export function shareSentence(plan: SharePlan): string {
+  if (plan.npm !== undefined) return `Publish v${plan.version} of ${plan.repo} to ${plan.npm.registry} as ${plan.npm.package}, public, under the ${plan.license ?? 'MIT'} license. It is sent with your own npm login (npm whoami).${plan.released === undefined ? '' : ` v${plan.released} is already there, so this is the next version.`}`
   const where = `${plan.owner}/${plan.repo}`
   const what = plan.createsRepository
     ? `Create repository ${where} on GitHub and publish v${plan.version}?`
@@ -73,7 +79,9 @@ export function shareSentence(plan: SharePlan): string {
 export function shareDetails(plan: SharePlan): string[] {
   return [
     shareSentence(plan),
-    `Repository: ${plan.owner}/${plan.repo} on GitHub (${plan.createsRepository ? 'a new one' : 'it exists'}), ${plan.visibility}`,
+    ...(plan.npm === undefined
+      ? [`Repository: ${plan.owner}/${plan.repo} on GitHub (${plan.createsRepository ? 'a new one' : 'it exists'}), ${plan.visibility}`]
+      : [`Package: ${plan.npm.package} on ${plan.npm.registry}`]),
     ...(plan.license === undefined ? [] : [`License: ${plan.license}`]),
     ...(plan.registry === true ? ['Topic: cordis-plugin, which cordisplugins.github.io lists within about an hour'] : []),
     ...(plan.placement === undefined ? [] : [`Category: ${plan.placement.category}${plan.placement.subcategory === undefined ? '' : ` › ${plan.placement.subcategory}`}, where this app is in the Blends store`]),
@@ -204,7 +212,7 @@ export function createAppPluginsApi(fetcher: FetchLike = (input, init) => fetch(
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ ...(target === undefined ? { name } : target === 'registry' ? { name, registry: true } : { name, visibility: target }), ...(owner === undefined ? {} : { owner }) }),
+        body: JSON.stringify({ ...(target === undefined ? { name } : target === 'registry' ? { name, registry: true } : target === 'npm' ? { name, npm: true } : { name, visibility: target }), ...(owner === undefined ? {} : { owner }) }),
       })
       if (!response.ok) return errorOf(response)
       return parseSharePlan(await response.json())

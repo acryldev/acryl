@@ -8,6 +8,7 @@ import { frameRoutes } from '../src/index.ts'
 import { githubReadiness, plainPullRefusal, plainShareProblem, PlainError } from '../src/plain.ts'
 import { bareName, createRegistryReader, downloadFor, newerVersion, readRegistryView, registryEntries, repoOfSource, type RegistryMarks } from '../src/registry.ts'
 import { createRegistryApi } from '../src/client/registry-api.ts'
+import { npmShareOf, planNpmShare, shareNpm } from '../src/npm-share.ts'
 import { addedText, addQuestion, cleanAddress, entryByline, filterRegistry } from '../src/client/registry-list.ts'
 import { colleagueAddress, shareButton, shareDetails, shareQuestion, shareSentence } from '../src/client/plugins-navigator.ts'
 import { PlainFailure } from '../src/client/plain-failure.ts'
@@ -351,5 +352,43 @@ describe('the Host routes of the registry', () => {
     const refused = await call(app, '/api/acryl-blends-frame/plugins/pull', 'POST', { source: 'github:a/b@1.0.0' })
     expect(refused.status).toBe(409)
     expect(await refused.json()).toEqual({ error: expect.stringContaining('could not be downloaded'), details: 'HTTP 404 - check the version' })
+  })
+})
+
+describe('sharing to npm from the frame', () => {
+  const service = (log: string[], plan: Record<string, unknown> = {}) => ({
+    planPublish: async (name: string, options: { to: 'npm'; scope?: string }) => {
+      log.push(`plan ${name} ${options.scope ?? '-'}`)
+      return { target: 'npm', package: `@${options.scope ?? 'ana'}/${name}`, registry: 'https://registry.npmjs.org/', owner: options.scope ?? 'ana', repo: name, version: '0.1.0', license: 'MIT', digest: 'a'.repeat(64), ...plan } as never
+    },
+    publish: async (name: string, _confirmed: unknown, options: { to: 'npm'; scope?: string }) => {
+      log.push(`publish ${name} ${options.scope ?? '-'}`)
+      return { ok: true as const, url: `https://www.npmjs.com/package/@${options.scope ?? 'ana'}/${name}`, version: '0.1.0' }
+    },
+  })
+
+  it('plans the same package the terminal would, in the frame\'s plan, and publishes only that plan', async () => {
+    const log: string[] = []
+    const plan = await planNpmShare(service(log), 'clock')
+    expect(plan).toMatchObject({ owner: 'ana', repo: 'clock', version: '0.1.0', visibility: 'public', license: 'MIT', npm: { package: '@ana/clock', registry: 'https://registry.npmjs.org/' } })
+    expect(parseSharePlan(JSON.parse(JSON.stringify(plan)))).toEqual(plan)
+    expect(shareQuestion(plan)).toContain('@ana/clock')
+    expect(shareButton(plan)).toBe('Publish to npm')
+    expect(shareDetails(plan).join('\n')).toContain('Package: @ana/clock')
+    expect(log).toEqual(['plan clock -'])
+    const shared = await shareNpm(service(log), 'clock', plan)
+    expect(shared).toMatchObject({ url: 'https://www.npmjs.com/package/@ana/clock', version: '0.1.0', owner: 'ana', repo: 'clock', tag: 'v0.1.0' })
+    expect(log).toEqual(['plan clock -', 'plan clock -', 'publish clock -'])
+  })
+
+  it('refuses a plan that changed since it was confirmed, and says why when the service refuses', async () => {
+    const log: string[] = []
+    const plan = await planNpmShare(service(log, {}), 'clock')
+    await expect(shareNpm(service(log, { digest: 'b'.repeat(64) }), 'clock', plan)).rejects.toThrow('changed since you confirmed')
+    expect(log.filter(line => line.startsWith('publish'))).toEqual([])
+    const refusing = { planPublish: async () => ({ ok: false as const, reason: 'npm whoami failed (sign in with: npm login)', next: 'nothing was sent' }), publish: async () => { throw new Error('never') } }
+    await expect(planNpmShare(refusing as never, 'clock')).rejects.toThrow('npm login')
+    await expect(planNpmShare(undefined, 'clock')).rejects.toThrow('no plugin-share')
+    expect(npmShareOf(() => undefined)).toBeUndefined()
   })
 })
