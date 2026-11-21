@@ -11,7 +11,17 @@
 import { mkdirSync, readFileSync, unwatchFile, watchFile } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, session, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  MenuItem,
+  screen,
+  session,
+  shell,
+} from 'electron'
 import '@acryldev/node-server/register'
 import { type AppInstance, instanceEnv, selectInstance, withRunEnv } from '@acryldev/instance'
 import { readProduct } from '@acryldev/instance/bundle'
