@@ -214,8 +214,15 @@ export function validate(document: unknown, known?: Iterable<string>): Diagnosti
       metadata.visibility !== 'public'
     )
       add('schema-error', 'metadata.visibility', "must be 'private' or 'public'")
-    if (metadata.from !== undefined && (typeof metadata.from !== 'string' || metadata.from.trim() === ''))
-      add('schema-error', 'metadata.from', "must name a source such as 'acrylblends.notes#0.3.1' or 'github:ana/notes#v0.2.0'")
+    if (
+      metadata.from !== undefined &&
+      (typeof metadata.from !== 'string' || metadata.from.trim() === '')
+    )
+      add(
+        'schema-error',
+        'metadata.from',
+        "must name a source such as 'acrylblends.notes#0.3.1' or 'github:ana/notes#v0.2.0'",
+      )
   }
 
   const spec = document.spec
