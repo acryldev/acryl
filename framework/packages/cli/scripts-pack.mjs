@@ -58,3 +58,17 @@ const docsTo = fileURLToPath(new URL('./docs', import.meta.url))
 
 rmSync(docsTo, { recursive: true, force: true })
 if (process.argv[2] === 'copy') cpSync(docsFrom, join(docsTo, 'framework'), { recursive: true })
+
+// The product packer (`acrylblends pack`) and the one helper it imports, so a Blend's own repository packs with the published package.
+const packTo = fileURLToPath(new URL('./pack', import.meta.url))
+rmSync(packTo, { recursive: true, force: true })
+if (process.argv[2] === 'copy') {
+  cpSync(
+    fileURLToPath(new URL('../../scripts/pack-blank-mac.mjs', import.meta.url)),
+    join(packTo, 'pack-blank-mac.mjs'),
+  )
+  cpSync(
+    fileURLToPath(new URL('../../scripts/lib/create-source.mjs', import.meta.url)),
+    join(packTo, 'lib', 'create-source.mjs'),
+  )
+}

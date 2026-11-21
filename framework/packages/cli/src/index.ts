@@ -1,5 +1,6 @@
 export { type AddOptions, add, listPlugins, parseAddOptions } from './add'
 export { HELP, runCli, VERSION } from './cli'
+export { findDesktopShell } from './desktop-shell'
 export { isFramedByPackages } from './frame-release'
 export {
   FRAME_URL_FILE,

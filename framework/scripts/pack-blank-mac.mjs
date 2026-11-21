@@ -6,6 +6,7 @@
  *   node scripts/pack-blank-mac.mjs [--out <dir>] [--arch arm64|x64]
  *   node scripts/pack-blank-mac.mjs --from acrylblends.small-crm [--product "Small CRM"]     a registry blueprint as its own product
  *   node scripts/pack-blank-mac.mjs --from ../apps/acryl-ade --product "ACRYL ADE" --tag-prefix ade-v  a product of a repository that releases several
+ *   npx @acryldev/blends pack --from . --product "ACRYL ADE"     the same from a Blend's own repository, with the published packages
  *
  * The DMG carries the app itself: the frame and the Blank app it builds in, with Electron's own Node, so it needs no Node, npm or git. The bundle is
  * read-only; on the first start the packaged app makes the person's first app from it in the product's own folder of the OS per-user data folder
@@ -27,11 +28,19 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createSource } from './lib/create-source.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+/**
+ * Where this packer runs: ACRYL's checkout (framework/scripts, root = framework), which makes the app with the checkout's own CLI and frame packages, or the
+ * published @acryldev/blends (its pack/ folder, root = the package, `acrylblends pack`), which makes it with the published ones: a Blend's own repository
+ * releases its product without ACRYL's source.
+ */
+const checkout = existsSync(join(root, 'packages', 'cli', 'bin', 'acrylblends.js'))
+const scratch = checkout ? join(root, 'dist') : join(tmpdir(), 'acryl-pack')
 const args = process.argv.slice(2)
 const option = (name, fallback) => {
   const at = args.indexOf(name)
@@ -95,8 +104,10 @@ const slug =
     : /^[./\\]|^[a-z]:/iu.test(from)
       ? basename(resolve(from)).replace(/^\d+-/u, '')
       : from.replace(/^[^.]+\./u, '')
-const out = resolve(option('--out', join(root, 'dist', `${slug}-${platform}`)))
-const work = join(root, 'dist', `${slug}-${platform}-work`)
+const out = resolve(
+  option('--out', join(checkout ? scratch : join(process.cwd(), 'dist'), `${slug}-${platform}`)),
+)
+const work = join(scratch, `${slug}-${platform}-work`)
 // Every git this script starts (create's first commit, the frame's) runs without git's background maintenance: a detached `git maintenance run --auto`
 // writes into .git (objects/maintenance.lock) while step 6 copies it, and the copy fails with ENOENT (macOS runner, ACRYL ADE v0.1.1).
 const gitConfigAt = Number(process.env.GIT_CONFIG_COUNT ?? 0)
@@ -135,7 +146,7 @@ async function download(url, file) {
 
 async function productGit(cpu) {
   const name = `dugite-native-v${GIT.version}-${GIT.build}-macOS-${cpu}.tar.gz`
-  const cache = join(root, 'dist', 'git-download')
+  const cache = join(scratch, 'git-download')
   const archive = join(cache, name)
   await download(
     `https://github.com/desktop/dugite-native/releases/download/${GIT.release}/${name}`,
@@ -210,8 +221,9 @@ function gitSourceOffer() {
 }
 
 if (
-  !existsSync(join(root, '..', 'plugins', 'blends-frame', 'lib')) ||
-  !existsSync(join(root, 'packages', 'cli', 'dist'))
+  checkout &&
+  (!existsSync(join(root, '..', 'plugins', 'blends-frame', 'lib')) ||
+    !existsSync(join(root, 'packages', 'cli', 'dist')))
 )
   throw new Error('the checkout is not built: run `corepack pnpm run build` first')
 
@@ -232,7 +244,7 @@ for (const [pkg, out] of [
   ['packages/cli', 'dist'],
 ]) {
   const src = join(root, pkg, 'src')
-  if (existsSync(src) && newestFile(src) > newestFile(join(root, pkg, out)))
+  if (checkout && existsSync(src) && newestFile(src) > newestFile(join(root, pkg, out)))
     stale.push(`${pkg} (${out} is older than src)`)
 }
 if (stale.length > 0)
@@ -243,43 +255,65 @@ if (stale.length > 0)
 // 1. A Blank app with the desktop shell, made by this checkout's CLI, exactly as a person would make one.
 rmSync(work, { recursive: true, force: true })
 mkdirSync(work, { recursive: true })
-const { frameSpecsEnv } = await import(pathToFileURL(join(root, 'scripts/lib/ide-specs.mjs')).href)
-const cliVersion = JSON.parse(readFileSync(join(root, 'packages/cli/package.json'), 'utf8')).version
-const init = spawnSync(
-  process.execPath,
+const cliVersion = JSON.parse(
+  readFileSync(join(root, checkout ? 'packages/cli/package.json' : 'package.json'), 'utf8'),
+).version
+// The checkout's own frame packages (file: links) for a checkout; the published ones, as create picks them, otherwise.
+const frameEnv = checkout
+  ? {
+      ACRYLBLENDS_FRAME_PACKAGES: (
+        await import(pathToFileURL(join(root, 'scripts/lib/ide-specs.mjs')).href)
+      ).frameSpecsEnv(root, { dshVersion: '0.2.0-rc.2', frameworkVersion: `^${cliVersion}` }),
+    }
+  : {}
+const initOptions = { stdio: 'inherit', env: { ...process.env, ...frameEnv } }
+const init =
   from === undefined
-    ? [
-        join(root, 'packages/cli/bin/acrylblends.js'),
-        'init',
-        app,
-        '--name',
-        'acryl-blends-blank',
-        '--template',
-        'blank',
-        '--desktop',
-        '--yes',
-        '--no-next',
-      ]
+    ? spawnSync(
+        process.execPath,
+        [
+          join(root, checkout ? 'packages/cli/bin/acrylblends.js' : 'bin/acrylblends.js'),
+          'init',
+          app,
+          '--name',
+          'acryl-blends-blank',
+          '--template',
+          'blank',
+          '--desktop',
+          '--yes',
+          '--no-next',
+        ],
+        initOptions,
+      )
     : // The registry blueprint, put in the frame by create itself (add desktop, upgrade); installed in step 2 like Blank.
       // A folder goes to create as an absolute path (lib/create-source.mjs says why).
-      [
-        join(root, 'packages/create/bin/create-acrylblends.js'),
-        app,
-        '--from',
-        createSource(from),
-        '--yes',
-      ],
-  {
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      ACRYLBLENDS_FRAME_PACKAGES: frameSpecsEnv(root, {
-        dshVersion: '0.2.0-rc.2',
-        frameworkVersion: `^${cliVersion}`,
-      }),
-    },
-  },
-)
+      checkout
+      ? spawnSync(
+          process.execPath,
+          [
+            join(root, 'packages/create/bin/create-acrylblends.js'),
+            app,
+            '--from',
+            createSource(from),
+            '--yes',
+          ],
+          initOptions,
+        )
+      : // create is its own package, released together with this CLI.
+        npm(
+          [
+            'exec',
+            '--yes',
+            `--package=@acryldev/create-blends@${cliVersion}`,
+            '--',
+            'create-blends',
+            app,
+            '--from',
+            createSource(from),
+            '--yes',
+          ],
+          initOptions,
+        )
 if (init.status !== 0) throw new Error(`init failed (${String(init.status)})`)
 log(`scaffolded ${app}`)
 // The manifest the person's app starts from, before the packaging below declares every installed package in it.
@@ -439,7 +473,7 @@ const manifest = JSON.parse(readFileSync(join(app, 'package.json'), 'utf8'))
 // assets/icon.png, else the ACRYL Blends logo. Left unset, every product showed Electron's default icon.
 // The app's desktop shell: its own copy in plugins/desktop-shell, or the @acryldev/desktop-shell package it depends on (spec 051 T011).
 const { findDesktopShell } = await import(
-  pathToFileURL(join(root, 'packages/cli/src/desktop-shell.ts')).href
+  pathToFileURL(join(root, checkout ? 'packages/cli/src/desktop-shell.ts' : 'dist/index.js')).href
 )
 const shell = findDesktopShell(app)
 if (shell === undefined)

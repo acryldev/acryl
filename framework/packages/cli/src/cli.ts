@@ -5,6 +5,7 @@ import { openFrame } from './frame-url'
 import { init, parseInitOptions, UsageError } from './init'
 import { type Io, processIo } from './io'
 import { kvImport, parseKvOptions } from './kv-import'
+import { pack } from './pack'
 import { runPreflight } from './preflight'
 import { TEMPLATE_SUMMARY, TEMPLATES } from './templates'
 import { parseUpdateOptions, update } from './update'
@@ -30,6 +31,9 @@ Usage:
                                       for a page that has to be opened again after its session ended
   acrylblends preflight                  Check this machine for the workshop: Node, npm, git, a coding agent, a free port
                                       (and on Windows PowerShell and long paths); one line per check, PASS or the fix
+  acrylblends pack --from <dir> [--product "Name"] [--arch arm64|x64] [--out d]
+                                      The app in <dir> as an installer for this OS (DMG, NSIS .exe, .deb), made
+                                      with the published packages; updates come from <dir>'s GitHub releases
   acrylblends build-client [root] [out]  Compile the client modules once for production (src/client to dist/client)
   acrylblends kv import <kv.json> <db>   Move a JSON-file kv store into the kv table of a SQLite database [--overwrite] [--table t] [--migrations dir]
   acrylblends check-deps [dir]           Fail when app code imports a database driver or opener outside the file named in
@@ -75,6 +79,7 @@ export async function runCli(argv: readonly string[], io: Io = processIo()): Pro
     if (command === 'plugins') return listPlugins(io)
     if (command === 'open') return await openFrame(args, io)
     if (command === 'preflight') return await runPreflight(io)
+    if (command === 'pack') return pack(args, io)
     throw new UsageError(`unknown command "${command}"`)
   } catch (error) {
     if (error instanceof UsageError) {
