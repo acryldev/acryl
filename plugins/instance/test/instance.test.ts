@@ -75,8 +75,15 @@ test('ACRYLBLENDS_NAME names a folder app too, not only a pinned home (a WebBox 
   writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'acryl' }))
   assert.equal(projectInstance(dir, isolated).name, 'acryl')
   assert.equal(projectInstance(dir, { ...isolated, ACRYLBLENDS_NAME: 'my-box' }).name, 'my-box')
-  assert.equal(selectInstance({ projectRoot: dir, env: { ...isolated, ACRYLBLENDS_NAME: ' my-box ' } }).name, 'my-box')
-  assert.equal(projectInstance(dir, { ...isolated, ACRYLBLENDS_NAME: '  ' }).name, 'acryl', 'an empty name changes nothing')
+  assert.equal(
+    selectInstance({ projectRoot: dir, env: { ...isolated, ACRYLBLENDS_NAME: ' my-box ' } }).name,
+    'my-box',
+  )
+  assert.equal(
+    projectInstance(dir, { ...isolated, ACRYLBLENDS_NAME: '  ' }).name,
+    'acryl',
+    'an empty name changes nothing',
+  )
 })
 
 test('the interface is loopback unless the environment names one (a container sets it)', () => {
