@@ -17,3 +17,6 @@ Released 2026-11-21. Everything in 1.7.22 (which was staged only), and:
   system's list of installed apps show it.
 - A failed chat turn shows the provider's own sentence and a known fix, and a Claude sign-in authenticates the route it activates.
   (@acryldev/control 0.3.1, @acryldev/sign-in 0.2.3)
+- One copy of @acryldev/control in an app: @acryldev/workspace 0.2.4, @acryldev/plugin-admin 0.2.2 and @acryldev/support 0.2.2 are built on
+  control 0.3.1 (their earlier releases pinned 0.3.0, so an app carried both and the chat missed the plain failed-turn row), and
+  @acryldev/blends-frame 0.2.14 on that workspace. An app made with 1.7.23 gets them through its `^` ranges.

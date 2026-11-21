@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/support",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "ACRYL support tools, one Cordis plugin: the Web surface writes log files, and Settings > Support downloads a diagnostics archive (system facts plus masked logs)",
   "license": "MIT",
   "repository": {

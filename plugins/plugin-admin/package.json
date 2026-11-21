@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/plugin-admin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "ACRYL plugin administration, one Cordis plugin for every surface: Settings > Plugins Lifecycle and Architecture tabs (Client) and their private same-origin routes (Host), driven by the shared ctx.acrPluginLifecycle service",
   "license": "MIT",
   "repository": {
