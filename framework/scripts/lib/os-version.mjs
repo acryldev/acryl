@@ -17,3 +17,27 @@ export function osVersion(packageVersion, blendVersion) {
   const at = a.findIndex((part, index) => part !== b[index])
   return at !== -1 && b[at] > a[at] ? blendVersion : packageVersion
 }
+
+/**
+ * blend.yaml's text with `metadata.version` set to `version` (added under `metadata:` when missing), the rest of the text untouched. The packed copy
+ * carries the version the OS shows, so the frame's top bar, the About window and Installed apps name the same one. Without a `metadata:` block the text
+ * is returned as it is.
+ */
+export function withManifestVersion(text, version) {
+  const lines = text.split('\n')
+  const start = lines.findIndex((line) => /^metadata:\s*(#.*)?$/u.test(line))
+  if (start === -1) return text
+  let end = lines.findIndex((line, index) => index > start && /^\S/u.test(line))
+  if (end === -1) end = lines.length
+  const at = lines.findIndex(
+    (line, index) => index > start && index < end && /^\s+version:/u.test(line),
+  )
+  const indent =
+    lines
+      .slice(start + 1, end)
+      .find((line) => /^\s+\S/u.test(line))
+      ?.match(/^\s+/u)?.[0] ?? '  '
+  if (at === -1) lines.splice(start + 1, 0, `${indent}version: ${version}`)
+  else lines[at] = `${lines[at].match(/^\s+/u)[0]}version: ${version}`
+  return lines.join('\n')
+}
