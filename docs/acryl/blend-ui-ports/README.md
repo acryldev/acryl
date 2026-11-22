@@ -1,0 +1,11 @@
+# The five store apps keep their own UIs
+
+Accounting, GTD Planner, Music, Order Desk and Organizer (acrylblends.github.io registry, ids `acryl.*`, version 0.3.0) were starters for the earlier ACRYL app. They are acrylblends apps now. Their domain code (`domain.js`, `store.js`, Order Desk's `files.js`) is unchanged, and so is their UI: each app's `plugins/<app>/client.js` is the starter's own React `client.js`, moved (not rewritten) onto the page. Only the DSH integration changed: the module loader and `acryl-app-shell` are gone, the UI mounts into the page's `#<app>-root`, and it calls the plugin's own routes under `/<app>` instead of the old Host's `/api/acryl-<app>/`. The plugin's `index.ts` serves the page at `/` (to a browser; any other client still gets the app's JSON hello), the UI and React 18's production builds. The conversation that sat beside the UI is the ACRYL frame's own panel.
+
+The pictures here are each main screen, old on the left and new on the right, at 1400 x 900:
+
+- OLD is the starter's `client.js` from the registry before the conversion, unmodified, in a minimal host shim (module loader, `acryl-app-shell`, the slot it registers into; the conversation column is a placeholder), with its API calls sent to the app's routes. The earlier ACRYL surface itself (`acryl-web` at 30484064) does not boot the Blank profile any more (`@acryldev/brand` client modules fail to load), so the shim is the honest way to run the old code.
+- NEW is the page the converted app serves at `/`.
+- For every screen the visible text of both pages is compared in the script and was identical (the old conversation placeholder aside); no page errors in either. The old column is narrower only because the conversation column took the right third; nothing else differs.
+
+Screens: Music (start, techno, 8 steps), Order Desk (start, sample business, stock, outbox and rules, pipeline, an order ready, a shipped order with its delivery note), Accounting (invoices, expenses, VAT and income), GTD (board, list, calendar, projects), Organizer (today, a to-do added). The harness is `compare.mjs` (old and new, step by step) and `montage.mjs` (the side-by-side pictures), in this folder; both need Playwright.
