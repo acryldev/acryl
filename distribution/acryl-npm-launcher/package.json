@@ -1,6 +1,6 @@
 {
   "name": "acryl",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "ACRYL: everything is a plugin. Build agentic apps. One command for the whole platform: ACRYL Control Center in the terminal, a window or the browser (npx acryl)",
   "acrylRuntime": "0.3.0",
   "type": "module",
