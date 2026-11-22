@@ -145,7 +145,7 @@ async function runApps(appsArgs) {
 
 const context = () => ({ env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, exists: existsSync })
 
-/** Run each step in turn, its label first; the exit code of the first that fails, else 0. */
+/** Run each step in turn, its label first; the exit code of the first that fails (an optional step only reports it), else 0. */
 async function runSteps(steps, env) {
   for (const step of steps) {
     console.log(`acryl: ${step.label}`)
@@ -155,7 +155,8 @@ async function runSteps(steps, env) {
       child.once('error', cause => { stopForwarding(); console.error(`acryl: ${cause.message}`); done(1) })
       child.once('exit', exitCode => { stopForwarding(); done(exitCode ?? 1) })
     })
-    if (code !== 0) return code
+    if (code !== 0 && step.optional) console.error(`acryl: ${step.label} did not finish (exit ${code}); going on with what is there`)
+    else if (code !== 0) return code
   }
   return 0
 }
@@ -191,9 +192,9 @@ async function runStepsOpening(steps, env) {
 
 /**
  * `acryl --gui` / `acryl --web`: ACRYL Control Center. In a window it is the installed app when there is one; otherwise, and always in the browser, the Blend
- * acryl.control-center kept in ~/.acryl/control-center, made and installed on first use, brought up to date with --update.
+ * acryl.control-center kept in ~/.acryl/control-center, made and installed on first use, and brought to its newest release each time (--no-update skips that; --update also skips the installed app).
  */
-async function openLauncherBlend({ surface, update }) {
+async function openLauncherBlend({ surface, update, noUpdate }) {
   const installed = surface === 'gui' && !update ? installedControlCenter({ platform: process.platform, env: process.env }) : undefined
   if (installed) {
     console.log(`acryl: opening ${MANAGED.launcher.title} (${installed.at})`)
@@ -203,7 +204,7 @@ async function openLauncherBlend({ surface, update }) {
     return
   }
   mkdirSync(ACRYL_HOME, { recursive: true })
-  const steps = managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context(), update })
+  const steps = managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context(), update: !noUpdate })
   process.exitCode = surface === 'web' ? await runStepsOpening(steps, await appEnvironment()) : await runSteps(steps, await appEnvironment())
 }
 

@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
+import { parse } from 'yaml'
 import {
   AppInstanceError,
   appDataHome,
@@ -95,8 +96,20 @@ const plainName = (folder: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'app'
 
-/** The name the app was made with (`init --name`, kept as package.json's name), or undefined when it has none. */
+/**
+ * The name the person sees for the app (the window's title, the About panel, the Dock): its Blend's name when its `blend.yaml` has one ("ACRYL Control Center", made in a folder
+ * called `control-center`), else the name the app was made with (`init --name`, kept as package.json's name), or undefined when it has neither.
+ */
 function declaredName(root: string): string | undefined {
+  try {
+    const manifest = parse(readFileSync(join(root, 'blend.yaml'), 'utf8')) as {
+      metadata?: { name?: unknown }
+    } | null
+    const blend = manifest?.metadata?.name
+    if (typeof blend === 'string' && blend.trim() !== '') return blend.trim()
+  } catch {
+    // No blend.yaml, or one that cannot be read: the package names the app.
+  }
   try {
     const name = (
       JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as { name?: unknown }

@@ -37,8 +37,8 @@ In the terminal, ACRYL Control Center does what the window does, with the same c
 
 `acryl --gui` opens the installed ACRYL Control Center app when you have it
 ([downloads](https://github.com/acrylblends/63-acryl-control-center/releases/latest)), otherwise it makes the Control Center Blend once in
-`~/.acryl/control-center` and opens that. `acryl --web` uses the same copy and opens your browser at its address. Add `--update` to bring that copy up to
-the newest release first.
+`~/.acryl/control-center` and opens that. `acryl --web` uses the same copy and opens your browser at its address. Each time, that copy is first brought to its
+Blend's newest release (your own changes are kept; offline, it just opens what you have). `--no-update` skips that; `--update` also skips the installed app.
 
 ## For scripts and agents
 

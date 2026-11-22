@@ -86,6 +86,34 @@ test('ACRYLBLENDS_NAME names a folder app too, not only a pinned home (a WebBox 
   )
 })
 
+test('an app is named for its Blend when its blend.yaml has a name (the window title, the About panel), else for its package, else for its folder', () => {
+  const dir = appFolder('control-center')
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'control-center' }))
+  assert.equal(projectInstance(dir, isolated).name, 'control-center')
+  writeFileSync(
+    join(dir, 'blend.yaml'),
+    'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acryl.control-center\n  name: "ACRYL Control Center"\n  version: 0.2.13\nspec:\n  runtime: cordis\n',
+  )
+  assert.equal(projectInstance(dir, isolated).name, 'ACRYL Control Center')
+  assert.equal(
+    projectInstance(dir, { ...isolated, ACRYLBLENDS_NAME: 'my-box' }).name,
+    'my-box',
+    'the environment still wins',
+  )
+  writeFileSync(join(dir, 'blend.yaml'), 'not: [a manifest')
+  assert.equal(
+    projectInstance(dir, isolated).name,
+    'control-center',
+    'a blend.yaml that cannot be read changes nothing',
+  )
+  writeFileSync(join(dir, 'blend.yaml'), 'metadata:\n  id: x\n')
+  assert.equal(
+    projectInstance(dir, isolated).name,
+    'control-center',
+    'a Blend without a name changes nothing',
+  )
+})
+
 test('the interface is loopback unless the environment names one (a container sets it)', () => {
   const dir = appFolder('host')
   assert.equal(selectInstance({ projectRoot: dir, env: isolated }).host, undefined)

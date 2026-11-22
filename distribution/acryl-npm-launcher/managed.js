@@ -34,11 +34,11 @@ export function surfaceFrom(args) {
 }
 
 /**
- * The steps that bring a managed Blend to running on `surface`: make it (once), install (when no finished install is there), start.
+ * The steps that bring a managed Blend to running on `surface`: make it (once) or bring the existing copy to its newest release (`update`, on by default), install (when no finished install is there), start.
  * npm writes `node_modules/.package-lock.json` last, so an install cut short is done again instead of starting a broken app.
- * @returns {{ label: string, command: string, args: string[], cwd: string, shell?: boolean }[]}
+ * @returns {{ label: string, command: string, args: string[], cwd: string, shell?: boolean, optional?: boolean }[]}
  */
-export function managedSteps(app, surface, { home, context, exists = existsSync, update = false }) {
+export function managedSteps(app, surface, { home, context, exists = existsSync, update = true }) {
   const folder = join(home, app.folder)
   const steps = []
   if (!exists(join(folder, 'blend.yaml'))) {
@@ -46,7 +46,8 @@ export function managedSteps(app, surface, { home, context, exists = existsSync,
     steps.push({ label: `making ${app.title} in ${folder} (once)`, ...npmExec(context, create, [app.folder, '--from', app.id, '--no-start']), cwd: home })
   } else if (update) {
     // The copy made earlier, brought up to its Blend's newest release: a merge that keeps local changes, then npm install (the window's "Update to").
-    steps.push({ label: `updating ${app.title} to the newest release`, ...npmExec(context, UPDATE_SPEC, ['update']), cwd: folder })
+    // Optional: offline or a registry hiccup must not keep a person from opening the copy they already have.
+    steps.push({ label: `updating ${app.title} to the newest release`, optional: true, ...npmExec(context, UPDATE_SPEC, ['update']), cwd: folder })
   }
   if (!exists(join(folder, 'node_modules', '.package-lock.json'))) {
     steps.push({ label: `installing ${app.title} (once, about a minute)`, ...npmCommand(context, ['install', '--no-audit', '--no-fund']), cwd: folder })

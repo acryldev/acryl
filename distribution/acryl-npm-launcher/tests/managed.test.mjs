@@ -31,13 +31,13 @@ test('the first run makes ADE from the registry in ~/.acryl/ade, installs it, th
 })
 
 test('a made and installed ADE only starts; --gui starts its window', () => {
-  const steps = managedSteps(MANAGED.ade, 'gui', { home, context, exists: () => true })
+  const steps = managedSteps(MANAGED.ade, 'gui', { home, context, exists: () => true, update: false })
   assert.deepEqual(steps.map(step => step.args), [['run', 'desktop']])
 })
 
 test('an install cut short (no npm lockfile in node_modules) is done again', () => {
   const made = path => path === join(ade, 'blend.yaml') || path === join(ade, 'node_modules')
-  assert.deepEqual(managedSteps(MANAGED.ade, 'web', { home, context, exists: made }).map(step => step.args[0]), ['install', 'run'])
+  assert.deepEqual(managedSteps(MANAGED.ade, 'web', { home, context, exists: made, update: false }).map(step => step.args[0]), ['install', 'run'])
 })
 
 test('acryl --gui and --web make ACRYL Control Center in ~/.acryl/control-center once, then open it in a window or the browser', () => {
@@ -46,7 +46,7 @@ test('acryl --gui and --web make ACRYL Control Center in ~/.acryl/control-center
   assert.deepEqual(steps[0].args.slice(-4), ['control-center', '--from', 'acryl.control-center', '--no-start'])
   assert.deepEqual(steps.map(step => step.cwd), [home, launcher, launcher])
   assert.deepEqual(steps[2].args, ['run', 'desktop'])
-  assert.deepEqual(managedSteps(MANAGED.launcher, 'web', { home, context, exists: () => true }).map(step => step.args), [['run', 'dev']])
+  assert.deepEqual(managedSteps(MANAGED.launcher, 'web', { home, context, exists: () => true, update: false }).map(step => step.args), [['run', 'dev']])
 })
 
 test('ACRYL_CREATE pins the create package, as for acryl new', () => {

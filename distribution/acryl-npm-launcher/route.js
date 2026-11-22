@@ -1,7 +1,7 @@
 // Which part of `acryl` the words on the command line ask for. Pure: cli.js runs what this decides, and the test reads it without starting anything.
 //
 //   acryl, acryl --tui            ACRYL Control Center in this terminal (a bare `acryl` without a terminal prints the help instead)
-//   acryl --gui, acryl --web      ACRYL Control Center in a window, in the browser (`--update` first)
+//   acryl --gui, acryl --web      ACRYL Control Center in a window, in the browser (its newest release first; `--no-update` skips that)
 //   acryl --help, -h, help        the help          acryl --version, -v       this package's version
 //   acryl apps | model | store    the list of apps, the model key, the store's Blends
 //   acryl ade [...]               ACRYL ADE         acryl desktop             where the earlier desktop went (--installer: its installer)
@@ -21,7 +21,7 @@ export function routeArgs(args, { terminal }) {
   }
   if (first === '--gui' || first === '--web' || first === 'web') {
     const chosen = controlCenterArgs(first === 'web' ? ['--web', ...rest] : args)
-    return chosen.error ? { kind: 'error', message: chosen.error } : { kind: 'control-center', surface: chosen.surface, update: chosen.update }
+    return chosen.error ? { kind: 'error', message: chosen.error } : { kind: 'control-center', surface: chosen.surface, update: chosen.update, noUpdate: chosen.noUpdate }
   }
   if (first === 'apps' || first === 'model' || first === 'store' || first === 'desktop') return { kind: first, args: rest }
   if (first === 'ade' || first === 'code') return { kind: 'ade', args: rest }

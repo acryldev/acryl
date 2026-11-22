@@ -60,10 +60,14 @@ export const firstAddress = text => ADDRESS.exec(text.replace(ANSI, ''))?.[0]
 /** True unless the person said not to open a browser (ACRYL_NO_OPEN=1, or BROWSER=none as many tools read it). */
 export const opensBrowser = env => !['1', 'true'].includes(env.ACRYL_NO_OPEN?.trim() ?? '') && env.BROWSER?.trim() !== 'none'
 
-/** `acryl --gui` / `--web` words: `--update` first brings the copy up to its Blend's newest release (acrylblends update). */
+/**
+ * `acryl --gui` / `--web` words. The copy in ~/.acryl is always brought to its Blend's newest release first (acrylblends update), unless `--no-update`;
+ * `--update` also asks for that copy instead of an installed app (which updates itself).
+ */
 export function controlCenterArgs(args) {
-  const rest = args.slice(1).filter(arg => arg !== '--update')
-  if (rest.length > 0) return { error: `acryl ${args[0]} takes only --update (not ${rest.join(' ')})` }
-  return { surface: args[0] === '--gui' ? 'gui' : 'web', update: args.includes('--update') }
+  const rest = args.slice(1).filter(arg => arg !== '--update' && arg !== '--no-update')
+  if (rest.length > 0) return { error: `acryl ${args[0]} takes only --update or --no-update (not ${rest.join(' ')})` }
+  if (args.includes('--update') && args.includes('--no-update')) return { error: `acryl ${args[0]} takes --update or --no-update, not both` }
+  return { surface: args[0] === '--gui' ? 'gui' : 'web', update: args.includes('--update'), noUpdate: args.includes('--no-update') }
 }
 

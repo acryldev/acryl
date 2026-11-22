@@ -19,11 +19,13 @@ test('acryl and acryl --tui open the terminal Control Center; without a terminal
 })
 
 test('--gui and --web are the Control Center in a window and the browser, with --update and nothing else', () => {
-  assert.deepEqual(routeArgs(['--gui'], pipe), { kind: 'control-center', surface: 'gui', update: false })
-  assert.deepEqual(routeArgs(['--web', '--update'], pipe), { kind: 'control-center', surface: 'web', update: true })
-  assert.deepEqual(routeArgs(['web'], pipe), { kind: 'control-center', surface: 'web', update: false })
-  assert.match(routeArgs(['--gui', 'now'], pipe).message, /takes only --update/u)
-  assert.deepEqual(controlCenterArgs(['--gui', '--update']), { surface: 'gui', update: true })
+  assert.deepEqual(routeArgs(['--gui'], pipe), { kind: 'control-center', surface: 'gui', update: false, noUpdate: false })
+  assert.deepEqual(routeArgs(['--web', '--update'], pipe), { kind: 'control-center', surface: 'web', update: true, noUpdate: false })
+  assert.deepEqual(routeArgs(['web'], pipe), { kind: 'control-center', surface: 'web', update: false, noUpdate: false })
+  assert.match(routeArgs(['--gui', 'now'], pipe).message, /takes only --update or --no-update/u)
+  assert.deepEqual(routeArgs(['--web', '--no-update'], pipe), { kind: 'control-center', surface: 'web', update: false, noUpdate: true })
+  assert.match(routeArgs(['--web', '--update', '--no-update'], pipe).message, /not both/u)
+  assert.deepEqual(controlCenterArgs(['--gui', '--update']), { surface: 'gui', update: true, noUpdate: false })
 })
 
 test('the script commands: help, version, apps, model, store, ade, desktop; other words go to the terminal agent', () => {
@@ -64,15 +66,17 @@ test('--web opens the first tokenized address the Control Center prints, unless 
   assert.equal(opensBrowser({ BROWSER: 'none' }), false)
 })
 
-test('one Control Center copy in the ACRYL home: made once, then only started; --update merges its newer release first', () => {
+test('one Control Center copy in the ACRYL home: made once, then updated to its newest release and started; --no-update only starts it', () => {
   const context = { env: {}, platform: 'linux', execPath: '/node', exists: () => false }
   const made = path => path === join('/h/.acryl', 'control-center', 'blend.yaml') || path.endsWith('.package-lock.json')
   const first = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: () => false })
   assert.deepEqual(first.map(step => step.label.split(' ')[0]), ['making', 'installing', 'starting'])
-  const later = managedSteps(MANAGED.launcher, 'gui', { home: '/h/.acryl', context, exists: made })
+  const later = managedSteps(MANAGED.launcher, 'gui', { home: '/h/.acryl', context, exists: made, update: false })
   assert.deepEqual(later.map(step => [step.args.join(' '), step.cwd]), [['run desktop', join('/h/.acryl', 'control-center')]])
-  const updated = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: made, update: true })
+  const updated = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: made })
   assert.deepEqual(updated.map(step => step.args.join(' ')), ['exec --yes acrylblends@latest -- update', 'run dev'])
+  assert.equal(updated[0].optional, true)
+  assert.equal(updated[0].cwd, join('/h/.acryl', 'control-center'))
 })
 
 test('acryl desktop says where the earlier desktop went and still offers its installer', async () => {
