@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/agent-panel",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A chat panel inside the running app: the person writes what they want, the app's own agent (or Claude Code, Codex or pi started in the app folder) builds it through the same door, and the page reloads when a plugin was installed, with no restart. Development only; opt-in with acrylblends add agent-panel.",
   "license": "MIT",
   "repository": {

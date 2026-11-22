@@ -70,6 +70,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 1.0.6](release-notes/1.0.6.md) - the desktop app's windows and menu as door verbs (window, menu, --window), guarded against ending the session; a clean tarball
 - [Release notes @acryldev/blends 1.7.18](release-notes/blends-1.7.18.md) - Cordis plugins share to GitHub, the registry and npm, and update in place
 - [Release notes @acryldev/create-blends 1.7.18](release-notes/create-blends-1.7.18.md) - released with blends 1.7.18
+- [Release notes @acryldev/blends 1.7.29](release-notes/blends-1.7.29.md) - an app is named as its Blend names it
+- [Release notes @acryldev/create-blends 1.7.29](release-notes/create-blends-1.7.29.md) - released with blends 1.7.29
 - [Release notes @acryldev/blends 1.7.28](release-notes/blends-1.7.28.md) - an installed app shows its product version and opens saved; one copy of each @acryldev package
 - [Release notes @acryldev/create-blends 1.7.28](release-notes/create-blends-1.7.28.md) - released with blends 1.7.28
 - [Release notes @acryldev/blends 1.7.27](release-notes/blends-1.7.27.md) - staged only, replaced by 1.7.28

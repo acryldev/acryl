@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/driver-acp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Any agent that speaks the Agent Client Protocol (ACP) as a chat in the agent panel, started in the app folder: DeepSeek Harness (dsh --profile acp) is the first preset, other ACP agents are added by config. Development only; needs the agent panel; opt-in with acrylblends add driver-acp.",
   "license": "MIT",
   "repository": {

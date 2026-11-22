@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/driver-pty",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A coding agent (claude, codex, pi, any program) in a real terminal inside the running app: the panel gets a terminal tab, the agent builds through the door in its own interactive mode. Development only; needs the agent panel; opt-in with acrylblends add driver-pty.",
   "license": "MIT",
   "repository": {

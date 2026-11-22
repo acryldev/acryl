@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/plugin-share",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Share plugins between people. Pull one someone released into the running app: fetched without running anything, checked by digest and for every OS, then installed live. Publish one, only as a plan a person confirmed.",
   "license": "MIT",
   "repository": {

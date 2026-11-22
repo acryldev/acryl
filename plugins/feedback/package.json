@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/feedback",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Feedback from the people who use the app: a Feedback button on every page, in production too, that lets them pinpoint the element they mean (or choose \"Nothing specific\") and send a note; the ACRYL frame shows the notes in the builder's left panel.",
   "license": "MIT",
   "repository": {
