@@ -82,7 +82,9 @@ verify and check:layout and all 23 framework check steps green before it lands.
   - Codex: needs the user's own login (same HOME reason); not run.
   - ACRYL chat: drives the app (look, click), but it chose Bash with `.acryl/bin/acryl`, not its `door_*` tools.
   - "Page: not open" is the door reporting that no app page is connected (none open, or reloading); not a door bug.
-  Open: the installed ADE, and the chat driving through its `door_*` tools.
+  2026-11-21/22 (Fork6): the door itself answers in the installed products, packed from their repositories: Control Center v0.2.9, ADE v0.2.6, SDE
+  v0.1.5 on macOS, Windows and Linux (`acryl window list`, `brief`; `frame close/open left` in a real page for Control Center and the store apps).
+  Open: an agent (the chat through its `door_*` tools, a PTY agent) driving the installed ADE.
 
 - [x] T024 [guard] The cross-package relative imports are gone (051-t017): `@acryldev/framework` imports `@acryldev/router` (new `/core`,
   `/connection`, `/conninfo` subpaths), `@acryldev/node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
@@ -152,7 +154,7 @@ verify and check:layout and all 23 framework check steps green before it lands.
   @acryldev/system-prompt 0.2.0, @acryldev/control 0.2.11. Apps made from main cannot install them until published (the gate takes
   them from local tarballs since ef386bca). The published create (1.5.21) is unaffected. Publish through framework-release.yml once the
   owner says go.
-- [ ] T036 [npm scope, owner decision 2026-11-19, AFTER the workshop] One scope: `@acryldev/*` (the npm org `@acryl` belongs to an
+- [x] T036 [npm scope, owner decision 2026-11-19, AFTER the workshop] One scope: `@acryldev/*` (the npm org `@acryl` belongs to an
   unrelated project since 2019, checked by the owner). Plain names, one name per package everywhere (folder `plugins/web`, package and
   import `@acryldev/web`): `@acryldev/web`, `system-prompt`, `control`, `settings`, `workspace`, `sign-in`, `app-shell`, `ui`, `versions`,
   ... and `@acryldev/blends-frame` the only `blends-` name. T011's packages go straight to `@acryldev/desktop-shell`, `instance`,
@@ -160,8 +162,15 @@ verify and check:layout and all 23 framework check steps green before it lands.
   converted to an org (owner `musichen`, members incl. `webboxescom`) or gets its own publish token - a user scope accepts no other
   publisher. One release: publish `@acryldev/*` at the same versions, `acrylblends upgrade` rewrites an app's package.json and
   generated overlay, then deprecate `@acryldev/*`. Open: row ids = short names (CLAUDE.md row-id rule change, owner decides).
-- [ ] T038 [names, owner decision 2026-11-19 "one name everywhere tonight"] Every workspace package's name, folder and import become
+  Done (verified 2026-11-22): the frame and the library publish as `@acryldev/*` (c1c09fac, 64ae202f; 1.6.0 e80ae541; now @acryldev/blends 1.7.x on
+  npm), new apps and the registry starters depend on them, `acrylblends upgrade` rewrites an app's package.json. Not done: deprecating the old
+  `@webboxes/*` names on npm (no deprecation notice is set), and the row-id rule note (owner decides).
+- [x] T038 [names, owner decision 2026-11-19 "one name everywhere tonight"] Every workspace package's name, folder and import become
   `@acryldev/<short>` (Pi-style); design and name map in t038-design.md. Owner: DS2_Fork3, after T036, T031 and T021 land.
+  Done (audited 2026-11-22, 79 workspace packages): every package is `@acryldev/<short>` and its folder is the short name (58d4e8c9 the moves,
+  f0f3c53a the identifiers that are not specifiers, 2494721f, d3fdf8b6, e22b277d the follow-ups). The only other names are the documented ones: `acryl`,
+  `acrylblends`, `create-acrylblends` (what people type) and the private example `acryl-organizer`; the folders `framework/packages/cli` and `create`
+  are `@acryldev/blends` and `@acryldev/create-blends`. Open: the CLAUDE.md row-id rule note for scoped packages (with T036's row-id decision).
 - [ ] T037 [npm, deadline 2027-01] npm stops direct publishing with 2FA-bypass tokens in January 2027 (banner on npmjs.com, seen
   2026-11-19); every release here uses one. Set up npm trusted publishing for each package (GitHub Actions OIDC; today the release
   workflow's publish step 404s because nothing is configured on npm's side) and move publishing into the workflows.
@@ -232,10 +241,13 @@ verify and check:layout and all 23 framework check steps green before it lands.
 - [x] T045 [deploy] Control Center's "Deploy to WebBoxes.ai" opens webboxes.ai's New WebBox form with the shared app's GitHub repository
   filled in (f8648075; webboxesai d333da3 prefill), enabled once the app has a github.com origin. Released in control-center-v0.2.1.
 
-- [ ] T046 [archives] Every registry Blueprint (acrylblends.github.io registry/blends, runtime acrylblends) regenerated with
+- [x] T046 [archives] Every registry Blueprint (acrylblends.github.io registry/blends, runtime acrylblends) regenerated with
   @acryldev/blends 1.7.4 so an app made from it passes its own `npm test` / `npm run check`: today the archive's test pins the manifest
   rows without plugin-share (which create adds) and its old plugins/instance copy clashes with @acryldev/instance (TS2717). Owner: Fork6,
   per-archive proof (install, test, check, the frame serves).
+  Done 2026-11-21 (Fork6): the 55 registry Blueprints regenerated from the @acryldev/blends 1.7.11 and then 1.7.21 templates (acrylblends.github.io
+  70732f4, b245621), the three products rebuilt from their repositories' release tags (c3aa9ae, f975652). Proof: each made with `npm create
+  @acryldev/blends`, install, `npm test`, `npm run check`, dev serves the frame, the door answers (z370n: 55/55 on 1.7.11, 58/58 on 1.7.21).
 - [x] T047 [walk findings 2026-11-20] Fixed and released: the blank page after an agent's edit on Windows reloads itself (frame 0.2.2 +
   0.2.3, 4ca0db75, 1fd916e8); the Connect a model dialog fits small windows (sign-in 0.2.1, 1a3892b8); a just-made app's card says
   starting while npm install runs (launcher-desktop 0.1.5, 14157dc6, control-center-v0.2.2). Open: ADE shows the sign-in dialog and the
@@ -281,9 +293,14 @@ verify and check:layout and all 23 framework check steps green before it lands.
   Fixed 2026-11-19 (AcrylImplementer): verify-packed's runner starts npm and pnpm through `npmSpawn` / the new `pnpmSpawn` in
   framework/scripts/lib/platform.mjs (Windows: through the shell, pnpm named bare so PATHEXT finds pnpm.cmd or pnpm.exe); unit-tested in
   platform.test.mjs on macOS. NOT yet proven on Windows: mbpi9win is off the network tonight; open until `pnpm run verify:packed` passes there.
+  2026-11-22: not run. mbpi9win is up, but `verify:packed` needs the whole framework installed and built on Windows first (pnpm install of the
+  workspace with the isolated linker, the full build), a long run with its own symlink and path-length risks; left open on purpose.
 
-- [ ] T040 [release, after the 2026-11-20 workshop] framework/scripts/release-local.sh waits for npm visibility once, after the last publish and
+- [x] T040 [release, after the 2026-11-20 workshop] framework/scripts/release-local.sh waits for npm visibility once, after the last publish and
   before the tags and proofs, not after every package. Found 2026-11-20 by the coordinator during the 1.7.0 publish: the per-package `visible`
   wait (up to 6 min each, about 2.5 min in practice) made 28 packages take over an hour, and `npm publish` does not need its dependencies
   visible. The coordinator's scratch copy `release-fast.sh` did this for 1.7.0; make it the script's default and keep the final wait for every
   published name@version before the proof from npm.
+  Done 2026-11-22 (Fork6): release-local.sh records each published name@version while it publishes and waits for all of them once, after the last
+  publish and before the tags and the proofs (`PUBLISHED`, framework/scripts/release-local.sh); `bash -n` clean, name/version split checked for scoped names.
+  Not run through a real publish.

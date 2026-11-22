@@ -283,19 +283,26 @@ tokens
 cfg() { [ "$(owner_of "$1")" = acryldev ] && echo "$cfg_acryldev" || echo "$cfg_webboxes"; }
 
 step "publish (missing @acryldev dependencies, then the scoped two, then the aliases that depend on them)"
-visible() { # $1 name, $2 version: wait for the registry (it lags a few minutes; a dependent installed before it would fail)
+# `npm publish` does not need a package's dependencies visible (the registry lags a few minutes), so nothing waits per package (28 packages took over an
+# hour that way, spec 051 T040): every published name@version is recorded here and waited for once, after the last publish, before the tags and the proofs.
+PUBLISHED=()
+visible() { # $1 name, $2 version: wait for the registry (a dependent installed before it would fail)
   for _ in $(seq 1 20); do npm view "$1@$2" version >/dev/null 2>&1 && break; sleep 20; done
   npm view "$1@$2" version >/dev/null 2>&1 || die "$1@$2 not visible on npm after 6 min"
   echo "$1@$2 is on npm"
 }
 for t in $EXTRA_TGZ; do
   outward npm publish "$t" --access public --tag "$TAG" --userconfig "$cfg_acryldev"
-  [ "$GO" = 1 ] && visible "$(tar -xzOf "$t" package/package.json | node -p 'JSON.parse(require("fs").readFileSync(0)).name')" "$(tar -xzOf "$t" package/package.json | node -p 'JSON.parse(require("fs").readFileSync(0)).version')"
+  [ "$GO" = 1 ] && PUBLISHED+=("$(tar -xzOf "$t" package/package.json | node -p 'const p=JSON.parse(require("fs").readFileSync(0));p.name+"@"+p.version')")
 done
 for d in "${DIRS[@]}"; do
   outward npm publish "$(tgz_of "$d")" --access public --tag "$TAG" --userconfig "$(cfg "$d")"
-  [ "$GO" = 1 ] && visible "$(name_of "$d")" "$version"
+  [ "$GO" = 1 ] && PUBLISHED+=("$(name_of "$d")@$version")
 done
+if [ "$GO" = 1 ]; then
+  step "visible on npm: every published name@version, once"
+  for nv in "${PUBLISHED[@]}"; do visible "${nv%@*}" "${nv##*@}"; done
+fi
 
 step "tags (framework-release.yml runs on blends-v* and create-blends-v*; its publish would only fail now, so those runs are cancelled)"
 for d in cli create; do
