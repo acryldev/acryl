@@ -2,9 +2,9 @@
  * The app page the canvas shows, and the calls a person or the agent may make on it (docs/plans/ide-host-inversion.md section 31, boundary A).
  *
  * The canvas is a value, not a surface: the React component renders whatever this state says, and a navigation or a reload is a new address or a
- * new attempt, which makes a NEW frame. A frame is never re-pointed at another address - that is what let a late load from an earlier address pass
- * for this one's answer and replace a live app page (section 30) - and nothing here reloads on its own: only `navigate` and `reload`, which only a
- * person or the door calls.
+ * new attempt, which makes a NEW frame. A frame is never re-pointed at another address - that is what let a late load from an earlier address
+ * pass for this one's answer and replace a live app page (section 30) - and nothing here reloads on its own: only `navigate` and `reload`, which
+ * only a person, the door or a change of the app's code calls. A reload keeps the page the app is on (`reload`).
  */
 
 /** The key the door publishes `{ windowId }` on the page's window (plugins/door/src/page/index.ts, `PAGE_KEY`). */
@@ -64,8 +64,16 @@ export class AppCanvasState implements AppCanvas {
     this.emit()
   }
 
+  /**
+   * Load the app page again where it is now. A link clicked inside the app, or the door's `act navigate` run in the page, moves the page without
+   * passing here, so the address this state holds can be an earlier page: reloading that would take the person (or the agent) back to it after
+   * every change of the app's code. The page's own address is read from the live frame (an app page is on the frame's origin, so it is readable);
+   * a page that cannot be read, or one on another origin, reloads at the address held here.
+   */
   reload(): void {
     if (this.addressValue === undefined) return
+    const here = this.livePageAddress()
+    if (here !== undefined) this.addressValue = here
     this.attemptValue += 1
     this.emit()
   }
@@ -92,6 +100,21 @@ export class AppCanvasState implements AppCanvas {
       | undefined
     const published = view?.[DOOR_PAGE_KEY]
     return typeof published?.windowId === 'string' ? published.windowId : undefined
+  }
+
+  /** The address the live frame shows, when it is an http(s) page on the origin of the address held here; undefined otherwise. */
+  private livePageAddress(): string | undefined {
+    if (this.addressValue === undefined) return undefined
+    try {
+      const href = this.frame?.contentWindow?.location.href
+      if (href === undefined) return undefined
+      const live = new URL(href)
+      if (live.protocol !== 'http:' && live.protocol !== 'https:') return undefined
+      return live.origin === new URL(this.addressValue).origin ? live.href : undefined
+    } catch {
+      // A page on another origin throws on `location.href`: keep the address held here.
+      return undefined
+    }
   }
 
   /** The live app page's window, when the canvas has one: the frame's view contract reaches the page through it. */

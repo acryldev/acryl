@@ -35,6 +35,43 @@ describe('AppCanvasState', () => {
     expect(canvas.attempt()).toBe(3)
   })
 
+  it('reloads the page the app is on when a link or the door moved it, not the address it was first given', () => {
+    canvas.setAddress(`${ORIGIN}/app`)
+    const view = { location: { href: `${ORIGIN}/app/contacts?q=ana#top` } } as unknown as Window
+    canvas.attach({ contentWindow: view } as HTMLIFrameElement)
+    canvas.reload()
+    expect(canvas.address()).toBe(`${ORIGIN}/app/contacts?q=ana#top`)
+    expect(canvas.attempt()).toBe(1)
+    // The next change reloads there again; navigate still goes where it is told.
+    canvas.reload()
+    expect(canvas.address()).toBe(`${ORIGIN}/app/contacts?q=ana#top`)
+    canvas.navigate('/app/deals')
+    expect(canvas.address()).toBe(`${ORIGIN}/app/deals`)
+  })
+
+  it('keeps the address it holds when the live page is unreadable, blank, or on another origin', () => {
+    canvas.setAddress(`${ORIGIN}/app/settings`)
+    const crossOrigin = Object.defineProperty({}, 'location', {
+      get: () => {
+        throw new DOMException('Blocked a frame with origin', 'SecurityError')
+      },
+    }) as Window
+    for (const contentWindow of [
+      crossOrigin,
+      { location: { href: 'about:blank' } } as unknown as Window,
+      { location: { href: 'https://example.com/app' } } as unknown as Window,
+      null,
+    ]) {
+      canvas.attach({ contentWindow } as unknown as HTMLIFrameElement)
+      canvas.reload()
+      expect(canvas.address()).toBe(`${ORIGIN}/app/settings`)
+    }
+    canvas.attach(null)
+    canvas.reload()
+    expect(canvas.address()).toBe(`${ORIGIN}/app/settings`)
+    expect(canvas.attempt()).toBe(5)
+  })
+
   it('does nothing on its own: no address, no reload, no load', () => {
     expect(canvas.address()).toBeUndefined()
     canvas.reload()
