@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/builder",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "The agent's tools for building the app it runs in: write, install, read, list and remove extensions, with real results.",
   "license": "MIT",
   "repository": {

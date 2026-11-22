@@ -70,10 +70,12 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes 1.0.6](release-notes/1.0.6.md) - the desktop app's windows and menu as door verbs (window, menu, --window), guarded against ending the session; a clean tarball
 - [Release notes @acryldev/blends 1.7.18](release-notes/blends-1.7.18.md) - Cordis plugins share to GitHub, the registry and npm, and update in place
 - [Release notes @acryldev/create-blends 1.7.18](release-notes/create-blends-1.7.18.md) - released with blends 1.7.18
-- [Release notes @acryldev/blends 1.7.27](release-notes/blends-1.7.27.md) - an installed app's top bar shows its product version; a WebBox app carries the box's name
-- [Release notes @acryldev/create-blends 1.7.27](release-notes/create-blends-1.7.27.md) - released with blends 1.7.27
-- [Release notes @acryldev/blends 1.7.26](release-notes/blends-1.7.26.md) - staged only, replaced by 1.7.27
-- [Release notes @acryldev/create-blends 1.7.26](release-notes/create-blends-1.7.26.md) - staged only, replaced by 1.7.27
+- [Release notes @acryldev/blends 1.7.28](release-notes/blends-1.7.28.md) - an installed app shows its product version and opens saved; one copy of each @acryldev package
+- [Release notes @acryldev/create-blends 1.7.28](release-notes/create-blends-1.7.28.md) - released with blends 1.7.28
+- [Release notes @acryldev/blends 1.7.27](release-notes/blends-1.7.27.md) - staged only, replaced by 1.7.28
+- [Release notes @acryldev/create-blends 1.7.27](release-notes/create-blends-1.7.27.md) - staged only, replaced by 1.7.28
+- [Release notes @acryldev/blends 1.7.26](release-notes/blends-1.7.26.md) - staged only, replaced by 1.7.28
+- [Release notes @acryldev/create-blends 1.7.26](release-notes/create-blends-1.7.26.md) - staged only, replaced by 1.7.28
 - [Release notes @acryldev/blends 1.7.25](release-notes/blends-1.7.25.md) - a new app's first test passes whatever its folder is called
 - [Release notes @acryldev/create-blends 1.7.25](release-notes/create-blends-1.7.25.md) - released with blends 1.7.25
 - [Release notes @acryldev/blends 1.7.24](release-notes/blends-1.7.24.md) - a Linux .deb is named after the product and depends on the sound library

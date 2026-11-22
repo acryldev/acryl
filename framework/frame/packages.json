@@ -82,11 +82,11 @@
       "path": "../plugins/app-context"
     },
     "@acryldev/versions": {
-      "version": "0.2.0",
+      "version": "0.2.1",
       "path": "../plugins/versions"
     },
     "@acryldev/blends-frame": {
-      "version": "0.2.14",
+      "version": "0.2.15",
       "path": "../plugins/blends-frame"
     }
   },

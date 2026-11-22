@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/extensions",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Install, update, remove and reload plugins while the app runs; a failed update brings the previous version back; a ledger of every change.",
   "license": "MIT",
   "repository": {

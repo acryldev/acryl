@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/coding-capabilities",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "How ACRYL's coding capabilities compose on each product surface: the Loader rows, the packages a surface must make resolvable, and the shell-mode split. The Blueprint vocabulary stays in @acryldev/harness-runtime.",
   "license": "MIT",
   "repository": {

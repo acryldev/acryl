@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/app-settings",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Validated settings per namespace in one YAML file in the app's home: defaults, base and stored layers, watch, update.",
   "license": "MIT",
   "repository": {

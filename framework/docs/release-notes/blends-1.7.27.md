@@ -1,6 +1,6 @@
 # @acryldev/blends 1.7.27
 
-Released 2026-11-22.
+Staged under `next` on 2026-11-22 and never made latest: an installed app opened with the version change as "1 unsaved". Use 1.7.28.
 
 - **An installed app's top bar shows the version the OS shows.** The packer writes the product version (the one About and Installed apps
   show) into the packed blend.yaml, so ACRYL Control Center v0.2.13 reads "Blend 0.2.13 · ACRYL Blends 1.7.27" instead of the template's

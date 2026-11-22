@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/plugin-hub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Save, share and pull plugins in an app: the pluginHub service (the local store, pulls checked by sha512 and by the services the app provides, installed through DSH's own plugin manager) and the /plugin chat command",
   "license": "MIT",
   "repository": {

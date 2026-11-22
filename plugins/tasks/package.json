@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/tasks",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Durable task records: id, owner, input, status, result, trace; appended to a log in the app's home and readable after a restart.",
   "license": "MIT",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/harness-runtime",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "ACRYL's runtime around the DeepSeek Harness engine: resolves and composes each surface's profile (the harness plus every ACRYL plugin it runs - the composition root), the app instance and its homes, plugin lifecycle and doctor, the pinned pnpm, and the session bridge",
   "private": false,
   "license": "MIT",

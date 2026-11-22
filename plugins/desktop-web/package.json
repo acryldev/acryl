@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/desktop-web",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Run a plain Acryl app (`export default app`) as a desktop app: an Electron window on the app's own server. `npm run desktop`; the app's code never imports electron. `acrylblends add desktop` picks this one for an app without the Blend plugins.",
   "license": "MIT",
   "repository": {

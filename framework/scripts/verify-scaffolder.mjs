@@ -24,6 +24,7 @@ import { join, resolve } from 'node:path'
  * Needs the network for the install step. Fails on the first problem.
  */
 import { probeDoor } from './lib/door-probe.mjs'
+import { duplicateCopies } from './lib/one-copy.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const cliDir = join(root, 'packages', 'cli')
@@ -43,6 +44,19 @@ const fail = (message) => {
 
 const capture = (command, args, options = {}) =>
   execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...options })
+
+// npm ls exits non-zero for any tree problem (an extraneous package, a peer warning) but still prints the tree.
+const listedTree = (dir) => {
+  try {
+    return JSON.parse(
+      capture(npm, ['ls', '--all', '--json'], { cwd: dir, maxBuffer: 64 * 1024 * 1024 }),
+    )
+  } catch (error) {
+    if (typeof error.stdout === 'string' && error.stdout.trim().startsWith('{'))
+      return JSON.parse(error.stdout)
+    throw error
+  }
+}
 
 /** True once `url` answers with any status, within `timeoutMs`. */
 async function waitForOk(url, timeoutMs = 30_000) {
@@ -199,6 +213,11 @@ try {
     log(`${template}: scaffolded, refusal ok, runtime dependencies ${deps.join(', ')}`)
 
     capture(npm, ['install', '--no-audit', '--no-fund'], { cwd: dir })
+    const twice = duplicateCopies(listedTree(dir))
+    if (twice.length > 0)
+      fail(
+        `${template}: two copies after install: ${twice.map((d) => `${d.name} ${d.versions.join(' and ')}`).join('; ')} (republish what pins the older one)`,
+      )
     capture(npm, ['run', 'check'], { cwd: dir })
     capture(npm, ['test'], { cwd: dir })
     capture(npm, ['run', 'lock'], { cwd: dir })
