@@ -677,6 +677,9 @@ execFileSync('git', ['update-index', '--cacheinfo', `100644,${manifestBlob},pack
   cwd: app,
   stdio: 'inherit',
 })
+// The product version written into blend.yaml above belongs to the first commit, else a new app opens with it as an unsaved change.
+if (existsSync(join(app, 'blend.yaml')))
+  execFileSync('git', ['add', '--', 'blend.yaml'], { cwd: app, stdio: 'inherit' })
 execFileSync(
   'git',
   [
