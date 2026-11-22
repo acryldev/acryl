@@ -1,6 +1,6 @@
 # @acryldev/blends 1.7.29
 
-Released 2026-11-22.
+Staged under `next` on 2026-11-22 and never made latest: a packed product still took the scaffold's name (`blend`). Use 1.7.30.
 
 - **An app is named as its Blend names it.** The window's title, the About panel and the Dock read the Blend's `metadata.name` from
   blend.yaml ("ACRYL Control Center"), not the folder or package name (`control-center`). @acryldev/instance 0.1.4; the page and its

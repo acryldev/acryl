@@ -35,7 +35,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { desktopEntry, launcherScript, tarballName } from './lib/arch-linux.mjs'
 import { createSource, repositoryOnlyIn } from './lib/create-source.mjs'
 import { DEB_DEPENDS, debPackageName } from './lib/deb.mjs'
-import { osVersion, withManifestVersion } from './lib/os-version.mjs'
+import { osVersion, withManifestName, withManifestVersion } from './lib/os-version.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 /**
@@ -552,11 +552,13 @@ const blendVersion = await (async () => {
   }
 })()
 manifest.version = osVersion(manifest.version, blendVersion)
-// The frame's top bar reads blend.yaml: the packed copy names the same version as About and Installed apps (a release sets only package.json's).
-if (blendVersion !== manifest.version && existsSync(join(app, 'blend.yaml'))) {
+// The packed blend.yaml is the scaffold's: it names the version the OS shows (the frame's top bar reads it, a release sets only package.json's) and the
+// product (the instance names the app, so the window's title and the About panel, by it).
+if (existsSync(join(app, 'blend.yaml'))) {
+  const written = readFileSync(join(app, 'blend.yaml'), 'utf8')
   writeFileSync(
     join(app, 'blend.yaml'),
-    withManifestVersion(readFileSync(join(app, 'blend.yaml'), 'utf8'), manifest.version),
+    withManifestName(withManifestVersion(written, manifest.version), PRODUCT),
   )
 }
 log(

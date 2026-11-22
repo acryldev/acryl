@@ -26,3 +26,19 @@ test("the packed blend.yaml carries the version the OS shows, so the frame's bar
   )
   assert.equal(withManifestVersion('kind: Blend\n', '1.0.0'), 'kind: Blend\n')
 })
+
+test("the packed blend.yaml names the product, so the window's title and About say it", async () => {
+  const { withManifestName } = await import('./os-version.mjs')
+  assert.equal(
+    withManifestName(
+      'metadata:\n  id: acrylblends.blend\n  name: blend\n  version: 0.1.0\nspec: {}\n',
+      'ACRYL Control Center',
+    ),
+    'metadata:\n  id: acrylblends.blend\n  name: "ACRYL Control Center"\n  version: 0.1.0\nspec: {}\n',
+  )
+  assert.equal(
+    withManifestName('metadata:\n  id: x\n', 'A: "b"'),
+    'metadata:\n  name: "A: \\"b\\""\n  id: x\n',
+  )
+  assert.equal(withManifestName('kind: Blend\n', 'X'), 'kind: Blend\n')
+})

@@ -19,25 +19,38 @@ export function osVersion(packageVersion, blendVersion) {
 }
 
 /**
- * blend.yaml's text with `metadata.version` set to `version` (added under `metadata:` when missing), the rest of the text untouched. The packed copy
- * carries the version the OS shows, so the frame's top bar, the About window and Installed apps name the same one. Without a `metadata:` block the text
- * is returned as it is.
+ * blend.yaml's text with `metadata.<key>` set to `value` (added under `metadata:` when missing), the rest of the text untouched. Without a `metadata:`
+ * block the text is returned as it is.
  */
-export function withManifestVersion(text, version) {
+function withMetadataField(text, key, value) {
   const lines = text.split('\n')
   const start = lines.findIndex((line) => /^metadata:\s*(#.*)?$/u.test(line))
   if (start === -1) return text
   let end = lines.findIndex((line, index) => index > start && /^\S/u.test(line))
   if (end === -1) end = lines.length
   const at = lines.findIndex(
-    (line, index) => index > start && index < end && /^\s+version:/u.test(line),
+    (line, index) => index > start && index < end && new RegExp(`^\\s+${key}:`, 'u').test(line),
   )
   const indent =
     lines
       .slice(start + 1, end)
       .find((line) => /^\s+\S/u.test(line))
       ?.match(/^\s+/u)?.[0] ?? '  '
-  if (at === -1) lines.splice(start + 1, 0, `${indent}version: ${version}`)
-  else lines[at] = `${lines[at].match(/^\s+/u)[0]}version: ${version}`
+  if (at === -1) lines.splice(start + 1, 0, `${indent}${key}: ${value}`)
+  else lines[at] = `${lines[at].match(/^\s+/u)[0]}${key}: ${value}`
   return lines.join('\n')
 }
+
+/**
+ * blend.yaml's text with `metadata.version` set to `version`. The packed copy carries the version the OS shows, so the frame's top bar, the About
+ * window and Installed apps name the same one.
+ */
+export const withManifestVersion = (text, version) => withMetadataField(text, 'version', version)
+
+/**
+ * blend.yaml's text with `metadata.name` set to the product's name, as a JSON string (a name may hold a colon or a quote). The packed copy is the
+ * scaffold's, named for its folder (`blend`); the instance names an app by this field, so the window's title, the About panel and the Dock say the
+ * product ("ACRYL Control Center").
+ */
+export const withManifestName = (text, name) =>
+  withMetadataField(text, 'name', JSON.stringify(name))
