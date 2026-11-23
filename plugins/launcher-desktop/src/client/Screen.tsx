@@ -106,6 +106,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
       </nav>
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}
+        {state?.self === undefined ? null : <SelfBanner self={state.self} onUpdate={() => { void act(() => api.updateSelf()) }} />}
         {state?.job == null ? null : <JobBanner job={state.job} />}
         {view === 'apps' && (
           <AppsView
@@ -137,6 +138,22 @@ function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNo
       <b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{'\n'}{job.status === 'failed' ? null : job.step}
       {job.message === undefined ? null : `\n${job.message}`}
       {job.status === 'running' ? <pre className="acrylHomeLog">{job.output === '' ? 'Waiting for its first output...' : job.output}</pre> : null}
+    </div>
+  )
+}
+
+/** This app's own update: a newer release with its button, the update as it runs, then "open it again", or why it did not finish. */
+function SelfBanner({ self, onUpdate }: { self: NonNullable<StateResponse['self']>, onUpdate: () => void }): ReactNode {
+  const head = self.status === 'available' ? `${self.name} ${self.update} is out` : self.status === 'updating' ? `Updating ${self.name} to ${self.update}${self.since === undefined ? '' : ` · ${elapsed(self.since)}`}` : self.status === 'done' ? `${self.name} is updated to ${self.update}` : `${self.name} could not be updated to ${self.update}`
+  const text = self.status === 'available' ? `You have ${self.version}. Updating brings the new release in and keeps any change you made (a git merge), then installs its packages.`
+    : self.status === 'updating' ? 'Getting the release, merging it in, then npm install. The screen may reload while it works; that is expected.'
+      : self.status === 'done' ? `Quit ${self.name} and open it again to finish: the window and its packages load once, when it opens.`
+        : 'Nothing was lost: what the copy had stays. The last lines it printed:'
+  return (
+    <div className="acrylHomeJob" role="status" aria-label={`${self.name} update`}>
+      <b>{head}</b>{'\n'}{text}
+      {self.output === undefined || self.output === '' ? null : <pre className="acrylHomeLog">{self.output}</pre>}
+      {self.status === 'available' || self.status === 'failed' ? <>{'\n'}<button type="button" className="acrylHomeBtn" data-small data-primary onClick={onUpdate}>{self.status === 'failed' ? 'Try again' : `Update to ${self.update}`}</button></> : null}
     </div>
   )
 }

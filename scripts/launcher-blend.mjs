@@ -50,7 +50,7 @@ if (!existsSync(join(app, 'blend.yaml'))) {
 // the published library `@acryldev/launcher`, a dependency of the app (spec 051 T010).
 const host = join(app, 'plugins/acryl-launcher-host')
 for (const file of ['index.ts', 'package.json']) put(join(host, file), readFileSync(join(pkg, 'blend/host', file)))
-for (const file of ['contract.ts', 'door.ts', 'registry.ts', 'route.ts', 'runner.ts', 'service.ts']) {
+for (const file of ['contract.ts', 'door.ts', 'registry.ts', 'route.ts', 'runner.ts', 'self-update.ts', 'service.ts']) {
   put(join(host, file), readFileSync(join(pkg, 'src', file), 'utf8')
     .replaceAll("from '@acryldev/loopback-http/router'", "from '@acryldev/loopback-http/router'")
     .replaceAll("from '@acryldev/loopback-http'", "from '@acryldev/loopback-http'"))

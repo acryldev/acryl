@@ -16,6 +16,7 @@ import type {
 import { ACCOUNT_NAME, BLEND_ID, BLEND_SOURCE, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
 import { appEnvironment, type Run, type Runner } from './runner.ts'
+import { originOf, selfUpdateCommand, selfView, type SelfFiles } from './self-update.ts'
 
 /** A request the service cannot honour, in a sentence a person can act on. The route answers it as 409. */
 export class LauncherRefusal extends Error {}
@@ -39,6 +40,11 @@ export interface LauncherPorts {
    * computer's own tools are used as they are (tests, and a launcher run from a terminal).
    */
   readonly prepareTools?: () => Promise<readonly string[]>
+  /**
+   * This app's own copy, when it runs from one it can update (`acryl --gui` keeps the Blend in `~/.acryl/control-center`): its folder and name, how to
+   * read and write the update's record, and when this process began (an update finished before it is the release that runs now).
+   */
+  readonly self?: { readonly folder: string, readonly name: string, readonly files: SelfFiles, readonly startedAt: number }
 }
 
 /** The address an app prints, with the token it needs: `http://127.0.0.1:3999/?token=...`. */
@@ -123,7 +129,8 @@ export class LauncherService {
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
     const at = this.#job
     const job = at === undefined ? null : { name: at.name, kind: at.kind, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message } }
-    return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job }
+    const self = this.#self()
+    return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job, ...self === undefined ? {} : { self } }
   }
 
   #view(entry: AppEntry): AppView {
@@ -237,6 +244,38 @@ export class LauncherService {
       job.output = ''
       if (restart) try { this.start(id) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) }
     })
+  }
+
+  /** This app's own copy: the Blend and version it was made from (package.json's `acryl.from`), the version it has now, and its name. */
+  #selfCopy() {
+    const self = this.#ports.self
+    if (self === undefined) return undefined
+    const origin = originOf(self.files.read(join(self.folder, 'package.json')))
+    if (origin === undefined) return undefined
+    return { folder: self.folder, name: self.name, blend: origin.blend, version: blendVersionOf(self.folder) || origin.version }
+  }
+
+  #self() {
+    const self = this.#ports.self
+    const copy = this.#selfCopy()
+    if (self === undefined || copy === undefined) return undefined
+    const latest = this.#blends?.list.find(listed => listed.id === copy.blend)?.version
+    return selfView(copy, latest, self.files, this.#ports.home, self.startedAt, newerVersion)
+  }
+
+  /**
+   * Update this app itself to its Blend's newer release: `acrylblends update` in its own folder, detached, so it finishes even when this plugin is reloaded
+   * by the change it brings. The new release runs once the app is opened again.
+   */
+  updateSelf(): void {
+    this.#toolsReady()
+    const self = this.#ports.self
+    const copy = this.#selfCopy()
+    const view = this.#self()
+    if (self === undefined || copy === undefined) throw new LauncherRefusal('This app was not made from a Blend copy it can update: download the newest release instead.')
+    if (view === undefined || (view.status !== 'available' && view.status !== 'failed')) throw new LauncherRefusal(view?.status === 'updating' ? `${copy.name} is already being updated` : `${copy.name} is on the latest release`)
+    const command = selfUpdateCommand(copy, view.update, { ...self.files, makeFolder: this.#ports.makeFolder }, this.#ports.home, Date.now())
+    this.#ports.runner({ ...command, env: this.#environment() })
   }
 
   /**

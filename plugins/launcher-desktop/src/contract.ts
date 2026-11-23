@@ -10,6 +10,8 @@ export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
 export const LAUNCHER_UPDATE_PATH = `${LAUNCHER_API_PREFIX}/update`
+/** Update the Control Center itself (the Blend copy it runs from) to its Blend's newer release. */
+export const LAUNCHER_UPDATE_SELF_PATH = `${LAUNCHER_API_PREFIX}/update-self`
 /** Open ACRYL ADE (the Blend `acryl.ade` in `<home>/ade`, the folder `acryl ade` uses), made on first use, in a window or the browser. */
 export const LAUNCHER_ADE_PATH = `${LAUNCHER_API_PREFIX}/ade`
 export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
@@ -109,6 +111,21 @@ export interface StateResponse {
   readonly appsFolder: string
   readonly starters: readonly StarterView[]
   readonly job: JobView | null
+  /** This app itself, when it runs from a Blend copy it can update and there is something to say: a newer release, an update running, done or failed. */
+  readonly self?: SelfView
+}
+
+export interface SelfView {
+  /** The name a person reads: "ACRYL Control Center". */
+  readonly name: string
+  /** The release the copy has now. */
+  readonly version: string
+  /** The newer release (`available`), or the one being or just brought in. */
+  readonly update: string
+  readonly status: 'available' | 'updating' | 'done' | 'failed'
+  readonly since?: number
+  /** The update's last lines of output (`updating`, `failed`). */
+  readonly output?: string
 }
 
 export interface HealthView {

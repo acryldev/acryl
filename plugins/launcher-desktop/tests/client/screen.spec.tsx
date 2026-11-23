@@ -37,7 +37,7 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
     sharePlan: vi.fn(async () => SHARE_PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/o/shop.git', created: true })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
-    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial), update: vi.fn(async () => initial),
+    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial), update: vi.fn(async () => initial), updateSelf: vi.fn(async () => initial),
     ...over,
   }
 }
@@ -357,6 +357,20 @@ describe('the look', () => {
     open(fake(state([])))
     expect((await screen.findByRole('dialog', { name: 'ACRYL' })).getAttribute('data-skin')).toBe('site')
     localStorage.clear()
+  })
+})
+
+describe('its own update', () => {
+  it('says a newer release is out and updates itself; while it runs and after, says where it is', async () => {
+    const available = { ...state([]), self: { name: 'ACRYL Control Center', version: '0.2.14', update: '0.2.15', status: 'available' as const } }
+    const api = fake(available, { updateSelf: vi.fn(async () => ({ ...state([]), self: { name: 'ACRYL Control Center', version: '0.2.14', update: '0.2.15', status: 'updating' as const, since: Date.now(), output: 'npm http fetch' } })) })
+    open(api)
+    const banner = await screen.findByRole('status', { name: 'ACRYL Control Center update' })
+    expect(banner.textContent).toMatch(/ACRYL Control Center 0\.2\.15 is out.*You have 0\.2\.14/su)
+    fireEvent.click(within(banner).getByRole('button', { name: 'Update to 0.2.15' }))
+    await waitFor(() => { expect(api.updateSelf).toHaveBeenCalled() })
+    expect((await screen.findByText(/Updating ACRYL Control Center to 0\.2\.15/u))).toBeTruthy()
+    expect(screen.getByText('npm http fetch')).toBeTruthy()
   })
 })
 
