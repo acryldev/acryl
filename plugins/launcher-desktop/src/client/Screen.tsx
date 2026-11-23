@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { MAKEABLE_SURFACES, SURFACES, webboxesDeployBlendUrl, webboxesDeployUrl, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
-import { blendAppName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
+import { blendAppName, folderName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
 import { readRail, saveRail } from './skin.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
@@ -68,6 +68,11 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
     setDark(isDarkColor(token) ?? window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? true)
   }, [open])
 
+  /** A new app: make it and show the list it answers with, or hand the reason it was refused back to the form that asked (shown beside its button). */
+  const create = useCallback(async (request: NewAppRequest): Promise<string | undefined> => {
+    try { setState(await api.create(request)); setProblem(undefined); return undefined } catch (cause) { return message(cause) }
+  }, [api])
+
   /** A change: send it, show the list it answers with, or the reason it was refused. */
   const act = useCallback(async (run: () => Promise<StateResponse>): Promise<boolean> => {
     try { setState(await run()); setProblem(undefined); return true } catch (cause) { setProblem(message(cause)); return false }
@@ -107,7 +112,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
             api={api} apps={apps} tiles={tiles} current={current} search={search} surface={surface} panel={panel} state={state}
             onSearch={setSearch} onSurface={setSurface} onPanel={setPanel} onSelect={setSelected}
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
-            onCreate={async request => { const done = await act(() => api.create(request)); if (done) setPanel('none'); return done }}
+            onCreate={async request => { const refused = await create(request); if (refused === undefined) setPanel('none'); return refused }}
             onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onRemove={id => act(() => api.remove(id))}
             openExternal={openExternal} adeUnderneath={adeUnderneath} onOpenCode={() => { visibility.set(false) }} onOpenAde={surface => { void act(() => api.openAde(surface)) }}
           />
@@ -115,7 +120,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
         {view === 'updates' && <UpdatesView apps={apps.filter(app => app.update !== undefined)} onUpdate={id => act(() => api.update(id))} />}
-        {view === 'store' && <StoreView api={api} state={state} openExternal={openExternal} onCreate={async (request) => { const done = await act(() => api.create(request)); if (done) setView('apps'); return done }} />}
+        {view === 'store' && <StoreView api={api} state={state} openExternal={openExternal} onCreate={async (request) => { const refused = await create(request); if (refused === undefined) setView('apps'); return refused }} />}
         {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Put an app online at <name>.webboxes.ai: Share it to GitHub as Public (its card, Share), then press Deploy to WebBoxes.ai on its card. WebBoxes.ai opens with the app filled in: sign in, press Create, then Publish." />}
         {view === 'health' && <HealthView api={api} />}
         {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} skin={skin} onSkin={(next) => { setSkin(next); saveSkin(next) }} />}
@@ -169,7 +174,7 @@ interface AppsViewProps {
   readonly onPanel: (value: Panel) => void
   readonly onSelect: (id: string) => void
   readonly onAdd: (path: string) => Promise<boolean>
-  readonly onCreate: (request: NewAppRequest) => Promise<boolean>
+  readonly onCreate: (request: NewAppRequest) => Promise<string | undefined>
   readonly onStart: (id: string) => Promise<boolean>
   readonly onUpdate: (id: string) => Promise<boolean>
   readonly onStop: (id: string) => Promise<boolean>
@@ -502,18 +507,22 @@ function PluginsPanel({ api, app, openExternal }: { api: LauncherApi, app: AppVi
   )
 }
 
-function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse, blend?: BlendView, onCreate: (request: NewAppRequest) => Promise<boolean>, onCancel: () => void }): ReactNode {
+function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse, blend?: BlendView, onCreate: (request: NewAppRequest) => Promise<string | undefined>, onCancel: () => void }): ReactNode {
   const [where, setWhere] = useState(state.appsFolder)
+  // What the person types; the folder (and the app's id) is made from it.
   const [name, setName] = useState(blend === undefined ? '' : blendAppName(blend.id))
+  const folder = folderName(name)
+  const [refused, setRefused] = useState<string | undefined>(undefined)
   const [starter, setStarter] = useState(state.starters[0]?.value ?? 'blank')
   const [surface, setSurface] = useState<Surface>('web')
   const [busy, setBusy] = useState(false)
-  const line = `cd ${where} && acryl new ${name === '' ? '<name>' : name} ${blend === undefined ? starter : `--from ${blend.source ?? blend.id}`}`
+  const line = `cd ${where} && acryl new ${folder === '' ? '<name>' : folder} ${blend === undefined ? starter : `--from ${blend.source ?? blend.id}`}`
   return (
-    <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); setBusy(true); void onCreate({ where, name, surface, ...blend === undefined ? { starter } : { blend: blend.source ?? blend.id } }).finally(() => { setBusy(false) }) }}>
+    <form className="acrylHomePanel acrylHomeForm" onSubmit={(event) => { event.preventDefault(); setRefused(undefined); setBusy(true); void onCreate({ where, name: folder, surface, ...blend === undefined ? { starter } : { blend: blend.source ?? blend.id } }).then(setRefused).finally(() => { setBusy(false) }) }}>
       <div className="acrylHomePanelTop"><h3>{blend === undefined ? 'New app' : `New app from ${blend.name}`}</h3></div>
       <label className="acrylHomeField"><span>Where does it go?</span><input className="acrylHomeInput" data-mono value={where} onChange={(event) => { setWhere(event.target.value) }} aria-label="Where does it go" /></label>
-      <label className="acrylHomeField"><span>Name</span><input className="acrylHomeInput" value={name} placeholder="my-app" autoFocus onChange={(event) => { setName(event.target.value) }} aria-label="Name" /></label>
+      <label className="acrylHomeField"><span>Name</span><input className="acrylHomeInput" value={name} placeholder="My app" autoFocus onChange={(event) => { setName(event.target.value); setRefused(undefined) }} aria-label="Name" /></label>
+      <p className="acrylHomeNote">{folder === '' ? 'Type a name with at least one letter.' : <>Folder <span className="acrylHomeMeta">{`${where.replace(/[\\/]+$/u, '')}/${folder}`}</span></>}</p>
       {blend !== undefined && blend.origin === 'community' ? <p className="acrylHomeNote" data-warn role="note">A Community Blend: released by someone outside the ACRYL project, from {blend.source}. Its code is not reviewed; make it only if you trust who released it.</p> : null}
       {blend !== undefined ? <p className="acrylHomeNote">{blend.description}</p> : <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="acrylHomeField"><span>Starter</span></legend>
@@ -538,13 +547,15 @@ function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse
         </div>
       </fieldset>
       <p className="acrylHomeNote">Same as typing <span className="acrylHomeMeta">{line}</span></p>
-      <div className="acrylHomeActs"><button type="submit" className="acrylHomeBtn" data-primary disabled={busy || name === ''}>Make it</button><button type="button" className="acrylHomeBtn" onClick={onCancel}>Cancel</button></div>
+      <div className="acrylHomeActs"><button type="submit" className="acrylHomeBtn" data-primary disabled={busy || folder === ''}>{busy ? 'Making it...' : 'Make it'}</button><button type="button" className="acrylHomeBtn" disabled={busy} onClick={onCancel}>Cancel</button></div>
+      {busy ? <p className="acrylHomeNote" role="status">Making {folder} in {where}: copying {blend === undefined ? 'the starter' : blend.name} and installing its packages. This can take a minute or two.</p> : null}
+      {refused === undefined ? null : <p className="acrylHomeNote" data-error role="alert">Not made: {refused}</p>}
     </form>
   )
 }
 
 /** The public registry's Blends, read when the store opens; "Make an app" opens the New app form for the chosen one. */
-function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, state: StateResponse | undefined, onCreate: (request: NewAppRequest) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
+function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, state: StateResponse | undefined, onCreate: (request: NewAppRequest) => Promise<string | undefined>, openExternal: (url: string) => void }): ReactNode {
   const [blends, setBlends] = useState<readonly BlendView[] | undefined>(undefined)
   const [failed, setFailed] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')

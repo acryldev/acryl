@@ -46,4 +46,11 @@ export const initial = (name: string): string => (name.trim()[0] ?? '?').toUpper
 export const runsLine = (app: AppView): string => `cd ${app.path} && npm run ${app.surface === 'desktop' ? 'desktop' : 'dev'}`
 
 /** A name for an app made from a registry id: its last part (`acrylblends.notes-desktop` gives `notes-desktop`), the same rule as the terminal's. */
+/**
+ * The folder (and id) a name makes: any name a person types ("ACRYL ADE (EB)") becomes lower case letters, digits and dashes, starting with a
+ * letter ("acryl-ade-eb"), the form `acryl new` and npm accept. Empty when the name has no letter or digit to keep.
+ */
+export const folderName = (text: string): string =>
+  text.normalize('NFKD').replace(/[\u0300-\u036f]/gu, '').toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^[^a-z]+/u, '').replace(/-+$/u, '')
+
 export const blendAppName = (id: string): string => id.split('.').at(-1)?.replace(/[^a-z0-9-]/gu, '-').replace(/^[^a-z]+/u, '') || 'my-app'

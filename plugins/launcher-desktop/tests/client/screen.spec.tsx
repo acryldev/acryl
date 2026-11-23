@@ -111,8 +111,19 @@ describe('the ACRYL screen', () => {
     fireEvent.click(await screen.findByRole('button', { name: '+ New app' }))
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'shop' } })
     fireEvent.click(screen.getByRole('button', { name: 'Make it' }))
-    expect((await screen.findByRole('alert')).textContent).toBe('there is already a folder named shop in /h/ACRYL')
+    // The reason shows beside the form's own button, not only at the top of the page.
+    expect((await screen.findByRole('alert')).textContent).toBe('Not made: there is already a folder named shop in /h/ACRYL')
     expect(screen.getByLabelText('Name')).toBeTruthy()
+  })
+
+  it('takes any name and makes the folder from it, shown as it is typed', async () => {
+    const create = vi.fn(async () => state([]))
+    open(fake(state([]), { create }))
+    fireEvent.click(await screen.findByRole('button', { name: '+ New app' }))
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'ACRYL ADE (EB)' } })
+    expect(screen.getByText(/\/acryl-ade-eb$/u)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Make it' }))
+    await waitFor(() => { expect(create).toHaveBeenCalledWith(expect.objectContaining({ name: 'acryl-ade-eb' })) })
   })
 
   it('adds a folder, starts and stops an app, opens a running one at its address, and removes one from the list', async () => {
