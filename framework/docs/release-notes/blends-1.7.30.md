@@ -14,3 +14,6 @@ Released 2026-11-22.
 - After the release: @acryldev/blends-frame 0.2.16 - after a change of the app's code (an agent's new plugin or edit, a version restored,
   a branch switched) the app canvas reloads on the page it is on, not on the app's first page. An app made with 1.7.30 gets it through its
   `^` range.
+- After the release: @acryldev/workspace 0.2.5 and @acryldev/blends-frame 0.2.17 (on that workspace) - a collapsed left sidebar shows an
+  Expand sidebar button on its rail; before, the rail was empty and the sidebar could not be opened again (88c0383d). An app made with
+  1.7.30 gets it through its `^` range.
