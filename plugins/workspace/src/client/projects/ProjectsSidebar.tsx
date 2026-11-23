@@ -266,7 +266,18 @@ export function ProjectsSidebar({ collapsed, renderUpstream, onToggleCollapse, u
     else setNotice(result.reason)
   }
 
-  if (collapsed) return <>{renderUpstream()}</>
+  // The collapsed rail keeps the way back: the upstream sidebar it used to show here renders nothing in this frame, so the rail was
+  // empty and a collapsed sidebar could not be opened again (found 2026-11-23 by the installed ADE's chat through its door).
+  if (collapsed) {
+    return (
+      <div className="dshWorkspaceSide dshWorkspaceSideRail" data-acryl-workspace-side="rail">
+        <div className="dshWorkspaceUpstreamHost" aria-hidden="true">{renderUpstream()}</div>
+        <button type="button" className="dshWorkspaceSideCollapse" aria-label="Expand sidebar" title="Expand sidebar" onClick={onToggleCollapse}>
+          <CollapseSidebarIcon />
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="dshWorkspaceSide" data-acryl-workspace-side="tree">

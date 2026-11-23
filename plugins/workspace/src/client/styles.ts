@@ -243,6 +243,7 @@ body[data-ds-dark-theme] .dshWorkspaceAcrylMarkDark { display: block; }
 .dshWorkspaceSideBrandName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-primary); font: 600 13px/1.3 ui-sans-serif, system-ui, sans-serif; }
 .dshWorkspaceSideCollapse { appearance: none; flex: none; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
 .dshWorkspaceSideCollapse:hover { background: var(--dsw-alias-fill-hover, rgb(255 255 255 / 8%)); color: var(--dsw-alias-label-primary); }
+.dshWorkspaceSideRail { align-items: center; padding-top: 10px; }
 /* overflow-x: hidden is deliberate, not a default: setting only overflow-y computes overflow-x to auto too
    (CSS overflow is a one-axis-implies-the-other-scrolls rule), so any row even a pixel wider than the
    column - an untruncated path, an icon's own layout width - silently made the whole list horizontally

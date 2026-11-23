@@ -229,7 +229,7 @@ describe('ProjectsSidebar', () => {
     shell.dispose()
   })
 
-  it('renders only the upstream sidebar when collapsed to the rail', () => {
+  it('keeps the upstream sidebar mounted and shows no tree when collapsed to the rail', () => {
     const shell = new WorkspaceShellState(api())
     render(<ProjectsSidebar {...sidebarProps(shell, true)} />)
     expect(screen.getByTestId('upstream')).toBeTruthy()
@@ -508,6 +508,16 @@ describe('ProjectsSidebar', () => {
     render(<ProjectsSidebar {...sidebarProps(shell)} onToggleCollapse={onToggleCollapse} />)
     fireEvent.click(await screen.findByRole('button', { name: 'Collapse sidebar' }))
     expect(onToggleCollapse).toHaveBeenCalledOnce()
+    shell.dispose()
+  })
+
+  it('keeps an Expand sidebar control on the collapsed rail, so a collapsed sidebar can be opened again', async () => {
+    const shell = new WorkspaceShellState(api())
+    const onToggleCollapse = vi.fn()
+    render(<ProjectsSidebar {...sidebarProps(shell)} collapsed onToggleCollapse={onToggleCollapse} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Expand sidebar' }))
+    expect(onToggleCollapse).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('button', { name: 'Collapse sidebar' })).toBeNull()
     shell.dispose()
   })
 
