@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { MAKEABLE_SURFACES, SURFACES, webboxesDeployBlendUrl, webboxesDeployUrl, type AppSharePlanView, type AppShareResponse, type AppView, type BlendView, type NewAppRequest, type PluginView, type PublishPlanView, type PublishResponse, type StateResponse, type Surface } from '../contract.ts'
 import type { HealthResponse, LauncherApi } from './api.ts'
-import { blendAppName, folderName, iconColor, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
+import { blendAppName, folderName, iconColor, storeCategories, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
 import { readRail, saveRail } from './skin.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
@@ -554,12 +554,18 @@ function NewAppForm({ state, blend, onCreate, onCancel }: { state: StateResponse
   )
 }
 
-/** The public registry's Blends, read when the store opens; "Make an app" opens the New app form for the chosen one. */
+/**
+ * The public registry's Blends, read when the store opens: browsed by the store's categories and subcategories, by who released them and by search; a
+ * card opens the Blend's page (its picture, what it is, where it sits), and "Make an app" opens the New app form for it.
+ */
 function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, state: StateResponse | undefined, onCreate: (request: NewAppRequest) => Promise<string | undefined>, openExternal: (url: string) => void }): ReactNode {
   const [blends, setBlends] = useState<readonly BlendView[] | undefined>(undefined)
   const [failed, setFailed] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')
   const [origin, setOrigin] = useState<'all' | BlendView['origin']>('all')
+  const [category, setCategory] = useState<string | undefined>(undefined)
+  const [subcategory, setSubcategory] = useState<string | undefined>(undefined)
+  const [viewing, setViewing] = useState<BlendView | undefined>(undefined)
   const [chosen, setChosen] = useState<BlendView | undefined>(undefined)
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
@@ -569,34 +575,62 @@ function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, s
     return () => { live = false }
   }, [api, attempt])
   const needle = search.trim().toLowerCase()
-  const shown = (blends ?? []).filter(blend => (origin === 'all' || blend.origin === origin) && (needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle)))
+  const byOrigin = (blends ?? []).filter(blend => origin === 'all' || blend.origin === origin)
+  const categories = storeCategories(byOrigin)
+  const current = categories.find(entry => entry.name === category)
+  const shown = byOrigin.filter(blend => (category === undefined || blend.place?.category === category) && (subcategory === undefined || blend.place?.subcategory === subcategory) && (needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle)))
   const count = (which: BlendView['origin']): number => (blends ?? []).filter(blend => blend.origin === which).length
+  const choose = (name: string | undefined): void => { setCategory(name); setSubcategory(undefined) }
+  const makeForm = chosen !== undefined && state !== undefined ? <NewAppForm key={chosen.id} state={state} blend={chosen} onCreate={onCreate} onCancel={() => { setChosen(undefined) }} /> : null
+  if (viewing !== undefined) return (
+    <section className="acrylHomeForm">
+      <div className="acrylHomeRow"><button type="button" className="acrylHomeBtn" data-small onClick={() => { setViewing(undefined); setChosen(undefined) }}>‹ All Blends</button>{viewing.place === undefined ? null : <span className="acrylHomeMeta">{viewing.place.category}{viewing.place.subcategory === '' ? '' : ` › ${viewing.place.subcategory}`}</span>}</div>
+      <BlendPage blend={viewing} />
+      {makeForm}
+      <div className="acrylHomeActs">
+        <button type="button" className="acrylHomeBtn" data-primary disabled={state === undefined || chosen !== undefined} onClick={() => { setChosen(viewing) }}>Make an app</button>
+        {viewing.page === undefined ? null : <button type="button" className="acrylHomeBtn" onClick={() => { if (viewing.page !== undefined) openExternal(viewing.page) }}>Open its store page</button>}
+        <button type="button" className="acrylHomeBtn" title={`Opens WebBoxes.ai on ${viewing.name}: sign in, press Create, then Publish`} onClick={() => { openExternal(webboxesDeployBlendUrl(viewing)) }}>Deploy to WebBoxes.ai</button>
+      </div>
+    </section>
+  )
   return (
     <section className="acrylHomeForm">
       <h3 style={{ margin: 0 }}>Blends store</h3>
-      <p className="acrylHomeNote">Ready-made apps from the public registry (acrylblends.github.io/blends). Making one is the same as <span className="acrylHomeMeta">acryl new &lt;name&gt; --from &lt;id&gt;</span>.</p>
-      {chosen !== undefined && state !== undefined ? <NewAppForm key={chosen.id} state={state} blend={chosen} onCreate={onCreate} onCancel={() => { setChosen(undefined) }} /> : null}
+      <p className="acrylHomeNote">Ready-made apps from the public registry (acrylblends.github.io/blends). Open one to see what it is; making one is the same as <span className="acrylHomeMeta">acryl new &lt;name&gt; --from &lt;id&gt;</span>.</p>
+      {makeForm}
       <input className="acrylHomeSearch" type="search" value={search} placeholder="Search Blends..." aria-label="Search Blends" onChange={(event) => { setSearch(event.target.value) }} />
       <div className="acrylHomeRow" role="group" aria-label="Who released it">
-        <button type="button" className="acrylHomeChip" aria-pressed={origin === 'all'} onClick={() => { setOrigin('all') }}>All</button>
+        <button type="button" className="acrylHomeChip" aria-pressed={origin === 'all'} onClick={() => { setOrigin('all') }}>All ({(blends ?? []).length})</button>
         <button type="button" className="acrylHomeChip" aria-pressed={origin === 'official'} title="Released by the ACRYL project" onClick={() => { setOrigin('official') }}>Official ({count('official')})</button>
         <button type="button" className="acrylHomeChip" aria-pressed={origin === 'community'} title="Released by people outside the ACRYL project; their code is not reviewed" onClick={() => { setOrigin('community') }}>Community ({count('community')})</button>
       </div>
+      {categories.length === 0 ? null : (
+        <div className="acrylHomeRow" role="group" aria-label="Categories" style={{ flexWrap: 'wrap' }}>
+          <button type="button" className="acrylHomeChip" aria-pressed={category === undefined} onClick={() => { choose(undefined) }}>All categories</button>
+          {categories.map(entry => <button key={entry.name} type="button" className="acrylHomeChip" aria-pressed={category === entry.name} onClick={() => { choose(entry.name) }}>{entry.name} ({entry.count})</button>)}
+        </div>
+      )}
+      {current === undefined || current.subs.length === 0 ? null : (
+        <div className="acrylHomeRow" role="group" aria-label={`Subcategories of ${current.name}`} style={{ flexWrap: 'wrap' }}>
+          <button type="button" className="acrylHomeChip" aria-pressed={subcategory === undefined} onClick={() => { setSubcategory(undefined) }}>All of {current.name}</button>
+          {current.subs.map(entry => <button key={entry.name} type="button" className="acrylHomeChip" aria-pressed={subcategory === entry.name} onClick={() => { setSubcategory(entry.name) }}>{entry.name} ({entry.count})</button>)}
+        </div>
+      )}
       {failed !== undefined ? <p className="acrylHomeNote" data-error role="alert">{failed} <button type="button" className="acrylHomeBtn" data-small onClick={() => { setAttempt(attempt + 1) }}>Try again</button></p> : null}
       {blends === undefined && failed === undefined ? <p className="acrylHomeNote">Reading the registry...</p> : null}
       {blends !== undefined && shown.length === 0 ? <p className="acrylHomeNote">No Blend matches.</p> : null}
       <div className="acrylHomeCards">
         {shown.map(blend => (
           <div className="acrylHomeApp" key={blend.id}>
-            <div className="acrylHomeHead">
+            <button type="button" className="acrylHomeHead acrylHomeHeadLink" title={`Open ${blend.name}: its picture and what it is`} aria-label={`Open ${blend.name}`} onClick={() => { setViewing(blend); setChosen(undefined) }}>
               <div className="acrylHomeIcon" style={{ background: iconColor(blend.id) }}>{initial(blend.name)}</div>
               <div style={{ minWidth: 0 }}><div className="acrylHomeName">{blend.name}</div><div className="acrylHomeMeta">{blend.id}</div></div>
-            </div>
+            </button>
             <p className="acrylHomeDesc">{blend.description}</p>
             <div className="acrylHomeCardFoot">
-              <div className="acrylHomeRow">{blend.origin === 'official'
-                ? <span className="acrylHomePill" title="Released by the ACRYL project">Official</span>
-                : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.publisher === undefined ? null : <span className="acrylHomeMeta">by @{blend.publisher}</span>}{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
+              <OriginPills blend={blend} />
+              <button type="button" className="acrylHomeBtn" data-small onClick={() => { setViewing(blend); setChosen(undefined) }}>View</button>
               <button type="button" className="acrylHomeBtn" data-small title={`Opens WebBoxes.ai on ${blend.name}: sign in, press Create, then Publish`} onClick={() => { openExternal(webboxesDeployBlendUrl(blend)) }}>Deploy to WebBoxes.ai</button>
               <button type="button" className="acrylHomeBtn" data-small data-primary disabled={state === undefined} onClick={() => { setChosen(blend) }}>Make an app</button>
             </div>
@@ -604,6 +638,34 @@ function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, s
         ))}
       </div>
     </section>
+  )
+}
+
+/** Who released a Blend, where the store files it and its version, as the card and the Blend's page show them. */
+function OriginPills({ blend }: { blend: BlendView }): ReactNode {
+  return (
+    <div className="acrylHomeRow">{blend.origin === 'official'
+      ? <span className="acrylHomePill" title="Released by the ACRYL project">Official</span>
+      : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.publisher === undefined ? null : <span className="acrylHomeMeta">by @{blend.publisher}</span>}{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
+  )
+}
+
+/** A Blend's own page in the store: its first page's picture (when it has one), its name, who released it, where it sits, and what it is. */
+function BlendPage({ blend }: { blend: BlendView }): ReactNode {
+  const [pictured, setPictured] = useState(true)
+  return (
+    <article className="acrylHomeForm" aria-label={blend.name}>
+      <div className="acrylHomeHead">
+        <div className="acrylHomeIcon" style={{ background: iconColor(blend.id) }}>{initial(blend.name)}</div>
+        <div style={{ minWidth: 0 }}><h3 style={{ margin: 0 }}>{blend.name}</h3><div className="acrylHomeMeta">{blend.id}{blend.source === undefined ? '' : ` · ${blend.source}`}</div></div>
+      </div>
+      <OriginPills blend={blend} />
+      {blend.screenshot !== undefined && pictured
+        ? <img src={blend.screenshot} alt={`${blend.name}, its first page`} loading="lazy" onError={() => { setPictured(false) }} style={{ display: 'block', width: '100%', maxHeight: 420, objectFit: 'cover', objectPosition: 'top', border: '1px solid var(--h-border)', borderRadius: 12 }} />
+        : <p className="acrylHomeNote">No picture of this Blend yet.</p>}
+      <p className="acrylHomeDesc" style={{ WebkitLineClamp: 'unset', display: 'block' }}>{blend.description}</p>
+      {blend.origin === 'community' ? <p className="acrylHomeNote" data-warn role="note">A Community Blend: released by someone outside the ACRYL project. Its code is not reviewed; make it only if you trust who released it.</p> : null}
+    </article>
   )
 }
 

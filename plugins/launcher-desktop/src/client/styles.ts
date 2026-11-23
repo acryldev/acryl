@@ -55,6 +55,9 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHomeApp:hover, .acrylHomeApp[aria-pressed="true"] { border-color: var(--h-line); }
 .acrylHomeApp[aria-pressed="true"] { box-shadow: 0 0 0 1px var(--h-accent); border-color: var(--h-accent); }
 .acrylHomeHead { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.acrylHomeHeadLink { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.acrylHomeHeadLink:hover .acrylHomeName { text-decoration: underline; }
+.acrylHomeHeadLink:focus-visible { outline: 2px solid var(--h-accent); outline-offset: 2px; border-radius: 6px; }
 .acrylHomeIcon { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 8px; color: #fff; font-weight: 600; font-size: 14px; }
 .acrylHomeName { font-weight: 600; overflow-wrap: anywhere; }
 .acrylHomeMeta { color: var(--h-dim); font: 12px/18px ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-wrap: anywhere; }

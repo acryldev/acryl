@@ -1,6 +1,6 @@
 /** The registry reader: only Blends an ACRYL app can be made from, by name, and a reason in words when it cannot be read. */
 import { describe, expect, it } from 'vitest'
-import { readBlends, REGISTRY_DISCOVERED, REGISTRY_INDEX, RegistryUnavailable } from '../src/registry.ts'
+import { readBlends, REGISTRY_DISCOVERED, REGISTRY_INDEX, REGISTRY_PLACEMENT, RegistryUnavailable } from '../src/registry.ts'
 
 const answer = (body: unknown, status = 200) => async () => ({ ok: status < 400, status, json: async () => body })
 
@@ -25,6 +25,40 @@ describe('readBlends', () => {
     ])
     // Shown where the store placed it, with its author.
     expect(blends[1]).toMatchObject({ category: 'Application › Productivity', publisher: 'inboxxobni' })
+  })
+
+  it('files each Blend where the store does, with its page and screenshot, in the store order; one the placement leaves out keeps its own word', async () => {
+    const blends = await readBlends(byUrl({
+      [REGISTRY_INDEX]: { entries: [
+        { id: 'acryl.ade', name: 'ACRYL ADE', runtime: 'acrylblends', origin: 'official', category: 'ai' },
+        { id: 'acrylblends.notes', name: 'Notes', runtime: 'acrylblends', origin: 'official', category: 'notes' },
+      ] },
+      [REGISTRY_PLACEMENT]: {
+        formatVersion: 1,
+        taxonomy: [{ name: 'System' }, { name: 'AI' }],
+        entries: {
+          'acryl.ade': { category: 'AI', subcategory: 'Agent Development Environment (ADE)', page: 'https://acrylblends.github.io/blends/ai/ade/acryl.ade', screenshot: 'https://acrylblends.github.io/registry/blends/acryl.ade/docs/screenshot.png' },
+          'ghost.blend': { category: 'System', subcategory: 'Kernels' },
+        },
+      },
+    }))
+    expect(blends[0]).toMatchObject({
+      id: 'acryl.ade',
+      category: 'AI › Agent Development Environment (ADE)',
+      place: { category: 'AI', subcategory: 'Agent Development Environment (ADE)', order: 1 },
+      page: 'https://acrylblends.github.io/blends/ai/ade/acryl.ade',
+      screenshot: 'https://acrylblends.github.io/registry/blends/acryl.ade/docs/screenshot.png',
+    })
+    expect(blends[1]).toMatchObject({ id: 'acrylblends.notes', category: 'notes' })
+    expect(blends[1]?.place).toBeUndefined()
+  })
+
+  it('lists the Blends without categories when the placement cannot be read, and never takes a page that is not https', async () => {
+    const index = { entries: [{ id: 'acryl.ade', name: 'ACRYL ADE', runtime: 'acrylblends', origin: 'official', category: 'ai' }] }
+    expect((await readBlends(byUrl({ [REGISTRY_INDEX]: index })))[0]).toMatchObject({ id: 'acryl.ade', category: 'ai' })
+    const odd = await readBlends(byUrl({ [REGISTRY_INDEX]: index, [REGISTRY_PLACEMENT]: { taxonomy: [], entries: { 'acryl.ade': { category: 'AI', subcategory: 'ADE', page: 'javascript:alert(1)', screenshot: 'http://x/y.png' } } } }))
+    expect(odd[0]?.page).toBeUndefined()
+    expect(odd[0]?.screenshot).toBeUndefined()
   })
 
   it('still lists the public registry when the community list cannot be read', async () => {

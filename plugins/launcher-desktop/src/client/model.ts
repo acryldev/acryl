@@ -1,5 +1,5 @@
 /** What the screen shows, worked out from the Host's list: pure functions, no DOM (Clean Code: the view only draws these). */
-import type { AppView, Surface } from '../contract.ts'
+import type { AppView, BlendView, Surface } from '../contract.ts'
 
 export type SurfaceFilter = 'all' | Surface
 
@@ -54,3 +54,23 @@ export const folderName = (text: string): string =>
   text.normalize('NFKD').replace(/[\u0300-\u036f]/gu, '').toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^[^a-z]+/u, '').replace(/-+$/u, '')
 
 export const blendAppName = (id: string): string => id.split('.').at(-1)?.replace(/[^a-z0-9-]/gu, '-').replace(/^[^a-z]+/u, '') || 'my-app'
+
+export interface StoreSubcategory { readonly name: string, readonly count: number }
+export interface StoreCategory { readonly name: string, readonly count: number, readonly subs: readonly StoreSubcategory[] }
+
+/** The store's categories that hold at least one of `blends`, in the store's own order, each with its subcategories (by name) and counts. */
+export function storeCategories(blends: readonly BlendView[]): readonly StoreCategory[] {
+  const byName = new Map<string, { order: number, count: number, subs: Map<string, number> }>()
+  for (const blend of blends) {
+    if (blend.place === undefined) continue
+    const category = byName.get(blend.place.category) ?? { order: blend.place.order, count: 0, subs: new Map<string, number>() }
+    category.count += 1
+    if (blend.place.subcategory !== '') category.subs.set(blend.place.subcategory, (category.subs.get(blend.place.subcategory) ?? 0) + 1)
+    byName.set(blend.place.category, category)
+  }
+  return [...byName].sort(([a, x], [b, y]) => x.order - y.order || a.localeCompare(b)).map(([name, category]) => ({
+    name,
+    count: category.count,
+    subs: [...category.subs].sort(([a], [b]) => a.localeCompare(b)).map(([sub, count]) => ({ name: sub, count })),
+  }))
+}

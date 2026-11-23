@@ -380,6 +380,52 @@ describe('the Blends store', () => {
     await waitFor(() => { expect(api.create).toHaveBeenCalledWith({ where: '/h/ACRYL', name: 'notes-desktop', surface: 'web', blend: 'acrylblends.notes-desktop' }) })
   })
 
+  it('browses by category and subcategory, together with who released it', async () => {
+    const PLACED = [
+      { id: 'acryl.ade', name: 'ACRYL ADE', version: '0.2.11', category: 'AI › ADE', description: 'the agent development environment', origin: 'official' as const, place: { category: 'AI', subcategory: 'ADE', order: 5 } },
+      { id: 'acrylblends.acryl-ade-eb', name: 'ACRYL ADE (Electrobun)', version: '0.1.0', category: 'AI › ADE', description: 'the ADE, smallest build', origin: 'official' as const, place: { category: 'AI', subcategory: 'ADE', order: 5 } },
+      { id: 'acrylblends.sde', name: 'SDE', version: '0.1.0', category: 'AI › SDE', description: 'synthetic data', origin: 'official' as const, place: { category: 'AI', subcategory: 'SDE', order: 5 } },
+      { id: 'ana.shop', name: 'Shop', version: '0.1.0', category: 'Business › Shops', description: 'a shop', origin: 'community' as const, source: 'github:ana/shop#v0.1.0', place: { category: 'Business', subcategory: 'Shops', order: 2 } },
+    ]
+    open(fake(state([]), { blends: vi.fn(async () => PLACED) }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    const categories = await screen.findByRole('group', { name: 'Categories' })
+    // In the store's own order (Business before AI here), each with how many Blends it holds.
+    expect(within(categories).getAllByRole('button').map(button => button.textContent)).toEqual(['All categories', 'Business (1)', 'AI (3)'])
+    fireEvent.click(within(categories).getByRole('button', { name: 'AI (3)' }))
+    expect(screen.queryByText('Shop')).toBeNull()
+    const subs = screen.getByRole('group', { name: 'Subcategories of AI' })
+    fireEvent.click(within(subs).getByRole('button', { name: 'ADE (2)' }))
+    expect(screen.getByText('ACRYL ADE (Electrobun)')).toBeTruthy()
+    expect(screen.queryByText('SDE')).toBeNull()
+    // Community only: no AI Blend is community, so the AI category leaves the list.
+    fireEvent.click(screen.getByRole('button', { name: 'Community (1)' }))
+    expect(within(screen.getByRole('group', { name: 'Categories' })).getAllByRole('button').map(button => button.textContent)).toEqual(['All categories', 'Business (1)'])
+  })
+
+  it('opens a Blend page with its picture, what it is and where it sits, and makes an app from there', async () => {
+    const ADE = { id: 'acrylblends.acryl-ade-eb', name: 'ACRYL ADE (Electrobun)', version: '0.1.0', category: 'AI › ADE', description: 'ACRYL ADE in its smallest build: everything on Bun', origin: 'official' as const, place: { category: 'AI', subcategory: 'ADE', order: 5 }, page: 'https://acrylblends.github.io/blends/ai/ade/acrylblends.acryl-ade-eb', screenshot: 'https://acrylblends.github.io/registry/blends/acrylblends.acryl-ade-eb/docs/screenshot.png' }
+    const opened: string[] = []
+    const api = fake(state([]), { blends: vi.fn(async () => [ADE]) })
+    open(api, new LauncherVisibility(true), url => opened.push(url))
+    fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open ACRYL ADE (Electrobun)' }))
+    const page = screen.getByRole('article', { name: 'ACRYL ADE (Electrobun)' })
+    expect((within(page).getByRole('img') as HTMLImageElement).src).toBe(ADE.screenshot)
+    expect(within(page).getByText(/everything on Bun/u)).toBeTruthy()
+    expect(screen.getByText('AI › ADE', { selector: '.acrylHomeMeta' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Open its store page' }))
+    expect(opened).toEqual([ADE.page])
+    // Back to the list, and in again.
+    fireEvent.click(screen.getByRole('button', { name: '‹ All Blends' }))
+    expect(screen.queryByRole('article')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Open ACRYL ADE (Electrobun)' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Make an app' }))
+    expect((await screen.findByRole('textbox', { name: 'Name' }) as HTMLInputElement).value).toBe('acryl-ade-eb')
+    fireEvent.click(screen.getByRole('button', { name: 'Make it' }))
+    await waitFor(() => { expect(api.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'acryl-ade-eb', blend: 'acrylblends.acryl-ade-eb' })) })
+  })
+
   it('says why the registry could not be read and tries again', async () => {
     let attempts = 0
     const api = fake(state([]), { blends: vi.fn(async () => { attempts += 1; if (attempts === 1) throw new Error('The registry could not be read. Check the network and try again.'); return BLENDS }) })

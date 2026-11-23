@@ -134,6 +134,18 @@ export interface BlendView {
   readonly source?: string
   /** A community Blend's GitHub owner, shown as "by @owner". */
   readonly publisher?: string
+  /** Where the store files it (the registry's placement.json): its category and subcategory; `order` is the category's place in the store's list. */
+  readonly place?: BlendPlace
+  /** Its page on the store (https), when the registry names one. */
+  readonly page?: string
+  /** A picture of its first page (https), when the Blend has one. */
+  readonly screenshot?: string
+}
+
+export interface BlendPlace {
+  readonly category: string
+  readonly subcategory: string
+  readonly order: number
 }
 
 export interface BlendsResponse {
