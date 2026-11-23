@@ -10,6 +10,8 @@ export default defineConfig({
     alias: { '@acryldev/loopback-http/router': fileURLToPath(new URL('../../runtime/loopback-http/src/router.ts', import.meta.url)) },
   },
   test: {
+    // Node 25 and later have their own localStorage, which hides jsdom's (window.localStorage is undefined); the tests use jsdom's.
+    execArgv: ['--no-experimental-webstorage'],
     environment: 'node',
     include: ['tests/**/*.spec.{ts,tsx}'],
     setupFiles: ['../../scripts/testing/isolate-home.ts', './tests/setup.ts'],
