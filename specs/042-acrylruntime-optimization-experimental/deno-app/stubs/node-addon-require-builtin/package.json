@@ -1,0 +1,7 @@
+{
+  "name": "node-addon-require-builtin",
+  "version": "0.1.7",
+  "description": "AcrylDeno stub: same API as the real package, never loads a native addon. Specs/042 F13.",
+  "main": "index.js",
+  "license": "MIT"
+}
