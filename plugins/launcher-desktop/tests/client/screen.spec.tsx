@@ -391,7 +391,8 @@ describe('the Blends store', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Blends store' }))
     const categories = await screen.findByRole('group', { name: 'Categories' })
     // In the store's own order (Business before AI here), each with how many Blends it holds.
-    expect(within(categories).getAllByRole('button').map(button => button.textContent)).toEqual(['All categories', 'Business (1)', 'AI (3)'])
+    const names = (group: HTMLElement): string[] => within(group).getAllByRole('button').map(button => button.getAttribute('aria-label') ?? '')
+    expect(names(categories)).toEqual(['All categories (4)', 'Business (1)', 'AI (3)'])
     fireEvent.click(within(categories).getByRole('button', { name: 'AI (3)' }))
     expect(screen.queryByText('Shop')).toBeNull()
     const subs = screen.getByRole('group', { name: 'Subcategories of AI' })
@@ -400,7 +401,7 @@ describe('the Blends store', () => {
     expect(screen.queryByText('SDE')).toBeNull()
     // Community only: no AI Blend is community, so the AI category leaves the list.
     fireEvent.click(screen.getByRole('button', { name: 'Community (1)' }))
-    expect(within(screen.getByRole('group', { name: 'Categories' })).getAllByRole('button').map(button => button.textContent)).toEqual(['All categories', 'Business (1)'])
+    expect(names(screen.getByRole('group', { name: 'Categories' }))).toEqual(['All categories (1)', 'Business (1)'])
   })
 
   it('opens a Blend page with its picture, what it is and where it sits, and makes an app from there', async () => {

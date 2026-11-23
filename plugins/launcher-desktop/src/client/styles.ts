@@ -64,6 +64,14 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHomeDesc { margin: 0; color: var(--h-dim); font-size: 13px; line-height: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .acrylHomeRow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 20px; }
 .acrylHomeCardFoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; }
+.acrylHomeCardFoot[data-wrap] { flex-wrap: wrap; justify-content: flex-start; }
+.acrylHomePill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acrylHomeStore { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.acrylHomeStoreCats { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; max-height: calc(100vh - 140px); overflow-y: auto; }
+.acrylHomeStoreCats .acrylHomeNavItem { height: auto; min-height: 30px; padding: 5px 10px; gap: 8px; }
+.acrylHomeStoreCats .acrylHomeNavItem[aria-pressed="true"] { background: var(--h-fill); color: var(--h-text); }
+.acrylHomeStoreMain { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+@media (max-width: 760px) { .acrylHomeStore { grid-template-columns: minmax(0, 1fr); } .acrylHomeStoreCats { position: static; max-height: 220px; } }
 .acrylHomeState { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--h-dim); }
 .acrylHomeState[data-state="running"], .acrylHomeState[data-state="starting"] { color: var(--h-ok); }
 .acrylHomeState[data-state="missing"] { color: var(--h-warn); }
@@ -111,6 +119,7 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHome[data-skin="site"] .acrylHomeMain { background-image: linear-gradient(to right, var(--h-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--h-grid) 1px, transparent 1px); background-size: 64px 64px; background-position: -1px -1px; }
 .acrylHome[data-skin="site"] .acrylHomeBrand { font-size: 12px; font-weight: 650; letter-spacing: .31em; text-transform: uppercase; }
 .acrylHome[data-skin="site"] .acrylHomeNavItem { height: 34px; font-size: 10px; letter-spacing: .1em; border-left: 2px solid transparent; }
+.acrylHome[data-skin="site"] .acrylHomeStoreCats .acrylHomeNavItem[aria-pressed="true"] { border-left-color: var(--h-text); background: var(--h-fill); color: var(--h-text); font-weight: 500; }
 .acrylHome[data-skin="site"] .acrylHomeNavItem[aria-current="page"] { border-left-color: var(--h-text); background: var(--h-fill); color: var(--h-text); font-weight: 500; }
 .acrylHome[data-skin="site"] .acrylHomeBtn { height: 34px; padding: 0 14px; border: 1px solid var(--h-border); background: transparent; color: var(--h-text); font-size: 9px; font-weight: 500; transition: background .16s ease, color .16s ease, border-color .16s ease; }
 .acrylHome[data-skin="site"] .acrylHomeBtn:hover:not(:disabled) { border-color: var(--h-text); background: transparent; color: var(--h-text); }

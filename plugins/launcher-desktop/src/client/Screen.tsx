@@ -605,37 +605,41 @@ function StoreView({ api, state, onCreate, openExternal }: { api: LauncherApi, s
         <button type="button" className="acrylHomeChip" aria-pressed={origin === 'official'} title="Released by the ACRYL project" onClick={() => { setOrigin('official') }}>Official ({count('official')})</button>
         <button type="button" className="acrylHomeChip" aria-pressed={origin === 'community'} title="Released by people outside the ACRYL project; their code is not reviewed" onClick={() => { setOrigin('community') }}>Community ({count('community')})</button>
       </div>
-      {categories.length === 0 ? null : (
-        <div className="acrylHomeRow" role="group" aria-label="Categories" style={{ flexWrap: 'wrap' }}>
-          <button type="button" className="acrylHomeChip" aria-pressed={category === undefined} onClick={() => { choose(undefined) }}>All categories</button>
-          {categories.map(entry => <button key={entry.name} type="button" className="acrylHomeChip" aria-pressed={category === entry.name} onClick={() => { choose(entry.name) }}>{entry.name} ({entry.count})</button>)}
-        </div>
-      )}
-      {current === undefined || current.subs.length === 0 ? null : (
-        <div className="acrylHomeRow" role="group" aria-label={`Subcategories of ${current.name}`} style={{ flexWrap: 'wrap' }}>
-          <button type="button" className="acrylHomeChip" aria-pressed={subcategory === undefined} onClick={() => { setSubcategory(undefined) }}>All of {current.name}</button>
-          {current.subs.map(entry => <button key={entry.name} type="button" className="acrylHomeChip" aria-pressed={subcategory === entry.name} onClick={() => { setSubcategory(entry.name) }}>{entry.name} ({entry.count})</button>)}
-        </div>
-      )}
-      {failed !== undefined ? <p className="acrylHomeNote" data-error role="alert">{failed} <button type="button" className="acrylHomeBtn" data-small onClick={() => { setAttempt(attempt + 1) }}>Try again</button></p> : null}
-      {blends === undefined && failed === undefined ? <p className="acrylHomeNote">Reading the registry...</p> : null}
-      {blends !== undefined && shown.length === 0 ? <p className="acrylHomeNote">No Blend matches.</p> : null}
-      <div className="acrylHomeCards">
-        {shown.map(blend => (
-          <div className="acrylHomeApp" key={blend.id}>
-            <button type="button" className="acrylHomeHead acrylHomeHeadLink" title={`Open ${blend.name}: its picture and what it is`} aria-label={`Open ${blend.name}`} onClick={() => { setViewing(blend); setChosen(undefined) }}>
-              <div className="acrylHomeIcon" style={{ background: iconColor(blend.id) }}>{initial(blend.name)}</div>
-              <div style={{ minWidth: 0 }}><div className="acrylHomeName">{blend.name}</div><div className="acrylHomeMeta">{blend.id}</div></div>
-            </button>
-            <p className="acrylHomeDesc">{blend.description}</p>
-            <div className="acrylHomeCardFoot">
-              <OriginPills blend={blend} />
-              <button type="button" className="acrylHomeBtn" data-small onClick={() => { setViewing(blend); setChosen(undefined) }}>View</button>
-              <button type="button" className="acrylHomeBtn" data-small title={`Opens WebBoxes.ai on ${blend.name}: sign in, press Create, then Publish`} onClick={() => { openExternal(webboxesDeployBlendUrl(blend)) }}>Deploy to WebBoxes.ai</button>
-              <button type="button" className="acrylHomeBtn" data-small data-primary disabled={state === undefined} onClick={() => { setChosen(blend) }}>Make an app</button>
-            </div>
+      <div className="acrylHomeStore">
+        {categories.length === 0 ? <div /> : (
+          <div className="acrylHomeStoreCats" role="group" aria-label="Categories">
+            <button type="button" className="acrylHomeNavItem" aria-pressed={category === undefined} aria-label={`All categories (${String(byOrigin.length)})`} onClick={() => { choose(undefined) }}><span>All categories</span><span className="acrylHomeCount">{byOrigin.length}</span></button>
+            {categories.map(entry => <button key={entry.name} type="button" className="acrylHomeNavItem" aria-pressed={category === entry.name} aria-label={`${entry.name} (${String(entry.count)})`} onClick={() => { choose(entry.name) }}><span>{entry.name}</span><span className="acrylHomeCount">{entry.count}</span></button>)}
           </div>
-        ))}
+        )}
+        <div className="acrylHomeStoreMain">
+          {current === undefined || current.subs.length === 0 ? null : (
+            <div className="acrylHomeRow" role="group" aria-label={`Subcategories of ${current.name}`}>
+              <button type="button" className="acrylHomeChip" aria-pressed={subcategory === undefined} onClick={() => { setSubcategory(undefined) }}>All of {current.name}</button>
+              {current.subs.map(entry => <button key={entry.name} type="button" className="acrylHomeChip" aria-pressed={subcategory === entry.name} onClick={() => { setSubcategory(entry.name) }}>{entry.name} ({entry.count})</button>)}
+            </div>
+          )}
+          {failed !== undefined ? <p className="acrylHomeNote" data-error role="alert">{failed} <button type="button" className="acrylHomeBtn" data-small onClick={() => { setAttempt(attempt + 1) }}>Try again</button></p> : null}
+          {blends === undefined && failed === undefined ? <p className="acrylHomeNote">Reading the registry...</p> : null}
+          {blends !== undefined && shown.length === 0 ? <p className="acrylHomeNote">No Blend matches.</p> : null}
+          <div className="acrylHomeCards">
+            {shown.map(blend => (
+              <div className="acrylHomeApp" key={blend.id}>
+                <button type="button" className="acrylHomeHead acrylHomeHeadLink" title={`Open ${blend.name}: its picture and what it is`} aria-label={`Open ${blend.name}`} onClick={() => { setViewing(blend); setChosen(undefined) }}>
+                  <div className="acrylHomeIcon" style={{ background: iconColor(blend.id) }}>{initial(blend.name)}</div>
+                  <div style={{ minWidth: 0 }}><div className="acrylHomeName">{blend.name}</div><div className="acrylHomeMeta">{blend.id}</div></div>
+                </button>
+                <p className="acrylHomeDesc">{blend.description}</p>
+                <OriginPills blend={blend} />
+                <div className="acrylHomeCardFoot" data-wrap="">
+                  <button type="button" className="acrylHomeBtn" data-small onClick={() => { setViewing(blend); setChosen(undefined) }}>View</button>
+                  <button type="button" className="acrylHomeBtn" data-small title={`Opens WebBoxes.ai on ${blend.name}: sign in, press Create, then Publish`} onClick={() => { openExternal(webboxesDeployBlendUrl(blend)) }}>Deploy to WebBoxes.ai</button>
+                  <button type="button" className="acrylHomeBtn" data-small data-primary disabled={state === undefined} onClick={() => { setChosen(blend) }}>Make an app</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -646,7 +650,7 @@ function OriginPills({ blend }: { blend: BlendView }): ReactNode {
   return (
     <div className="acrylHomeRow">{blend.origin === 'official'
       ? <span className="acrylHomePill" title="Released by the ACRYL project">Official</span>
-      : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.publisher === undefined ? null : <span className="acrylHomeMeta">by @{blend.publisher}</span>}{blend.category === '' ? null : <span className="acrylHomePill">{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
+      : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}{blend.publisher === undefined ? null : <span className="acrylHomeMeta">by @{blend.publisher}</span>}{blend.category === '' ? null : <span className="acrylHomePill" title={blend.category}>{blend.category}</span>}{blend.version === '' ? null : <span className="acrylHomeMeta">{blend.version}</span>}</div>
   )
 }
 
