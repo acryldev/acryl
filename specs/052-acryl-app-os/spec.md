@@ -1,6 +1,6 @@
 # Spec 052 - ACRYL as an app OS: shared runtimes, real app icons, export
 
-Status (2026-11-23): written, nothing built. Tasks: [`tasks.md`](tasks.md).
+Status (2026-11-24): written, nothing built. WebBoxes first (owner 2026-11-24): D9, D10. Tasks: [`tasks.md`](tasks.md).
 
 ## The owner's words (2026-11-23)
 
@@ -41,6 +41,30 @@ platform's mess (bundles, shortcuts, `.desktop` files, packers). *DDD Distilled*
 machine"; launchers, exports and the runtime store are its concepts, not each app's. *Clean Code* - one name per concept: an **app**
 (a folder with `blend.yaml`), a **runtime** (Electron, Bun, Electrobun at one version), the **store** (shared packages), a **launcher** (the
 OS-side icon that starts an app), an **installer** (a DMG, exe or deb made by export).
+
+## WebBoxes first: what a box costs (measured on z370n, 2026-11-24, read-only)
+
+The owner (2026-11-24): the shared runtime and store are "first of all useful for webboxes.ai where we absolutely need to re-use resources
+as we pay for it".
+
+| | Disk | Memory |
+|---|---|---|
+| a box (editor), `/workspace` volume | ~400 MB, of which `node_modules` 394 MB | 60-140 MB (one Node host) |
+| its published copy (`-prod`) | another ~400 MB, the same files | its own process |
+| the app's own code | 4-50 MB | |
+| the box images (`webbox-acryl:*`) | 0.9-1.85 GB each, but shared layers: 6-8 kB unique per image | - |
+
+About 98 % of a box's disk is the framework's packages, copied into every box volume (21 volumes on 2026-11-24; 100 boxes would be ~80 GB
+of the same bytes). Images are already shared by Docker; the copies are in the volumes.
+
+- **D9 WebBoxes: the store is a read-only image layer.** Hard links do not cross Docker volumes (D2 needs one file system mount), so on the
+  server the shared part is a layer of the box image: the framework's `node_modules` for that `@acryldev/blends` version, read-only, shared
+  on disk by every box of that version (overlayfs). A box's volume holds only its own code and the packages its app adds (resolved before
+  the shared layer). A published copy (`-prod`) mounts the same layer and its own code only. An app on another Blends version gets that
+  version's image. Accepted when a new box adds under 50 MB to the server's disk (measured with `du` of its volume), its app, terminal,
+  agent and Update work, and a published copy adds the size of its own code only.
+- **D10 WebBoxes: idle boxes sleep.** Memory is the other bill: a box that nobody used for a while is stopped and started again on the next
+  request (its first answer waits for the start). Measured before it is designed: start time of a box and how many boxes are idle.
 
 ## Decisions
 

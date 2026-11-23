@@ -2,6 +2,15 @@
 
 Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done when its proof ran on the named machines.
 
+## Phase 0 - WebBoxes (D9, D10), first
+
+- [ ] T030 The box image carries the framework's `node_modules` for its `@acryldev/blends` version as a read-only layer; the app in the
+  volume resolves its own packages first, then the shared layer. Proof on z370n: a new box adds under 50 MB to its volume; its app,
+  terminal, agent and Update work; Deploy's published copy adds only its code.
+- [ ] T031 Existing boxes move to the shared layer by reinstall (D8), one at a time, each checked before the next.
+- [ ] T032 Measure for D10: a box's cold start time, and how many boxes had no request in the last hour/day.
+- [ ] T033 Idle boxes sleep and wake on the next request (after T032 says the start is short enough).
+
 ## Phase 1 - Shared runtimes and store (D1, D2, D8)
 
 - [ ] T001 Measure the baseline on macOS (AION), Windows (mbpi9win), Ubuntu (z370n): a Control Center copy and one store app, sum of file
