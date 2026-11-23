@@ -85,6 +85,10 @@ verify and check:layout and all 23 framework check steps green before it lands.
   2026-11-21/22 (Fork6): the door itself answers in the installed products, packed from their repositories: Control Center v0.2.9, ADE v0.2.6, SDE
   v0.1.5 on macOS, Windows and Linux (`acryl window list`, `brief`; `frame close/open left` in a real page for Control Center and the store apps).
   Open: an agent (the chat through its `door_*` tools, a PTY agent) driving the installed ADE.
+  2026-11-23: the chat of the installed ADE (release DMG v0.2.11, macOS arm64, scratch HOME, DeepSeek) read the page with `door_look`
+  and clicked with `door_act`, no shell. It found a real bug: after Collapse sidebar the rail was empty and the sidebar could not be
+  opened again (fixed 88c0383d, @acryldev/workspace 0.2.5 + blends-frame 0.2.17, ADE v0.2.12). On v0.2.12 the chat collapsed the
+  sidebar, clicked Expand sidebar and saw the Projects list back. Still open: a PTY agent driving the installed ADE; Windows and Linux.
 
 - [x] T024 [guard] The cross-package relative imports are gone (051-t017): `@acryldev/framework` imports `@acryldev/router` (new `/core`,
   `/connection`, `/conninfo` subpaths), `@acryldev/node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
