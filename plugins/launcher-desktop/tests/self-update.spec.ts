@@ -46,10 +46,10 @@ describe('selfView', () => {
   it('follows an update from its files: running, done until the app is opened again, failed with its output', () => {
     const files = memory()
     const command = selfUpdateCommand(copy, '0.2.15', files, '/h/.acryl', 1000)
-    expect(command).toMatchObject({ program: 'node', cwd: copy.folder, log: '/h/.acryl/logs/control-center-update.log' })
+    expect(command).toMatchObject({ program: 'node', cwd: copy.folder, log: join('/h/.acryl', 'logs', 'control-center-update.log') })
     files.write(command.log, 'npm http fetch GET 200\n')
     expect(selfView(copy, '0.2.15', files, '/h/.acryl', 0, newer)).toMatchObject({ status: 'updating', update: '0.2.15', since: 1000, output: 'npm http fetch GET 200' })
-    files.write('/h/.acryl/logs/control-center-update.end', '0')
+    files.write(join('/h/.acryl', 'logs', 'control-center-update.end'), '0')
     // This process began before the update ended: open the app again to run the new release.
     expect(selfView({ ...copy, version: '0.2.15' }, '0.2.15', files, '/h/.acryl', 0, newer)).toMatchObject({ status: 'done', update: '0.2.15' })
     // Opened again after it ended: the record is cleared, nothing to say.
@@ -57,8 +57,8 @@ describe('selfView', () => {
     expect(files.files.size).toBe(1)
 
     selfUpdateCommand(copy, '0.2.15', files, '/h/.acryl', 2000)
-    files.write('/h/.acryl/logs/control-center-update.log', 'CONFLICT (content): Merge conflict in src/routes.ts\n')
-    files.write('/h/.acryl/logs/control-center-update.end', '1')
+    files.write(join('/h/.acryl', 'logs', 'control-center-update.log'), 'CONFLICT (content): Merge conflict in src/routes.ts\n')
+    files.write(join('/h/.acryl', 'logs', 'control-center-update.end'), '1')
     expect(selfView(copy, '0.2.15', files, '/h/.acryl', 0, newer)).toMatchObject({ status: 'failed', output: 'CONFLICT (content): Merge conflict in src/routes.ts' })
   })
 
