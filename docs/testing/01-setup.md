@@ -51,6 +51,7 @@ published packages in their own repositories: the terminal agent in acryl-termin
 ```bash
 git clone https://github.com/acryldev/acryl.git
 cd acryl
+npm install -g corepack                  # only on Node 25 and later, which no longer include Corepack
 corepack pnpm run upstream:sync          # the pinned DeepSeek Harness submodule (about 2 min)
 corepack pnpm install --frozen-lockfile
 corepack pnpm run build                  # about 2 to 4 min

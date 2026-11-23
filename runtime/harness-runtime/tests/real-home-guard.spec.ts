@@ -127,8 +127,10 @@ async function olderHolder(file: string): Promise<void> {
 
 const pause = ['-e', 'setTimeout(() => {}, 1200)']
 
-// lsof and ps -o lstart do not exist on Windows; there the guard excuses nothing, which fails safe.
-describe.skipIf(process.platform === 'win32')('the real-home guard and processes older than the gate', () => {
+// lsof and ps -o lstart do not exist on Windows, and a minimal Linux (Arch, Omarchy) ships no lsof; there the guard excuses nothing, which fails
+// safe, so these cases need lsof to run.
+const hasLsof = process.platform !== 'win32' && spawnSync('lsof', ['-v'], { stdio: 'ignore' }).error === undefined
+describe.skipIf(!hasLsof)('the real-home guard and processes older than the gate', () => {
   it('excuses a file only a process older than the gate holds open, and names both', async () => {
     const osHome = home()
     const wal = join(osHome, '.dsh', 'state', 'superagent', 'orchestrator.sqlite-wal')

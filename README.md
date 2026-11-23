@@ -90,11 +90,13 @@ ACRYL builds on [Cordis](https://github.com/cordiverse/cordis), the meta-framewo
 
 ## Run from source
 
-Requirements: Node.js `^22.19.0` or `>=24.0.0`, Corepack (selects the pinned PNPM 12.14.0).
+Requirements: Node.js `^22.19.0` or `>=24.0.0`, Corepack (selects the pinned PNPM 12.14.0). Node 25 and later no longer include
+Corepack (Arch Linux, Omarchy and mise install the newest Node): run `npm install -g corepack` once first.
 
 ```sh
 corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
+corepack pnpm run build
 corepack pnpm run verify
 ```
 

@@ -92,11 +92,13 @@ ACRYL 构建在 [Cordis](https://github.com/cordiverse/cordis)（可组合插件
 
 ## 从源码运行
 
-要求：Node.js `^22.19.0` 或 `>=24.0.0`，Corepack（它会选择固定的 PNPM 12.14.0）。
+要求：Node.js `^22.19.0` 或 `>=24.0.0`，Corepack（它会选择固定的 PNPM 12.14.0）。Node 25 及更高版本不再自带
+Corepack（Arch Linux、Omarchy 和 mise 会安装最新的 Node）：请先运行一次 `npm install -g corepack`。
 
 ```sh
 corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
+corepack pnpm run build
 corepack pnpm run verify
 ```
 

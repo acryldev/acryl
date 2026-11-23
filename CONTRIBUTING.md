@@ -28,6 +28,7 @@ Plugins that follow the manifesto coexist better with other plugins and will be 
 ### Development environment
 
 ```sh
+npm install -g corepack   # only on Node 25 and later, which no longer include Corepack
 corepack pnpm run upstream:sync
 corepack pnpm install --frozen-lockfile
 corepack pnpm run check   # full headless gate: build, typecheck, tests, and smokes
