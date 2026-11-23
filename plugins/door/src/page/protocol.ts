@@ -140,6 +140,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => value !==
 const invalid = (message: string): never => { throw new UiControlError('invalid', message) }
 
 function ref(value: unknown): string {
+  if (value === undefined) return invalid('ref is missing: name the element by its ref from the latest look (like 3.17; on the command line --ref 3.17)')
   if (typeof value !== 'string' || !REF.test(value)) return invalid('ref must look like 3.17, from the latest snapshot')
   return value
 }

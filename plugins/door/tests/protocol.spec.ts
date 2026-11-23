@@ -25,6 +25,11 @@ describe('parseUiRequest', () => {
     ['a wait that is too long', { op: 'wait', text: 'x', timeoutMs: 60_000 }], ['a negative cursor', { op: 'snapshot', cursor: -1 }],
     ['too many nodes', { op: 'snapshot', maxNodes: 100_000 }],
   ])('refuses %s', (_name, value) => { expect(invalid(value)).toBe(true) })
+
+  it('says a missing ref is missing, not malformed', () => {
+    expect(() => parseUiRequest({ op: 'click' })).toThrow(/ref is missing: .*--ref 3\.17/)
+    expect(() => parseUiRequest({ op: 'click', ref: '2' })).toThrow(/ref must look like 3\.17/)
+  })
 })
 
 describe('channel messages', () => {
