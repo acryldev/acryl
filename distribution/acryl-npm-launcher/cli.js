@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { createdAppName, forwardCommand, launcherCommand } from './forward.js'
 import { readSecret } from './secret-input.js'
 import { forwardStopSignals, runtimeCommand, runtimeLauncher, targetFor, targetPackageName } from './runtime.js'
-import { MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
+import { MANAGED, managedEnv, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from './managed.js'
 import { acquireDesktopInstaller } from './desktop-runtime.js'
 import { firstAddress, installedControlCenter, opensBrowser } from './control-center.js'
 import { DESKTOP_MOVED, HELP } from './help.js'
@@ -205,7 +205,8 @@ async function openLauncherBlend({ surface, update, noUpdate }) {
   }
   mkdirSync(ACRYL_HOME, { recursive: true })
   const steps = managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context(), update: !noUpdate })
-  process.exitCode = surface === 'web' ? await runStepsOpening(steps, await appEnvironment()) : await runSteps(steps, await appEnvironment())
+  const env = { ...(await appEnvironment()), ...managedEnv(MANAGED.launcher) }
+  process.exitCode = surface === 'web' ? await runStepsOpening(steps, env) : await runSteps(steps, env)
 }
 
 /** `acryl store [words]`: the Blends `acryl make <name> --from <id>` can make, one per line (id, name, category, Official or Community), the words narrowing it. */
@@ -224,7 +225,7 @@ async function openAde(adeArgs) {
   if (chosen.error) throw new Error(chosen.error)
   if (chosen.surface === 'tui') return openTerminalAgent(chosen.rest)
   mkdirSync(ACRYL_HOME, { recursive: true })
-  const env = { ...(await appEnvironment()), ...openFolderEnv(process.cwd(), { userHome: homedir(), acrylHome: ACRYL_HOME }) }
+  const env = { ...(await appEnvironment()), ...managedEnv(MANAGED.ade), ...openFolderEnv(process.cwd(), { userHome: homedir(), acrylHome: ACRYL_HOME }) }
   process.exitCode = await runSteps(managedSteps(MANAGED.ade, chosen.surface, { home: ACRYL_HOME, context: context() }), env)
 }
 

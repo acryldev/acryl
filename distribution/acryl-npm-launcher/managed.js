@@ -15,6 +15,12 @@ export const MANAGED = Object.freeze({
   launcher: Object.freeze({ id: 'acryl.control-center', folder: 'control-center', title: 'ACRYL Control Center' }),
 })
 
+/**
+ * The name a managed copy shows (window title, About, Dock, the frame's header): its product's, not its folder's. Making the copy gives it the folder's
+ * name in its blend.yaml, as it does every app a person makes; the copy is ACRYL's product, so its start names it (`ACRYLBLENDS_NAME`, read by @acryldev/instance).
+ */
+export const managedEnv = app => ({ ACRYLBLENDS_NAME: app.title })
+
 /** The surfaces a managed Blend opens on, and the app script that opens it there. */
 export const SURFACES = Object.freeze({ web: 'dev', gui: 'desktop' })
 

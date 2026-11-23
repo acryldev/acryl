@@ -68,3 +68,9 @@ test('acryl ade passes the folder it was started in, but not the home or ACRYL\'
   assert.deepEqual(openFolderEnv('/u/.acryl/ade', homes), {})
   assert.deepEqual(openFolderEnv('/u/.acryl-notes', homes), { ACRYL_OPEN_FOLDER: '/u/.acryl-notes' })
 })
+
+test('a managed copy starts under its product name, not its folder name', async () => {
+  const { managedEnv } = await import('../managed.js')
+  assert.deepEqual(managedEnv(MANAGED.launcher), { ACRYLBLENDS_NAME: 'ACRYL Control Center' })
+  assert.deepEqual(managedEnv(MANAGED.ade), { ACRYLBLENDS_NAME: 'ACRYL ADE' })
+})
