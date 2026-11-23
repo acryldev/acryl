@@ -88,7 +88,9 @@ verify and check:layout and all 23 framework check steps green before it lands.
   2026-11-23: the chat of the installed ADE (release DMG v0.2.11, macOS arm64, scratch HOME, DeepSeek) read the page with `door_look`
   and clicked with `door_act`, no shell. It found a real bug: after Collapse sidebar the rail was empty and the sidebar could not be
   opened again (fixed 88c0383d, @acryldev/workspace 0.2.5 + blends-frame 0.2.17, ADE v0.2.12). On v0.2.12 the chat collapsed the
-  sidebar, clicked Expand sidebar and saw the Projects list back. Still open: a PTY agent driving the installed ADE; Windows and Linux.
+  sidebar, clicked Expand sidebar and saw the Projects list back. Pi 1.5.2 (DeepSeek, `pi -p` in the installed app's folder, bash only)
+  did the same round trip through `.acryl/bin/acryl look` and `act click --ref`. Still open: Pi from the panel's PTY tab of the
+  installed ADE (run here in print mode beside it); Windows and Linux.
 
 - [x] T024 [guard] The cross-package relative imports are gone (051-t017): `@acryldev/framework` imports `@acryldev/router` (new `/core`,
   `/connection`, `/conninfo` subpaths), `@acryldev/node-server` (new `/adapter`, `/conninfo`, `/upgrade-hub`, `/register`, `/serve-static`,
