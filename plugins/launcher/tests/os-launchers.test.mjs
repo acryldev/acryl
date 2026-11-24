@@ -27,6 +27,9 @@ function scratch(run) {
     return run({ root, user, home, folder, calls, exec })
   } finally { rmSync(root, { recursive: true, force: true }) }
 }
+// These write a Linux or macOS launcher into a real scratch folder: on a Windows runner that folder is a Windows path, which the posix rules of the
+// simulated OS cannot read. The Windows launcher has its own tests above and was walked on Windows 10.
+const POSIX_HOME = { skip: process.platform === 'win32' && 'a simulated Linux or macOS home needs a posix scratch path' }
 const app = folder => ({ id: 'shop', name: 'My Shop', folder })
 
 test('what each OS writes, as data', () => {
@@ -112,7 +115,7 @@ for (const platform of ['linux', 'darwin']) {
   }))
 }
 
-test('a moved Node.js rewrites the launcher; a renamed app does not leave the old one', () => scratch(({ user, home, folder, exec }) => {
+test('a moved Node.js rewrites the launcher; a renamed app does not leave the old one', POSIX_HOME, () => scratch(({ user, home, folder, exec }) => {
   addApp(home, { path: folder, surface: 'desktop' })
   const file = join(user, '.local', 'share', 'applications', 'acryl-shop.desktop')
   addToApplications({ platform: 'linux', home, node: '/old/node', app: 'shop', sourceDir: SOURCE, exec })
@@ -125,7 +128,7 @@ test('a moved Node.js rewrites the launcher; a renamed app does not leave the ol
   assert.match(readFileSync(file, 'utf8'), /Name=Shop Two/u)
 }))
 
-test('the answer to the one-time offer is kept; removing the last launcher keeps it', () => scratch(({ home, folder, exec }) => {
+test('the answer to the one-time offer is kept; removing the last launcher keeps it', POSIX_HOME, () => scratch(({ home, folder, exec }) => {
   assert.equal(offeredLauncher(home), undefined)
   recordOffer(home, 'no')
   assert.equal(offeredLauncher(home), 'no')
@@ -141,7 +144,7 @@ test('the Windows script path is run through PowerShell with the values in the e
   assert.equal(plan.lnk.path.endsWith('\\ACRYL\\A -b- $c.lnk'), true)
 })
 
-test('acryl apps add-to-applications and remove-from-applications are the same actions as the screen\'s buttons', () => scratch(({ user, home, folder, exec }) => {
+test('acryl apps add-to-applications and remove-from-applications are the same actions as the screen\'s buttons', POSIX_HOME, () => scratch(({ user, home, folder, exec }) => {
   addApp(home, { path: folder, surface: 'desktop' })
   const out = []
   const err = []
@@ -164,7 +167,7 @@ test('the PowerShell script holds no backslash (a JavaScript template eats one: 
   assert.equal(WINDOWS_SCRIPT.includes('\\'), false)
 })
 
-test('the call Fork3 makes: an app object with its own icon in, an app object with an id out', () => scratch(({ user, home, folder, exec }) => {
+test('the call Fork3 makes: an app object with its own icon in, an app object with an id out', POSIX_HOME, () => scratch(({ user, home, folder, exec }) => {
   writeFileSync(join(folder, 'own.png'), 'png')
   const result = addToApplications({ platform: 'linux', home, node: '/usr/bin/node', app: { id: 'aos', name: 'ACRYL AOS', folder, icon: join(folder, 'own.png') }, sourceDir: SOURCE, exec })
   assert.ok(result.written.includes(join(user, '.local', 'share', 'applications', 'acryl-aos.desktop')))
