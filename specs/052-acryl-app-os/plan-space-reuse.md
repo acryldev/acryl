@@ -39,9 +39,28 @@ hard links (one file on disk, many names), which is what D1 and D2 of this spec 
 
 So the plan below starts from 1 and 2, and uses a package store only for what an app adds on top.
 
+## The book rules that decide this plan (owner: the five books are the backbone of every decision)
+
+- *The Pragmatic Programmer*, DRY ("do not duplicate knowledge"): one Blends version's Program is one fact on disk, not one copy per app;
+  and the design decisions already made in spec 049 are reused, not made a second time in this plan.
+- *Clean Architecture*, stable core and replaceable edge, the Dependency Rule: the Program (framework, Electron) is the stable core that
+  apps depend on; an app is its own policy and names the version it needs; the package manager and the disk trick (APFS clone, hard
+  link, overlay) are details at the edge that can be swapped per OS without touching an app.
+- *A Philosophy of Software Design*, deep modules and pulling complexity down: one "install an app" module behind one small call, used by
+  every place that installs today (Control Center, `acryl new`, the store, agents); clones, links, the resolver and the fallbacks are
+  hidden inside it, so no caller knows how space is shared.
+- *Domain-Driven Design Distilled*, bounded context: "apps on this machine" (the Control Center and AOS) owns the Program store, the
+  launchers and `reinstall`/`clean`; an app never manages shared space itself.
+- *Clean Code*, one word per concept and no duplication: Program, app, store, launcher keep the meanings spec 049 and 052 gave them.
+
 ## The plan
 
-### Step 0 - measure the cheapest way first (half a day, no product change)
+### Step 0 - measure what we already have, then the cheapest addition (no product change)
+
+First the spec 049 way: apps made against one shared Program (one framework install per Blends version, read-only), each app holding only
+its own packages, framework names resolved to the Program first by the `registerHooks` resolver generalised from
+`plugins/extensions/resolve.ts`; and for real OS apps, `make-blend-app.mjs` (APFS clone / hard-linked engine). Then, for the packages an
+app adds on top, the package manager's own shared store:
 
 The repository already uses pnpm with one store. pnpm installs every package file once into its store and hard-links it into each
 project, and keeps the result of an install script (Electron's binary download is one) in the store too ("side effects cache"), so a
