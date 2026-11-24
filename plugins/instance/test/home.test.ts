@@ -19,6 +19,7 @@ import {
   appHomes,
   appIdOf,
   chatKeyOf,
+  osAppIdOf,
   followFolder,
   migrateOldHome,
   moveChats,
@@ -63,6 +64,10 @@ test('the first look at an app folder writes its id once, from the folder name, 
     id,
   )
   assert.equal(readAppId(dir), id)
+})
+
+test('the OS knows an app by one id: the macOS bundle id, the Windows AppUserModelID and the Linux window class are the same value', () => {
+  assert.equal(osAppIdOf('my-notes-ab12'), 'com.acrylblends.app.my-notes-ab12')
 })
 
 test('an unreadable or invalid id file is not an id; a new one replaces nothing that was valid', () => {

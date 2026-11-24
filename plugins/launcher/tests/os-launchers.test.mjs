@@ -31,6 +31,7 @@ function scratch(run) {
 // simulated OS cannot read. The Windows launcher has its own tests above and was walked on Windows 10.
 const POSIX_HOME = { skip: process.platform === 'win32' && 'a simulated Linux or macOS home needs a posix scratch path' }
 const app = folder => ({ id: 'shop', name: 'My Shop', folder })
+const OS_ID = 'com.acrylblends.app.shop-ab12'
 
 test('what each OS writes, as data', () => {
   const folder = '/work/shop'
@@ -56,6 +57,16 @@ test('what each OS writes, as data', () => {
   assert.equal(linux.files[0].content, '[Desktop Entry]\nType=Application\nName=My Shop\nExec="/usr/bin/node" "/home/a/.acryl/shortcuts/shortcut-open.mjs" "/work/shop"\nIcon=/home/a/.local/share/icons/acryl-shop.png\nTerminal=false\nCategories=Utility;\nX-ACRYL-App=shop\n')
   assert.deepEqual(linux.icon, { kind: 'png', from: '/work/shop/assets/icon.png', to: '/home/a/.local/share/icons/acryl-shop.png' })
   assert.deepEqual(linux.record, ['/home/a/.local/share/applications/acryl-shop.desktop', '/home/a/.local/share/icons/acryl-shop.png', '/home/a/.acryl/shortcuts'])
+})
+
+test('with the app\'s OS id (T056), the Start shortcut carries it as its AppUserModelID and the .desktop names it as StartupWMClass; macOS is unchanged (the running clone carries it)', () => {
+  const withId = folder => ({ ...app(folder), osId: OS_ID })
+  const win = launcherPlan({ platform: 'win32', home: 'C:\\Users\\a\\.acryl', node: 'C:\\node\\node.exe', app: withId('D:\\apps\\shop') })
+  assert.equal(win.lnk.appUserModelId, OS_ID)
+  const linux = launcherPlan({ platform: 'linux', home: '/home/a/.acryl', node: '/usr/bin/node', app: withId('/work/shop') })
+  assert.equal(linux.files[0].content, '[Desktop Entry]\nType=Application\nName=My Shop\nExec="/usr/bin/node" "/home/a/.acryl/shortcuts/shortcut-open.mjs" "/work/shop"\nTerminal=false\nCategories=Utility;\nStartupWMClass=com.acrylblends.app.shop-ab12\nX-ACRYL-App=shop\n')
+  const mac = launcherPlan({ platform: 'darwin', home: '/Users/a/.acryl', node: '/opt/node/bin/node', app: withId('/work/shop') })
+  assert.deepEqual(mac, launcherPlan({ platform: 'darwin', home: '/Users/a/.acryl', node: '/opt/node/bin/node', app: app('/work/shop') }))
 })
 
 test('the managed copies show their product name to the opener; an app without an icon has no icon line', () => {
@@ -98,6 +109,9 @@ for (const platform of ['linux', 'darwin']) {
     if (platform === 'linux') {
       assert.equal(readFileSync(join(user, '.local', 'share', 'icons', 'acryl-shop.png'), 'utf8'), 'png')
       assert.equal(statSync(launcher).isFile(), true)
+      // The app's own id (its .acryl/app.json, the one the running app reads) names the window class the menu entry matches.
+      const { id } = JSON.parse(readFileSync(join(folder, '.acryl', 'app.json'), 'utf8'))
+      assert.match(readFileSync(launcher, 'utf8'), new RegExp(`^StartupWMClass=com\\.acrylblends\\.app\\.${id}$`, 'mu'))
     } else {
       assert.deepEqual(calls.map(call => call.command), ['sips', 'sips', 'codesign'])
       assert.equal(statSync(join(launcher, 'Contents', 'MacOS', 'launch')).mode & 0o111, 0o111)

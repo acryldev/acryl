@@ -26,6 +26,7 @@ import {
 import '@acryldev/node-server/register'
 import { type AppInstance, instanceEnv, selectInstance, withRunEnv } from '@acryldev/instance'
 import { readProduct } from '@acryldev/instance/bundle'
+import { appIdOf, osAppIdOf } from '@acryldev/instance/home'
 import { type AppStorage, openProductStorage } from '@acryldev/instance/storage'
 import { APP_PAGE_CHANNEL, appPageHandler } from './app-page.ts'
 import { appRootFor } from './app-root.ts'
@@ -178,6 +179,15 @@ mkdirSync(userData, { recursive: true, mode: 0o700 })
 app.setPath('userData', userData)
 // A packed product is named by its marker (the menu's About and Quit, the Dock): its source's package is named after the folder it was packed from.
 app.setName(product?.product ?? appTitle(projectRoot))
+// Windows groups and pins a window under the shortcut that carries the same AppUserModelID (spec 052 T057): the Start entry `Add to Applications` wrote
+// carries the app's own id. A packed product keeps the id its installer gave it.
+// Linux: a dock or app menu matches a window to its .desktop entry by the window class (StartupWMClass, spec 052 T058). Under Electron 44 only the desktop
+// name sets it (measured on Ubuntu with xprop: app.setName and --class leave "electron"); the class is then the name without ".desktop".
+if (product === undefined) {
+  const osId = osAppIdOf(appIdOf(projectRoot))
+  if (process.platform === 'win32') app.setAppUserModelId(osId)
+  if (process.platform === 'linux') app.setDesktopName(`${osId}.desktop`)
+}
 
 if (!app.requestSingleInstanceLock()) {
   // The same app is already open, or starting, or updating: it is told (`second-instance` below shows its window, or queues that until it has one) and this process ends.

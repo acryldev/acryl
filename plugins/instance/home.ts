@@ -124,6 +124,14 @@ export function readAppId(appRoot: string): string | undefined {
 }
 
 /**
+ * The id the operating system knows an app by (spec 052 T056): the macOS bundle id of its branded Electron, the Windows AppUserModelID and the Linux window
+ * class, for the app's id (`appIdOf`). One value on every side, so the OS entry (Spotlight, the Start menu, the app menu) and the running window are one app.
+ */
+export function osAppIdOf(appId: string): string {
+  return `com.acrylblends.app.${appId}`
+}
+
+/**
  * The id of an app folder: the one in `.acryl/app.json`, else a new one (the folder's name and four hex digits) written there. Two processes starting a
  * fresh folder at once end with the same id: the file is created exclusively and the loser reads the winner's.
  */
