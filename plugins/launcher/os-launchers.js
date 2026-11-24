@@ -173,7 +173,7 @@ const newer = (from, to) => { try { return statSync(from).mtimeMs > statSync(to)
 const defaultExec = (command, args, env) => spawnSync(command, args, { env: { ...process.env, ...env }, encoding: 'utf8', windowsHide: true })
 
 /** PowerShell: an .ico of 256 px (PNG inside) from the app's png, and the .lnk. Values come in environment variables, never in the script text. */
-const WINDOWS_SCRIPT = `
+export const WINDOWS_SCRIPT = `
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 if ($env:ACRYL_ICON_FROM) {
@@ -197,7 +197,7 @@ if ($env:ACRYL_ICON_FROM) {
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($env:ACRYL_LNK)
 $target = $env:ACRYL_TARGET
-if (-not [System.IO.Path]::IsPathRooted($target)) { $target = Join-Path $env:SystemRoot ('System32\' + $target) }
+if (-not [System.IO.Path]::IsPathRooted($target)) { $target = Join-Path (Join-Path $env:SystemRoot 'System32') $target }
 $link.TargetPath = $target
 $link.Arguments = $env:ACRYL_ARGS
 $link.WorkingDirectory = $env:ACRYL_WORKDIR
@@ -208,6 +208,8 @@ $link.Save()
 /** Copy the opener and what it imports into `<home>/shortcuts`; `from` is where they are (beside this file unless a bundle says otherwise). */
 function writeOpener(home, from, P) {
   for (const file of OPENER_FILES) writeIfChanged(P.join(home, 'shortcuts', file), readFileSync(P.join(from, file), 'utf8'), undefined, P)
+  // model-key.js is an ES module; without this the folder is typeless and Node reads it as CommonJS (older Node) or warns (newer).
+  writeIfChanged(P.join(home, 'shortcuts', 'package.json'), '{ "type": "module" }\n', undefined, P)
 }
 
 function removeRecorded(paths, userHome, home, P) {
@@ -231,7 +233,7 @@ export function addToApplications({ platform = process.platform, home, node, app
   const userHome = P.dirname(home)
   const found = typeof app === 'string' ? launcherApp(home, app, platform) : app
   if (found === undefined) throw new Error(`no app "${String(app)}" in the list (see: acryl apps)`)
-  const png = P.join(found.folder, 'assets', 'icon.png')
+  const png = found.icon ?? P.join(found.folder, 'assets', 'icon.png')
   const icon = existsSync(png) ? png : undefined
   const plan = launcherPlan({ platform, home, node, app: found, icon })
   const problems = []
@@ -243,7 +245,11 @@ export function addToApplications({ platform = process.platform, home, node, app
     changed = true
     if (plan.icon.kind === 'png') copyFileSync(plan.icon.from, plan.icon.to)
     else if (plan.icon.kind === 'icns') {
-      const done = exec('sips', ['-s', 'format', 'icns', plan.icon.from, '--out', plan.icon.to], {})
+      // sips cannot write an .icns from a 1024 px picture (error 13), so the picture is brought to 512 px first.
+      const small = `${plan.icon.to}.png`
+      const resized = exec('sips', ['-z', '512', '512', '-s', 'format', 'png', plan.icon.from, '--out', small], {})
+      const done = resized.status === 0 ? exec('sips', ['-s', 'format', 'icns', small, '--out', plan.icon.to], {}) : resized
+      rmSync(small, { force: true })
       if (done.status !== 0) problems.push('the icon could not be converted (sips)')
     }
   }
@@ -265,8 +271,9 @@ export function addToApplications({ platform = process.platform, home, node, app
   return { written: plan.record, problems }
 }
 
-/** Delete exactly what was recorded for `id` and forget it; the opener goes with the last launcher. Returns whether there was one. */
-export function removeFromApplications({ platform = process.platform, home, id }) {
+/** Delete exactly what was recorded for the app (`app.id`, or `id`) and forget it; the opener goes with the last launcher. Returns whether there was one. */
+export function removeFromApplications({ platform = process.platform, home, id, app }) {
+  id = app?.id ?? id
   if (!isLauncherHome(home, platform)) throw new Error(`launchers are made only for the .acryl folder of a person's home, not ${home}`)
   const P = pathsOf(platform)
   const record = readLaunchers(home, platform)
@@ -276,6 +283,7 @@ export function removeFromApplications({ platform = process.platform, home, id }
   const last = Object.keys(rest).length === 0
   // The opener folder is shared: it is deleted only when this was the last launcher.
   removeRecorded(entry.files.filter(path => last || path !== P.join(home, 'shortcuts')), P.dirname(home), home, P)
+  rmSync(P.join(home, 'logs', 'shortcuts', `${P.basename(entry.folder)}.log`), { force: true })   // what the opener wrote for this app
   writeLaunchers(home, { ...record, apps: rest }, platform)
   return true
 }

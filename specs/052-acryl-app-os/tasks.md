@@ -32,14 +32,24 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
 
 ## Phase 2 - Add to Applications (D4)
 
-- [ ] T010 The launcher model: what is written per OS, as data (paths and contents), one function per OS, pure and unit-tested.
-- [ ] T011 macOS: `~/Applications/<Name>.app` (Info.plist with `io.github.acrylblends.<id>`, `.icns` from the app's icon, a script that
-  starts the app, ad-hoc `codesign`). Proof on AION: Spotlight finds it, Launchpad shows it, a click opens the app with its name and icon in
-  the Dock, Quit works.
-- [ ] T012 Windows: Start menu `.lnk` with the icon (`.ico`). Proof on mbpi9win: Start search finds it, a click opens it.
-- [ ] T013 Linux: `.desktop` file and icon under `~/.local/share`. Proof on z370n (GNOME): the app menu shows and opens it.
-- [ ] T014 Remove from Applications deletes exactly what T011-T013 wrote (recorded in `~/.acryl/launchers.json`). Proof: nothing left.
-- [ ] T015 `acryl --gui` offers once to add the Control Center itself; `acryl apps add-launcher <app>` in the terminal.
+- [x] T010 The launcher model: what is written per OS, as data (paths and contents), one function per OS, pure and unit-tested
+  (`plugins/launcher/os-launchers.js` `launcherPlan`, `plugins/launcher/tests/os-launchers.test.mjs`).
+- [x] T011 macOS: `~/Applications/<Name>.app` (Info.plist with `io.github.acrylblends.<id>`, `.icns` from the app's icon, a script that
+  starts the app, ad-hoc `codesign`). Proof on AION (scratch user folder, 2026-11-24): `codesign --verify` valid, Spotlight (`mdfind`) finds the bundle,
+  `open` starts the app and its Electron window shows (visible true, the saved model key in its environment, none in any launcher file), the app is
+  in `lsappinfo`; closing it leaves no process. Not checked: the Dock shows the stock Electron name and icon until an app sets its own.
+- [x] T012 Windows: Start menu `.lnk` with the icon (`.ico`, 256 px). Proof on mbpi9win (Windows 10, scratch user folder): the `.lnk` resolves to
+  `C:\Windows\System32\wscript.exe` + the `.vbs` that runs Node with window style 0; started from the interactive session (scheduled task /IT) the
+  app's window showed; closing leaves no process. Not checked: Start search itself (the scratch folder is not the real Start menu) and that no console
+  flashes.
+- [x] T013 Linux: `.desktop` file and icon under `~/.local/share`. Proof on z370n (Ubuntu, no display): `desktop-file-validate` valid, `gio info` reads
+  it, `gio launch` starts the app (its record says headless), closing leaves no process. Not checked: the app menu showing it and a window opening
+  (z370n has no display).
+- [x] T014 Remove from Applications deletes exactly what T011-T013 wrote (recorded in `<home>/launchers.json`). Proof on all three: nothing of the
+  launcher is left (the user's `.acryl` keeps only the list, the key and the opener's empty log folder).
+- [x] T015 `acryl --gui` offers once to add the Control Center itself (the answer is kept in `launchers.json`); `acryl apps add-to-applications <id>`
+  and `remove-from-applications <id>` in the terminal; the Control Center has the same two as a button per app (`appShortcut` on the service).
+  Moved Node.js or app folders are written into the launchers at the next start. Not walked: the offer prompt itself in a real terminal.
 
 ## Phase 3 - Apps as apps in the Control Center (D5)
 

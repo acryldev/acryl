@@ -21,7 +21,7 @@ function scratch(run) {
     const calls = []
     const exec = (command, args, env) => {
       calls.push({ command, args, env })
-      if (command === 'sips') writeFileSync(args[args.indexOf('--out') + 1], 'icns')   // what sips leaves behind
+      if (command === 'sips') writeFileSync(args[args.indexOf('--out') + 1], 'picture')   // what sips leaves behind
       return { status: 0, stderr: '' }
     }
     return run({ root, user, home, folder, calls, exec })
@@ -96,7 +96,7 @@ for (const platform of ['linux', 'darwin']) {
       assert.equal(readFileSync(join(user, '.local', 'share', 'icons', 'acryl-shop.png'), 'utf8'), 'png')
       assert.equal(statSync(launcher).isFile(), true)
     } else {
-      assert.deepEqual(calls.map(call => call.command), ['sips', 'codesign'])
+      assert.deepEqual(calls.map(call => call.command), ['sips', 'sips', 'codesign'])
       assert.equal(statSync(join(launcher, 'Contents', 'MacOS', 'launch')).mode & 0o111, 0o111)
     }
     const stamp = statSync(launcher).mtimeMs
@@ -157,4 +157,18 @@ test('acryl apps add-to-applications and remove-from-applications are the same a
   assert.equal(runAppsCommand(['remove-from-applications', 'shop'], common), 1)
   assert.equal(existsSync(join(user, '.local', 'share', 'applications', 'acryl-shop.desktop')), false)
   void exec
+}))
+
+test('the PowerShell script holds no backslash (a JavaScript template eats one: the shortcut once pointed at C:\\Windows\\System32wscript.exe)', async () => {
+  const { WINDOWS_SCRIPT } = await import('../os-launchers.js')
+  assert.equal(WINDOWS_SCRIPT.includes('\\'), false)
+})
+
+test('the call Fork3 makes: an app object with its own icon in, an app object with an id out', () => scratch(({ user, home, folder, exec }) => {
+  writeFileSync(join(folder, 'own.png'), 'png')
+  const result = addToApplications({ platform: 'linux', home, node: '/usr/bin/node', app: { id: 'aos', name: 'ACRYL AOS', folder, icon: join(folder, 'own.png') }, sourceDir: SOURCE, exec })
+  assert.ok(result.written.includes(join(user, '.local', 'share', 'applications', 'acryl-aos.desktop')))
+  assert.equal(readFileSync(join(user, '.local', 'share', 'icons', 'acryl-aos.png'), 'utf8'), 'png')
+  assert.equal(removeFromApplications({ platform: 'linux', home, app: { id: 'aos' } }), true)
+  assert.equal(existsSync(join(user, '.local', 'share', 'applications', 'acryl-aos.desktop')), false)
 }))
