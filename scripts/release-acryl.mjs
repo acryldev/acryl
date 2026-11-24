@@ -26,7 +26,7 @@ const args = process.argv.slice(2)
 const flag = (name) => args.includes(name)
 const value = (name) => { const i = args.indexOf(name); return i === -1 ? undefined : args[i + 1] }
 const win = process.platform === 'win32'
-const run = (cmd, argv, options = {}) => execFileSync(win && (cmd === 'npm' || cmd === 'gh') ? `${cmd}.cmd` : cmd, argv, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...options }).trim()
+const run = (cmd, argv, options = {}) => execFileSync(win && (cmd === 'npm' || cmd === 'gh') ? `${cmd}.cmd` : cmd, argv, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], ...options })?.trim() ?? ''   // null when the output goes to the terminal (npm publish, gh release)
 const tryRun = (cmd, argv) => { try { return run(cmd, argv) } catch { return undefined } }
 const stop = (message) => { console.error(`release-acryl: STOP - ${message}`); process.exit(1) }
 
