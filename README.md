@@ -25,6 +25,22 @@
   <a href="https://discord.gg/cY9KXMex69"><img src="https://img.shields.io/badge/Discord-5865F2?style=flat&amp;logo=discord&amp;logoColor=white" alt="Join Discord"></a>
 </p>
 
+## Get started
+
+Install ACRYL Control Center in one line. No admin, no Node, the download is checked against GitHub's sha256, and Windows and macOS open it without warnings because it is not browser-downloaded.
+
+**macOS and Linux**
+```sh
+curl -fsSL https://acryl.dev/install.sh | bash
+```
+
+**Windows (PowerShell)**
+```powershell
+irm https://acryl.dev/install.ps1 | iex
+```
+
+**Developers:** `npx acryl@latest`
+
 ## What ACRYL is
 
 Build agentic apps from plugins. Start blank, grow with an agent, share what you make. ACRYL is the open platform and framework underneath:

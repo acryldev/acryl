@@ -19,6 +19,22 @@ dependencies - and a composition of plugins that runs in a browser or a desktop 
 
 ---
 
+## Get started
+
+Install ACRYL Control Center in one line. No admin, no Node, the download is checked against GitHub's sha256, and Windows and macOS open it without warnings because it is not browser-downloaded.
+
+**macOS and Linux**
+```sh
+curl -fsSL https://acryl.dev/install.sh | bash
+```
+
+**Windows (PowerShell)**
+```powershell
+irm https://acryl.dev/install.ps1 | iex
+```
+
+**Developers:** `npx acryl@latest`
+
 ```ts
 import { Acryl } from 'acrylblends'
 

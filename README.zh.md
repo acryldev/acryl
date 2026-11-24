@@ -27,6 +27,22 @@
 
 > 本文是英文 [`README.md`](README.md) 的中文版，内容保持一致；两种语言同等有效。
 
+## 快速开始
+
+用一行命令安装 ACRYL Control Center：无需管理员权限，无需 Node；下载内容会用 GitHub 的 sha256 校验；因为它不是通过浏览器下载的，Windows 和 macOS 打开时不会出现安全警告。
+
+**macOS 和 Linux**
+```sh
+curl -fsSL https://acryl.dev/install.sh | bash
+```
+
+**Windows（PowerShell）**
+```powershell
+irm https://acryl.dev/install.ps1 | iex
+```
+
+**开发者：** `npx acryl@latest`
+
 ## ACRYL 是什么
 
 用插件构建智能体应用。从空白开始，和智能体一起成长，把做出来的东西分享出去。ACRYL 是底层的开放平台和框架：

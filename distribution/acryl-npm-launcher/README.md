@@ -10,6 +10,22 @@ foundation; they keep their layer.
 Build agentic apps from plugins. Start blank, grow with an agent, share what you make. ACRYL is the open platform and framework underneath: the agent
 is one part of your app, and our own IDE is one app built on it.
 
+## Get started
+
+Install ACRYL Control Center in one line. No admin, no Node, the download is checked against GitHub's sha256, and Windows and macOS open it without warnings because it is not browser-downloaded.
+
+**macOS and Linux**
+```sh
+curl -fsSL https://acryl.dev/install.sh | bash
+```
+
+**Windows (PowerShell)**
+```powershell
+irm https://acryl.dev/install.ps1 | iex
+```
+
+**Developers:** `npx acryl@latest`
+
 ## One command
 
 `acryl` is the front door to the whole platform: ACRYL Control Center, where your apps, the Blends store, sharing and your keys live.
