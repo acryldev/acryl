@@ -37,7 +37,11 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
 - [x] T011 macOS: `~/Applications/<Name>.app` (Info.plist with `io.github.acrylblends.<id>`, `.icns` from the app's icon, a script that
   starts the app, ad-hoc `codesign`). Proof on AION (scratch user folder, 2026-11-24): `codesign --verify` valid, Spotlight (`mdfind`) finds the bundle,
   `open` starts the app and its Electron window shows (visible true, the saved model key in its environment, none in any launcher file), the app is
-  in `lsappinfo`; closing it leaves no process. Not checked: the Dock shows the stock Electron name and icon until an app sets its own.
+  in `lsappinfo`; closing it leaves no process. Dock name (AION, scratch HOME, 2026-11-24, a real Notes app made with blends 1.7.32 and desktop-shell 0.1.13,
+  `open --env HOME=<scratch> Notes.app`): the running app is desktop-shell's branded clone (`<acryl root>/electron/notes-50f6.app/Contents/MacOS/Electron`, bundle id
+  `com.acrylblends.app.notes-50f6`), not the stock Electron, so the launcher's path does reach `brandedElectron`. Found there: the Dock said "notes" (the package's name)
+  while the window says the Blend's "Notes"; `launch.ts` named the clone from `appTitle`, now from the instance (`brandingOf`, test in `test/launch.test.ts`), and
+  `lsappinfo` then says "Notes". The clone has the icon file (`electron.icns`, the ACRYL Blends logo: the app has no `assets/icon.png`); the Dock drawing itself was not looked at.
 - [x] T012 Windows: Start menu `.lnk` with the icon (`.ico`, 256 px). Proof on mbpi9win (Windows 10, scratch user folder): the `.lnk` resolves to
   `C:\Windows\System32\wscript.exe` + the `.vbs` that runs Node with window style 0; started from the interactive session (scheduled task /IT) the
   app's window showed; closing leaves no process. Not checked: Start search itself (the scratch folder is not the real Start menu) and that no console

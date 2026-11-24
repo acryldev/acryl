@@ -7,9 +7,10 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
+import { selectInstance } from '@acryldev/instance'
 import { acrylRoot, appIdOf, personHome } from '@acryldev/instance/home'
 import { APP_ROOT_ENV } from './app-root.ts'
-import { appTitle, brandedElectron, iconFile } from './brand.ts'
+import { brandedElectron, iconFile } from './brand.ts'
 
 /** The sysctl that makes the sandbox fail for an Electron without an AppArmor profile; its value, or `undefined` where it does not exist (every system but a recent Ubuntu). */
 export const RESTRICT_USERNS = '/proc/sys/kernel/apparmor_restrict_unprivileged_userns'
@@ -79,6 +80,23 @@ function mainFile(): string {
 }
 
 /**
+ * What the branded Electron of an app is made from: where it lives, its id, the name the Dock and Cmd+Tab show and its icon. The name is the one the instance gives
+ * (the app's Blend name in `blend.yaml`, else its package's, or ACRYLBLENDS_NAME): the window's title and About say the same, so the Dock never reads differently.
+ */
+export function brandingOf(
+  projectRoot: string,
+  env: Record<string, string | undefined>,
+  platform: NodeJS.Platform,
+): { folder: string; id: string; name: string; icon: string } {
+  return {
+    folder: join(acrylRoot(platform, env, personHome(env, platform)), 'electron'),
+    id: appIdOf(projectRoot),
+    name: selectInstance({ projectRoot, env }).name,
+    icon: iconFile(projectRoot),
+  }
+}
+
+/**
  * Start the app in `projectRoot` as a desktop app: `npm run desktop` (bin.ts) with the app's folder, `extra` its arguments. Electron's main learns the
  * app from ACRYLBLENDS_APP_ROOT (app-root.ts), since the shell is installed in node_modules, outside the app's tree.
  */
@@ -91,13 +109,7 @@ export function launchDesktop(projectRoot: string, extra: readonly string[]): Ch
   // macOS: the Dock and Cmd+Tab name the app and draw its icon only when the bundle says so (brand.ts); a copy that cannot be made leaves the stock Electron, with a note.
   const branded = brandedElectron({
     binary: electron,
-    folder: join(
-      acrylRoot(process.platform, process.env, personHome(process.env, process.platform)),
-      'electron',
-    ),
-    id: appIdOf(projectRoot),
-    name: appTitle(projectRoot),
-    icon: iconFile(projectRoot),
+    ...brandingOf(projectRoot, process.env, process.platform),
   })
   if (branded.problem !== undefined)
     console.warn(`desktop: the Dock shows Electron's own name and icon (${branded.problem})`)

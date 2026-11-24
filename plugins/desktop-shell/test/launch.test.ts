@@ -4,7 +4,14 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { electronArgs, RESTRICT_USERNS, SANDBOX_NOTICE, sandboxBlocked } from '../launch.ts'
+import { appIdOf } from '@acryldev/instance/home'
+import {
+  brandingOf,
+  electronArgs,
+  RESTRICT_USERNS,
+  SANDBOX_NOTICE,
+  sandboxBlocked,
+} from '../launch.ts'
 
 test('the sandbox is blocked only on Linux with the user-namespace restriction on', () => {
   const sysctl = (value: string) => (path: string) => {
@@ -88,5 +95,28 @@ runElectron(process.execPath, [${JSON.stringify(electron)}])
     assert.deepEqual(read().trim().split('\n'), ['ready', 'SIGINT'])
   } finally {
     rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test("the Dock's name for an app is the one its window shows: its Blend's name, else its package's, or the host's ACRYLBLENDS_NAME", () => {
+  const folder = mkdtempSync(join(tmpdir(), 'branding-'))
+  try {
+    writeFileSync(join(folder, 'package.json'), JSON.stringify({ name: 'notes' }))
+    const env = { HOME: join(folder, 'home') }
+    assert.equal(brandingOf(folder, env, 'darwin').name, 'notes', 'no blend.yaml: the package')
+    writeFileSync(
+      join(folder, 'blend.yaml'),
+      'apiVersion: blends.acryl.dev/v1alpha1\nkind: Blueprint\nmetadata:\n  id: acrylblends.notes\n  name: Notes\n',
+    )
+    const made = brandingOf(folder, env, 'darwin')
+    assert.equal(made.name, 'Notes', 'the Blend names it, as the window title does')
+    assert.equal(made.folder, join(folder, 'home', '.acryl', 'electron'))
+    assert.equal(made.id, appIdOf(folder), "the id is the folder's, whatever the name")
+    assert.equal(
+      brandingOf(folder, { ...env, ACRYLBLENDS_NAME: 'My Notes' }, 'darwin').name,
+      'My Notes',
+    )
+  } finally {
+    rmSync(folder, { recursive: true, force: true })
   }
 })
