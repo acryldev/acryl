@@ -116,10 +116,9 @@ try {
 } catch (cause) {
   // A root of a newer version, or one this version cannot read: said once, in a dialog, and nothing is started or written.
   const message = cause instanceof Error ? cause.message : String(cause)
-  // The app is not known yet: the product's own logs folder, else Electron's.
-  startup.attach(
-    storage === undefined ? app.getPath('logs') : join(dirname(storage.electron), 'logs'),
-  )
+  // The app is not known yet: the product's own logs folder. An app run from its own folder has no product storage: its start was in its
+  // terminal, and the dialog below says the reason (where an app keeps anything is the AppInstance family's decision alone, bulkhead rule).
+  if (storage !== undefined) startup.attach(join(dirname(storage.electron), 'logs'))
   console.error(`desktop: ${message}`)
   dialog.showErrorBox(`${product?.product ?? 'The app'} cannot open`, message)
   app.exit(1)
