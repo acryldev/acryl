@@ -32,6 +32,8 @@ const CODE_TEXT: Readonly<Record<string, SignInLocaleKey>> = {
 const KNOWN: readonly { readonly match: RegExp, readonly hint: SignInLocaleKey }[] = [
   // Anthropic, since 2026: a Claude subscription signed in from a third-party app is billed to "extra usage" only.
   { match: /third-party apps now draw from your extra usage/iu, hint: 'hintClaudeExtraUsage' },
+  // DeepSeek ("Authentication Fails, Your api key: ****abcd is invalid"), OpenAI and compatible endpoints ("Incorrect API key provided", "Invalid API key").
+  { match: /authentication fails|(?:invalid|incorrect) api key|api key[^.]*\b(?:is )?invalid/iu, hint: 'hintInvalidKey' },
 ]
 
 const record = (value: unknown): Record<string, unknown> | undefined => typeof value === 'object' && value !== null ? value as Record<string, unknown> : undefined

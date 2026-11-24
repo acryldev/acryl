@@ -7,7 +7,7 @@ export type SignInLocaleKey =
   | 'failed' | 'tryAgain' | 'done' | 'unavailable'
   | 'connectTitle' | 'connectIntro' | 'connectSettingsText' | 'connectSettingsAction' | 'connectLater'
   | 'turnFailed' | 'turnStopped' | 'failureAuth' | 'failureAccountSignedOut' | 'failureAccountSignInRequired' | 'failureQuota'
-  | 'failureDetails' | 'hintClaudeExtraUsage'
+  | 'failureDetails' | 'hintClaudeExtraUsage' | 'hintInvalidKey'
 
 export const en: Record<SignInLocaleKey, string> = {
   heading: 'Sign in with an account',
@@ -48,6 +48,7 @@ export const en: Record<SignInLocaleKey, string> = {
   failureQuota: 'Request quota exhausted.',
   failureDetails: 'Details',
   hintClaudeExtraUsage: 'Your Claude plan does not cover apps like ACRYL. Turn on extra usage at claude.ai/settings/usage, or choose another model.',
+  hintInvalidKey: 'The provider refused this API key. Open Settings > Models and enter a valid key for this provider, or choose another model.',
 }
 
 export const zh: Record<SignInLocaleKey, string> = {
@@ -89,4 +90,5 @@ export const zh: Record<SignInLocaleKey, string> = {
   failureQuota: '当前请求的额度已用尽',
   failureDetails: '详情',
   hintClaudeExtraUsage: '你的 Claude 套餐不包含 ACRYL 这类应用的用量。请在 claude.ai/settings/usage 开启额外用量，或选择其他模型。',
+  hintInvalidKey: '提供商拒绝了这个 API 密钥。请在 设置 > 模型 中填写该提供商的有效密钥，或选择其他模型。',
 }

@@ -33,6 +33,13 @@ describe('describeTurnFailure', () => {
     })
   })
 
+  it('says what to do when the provider refuses the API key (DeepSeek, OpenAI-compatible)', () => {
+    const deepseek = '401 {"error":{"message":"Authentication Fails, Your api key: ****abcd is invalid","type":"authentication_error","param":null,"code":"invalid_request_error"}}'
+    expect(describeTurnFailure(deepseek, 'AUTH')).toMatchObject({ text: { said: 'Authentication Fails, Your api key: ****abcd is invalid' }, hint: 'hintInvalidKey' })
+    expect(describeTurnFailure('401 {"error":{"message":"Incorrect API key provided: sk-...","type":"invalid_request_error"}}', 'AUTH').hint).toBe('hintInvalidKey')
+    expect(describeTurnFailure('429 {"error":{"message":"Rate limit reached for gpt-5.5","type":"requests"}}', 'RATE_LIMIT').hint).toBeUndefined()
+  })
+
   it('reads another provider\'s body without naming it', () => {
     expect(describeTurnFailure('429 {"error":{"message":"Rate limit reached for gpt-5.5","type":"requests"}}', 'RATE_LIMIT').text).toEqual({ said: 'Rate limit reached for gpt-5.5' })
   })
