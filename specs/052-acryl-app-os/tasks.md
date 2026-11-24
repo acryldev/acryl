@@ -109,6 +109,60 @@ stays behind.
 
 ## Phase 6 - Each Blend a real OS app on one shared engine (D15; after `baseline.md` is complete)
 
+### Slice plan (2026-11-25, to be approved by the coordinator before coding)
+
+What exists already, from reading the code:
+- **T050 and T051 are met by Step 1 (T006).** Every install place calls `plugins/launcher/app-install.js`. The Program is
+  `~/.acryl/program/blends-<version>`, not `programs/`; the home is passed in by the caller.
+- **T054 is met by T008,** except "engine copies". There are none to clean: the engine is the Program's Electron, linked or cloned into
+  each app.
+- **T052 is met by the layout, without a resolver.** Each app's `node_modules` is one whole tree (links or clones of the Program plus its
+  own packages), so an app resolves one framework instance normally. The two-copies failure of October cannot happen within an app.
+  `live-test.sh` passed on every host for every app (step1-proof.md). Proposed: mark T052 done with that evidence, not build a resolver
+  (YAGNI, The Pragmatic Programmer; APOSD: no module that hides nothing).
+- **T053, which is what remains:** today a launcher (T011-T013) runs the recorded Node with `shortcut-open.mjs`, which runs `npm run desktop`
+  in the app's folder. The app then runs on its own Electron, which is the Program's, shared. "No Node on PATH" already holds, because the
+  launcher records Node's absolute path.
+
+What is still missing for "its own app with its own name and icon", per OS:
+- **macOS:** done in the code. desktop-shell's `brand.ts` runs a per-app clone `<acryl root>/electron/<id>.app` named after the app, with
+  `assets/icon.png` or the ACRYL Blends logo. T011's proof saw the Dock name; the Dock icon itself was not looked at.
+- **Windows:** the app runs as the stock `electron.exe`. The taskbar groups it as "Electron", and pinning pins Electron, because neither
+  the app (`app.setAppUserModelId`) nor the Start shortcut (`System.AppUserModel.ID`) sets an AppUserModelID.
+- **Linux:** the `.desktop` file has no `StartupWMClass`, so a dock or app menu cannot match the window to the entry; it shows a generic
+  icon.
+
+Slices, each with characterization tests first (Working Effectively with Legacy Code), then the change, then the proof:
+
+- [ ] T056 **The app's identity is one value** (DDD Distilled: one term, one meaning; Clean Code: no duplication). The app id and name the
+  launcher writes (`launcherPlan`) and the ones desktop-shell runs under (`brandingOf`) come from one place, so the AppUserModelID, the
+  WM class and the macOS bundle id agree. Characterize `launcherPlan` and `brandingOf` as they are today, then share the rule.
+- [ ] T057 **Windows: one AppUserModelID** (`com.acrylblends.app.<id>`). The Start `.lnk` carries it, set through the PowerShell writer
+  with values in environment variables, as the other fields are. The app calls `app.setAppUserModelId` with the same value before its
+  window opens. Clean Architecture: the launcher (edge) and desktop-shell (frame) each know only the shared id rule.
+- [ ] T058 **Linux: one WM class.** The `.desktop` file gets `StartupWMClass=<class>`, and the app runs with that class (Electron's
+  `desktopName` / `--class`, whichever Electron 44 honours, checked by `xprop WM_CLASS` on z370n's Xvfb).
+- [ ] T059 **The proof on all three hosts:** an installed Blend with its own `assets/icon.png` (Notes), added to Applications, opened from
+  the OS entry. Measured per host:
+  - macOS (AION): `mdfind` finds it; `open` starts it; `lsappinfo` shows the app's name and bundle id; the Dock tile's icon file is the
+    app's icon.
+  - Windows (mbpi9win): the `.lnk` carries the AUMID; the running window's AUMID (read with PowerShell's shell property store) matches;
+    the taskbar button groups under the app.
+  - Linux (z370n): `desktop-file-validate` passes; `gtk-launch` starts it; `xprop WM_CLASS` of its window equals `StartupWMClass`.
+  - Disk per app: the measurement from step1-proof.md, plus what the clone or launcher adds.
+  - Every start check.
+
+What the proof cannot see, named up front:
+- Start search on Windows and the app menu on Linux read the real user's folders. On the test hosts this means user alexa's Start menu on
+  mbpi9win, and z370n's user. Question for the coordinator: may T059 write there (test hosts, never the owner's Mac), or should it stay in
+  scratch folders, as T012 and T013 did?
+- z370n has no desktop session, so a dock drawing cannot be seen there. The WM class match is the evidence.
+
+Not in these slices (said so they are not lost): opening an app without npm. That means the launcher running the app's Electron directly
+on its built frame, with Electron as Node, so neither Node nor npm is needed. It is what `make-blend-app.mjs` does for a packed product.
+It is a larger change to desktop-shell's start path, and is proposed as the next slice after T059.
+
+
 - [ ] T050 Characterize first (Working Effectively with Legacy Code): a test per install place (Control Center "+ New app" and Start,
   `acryl new`, `acryl --gui`/`acryl ade` copies, the store's Make, an agent's install) recording the folder it makes and what starts.
 - [ ] T051 One install module (A Philosophy of Software Design, deep module): every place above calls it; it installs the app's own
