@@ -1,6 +1,6 @@
 ---
 name: acryl-app
-description: How the __APP_NAME__ app is put together - its blend.yaml rows, its plugins/ folder and src/ - and how to change it, run it and check it through the door. Use before adding a feature, a route, a plugin or a dependency to this app, and before saying the work is done. Also use when asked to click, open, close, collapse, show or type something on screen: that is done with the door, not by editing code.
+description: "How the __APP_NAME__ app is put together - its blend.yaml rows, its plugins/ folder and src/ - and how to change it, run it and check it through the door. Use before adding a feature, a route, a plugin or a dependency to this app, and before saying the work is done. Also use when asked to click, open, close, collapse, show or type something on screen: that is done with the door, not by editing code."
 ---
 
 # Working in __APP_NAME__

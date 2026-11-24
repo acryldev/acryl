@@ -131,6 +131,21 @@ stays behind.
   `registry.ts`, `route.ts`, `runner.ts`, `self-update.ts` and `service.ts` are the package's files unchanged. Done when the Blend lists
   the package, its mount points and `appInstance` come from the frame, the copy and `scripts/launcher-blend.mjs` are gone, and a release
   starts, makes and updates apps as v0.2.21 does (AION walk).
+  Done in the Blend as v0.2.22 and v0.2.23 (acrylblends/63-acryl-control-center): the package is a dependency, `plugins/acryl-launcher-host` and
+  `public/launcher.js` are gone, and `src/launcher.ts` is a wrapper that gives the package two things a Blends frame names differently (T055a, T055b).
+  `scripts/launcher-blend.mjs` is still here: `pnpm dev`, `pnpm desktop` and `pnpm launcher blend` run Control Center from this checkout through it, so it
+  goes only with a replacement for that dev start (T055c).
+- [ ] T055a `@acryldev/launcher-desktop` takes ACRYL's root as an option, read from the AppInstance family (`acrylRoot` of `@acryldev/instance/storage`),
+  so a Blend needs no `src/launcher.ts` to replace `appInstance.home`: in a Blends frame `appInstance.home` is the app's own data folder
+  (`~/.acryl/apps/<id>/data`), in this repository's runtime it is ACRYL's root, and the package reads it as the root (found 2026-11-24 when the Blend
+  took the package: the apps listed would have been the wrong ones).
+- [ ] T055b The Blends frame provides the `acrylTools` port the way `@acryldev/harness-runtime` `engine-tools` does (a thin delegate over the chat's `tools`),
+  so no Blend provides it itself. Today the Control Center Blend provides it to the launcher alone (`src/launcher.ts`, isolated scope, provided from a plugin
+  of that scope: a provide made straight from `apply` is not seen by the package); the other plugins that inject `acrylTools` (plugin-admin, workspace)
+  find no port in a Blends frame, so their tools are not in the Blend's chat. Providing it for the whole frame brings those tools into the chat: decide that
+  with the owner first.
+- [ ] T055c Replace what `scripts/launcher-blend.mjs` does for `pnpm dev` (assemble the Control Center Blend from this checkout) with the Blend's own
+  repository run from source, then remove the script and `launcher-dev.mjs`'s `blend` face.
 
 ## Phase 7 - Share with team (D16, D17)
 
