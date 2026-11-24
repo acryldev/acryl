@@ -1,3 +1,20 @@
+## 2026-11-24 - `acryl new` installs through the one install: a second app adds 7-18 MB (spec 052)
+
+`acryl new <name> [starter]` used to leave the install to `create-acrylblends`, a full `npm install` of about 700 MB per app. Now
+`acryl` runs three steps (`distribution/acryl-npm-launcher/forward.js`): `create-acrylblends --no-install` makes the app, the one install
+(`app-install-cli.mjs`) installs it from the shared Program when one fits, and in a terminal the app starts as before. `acryl` owns the
+seam, as it does for `acryl --gui`; the framework layer is unchanged and does not depend on the launcher (Clean Architecture: the
+framework is the inner layer).
+
+- **The change (`cb92e01c0c496b773bb77a08a609130d9569ff3f`):** a source, `--from`, `--install`, `--no-install`, `--pm` or no name still
+  go to `create-acrylblends` unchanged, which installs on its own terms. The selector's pty test now checks that `acryl new` asks for
+  `--no-install` and then installs.
+- **Proof (`5ccc11ee77a45b0321d72c2603b5ac9ad1f69d0f`, `specs/052-acryl-app-os/step1-proof.md`):** the packed `acryl` made three apps on
+  each host. After the first, each added 6.7-6.9 MB on Ubuntu, 8.6-11.3 MB on Windows and 17.9-18.0 MB of free space on macOS, with one
+  Electron for all. Every app started, its window and terminal worked, and live plugins with HMR worked. The only failure is koffi
+  inside Electron on AION's Rosetta Node, as before.
+- A bare `npm create acrylblends` without `acryl` still installs in full. This is accepted for developers.
+
 ## 2026-11-24 - one install for every app on this computer: a new app adds 6-13 MB instead of 700 (spec 052 Step 1)
 
 Every place that installs an app (`acryl --gui` and `acryl ade`, Control Center's Start and + New app) now runs one install,
