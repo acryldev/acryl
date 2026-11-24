@@ -52,6 +52,12 @@ So the plan below starts from 1 and 2, and uses a package store only for what an
 - *Domain-Driven Design Distilled*, bounded context: "apps on this machine" (the Control Center and AOS) owns the Program store, the
   launchers and `reinstall`/`clean`; an app never manages shared space itself.
 - *Clean Code*, one word per concept and no duplication: Program, app, store, launcher keep the meanings spec 049 and 052 gave them.
+- *Release It!* (`~/.agents/rules/agent-rules-books/release-it`), bulkheads and steady state: sharing disk never shares a process (D11, one
+  host per app), so one app's crash stays in that app; `acryl clean` is the steady-state cleanup, so the shared store cannot grow without
+  bound.
+- *Working Effectively with Legacy Code*, characterization before redesign, seams: before the install path changes, a test records what
+  each install place does today (folder layout, what starts); the change goes through one seam (the install module), and
+  `reinstall` keeps the old `node_modules` until the app starts.
 
 ## The plan
 
