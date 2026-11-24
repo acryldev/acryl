@@ -1,10 +1,10 @@
-# Spec 053 B: classification of the 84 live plugins (proposal)
+# Spec 053 B: classification of the live plugins, plus 1 private (approved 2026-11-25)
 
-Status: proposal only. The owner has not approved it and nothing here is live. The registry site does not read the override file yet
-(`src/data/classification-overrides.json` in cordisplugins.github.io, branch `053-catalog-verified`); it goes live by one word, the file's
-`status`, after the owner's yes. A plugin author's own `cordis-kind-*` / `cordis-domain-*` keywords win over this table.
+Status: approved by the owner on 2026-11-25. The registry reads the override file (`src/data/classification-overrides.json` in
+cordisplugins.github.io, status "approved (owner 2026-11-25)"); nothing is live until the branch `053-catalog-verified` is merged to main.
+The 10 test scaffolds below were removed from the table and from the catalog by the owner's decision (see "Hidden test scaffolds"). A plugin author's own `cordis-kind-*` / `cordis-domain-*` keywords win over this table.
 
-Source of the list: the live `https://cordisplugins.github.io/registry/index.json` of 2026-11-25, 84 entries (12 official, 72 community). Each row was
+Source of the list (before the scaffolds were removed): the live `https://cordisplugins.github.io/registry/index.json` of 2026-11-25, 84 entries (12 official, 72 community). Each row was
 classified from the entry's description, and from the repository README where the description was thin or the purpose unclear
 (j-space, calm, johnny, memory-hub, agent-profiles, nga-reader, rea, file-opener). The earlier worker's table was used only as a
 comparison: every row below was decided again, and the rows that differ are listed in "Rows changed from the first proposal".
@@ -17,8 +17,8 @@ comparison: every row below was decided again, and the rows that differ are list
 
 ## Counts
 
-Kinds: Development & Runtime 20, Agent Architecture & Research 7, Integrations 7, Sessions & Messages 7, Models & Providers 6, Memory & Context 6, Vision & Multimodal 5, Docs & Rendering 4, Themes & Appearance 3, Plugin Markets & Managers 3, Channels & Notifications 3, UI Panels & Views 2, Fun 2, Remote & Mobile 2, Agent Tools & Skills 2, Workflow & Automation 2, OS & Platform Interop 1, Git & Code Review 1, Usage & Billing 1.
-Kinds with no plugin yet (the site still shows their chip, with a count of 0): Identity & Communication, Browser & Web, Voice & Audio.
+Kinds: Development & Runtime 10, Integrations 8, Agent Architecture & Research 7, Sessions & Messages 7, Models & Providers 6, Memory & Context 6, Vision & Multimodal 5, Docs & Rendering 4, Themes & Appearance 3, Plugin Markets & Managers 3, Channels & Notifications 3, UI Panels & Views 2, Fun 2, Remote & Mobile 2, Agent Tools & Skills 2, Workflow & Automation 2, OS & Platform Interop 1, Git & Code Review 1, Usage & Billing 1.
+Kinds with no plugin yet (not shown as chips until a plugin uses them): Identity & Communication, Browser & Web, Voice & Audio.
 Domains used: 44 of 513 subcategories.
 
 ## The table
@@ -96,19 +96,9 @@ Domains used: 44 of 513 subcategories.
 | `dsh-whale-live` | Integrations | 13-05 Video and streaming | - | Live-stream console: session records, Bilibili danmaku, speech, VTube Studio avatar bridge. |
 | `dsh-yanfield` | Docs & Rendering | 45-01 Editorial and manuscript management | - | Long-form fiction writing desk: manuscript, outline, notes and reviewable AI revisions. |
 | `dsh-yizi-themes` | Themes & Appearance | 02-06 Application shell components | - | YiziMarkdown theme pack: 19 themes, Theme Studio, custom brand, contrast checks. |
-| `hello-1118` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
-| `hello-ana` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
-| `hello-ben` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
-| `hello-cleo` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own and no description. |
-| `hello-cycle` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
-| `hello-w2350` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
-| `hello-walk-2215` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
 | `office-preview` | Docs & Rendering | 86-04 Conversion, rendering, and signatures | - | Word, Excel and PowerPoint files open as PDF in the frame's document preview. |
 | `pi-cordis` | Development & Runtime | 58-05 Agent and task execution runtimes | - | Cordis integration for the Pi coding-agent runtime. |
-| `sh-guide-clock` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
-| `sh1121-ana` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); its only function is GET /sh1121-ana answering a greeting. |
 | `skill-mcp-manager` | Agent Tools & Skills | 05-04 Agent planning and execution | - | Settings page that lists, adds, switches and tests skills and MCP servers. |
-| `ws-ana-clock` | Development & Runtime | 96-01 Extension APIs and contribution points | - | Scaffold from the sharing-cycle tests (inboxxobni test org); no function of its own. |
 
 ## Rows changed from the first proposal (worker DS2): 35 of the 73 rows that are still live
 
@@ -141,18 +131,10 @@ Domains used: 44 of 513 subcategories.
 | `dsh-update-center` | Development & Runtime / 94-03 Updates and release channels | Plugin Markets & Managers / 94-03 Updates and release channels | It updates plugins and the client: a plugin manager. |
 | `dsh-yanfield` | Docs & Rendering / 86-01 Document viewing and editing | Docs & Rendering / 45-01 Editorial and manuscript management | A fiction writing desk is manuscript management (45-01); 86-01 is a generic document editor. |
 | `dsh-yizi-themes` | Themes & Appearance / 64-01 Web application modules | Themes & Appearance / 02-06 Application shell components | Same. |
-| `hello-1118` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `hello-ana` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `hello-ben` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `hello-cleo` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `hello-cycle` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `hello-w2350` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `hello-walk-2215` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
-| `ws-ana-clock` | Development & Runtime / 04-05 Testing and debugging | Development & Runtime / 96-01 Extension APIs and contribution points | These are scaffolds from the sharing-cycle tests (README: "The X Cordis plugin", repository in the inboxxobni test org); "testing and debugging" claims a function they do not have. 96-01 is the plugin API they exercise. |
 
 ## New rows (live in the registry, missing from the first proposal): 11
 
-`dsh-cortex-extractors`, `dsh-lan-bridge`, `dsh-plugin-reply-with-images`, `dsh-plugin-socratic-tutor`, `dsh-shiori-bridge`, `dsh-shiori-shore`, `dsh-videocall`, `dsh-whale-gaze`, `dsh-whale-live`, `sh-guide-clock`, `sh1121-ana`.
+`dsh-cortex-extractors`, `dsh-lan-bridge`, `dsh-plugin-reply-with-images`, `dsh-plugin-socratic-tutor`, `dsh-shiori-bridge`, `dsh-shiori-shore`, `dsh-videocall`, `dsh-whale-gaze`, `dsh-whale-live`.
 
 ## In the first proposal but not in the live registry: 2
 
@@ -163,10 +145,15 @@ Domains used: 44 of 513 subcategories.
 
 Neither row is in the override file, which covers exactly the live entries.
 
-## For the owner to decide
+## Hidden test scaffolds
 
-1. The table above, row by row (or "approved").
+The owner decided on 2026-11-25 to hide our own test plugins from the catalog: `hello-1118`, `hello-ana`, `hello-ben`, `hello-cleo`, `hello-cycle`,
+`hello-w2350`, `hello-walk-2215`, `sh-guide-clock`, `sh1121-ana`, `ws-ana-clock`, plus `hello-share` (no release yet). They are on the registry's
+`blocklist.json` by repository; only their listing is hidden, their repositories and releases are untouched. The site then shows 75 entries (74 in index.json).
+
+## Decided by the owner / still open
+
+1. The table above: approved (2026-11-25).
 2. v04 has no theming subcategory (themes, brand, skins sit in 02-06 Application shell components for now). Add one, or accept 02-06.
-3. Seven `hello-*`, `sh-guide-clock`, `sh1121-ana` and `ws-ana-clock` (10 entries) are scaffolds from the sharing-cycle tests in the inboxxobni test org (no function of their own; hello-cleo has no description).
-   They are classified (Development & Runtime, 96-01) so nothing is Unclassified, but they could go on blocklist.json instead.
-4. Kinds with no plugin yet (listed under Counts) still show as chips with a count of 0.
+3. Decided: the 10 scaffolds are not classified; they are on blocklist.json (see below).
+4. Kinds with no plugin yet (listed under Counts) are not shown as chips until a plugin uses them.
