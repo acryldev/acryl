@@ -9,6 +9,8 @@ export const ALLOWED_WORDS = new Set([
   'honour',
   'honours',
   'honoured',
+  'honoring',
+  'honouring',
   'honorific',
   'honorable',
   'honorary',

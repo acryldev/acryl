@@ -30,6 +30,7 @@ test('the allowed English words are not hits, in any case, and each one is allow
   }
   assert.deepEqual(findName('honorific-prefix'), [])
   assert.deepEqual(findName('the process is honoured here'), [])
+  assert.deepEqual(findName('honouring every ignore rule, honoring the lock'), [])
 })
 
 test('a word that only starts with an allowed word, or is built on the name, is still a hit', () => {
