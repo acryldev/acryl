@@ -1,6 +1,6 @@
 # 053 Cordis plugin catalog: categories, and browsing plugins in Control Center
 
-Status: plan, for the owner's decisions (2026-11-24). Nothing built yet.
+Status: decided by the owner (2026-11-24), building in the order A-F.
 
 ## The owner's words (2026-11-24)
 
@@ -92,3 +92,36 @@ What people see:
 2. The ten kind names above (or edits).
 3. Show only non-empty domains in the browse view.
 4. Classifying the 84 existing plugins in an override file (the authors' own keywords win when they add them).
+
+## Decided (owner, 2026-11-24)
+
+1. Kind plus domain, as planned; only non-empty domains are shown.
+2. The kinds: the ten proposed, merged with deepseek1024.com's list the owner pasted (AGI Architecture Exploration, UI Enhancements,
+   Usage & Billing, Themes & Appearance, Models & Providers, Identity & Communication, Sessions & Messages, Memory, Tools & Capabilities,
+   WSL & Windows Interop, Browser & Web, Vision & Multimodal, Voice & Audio, Docs & Rendering, Workflow & Automation, Git & Code Review,
+   Notifications & Integrations, Development & Runtime, Remote & Mobile, Plugin Markets & Managers, Just for Fun). The merged list, 22 kinds,
+   slug in brackets:
+   - Themes & Appearance (`themes`): themes, brand, icons, fonts.
+   - UI Panels & Views (`ui`): panels, views, layout, UI enhancements.
+   - Sessions & Messages (`sessions`): chat history, sessions, message tools.
+   - Agent Tools & Skills (`tools`): tools and capabilities the agent calls, skills.
+   - Memory & Context (`memory`): memory, context, retrieval for the agent.
+   - Models & Providers (`models`): model providers, routing, local models.
+   - Usage & Billing (`usage`): tokens, cost, quotas.
+   - Identity & Communication (`identity`): accounts, sign-in, people, team presence.
+   - Channels & Notifications (`channels`): chat channels, notifications, messengers.
+   - Integrations (`integrations`): MCP, apps and outside services.
+   - Browser & Web (`web`): browser use, web fetch, web pages.
+   - Vision & Multimodal (`vision`): images, video, screen, multimodal input.
+   - Voice & Audio (`voice`): speech in and out, audio.
+   - Docs & Rendering (`docs`): documents, markdown, diagrams, rendering.
+   - Git & Code Review (`git`): git, pull requests, review.
+   - Workflow & Automation (`workflow`): workflows, schedules, automations.
+   - Development & Runtime (`dev`): developer tools, runtimes, debugging.
+   - Remote & Mobile (`remote`): remote access, phones, other devices.
+   - OS & Platform Interop (`platform`): Windows, WSL, macOS, Linux integration (the owner's "WSL & Windows Interop", widened to all OSes).
+   - Plugin Markets & Managers (`markets`): catalogs, installers, plugin managers.
+   - Agent Architecture & Research (`agents`): agent architectures, multi-agent, AGI exploration.
+   - Fun (`fun`): just for fun.
+3. The existing 84 plugins: a worker proposes kind, domain and reason per plugin; the owner approves the table before it goes live.
+4. Start now, A to F.
