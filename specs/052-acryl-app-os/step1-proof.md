@@ -80,6 +80,41 @@ were in the list of apps (`acryl apps`).
 A bare `npm create acrylblends` (without `acryl`) still installs the app in full, about 700 MB. This is accepted for developers who use the
 framework directly.
 
+## `acryl apps reinstall` and `acryl clean` (T008, 2026-11-25, commit 8d7aeb919c0a58a6ebb4a63d01ebc0d6416962a6)
+
+- `acryl apps reinstall [<id>]` installs an app's packages again through the one install, so an app installed in full moves onto the shared
+  Program. It moves `node_modules` aside first, and puts it back if the install fails. Without an id it does every app in the list.
+- `acryl clean [--yes]` lists every Program in `~/.acryl/program` that no app uses, and every half-made one whose install stopped. For each
+  it shows how much removing it frees: files an app still hard-links count as not freed, and on macOS the total is "up to", because a clone
+  shares blocks. Then it asks once. Without a terminal it removes only with `--yes`.
+- Apps in the list, and the apps acryl keeps in its home (Control Center, ADE), count as users of a Program.
+- Neither command touches an app's own files or data. Clean refuses any path outside `<home>/program`.
+- Neither command can see whether an app is running. On Windows the reinstall of a running app fails and says to stop it first. On Linux
+  and macOS the running app keeps its open files and should be restarted.
+
+Proof: the packed `acryl` from that commit, on scratch HOMEs, with `create-acrylblends@1.7.33`. The steps:
+
+1. `full-app` was made by `create-acrylblends` with its own full install (the old way) and put in the list.
+2. `acryl new shared-app blank` made the Program.
+3. `acryl apps reinstall full-app` moved full-app onto the Program.
+4. `acryl clean --yes`, with every Program in use, found nothing to remove.
+5. A copy of the Program was made under a version no app asks for (`blends-1.7.0`). `acryl clean` without a terminal listed it and removed
+   nothing, and `acryl clean --yes` removed only it.
+6. Both apps then passed the start checks above.
+
+Results are in the measuring session's scratch folder (`evidence/t8-*`).
+
+| Host | full-app before | reinstall gave back | full-app's own files | clean said | clean gave back | Start checks |
+|---|---|---|---|---|---|---|
+| z370n (Ubuntu) | 404 MB | 397 MB (free space 397 MB) | unchanged (sha256) | 698.0 MB | 714 MB free space | all 20 passed |
+| mbpi9win (Windows 10) | 367 MB | 356 MB (free space 441 MB) | unchanged (sha256) | 751.6 MB | 1,122 MB free space | all 20 passed |
+| AION (macOS 26) | 415 MB | 412 MB free space | unchanged (sha256) | up to 733.4 MB | 8.8 MB free space | all passed except koffi inside Electron (finding 3) |
+
+- On AION, the test's unused Program was itself an APFS clone of the live one, so removing it freed almost nothing. That is why clean says
+  "up to" on macOS. A Program whose apps are gone frees its full size.
+- On Windows, the "said" figure adds file sizes, and the free space it gave back was larger.
+- On every host the Program in use stayed whole, and both apps' own files were unchanged by clean.
+
 ## Not in this step
+
 - Control Center and `acryl` get this through a release of `@acryldev/launcher`, `@acryldev/launcher-desktop` and `acryl`.
-- `acryl apps reinstall` and `acryl clean` (T008) are not built yet.
