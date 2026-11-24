@@ -275,7 +275,7 @@ describe('+ New app', () => {
     const { service, runs, root } = setup()
     const where = join(root, 'ACRYL')
     service.create({ where, name: 'shop', starter: 'notes', surface: 'desktop' })
-    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'shop', 'notes'], cwd: where })
+    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'shop', 'notes', '--no-install'], cwd: where })
     expect(service.state().job).toMatchObject({ name: 'shop', status: 'running', line: `cd ${where} && acryl new shop notes` })
     expect(service.state().apps).toEqual([])
     mkdirSync(join(where, 'shop'), { recursive: true })
@@ -290,10 +290,11 @@ describe('+ New app', () => {
   })
 
   it('installs the dependencies of an app that has none before starting it, shows it as starting, and keeps npm\'s words when that fails', () => {
-    const { service, makeApp, runs } = setup()
+    const { service, makeApp, runs, home } = setup()
     const folder = makeApp('crm', 'desktop', false)
     service.start('crm')
-    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: folder })
+    // The one install (@acryldev/launcher app-install-cli.mjs): the shared Program when one fits, then npm install, by the machine's Node.
+    expect(runs[0]?.command).toMatchObject({ program: 'node', args: [expect.stringMatching(/app-install-cli\.mjs$/u), '--home', home, '--', 'install', '--loglevel', 'http'], cwd: folder })
     expect(service.state().apps[0]).toMatchObject({ state: 'starting' })
     mkdirSync(join(folder, 'node_modules'))
     runs[0]!.end(0)
@@ -321,14 +322,14 @@ describe('+ New app', () => {
     expect(() => { service.create({ where, name: 'notes', blend: '--yes', surface: 'web' }) }).toThrow(/not a Blend id/u)
     expect(runs).toHaveLength(0)
     service.create({ where, name: 'notes', blend: 'acrylblends.notes', surface: 'desktop' })
-    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'notes', '--from', 'acrylblends.notes'], cwd: where })
+    expect(runs[0]?.command).toMatchObject({ program: 'npm', args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'notes', '--from', 'acrylblends.notes', '--no-install'], cwd: where })
     expect(service.state().job?.line).toBe(`cd ${where} && acryl new notes --from acrylblends.notes`)
   })
 
   it('opens ACRYL ADE from <home>/ade: made from the registry the first time, then started on the surface asked for', () => {
     const { service, runs, home } = setup()
     service.openAde('web')
-    expect(runs[0]?.command).toMatchObject({ args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'ade', '--from', 'acryl.ade'], cwd: home })
+    expect(runs[0]?.command).toMatchObject({ args: ['exec', '--yes', 'create-acrylblends@latest', '--', 'ade', '--from', 'acryl.ade', '--no-install'], cwd: home })
     const ade = join(home, 'ade')
     mkdirSync(join(ade, 'node_modules'), { recursive: true })
     writeFileSync(join(ade, 'blend.yaml'), 'metadata:\n  id: acryl.ade\n')
@@ -349,14 +350,14 @@ describe('+ New app', () => {
   })
 
   it('installs the dependencies of an app that arrives without them (a Blend from the registry), then starts it', () => {
-    const { service, runs, root } = setup()
+    const { service, runs, root, home } = setup()
     const where = join(root, 'ACRYL')
     service.create({ where, name: 'notes', blend: 'acrylblends.notes', surface: 'desktop' })
     mkdirSync(join(where, 'notes'), { recursive: true })
     writeFileSync(join(where, 'notes', 'blend.yaml'), 'id: acrylblends.notes\n')
     runs[0]!.say('Next:\n  npm install\n')
     runs[0]!.end(0)
-    expect(runs[1]?.command).toMatchObject({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: join(where, 'notes') })
+    expect(runs[1]?.command).toMatchObject({ program: 'node', args: [expect.stringMatching(/app-install-cli\.mjs$/u), '--home', home, '--', 'install', '--loglevel', 'http'], cwd: join(where, 'notes') })
     expect(service.state().job).toMatchObject({ status: 'running', step: expect.stringContaining('installing its dependencies') })
     // Output arrives in chunks: a line that ended stays its own line when the next chunk comes, and a half line is finished by the next chunk.
     runs[1]!.say('npm http fetch GET 200 a\n')

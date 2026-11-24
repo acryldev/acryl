@@ -69,7 +69,7 @@ describe('the launcher tools', () => {
     const { tool, commands, app } = setup()
     expect((JSON.parse(await tool('acryl_launcher_blends')({ query: 'invoice' }) as string) as { blends: Array<{ id: string }> }).blends.map(blend => blend.id)).toEqual(['acrylblends.accounting'])
     await tool('acryl_launcher_new_app')({ name: 'demo' })
-    expect(commands[0]?.args).toEqual(['exec', '--yes', 'create-acrylblends@latest', '--', 'demo', 'blank'])
+    expect(commands[0]?.args).toEqual(['exec', '--yes', 'create-acrylblends@latest', '--', 'demo', 'blank', '--no-install'])
     await expect(tool('acryl_launcher_new_app')({ name: 'second', blend: 'acrylblends.notes', surface: 'desktop' })).rejects.toThrow(/still being made/u)
     await expect(tool('acryl_launcher_new_app')({ name: 'x', surface: 'tui' })).rejects.toThrow(/web or desktop/u)
     app('shop')

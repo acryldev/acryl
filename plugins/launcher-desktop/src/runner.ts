@@ -83,13 +83,18 @@ function follow(file: string, emit: (text: string) => void): () => void {
   return () => { clearInterval(timer); read(); closeSync(fd) }
 }
 
+/** The programs that are .cmd files on Windows. */
+export const isCmdFile = (program: string): boolean => program === 'npm' || program === 'npx'
+
 export const spawnRunner: Runner = (command) => {
   const win = process.platform === 'win32'
-  // `npm` and `npx` are .cmd files on Windows, which only a shell starts.
+  // `npm` and `npx` are .cmd files on Windows, which only a shell starts. Anything else (node) starts without one: a shell splits an argument with a
+  // space in it (an install command's path under C:\Users\First Last, `node -e <script>`) where spawn quotes it.
+  const shell = win && isCmdFile(command.program)
   const start = win ? { program: command.program, args: command.args } : withoutInheritedDescriptors(command.program, command.args)
   const log = command.log === undefined ? undefined : openSync(command.log, 'w')
   const output = log ?? 'pipe'
-  const child = spawn(start.program, [...start.args], { cwd: command.cwd, env: command.env as NodeJS.ProcessEnv, shell: win, detached: !win, windowsHide: true, stdio: ['ignore', output, output] })
+  const child = spawn(start.program, [...start.args], { cwd: command.cwd, env: command.env as NodeJS.ProcessEnv, shell, detached: !win, windowsHide: true, stdio: ['ignore', output, output] })
   if (log !== undefined) closeSync(log)
   const outputs: Array<(text: string) => void> = []
   const emit = (text: string): void => { for (const listener of outputs) listener(text) }

@@ -4,6 +4,7 @@
  * memory, because the launcher records no port: an app is "running" when this service started it and it has not ended.
  */
 import { basename, delimiter, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   addApp, addToApplications, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
   readApps, readGithub, readLaunchers, readModelKey, refreshLaunchers, removeApp, removeFromApplications, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
@@ -15,7 +16,10 @@ import type {
 } from './contract.ts'
 import { ACCOUNT_NAME, BLEND_ID, BLEND_SOURCE, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
-import { appEnvironment, type Run, type Runner } from './runner.ts'
+import { appEnvironment, type Command, type Run, type Runner } from './runner.ts'
+
+/** The install command's file (@acryldev/launcher), run by the machine's Node as every command here is. */
+const INSTALL_CLI = fileURLToPath(import.meta.resolve('@acryldev/launcher/install-cli'))
 import { originOf, selfUpdateCommand, selfView, type SelfFiles } from './self-update.ts'
 
 /** A request the service cannot honour, in a sentence a person can act on. The route answers it as 409. */
@@ -228,7 +232,7 @@ export class LauncherService {
   }
 
   #installThenStart(id: string, folder: string, surface: Surface | undefined): void {
-    const run = this.#ports.runner({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: folder, env: this.#environment() })
+    const run = this.#ports.runner(this.#installCommand(folder))
     const started: Started = { run, desktop: false, address: undefined, output: '' }
     this.#started.set(id, started)
     run.onOutput((text) => { started.output = tail(`${started.output}${text}`) })
@@ -360,13 +364,12 @@ export class LauncherService {
     // What `acryl new` forwards to (the selector's `npm exec --yes create-acrylblends@latest -- <args>`), run directly so this screen does not depend on which
     // `acryl` release is installed; the line shown is the one a person types.
     const source = request.blend === undefined ? [request.starter ?? ''] : ['--from', request.blend]
-    const args = ['exec', '--yes', CREATE_SPEC, '--', request.name, ...source]
+    // `--no-install`: a starter would install itself inside create-acrylblends; every app is installed by the one install here instead (#install), so
+    // a starter starts from the shared Program as a registry Blend does.
+    const args = ['exec', '--yes', CREATE_SPEC, '--', request.name, ...source, '--no-install']
     const line = `cd ${request.where} && acryl new ${request.name} ${source.join(' ')}`
-    // npm_config_loglevel reaches the install a starter runs inside create-acrylblends too, so its minute shows each download instead of one still line.
     const run = this.#ports.runner({ program: 'npm', args, cwd: request.where, env: { ...this.#environment(), npm_config_loglevel: 'http' } })
-    const step = request.blend === undefined
-      ? `Step 1 of 2: getting ${request.name} and installing its dependencies (${CREATE_SPEC}, about a minute). Next: starting it.`
-      : `Step 1 of 3: getting ${request.name} (${CREATE_SPEC}). Next: installing its dependencies, then starting it.`
+    const step = `Step 1 of 3: getting ${request.name} (${CREATE_SPEC}). Next: installing its dependencies, then starting it.`
     const job: Job = { name: request.name, kind: 'make', line, status: 'running', run, step, since: Date.now(), output: '' }
     this.#job = job
     this.#watch(undefined, run, { folder, surface: request.surface, job })
@@ -635,8 +638,7 @@ export class LauncherService {
     this.#installing.set(appId, job)
     job.step = 'Step 2 of 3: installing its dependencies (npm install, about a minute). Next: starting it.'
     job.output = ''
-    // `--loglevel http` makes npm print each download, so the screen shows it working instead of a silent minute.
-    const run = this.#ports.runner({ program: 'npm', args: ['install', '--loglevel', 'http'], cwd: folder, env: this.#environment() })
+    const run = this.#ports.runner(this.#installCommand(folder))
     job.run = run
     let output = ''
     run.onOutput((text) => { output = tail(`${output}${text}`); job.output = output })
@@ -646,6 +648,14 @@ export class LauncherService {
       if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.' } else if (end.code === 0) this.#finish(appId, job)
       else { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'npm install ended before the app could run.') : output.trimEnd() }
     })
+  }
+
+  /**
+   * The one install every app gets (@acryldev/launcher app-install-cli.mjs, the same `acryl --gui` runs): from the shared Program when one fits, npm
+   * on top. `--loglevel http` makes npm print each download, so the screen shows it working instead of a silent minute.
+   */
+  #installCommand(folder: string): Command {
+    return { program: 'node', args: [INSTALL_CLI, '--home', this.#ports.home, '--', 'install', '--loglevel', 'http'], cwd: folder, env: this.#environment() }
   }
 
   #note(making: { job: Job } | undefined, status: 'failed', message: string, id: string | undefined): void {

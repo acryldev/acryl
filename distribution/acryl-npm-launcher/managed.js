@@ -4,7 +4,11 @@
 // The functions here only decide what to run; cli.js runs it. Nothing here touches the network or the disk except `exists`.
 import { existsSync } from 'node:fs'
 import { join, relative, isAbsolute } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { CREATE_SPEC, npmCommand, npmExec } from './forward.js'
+
+/** The one install every place that installs an app runs (@acryldev/launcher app-install.js: it starts from the shared Program when one fits). */
+export const INSTALL_CLI = fileURLToPath(import.meta.resolve('@acryldev/launcher/install-cli'))
 
 /** What updates a Blend copy from its newer release (the acrylblends command; the Control Center window runs the same). */
 export const UPDATE_SPEC = 'acrylblends@latest'
@@ -56,7 +60,7 @@ export function managedSteps(app, surface, { home, context, exists = existsSync,
     steps.push({ label: `updating ${app.title} to the newest release`, optional: true, ...npmExec(context, UPDATE_SPEC, ['update']), cwd: folder })
   }
   if (!exists(join(folder, 'node_modules', '.package-lock.json'))) {
-    steps.push({ label: `installing ${app.title} (once, about a minute)`, ...npmCommand(context, ['install', '--no-audit', '--no-fund']), cwd: folder })
+    steps.push({ label: `installing ${app.title} (once, about a minute)`, command: context.execPath, args: [INSTALL_CLI, '--home', home], cwd: folder })
   }
   steps.push({ label: `starting ${app.title}`, ...npmCommand(context, ['run', SURFACES[surface]]), cwd: folder })
   return steps

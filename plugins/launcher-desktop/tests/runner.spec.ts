@@ -3,7 +3,7 @@ import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { spawnRunner, withoutInheritedDescriptors } from '../src/runner.ts'
+import { isCmdFile, spawnRunner, withoutInheritedDescriptors } from '../src/runner.ts'
 
 describe('what a started app inherits from the Electron main process', () => {
   it('only Linux with bash gets the wrapper; every other case starts the command as it is', () => {
@@ -29,6 +29,12 @@ describe('what a started app inherits from the Electron main process', () => {
     } finally {
       closeSync(fd)
     }
+  })
+})
+
+describe('which programs need a shell on Windows', () => {
+  it('only npm and npx, the .cmd files; node starts without one, so a path with a space stays one argument', () => {
+    expect(['npm', 'npx', 'node', 'C:\\Users\\First Last\\node.exe'].map(isCmdFile)).toEqual([true, true, false, false])
   })
 })
 

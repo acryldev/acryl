@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { controlCenterArgs, desktopEntryExec, firstAddress, installedControlCenter, opensBrowser } from '../control-center.js'
 import { createdAppName, forwardCommand } from '../forward.js'
 import { HELP } from '../help.js'
-import { MANAGED, managedSteps } from '../managed.js'
+import { INSTALL_CLI, MANAGED, managedSteps } from '../managed.js'
 import { routeArgs } from '../route.js'
 
 const terminal = { terminal: true }
@@ -71,6 +71,9 @@ test('one Control Center copy in the ACRYL home: made once, then updated to its 
   const made = path => path === join('/h/.acryl', 'control-center', 'blend.yaml') || path.endsWith('.package-lock.json')
   const first = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: () => false })
   assert.deepEqual(first.map(step => step.label.split(' ')[0]), ['making', 'installing', 'starting'])
+  // The install is the one every app gets (@acryldev/launcher app-install-cli.mjs), run by this Node in the copy's folder, with ACRYL's home.
+  assert.deepEqual({ ...first[1], label: undefined }, { label: undefined, command: '/node', args: [INSTALL_CLI, '--home', '/h/.acryl'], cwd: join('/h/.acryl', 'control-center') })
+  assert.match(INSTALL_CLI, /app-install-cli\.mjs$/u)
   const later = managedSteps(MANAGED.launcher, 'gui', { home: '/h/.acryl', context, exists: made, update: false })
   assert.deepEqual(later.map(step => [step.args.join(' '), step.cwd]), [['run desktop', join('/h/.acryl', 'control-center')]])
   const updated = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: made })

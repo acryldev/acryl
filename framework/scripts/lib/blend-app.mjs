@@ -5,22 +5,17 @@
  */
 import { execFileSync } from 'node:child_process'
 import {
-  copyFileSync,
   cpSync,
   existsSync,
-  linkSync,
-  mkdirSync,
   mkdtempSync,
-  readdirSync,
   readFileSync,
-  readlinkSync,
   renameSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { linkTree } from '../../../plugins/launcher/app-install.js'
 
 /** A name that is a folder name on every OS (plugins/instance/storage.ts `isPortableName`, the same rule) and a file name inside an Info.plist. */
 export const NAME = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,62}$/u
@@ -35,25 +30,8 @@ export const slugOf = (name) =>
 /** Where the product marker lies in a Windows or Linux engine folder (electron-builder's `asar: false` layout: `resources/app`). */
 export const MARKER = ['resources', 'app', 'product.json']
 
-/** Link `from` into `to`, folder by folder; `skip` gets each file's path under `from`, `/`-separated. Falls back to a copy where a link cannot be made. */
-export function linkTree(from, to, skip = () => false, base = '') {
-  mkdirSync(to, { recursive: true })
-  for (const entry of readdirSync(from, { withFileTypes: true })) {
-    const path = base === '' ? entry.name : `${base}/${entry.name}`
-    const source = join(from, entry.name)
-    const target = join(to, entry.name)
-    if (skip(path)) continue
-    if (entry.isDirectory()) linkTree(source, target, skip, path)
-    else if (entry.isSymbolicLink()) symlinkSync(readlinkSync(source), target)
-    else {
-      try {
-        linkSync(source, target)
-      } catch {
-        copyFileSync(source, target)
-      }
-    }
-  }
-}
+/** The one tree linker (hard links, a copy where a link cannot be made), kept with the install of apps on this computer that shares the framework the same way. */
+export { linkTree }
 
 /**
  * A Windows or Linux Blend app: the engine folder linked under `<out>/<name>`, its executable renamed to the Blend's, the marker rewritten so the product

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import test from 'node:test'
 import { CREATE_SPEC } from '../forward.js'
-import { MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from '../managed.js'
+import { INSTALL_CLI, MANAGED, managedSteps, openFolderEnv, runtimeInstallStep, runtimePrefix, surfaceFrom } from '../managed.js'
 
 const context = { env: {}, platform: 'linux', cwd: '/work', execPath: '/usr/bin/node', exists: () => false }
 const home = '/u/.acryl'
@@ -25,7 +25,7 @@ test('the first run makes ADE from the registry in ~/.acryl/ade, installs it, th
   const steps = managedSteps(MANAGED.ade, 'web', { home, context, exists: () => false })
   assert.deepEqual(steps.map(({ command, args, cwd }) => ({ command, args, cwd })), [
     { command: 'npm', args: ['exec', '--yes', CREATE_SPEC, '--', 'ade', '--from', 'acryl.ade', '--no-start'], cwd: home },
-    { command: 'npm', args: ['install', '--no-audit', '--no-fund'], cwd: ade },
+    { command: '/usr/bin/node', args: [INSTALL_CLI, '--home', home], cwd: ade },
     { command: 'npm', args: ['run', 'dev'], cwd: ade },
   ])
 })
@@ -37,7 +37,7 @@ test('a made and installed ADE only starts; --gui starts its window', () => {
 
 test('an install cut short (no npm lockfile in node_modules) is done again', () => {
   const made = path => path === join(ade, 'blend.yaml') || path === join(ade, 'node_modules')
-  assert.deepEqual(managedSteps(MANAGED.ade, 'web', { home, context, exists: made, update: false }).map(step => step.args[0]), ['install', 'run'])
+  assert.deepEqual(managedSteps(MANAGED.ade, 'web', { home, context, exists: made, update: false }).map(step => step.args[0]), [INSTALL_CLI, 'run'])
 })
 
 test('acryl --gui and --web make ACRYL Control Center in ~/.acryl/control-center once, then open it in a window or the browser', () => {
