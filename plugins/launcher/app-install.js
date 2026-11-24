@@ -5,7 +5,7 @@
 // gets its own copy; npm trusts that lockfile only when it is newer than every package folder, so the copy is stamped now; Electron unpacks its
 // binary on first use and writes `path.txt` only when it downloads, so the Program is unpacked once and `path.txt` written when missing.
 // Home is a parameter: where ACRYL's home is stays the caller's one decision (the AppInstance rule of this repo).
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
   copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync,
@@ -66,6 +66,16 @@ export function npmCommand({ env, platform, execPath, exists = existsSync }, arg
     return { command: 'npm.cmd', args, shell: true }
   }
   return { command: 'npm', args }
+}
+
+/** npm run in `cwd` with this process's output (the person sees npm's own lines); resolves to its exit code. */
+export function runNpm(args, cwd) {
+  return new Promise(done => {
+    const command = npmCommand({ env: process.env, platform: process.platform, execPath: process.execPath }, args)
+    const child = spawn(command.command, command.args, { cwd, stdio: 'inherit', shell: command.shell === true })
+    child.once('error', cause => { console.error(`acryl: ${cause.message}`); done(1) })
+    child.once('exit', code => done(code ?? 1))
+  })
 }
 
 /** The Program an app's `package.json` asks for: `blends-<version>` from its `@acryldev/blends` range (`^1.7.33`, `~1.7.33`, `1.7.33`), else none. */

@@ -12,6 +12,8 @@ Apps
   acryl apps                  list the apps on this computer
   acryl apps add <folder>     put an app folder in the list
   acryl apps remove <id>      take an app out of the list (the folder stays)
+  acryl apps reinstall [<id>] install an app's packages again (every app without an id), from the one shared install
+  acryl clean                 remove the shared installs no app uses (says what and how much, asks first)
   acryl new <name> [starter]  make an app from a starter (blank, nodejs, notes, chat, todo, agent)
   acryl make <name> --from <id>
                               make an app from a Blend in the store (acryl store lists them)

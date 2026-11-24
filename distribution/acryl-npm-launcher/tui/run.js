@@ -12,7 +12,7 @@ import { TICK_MS, colorEnabled } from './brand.js'
 import { createControlCenterView } from './view.js'
 
 // The list of apps, the model key and the registry are read and written by the same code the screen uses; the selector reaches them through this bundle.
-export { addApp, addToApplications, blendVersionOf, isLauncherHome, modelEnv, offeredLauncher, readApps, recordOffer, refreshLaunchers, runAppsCommand, runModelCommand } from '@acryldev/launcher'
+export { addApp, addToApplications, blendVersionOf, isLauncherHome, modelEnv, offeredLauncher, readApps, recordOffer, refreshLaunchers, runAppsCommand, runCleanCommand, runModelCommand } from '@acryldev/launcher'
 export { readBlends } from '@acryldev/launcher-desktop/node'
 
 /** Open a URL in the browser or a folder in the file manager, without waiting and without failing the screen when there is no opener. */

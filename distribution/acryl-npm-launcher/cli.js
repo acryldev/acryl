@@ -140,7 +140,19 @@ async function runModel(modelArgs) {
 async function runApps(appsArgs) {
   if (!existsSync(LAUNCHER)) throw new Error('the launcher is not part of this install; install acryl from npm')
   const { runAppsCommand } = await loadLauncher()
-  process.exitCode = runAppsCommand(appsArgs, { home: ACRYL_HOME, cwd: process.cwd(), out: line => console.log(line), err: line => console.error(line) })
+  process.exitCode = await runAppsCommand(appsArgs, { home: ACRYL_HOME, cwd: process.cwd(), out: line => console.log(line), err: line => console.error(line) })
+}
+
+/** `acryl clean`: the shared installs no app uses, said first, removed after one question (or --yes without a terminal). */
+async function runClean(cleanArgs) {
+  if (!existsSync(LAUNCHER)) throw new Error('the launcher is not part of this install; install acryl from npm')
+  const { runCleanCommand } = await loadLauncher()
+  const terminal = Boolean(stdin.isTTY && process.stdout.isTTY)
+  const ask = async question => {
+    const prompt = createInterface({ input: stdin, output: process.stdout })
+    try { return await prompt.question(question) } finally { prompt.close() }
+  }
+  process.exitCode = await runCleanCommand(cleanArgs, { home: ACRYL_HOME, out: line => console.log(line), err: line => console.error(line), ask: terminal ? ask : undefined })
 }
 
 const context = () => ({ env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, exists: existsSync })
@@ -331,6 +343,7 @@ if (forwarded?.error) {
   } else if (route.kind === 'control-center') openLauncherBlend(route).catch(fail)
   else if (route.kind === 'model') runModel(route.args).catch(fail)
   else if (route.kind === 'apps') runApps(route.args).catch(fail)
+  else if (route.kind === 'clean') runClean(route.args).catch(fail)
   else if (route.kind === 'store') runStore(route.args).catch(fail)
   else if (route.kind === 'desktop') runDesktop(route.args).catch(fail)
   // `acryl ade` is ACRYL ADE (spec 050 D14): the Blend in the browser, `--gui` in a window, `--tui` the terminal agent. `acryl code` is its earlier name.

@@ -2,7 +2,7 @@
 // apps/acryl-launcher, the desktop one later) only draw the session's states.
 export { APP_NAME, JOURNEYS, STARTERS, appNameProblem, commandLine, journey, nameFromId, whereProblem } from './journeys.js'
 export { APP_MARKER, REGISTRY_FILE, SURFACES, addApp, blendOf, blendVersionOf, githubOf, inspectApp, readApps, removeApp, setBlendVisibility } from './apps-registry.js'
-export { runAppsCommand } from './apps-command.js'
+export { runAppsCommand, runCleanCommand } from './apps-command.js'
 export { LAUNCHERS_FILE, addToApplications, blendNameOf, desktopExecArg, isLauncherHome, launcherApp, launcherPlan, offeredLauncher, readLaunchers, recordOffer, refreshLaunchers, removeFromApplications } from './os-launchers.js'
 export { createSession } from './session.js'
 export { MODEL_FILE, ORCAROUTER_REFERRAL_URL, PROVIDERS, clearModelKey, keyProblem, maskKey, modelEnv, readModelKey, runModelCommand, saveModelKey } from './model-key.js'

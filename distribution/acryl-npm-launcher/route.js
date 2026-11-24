@@ -4,6 +4,7 @@
 //   acryl --gui, acryl --web      ACRYL Control Center in a window, in the browser (its newest release first; `--no-update` skips that)
 //   acryl --help, -h, help        the help          acryl --version, -v       this package's version
 //   acryl apps | model | store    the list of apps, the model key, the store's Blends
+//   acryl clean                   remove the shared installs no app uses (asks first)
 //   acryl ade [...]               ACRYL ADE         acryl desktop             where the earlier desktop went (--installer: its installer)
 //   anything else                 the terminal coding agent with those words (`acryl -p "..."`)
 // The short commands forwarded to the part that owns them (new, make, plugin, blends, update) are decided before this, by forward.js.
@@ -23,7 +24,7 @@ export function routeArgs(args, { terminal }) {
     const chosen = controlCenterArgs(first === 'web' ? ['--web', ...rest] : args)
     return chosen.error ? { kind: 'error', message: chosen.error } : { kind: 'control-center', surface: chosen.surface, update: chosen.update, noUpdate: chosen.noUpdate }
   }
-  if (first === 'apps' || first === 'model' || first === 'store' || first === 'desktop') return { kind: first, args: rest }
+  if (first === 'apps' || first === 'model' || first === 'store' || first === 'desktop' || first === 'clean') return { kind: first, args: rest }
   if (first === 'ade' || first === 'code') return { kind: 'ade', args: rest }
   return { kind: 'agent', args }
 }

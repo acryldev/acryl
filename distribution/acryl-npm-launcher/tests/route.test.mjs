@@ -28,16 +28,18 @@ test('--gui and --web are the Control Center in a window and the browser, with -
   assert.deepEqual(controlCenterArgs(['--gui', '--update']), { surface: 'gui', update: true, noUpdate: false })
 })
 
-test('the script commands: help, version, apps, model, store, ade, desktop; other words go to the terminal agent', () => {
+test('the script commands: help, version, apps, clean, model, store, ade, desktop; other words go to the terminal agent', () => {
   for (const words of [['--help'], ['-h'], ['help']]) assert.deepEqual(routeArgs(words, terminal), { kind: 'help' })
   assert.deepEqual(routeArgs(['--version'], pipe), { kind: 'version' })
   assert.deepEqual(routeArgs(['apps', 'add', 'x'], pipe), { kind: 'apps', args: ['add', 'x'] })
+  assert.deepEqual(routeArgs(['apps', 'reinstall'], pipe), { kind: 'apps', args: ['reinstall'] })
+  assert.deepEqual(routeArgs(['clean', '--yes'], pipe), { kind: 'clean', args: ['--yes'] })
   assert.deepEqual(routeArgs(['store', 'notes'], pipe), { kind: 'store', args: ['notes'] })
   assert.deepEqual(routeArgs(['model', 'set', 'deepseek'], pipe), { kind: 'model', args: ['set', 'deepseek'] })
   assert.deepEqual(routeArgs(['code', '--gui'], pipe), { kind: 'ade', args: ['--gui'] })
   assert.deepEqual(routeArgs(['desktop', '--no-open'], pipe), { kind: 'desktop', args: ['--no-open'] })
   assert.deepEqual(routeArgs(['-p', 'hello'], pipe), { kind: 'agent', args: ['-p', 'hello'] })
-  for (const command of ['acryl --tui', 'acryl --gui', 'acryl --web', 'acryl make <name> --from <id>', 'acryl store', 'acryl apps', 'acryl model']) assert.ok(HELP.includes(command), command)
+  for (const command of ['acryl --tui', 'acryl --gui', 'acryl --web', 'acryl make <name> --from <id>', 'acryl store', 'acryl apps', 'acryl apps reinstall', 'acryl clean', 'acryl model']) assert.ok(HELP.includes(command), command)
 })
 
 test('acryl make is acryl new: the same create command, and the made folder is listed', () => {

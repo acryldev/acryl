@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { installApp, programOf } from '../app-install.js'
+import { fakeNpm } from './fake-npm.mjs'
 
 function scratch(run) {
   const root = mkdtempSync(join(tmpdir(), 'acryl-install-'))
@@ -17,25 +18,6 @@ const blendsApp = (root, name, deps = { '@acryldev/blends': '^1.7.33', 'left-pad
   mkdirSync(folder, { recursive: true })
   writeFileSync(join(folder, 'package.json'), JSON.stringify({ name, dependencies: deps }))
   return folder
-}
-
-/** What npm install leaves: one file per dependency, the hidden lockfile written last. Calls are recorded with what node_modules held when it started. */
-function fakeNpm({ code = 0, alsoWrite } = {}) {
-  const calls = []
-  const npm = async (args, cwd) => {
-    calls.push({ args, cwd, found: existsSync(join(cwd, 'node_modules', 'left-pad', 'index.js')) })
-    if (code !== 0) return code
-    const deps = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).dependencies ?? {}
-    for (const name of Object.keys(deps)) {
-      const file = join(cwd, 'node_modules', name, 'index.js')
-      if (!existsSync(file)) { mkdirSync(join(file, '..'), { recursive: true }); writeFileSync(file, `module.exports = '${name}'\n`) }
-    }
-    alsoWrite?.(cwd)
-    // npm rewrites the hidden lockfile in place (finding 1): an append is what reaches a hard-linked copy.
-    appendFileSync(join(cwd, 'node_modules', '.package-lock.json'), `{"from":"${cwd}"}\n`)
-    return 0
-  }
-  return { npm, calls }
 }
 
 const inode = path => statSync(path).ino
