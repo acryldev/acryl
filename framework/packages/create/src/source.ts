@@ -10,7 +10,9 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -317,6 +319,36 @@ export function readManifest(dir: string): Manifest {
 }
 
 const SKIP = new Set(['.git', 'node_modules', TEMPLATE_MANIFEST])
+/** Without git: an app's local state, never its source (what the app template's gitignore lists). */
+const LOCAL_STATE = new Set(['.acryl', '.acrylblends'])
+const isLocalState = (name: string): boolean =>
+  LOCAL_STATE.has(name) || name === '.env' || name.startsWith('.env.')
+
+/**
+ * The files of a folder as its git repository sees them: tracked and untracked, honouring every ignore rule (nested .gitignore files and
+ * .git/info/exclude included). Undefined when git is not installed or the folder is not the top of a repository (a download unpacked inside
+ * some other repository's ignored folder would list nothing).
+ */
+export function gitFiles(folder: string): string[] | undefined {
+  const top = spawnSync('git', ['rev-parse', '--show-toplevel'], {
+    cwd: folder,
+    encoding: 'utf8',
+    windowsHide: true,
+  })
+  if (
+    top.error !== undefined ||
+    top.status !== 0 ||
+    realpathSync(top.stdout.trim()) !== realpathSync(folder)
+  )
+    return undefined
+  const listed = spawnSync(
+    'git',
+    ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+    { cwd: folder, encoding: 'utf8', windowsHide: true },
+  )
+  if (listed.error !== undefined || listed.status !== 0) return undefined
+  return listed.stdout.split('\0').filter((file) => file !== '')
+}
 const GIT_ATTRIBUTES =
   '# Every checkout has the same line endings, on every OS.\n* text=auto eol=lf\n'
 /** Lifecycle scripts npm runs on `npm install` in the app's own folder. */
@@ -344,21 +376,38 @@ export function writeTemplate(
   name: string,
 ): { files: string[]; lifecycle: Record<string, string> } {
   const files: string[] = []
-  const walk = (src: string, dst: string, prefix: string) => {
-    mkdirSync(dst, { recursive: true })
-    for (const entry of readdirSync(src, { withFileTypes: true })) {
-      if (SKIP.has(entry.name)) continue
-      const outName = prefix === '' && entry.name === 'gitignore' ? '.gitignore' : entry.name
-      if (entry.isDirectory())
-        walk(join(src, entry.name), join(dst, outName), `${prefix}${entry.name}/`)
-      else {
-        const buffer = readFileSync(join(src, entry.name))
-        writeFileSync(join(dst, outName), isText(buffer) ? stamp(buffer.toString('utf8')) : buffer)
-        files.push(`${prefix}${outName}`)
+  const copy = (relative: string) => {
+    const parts = relative.split('/')
+    const outParts = parts.length === 1 && parts[0] === 'gitignore' ? ['.gitignore'] : parts
+    const buffer = readFileSync(join(from, ...parts))
+    mkdirSync(join(target, ...outParts.slice(0, -1)), { recursive: true })
+    writeFileSync(
+      join(target, ...outParts),
+      isText(buffer) ? stamp(buffer.toString('utf8')) : buffer,
+    )
+    files.push(outParts.join('/'))
+  }
+  mkdirSync(target, { recursive: true })
+  // A folder in a git repository (a made app, a Blend's checkout) is copied as git sees it, so its local state (.acryl/door.json, data, .env) stays
+  // behind whatever its ignore rules say; without git, a fixed list of an app's local state is left out.
+  const listed = gitFiles(from)
+  if (listed !== undefined) {
+    for (const relative of listed.sort())
+      if (
+        !relative.split('/').some((part) => SKIP.has(part)) &&
+        statSync(join(from, relative), { throwIfNoEntry: false })?.isFile() === true
+      )
+        copy(relative)
+  } else {
+    const walk = (prefix: string) => {
+      for (const entry of readdirSync(join(from, prefix), { withFileTypes: true })) {
+        if (SKIP.has(entry.name) || isLocalState(entry.name)) continue
+        if (entry.isDirectory()) walk(`${prefix}${entry.name}/`)
+        else if (entry.isFile()) copy(`${prefix}${entry.name}`)
       }
     }
+    walk('')
   }
-  walk(from, target, '')
   // An app's plugins are identified by every byte, so a CRLF checkout would make them different plugins. An entry made before make-entry wrote this file
   // has none; one that has its own keeps it.
   if (!existsSync(join(target, '.gitattributes'))) {
