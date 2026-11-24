@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL AOS</title>
+<style>
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --secondary: #0369A1; --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12);
+  --term-bg: #0b0b0d; --term-text: #e8e8ea; --term-dim: #8b8b93;
+  --win-bar: #e4e4ea; --desk: linear-gradient(160deg, #dfe3f5 0%, #eef0f7 55%, #e9eef0 100%);
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; --desk: linear-gradient(160deg, #15172a 0%, #111216 60%, #12171a 100%); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; --desk: linear-gradient(160deg, #15172a 0%, #111216 60%, #12171a 100%); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 48px; }
+h1 { font-size: 36px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 23px; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.quote { border-left: 3px solid var(--primary); padding: 4px 0 4px 16px; color: var(--dim); font-style: italic; max-width: 90ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.dim { color: var(--dim); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.agent { background: var(--agent-dim); color: var(--agent); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.note { font-size: 12.5px; color: var(--dim); }
+
+/* the computer */
+.pc { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: 0 24px 60px -30px rgba(0,0,0,.45); display: flex; flex-direction: column; min-width: 0; }
+.menubar { display: flex; align-items: center; gap: 14px; padding: 6px 12px; background: var(--win-bar); font-size: 12.5px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.menubar .logo { font: 800 13px var(--sans); letter-spacing: .04em; }
+.menubar .focus { font-weight: 650; }
+.menubar .spacer { flex: 1; }
+.meter { display: flex; gap: 8px; flex-wrap: wrap; font: 600 11.5px var(--mono); color: var(--dim); }
+.meter span b { color: var(--text); }
+.meter .saved b { color: var(--success); }
+.screen { display: grid; grid-template-columns: minmax(0,1fr) 340px; height: 640px; min-height: 0; }
+.desk { position: relative; background: var(--desk); overflow: hidden; min-width: 0; }
+.icons { position: absolute; inset: 14px auto 80px 14px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(auto-fill, 86px); gap: 4px 8px; }
+.dicon { all: unset; cursor: pointer; width: 78px; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 2px; border-radius: 10px; text-align: center; font-size: 11.5px; line-height: 1.2; color: var(--text); }
+.dicon:hover, .dicon:focus-visible { background: rgba(127,127,160,.16); }
+.dicon .badge { position: absolute; transform: translate(20px,-6px); }
+.appicon { width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; color: #fff; font: 700 18px var(--sans); box-shadow: 0 4px 10px -4px rgba(0,0,0,.35); position: relative; flex: none; }
+.appicon.sm { width: 30px; height: 30px; border-radius: 8px; font-size: 13px; }
+.appicon .zz { position: absolute; right: -5px; top: -5px; font-size: 11px; background: var(--surface); color: var(--dim); border: 1px solid var(--border); border-radius: 99px; padding: 0 4px; font-weight: 700; }
+.w { position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; box-shadow: 0 18px 44px -18px rgba(0,0,0,.45); display: flex; flex-direction: column; overflow: hidden; min-width: 260px; }
+.w.focused { box-shadow: 0 22px 54px -16px rgba(0,0,0,.55), 0 0 0 1px var(--primary-dim); }
+.w .bar { display: flex; align-items: center; gap: 6px; padding: 7px 10px; background: var(--win-bar); cursor: grab; user-select: none; font-size: 12px; color: var(--dim); touch-action: none; }
+.w .bar .t { margin-left: 8px; font-weight: 600; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w .bar button { all: unset; width: 11px; height: 11px; border-radius: 50%; cursor: pointer; flex: none; }
+.w .bar .cl { background: #ef5b5b; } .w .bar .mn { background: #f2b84b; } .w .bar .sl { background: #9aa0b4; }
+.w .wb { padding: 12px; overflow: auto; font-size: 13px; flex: 1; min-height: 0; }
+.w .tools { border-top: 1px solid var(--border); padding: 6px 10px; font: 11px var(--mono); color: var(--dim); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.w .tools code { font-size: 11px; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-weight: 600; color: var(--dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+tr.hit td { background: var(--success-dim); }
+tr.new td { background: var(--agent-dim); }
+.num { font-family: var(--mono); text-align: right; white-space: nowrap; }
+.dock { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 8px; border-radius: 16px; background: color-mix(in srgb, var(--surface) 78%, transparent); border: 1px solid var(--border); backdrop-filter: blur(10px); max-width: calc(100% - 20px); overflow-x: auto; }
+.dock button { all: unset; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px; border-radius: 10px; }
+.dock button:focus-visible { outline: 2px solid var(--primary); }
+.dock .ind { width: 4px; height: 4px; border-radius: 50%; background: transparent; }
+.dock .ind.on { background: var(--text); }
+.dock .sep { width: 1px; background: var(--border); margin: 4px 2px; }
+.chat { border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+.chat header { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.chat header b { font-size: 13.5px; }
+.msgs { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.m { font-size: 13px; padding: 8px 10px; border-radius: 10px; max-width: 100%; overflow-wrap: anywhere; }
+.m.me { align-self: flex-end; background: var(--primary); color: #fff; max-width: 88%; }
+.m.ai { background: var(--surface-2); }
+.step { display: grid; grid-template-columns: 18px minmax(0,1fr) auto; gap: 8px; align-items: start; font: 12px/1.45 var(--mono); padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; }
+.step .k { width: 10px; height: 10px; border-radius: 3px; margin-top: 3px; }
+.step.tool .k { background: var(--success); } .step.model .k { background: var(--agent); } .step.ask .k { background: var(--primary); }
+.step .cost { color: var(--dim); white-space: nowrap; }
+.step.tool .cost { color: var(--success); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
+.chips button { font: 12px var(--sans); border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 99px; padding: 4px 10px; cursor: pointer; }
+.compose { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.compose input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; font: 13px var(--sans); background: var(--bg); color: var(--text); }
+.overlay { position: absolute; inset: 0; background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; padding: 28px 16px 90px; gap: 18px; z-index: 900; }
+.overlay[hidden] { display: none; }
+.overlay input { width: min(420px, 100%); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; font: 14px var(--sans); background: var(--surface); color: var(--text); }
+.lp { display: grid; grid-template-columns: repeat(auto-fill, 92px); gap: 14px; justify-content: center; width: 100%; max-width: 720px; overflow: auto; }
+.ctx { position: absolute; z-index: 950; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: 0 14px 36px -14px rgba(0,0,0,.45); padding: 4px; min-width: 210px; font-size: 13px; }
+.ctx[hidden] { display: none; }
+.ctx button { all: unset; display: block; width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.ctx button:hover, .ctx button:focus-visible { background: var(--primary-dim); color: var(--primary); }
+.ctx hr { border: 0; border-top: 1px solid var(--border); margin: 4px 2px; }
+.toast { position: absolute; right: 14px; top: 12px; z-index: 990; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--success); border-radius: 9px; padding: 8px 12px; font-size: 12.5px; max-width: 340px; box-shadow: 0 10px 30px -14px rgba(0,0,0,.4); }
+.toast[hidden] { display: none; }
+.flow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font: 12px var(--mono); }
+.flow span { border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; background: var(--bg); }
+.flow i { color: var(--dim); font-style: normal; }
+.term { background: var(--term-bg); color: var(--term-text); font: 12px/1.5 var(--mono); padding: 10px; border-radius: 8px; white-space: pre-wrap; }
+.term .d { color: var(--term-dim); }
+@media (max-width: 900px) {
+  .screen { grid-template-columns: 1fr; height: auto; }
+  .desk { height: 560px; }
+  .chat { border-left: 0; border-top: 1px solid var(--border); height: 460px; }
+  .w { left: 8px !important; right: 8px; width: auto !important; }
+}
+
+/* diagram + tables + decisions */
+svg text { font-family: var(--sans); fill: currentColor; }
+.fig { color: var(--text); }
+.tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.tbl table { min-width: 640px; }
+.tbl td:first-child { font-weight: 600; }
+fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 0; background: var(--surface); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+legend { font-weight: 650; padding: 0 6px; }
+fieldset label { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 6px; align-items: start; font-size: 14px; cursor: pointer; }
+fieldset label small { display: block; color: var(--dim); font-size: 12.5px; }
+fieldset .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.queued { font: 600 12px var(--mono); color: var(--success); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section>
+  <span class="eyebrow">Spec 052 · design · interactive prototype</span>
+  <h1>ACRYL AOS: a computer whose apps are agents' tools</h1>
+  <p class="lead">AOS (agentic in-app operating system) is a new face for ACRYL Control Center. It is a whole computer in one window: a desktop, a dock, app windows, and one chat that works across every app. Every app is a Blend, and every Blend gives the agent <b>deterministic tools</b>. The agent plans with the model and then acts with tools, so the work it repeats costs no model tokens. All apps share one runtime, one host process and one package store, so an extra app costs megabytes, not 700 MB.</p>
+  <p class="quote">"maybe we can turn acryl control center (gui, web and tui) into like an "Operating System App" where we see "apps icons" inside ... simulating "OS" inside of Acryl CC" (owner, 2026-11-23)</p>
+  <p class="quote">"like we design a "computer" (OS-simulation) with own agentic apps / deterministic tools save tokens as they are doing stuff deterministic" (owner, 2026-11-24)</p>
+  <p class="note">Inspiration: Vesence's "agent-native computer" (vesence.com/platform), where files, mail and calendar sit in one workspace with one chat. AOS takes that idea and applies it to apps people and agents make. The apps are open Blends, each one a set of Cordis plugins with typed tools. AOS runs on your machine and, in the browser, on WebBoxes.ai.</p>
+</section>
+
+<section aria-labelledby="try">
+  <h2 id="try">Try it</h2>
+  <p class="dim">Click an icon to open it, and drag windows by their bar. Right-click an icon (or long-press it) for its actions. Ask the chat something. The suggestions run a real-looking flow: the model plans, the tools act, and "Save as workflow" replays the same run without the model. <b>Every number inside the computer is simulated</b>; the measured numbers are in the table further down.</p>
+
+  <div class="pc" id="pc">
+    <div class="menubar">
+      <span class="logo">ACRYL AOS</span>
+      <span class="focus" id="focusName">Desktop</span>
+      <span class="spacer"></span>
+      <div class="meter" aria-live="polite">
+        <span>runtime <b>1</b></span>
+        <span>host <b>1</b></span>
+        <span>apps <b id="mApps">0</b></span>
+        <span>asleep <b id="mSleep">0</b></span>
+        <span>model tokens <b id="mTok">0</b></span>
+        <span>tool calls <b id="mTools">0</b></span>
+        <span class="saved">replays without model <b id="mReplay">0</b></span>
+      </div>
+    </div>
+    <div class="screen">
+      <div class="desk" id="desk">
+        <div class="icons" id="icons"></div>
+        <div class="dock" id="dock" aria-label="Dock"></div>
+        <div class="overlay" id="launchpad" hidden>
+          <input id="lpSearch" placeholder="Search apps and the Blends store" aria-label="Search apps">
+          <div class="lp" id="lpGrid"></div>
+        </div>
+        <div class="ctx" id="ctx" role="menu" hidden></div>
+        <div class="toast" id="toast" role="status" hidden></div>
+      </div>
+      <aside class="chat" aria-label="ACRYL chat">
+        <header><span class="appicon sm" style="background:#3652D9">A</span><b>Message ACRYL</b><span class="pill agent" style="margin-left:auto">one chat, every app</span></header>
+        <div class="msgs" id="msgs">
+          <div class="m ai">I can open, use and make apps on this computer. I use an app's tools whenever it has one (green steps), and I reason with the model only to plan and write (amber steps).</div>
+        </div>
+        <div class="chips" id="chips">
+          <button data-s="crm">Find Vienna leads and draft follow-ups</button>
+          <button data-s="make">Make an invoice tracker app</button>
+          <button data-s="sleep">Put idle apps to sleep</button>
+        </div>
+        <form class="compose" id="compose"><input id="ask" placeholder="Ask ACRYL to do something" aria-label="Ask ACRYL"><button class="btn primary" type="submit">Send</button></form>
+      </aside>
+    </div>
+  </div>
+  <div class="flow" aria-label="Legend">
+    <span><b style="color:var(--success)">■</b> tool step: deterministic, typed result, no model tokens</span>
+    <span><b style="color:var(--agent)">■</b> model step: plans or writes text, costs tokens</span>
+    <span><b style="color:var(--primary)">■</b> asks you: anything sent or deleted waits for your yes</span>
+  </div>
+</section>
+
+<section aria-labelledby="how">
+  <h2 id="how">How one computer runs many apps</h2>
+  <p class="dim">An app brings only its own code. Everything below it is shared and exists once per version.</p>
+  <div class="card fig">
+    <svg viewBox="0 0 1000 400" width="100%" role="img" aria-labelledby="figT">
+      <title id="figT">AOS layers: surfaces on top, apps with tools, one host, one store, one runtime</title>
+      <g id="surfaces"><title>Surfaces</title>
+        <rect x="20" y="16" width="960" height="54" rx="10" fill="var(--primary-dim)" stroke="var(--primary)"/>
+        <text x="40" y="49" font-size="15" font-weight="700">Surfaces</text>
+        <text x="200" y="49" font-size="14">Desktop window (Electron)</text>
+        <text x="460" y="49" font-size="14">Browser: acryl --web, and WebBoxes.ai</text>
+        <text x="790" y="49" font-size="14">Terminal: acryl --tui</text>
+      </g>
+      <g id="apps"><title>Apps: Blends with tools</title>
+        <rect x="20" y="86" width="960" height="118" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+        <text x="40" y="112" font-size="15" font-weight="700">Apps (their own code only: a few MB each)</text>
+        <g font-size="12.5">
+          <rect x="40" y="126" width="170" height="64" rx="8" fill="var(--surface)" stroke="var(--border)"/><text x="54" y="150" font-weight="650">Small CRM</text><text x="54" y="172" fill="var(--success)">crm.search · crm.add</text>
+          <rect x="226" y="126" width="170" height="64" rx="8" fill="var(--surface)" stroke="var(--border)"/><text x="240" y="150" font-weight="650">Workflow Automation</text><text x="240" y="172" fill="var(--success)">flow.run · flow.save</text>
+          <rect x="412" y="126" width="170" height="64" rx="8" fill="var(--surface)" stroke="var(--border)"/><text x="426" y="150" font-weight="650">Notes</text><text x="426" y="172" fill="var(--success)">notes.create · find</text>
+          <rect x="598" y="126" width="170" height="64" rx="8" fill="var(--surface)" stroke="var(--border)"/><text x="612" y="150" font-weight="650">ADE · Terminal</text><text x="612" y="172" fill="var(--success)">shell.run · files.*</text>
+          <rect x="784" y="126" width="176" height="64" rx="8" fill="var(--agent-dim)" stroke="var(--agent)" stroke-dasharray="4 3"/><text x="798" y="150" font-weight="650">app an agent made</text><text x="798" y="172" fill="var(--success)">its own tools</text>
+        </g>
+      </g>
+      <g id="host"><title>One host process</title>
+        <rect x="20" y="220" width="620" height="76" rx="10" fill="var(--success-dim)" stroke="var(--success)"/>
+        <text x="40" y="248" font-size="15" font-weight="700">One AOS host (Node, Cordis)</text>
+        <text x="40" y="274" font-size="13">each app is a Cordis scope; tools join one tool registry; the door drives every app</text>
+      </g>
+      <g id="agent"><title>The agent</title>
+        <rect x="656" y="220" width="324" height="76" rx="10" fill="var(--agent-dim)" stroke="var(--agent)"/>
+        <text x="676" y="248" font-size="15" font-weight="700">One chat, one agent</text>
+        <text x="676" y="274" font-size="13">model plans; tools act; runs saved as workflows</text>
+      </g>
+      <g id="store"><title>Store and runtime</title>
+        <rect x="20" y="312" width="470" height="72" rx="10" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="40" y="340" font-size="15" font-weight="700">Package store, once per version</text>
+        <text x="40" y="364" font-size="13">~/.acryl/store, hard-linked (D2); a read-only layer on WebBoxes (D9)</text>
+        <rect x="510" y="312" width="470" height="72" rx="10" fill="var(--surface)" stroke="var(--border)"/>
+        <text x="530" y="340" font-size="15" font-weight="700">Runtime, once per version</text>
+        <text x="530" y="364" font-size="13">~/.acryl/runtimes/electron-44.9.3, bun, electrobun (D1)</text>
+      </g>
+    </svg>
+  </div>
+  <div class="grid3">
+    <div class="card"><h3>Deterministic tools save tokens</h3><p class="dim" style="margin-top:6px">An app's tool returns a typed result, such as "these 3 contacts" or "row 14 added". The model never re-reads the screen or works the answer out again. It spends tokens only to plan and to write. A run made of tools can be saved as a workflow (the Workflow Automation Blend), and then it runs again with <b>no model at all</b>.</p></div>
+    <div class="card"><h3>One runtime, one host, one store</h3><p class="dim" style="margin-top:6px">Today every app carries its own Electron and framework (701 MB measured, below). In AOS, one Electron main process draws every window, sharing its GPU and network processes. One Node host runs every app as a Cordis scope, and the store holds each package version once. Apps nobody is using go to sleep (D10).</p></div>
+    <div class="card"><h3>Still a real app outside</h3><p class="dim" style="margin-top:6px">Any app can step out of AOS. "Add to Applications" writes a launcher that Spotlight, the Start menu or the app menu finds (D4), and "Export as installer" makes a DMG, exe or deb (D6). Inside AOS, a window can pop out into a real OS window.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="cost">
+  <h2 id="cost">What it saves</h2>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>Today</th><th>AOS</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Disk for one more desktop app</td><td class="num">701 MB</td><td class="num">target &lt; 50 MB</td><td>measured on AION 2026-11-23 (spec 052); D1 + D2 acceptance</td></tr>
+      <tr><td>Disk for one more WebBox</td><td class="num">~400 MB</td><td class="num">3.5 MB</td><td>measured on z370n 2026-11-24, D9 live (webboxesai 37a05b7)</td></tr>
+      <tr><td>Box plus its published copy</td><td class="num">~780 MB</td><td class="num">6.4 MB</td><td>measured, same run</td></tr>
+      <tr><td>Electron per app</td><td class="num">309 MB each</td><td class="num">one per version</td><td>measured (node_modules/electron)</td></tr>
+      <tr><td>Processes for 5 open apps</td><td>5 Electron sets + 5 hosts</td><td>1 Electron set + 1 host</td><td>design; to be measured (T030-T033 style)</td></tr>
+      <tr><td>Model tokens for a repeated task</td><td>the whole run again</td><td>0 when replayed as a workflow</td><td>design; to be measured on a real task</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section aria-labelledby="decide">
+  <h2 id="decide">Decisions for you</h2>
+  <p class="dim">Choose an answer, then press its Queue button. Nothing is sent until you press Send in the Lavish panel. The recommended choice is marked.</p>
+
+  <form data-lavish-question="aos-process-model" onsubmit="return queue(event,'aos-process-model','How AOS runs apps')">
+    <fieldset><legend>1. How do apps run inside AOS?</legend>
+      <label><input type="radio" name="answer" value="C: one host per trust group, idle apps sleep"><span><b>One host per trust group, idle apps sleep</b> <span class="pill ok">recommended</span><small>Official Blends share one host; each agent-made or community app gets its own. A crash stays inside its group. Most of the savings, without the biggest risk.</small></span></label>
+      <label><input type="radio" name="answer" value="B: one host runs every app"><span><b>One host runs every app</b><small>The most reuse. One bad app can stop all of them, and Cordis isolation is not an OS sandbox.</small></span></label>
+      <label><input type="radio" name="answer" value="A: one host per app, shared runtime and store"><span><b>One host per app, shared runtime and store</b><small>Disk savings only (D1, D2); memory stays as it is today.</small></span></label>
+      <div class="row"><button class="btn primary small" type="submit">Queue answer</button><span class="queued" hidden>queued</span></div>
+    </fieldset>
+  </form>
+
+  <form data-lavish-question="aos-windows" onsubmit="return queue(event,'aos-windows','Where app windows live')">
+    <fieldset><legend>2. Where do app windows live?</legend>
+      <label><input type="radio" name="answer" value="Both: inside AOS by default, pop out to a real window"><span><b>Inside AOS by default, with a pop-out to a real OS window</b> <span class="pill ok">recommended</span><small>The same in the browser (WebBoxes) and on the desktop. A popped-out window is a BrowserWindow of the same Electron.</small></span></label>
+      <label><input type="radio" name="answer" value="Only inside AOS"><span><b>Only inside AOS</b><small>The simplest. Apps never appear in the OS taskbar unless you use Add to Applications.</small></span></label>
+      <label><input type="radio" name="answer" value="Only real OS windows"><span><b>Only real OS windows</b><small>AOS is the launcher and the chat, and apps open as normal windows. There is no desktop simulation in the browser.</small></span></label>
+      <div class="row"><button class="btn primary small" type="submit">Queue answer</button><span class="queued" hidden>queued</span></div>
+    </fieldset>
+  </form>
+
+  <form data-lavish-question="aos-vs-control-center" onsubmit="return queue(event,'aos-vs-control-center','AOS and Control Center')">
+    <fieldset><legend>3. AOS and today's Control Center</legend>
+      <label><input type="radio" name="answer" value="AOS is the Control Center's new home view; the list view stays one click away"><span><b>AOS becomes the Control Center's home view, and the list stays one click away</b> <span class="pill ok">recommended</span><small>One product, one name. The terminal Control Center gets the same actions as menus.</small></span></label>
+      <label><input type="radio" name="answer" value="AOS is a separate Blend, ACRYL AOS"><span><b>A separate Blend, "ACRYL AOS"</b><small>The Control Center stays as it is, and AOS is a second product.</small></span></label>
+      <div class="row"><button class="btn primary small" type="submit">Queue answer</button><span class="queued" hidden>queued</span></div>
+    </fieldset>
+  </form>
+
+  <form data-lavish-question="aos-first" onsubmit="return queue(event,'aos-first','Where AOS ships first')">
+    <fieldset><legend>4. Where does it ship first?</legend>
+      <label><input type="radio" name="answer" value="WebBoxes first: AOS is the box desktop in the browser"><span><b>WebBoxes first: AOS is a person's desktop in the browser</b> <span class="pill ok">recommended</span><small>The store sharing is already live there (D9), it is where resources cost money, and a browser OS needs no installer.</small></span></label>
+      <label><input type="radio" name="answer" value="Desktop first: Control Center on Mac, Windows, Linux"><span><b>Desktop first: the Control Center on Mac, Windows and Linux</b><small>D1 and D2 (shared runtime and store) have to be built first.</small></span></label>
+      <div class="row"><button class="btn primary small" type="submit">Queue answer</button><span class="queued" hidden>queued</span></div>
+    </fieldset>
+  </form>
+</section>
+
+<section aria-labelledby="risks">
+  <h2 id="risks">Risks</h2>
+  <div class="grid3">
+    <div class="card"><h3>One crash, many apps</h3><p class="dim" style="margin-top:6px">A shared host means a hung or crashing app can take the others with it. Answer: trust groups (decision 1). Each group's host is watched and restarted, and only that group's apps reopen.</p></div>
+    <div class="card"><h3>Versions that differ</h3><p class="dim" style="margin-top:6px">An app built on another Blends version, or with a conflicting package major (the zod 3 over zod 4 case found on WebBoxes, +278 MB), cannot share. It gets its own host and store layer, and the Activity app says so.</p></div>
+    <div class="card"><h3>Tools must stay deterministic</h3><p class="dim" style="margin-top:6px">A workflow replays only what its tools did. A tool that reads the clock, the network or a random number has to declare that, and the replay asks you before it repeats anything that sends or deletes.</p></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const APPS = [
+  { id: 'crm', name: 'Small CRM', color: '#0E7490', letter: 'C', mb: 4.1, mem: 38, tools: ['crm.search', 'crm.add', 'crm.update'] },
+  { id: 'flow', name: 'Workflow Automation', color: '#7C3AED', letter: 'W', mb: 6.8, mem: 44, tools: ['flow.save', 'flow.run', 'flow.list'] },
+  { id: 'notes', name: 'Notes', color: '#B45309', letter: 'N', mb: 2.2, mem: 21, tools: ['notes.create', 'notes.find'] },
+  { id: 'term', name: 'Terminal', color: '#18181b', letter: '>', mb: 0.4, mem: 18, tools: ['shell.run'] },
+  { id: 'ade', name: 'ACRYL ADE', color: '#3652D9', letter: 'A', mb: 12.5, mem: 72, tools: ['files.read', 'files.write', 'shell.run'] },
+  { id: 'store', name: 'Blends Store', color: '#047857', letter: 'S', mb: 1.1, mem: 16, tools: ['store.search', 'store.make'] },
+  { id: 'activity', name: 'Activity', color: '#52525B', letter: '≋', mb: 0.3, mem: 9, tools: ['system.apps', 'system.sleep'] },
+]
+const state = { open: {}, z: 10, asleep: new Set(), tokens: 0, tools: 0, replays: 0, lastRun: null, leads: [
+  { n: 'Anna Berger', c: 'Vienna', s: 'Lead', last: '41 days' }, { n: 'Jonas Weiss', c: 'Graz', s: 'Customer', last: '3 days' },
+  { n: 'Lea Novak', c: 'Vienna', s: 'Lead', last: '19 days' }, { n: 'Petr Dvorak', c: 'Brno', s: 'Lead', last: '60 days' },
+  { n: 'Mira Hofer', c: 'Vienna', s: 'Lead', last: '33 days' }, { n: 'Tomas Klein', c: 'Linz', s: 'Customer', last: '8 days' },
+], notes: [], hits: new Set(), newRow: null, flows: [] }
+const $ = s => document.querySelector(s)
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const desk = $('#desk')
+
+function iconHtml(app, size = '') { return `<span class="appicon ${size}" style="background:${app.color}">${esc(app.letter)}${state.asleep.has(app.id) ? '<span class="zz">z</span>' : ''}</span>` }
+function renderIcons() {
+  $('#icons').innerHTML = APPS.map(a => `<button class="dicon" data-id="${a.id}" aria-label="${esc(a.name)}">${iconHtml(a)}<span>${esc(a.name)}</span>${a.agent ? '<span class="pill agent badge">agent</span>' : ''}</button>`).join('')
+  const pinned = APPS.filter(a => a.pinned !== false)
+  $('#dock').innerHTML = `<button data-lp aria-label="All apps"><span class="appicon sm" style="background:linear-gradient(135deg,#3652D9,#0E7490)">⊞</span><span class="ind"></span></button><span class="sep"></span>` +
+    pinned.map(a => `<button data-id="${a.id}" aria-label="${esc(a.name)}" title="${esc(a.name)}">${iconHtml(a, 'sm')}<span class="ind ${state.open[a.id] ? 'on' : ''}"></span></button>`).join('')
+  $('#mApps').textContent = Object.keys(state.open).length
+  $('#mSleep').textContent = state.asleep.size
+}
+function meters() { $('#mTok').textContent = state.tokens.toLocaleString('en'); $('#mTools').textContent = state.tools; $('#mReplay').textContent = state.replays }
+
+const BODY = {
+  crm: () => `<table><thead><tr><th>Name</th><th>City</th><th>Stage</th><th>Last contact</th></tr></thead><tbody>${state.leads.map((l, i) => `<tr class="${state.hits.has(i) ? 'hit' : ''} ${state.newRow === i ? 'new' : ''}"><td>${esc(l.n)}</td><td>${esc(l.c)}</td><td>${esc(l.s)}</td><td>${esc(l.last)}</td></tr>`).join('')}</tbody></table>`,
+  notes: () => state.notes.length === 0 ? '<p class="dim">No notes yet. Ask ACRYL to write one.</p>' : state.notes.map(n => `<div class="card" style="padding:10px;margin-bottom:8px"><b>${esc(n.t)}</b><p class="dim" style="font-size:12.5px;margin-top:4px">${esc(n.b)}</p></div>`).join(''),
+  flow: () => state.flows.length === 0 ? '<p class="dim">No workflows yet. After an agent run, press "Save as workflow" in the chat.</p>' :
+    state.flows.map((f, i) => `<div class="card" style="padding:10px;margin-bottom:8px"><b>${esc(f.name)}</b><div class="flow" style="margin:8px 0">${f.steps.map(s => `<span>${esc(s)}</span>`).join('<i>→</i>')}</div><button class="btn small primary" onclick="replay(${i})">Run again (no model)</button> <span class="note">${f.runs} runs · 0 model tokens</span></div>`).join(''),
+  term: () => `<div class="term"><span class="d">$</span> acryl apps\n${APPS.map(a => `${a.id.padEnd(9)} ${state.asleep.has(a.id) ? 'asleep ' : state.open[a.id] ? 'running' : 'ready  '} ${a.mb} MB`).join('\n')}\n<span class="d">$</span> _</div>`,
+  ade: () => `<div class="term"><span class="d">// src/app.ts</span>\nexport const tools = [crm.search, crm.add]\n<span class="d">// ADE edits any app on this computer; changes reload live</span></div>`,
+  store: () => `<p class="dim" style="margin-bottom:8px">100 categories from the Blends registry. Making one adds only its own code.</p>${['CRM & Sales', 'Finance', 'Workflow', 'Docs & Notes', 'AI agents', 'Games'].map(c => `<span class="pill off" style="margin:0 4px 6px 0">${c}</span>`).join('')}<table style="margin-top:6px"><tbody><tr><td>Invoice Tracker</td><td class="num">+3.9 MB</td><td><button class="btn small" onclick="makeApp('Invoice Tracker')">Make</button></td></tr><tr><td>Habit Tracker</td><td class="num">+2.6 MB</td><td><button class="btn small" onclick="makeApp('Habit Tracker')">Make</button></td></tr></tbody></table>`,
+  activity: () => {
+    const rows = APPS.map(a => ({ a, run: !!state.open[a.id] && !state.asleep.has(a.id) }))
+    const own = APPS.reduce((s, a) => s + a.mb, 0), mem = rows.filter(r => r.run).reduce((s, r) => s + r.a.mem, 0)
+    return `<table><thead><tr><th>What</th><th>State</th><th class="num">Disk</th><th class="num">Memory</th></tr></thead><tbody>
+      <tr><td><b>Electron 44.9.3</b> <span class="pill">shared</span></td><td>1 copy</td><td class="num">309 MB</td><td class="num">1 set</td></tr>
+      <tr><td><b>Package store</b> <span class="pill">shared</span></td><td>1 copy</td><td class="num">384 MB</td><td class="num">-</td></tr>
+      <tr><td><b>AOS host</b> <span class="pill">shared</span></td><td>1 process</td><td class="num">-</td><td class="num">base 120 MB</td></tr>
+      ${rows.map(r => `<tr><td>${esc(r.a.name)}</td><td>${state.asleep.has(r.a.id) ? '<span class="pill off">asleep</span>' : r.run ? '<span class="pill ok">running</span>' : '<span class="pill off">closed</span>'}</td><td class="num">${r.a.mb} MB</td><td class="num">${r.run ? r.a.mem + ' MB' : '0'}</td></tr>`).join('')}
+      </tbody></table>
+      <p class="note" style="margin-top:8px">AOS: ${Math.round(693 + own)} MB on disk for ${APPS.length} apps. Today: ${(APPS.length * 701).toLocaleString('en')} MB (701 MB each, measured). Memory of open apps: ${mem + 120} MB. Simulated except the 701, 309 and 384 MB, which are measured.</p>`
+  },
+}
+BODY.settings = () => ''
+
+function openApp(id) {
+  const app = APPS.find(a => a.id === id); if (!app) return
+  $('#launchpad').hidden = true
+  if (state.asleep.has(id)) { state.asleep.delete(id); toast(`${app.name} woke up in 0.4 s (simulated): its scope restarts in the running host; nothing new is started.`) }
+  if (state.open[id]) { focus(id); renderIcons(); return }
+  const n = Object.keys(state.open).length
+  const narrow = desk.clientWidth < 600
+  const w = document.createElement('div')
+  w.className = 'w'; w.dataset.id = id
+  const width = id === 'activity' ? 470 : id === 'crm' ? 440 : 380
+  Object.assign(w.style, { left: (narrow ? 8 : 110 + (n * 34) % 260) + 'px', top: (16 + (n * 30) % 200) + 'px', width: width + 'px', height: (id === 'activity' ? 380 : 300) + 'px' })
+  w.innerHTML = `<div class="bar"><button class="cl" aria-label="Close ${esc(app.name)}"></button><button class="mn" aria-label="Minimize ${esc(app.name)}"></button><button class="sl" aria-label="Put ${esc(app.name)} to sleep" title="Sleep"></button><span class="t">${esc(app.name)}</span></div><div class="wb"></div><div class="tools">tools: ${app.tools.map(t => `<code>${t}</code>`).join(' ')}</div>`
+  desk.appendChild(w)
+  state.open[id] = w
+  w.querySelector('.cl').onclick = () => closeApp(id)
+  w.querySelector('.mn').onclick = () => { w.hidden = true; renderIcons() }
+  w.querySelector('.sl').onclick = () => sleepApp(id)
+  w.addEventListener('pointerdown', () => focus(id))
+  drag(w)
+  refresh(id); focus(id); renderIcons()
+}
+function refresh(id) { const w = state.open[id]; if (w) w.querySelector('.wb').innerHTML = BODY[id]() }
+function refreshAll() { Object.keys(state.open).forEach(refresh) }
+function focus(id) { const w = state.open[id]; if (!w) return; w.hidden = false; document.querySelectorAll('.w').forEach(x => x.classList.remove('focused')); w.classList.add('focused'); w.style.zIndex = ++state.z; $('#focusName').textContent = APPS.find(a => a.id === id).name }
+function closeApp(id) { state.open[id]?.remove(); delete state.open[id]; state.asleep.delete(id); $('#focusName').textContent = 'Desktop'; renderIcons(); refreshAll() }
+function sleepApp(id) { const a = APPS.find(x => x.id === id); state.asleep.add(id); state.open[id]?.remove(); delete state.open[id]; toast(`${a.name} is asleep: its scope is unloaded and uses 0 MB of memory. A click wakes it.`); renderIcons(); refreshAll() }
+function drag(w) {
+  const bar = w.querySelector('.bar')
+  bar.addEventListener('pointerdown', e => {
+    if (e.target.tagName === 'BUTTON') return
+    const r = w.getBoundingClientRect(), d = desk.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top
+    bar.setPointerCapture(e.pointerId); bar.style.cursor = 'grabbing'
+    const move = ev => { w.style.left = Math.max(0, Math.min(d.width - 80, ev.clientX - d.left - dx)) + 'px'; w.style.top = Math.max(0, Math.min(d.height - 40, ev.clientY - d.top - dy)) + 'px' }
+    const up = () => { bar.removeEventListener('pointermove', move); bar.removeEventListener('pointerup', up); bar.style.cursor = '' }
+    bar.addEventListener('pointermove', move); bar.addEventListener('pointerup', up)
+  })
+}
+let toastTimer
+function toast(text) { const t = $('#toast'); t.textContent = text; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true }, 4200) }
+
+// icons, dock, launchpad, context menu
+desk.addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (b && !e.target.closest('.w')) { openApp(b.dataset.id); return }
+  if (e.target.closest('[data-lp]')) { showLaunchpad(); return }
+  if (e.target === $('#launchpad')) $('#launchpad').hidden = true
+  $('#ctx').hidden = true
+})
+desk.addEventListener('contextmenu', e => {
+  const b = e.target.closest('.dicon, .dock [data-id]'); if (!b) return
+  e.preventDefault(); showCtx(b.dataset.id, e.clientX, e.clientY)
+})
+let press
+desk.addEventListener('pointerdown', e => { const b = e.target.closest('.dicon'); if (b && e.pointerType !== 'mouse') press = setTimeout(() => showCtx(b.dataset.id, e.clientX, e.clientY), 550) })
+desk.addEventListener('pointerup', () => clearTimeout(press))
+function showCtx(id, x, y) {
+  const a = APPS.find(z => z.id === id), d = desk.getBoundingClientRect(), m = $('#ctx')
+  m.innerHTML = `<button role="menuitem" data-a="open">Open</button><button role="menuitem" data-a="pop">Open in its own window</button><hr><button role="menuitem" data-a="apps">Add to Applications</button><button role="menuitem" data-a="export">Export as installer</button><button role="menuitem" data-a="share">Share</button><hr><button role="menuitem" data-a="sleep">Sleep</button>`
+  m.style.left = Math.min(x - d.left, d.width - 220) + 'px'; m.style.top = Math.min(y - d.top, d.height - 230) + 'px'; m.hidden = false
+  m.onclick = ev => {
+    const act = ev.target.dataset.a; m.hidden = true
+    if (act === 'open') openApp(id)
+    if (act === 'pop') toast(`${a.name} opens as a real OS window of the same Electron: no second runtime starts.`)
+    if (act === 'apps') toast(`Wrote ~/Applications/${a.name}.app (macOS), Start menu\\ACRYL\\${a.name}.lnk (Windows) or acryl-${a.id}.desktop (Linux). Spotlight finds it now. (D4)`)
+    if (act === 'export') toast(`Exporting ${a.name} with acrylblends pack: a self-contained DMG, exe or deb that carries its runtime (D3, D6).`)
+    if (act === 'share') toast(`${a.name} pushed to your GitHub as a Blend; others make it with: acryl make --from <your repo>.`)
+    if (act === 'sleep') sleepApp(id)
+  }
+  m.querySelector('button').focus()
+}
+function showLaunchpad() {
+  const lp = $('#launchpad'); lp.hidden = false
+  const draw = q => { $('#lpGrid').innerHTML = APPS.filter(a => a.name.toLowerCase().includes(q.toLowerCase())).map(a => `<button class="dicon" data-id="${a.id}">${iconHtml(a)}<span>${esc(a.name)}</span></button>`).join('') || '<p class="dim">No app matches. The Blends Store has 100 categories.</p>' }
+  draw(''); const s = $('#lpSearch'); s.value = ''; s.oninput = () => draw(s.value); s.focus()
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#launchpad').hidden = true; $('#ctx').hidden = true } })
+
+// the chat
+const msgs = $('#msgs')
+function say(cls, html) { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d }
+function step(kind, text, cost) { return say(`step ${kind}`, `<span class="k"></span><span>${text}</span><span class="cost">${cost}</span>`) }
+const wait = ms => new Promise(r => setTimeout(r, ms))
+let busy = false
+async function run(steps, title) {
+  if (busy) return; busy = true
+  const used = []
+  for (const s of steps) {
+    await wait(520)
+    if (s.kind === 'model') { state.tokens += s.tokens; step('model', s.text, `${s.tokens.toLocaleString('en')} tok`) }
+    else if (s.kind === 'tool') { state.tools += 1; used.push(s.tool); step('tool', `<b>${s.tool}</b> ${s.text}`, '0 tok'); s.do?.() }
+    else if (s.kind === 'ask') step('ask', s.text, 'waits for you')
+    else if (s.kind === 'say') say('m ai', s.text)
+    meters()
+  }
+  if (title && used.length) {
+    state.lastRun = { name: title, steps: used, runs: 1, act: steps.filter(s => s.kind === 'tool').map(s => s.do).filter(Boolean) }
+    const d = say('m ai', `Done. ${used.length} tool calls, model tokens only for planning and writing. <br><button class="btn small primary" style="margin-top:6px">Save as workflow</button>`)
+    d.querySelector('button').onclick = ev => { ev.target.disabled = true; state.flows.push(state.lastRun); openApp('flow'); refresh('flow'); toast(`Saved "${title}" in Workflow Automation: ${used.join(' → ')}. It runs again with no model.`) }
+  }
+  busy = false
+}
+window.replay = i => {
+  const f = state.flows[i]; f.runs += 1; state.replays += 1; state.tools += f.steps.length; f.act.forEach(a => a()); meters(); refreshAll()
+  say('m ai', `Ran "${esc(f.name)}" again from Workflow Automation: ${f.steps.length} tool calls, <b>0 model tokens</b>. The drafts wait for your review, as before.`)
+}
+const SCENARIOS = {
+  crm: () => run([
+    { kind: 'model', text: 'plan: search the CRM, pick stale Vienna leads, draft notes', tokens: 640 },
+    { kind: 'tool', tool: 'crm.search', text: '{ city: "Vienna", stage: "Lead" } → 3 contacts', do: () => { openApp('crm'); state.hits = new Set([0, 2, 4]); refresh('crm') } },
+    { kind: 'tool', tool: 'crm.filter', text: 'last contact > 30 days → Anna Berger, Mira Hofer' },
+    { kind: 'model', text: 'write two short follow-up drafts', tokens: 910 },
+    { kind: 'tool', tool: 'notes.create', text: '2 drafts saved in Notes', do: () => { state.notes.push({ t: 'Follow-up: Anna Berger', b: 'Hi Anna, it has been a while since we spoke about...' }, { t: 'Follow-up: Mira Hofer', b: 'Hi Mira, following up on your question about...' }); openApp('notes'); refresh('notes') } },
+    { kind: 'ask', text: 'Send the drafts by mail? I send nothing without your yes.' },
+  ], 'Vienna follow-ups'),
+  make: () => run([
+    { kind: 'model', text: 'plan: find a Blend close to "invoice tracker"', tokens: 380 },
+    { kind: 'tool', tool: 'store.search', text: '"invoice" → Invoice Tracker (Finance › Invoicing)' },
+    { kind: 'tool', tool: 'store.make', text: 'made from the store: +3.9 MB, shared runtime and store', do: () => makeApp('Invoice Tracker', true) },
+    { kind: 'say', text: 'Invoice Tracker is on your desktop. It brought only its own code, and its tools <code>invoice.add</code> and <code>invoice.list</code> are now mine to use too.' },
+  ], 'Make Invoice Tracker'),
+  sleep: () => run([
+    { kind: 'tool', tool: 'system.apps', text: `idle for 30 min: ${APPS.filter(a => !state.open[a.id]).length} apps` },
+    { kind: 'tool', tool: 'system.sleep', text: 'unloaded their scopes; memory freed', do: () => { APPS.filter(a => !state.open[a.id] && a.id !== 'activity').forEach(a => state.asleep.add(a.id)); renderIcons(); openApp('activity'); refreshAll() } },
+    { kind: 'say', text: 'Done without the model: this whole request was two tool calls.' },
+  ]),
+}
+window.makeApp = (name, quiet) => {
+  if (APPS.some(a => a.name === name)) { openApp(APPS.find(a => a.name === name).id); return }
+  const id = name.toLowerCase().replace(/[^a-z]+/g, '-')
+  APPS.push({ id, name, color: '#BE123C', letter: name[0], mb: 3.9, mem: 26, tools: ['invoice.add', 'invoice.list'], agent: true })
+  BODY[id] = () => `<p class="dim">${esc(name)}, made from the Blends Store. Its folder holds only its own code (3.9 MB, simulated); the runtime and the packages are the shared ones.</p>`
+  renderIcons(); refreshAll(); if (!quiet) toast(`${name} made: +3.9 MB (simulated). No new runtime, no new node_modules.`)
+}
+$('#chips').addEventListener('click', e => { const s = e.target.dataset.s; if (s && !busy) { say('m me', esc(e.target.textContent)); SCENARIOS[s]() } })
+$('#compose').addEventListener('submit', e => {
+  e.preventDefault(); const q = $('#ask').value.trim(); if (!q || busy) return; $('#ask').value = ''; say('m me', esc(q))
+  const l = q.toLowerCase()
+  if (/lead|crm|follow|vienna|contact/.test(l)) SCENARIOS.crm()
+  else if (/make|create|build|app/.test(l)) SCENARIOS.make()
+  else if (/sleep|idle|memory/.test(l)) SCENARIOS.sleep()
+  else { const app = APPS.find(a => l.includes(a.name.toLowerCase()) || l.includes(a.id)); if (app) { openApp(app.id); say('m ai', `Opened ${esc(app.name)} (tool <code>system.open</code>, 0 tokens).`) } else run([{ kind: 'model', text: 'this prototype knows three flows; try a suggestion', tokens: 120 }]) }
+})
+
+// decisions
+window.queue = (e, key, label) => {
+  e.preventDefault()
+  const v = new FormData(e.currentTarget).get('answer')
+  if (!v) return false
+  if (window.lavish?.queuePrompt) window.lavish.queuePrompt(`Spec 052 AOS decision "${label}": ${v}`, { tag: 'choice', text: `${label}: ${v}`, element: e.currentTarget, queueKey: key, data: { question: key, answer: v } })
+  e.currentTarget.querySelector('.queued').hidden = false
+  return false
+}
+renderIcons(); meters()
+</script>
+</body>
+</html>
