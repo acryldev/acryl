@@ -27,6 +27,8 @@
     "session.js",
     "apps-registry.js",
     "apps-command.js",
+    "os-launchers.js",
+    "shortcut-open.mjs",
     "model-key.js",
     "github-login.js",
     "tools.js",
