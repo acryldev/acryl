@@ -16,6 +16,15 @@ Earlier the same day: "why it's not in /Applications? (or in Windows in Program 
 as normal app, searchable etc". Answered then: a launcher written on the person's own machine needs no Apple Developer ID and no notarization
 (nothing downloaded carries the quarantine flag); a downloaded DMG does.
 
+## The owner's words (2026-11-24, sharing)
+
+"to be able to share to github apps individually, to deploy them, to share cordis plugins (their features) to registry / but also to
+produce installers: dmg, appImage/.deb, .exe for all platforms kind of from Blend App itself from settings and from Control Center / to
+basically be able to share it to other team members who has no git, no tech, no will to dig into it just wants to use the results"
+
+And on the real-app idea: "would that change a lot in current architecture?" Answer recorded in D15: no; sharing, deploying, the plugin
+registry and installers all work on the app's Source folder, which spec 049's Program/Source/Data split leaves as it is today.
+
 ## Why: what an app costs today (measured on AION, Mac mini M4, 2026-11-23)
 
 `npx acryl --gui` made `~/.acryl/control-center`, an ordinary npm project:
@@ -111,6 +120,26 @@ of the same bytes). Images are already shared by Docker; the copies are in the v
   folders that group apps and files, a Files view, menus, dock, Settings (wallpaper, icon size, dock side, chat), one chat that drives
   every app through its deterministic tools (the door), "Save as workflow" so a repeated run needs no model, and per app Add to
   Applications (D4) and Export as installer (D6).
+
+- **D15 Each Blend is a real OS app on one shared engine** (2026-11-24; measured in `baseline.md`, plan in `plan-space-reuse.md`). On this
+  computer an app's Source runs on one shared Program per Blends version (spec 049), and its launcher opens a per-app copy of the one
+  engine (APFS clone on macOS, hard links on Windows and Linux: `framework/scripts/make-blend-app.mjs`, `lib/blend-app.mjs`, proven
+  2026-11-09: 6 MB, 14 MB, 31 MB), branded with the app's name and icon (`desktop-shell/brand.ts`). No Node on PATH is needed to open it.
+  What changes is two seams only: the install step (one module for every place that installs an app, the framework-first resolver
+  generalised from `plugins/extensions/resolve.ts`) and what the D4 launcher opens. Clean Architecture's stable core and replaceable edge:
+  apps, sharing, deploy and the registry do not see the change.
+- **D16 Share, deploy and publish stay on the Source, through the plugins that exist**: an app to its own GitHub repository (`@acryldev/save`,
+  `@acryldev/app-save`: secret check, a private app never reaches a public remote, the person's own `gh` login); a feature as a Cordis
+  plugin to the registry (`@acryldev/plugin-share`, cordisplugins registry); deploy to WebBoxes.ai (the Control Center's Deploy). One
+  place in the app's Settings and one per app in the Control Center offer all of them.
+- **D17 "Share with team": installers for every OS from one button, a download link for people without git** (owner 2026-11-24). The
+  button saves and pushes the app (D16), then runs the release workflow every Blend repository already has (GitHub Actions; it built
+  Control Center v0.2.18's six installers: macOS arm64/x64 DMG, Windows x64/arm64 exe, Linux x64/arm64 deb and tar.gz) and shows one
+  download link to send. The person who receives it needs no git, no Node, no terminal. AppImage is added as a Linux target (the packer,
+  electron-builder, supports it). "Export as installer" (D6) stays for this computer's OS without GitHub. Open, the owner decides: (a) the
+  download page is the GitHub release page or a WebBoxes.ai page for people without a GitHub account; (b) signing: until the owner's
+  Apple Developer ID and a Windows code-signing certificate exist, installers are unsigned and the download page shows the two clicks
+  macOS (Open from the context menu, or Privacy and Security) and Windows (SmartScreen: More info, Run anyway) ask for, with pictures.
 
 ## Order and acceptance
 

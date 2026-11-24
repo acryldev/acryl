@@ -106,3 +106,29 @@ no "runtime 1, host 1" (D11: one host per app); a fresh desktop has only the app
 no Blends Store icon. Partly done in T041: a file tied to an app opens that app, not the document inside it; other files open as text in an
 AOS window. Export needed `@acryldev/create-blends` 1.7.31 (9d30f0e1): create copies a folder as git sees it, so a running app's door file
 stays behind.
+
+## Phase 6 - Each Blend a real OS app on one shared engine (D15; after `baseline.md` is complete)
+
+- [ ] T050 Characterize first (Working Effectively with Legacy Code): a test per install place (Control Center "+ New app" and Start,
+  `acryl new`, `acryl --gui`/`acryl ade` copies, the store's Make, an agent's install) recording the folder it makes and what starts.
+- [ ] T051 One install module (A Philosophy of Software Design, deep module): every place above calls it; it installs the app's own
+  packages on top of the shared Program for its Blends version (`~/.acryl/programs/blends-<version>/`, through `AppInstance`), with the
+  two Step 0 fixes (`.package-lock.json` copied, the copy stamped now). Same-volume check; another disk falls back to a copy, said once.
+- [ ] T052 The framework-first resolver, generalised from `plugins/extensions/resolve.ts` (spec 049): framework names resolve to the
+  Program for any parent, everything else normally. Proof: two apps share one framework instance each (no second copy; the October
+  lesson), HMR and live plugins pass (`live-test.sh`) on all three OSes.
+- [ ] T053 The D4 launcher opens a per-app engine copy (`make-blend-app.mjs` / `linkTree`, `brand.ts`), so no Node is needed to open
+  an app. Proof on AION, mbpi9win, z370n: found by the OS search, opens with its name and icon, MB per app measured.
+- [ ] T054 `acryl apps reinstall` moves an existing app onto the Program (old `node_modules` kept until it starts) and `acryl clean`
+  removes Programs and engine copies no app uses (Release It!, steady state).
+
+## Phase 7 - Share with team (D16, D17)
+
+- [ ] T060 One "Share" place in an app's Settings and per app in the Control Center: Save to GitHub (`@acryldev/save`), a feature to the
+  registry (`@acryldev/plugin-share`), Deploy to WebBoxes.ai, each as today, gathered, not rewritten.
+- [ ] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
+- [ ] T062 AppImage as a Linux target in the packer and the release workflow, beside deb and tar.gz.
+- [ ] T063 The download page per the owner's choice (GitHub release or WebBoxes.ai page), with the first-open steps for unsigned
+  installers on macOS and Windows, with pictures.
+- [ ] T064 Proof: an app made in the Control Center is shared with "Share with team"; on a second machine with no git and no Node, the
+  installer from the link installs and opens it, on macOS, Windows and Ubuntu.
