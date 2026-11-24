@@ -121,6 +121,16 @@ stays behind.
   an app. Proof on AION, mbpi9win, z370n: found by the OS search, opens with its name and icon, MB per app measured.
 - [ ] T054 `acryl apps reinstall` moves an existing app onto the Program (old `node_modules` kept until it starts) and `acryl clean`
   removes Programs and engine copies no app uses (Release It!, steady state).
+- [ ] T055 The Control Center Blend (`acrylblends/63-acryl-control-center`) takes `@acryldev/launcher-desktop` as a dependency instead of its
+  own copy `plugins/acryl-launcher-host` (The Pragmatic Programmer, DRY: v0.2.21 needed the 0.1.11 to 0.2.0 diff of `runner.ts` and
+  `service.ts` patched in by hand). What the copy differs in today (checked against `plugins/launcher-desktop` at c5022486 and the Blend at
+  16ad070): `door.ts` calls `/api/door/...` where the package calls `/api/acryl-door/...`; `index.ts` is another plugin (`name`
+  `acryl-launcher-host`, no `appInstance` and no `acrylTools`, so no launcher tools for the chat; home from `ACRYL_LAUNCHER_HOME` or
+  `~/.acryl`, not `appInstance.home`; the self-update view is built there; routes mounted under `/app`); it has no `node.ts` and no
+  `tools.ts`; the page is the built `public/launcher.js`, not the package's client; its `package.json` is `0.1.0` with no build. `contract.ts`,
+  `registry.ts`, `route.ts`, `runner.ts`, `self-update.ts` and `service.ts` are the package's files unchanged. Done when the Blend lists
+  the package, its mount points and `appInstance` come from the frame, the copy and `scripts/launcher-blend.mjs` are gone, and a release
+  starts, makes and updates apps as v0.2.21 does (AION walk).
 
 ## Phase 7 - Share with team (D16, D17)
 
