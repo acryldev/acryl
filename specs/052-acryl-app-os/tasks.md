@@ -128,7 +128,9 @@ stays behind.
   registry (`@acryldev/plugin-share`), Deploy to WebBoxes.ai, each as today, gathered, not rewritten.
 - [ ] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
 - [ ] T062 AppImage as a Linux target in the packer and the release workflow, beside deb and tar.gz.
-- [ ] T063 The download page per the owner's choice (GitHub release or WebBoxes.ai page), with the first-open steps for unsigned
-  installers on macOS and Windows, with pictures.
+- [ ] T063 The download link is the app repository's GitHub release page (owner 2026-11-24); its notes carry the first-open steps for
+  unsigned installers on macOS and Windows, with pictures.
+- [ ] T065 Windows signing for free: apply to SignPath Foundation's open source program once T061 builds in CI, Control Center first;
+  wire its signing step into the release workflow when approved.
 - [ ] T064 Proof: an app made in the Control Center is shared with "Share with team"; on a second machine with no git and no Node, the
   installer from the link installs and opens it, on macOS, Windows and Ubuntu.

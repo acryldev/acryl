@@ -136,10 +136,18 @@ of the same bytes). Images are already shared by Docker; the copies are in the v
   button saves and pushes the app (D16), then runs the release workflow every Blend repository already has (GitHub Actions; it built
   Control Center v0.2.18's six installers: macOS arm64/x64 DMG, Windows x64/arm64 exe, Linux x64/arm64 deb and tar.gz) and shows one
   download link to send. The person who receives it needs no git, no Node, no terminal. AppImage is added as a Linux target (the packer,
-  electron-builder, supports it). "Export as installer" (D6) stays for this computer's OS without GitHub. Open, the owner decides: (a) the
-  download page is the GitHub release page or a WebBoxes.ai page for people without a GitHub account; (b) signing: until the owner's
-  Apple Developer ID and a Windows code-signing certificate exist, installers are unsigned and the download page shows the two clicks
-  macOS (Open from the context menu, or Privacy and Security) and Windows (SmartScreen: More info, Run anyway) ask for, with pictures.
+  electron-builder, supports it). "Export as installer" (D6) stays for this computer's OS without GitHub. Decided by the owner (2026-11-24): this is about ACRYL apps
+  only, so the download link is the app repository's GitHub release page (no WebBoxes.ai page); no paid certificates for now (an open
+  source project, not sold). Signing, free routes only:
+  - Windows: SignPath Foundation signs open source projects for free (OSI licence, public repository, builds fully automated in CI,
+    no proprietary component, MFA for every team member, the attribution line "Free code signing provided by SignPath.io, certificate by
+    SignPath Foundation"; the certificate names SignPath Foundation as the publisher, and approval is not automatic). To apply after
+    Phase 7 works unsigned, for the Control Center first.
+  - macOS: no free Developer ID for a company or a person: Apple's fee waiver covers only nonprofits, accredited schools and government
+    bodies. Installers stay unsigned (ad hoc sealed, as today); the download page shows the first-open step with a picture (Open from the
+    context menu, or Privacy and Security, Open Anyway). An app added through `acryl` on the computer (D4) needs none of this, because
+    nothing downloaded carries the quarantine flag.
+  - Linux: deb, tar.gz and AppImage need no signing.
 
 ## Order and acceptance
 
