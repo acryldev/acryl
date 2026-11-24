@@ -20,6 +20,8 @@
     "shortcut-open.mjs",
     "model-key.js",
     "managed.js",
+    "app-install.js",
+    "app-install-cli.mjs",
     "runtime.js",
     "release-contract.js",
     "desktop-runtime.js",

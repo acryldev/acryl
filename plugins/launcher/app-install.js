@@ -11,6 +11,13 @@ import {
   copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync,
 } from 'node:fs'
 import { basename, join, win32 } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+/**
+ * The command form of installApp, for a caller that runs commands (Control Center's runner). Beside this file: in the package, and beside
+ * acryl's bundled launcher.js, where distribution/acryl-npm-launcher/tui/bundle.mjs copies it.
+ */
+export const INSTALL_CLI = fileURLToPath(new URL('./app-install-cli.mjs', import.meta.url))
 
 /** Where the Programs are kept in ACRYL's home: `<home>/program/blends-<version>/node_modules`, beside its `sha256.json`. */
 export const PROGRAM_DIR = 'program'
@@ -45,6 +52,8 @@ export function linkTree(from, to, skip = () => false, base = '') {
 }
 
 /**
+ * shortcut: the same rule as distribution/acryl-npm-launcher/forward.js npmCommand, kept twice because `acryl` ships without dependencies; one
+ * definition once acryl's own files import from here (it already copies this file beside itself, tui/bundle.mjs).
  * npm with these arguments, without a shell wherever that is possible: the npm that started this process (npx sets npm_execpath), else on Windows the
  * npm CLI file that installs next to node.exe, run by node itself; only when neither exists `npm`, and `npm.cmd` through a shell on Windows.
  */

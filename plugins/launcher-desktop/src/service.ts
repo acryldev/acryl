@@ -4,9 +4,8 @@
  * memory, because the launcher records no port: an app is "running" when this service started it and it has not ended.
  */
 import { basename, delimiter, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import {
-  addApp, addToApplications, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
+  addApp, addToApplications, APP_NAME, INSTALL_CLI, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
   readApps, readGithub, readLaunchers, readModelKey, refreshLaunchers, removeApp, removeFromApplications, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
   type AppEntry,
 } from '@acryldev/launcher'
@@ -17,9 +16,6 @@ import type {
 import { ACCOUNT_NAME, BLEND_ID, BLEND_SOURCE, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
 import { appEnvironment, type Command, type Run, type Runner } from './runner.ts'
-
-/** The install command's file (@acryldev/launcher), run by the machine's Node as every command here is. */
-const INSTALL_CLI = fileURLToPath(import.meta.resolve('@acryldev/launcher/install-cli'))
 import { originOf, selfUpdateCommand, selfView, type SelfFiles } from './self-update.ts'
 
 /** A request the service cannot honour, in a sentence a person can act on. The route answers it as 409. */

@@ -18,7 +18,6 @@
       "default": "./index.js"
     },
     "./node": "./node-context.js",
-    "./install-cli": "./app-install-cli.mjs",
     "./package.json": "./package.json"
   },
   "files": [

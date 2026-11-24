@@ -83,6 +83,13 @@ Acceptance to go on: the second and third app add under 50 MB each, everything s
 
 ### Step 1 - make it the way apps are installed (T006, T008)
 
+> **As built (2026-11-24, after Step 0):** [`baseline.md`](baseline.md) showed pnpm's store alone leaves 305-404 MB per app (Electron is never
+> shared by it), so the shared store of this step is spec 049's Program, not pnpm: `<home>/program/blends-<version>/node_modules`, one per
+> Blends version, made from the first app installed on it and put into each next app as an APFS clone (macOS) or hard links (Linux, Windows),
+> `npm install` on top. The one install is `installApp` in `plugins/launcher/app-install.js` (`app-install-cli.mjs` as a command), run by
+> `acryl --gui`/`acryl ade` (`distribution/acryl-npm-launcher/managed.js`) and Control Center (`plugins/launcher-desktop/src/service.ts`).
+> The bullets below are the plan as written before Step 0.
+
 - One install command for every place that installs an app today (Control Center's "+ New app" and Start, `acryl new`, `acryl --gui`
   and `acryl ade`'s copies, the store's Make, an agent's install): today each runs `npm install`
   (`distribution/acryl-npm-launcher/managed.js`, `plugins/launcher-desktop/src/service.ts`). It becomes pnpm against the shared store,

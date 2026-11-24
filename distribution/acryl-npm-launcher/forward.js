@@ -7,8 +7,7 @@
 //
 // The functions here only decide what to run; bin.js runs it. Nothing here touches the network or the disk except `existsSync` of the door file.
 import { existsSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
-import { npmCommand } from '@acryldev/launcher'
+import { basename, dirname, join, resolve, win32 } from 'node:path'
 
 /** The commands this module answers. `acryl` with anything else keeps its old meaning. */
 export const FORWARDED = ['new', 'make', 'create', 'plugin', 'plugins', 'blends', 'update']
@@ -29,8 +28,17 @@ export function npmExec(context, spec, rest) {
   return npmCommand(context, ['exec', '--yes', spec, '--', ...rest])
 }
 
-/** npm with these arguments, found as `npmExec` describes (one definition, in @acryldev/launcher, which also installs apps with it). */
-export { npmCommand }
+/** npm with these arguments, found as `npmExec` describes. */
+export function npmCommand({ env, platform, execPath, exists = existsSync }, args) {
+  const cli = env.npm_execpath
+  if (cli && /npm-cli\.c?js$/u.test(basename(cli))) return { command: execPath, args: [cli, ...args] }
+  if (platform === 'win32') {
+    const beside = win32.join(win32.dirname(execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js')
+    if (exists(beside)) return { command: execPath, args: [beside, ...args] }
+    return { command: 'npm.cmd', args, shell: true }
+  }
+  return { command: 'npm', args }
+}
 
 /**
  * What the launcher's chosen command runs (spec 050). `acryl ...` runs this same `acryl` again (`bin`, with the Node running it), so the launcher

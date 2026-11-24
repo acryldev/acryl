@@ -7,8 +7,11 @@ import { join, relative, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { CREATE_SPEC, npmCommand, npmExec } from './forward.js'
 
-/** The one install every place that installs an app runs (@acryldev/launcher app-install.js: it starts from the shared Program when one fits). */
-export const INSTALL_CLI = fileURLToPath(import.meta.resolve('@acryldev/launcher/install-cli'))
+/**
+ * The one install every place that installs an app runs (@acryldev/launcher app-install.js: it starts from the shared Program when one fits).
+ * acryl ships without dependencies, so tui/bundle.mjs copies the file beside this one, as it does model-key.js.
+ */
+export const INSTALL_CLI = fileURLToPath(new URL('./app-install-cli.mjs', import.meta.url))
 
 /** What updates a Blend copy from its newer release (the acrylblends command; the Control Center window runs the same). */
 export const UPDATE_SPEC = 'acrylblends@latest'

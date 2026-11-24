@@ -62,9 +62,9 @@ export function offeredLauncher(home: string, platform?: string): 'yes' | 'no' |
 export function recordOffer(home: string, answer: 'yes' | 'no', platform?: string): void
 /** Installing an app on this computer against the shared Program (spec 052 Step 1, app-install.js). */
 export const PROGRAM_DIR: string
+export const INSTALL_CLI: string
 export function programOf(folder: string): string | undefined
 export function linkTree(from: string, to: string, skip?: (path: string) => boolean, base?: string): void
-export function npmCommand(context: { env: Readonly<Record<string, string | undefined>>, platform: string, execPath: string, exists?: (path: string) => boolean }, args: readonly string[]): { readonly command: string, readonly args: string[], readonly shell?: boolean }
 export function installApp(input: {
   folder: string, home: string, npm: (args: string[], cwd: string) => Promise<number>, npmArgs?: readonly string[], say?: (line: string) => void,
   platform?: string, node?: string, device?: (path: string) => number | bigint,

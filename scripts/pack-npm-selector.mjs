@@ -18,9 +18,10 @@ import { MINIMUM as MINIMUM_NODE } from '../distribution/acryl-npm-launcher/node
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const selectorSource = join(root, 'distribution', 'acryl-npm-launcher')
-// The Add to Applications opener and the model key reader it imports are copied into ~/.acryl/shortcuts from beside launcher.js (os-launchers.js):
+// The Add to Applications opener and the model key reader it imports are copied into ~/.acryl/shortcuts from beside launcher.js (os-launchers.js),
+// and the one install of apps (app-install-cli.mjs and app-install.js) runs from there (managed.js INSTALL_CLI):
 // they are the launcher package's own files, shipped as they are, never kept twice.
-const fromLauncher = new Set(['shortcut-open.mjs', 'model-key.js'])
+const fromLauncher = new Set(['shortcut-open.mjs', 'model-key.js', 'app-install.js', 'app-install-cli.mjs'])
 const launcherSource = join(root, 'plugins', 'launcher')
 const selectorPackage = JSON.parse(readFileSync(join(selectorSource, 'package.json'), 'utf8'))
 // The launcher's own package.json lists what the selector ships; a second list here once left forward.js out of the tarball.
