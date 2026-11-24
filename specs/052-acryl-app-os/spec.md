@@ -148,6 +148,11 @@ of the same bytes). Images are already shared by Docker; the copies are in the v
     context menu, or Privacy and Security, Open Anyway). An app added through `acryl` on the computer (D4) needs none of this, because
     nothing downloaded carries the quarantine flag.
   - Linux: deb, tar.gz and AppImage need no signing.
+  Free install routes that avoid the first-open step, decided by the owner (2026-11-24, "option 2"): the one-line installer on acryl.dev
+  (`curl -fsSL https://acryl.dev/install.sh | bash`, Windows `irm https://acryl.dev/install.ps1 | iex`; acryldev.github.io 3f45f68), shown with a
+  copy button in the heroes and READMEs; and the Homebrew tap `brew install acryldev/tap/acryl` (a formula for the `acryl` command, not a cask:
+  Homebrew disables unsigned casks from 2026-09-01), which `scripts/release-acryl.mjs` step 7 keeps on the latest release. Cargo is not a route
+  (nothing here is Rust; acrylmicrovm is on crates.io already). winget, scoop and the AUR (the release already carries a PKGBUILD) are next.
 
 ## Order and acceptance
 

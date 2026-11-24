@@ -11,9 +11,11 @@
  *   3. --go only from here: npm publish (latest);
  *   4. the tag acryl-v<version> at HEAD is pushed;
  *   5. the GitHub release acryl-v<version> is made Latest, with the tarball and the notes;
- *   6. npm `latest` and the GitHub Latest release are compared: the run fails when they differ.
+ *   6. npm `latest` and the GitHub Latest release are compared: the run fails when they differ;
+ *   7. the Homebrew formula (acryldev/homebrew-tap, Formula/acryl.rb) is pointed at the new npm tarball, so `brew install acryldev/tap/acryl` follows.
  * Without --go it stops after step 2 and says what it would do. Pragmatic Programmer: one command, nothing done by hand.
  */
+import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readdirSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -33,6 +35,27 @@ const stop = (message) => { console.error(`release-acryl: STOP - ${message}`); p
 /** npm `latest` and the GitHub Latest release, as versions. */
 export function versionsAgree(npmLatest, githubLatestTag) {
   return typeof npmLatest === 'string' && githubLatestTag === `acryl-v${npmLatest}`
+}
+
+const TAP = 'acryldev/homebrew-tap'
+const FORMULA = 'Formula/acryl.rb'
+
+/** The formula's text pointed at acryl@<version>'s npm tarball with that sha256; everything else is kept. */
+export function formulaFor(text, version, sha256) {
+  const next = text
+    .replace(/^  url "[^"]*"$/m, `  url "https://registry.npmjs.org/acryl/-/acryl-${version}.tgz"`)
+    .replace(/^  sha256 "[0-9a-f]*"$/m, `  sha256 "${sha256}"`)
+  if (!next.includes(`acryl-${version}.tgz`) || !next.includes(sha256)) throw new Error('the formula has no url or sha256 line to update')
+  return next
+}
+
+/** 7. Point the tap's formula at the published tarball (the same bytes npm serves), through the GitHub contents API. */
+function updateFormula(version, tarballPath) {
+  const sha256 = createHash('sha256').update(readFileSync(tarballPath)).digest('hex')
+  const current = JSON.parse(run('gh', ['api', `repos/${TAP}/contents/${FORMULA}`]))
+  const text = formulaFor(Buffer.from(current.content, 'base64').toString('utf8'), version, sha256)
+  run('gh', ['api', '-X', 'PUT', `repos/${TAP}/contents/${FORMULA}`, '-f', `message=acryl ${version}`, '-f', `content=${Buffer.from(text).toString('base64')}`, '-f', `sha=${current.sha}`])
+  console.log(`7. ${TAP}: ${FORMULA} is acryl ${version}`)
 }
 
 function compare() {
@@ -88,7 +111,7 @@ function main() {
 
   // 6. The same on both (npm's metadata can take a minute to show the new latest).
   for (let attempt = 1; attempt <= 12; attempt++) {
-    if (compare()) process.exit(0)
+    if (compare()) { updateFormula(version, join(out, tarball)); process.exit(0) }
     execFileSync(process.execPath, ['-e', 'setTimeout(() => {}, 10000)'])
   }
   stop('npm latest and the GitHub Latest release still differ after two minutes: look at both before anything else')
