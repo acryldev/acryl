@@ -1,6 +1,6 @@
 # Spec 052 - ACRYL as an app OS: shared runtimes, real app icons, export
 
-Status (2026-11-24): written. WebBoxes first (owner 2026-11-24): D9 live (webboxesai 37a05b7), D10 next. ACRYL AOS (D11-D14) decided 2026-11-24, design [`design/aos.html`](design/aos.html). Tasks: [`tasks.md`](tasks.md).
+Status (2026-11-24): written. WebBoxes first (owner 2026-11-24): D9 and D10 done (webboxesai 37a05b7..77b7a86: box volumes 8252 MB to 1543 MB, idle boxes asleep). ACRYL AOS (D11-D14) decided 2026-11-24, design [`design/aos.html`](design/aos.html). Tasks: [`tasks.md`](tasks.md).
 
 ## The owner's words (2026-11-23)
 

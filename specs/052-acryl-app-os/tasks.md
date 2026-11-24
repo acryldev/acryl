@@ -4,12 +4,12 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
 
 ## Phase 0 - WebBoxes (D9, D10), first
 
-- [ ] T030 The box image carries the framework's `node_modules` for its `@acryldev/blends` version as a read-only layer; the app in the
+- [x] T030 (done 2026-11-24, webboxesai 37a05b7: one read-only store per image content, each box an overlay; a new box 3.5 MB (was ~400 MB), box + published copy 6.4 MB (was ~780 MB).) The box image carries the framework's `node_modules` for its `@acryldev/blends` version as a read-only layer; the app in the
   volume resolves its own packages first, then the shared layer. Proof on z370n: a new box adds under 50 MB to its volume; its app,
   terminal, agent and Update work; Deploy's published copy adds only its code.
-- [ ] T031 Existing boxes move to the shared layer by reinstall (D8), one at a time, each checked before the next.
-- [ ] T032 Measure for D10: a box's cold start time, and how many boxes had no request in the last hour/day.
-- [ ] T033 Idle boxes sleep and wake on the next request (after T032 says the start is short enough).
+- [x] T031 (done 2026-11-24, webboxesai eafd39d..77b7a86: 14 boxes and 6 published copies moved one at a time with backup and automatic rollback; 8252 MB to 1543 MB of volumes (81% less); 392 MB of backups kept for the owner.) Existing boxes move to the shared layer by reinstall (D8), one at a time, each checked before the next.
+- [x] T032 (done 2026-11-24: an edit box starts in 2 s; a published copy wakes in 1.2 s through the gate (warm 36 ms); 13 of 14 edit boxes were asleep at idle.) Measure for D10: a box's cold start time, and how many boxes had no request in the last hour/day.
+- [x] T033 (done 2026-11-24, webboxesai 50fe7f7: published copies stop after 60 idle minutes and wake on the next visit (edit boxes already slept after 30 min); idle memory 0 MB.) Idle boxes sleep and wake on the next request (after T032 says the start is short enough).
 
 ## Phase 1 - Shared runtimes and store (D1, D2, D8)
 
