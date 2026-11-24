@@ -20,6 +20,25 @@ version, keep each app's own additions separate, move existing installs one at a
 Ten apps are ~7 GB of mostly identical files. On a computer there is no Docker overlay; the equivalent is a content-addressed store with
 hard links (one file on disk, many names), which is what D1 and D2 of this spec decide.
 
+## What we already found and built (read first; reuse, do not reinvent)
+
+1. **Spec 049, `app-storage.md` (2026-11-11): Program, Source, Data.** The Program (Electron, the frame, the framework packages and their
+   `node_modules`) is one read-only bundle, never copied; an app's `source/` holds only the person's files and the packages the person
+   added; Data and cache are separate. Built for installed products in `@acryldev/desktop-shell` (`product.ts`, `programRoot` in
+   `main.ts`). The seam that lets an app carry only its own packages is designed there: a sync `module.registerHooks` resolver that
+   resolves framework names to the shared Program first and everything else normally (`NODE_PATH` does not work for ESM). Two pieces of
+   it exist: `plugins/extensions/resolve.ts` (a staged plugin resolves framework names from the app) and `plugins/blends-frame/src/app-generation.ts`.
+2. **One OS app per Blend, proof of concept (2026-11-09), scripts on main:** `framework/scripts/make-blend-app.mjs`,
+   `framework/scripts/lib/blend-app.mjs` (`linkTree`), `pack-blank-engine.mjs`. A second app from one engine cost **6 MB on macOS** (APFS
+   clone, `cp -c`, sealed again ad hoc), **14 MB on Windows and 31 MB on Linux for two apps** (hard-linked engine folders). Walked on all
+   three OSes. `desktop-shell/brand.ts` already clones Electron with `cp -c` for the Dock name.
+3. **Lesson (extensions, 2026-10):** a second copy of a framework package broke tool calls after a restart; framework packages must be one
+   instance (peers), which is exactly what the shared Program gives.
+4. **Spec 042 (2026-10):** the shell is not the size lever; the dependency payload is (236 MB of `node_modules` in a 471 MB app).
+5. **WebBoxes D9 (today):** the same idea on a server, one read-only layer per Blends version, measured 81 % less.
+
+So the plan below starts from 1 and 2, and uses a package store only for what an app adds on top.
+
 ## The plan
 
 ### Step 0 - measure the cheapest way first (half a day, no product change)
