@@ -50,11 +50,14 @@ Acceptance to go on: the second and third app add under 50 MB each, everything s
   WebBoxes way: backup, move, check, put back on failure). `acryl clean` removes store entries no app uses, after saying what and how much.
 - The Control Center shows the disk each app adds and what the shared store holds (the Activity numbers of AOS, from real files).
 
-### Step 2 - only if Step 0 shows Electron is still copied (T002-T005)
+### Step 2 - only if Step 0 shows Electron is still copied: reuse what exists, build nothing new
 
-The runtime store `~/.acryl/runtimes/electron-<version>/` from D1: apps name their runtime and `acryl-desktop` starts the shared one.
-This is more code (download, checksum, lock, the branded macOS clone); it is built only if pnpm's own sharing does not already give one
-Electron per version.
+Owner (2026-11-24): "re-use, don't invent the wheel again". No runtime store of our own (the earlier T003-T005 idea). In order:
+- pnpm's side-effects cache already keeps Electron's downloaded binary in the store; if Step 0 shows a copy anyway, set the store's
+  `package-import-method` to hard links or clones (pnpm settings), nothing else.
+- Electron's own `ELECTRON_OVERRIDE_DIST_PATH` makes an app use an Electron that is already on the computer, and Electron's own download
+  cache (`~/Library/Caches/electron` and its Windows and Linux equivalents) already keeps one download per version.
+- Electrobun apps: Bun's own install cache (global, linked into each project) is measured in Step 0 the same way.
 
 ### Step 3 - the rest of what WebBoxes learned
 
