@@ -56,9 +56,30 @@ clones of it.
 3. **AION's Node is x64 under Rosetta** (baseline finding 5, reported only, not fixed here): koffi does not load inside Electron there,
    in this layout as in today's npm layout. The apps start, and their terminal and live plugins work.
 
-## Not in this step
+## `acryl new` installs through the one install (2026-11-24, commit cb92e01c0c496b773bb77a08a609130d9569ff3f)
 
-- `acryl new` in a terminal still installs inside `create-acrylblends` (the framework layer, which cannot depend on the launcher).
-  That is the next slice.
+`acryl new <name> [starter]` (and `make`, `create`) now runs three steps in `acryl` (`distribution/acryl-npm-launcher/forward.js`):
+`create-acrylblends` makes the app with `--no-install`, `app-install-cli.mjs` installs it (from the shared Program when one fits), and in a
+terminal the app starts as `create-acrylblends` would have started it. The framework layer is unchanged and does not depend on the
+launcher: `acryl` owns the seam, as it already does for `acryl --gui` and `acryl ade`. A source, `--from`, `--install`, `--no-install`,
+`--pm` or no name go to `create-acrylblends` unchanged, so it installs on its own terms as before.
+
+Proof: the packed `acryl` 0.3.7 from that commit, on scratch HOMEs, with `ACRYL_CREATE=create-acrylblends@1.7.33`. It ran `acryl new first-new
+blank`, `acryl new notes-new notes`, `acryl new blank-new blank` (no terminal, so made and installed, not started), then the start checks
+above for each app. Results are in the measuring session's scratch folder (`evidence/new-*.tgz`).
+
+| Host | first-new (becomes the Program) | notes-new | blank-new | One Electron for all | Start checks |
+|---|---|---|---|---|---|
+| z370n (Ubuntu, hard links) | 705 MB, 79 s | 6.9 MB, 4 s | 6.7 MB, 5 s | yes: one inode, 4 links | all 22 passed |
+| mbpi9win (Windows 10, hard links) | 762 MB, 298 s | 11.3 MB, 73 s | 8.6 MB, 82 s | yes: one file ID, 4 links | all 22 passed |
+| AION (macOS 26, clones, free space) | 1,183 MB free space, 67 s | 18.0 MB, 13 s | 17.9 MB, 13 s | one clone per app, blocks shared | all passed except koffi inside Electron (Rosetta, finding 3) |
+
+On every host each app after the first said "Starting from the shared blends-1.7.33", no install changed a Program file, and all three apps
+were in the list of apps (`acryl apps`).
+
+A bare `npm create acrylblends` (without `acryl`) still installs the app in full, about 700 MB. This is accepted for developers who use the
+framework directly.
+
+## Not in this step
 - Control Center and `acryl` get this through a release of `@acryldev/launcher`, `@acryldev/launcher-desktop` and `acryl`.
 - `acryl apps reinstall` and `acryl clean` (T008) are not built yet.
