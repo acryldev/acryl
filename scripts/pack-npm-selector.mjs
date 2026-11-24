@@ -18,6 +18,10 @@ import { MINIMUM as MINIMUM_NODE } from '../distribution/acryl-npm-launcher/node
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const selectorSource = join(root, 'distribution', 'acryl-npm-launcher')
+// The Add to Applications opener and the model key reader it imports are copied into ~/.acryl/shortcuts from beside launcher.js (os-launchers.js):
+// they are the launcher package's own files, shipped as they are, never kept twice.
+const fromLauncher = new Set(['shortcut-open.mjs', 'model-key.js'])
+const launcherSource = join(root, 'plugins', 'launcher')
 const selectorPackage = JSON.parse(readFileSync(join(selectorSource, 'package.json'), 'utf8'))
 // The launcher's own package.json lists what the selector ships; a second list here once left forward.js out of the tarball.
 const selectorFiles = selectorPackage.files.filter(file => file !== 'package.json')
@@ -47,8 +51,9 @@ if (process.argv.includes('--print-manifest')) {
     for (const file of selectorFiles) {
       // launcher.js is made, not kept: the terminal launcher (spec 050) bundled into one file with nothing to install.
       if (file === LAUNCHER_BUNDLE) { await bundleLauncher(join(selector, file)); continue }
-      if (!existsSync(join(selectorSource, file))) throw new Error(`pack-npm-selector: the launcher lists ${file} in files but it is missing`)
-      cpSync(join(selectorSource, file), join(selector, file))
+      const source = join(fromLauncher.has(file) ? launcherSource : selectorSource, file)
+      if (!existsSync(source)) throw new Error(`pack-npm-selector: the launcher lists ${file} in files but it is missing`)
+      cpSync(source, join(selector, file))
     }
     writeFileSync(join(selector, 'package.json'), `${JSON.stringify(selectorManifest(), null, 2)}\n`)
     execShim('npm', ['pack', '--silent'], { cwd: selector, stdio: 'inherit' })
