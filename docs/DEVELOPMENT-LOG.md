@@ -1,3 +1,17 @@
+## 2026-11-25 - `acryl apps reinstall` and `acryl clean`: move an app onto the shared install, remove what no app uses (spec 052 T008)
+
+- **The change (`8d7aeb919c0a58a6ebb4a63d01ebc0d6416962a6`):** `plugins/launcher/app-space.js` beside the one install.
+  - `reinstallApp` moves `node_modules` aside, installs through `installApp`, and puts the old packages back when that fails.
+  - `planClean` lists the Programs no app uses (the list of apps, plus the apps acryl keeps in its home), and leftovers of a stopped install.
+    For each it counts what removing it frees: a file an app still hard-links frees nothing.
+  - `removePrograms` checks every path is inside `<home>/program` before it removes anything.
+  - `acryl apps reinstall [<id>]` and `acryl clean [--yes]` say what they do, and clean asks once. Neither touches an app's own files or data.
+  - The npm runner moved into `app-install.js` (`runNpm`), so the install command and reinstall share it.
+- **Proof (`718fe0ef728d5bf736cc1f1ef41eb2a29209e864`, `specs/052-acryl-app-os/step1-proof.md`):** on z370n, mbpi9win and AION, an app
+  installed in full moved onto the shared Program and gave back 356-412 MB, with its own files unchanged. `acryl clean` removed only a Program
+  no app used, and the apps then passed every start check. On macOS clean says "up to", because a clone shares blocks.
+- Known limit: neither command can see whether an app is running. Ships in acryl 0.3.9.
+
 ## 2026-11-24 - `acryl new` installs through the one install: a second app adds 7-18 MB (spec 052)
 
 `acryl new <name> [starter]` used to leave the install to `create-acrylblends`, a full `npm install` of about 700 MB per app. Now
