@@ -1712,6 +1712,9 @@ importers:
       '@acryldev/app-persistence':
         specifier: workspace:^
         version: link:../../runtime/app-persistence
+      '@acryldev/instance':
+        specifier: workspace:^
+        version: link:../instance
 
   plugins/launcher-desktop:
     dependencies:

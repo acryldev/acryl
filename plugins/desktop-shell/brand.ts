@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
+import { osAppIdOf } from '@acryldev/instance/home'
 
 /** The logo an app without an icon of its own shows. */
 export const DEFAULT_ICON = join(import.meta.dirname, 'assets', 'acrylblends-logo.png')
@@ -44,7 +45,7 @@ export function plistNames(name: string, id: string): Record<string, string> {
   return {
     CFBundleName: name,
     CFBundleDisplayName: name,
-    CFBundleIdentifier: `com.acrylblends.app.${id}`,
+    CFBundleIdentifier: osAppIdOf(id),
   }
 }
 

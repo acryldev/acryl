@@ -49,6 +49,7 @@
     "url": "https://github.com/acryldev/acryl/issues"
   },
   "dependencies": {
-    "@acryldev/app-persistence": "workspace:^"
+    "@acryldev/app-persistence": "workspace:^",
+    "@acryldev/instance": "workspace:^"
   }
 }

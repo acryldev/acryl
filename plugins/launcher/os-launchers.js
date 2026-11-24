@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process'
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, rmdirSync, statSync, writeFileSync } from 'node:fs'
 import { join, posix, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { appIdOf, osAppIdOf } from '@acryldev/instance/home'
 import { APP_MARKER, readApps } from './apps-registry.js'
 
 export const LAUNCHERS_FILE = 'launchers.json'
@@ -59,7 +60,8 @@ export function desktopExecArg(arg) {
 /**
  * What to write for one app, as data (T010): the files with their contents, the icon to convert or copy, the shortcut to make, what to sign, and every
  * path to record so that removal deletes exactly these. No disk is touched here.
- * @param {{ platform: string, home: string, node: string, app: { id: string, name: string, folder: string, forwardName?: boolean }, icon?: string }} input
+ * `app.osId` is the id the OS knows the running app by (osAppIdOf, T056): the Start shortcut's AppUserModelID and the .desktop's StartupWMClass.
+ * @param {{ platform: string, home: string, node: string, app: { id: string, name: string, folder: string, forwardName?: boolean, osId?: string }, icon?: string }} input
  */
 export function launcherPlan({ platform, home, node, app, icon }) {
   const P = pathsOf(platform)
@@ -94,7 +96,7 @@ export function launcherPlan({ platform, home, node, app, icon }) {
     // Window style 0 hides the console; `False` does not wait, so the shortcut ends when the app is started.
     plan.files.push({ path: script, content: `CreateObject("WScript.Shell").Run ${vbs(words.map(word => `"${word}"`).join(' '))}, 0, False\r\n` })
     if (icon !== undefined) plan.icon = { kind: 'ico', from: icon, to: P.join(own, `${id}.ico`) }
-    plan.lnk = { path: link, target: 'wscript.exe', args: `"${script}"`, icon: plan.icon?.to, workingDir: own }
+    plan.lnk = { path: link, target: 'wscript.exe', args: `"${script}"`, icon: plan.icon?.to, workingDir: own, ...(app.osId === undefined ? {} : { appUserModelId: app.osId }) }
     plan.record.push(link, own)
   } else {
     const desktop = P.join(userHome, '.local', 'share', 'applications', `acryl-${id}.desktop`)
@@ -103,7 +105,7 @@ export function launcherPlan({ platform, home, node, app, icon }) {
     plan.files.push({
       path: desktop,
       content: `[Desktop Entry]\nType=Application\nName=${line(app.name)}\nExec=${words.map(desktopExecArg).join(' ')}\n${icon === undefined ? '' : `Icon=${png}\n`}`
-        + `Terminal=false\nCategories=Utility;\nX-ACRYL-App=${id}\n`,
+        + `Terminal=false\nCategories=Utility;\n${app.osId === undefined ? '' : `StartupWMClass=${line(app.osId)}\n`}X-ACRYL-App=${id}\n`,
     })
     if (icon !== undefined) plan.icon = { kind: 'png', from: icon, to: png }
     plan.record.push(desktop, ...(icon === undefined ? [] : [png]))
@@ -203,6 +205,39 @@ $link.Arguments = $env:ACRYL_ARGS
 $link.WorkingDirectory = $env:ACRYL_WORKDIR
 if ($env:ACRYL_ICON_TO) { $link.IconLocation = $env:ACRYL_ICON_TO }
 $link.Save()
+# The AppUserModelID (T057): the taskbar groups and pins the running window under this shortcut when both carry the same id. WScript.Shell cannot set it,
+# so the shortcut's property store is written through shell32 (PKEY_AppUserModel_ID, a string).
+if ($env:ACRYL_AUMID) {
+  Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+[StructLayout(LayoutKind.Sequential, Pack = 4)] public struct AcrylPropertyKey { public Guid fmtid; public uint pid; }
+[StructLayout(LayoutKind.Explicit, Size = 16)] public struct AcrylPropVariant { [FieldOffset(0)] public ushort vt; [FieldOffset(8)] public IntPtr p; }
+[ComImport, Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IAcrylPropertyStore {
+  [PreserveSig] int GetCount(out uint count);
+  [PreserveSig] int GetAt(uint index, out AcrylPropertyKey key);
+  [PreserveSig] int GetValue(ref AcrylPropertyKey key, out AcrylPropVariant value);
+  [PreserveSig] int SetValue(ref AcrylPropertyKey key, ref AcrylPropVariant value);
+  [PreserveSig] int Commit();
+}
+public static class AcrylAppUserModelId {
+  [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+  static extern void SHGetPropertyStoreFromParsingName(string path, IntPtr bindContext, int flags, ref Guid iid, [MarshalAs(UnmanagedType.Interface)] out IAcrylPropertyStore store);
+  static AcrylPropertyKey Key() { var key = new AcrylPropertyKey(); key.fmtid = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"); key.pid = 5; return key; }
+  public static void Set(string lnk, string id) {
+    Guid iid = typeof(IAcrylPropertyStore).GUID;
+    IAcrylPropertyStore store;
+    SHGetPropertyStoreFromParsingName(lnk, IntPtr.Zero, 2, ref iid, out store);
+    var key = Key();
+    var value = new AcrylPropVariant(); value.vt = 31; value.p = Marshal.StringToCoTaskMemUni(id);
+    try { Marshal.ThrowExceptionForHR(store.SetValue(ref key, ref value)); Marshal.ThrowExceptionForHR(store.Commit()); }
+    finally { Marshal.FreeCoTaskMem(value.p); Marshal.ReleaseComObject(store); }
+  }
+}
+'@
+  [AcrylAppUserModelId]::Set($env:ACRYL_LNK, $env:ACRYL_AUMID)
+}
 `
 
 /** Copy the opener and what it imports into `<home>/shortcuts`; `from` is where they are (beside this file unless a bundle says otherwise). */
@@ -223,6 +258,15 @@ function removeRecorded(paths, userHome, home, P) {
 }
 
 /**
+ * The app with the id the OS knows it by (T056): its own id (its .acryl/app.json, written on first look as the running app does), so the entry and the
+ * window are one app. A folder that is not there gets none, and nothing is made for it.
+ */
+function withOsId(app) {
+  if (app.osId !== undefined || !existsSync(app.folder)) return app
+  return { ...app, osId: osAppIdOf(appIdOf(app.folder)) }
+}
+
+/**
  * Write the launcher of one app and record it (T011-T013). Idempotent: unchanged files are not rewritten, and the files an earlier add wrote that this one does not
  * (the app was renamed) are removed.
  * @returns {{ written: readonly string[], problems: readonly string[] }}
@@ -231,8 +275,9 @@ export function addToApplications({ platform = process.platform, home, node, app
   if (!isLauncherHome(home, platform)) throw new Error(`launchers are made only for the .acryl folder of a person's home, not ${home}`)
   const P = pathsOf(platform)
   const userHome = P.dirname(home)
-  const found = typeof app === 'string' ? launcherApp(home, app, platform) : app
-  if (found === undefined) throw new Error(`no app "${String(app)}" in the list (see: acryl apps)`)
+  const listed = typeof app === 'string' ? launcherApp(home, app, platform) : app
+  if (listed === undefined) throw new Error(`no app "${String(app)}" in the list (see: acryl apps)`)
+  const found = withOsId(listed)
   const png = found.icon ?? P.join(found.folder, 'assets', 'icon.png')
   const icon = existsSync(png) ? png : undefined
   const plan = launcherPlan({ platform, home, node, app: found, icon })
@@ -256,7 +301,7 @@ export function addToApplications({ platform = process.platform, home, node, app
   if (plan.lnk !== undefined && (changed || !existsSync(plan.lnk.path))) {
     mkdirSync(P.dirname(plan.lnk.path), { recursive: true })
     const done = exec('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', WINDOWS_SCRIPT], {
-      ACRYL_ICON_FROM: plan.icon?.from ?? '', ACRYL_ICON_TO: plan.icon?.to ?? '', ACRYL_LNK: plan.lnk.path, ACRYL_TARGET: plan.lnk.target, ACRYL_ARGS: plan.lnk.args, ACRYL_WORKDIR: plan.lnk.workingDir,
+      ACRYL_ICON_FROM: plan.icon?.from ?? '', ACRYL_ICON_TO: plan.icon?.to ?? '', ACRYL_LNK: plan.lnk.path, ACRYL_TARGET: plan.lnk.target, ACRYL_ARGS: plan.lnk.args, ACRYL_WORKDIR: plan.lnk.workingDir, ACRYL_AUMID: plan.lnk.appUserModelId ?? '',
     })
     if (done.status !== 0) throw new Error(`the Start menu shortcut could not be made: ${String(done.stderr ?? '').trim()}`)
   }
@@ -298,8 +343,9 @@ export function refreshLaunchers({ platform = process.platform, home, node, sour
   const rewritten = []
   for (const id of Object.keys(readLaunchers(home, platform).apps)) {
     try {
-      const app = launcherApp(home, id, platform)
-      if (app === undefined) continue
+      const listed = launcherApp(home, id, platform)
+      if (listed === undefined) continue
+      const app = withOsId(listed)
       const plan = launcherPlan({ platform, home, node, app })
       const current = plan.files.every(file => same(file.path, file.content))
       if (current && existsSync(plan.record[0])) continue
