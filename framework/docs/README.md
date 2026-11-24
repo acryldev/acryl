@@ -72,6 +72,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes @acryldev/create-blends 1.7.18](release-notes/create-blends-1.7.18.md) - released with blends 1.7.18
 - [Release notes @acryldev/blends 1.7.31](release-notes/blends-1.7.31.md) - `pack --from .` exports a running app (a folder is copied as git sees it); sign-in 0.2.4
 - [Release notes @acryldev/create-blends 1.7.31](release-notes/create-blends-1.7.31.md) - released with blends 1.7.31
+- [Release notes @acryldev/blends 1.7.32](release-notes/blends-1.7.32.md) - a desktop app's update copy runs behind an Updating window, a locked file is said in a window, the start has its own log (desktop-shell 0.1.12)
+- [Release notes @acryldev/create-blends 1.7.32](release-notes/create-blends-1.7.32.md) - released with blends 1.7.32
 - [Release notes @acryldev/blends 1.7.30](release-notes/blends-1.7.30.md) - a packed product is named for the product; an app is named as its Blend names it
 - [Release notes @acryldev/create-blends 1.7.30](release-notes/create-blends-1.7.30.md) - released with blends 1.7.30
 - [Release notes @acryldev/blends 1.7.29](release-notes/blends-1.7.29.md) - staged only, replaced by 1.7.30
