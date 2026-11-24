@@ -29,7 +29,7 @@
 
 ## 快速开始
 
-用一行命令安装 ACRYL Control Center：无需管理员权限，无需 Node；下载内容会用 GitHub 的 sha256 校验；因为它不是通过浏览器下载的，Windows 和 macOS 打开时不会出现安全警告。
+用一行命令安装 ACRYL Control Center：应用本身无需管理员权限，也无需 Node（如缺少 git 或桌面依赖库，Linux 会询问一次 sudo）；下载内容会用 GitHub 的 sha256 校验；因为它不是通过浏览器下载的，Windows 和 macOS 打开时不会出现安全警告。
 
 **macOS 和 Linux**
 ```sh

@@ -27,7 +27,7 @@
 
 ## Get started
 
-Install ACRYL Control Center in one line. No admin, no Node, the download is checked against GitHub's sha256, and Windows and macOS open it without warnings because it is not browser-downloaded.
+Install ACRYL Control Center in one line. No Node and no admin for the app itself (if git or a desktop library is missing, Linux asks for sudo once), the download is checked against GitHub's sha256, and Windows and macOS open it without warnings because it is not browser-downloaded.
 
 **macOS and Linux**
 ```sh
