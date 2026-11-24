@@ -106,7 +106,7 @@ of the same bytes). Images are already shared by Docker; the copies are in the v
   normal window of the OS (taskbar, Dock, Alt-Tab), not as a window drawn inside AOS. One Electron main process may own several app
   windows (shared GPU and network processes) when the runtime allows it; that is measured, not assumed.
 - **D13 ACRYL AOS is its own Blend** (owner 2026-11-24): `acrylblends/01-acryl-aos`, category 01 System, subcategory "Agentic operating
-  systems". The Control Center stays as it is; both read the same app list (`control-center-apps.json`) and layout (`~/.acryl/layout.json`).
+  systems". The Control Center stays as it is; both read the same app list (`control-center-apps.json`) and layout (`~/.acryl/desktop.json`).
 - **D14 Desktop first** (owner 2026-11-24): macOS, Windows and Linux before the browser (WebBoxes). Its features: desktop with app icons,
   folders that group apps and files, a Files view, menus, dock, Settings (wallpaper, icon size, dock side, chat), one chat that drives
   every app through its deterministic tools (the door), "Save as workflow" so a repeated run needs no model, and per app Add to

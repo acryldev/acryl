@@ -292,7 +292,7 @@ fieldset .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; 
   <div class="grid3">
     <div class="card"><h3>Deterministic tools save tokens</h3><p class="dim" style="margin-top:6px">An app's tool returns a typed result, such as "these 3 contacts" or "row 14 added". The model never re-reads the screen or works the answer out again. It spends tokens only to plan and to write. A run made of tools can be saved as a workflow (the Workflow Automation Blend), and then it runs again with <b>no model at all</b>.</p></div>
     <div class="card"><h3>One runtime, one host, one store</h3><p class="dim" style="margin-top:6px">Today every app carries its own Electron and framework (701 MB measured, below). In AOS, one Electron main process draws every window, sharing its GPU and network processes. One Node host runs every app as a Cordis scope, and the store holds each package version once. Apps nobody is using go to sleep (D10).</p></div>
-    <div class="card"><h3>Your computer, your way</h3><p class="dim" style="margin-top:6px">Folders group apps and files the way you think: Sales, Q4 or Clients. Files open in their app, so a <code>.csv</code> opens in the CRM and a <code>.md</code> in Notes. The arrangement (folders, dock, wallpaper, icon size) is one file, <code>~/.acryl/layout.json</code>, the same on the desktop, in the browser and in the terminal. The agent rearranges it with deterministic <code>desktop.*</code> tools, so "group my sales apps" costs one plan and two tool calls.</p></div>
+    <div class="card"><h3>Your computer, your way</h3><p class="dim" style="margin-top:6px">Folders group apps and files the way you think: Sales, Q4 or Clients. Files open in their app, so a <code>.csv</code> opens in the CRM and a <code>.md</code> in Notes. The arrangement (folders, dock, wallpaper, icon size) is one file, <code>~/.acryl/desktop.json</code>, the same on the desktop, in the browser and in the terminal. The agent rearranges it with deterministic <code>desktop.*</code> tools, so "group my sales apps" costs one plan and two tool calls.</p></div>
     <div class="card"><h3>Still a real app outside</h3><p class="dim" style="margin-top:6px">Any app can step out of AOS. "Add to Applications" writes a launcher that Spotlight, the Start menu or the app menu finds (D4), and "Export as installer" makes a DMG, exe or deb (D6). Inside AOS, a window can pop out into a real OS window.</p></div>
   </div>
 </section>
@@ -471,7 +471,7 @@ const BODY = {
     return `<div class="files"><div class="side"><small>Places</small>${side.map(([id, n]) => `<button data-place="${id}" aria-pressed="${id === at}">${id === 'desk' ? '🖥' : '📁'} ${esc(n)}</button>`).join('')}<small>Apps</small><button data-place="apps" aria-pressed="false">All apps</button></div>
       <div><div class="fl">${items.map(iconButton).join('') || '<p class="dim">Empty. Drag apps or files here, or onto a place on the left.</p>'}</div></div></div>`
   },
-  term: () => `<div class="term"><span class="d">$</span> acryl apps\n${APPS.map(a => `${a.id.padEnd(9)} ${state.asleep.has(a.id) ? 'asleep ' : state.open[a.id] ? 'running' : 'ready  '} ${a.mb} MB`).join('\n')}\n<span class="d">$</span> cat ~/.acryl/layout.json | head -3\n${esc(JSON.stringify({ desk: layout.desk.slice(0, 4), folders: Object.values(layout.folders).map(f => f.name) }))}\n<span class="d">$</span> _</div>`,
+  term: () => `<div class="term"><span class="d">$</span> acryl apps\n${APPS.map(a => `${a.id.padEnd(9)} ${state.asleep.has(a.id) ? 'asleep ' : state.open[a.id] ? 'running' : 'ready  '} ${a.mb} MB`).join('\n')}\n<span class="d">$</span> cat ~/.acryl/desktop.json | head -3\n${esc(JSON.stringify({ desk: layout.desk.slice(0, 4), folders: Object.values(layout.folders).map(f => f.name) }))}\n<span class="d">$</span> _</div>`,
   ade: () => `<div class="term"><span class="d">// src/app.ts</span>\nexport const tools = [crm.search, crm.add]\n<span class="d">// ADE edits any app on this computer; changes reload live</span></div>`,
   store: () => `<p class="dim" style="margin-bottom:8px">100 categories from the Blends registry. Making one adds only its own code.</p>${['CRM & Sales', 'Finance', 'Workflow', 'Docs & Notes', 'AI agents', 'Games'].map(c => `<span class="pill off" style="margin:0 4px 6px 0">${c}</span>`).join('')}<table style="margin-top:6px"><tbody><tr><td>Invoice Tracker</td><td class="num">+3.9 MB</td><td><button class="btn small" onclick="makeApp('Invoice Tracker')">Make</button></td></tr><tr><td>Habit Tracker</td><td class="num">+2.6 MB</td><td><button class="btn small" onclick="makeApp('Habit Tracker')">Make</button></td></tr></tbody></table>`,
   activity: () => {
@@ -493,7 +493,7 @@ const BODY = {
       <div><h4>Dock</h4><div class="opt"><label><input type="radio" name="dk" data-set="dockLeft" data-v="0" ${p.dockLeft ? '' : 'checked'}> Bottom</label><label><input type="radio" name="dk" data-set="dockLeft" data-v="1" ${p.dockLeft ? 'checked' : ''}> Left</label></div></div>
       <div><h4>Chat</h4><div class="opt"><label><input type="checkbox" data-set="chat" ${p.chat ? 'checked' : ''}> Show the ACRYL chat beside the desktop</label></div></div>
       <div class="opt"><button class="btn small" data-set="reset">Reset the layout</button></div>
-      <p class="note">Saved as one file, ~/.acryl/layout.json: the same desktop on the desktop app, in the browser (WebBoxes) and in the terminal. The agent changes it with desktop.arrange and desktop.wallpaper (deterministic, 0 tokens).</p></div>`
+      <p class="note">Saved as one file, ~/.acryl/desktop.json: the same desktop on the desktop app, in the browser (WebBoxes) and in the terminal. The agent changes it with desktop.arrange and desktop.wallpaper (deterministic, 0 tokens).</p></div>`
   },
 }
 
@@ -717,7 +717,7 @@ const SCENARIOS = {
       { kind: 'model', text: 'plan: which apps and files are about sales', tokens: 220 },
       { kind: 'tool', tool: 'desktop.folder.create', text: '{ name: "Sales" }', do: () => { folder = Object.keys(layout.folders).find(f => layout.folders[f].name === 'Sales') ?? newFolder('Sales', false) } },
       { kind: 'tool', tool: 'desktop.move', text: `${sales.map(nameOf).join(', ')} → Sales`, do: () => { sales.forEach(id => moveItem(id, folder)); state.filesAt = folder; openApp('files') } },
-      { kind: 'say', text: 'Your sales apps and files are in the Sales folder. That was one short plan and two tool calls; the layout is saved in ~/.acryl/layout.json.' },
+      { kind: 'say', text: 'Your sales apps and files are in the Sales folder. That was one short plan and two tool calls; the layout is saved in ~/.acryl/desktop.json.' },
     ], 'Group sales apps')
   },
   sleep: () => run([
