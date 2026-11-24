@@ -52,6 +52,42 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 .btn.small { padding: 4px 9px; font-size: 12px; }
 .btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .note { font-size: 12.5px; color: var(--dim); }
+:root { --ic: 44px; }
+.big { --ic: 58px; }
+.menus { display: flex; gap: 2px; position: relative; }
+.menus > div { position: relative; }
+.menus > div > button { all: unset; cursor: pointer; padding: 2px 8px; border-radius: 5px; }
+.menus > div > button:hover, .menus > div > button[aria-expanded="true"], .menus > div > button:focus-visible { background: var(--primary-dim); color: var(--primary); }
+.menu { position: absolute; left: 0; top: 24px; z-index: 980; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; box-shadow: 0 14px 36px -14px rgba(0,0,0,.45); padding: 4px; min-width: 220px; }
+.menu[hidden] { display: none; }
+.menu button { all: unset; display: flex; justify-content: space-between; gap: 16px; width: 100%; box-sizing: border-box; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.menu button:hover, .menu button:focus-visible { background: var(--primary-dim); color: var(--primary); }
+.menu button kbd { font: 11px var(--mono); color: var(--dim); }
+.menu hr, .ctx hr { border: 0; border-top: 1px solid var(--border); margin: 4px 2px; }
+.glyph { width: var(--ic); height: var(--ic); display: grid; place-items: center; position: relative; flex: none; }
+.glyph svg { width: 100%; height: 100%; }
+.glyph .ext { position: absolute; bottom: 18%; font: 700 9px var(--mono); color: var(--dim); }
+.dicon.drop .glyph, .side button.drop { outline: 2px dashed var(--primary); outline-offset: 2px; border-radius: 10px; }
+.dicon .lbl { max-width: 76px; overflow-wrap: anywhere; }
+.dicon input, .fl input { width: 74px; font: 11.5px var(--sans); border: 1px solid var(--primary); border-radius: 4px; padding: 1px 3px; background: var(--surface); color: var(--text); text-align: center; }
+.files { display: grid; grid-template-columns: 130px minmax(0,1fr); gap: 10px; height: 100%; }
+.side { display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--border); padding-right: 8px; }
+.side button { all: unset; cursor: pointer; padding: 5px 8px; border-radius: 6px; font-size: 12.5px; display: flex; gap: 6px; align-items: center; }
+.side button[aria-pressed="true"] { background: var(--primary-dim); color: var(--primary); font-weight: 600; }
+.side small { font: 600 10.5px var(--mono); color: var(--dim); text-transform: uppercase; letter-spacing: .06em; padding: 8px 8px 2px; }
+.fl { display: grid; grid-template-columns: repeat(auto-fill, 84px); gap: 6px; align-content: start; }
+.fl .dicon { color: var(--text); }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatches button { width: 54px; height: 36px; border-radius: 8px; border: 2px solid var(--border); cursor: pointer; }
+.swatches button[aria-pressed="true"] { border-color: var(--primary); }
+.set { display: flex; flex-direction: column; gap: 14px; }
+.set .opt { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; font-size: 13px; }
+.set h4 { margin: 0 0 4px; font-size: 12.5px; }
+.dock.left { left: 10px; top: 50%; bottom: auto; transform: translateY(-50%); flex-direction: column; max-height: calc(100% - 20px); }
+.dock.left .sep { width: auto; height: 1px; margin: 2px 4px; }
+.withleft .icons { left: 76px; }
+.screen.nochat { grid-template-columns: minmax(0,1fr); }
+.screen.nochat .chat { display: none; }
 
 /* the computer */
 .pc { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: 0 24px 60px -30px rgba(0,0,0,.45); display: flex; flex-direction: column; min-width: 0; }
@@ -64,11 +100,11 @@ ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 
 .meter .saved b { color: var(--success); }
 .screen { display: grid; grid-template-columns: minmax(0,1fr) 340px; height: 640px; min-height: 0; }
 .desk { position: relative; background: var(--desk); overflow: hidden; min-width: 0; }
-.icons { position: absolute; inset: 14px auto 80px 14px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(auto-fill, 86px); gap: 4px 8px; }
+.icons { position: absolute; inset: 14px auto 80px 14px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(auto-fill, calc(var(--ic) + 44px)); gap: 4px 8px; }
 .dicon { all: unset; cursor: pointer; width: 78px; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 2px; border-radius: 10px; text-align: center; font-size: 11.5px; line-height: 1.2; color: var(--text); }
 .dicon:hover, .dicon:focus-visible { background: rgba(127,127,160,.16); }
 .dicon .badge { position: absolute; transform: translate(20px,-6px); }
-.appicon { width: 44px; height: 44px; border-radius: 11px; display: grid; place-items: center; color: #fff; font: 700 18px var(--sans); box-shadow: 0 4px 10px -4px rgba(0,0,0,.35); position: relative; flex: none; }
+.appicon { width: var(--ic); height: var(--ic); border-radius: 11px; display: grid; place-items: center; color: #fff; font: 700 18px var(--sans); box-shadow: 0 4px 10px -4px rgba(0,0,0,.35); position: relative; flex: none; }
 .appicon.sm { width: 30px; height: 30px; border-radius: 8px; font-size: 13px; }
 .appicon .zz { position: absolute; right: -5px; top: -5px; font-size: 11px; background: var(--surface); color: var(--dim); border: 1px solid var(--border); border-radius: 99px; padding: 0 4px; font-weight: 700; }
 .w { position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; box-shadow: 0 18px 44px -18px rgba(0,0,0,.45); display: flex; flex-direction: column; overflow: hidden; min-width: 260px; }
@@ -159,11 +195,11 @@ fieldset .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; 
 
 <section aria-labelledby="try">
   <h2 id="try">Try it</h2>
-  <p class="dim">Click an icon to open it, and drag windows by their bar. Right-click an icon (or long-press it) for its actions. Ask the chat something. The suggestions run a real-looking flow: the model plans, the tools act, and "Save as workflow" replays the same run without the model. <b>Every number inside the computer is simulated</b>; the measured numbers are in the table further down.</p>
+  <p class="dim">Click an icon to open it, and drag windows by their bar. <b>Make it yours</b>: use the menus at the top (File, View, Go), drag apps and files onto a folder, right-click the desktop to make a folder or a note, and choose a wallpaper, the icon size and where the dock sits in Settings. Right-click an icon (or long-press it) for its actions. Ask the chat something. The suggestions run a real-looking flow: the model plans, the tools act, and "Save as workflow" replays the same run without the model. <b>Every number inside the computer is simulated</b>; the measured numbers are in the table further down.</p>
 
   <div class="pc" id="pc">
     <div class="menubar">
-      <span class="logo">ACRYL AOS</span>
+      <nav class="menus" id="menus" aria-label="Menu bar"></nav>
       <span class="focus" id="focusName">Desktop</span>
       <span class="spacer"></span>
       <div class="meter" aria-live="polite">
@@ -195,6 +231,7 @@ fieldset .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; 
         <div class="chips" id="chips">
           <button data-s="crm">Find Vienna leads and draft follow-ups</button>
           <button data-s="make">Make an invoice tracker app</button>
+          <button data-s="group">Group my sales apps and files in a folder</button>
           <button data-s="sleep">Put idle apps to sleep</button>
         </div>
         <form class="compose" id="compose"><input id="ask" placeholder="Ask ACRYL to do something" aria-label="Ask ACRYL"><button class="btn primary" type="submit">Send</button></form>
@@ -255,6 +292,7 @@ fieldset .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; 
   <div class="grid3">
     <div class="card"><h3>Deterministic tools save tokens</h3><p class="dim" style="margin-top:6px">An app's tool returns a typed result, such as "these 3 contacts" or "row 14 added". The model never re-reads the screen or works the answer out again. It spends tokens only to plan and to write. A run made of tools can be saved as a workflow (the Workflow Automation Blend), and then it runs again with <b>no model at all</b>.</p></div>
     <div class="card"><h3>One runtime, one host, one store</h3><p class="dim" style="margin-top:6px">Today every app carries its own Electron and framework (701 MB measured, below). In AOS, one Electron main process draws every window, sharing its GPU and network processes. One Node host runs every app as a Cordis scope, and the store holds each package version once. Apps nobody is using go to sleep (D10).</p></div>
+    <div class="card"><h3>Your computer, your way</h3><p class="dim" style="margin-top:6px">Folders group apps and files the way you think: Sales, Q4 or Clients. Files open in their app, so a <code>.csv</code> opens in the CRM and a <code>.md</code> in Notes. The arrangement (folders, dock, wallpaper, icon size) is one file, <code>~/.acryl/layout.json</code>, the same on the desktop, in the browser and in the terminal. The agent rearranges it with deterministic <code>desktop.*</code> tools, so "group my sales apps" costs one plan and two tool calls.</p></div>
     <div class="card"><h3>Still a real app outside</h3><p class="dim" style="margin-top:6px">Any app can step out of AOS. "Add to Applications" writes a launcher that Spotlight, the Start menu or the app menu finds (D4), and "Export as installer" makes a DMG, exe or deb (D6). Inside AOS, a window can pop out into a real OS window.</p></div>
   </div>
 </section>
@@ -326,40 +364,114 @@ fieldset .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; 
 
 <script>
 const APPS = [
-  { id: 'crm', name: 'Small CRM', color: '#0E7490', letter: 'C', mb: 4.1, mem: 38, tools: ['crm.search', 'crm.add', 'crm.update'] },
-  { id: 'flow', name: 'Workflow Automation', color: '#7C3AED', letter: 'W', mb: 6.8, mem: 44, tools: ['flow.save', 'flow.run', 'flow.list'] },
-  { id: 'notes', name: 'Notes', color: '#B45309', letter: 'N', mb: 2.2, mem: 21, tools: ['notes.create', 'notes.find'] },
-  { id: 'term', name: 'Terminal', color: '#18181b', letter: '>', mb: 0.4, mem: 18, tools: ['shell.run'] },
-  { id: 'ade', name: 'ACRYL ADE', color: '#3652D9', letter: 'A', mb: 12.5, mem: 72, tools: ['files.read', 'files.write', 'shell.run'] },
-  { id: 'store', name: 'Blends Store', color: '#047857', letter: 'S', mb: 1.1, mem: 16, tools: ['store.search', 'store.make'] },
-  { id: 'activity', name: 'Activity', color: '#52525B', letter: '≋', mb: 0.3, mem: 9, tools: ['system.apps', 'system.sleep'] },
+  { id: 'crm', name: 'Small CRM', color: '#0E7490', letter: 'C', mb: 4.1, mem: 38, tools: ['crm.search', 'crm.add', 'crm.update'], kind: 'Sales' },
+  { id: 'flow', name: 'Workflow Automation', color: '#7C3AED', letter: 'W', mb: 6.8, mem: 44, tools: ['flow.save', 'flow.run', 'flow.list'], kind: 'Work' },
+  { id: 'notes', name: 'Notes', color: '#B45309', letter: 'N', mb: 2.2, mem: 21, tools: ['notes.create', 'notes.find'], kind: 'Work' },
+  { id: 'files', name: 'Files', color: '#0369A1', letter: '▤', mb: 0.6, mem: 12, tools: ['files.list', 'files.move', 'desktop.folder.create'], kind: 'System' },
+  { id: 'term', name: 'Terminal', color: '#18181b', letter: '>', mb: 0.4, mem: 18, tools: ['shell.run'], kind: 'Developer' },
+  { id: 'ade', name: 'ACRYL ADE', color: '#3652D9', letter: 'A', mb: 12.5, mem: 72, tools: ['files.read', 'files.write', 'shell.run'], kind: 'Developer' },
+  { id: 'store', name: 'Blends Store', color: '#047857', letter: 'S', mb: 1.1, mem: 16, tools: ['store.search', 'store.make'], kind: 'System' },
+  { id: 'activity', name: 'Activity', color: '#52525B', letter: '≋', mb: 0.3, mem: 9, tools: ['system.apps', 'system.sleep'], kind: 'System' },
+  { id: 'settings', name: 'Settings', color: '#71717A', letter: '⚙', mb: 0.2, mem: 6, tools: ['desktop.arrange', 'desktop.wallpaper'], kind: 'System' },
 ]
-const state = { open: {}, z: 10, asleep: new Set(), tokens: 0, tools: 0, replays: 0, lastRun: null, leads: [
+const WALLPAPERS = { default: 'var(--desk)', dusk: 'linear-gradient(160deg,#3b3f6b 0%,#7a5f86 60%,#c0858a 100%)', mint: 'linear-gradient(160deg,#cdeee3 0%,#e7f3ee 60%,#d6e7f2 100%)', plain: 'var(--surface-2)' }
+const FRESH = () => ({
+  desk: ['crm', 'flow', 'notes', 'files', 'store', 'f-dev', 'file-leads', 'file-plan', 'activity', 'settings'],
+  dock: ['files', 'crm', 'flow', 'notes', 'store', 'activity', 'settings'],
+  folders: { 'f-dev': { name: 'Developer', items: ['term', 'ade'] } },
+  files: { 'file-leads': { name: 'Leads.csv', app: 'crm' }, 'file-plan': { name: 'Q4 plan.md', app: 'notes' } },
+  prefs: { wallpaper: 'default', big: false, chat: true, dockLeft: false },
+})
+const KEY = 'aos-layout-v1'
+let layout
+try { layout = JSON.parse(localStorage.getItem(KEY)) } catch { layout = null }
+if (!layout || !layout.desk) layout = FRESH()
+const saveLayout = () => { try { localStorage.setItem(KEY, JSON.stringify(layout)) } catch { /* the page works without storage */ } }
+const state = { open: {}, z: 10, asleep: new Set(), tokens: 0, tools: 0, replays: 0, filesAt: 'desk', leads: [
   { n: 'Anna Berger', c: 'Vienna', s: 'Lead', last: '41 days' }, { n: 'Jonas Weiss', c: 'Graz', s: 'Customer', last: '3 days' },
   { n: 'Lea Novak', c: 'Vienna', s: 'Lead', last: '19 days' }, { n: 'Petr Dvorak', c: 'Brno', s: 'Lead', last: '60 days' },
   { n: 'Mira Hofer', c: 'Vienna', s: 'Lead', last: '33 days' }, { n: 'Tomas Klein', c: 'Linz', s: 'Customer', last: '8 days' },
-], notes: [], hits: new Set(), newRow: null, flows: [] }
+], notes: [], hits: new Set(), flows: [] }
 const $ = s => document.querySelector(s)
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
 const desk = $('#desk')
+const app = id => APPS.find(a => a.id === id)
+const kindOf = id => app(id) ? 'app' : layout.folders[id] ? 'folder' : layout.files[id] ? 'file' : undefined
+const nameOf = id => app(id)?.name ?? layout.folders[id]?.name ?? layout.files[id]?.name ?? id
+const parentOf = id => layout.desk.includes(id) ? 'desk' : Object.keys(layout.folders).find(f => layout.folders[f].items.includes(id))
+const listOf = where => where === 'desk' ? layout.desk : layout.folders[where]?.items ?? []
+const uid = p => `${p}-${Math.random().toString(36).slice(2, 7)}`
 
-function iconHtml(app, size = '') { return `<span class="appicon ${size}" style="background:${app.color}">${esc(app.letter)}${state.asleep.has(app.id) ? '<span class="zz">z</span>' : ''}</span>` }
+function glyph(id, size = '') {
+  const k = kindOf(id)
+  if (k === 'app') { const a = app(id); return `<span class="appicon ${size}" style="background:${a.color}">${esc(a.letter)}${state.asleep.has(id) ? '<span class="zz">z</span>' : ''}</span>` }
+  if (k === 'folder') return `<span class="glyph"><svg viewBox="0 0 48 40" aria-hidden="true"><path d="M3 8a4 4 0 0 1 4-4h11l4 4h19a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" fill="var(--secondary)" opacity=".85"/><path d="M3 14h42v20a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z" fill="var(--secondary)"/></svg></span>`
+  const ext = (layout.files[id]?.name.split('.').pop() ?? '').toUpperCase()
+  return `<span class="glyph"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M6 2h20l10 10v32a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/><path d="M26 2v10h10" fill="none" stroke="var(--border)" stroke-width="2"/></svg><span class="ext">${esc(ext)}</span></span>`
+}
+const iconButton = id => `<button class="dicon" draggable="true" data-item="${id}" aria-label="${esc(nameOf(id))}">${glyph(id)}<span class="lbl">${esc(nameOf(id))}</span>${app(id)?.agent ? '<span class="pill agent badge">agent</span>' : ''}</button>`
+
 function renderIcons() {
-  $('#icons').innerHTML = APPS.map(a => `<button class="dicon" data-id="${a.id}" aria-label="${esc(a.name)}">${iconHtml(a)}<span>${esc(a.name)}</span>${a.agent ? '<span class="pill agent badge">agent</span>' : ''}</button>`).join('')
-  const pinned = APPS.filter(a => a.pinned !== false)
-  $('#dock').innerHTML = `<button data-lp aria-label="All apps"><span class="appicon sm" style="background:linear-gradient(135deg,#3652D9,#0E7490)">⊞</span><span class="ind"></span></button><span class="sep"></span>` +
-    pinned.map(a => `<button data-id="${a.id}" aria-label="${esc(a.name)}" title="${esc(a.name)}">${iconHtml(a, 'sm')}<span class="ind ${state.open[a.id] ? 'on' : ''}"></span></button>`).join('')
+  desk.style.background = WALLPAPERS[layout.prefs.wallpaper] ?? WALLPAPERS.default
+  $('#pc').classList.toggle('big', layout.prefs.big)
+  $('.screen').classList.toggle('nochat', !layout.prefs.chat)
+  desk.classList.toggle('withleft', layout.prefs.dockLeft)
+  $('#icons').innerHTML = layout.desk.map(iconButton).join('')
+  const running = Object.keys(state.open).filter(id => !layout.dock.includes(id))
+  const dockBtn = id => `<button data-item="${id}" aria-label="${esc(nameOf(id))}" title="${esc(nameOf(id))}">${glyph(id, 'sm')}<span class="ind ${state.open[id] ? 'on' : ''}"></span></button>`
+  const dock = $('#dock')
+  dock.classList.toggle('left', layout.prefs.dockLeft)
+  dock.innerHTML = `<button data-lp aria-label="All apps"><span class="appicon sm" style="background:linear-gradient(135deg,#3652D9,#0E7490)">⊞</span><span class="ind"></span></button><span class="sep"></span>` +
+    layout.dock.filter(app).map(dockBtn).join('') + (running.length ? '<span class="sep"></span>' + running.map(dockBtn).join('') : '')
   $('#mApps').textContent = Object.keys(state.open).length
   $('#mSleep').textContent = state.asleep.size
+  saveLayout()
 }
 function meters() { $('#mTok').textContent = state.tokens.toLocaleString('en'); $('#mTools').textContent = state.tools; $('#mReplay').textContent = state.replays }
 
+// moving things: one function, used by drag and drop, menus and the agent's desktop.move tool
+function moveItem(id, to) {
+  if (id === to) return
+  if (kindOf(id) === 'folder' && to !== 'desk') { toast('A folder stays on the desktop in this prototype (folders in folders: later).'); return }
+  const from = parentOf(id); if (from === to) return
+  if (from) { const l = listOf(from); l.splice(l.indexOf(id), 1) }
+  listOf(to).push(id)
+  renderIcons(); refreshAll()
+}
+function newFolder(name = 'New folder', rename = true) {
+  const id = uid('f'); layout.folders[id] = { name, items: [] }; layout.desk.push(id); renderIcons(); if (rename) startRename(id); return id
+}
+function newNote() {
+  const id = uid('file'); layout.files[id] = { name: 'Untitled.md', app: 'notes' }; layout.desk.push(id); renderIcons(); startRename(id)
+}
+function removeFolder(id) { const f = layout.folders[id]; layout.desk.splice(layout.desk.indexOf(id), 1, ...f.items); delete layout.folders[id]; renderIcons(); refreshAll(); toast(`Folder "${f.name}" removed; what was in it is back on the desktop.`) }
+function startRename(id) {
+  const holder = document.querySelector(`.dicon[data-item="${id}"] .lbl`); if (!holder || kindOf(id) === 'app') return
+  const input = document.createElement('input'); input.value = nameOf(id); holder.replaceWith(input); input.focus(); input.select()
+  const done = ok => { const v = input.value.trim(); if (ok && v) (layout.folders[id] ?? layout.files[id]).name = v; renderIcons(); refreshAll() }
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false) })
+  input.addEventListener('blur', () => done(true))
+  input.addEventListener('click', e => e.stopPropagation())
+}
+function sortDesk(by) {
+  const rank = id => ({ folder: 0, app: 1, file: 2 })[kindOf(id)]
+  layout.desk.sort((a, b) => by === 'kind' ? rank(a) - rank(b) || nameOf(a).localeCompare(nameOf(b)) : nameOf(a).localeCompare(nameOf(b)))
+  renderIcons()
+}
+
 const BODY = {
-  crm: () => `<table><thead><tr><th>Name</th><th>City</th><th>Stage</th><th>Last contact</th></tr></thead><tbody>${state.leads.map((l, i) => `<tr class="${state.hits.has(i) ? 'hit' : ''} ${state.newRow === i ? 'new' : ''}"><td>${esc(l.n)}</td><td>${esc(l.c)}</td><td>${esc(l.s)}</td><td>${esc(l.last)}</td></tr>`).join('')}</tbody></table>`,
-  notes: () => state.notes.length === 0 ? '<p class="dim">No notes yet. Ask ACRYL to write one.</p>' : state.notes.map(n => `<div class="card" style="padding:10px;margin-bottom:8px"><b>${esc(n.t)}</b><p class="dim" style="font-size:12.5px;margin-top:4px">${esc(n.b)}</p></div>`).join(''),
+  crm: () => `<table><thead><tr><th>Name</th><th>City</th><th>Stage</th><th>Last contact</th></tr></thead><tbody>${state.leads.map((l, i) => `<tr class="${state.hits.has(i) ? 'hit' : ''}"><td>${esc(l.n)}</td><td>${esc(l.c)}</td><td>${esc(l.s)}</td><td>${esc(l.last)}</td></tr>`).join('')}</tbody></table>`,
+  notes: () => state.notes.length === 0 ? '<p class="dim">No notes yet. Ask ACRYL to write one, or right-click the desktop and choose New note.</p>' : state.notes.map(n => `<div class="card" style="padding:10px;margin-bottom:8px"><b>${esc(n.t)}</b><p class="dim" style="font-size:12.5px;margin-top:4px">${esc(n.b)}</p></div>`).join(''),
   flow: () => state.flows.length === 0 ? '<p class="dim">No workflows yet. After an agent run, press "Save as workflow" in the chat.</p>' :
     state.flows.map((f, i) => `<div class="card" style="padding:10px;margin-bottom:8px"><b>${esc(f.name)}</b><div class="flow" style="margin:8px 0">${f.steps.map(s => `<span>${esc(s)}</span>`).join('<i>→</i>')}</div><button class="btn small primary" onclick="replay(${i})">Run again (no model)</button> <span class="note">${f.runs} runs · 0 model tokens</span></div>`).join(''),
-  term: () => `<div class="term"><span class="d">$</span> acryl apps\n${APPS.map(a => `${a.id.padEnd(9)} ${state.asleep.has(a.id) ? 'asleep ' : state.open[a.id] ? 'running' : 'ready  '} ${a.mb} MB`).join('\n')}\n<span class="d">$</span> _</div>`,
+  files: () => {
+    const at = state.filesAt in layout.folders || state.filesAt === 'desk' ? state.filesAt : 'desk'
+    const side = [['desk', 'Desktop'], ...Object.entries(layout.folders).map(([id, f]) => [id, f.name])]
+    const items = listOf(at)
+    return `<div class="files"><div class="side"><small>Places</small>${side.map(([id, n]) => `<button data-place="${id}" aria-pressed="${id === at}">${id === 'desk' ? '🖥' : '📁'} ${esc(n)}</button>`).join('')}<small>Apps</small><button data-place="apps" aria-pressed="false">All apps</button></div>
+      <div><div class="fl">${items.map(iconButton).join('') || '<p class="dim">Empty. Drag apps or files here, or onto a place on the left.</p>'}</div></div></div>`
+  },
+  term: () => `<div class="term"><span class="d">$</span> acryl apps\n${APPS.map(a => `${a.id.padEnd(9)} ${state.asleep.has(a.id) ? 'asleep ' : state.open[a.id] ? 'running' : 'ready  '} ${a.mb} MB`).join('\n')}\n<span class="d">$</span> cat ~/.acryl/layout.json | head -3\n${esc(JSON.stringify({ desk: layout.desk.slice(0, 4), folders: Object.values(layout.folders).map(f => f.name) }))}\n<span class="d">$</span> _</div>`,
   ade: () => `<div class="term"><span class="d">// src/app.ts</span>\nexport const tools = [crm.search, crm.add]\n<span class="d">// ADE edits any app on this computer; changes reload live</span></div>`,
   store: () => `<p class="dim" style="margin-bottom:8px">100 categories from the Blends registry. Making one adds only its own code.</p>${['CRM & Sales', 'Finance', 'Workflow', 'Docs & Notes', 'AI agents', 'Games'].map(c => `<span class="pill off" style="margin:0 4px 6px 0">${c}</span>`).join('')}<table style="margin-top:6px"><tbody><tr><td>Invoice Tracker</td><td class="num">+3.9 MB</td><td><button class="btn small" onclick="makeApp('Invoice Tracker')">Make</button></td></tr><tr><td>Habit Tracker</td><td class="num">+2.6 MB</td><td><button class="btn small" onclick="makeApp('Habit Tracker')">Make</button></td></tr></tbody></table>`,
   activity: () => {
@@ -373,21 +485,36 @@ const BODY = {
       </tbody></table>
       <p class="note" style="margin-top:8px">AOS: ${Math.round(693 + own)} MB on disk for ${APPS.length} apps. Today: ${(APPS.length * 701).toLocaleString('en')} MB (701 MB each, measured). Memory of open apps: ${mem + 120} MB. Simulated except the 701, 309 and 384 MB, which are measured.</p>`
   },
+  settings: () => {
+    const p = layout.prefs
+    return `<div class="set">
+      <div><h4>Wallpaper</h4><div class="swatches">${Object.entries(WALLPAPERS).map(([k, v]) => `<button data-set="wallpaper" data-v="${k}" aria-pressed="${p.wallpaper === k}" aria-label="${k}" style="background:${v}"></button>`).join('')}</div></div>
+      <div><h4>Icons</h4><div class="opt"><label><input type="radio" name="ic" data-set="big" data-v="0" ${p.big ? '' : 'checked'}> Small</label><label><input type="radio" name="ic" data-set="big" data-v="1" ${p.big ? 'checked' : ''}> Large</label></div></div>
+      <div><h4>Dock</h4><div class="opt"><label><input type="radio" name="dk" data-set="dockLeft" data-v="0" ${p.dockLeft ? '' : 'checked'}> Bottom</label><label><input type="radio" name="dk" data-set="dockLeft" data-v="1" ${p.dockLeft ? 'checked' : ''}> Left</label></div></div>
+      <div><h4>Chat</h4><div class="opt"><label><input type="checkbox" data-set="chat" ${p.chat ? 'checked' : ''}> Show the ACRYL chat beside the desktop</label></div></div>
+      <div class="opt"><button class="btn small" data-set="reset">Reset the layout</button></div>
+      <p class="note">Saved as one file, ~/.acryl/layout.json: the same desktop on the desktop app, in the browser (WebBoxes) and in the terminal. The agent changes it with desktop.arrange and desktop.wallpaper (deterministic, 0 tokens).</p></div>`
+  },
 }
-BODY.settings = () => ''
 
+function openItem(id) {
+  const k = kindOf(id)
+  if (k === 'app') openApp(id)
+  else if (k === 'folder') { state.filesAt = id; openApp('files'); refresh('files') }
+  else if (k === 'file') { const f = layout.files[id]; openApp(f.app); toast(`Opened ${f.name} in ${app(f.app).name}.`) }
+}
 function openApp(id) {
-  const app = APPS.find(a => a.id === id); if (!app) return
+  const a = app(id); if (!a) return
   $('#launchpad').hidden = true
-  if (state.asleep.has(id)) { state.asleep.delete(id); toast(`${app.name} woke up in 0.4 s (simulated): its scope restarts in the running host; nothing new is started.`) }
-  if (state.open[id]) { focus(id); renderIcons(); return }
+  if (state.asleep.has(id)) { state.asleep.delete(id); toast(`${a.name} woke up in 0.4 s (simulated): its scope restarts in the running host; nothing new is started.`) }
+  if (state.open[id]) { refresh(id); focus(id); renderIcons(); return }
   const n = Object.keys(state.open).length
   const narrow = desk.clientWidth < 600
   const w = document.createElement('div')
   w.className = 'w'; w.dataset.id = id
-  const width = id === 'activity' ? 470 : id === 'crm' ? 440 : 380
-  Object.assign(w.style, { left: (narrow ? 8 : 110 + (n * 34) % 260) + 'px', top: (16 + (n * 30) % 200) + 'px', width: width + 'px', height: (id === 'activity' ? 380 : 300) + 'px' })
-  w.innerHTML = `<div class="bar"><button class="cl" aria-label="Close ${esc(app.name)}"></button><button class="mn" aria-label="Minimize ${esc(app.name)}"></button><button class="sl" aria-label="Put ${esc(app.name)} to sleep" title="Sleep"></button><span class="t">${esc(app.name)}</span></div><div class="wb"></div><div class="tools">tools: ${app.tools.map(t => `<code>${t}</code>`).join(' ')}</div>`
+  const width = id === 'activity' ? 470 : id === 'crm' || id === 'files' ? 440 : 380
+  Object.assign(w.style, { left: (narrow ? 8 : 110 + (n * 34) % 260) + 'px', top: (16 + (n * 30) % 200) + 'px', width: width + 'px', height: (id === 'activity' || id === 'settings' ? 380 : 300) + 'px' })
+  w.innerHTML = `<div class="bar"><button class="cl" aria-label="Close ${esc(a.name)}"></button><button class="mn" aria-label="Minimize ${esc(a.name)}"></button><button class="sl" aria-label="Put ${esc(a.name)} to sleep" title="Sleep"></button><span class="t">${esc(a.name)}</span></div><div class="wb"></div><div class="tools">tools: ${a.tools.map(t => `<code>${t}</code>`).join(' ')}</div>`
   desk.appendChild(w)
   state.open[id] = w
   w.querySelector('.cl').onclick = () => closeApp(id)
@@ -399,9 +526,9 @@ function openApp(id) {
 }
 function refresh(id) { const w = state.open[id]; if (w) w.querySelector('.wb').innerHTML = BODY[id]() }
 function refreshAll() { Object.keys(state.open).forEach(refresh) }
-function focus(id) { const w = state.open[id]; if (!w) return; w.hidden = false; document.querySelectorAll('.w').forEach(x => x.classList.remove('focused')); w.classList.add('focused'); w.style.zIndex = ++state.z; $('#focusName').textContent = APPS.find(a => a.id === id).name }
+function focus(id) { const w = state.open[id]; if (!w) return; w.hidden = false; document.querySelectorAll('.w').forEach(x => x.classList.remove('focused')); w.classList.add('focused'); w.style.zIndex = ++state.z; $('#focusName').textContent = app(id).name }
 function closeApp(id) { state.open[id]?.remove(); delete state.open[id]; state.asleep.delete(id); $('#focusName').textContent = 'Desktop'; renderIcons(); refreshAll() }
-function sleepApp(id) { const a = APPS.find(x => x.id === id); state.asleep.add(id); state.open[id]?.remove(); delete state.open[id]; toast(`${a.name} is asleep: its scope is unloaded and uses 0 MB of memory. A click wakes it.`); renderIcons(); refreshAll() }
+function sleepApp(id) { const a = app(id); state.asleep.add(id); state.open[id]?.remove(); delete state.open[id]; toast(`${a.name} is asleep: its scope is unloaded and uses 0 MB of memory. A click wakes it.`); renderIcons(); refreshAll() }
 function drag(w) {
   const bar = w.querySelector('.bar')
   bar.addEventListener('pointerdown', e => {
@@ -416,41 +543,129 @@ function drag(w) {
 let toastTimer
 function toast(text) { const t = $('#toast'); t.textContent = text; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true }, 4200) }
 
-// icons, dock, launchpad, context menu
+// drag and drop of icons: onto a folder icon, a place in Files, an open Files window, or the desktop
+desk.addEventListener('dragstart', e => { const b = e.target.closest('[data-item]'); if (b) e.dataTransfer.setData('text/plain', b.dataset.item) })
+const dropTarget = e => e.target.closest('.dicon[data-item], .side [data-place], .w[data-id="files"] .wb, #icons, .desk')
+desk.addEventListener('dragover', e => {
+  const t = dropTarget(e); if (!t) return
+  if (t.matches('.dicon') && kindOf(t.dataset.item) !== 'folder') return
+  e.preventDefault(); document.querySelectorAll('.drop').forEach(x => x.classList.remove('drop')); if (t.matches('.dicon, [data-place]')) t.classList.add('drop')
+})
+desk.addEventListener('dragleave', e => e.target.closest?.('.drop')?.classList.remove('drop'))
+desk.addEventListener('drop', e => {
+  e.preventDefault(); document.querySelectorAll('.drop').forEach(x => x.classList.remove('drop'))
+  const id = e.dataTransfer.getData('text/plain'); if (!id) return
+  const t = dropTarget(e)
+  if (t?.matches('.dicon')) moveItem(id, t.dataset.item)
+  else if (t?.matches('[data-place]')) { if (t.dataset.place !== 'apps') moveItem(id, t.dataset.place) }
+  else if (t?.matches('.wb')) moveItem(id, state.filesAt)
+  else moveItem(id, 'desk')
+})
+
+// clicks: icons, dock, launchpad, Files places, Settings
 desk.addEventListener('click', e => {
-  const b = e.target.closest('[data-id]'); if (b && !e.target.closest('.w')) { openApp(b.dataset.id); return }
+  closeMenus()
+  const place = e.target.closest('[data-place]')
+  if (place) { if (place.dataset.place === 'apps') showLaunchpad(); else { state.filesAt = place.dataset.place; refresh('files') } return }
+  const set = e.target.closest('[data-set]')
+  if (set) { applySetting(set); return }
+  const b = e.target.closest('[data-item]'); if (b) { openItem(b.dataset.item); return }
   if (e.target.closest('[data-lp]')) { showLaunchpad(); return }
   if (e.target === $('#launchpad')) $('#launchpad').hidden = true
   $('#ctx').hidden = true
 })
+desk.addEventListener('change', e => { if (e.target.matches('[data-set]')) applySetting(e.target) })
+function applySetting(el) {
+  const k = el.dataset.set, p = layout.prefs
+  if (k === 'wallpaper') p.wallpaper = el.dataset.v
+  if (k === 'big') p.big = el.dataset.v === '1'
+  if (k === 'dockLeft') p.dockLeft = el.dataset.v === '1'
+  if (k === 'chat') p.chat = el.checked
+  if (k === 'reset') { layout = FRESH(); Object.keys(state.open).forEach(id => { state.open[id].remove(); delete state.open[id] }); renderIcons(); openApp('settings'); toast('Layout reset to the first start.'); return }
+  renderIcons(); refresh('settings')
+}
+
+// right-click menus: an item, or the desktop itself
 desk.addEventListener('contextmenu', e => {
-  const b = e.target.closest('.dicon, .dock [data-id]'); if (!b) return
-  e.preventDefault(); showCtx(b.dataset.id, e.clientX, e.clientY)
+  if (e.target.closest('.w .bar, input')) return
+  const b = e.target.closest('[data-item]')
+  if (b) { e.preventDefault(); itemMenu(b.dataset.item, e.clientX, e.clientY); return }
+  if (e.target.closest('.w')) return
+  e.preventDefault(); deskMenu(e.clientX, e.clientY)
 })
 let press
-desk.addEventListener('pointerdown', e => { const b = e.target.closest('.dicon'); if (b && e.pointerType !== 'mouse') press = setTimeout(() => showCtx(b.dataset.id, e.clientX, e.clientY), 550) })
+desk.addEventListener('pointerdown', e => { const b = e.target.closest('.dicon'); if (b && e.pointerType !== 'mouse') press = setTimeout(() => itemMenu(b.dataset.item, e.clientX, e.clientY), 550) })
 desk.addEventListener('pointerup', () => clearTimeout(press))
-function showCtx(id, x, y) {
-  const a = APPS.find(z => z.id === id), d = desk.getBoundingClientRect(), m = $('#ctx')
-  m.innerHTML = `<button role="menuitem" data-a="open">Open</button><button role="menuitem" data-a="pop">Open in its own window</button><hr><button role="menuitem" data-a="apps">Add to Applications</button><button role="menuitem" data-a="export">Export as installer</button><button role="menuitem" data-a="share">Share</button><hr><button role="menuitem" data-a="sleep">Sleep</button>`
-  m.style.left = Math.min(x - d.left, d.width - 220) + 'px'; m.style.top = Math.min(y - d.top, d.height - 230) + 'px'; m.hidden = false
-  m.onclick = ev => {
-    const act = ev.target.dataset.a; m.hidden = true
-    if (act === 'open') openApp(id)
-    if (act === 'pop') toast(`${a.name} opens as a real OS window of the same Electron: no second runtime starts.`)
-    if (act === 'apps') toast(`Wrote ~/Applications/${a.name}.app (macOS), Start menu\\ACRYL\\${a.name}.lnk (Windows) or acryl-${a.id}.desktop (Linux). Spotlight finds it now. (D4)`)
-    if (act === 'export') toast(`Exporting ${a.name} with acrylblends pack: a self-contained DMG, exe or deb that carries its runtime (D3, D6).`)
-    if (act === 'share') toast(`${a.name} pushed to your GitHub as a Blend; others make it with: acryl make --from <your repo>.`)
-    if (act === 'sleep') sleepApp(id)
+function showMenu(x, y, entries) {
+  const d = desk.getBoundingClientRect(), m = $('#ctx')
+  m.innerHTML = entries.map(en => en === '-' ? '<hr>' : `<button role="menuitem" data-k="${en[0]}">${esc(en[1])}</button>`).join('')
+  m.hidden = false
+  m.style.left = Math.max(4, Math.min(x - d.left, d.width - 224)) + 'px'; m.style.top = Math.max(4, Math.min(y - d.top, d.height - m.offsetHeight - 6)) + 'px'
+  const acts = Object.fromEntries(entries.filter(en => en !== '-').map(en => [en[0], en[2]]))
+  m.onclick = ev => { const k = ev.target.closest('[data-k]')?.dataset.k; if (!k) return; m.hidden = true; acts[k]() }
+  m.querySelector('button')?.focus()
+}
+function moveEntries(id) {
+  const where = parentOf(id)
+  return [...Object.entries(layout.folders).filter(([f]) => f !== id && f !== where).map(([f, v]) => [`mv-${f}`, `Move to ${v.name}`, () => moveItem(id, f)]),
+    ...(where !== 'desk' ? [['mv-desk', 'Move to Desktop', () => moveItem(id, 'desk')]] : [])]
+}
+function itemMenu(id, x, y) {
+  const k = kindOf(id), a = app(id)
+  if (k === 'app') {
+    const inDock = layout.dock.includes(id)
+    showMenu(x, y, [
+      ['open', 'Open', () => openApp(id)], ['pop', 'Open in its own window', () => toast(`${a.name} opens as a real OS window of the same Electron: no second runtime starts.`)], '-',
+      ['dock', inDock ? 'Remove from Dock' : 'Keep in Dock', () => { inDock ? layout.dock.splice(layout.dock.indexOf(id), 1) : layout.dock.push(id); renderIcons() }],
+      ...moveEntries(id), '-',
+      ['apps', 'Add to Applications', () => toast(`Wrote ~/Applications/${a.name}.app (macOS), Start menu\\ACRYL\\${a.name}.lnk (Windows) or acryl-${a.id}.desktop (Linux). Spotlight finds it now. (D4)`)],
+      ['export', 'Export as installer', () => toast(`Exporting ${a.name} with acrylblends pack: a self-contained DMG, exe or deb that carries its runtime (D3, D6).`)],
+      ['share', 'Share', () => toast(`${a.name} pushed to your GitHub as a Blend; others make it with: acryl make --from <your repo>.`)], '-',
+      ['sleep', 'Sleep', () => sleepApp(id)],
+    ])
+  } else if (k === 'folder') {
+    showMenu(x, y, [['open', 'Open', () => openItem(id)], ['ren', 'Rename', () => startRename(id)], '-', ['del', 'Remove folder (keeps what is in it)', () => removeFolder(id)]])
+  } else {
+    const f = layout.files[id]
+    showMenu(x, y, [['open', `Open with ${app(f.app).name}`, () => openItem(id)], ['ren', 'Rename', () => startRename(id)], ...moveEntries(id)])
   }
-  m.querySelector('button').focus()
+}
+function deskMenu(x, y) {
+  showMenu(x, y, [
+    ['nf', 'New folder', () => newFolder()], ['nn', 'New note', () => newNote()], '-',
+    ['sn', 'Sort by name', () => sortDesk('name')], ['sk', 'Sort by kind', () => sortDesk('kind')], '-',
+    ['wp', 'Change wallpaper', () => openApp('settings')], ['cu', 'Customize the desktop', () => openApp('settings')],
+  ])
 }
 function showLaunchpad() {
   const lp = $('#launchpad'); lp.hidden = false
-  const draw = q => { $('#lpGrid').innerHTML = APPS.filter(a => a.name.toLowerCase().includes(q.toLowerCase())).map(a => `<button class="dicon" data-id="${a.id}">${iconHtml(a)}<span>${esc(a.name)}</span></button>`).join('') || '<p class="dim">No app matches. The Blends Store has 100 categories.</p>' }
+  const draw = q => { $('#lpGrid').innerHTML = APPS.filter(a => a.name.toLowerCase().includes(q.toLowerCase())).map(a => iconButton(a.id)).join('') || '<p class="dim">No app matches. The Blends Store has 100 categories.</p>' }
   draw(''); const s = $('#lpSearch'); s.value = ''; s.oninput = () => draw(s.value); s.focus()
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#launchpad').hidden = true; $('#ctx').hidden = true } })
+
+// the menu bar
+const MENUS = [
+  ['ACRYL AOS', [['About AOS', () => toast('ACRYL AOS: one runtime, one host, one store; every app a Blend with tools. Prototype for spec 052.')], ['Settings…', () => openApp('settings'), '⌘,'], '-', ['Put idle apps to sleep', () => SCENARIOS.sleep()]]],
+  ['File', [['New folder', () => newFolder(), '⇧⌘N'], ['New note', () => newNote(), '⌘N'], '-', ['Open Files', () => { state.filesAt = 'desk'; openApp('files') }]]],
+  ['View', [['Sort by name', () => sortDesk('name')], ['Sort by kind', () => sortDesk('kind')], '-', ['Large icons', () => { layout.prefs.big = !layout.prefs.big; renderIcons() }], ['Dock on the left', () => { layout.prefs.dockLeft = !layout.prefs.dockLeft; renderIcons() }], ['Show the chat', () => { layout.prefs.chat = !layout.prefs.chat; renderIcons() }]]],
+  ['Go', [['Files', () => { state.filesAt = 'desk'; openApp('files') }], ['Blends Store', () => openApp('store')], ['Workflows', () => openApp('flow')], ['Activity', () => openApp('activity')], ['All apps', () => showLaunchpad()]]],
+  ['Help', [['Ask ACRYL', () => { layout.prefs.chat = true; renderIcons(); $('#ask').focus() }]]],
+]
+const ticks = { 'Large icons': () => layout.prefs.big, 'Dock on the left': () => layout.prefs.dockLeft, 'Show the chat': () => layout.prefs.chat }
+$('#menus').innerHTML = MENUS.map(([t, items], i) => `<div><button aria-haspopup="menu" aria-expanded="false" data-menu="${i}" ${i === 0 ? 'style="font-weight:800;letter-spacing:.03em"' : ''}>${esc(t)}</button><div class="menu" role="menu" hidden>${items.map((it, j) => it === '-' ? '<hr>' : `<button role="menuitem" data-mi="${i}.${j}"><span>${esc(it[0])}</span><kbd>${it[2] ?? ''}</kbd></button>`).join('')}</div></div>`).join('')
+function closeMenus() { document.querySelectorAll('.menus .menu').forEach(m => { m.hidden = true; m.previousElementSibling.setAttribute('aria-expanded', 'false') }) }
+$('#menus').addEventListener('click', e => {
+  e.stopPropagation()
+  const mi = e.target.closest('[data-mi]')
+  if (mi) { const [i, j] = mi.dataset.mi.split('.').map(Number); closeMenus(); MENUS[i][1][j][1](); return }
+  const top = e.target.closest('[data-menu]'); if (!top) return
+  const m = top.nextElementSibling, wasOpen = !m.hidden
+  closeMenus(); if (wasOpen) return
+  m.querySelectorAll('[data-mi]').forEach(b => { const label = b.querySelector('span').textContent; if (ticks[label]) b.querySelector('kbd').textContent = ticks[label]() ? '✓' : '' })
+  m.hidden = false; top.setAttribute('aria-expanded', 'true'); m.querySelector('button')?.focus()
+})
+document.addEventListener('click', e => { if (!e.target.closest('.menus')) closeMenus() })
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#launchpad').hidden = true; $('#ctx').hidden = true; closeMenus() } })
 
 // the chat
 const msgs = $('#msgs')
@@ -460,25 +675,25 @@ const wait = ms => new Promise(r => setTimeout(r, ms))
 let busy = false
 async function run(steps, title) {
   if (busy) return; busy = true
-  const used = []
+  const used = [], acts = []
   for (const s of steps) {
     await wait(520)
     if (s.kind === 'model') { state.tokens += s.tokens; step('model', s.text, `${s.tokens.toLocaleString('en')} tok`) }
-    else if (s.kind === 'tool') { state.tools += 1; used.push(s.tool); step('tool', `<b>${s.tool}</b> ${s.text}`, '0 tok'); s.do?.() }
+    else if (s.kind === 'tool') { state.tools += 1; used.push(s.tool); step('tool', `<b>${s.tool}</b> ${s.text}`, '0 tok'); if (s.do) { s.do(); acts.push(s.do) } }
     else if (s.kind === 'ask') step('ask', s.text, 'waits for you')
     else if (s.kind === 'say') say('m ai', s.text)
     meters()
   }
   if (title && used.length) {
-    state.lastRun = { name: title, steps: used, runs: 1, act: steps.filter(s => s.kind === 'tool').map(s => s.do).filter(Boolean) }
+    const flow = { name: title, steps: used, runs: 1, act: acts }
     const d = say('m ai', `Done. ${used.length} tool calls, model tokens only for planning and writing. <br><button class="btn small primary" style="margin-top:6px">Save as workflow</button>`)
-    d.querySelector('button').onclick = ev => { ev.target.disabled = true; state.flows.push(state.lastRun); openApp('flow'); refresh('flow'); toast(`Saved "${title}" in Workflow Automation: ${used.join(' → ')}. It runs again with no model.`) }
+    d.querySelector('button').onclick = ev => { ev.target.disabled = true; state.flows.push(flow); openApp('flow'); refresh('flow'); toast(`Saved "${title}" in Workflow Automation: ${used.join(' → ')}. It runs again with no model.`) }
   }
   busy = false
 }
 window.replay = i => {
   const f = state.flows[i]; f.runs += 1; state.replays += 1; state.tools += f.steps.length; f.act.forEach(a => a()); meters(); refreshAll()
-  say('m ai', `Ran "${esc(f.name)}" again from Workflow Automation: ${f.steps.length} tool calls, <b>0 model tokens</b>. The drafts wait for your review, as before.`)
+  say('m ai', `Ran "${esc(f.name)}" again from Workflow Automation: ${f.steps.length} tool calls, <b>0 model tokens</b>. Anything to send still waits for your review.`)
 }
 const SCENARIOS = {
   crm: () => run([
@@ -495,6 +710,16 @@ const SCENARIOS = {
     { kind: 'tool', tool: 'store.make', text: 'made from the store: +3.9 MB, shared runtime and store', do: () => makeApp('Invoice Tracker', true) },
     { kind: 'say', text: 'Invoice Tracker is on your desktop. It brought only its own code, and its tools <code>invoice.add</code> and <code>invoice.list</code> are now mine to use too.' },
   ], 'Make Invoice Tracker'),
+  group: () => {
+    const sales = [...APPS.filter(a => a.kind === 'Sales' || a.name === 'Invoice Tracker').map(a => a.id), ...Object.keys(layout.files).filter(f => layout.files[f].app === 'crm')]
+    let folder
+    return run([
+      { kind: 'model', text: 'plan: which apps and files are about sales', tokens: 220 },
+      { kind: 'tool', tool: 'desktop.folder.create', text: '{ name: "Sales" }', do: () => { folder = Object.keys(layout.folders).find(f => layout.folders[f].name === 'Sales') ?? newFolder('Sales', false) } },
+      { kind: 'tool', tool: 'desktop.move', text: `${sales.map(nameOf).join(', ')} → Sales`, do: () => { sales.forEach(id => moveItem(id, folder)); state.filesAt = folder; openApp('files') } },
+      { kind: 'say', text: 'Your sales apps and files are in the Sales folder. That was one short plan and two tool calls; the layout is saved in ~/.acryl/layout.json.' },
+    ], 'Group sales apps')
+  },
   sleep: () => run([
     { kind: 'tool', tool: 'system.apps', text: `idle for 30 min: ${APPS.filter(a => !state.open[a.id]).length} apps` },
     { kind: 'tool', tool: 'system.sleep', text: 'unloaded their scopes; memory freed', do: () => { APPS.filter(a => !state.open[a.id] && a.id !== 'activity').forEach(a => state.asleep.add(a.id)); renderIcons(); openApp('activity'); refreshAll() } },
@@ -504,18 +729,25 @@ const SCENARIOS = {
 window.makeApp = (name, quiet) => {
   if (APPS.some(a => a.name === name)) { openApp(APPS.find(a => a.name === name).id); return }
   const id = name.toLowerCase().replace(/[^a-z]+/g, '-')
-  APPS.push({ id, name, color: '#BE123C', letter: name[0], mb: 3.9, mem: 26, tools: ['invoice.add', 'invoice.list'], agent: true })
+  APPS.push({ id, name, color: '#BE123C', letter: name[0], mb: 3.9, mem: 26, tools: ['invoice.add', 'invoice.list'], agent: true, kind: 'Sales' })
   BODY[id] = () => `<p class="dim">${esc(name)}, made from the Blends Store. Its folder holds only its own code (3.9 MB, simulated); the runtime and the packages are the shared ones.</p>`
+  layout.desk.push(id)
   renderIcons(); refreshAll(); if (!quiet) toast(`${name} made: +3.9 MB (simulated). No new runtime, no new node_modules.`)
 }
+// an app made in an earlier visit is in the saved layout; this prototype only knows the store's two
+layout.desk = layout.desk.filter(id => kindOf(id) || ['invoice-tracker', 'habit-tracker'].includes(id))
+for (const id of ['invoice-tracker', 'habit-tracker']) if (layout.desk.includes(id) || Object.values(layout.folders).some(f => f.items.includes(id))) { const n = id === 'invoice-tracker' ? 'Invoice Tracker' : 'Habit Tracker'; APPS.push({ id, name: n, color: '#BE123C', letter: n[0], mb: 3.9, mem: 26, tools: ['invoice.add', 'invoice.list'], agent: true, kind: 'Sales' }); BODY[id] = () => `<p class="dim">${n}, made from the Blends Store.</p>` }
+
 $('#chips').addEventListener('click', e => { const s = e.target.dataset.s; if (s && !busy) { say('m me', esc(e.target.textContent)); SCENARIOS[s]() } })
 $('#compose').addEventListener('submit', e => {
   e.preventDefault(); const q = $('#ask').value.trim(); if (!q || busy) return; $('#ask').value = ''; say('m me', esc(q))
   const l = q.toLowerCase()
-  if (/lead|crm|follow|vienna|contact/.test(l)) SCENARIOS.crm()
-  else if (/make|create|build|app/.test(l)) SCENARIOS.make()
+  if (/group|folder|organi[sz]e|tidy/.test(l)) SCENARIOS.group()
+  else if (/lead|crm|follow|vienna|contact/.test(l)) SCENARIOS.crm()
+  else if (/make|create|build/.test(l)) SCENARIOS.make()
   else if (/sleep|idle|memory/.test(l)) SCENARIOS.sleep()
-  else { const app = APPS.find(a => l.includes(a.name.toLowerCase()) || l.includes(a.id)); if (app) { openApp(app.id); say('m ai', `Opened ${esc(app.name)} (tool <code>system.open</code>, 0 tokens).`) } else run([{ kind: 'model', text: 'this prototype knows three flows; try a suggestion', tokens: 120 }]) }
+  else if (/wallpaper|dark|background/.test(l)) run([{ kind: 'tool', tool: 'desktop.wallpaper', text: '{ wallpaper: "dusk" }', do: () => { layout.prefs.wallpaper = 'dusk'; renderIcons(); refresh('settings') } }, { kind: 'say', text: 'Wallpaper changed: one tool call, no model.' }])
+  else { const a = APPS.find(x => l.includes(x.name.toLowerCase()) || l.includes(x.id)); if (a) { openApp(a.id); say('m ai', `Opened ${esc(a.name)} (tool <code>system.open</code>, 0 tokens).`) } else run([{ kind: 'model', text: 'this prototype knows a few flows; try a suggestion', tokens: 120 }]) }
 })
 
 // decisions
