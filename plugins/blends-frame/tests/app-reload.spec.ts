@@ -181,11 +181,19 @@ describe('watchFolders', () => {
     let calls = 0
     const stop = watchFolders([src, plugins, join(dir, 'missing')], () => { calls += 1 }, { debounceMs: 10 })
     await new Promise(resolve => setTimeout(resolve, 400))
+    // Each folder is heard: the count rises after a write in each. Not an exact count: one write can reach fs.watch as two events (create, then
+    // change), more than the 10 ms debounce apart on a loaded machine; collapsing a burst is watchFolder's test below.
     writeFileSync(join(plugins, 'board', 'index.ts'), 'export {}')
-    await vi.waitFor(() => { expect(calls).toBe(1) }, { timeout: 3000 })
+    await vi.waitFor(() => { expect(calls).toBeGreaterThanOrEqual(1) }, { timeout: 3000 })
+    await new Promise(resolve => setTimeout(resolve, 200))
+    const afterPlugins = calls
     writeFileSync(join(src, 'routes.ts'), 'export {}')
-    await vi.waitFor(() => { expect(calls).toBe(2) }, { timeout: 3000 })
+    await vi.waitFor(() => { expect(calls).toBeGreaterThan(afterPlugins) }, { timeout: 3000 })
     stop()
+    const stopped = calls
+    writeFileSync(join(src, 'after-stop.ts'), 'export {}')
+    await new Promise(resolve => setTimeout(resolve, 200))
+    expect(calls).toBe(stopped)
     rmSync(dir, { recursive: true, force: true })
   })
 })
