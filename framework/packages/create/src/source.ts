@@ -325,7 +325,7 @@ const isLocalState = (name: string): boolean =>
   LOCAL_STATE.has(name) || name === '.env' || name.startsWith('.env.')
 
 /**
- * The files of a folder as its git repository sees them: tracked and untracked, honouring every ignore rule (nested .gitignore files and
+ * The files of a folder as its git repository sees them: tracked and untracked, following every ignore rule (nested .gitignore files and
  * .git/info/exclude included). Undefined when git is not installed or the folder is not the top of a repository (a download unpacked inside
  * some other repository's ignored folder would list nothing).
  */
