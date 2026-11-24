@@ -93,6 +93,35 @@ describe('the list', () => {
   })
 })
 
+describe('Add to Applications', () => {
+  it('makes the launcher of a listed app on request, shows it in the list, and deletes it with the app', () => {
+    const { service, makeApp, root, home } = setup({ environment: () => ({ PATH: join(root0(), 'node-bin') }) })
+    function root0() { return join(home, '..') }
+    makeApp('shop')
+    mkdirSync(join(root0(), 'node-bin'), { recursive: true })
+    writeFileSync(join(root0(), 'node-bin', process.platform === 'win32' ? 'node.exe' : 'node'), '')
+    if (process.platform === 'win32') return   // PowerShell makes the shortcut there: walked on a real Windows machine
+    const launcher = process.platform === 'darwin' ? join(root, 'Applications', 'shop.app') : join(root, '.local', 'share', 'applications', 'acryl-shop.desktop')
+    expect(service.state().apps[0]?.inApplications).toBeUndefined()
+    service.appShortcut('shop', true)
+    expect(existsSync(launcher)).toBe(true)
+    expect(service.state().apps[0]?.inApplications).toBe(true)
+    service.appShortcut('shop', false)
+    expect(existsSync(launcher)).toBe(false)
+    expect(service.state().apps[0]?.inApplications).toBeUndefined()
+    service.appShortcut('shop', true)
+    service.remove('shop')
+    expect(existsSync(launcher)).toBe(false)
+  })
+
+  it('says in words when Node.js cannot be found or the app is not listed', () => {
+    const { service, makeApp } = setup({ exists: path => !/node(\.exe)?$/u.test(path) && existsSync(path) })
+    makeApp('shop')
+    expect(() => service.appShortcut('shop', true)).toThrow(/Node.js was not found/u)
+    expect(() => service.appShortcut('nope', false)).not.toThrow()
+  })
+})
+
 describe('the plugins of an app from an older Blueprint', () => {
   it('says where its plugins are in words for a person, not the door\'s words for an agent', async () => {
     const { service, makeApp, doorAnswers } = setup()

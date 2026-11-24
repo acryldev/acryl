@@ -195,6 +195,7 @@ async function runStepsOpening(steps, env) {
  * acryl.control-center kept in ~/.acryl/control-center, made and installed on first use, and brought to its newest release each time (--no-update skips that; --update also skips the installed app).
  */
 async function openLauncherBlend({ surface, update, noUpdate }) {
+  await refreshOwnLaunchers()
   const installed = surface === 'gui' && !update ? installedControlCenter({ platform: process.platform, env: process.env }) : undefined
   if (installed) {
     console.log(`acryl: opening ${MANAGED.launcher.title} (${installed.at})`)
@@ -206,7 +207,39 @@ async function openLauncherBlend({ surface, update, noUpdate }) {
   mkdirSync(ACRYL_HOME, { recursive: true })
   const steps = managedSteps(MANAGED.launcher, surface, { home: ACRYL_HOME, context: context(), update: !noUpdate })
   const env = { ...(await appEnvironment()), ...managedEnv(MANAGED.launcher) }
-  process.exitCode = surface === 'web' ? await runStepsOpening(steps, env) : await runSteps(steps, env)
+  if (surface === 'web') { process.exitCode = await runStepsOpening(steps, env); return }
+  // The copy is made and installed first; the window's start is the last step, which stays until the window is closed: the one-time offer comes before it.
+  const starting = steps.pop()
+  const prepared = await runSteps(steps, env)
+  if (prepared === 0) await offerOwnLauncher()
+  process.exitCode = prepared === 0 ? await runSteps([starting], env) : prepared
+}
+
+/**
+ * The first time the Control Center opens from the copy in ~/.acryl, offer once to put it among the computer's apps (spec 052 D4); the answer is kept in
+ * ~/.acryl, so it is asked once. Only in a terminal a person can answer in; never an installed app (the OS finds those already).
+ */
+async function offerOwnLauncher() {
+  if (!existsSync(LAUNCHER) || !stdin.isTTY || !stderr.isTTY) return
+  try {
+    const { addToApplications, isLauncherHome, offeredLauncher, recordOffer } = await loadLauncher()
+    if (!isLauncherHome(ACRYL_HOME) || offeredLauncher(ACRYL_HOME) !== undefined) return
+    const prompt = createInterface({ input: stdin, output: stderr })
+    let answer
+    try { answer = (await prompt.question(`Add ${MANAGED.launcher.title} to your Applications, so Spotlight, the Start menu or the app menu opens it? [y/N] `)).trim().toLowerCase() } finally { prompt.close() }
+    recordOffer(ACRYL_HOME, answer === 'y' || answer === 'yes' ? 'yes' : 'no')
+    if (answer === 'y' || answer === 'yes') {
+      const { written, problems } = addToApplications({ home: ACRYL_HOME, node: process.execPath, app: 'control-center' })
+      console.error(`acryl: ${MANAGED.launcher.title} is in your Applications (${written[0]}). Take it out with: acryl apps remove-from-applications control-center`)
+      for (const problem of problems) console.error(`acryl: ${problem}`)
+    }
+  } catch (cause) { console.error(`acryl: could not add ${MANAGED.launcher.title} to your Applications: ${cause instanceof Error ? cause.message : String(cause)}`) }
+}
+
+/** A moved Node.js or app folder is written into the launchers already made (never fails the command that called it). */
+async function refreshOwnLaunchers() {
+  if (!existsSync(LAUNCHER)) return
+  try { (await loadLauncher()).refreshLaunchers({ home: ACRYL_HOME, node: process.execPath }) } catch { /* a launcher problem never stops acryl */ }
 }
 
 /** `acryl store [words]`: the Blends `acryl make <name> --from <id>` can make, one per line (id, name, category, Official or Community), the words narrowing it. */
@@ -225,6 +258,7 @@ async function openAde(adeArgs) {
   if (chosen.error) throw new Error(chosen.error)
   if (chosen.surface === 'tui') return openTerminalAgent(chosen.rest)
   mkdirSync(ACRYL_HOME, { recursive: true })
+  await refreshOwnLaunchers()
   const env = { ...(await appEnvironment()), ...managedEnv(MANAGED.ade), ...openFolderEnv(process.cwd(), { userHome: homedir(), acrylHome: ACRYL_HOME }) }
   process.exitCode = await runSteps(managedSteps(MANAGED.ade, chosen.surface, { home: ACRYL_HOME, context: context() }), env)
 }

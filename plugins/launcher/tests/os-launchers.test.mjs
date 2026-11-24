@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { addApp, addToApplications, desktopExecArg, isLauncherHome, launcherPlan, offeredLauncher, readLaunchers, recordOffer, refreshLaunchers, removeFromApplications } from '../index.js'
+import { addApp, addToApplications, desktopExecArg, runAppsCommand, isLauncherHome, launcherPlan, offeredLauncher, readLaunchers, recordOffer, refreshLaunchers, removeFromApplications } from '../index.js'
 
 const SOURCE = fileURLToPath(new URL('..', import.meta.url))
 
@@ -140,3 +140,21 @@ test('the Windows script path is run through PowerShell with the values in the e
   const plan = launcherPlan({ platform: 'win32', home: 'C:\\Users\\a\\.acryl', node: 'C:\\n\\node.exe', app: { id: 'x', name: 'A "b" $c', folder: 'D:\\x' } })
   assert.equal(plan.lnk.path.endsWith('\\ACRYL\\A -b- $c.lnk'), true)
 })
+
+test('acryl apps add-to-applications and remove-from-applications are the same actions as the screen\'s buttons', () => scratch(({ user, home, folder, exec }) => {
+  addApp(home, { path: folder, surface: 'desktop' })
+  const out = []
+  const err = []
+  const common = { home, cwd: user, platform: 'linux', node: '/usr/bin/node', out: line => out.push(line), err: line => err.push(line) }
+  assert.equal(runAppsCommand(['add-to-applications', 'nope'], common), 1)
+  assert.match(err.pop(), /no app "nope" in the list/u)
+  assert.equal(runAppsCommand(['add-to-applications'], common), 2)
+  assert.equal(runAppsCommand(['add-to-applications', 'shop'], common), 0)
+  assert.ok(existsSync(join(user, '.local', 'share', 'applications', 'acryl-shop.desktop')))
+  runAppsCommand(['list'], common)
+  assert.match(out.at(-1), /\(in Applications\)$/u)
+  assert.equal(runAppsCommand(['remove-from-applications', 'shop'], common), 0)
+  assert.equal(runAppsCommand(['remove-from-applications', 'shop'], common), 1)
+  assert.equal(existsSync(join(user, '.local', 'share', 'applications', 'acryl-shop.desktop')), false)
+  void exec
+}))

@@ -37,7 +37,7 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
     sharePlan: vi.fn(async () => SHARE_PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/o/shop.git', created: true })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
-    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial), update: vi.fn(async () => initial), updateSelf: vi.fn(async () => initial),
+    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), inApplications: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial), update: vi.fn(async () => initial), updateSelf: vi.fn(async () => initial),
     ...over,
   }
 }
@@ -124,6 +124,18 @@ describe('the ACRYL screen', () => {
     expect(screen.getByText(/\/acryl-ade-eb$/u)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Make it' }))
     await waitFor(() => { expect(create).toHaveBeenCalledWith(expect.objectContaining({ name: 'acryl-ade-eb' })) })
+  })
+
+  it('adds an app to the OS Applications and takes it out again, the button saying which', async () => {
+    const inApplications = vi.fn(async () => state([app({ inApplications: true })]))
+    open(fake(state([app({})]), { inApplications }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Add to Applications' }))
+    await waitFor(() => { expect(inApplications).toHaveBeenCalledWith('shop', true) })
+    cleanup()
+    const off = vi.fn(async () => state([app({})]))
+    open(fake(state([app({ inApplications: true })]), { inApplications: off }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove from Applications' }))
+    await waitFor(() => { expect(off).toHaveBeenCalledWith('shop', false) })
   })
 
   it('adds a folder, starts and stops an app, opens a running one at its address, and removes one from the list', async () => {

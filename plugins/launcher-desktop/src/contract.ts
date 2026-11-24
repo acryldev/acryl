@@ -6,6 +6,8 @@ export const LAUNCHER_STATE_PATH = `${LAUNCHER_API_PREFIX}/state`
 export const LAUNCHER_HEALTH_PATH = `${LAUNCHER_API_PREFIX}/health`
 export const LAUNCHER_ADD_PATH = `${LAUNCHER_API_PREFIX}/add`
 export const LAUNCHER_REMOVE_PATH = `${LAUNCHER_API_PREFIX}/remove`
+/** Add an app to the OS's Applications (a launcher where the OS looks for apps) or take it out again (spec 052 D4). */
+export const LAUNCHER_APPLICATIONS_PATH = `${LAUNCHER_API_PREFIX}/applications`
 export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
@@ -57,6 +59,8 @@ export interface AppView {
   readonly update?: string
   /** Where the app was shared to (`https://github.com/<owner>/<repo>`), from its origin remote; what WebBoxes.ai deploys from. */
   readonly github?: string
+  /** True when the app has a launcher where the OS looks for apps ("Add to Applications", spec 052 D4). */
+  readonly inApplications?: true
 }
 
 /** WebBoxes.ai's New WebBox form, opened with the app's repository filled in (the person signs in and presses Create there). */

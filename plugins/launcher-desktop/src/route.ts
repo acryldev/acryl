@@ -3,7 +3,7 @@ import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
   SURFACES, type AppSharePlanRequest, type AppSharePlanView, type AppShareRequest, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
 } from './contract.ts'
 import { RegistryUnavailable } from './registry.ts'
@@ -32,6 +32,13 @@ function parseNew(value: unknown): NewAppRequest | undefined {
   const surface = SURFACES.find((known): known is Surface => known === body.surface)
   if (where === undefined || name === undefined || surface === undefined || (starter === undefined) === (blend === undefined)) return undefined
   return { where, name, surface, ...starter === undefined ? {} : { starter }, ...blend === undefined ? {} : { blend } }
+}
+
+function parseApplications(value: unknown): { id: string, on: boolean } | undefined {
+  const body = record(value)
+  if (body === undefined || !onlyKeys(body, ['id', 'on'])) return undefined
+  const id = text(body.id)
+  return id === undefined || typeof body.on !== 'boolean' ? undefined : { id, on: body.on }
 }
 
 const optional = (value: unknown): string | undefined | null => value === undefined ? undefined : text(value) ?? null
@@ -164,6 +171,7 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
   }
   change(LAUNCHER_ADD_PATH, parseOne('path'), path => { service.add(path) }, 'add an app')
   change(LAUNCHER_REMOVE_PATH, parseOne('id'), id => { service.remove(id) }, 'remove an app')
+  change(LAUNCHER_APPLICATIONS_PATH, parseApplications, ({ id, on }) => { service.appShortcut(id, on) }, 'add an app to Applications or take it out')
   change(LAUNCHER_NEW_PATH, parseNew, request => { service.create(request) }, 'make an app')
   change(LAUNCHER_START_PATH, parseOne('id'), id => { service.start(id) }, 'start an app')
   change(LAUNCHER_STOP_PATH, parseOne('id'), id => { service.stop(id) }, 'stop an app')

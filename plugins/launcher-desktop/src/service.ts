@@ -3,10 +3,10 @@
  * The list is the registry `<home>/apps.json` (`acryl-launcher`, the same file `acryl apps` and the terminal read); what runs is held here, in
  * memory, because the launcher records no port: an app is "running" when this service started it and it has not ended.
  */
-import { basename, join } from 'node:path'
+import { basename, delimiter, join } from 'node:path'
 import {
-  addApp, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
-  readApps, readGithub, readModelKey, removeApp, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
+  addApp, addToApplications, APP_NAME, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
+  readApps, readGithub, readLaunchers, readModelKey, refreshLaunchers, removeApp, removeFromApplications, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
   type AppEntry,
 } from '@acryldev/launcher'
 import type {
@@ -103,7 +103,10 @@ export class LauncherService {
   readonly #installing = new Map<string, Job>()
   /** The tools apps need: being fetched (the first start on a computer without them), ready, or not had (apps then try the computer's own). */
   #tools: { readonly state: 'preparing' } | { readonly state: 'ready' } | { readonly state: 'failed', readonly reason: string } = { state: 'ready' }
-  constructor(ports: LauncherPorts) { this.#ports = ports }
+  constructor(ports: LauncherPorts) {
+    this.#ports = ports
+    this.#refreshLaunchers()
+  }
 
   /** Start fetching what this computer lacks of Node.js and gh; apps wait for it (`#toolsReady`). Called once, when the launcher starts. */
   prepareTools(): Promise<void> {
@@ -143,6 +146,7 @@ export class LauncherService {
     const version = missing ? '' : blendVersionOf(entry.path)
     const latest = this.#blends?.list.find(listed => listed.id === blend)?.version
     const github = missing ? undefined : githubOf(entry.path)
+    const inApplications = readLaunchers(this.#ports.home).apps[entry.id] !== undefined
     return {
       id: entry.id, name: basename(entry.path), path: entry.path, blend, madeBy: entry.madeBy, surface: entry.surface, state,
       ...version === '' ? {} : { version },
@@ -152,6 +156,7 @@ export class LauncherService {
       ...started === undefined && installing !== undefined && installing.output !== '' ? { output: installing.output.trimEnd() } : {},
       ...failure === undefined || state !== 'stopped' ? {} : { failure },
       ...github === undefined ? {} : { github },
+      ...inApplications ? { inApplications: true as const } : {},
     }
   }
 
@@ -166,6 +171,42 @@ export class LauncherService {
   remove(id: string): void {
     this.stop(id)
     if (!removeApp(this.#ports.home, id)) throw new LauncherRefusal(`there is no app "${id}" in the list`)
+    // An app off the list must not stay in the OS's menus: its launcher goes with it.
+    try { removeFromApplications({ home: this.#ports.home, id }) } catch { /* not the person's own home: there is none */ }
+  }
+
+  /**
+   * "Add to Applications" (`on`) / "Remove from Applications": the app's launcher where this OS looks for apps (spec 052 D4), made on request and deleted exactly as
+   * written. Returns what could not be done fully (an icon, an ad-hoc signature); a launcher that cannot be made at all is refused in words.
+   */
+  appShortcut(id: string, on: boolean): readonly string[] {
+    try {
+      if (!on) { removeFromApplications({ home: this.#ports.home, id }); return [] }
+      const node = this.#nodePath()
+      if (node === undefined) throw new Error('Node.js was not found on this machine: install Node.js 22.19 or later from nodejs.org, then try again')
+      return addToApplications({ home: this.#ports.home, node, app: id }).problems
+    } catch (cause) {
+      throw new LauncherRefusal(cause instanceof Error ? cause.message : String(cause))
+    }
+  }
+
+  /** The Node.js a launcher runs the app with: the first on the PATH apps get (this process is Electron, not Node). */
+  #nodePath(): string | undefined {
+    const environment = this.#environment()
+    const names = process.platform === 'win32' ? ['node.exe'] : ['node']
+    const key = Object.keys(environment).find(name => name.toUpperCase() === 'PATH') ?? 'PATH'
+    for (const folder of (environment[key] ?? '').split(delimiter)) {
+      for (const name of names) if (folder !== '' && this.#ports.exists(join(folder, name))) return join(folder, name)
+    }
+    return undefined
+  }
+
+  /** A moved Node.js or app folder is written into the launchers already made. Never fails what called it. */
+  #refreshLaunchers(): void {
+    try {
+      const node = this.#nodePath()
+      if (node !== undefined) refreshLaunchers({ home: this.#ports.home, node })
+    } catch { /* a launcher problem never stops the screen */ }
   }
 
   /**

@@ -114,7 +114,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
             onSearch={setSearch} onSurface={setSurface} onPanel={setPanel} onSelect={setSelected}
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const refused = await create(request); if (refused === undefined) setPanel('none'); return refused }}
-            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onRemove={id => act(() => api.remove(id))}
+            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onRemove={id => act(() => api.remove(id))} onApplications={(id, on) => act(() => api.inApplications(id, on))}
             openExternal={openExternal} adeUnderneath={adeUnderneath} onOpenCode={() => { visibility.set(false) }} onOpenAde={surface => { void act(() => api.openAde(surface)) }}
           />
         )}
@@ -196,6 +196,7 @@ interface AppsViewProps {
   readonly onUpdate: (id: string) => Promise<boolean>
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
+  readonly onApplications: (id: string, on: boolean) => Promise<boolean>
   readonly openExternal: (url: string) => void
   /** Leave this screen for the coding workspace underneath it (ACRYL ADE is the agentic development environment, in this same window). */
   readonly onOpenCode: () => void
@@ -260,12 +261,12 @@ function AppsView(props: AppsViewProps): ReactNode {
       {props.apps.length === 0
         ? <p className="acrylHomeNote">No apps of your own yet. Press + New app to make one, or Add a folder to list one you already have.</p>
         : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p> : null}
-      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onStop={props.onStop} onRemove={props.onRemove} openExternal={props.openExternal} />}
+      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onStop={props.onStop} onRemove={props.onRemove} onApplications={props.onApplications} openExternal={props.openExternal} />}
     </div>
   )
 }
 
-function Detail({ api, app, onStart, onUpdate, onStop, onRemove, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
+function Detail({ api, app, onStart, onUpdate, onStop, onRemove, onApplications, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, onApplications: (id: string, on: boolean) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const running = app.state === 'running' || app.state === 'starting'
   const [sharing, setSharing] = useState(false)
   // Another app's detail starts with its share closed.
@@ -283,6 +284,8 @@ function Detail({ api, app, onStart, onUpdate, onStop, onRemove, openExternal }:
             title={app.github === undefined ? 'Share the app to GitHub first (Public), then deploy it from there' : `Opens WebBoxes.ai with ${app.github} filled in`}
             onClick={() => { if (app.github !== undefined) openExternal(webboxesDeployUrl(app.github, app.name)) }}>Deploy to WebBoxes.ai</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
+          <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} title={app.inApplications === true ? 'Takes the launcher out of your Applications (Spotlight, the Start menu, the app menu); the app itself stays' : 'Puts a launcher for this app where your computer looks for apps (Spotlight, the Start menu, the app menu)'}
+            onClick={() => { void onApplications(app.id, app.inApplications !== true) }}>{app.inApplications === true ? 'Remove from Applications' : 'Add to Applications'}</button>
           <button type="button" className="acrylHomeBtn" disabled title="coming">Open folder</button>
           <button type="button" className="acrylHomeBtn" onClick={() => { void onRemove(app.id) }} title="Takes it off this list; the folder stays">Remove from list</button>
         </div>

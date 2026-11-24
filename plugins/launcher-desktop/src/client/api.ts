@@ -1,6 +1,6 @@
 /** Same-origin browser client for the launcher routes (`../contract.ts`). */
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
   type AppSharePlanRequest, type AppSharePlanView, type GithubPollView, type GithubStartView, type GithubView, type AppShareRequest, type AppShareResponse, type AssistantFolderResponse, type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type PluginPullResponse, type PluginsResponse, type PluginView, type PublishPlanRequest, type PublishPlanView,
   type PublishRequest, type PublishResponse, type StateResponse,
 } from '../contract.ts'
@@ -17,6 +17,8 @@ export interface LauncherApi {
   blends(): Promise<readonly BlendView[]>
   add(path: string): Promise<StateResponse>
   remove(id: string): Promise<StateResponse>
+  /** Put the app's launcher where the OS looks for apps (`on`), or take it out again. */
+  inApplications(id: string, on: boolean): Promise<StateResponse>
   create(request: NewAppRequest): Promise<StateResponse>
   start(id: string): Promise<StateResponse>
   /** Bring the newer release of the app's Blend into it, keeping the person's changes. */
@@ -77,6 +79,7 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
     blends: async () => (await get<BlendsResponse>(LAUNCHER_BLENDS_PATH)).blends,
     add: path => post(LAUNCHER_ADD_PATH, { path }),
     remove: id => post(LAUNCHER_REMOVE_PATH, { id }),
+    inApplications: (id, on) => post(LAUNCHER_APPLICATIONS_PATH, { id, on }),
     create: request => post(LAUNCHER_NEW_PATH, request),
     start: id => post(LAUNCHER_START_PATH, { id }),
     stop: id => post(LAUNCHER_STOP_PATH, { id }),

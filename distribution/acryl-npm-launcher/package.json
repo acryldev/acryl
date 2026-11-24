@@ -17,6 +17,8 @@
     "node-version.js",
     "forward.js",
     "launcher.js",
+    "shortcut-open.mjs",
+    "model-key.js",
     "managed.js",
     "runtime.js",
     "release-contract.js",
