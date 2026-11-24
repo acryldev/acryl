@@ -1,3 +1,27 @@
+## 2026-11-24 - one install for every app on this computer: a new app adds 6-13 MB instead of 700 (spec 052 Step 1)
+
+Every place that installs an app (`acryl --gui` and `acryl ade`, Control Center's Start and + New app) now runs one install,
+`installApp` in `plugins/launcher/app-install.js`, instead of `npm install`. A fresh app on a Blends version the computer already has
+starts from that version's Program (spec 049), `~/.acryl/program/blends-<version>`: a clone on macOS, hard links on Linux and Windows,
+then `npm install` on top for the app's own packages. Measured in Step 0 (`specs/052-acryl-app-os/baseline.md`), proven in
+`specs/052-acryl-app-os/step1-proof.md`.
+
+- **The module (`17de6496ce060ad0d0eb4229956406512e835414`):** the Step 0 findings live inside it. The hidden lockfile is each app's own copy, stamped now. Electron is
+  unpacked before the Program is made, and `path.txt` is written when missing. Every Program file is checked by sha256 after each
+  install on top, and a changed Program is retired. Today's layout keeps working (characterization tests first): an app that already
+  has `node_modules`, one not on a Blends version, or one on another disk is installed as before. `linkTree` has one definition (moved
+  from `framework/scripts/lib/blend-app.mjs`). Control Center makes every app with `--no-install`, so starters take the same path. The
+  Windows runner uses a shell only for npm/npx.
+- **Fixed before release (`a7f17573effad316d27a98b218b2994c7617df8a`):** `acryl` ships without dependencies, so it cannot import `@acryldev/launcher`. The launcher exports
+  `INSTALL_CLI` (the file beside its own module), and acryl's bundle and pack copy the two install files beside `launcher.js`, as they
+  do `model-key.js`. The selector's pty test had caught it.
+- **Proof (`059410c3678cdc3f52d2f352616aeda0e843433f`):** Control Center, Notes, Small CRM and a blank starter on z370n, mbpi9win and AION. The extra apps added 7.3-8.6 MB
+  (Ubuntu), 7.1-12.5 MB (Windows) and 11.8-12.8 MB of free space (macOS), with one Electron for all. Every app started, its window
+  answered, its terminal ran, and live plugins with HMR worked. Removing the first app left the Program whole, and a new app still
+  started from it. koffi does not load inside Electron on AION's Rosetta Node (reported, not fixed).
+- To release: `@acryldev/launcher`, `@acryldev/launcher-desktop`, and `acryl`. Next: `acryl new` in a terminal, which still installs
+  inside create-acrylblends.
+
 ## 2026-11-21 - Claude sign-in: the route it activates is used, and a failed turn reads in plain words
 
 Reported on Windows 11 (Control Center and a create-blends 1.7.21 app): signed in with Claude, the chat failed. The person's own failure turned out to be Anthropic's answer (`400 ... Third-party apps now draw from your extra usage, not your plan limits ...`, the plan's extra usage was off), printed as raw JSON. Reproduced without a Claude account on the Mac and on mbpi9win: a scratch app, the real sign-in routes, the browser's redirect to `localhost:53692/callback` (Edge headless on Windows), Anthropic's token endpoint and Messages API answered by a test-only fetch stand-in. A fresh app signs in and sends the OAuth token (Bearer, oauth beta) on both systems.

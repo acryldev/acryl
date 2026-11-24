@@ -5,7 +5,7 @@ Step 1 of [`plan-space-reuse.md`](plan-space-reuse.md) (T006). What was built: `
 Center (`plugins/launcher-desktop/src/service.ts`: Start of an app without packages, + New app from a Blend or a starter). A fresh app on a
 Blends version this computer already has starts from that version's Program, `<home>/program/blends-<version>/node_modules`: an APFS
 clone on macOS, hard links on Linux and Windows. Then `npm install` on top adds the app's own packages. The first app installed on a
-version becomes its Program. Commits d25d1031 and bef5fbc0.
+version becomes its Program. Commits 17de6496ce060ad0d0eb4229956406512e835414 and a7f17573effad316d27a98b218b2994c7617df8a.
 
 The method is the same as [`baseline.md`](baseline.md): scratch HOMEs on the test hosts, `create-acrylblends@1.7.33 --no-install`, then
 each app installed by the module's command (`node app-install-cli.mjs --home <home>/.acryl`). Disk on Linux and Windows is each file once
