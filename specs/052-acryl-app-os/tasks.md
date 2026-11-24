@@ -23,7 +23,7 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
   Proof: an app with no `electron` in `node_modules` opens its window on all three OSes.
 - [ ] T005 The same for Electrobun apps (`electrobun/main.ts`, `shell-core.mjs`): the shared Bun and Electrobun. Proof: the Electrobun
   Blank and CRM walks pass with the shared runtime.
-- [ ] T006 The package store `~/.acryl/store`: apps made by `acryl new`, the store and agents install through it (hard links), native
+- [x] T006 (done 2026-11-24, [`step1-proof.md`](step1-proof.md): the store is spec 049's Program in `~/.acryl/program/blends-<version>`, the one install `plugins/launcher/app-install.js` run by `acryl` and Control Center; 5.9-12.8 MB per extra app on macOS, Windows and Ubuntu, one Electron, every start check, the Program whole after its first app is removed. `acryl new` in a terminal still installs inside create-acrylblends: next slice.) The package store `~/.acryl/store`: apps made by `acryl new`, the store and agents install through it (hard links), native
   modules once per runtime ABI, a same-volume check that falls back to copies with a sentence. Proof: second app adds under 50 MB.
 - [ ] T007 The app template and the Control Center/ADE Blends drop `electron` from their dependencies and name their runtime (T002).
 - [ ] T008 `acryl apps reinstall` (all apps or one) and `acryl clean` (unused runtimes and store entries, after saying what it removes).
