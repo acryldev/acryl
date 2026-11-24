@@ -6,10 +6,12 @@ import { after, test } from 'node:test'
 import {
   captureConsole,
   createStartupLog,
+  endsWithLastWindow,
   isLockedFileError,
   retryLocked,
   updateFailureText,
   updateWindowUrl,
+  waitAtMost,
 } from '../startup.ts'
 
 const dirs: string[] = []
@@ -154,4 +156,32 @@ test("the update window is a page of its own: the product's name, escaped, and o
   const html = decodeURIComponent(url.slice('data:text/html;charset=utf-8,'.length))
   assert.match(html, /Updating A &lt;b&gt; &amp; &quot;C&quot;\.\.\./u)
   assert.doesNotMatch(html, /<b>/u)
+})
+
+test("closing the update window does not end the app: the last window ends it only once the app's own window has been opened", () => {
+  assert.equal(endsWithLastWindow(false), false)
+  assert.equal(endsWithLastWindow(true), true)
+})
+
+test('a copy that waits on a held file without an error is cut off after its time, said like a locked file, and its later end is not reported again', async () => {
+  const fast = await waitAtMost(Promise.resolve('copied'), 50)
+  assert.equal(fast, 'copied')
+  await assert.rejects(waitAtMost(Promise.reject(new Error('disk full')), 50), /disk full/u)
+
+  let finish: () => void = () => undefined
+  const stuck = new Promise<void>((_, fail) => {
+    finish = () => fail(new Error('too late'))
+  })
+  const cut = await waitAtMost(stuck, 20).then(
+    () => undefined,
+    (cause: unknown) => cause,
+  )
+  assert.equal((cut as { code?: string }).code, 'UPDATE_TIMEOUT')
+  assert.match((cut as Error).message, /did not finish in 0 seconds/u)
+  finish() // an unhandled rejection here would fail the test run
+  await new Promise((done) => setTimeout(done, 10))
+
+  const said = updateFailureText('ACRYL Control Center', cut, '/logs')
+  assert.match(said.detail, /A file is in use by another program/u)
+  assert.match(said.detail, /old version/u)
 })

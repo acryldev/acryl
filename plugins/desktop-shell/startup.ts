@@ -65,6 +65,12 @@ export function captureConsole(
   }
 }
 
+/**
+ * Whether the last window closing ends the app. Only once the app's own window has been opened: the update's window closes before it does, and the host takes
+ * seconds to serve, so a window count of zero is the normal state of a start (a Windows walk found the app ending itself right after its update).
+ */
+export const endsWithLastWindow = (appWindowOpened: boolean): boolean => appWindowOpened
+
 const LOCKED = new Set(['EBUSY', 'EPERM', 'EACCES', 'EMFILE', 'ENOTEMPTY'])
 
 /** A file another program holds (the old version still closing, a virus scanner, a sync client): Windows answers EBUSY or EPERM. */
@@ -93,6 +99,37 @@ export async function retryLocked<T>(
   }
 }
 
+/** How long the update's copy may take before the person is told and the old version starts: it takes seconds; a file another program holds can make it wait without an error. */
+export const COPY_DEADLINE_MS = 60_000
+
+const TIMED_OUT = 'UPDATE_TIMEOUT'
+
+/** `work`, or an error with code UPDATE_TIMEOUT after `ms`; `work` keeps running (a copy cannot be cancelled) and its later failure is not reported twice. */
+export function waitAtMost<T>(work: Promise<T>, ms: number): Promise<T> {
+  work.catch(() => undefined)
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () =>
+        reject(
+          Object.assign(new Error(`did not finish in ${String(Math.round(ms / 1000))} seconds`), {
+            code: TIMED_OUT,
+          }),
+        ),
+      ms,
+    )
+    work.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (cause: unknown) => {
+        clearTimeout(timer)
+        reject(cause)
+      },
+    )
+  })
+}
+
 /** What a person is told when the update could not be copied: which file, why in words, what happens next, where the details are. */
 export function updateFailureText(
   product: string,
@@ -101,9 +138,10 @@ export function updateFailureText(
 ): { readonly message: string; readonly detail: string } {
   const error = cause as { code?: string; path?: string; message?: string }
   const file = typeof error?.path === 'string' ? ` (${error.path})` : ''
-  const why = isLockedFileError(cause)
-    ? `A file is in use by another program${file}: usually ${product} still closing, or a virus scanner. Close every ${product} window and process (Task Manager on Windows), then open it again and the update runs again.`
-    : `${error?.message ?? String(cause)}${file}`
+  const why =
+    isLockedFileError(cause) || error?.code === TIMED_OUT
+      ? `A file is in use by another program${file}: usually ${product} still closing, or a virus scanner. Close every ${product} window and process (Task Manager on Windows), then open it again and the update runs again.`
+      : `${error?.message ?? String(cause)}${file}`
   return {
     message: `${product} could not finish its update`,
     detail: `${why}\n\nIt starts now with what is there: the old version, with the files that were already copied. Nothing of yours is changed.\n\nThe details are in ${logs}`,

@@ -54,11 +54,14 @@ import { aboutPlacement, aboutText, hasSettings, settingsPlacement } from './men
 import { openProductAppForStart, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
 import {
+  COPY_DEADLINE_MS,
   captureConsole,
   createStartupLog,
+  endsWithLastWindow,
   retryLocked,
   updateFailureText,
   updateWindowUrl,
+  waitAtMost,
 } from './startup.ts'
 import { offerUpdates } from './update-menu.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
@@ -189,7 +192,6 @@ if (!app.requestSingleInstanceLock()) {
   let stopDoorShell: (() => void) | undefined
   /** The small window shown while the update copies, and whether it does; the app's own window does not exist yet then. */
   let updateWindow: BrowserWindow | undefined
-  let updating = false
   /** A second start came before any window was open: the window is brought forward as soon as there is one. */
   let focusQueued = false
 
@@ -231,9 +233,10 @@ if (!app.requestSingleInstanceLock()) {
     if (shown.isMinimized()) shown.restore()
     shown.focus()
   })
-  // The window is the app: closing it ends the process on every platform, after the server has stopped. Not the update's own window, which closes before the app's opens.
+  // The window is the app: closing it ends the process on every platform, after the server has stopped.
   app.on('window-all-closed', () => {
-    if (updating) return
+    // Closing the update's own window (before the app's exists) must not end the app: found on a walk of the update on Windows, where the start ended there.
+    if (!endsWithLastWindow(window !== undefined)) return
     void shutdown.request(0)
   })
 
@@ -241,7 +244,6 @@ if (!app.requestSingleInstanceLock()) {
     if (update !== undefined && product !== undefined) {
       // The first start of a new build copies it over the app's source: behind a window that says so (a copy can take many seconds on a slow disk), after the
       // lock (so a second start never copies at the same time), and a file another program holds is tried again and then said in words, never an exit with nothing shown.
-      updating = true
       const copying = update
       const shown = new BrowserWindow({
         width: 420,
@@ -263,15 +265,18 @@ if (!app.requestSingleInstanceLock()) {
       })
       void shown.loadURL(updateWindowUrl(product.product))
       try {
-        await retryLocked(
-          () =>
-            copying().catch((cause: unknown) => {
-              console.warn(
-                `desktop: the update's copy stopped: ${cause instanceof Error ? cause.message : String(cause)}`,
-              )
-              throw cause
-            }),
-          { attempts: 3, delayMs: 2000 },
+        await waitAtMost(
+          retryLocked(
+            () =>
+              copying().catch((cause: unknown) => {
+                console.warn(
+                  `desktop: the update's copy stopped: ${cause instanceof Error ? cause.message : String(cause)}`,
+                )
+                throw cause
+              }),
+            { attempts: 3, delayMs: 2000 },
+          ),
+          COPY_DEADLINE_MS,
         )
         console.log('desktop: the update was copied')
         applyAbout()
@@ -289,7 +294,6 @@ if (!app.requestSingleInstanceLock()) {
           defaultId: 0,
         })
       } finally {
-        updating = false
         if (!shown.isDestroyed()) shown.destroy()
         updateWindow = undefined
       }
