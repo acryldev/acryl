@@ -9,7 +9,7 @@
  */
 
 import { mkdirSync, readFileSync, unwatchFile, watchFile } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { readAppVersions } from '@acryldev/blends-core'
 import {
@@ -51,11 +51,30 @@ import {
 import { productGit, withGitFirst } from './git.ts'
 import { appendHostLog, hostCrashed, hostRestarting, nextRestart } from './host-supervisor.ts'
 import { aboutPlacement, aboutText, hasSettings, settingsPlacement } from './menu.ts'
-import { openProductApp, seedSource } from './product.ts'
+import { openProductAppForStart, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
+import {
+  captureConsole,
+  createStartupLog,
+  retryLocked,
+  updateFailureText,
+  updateWindowUrl,
+} from './startup.ts'
 import { offerUpdates } from './update-menu.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
 import { cascade, windowOptions, windowSize } from './window.ts'
+
+// The start's own log, from the first line: kept in memory until the product's logs folder is known (`startup.attach`), and everything the shell prints goes in it.
+const startup = createStartupLog()
+captureConsole(console, startup)
+process.on('uncaughtExceptionMonitor', (cause, origin) => {
+  startup.line(
+    `error: ${origin}: ${cause instanceof Error ? (cause.stack ?? cause.message) : String(cause)}`,
+  )
+})
+console.log(
+  `desktop: starting ${app.getName()} ${app.getVersion()} (pid ${String(process.pid)}, ${process.platform} ${process.arch}, electron ${process.versions.electron ?? '?'})`,
+)
 
 /** The app shipped inside the bundle (a packaged product) or checked out by the person (an app made with `acrylblends init`); as an installed package, Electron names it. */
 const bundledRoot = appRootFor(import.meta.url, () => app.getAppPath())
@@ -67,6 +86,8 @@ const git = product === undefined ? undefined : productGit(process.resourcesPath
 let storage: AppStorage | undefined
 /** The app the window shows. A product can switch to another of its apps (Settings > App: import, start over, open). */
 let chosen: AppInstance
+/** The update's copy over the source, when this start is the first of a new build: run after the single-instance lock, behind a window. */
+let update: (() => Promise<void>) | undefined
 try {
   storage =
     product === undefined
@@ -80,13 +101,19 @@ try {
             shell.showItemInFolder(path)
           },
         })
-  chosen =
-    storage === undefined || product === undefined
-      ? selectInstance({ projectRoot: bundledRoot, env: process.env })
-      : withRunEnv(openProductApp(storage, product, bundledRoot), process.env)
+  if (storage !== undefined) startup.attach(join(dirname(storage.electron), 'logs'))
+  if (storage === undefined || product === undefined) {
+    chosen = selectInstance({ projectRoot: bundledRoot, env: process.env })
+    startup.attach(join(chosen.home, 'logs'))
+  } else {
+    const started = openProductAppForStart(storage, product, bundledRoot)
+    update = started.update
+    chosen = withRunEnv(started.app, process.env)
+  }
 } catch (cause) {
   // A root of a newer version, or one this version cannot read: said once, in a dialog, and nothing is started or written.
   const message = cause instanceof Error ? cause.message : String(cause)
+  if (storage === undefined) startup.attach(app.getPath('logs'))
   console.error(`desktop: ${message}`)
   dialog.showErrorBox(`${product?.product ?? 'The app'} cannot open`, message)
   app.exit(1)
@@ -106,9 +133,9 @@ function ownVersions(): {
     ...readAppVersions(chosen.root, programRoot),
   }
 }
-{
+/** macOS's About panel: the version, then in parentheses the Blend's and the framework's. Again after an update, which changes them. */
+const applyAbout = (): void => {
   const own = ownVersions()
-  // macOS's About panel: the version, then in parentheses the Blend's and the framework's.
   app.setAboutPanelOptions({
     applicationVersion: own.product ?? own.blend ?? '',
     version: [
@@ -125,6 +152,7 @@ function ownVersions(): {
         }),
   })
 }
+applyAbout()
 
 /** Where the window opens: `acrylblends.desktopPath` in package.json (the todo template sets `/todo`), else the root. */
 function startPath(): string {
@@ -147,7 +175,8 @@ app.setPath('userData', userData)
 app.setName(product?.product ?? appTitle(projectRoot))
 
 if (!app.requestSingleInstanceLock()) {
-  // The same app is already open: its window takes focus (see `second-instance` below) and this process ends.
+  // The same app is already open, or starting, or updating: it is told (`second-instance` below shows its window, or queues that until it has one) and this process ends.
+  console.log('desktop: the app is already running: asking it to show its window; this start ends')
   app.quit()
 } else {
   /** The app the window shows: what the app's own `src/app.ts` returns (`createApp`). */
@@ -155,6 +184,11 @@ if (!app.requestSingleInstanceLock()) {
   let host: FrameHost | undefined
   let window: BrowserWindow | undefined
   let stopDoorShell: (() => void) | undefined
+  /** The small window shown while the update copies, and whether it does; the app's own window does not exist yet then. */
+  let updateWindow: BrowserWindow | undefined
+  let updating = false
+  /** A second start came before any window was open: the window is brought forward as soon as there is one. */
+  let focusQueued = false
 
   const shutdown = createDesktopShutdown(
     async () => {
@@ -181,16 +215,86 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.on('second-instance', () => {
-    if (window === undefined) return
-    if (window.isMinimized()) window.restore()
-    window.focus()
+    const shown = window ?? updateWindow
+    if (shown === undefined || shown.isDestroyed()) {
+      // Nothing to show yet (the update, or the host, is still starting): a silent return here made a second double-click look like a start that did nothing.
+      console.log(
+        'desktop: a second start asked for the window; none is open yet, so its focus is queued',
+      )
+      focusQueued = true
+      return
+    }
+    console.log('desktop: a second start asked for the window; bringing it forward')
+    if (shown.isMinimized()) shown.restore()
+    shown.focus()
   })
-  // The window is the app: closing it ends the process on every platform, after the server has stopped.
+  // The window is the app: closing it ends the process on every platform, after the server has stopped. Not the update's own window, which closes before the app's opens.
   app.on('window-all-closed', () => {
+    if (updating) return
     void shutdown.request(0)
   })
 
-  void app.whenReady().then(async () => {
+  const started = app.whenReady().then(async () => {
+    if (update !== undefined && product !== undefined) {
+      // The first start of a new build copies it over the app's source: behind a window that says so (a copy can take many seconds on a slow disk), after the
+      // lock (so a second start never copies at the same time), and a file another program holds is tried again and then said in words, never an exit with nothing shown.
+      updating = true
+      const copying = update
+      const shown = new BrowserWindow({
+        width: 420,
+        height: 180,
+        title: product.product,
+        show: false,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        fullscreenable: false,
+        autoHideMenuBar: true,
+        icon: iconFile(projectRoot),
+      })
+      updateWindow = shown
+      shown.removeMenu()
+      shown.once('ready-to-show', () => {
+        shown.show()
+        if (focusQueued) shown.focus()
+      })
+      void shown.loadURL(updateWindowUrl(product.product))
+      try {
+        await retryLocked(
+          () =>
+            copying().catch((cause: unknown) => {
+              console.warn(
+                `desktop: the update's copy stopped: ${cause instanceof Error ? cause.message : String(cause)}`,
+              )
+              throw cause
+            }),
+          { attempts: 3, delayMs: 2000 },
+        )
+        console.log('desktop: the update was copied')
+        applyAbout()
+      } catch (cause) {
+        console.error(
+          `desktop: the update could not be copied: ${cause instanceof Error ? (cause.stack ?? cause.message) : String(cause)}`,
+        )
+        const said = updateFailureText(
+          product.product,
+          cause,
+          storage === undefined ? chosen.home : join(dirname(storage.electron), 'logs'),
+        )
+        await dialog.showMessageBox({
+          type: 'warning',
+          title: product.product,
+          message: said.message,
+          detail: said.detail,
+          buttons: ['Start'],
+          defaultId: 0,
+        })
+      } finally {
+        updating = false
+        if (!shown.isDestroyed()) shown.destroy()
+        updateWindow = undefined
+      }
+    }
     // The Dock shows the app's own icon even when the bundle could not be branded (brand.ts); a no-op where there is no Dock.
     app.dock?.setIcon(iconFile(projectRoot))
     // An icon chosen in Settings > App (written to assets/icon.png by the frame's host) shows at once, in the Dock and on every window.
@@ -330,7 +434,13 @@ if (!app.requestSingleInstanceLock()) {
         try {
           url = await startHost()
         } catch (cause) {
-          console.error(`desktop: ${cause instanceof Error ? cause.message : String(cause)}`)
+          const reason = cause instanceof Error ? cause.message : String(cause)
+          console.error(`desktop: ${reason}`)
+          // A start that ends with nothing on screen looks like an app that does not open: the reason is shown, and where the logs are.
+          dialog.showErrorBox(
+            `${chosen.name} cannot start`,
+            `${reason.slice(-1200)}\n\nThe details are in ${join(chosen.home, 'logs')} and ${storage === undefined ? chosen.home : join(dirname(storage.electron), 'logs')}`,
+          )
           await shutdown.request(1)
           return
         }
@@ -427,6 +537,10 @@ if (!app.requestSingleInstanceLock()) {
       return created
     }
     window = createWindow(frame ? undefined : startPath())
+    if (focusQueued) {
+      focusQueued = false
+      window.once('ready-to-show', () => window?.focus())
+    }
     // The door (development) reaches the windows and the menu through this port: `acryl window list`, `acryl menu click`.
     const live = (): BrowserWindow[] =>
       BrowserWindow.getAllWindows().filter((candidate) => !candidate.isDestroyed())
@@ -630,5 +744,12 @@ if (!app.requestSingleInstanceLock()) {
         return handle(op, arg)
       })
     }
+  })
+  // Anything the start throws after the window machinery is up: said in a dialog and kept in the log, then the app ends (it cannot run half started).
+  started.catch((cause: unknown) => {
+    const reason = cause instanceof Error ? (cause.stack ?? cause.message) : String(cause)
+    console.error(`desktop: the start failed: ${reason}`)
+    dialog.showErrorBox(`${product?.product ?? 'The app'} cannot start`, reason.slice(0, 1500))
+    void shutdown.request(1)
   })
 }

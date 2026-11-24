@@ -38,13 +38,22 @@ export function nextRestart(
 
 const KEEP_DAYS = 14
 
-/** The host's output, one file a day (`host-YYYY-MM-DD.log`) in the app's logs folder; files older than two weeks go. Never throws: a log must not stop the app. */
-export function appendHostLog(dir: string, text: string, now: Date = new Date()): void {
+/**
+ * The host's output, one file a day (`host-YYYY-MM-DD.log`) in the app's logs folder; files older than two weeks go. Never throws: a log must not stop the app.
+ * `prefix` names another log of the same kind (the window's own start, `desktop-YYYY-MM-DD.log`).
+ */
+export function appendHostLog(
+  dir: string,
+  text: string,
+  now: Date = new Date(),
+  prefix: 'host' | 'desktop' = 'host',
+): void {
   try {
     mkdirSync(dir, { recursive: true })
-    appendFileSync(join(dir, `host-${now.toISOString().slice(0, 10)}.log`), text)
+    appendFileSync(join(dir, `${prefix}-${now.toISOString().slice(0, 10)}.log`), text)
+    const own = new RegExp(`^${prefix}-\\d{4}-\\d{2}-\\d{2}\\.log$`, 'u')
     for (const name of readdirSync(dir)) {
-      if (!/^host-\d{4}-\d{2}-\d{2}\.log$/u.test(name)) continue
+      if (!own.test(name)) continue
       const file = join(dir, name)
       if (now.getTime() - statSync(file).mtimeMs > KEEP_DAYS * 86_400_000)
         rmSync(file, { force: true })

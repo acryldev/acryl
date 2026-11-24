@@ -61,3 +61,22 @@ test('the watcher ending or restarting the host is a restart the windows must si
   assert.equal(hostRestarting('acrylblends host: http://127.0.0.1:3816/?token=abc'), false)
   assert.equal(hostRestarting("Failed running '/app/scripts/ide-host.mjs'"), false)
 })
+
+test("the window's own start log is its own file and its own rotation: the host's logs are left alone", async () => {
+  const { appendHostLog } = await import('../host-supervisor.ts')
+  const { mkdtempSync, readdirSync, rmSync, utimesSync, writeFileSync } = await import('node:fs')
+  const { tmpdir } = await import('node:os')
+  const { join } = await import('node:path')
+  const dir = mkdtempSync(join(tmpdir(), 'acryl-logs-'))
+  try {
+    const old = new Date('2026-10-01T00:00:00Z')
+    for (const name of ['host-2026-10-01.log', 'desktop-2026-10-01.log']) {
+      writeFileSync(join(dir, name), 'x')
+      utimesSync(join(dir, name), old, old)
+    }
+    appendHostLog(dir, 'line\n', new Date('2026-11-24T10:00:00Z'), 'desktop')
+    assert.deepEqual(readdirSync(dir).sort(), ['desktop-2026-11-24.log', 'host-2026-10-01.log'])
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})

@@ -13,7 +13,7 @@ import { join, sep } from 'node:path'
 import { after, test } from 'node:test'
 import { readProduct } from '@acryldev/instance/bundle'
 import { openProductStorage } from '@acryldev/instance/storage'
-import { openProductApp, seedSource } from '../product.ts'
+import { openProductApp, openProductAppForStart, seedSource } from '../product.ts'
 
 /** Temporary folders this file makes; removed after its tests, also when one fails. */
 const tempDirs: string[] = []
@@ -347,4 +347,63 @@ test('a named product updated to a new build copies the new build over its app, 
     () => {},
   )
   assert.equal(readFileSync(join(mine.root, 'src', 'app.ts'), 'utf8'), 'export const mine = 1\n')
+})
+
+test("the window's start gets the update to run later: nothing is copied and no build is recorded until it runs, and a copy that fails is tried again at the next start", async () => {
+  const root = scratch()
+  bundle(root)
+  const seed = join(root, 'seed')
+  mkdirSync(join(seed, 'plugins', 'launcher'), { recursive: true })
+  mkdirSync(join(seed, 'template-git'), { recursive: true })
+  writeFileSync(join(seed, 'plugins', 'launcher', 'service.ts'), 'export const v = 1\n')
+  writeFileSync(join(seed, 'template-git', 'HEAD'), 'ref: refs/heads/main\n')
+  const product = {
+    product: 'Control',
+    appName: 'Control',
+    program: PROGRAM,
+    seed: 'seed',
+    named: true as const,
+    build: 'b1',
+  }
+  const home = scratch()
+  const storage = () => openProductStorage({ writtenBy: '1.0.0', env: {}, home })
+  const lines: string[] = []
+
+  // The first start makes the app and records the build; there is no update to run.
+  const first = openProductAppForStart(storage(), product, root, (line) => lines.push(line))
+  assert.equal(first.update, undefined)
+  assert.equal(readFileSync(join(first.app.home, 'product-build'), 'utf8'), 'b1\n')
+  // The same build again: none either.
+  assert.equal(openProductAppForStart(storage(), product, root, () => {}).update, undefined)
+
+  // A new build: the update is handed over, and nothing has changed yet.
+  writeFileSync(join(seed, 'plugins', 'launcher', 'service.ts'), 'export const v = 2\n')
+  const next = { ...product, build: 'b2' }
+  const pending = openProductAppForStart(storage(), next, root, (line) => lines.push(line))
+  assert.ok(pending.update)
+  assert.equal(
+    readFileSync(join(pending.app.root, 'plugins', 'launcher', 'service.ts'), 'utf8'),
+    'export const v = 1\n',
+  )
+  assert.equal(readFileSync(join(pending.app.home, 'product-build'), 'utf8'), 'b1\n')
+  assert.equal(
+    lines.filter((line) => line.includes('updating')).length,
+    0,
+    'it says so when it runs, not when it is handed over',
+  )
+
+  // A copy that cannot be done (a file another program holds) leaves the build unrecorded: the next start offers it again.
+  const held = join(pending.app.root, 'plugins', 'launcher', 'service.ts')
+  rmSync(held)
+  mkdirSync(held) // a folder where the new file must go: the copy fails, as a locked file does
+  await assert.rejects(pending.update())
+  assert.equal(readFileSync(join(pending.app.home, 'product-build'), 'utf8'), 'b1\n')
+  const again = openProductAppForStart(storage(), next, root, () => {})
+  assert.ok(again.update, 'offered again')
+  rmSync(held, { recursive: true })
+  await again.update()
+  assert.equal(readFileSync(held, 'utf8'), 'export const v = 2\n')
+  assert.equal(readFileSync(join(again.app.home, 'product-build'), 'utf8'), 'b2\n')
+  assert.equal(lines.filter((line) => line.includes('updating')).length, 1)
+  assert.equal(openProductAppForStart(storage(), next, root, () => {}).update, undefined)
 })
