@@ -68,13 +68,37 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
 
 ## Phase 5 - ACRYL AOS, its own Blend (D11-D14, design `design/aos.html`)
 
-- [ ] T040 Repository `acrylblends/01-acryl-aos` (category 01 System, subcategory "Agentic operating systems" added to the site's taxonomy),
+- [x] T040 Repository `acrylblends/01-acryl-aos` (category 01 System, subcategory "Agentic operating systems" added to the site's taxonomy),
   made with create-acrylblends on the current frame; desktop (Electron) surface first.
-- [ ] T041 Desktop: icons of every app in `control-center-apps.json` (their own `assets/icon.png`), folders, files that open in their app,
+- [x] T041 Desktop: icons of every app in `control-center-apps.json` (their own `assets/icon.png`), folders, files that open in their app,
   menus, dock, Settings; the arrangement in `~/.acryl/desktop.json`, written through `desktop.*` tools the agent can call.
-- [ ] T042 A click opens the app in its own OS window (D12) with its own host (D11); sleep after idle; Activity view with real numbers.
-- [ ] T043 One chat that drives every app through the door's tools; tool steps and model steps shown apart, tokens counted from the
+- [x] T042 A click opens the app in its own OS window (D12) with its own host (D11); sleep after idle; Activity view with real numbers.
+- [x] T043 One chat that drives every app through the door's tools; tool steps and model steps shown apart, tokens counted from the
   provider's usage; "Save as workflow" into Workflow Automation, replayed with no model call.
-- [ ] T044 Per app: Add to Applications (D4, the shared launcher code), Export as installer (D6).
-- [ ] T045 Proof on AION, mbpi9win and z370n: made, opened, an app started from it in its own window, a chat turn with DeepSeek that uses
+- [x] T044 Per app: Add to Applications (D4, the shared launcher code), Export as installer (D6).
+- [x] T045 Proof on AION, mbpi9win and z370n: made, opened, an app started from it in its own window, a chat turn with DeepSeek that uses
   a tool, a saved workflow replayed with 0 model tokens; screenshots side by side with `design/aos.html`; released v0.1.0 on the store.
+
+Delivered 2026-11-24 (AOS 0.1.4 to 0.1.7, `acrylblends/01-acryl-aos`; first release with installers v0.1.4, not v0.1.0, because the
+store entry had reached 0.1.3 while the proof was being made). Measured on AION (macOS, M4), z370n (Ubuntu, Xvfb) and mbpi9win (Windows 10,
+console session), each AOS made from the store with create-acrylblends 1.7.31:
+
+| | AION | z370n | mbpi9win |
+|---|---|---|---|
+| Notes opens in its own OS window (window server lists notes + workflow-automation) | 28.2 s | 9.1 s | 27.8 s |
+| The chat (DeepSeek) arranges the desktop with AOS tools: provider tokens | 70,814 | 70,486 | 73,067 |
+| Saved as a workflow, Run again: model tokens added | 0 | 0 | 0 |
+| Activity, Notes from its processes | 325 MB, 7 | 1,093 MB, 10 | 763 MB, 9 |
+| Asleep after 1 min unused, then woken by an open (AOS's measure) | 4.0 s | 2.4 s | 7.5 s |
+| Add to Applications / Remove | notes.app | acryl-notes.desktop | notes.lnk |
+| Export as installer (Notes) | dmg 217 MB, 107 s | deb 144 MB + tar.gz 183 MB, 55 s | exe 177 MB, 364 s |
+
+The open time includes installing the app's packages on its first open. AION's Node is an x64 build under Rosetta, so its export is
+mac-x64: the packer follows the running Node because npm installs native packages for it. The v0.1.4 Apple silicon installer from the
+release's download link started on AION under a scratch home in 6 s and showed its window.
+
+Differences from `design/aos.html`, all chosen while building: D12's one chat is the frame's own chat, not a separate panel with suggestion chips; the meter has
+no "runtime 1, host 1" (D11: one host per app); a fresh desktop has only the app icons in one column, not sample folders and files; there is
+no Blends Store icon. Partly done in T041: a file tied to an app opens that app, not the document inside it; other files open as text in an
+AOS window. Export needed `@acryldev/create-blends` 1.7.31 (9d30f0e1): create copies a folder as git sees it, so a running app's door file
+stays behind.
