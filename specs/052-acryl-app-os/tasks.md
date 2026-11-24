@@ -13,7 +13,7 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
 
 ## Phase 1 - Shared runtimes and store (D1, D2, D8)
 
-- [ ] T001 Measure the baseline on macOS (AION), Windows (mbpi9win), Ubuntu (z370n): a Control Center copy and one store app, sum of file
+- [x] T001 (done 2026-11-24, [`baseline.md`](baseline.md): npm today 701-754 MB per app; spec 049's shared Program 7-12 MB per extra app on all three OSes with Electron once; pnpm's store alone 305-404 MB, the Electron override alone 367-451 MB; every layout starts with terminal, live plugins and HMR.) Measure the baseline on macOS (AION), Windows (mbpi9win), Ubuntu (z370n): a Control Center copy and one store app, sum of file
   sizes per folder, as in the spec's table. Recorded in `specs/052-acryl-app-os/baseline.md`.
 - [ ] T002 The runtime record: `acryl.runtime` in an app's `package.json` (`desktop: electron@<version>` or `electrobun@<version>`), one
   exported type, read by `@acryldev/desktop-shell` and the Electrobun shell. Unit tests.
