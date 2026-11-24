@@ -31,3 +31,5 @@ export { LauncherRefusal, LauncherService } from './service.ts'
 export { readBlends, RegistryUnavailable } from './registry.ts'
 export { webboxesDeployUrl } from './contract.ts'
 export type { AppView, BlendView, GithubPollView, GithubStartView, JobView, PluginView, StateResponse, Surface } from './contract.ts'
+// The door client over an app folder's `.acryl/door.json`: what another Blend (ACRYL AOS) uses to drive the apps this service starts.
+export { type Door, type DoorAnswer, DoorUnavailable, fileDoor } from './door.ts'
