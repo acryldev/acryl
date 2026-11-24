@@ -101,19 +101,22 @@ try {
             shell.showItemInFolder(path)
           },
         })
-  if (storage !== undefined) startup.attach(join(dirname(storage.electron), 'logs'))
   if (storage === undefined || product === undefined) {
     chosen = selectInstance({ projectRoot: bundledRoot, env: process.env })
-    startup.attach(join(chosen.home, 'logs'))
   } else {
     const started = openProductAppForStart(storage, product, bundledRoot)
     update = started.update
     chosen = withRunEnv(started.app, process.env)
   }
+  // Beside the host's own log: the app's data/logs. What was said until now is written first.
+  startup.attach(join(chosen.home, 'logs'))
 } catch (cause) {
   // A root of a newer version, or one this version cannot read: said once, in a dialog, and nothing is started or written.
   const message = cause instanceof Error ? cause.message : String(cause)
-  if (storage === undefined) startup.attach(app.getPath('logs'))
+  // The app is not known yet: the product's own logs folder, else Electron's.
+  startup.attach(
+    storage === undefined ? app.getPath('logs') : join(dirname(storage.electron), 'logs'),
+  )
   console.error(`desktop: ${message}`)
   dialog.showErrorBox(`${product?.product ?? 'The app'} cannot open`, message)
   app.exit(1)
@@ -276,11 +279,7 @@ if (!app.requestSingleInstanceLock()) {
         console.error(
           `desktop: the update could not be copied: ${cause instanceof Error ? (cause.stack ?? cause.message) : String(cause)}`,
         )
-        const said = updateFailureText(
-          product.product,
-          cause,
-          storage === undefined ? chosen.home : join(dirname(storage.electron), 'logs'),
-        )
+        const said = updateFailureText(product.product, cause, join(chosen.home, 'logs'))
         await dialog.showMessageBox({
           type: 'warning',
           title: product.product,
@@ -439,7 +438,7 @@ if (!app.requestSingleInstanceLock()) {
           // A start that ends with nothing on screen looks like an app that does not open: the reason is shown, and where the logs are.
           dialog.showErrorBox(
             `${chosen.name} cannot start`,
-            `${reason.slice(-1200)}\n\nThe details are in ${join(chosen.home, 'logs')} and ${storage === undefined ? chosen.home : join(dirname(storage.electron), 'logs')}`,
+            `${reason.slice(-1200)}\n\nThe details are in ${join(chosen.home, 'logs')}`,
           )
           await shutdown.request(1)
           return
