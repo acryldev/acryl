@@ -46,7 +46,7 @@
       "path": "../plugins/settings"
     },
     "@acryldev/sign-in": {
-      "version": "0.2.3",
+      "version": "0.2.4",
       "path": "../plugins/sign-in"
     },
     "@acryldev/control": {
