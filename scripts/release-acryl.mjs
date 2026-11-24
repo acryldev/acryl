@@ -109,12 +109,12 @@ function main() {
   run('gh', ['release', 'create', tag, join(out, tarball), '--repo', REPO, '--verify-tag', '--latest', '--title', `ACRYL ${version}`, '--notes-file', notes], { stdio: ['ignore', 'inherit', 'inherit'] })
   console.log(`5. GitHub release ${tag} is Latest`)
 
-  // 6. The same on both (npm's metadata can take a minute to show the new latest).
-  for (let attempt = 1; attempt <= 12; attempt++) {
+  // 6. The same on both (npm's listing took over two minutes for 0.3.7, so it waits up to ten).
+  for (let attempt = 1; attempt <= 60; attempt++) {
     if (compare()) { updateFormula(version, join(out, tarball)); process.exit(0) }
     execFileSync(process.execPath, ['-e', 'setTimeout(() => {}, 10000)'])
   }
-  stop('npm latest and the GitHub Latest release still differ after two minutes: look at both before anything else')
+  stop('npm latest and the GitHub Latest release still differ after ten minutes: look at both before anything else')
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main()
