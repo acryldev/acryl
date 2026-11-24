@@ -1,6 +1,6 @@
 # Spec 052 - ACRYL as an app OS: shared runtimes, real app icons, export
 
-Status (2026-11-24): written, nothing built. WebBoxes first (owner 2026-11-24): D9, D10. Tasks: [`tasks.md`](tasks.md).
+Status (2026-11-24): written. WebBoxes first (owner 2026-11-24): D9 live (webboxesai 37a05b7), D10 next. ACRYL AOS (D11-D14) decided 2026-11-24, design [`design/aos.html`](design/aos.html). Tasks: [`tasks.md`](tasks.md).
 
 ## The owner's words (2026-11-23)
 
@@ -98,6 +98,19 @@ of the same bytes). Images are already shared by Docker; the copies are in the v
   live where the OS looks, and the installers of D6, where the person chose.
 - **D8 Day 0, no migration code.** Existing apps are reinstalled into D1/D2 (`acryl apps reinstall`), not migrated by compatibility code
   (owner rule: few installs, reinstall is fine).
+
+- **D11 ACRYL AOS: one host per app, shared runtime and store** (owner 2026-11-24, in the AOS design review). Each app keeps its own
+  host process (a crash stays in its app); the savings come from D1 (one runtime per version) and D2 (one store), and from idle apps
+  sleeping. A shared host for several apps is not built.
+- **D12 Apps open in real OS windows** (owner 2026-11-24). AOS is the desktop, dock, folders, files and the one chat; an app opens as a
+  normal window of the OS (taskbar, Dock, Alt-Tab), not as a window drawn inside AOS. One Electron main process may own several app
+  windows (shared GPU and network processes) when the runtime allows it; that is measured, not assumed.
+- **D13 ACRYL AOS is its own Blend** (owner 2026-11-24): `acrylblends/01-acryl-aos`, category 01 System, subcategory "Agentic operating
+  systems". The Control Center stays as it is; both read the same app list (`control-center-apps.json`) and layout (`~/.acryl/layout.json`).
+- **D14 Desktop first** (owner 2026-11-24): macOS, Windows and Linux before the browser (WebBoxes). Its features: desktop with app icons,
+  folders that group apps and files, a Files view, menus, dock, Settings (wallpaper, icon size, dock side, chat), one chat that drives
+  every app through its deterministic tools (the door), "Save as workflow" so a repeated run needs no model, and per app Add to
+  Applications (D4) and Export as installer (D6).
 
 ## Order and acceptance
 

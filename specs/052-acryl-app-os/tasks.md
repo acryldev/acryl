@@ -55,3 +55,16 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
   installer's size; other OS/CPU pairs named, not attempted.
 - [ ] T022 Proof: an app made in the Control Center exports and installs on a clean scratch home on macOS (DMG), Windows (exe) and
   Ubuntu (deb), and starts.
+
+## Phase 5 - ACRYL AOS, its own Blend (D11-D14, design `design/aos.html`)
+
+- [ ] T040 Repository `acrylblends/01-acryl-aos` (category 01 System, subcategory "Agentic operating systems" added to the site's taxonomy),
+  made with create-acrylblends on the current frame; desktop (Electron) surface first.
+- [ ] T041 Desktop: icons of every app in `control-center-apps.json` (their own `assets/icon.png`), folders, files that open in their app,
+  menus, dock, Settings; the arrangement in `~/.acryl/layout.json`, written through `desktop.*` tools the agent can call.
+- [ ] T042 A click opens the app in its own OS window (D12) with its own host (D11); sleep after idle; Activity view with real numbers.
+- [ ] T043 One chat that drives every app through the door's tools; tool steps and model steps shown apart, tokens counted from the
+  provider's usage; "Save as workflow" into Workflow Automation, replayed with no model call.
+- [ ] T044 Per app: Add to Applications (D4, the shared launcher code), Export as installer (D6).
+- [ ] T045 Proof on AION, mbpi9win and z370n: made, opened, an app started from it in its own window, a chat turn with DeepSeek that uses
+  a tool, a saved workflow replayed with 0 model tokens; screenshots side by side with `design/aos.html`; released v0.1.0 on the store.
