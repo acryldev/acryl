@@ -297,10 +297,19 @@ const fail = cause => {
 }
 
 // The short commands (acryl new, plugin, blends, update) run the part that owns them (forward.js).
-const forwarded = forwardCommand(args, { env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, exists: existsSync })
+const forwarded = forwardCommand(args, {
+  env: process.env, platform: process.platform, cwd: process.cwd(), execPath: process.execPath, exists: existsSync, home: ACRYL_HOME,
+  terminal: Boolean(stdin.isTTY && process.stdout.isTTY),
+})
 if (forwarded?.error) {
   console.error(`acryl: ${forwarded.error}`)
   process.exitCode = 2
+} else if (forwarded?.steps) {
+  // acryl new: make, install through the one install, start (forward.js); the folder decides the list of apps, as below.
+  appEnvironment().then(env => runSteps(forwarded.steps, env)).then(code => {
+    process.exitCode = code
+    return listCreatedApp(args, process.cwd())
+  }, fail)
 } else if (forwarded) {
   appEnvironment().then(env => {
     const child = spawn(forwarded.command, forwarded.args, { stdio: 'inherit', cwd: forwarded.cwd, shell: forwarded.shell === true, env })

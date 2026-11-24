@@ -1,6 +1,6 @@
 // The short commands of `acryl`: each runs a part that already exists, with the same flags, and no `--` in front of them.
 //
-//   acryl new <name> [starter]    makes an app: create-acrylblends (the app, in the frame, installed and started); `make` means the same
+//   acryl new <name> [starter]    makes an app: create-acrylblends makes it (in the frame), the one install installs it, then it starts; `make` means the same
 //   acryl plugin <verb> ...       inside an app: the app's own door (publish, pull, ...); `plugins` means the same
 //   acryl blends <command> ...    the acrylblends command (add, upgrade, open, preflight, ...)
 //   acryl update                  acrylblends upgrade, in the app
@@ -8,6 +8,7 @@
 // The functions here only decide what to run; bin.js runs it. Nothing here touches the network or the disk except `existsSync` of the door file.
 import { existsSync } from 'node:fs'
 import { basename, dirname, join, resolve, win32 } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /** The commands this module answers. `acryl` with anything else keeps its old meaning. */
 export const FORWARDED = ['new', 'make', 'create', 'plugin', 'plugins', 'blends', 'update']
@@ -15,6 +16,53 @@ export const FORWARDED = ['new', 'make', 'create', 'plugin', 'plugins', 'blends'
 /** The package `acryl new` runs. `ACRYL_CREATE` pins another (a version, a tarball) without a new flag. */
 export const CREATE_SPEC = 'create-acrylblends@latest'
 export const BLENDS_SPEC = 'acrylblends'
+
+/**
+ * The one install every place that installs an app runs (@acryldev/launcher app-install.js: it starts from the shared Program when one fits).
+ * acryl ships without dependencies, so tui/bundle.mjs copies the file beside this one, as it does model-key.js.
+ */
+export const INSTALL_CLI = fileURLToPath(new URL('./app-install-cli.mjs', import.meta.url))
+
+/** The words that make an app, and the create-acrylblends flags that take a value (`--from x` or `--from=x`). */
+const CREATE_WORDS = ['new', 'make', 'create']
+const VALUED = new Set(['--from', '--template', '--pm', '--registry'])
+/** The flags with which create-acrylblends installs on its own terms (a source, another package manager), or installs nothing: acryl forwards them unchanged. */
+const OWN_TERMS = ['--from', '--install', '--no-install', '--pm', '--registry', '-h', '--help', '-v', '--version']
+
+/** The words after `acryl new`: its positionals (folder, starter) and the flags given. */
+function createParts(rest) {
+  const positionals = []
+  const flags = new Set()
+  for (let i = 0; i < rest.length; i += 1) {
+    if (!rest[i].startsWith('-')) { positionals.push(rest[i]); continue }
+    const [flag, inline] = rest[i].split('=', 2)
+    flags.add(flag)
+    if (VALUED.has(flag) && inline === undefined) i += 1
+  }
+  return { positionals, flags }
+}
+
+/** A starter word that is a source (github:, an npm package, a .tgz, a folder), not a built-in template: create-acrylblends then installs nothing unless asked. */
+const isSource = word => /^(?:[a-z]+:|@|\.|\/)/u.test(word) || word.endsWith('.tgz') || word.includes('\\')
+
+/**
+ * The steps of `acryl new <name> [template]` (spec 052): create-acrylblends makes the app with --no-install, the one install installs it (from the shared
+ * Program when one fits), and in a terminal it starts as create-acrylblends would have started it. Undefined when create-acrylblends decides the install
+ * itself (no name, a source, --from, --install, --pm, help): those go to it unchanged.
+ */
+function newAppSteps(spec, rest, context) {
+  const { cwd, home, execPath, terminal } = context
+  const { positionals: [name, starter], flags } = createParts(rest)
+  if (name === undefined || OWN_TERMS.some(flag => flags.has(flag)) || (starter !== undefined && isSource(starter))) return undefined
+  const folder = resolve(cwd, name)
+  const steps = [
+    { label: `making ${name}`, ...npmExec(context, spec, [...rest, '--no-install']), cwd },
+    { label: `installing ${name} (from the shared install when one fits)`, command: execPath, args: [INSTALL_CLI, '--home', home], cwd: folder },
+  ]
+  if (terminal && !flags.has('--no-start') && !flags.has('--bare'))
+    steps.push({ label: `starting ${name} (Ctrl+C stops it). Next time: cd ${name} && npm run dev`, ...npmCommand(context, ['run', 'dev']), cwd: folder })
+  return steps
+}
 
 /** The door of an app: the same file the app's `npm run acryl` runs. */
 export const DOOR = join('plugins', 'door', 'src', 'cli', 'acryl.ts')
@@ -63,15 +111,18 @@ export function appRoot(from, exists = existsSync) {
 }
 
 /**
- * What a forwarded command runs: `{ command, args, cwd?, shell? }`, or `{ error }` with a line a person can act on. Returns undefined for a command this
+ * What a forwarded command runs: `{ command, args, cwd?, shell? }`, `{ steps }` (each one such command with a label, run in turn), or `{ error }` with a line a person can act on. Returns undefined for a command this
  * module does not forward.
  */
 export function forwardCommand(argv, context) {
   const [command, ...rest] = argv
   if (!FORWARDED.includes(command)) return undefined
   const { env, cwd } = context
-  if (command === 'new' || command === 'make' || command === 'create')
-    return npmExec(context, env.ACRYL_CREATE?.trim() || CREATE_SPEC, rest)
+  if (CREATE_WORDS.includes(command)) {
+    const spec = env.ACRYL_CREATE?.trim() || CREATE_SPEC
+    const steps = newAppSteps(spec, rest, context)
+    return steps === undefined ? npmExec(context, spec, rest) : { steps }
+  }
   if (command === 'blends') return npmExec(context, BLENDS_SPEC, rest)
   if (command === 'update') return npmExec(context, BLENDS_SPEC, ['upgrade', ...rest])
   // plugin | plugins: the door of the app this directory is in.
@@ -91,10 +142,6 @@ export function forwardCommand(argv, context) {
  */
 export function createdAppName(argv) {
   const [command, ...rest] = argv
-  if (command !== 'new' && command !== 'make' && command !== 'create') return undefined
-  for (let i = 0; i < rest.length; i += 1) {
-    if (rest[i] === '--from') { i += 1; continue }
-    if (!rest[i].startsWith('-')) return rest[i]
-  }
-  return undefined
+  if (!CREATE_WORDS.includes(command)) return undefined
+  return createParts(rest).positionals[0]
 }

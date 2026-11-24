@@ -1,23 +1,54 @@
 import assert from 'node:assert/strict'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
-import { appRoot, CREATE_SPEC, DOOR, forwardCommand, launcherCommand, npmExec } from '../forward.js'
+import { appRoot, CREATE_SPEC, DOOR, forwardCommand, INSTALL_CLI, launcherCommand, npmExec } from '../forward.js'
 
 const execPath = '/usr/bin/node'
-const base = { env: {}, platform: 'linux', cwd: '/work/shop', execPath, exists: () => false }
+const base = { env: {}, platform: 'linux', cwd: '/work/shop', execPath, exists: () => false, home: '/h/.acryl', terminal: false }
 
-test('acryl new and create run create-acrylblends with the same words, and no -- in front of the flags', () => {
-  for (const word of ['new', 'create']) {
-    assert.deepEqual(forwardCommand([word, 'shop', 'notes', '--no-start'], base), {
-      command: 'npm',
-      args: ['exec', '--yes', CREATE_SPEC, '--', 'shop', 'notes', '--no-start'],
-    })
+test('acryl new, make and create make the app with create-acrylblends --no-install, then install it through the one install (spec 052)', () => {
+  for (const word of ['new', 'make', 'create']) {
+    assert.deepEqual(forwardCommand([word, 'shop', 'notes', '--no-start'], base).steps.map(({ label, ...step }) => step), [
+      { command: 'npm', args: ['exec', '--yes', CREATE_SPEC, '--', 'shop', 'notes', '--no-start', '--no-install'], cwd: '/work/shop' },
+      { command: execPath, args: [INSTALL_CLI, '--home', '/h/.acryl'], cwd: resolve('/work/shop', 'shop') },
+    ])
+  }
+  assert.match(INSTALL_CLI, /app-install-cli\.mjs$/u)
+})
+
+test('in a terminal the new app then starts, as create-acrylblends would have started it; not with --no-start, --bare, or without a terminal', () => {
+  const steps = forwardCommand(['new', 'shop'], { ...base, terminal: true }).steps
+  assert.equal(steps.length, 3)
+  assert.deepEqual({ ...steps[2], label: undefined }, { label: undefined, command: 'npm', args: ['run', 'dev'], cwd: resolve('/work/shop', 'shop') })
+  assert.match(steps[2].label, /cd shop && npm run dev/u)
+  for (const flag of ['--no-start', '--bare']) assert.equal(forwardCommand(['new', 'shop', flag], { ...base, terminal: true }).steps.length, 2)
+  assert.equal(forwardCommand(['new', 'shop'], base).steps.length, 2)
+})
+
+test('what create-acrylblends installs on its own terms goes to it unchanged: no name, a source, --from, --install, --no-install, --pm, help', () => {
+  for (const rest of [
+    [],
+    ['--yes'],
+    ['shop', 'github:me/starter'],
+    ['shop', '@me/starter'],
+    ['shop', './starter.tgz'],
+    ['shop', '--from', 'acrylblends.notes-desktop'],
+    ['shop', '--from=acrylblends.notes-desktop'],
+    ['shop', '--install'],
+    ['shop', '--no-install'],
+    ['shop', '--pm', 'pnpm'],
+    ['--help'],
+    ['-v'],
+  ]) {
+    assert.deepEqual(forwardCommand(['new', ...rest], base), { command: 'npm', args: ['exec', '--yes', CREATE_SPEC, '--', ...rest] }, rest.join(' '))
   }
 })
 
 test('ACRYL_CREATE pins another version or a tarball without a flag', () => {
   const pinned = forwardCommand(['new', 'shop'], { ...base, env: { ACRYL_CREATE: ' file:/x/c.tgz ' } })
-  assert.deepEqual(pinned.args, ['exec', '--yes', 'file:/x/c.tgz', '--', 'shop'])
+  assert.deepEqual(pinned.steps[0].args, ['exec', '--yes', 'file:/x/c.tgz', '--', 'shop', '--no-install'])
+  const sourced = forwardCommand(['new', 'shop', '--from', 'x'], { ...base, env: { ACRYL_CREATE: 'file:/x/c.tgz' } })
+  assert.deepEqual(sourced.args, ['exec', '--yes', 'file:/x/c.tgz', '--', 'shop', '--from', 'x'])
 })
 
 test('the npm that started acryl runs it, with no shell; on Windows the npm CLI file beside node.exe, and npm.cmd through a shell only as the last resort', () => {
@@ -89,6 +120,9 @@ test('createdAppName finds the folder acryl new makes', async () => {
   assert.equal(createdAppName(['create', 'shop', 'todo']), 'shop')
   assert.equal(createdAppName(['new', 'shop', '--from', 'acrylblends.notes']), 'shop')
   assert.equal(createdAppName(['new', '--from', 'acrylblends.notes', 'shop']), 'shop')
+  assert.equal(createdAppName(['new', '--template', 'notes', 'shop']), 'shop')
+  assert.equal(createdAppName(['new', '--pm', 'pnpm', 'shop']), 'shop')
+  assert.equal(createdAppName(['new', '--from=acrylblends.notes', 'shop']), 'shop')
   assert.equal(createdAppName(['new']), undefined)
   assert.equal(createdAppName(['update']), undefined)
 })

@@ -2,7 +2,7 @@
 // The selector is the real one (distribution/acryl-npm-launcher) with the real bundle beside it, as npm installs it; only the create package is a local
 // stand-in (ACRYL_CREATE, the selector's own override) so the test records exactly what `acryl make` was asked.
 import assert from 'node:assert/strict'
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -103,12 +103,16 @@ test('acryl make lists the app, acryl apps and the terminal Control Center show 
     assert.match(plain(asked), /Saved \(sk-\.\.\.3210\)/u)
     assert.equal(JSON.parse(readFileSync(join(home, '.acryl', 'model.json'), 'utf8')).deepseek, typed)
     writeFileSync(join(home, '.acryl', 'model.json'), JSON.stringify({ deepseek: KEY }))
-    // An app the selector starts gets the stored key as DEEPSEEK_API_KEY (the stand-in create package writes what it saw).
+    // An app the selector starts gets the stored key as DEEPSEEK_API_KEY (the stand-in create package writes what it saw, and makes the app with no
+    // dependencies); acryl new then installs it through the one install (spec 052), which leaves npm's lockfile.
     const seen = join(root, 'seen-key.txt')
-    writeFileSync(join(create, 'bin.js'), '#!/usr/bin/env node\nrequire("node:fs").writeFileSync(process.env.ACRYL_TEST_SEEN, process.env.DEEPSEEK_API_KEY || "none")\n')
+    writeFileSync(join(create, 'bin.js'), '#!/usr/bin/env node\nconst fs = require("node:fs")\nfs.writeFileSync(process.env.ACRYL_TEST_SEEN, process.env.DEEPSEEK_API_KEY || "none")\nfs.mkdirSync(process.argv[2])\nfs.writeFileSync(process.argv[2] + "/package.json", JSON.stringify({ name: process.argv[2], version: "0.0.0" }))\nfs.writeFileSync(process.env.ACRYL_TEST_MARKER, JSON.stringify(process.argv.slice(2)))\n')
     const started = spawnSync(process.execPath, [join(selector, 'bin.js'), 'new', 'other-app'], { cwd: work, env: { ...env, ACRYL_TEST_SEEN: seen }, encoding: 'utf8' })
     assert.equal(started.status, 0, started.stderr)
     assert.equal(readFileSync(seen, 'utf8'), KEY)
+    assert.deepEqual(JSON.parse(readFileSync(marker, 'utf8')), ['other-app', '--no-install'])
+    assert.match(started.stdout, /acryl: installing other-app/u)
+    assert.equal(existsSync(join(work, 'other-app', 'package-lock.json')), true, started.stdout)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

@@ -4,14 +4,9 @@
 // The functions here only decide what to run; cli.js runs it. Nothing here touches the network or the disk except `exists`.
 import { existsSync } from 'node:fs'
 import { join, relative, isAbsolute } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { CREATE_SPEC, npmCommand, npmExec } from './forward.js'
+import { CREATE_SPEC, INSTALL_CLI, npmCommand, npmExec } from './forward.js'
 
-/**
- * The one install every place that installs an app runs (@acryldev/launcher app-install.js: it starts from the shared Program when one fits).
- * acryl ships without dependencies, so tui/bundle.mjs copies the file beside this one, as it does model-key.js.
- */
-export const INSTALL_CLI = fileURLToPath(new URL('./app-install-cli.mjs', import.meta.url))
+export { INSTALL_CLI }
 
 /** What updates a Blend copy from its newer release (the acrylblends command; the Control Center window runs the same). */
 export const UPDATE_SPEC = 'acrylblends@latest'
