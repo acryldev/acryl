@@ -5,6 +5,7 @@ import { openFrame } from './frame-url'
 import { init, parseInitOptions, UsageError } from './init'
 import { type Io, processIo } from './io'
 import { kvImport, parseKvOptions } from './kv-import'
+import { own, parseOwnOptions } from './own'
 import { pack } from './pack'
 import { runPreflight } from './preflight'
 import { parseReleaseWorkflowOptions, writeReleaseWorkflow } from './release-workflow'
@@ -39,6 +40,8 @@ Usage:
                                       on Linux also a portable .tar.gz (Arch Linux, Omarchy)
   acrylblends pkgbuild --dir <d> --product "Name" --version x.y.z --repo owner/name
                                       The PKGBUILD (Arch Linux, Omarchy) for a release whose Linux .tar.gz files are in <d>
+  acrylblends own <package> [--dir d]  Take the app's own copy of a frame core package (blends-frame, settings, ...) into
+                                      plugins/, built and mounted instead of the shared one: a core change for this app alone
   acrylblends release-workflow [--dir d] [--product "Name"] [--force]
                                       Write .github/workflows/release.yml: a tag v<version> pushed to GitHub builds the app's
                                       installers (macOS, Windows, Linux) and publishes them as the repository's Latest release
@@ -89,6 +92,7 @@ export async function runCli(argv: readonly string[], io: Io = processIo()): Pro
     if (command === 'preflight') return await runPreflight(io)
     if (command === 'pack') return pack(args, io)
     if (command === 'pkgbuild') return pack(args, io, 'pkgbuild.mjs')
+    if (command === 'own') return own(parseOwnOptions(args), io)
     if (command === 'release-workflow')
       return writeReleaseWorkflow(parseReleaseWorkflowOptions(args), io)
     throw new UsageError(`unknown command "${command}"`)
