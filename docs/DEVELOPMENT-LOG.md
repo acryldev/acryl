@@ -12,6 +12,11 @@
   no app used, and the apps then passed every start check. On macOS clean says "up to", because a clone shares blocks.
 - Known limit: neither command can see whether an app is running. Ships in acryl 0.3.9.
 
+## 2026-11-25 - the system-prompt generator works again, and a failed engine says why
+
+- **Root cause** (`db32c64c36d5288f4967e1cead7bd664c1c289ed`): `tests/dump-system-prompt.spec.ts` composed the engines without `@acryldev/coding-capabilities`, so the engine row failed (`Cannot find package '@acryldev/system-prompt'`). The failure stayed inside its fiber, `loader.await()` resolved, the host booted with no Harness profile, and the first thing to notice was `ACRYL profile has no default agent model` in the session bridge.
+- **Fix:** `createAcrylEngineHost` (and `select`) now stop with `ACRYL engine "dsh" did not start, so there is no Harness profile: <cause>`; the generator and the opt-in real-model test pass the capabilities; every test run checks that the generator's composition provides `agentDefaultModel`. `docs/system-prompt/current` and `budget.md` regenerated.
+
 ## 2026-11-24 - `acryl new` installs through the one install: a second app adds 7-18 MB (spec 052)
 
 `acryl new <name> [starter]` used to leave the install to `create-acrylblends`, a full `npm install` of about 700 MB per app. Now
