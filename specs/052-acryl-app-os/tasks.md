@@ -239,7 +239,7 @@ It is a larger change to desktop-shell's start path, and is proposed as the next
 
 ## Phase 8 - Shared until changed (D18)
 
-- [ ] T066 The Program is read-only: `plugins/launcher/app-install.js` makes its files read-only when it makes it (directories stay writable for
+- [x] T066 (done 2026-11-25, `sealProgram` in `plugins/launcher/app-install.js`, tests in `tests/app-install.test.mjs`; walked on hosts with T070) The Program is read-only: `plugins/launcher/app-install.js` makes its files read-only when it makes it (directories stay writable for
   npm's own work in an app); an app installed from it can still `npm install` its own packages; `acryl clean` and `acryl apps reinstall` still
   remove and replace it. Test: an in-place write to a linked file fails (Linux, Windows), a write in a macOS clone stays in that app.
 - [ ] T067 The agent's instructions (app-context docs, the acryl-app skill) say: never edit `node_modules`; to change a core part, own it (T068).

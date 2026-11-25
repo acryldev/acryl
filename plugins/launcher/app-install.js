@@ -8,7 +8,8 @@
 import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
-  copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync,
+  chmodSync, copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, symlinkSync, utimesSync,
+  writeFileSync,
 } from 'node:fs'
 import { basename, join, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -22,11 +23,16 @@ export const INSTALL_CLI = fileURLToPath(new URL('./app-install-cli.mjs', import
 /** Where the Programs are kept in ACRYL's home: `<home>/program/blends-<version>/node_modules`, beside its `sha256.json`. */
 export const PROGRAM_DIR = 'program'
 const MANIFEST = 'sha256.json'
+/** Written beside the manifest once a Program's files are read-only (spec 052 D18 step 1), so an older Program is sealed once, on its next use. */
+const SEALED = 'read-only'
 const LOCKFILE = '.package-lock.json'
 const NPM_INSTALL = Object.freeze(['install', '--no-audit', '--no-fund'])
 
 /** The binary's place inside Electron's `dist`, which Electron's own `index.js` reads from `path.txt` (its fallback is right on Linux only). */
 const ELECTRON_BINARY = Object.freeze({ darwin: 'Electron.app/Contents/MacOS/Electron', win32: 'electron.exe' })
+
+/** A copy is the app's own file: writable even when its source is a read-only Program file (copyFileSync keeps the mode). */
+const writable = (path) => { chmodSync(path, statSync(path).mode | 0o200) }
 
 /**
  * Link `from` into `to`, folder by folder; `skip` gets each file's path under `from`, `/`-separated. Falls back to a copy where a link cannot be made.
@@ -46,9 +52,39 @@ export function linkTree(from, to, skip = () => false, base = '') {
         linkSync(source, target)
       } catch {
         copyFileSync(source, target)
+        writable(target)
       }
     }
   }
+}
+
+/**
+ * Make a Program's files read-only (spec 052 D18 step 1, T066), folders left writable. On Linux and Windows an app's `node_modules` holds hard links
+ * to these files, one file for every app on the Program, so an edit in place would change every app: it now fails at once, and an app that wants to
+ * change a core part owns that plugin instead. npm still replaces a package in an app (it removes the link from the app's own folder and writes a new
+ * file), and `acryl clean` still removes the Program. macOS is left as it was: its apps hold copy-on-write clones, where an edit stays in its app, and
+ * a read-only Program would make every clone read-only too.
+ * @returns how many files it changed.
+ */
+export function sealProgram(program, platform = process.platform) {
+  if (platform === 'darwin' || existsSync(join(program, SEALED))) return 0
+  let changed = 0
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name)
+      if (entry.isDirectory()) walk(path)
+      else if (entry.isFile()) {
+        const mode = lstatSync(path).mode & 0o7777
+        if ((mode & 0o222) !== 0) {
+          chmodSync(path, mode & ~0o222)
+          changed += 1
+        }
+      }
+    }
+  }
+  walk(join(program, 'node_modules'))
+  writeFileSync(join(program, SEALED), 'The files under node_modules are read-only: an app that changes a core part owns that plugin (spec 052 D18).\n')
+  return changed
 }
 
 /**
@@ -105,7 +141,10 @@ function place(from, to, platform) {
   if (platform === 'darwin') execFileSync('cp', ['-cRp', from, to])
   else {
     linkTree(from, to, path => path === LOCKFILE)
-    if (existsSync(join(from, LOCKFILE))) copyFileSync(join(from, LOCKFILE), join(to, LOCKFILE))
+    if (existsSync(join(from, LOCKFILE))) {
+      copyFileSync(join(from, LOCKFILE), join(to, LOCKFILE))
+      writable(join(to, LOCKFILE))
+    }
   }
   const now = new Date()
   if (existsSync(join(to, LOCKFILE))) utimesSync(join(to, LOCKFILE), now, now)
@@ -143,6 +182,7 @@ export async function installApp({
   const existing = shared && existsSync(join(program, MANIFEST))
   if (existing) {
     say(`Starting from the shared ${key} already on this computer; only this app's own packages are added.`)
+    sealProgram(program, platform)
     place(join(program, 'node_modules'), join(folder, 'node_modules'), platform)
   }
   const code = await npm([...npmArgs], folder)
@@ -166,6 +206,7 @@ export async function installApp({
   mkdirSync(making, { recursive: true })
   place(join(folder, 'node_modules'), join(making, 'node_modules'), platform)
   writeFileSync(join(making, MANIFEST), JSON.stringify(hashes(join(making, 'node_modules'))))
+  sealProgram(making, platform)
   try {
     renameSync(making, program)
   } catch {

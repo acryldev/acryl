@@ -1,11 +1,11 @@
 // Installing an app against the shared Program (spec 052 Step 1, specs/052-acryl-app-os/baseline.md findings 1-3). npm is a fake that writes what a
 // real install writes (package folders, node_modules/.package-lock.json last), so every rule here runs in milliseconds on any OS.
 import assert from 'node:assert/strict'
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
+import { appendFileSync, chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { installApp, programOf } from '../app-install.js'
+import { installApp, programOf, sealProgram } from '../app-install.js'
 import { fakeNpm } from './fake-npm.mjs'
 
 function scratch(run) {
@@ -104,7 +104,14 @@ test('an install that writes into a Program file through its link is caught by t
   const home = join(root, 'home')
   await installApp({ folder: blendsApp(root, 'first'), home, npm: fakeNpm().npm, ...linux })
   const program = join(home, 'program', 'blends-1.7.33')
-  const bad = fakeNpm({ alsoWrite: cwd => appendFileSync(join(cwd, 'node_modules', 'left-pad', 'index.js'), '// patched in place\n') })
+  // A writer that makes the read-only file writable first (as a Windows remover may): the sha256 check stays the last guard.
+  const bad = fakeNpm({
+    alsoWrite: (cwd) => {
+      const file = join(cwd, 'node_modules', 'left-pad', 'index.js')
+      chmodSync(file, 0o644)
+      appendFileSync(file, '// patched in place\n')
+    },
+  })
   const lines = []
   const result = await installApp({ folder: blendsApp(root, 'second'), home, npm: bad.npm, say: line => lines.push(line), ...linux })
   assert.equal(result.code, 0, 'the app itself installed')
@@ -158,4 +165,43 @@ test('on macOS the Program is an APFS clone (cp -c), never a hard link', { skip:
   const result = await installApp({ folder: second, home, npm: fakeNpm({ alsoWrite: cwd => appendFileSync(join(cwd, 'node_modules', 'left-pad', 'index.js'), '// x\n') }).npm })
   assert.equal(result.program, 'used', 'a write into a clone stays in the app')
   assert.notEqual(inode(join(second, 'node_modules', 'left-pad', 'index.js')), inode(join(home, 'program', 'blends-1.7.33', 'node_modules', 'left-pad', 'index.js')))
+}))
+
+const writableBits = path => statSync(path).mode & 0o222
+
+test('the Program is read-only (spec 052 D18): an edit in place through an app\'s link fails, the app\'s own lockfile and new packages stay writable', () => scratch(async root => {
+  const home = join(root, 'home')
+  const first = blendsApp(root, 'first')
+  await installApp({ folder: first, home, npm: fakeNpm().npm, ...linux })
+  const program = join(home, 'program', 'blends-1.7.33')
+  const shared = join(program, 'node_modules', 'left-pad', 'index.js')
+  assert.equal(writableBits(shared), 0, 'the shared file is read-only')
+  assert.equal(writableBits(join(first, 'node_modules', '.package-lock.json')) !== 0, true, 'the first app\'s lockfile is its own, writable')
+
+  const second = blendsApp(root, 'second', { '@acryldev/blends': '^1.7.33', 'left-pad': '1.3.0', 'is-odd': '3.0.1' })
+  const used = await installApp({ folder: second, home, npm: fakeNpm().npm, ...linux })
+  assert.equal(used.program, 'used')
+  const linked = join(second, 'node_modules', 'left-pad', 'index.js')
+  const before = readFileSync(shared, 'utf8')
+  assert.throws(() => appendFileSync(linked, '// an agent edits the core in place\n'), { code: 'EACCES' })
+  assert.equal(readFileSync(shared, 'utf8'), before, 'no other app changed')
+  assert.equal(writableBits(join(second, 'node_modules', '.package-lock.json')) !== 0, true, 'npm can rewrite the app\'s own lockfile')
+  assert.equal(writableBits(join(second, 'node_modules', 'is-odd', 'index.js')) !== 0, true, 'the app\'s own package is writable')
+  // npm replacing a package in one app removes the link from that app's folder and writes a new file: allowed, the Program keeps its file.
+  rmSync(linked)
+  writeFileSync(linked, 'module.exports = "replaced in second"\n')
+  assert.equal(readFileSync(shared, 'utf8'), before)
+}))
+
+test('a Program made before D18 is made read-only on its next use, once; macOS clones are left as they were', () => scratch(async root => {
+  const program = join(root, 'program', 'blends-1.7.30')
+  const file = join(program, 'node_modules', 'pkg', 'index.js')
+  mkdirSync(join(program, 'node_modules', 'pkg'), { recursive: true })
+  writeFileSync(file, 'x\n')
+  assert.equal(sealProgram(program, 'darwin'), 0)
+  assert.notEqual(writableBits(file), 0, 'macOS: untouched')
+  assert.equal(sealProgram(program, 'linux'), 1)
+  assert.equal(writableBits(file), 0)
+  chmodSync(file, 0o644)
+  assert.equal(sealProgram(program, 'linux'), 0, 'sealed once: the marker says so')
 }))
