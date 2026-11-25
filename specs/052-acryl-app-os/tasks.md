@@ -65,7 +65,7 @@ Decisions are in [`spec.md`](spec.md). Each task names its proof; a task is done
 
 ## Phase 4 - Export as installer (D6)
 
-- [ ] T021 "Export as installer" runs `acrylblends pack` for this OS and CPU into a chosen folder, as a job with progress and the
+- [x] T021 (built 2026-11-25: "Build installer" on each app's panel and the chat tool `acryl_launcher_build_installer`, `LauncherService.buildInstaller` in `plugins/launcher-desktop`, the app's own `acrylblends pack` into `<home>/installers/<app id>/`; the folder is not chosen yet, a picker comes with the Share place T060; the walk is T022) "Export as installer" runs `acrylblends pack` for this OS and CPU into a chosen folder, as a job with progress and the
   installer's size; other OS/CPU pairs named, not attempted.
 - [ ] T022 Proof: an app made in the Control Center exports and installs on a clean scratch home on macOS (DMG), Windows (exe) and
   Ubuntu (deb), and starts.

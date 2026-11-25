@@ -116,7 +116,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
             onSearch={setSearch} onSurface={setSurface} onPanel={setPanel} onSelect={setSelected}
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const refused = await create(request); if (refused === undefined) setPanel('none'); return refused }}
-            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onRemove={id => act(() => api.remove(id))} onApplications={(id, on) => act(() => api.inApplications(id, on))}
+            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onBuild={id => act(() => api.buildInstaller(id))} onRemove={id => act(() => api.remove(id))} onApplications={(id, on) => act(() => api.inApplications(id, on))}
             openExternal={openExternal} adeUnderneath={adeUnderneath} onOpenCode={() => { visibility.set(false) }} onOpenAde={surface => { void act(() => api.openAde(surface)) }}
           />
         )}
@@ -133,13 +133,22 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
   )
 }
 
+/** The job banner's head for each kind of job, running, done and failed. */
+const JOB_HEADS: Readonly<Record<NonNullable<StateResponse['job']>['kind'], { doing: string, done: string, failed: string }>> = {
+  make: { doing: 'Making {name}', done: '{name} is made', failed: '{name} could not be made' },
+  update: { doing: 'Updating {name}', done: '{name} is updated', failed: '{name} could not be updated' },
+  build: { doing: 'Building an installer of {name}', done: 'The installer of {name} is built', failed: 'The installer of {name} could not be built' },
+}
+
 function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNode {
-  const update = job.kind === 'update'
-  const head = job.status === 'running' ? `${update ? 'Updating' : 'Making'} ${job.name} · ${elapsed(job.since)}` : job.status === 'done' ? `${job.name} is ${update ? 'updated' : 'made'}` : `${job.name} could not be ${update ? 'updated' : 'made'}`
+  const heads = JOB_HEADS[job.kind]
+  const named = (text: string): string => text.replace('{name}', job.name)
+  const head = job.status === 'running' ? `${named(heads.doing)} · ${elapsed(job.since)}` : named(job.status === 'done' ? heads.done : heads.failed)
   return (
     <div className="acrylHomeJob" role="status">
       <b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{'\n'}{job.status === 'failed' ? null : job.step}
       {job.message === undefined ? null : `\n${job.message}`}
+      {job.installer === undefined ? null : <>{'\n'}<span className="acrylHomeMeta" title="The installer file">{job.installer.file}</span></>}
       {job.status === 'running' ? <pre className="acrylHomeLog">{job.output === '' ? 'Waiting for its first output...' : job.output}</pre> : null}
     </div>
   )
@@ -197,6 +206,8 @@ interface AppsViewProps {
   readonly onCreate: (request: NewAppRequest) => Promise<string | undefined>
   readonly onStart: (id: string) => Promise<boolean>
   readonly onUpdate: (id: string) => Promise<boolean>
+  /** Build an installer of the app for this computer (spec 052 T021). */
+  readonly onBuild?: (id: string) => Promise<boolean>
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
   readonly onApplications: (id: string, on: boolean) => Promise<boolean>
@@ -264,12 +275,12 @@ function AppsView(props: AppsViewProps): ReactNode {
       {props.apps.length === 0
         ? <p className="acrylHomeNote">No apps of your own yet. Press + New app to make one, or Add a folder to list one you already have.</p>
         : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p> : null}
-      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onStop={props.onStop} onRemove={props.onRemove} onApplications={props.onApplications} openExternal={props.openExternal} />}
+      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onBuild={props.onBuild} onStop={props.onStop} onRemove={props.onRemove} onApplications={props.onApplications} openExternal={props.openExternal} />}
     </div>
   )
 }
 
-function Detail({ api, app, onStart, onUpdate, onStop, onRemove, onApplications, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, onApplications: (id: string, on: boolean) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
+function Detail({ api, app, onStart, onUpdate, onBuild, onStop, onRemove, onApplications, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onBuild?: ((id: string) => Promise<boolean>) | undefined, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, onApplications: (id: string, on: boolean) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const running = app.state === 'running' || app.state === 'starting'
   const [sharing, setSharing] = useState(false)
   // Another app's detail starts with its share closed.
@@ -286,6 +297,9 @@ function Detail({ api, app, onStart, onUpdate, onStop, onRemove, onApplications,
           <button type="button" className="acrylHomeBtn" disabled={app.github === undefined}
             title={app.github === undefined ? 'Share the app to GitHub first (Public), then deploy it from there' : `Opens WebBoxes.ai with ${app.github} filled in`}
             onClick={() => { if (app.github !== undefined) openExternal(webboxesDeployUrl(app.github, app.name)) }}>Deploy to WebBoxes.ai</button>
+          <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing' || onBuild === undefined}
+            title="Builds an installer of this app for this computer (a DMG on macOS, an .exe on Windows, a .deb on Linux) that carries everything it needs: send it to anyone, they need no Node, git or ACRYL"
+            onClick={() => { void onBuild?.(app.id) }}>Build installer</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} title={app.inApplications === true ? 'Takes the launcher out of your Applications (Spotlight, the Start menu, the app menu); the app itself stays' : 'Puts a launcher for this app where your computer looks for apps (Spotlight, the Start menu, the app menu)'}
             onClick={() => { void onApplications(app.id, app.inApplications !== true) }}>{app.inApplications === true ? 'Remove from Applications' : 'Add to Applications'}</button>

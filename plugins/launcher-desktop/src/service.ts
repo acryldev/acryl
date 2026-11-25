@@ -11,7 +11,7 @@ import {
 } from '@acryldev/launcher'
 import type {
   GithubPollView, GithubStartView, GithubView,
-  AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginCatalogView, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
+  AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, InstallerView, JobView, NewAppRequest, PluginCatalogView, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
 } from './contract.ts'
 import { ACCOUNT_NAME, BLEND_ID, BLEND_SOURCE, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
@@ -53,6 +53,12 @@ export interface LauncherPorts {
 const ADDRESS = /https?:\/\/(?:127\.0\.0\.1|localhost|\[::1\]):\d+[^\s'")\]]*/u
 const TAIL_LINES = 12
 const BLENDS_FRESH_MS = 60_000
+/** Where built installers go, per app: `<home>/installers/<app id>/` (spec 052 T021). */
+const INSTALLERS_DIR = 'installers'
+/** The packer's last line: `pack-blank-mac: done: <file> (<size> MB)` (framework/scripts/pack-blank-mac.mjs). */
+const PACKED = /pack-blank-mac: done: (.+) \((\d+) MB\)/u
+/** What a person calls the installer this computer's OS gets. */
+const INSTALLER_KIND: Readonly<Record<string, string>> = { darwin: 'a DMG (macOS)', win32: 'an installer (Windows .exe)', linux: 'a Debian package (Linux .deb)' }
 /** The package `acryl new` runs (`distribution/acryl-npm-launcher/forward.js` CREATE_SPEC). */
 const CREATE_SPEC = 'create-acrylblends@latest'
 /** The command that updates an app from its Blend's newer release (`acrylblends update`, in the acrylblends package). */
@@ -80,6 +86,7 @@ interface Job {
   readonly since: number
   output: string
   message?: string
+  installer?: InstallerView
   /** The process the job is on now: the command that makes the app, then, for an app that arrives without its dependencies, `npm install`. */
   run: Run
 }
@@ -134,7 +141,7 @@ export class LauncherService {
     if (this.#blends === undefined || Date.now() - this.#blends.at >= BLENDS_FRESH_MS) void this.blends().catch(() => undefined)
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
     const at = this.#job
-    const job = at === undefined ? null : { name: at.name, kind: at.kind, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message } }
+    const job = at === undefined ? null : { name: at.name, kind: at.kind, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message }, ...at.installer === undefined ? {} : { installer: at.installer } }
     const self = this.#self()
     return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job, ...self === undefined ? {} : { self } }
   }
@@ -287,6 +294,49 @@ export class LauncherService {
       job.step = `Updated ${view.name} to ${view.blend} ${view.update}.${restart ? ' Starting it again: its progress shows on its card below.' : ''}`
       job.output = ''
       if (restart) try { this.start(id) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) }
+    })
+  }
+
+  /**
+   * Build an installer of the app for this computer's OS (spec 052 T021): the app's own `acrylblends pack` (the version its frame is on) makes the app
+   * from its folder with its published packages and packages it, into `<home>/installers/<app id>/`. It carries its runtime and packages, so the person
+   * who gets it needs no Node, npm, git or ACRYL. Other OS and CPU pairs are built by the app repository's release workflow (Share with team, T061).
+   */
+  buildInstaller(id: string): void {
+    this.#toolsReady()
+    if (this.#job?.status === 'running') throw new LauncherRefusal(`${this.#job.name} is still being worked on: wait for it to finish`)
+    const entry = readApps(this.#ports.home).find(app => app.id === id)
+    if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
+    const view = this.#view(entry)
+    if (!this.#ports.exists(join(entry.path, 'node_modules', '@acryldev', 'blends'))) {
+      throw new LauncherRefusal(`${view.name} has no ACRYL packages installed yet: start it once (its packages are installed then), then build its installer`)
+    }
+    const folder = join(this.#ports.home, INSTALLERS_DIR, entry.id)
+    this.#ports.makeFolder(folder)
+    const args = ['exec', '--no', '--', 'acrylblends', 'pack', '--from', '.', '--product', view.name, '--out', folder]
+    const run = this.#ports.runner({ program: 'npm', args, cwd: entry.path, env: this.#environment() })
+    const kind = INSTALLER_KIND[process.platform] ?? 'an installer'
+    const job: Job = {
+      name: view.name, kind: 'build', line: `cd ${entry.path} && npx acrylblends pack --from . --product "${view.name}" --out ${folder}`, status: 'running', run, since: Date.now(), output: '',
+      step: `Building ${kind} of ${view.name} for this computer: making the app from its folder with its packages, then packaging it (5 to 15 minutes, it downloads Electron's builder the first time). Next: the file, in ${folder}.`,
+    }
+    this.#job = job
+    let output = ''
+    let packed: InstallerView | undefined
+    run.onOutput((text) => {
+      const done = PACKED.exec(text.replace(ANSI, ''))
+      if (done !== null) packed = { file: done[1]!.trim(), folder, megabytes: Number(done[2]) }
+      output = tail(`${output}${text}`)
+      job.output = output
+    })
+    run.onEnd((end) => {
+      if (job.run !== run) return
+      if (end.notFound) { job.status = 'failed'; job.message = 'Node.js and npm were not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.'; return }
+      if (end.code !== 0 || packed === undefined) { job.status = 'failed'; job.message = output === '' ? (end.error ?? 'The build ended before the installer was made.') : output.trimEnd(); return }
+      job.status = 'done'
+      job.installer = packed
+      job.step = `Built ${basename(packed.file)} (${packed.megabytes} MB). It carries everything ${view.name} needs: send it to anyone on this kind of computer.`
+      job.output = ''
     })
   }
 

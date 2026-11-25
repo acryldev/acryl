@@ -99,13 +99,14 @@ Your working directory is <workspace>.
 </cwd>
 ```
 
-## Tools (57)
+## Tools (58)
 
 | Tool | Description (first line) |
 | --- | --- |
 | `acryl_install_plugin` | Install a plugin package you wrote into the active ACRYL profile and activate it live (no restart), or UPDATE it if it is already installed. Checks the package  |
 | `acryl_launcher_apps` | The apps in the launcher's list: id, folder, Blend, surface (web or desktop), state (running, starting, stopped, missing) and address when running; and the app  |
 | `acryl_launcher_blends` | Blends in the public registry that an app can be made from (id, name, category, description). Give a query to narrow it; at most 25 are returned. |
+| `acryl_launcher_build_installer` | Build an installer of an app for this computer's OS (DMG, .exe or .deb) that needs no Node, git or ACRYL. Runs as a job of 5-15 minutes; watch it with acryl_lau |
 | `acryl_launcher_help` | How to use the ACRYL launcher and where to find what: its screens, buttons and the other launcher tools. Call it first when asked about the launcher. |
 | `acryl_launcher_new_app` | Make a new app, as the launcher's + New app does: from a starter (blank, nodejs, notes, chat, todo, agent) or from a registry Blend id (acrylblends_launcher_ble |
 | `acryl_launcher_plugin_catalog` | Search the public Cordis plugin catalog: id, name, kind, domain, compatibility and the source for acryl_launcher_pull_plugin. At most 25. |

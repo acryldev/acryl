@@ -12,6 +12,8 @@ export const LAUNCHER_NEW_PATH = `${LAUNCHER_API_PREFIX}/new`
 export const LAUNCHER_START_PATH = `${LAUNCHER_API_PREFIX}/start`
 export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
 export const LAUNCHER_UPDATE_PATH = `${LAUNCHER_API_PREFIX}/update`
+/** Build an installer of an app for this computer's OS (spec 052 T021): `acrylblends pack` in its folder. */
+export const LAUNCHER_BUILD_PATH = `${LAUNCHER_API_PREFIX}/build-installer`
 /** Update the Control Center itself (the Blend copy it runs from) to its Blend's newer release. */
 export const LAUNCHER_UPDATE_SELF_PATH = `${LAUNCHER_API_PREFIX}/update-self`
 /** Open ACRYL ADE (the Blend `acryl.ade` in `<home>/ade`, the folder `acryl ade` uses), made on first use, in a window or the browser. */
@@ -97,8 +99,8 @@ export interface StarterView {
 /** The one app the screen is making right now (making an app installs it, about a minute). */
 export interface JobView {
   readonly name: string
-  /** Making a new app, or updating one from its Blend's newer release. */
-  readonly kind: 'make' | 'update'
+  /** Making a new app, updating one from its Blend's newer release, or building an installer of one (spec 052 T021). */
+  readonly kind: 'make' | 'update' | 'build'
   /** The line a person types to do the same. */
   readonly line: string
   readonly status: 'running' | 'done' | 'failed'
@@ -109,6 +111,15 @@ export interface JobView {
   /** The last lines the current step printed, live. */
   readonly output: string
   readonly message?: string
+  /** A built installer (kind `build`, done): the file, the folder it is in, and its size. */
+  readonly installer?: InstallerView
+}
+
+/** An installer `acrylblends pack` made: a DMG on macOS, an NSIS installer on Windows, a Debian package on Linux. */
+export interface InstallerView {
+  readonly file: string
+  readonly folder: string
+  readonly megabytes: number
 }
 
 export interface StateResponse {

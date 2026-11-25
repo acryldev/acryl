@@ -18,6 +18,7 @@ export const LAUNCHER_TOOLS = [
   'acryl_launcher_new_app',
   'acryl_launcher_start_app',
   'acryl_launcher_stop_app',
+  'acryl_launcher_build_installer',
   'acryl_launcher_plugins',
   'acryl_launcher_pull_plugin',
   'acryl_launcher_publish_plan',
@@ -29,10 +30,11 @@ export const LAUNCHER_HELP = `The ACRYL launcher is the first screen of ACRYL (W
 - Plugin catalog (left nav): the public Cordis plugin registry (cordisplugins.github.io), browsed by kind (what a plugin does for an app) and domain, searched by words; a plugin's page has "Add to an app", the same pull as "Pull a plugin".
 - Blends store (left nav): the public registry of ready-made apps (acrylblends.github.io/blends); "Make an app" on a card runs "acryl new <name> --from <id>".
 - Add a folder (top): puts an app you already have in the list ("acryl apps add <folder>").
+- Build installer (an app's panel): an installer of the app for this computer (DMG on macOS, .exe on Windows, .deb on Linux) that carries everything it needs, into ACRYL's installers folder; it runs as the screen's job (5-15 minutes).
 - Plugins of a running app (its card's panel): "Pull a plugin" takes github:owner/repo@version; "Share plugin" shows exactly what would be published and sends nothing until the person clicks "Yes, publish". An agent never publishes: it can only prepare the plan.
 - Running, Made by agents, Updates (not built yet), WebBoxes.ai (deploy is coming), Health (Node, npm and the model key), Settings (the look: ACRYL ADE or acryl.dev).
 - Assistant (left nav): this panel. ACRYL ADE (the agentic development environment) opens from its card on My apps.
-Tools: acryl_launcher_apps lists the apps; acryl_launcher_new_app, _start_app and _stop_app change them; acryl_launcher_blends searches the registry; acryl_launcher_plugin_catalog searches the Cordis plugin catalog (kind, domain, the source to pull); acryl_launcher_plugins and _pull_plugin work on a running app; acryl_launcher_publish_plan prepares a publish for the person to confirm.`
+Tools: acryl_launcher_apps lists the apps; acryl_launcher_new_app, _start_app and _stop_app change them; acryl_launcher_build_installer builds an app's installer; acryl_launcher_blends searches the registry; acryl_launcher_plugin_catalog searches the Cordis plugin catalog (kind, domain, the source to pull); acryl_launcher_plugins and _pull_plugin work on a running app; acryl_launcher_publish_plan prepares a publish for the person to confirm.`
 
 /** An app as an agent reads it: the address without its launch token (the token is a secret of the person's session). */
 const describeApp = (app: AppView): Record<string, unknown> => ({
@@ -131,6 +133,13 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
       parameters: { app: { type: 'string', required: true, description: 'the app\'s id from acryl_launcher_apps' } },
       output: { schema: STRING, render: (_args, value: string) => text(value) },
       execute: (args) => { service.stop(args.app); return asText({ stopped: args.app }) },
+    }),
+    defineAcrylTool({
+      name: 'acryl_launcher_build_installer',
+      description: 'Build an installer of an app for this computer\'s OS (DMG, .exe or .deb) that needs no Node, git or ACRYL. Runs as a job of 5-15 minutes; watch it with acryl_launcher_apps.',
+      parameters: { app: { type: 'string', required: true, description: 'the app\'s id from acryl_launcher_apps' } },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: (args) => { service.buildInstaller(args.app); return asText({ building: args.app, job: service.state().job }) },
     }),
     defineAcrylTool({
       name: 'acryl_launcher_plugins',

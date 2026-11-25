@@ -248,6 +248,33 @@ describe('start and stop', () => {
     expect(() => { service.update('notes') }).toThrow(/latest release/u)
   })
 
+  it('builds an installer of an app with its own acrylblends pack, into the home\'s installers folder, and names the file it made (spec 052 T021)', () => {
+    const { service, makeApp, runs, home } = setup()
+    const folder = makeApp('notes')
+    expect(() => { service.buildInstaller('notes') }).toThrow(/no ACRYL packages installed yet: start it once/u)
+    mkdirSync(join(folder, 'node_modules', '@acryldev', 'blends'), { recursive: true })
+    service.buildInstaller('notes')
+    const out = join(home, 'installers', 'notes')
+    expect(existsSync(out)).toBe(true)
+    expect(runs[0]!.command).toMatchObject({ program: 'npm', args: ['exec', '--no', '--', 'acrylblends', 'pack', '--from', '.', '--product', 'notes', '--out', out], cwd: folder })
+    expect(service.state().job).toMatchObject({ kind: 'build', status: 'running' })
+    expect(() => { service.update('notes') }).toThrow(/still being worked on/u)
+    runs[0]!.say('pack-blank-mac: packaging with npx electron-builder@26.15.7\n')
+    runs[0]!.say(`pack-blank-mac: done: ${join(out, 'notes-1.0.0-arm64.dmg')} (212 MB)\n`)
+    runs[0]!.end(0)
+    expect(service.state().job).toMatchObject({ kind: 'build', status: 'done', installer: { file: join(out, 'notes-1.0.0-arm64.dmg'), folder: out, megabytes: 212 }, step: expect.stringContaining('notes-1.0.0-arm64.dmg (212 MB)') })
+  })
+
+  it('reports a build that ends without an installer as failed, with what the packer printed', () => {
+    const { service, makeApp, runs } = setup()
+    const folder = makeApp('notes')
+    mkdirSync(join(folder, 'node_modules', '@acryldev', 'blends'), { recursive: true })
+    service.buildInstaller('notes')
+    runs[0]!.say('pack-blank-mac: npm install failed\n')
+    runs[0]!.end(0)
+    expect(service.state().job).toMatchObject({ kind: 'build', status: 'failed', message: expect.stringContaining('npm install failed') })
+  })
+
   it('says so when Node and npm are not on the machine', () => {
     const { service, makeApp, runs } = setup()
     makeApp('shop')
