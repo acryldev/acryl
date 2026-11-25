@@ -97,6 +97,8 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHomeItem:first-child { border-top: 0; }
 .acrylHomeItem small { display: block; color: var(--h-dim); font-size: 12px; overflow-wrap: anywhere; }
 .acrylHomeNote { margin: 0; color: var(--h-dim); font-size: 13px; line-height: 20px; max-width: 72ch; }
+.acrylHomeShareStep { margin: 10px 0 0; padding-top: 12px; border-top: 1px solid var(--h-line); font-size: 13.5px; line-height: 20px; font-weight: 600; }
+.acrylHomeShareStep:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
 .acrylHomeNote[data-error] { color: var(--h-danger); }
 .acrylHomeForm { display: flex; flex-direction: column; gap: 14px; }
 .acrylHomeField { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }

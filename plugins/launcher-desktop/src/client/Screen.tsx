@@ -294,13 +294,7 @@ function Detail({ api, app, onStart, onUpdate, onBuild, onStop, onRemove, onAppl
             ? <><button type="button" className="acrylHomeBtn" data-primary={app.surface === 'desktop' ? undefined : ''} disabled={app.address === undefined} onClick={() => { if (app.address !== undefined) openExternal(app.address) }}>Open in the browser</button><button type="button" className="acrylHomeBtn" onClick={() => { void onStop(app.id) }}>Stop</button></>
             : <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing'} onClick={() => { void onStart(app.id) }}>Start</button>}
           {app.update === undefined ? null : <button type="button" className="acrylHomeBtn" data-primary title={`${app.blend} ${app.update} is out: bring it into this app, keeping your changes (a git merge), then npm install`} onClick={() => { void onUpdate(app.id) }}>Update to {app.update}</button>}
-          <button type="button" className="acrylHomeBtn" disabled={app.github === undefined}
-            title={app.github === undefined ? 'Share the app to GitHub first (Public), then deploy it from there' : `Opens WebBoxes.ai with ${app.github} filled in`}
-            onClick={() => { if (app.github !== undefined) openExternal(webboxesDeployUrl(app.github, app.name)) }}>Deploy to WebBoxes.ai</button>
-          <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing' || onBuild === undefined}
-            title="Builds an installer of this app for this computer (a DMG on macOS, an .exe on Windows, a .deb on Linux) that carries everything it needs: send it to anyone, they need no Node, git or ACRYL"
-            onClick={() => { void onBuild?.(app.id) }}>Build installer</button>
-          <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Give the app a repository of its own on GitHub and push it there, after you read what would be sent" onClick={() => { setSharing(open => !open) }}>Share</button>
+          <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} aria-expanded={sharing} title="Every way to share or move this app: save it to GitHub, build an installer, deploy it to WebBoxes.ai, publish a plugin" onClick={() => { setSharing(open => !open) }}>Share</button>
           <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing'} title={app.inApplications === true ? 'Takes the launcher out of your Applications (Spotlight, the Start menu, the app menu); the app itself stays' : 'Puts a launcher for this app where your computer looks for apps (Spotlight, the Start menu, the app menu)'}
             onClick={() => { void onApplications(app.id, app.inApplications !== true) }}>{app.inApplications === true ? 'Remove from Applications' : 'Add to Applications'}</button>
           <button type="button" className="acrylHomeBtn" disabled title="coming">Open folder</button>
@@ -316,7 +310,7 @@ function Detail({ api, app, onStart, onUpdate, onBuild, onStop, onRemove, onAppl
         <dt>Runs</dt><dd>{runsLine(app)}</dd>
       </dl>
       {app.state === 'starting' ? <><p className="acrylHomeNote" role="status">Starting {app.name}: {app.output === undefined ? 'waiting for its first output.' : 'what it prints, live:'}</p>{app.output === undefined ? null : <pre className="acrylHomeLog">{app.output}</pre>}</> : null}
-      {sharing ? <SharePanel key={app.id} api={api} app={app} onClose={() => { setSharing(false) }} openExternal={openExternal} /> : null}
+      {sharing ? <SharePanel key={app.id} api={api} app={app} onBuild={onBuild} onClose={() => { setSharing(false) }} openExternal={openExternal} /> : null}
       {running ? <PluginsPanel api={api} app={app} openExternal={openExternal} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
       {app.failure === undefined ? null : <p className="acrylHomeNote" data-error>It stopped on its own:{'\n'}{app.failure}</p>}
     </div>
@@ -385,8 +379,12 @@ function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: 
   )
 }
 
-/** Share a whole app: the app's own plan (which repository, how visible, what is saved first), then the person's yes. The app need not be running. */
-function SharePanel({ api, app, onClose, openExternal }: { api: LauncherApi, app: AppView, onClose: () => void, openExternal: (url: string) => void }): ReactNode {
+/**
+ * The Share place of an app (spec 052 T060): every way to share or move it, gathered, each the flow it was before. Save to GitHub (the app's own plan,
+ * then the person's yes), Build installer (T021), Deploy to WebBoxes.ai (from its GitHub repository), and publishing a plugin (the running app's Plugins).
+ * The app need not be running, except to publish a plugin.
+ */
+function SharePanel({ api, app, onBuild, onClose, openExternal }: { api: LauncherApi, app: AppView, onBuild?: ((id: string) => Promise<boolean>) | undefined, onClose: () => void, openExternal: (url: string) => void }): ReactNode {
   const [owner, setOwner] = useState('')
   const [plan, setPlan] = useState<AppSharePlanView | undefined>(undefined)
   const [done, setDone] = useState<AppShareResponse | undefined>(undefined)
@@ -405,6 +403,8 @@ function SharePanel({ api, app, onClose, openExternal }: { api: LauncherApi, app
   return (
     <div className="acrylHomePanel" role="group" aria-label={`Share ${app.name}`} ref={panel}>
       <div className="acrylHomePanelTop"><h3>Share {app.name}</h3><button type="button" className="acrylHomeBtn" data-small onClick={onClose}>Close</button></div>
+      <h4 className="acrylHomeShareStep">1. Save to GitHub</h4>
+      <p className="acrylHomeNote">A repository of its own, with every saved version: the way to keep it, move it to another computer, or work on it with others.</p>
       <GithubConnect api={api} openExternal={openExternal} />
       {done !== undefined ? (
         <p className="acrylHomeNote" role="status">Shared to <span className="acrylHomeMeta">{remoteLabel(done.remote)}</span>{done.created ? ' (a new repository)' : ''}. Someone you give access makes their own copy with <span className="acrylHomeMeta">git clone {done.remote}</span></p>
@@ -435,6 +435,14 @@ function SharePanel({ api, app, onClose, openExternal }: { api: LauncherApi, app
         </>
       )}
       {note === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{note}</p>}
+      <h4 className="acrylHomeShareStep">2. Build installer</h4>
+      <p className="acrylHomeNote">An installer of {app.name} for this computer: a DMG on macOS, an .exe on Windows, a .deb on Linux. It carries everything the app needs, so whoever gets it needs no Node, git or ACRYL. It takes 5 to 15 minutes; the progress shows at the top.</p>
+      <div className="acrylHomeActs"><button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing' || onBuild === undefined} onClick={() => { void onBuild?.(app.id) }}>Build installer</button></div>
+      <h4 className="acrylHomeShareStep">3. Deploy to WebBoxes.ai</h4>
+      <p className="acrylHomeNote">{app.github === undefined ? 'Runs the app in the cloud, at an address anyone can open. It deploys from the app\'s GitHub repository: save it to GitHub (public) first.' : `Runs the app in the cloud from ${app.github}, at an address anyone can open.`}</p>
+      <div className="acrylHomeActs"><button type="button" className="acrylHomeBtn" disabled={app.github === undefined} onClick={() => { if (app.github !== undefined) openExternal(webboxesDeployUrl(app.github, app.name)) }}>Deploy to WebBoxes.ai</button></div>
+      <h4 className="acrylHomeShareStep">4. Publish a plugin</h4>
+      <p className="acrylHomeNote">{app.state === 'running' ? 'A plugin made in this app goes to the plugin registry from its Plugins, below: Share plugin shows exactly what would be published first.' : `Start ${app.name}: its Plugins, below, then publish a plugin made in it to the plugin registry.`}</p>
     </div>
   )
 }

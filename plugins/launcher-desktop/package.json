@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/launcher-desktop",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "The ACRYL screen of the desktop app (spec 050): every app made with ACRYL on this machine, the surface of each (Web, Desktop, CLI/TUI), and New app, Add a folder, Start and Stop. The Host half serves the list and runs the commands; the Client half draws the Control Center design as the first screen",
   "license": "MIT",
   "repository": {

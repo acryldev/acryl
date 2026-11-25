@@ -98,7 +98,6 @@ describe('the ACRYL screen', () => {
     open(fake(state([app({})])))
     const filter = await screen.findByRole('button', { name: /CLI \(TUI\) \(coming\)/u })
     expect((filter as HTMLButtonElement).disabled).toBe(true)
-    expect((screen.getByRole('button', { name: 'Deploy to WebBoxes.ai' }) as HTMLButtonElement).disabled).toBe(true)
     expect((screen.getByRole('button', { name: 'Open folder' }) as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: '+ New app' }))
     const radio = screen.getByRole('radio', { name: /CLI \(TUI\) \(coming\)/u }) as HTMLInputElement
@@ -279,11 +278,24 @@ describe('the plugins of a running app', () => {
     const opened: string[] = []
     const shared = { ...app({}), github: 'https://github.com/ana/shop' }
     render(<LauncherScreen api={fake(state([shared]))} visibility={new LauncherVisibility(true)} openExternal={(url) => { opened.push(url) }} />)
+    // Deploy lives in the app's Share place (spec 052 T060).
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }))
     expect(opened).toEqual(['https://webboxes.ai/dashboard/webboxes?github=https%3A%2F%2Fgithub.com%2Fana%2Fshop&name=shop'])
     cleanup()
     render(<LauncherScreen api={fake(state([app({})]))} visibility={new LauncherVisibility(true)} openExternal={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
     expect((await screen.findByRole('button', { name: 'Deploy to WebBoxes.ai' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('gathers every way to share an app in its Share place, in order, and builds an installer from it (spec 052 T060, T021)', async () => {
+    const api = fake(state([app({})]))
+    render(<LauncherScreen api={api} visibility={new LauncherVisibility(true)} openExternal={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
+    const place = await screen.findByRole('group', { name: /^Share / })
+    expect([...place.querySelectorAll('h4')].map(step => step.textContent)).toEqual(['1. Save to GitHub', '2. Build installer', '3. Deploy to WebBoxes.ai', '4. Publish a plugin'])
+    fireEvent.click(screen.getByRole('button', { name: 'Build installer' }))
+    await waitFor(() => { expect(api.buildInstaller).toHaveBeenCalledTimes(1) })
   })
 
   it('deploys a store Blend to WebBoxes.ai with ?blend=<id>; a community Blend from GitHub deploys from its repository', async () => {

@@ -231,7 +231,7 @@ distribution, like export app or make build ... multi way to share or move an ap
 webboxes.ai"; then "go build, yes"): one **Share** place per app first, with **Build installer** (T021, this computer's OS) as its first new action,
 beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); then Share with team (T061-T064); then D18 steps 2 and 3 (T068, T069).
 
-- [ ] T060 One "Share" place in an app's Settings and per app in the Control Center: Save to GitHub (`@acryldev/save`), a feature to the
+- [x] T060 (built 2026-11-25 in Control Center: an app's Share opens its Share place, 1. Save to GitHub, 2. Build installer, 3. Deploy to WebBoxes.ai, 4. Publish a plugin; the app's own Settings get the same place with T061) One "Share" place in an app's Settings and per app in the Control Center: Save to GitHub (`@acryldev/save`), a feature to the
   registry (`@acryldev/plugin-share`), Deploy to WebBoxes.ai, each as today, gathered, not rewritten.
 - [ ] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
 - [ ] T062 AppImage as a Linux target in the packer and the release workflow, beside deb and tar.gz.
