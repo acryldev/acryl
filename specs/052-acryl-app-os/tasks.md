@@ -265,7 +265,11 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
   `name: '@acryldev/blends-frame'`); `acryl-door` already mounts an app-owned copy (`./plugins/door/src/index.ts`), so owning is the same row id
   pointed at `./plugins/<name>/src/index.ts`, recorded so that regenerating the frame keeps it. The core packages publish only `lib/` (blends-frame
   0.2.18: 95 files, no `src/`), so the source comes from acryldev/acryl at the version the app runs (its frame tag), and the package's dependencies
-  stay installed. Open question, proven first by hand: whether the frame serves an owned copy's client half (compiled at release today) in dev.
+  stay installed. Proven by hand 2026-11-25 (scratch home, an app from the Notes starter on blends-frame 0.2.18): blends-frame built from its source
+  with one marked string (`NEW_CHAT = 'New chat (OWNED COPY)'`), its `lib/`, `package.json` and `cordis.patch.yml` placed in the app's
+  `plugins/blends-frame/`, the `acryl-blends-frame` row pointed at `./plugins/blends-frame/lib/index.js` (a folder fails: "failed to import"):
+  the host loaded it and the page's client bundle carried the marker; a second app on the shared package was unchanged. So owning works with
+  the copy's own build (tsdown, as the package does); the command builds it once when owned and after each edit, with the build tools it needs.
   `acryl plugin own <name>`: copy the plugin's source into the app's `plugins/`, mount it in place of the shared one (same row id), record
   it so `acrylblends update` merges upstream into it; refuse with the reason for a part that cannot be owned. Test and proof: an app owns
   `blends-frame`, changes its left panel, a second app is unchanged.
