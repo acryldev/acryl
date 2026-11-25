@@ -201,6 +201,13 @@ It is a larger change to desktop-shell's start path, and is proposed as the next
   Flake check (2026-11-25): the `{"error":"invalid JSON request"}` seen on a first POST to `/new` in two of five fresh-home runs of my own curl scripts was not reproduced in 145
   first-POST attempts on AION against v0.2.23 (50 warm restarts x 3, 25 with the failing script shape, 20 fresh homes); the request path reads the body once. Not reproduced, no fix made;
   if it recurs, record the exact request and timing.
+- [ ] T055d `@acryldev/plugin-admin`'s agent tools (`acryl_plugin_list`, `acryl_plugin_set_enabled`) work in a Blend's chat (owner direction 2026-11-19: every
+  agent drives the app). Found in the v0.2.24 walk: the frame gave the tools port but no `acrPluginLifecycle`, which only the ACRYL runtime provided. The
+  frame owns switching (the same list and switch as its Settings > Plugins) and provides it as `frameAppPlugins` (@acryldev/blends-frame 0.2.18);
+  `@acryldev/app-context` 0.2.3 adapts it to `acrPluginLifecycle` (`src/plugin-lifecycle.ts`, as `acryl-tools.ts` adapts the tools). The app's plugins
+  (`blend.yaml` rows and `plugins/` folders) are changeable, each change asked of the person; the frame's own rows are listed and locked. No second plugin
+  screen: DSH's `ui-settings-plugins` stays out of a Blend, so plugin-admin's two tabs have no place to show. Done when: tests, the full gate, and an AION
+  chat walk that lists and switches a plugin, with a look at Settings showing one Plugins page.
 - [ ] T055c Replace what `scripts/launcher-blend.mjs` does for `pnpm dev` (assemble the Control Center Blend from this checkout) with the Blend's own
   repository run from source, then remove the script and `launcher-dev.mjs`'s `blend` face.
 

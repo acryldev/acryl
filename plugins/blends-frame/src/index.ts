@@ -23,7 +23,7 @@ import { GitRunner, Versions } from '@acryldev/versions'
 import * as workspaceHost from '@acryldev/workspace'
 // `ctx.loader`: the frame lists its Loader rows and starts the app's plugins again after a switch.
 import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
-import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, recordShare, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
+import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, recordShare, saveAppPlugin, shareAppPlugin, switchAppPlugin, isFramePlugin, listAppPluginSwitches, type FrameAppPlugins, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
 import { appFallbackTarget, appNavigationTarget } from './app-urls.ts'
 import { AppShareRefused, appShareCommand, type AppSharePort } from './app-share.ts'
 import { AppIconRefused, APP_ICON_MAX_BYTES, iconBytes, saveAppIcon } from './app-icon.ts'
@@ -996,6 +996,13 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
     ctx.effect(() => () => {
       githubConnect.dispose()
     }, '@acryldev/blends-frame: connecting GitHub')
+    // The app's plugins read blend.yaml when they start: start them again so a switch takes effect now.
+    // The overlay's rows sit in a group of the composition, so the row is found by its own id, not resolved from the root.
+    const restartAppPlugins = async (): Promise<void> => {
+      const loader = ctx.get('loader')
+      const entry = loader === undefined ? undefined : [...loader.entries()].find(row => row.options.id === APP_PLUGINS_ROW)
+      if (entry?.fiber !== undefined) await entry.fiber.restart()
+    }
     const plugins: PluginsPort = {
       read: async () => {
         const [app, frame] = await Promise.all([readAppPlugins(root, git, join(ctx.appInstance.home, 'shared-plugins.json'), ghRepositoryCheck, storeRootOf(ctx.appInstance.home)), readFramePlugins(root, frameRows())])
@@ -1003,11 +1010,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       },
       switch: async (kind, name, on) => {
         await switchAppPlugin(root, kind, name, on)
-        // The app's plugins read blend.yaml when they start: start them again so the switch takes effect now.
-        // The overlay's rows sit in a group of the composition, so the row is found by its own id, not resolved from the root.
-        const loader = ctx.get('loader')
-        const entry = loader === undefined ? undefined : [...loader.entries()].find(row => row.options.id === APP_PLUGINS_ROW)
-        if (entry?.fiber !== undefined) await entry.fiber.restart()
+        await restartAppPlugins()
       },
       // A local plugin goes to GitHub through the plugin-hub path: the same pack, secret check, repository, release and local store an
       // ACRYL plugin share uses, with the user's own gh and git doing the publishing.
@@ -1156,9 +1159,18 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
     ctx.routerHttp.mount(FRAME_API_PREFIX)
     // The snapshot verbs for the agent's tools (@acryldev/app-context), on the same git runner and queue as the left panel's buttons.
     const stopSnapshot = ctx.reflect.provide('appSnapshot', snapshot)
+    // The plugins a person switches in Settings > Plugins, for the agent's plugin tools (@acryldev/app-context gives them `acrPluginLifecycle`).
+    const appPlugins: FrameAppPlugins = {
+      list: () => listAppPluginSwitches(root),
+      frame: () => frameRows().filter(row => isFramePlugin(row.name, row.id)),
+      switch: (kind, name, on) => plugins.switch(kind, name, on),
+      restart: restartAppPlugins,
+    }
+    const stopAppPlugins = ctx.reflect.provide('frameAppPlugins', appPlugins)
     return () => {
       graph.stop()
       void stopSnapshot()
+      void stopAppPlugins()
       stopListening()
       stopGuard()
       stopOutwardGuard()
