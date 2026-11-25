@@ -198,6 +198,9 @@ It is a larger change to desktop-shell's start path, and is proposed as the next
   of that scope: a provide made straight from `apply` is not seen by the package); the other plugins that inject `acrylTools` (plugin-admin, workspace)
   find no port in a Blends frame, so their tools are not in the Blend's chat. Providing it for the whole frame brings those tools into the chat: decide that
   with the owner first.
+  Flake check (2026-11-25): the `{"error":"invalid JSON request"}` seen on a first POST to `/new` in two of five fresh-home runs of my own curl scripts was not reproduced in 145
+  first-POST attempts on AION against v0.2.23 (50 warm restarts x 3, 25 with the failing script shape, 20 fresh homes); the request path reads the body once. Not reproduced, no fix made;
+  if it recurs, record the exact request and timing.
 - [ ] T055c Replace what `scripts/launcher-blend.mjs` does for `pnpm dev` (assemble the Control Center Blend from this checkout) with the Blend's own
   repository run from source, then remove the script and `launcher-dev.mjs`'s `blend` face.
 
