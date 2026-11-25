@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/blends",
-  "version": "1.7.33",
+  "version": "1.7.34",
   "description": "The Acryl web framework (import { Acryl } from \"acrylblends\") and the acrylblends command that scaffolds Cordis apps.",
   "license": "MIT",
   "type": "module",
