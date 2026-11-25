@@ -11,7 +11,7 @@ import {
 } from '@acryldev/launcher'
 import type {
   GithubPollView, GithubStartView, GithubView,
-  AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
+  AppSharePlanRequest, AppSharePlanView, AppShareRequest, AppShareResponse, AppRunState, AppView, BlendView, HealthView, JobView, NewAppRequest, PluginCatalogView, PluginPullResponse, PluginView, PublishPlanRequest, PublishPlanView, PublishRequest, PublishResponse, StateResponse, Surface,
 } from './contract.ts'
 import { ACCOUNT_NAME, BLEND_ID, BLEND_SOURCE, LICENSE_ID, MAKEABLE_SURFACES, PLUGIN_NAME } from './contract.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from './door.ts'
@@ -33,6 +33,8 @@ export interface LauncherPorts {
   readonly makeFolder: (path: string) => void
   /** The Blends in the public registry; rejects (`RegistryUnavailable`) when it cannot be read. */
   readonly blends: () => Promise<readonly BlendView[]>
+  /** The Cordis plugin catalog of the public registry; rejects (`RegistryUnavailable`) when it cannot be read. Absent: the catalog is not offered. */
+  readonly pluginCatalog?: () => Promise<PluginCatalogView>
   /** The running apps' doors: what lists, pulls and publishes their plugins. */
   readonly door: Door
   /**
@@ -97,6 +99,7 @@ export class LauncherService {
   readonly #failures = new Map<string, string>()
   #job: Job | undefined
   #blends: { at: number, list: readonly BlendView[] } | undefined
+  #pluginCatalog: { at: number, view: PluginCatalogView } | undefined
 
   #signIn: { readonly clientId: string, readonly deviceCode: string, readonly until: number } | undefined
   /** Apps just made whose `npm install` is running (`#install`), by id. */
@@ -377,6 +380,15 @@ export class LauncherService {
     const list = await this.#ports.blends()
     this.#blends = { at: Date.now(), list }
     return list
+  }
+
+  /** The Cordis plugin catalog, read again at most once a minute like the Blends. */
+  async pluginCatalog(): Promise<PluginCatalogView> {
+    if (this.#ports.pluginCatalog === undefined) throw new LauncherRefusal('The plugin catalog is not offered here.')
+    if (this.#pluginCatalog !== undefined && Date.now() - this.#pluginCatalog.at < BLENDS_FRESH_MS) return this.#pluginCatalog.view
+    const view = await this.#ports.pluginCatalog()
+    this.#pluginCatalog = { at: Date.now(), view }
+    return view
   }
 
   /** The apps folder, made when it is not there yet: the assistant's agent works in it, and a folder that does not exist cannot be worked in. */

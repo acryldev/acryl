@@ -7,7 +7,7 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { prepareTools } from '@acryldev/launcher'
 import { fileDoor } from './door.ts'
-import { readBlends } from './registry.ts'
+import { readBlends, readPluginCatalog } from './registry.ts'
 import { spawnRunner } from './runner.ts'
 import { LauncherService } from './service.ts'
 
@@ -21,6 +21,7 @@ export function createNodeLauncher(home: string, environment: () => Readonly<Rec
     exists: path => existsSync(path),
     makeFolder: (path) => { mkdirSync(path, { recursive: true }) },
     blends: () => readBlends(),
+    pluginCatalog: () => readPluginCatalog(),
     door: fileDoor(),
     // A computer without Node.js 22.19+ or gh gets them once, from their makers, into the home's tools folder.
     prepareTools: () => prepareTools(home, process.env),
@@ -28,8 +29,8 @@ export function createNodeLauncher(home: string, environment: () => Readonly<Rec
 }
 
 export { LauncherRefusal, LauncherService } from './service.ts'
-export { readBlends, RegistryUnavailable } from './registry.ts'
+export { readBlends, readPluginCatalog, RegistryUnavailable } from './registry.ts'
 export { webboxesDeployUrl } from './contract.ts'
-export type { AppView, BlendView, GithubPollView, GithubStartView, JobView, PluginView, StateResponse, Surface } from './contract.ts'
+export type { AppView, BlendView, PluginCatalogEntry, PluginCatalogView, GithubPollView, GithubStartView, JobView, PluginView, StateResponse, Surface } from './contract.ts'
 // The door client over an app folder's `.acryl/door.json`: what another Blend (ACRYL AOS) uses to drive the apps this service starts.
 export { type Door, type DoorAnswer, DoorUnavailable, fileDoor } from './door.ts'

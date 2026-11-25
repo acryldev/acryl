@@ -17,6 +17,8 @@ export const LAUNCHER_UPDATE_SELF_PATH = `${LAUNCHER_API_PREFIX}/update-self`
 /** Open ACRYL ADE (the Blend `acryl.ade` in `<home>/ade`, the folder `acryl ade` uses), made on first use, in a window or the browser. */
 export const LAUNCHER_ADE_PATH = `${LAUNCHER_API_PREFIX}/ade`
 export const LAUNCHER_BLENDS_PATH = `${LAUNCHER_API_PREFIX}/blends`
+/** The Cordis plugin catalog of the public registry (cordisplugins.github.io): plugins with their kind and domain (spec 053). */
+export const LAUNCHER_PLUGIN_CATALOG_PATH = `${LAUNCHER_API_PREFIX}/plugin-catalog`
 export const LAUNCHER_ASSISTANT_FOLDER_PATH = `${LAUNCHER_API_PREFIX}/assistant-folder`
 export const LAUNCHER_PLUGINS_PATH = `${LAUNCHER_API_PREFIX}/plugins`
 export const LAUNCHER_PLUGIN_PULL_PATH = `${LAUNCHER_API_PREFIX}/plugin-pull`
@@ -167,6 +169,43 @@ export interface BlendPlace {
   readonly category: string
   readonly subcategory: string
   readonly order: number
+}
+
+/** One of the catalog's kinds (spec 053): what a plugin does for an app, the main filter of the plugin catalog. */
+export interface PluginKindView {
+  readonly slug: string
+  readonly name: string
+  readonly description: string
+}
+
+/** A plugin in the public Cordis registry, as the plugin catalog lists it. */
+export interface PluginCatalogEntry {
+  /** The registry's id (a slug): `acryl-quick-notes`. */
+  readonly id: string
+  /** The package name: `acryl-quick-notes`, `@scope/name`. */
+  readonly name: string
+  readonly description: string
+  /** A kind's `slug`; absent: unclassified (its author has not said, and the owner's table does not cover it yet). */
+  readonly kind?: string
+  /** The v04 domain (`NN-SS`) as the shared catalog names it: its category and subcategory. */
+  readonly domain?: { readonly id: string, readonly category: string, readonly sub: string }
+  readonly component?: { readonly id: string, readonly name: string }
+  /** `Both`, `ACRYL`, `ACRYL Blends` or `DSH stock`: which hosts the plugin was made for. */
+  readonly compatibility: string
+  readonly origin: 'official' | 'community'
+  readonly publisher: string
+  readonly version: string
+  /** Its repository (https). */
+  readonly repo: string
+  /** Its page on the registry's site (https). */
+  readonly page?: string
+  /** What `Pull a plugin` takes (`github:owner/repo@version`); absent: the registry names no release to pull. */
+  readonly source?: string
+}
+
+export interface PluginCatalogView {
+  readonly kinds: readonly PluginKindView[]
+  readonly plugins: readonly PluginCatalogEntry[]
 }
 
 export interface BlendsResponse {

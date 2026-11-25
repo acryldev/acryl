@@ -1,5 +1,5 @@
 /** The public Blend registry as the screen's store lists it: only reads (the same index `acryl new --from` and the terminal's "Install a Blend" use). */
-import { BLEND_SOURCE, type BlendPlace, type BlendView } from './contract.ts'
+import { BLEND_SOURCE, type BlendPlace, type BlendView, type PluginCatalogEntry, type PluginCatalogView, type PluginKindView } from './contract.ts'
 
 export const REGISTRY_INDEX = 'https://acrylblends.github.io/registry/index.json'
 /** Blends released by people outside the ACRYL project and found on GitHub by the registry's hourly sync (origin `community`, each with its `source`). */
@@ -100,4 +100,81 @@ export async function readBlends(fetchImpl: Fetch = (input, init) => fetch(input
     const where = placed.get(blend.id)
     return where === undefined ? blend : { ...blend, ...where, category: [where.place.category, where.place.subcategory].filter(Boolean).join(' › ') }
   }).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** The public Cordis plugin registry (cordisplugins.github.io): its list of plugins, and the shared catalog the kinds and domains are named in (spec 053). */
+export const PLUGIN_REGISTRY_INDEX = 'https://cordisplugins.github.io/registry/index.json'
+export const PLUGIN_CATEGORIES = 'https://cordisplugins.github.io/categories.json'
+
+/** The line a registry entry names for pulling (`/plugin pull github:owner/repo@1.2.3`), as the source `Pull a plugin` takes. */
+const PULL_LINE = /^\/plugin pull (github:[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-Za-z0-9._-]{1,100}@[A-Za-z0-9._-]{1,64})$/u
+
+/**
+ * The shared catalog's names for kinds, domains and components. Optional: when it cannot be read, plugins are listed without kinds or domains
+ * (the registry's list itself is enough to browse and add). It is about a megabyte, so only the names the screen needs are kept.
+ */
+async function catalogNames(fetchImpl: Fetch, url: string): Promise<{ kinds: readonly PluginKindView[], domains: ReadonlyMap<string, { category: string, sub: string }>, components: ReadonlyMap<string, string> }> {
+  const none = { kinds: [], domains: new Map<string, { category: string, sub: string }>(), components: new Map<string, string>() }
+  let body: unknown
+  try {
+    const response = await fetchImpl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) })
+    if (!response.ok) return none
+    body = await response.json()
+  } catch {
+    return none
+  }
+  const root = record(body)
+  const kinds = (Array.isArray(root?.kinds) ? root.kinds : []).flatMap((raw): PluginKindView[] => {
+    const kind = record(raw)
+    return typeof kind?.slug === 'string' && kind.slug !== '' ? [{ slug: kind.slug, name: text(kind.name) || kind.slug, description: text(kind.description) }] : []
+  })
+  const domains = new Map<string, { category: string, sub: string }>()
+  const components = new Map<string, string>()
+  for (const rawCategory of Array.isArray(root?.categories) ? root.categories : []) {
+    const category = record(rawCategory)
+    for (const rawSub of Array.isArray(category?.subcategories) ? category.subcategories : []) {
+      const sub = record(rawSub)
+      if (typeof sub?.id !== 'string') continue
+      domains.set(sub.id, { category: text(category?.name), sub: text(sub.name) })
+      for (const rawComponent of Array.isArray(sub.components) ? sub.components : []) {
+        const component = record(rawComponent)
+        if (typeof component?.id === 'string') components.set(component.id, text(component.name))
+      }
+    }
+  }
+  return { kinds, domains, components }
+}
+
+/**
+ * The Cordis plugins of the public registry, with each one's kind and domain named by the shared catalog, by name. A plugin whose kind the catalog does not
+ * know is listed without one (unclassified). `RegistryUnavailable` when the plugin list itself cannot be read.
+ */
+export async function readPluginCatalog(fetchImpl: Fetch = (input, init) => fetch(input, init), indexUrl: string = PLUGIN_REGISTRY_INDEX, categoriesUrl: string = PLUGIN_CATEGORIES): Promise<PluginCatalogView> {
+  const [entries, names] = await Promise.all([entriesOf(fetchImpl, indexUrl), catalogNames(fetchImpl, categoriesUrl)])
+  const kinds = new Set(names.kinds.map(kind => kind.slug))
+  const plugins: PluginCatalogEntry[] = []
+  for (const raw of entries) {
+    const entry = record(raw)
+    if (entry === undefined || typeof entry.id !== 'string' || entry.id === '' || typeof entry.name !== 'string' || entry.name === '') continue
+    const domain = typeof entry.domain === 'string' ? names.domains.get(entry.domain) : undefined
+    const componentName = typeof entry.component === 'string' ? names.components.get(entry.component) : undefined
+    const page = httpsUrl(entry.page)
+    const source = PULL_LINE.exec(text(entry.acrylPull))?.[1]
+    plugins.push({
+      id: entry.id,
+      name: entry.name,
+      description: text(entry.description),
+      ...typeof entry.kind === 'string' && kinds.has(entry.kind) ? { kind: entry.kind } : {},
+      ...domain === undefined ? {} : { domain: { id: String(entry.domain), ...domain } },
+      ...componentName === undefined ? {} : { component: { id: String(entry.component), name: componentName } },
+      compatibility: text(entry.compatibility),
+      origin: entry.origin === 'official' ? 'official' : 'community',
+      publisher: text(entry.publisher),
+      version: text(entry.version),
+      repo: httpsUrl(entry.repo) ?? '',
+      ...page === undefined ? {} : { page },
+      ...source === undefined ? {} : { source },
+    })
+  }
+  return { kinds: names.kinds, plugins: plugins.sort((a, b) => a.name.localeCompare(b.name)) }
 }

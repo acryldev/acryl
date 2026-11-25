@@ -3,7 +3,7 @@ import { Acryl } from '@acryldev/blends'
 import { error } from '@acryldev/loopback-http'
 import { INVALID_JSON, jsonBody, jsonContent, ownPage, privateApi, readJson, type ReportError } from '@acryldev/loopback-http/router'
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_CATALOG_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_API_PREFIX, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
   SURFACES, type AppSharePlanRequest, type AppSharePlanView, type AppShareRequest, type NewAppRequest, type PublishPlanRequest, type PublishPlanView, type PublishRequest, type Surface,
 } from './contract.ts'
 import { RegistryUnavailable } from './registry.ts'
@@ -115,6 +115,17 @@ export function launcherRoutes(service: LauncherService, report: ReportError = (
     } catch (cause) {
       if (cause instanceof RegistryUnavailable) return c.json(error(cause.message), 502)
       report('read the registry', cause)
+      return c.json(error('the launcher is unavailable'), 500)
+    }
+  })
+
+  app.get(LAUNCHER_PLUGIN_CATALOG_PATH, ownPage, async (c) => {
+    try {
+      return c.json(await service.pluginCatalog())
+    } catch (cause) {
+      if (cause instanceof LauncherRefusal) return c.json(error(cause.message), 409)
+      if (cause instanceof RegistryUnavailable) return c.json(error(cause.message), 502)
+      report('read the plugin catalog', cause)
       return c.json(error('the launcher is unavailable'), 500)
     }
   })

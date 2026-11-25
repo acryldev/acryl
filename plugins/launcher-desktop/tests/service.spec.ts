@@ -64,6 +64,18 @@ function setup(extra: Partial<LauncherPorts> = {}) {
   return { root, home, appsFolder, runs, service, makeApp, registry, doorCalls, doorAnswers }
 }
 
+describe('the plugin catalog', () => {
+  const view = { kinds: [], plugins: [] }
+  it('is read at most once a minute, and refused in words when this face does not offer it', async () => {
+    let reads = 0
+    const { service } = setup({ pluginCatalog: async () => { reads += 1; return view } })
+    expect(await service.pluginCatalog()).toBe(view)
+    expect(await service.pluginCatalog()).toBe(view)
+    expect(reads).toBe(1)
+    await expect(setup().service.pluginCatalog()).rejects.toThrow('The plugin catalog is not offered here.')
+  })
+})
+
 describe('the list', () => {
   it('shows the registry with state, surface and the folder name, and a folder that is gone as missing', () => {
     const { service, makeApp, root } = setup()

@@ -1,6 +1,6 @@
 /** The registry reader: only Blends an ACRYL app can be made from, by name, and a reason in words when it cannot be read. */
 import { describe, expect, it } from 'vitest'
-import { readBlends, REGISTRY_DISCOVERED, REGISTRY_INDEX, REGISTRY_PLACEMENT, RegistryUnavailable } from '../src/registry.ts'
+import { PLUGIN_CATEGORIES, PLUGIN_REGISTRY_INDEX, readBlends, readPluginCatalog, REGISTRY_DISCOVERED, REGISTRY_INDEX, REGISTRY_PLACEMENT, RegistryUnavailable } from '../src/registry.ts'
 
 const answer = (body: unknown, status = 200) => async () => ({ ok: status < 400, status, json: async () => body })
 
@@ -83,5 +83,64 @@ describe('readBlends', () => {
     await expect(readBlends(async () => { throw new TypeError('fetch failed') })).rejects.toThrow('could not be read. Check the network')
     await expect(readBlends(answer({}, 404))).rejects.toThrow('answered HTTP 404')
     await expect(readBlends(answer({ entries: 'x' }))).rejects.toBeInstanceOf(RegistryUnavailable)
+  })
+})
+
+describe('readPluginCatalog', () => {
+  const categories = {
+    formatVersion: 2,
+    kinds: [{ slug: 'ui', name: 'UI Panels & Views', description: 'Panels' }, { slug: 'fun', name: 'Fun', description: 'Just for fun.' }],
+    categories: [{ id: '02', name: 'Application', subcategories: [
+      { id: '02-02', name: 'Personal information tools', components: [{ id: '02-02-02', name: 'Bookmark store' }] },
+      { id: '02-06', name: 'Application shell components', components: [] },
+    ] }],
+  }
+  const quickNotes = {
+    id: 'acryl-quick-notes', name: 'acryl-quick-notes', description: 'Quick notes', kind: 'ui', domain: '02-02', component: '02-02-02', compatibility: 'Both', origin: 'community',
+    publisher: 'inboxxobni', version: '0.3.0', repo: 'https://github.com/inboxxobni/acryl-quick-notes', page: 'https://cordisplugins.github.io/plugins/p/acryl-quick-notes',
+    acrylPull: '/plugin pull github:inboxxobni/acryl-quick-notes@0.3.0',
+  }
+
+  it('names each plugin\'s kind, domain and component from the shared catalog, with the source Pull takes, by name', async () => {
+    const view = await readPluginCatalog(byUrl({
+      [PLUGIN_REGISTRY_INDEX]: { entries: [{ id: 'zeta', name: 'zeta', origin: 'official', compatibility: 'ACRYL' }, quickNotes] },
+      [PLUGIN_CATEGORIES]: categories,
+    }))
+    expect(view.kinds.map(kind => kind.slug)).toEqual(['ui', 'fun'])
+    expect(view.plugins.map(plugin => plugin.id)).toEqual(['acryl-quick-notes', 'zeta'])
+    expect(view.plugins[0]).toEqual({
+      id: 'acryl-quick-notes', name: 'acryl-quick-notes', description: 'Quick notes', kind: 'ui', domain: { id: '02-02', category: 'Application', sub: 'Personal information tools' },
+      component: { id: '02-02-02', name: 'Bookmark store' }, compatibility: 'Both', origin: 'community', publisher: 'inboxxobni', version: '0.3.0',
+      repo: 'https://github.com/inboxxobni/acryl-quick-notes', page: 'https://cordisplugins.github.io/plugins/p/acryl-quick-notes', source: 'github:inboxxobni/acryl-quick-notes@0.3.0',
+    })
+    // No kind, domain or pull line in the entry: listed, unclassified, nothing to add.
+    expect(view.plugins[1]).toMatchObject({ id: 'zeta', origin: 'official', compatibility: 'ACRYL', repo: '' })
+    expect(view.plugins[1]).not.toHaveProperty('kind')
+    expect(view.plugins[1]).not.toHaveProperty('source')
+  })
+
+  it('drops a kind the catalog does not know, a pull line that is not github:owner/repo@version, and entries without an id or name', async () => {
+    const view = await readPluginCatalog(byUrl({
+      [PLUGIN_REGISTRY_INDEX]: { entries: [
+        { ...quickNotes, kind: 'nonsense', domain: '99-99', component: '99-99-99', acrylPull: '/plugin pull https://evil.example/x.tgz' },
+        { name: 'no-id' },
+        { id: 'no-name' },
+        'junk',
+      ] },
+      [PLUGIN_CATEGORIES]: categories,
+    }))
+    expect(view.plugins).toHaveLength(1)
+    expect(view.plugins[0]).not.toHaveProperty('kind')
+    expect(view.plugins[0]).not.toHaveProperty('domain')
+    expect(view.plugins[0]).not.toHaveProperty('component')
+    expect(view.plugins[0]).not.toHaveProperty('source')
+  })
+
+  it('lists the plugins without kinds when the shared catalog cannot be read, and says so in words when the plugin list cannot', async () => {
+    const view = await readPluginCatalog(byUrl({ [PLUGIN_REGISTRY_INDEX]: { entries: [quickNotes] } }))
+    expect(view.kinds).toEqual([])
+    expect(view.plugins[0]).not.toHaveProperty('kind')
+    await expect(readPluginCatalog(byUrl({}))).rejects.toThrow(RegistryUnavailable)
+    await expect(readPluginCatalog(async () => { throw new Error('offline') })).rejects.toThrow('The registry could not be read. Check the network and try again.')
   })
 })
