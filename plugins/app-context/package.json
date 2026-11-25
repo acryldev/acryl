@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/app-context",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "The app builder's own docs, as ACRYL IDE's agent has them: a routed index of how a Blends app is made and extended, verified example plugins, and the prompt section that points the frame's agent at them before it writes a plugin",
   "license": "MIT",
   "repository": {
@@ -48,6 +48,9 @@
     "test": "vitest run",
     "check": "pnpm run build && pnpm run typecheck && pnpm run test",
     "prepack": "pnpm run check"
+  },
+  "dependencies": {
+    "@acryldev/control": "workspace:*"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.2",

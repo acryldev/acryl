@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool, type ToolDefinition } from '@deepseek-ai/dsh-tools'
 import { LOOKUP_TOOL_NAME, type LookupManifest, lookupAppDocs } from './lookup.ts'
+import { provideAcrylTools } from './acryl-tools.ts'
 import { type AppSnapshotTools, snapshotTools } from './snapshot-tools.ts'
 import { buildRouterText, type PackManifest, ROUTER_SECTION_NAME, ROUTER_SECTION_ORDER } from './router.ts'
 
@@ -63,6 +64,8 @@ export function apply(ctx: Context): void {
   const text = buildRouterText(readable, manifest)
   if (process.env.ACRYL_PLUGIN_DOCS !== 'off')
     ctx.effect(() => systemPrompt.section({ name: ROUTER_SECTION_NAME, order: ROUTER_SECTION_ORDER, text }), 'app-context: prompt router')
+  // The tools port the plugins of the app give the chat tools through (the launcher, plugin-admin, workspace), over the registry above.
+  provideAcrylTools(ctx)
   // The lookup answers in the paths the agent reads (the pack inside the app when it is installed there), like the prompt section.
   ctx.inject(['tools'], scoped => {
     ;(scoped as unknown as { tools: { register(tool: ToolDefinition): unknown } }).tools.register(

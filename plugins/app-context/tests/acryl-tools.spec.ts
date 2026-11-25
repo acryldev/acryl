@@ -1,5 +1,5 @@
 /**
- * The Blends frame answers ACRYL's tools port over the chat's tool registry (spec 052 T055b): a plugin that registers a tool through `acrylTools` has it in
+ * The app-context plugin answers ACRYL's tools port over the chat's tool registry (spec 052 T055b): a plugin that registers a tool through `acrylTools` has it in
  * the registry, and the port leaves with the registry.
  */
 import { Context } from '@deepseek-ai/cordis'
@@ -27,7 +27,7 @@ function registry() {
   }
 }
 
-describe('the frame provides the acrylTools port', () => {
+describe('the app-context plugin provides the acrylTools port', () => {
   it('waits for the chat\'s tools, registers a plugin\'s tool in them, and takes the port away with them', async () => {
     const ctx: any = new Context()
     provideAcrylTools(ctx)

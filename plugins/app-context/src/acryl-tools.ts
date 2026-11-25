@@ -3,7 +3,9 @@
  * plugins that register tools through it (the launcher, plugin-admin, workspace) have them in the frame's chat and, through the agent-control gateway, in every
  * agent. The same thin delegate `@acryldev/harness-runtime` provides in the ACRYL runtime (`engine-tools.ts`): a tool is an ordinary registry tool, a call runs
  * the registry's whole pipeline (so the frame's own policies and `tools/pre-execute` hooks apply), and a policy is a `tools/pre-execute` hook. The runtime is
- * above this plugin in the dependency graph, so the delegate is written here too rather than imported.
+ * above this plugin in the dependency graph, so the delegate is written here too rather than imported. It lives in this plugin, not in the frame's
+ * client-and-host package: this one already imports the engine's `@deepseek-ai/dsh-tools`, whose types declare the server `sessions` service, which a
+ * package that also holds the frame's client (`sessions` is another type there) must not pull into its project.
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
@@ -26,6 +28,6 @@ export function provideAcrylTools(ctx: Context): void {
     child.effect(() => {
       const dispose = child.reflect.provide('acrylTools', port)
       return () => { void dispose() }
-    }, '@acryldev/blends-frame: acrylTools')
+    }, '@acryldev/app-context: acrylTools')
   })
 }
