@@ -7,6 +7,7 @@ import { type Io, processIo } from './io'
 import { kvImport, parseKvOptions } from './kv-import'
 import { pack } from './pack'
 import { runPreflight } from './preflight'
+import { parseReleaseWorkflowOptions, writeReleaseWorkflow } from './release-workflow'
 import { TEMPLATE_SUMMARY, TEMPLATES } from './templates'
 import { parseUpdateOptions, update } from './update'
 import { parseUpgradeOptions, upgrade } from './upgrade'
@@ -38,6 +39,9 @@ Usage:
                                       on Linux also a portable .tar.gz (Arch Linux, Omarchy)
   acrylblends pkgbuild --dir <d> --product "Name" --version x.y.z --repo owner/name
                                       The PKGBUILD (Arch Linux, Omarchy) for a release whose Linux .tar.gz files are in <d>
+  acrylblends release-workflow [--dir d] [--product "Name"] [--force]
+                                      Write .github/workflows/release.yml: a tag v<version> pushed to GitHub builds the app's
+                                      installers (macOS, Windows, Linux) and publishes them as the repository's Latest release
   acrylblends build-client [root] [out]  Compile the client modules once for production (src/client to dist/client)
   acrylblends kv import <kv.json> <db>   Move a JSON-file kv store into the kv table of a SQLite database [--overwrite] [--table t] [--migrations dir]
   acrylblends check-deps [dir]           Fail when app code imports a database driver or opener outside the file named in
@@ -85,6 +89,8 @@ export async function runCli(argv: readonly string[], io: Io = processIo()): Pro
     if (command === 'preflight') return await runPreflight(io)
     if (command === 'pack') return pack(args, io)
     if (command === 'pkgbuild') return pack(args, io, 'pkgbuild.mjs')
+    if (command === 'release-workflow')
+      return writeReleaseWorkflow(parseReleaseWorkflowOptions(args), io)
     throw new UsageError(`unknown command "${command}"`)
   } catch (error) {
     if (error instanceof UsageError) {

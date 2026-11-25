@@ -234,6 +234,12 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
 - [x] T060 (built 2026-11-25 in Control Center: an app's Share opens its Share place, 1. Save to GitHub, 2. Build installer, 3. Deploy to WebBoxes.ai, 4. Publish a plugin; the app's own Settings get the same place with T061) One "Share" place in an app's Settings and per app in the Control Center: Save to GitHub (`@acryldev/save`), a feature to the
   registry (`@acryldev/plugin-share`), Deploy to WebBoxes.ai, each as today, gathered, not rewritten.
 - [ ] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
+  Design (2026-11-25): an app made from a starter has no release workflow, and Control Center's GitHub sign-in asks only for `repo`, which GitHub
+  refuses for a push that adds a workflow file. So: (a) `acrylblends release-workflow` writes `.github/workflows/release.yml` into the app,
+  generalized from Control Center's proven one (a `v*` tag packs macOS arm64/x64, Windows x64, Linux x64 and publishes the Latest release; the
+  product name reaches the shell only as `$PRODUCT`; no SignPath steps) - done, @acryldev/blends 1.7.36; (b) the sign-in also asks for
+  `workflow`, saying why ("so GitHub can build this app's installers"), and a person signed in before is asked once more on first use; (c) Share
+  with team in the Share place: push the app, add the workflow when missing, push a tag `v<version>`, follow the run, show the release page link.
 - [ ] T062 AppImage as a Linux target in the packer and the release workflow, beside deb and tar.gz.
 - [ ] T063 The download link is the app repository's GitHub release page (owner 2026-11-24); its notes carry the first-open steps for
   unsigned installers on macOS and Windows, with pictures.
