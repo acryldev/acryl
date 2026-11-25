@@ -11,6 +11,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
+import { FRAME_PACKAGES } from '../src/ide-profile'
 import {
   closure,
   copyPlugin,
@@ -416,6 +417,35 @@ describe('the library pins', () => {
         ),
     )
     expect(stale).toEqual([])
+  })
+})
+
+describe('the frame core packages', () => {
+  // An app owns a core part by building its own copy (spec 052 D18, T068). No published package records its commit and most versions have no tag,
+  // so the package itself carries its source and build config: the code an app runs is the code it can own.
+  it('each publishes its src and the build files it has', () => {
+    const repo = join(import.meta.dirname, '..', '..', '..', '..')
+    const folders = new Map<string, string>()
+    for (const group of ['plugins', 'runtime'])
+      for (const folder of readdirSync(join(repo, group))) {
+        const file = join(repo, group, folder, 'package.json')
+        if (existsSync(file))
+          folders.set(
+            (JSON.parse(readFileSync(file, 'utf8')) as { name?: string }).name ?? '',
+            join(repo, group, folder),
+          )
+      }
+    const build = ['tsdown.config.ts', 'tsconfig.json', 'tsconfig.client.json', 'scripts/clean.mjs']
+    const missing = FRAME_PACKAGES.flatMap(({ name }) => {
+      const folder = folders.get(name)
+      if (folder === undefined) return []
+      const files =
+        (JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')) as { files?: string[] })
+          .files ?? []
+      const wanted = ['src/**', ...build.filter((file) => existsSync(join(folder, file)))]
+      return wanted.filter((file) => !files.includes(file)).map((file) => `${name}: ${file}`)
+    })
+    expect(missing).toEqual([])
   })
 })
 

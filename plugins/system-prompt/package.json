@@ -34,7 +34,11 @@
     "cordis.patch.yml",
     "lib/**",
     "drift/**",
-    "README.md"
+    "README.md",
+    "src/**",
+    "tsdown.config.ts",
+    "tsconfig.json",
+    "scripts/clean.mjs"
   ],
   "dsh": {
     "bundle": {

@@ -42,7 +42,12 @@
     "cordis.patch.yml",
     "lib/**",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "src/**",
+    "tsdown.config.ts",
+    "tsconfig.json",
+    "tsconfig.client.json",
+    "scripts/clean.mjs"
   ],
   "engines": {
     "node": "^22.19.0 || >=24.0.0"

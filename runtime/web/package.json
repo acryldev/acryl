@@ -30,7 +30,11 @@
   "files": [
     "cordis.patch.yml",
     "lib/**",
-    "README.md"
+    "README.md",
+    "src/**",
+    "tsdown.config.ts",
+    "tsconfig.json",
+    "scripts/clean.mjs"
   ],
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
