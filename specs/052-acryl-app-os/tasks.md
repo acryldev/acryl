@@ -260,7 +260,7 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
 - [x] T066 (done 2026-11-25, `sealProgram` in `plugins/launcher/app-install.js`, tests in `tests/app-install.test.mjs`; walked on hosts with T070) The Program is read-only: `plugins/launcher/app-install.js` makes its files read-only when it makes it (directories stay writable for
   npm's own work in an app); an app installed from it can still `npm install` its own packages; `acryl clean` and `acryl apps reinstall` still
   remove and replace it. Test: an in-place write to a linked file fails (Linux, Windows), a write in a macOS clone stays in that app.
-- [ ] T067 The agent's instructions (app-context docs, the acryl-app skill) say: never edit `node_modules`; to change a core part, own it (T068).
+- [x] T067 (done 2026-11-25: app-context docs `start-here/this-app.md` "Never edit node_modules: core parts are shared" and the EACCES/EPERM entry in `troubleshooting.md`; ships with the next app-context release) The agent's instructions (app-context docs, the acryl-app skill) say: never edit `node_modules`; to change a core part, own it (T068).
 - [ ] T068 `acryl plugin own <name>`: copy the plugin's source into the app's `plugins/`, mount it in place of the shared one (same row id), record
   it so `acrylblends update` merges upstream into it; refuse with the reason for a part that cannot be owned. Test and proof: an app owns
   `blends-frame`, changes its left panel, a second app is unchanged.

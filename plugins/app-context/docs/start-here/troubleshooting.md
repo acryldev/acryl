@@ -46,3 +46,9 @@ The plugin kept it in a variable. Keep it in a file in `ctx.appInstance.home`: [
 
 The frame reloads 300 ms after the last change to `blend.yaml`, `src/` or `plugins/`. If `look` still shows the old page, the new code did not
 load: run `npm test` and `npm run check` and fix the first error. Never restart the frame or edit `src/frame.ts` to force it.
+
+## EACCES or EPERM writing a file under node_modules
+
+The file is part of the shared, read-only install every app on this computer uses (spec 052 D18): an edit there would change every app, so it is
+refused. Do not change its permissions. Make the change in the app's own `src/`, `blend.yaml` or `plugins/`; when it needs a core part, tell the
+person the app must own that plugin first ([this app](this-app.md), "Never edit node_modules").

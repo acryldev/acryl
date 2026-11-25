@@ -39,6 +39,14 @@ Never wire a feature into `src/frame.ts`, `src/app.ts` or `src/routes.ts`, and n
 files are the app's frame: a feature written there cannot be switched off in Settings > Plugins, does not show in the plugin list, cannot be
 shared to the plugin registry, and leaves when someone regenerates the frame.
 
+## Never edit node_modules: core parts are shared
+
+The packages in `node_modules` (the frame, the chat, the left and right panels, `@acryldev/*`) are shared by every app on this computer and are
+read-only: on Linux and Windows an edit there fails (`EACCES` or `EPERM`), and anywhere the next `npm install` or update replaces it. Change what is
+the app's own instead: its `src/`, its `blend.yaml`, and its `plugins/` (the library plugins `acrylblends add` copied there are the app's own copies).
+When a change needs a core part that lives only in `node_modules`, do not patch it: tell the person which part it is and that the app must own that
+plugin first (its own copy in `plugins/`, mounted in place of the shared one; spec 052 D18).
+
 ## Where it runs
 
 - **In the frame** (`npm run dev`, `npm run desktop`): the ACRYL frame's host composes the app's `blend.yaml` rows beside its own (the chat,
