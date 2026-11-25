@@ -108,7 +108,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
       </nav>
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}
-        {state?.self === undefined ? null : <SelfBanner self={state.self} onUpdate={() => { void act(() => api.updateSelf()) }} />}
+        {state?.self === undefined || state.self.status === 'checking' || state.self.status === 'current' ? null : <SelfBanner self={state.self} onUpdate={() => { void act(() => api.updateSelf()) }} />}
         {state?.job == null ? null : <JobBanner job={state.job} openExternal={openExternal} />}
         {view === 'apps' && (
           <AppsView

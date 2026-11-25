@@ -166,6 +166,15 @@ button.acrylHomeApp { cursor: pointer; }
 @media (max-width: 760px) { .acrylHomeMain { padding: 20px 16px; } }
 @media (min-width: 481px) and (max-width: 600px) { .acrylHome { grid-template-columns: 60px minmax(0, 1fr); } .acrylHomeNav { padding-inline: 8px; } .acrylHomeBrand { flex-direction: column; padding: 0 0 12px; } .acrylHomeBrand .acrylHomeLabel, .acrylHomeNavItem .acrylHomeLabel, .acrylHomeNavItem .acrylHomeCount, .acrylHomeRailToggle { display: none; } .acrylHomeGlyph { display: grid; } .acrylHomeNavItem { justify-content: center; padding: 0; } .acrylHomeSep { margin-inline: 4px; } .acrylHomeMain { padding: 20px 16px; } }
 @media (max-width: 480px) { .acrylHome { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .acrylHomeNav { flex-direction: row; flex-wrap: wrap; padding-top: 14px; border-right: 0; border-bottom: 1px solid var(--h-border); } .acrylHomeBrand, .acrylHomeSep { display: none; } .acrylHomeMain { padding: 20px 16px; } }
+.acrylUpdates { display: grid; gap: 10px; padding: 4px 0 24px; color: var(--dsw-alias-label-primary); font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; }
+.acrylUpdates h3 { margin: 0; font: 600 15px/1.3 ui-sans-serif, system-ui, sans-serif; }
+.acrylUpdates p { margin: 0; color: var(--dsw-alias-label-secondary, inherit); }
+.acrylUpdates pre { margin: 0; max-height: 160px; overflow: auto; padding: 8px; border-radius: 6px; background: var(--dsw-alias-bg-l2, rgba(127,127,127,.12)); font: 12px/1.45 ui-monospace, monospace; white-space: pre-wrap; }
+.acrylUpdatesActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.acrylUpdatesButton { padding: 6px 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.acrylUpdatesButton[data-primary] { border-color: #4d6bfe; background: #4d6bfe; color: #fff; }
+.acrylUpdatesButton:hover:not(:disabled):not([data-primary]) { border-color: #4d6bfe; color: #4d6bfe; }
+.acrylUpdatesButton:disabled { opacity: 0.55; cursor: default; }
 `
 
 /** @returns disposer, for one owning `ctx.effect`. */

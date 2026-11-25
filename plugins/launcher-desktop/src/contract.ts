@@ -141,9 +141,10 @@ export interface SelfView {
   readonly name: string
   /** The release the copy has now. */
   readonly version: string
-  /** The newer release (`available`), or the one being or just brought in. */
+  /** The newer release (`available`), the one being or just brought in, or the copy's own (`current`, `checking`). */
   readonly update: string
-  readonly status: 'available' | 'updating' | 'done' | 'failed'
+  /** `checking`: the registry was not read yet; `current`: the copy has the Blend's latest release. */
+  readonly status: 'checking' | 'current' | 'available' | 'updating' | 'done' | 'failed'
   readonly since?: number
   /** The update's last lines of output (`updating`, `failed`). */
   readonly output?: string

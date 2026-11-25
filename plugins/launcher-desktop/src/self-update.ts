@@ -50,10 +50,10 @@ export function originOf(packageText: string | undefined): { blend: string, vers
 const lastLines = (text: string | undefined, count = 12): string => (text ?? '').replaceAll(/\u001b\[[0-9;?]*[ -/]*[@-~]/gu, '').trimEnd().split(/\r?\n/u).slice(-count).join('\n')
 
 /**
- * Where the copy stands: up to date (`undefined` when there is nothing to say), a newer release out, an update running, done (until this app is opened
+ * Where the copy stands: not checked yet, up to date, a newer release out, an update running, done (until this app is opened
  * again: `startedAt` is when this process began), or failed. `version` is what the copy has now (blend.yaml's `metadata.version`, which the merge moves).
  */
-export function selfView(copy: SelfCopy, latest: string | undefined, files: SelfFiles, home: string, startedAt: number, newer: (a: string, b: string) => boolean): SelfView | undefined {
+export function selfView(copy: SelfCopy, latest: string | undefined, files: SelfFiles, home: string, startedAt: number, newer: (a: string, b: string) => boolean): SelfView {
   const at = paths(home)
   const started = files.read(at.start)
   if (started !== undefined) {
@@ -68,7 +68,8 @@ export function selfView(copy: SelfCopy, latest: string | undefined, files: Self
     else if (ended.trim() === '0') return { name: copy.name, version: copy.version, update: to, status: 'done', since }
     else return { name: copy.name, version: copy.version, update: to, status: 'failed', since, output: lastLines(files.read(at.log)) }
   }
-  return latest !== undefined && newer(latest, copy.version) ? { name: copy.name, version: copy.version, update: latest, status: 'available' } : undefined
+  if (latest === undefined) return { name: copy.name, version: copy.version, update: copy.version, status: 'checking' }
+  return newer(latest, copy.version) ? { name: copy.name, version: copy.version, update: latest, status: 'available' } : { name: copy.name, version: copy.version, update: copy.version, status: 'current' }
 }
 
 /**

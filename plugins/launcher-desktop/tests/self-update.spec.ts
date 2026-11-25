@@ -39,8 +39,8 @@ describe('selfView', () => {
   it('offers a newer release, says nothing when up to date', () => {
     const files = memory()
     expect(selfView(copy, '0.2.15', files, '/h/.acryl', 0, newer)).toEqual({ name: 'ACRYL Control Center', version: '0.2.14', update: '0.2.15', status: 'available' })
-    expect(selfView(copy, '0.2.14', files, '/h/.acryl', 0, newer)).toBeUndefined()
-    expect(selfView(copy, undefined, files, '/h/.acryl', 0, newer)).toBeUndefined()
+    expect(selfView(copy, '0.2.14', files, '/h/.acryl', 0, newer)).toMatchObject({ status: 'current', update: '0.2.14' })
+    expect(selfView(copy, undefined, files, '/h/.acryl', 0, newer)).toMatchObject({ status: 'checking' })
   })
 
   it('follows an update from its files: running, done until the app is opened again, failed with its output', () => {
@@ -53,7 +53,7 @@ describe('selfView', () => {
     // This process began before the update ended: open the app again to run the new release.
     expect(selfView({ ...copy, version: '0.2.15' }, '0.2.15', files, '/h/.acryl', 0, newer)).toMatchObject({ status: 'done', update: '0.2.15' })
     // Opened again after it ended: the record is cleared, nothing to say.
-    expect(selfView({ ...copy, version: '0.2.15' }, '0.2.15', files, '/h/.acryl', Date.now() + 1, newer)).toBeUndefined()
+    expect(selfView({ ...copy, version: '0.2.15' }, '0.2.15', files, '/h/.acryl', Date.now() + 1, newer)).toMatchObject({ status: 'current' })
     expect(files.files.size).toBe(1)
 
     selfUpdateCommand(copy, '0.2.15', files, '/h/.acryl', 2000)
@@ -103,7 +103,7 @@ describe('LauncherService.updateSelf', () => {
     })
     const current = make('0.2.14')
     await current.blends()
-    expect(current.state().self).toBeUndefined()
+    expect(current.state().self).toMatchObject({ status: 'current', version: '0.2.14' })
     expect(() => { current.updateSelf() }).toThrow(LauncherRefusal)
     const service = make('0.2.15')
     await service.blends()

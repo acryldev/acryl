@@ -9,6 +9,7 @@ import { createLauncherApi } from './api.ts'
 import { LauncherScreen, type LauncherScreenProps } from './Screen.tsx'
 import { LauncherVisibility } from './store.ts'
 import { installLauncherStyles } from './styles.ts'
+import { UpdatesSection } from './UpdatesSection.tsx'
 
 export const name = 'acryl-launcher-desktop-client'
 export const inject = ['slots']
@@ -28,10 +29,18 @@ export function apply(ctx: ClientContext): void {
     id: 'acryl-launcher-desktop',
     order: -1000,
     inject: () => injected,
-  }, LauncherScreen))
+  }, LauncherScreen))  // Settings > Updates: this Control Center's own release, beside the Home banner (owner 2026-11-26: more than one way to update).
+  ctx.slots.inject('settings.section', () => ctx.slots.register({
+    name: 'settings.section',
+    id: 'acryl-updates',
+    order: 85,
+    label: () => 'Updates',
+    inject: () => ({ api: injected.api }),
+  }, UpdatesSection))
 }
 
 export { LauncherScreen } from './Screen.tsx'
+export { UpdatesSection } from './UpdatesSection.tsx'
 export { createLauncherApi } from './api.ts'
 export type { LauncherApi } from './api.ts'
 export { LauncherVisibility } from './store.ts'
