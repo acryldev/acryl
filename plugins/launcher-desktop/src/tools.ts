@@ -6,6 +6,7 @@
  */
 import type { Context } from '@deepseek-ai/cordis'
 import { defineAcrylTool, type AcrylToolDefinition } from '@acryldev/control'
+import { filterPlugins, kindChips } from './client/plugin-catalog-model.ts'
 import type { AppView } from './contract.ts'
 import type { LauncherService } from './service.ts'
 
@@ -13,6 +14,7 @@ export const LAUNCHER_TOOLS = [
   'acryl_launcher_help',
   'acryl_launcher_apps',
   'acryl_launcher_blends',
+  'acryl_launcher_plugin_catalog',
   'acryl_launcher_new_app',
   'acryl_launcher_start_app',
   'acryl_launcher_stop_app',
@@ -24,12 +26,13 @@ export const LAUNCHER_TOOLS = [
 export const LAUNCHER_HELP = `The ACRYL launcher is the first screen of ACRYL (Web and Desktop). Where things are:
 - My apps (left nav): every app made with ACRYL on this machine, as cards with a state (running, stopped), a surface (Web = served at an address, Desktop = a window of its own) and a Blend name. Select a card for its panel: Start or Stop, Open, Remove from list, its folder, and, while it runs, its Plugins.
 - + New app (top): asks where, a name, a starter (Blank, Node.js, Notes, Chat, To-do, Agent) and a surface; it runs "acryl new <name> <starter>" and installs the app (about a minute), then starts it.
+- Plugin catalog (left nav): the public Cordis plugin registry (cordisplugins.github.io), browsed by kind (what a plugin does for an app) and domain, searched by words; a plugin's page has "Add to an app", the same pull as "Pull a plugin".
 - Blends store (left nav): the public registry of ready-made apps (acrylblends.github.io/blends); "Make an app" on a card runs "acryl new <name> --from <id>".
 - Add a folder (top): puts an app you already have in the list ("acryl apps add <folder>").
 - Plugins of a running app (its card's panel): "Pull a plugin" takes github:owner/repo@version; "Share plugin" shows exactly what would be published and sends nothing until the person clicks "Yes, publish". An agent never publishes: it can only prepare the plan.
 - Running, Made by agents, Updates (not built yet), WebBoxes.ai (deploy is coming), Health (Node, npm and the model key), Settings (the look: ACRYL ADE or acryl.dev).
 - Assistant (left nav): this panel. ACRYL ADE (the agentic development environment) opens from its card on My apps.
-Tools: acryl_launcher_apps lists the apps; acryl_launcher_new_app, _start_app and _stop_app change them; acryl_launcher_blends searches the registry; acryl_launcher_plugins and _pull_plugin work on a running app; acryl_launcher_publish_plan prepares a publish for the person to confirm.`
+Tools: acryl_launcher_apps lists the apps; acryl_launcher_new_app, _start_app and _stop_app change them; acryl_launcher_blends searches the registry; acryl_launcher_plugin_catalog searches the Cordis plugin catalog (kind, domain, the source to pull); acryl_launcher_plugins and _pull_plugin work on a running app; acryl_launcher_publish_plan prepares a publish for the person to confirm.`
 
 /** An app as an agent reads it: the address without its launch token (the token is a secret of the person's session). */
 const describeApp = (app: AppView): Record<string, unknown> => ({
@@ -73,6 +76,27 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
         const all = await service.blends()
         const found = all.filter(blend => needle === '' || `${blend.name} ${blend.id} ${blend.category} ${blend.description}`.toLowerCase().includes(needle))
         return asText({ total: found.length, blends: found.slice(0, 25).map(blend => ({ id: blend.id, name: blend.name, category: blend.category, description: blend.description })) })
+      },
+    }),
+    defineAcrylTool({
+      name: 'acryl_launcher_plugin_catalog',
+      description: 'Plugins in the public Cordis plugin catalog (id, name, kind, domain, description, compatibility, who released it, and the source to give acryl_launcher_pull_plugin). Give a query and/or a kind slug to narrow it; at most 25 are returned. Then pull one into a RUNNING app with acryl_launcher_pull_plugin.',
+      parameters: {
+        query: { type: 'string', description: 'words to look for in the name, description, kind, domain or publisher' },
+        kind: { type: 'string', description: 'a kind slug such as ui, memory, models, tools, integrations, fun, or unclassified' },
+      },
+      output: { schema: STRING, render: (_args, value: string) => text(value) },
+      execute: async (args) => {
+        const view = await service.pluginCatalog()
+        const found = filterPlugins(view, { kind: (args.kind ?? 'all').trim().toLowerCase() || 'all', origin: 'all', search: args.query ?? '' })
+        return asText({
+          total: found.length,
+          kinds: kindChips(view).map(chip => ({ slug: chip.kind.slug, name: chip.kind.name, plugins: chip.count })),
+          plugins: found.slice(0, 25).map(plugin => ({
+            id: plugin.id, name: plugin.name, description: plugin.description, kind: plugin.kind ?? 'unclassified', domain: plugin.domain === undefined ? undefined : `${plugin.domain.category} > ${plugin.domain.sub}`,
+            compatibility: plugin.compatibility, origin: plugin.origin, publisher: plugin.publisher, version: plugin.version, source: plugin.source, repository: plugin.repo,
+          })),
+        })
       },
     }),
     defineAcrylTool({

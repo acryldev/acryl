@@ -28,6 +28,7 @@ function setup() {
     runner: (command): Run => { commands.push(command); return { onOutput: () => {}, onEnd: () => {}, stop: () => {} } },
     environment: () => ({}), exists: path => existsSync(path), makeFolder: path => { mkdirSync(path, { recursive: true }) },
     blends: async () => [{ id: 'acrylblends.notes', name: 'Notes', version: '0.1.0', category: 'productivity', description: 'a notes app', origin: 'official' as const }, { id: 'acrylblends.accounting', name: 'Accounting', version: '0.1.0', category: 'finance', description: 'invoices', origin: 'official' as const }],
+    pluginCatalog: async () => ({ kinds: [{ slug: 'ui', name: 'UI Panels & Views', description: '' }, { slug: 'fun', name: 'Fun', description: '' }], plugins: [{ id: 'acryl-quick-notes', name: 'acryl-quick-notes', description: 'Quick notes', kind: 'ui', domain: { id: '02-02', category: 'Application', sub: 'Personal information tools' }, compatibility: 'Both', origin: 'community' as const, publisher: 'inboxxobni', version: '0.3.0', repo: 'https://github.com/inboxxobni/acryl-quick-notes', source: 'github:inboxxobni/acryl-quick-notes@0.3.0' }, { id: 'cards', name: 'cards', description: 'A card game', kind: 'fun', compatibility: 'DSH stock', origin: 'community' as const, publisher: 'ana', version: '1.0.0', repo: '' }, { id: 'loose', name: 'loose', description: 'Unsorted', compatibility: 'Both', origin: 'official' as const, publisher: 'acryldev', version: '', repo: '' }] }),
     door,
   })
   const app = (name: string): string => {
@@ -48,7 +49,7 @@ function setup() {
 const PLAN = { owner: 'o', repo: 'demo', version: '0.1.0', visibility: 'public', license: 'MIT', createsRepository: true, files: ['index.ts'], integrity: 'x', digest: 'd', pullLine: 'npm run acryl -- plugin pull github:o/demo@0.1.0@sha256:d' }
 
 describe('the launcher tools', () => {
-  it('are the nine named ones, each with a name the gateway accepts, and the help names every other tool', () => {
+  it('are the ten named ones, each with a name the gateway accepts, and the help names every other tool', () => {
     const { service } = setup()
     const names = launcherTools(service).map(definition => definition.name)
     expect(names).toEqual([...LAUNCHER_TOOLS])
@@ -76,6 +77,17 @@ describe('the launcher tools', () => {
     await tool('acryl_launcher_start_app')({ app: 'shop' })
     expect(commands.at(-1)).toMatchObject({ args: ['run', 'dev'] })
     await expect(tool('acryl_launcher_start_app')({ app: 'nope' })).rejects.toThrow(/no app "nope"/u)
+  })
+
+  it('search the plugin catalog by words and kind, giving the source to pull, and say what kinds there are', async () => {
+    const { tool } = setup()
+    const found = async (args: Record<string, unknown>) => JSON.parse(await tool('acryl_launcher_plugin_catalog')(args) as string) as { total: number, kinds: Array<{ slug: string }>, plugins: Array<{ id: string, source?: string, kind: string }> }
+    const notes = await found({ query: 'notes' })
+    expect(notes.plugins.map(plugin => [plugin.id, plugin.source])).toEqual([['acryl-quick-notes', 'github:inboxxobni/acryl-quick-notes@0.3.0']])
+    expect(notes.kinds.map(kind => kind.slug)).toEqual(['ui', 'fun'])
+    expect((await found({ kind: 'fun' })).plugins.map(plugin => plugin.id)).toEqual(['cards'])
+    expect((await found({ kind: 'Unclassified' })).plugins.map(plugin => [plugin.id, plugin.kind])).toEqual([['loose', 'unclassified']])
+    expect((await found({ query: 'zzz' })).total).toBe(0)
   })
 
   it('list and pull plugins of a running app, and only prepare a publish: nothing is confirmed', async () => {

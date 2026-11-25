@@ -23,6 +23,7 @@ export const DEFAULT_EXPOSED_TOOLS: readonly string[] = [
   'acryl_launcher_help',
   'acryl_launcher_apps',
   'acryl_launcher_blends',
+  'acryl_launcher_plugin_catalog',
   'acryl_launcher_new_app',
   'acryl_launcher_start_app',
   'acryl_launcher_stop_app',
