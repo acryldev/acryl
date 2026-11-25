@@ -270,6 +270,13 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
   `plugins/blends-frame/`, the `acryl-blends-frame` row pointed at `./plugins/blends-frame/lib/index.js` (a folder fails: "failed to import"):
   the host loaded it and the page's client bundle carried the marker; a second app on the shared package was unchanged. So owning works with
   the copy's own build (tsdown, as the package does); the command builds it once when owned and after each edit, with the build tools it needs.
+  Source decided 2026-11-25: the packages carry it. No published @acryldev package records its commit (`gitHead` empty) and most frame versions
+  have no tag, so a frame core package also publishes `src/**`, its `tsdown.config.ts`, `tsconfig*.json` and `scripts/clean.mjs` (blends-frame:
+  about 1 MB more): the code an app runs is the code it owns, with nothing fetched. Proven: blends-frame 0.2.18 packed that way, in a scratch folder
+  outside the monorepo, `npm install --include=dev` (with `legacy-peer-deps=true`: the upstream cordis 4.0.4 / cordis-plugin-include 1.0.10 peer
+  ranges conflict) and `npx tsdown` built its lib/ with an edited string in the client. The build tools take about 180 MB in the owned copy.
+  The command: copy the installed package into `plugins/<name>/`, add its devDependencies, install, build, point the row at
+  `./plugins/<name>/lib/index.js`, record the owned row in the app (so a regenerated frame keeps it), and `npm run build` there after an edit.
   `acryl plugin own <name>`: copy the plugin's source into the app's `plugins/`, mount it in place of the shared one (same row id), record
   it so `acrylblends update` merges upstream into it; refuse with the reason for a part that cannot be owned. Test and proof: an app owns
   `blends-frame`, changes its left panel, a second app is unchanged.
