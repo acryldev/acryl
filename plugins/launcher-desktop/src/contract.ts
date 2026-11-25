@@ -14,6 +14,8 @@ export const LAUNCHER_STOP_PATH = `${LAUNCHER_API_PREFIX}/stop`
 export const LAUNCHER_UPDATE_PATH = `${LAUNCHER_API_PREFIX}/update`
 /** Build an installer of an app for this computer's OS (spec 052 T021): `acrylblends pack` in its folder. */
 export const LAUNCHER_BUILD_PATH = `${LAUNCHER_API_PREFIX}/build-installer`
+/** Share with team (spec 052 T061): GitHub builds the app's installers for every computer and publishes one link. */
+export const LAUNCHER_TEAM_RELEASE_PATH = `${LAUNCHER_API_PREFIX}/team-release`
 /** Update the Control Center itself (the Blend copy it runs from) to its Blend's newer release. */
 export const LAUNCHER_UPDATE_SELF_PATH = `${LAUNCHER_API_PREFIX}/update-self`
 /** Open ACRYL ADE (the Blend `acryl.ade` in `<home>/ade`, the folder `acryl ade` uses), made on first use, in a window or the browser. */
@@ -99,8 +101,8 @@ export interface StarterView {
 /** The one app the screen is making right now (making an app installs it, about a minute). */
 export interface JobView {
   readonly name: string
-  /** Making a new app, updating one from its Blend's newer release, or building an installer of one (spec 052 T021). */
-  readonly kind: 'make' | 'update' | 'build'
+  /** Making a new app, updating one from its Blend's newer release, building an installer of one (spec 052 T021), or releasing it for a team (T061). */
+  readonly kind: 'make' | 'update' | 'build' | 'release'
   /** The line a person types to do the same. */
   readonly line: string
   readonly status: 'running' | 'done' | 'failed'
@@ -113,6 +115,8 @@ export interface JobView {
   readonly message?: string
   /** A built installer (kind `build`, done): the file, the folder it is in, and its size. */
   readonly installer?: InstallerView
+  /** A team release's page (kind `release`, done): where the installers for every computer are, the link to send. */
+  readonly link?: string
 }
 
 /** An installer `acrylblends pack` made: a DMG on macOS, an NSIS installer on Windows, a Debian package on Linux. */
@@ -326,6 +330,8 @@ export interface GithubView {
   /** False when this build has no GitHub app to sign in with. */
   readonly available: boolean
   readonly login: string | null
+  /** Whether the connection may push a workflow file: Share with team needs it, and a sign-in from before asks again. */
+  readonly workflow: boolean
 }
 
 /** A sign-in under way: the code the person types at GitHub. The device code stays in the service. */

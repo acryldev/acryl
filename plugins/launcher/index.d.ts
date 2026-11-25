@@ -23,8 +23,8 @@ export function saveModelKey(home: string, key: string, provider?: string): void
 export const GITHUB_FILE: string
 export const GITHUB_CLIENT_ID: string
 export function githubClientId(env?: Record<string, string | undefined>): string | undefined
-export function readGithub(home: string): { readonly token: string, readonly login: string } | undefined
-export function saveGithub(home: string, token: string, login: string): void
+export function readGithub(home: string): { readonly token: string, readonly login: string, readonly scopes?: readonly string[] } | undefined
+export function saveGithub(home: string, token: string, login: string, scopes?: readonly string[]): void
 export function clearGithub(home: string): boolean
 export function githubEnv(home: string, env?: Record<string, string | undefined>): Record<string, string | undefined>
 export interface GithubSignIn { readonly deviceCode: string, readonly userCode: string, readonly verificationUri: string, readonly interval: number, readonly expiresIn: number }
@@ -69,3 +69,13 @@ export function installApp(input: {
   folder: string, home: string, npm: (args: string[], cwd: string) => Promise<number>, npmArgs?: readonly string[], say?: (line: string) => void,
   platform?: string, node?: string, device?: (path: string) => number | bigint,
 }): Promise<{ readonly code: number, readonly program: 'used' | 'made' | 'retired' | 'none' }>
+
+/** Share with team (spec 052 T061, team-release.js): `node TEAM_RELEASE_CLI` in an app's folder with GH_TOKEN set pushes a version tag and follows GitHub's Release run. */
+export const TEAM_RELEASE_CLI: string
+/** Every line the command says starts with this; `release: <url>` carries the release page, `failed: <reason>` why it stopped. */
+export const TEAM_RELEASE_SAY: string
+export const RELEASE_WORKFLOW_FILE: string
+export function repositoryOf(remote: string): string | undefined
+export function nextReleaseVersion(version: string, tags: ReadonlySet<string>): string
+/** Whether the stored GitHub connection may push a workflow file (it was granted `workflow`), which Share with team needs. */
+export function canPushWorkflows(connection: { readonly scopes?: readonly string[] } | undefined): boolean

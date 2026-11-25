@@ -5,7 +5,7 @@
  */
 import { basename, delimiter, join } from 'node:path'
 import {
-  addApp, addToApplications, APP_NAME, INSTALL_CLI, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
+  addApp, addToApplications, APP_NAME, canPushWorkflows, INSTALL_CLI, TEAM_RELEASE_CLI, TEAM_RELEASE_SAY, appNameProblem, APP_MARKER, blendOf, blendVersionOf, clearGithub, githubOf, githubClientId, githubEnv, inspectApp, maskKey, modelEnv, pollGithubSignIn,
   readApps, readGithub, readLaunchers, readModelKey, refreshLaunchers, removeApp, removeFromApplications, setBlendVisibility, startGithubSignIn, STARTERS, toolsEnv, whereProblem,
   type AppEntry,
 } from '@acryldev/launcher'
@@ -87,6 +87,7 @@ interface Job {
   output: string
   message?: string
   installer?: InstallerView
+  link?: string
   /** The process the job is on now: the command that makes the app, then, for an app that arrives without its dependencies, `npm install`. */
   run: Run
 }
@@ -141,7 +142,7 @@ export class LauncherService {
     if (this.#blends === undefined || Date.now() - this.#blends.at >= BLENDS_FRESH_MS) void this.blends().catch(() => undefined)
     const apps = readApps(this.#ports.home).map(entry => this.#view(entry))
     const at = this.#job
-    const job = at === undefined ? null : { name: at.name, kind: at.kind, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message }, ...at.installer === undefined ? {} : { installer: at.installer } }
+    const job = at === undefined ? null : { name: at.name, kind: at.kind, line: at.line, status: at.status, step: at.step, since: at.since, output: at.output.trimEnd(), ...at.message === undefined ? {} : { message: at.message }, ...at.installer === undefined ? {} : { installer: at.installer }, ...at.link === undefined ? {} : { link: at.link } }
     const self = this.#self()
     return { apps, appsFolder: this.#ports.appsFolder, starters: STARTERS, job, ...self === undefined ? {} : { self } }
   }
@@ -294,6 +295,50 @@ export class LauncherService {
       job.step = `Updated ${view.name} to ${view.blend} ${view.update}.${restart ? ' Starting it again: its progress shows on its card below.' : ''}`
       job.output = ''
       if (restart) try { this.start(id) } catch (cause) { this.#failures.set(id, cause instanceof Error ? cause.message : String(cause)) }
+    })
+  }
+
+  /**
+   * Share with team (spec 052 T061): GitHub builds the app's installers for macOS, Windows and Linux and publishes them on one release page, the link to
+   * send. @acryldev/launcher's team-release command does it in the app's folder (the release workflow added when missing, a version tag pushed, the run
+   * followed); this job shows its steps and the link. The app must be on GitHub already (Share, step 1), and the sign-in must allow pushing a workflow.
+   */
+  teamRelease(id: string): void {
+    this.#toolsReady()
+    if (this.#job?.status === 'running') throw new LauncherRefusal(`${this.#job.name} is still being worked on: wait for it to finish`)
+    const entry = readApps(this.#ports.home).find(app => app.id === id)
+    if (entry === undefined) throw new LauncherRefusal(`there is no app "${id}" in the list`)
+    const view = this.#view(entry)
+    if (view.github === undefined) throw new LauncherRefusal(`${view.name} is not on GitHub yet: save it to GitHub first (Share, step 1); GitHub builds the installers in its repository`)
+    if (!canPushWorkflows(readGithub(this.#ports.home))) {
+      throw new LauncherRefusal('GitHub needs one more permission to build the installers (workflow): sign out of GitHub and sign in again (Share, step 1), then try again')
+    }
+    const run = this.#ports.runner({ program: 'node', args: [TEAM_RELEASE_CLI], cwd: entry.path, env: this.#environment() })
+    const job: Job = {
+      name: view.name, kind: 'release', line: `cd ${entry.path} && node ${TEAM_RELEASE_CLI}`, status: 'running', run, since: Date.now(), output: '',
+      step: `Sharing ${view.name} with your team: the release workflow, a version tag, then GitHub builds the installers for macOS, Windows and Linux (about 20 minutes). Next: the link to send.`,
+    }
+    this.#job = job
+    let output = ''
+    let failure: string | undefined
+    run.onOutput((text) => {
+      for (const line of text.replace(ANSI, '').split(/\r?\n/u)) {
+        if (!line.startsWith(TEAM_RELEASE_SAY)) continue
+        const said = line.slice(TEAM_RELEASE_SAY.length).trim()
+        if (said.startsWith('step: ')) job.step = `${said.slice(6)}.`
+        else if (said.startsWith('release: ')) job.link = said.slice(9).trim()
+        else if (said.startsWith('failed: ')) failure = said.slice(8)
+      }
+      output = tail(`${output}${text}`)
+      job.output = output
+    })
+    run.onEnd((end) => {
+      if (job.run !== run) return
+      if (end.notFound) { job.status = 'failed'; job.message = 'Node.js was not found on this machine. Install Node.js 22.19 or later from nodejs.org, then try again.'; return }
+      if (end.code !== 0 || job.link === undefined) { job.status = 'failed'; job.message = failure ?? (output === '' ? (end.error ?? 'Sharing with the team ended before the release was made.') : output.trimEnd()); return }
+      job.status = 'done'
+      job.step = `Shared. The installers for macOS, Windows and Linux are on one page: send the link.`
+      job.output = ''
     })
   }
 
@@ -601,7 +646,8 @@ export class LauncherService {
 
   /** Who is signed in to GitHub here (the token apps get as GH_TOKEN), never the token. */
   github(): GithubView {
-    return { available: githubClientId(this.#ports.environment()) !== undefined, login: readGithub(this.#ports.home)?.login ?? null }
+    const connection = readGithub(this.#ports.home)
+    return { available: githubClientId(this.#ports.environment()) !== undefined, login: connection?.login ?? null, workflow: canPushWorkflows(connection) }
   }
 
   /** Start GitHub's device sign-in: the code for the person; the device code stays here until it is approved, refused or expires. */

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { addApp, saveModelKey, toolDirs } from '@acryldev/launcher'
+import { addApp, saveGithub, saveModelKey, TEAM_RELEASE_CLI, toolDirs } from '@acryldev/launcher'
 import { LauncherRefusal, LauncherService, type LauncherPorts } from '../src/service.ts'
 import { appEnvironment, type Command, type Run } from '../src/runner.ts'
 import { DoorUnavailable, type Door, type DoorAnswer } from '../src/door.ts'
@@ -273,6 +273,38 @@ describe('start and stop', () => {
     runs[0]!.say('pack-blank-mac: npm install failed\n')
     runs[0]!.end(0)
     expect(service.state().job).toMatchObject({ kind: 'build', status: 'failed', message: expect.stringContaining('npm install failed') })
+  })
+
+  it('shares an app with the team: refused off GitHub or on a sign-in without workflow, then follows the release command to its link (spec 052 T061)', () => {
+    const { service, makeApp, runs, home } = setup()
+    const folder = makeApp('notes')
+    expect(() => { service.teamRelease('notes') }).toThrow(/not on GitHub yet: save it to GitHub first/u)
+    mkdirSync(join(folder, '.git'), { recursive: true })
+    writeFileSync(join(folder, '.git', 'config'), '[remote "origin"]\n\turl = https://github.com/ana/notes.git\n')
+    saveGithub(home, 'gho_abcdefghijklmnopqrstuvwxyz0123456789', 'ana', ['repo'])
+    expect(service.github()).toMatchObject({ login: 'ana', workflow: false })
+    expect(() => { service.teamRelease('notes') }).toThrow(/one more permission to build the installers \(workflow\): sign out of GitHub and sign in again/u)
+    saveGithub(home, 'gho_abcdefghijklmnopqrstuvwxyz0123456789', 'ana', ['repo', 'workflow'])
+    service.teamRelease('notes')
+    expect(runs[0]!.command).toMatchObject({ program: 'node', args: [TEAM_RELEASE_CLI], cwd: folder })
+    expect(runs[0]!.command.env?.['GH_TOKEN']).toBe('gho_abcdefghijklmnopqrstuvwxyz0123456789')
+    runs[0]!.say('acryl-team: step: GitHub is building the installers: 2 of 5 steps done\n')
+    expect(service.state().job).toMatchObject({ kind: 'release', status: 'running', step: 'GitHub is building the installers: 2 of 5 steps done.' })
+    runs[0]!.say('acryl-team: release: https://github.com/ana/notes/releases/tag/v1.0.1\n')
+    runs[0]!.end(0)
+    expect(service.state().job).toMatchObject({ kind: 'release', status: 'done', link: 'https://github.com/ana/notes/releases/tag/v1.0.1' })
+  })
+
+  it('reports a team release that stopped with the command\'s own reason', () => {
+    const { service, makeApp, runs, home } = setup()
+    const folder = makeApp('notes')
+    mkdirSync(join(folder, '.git'), { recursive: true })
+    writeFileSync(join(folder, '.git', 'config'), '[remote "origin"]\n\turl = https://github.com/ana/notes.git\n')
+    saveGithub(home, 'gho_abcdefghijklmnopqrstuvwxyz0123456789', 'ana', ['repo', 'workflow'])
+    service.teamRelease('notes')
+    runs[0]!.say('acryl-team: failed: the Release run ended failure: its log says why (https://github.com/ana/notes/actions/runs/7)\n')
+    runs[0]!.end(1)
+    expect(service.state().job).toMatchObject({ kind: 'release', status: 'failed', message: 'the Release run ended failure: its log says why (https://github.com/ana/notes/actions/runs/7)' })
   })
 
   it('says so when Node and npm are not on the machine', () => {

@@ -30,6 +30,8 @@
     "app-space.js",
     "os-launchers.js",
     "shortcut-open.mjs",
+    "team-release.js",
+    "team-release-cli.mjs",
     "model-key.js",
     "github-login.js",
     "tools.js",

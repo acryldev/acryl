@@ -47,12 +47,12 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
     blends: vi.fn(async () => BLENDS),
     pluginCatalog: vi.fn(async () => CATALOG),
     assistantFolder: vi.fn(async () => '/h/ACRYL'), plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
-    github: vi.fn(async () => ({ available: false, login: null })), githubStart: vi.fn(async () => ({ userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device', interval: 5 })),
-    githubPoll: vi.fn(async () => ({ state: 'pending' as const })), githubDisconnect: vi.fn(async () => ({ available: true, login: null })),
+    github: vi.fn(async () => ({ available: false, login: null, workflow: false })), githubStart: vi.fn(async () => ({ userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device', interval: 5 })),
+    githubPoll: vi.fn(async () => ({ state: 'pending' as const })), githubDisconnect: vi.fn(async () => ({ available: true, login: null, workflow: false })),
     sharePlan: vi.fn(async () => SHARE_PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/o/shop.git', created: true })),
     publishPlan: vi.fn(async () => PLAN), publish: vi.fn(async () => ({ releaseUrl: 'https://github.com/o/demo/releases/tag/v0.1.0', pullLine: PLAN.pullLine })),
     health: vi.fn(async () => ({ node: '24.19.0', npm: '11.1.0', modelKey: true, home: '/h/.acryl', keyMask: 'sk-...6789' })),
-    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), inApplications: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial), update: vi.fn(async () => initial), buildInstaller: vi.fn(async () => initial), updateSelf: vi.fn(async () => initial),
+    add: vi.fn(async () => initial), remove: vi.fn(async () => initial), inApplications: vi.fn(async () => initial), create: vi.fn(async () => initial), start: vi.fn(async () => initial), stop: vi.fn(async () => initial), openAde: vi.fn(async () => initial), update: vi.fn(async () => initial), buildInstaller: vi.fn(async () => initial), teamRelease: vi.fn(async () => initial), updateSelf: vi.fn(async () => initial),
     ...over,
   }
 }
@@ -296,6 +296,13 @@ describe('the plugins of a running app', () => {
     expect([...place.querySelectorAll('h4')].map(step => step.textContent)).toEqual(['1. Save to GitHub', '2. Build installer', '3. Deploy to WebBoxes.ai', '4. Publish a plugin'])
     fireEvent.click(screen.getByRole('button', { name: 'Build installer' }))
     await waitFor(() => { expect(api.buildInstaller).toHaveBeenCalledTimes(1) })
+    expect((screen.getByRole('button', { name: 'Share with team' }) as HTMLButtonElement).disabled).toBe(true)
+    cleanup()
+    const shared = fake(state([{ ...app({}), github: 'https://github.com/ana/shop' }]))
+    render(<LauncherScreen api={shared} visibility={new LauncherVisibility(true)} openExternal={() => {}} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Share' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Share with team' }))
+    await waitFor(() => { expect(shared.teamRelease).toHaveBeenCalledTimes(1) })
   })
 
   it('deploys a store Blend to WebBoxes.ai with ?blend=<id>; a community Blend from GitHub deploys from its repository', async () => {
@@ -324,7 +331,7 @@ describe('the plugins of a running app', () => {
   it('connects GitHub in the app: the code to type, the GitHub page opened, and who is signed in once approved', async () => {
     let polls = 0
     const api = fake(state([app({})]), {
-      github: vi.fn(async () => ({ available: true, login: null })),
+      github: vi.fn(async () => ({ available: true, login: null, workflow: false })),
       githubStart: vi.fn(async () => ({ userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device', interval: 0.01 })),
       githubPoll: vi.fn(async () => { polls += 1; return polls < 2 ? { state: 'pending' as const, interval: 0.01 } : { state: 'connected' as const, login: 'ana' } }),
     })

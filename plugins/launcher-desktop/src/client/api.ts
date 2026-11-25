@@ -1,6 +1,6 @@
 /** Same-origin browser client for the launcher routes (`../contract.ts`). */
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_BUILD_PATH, LAUNCHER_PLUGIN_CATALOG_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_BUILD_PATH, LAUNCHER_PLUGIN_CATALOG_PATH, LAUNCHER_TEAM_RELEASE_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
   type AppSharePlanRequest, type AppSharePlanView, type GithubPollView, type GithubStartView, type GithubView, type AppShareRequest, type AppShareResponse, type AssistantFolderResponse, type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type PluginPullResponse, type PluginsResponse, type PluginView, type PublishPlanRequest, type PublishPlanView,
   type PluginCatalogView, type PublishRequest, type PublishResponse, type StateResponse,
 } from '../contract.ts'
@@ -27,6 +27,8 @@ export interface LauncherApi {
   update(id: string): Promise<StateResponse>
   /** Build an installer of the app for this computer's OS (spec 052 T021); it runs as the screen's job. */
   buildInstaller(id: string): Promise<StateResponse>
+  /** Share with team (spec 052 T061): GitHub builds the installers for every computer; it runs as the screen's job and ends with the link. */
+  teamRelease(id: string): Promise<StateResponse>
   /** Update this app itself to its Blend's newer release. */
   updateSelf(): Promise<StateResponse>
   stop(id: string): Promise<StateResponse>
@@ -90,6 +92,7 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
     stop: id => post(LAUNCHER_STOP_PATH, { id }),
     update: id => post(LAUNCHER_UPDATE_PATH, { id }),
     buildInstaller: id => post(LAUNCHER_BUILD_PATH, { id }),
+    teamRelease: id => post(LAUNCHER_TEAM_RELEASE_PATH, { id }),
     updateSelf: () => post(LAUNCHER_UPDATE_SELF_PATH, {}),
     openAde: surface => post(LAUNCHER_ADE_PATH, { surface }),
     assistantFolder: async () => (await send<AssistantFolderResponse>(LAUNCHER_ASSISTANT_FOLDER_PATH, {})).folder,

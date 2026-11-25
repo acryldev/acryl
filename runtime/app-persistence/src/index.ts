@@ -22,6 +22,7 @@ export {
   clearGithub,
   GITHUB_CLIENT_ID,
   GITHUB_FILE,
+  canPushWorkflows,
   GITHUB_SCOPE,
   githubClientId,
   githubEnv,

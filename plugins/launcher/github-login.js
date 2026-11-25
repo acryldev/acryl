@@ -2,6 +2,7 @@
 // flow with ACRYL's own OAuth app, the owner-only `<home>/github.json`, and GH_TOKEN for the gh and git an app starts. The frame inside every app uses the
 // same code and the same file, so signing in once, here or in an app, counts in both. This file only keeps the launcher's own names.
 export {
+  canPushWorkflows,
   clearGithub,
   GITHUB_CLIENT_ID,
   GITHUB_FILE,

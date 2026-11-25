@@ -109,14 +109,14 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
       <main className="acrylHomeMain">
         {problem === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{problem}</p>}
         {state?.self === undefined ? null : <SelfBanner self={state.self} onUpdate={() => { void act(() => api.updateSelf()) }} />}
-        {state?.job == null ? null : <JobBanner job={state.job} />}
+        {state?.job == null ? null : <JobBanner job={state.job} openExternal={openExternal} />}
         {view === 'apps' && (
           <AppsView
             api={api} apps={apps} tiles={tiles} current={current} search={search} surface={surface} panel={panel} state={state}
             onSearch={setSearch} onSurface={setSurface} onPanel={setPanel} onSelect={setSelected}
             onAdd={async path => { const done = await act(() => api.add(path)); if (done) setPanel('none'); return done }}
             onCreate={async request => { const refused = await create(request); if (refused === undefined) setPanel('none'); return refused }}
-            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onBuild={id => act(() => api.buildInstaller(id))} onRemove={id => act(() => api.remove(id))} onApplications={(id, on) => act(() => api.inApplications(id, on))}
+            onStart={id => act(() => api.start(id))} onStop={id => act(() => api.stop(id))} onUpdate={id => act(() => api.update(id))} onBuild={id => act(() => api.buildInstaller(id))} onTeamRelease={id => act(() => api.teamRelease(id))} onRemove={id => act(() => api.remove(id))} onApplications={(id, on) => act(() => api.inApplications(id, on))}
             openExternal={openExternal} adeUnderneath={adeUnderneath} onOpenCode={() => { visibility.set(false) }} onOpenAde={surface => { void act(() => api.openAde(surface)) }}
           />
         )}
@@ -138,9 +138,10 @@ const JOB_HEADS: Readonly<Record<NonNullable<StateResponse['job']>['kind'], { do
   make: { doing: 'Making {name}', done: '{name} is made', failed: '{name} could not be made' },
   update: { doing: 'Updating {name}', done: '{name} is updated', failed: '{name} could not be updated' },
   build: { doing: 'Building an installer of {name}', done: 'The installer of {name} is built', failed: 'The installer of {name} could not be built' },
+  release: { doing: 'Sharing {name} with your team', done: '{name} is shared with your team', failed: '{name} could not be shared with your team' },
 }
 
-function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNode {
+function JobBanner({ job, openExternal }: { job: NonNullable<StateResponse['job']>, openExternal?: (url: string) => void }): ReactNode {
   const heads = JOB_HEADS[job.kind]
   const named = (text: string): string => text.replace('{name}', job.name)
   const head = job.status === 'running' ? `${named(heads.doing)} · ${elapsed(job.since)}` : named(job.status === 'done' ? heads.done : heads.failed)
@@ -149,6 +150,7 @@ function JobBanner({ job }: { job: NonNullable<StateResponse['job']> }): ReactNo
       <b>{head}</b>{'\n'}<span className="acrylHomeMeta">{job.line}</span>{'\n'}{job.status === 'failed' ? null : job.step}
       {job.message === undefined ? null : `\n${job.message}`}
       {job.installer === undefined ? null : <>{'\n'}<span className="acrylHomeMeta" title="The installer file">{job.installer.file}</span></>}
+      {job.link === undefined ? null : <>{'\n'}<span className="acrylHomeMeta" title="The link to send">{job.link}</span>{' '}<button type="button" className="acrylHomeBtn" data-small onClick={() => { if (job.link !== undefined) openExternal?.(job.link) }}>Open</button></>}
       {job.status === 'running' ? <pre className="acrylHomeLog">{job.output === '' ? 'Waiting for its first output...' : job.output}</pre> : null}
     </div>
   )
@@ -208,6 +210,8 @@ interface AppsViewProps {
   readonly onUpdate: (id: string) => Promise<boolean>
   /** Build an installer of the app for this computer (spec 052 T021). */
   readonly onBuild?: (id: string) => Promise<boolean>
+  /** Share with team (spec 052 T061). */
+  readonly onTeamRelease?: (id: string) => Promise<boolean>
   readonly onStop: (id: string) => Promise<boolean>
   readonly onRemove: (id: string) => Promise<boolean>
   readonly onApplications: (id: string, on: boolean) => Promise<boolean>
@@ -275,12 +279,12 @@ function AppsView(props: AppsViewProps): ReactNode {
       {props.apps.length === 0
         ? <p className="acrylHomeNote">No apps of your own yet. Press + New app to make one, or Add a folder to list one you already have.</p>
         : shown.length === 0 ? <p className="acrylHomeNote">No app matches.</p> : null}
-      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onBuild={props.onBuild} onStop={props.onStop} onRemove={props.onRemove} onApplications={props.onApplications} openExternal={props.openExternal} />}
+      {current === undefined ? null : <Detail api={props.api} app={current} onStart={props.onStart} onUpdate={props.onUpdate} onBuild={props.onBuild} onTeamRelease={props.onTeamRelease} onStop={props.onStop} onRemove={props.onRemove} onApplications={props.onApplications} openExternal={props.openExternal} />}
     </div>
   )
 }
 
-function Detail({ api, app, onStart, onUpdate, onBuild, onStop, onRemove, onApplications, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onBuild?: ((id: string) => Promise<boolean>) | undefined, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, onApplications: (id: string, on: boolean) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
+function Detail({ api, app, onStart, onUpdate, onBuild, onTeamRelease, onStop, onRemove, onApplications, openExternal }: { api: LauncherApi, app: AppView, onStart: (id: string) => Promise<boolean>, onUpdate: (id: string) => Promise<boolean>, onBuild?: ((id: string) => Promise<boolean>) | undefined, onTeamRelease?: ((id: string) => Promise<boolean>) | undefined, onStop: (id: string) => Promise<boolean>, onRemove: (id: string) => Promise<boolean>, onApplications: (id: string, on: boolean) => Promise<boolean>, openExternal: (url: string) => void }): ReactNode {
   const running = app.state === 'running' || app.state === 'starting'
   const [sharing, setSharing] = useState(false)
   // Another app's detail starts with its share closed.
@@ -310,7 +314,7 @@ function Detail({ api, app, onStart, onUpdate, onBuild, onStop, onRemove, onAppl
         <dt>Runs</dt><dd>{runsLine(app)}</dd>
       </dl>
       {app.state === 'starting' ? <><p className="acrylHomeNote" role="status">Starting {app.name}: {app.output === undefined ? 'waiting for its first output.' : 'what it prints, live:'}</p>{app.output === undefined ? null : <pre className="acrylHomeLog">{app.output}</pre>}</> : null}
-      {sharing ? <SharePanel key={app.id} api={api} app={app} onBuild={onBuild} onClose={() => { setSharing(false) }} openExternal={openExternal} /> : null}
+      {sharing ? <SharePanel key={app.id} api={api} app={app} onBuild={onBuild} onTeamRelease={onTeamRelease} onClose={() => { setSharing(false) }} openExternal={openExternal} /> : null}
       {running ? <PluginsPanel api={api} app={app} openExternal={openExternal} /> : <p className="acrylHomeNote">Start the app to pull plugins into it and share the ones made in it.</p>}
       {app.failure === undefined ? null : <p className="acrylHomeNote" data-error>It stopped on its own:{'\n'}{app.failure}</p>}
     </div>
@@ -325,7 +329,7 @@ const remoteLabel = (remote: string): string => remote.replace(/^https?:\/\//u, 
  * login is asked of anyone. Connected, it says who; apps started from then on get the connection.
  */
 function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: (url: string) => void }): ReactNode {
-  const [github, setGithub] = useState<{ available: boolean, login: string | null } | undefined>(undefined)
+  const [github, setGithub] = useState<{ available: boolean, login: string | null, workflow?: boolean } | undefined>(undefined)
   const [code, setCode] = useState<{ userCode: string, verificationUri: string, interval: number } | undefined>(undefined)
   const [note, setNote] = useState<string | undefined>(undefined)
   const box = useRef<HTMLDivElement>(null)
@@ -354,6 +358,7 @@ function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: 
     return (
       <p className="acrylHomeNote" role="status">GitHub: signed in as <span className="acrylHomeMeta">{github.login === '' ? 'your account' : github.login}</span>.{' '}
         <button type="button" className="acrylHomeBtn" data-small onClick={() => { void api.githubDisconnect().then(setGithub) }}>Disconnect</button>
+        {github.workflow === false ? <>{'\n'}Share with team needs one more GitHub permission (to build the installers on GitHub): Disconnect, then connect again.</> : null}
       </p>
     )
   }
@@ -384,7 +389,7 @@ function GithubConnect({ api, openExternal }: { api: LauncherApi, openExternal: 
  * then the person's yes), Build installer (T021), Deploy to WebBoxes.ai (from its GitHub repository), and publishing a plugin (the running app's Plugins).
  * The app need not be running, except to publish a plugin.
  */
-function SharePanel({ api, app, onBuild, onClose, openExternal }: { api: LauncherApi, app: AppView, onBuild?: ((id: string) => Promise<boolean>) | undefined, onClose: () => void, openExternal: (url: string) => void }): ReactNode {
+function SharePanel({ api, app, onBuild, onTeamRelease, onClose, openExternal }: { api: LauncherApi, app: AppView, onBuild?: ((id: string) => Promise<boolean>) | undefined, onTeamRelease?: ((id: string) => Promise<boolean>) | undefined, onClose: () => void, openExternal: (url: string) => void }): ReactNode {
   const [owner, setOwner] = useState('')
   const [plan, setPlan] = useState<AppSharePlanView | undefined>(undefined)
   const [done, setDone] = useState<AppShareResponse | undefined>(undefined)
@@ -437,7 +442,13 @@ function SharePanel({ api, app, onBuild, onClose, openExternal }: { api: Launche
       {note === undefined ? null : <p className="acrylHomeNote" data-error role="alert">{note}</p>}
       <h4 className="acrylHomeShareStep">2. Build installer</h4>
       <p className="acrylHomeNote">An installer of {app.name} for this computer: a DMG on macOS, an .exe on Windows, a .deb on Linux. It carries everything the app needs, so whoever gets it needs no Node, git or ACRYL. It takes 5 to 15 minutes; the progress shows at the top.</p>
-      <div className="acrylHomeActs"><button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing' || onBuild === undefined} onClick={() => { void onBuild?.(app.id) }}>Build installer</button></div>
+      <div className="acrylHomeActs">
+        <button type="button" className="acrylHomeBtn" data-primary disabled={app.state === 'missing' || onBuild === undefined} onClick={() => { void onBuild?.(app.id) }}>Build installer</button>
+        <button type="button" className="acrylHomeBtn" disabled={app.state === 'missing' || app.github === undefined || onTeamRelease === undefined}
+          title={app.github === undefined ? 'Save it to GitHub first (step 1): GitHub builds the installers in its repository' : 'GitHub builds the installers for macOS, Windows and Linux and puts them on one page: the link to send'}
+          onClick={() => { void onTeamRelease?.(app.id) }}>Share with team</button>
+      </div>
+      <p className="acrylHomeNote">Share with team: GitHub builds the installers for macOS, Windows and Linux (about 20 minutes) and puts them on one page of the app's repository, the link to send. {app.github === undefined ? 'It needs the app on GitHub first (step 1).' : ''}</p>
       <h4 className="acrylHomeShareStep">3. Deploy to WebBoxes.ai</h4>
       <p className="acrylHomeNote">{app.github === undefined ? 'Runs the app in the cloud, at an address anyone can open. It deploys from the app\'s GitHub repository: save it to GitHub (public) first.' : `Runs the app in the cloud from ${app.github}, at an address anyone can open.`}</p>
       <div className="acrylHomeActs"><button type="button" className="acrylHomeBtn" disabled={app.github === undefined} onClick={() => { if (app.github !== undefined) openExternal(webboxesDeployUrl(app.github, app.name)) }}>Deploy to WebBoxes.ai</button></div>

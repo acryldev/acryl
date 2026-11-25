@@ -240,6 +240,10 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
   product name reaches the shell only as `$PRODUCT`; no SignPath steps) - done, @acryldev/blends 1.7.36; (b) the sign-in also asks for
   `workflow`, saying why ("so GitHub can build this app's installers"), and a person signed in before is asked once more on first use; (c) Share
   with team in the Share place: push the app, add the workflow when missing, push a tag `v<version>`, follow the run, show the release page link.
+  (b) and (c) built 2026-11-25: `GITHUB_SCOPE` is `repo workflow` and the granted scopes are stored (`canPushWorkflows`); `@acryldev/launcher`
+  team-release.js / team-release-cli.mjs does the push, the next free version tag and follows the Release run; Control Center's Share place step 2
+  has "Share with team" (refused off GitHub or on a sign-in from before, with what to do), the banner shows the link. No agent tool: an agent
+  never publishes. Not yet proven on GitHub: the end-to-end run needs a login with `workflow` (the owner's `gh auth refresh -s workflow`).
 - [ ] T062 AppImage as a Linux target in the packer and the release workflow, beside deb and tar.gz.
 - [ ] T063 The download link is the app repository's GitHub release page (owner 2026-11-24); its notes carry the first-open steps for
   unsigned installers on macOS and Windows, with pictures.

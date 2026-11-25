@@ -13,8 +13,11 @@ export const GITHUB_FILE = 'github.json'
 /** ACRYL's GitHub OAuth app (device flow on, no secret): a client id is public by design. ACRYL_GITHUB_CLIENT_ID overrides it, for a fork with its own app or a test. */
 export const GITHUB_CLIENT_ID = 'Ov23liKcmkBPwvX3MCBh'
 
-/** `repo` lets a person make and push to their own repositories, public or private; nothing else is asked for. */
-export const GITHUB_SCOPE = 'repo'
+/**
+ * `repo` lets a person make and push to their own repositories, public or private; `workflow` lets that push carry the app's release workflow
+ * (`.github/workflows/release.yml`), which GitHub refuses without it: Share with team builds the app's installers there (spec 052 T061). Nothing else.
+ */
+export const GITHUB_SCOPE = 'repo workflow'
 
 const DEVICE_CODE_URL = 'https://github.com/login/device/code'
 const TOKEN_URL = 'https://github.com/login/oauth/access_token'
@@ -26,6 +29,13 @@ type FetchLike = (input: string, init?: RequestInit) => Promise<{ readonly ok: b
 export interface GithubConnection {
   readonly token: string
   readonly login: string
+  /** The permissions GitHub granted (`repo`, `workflow`); undefined for a connection saved before they were recorded, which counts as `repo` only. */
+  readonly scopes?: readonly string[]
+}
+
+/** Whether a connection may push a workflow file (Share with team): one made before `workflow` was asked for may not, and is asked to sign in again. */
+export function canPushWorkflows(connection: GithubConnection | undefined): boolean {
+  return connection?.scopes?.includes('workflow') === true
 }
 
 /** The client id this process signs in with, or undefined when none is valid (the sign-in then says so instead of failing at GitHub). */
@@ -54,17 +64,19 @@ function readAll(home: string): Record<string, unknown> {
 
 /** The stored connection, or undefined. */
 export function readGithub(home: string): GithubConnection | undefined {
-  const { token, login } = readAll(home)
-  return typeof token === 'string' && token !== '' ? { token, login: typeof login === 'string' ? login : '' } : undefined
+  const { token, login, scopes } = readAll(home)
+  if (typeof token !== 'string' || token === '') return undefined
+  const granted = Array.isArray(scopes) ? scopes.filter((scope): scope is string => typeof scope === 'string') : undefined
+  return { token, login: typeof login === 'string' ? login : '', ...granted === undefined ? {} : { scopes: granted } }
 }
 
 /** Store the connection (owner-only file, written whole or not at all). */
-export function saveGithub(home: string, token: string, login: string): void {
+export function saveGithub(home: string, token: string, login: string, scopes?: readonly string[]): void {
   if (typeof token !== 'string' || !/^[A-Za-z0-9_]{20,255}$/u.test(token)) throw new Error('GitHub did not give a usable token')
   mkdirSync(home, { recursive: true })
   const file = join(home, GITHUB_FILE)
   const temporary = `${file}.${String(process.pid)}.tmp`
-  writeFileSync(temporary, `${JSON.stringify({ token, login })}\n`, { mode: 0o600 })
+  writeFileSync(temporary, `${JSON.stringify({ token, login, ...scopes === undefined ? {} : { scopes } })}\n`, { mode: 0o600 })
   chmodSync(temporary, 0o600)
   renameSync(temporary, file)
 }
@@ -145,7 +157,9 @@ export async function pollGithubSignIn(home: string, clientId: string, deviceCod
   if (typeof answer['access_token'] === 'string') {
     const user = await fetchImpl(USER_URL, { headers: { Authorization: `Bearer ${answer['access_token']}`, Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15_000) })
     const login = user.ok ? String(((await user.json()) as { login?: unknown }).login ?? '') : ''
-    saveGithub(home, answer['access_token'], login)
+    // GitHub names what it granted (`repo,workflow`), which may be less than was asked for.
+    const granted = typeof answer['scope'] === 'string' ? answer['scope'].split(/[\s,]+/u).filter(Boolean) : undefined
+    saveGithub(home, answer['access_token'], login, granted)
     return { state: 'connected', login }
   }
   switch (answer['error']) {

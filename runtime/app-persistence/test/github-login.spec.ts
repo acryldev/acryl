@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { adoptGithubToken, clearGithub, githubClientId, githubEnv, githubHome, pollGithubSignIn, readGithub, saveGithub, startGithubSignIn } from '../src/index.js'
+import { adoptGithubToken, canPushWorkflows, clearGithub, githubClientId, githubEnv, githubHome, pollGithubSignIn, readGithub, saveGithub, startGithubSignIn } from '../src/index.js'
 
 const dirs: string[] = []
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }) })
@@ -16,7 +16,7 @@ describe('the one GitHub sign-in', () => {
     const sent: Array<[string, string]> = []
     const start = await startGithubSignIn('Ov23abcdefgh', async (url, init) => { sent.push([url, String(init?.body)]); return reply({ device_code: 'dc', user_code: 'ABCD-1234', verification_uri: 'https://github.com/login/device', interval: 5, expires_in: 900 }) })
     expect(start.userCode).toBe('ABCD-1234')
-    expect(sent[0]?.[1]).toMatch(/scope=repo/u)
+    expect(sent[0]?.[1]).toMatch(/scope=repo(\+|%20)workflow/u)
     expect(await pollGithubSignIn(home, 'Ov23abcdefgh', 'dc', async () => reply({ error: 'authorization_pending' }))).toEqual({ state: 'pending' })
     expect(readGithub(home)).toBeUndefined()
     const done = await pollGithubSignIn(home, 'Ov23abcdefgh', 'dc', async url => url.includes('api.github.com') ? reply({ login: 'ana' }) : reply({ access_token: TOKEN }))
@@ -27,6 +27,18 @@ describe('the one GitHub sign-in', () => {
     expect(githubEnv(home, { GH_TOKEN: 'mine' })).toEqual({})
     expect(clearGithub(home)).toBe(true)
     expect(githubEnv(home, {})).toEqual({})
+  })
+
+  it('keeps the permissions GitHub granted: a connection with workflow may push a release workflow, one from before may not (spec 052 T061)', async () => {
+    const home = temp()
+    await pollGithubSignIn(home, 'Ov23abcdefgh', 'dc', async url => url.includes('api.github.com') ? reply({ login: 'ana' }) : reply({ access_token: TOKEN, scope: 'repo,workflow' }))
+    expect(readGithub(home)).toEqual({ token: TOKEN, login: 'ana', scopes: ['repo', 'workflow'] })
+    expect(canPushWorkflows(readGithub(home))).toBe(true)
+    saveGithub(home, TOKEN, 'ana')
+    expect(canPushWorkflows(readGithub(home))).toBe(false)
+    saveGithub(home, TOKEN, 'ana', ['repo'])
+    expect(canPushWorkflows(readGithub(home))).toBe(false)
+    expect(canPushWorkflows(undefined)).toBe(false)
   })
 
   it('a declined or expired sign-in says what happened and saves nothing', async () => {
