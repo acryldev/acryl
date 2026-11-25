@@ -97,7 +97,7 @@ console session), each AOS made from the store with create-acrylblends 1.7.31:
 | Add to Applications / Remove | notes.app | acryl-notes.desktop | notes.lnk |
 | Export as installer (Notes) | dmg 217 MB, 107 s | deb 144 MB + tar.gz 183 MB, 55 s | exe 177 MB, 364 s |
 
-The open time includes installing the app's packages on its first open. AION's Node is an x64 build under Rosetta, so its export is
+The open time includes installing the app's packages on its first open. AION's Node in these runs was an x64 build under Rosetta (a non-login ssh shell picks it), so its export is
 mac-x64: the packer follows the running Node because npm installs native packages for it. The v0.1.4 Apple silicon installer from the
 release's download link started on AION under a scratch home in 6 s and showed its window.
 
@@ -109,7 +109,7 @@ stays behind.
 
 ## Phase 6 - Each Blend a real OS app on one shared engine (D15; after `baseline.md` is complete)
 
-### Slice plan (2026-11-25, to be approved by the coordinator before coding)
+### Slice plan (2026-11-25, approved by the coordinator)
 
 What exists already, from reading the code:
 - **T050 and T051 are met by Step 1 (T006).** Every install place calls `plugins/launcher/app-install.js`. The Program is
@@ -134,13 +134,13 @@ What is still missing for "its own app with its own name and icon", per OS:
 
 Slices, each with characterization tests first (Working Effectively with Legacy Code), then the change, then the proof:
 
-- [ ] T056 **The app's identity is one value** (DDD Distilled: one term, one meaning; Clean Code: no duplication). The app id and name the
+- [x] T056 **The app's identity is one value** (DDD Distilled: one term, one meaning; Clean Code: no duplication). The app id and name the
   launcher writes (`launcherPlan`) and the ones desktop-shell runs under (`brandingOf`) come from one place, so the AppUserModelID, the
   WM class and the macOS bundle id agree. Characterize `launcherPlan` and `brandingOf` as they are today, then share the rule.
-- [ ] T057 **Windows: one AppUserModelID** (`com.acrylblends.app.<id>`). The Start `.lnk` carries it, set through the PowerShell writer
+- [x] T057 **Windows: one AppUserModelID** (`com.acrylblends.app.<id>`). The Start `.lnk` carries it, set through the PowerShell writer
   with values in environment variables, as the other fields are. The app calls `app.setAppUserModelId` with the same value before its
   window opens. Clean Architecture: the launcher (edge) and desktop-shell (frame) each know only the shared id rule.
-- [ ] T058 **Linux: one WM class.** The `.desktop` file gets `StartupWMClass=<class>`, and the app runs with that class (Electron's
+- [x] T058 **Linux: one WM class.** The `.desktop` file gets `StartupWMClass=<class>`, and the app runs with that class (Electron's
   `desktopName` / `--class`, whichever Electron 44 honours, checked by `xprop WM_CLASS` on z370n's Xvfb).
 - [ ] T059 **The proof on all three hosts:** an installed Blend with its own `assets/icon.png` (Notes), added to Applications, opened from
   the OS entry. Measured per host:
@@ -152,10 +152,19 @@ Slices, each with characterization tests first (Working Effectively with Legacy 
   - Disk per app: the measurement from step1-proof.md, plus what the clone or launcher adds.
   - Every start check.
 
+T056-T058 done in 503b746e. T059 run 2026-11-25 ([`phase6-proof.md`](phase6-proof.md)); it stays open for these:
+- Windows Start search, known gap: the entry is in the Start menu with its AUMID, Get-StartApps did not list it within 180 s on a locked
+  session; retest on an unlocked one.
+- Windows taskbar grouping: unproven for lack of a screen. The running window's AUMID was not read.
+- macOS, found in review: the `~/Applications` entry and the running app have different bundle ids; keeping the running app in the Dock is
+  untried.
+- Icons on Windows and Linux: not looked at.
+
 What the proof cannot see, named up front:
 - Start search on Windows and the app menu on Linux read the real user's folders. On the test hosts this means user alexa's Start menu on
   mbpi9win, and z370n's user. Question for the coordinator: may T059 write there (test hosts, never the owner's Mac), or should it stay in
-  scratch folders, as T012 and T013 did?
+  scratch folders, as T012 and T013 did? Answered: yes on mbpi9win, with the Start menu and the `HKCU` Classes and Uninstall keys listed
+  before and after and left as they were.
 - z370n has no desktop session, so a dock drawing cannot be seen there. The WM class match is the evidence.
 
 Not in these slices (said so they are not lost): opening an app without npm. That means the launcher running the app's Electron directly
@@ -163,18 +172,22 @@ on its built frame, with Electron as Node, so neither Node nor npm is needed. It
 It is a larger change to desktop-shell's start path, and is proposed as the next slice after T059.
 
 
-- [ ] T050 Characterize first (Working Effectively with Legacy Code): a test per install place (Control Center "+ New app" and Start,
+- [x] T050 Characterize first (Working Effectively with Legacy Code): a test per install place (Control Center "+ New app" and Start,
   `acryl new`, `acryl --gui`/`acryl ade` copies, the store's Make, an agent's install) recording the folder it makes and what starts.
-- [ ] T051 One install module (A Philosophy of Software Design, deep module): every place above calls it; it installs the app's own
+  **Done 2026-11-25:** Met by Step 1 (T006).
+- [x] T051 One install module (A Philosophy of Software Design, deep module): every place above calls it; it installs the app's own
   packages on top of the shared Program for its Blends version (`~/.acryl/programs/blends-<version>/`, through `AppInstance`), with the
   two Step 0 fixes (`.package-lock.json` copied, the copy stamped now). Same-volume check; another disk falls back to a copy, said once.
-- [ ] T052 The framework-first resolver, generalised from `plugins/extensions/resolve.ts` (spec 049): framework names resolve to the
+  **Done 2026-11-25:** Met by Step 1 (T006).
+- [x] T052 The framework-first resolver, generalised from `plugins/extensions/resolve.ts` (spec 049): framework names resolve to the
   Program for any parent, everything else normally. Proof: two apps share one framework instance each (no second copy; the October
   lesson), HMR and live plugins pass (`live-test.sh`) on all three OSes.
+  **Done 2026-11-25:** Met by the layout; no resolver built (slice plan above).
 - [ ] T053 The D4 launcher opens a per-app engine copy (`make-blend-app.mjs` / `linkTree`, `brand.ts`), so no Node is needed to open
   an app. Proof on AION, mbpi9win, z370n: found by the OS search, opens with its name and icon, MB per app measured.
-- [ ] T054 `acryl apps reinstall` moves an existing app onto the Program (old `node_modules` kept until it starts) and `acryl clean`
+- [x] T054 `acryl apps reinstall` moves an existing app onto the Program (old `node_modules` kept until it starts) and `acryl clean`
   removes Programs and engine copies no app uses (Release It!, steady state).
+  **Done 2026-11-25:** Met by T008; the old `node_modules` is kept until the install succeeds, and there are no engine copies to clean.
 - [ ] T055 The Control Center Blend (`acrylblends/63-acryl-control-center`) takes `@acryldev/launcher-desktop` as a dependency instead of its
   own copy `plugins/acryl-launcher-host` (The Pragmatic Programmer, DRY: v0.2.21 needed the 0.1.11 to 0.2.0 diff of `runner.ts` and
   `service.ts` patched in by hand). What the copy differs in today (checked against `plugins/launcher-desktop` at c5022486 and the Blend at

@@ -55,6 +55,8 @@ clones of it.
    and `node -e <script>`. It now uses a shell only for `npm` and `npx` (the .cmd files).
 3. **AION's Node is x64 under Rosetta** (baseline finding 5, reported only, not fixed here): koffi does not load inside Electron there,
    in this layout as in today's npm layout. The apps start, and their terminal and live plugins work.
+   **Correction (2026-11-25):** that Node is the Intel one a non-login ssh shell picks. With AION's arm64 Node (NVM) koffi loads inside
+   Electron: [`phase6-proof.md`](phase6-proof.md).
 
 ## `acryl new` installs through the one install (2026-11-24, commit cb92e01c0c496b773bb77a08a609130d9569ff3f)
 

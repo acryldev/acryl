@@ -77,6 +77,8 @@ Electrobun app's own runtime comes with its packed build).
 5. **AION only, not the layout:** AION's Node is x64 under Rosetta, so npm installs koffi's x64 package, while Electron's own download picks
    arm64 under Rosetta; koffi does not load inside Electron there, in every layout including today's npm. The apps start, and terminal and
    live plugins work. A Mac with arm64 Node gets matching packages.
+   Correction (2026-11-25): the x64 Node is the one a non-login ssh shell picks on AION; its login shell uses NVM's arm64 Node, and with that
+   koffi loads inside Electron ([`phase6-proof.md`](phase6-proof.md)).
 6. Test harness, not product: zsh in a home with no startup files opens its new-user menu and swallowed the terminal check's typed line
    (fixed with an empty `.zshrc` in the scratch home); `npm run desktop` leaves the frame host in its own process group, so the walk stops
    whatever listens on the app's port afterwards and checks the port is free.
