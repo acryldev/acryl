@@ -65,7 +65,7 @@ function setup(extra: Partial<LauncherPorts> = {}) {
 }
 
 describe('the plugin catalog', () => {
-  const view = { kinds: [], plugins: [] }
+  const view = { kinds: [], domains: [], plugins: [] }
   it('is read at most once a minute, and refused in words when this face does not offer it', async () => {
     let reads = 0
     const { service } = setup({ pluginCatalog: async () => { reads += 1; return view } })

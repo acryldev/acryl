@@ -1,5 +1,5 @@
 /** The public Blend registry as the screen's store lists it: only reads (the same index `acryl new --from` and the terminal's "Install a Blend" use). */
-import { BLEND_SOURCE, type BlendPlace, type BlendView, type PluginCatalogEntry, type PluginCatalogView, type PluginKindView } from './contract.ts'
+import { BLEND_SOURCE, type BlendPlace, type BlendView, type PluginCatalogEntry, type PluginCatalogView, type PluginDomainView, type PluginKindView } from './contract.ts'
 
 export const REGISTRY_INDEX = 'https://acrylblends.github.io/registry/index.json'
 /** Blends released by people outside the ACRYL project and found on GitHub by the registry's hourly sync (origin `community`, each with its `source`). */
@@ -113,8 +113,8 @@ const PULL_LINE = /^\/plugin pull (github:[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})\/[A-
  * The shared catalog's names for kinds, domains and components. Optional: when it cannot be read, plugins are listed without kinds or domains
  * (the registry's list itself is enough to browse and add). It is about a megabyte, so only the names the screen needs are kept.
  */
-async function catalogNames(fetchImpl: Fetch, url: string): Promise<{ kinds: readonly PluginKindView[], domains: ReadonlyMap<string, { category: string, sub: string }>, components: ReadonlyMap<string, string> }> {
-  const none = { kinds: [], domains: new Map<string, { category: string, sub: string }>(), components: new Map<string, string>() }
+async function catalogNames(fetchImpl: Fetch, url: string): Promise<{ kinds: readonly PluginKindView[], tree: readonly PluginDomainView[], domains: ReadonlyMap<string, { category: string, sub: string }>, components: ReadonlyMap<string, string> }> {
+  const none = { kinds: [], tree: [], domains: new Map<string, { category: string, sub: string }>(), components: new Map<string, string>() }
   let body: unknown
   try {
     const response = await fetchImpl(url, { signal: AbortSignal.timeout(TIMEOUT_MS) })
@@ -130,19 +130,23 @@ async function catalogNames(fetchImpl: Fetch, url: string): Promise<{ kinds: rea
   })
   const domains = new Map<string, { category: string, sub: string }>()
   const components = new Map<string, string>()
+  const tree: PluginDomainView[] = []
   for (const rawCategory of Array.isArray(root?.categories) ? root.categories : []) {
     const category = record(rawCategory)
+    const subs: { id: string, name: string }[] = []
     for (const rawSub of Array.isArray(category?.subcategories) ? category.subcategories : []) {
       const sub = record(rawSub)
       if (typeof sub?.id !== 'string') continue
+      subs.push({ id: sub.id, name: text(sub.name) })
       domains.set(sub.id, { category: text(category?.name), sub: text(sub.name) })
       for (const rawComponent of Array.isArray(sub.components) ? sub.components : []) {
         const component = record(rawComponent)
         if (typeof component?.id === 'string') components.set(component.id, text(component.name))
       }
     }
+    if (typeof category?.id === 'string') tree.push({ id: category.id, name: text(category.name), subs })
   }
-  return { kinds, domains, components }
+  return { kinds, tree, domains, components }
 }
 
 /**
@@ -176,5 +180,5 @@ export async function readPluginCatalog(fetchImpl: Fetch = (input, init) => fetc
       ...source === undefined ? {} : { source },
     })
   }
-  return { kinds: names.kinds, plugins: plugins.sort((a, b) => a.name.localeCompare(b.name)) }
+  return { kinds: names.kinds, domains: names.tree, plugins: plugins.sort((a, b) => a.name.localeCompare(b.name)) }
 }

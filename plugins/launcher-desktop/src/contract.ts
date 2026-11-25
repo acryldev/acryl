@@ -203,8 +203,17 @@ export interface PluginCatalogEntry {
   readonly source?: string
 }
 
+/** One of the shared catalog's 100 domains with its subcategories, each with its code (`01`, `01-01`), as the Blends store lists them. */
+export interface PluginDomainView {
+  readonly id: string
+  readonly name: string
+  readonly subs: readonly { readonly id: string, readonly name: string }[]
+}
+
 export interface PluginCatalogView {
   readonly kinds: readonly PluginKindView[]
+  /** Every domain the shared catalog has, empty ones too, in its order; empty when the shared catalog could not be read. */
+  readonly domains: readonly PluginDomainView[]
   readonly plugins: readonly PluginCatalogEntry[]
 }
 

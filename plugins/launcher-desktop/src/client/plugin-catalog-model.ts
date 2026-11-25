@@ -6,7 +6,7 @@ export type OriginFilter = 'all' | PluginCatalogEntry['origin']
 
 export interface PluginFilter {
   readonly kind: KindFilter
-  /** A domain category (`Application`) and, within it, one subcategory's id (`02-06`); both absent: every domain. */
+  /** A domain category's code (`02`) and, within it, one subcategory's code (`02-06`); both absent: every domain. */
   readonly category?: string
   readonly sub?: string
   readonly origin: OriginFilter
@@ -23,26 +23,32 @@ export function kindChips(view: PluginCatalogView): readonly KindChip[] {
 export const unclassifiedCount = (view: PluginCatalogView): number => view.plugins.filter(plugin => plugin.kind === undefined).length
 
 export interface DomainSub { readonly id: string, readonly name: string, readonly count: number }
-export interface DomainGroup { readonly name: string, readonly count: number, readonly subs: readonly DomainSub[] }
+export interface DomainGroup { readonly id: string, readonly name: string, readonly count: number, readonly subs: readonly DomainSub[] }
 
-/** The domains that hold at least one of `plugins`, in the shared catalog's order (by id), each with its subcategories and counts. */
-export function domainTree(plugins: readonly PluginCatalogEntry[]): readonly DomainGroup[] {
-  const byCategory = new Map<string, { first: string, count: number, subs: Map<string, { name: string, count: number }> }>()
-  for (const plugin of plugins) {
-    if (plugin.domain === undefined) continue
-    const group = byCategory.get(plugin.domain.category) ?? { first: plugin.domain.id, count: 0, subs: new Map() }
-    group.count += 1
-    if (plugin.domain.id < group.first) group.first = plugin.domain.id
-    const sub = group.subs.get(plugin.domain.id) ?? { name: plugin.domain.sub, count: 0 }
-    sub.count += 1
-    group.subs.set(plugin.domain.id, sub)
-    byCategory.set(plugin.domain.category, group)
-  }
-  return [...byCategory].sort(([, a], [, b]) => a.first.localeCompare(b.first)).map(([name, group]) => ({
-    name,
-    count: group.count,
-    subs: [...group.subs].sort(([a], [b]) => a.localeCompare(b)).map(([id, sub]) => ({ id, name: sub.name, count: sub.count })),
-  }))
+/** A domain's category code: `02-06` is in category `02`. */
+export const categoryOf = (domainId: string): string => domainId.split('-')[0] ?? domainId
+
+/**
+ * Every domain the shared catalog has, with its code, in its order, each with how many of `plugins` it holds: an empty one is listed with a count of 0 (the
+ * screen greys it), as the Blends store lists its categories. When the shared catalog could not be read, the domains the plugins sit in.
+ */
+export function domainTree(view: PluginCatalogView, plugins: readonly PluginCatalogEntry[]): readonly DomainGroup[] {
+  const counts = new Map<string, number>()
+  for (const plugin of plugins) if (plugin.domain !== undefined) counts.set(plugin.domain.id, (counts.get(plugin.domain.id) ?? 0) + 1)
+  const known = view.domains.length > 0
+    ? view.domains
+    : [...new Map(view.plugins.flatMap(plugin => plugin.domain === undefined ? [] : [[plugin.domain.id, plugin.domain] as const])).values()]
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .reduce<{ id: string, name: string, subs: { id: string, name: string }[] }[]>((groups, domain) => {
+          const id = categoryOf(domain.id)
+          const group = groups.find(entry => entry.id === id) ?? groups[groups.push({ id, name: domain.category, subs: [] }) - 1]!
+          group.subs.push({ id: domain.id, name: domain.sub })
+          return groups
+        }, [])
+  return known.map((group) => {
+    const subs = group.subs.map(sub => ({ id: sub.id, name: sub.name, count: counts.get(sub.id) ?? 0 }))
+    return { id: group.id, name: group.name, count: subs.reduce((sum, sub) => sum + sub.count, 0), subs }
+  })
 }
 
 /** The words a search looks in: the plugin's name, id, description, publisher, and its kind, domain and component as the catalog names them. */
@@ -56,7 +62,7 @@ export function searchText(plugin: PluginCatalogEntry, kinds: readonly PluginKin
 export function filterPlugins(view: PluginCatalogView, filter: PluginFilter): readonly PluginCatalogEntry[] {
   const needle = filter.search.trim().toLowerCase()
   return view.plugins.filter(plugin => (filter.kind === 'all' || (filter.kind === 'unclassified' ? plugin.kind === undefined : plugin.kind === filter.kind))
-    && (filter.category === undefined || plugin.domain?.category === filter.category)
+    && (filter.category === undefined || (plugin.domain !== undefined && categoryOf(plugin.domain.id) === filter.category))
     && (filter.sub === undefined || plugin.domain?.id === filter.sub)
     && (filter.origin === 'all' || plugin.origin === filter.origin)
     && (needle === '' || searchText(plugin, view.kinds).includes(needle)))

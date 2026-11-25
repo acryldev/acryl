@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { AppView, PluginCatalogEntry, PluginCatalogView } from '../contract.ts'
 import type { LauncherApi } from './api.ts'
 import { iconColor, initial } from './model.ts'
-import { compatibilityNote, domainTree, filterPlugins, kindChips, unclassifiedCount, type KindFilter, type OriginFilter } from './plugin-catalog-model.ts'
+import { categoryOf, compatibilityNote, domainTree, filterPlugins, kindChips, unclassifiedCount, type KindFilter, type OriginFilter } from './plugin-catalog-model.ts'
 
 const message = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause)
 
@@ -40,8 +40,8 @@ export function PluginStoreView({ api, apps, onStart, openExternal }: PluginStor
 
   const plugins = catalog?.plugins ?? []
   const base = { kind, origin, search }
-  const tree = catalog === undefined ? [] : domainTree(filterPlugins(catalog, base))
-  const current = tree.find(group => group.name === category)
+  const tree = catalog === undefined ? [] : domainTree(catalog, filterPlugins(catalog, base))
+  const current = tree.find(group => group.id === category)
   const shown = catalog === undefined ? [] : filterPlugins(catalog, { ...base, ...category === undefined ? {} : { category }, ...sub === undefined ? {} : { sub } })
   const count = (which: PluginCatalogEntry['origin']): number => plugins.filter(plugin => plugin.origin === which).length
   const choose = (name: string | undefined): void => { setCategory(name); setSub(undefined) }
@@ -66,14 +66,14 @@ export function PluginStoreView({ api, apps, onStart, openExternal }: PluginStor
         {tree.length === 0 ? <div /> : (
           <div className="acrylHomeStoreCats" role="group" aria-label="Domains">
             <button type="button" className="acrylHomeNavItem" aria-pressed={category === undefined} aria-label={`All domains (${String(plugins.length)})`} onClick={() => { choose(undefined) }}><span>All domains</span></button>
-            {tree.map(group => <button key={group.name} type="button" className="acrylHomeNavItem" aria-pressed={category === group.name} aria-label={`${group.name} (${String(group.count)})`} onClick={() => { choose(group.name) }}><span>{group.name}</span><span className="acrylHomeCount">{group.count}</span></button>)}
+            {tree.map(group => <button key={group.id} type="button" className="acrylHomeNavItem" data-empty={group.count === 0 ? '' : undefined} aria-pressed={category === group.id} aria-label={`${group.id} ${group.name} (${String(group.count)})`} onClick={() => { choose(group.id) }}><span><span className="acrylHomeMeta">{group.id}</span> {group.name}</span><span className="acrylHomeCount">{group.count}</span></button>)}
           </div>
         )}
         <div className="acrylHomeStoreMain">
           {current === undefined || current.subs.length === 0 ? null : (
             <div className="acrylHomeRow" role="group" aria-label={`Subcategories of ${current.name}`}>
-              <button type="button" className="acrylHomeChip" aria-pressed={sub === undefined} onClick={() => { setSub(undefined) }}>All of {current.name}</button>
-              {current.subs.map(entry => <button key={entry.id} type="button" className="acrylHomeChip" aria-pressed={sub === entry.id} onClick={() => { setSub(entry.id) }}>{entry.name} ({entry.count})</button>)}
+              <button type="button" className="acrylHomeChip" aria-pressed={sub === undefined} onClick={() => { setSub(undefined) }}>All of {current.id} {current.name}</button>
+              {current.subs.map(entry => <button key={entry.id} type="button" className="acrylHomeChip" data-empty={entry.count === 0 ? '' : undefined} aria-pressed={sub === entry.id} onClick={() => { setSub(entry.id) }}>{entry.id} {entry.name} ({entry.count})</button>)}
             </div>
           )}
           {failed !== undefined ? <p className="acrylHomeNote" data-error role="alert">{failed} <button type="button" className="acrylHomeBtn" data-small onClick={() => { setAttempt(attempt + 1) }}>Try again</button></p> : null}
@@ -111,7 +111,7 @@ function PluginPills({ plugin, kinds }: { plugin: PluginCatalogEntry, kinds: Plu
         : <span className="acrylHomePill" title="Released by someone outside the ACRYL project; its code is not reviewed">Community</span>}
       {plugin.publisher === '' ? null : <span className="acrylHomeMeta">by @{plugin.publisher}</span>}
       {kind === undefined ? null : <span className="acrylHomePill" title={kind.description}>{kind.name}</span>}
-      {plugin.domain === undefined ? null : <span className="acrylHomePill">{plugin.domain.category} › {plugin.domain.sub}</span>}
+      {plugin.domain === undefined ? null : <span className="acrylHomePill">{categoryOf(plugin.domain.id)} {plugin.domain.category} › {plugin.domain.id} {plugin.domain.sub}</span>}
     </div>
   )
 }

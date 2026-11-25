@@ -21,6 +21,11 @@ const BLENDS = [
 ]
 
 const CATALOG = {
+  domains: [
+    { id: '02', name: 'Application', subs: [{ id: '02-02', name: 'Personal information tools' }, { id: '02-06', name: 'Application shell components' }] },
+    { id: '03', name: 'Business', subs: [{ id: '03-01', name: 'Business entity modules' }] },
+    { id: '41', name: 'Gaming', subs: [{ id: '41-04', name: 'Multiplayer and live operations' }] },
+  ],
   kinds: [{ slug: 'ui', name: 'UI Panels & Views', description: 'Panels' }, { slug: 'fun', name: 'Fun', description: 'Just for fun.' }],
   plugins: [
     { id: 'acryl-quick-notes', name: 'acryl-quick-notes', description: 'Quick notes in the top bar', kind: 'ui', domain: { id: '02-02', category: 'Application', sub: 'Personal information tools' }, compatibility: 'Both', origin: 'community' as const, publisher: 'inboxxobni', version: '0.3.0', repo: 'https://github.com/inboxxobni/acryl-quick-notes', source: 'github:inboxxobni/acryl-quick-notes@0.3.0' },
@@ -503,8 +508,14 @@ describe('the plugin catalog', () => {
     fireEvent.click(screen.getByRole('button', { name: /Unclassified \(1\)/u }))
     expect(screen.getByRole('button', { name: 'Open office-preview' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Every kind' }))
-    fireEvent.click(screen.getByRole('button', { name: /Gaming \(1\)/u }))
+    fireEvent.click(screen.getByRole('button', { name: /^41 Gaming \(1\)/u }))
     expect(screen.getByText('1 of 3 plugins')).toBeTruthy()
+    // An empty domain stays listed (dimmed) and clickable, and says so.
+    const business = screen.getByRole('button', { name: /^03 Business \(0\)/u })
+    expect(business.hasAttribute('data-empty')).toBe(true)
+    fireEvent.click(business)
+    expect(screen.getByText('0 of 3 plugins')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /03-01 Business entity modules \(0\)/u })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /All domains/u }))
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search plugins' }), { target: { value: 'card' } })
     expect(screen.getByRole('button', { name: 'Open dsh-doudizhu' })).toBeTruthy()
@@ -517,6 +528,7 @@ describe('the plugin catalog', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Plugin catalog' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Open acryl-quick-notes' }))
     expect(screen.getByText(/A Community plugin/u)).toBeTruthy()
+    expect(screen.getByText('02 Application › 02-02 Personal information tools')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Add to shop' }))
     await waitFor(() => expect(api.pullPlugin).toHaveBeenCalledWith('shop', 'github:inboxxobni/acryl-quick-notes@0.3.0'))
     expect(await screen.findByText(/Added acryl-quick-notes to shop/u)).toBeTruthy()

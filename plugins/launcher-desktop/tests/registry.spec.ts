@@ -107,6 +107,8 @@ describe('readPluginCatalog', () => {
       [PLUGIN_CATEGORIES]: categories,
     }))
     expect(view.kinds.map(kind => kind.slug)).toEqual(['ui', 'fun'])
+    // Every domain the catalog has, with its code, whether or not a plugin sits in it.
+    expect(view.domains).toEqual([{ id: '02', name: 'Application', subs: [{ id: '02-02', name: 'Personal information tools' }, { id: '02-06', name: 'Application shell components' }] }])
     expect(view.plugins.map(plugin => plugin.id)).toEqual(['acryl-quick-notes', 'zeta'])
     expect(view.plugins[0]).toEqual({
       id: 'acryl-quick-notes', name: 'acryl-quick-notes', description: 'Quick notes', kind: 'ui', domain: { id: '02-02', category: 'Application', sub: 'Personal information tools' },
@@ -139,6 +141,7 @@ describe('readPluginCatalog', () => {
   it('lists the plugins without kinds when the shared catalog cannot be read, and says so in words when the plugin list cannot', async () => {
     const view = await readPluginCatalog(byUrl({ [PLUGIN_REGISTRY_INDEX]: { entries: [quickNotes] } }))
     expect(view.kinds).toEqual([])
+    expect(view.domains).toEqual([])
     expect(view.plugins[0]).not.toHaveProperty('kind')
     await expect(readPluginCatalog(byUrl({}))).rejects.toThrow(RegistryUnavailable)
     await expect(readPluginCatalog(async () => { throw new Error('offline') })).rejects.toThrow('The registry could not be read. Check the network and try again.')

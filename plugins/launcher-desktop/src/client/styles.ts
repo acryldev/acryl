@@ -70,6 +70,9 @@ button.acrylHomeApp { cursor: pointer; }
 .acrylHomeStoreCats { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; max-height: calc(100vh - 140px); overflow-y: auto; }
 .acrylHomeStoreCats .acrylHomeNavItem { height: auto; min-height: 30px; padding: 5px 10px; gap: 8px; }
 .acrylHomeStoreCats .acrylHomeNavItem[aria-pressed="true"] { background: var(--h-fill); color: var(--h-text); }
+/* A domain or subcategory with no plugin yet stays listed and clickable, a little dimmer (spec 053). */
+.acrylHomeStoreCats .acrylHomeNavItem[data-empty], .acrylHomeChip[data-empty] { opacity: .55; }
+.acrylHomeStoreCats .acrylHomeNavItem[data-empty][aria-pressed="true"], .acrylHomeChip[data-empty][aria-pressed="true"] { opacity: 1; }
 .acrylHomeStoreMain { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 @media (max-width: 760px) { .acrylHomeStore { grid-template-columns: minmax(0, 1fr); } .acrylHomeStoreCats { position: static; max-height: 220px; } }
 .acrylHomeState { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--h-dim); }
