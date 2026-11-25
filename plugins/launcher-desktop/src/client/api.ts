@@ -1,8 +1,8 @@
 /** Same-origin browser client for the launcher routes (`../contract.ts`). */
 import {
-  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
+  LAUNCHER_ADD_PATH, LAUNCHER_ADE_PATH, LAUNCHER_APPLICATIONS_PATH, LAUNCHER_ASSISTANT_FOLDER_PATH, LAUNCHER_BLENDS_PATH, LAUNCHER_PLUGIN_CATALOG_PATH, LAUNCHER_PLUGIN_PULL_PATH, LAUNCHER_PLUGINS_PATH, LAUNCHER_PUBLISH_PATH, LAUNCHER_PUBLISH_PLAN_PATH, LAUNCHER_SHARE_PATH, LAUNCHER_SHARE_PLAN_PATH, LAUNCHER_GITHUB_PATH, LAUNCHER_GITHUB_START_PATH, LAUNCHER_GITHUB_POLL_PATH, LAUNCHER_GITHUB_DISCONNECT_PATH, LAUNCHER_HEALTH_PATH, LAUNCHER_NEW_PATH, LAUNCHER_REMOVE_PATH, LAUNCHER_START_PATH, LAUNCHER_STATE_PATH, LAUNCHER_STOP_PATH, LAUNCHER_UPDATE_PATH, LAUNCHER_UPDATE_SELF_PATH,
   type AppSharePlanRequest, type AppSharePlanView, type GithubPollView, type GithubStartView, type GithubView, type AppShareRequest, type AppShareResponse, type AssistantFolderResponse, type BlendView, type BlendsResponse, type HealthView, type NewAppRequest, type PluginPullResponse, type PluginsResponse, type PluginView, type PublishPlanRequest, type PublishPlanView,
-  type PublishRequest, type PublishResponse, type StateResponse,
+  type PluginCatalogView, type PublishRequest, type PublishResponse, type StateResponse,
 } from '../contract.ts'
 
 export interface HealthResponse extends HealthView {
@@ -15,6 +15,8 @@ export interface LauncherApi {
   health(): Promise<HealthResponse>
   /** The registry's Blends; rejects with the reason in words when it cannot be read. */
   blends(): Promise<readonly BlendView[]>
+  /** The Cordis plugin catalog of the public registry; rejects with the reason in words when it cannot be read. */
+  pluginCatalog(): Promise<PluginCatalogView>
   add(path: string): Promise<StateResponse>
   remove(id: string): Promise<StateResponse>
   /** Put the app's launcher where the OS looks for apps (`on`), or take it out again. */
@@ -77,6 +79,7 @@ export function createLauncherApi(fetchImpl: FetchLike = (input, init) => fetch(
     state: () => get<StateResponse>(LAUNCHER_STATE_PATH),
     health: () => get<HealthResponse>(LAUNCHER_HEALTH_PATH),
     blends: async () => (await get<BlendsResponse>(LAUNCHER_BLENDS_PATH)).blends,
+    pluginCatalog: () => get<PluginCatalogView>(LAUNCHER_PLUGIN_CATALOG_PATH),
     add: path => post(LAUNCHER_ADD_PATH, { path }),
     remove: id => post(LAUNCHER_REMOVE_PATH, { id }),
     inApplications: (id, on) => post(LAUNCHER_APPLICATIONS_PATH, { id, on }),
