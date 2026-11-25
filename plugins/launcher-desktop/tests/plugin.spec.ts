@@ -73,7 +73,7 @@ const home = mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-home-'))
 cleanups.push(() => { rmSync(home, { recursive: true, force: true }) })
 const appInstance = { home, dshHome: join(home, '.dsh') }
 
-async function boot(options: { router?: boolean, instance?: boolean } = {}) {
+async function boot(options: { router?: boolean, instance?: boolean, root?: string } = {}) {
   const served = await host()
   const ctx = new Context()
   cleanups.push(async () => { await ctx.fiber.dispose() })
@@ -87,7 +87,7 @@ async function boot(options: { router?: boolean, instance?: boolean } = {}) {
     await fiber
   }
   const http = ctx.plugin(routerHttpPlugin)
-  const fiber = ctx.plugin(launcher)
+  const fiber = ctx.plugin(launcher, options.root === undefined ? undefined : { root: options.root })
   if (options.router !== false) await router()
   const send = (method: string, path: string, headers: Record<string, string>, body?: string) =>
     new Promise<{ status: number, body: string }>((resolve, reject) => {
@@ -116,6 +116,13 @@ describe('@acryldev/launcher-desktop Host plugin', () => {
     expect(JSON.parse(state.body)).toMatchObject({ apps: [], appsFolder: join(dirname(home), 'ACRYL'), job: null })
     expect((await app.get(LAUNCHER_STATE_PATH, { origin: 'http://evil.test', 'sec-fetch-site': 'cross-site' })).status).toBe(403)
     expect((await app.get(LAUNCHER_STATE_PATH, {})).status).toBe(403)
+  })
+
+  it('lists the apps of the ACRYL root it is given as an option, not of appInstance.home (a Blends frame\'s home is the app\'s own data folder)', async () => {
+    const root = join(mkdtempSync(join(tmpdir(), 'acryl-launcher-desktop-root-')), '.acryl')
+    cleanups.push(() => { rmSync(dirname(root), { recursive: true, force: true }) })
+    const app = await boot({ root })
+    expect(JSON.parse((await app.get(LAUNCHER_STATE_PATH)).body)).toMatchObject({ appsFolder: join(dirname(root), 'ACRYL') })
   })
 
   it('refuses a change that is not same-origin JSON, and a request body that is not what the route takes', async () => {

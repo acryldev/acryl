@@ -24,6 +24,7 @@ import * as workspaceHost from '@acryldev/workspace'
 // `ctx.loader`: the frame lists its Loader rows and starts the app's plugins again after a switch.
 import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
 import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, recordShare, saveAppPlugin, shareAppPlugin, switchAppPlugin, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
+import { provideAcrylTools } from './acryl-tools.ts'
 import { appFallbackTarget, appNavigationTarget } from './app-urls.ts'
 import { AppShareRefused, appShareCommand, type AppSharePort } from './app-share.ts'
 import { AppIconRefused, APP_ICON_MAX_BYTES, iconBytes, saveAppIcon } from './app-icon.ts'
@@ -954,6 +955,8 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       c.res = await ctx.router.fetch(new Request(new URL(target, url.origin), init), (c.env as { connection?: CanvasConnection } | undefined)?.connection ?? {})
     }), '@acryldev/blends-frame: app requests under the canvas prefix')
   }
+  // Every plugin that gives the chat a tool through ACRYL's tools port finds the port here, as it does in the ACRYL runtime.
+  provideAcrylTools(ctx)
   ctx.plugin(workspaceHost, appPage === undefined ? {} : { appPage })
   // The chat works in the app's own folder. DSH's first-run workspace is a folder under Documents; with the app's folder registered first, the page's first chat
   // opens in it (DSH makes its default workspace only when it has none), so what the agent writes is the app, and the auto-save can save it.

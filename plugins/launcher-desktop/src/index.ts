@@ -27,8 +27,17 @@ declare module '@deepseek-ai/cordis' {
 
 export const inject = ['router', 'routerHttp', 'appInstance']
 
-export function apply(ctx: Context): void {
-  const service = createNodeLauncher(ctx.appInstance.home)
+/**
+ * `root` is ACRYL's root (`~/.acryl`), where the apps are listed and made. Absent, it is `appInstance.home`, which is the root in the ACRYL runtime; a
+ * Blends frame's `appInstance.home` is the app's own data folder, so its Blend passes the root the AppInstance family names (`acrylRoot` of
+ * `@acryldev/instance/storage`) instead of this plugin reading the environment.
+ */
+export interface Config {
+  readonly root?: string
+}
+
+export function apply(ctx: Context, config: Config = {}): void {
+  const service = createNodeLauncher(config.root ?? ctx.appInstance.home)
   void service.prepareTools()
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`@acryldev/launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)

@@ -698,6 +698,9 @@ importers:
       '@acryldev/blends-core':
         specifier: workspace:^
         version: link:../../runtime/blends-core
+      '@acryldev/control':
+        specifier: workspace:*
+        version: link:../../runtime/control
       '@acryldev/loopback-http':
         specifier: workspace:*
         version: link:../../runtime/loopback-http
@@ -710,6 +713,9 @@ importers:
       '@acryldev/workspace':
         specifier: workspace:*
         version: link:../workspace
+      '@deepseek-ai/dsh-tools':
+        specifier: 0.2.0-rc.2
+        version: 0.2.0-rc.2(52b5a8ab481be2b3d891c22a71641755)
       yaml:
         specifier: 2.9.0
         version: 2.9.0

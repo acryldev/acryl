@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/blends-frame",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "description": "ACRYL Blends frame: the workbench around an app being built - a top bar, the branches and versions on the left, the app alone in the centre, and the agents on the right - as one Cordis plugin with a Host and a client half",
   "license": "MIT",
   "repository": {
@@ -62,6 +62,7 @@
     "@acryldev/app-persistence": "workspace:^",
     "@acryldev/app-shell": "workspace:*",
     "@acryldev/blends-core": "workspace:^",
+    "@acryldev/control": "workspace:*",
     "@acryldev/loopback-http": "workspace:*",
     "@acryldev/plugin-hub-core": "workspace:^",
     "@acryldev/versions": "workspace:*",
@@ -74,6 +75,7 @@
     "@deepseek-ai/dsh-client-ui-renderer": "0.2.0-rc.2",
     "@deepseek-ai/dsh-client-ui-slots": "0.2.0-rc.2",
     "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
