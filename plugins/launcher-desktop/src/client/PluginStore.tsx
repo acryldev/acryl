@@ -136,8 +136,8 @@ function PluginPage({ plugin, catalog, apps, api, onStart, openExternal, onBack 
     setDoing(true)
     setNote(undefined)
     try {
-      const result = await api.pullPlugin(app.id, plugin.source)
-      setNote({ text: `Added ${plugin.name} to ${app.name}. ${result.text}`, error: false })
+      await api.pullPlugin(app.id, plugin.source)
+      setNote({ text: `Added ${plugin.name} to ${app.name}. It is checked and installed; ${app.name} loads it now, see its Plugins panel on My apps.`, error: false })
     } catch (cause) {
       setNote({ text: message(cause), error: true })
     } finally {
