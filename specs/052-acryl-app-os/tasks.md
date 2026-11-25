@@ -261,7 +261,12 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
   npm's own work in an app); an app installed from it can still `npm install` its own packages; `acryl clean` and `acryl apps reinstall` still
   remove and replace it. Test: an in-place write to a linked file fails (Linux, Windows), a write in a macOS clone stays in that app.
 - [x] T067 (done 2026-11-25: app-context docs `start-here/this-app.md` "Never edit node_modules: core parts are shared" and the EACCES/EPERM entry in `troubleshooting.md`; ships with the next app-context release) The agent's instructions (app-context docs, the acryl-app skill) say: never edit `node_modules`; to change a core part, own it (T068).
-- [ ] T068 `acryl plugin own <name>`: copy the plugin's source into the app's `plugins/`, mount it in place of the shared one (same row id), record
+- [ ] T068 Design findings (2026-11-25): the frame mounts its core parts as rows of the app's generated `cordis.patch.yml` (`acryl-blends-frame` is
+  `name: '@acryldev/blends-frame'`); `acryl-door` already mounts an app-owned copy (`./plugins/door/src/index.ts`), so owning is the same row id
+  pointed at `./plugins/<name>/src/index.ts`, recorded so that regenerating the frame keeps it. The core packages publish only `lib/` (blends-frame
+  0.2.18: 95 files, no `src/`), so the source comes from acryldev/acryl at the version the app runs (its frame tag), and the package's dependencies
+  stay installed. Open question, proven first by hand: whether the frame serves an owned copy's client half (compiled at release today) in dev.
+  `acryl plugin own <name>`: copy the plugin's source into the app's `plugins/`, mount it in place of the shared one (same row id), record
   it so `acrylblends update` merges upstream into it; refuse with the reason for a part that cannot be owned. Test and proof: an app owns
   `blends-frame`, changes its left panel, a second app is unchanged.
 - [ ] T069 `acryl detach [--vendor]`: own real packages, leave the Control Center's list, move the app's data into its folder, drop the update
