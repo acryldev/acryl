@@ -78,7 +78,7 @@
       "path": "../plugins/system-prompt"
     },
     "@acryldev/app-context": {
-      "version": "0.2.1",
+      "version": "0.2.2",
       "path": "../plugins/app-context"
     },
     "@acryldev/versions": {
