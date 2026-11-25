@@ -1,6 +1,6 @@
 # Current system prompt: web
 
-<!-- Generated on 2026-11-18 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
+<!-- Generated on 2026-11-25 by the system-prompt capture (see ../README.md). Do not edit; regenerate. -->
 
 What the model receives on the first turn of a new session on the web surface (standard preset), after path scrubbing.
 Temporary paths are shown as `<workspace>`, `<dsh-home>` and `<acryl-repo>`. The tool list follows the system prompt.
@@ -87,7 +87,7 @@ ACRYL plugin docs: <acryl-repo>/plugins/plugin-context. Read only when the user 
 </acryl_plugin_docs>
 
 <harness_source>
-The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pnpm/@deepseek-ai+dsh-web-app@0.2.0-rc.2_patch_hash=ca942e3889e800daea793bee8e8e12110dd841b8_fb7b91819b2b1bddc3f56851f15b027d/. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.
+The DeepSeek Harness implementation checkout is at <acryl-repo>/node_modules/.pnpm/@deepseek-ai+dsh-web-app@0.2.0-rc.2_patch_hash=ca942e3889e800daea793bee8e8e12110dd841b8_62a76e66d7cb5411a514f63206fceaf5/. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.
 </harness_source>
 
 <app_web-surface>

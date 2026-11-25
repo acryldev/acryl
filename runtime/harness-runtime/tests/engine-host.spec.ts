@@ -110,6 +110,13 @@ describe('createAcrylEngineHost', () => {
     expect(events).toEqual(['start:dsh'])
   })
 
+  it('stops with the cause when the engine fails to start, instead of booting an app without its profile', async () => {
+    await expect(createAcrylEngineHost({
+      engines: [{ id: 'dsh', plugin: () => { throw new Error('profile package missing') } }],
+      initialEngine: 'dsh',
+    })).rejects.toThrow('ACRYL engine "dsh" did not start, so there is no Harness profile: profile package missing')
+  })
+
   it('runs prepare on the bare root before any engine mounts, so its registrations are visible to the mounted engine', async () => {
     const events: string[] = []
     const host = await createAcrylEngineHost({

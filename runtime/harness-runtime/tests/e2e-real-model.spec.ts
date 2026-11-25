@@ -17,6 +17,7 @@ import { join } from 'node:path'
 import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { it } from 'vitest'
+import { codingCapabilities } from '@acryldev/coding-capabilities'
 import { createDshEngineDefinition, createWebEngineDefinition } from '../src/engine-dsh.ts'
 import { createAcrylEngineHost } from '../src/engine-host.ts'
 import { createAcrylSessionBridge } from '../src/session-bridge.ts'
@@ -34,9 +35,9 @@ it.skipIf(prompts === undefined)('the agent builds, changes, extends and removes
 
   const tui = process.env.ACRYL_E2E_ENGINE === 'tui'
   const host = await createAcrylEngineHost(tui
-    ? { engines: [createDshEngineDefinition('acryl-e2e')], initialEngine: 'dsh' }
+    ? { engines: [createDshEngineDefinition('acryl-e2e', codingCapabilities)], initialEngine: 'dsh' }
     : {
-        engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href)],
+        engines: [createWebEngineDefinition(new URL('../package.json', import.meta.url).href, codingCapabilities)],
         initialEngine: 'dsh',
         prepare: ctx => { provideCmdline(ctx, { args: ['--no-open', '--port', '0'], exit: () => {} }) },
       })

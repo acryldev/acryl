@@ -87,12 +87,19 @@ export async function createAcrylEngineHost(input: {
     name: `cordis:acryl-engine-${engine.id}`,
     ...(engine.config === undefined ? {} : { config: engine.config }),
   })
+  // A failed engine row stays inside its own fiber: `loader.await()` resolves and the app would boot without its profile. Surface it here.
+  const settle = async (id: string): Promise<void> => {
+    await ctx.loader.await()
+    await ctx.loader.resolve(ENGINE_ENTRY_ID).fiber?.await().catch((cause: unknown) => {
+      throw new Error(`ACRYL engine "${id}" did not start, so there is no Harness profile: ${cause instanceof Error ? cause.message : String(cause)}`, { cause })
+    })
+  }
   try {
     await input.prepare?.(ctx)
     ctx.loader.builtins.group = Group
     for (const engine of engines.values()) ctx.loader.builtins[`acryl-engine-${engine.id}`] = engine.plugin
     await ctx.loader.create(entryFor(initial))
-    await ctx.loader.await()
+    await settle(initial.id)
   } catch (error) {
     await ctx.fiber.dispose()
     throw error
@@ -116,8 +123,9 @@ export async function createAcrylEngineHost(input: {
       ctx.loader.remove(ENGINE_ENTRY_ID)
       await previous?.dispose()
       await ctx.loader.create(entryFor(next))
-      await ctx.loader.await()
+      // `active` names the row that exists, started or not, so a failed engine can be swapped away from.
       active = next.id
+      await settle(next.id)
     },
     async dispose(): Promise<void> {
       if (disposed) return
