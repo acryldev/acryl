@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { digestFolder } from '@acryldev/blends-core'
 import { afterEach, describe, expect, it } from 'vitest'
-import { AppliedLive, pulledDigestOf, readDefinition, watchAppFiles } from '../src/applied-live.ts'
+import { AppliedLive, pulledDigestOf, readDefinition, UPDATE_HOLD, updateHeld, watchAppFiles } from '../src/applied-live.ts'
 
 const BLEND = (pulled: Readonly<Record<string, string>>, extraRow = ''): string => {
   const records = Object.entries(pulled)
@@ -156,8 +156,48 @@ describe('a pull blend.yaml does not remember (from a local file)', () => {
   })
 })
 
+describe('updateHeld', () => {
+  const hold = (root: string, record: unknown): void => {
+    mkdirSync(join(root, '.acrylblends'), { recursive: true })
+    writeFileSync(join(root, UPDATE_HOLD), JSON.stringify(record))
+  }
+
+  it('holds while a live update names itself, never for a dead, stale, broken or missing one', () => {
+    const root = app()
+    const now = 1_000_000_000
+    expect(updateHeld(root, now)).toBe(false)
+    hold(root, { pid: process.pid, since: now - 1000 })
+    expect(updateHeld(root, now)).toBe(true)
+    expect(updateHeld(root, now, () => false)).toBe(false)
+    expect(updateHeld(root, now + 31 * 60_000)).toBe(false)
+    writeFileSync(join(root, UPDATE_HOLD), '{ not json')
+    expect(updateHeld(root, now)).toBe(false)
+  })
+})
+
 describe('watchAppFiles', () => {
   const settle = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+  it('holds the reload while an update merges and installs, then loads the app once', async () => {
+    const root = app()
+    let reloads = 0
+    const stop = watchAppFiles(root, () => { reloads += 1 }, { debounceMs: 100 })
+    try {
+      await settle(350)
+      mkdirSync(join(root, '.acrylblends'), { recursive: true })
+      writeFileSync(join(root, UPDATE_HOLD), JSON.stringify({ pid: process.pid, since: Date.now() }))
+      writeFileSync(join(root, 'src', 'app.ts'), 'import "a-package-not-installed-yet"\n')
+      await settle(300)
+      writeFileSync(join(root, 'src', 'more.ts'), 'export {}\n')
+      await settle(300)
+      expect(reloads).toBe(0)
+      rmSync(join(root, UPDATE_HOLD))
+      await settle(800)
+      expect(reloads).toBe(1)
+    } finally {
+      stop()
+    }
+  })
 
   it('two pulls inside one debounce, one of them refused, load nothing; an edit after them loads the app once', async () => {
     const root = app()

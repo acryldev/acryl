@@ -10,9 +10,9 @@
  */
 
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { basename, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { UsageError } from './init'
 import type { Io } from './io'
@@ -24,6 +24,11 @@ export const REGISTRY_INDEX = 'https://acrylblends.github.io/registry/index.json
 /** The commit of the Blend's release the app last took: the base the next update merges from. */
 export const BLEND_REF = 'refs/acrylblends/blend'
 const LOCKFILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock'])
+/**
+ * While an update merges and installs, the app's files are half new: new code can import a package npm has not installed yet. A running app's frame
+ * (@acryldev/blends-frame `applied-live.ts`, UPDATE_HOLD there) holds its reload while this file names a live process, and reloads once when it is gone.
+ */
+export const UPDATE_HOLD = join('.acrylblends', 'updating.json')
 
 export interface UpdateOptions {
   readonly directory: string | undefined
@@ -238,63 +243,83 @@ export async function update(
       )
   }
 
-  const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-'))
+  // Where the app was before the update: an install that fails takes it back there, so a failed update never leaves new code without its packages.
+  const before = git(['rev-parse', 'HEAD']).out
+  const blendBefore = git(['rev-parse', '-q', '--verify', BLEND_REF]).out
+  const hold = join(app, UPDATE_HOLD)
+  mkdirSync(dirname(hold), { recursive: true })
+  writeFileSync(hold, `${JSON.stringify({ pid: process.pid, since: Date.now(), to: latest })}\n`)
   try {
-    say(
-      `Getting ${blend.id} ${newest} (@acryldev/create-blends@${VERSION}, as the app was made)...`,
-    )
-    const name = basename(app)
-    if ((await world.make(blend.id, name, scratch, newest)) !== 0)
-      throw new Error(`${blend.id} ${latest} could not be made; the app is unchanged`)
-    const made = join(scratch, name)
-    const fetched = git(['fetch', '-q', '--no-tags', made, 'HEAD'])
-    if (!fetched.ok) throw new Error(`the new release could not be read: ${fetched.err}`)
-    const tree = git(['rev-parse', 'FETCH_HEAD^{tree}']).out
-    const release = git([
-      'commit-tree',
-      tree,
-      '-p',
-      base,
-      '-m',
-      `${blend.id} ${latest} from ${fromRepository ? 'its repository' : 'the registry'}`,
-    ]).out
-    if (!release) throw new Error('the new release could not be recorded in the app')
-
-    say(`Merging ${blend.id} ${latest} into ${name} (your changes are kept)...`)
-    const merged = git(['merge', '--no-edit', '-m', `Update ${blend.id} to ${latest}`, release])
-    // A lockfile differs between any two installs: the release's is taken and the npm install below makes it this app's again.
-    const conflicts = git(['diff', '--name-only', '--diff-filter=U'])
-      .out.split('\n')
-      .filter(Boolean)
-    const onlyLocks =
-      conflicts.length > 0 && conflicts.every((file) => LOCKFILES.has(basename(file)))
-    if (
-      !merged.ok &&
-      onlyLocks &&
-      conflicts.every(
-        (file) => git(['checkout', '--theirs', '--', file]).ok && git(['add', '--', file]).ok,
-      ) &&
-      git(['commit', '-q', '--no-edit']).ok
-    ) {
-      say(`Took ${conflicts.join(', ')} from the release (npm install brings it up to date).`)
-    } else if (!merged.ok) {
-      const both = conflicts.join('\n')
-      git(['merge', '--abort'])
-      throw new Error(
-        both === ''
-          ? `the merge failed: ${merged.err || merged.out}; the app is unchanged`
-          : `you and ${blend.id} ${latest} both changed the same lines of: ${both.split('\n').join(', ')}. Nothing was changed; ask the agent to bring in ${blend.id} ${latest} by hand, or undo your change there and update again`,
+    const scratch = mkdtempSync(join(tmpdir(), 'acrylblends-update-'))
+    try {
+      say(
+        `Getting ${blend.id} ${newest} (@acryldev/create-blends@${VERSION}, as the app was made)...`,
       )
-    }
-    git(['update-ref', BLEND_REF, release])
-  } finally {
-    rmSync(scratch, { recursive: true, force: true })
-  }
+      const name = basename(app)
+      if ((await world.make(blend.id, name, scratch, newest)) !== 0)
+        throw new Error(`${blend.id} ${latest} could not be made; the app is unchanged`)
+      const made = join(scratch, name)
+      const fetched = git(['fetch', '-q', '--no-tags', made, 'HEAD'])
+      if (!fetched.ok) throw new Error(`the new release could not be read: ${fetched.err}`)
+      const tree = git(['rev-parse', 'FETCH_HEAD^{tree}']).out
+      const release = git([
+        'commit-tree',
+        tree,
+        '-p',
+        base,
+        '-m',
+        `${blend.id} ${latest} from ${fromRepository ? 'its repository' : 'the registry'}`,
+      ]).out
+      if (!release) throw new Error('the new release could not be recorded in the app')
 
-  if (existsSync(join(app, 'node_modules'))) {
-    say('Installing its dependencies (npm install)...')
-    if ((await io.install(app)) !== 0)
-      throw new Error('npm install failed after the update: run it in the app folder')
+      say(`Merging ${blend.id} ${latest} into ${name} (your changes are kept)...`)
+      const merged = git(['merge', '--no-edit', '-m', `Update ${blend.id} to ${latest}`, release])
+      // A lockfile differs between any two installs: the release's is taken and the npm install below makes it this app's again.
+      const conflicts = git(['diff', '--name-only', '--diff-filter=U'])
+        .out.split('\n')
+        .filter(Boolean)
+      const onlyLocks =
+        conflicts.length > 0 && conflicts.every((file) => LOCKFILES.has(basename(file)))
+      if (
+        !merged.ok &&
+        onlyLocks &&
+        conflicts.every(
+          (file) => git(['checkout', '--theirs', '--', file]).ok && git(['add', '--', file]).ok,
+        ) &&
+        git(['commit', '-q', '--no-edit']).ok
+      ) {
+        say(`Took ${conflicts.join(', ')} from the release (npm install brings it up to date).`)
+      } else if (!merged.ok) {
+        const both = conflicts.join('\n')
+        git(['merge', '--abort'])
+        throw new Error(
+          both === ''
+            ? `the merge failed: ${merged.err || merged.out}; the app is unchanged`
+            : `you and ${blend.id} ${latest} both changed the same lines of: ${both.split('\n').join(', ')}. Nothing was changed; ask the agent to bring in ${blend.id} ${latest} by hand, or undo your change there and update again`,
+        )
+      }
+      git(['update-ref', BLEND_REF, release])
+    } finally {
+      rmSync(scratch, { recursive: true, force: true })
+    }
+
+    if (existsSync(join(app, 'node_modules'))) {
+      say('Installing its dependencies (npm install)...')
+      if ((await io.install(app)) !== 0) {
+        say(`npm install failed: taking ${basename(app)} back to ${blend.id} ${blend.version}...`)
+        git(['reset', '-q', '--hard', before])
+        if (blendBefore) git(['update-ref', BLEND_REF, blendBefore])
+        else git(['update-ref', '-d', BLEND_REF])
+        const restored = (await io.install(app)) === 0
+        throw new Error(
+          restored
+            ? `npm install failed for ${blend.id} ${latest}; the app is back at ${blend.version}, as before the update`
+            : `npm install failed for ${blend.id} ${latest}; the app's files are back at ${blend.version}, but its packages could not be installed again: run npm install in the app folder`,
+        )
+      }
+    }
+  } finally {
+    rmSync(hold, { force: true })
   }
   say(`Updated to ${blend.id} ${latest}.`)
   return 0

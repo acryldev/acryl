@@ -19,6 +19,36 @@ import { digestFolder } from '@acryldev/blends-core'
 import { parseDocument } from 'yaml'
 import { watchFolder, watchFolders } from './app-reload.ts'
 
+/**
+ * The file `acrylblends update` writes while it merges a newer release into the app and installs its packages (@acryldev/blends `update.ts`, UPDATE_HOLD
+ * there). Meanwhile the files are half new: new code can import a package npm has not installed yet, so a reload then fails ("Not reloaded: Cannot find
+ * package"). The reload waits until the file is gone, then loads the app once.
+ */
+export const UPDATE_HOLD = join('.acrylblends', 'updating.json')
+/** A hold older than this is from an update that died without removing it, and holds nothing. */
+const HOLD_LIMIT_MS = 30 * 60_000
+const HOLD_POLL_MS = 500
+
+const processAlive = (pid: number): boolean => {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (cause) {
+    return (cause as NodeJS.ErrnoException).code === 'EPERM'
+  }
+}
+
+/** Whether an update is merging and installing in the app now: its hold names a process that still runs and was written less than half an hour ago. */
+export function updateHeld(root: string, now: number = Date.now(), alive: (pid: number) => boolean = processAlive): boolean {
+  let record: { pid?: unknown, since?: unknown }
+  try {
+    record = JSON.parse(readFileSync(join(root, UPDATE_HOLD), 'utf8')) as typeof record
+  } catch {
+    return false
+  }
+  return typeof record.pid === 'number' && typeof record.since === 'number' && now - record.since < HOLD_LIMIT_MS && alive(record.pid)
+}
+
 /** The row whose config remembers the pulled plugins (acrylblends' `plugin-share`). */
 const SHARE_ROW = 'plugin-share'
 
@@ -120,6 +150,21 @@ export function watchAppFiles(
   options: { readonly debounceMs?: number; readonly report?: (cause: unknown) => void; readonly pulledDigest?: PulledDigest } = {},
 ): () => void {
   const applied = new AppliedLive(root, options.pulledDigest)
+  let held: NodeJS.Timeout | undefined
+  // During an update the reload waits for its install (UPDATE_HOLD), then runs once for every change made meanwhile.
+  const reloadWhenFree = (): void => {
+    if (held !== undefined) return
+    if (!updateHeld(root)) {
+      reload()
+      return
+    }
+    held = setInterval(() => {
+      if (updateHeld(root)) return
+      clearInterval(held)
+      held = undefined
+      reload()
+    }, HOLD_POLL_MS)
+  }
   const onChange = (changed: readonly string[]): void => {
     try {
       if (!applied.needsReload(changed)) return
@@ -127,12 +172,13 @@ export function watchAppFiles(
     } catch (cause) {
       options.report?.(cause)
     }
-    reload()
+    reloadWhenFree()
   }
   const watching = { ...(options.debounceMs === undefined ? {} : { debounceMs: options.debounceMs }), ...(options.report === undefined ? {} : { report: options.report }) }
   const stopCode = watchFolders([join(root, 'src'), join(root, 'plugins')], onChange, watching)
   const stopBlend = watchFolder(root, onChange, { ...watching, only: ['blend.yaml'] })
   return () => {
+    clearInterval(held)
     stopCode()
     stopBlend()
   }

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -10,6 +10,7 @@ import {
   isNewerVersion,
   newestTag,
   sourceOfApp,
+  UPDATE_HOLD,
   type UpdateWorld,
   update,
 } from '../src/update'
@@ -207,5 +208,40 @@ describe('acrylblends update', () => {
     ).rejects.toThrow(/both changed the same lines of: chart\.ts/u)
     expect(git(app, 'rev-parse', 'HEAD')).toBe(head)
     expect(git(app, 'status', '--porcelain')).toBe('')
+  })
+  it('holds a running app\'s reload while it installs, and takes the app back when the install fails', async () => {
+    const app = join(scratch, 'held')
+    makeBlend(app, '0.1.0', { ...v1, '.gitignore': 'node_modules/\n' })
+    mkdirSync(join(app, 'node_modules'))
+    const head = git(app, 'rev-parse', 'HEAD')
+    const world: UpdateWorld = {
+      latest: async () => '0.2.0',
+      make: async (_id, name, folder) => {
+        makeBlend(join(folder, name), '0.2.0', { ...v1, '.gitignore': 'node_modules/\n', 'chart.ts': 'export const bars = 12\n' })
+        return 0
+      },
+    }
+    const installs: { held: boolean; chart: string }[] = []
+    const run = session(app)
+    run.io.install = async () => {
+      installs.push({ held: existsSync(join(app, UPDATE_HOLD)), chart: readFileSync(join(app, 'chart.ts'), 'utf8') })
+      return installs.length === 1 ? 1 : 0
+    }
+    await expect(update({ directory: undefined, check: false }, run.io, world)).rejects.toThrow(
+      /npm install failed for acrylblends\.csv-explorer 0\.2\.0; the app is back at 0\.1\.0/u,
+    )
+    // The failed install ran on the new code under the hold; the second one restored the old code's packages, still held.
+    expect(installs).toEqual([
+      { held: true, chart: 'export const bars = 12\n' },
+      { held: true, chart: 'export const bars = 5\n' },
+    ])
+    expect(git(app, 'rev-parse', 'HEAD')).toBe(head)
+    expect(() => git(app, 'rev-parse', '-q', '--verify', BLEND_REF)).toThrow()
+    expect(existsSync(join(app, UPDATE_HOLD))).toBe(false)
+
+    const again = session(app)
+    expect(await update({ directory: undefined, check: false }, again.io, world)).toBe(0)
+    expect(again.out()).toContain('Updated to acrylblends.csv-explorer 0.2.0')
+    expect(existsSync(join(app, UPDATE_HOLD))).toBe(false)
   })
 })
