@@ -233,7 +233,7 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
 
 - [x] T060 (built 2026-11-25 in Control Center: an app's Share opens its Share place, 1. Save to GitHub, 2. Build installer, 3. Deploy to WebBoxes.ai, 4. Publish a plugin; the app's own Settings get the same place with T061) One "Share" place in an app's Settings and per app in the Control Center: Save to GitHub (`@acryldev/save`), a feature to the
   registry (`@acryldev/plugin-share`), Deploy to WebBoxes.ai, each as today, gathered, not rewritten.
-- [ ] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
+- [x] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
   Design (2026-11-25): an app made from a starter has no release workflow, and Control Center's GitHub sign-in asks only for `repo`, which GitHub
   refuses for a push that adds a workflow file. So: (a) `acrylblends release-workflow` writes `.github/workflows/release.yml` into the app,
   generalized from Control Center's proven one (a `v*` tag packs macOS arm64/x64, Windows x64, Linux x64 and publishes the Latest release; the
@@ -243,7 +243,10 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
   (b) and (c) built 2026-11-25: `GITHUB_SCOPE` is `repo workflow` and the granted scopes are stored (`canPushWorkflows`); `@acryldev/launcher`
   team-release.js / team-release-cli.mjs does the push, the next free version tag and follows the Release run; Control Center's Share place step 2
   has "Share with team" (refused off GitHub or on a sign-in from before, with what to do), the banner shows the link. No agent tool: an agent
-  never publishes. Not yet proven on GitHub: the end-to-end run needs a login with `workflow` (the owner's `gh auth refresh -s workflow`).
+  never publishes. Proven on GitHub 2026-11-25: an app made from the Notes starter (create-acrylblends 1.7.37) in the throwaway repository
+  inboxxobni/team-release-test-11252023, the published team-release command (launcher 0.2.2) added the workflow, tagged v0.1.0, pushed, followed
+  the run (4 packs and the release, all green) and printed the release page, Latest, with the macOS arm64 and x64 DMGs, the Windows x64 .exe,
+  the Linux .deb and .tar.gz and the PKGBUILD. The Share place button itself was not clicked on a screen yet.
 - [ ] T062 AppImage as a Linux target in the packer and the release workflow, beside deb and tar.gz.
 - [ ] T063 The download link is the app repository's GitHub release page (owner 2026-11-24); its notes carry the first-open steps for
   unsigned installers on macOS and Windows, with pictures.
