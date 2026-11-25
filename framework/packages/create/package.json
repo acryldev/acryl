@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/create-blends",
-  "version": "1.7.36",
+  "version": "1.7.37",
   "description": "Create an Acryl app: npm create @acryldev/blends@latest",
   "license": "MIT",
   "type": "module",
