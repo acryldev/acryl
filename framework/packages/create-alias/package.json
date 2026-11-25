@@ -1,6 +1,6 @@
 {
   "name": "create-acrylblends",
-  "version": "1.7.35",
+  "version": "1.7.36",
   "description": "The short name for @acryldev/create-blends: the same scaffolder, forwarded.",
   "license": "MIT",
   "bin": {

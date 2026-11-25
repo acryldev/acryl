@@ -76,6 +76,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes @acryldev/create-blends 1.7.32](release-notes/create-blends-1.7.32.md) - released with blends 1.7.32
 - [Release notes @acryldev/blends 1.7.33](release-notes/blends-1.7.33.md) - the Dock and Cmd+Tab name a desktop app as its window does (desktop-shell 0.1.14)
 - [Release notes @acryldev/create-blends 1.7.33](release-notes/create-blends-1.7.33.md) - released with blends 1.7.33
+- [Release notes @acryldev/blends 1.7.36](release-notes/blends-1.7.36.md) - acrylblends release-workflow: a v tag builds the app's installers on GitHub and publishes them
+- [Release notes @acryldev/create-blends 1.7.36](release-notes/create-blends-1.7.36.md) - released with blends 1.7.36
 - [Release notes @acryldev/blends 1.7.35](release-notes/blends-1.7.35.md) - an update never breaks the running app half way, a failed install takes it back; a Blend's chat lists and switches its plugins
 - [Release notes @acryldev/create-blends 1.7.35](release-notes/create-blends-1.7.35.md) - released with blends 1.7.35
 - [Release notes @acryldev/blends 1.7.34](release-notes/blends-1.7.34.md) - a Blend's chat has the tools its plugins give (app-context 0.2.2); the acryl-app skill loads
