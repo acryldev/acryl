@@ -80,10 +80,10 @@ export function launcherTools(service: LauncherService): readonly AcrylToolDefin
     }),
     defineAcrylTool({
       name: 'acryl_launcher_plugin_catalog',
-      description: 'Plugins in the public Cordis plugin catalog (id, name, kind, domain, description, compatibility, who released it, and the source to give acryl_launcher_pull_plugin). Give a query and/or a kind slug to narrow it; at most 25 are returned. Then pull one into a RUNNING app with acryl_launcher_pull_plugin.',
+      description: 'Search the public Cordis plugin catalog: id, name, kind, domain, compatibility and the source for acryl_launcher_pull_plugin. At most 25.',
       parameters: {
-        query: { type: 'string', description: 'words to look for in the name, description, kind, domain or publisher' },
-        kind: { type: 'string', description: 'a kind slug such as ui, memory, models, tools, integrations, fun, or unclassified' },
+        query: { type: 'string', description: 'words to look for' },
+        kind: { type: 'string', description: 'a kind slug (see kinds in the answer), or unclassified' },
       },
       output: { schema: STRING, render: (_args, value: string) => text(value) },
       execute: async (args) => {
