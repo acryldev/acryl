@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/agent-control",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Agent Control (spec 041): a governed, snapshot-and-act interface to ACRYL's own window for the agent, one Cordis plugin for Web and Desktop. Host tools reach the page over @acryldev/door's channel (an event stream down, POST up, same origin); the in-page driver builds accessibility snapshots with short-lived refs, redacts sensitive fields, refuses protected controls, and shows an \"agent is driving\" indicator with a kill switch",
   "license": "MIT",
   "repository": {
