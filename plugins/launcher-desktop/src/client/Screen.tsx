@@ -7,6 +7,7 @@ import { MAKEABLE_SURFACES, SURFACES, webboxesDeployBlendUrl, webboxesDeployUrl,
 import type { HealthResponse, LauncherApi } from './api.ts'
 import { blendAppName, folderName, iconColor, storeCategories, initial, runsLine, SURFACE_LABEL, surfaceNote, tilesOf, visibleApps, type SurfaceFilter } from './model.ts'
 import { SITE_FONT_FACES } from './fonts.ts'
+import { PluginStoreView } from './PluginStore.tsx'
 import { readRail, saveRail } from './skin.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
 import type { LauncherVisibility } from './store.ts'
@@ -20,7 +21,7 @@ export interface LauncherScreenProps {
   readonly adeUnderneath?: boolean
 }
 
-type View = 'apps' | 'running' | 'drafts' | 'updates' | 'store' | 'cloud' | 'health' | 'settings'
+type View = 'apps' | 'running' | 'drafts' | 'updates' | 'store' | 'plugins' | 'cloud' | 'health' | 'settings'
 /** What is open beside the list: nothing, the "+ New app" form, or the "Add a folder" form. */
 type Panel = 'none' | 'new' | 'add'
 
@@ -99,6 +100,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         {nav('updates', 'Updates', tiles.updates)}
         <div className="acrylHomeSep" />
         {nav('store', 'Blends store')}
+        {nav('plugins', 'Plugin catalog')}
         {nav('cloud', 'WebBoxes.ai')}
         <div className="acrylHomeSep" />
         {nav('health', 'Health')}
@@ -122,6 +124,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
         {view === 'updates' && <UpdatesView apps={apps.filter(app => app.update !== undefined)} onUpdate={id => act(() => api.update(id))} />}
         {view === 'store' && <StoreView api={api} state={state} openExternal={openExternal} onCreate={async (request) => { const refused = await create(request); if (refused === undefined) setView('apps'); return refused }} />}
+        {view === 'plugins' && <PluginStoreView api={api} apps={apps} onStart={id => act(() => api.start(id))} openExternal={openExternal} />}
         {view === 'cloud' && <Empty title="On WebBoxes.ai" text="Put an app online at <name>.webboxes.ai: Share it to GitHub as Public (its card, Share), then press Deploy to WebBoxes.ai on its card. WebBoxes.ai opens with the app filled in: sign in, press Create, then Publish." />}
         {view === 'health' && <HealthView api={api} />}
         {view === 'settings' && <SettingsView api={api} appsFolder={state?.appsFolder ?? ''} skin={skin} onSkin={(next) => { setSkin(next); saveSkin(next) }} />}

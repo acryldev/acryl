@@ -20,6 +20,15 @@ const BLENDS = [
   { id: 'acrylblends.accounting', name: 'Accounting', version: '0.2.0', category: 'finance', description: 'invoices and a VAT summary', origin: 'community' as const, source: 'github:ana/accounting#v0.2.0' },
 ]
 
+const CATALOG = {
+  kinds: [{ slug: 'ui', name: 'UI Panels & Views', description: 'Panels' }, { slug: 'fun', name: 'Fun', description: 'Just for fun.' }],
+  plugins: [
+    { id: 'acryl-quick-notes', name: 'acryl-quick-notes', description: 'Quick notes in the top bar', kind: 'ui', domain: { id: '02-02', category: 'Application', sub: 'Personal information tools' }, compatibility: 'Both', origin: 'community' as const, publisher: 'inboxxobni', version: '0.3.0', repo: 'https://github.com/inboxxobni/acryl-quick-notes', source: 'github:inboxxobni/acryl-quick-notes@0.3.0' },
+    { id: 'dsh-doudizhu', name: 'dsh-doudizhu', description: 'A card game', kind: 'fun', domain: { id: '41-04', category: 'Gaming', sub: 'Multiplayer and live operations' }, compatibility: 'DSH stock', origin: 'community' as const, publisher: 'ana', version: '1.0.0', repo: 'https://github.com/ana/dsh-doudizhu', source: 'github:ana/dsh-doudizhu@1.0.0' },
+    { id: 'office-preview', name: 'office-preview', description: 'Office files as PDF', compatibility: 'ACRYL Blends', origin: 'official' as const, publisher: 'acrylblends', version: '0.1.0', repo: 'https://github.com/acrylblends/office-preview' },
+  ],
+}
+
 const PLUGINS = [
   { name: 'hello', version: 'e4bc', state: 'active' },
   { name: 'pomodoro', version: '6388', state: 'active', pulledFrom: 'github:a/b@0.1.0', author: 'a' },
@@ -31,6 +40,7 @@ function fake(initial: StateResponse, over: Partial<LauncherApi> = {}): Launcher
   return {
     state: vi.fn(async () => initial),
     blends: vi.fn(async () => BLENDS),
+    pluginCatalog: vi.fn(async () => CATALOG),
     assistantFolder: vi.fn(async () => '/h/ACRYL'), plugins: vi.fn(async () => PLUGINS), pullPlugin: vi.fn(async () => ({ text: 'ok', plugins: PLUGINS })),
     github: vi.fn(async () => ({ available: false, login: null })), githubStart: vi.fn(async () => ({ userCode: 'ABCD-1234', verificationUri: 'https://github.com/login/device', interval: 5 })),
     githubPoll: vi.fn(async () => ({ state: 'pending' as const })), githubDisconnect: vi.fn(async () => ({ available: true, login: null })),
@@ -476,5 +486,63 @@ describe('the same-origin client', () => {
     expect(calls[0]).toMatchObject({ path: '/api/acryl-launcher/state', init: { method: 'GET' } })
     expect(calls[1]).toMatchObject({ path: '/api/acryl-launcher/start', init: { method: 'POST', body: JSON.stringify({ id: 'shop' }) } })
     await expect(api.create({ where: '/x', name: 'a', starter: 'blank', surface: 'web' })).rejects.toThrow('no')
+  })
+})
+
+describe('the plugin catalog', () => {
+  const running = state([app({ id: 'shop', name: 'shop', state: 'running', address: 'http://127.0.0.1:3101/' })])
+
+  it('lists the plugins, filters by kind chip and domain, and searches', async () => {
+    open(fake(running))
+    fireEvent.click(await screen.findByRole('button', { name: 'Plugin catalog' }))
+    expect(await screen.findByText('3 plugins')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /UI Panels & Views \(1\)/u }))
+    expect(screen.getByText('1 of 3 plugins')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Open acryl-quick-notes' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Open dsh-doudizhu' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Unclassified \(1\)/u }))
+    expect(screen.getByRole('button', { name: 'Open office-preview' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Every kind' }))
+    fireEvent.click(screen.getByRole('button', { name: /Gaming \(1\)/u }))
+    expect(screen.getByText('1 of 3 plugins')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /All domains/u }))
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search plugins' }), { target: { value: 'card' } })
+    expect(screen.getByRole('button', { name: 'Open dsh-doudizhu' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Open acryl-quick-notes' })).toBeNull()
+  })
+
+  it('adds a plugin to a running app through the pull, and shows a refusal in words', async () => {
+    const api = fake(running)
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Plugin catalog' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open acryl-quick-notes' }))
+    expect(screen.getByText(/A Community plugin/u)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Add to shop' }))
+    await waitFor(() => expect(api.pullPlugin).toHaveBeenCalledWith('shop', 'github:inboxxobni/acryl-quick-notes@0.3.0'))
+    expect(await screen.findByText(/Added acryl-quick-notes to shop/u)).toBeTruthy()
+    vi.mocked(api.pullPlugin).mockRejectedValueOnce(new Error('it needs a service this app does not have'))
+    fireEvent.click(screen.getByRole('button', { name: 'Add to shop' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('it needs a service this app does not have')
+  })
+
+  it('says to start a stopped app first, warns about a DeepSeek Harness plugin, and has nothing to add without a release', async () => {
+    open(fake(state([app({ id: 'shop', name: 'shop', state: 'stopped' })])))
+    fireEvent.click(await screen.findByRole('button', { name: 'Plugin catalog' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open dsh-doudizhu' }))
+    expect(screen.getByText(/Made for DeepSeek Harness/u)).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Add to shop' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/Start shop first/u)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '‹ All plugins' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open office-preview' }))
+    expect(screen.getByText(/names no release of this plugin/u)).toBeTruthy()
+  })
+
+  it('says why the registry could not be read, and tries again', async () => {
+    const api = fake(running, { pluginCatalog: vi.fn().mockRejectedValueOnce(new Error('The registry could not be read.')).mockResolvedValue(CATALOG) })
+    open(api)
+    fireEvent.click(await screen.findByRole('button', { name: 'Plugin catalog' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('The registry could not be read.')
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(await screen.findByText('3 plugins')).toBeTruthy()
   })
 })
