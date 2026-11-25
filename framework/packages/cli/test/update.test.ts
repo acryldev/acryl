@@ -209,7 +209,7 @@ describe('acrylblends update', () => {
     expect(git(app, 'rev-parse', 'HEAD')).toBe(head)
     expect(git(app, 'status', '--porcelain')).toBe('')
   })
-  it('holds a running app\'s reload while it installs, and takes the app back when the install fails', async () => {
+  it("holds a running app's reload while it installs, and takes the app back when the install fails", async () => {
     const app = join(scratch, 'held')
     makeBlend(app, '0.1.0', { ...v1, '.gitignore': 'node_modules/\n' })
     mkdirSync(join(app, 'node_modules'))
@@ -217,14 +217,21 @@ describe('acrylblends update', () => {
     const world: UpdateWorld = {
       latest: async () => '0.2.0',
       make: async (_id, name, folder) => {
-        makeBlend(join(folder, name), '0.2.0', { ...v1, '.gitignore': 'node_modules/\n', 'chart.ts': 'export const bars = 12\n' })
+        makeBlend(join(folder, name), '0.2.0', {
+          ...v1,
+          '.gitignore': 'node_modules/\n',
+          'chart.ts': 'export const bars = 12\n',
+        })
         return 0
       },
     }
     const installs: { held: boolean; chart: string }[] = []
     const run = session(app)
     run.io.install = async () => {
-      installs.push({ held: existsSync(join(app, UPDATE_HOLD)), chart: readFileSync(join(app, 'chart.ts'), 'utf8') })
+      installs.push({
+        held: existsSync(join(app, UPDATE_HOLD)),
+        chart: readFileSync(join(app, 'chart.ts'), 'utf8'),
+      })
       return installs.length === 1 ? 1 : 0
     }
     await expect(update({ directory: undefined, check: false }, run.io, world)).rejects.toThrow(
