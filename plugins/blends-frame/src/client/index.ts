@@ -8,8 +8,8 @@
 import '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@acryldev/ui/frame'
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
-// The conversation slot maps (the composer overlay the chip sits in) and the scoped input events the send hook writes through.
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+// The conversation slot maps (the composer overlay the chip sits in, loaded by this import's augmentations) and the scoped input events the send
+// hook writes through.
 import type { SessionInput } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { DesktopLayoutState, DesktopThemePresenter, provideDesktopLayout, stripLaunchToken } from '@acryldev/app-shell/client'
 import { createVersionsApi } from '@acryldev/versions/client'
