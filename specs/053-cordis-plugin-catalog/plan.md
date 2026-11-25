@@ -125,3 +125,9 @@ What people see:
    - Fun (`fun`): just for fun.
 3. The existing 84 plugins: a worker proposes kind, domain and reason per plugin; the owner approves the table before it goes live.
 4. Start now, A to F.
+
+## Changed by the owner (2026-11-25)
+
+The domain tree shows **all** 100 categories and their subcategories, each with its code (`01`, `02` ... and `01-01` ...) as on
+acrylblends.github.io/blends. Empty categories and subcategories are greyed out a little but stay listed and clickable. This replaces
+"only non-empty domains are shown" in point 1 of Decided, for the registry site and the Control Center Plugin catalog alike.
