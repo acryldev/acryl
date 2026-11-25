@@ -236,3 +236,19 @@ It is a larger change to desktop-shell's start path, and is proposed as the next
   wire its signing step into the release workflow when approved.
 - [ ] T064 Proof: an app made in the Control Center is shared with "Share with team"; on a second machine with no git and no Node, the
   installer from the link installs and opens it, on macOS, Windows and Ubuntu.
+
+## Phase 8 - Shared until changed (D18)
+
+- [ ] T066 The Program is read-only: `plugins/launcher/app-install.js` makes its files read-only when it makes it (directories stay writable for
+  npm's own work in an app); an app installed from it can still `npm install` its own packages; `acryl clean` and `acryl apps reinstall` still
+  remove and replace it. Test: an in-place write to a linked file fails (Linux, Windows), a write in a macOS clone stays in that app.
+- [ ] T067 The agent's instructions (app-context docs, the acryl-app skill) say: never edit `node_modules`; to change a core part, own it (T068).
+- [ ] T068 `acryl plugin own <name>`: copy the plugin's source into the app's `plugins/`, mount it in place of the shared one (same row id), record
+  it so `acrylblends update` merges upstream into it; refuse with the reason for a part that cannot be owned. Test and proof: an app owns
+  `blends-frame`, changes its left panel, a second app is unchanged.
+- [ ] T069 `acryl detach [--vendor]`: own real packages, leave the Control Center's list, move the app's data into its folder, drop the update
+  link, `--vendor` copies every `@acryldev/*` package into `plugins/`, write `LICENSES.md`. Proof: the detached app installs and starts with
+  `~/.acryl` moved away.
+- [ ] T070 Proof of D18 on AION (macOS), z370n (Ubuntu) and mbpi9win (Windows), then the marketing line on acryl.dev and acrylblends.github.io
+  (proposed to the owner first, never replacing the owner's own copy).
+

@@ -153,6 +153,27 @@ of the same bytes). Images are already shared by Docker; the copies are in the v
   copy button in the heroes and READMEs; and the Homebrew tap `brew install acryldev/tap/acryl` (a formula for the `acryl` command, not a cask:
   Homebrew disables unsigned casks from 2026-09-01), which `scripts/release-acryl.mjs` step 7 keeps on the latest release. Cargo is not a route
   (nothing here is Rust; acrylmicrovm is on crates.io already). winget, scoop and the AUR (the release already carries a PKGBUILD) are next.
+- **D18 Shared until changed: every Blend stays self-contained** (owner 2026-11-25: "we marketed that each Blend is self-contained, self-aware,
+  self-modifiable, anything can be changed even the core plugins, but if we modify fundamental parts we touch the shared code"; "what if people
+  build one app and want it standalone, a commercial closed project"). Sharing (D2, D15) stays the default, because it saves 700 MB per app, but a
+  shared part is read-only and an app that changes one gets its own copy first. Three steps:
+  1. **The shared install is read-only.** The Program's files (`~/.acryl/program/blends-<version>`) are made read-only when it is made. On Linux and
+     Windows an app's `node_modules` holds hard links to them (one file for all apps), so an edit in place then fails at once instead of changing
+     every app; on macOS the clone is copy-on-write and an edit stays in its app as before. The agent's instructions say: never edit
+     `node_modules`; to change a core part, own it (step 2).
+  2. **Own one core plugin: `acryl plugin own <name>`.** Copies that plugin's source into the app's `plugins/` (the copy `acrylblends add` already
+     makes) and mounts the app's copy in place of the shared one through Cordis's ordinary provider replacement (same row id). The app then changes
+     its left panel, right panel or any other core part; no other app is touched. `acrylblends update` merges upstream changes into the owned copy
+     and keeps the app's edits, as it does for the app's own files. Parts the host mounts itself (`HOST_PROVIDED_IDS`) are made ownable or named as
+     not ownable, with the reason.
+  3. **Detach a whole app: `acryl detach`.** For a project that leaves ACRYL (a standalone, closed or commercial product): the app's packages become
+     its own real copies (no links into the Program), it leaves the Control Center's list and its data moves into its own folder, the update link
+     to its Blend is removed, `--vendor` copies every `@acryldev/*` package's source into `plugins/` (no dependency of ours, not even npm), and
+     `LICENSES.md` lists the MIT notices the product must carry. `acrylblends pack` (D3) already makes its installers self-contained.
+  Accepted when, on macOS, Linux and Windows: an in-place edit of a shared file fails with a sentence that says to own the plugin; an app that owns
+  the frame and changes its left panel shows the change while a second app is unchanged; a detached app installs and starts from its own folder
+  with `~/.acryl` moved away. The honest line after that: "Every Blend can change anything, even the core plugins. A change stays in that Blend
+  until you share it."
 
 ## Order and acceptance
 
