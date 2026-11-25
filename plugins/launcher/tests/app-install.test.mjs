@@ -183,7 +183,8 @@ test('the Program is read-only (spec 052 D18): an edit in place through an app\'
   assert.equal(used.program, 'used')
   const linked = join(second, 'node_modules', 'left-pad', 'index.js')
   const before = readFileSync(shared, 'utf8')
-  assert.throws(() => appendFileSync(linked, '// an agent edits the core in place\n'), { code: 'EACCES' })
+  // POSIX refuses with EACCES, Windows (a read-only attribute) with EPERM.
+  assert.throws(() => appendFileSync(linked, '// an agent edits the core in place\n'), cause => ['EACCES', 'EPERM'].includes(cause.code))
   assert.equal(readFileSync(shared, 'utf8'), before, 'no other app changed')
   assert.equal(writableBits(join(second, 'node_modules', '.package-lock.json')) !== 0, true, 'npm can rewrite the app\'s own lockfile')
   assert.equal(writableBits(join(second, 'node_modules', 'is-odd', 'index.js')) !== 0, true, 'the app\'s own package is writable')
