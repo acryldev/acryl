@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, test } from 'vitest'
@@ -15,6 +15,7 @@ import {
   DRIVER_ROWS,
   FRAME_PACKAGES,
   ideProfilePlan,
+  ownedOf,
   planIdeProfileWrite,
   profileNameFor,
 } from '../src/ide-profile.ts'
@@ -454,4 +455,43 @@ test('an installed app (no plugin folders on disk, the bundle overlay resolves t
   const old = folder()
   mkdirSync(join(old, 'plugins', 'acryl-node-server'), { recursive: true })
   assert.equal(hostPluginIn(old)('node-server'), 'acryl-node-server')
+})
+
+test('an owned frame package is mounted from its built copy in plugins/, and a regenerated frame keeps it (spec 052 D18, T068)', () => {
+  const app = folder()
+  const own = (dir: string, name: string, built: boolean) => {
+    mkdirSync(join(app, 'plugins', dir, 'lib'), { recursive: true })
+    writeFileSync(join(app, 'plugins', dir, 'package.json'), JSON.stringify({ name }))
+    if (built) writeFileSync(join(app, 'plugins', dir, 'lib', 'index.js'), '')
+  }
+  own('blends-frame', '@acryldev/blends-frame', true)
+  own('unbuilt', '@acryldev/settings', false)
+  own('notes', 'notes', true)
+  assert.deepEqual(
+    ownedOf(app),
+    { '@acryldev/blends-frame': 'blends-frame' },
+    'a built frame package only',
+  )
+  const plan = ideProfilePlan({ ...input, owned: ownedOf(app) })
+  const rows = parse(plan.overlay)[0].insert as { id: string; name: string }[]
+  assert.equal(
+    rows.find((row) => row.id === 'acryl-blends-frame')?.name,
+    './plugins/blends-frame/lib/index.js',
+  )
+  assert.equal(rows.find((row) => row.id === 'acryl-settings')?.name, '@acryldev/settings')
+  assert.match(
+    plan.hostScript,
+    /await import\('\.\.\/plugins\/blends-frame\/lib\/app-generation\.js'\)/u,
+  )
+  assert.match(
+    ideProfilePlan(input).hostScript,
+    /await import\('@acryldev\/blends-frame\/app-generation'\)/u,
+  )
+  // Generated from the app's files: the regeneration `upgrade` does reads the same folder.
+  assert.match(
+    planIdeProfileWrite(app, input)
+      .files.map((file) => file.text)
+      .join('\n'),
+    /name: \.\/plugins\/blends-frame\/lib\/index\.js/u,
+  )
 })
