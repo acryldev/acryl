@@ -115,3 +115,24 @@ describe('LauncherService.updateSelf', () => {
     expect(() => { service.updateSelf() }).toThrow(/already being updated/u)
   })
 })
+
+// The regression of 2026-11-26: the package's plugin (spec 052 T055) built its service without the copy it runs from, so Control Center never offered
+// its own updates. Whatever creates the node launcher with a self copy gets that copy's update state on the screen.
+describe('the node launcher with the copy it runs from', () => {
+  it('reports the copy\'s update in its state', async () => {
+    const { createNodeLauncher } = await import('../src/node.ts')
+    const home = mkdtempSync(join(tmpdir(), 'acryl-self-node-'))
+    const folder = mkdtempSync(join(tmpdir(), 'acryl-self-copy-'))
+    try {
+      writeFileSync(join(folder, 'package.json'), JSON.stringify({ acryl: { from: 'acryl.control-center#0.2.28' } }))
+      mkdirSync(join(home, 'logs'), { recursive: true })
+      writeFileSync(join(home, 'logs', 'control-center-update.json'), JSON.stringify({ to: '0.2.31', since: Date.now() }))
+      const service = createNodeLauncher(home, () => ({}), { folder, name: 'ACRYL Control Center' })
+      expect(service.state().self).toMatchObject({ name: 'ACRYL Control Center', status: 'updating', update: '0.2.31' })
+      expect(createNodeLauncher(home, () => ({})).state().self).toBeUndefined()
+    } finally {
+      rmSync(home, { recursive: true, force: true })
+      rmSync(folder, { recursive: true, force: true })
+    }
+  })
+})

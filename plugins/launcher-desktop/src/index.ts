@@ -34,10 +34,15 @@ export const inject = ['router', 'routerHttp', 'appInstance']
  */
 export interface Config {
   readonly root?: string
+  /**
+   * The Blend copy this app runs from and its name (ACRYL Control Center passes its own folder): the screen then says when that Blend has a newer release
+   * and updates the copy. Absent (the ACRYL runtime, a terminal), there is no copy to update.
+   */
+  readonly self?: { readonly folder: string, readonly name: string }
 }
 
 export function apply(ctx: Context, config: Config = {}): void {
-  const service = createNodeLauncher(config.root ?? ctx.appInstance.home)
+  const service = createNodeLauncher(config.root ?? ctx.appInstance.home, undefined, config.self)
   void service.prepareTools()
   const report = (operation: string, cause: unknown): void => {
     ctx.logger.error(`@acryldev/launcher-desktop: failed to ${operation}: ${cause instanceof Error ? cause.message : String(cause)}`)
