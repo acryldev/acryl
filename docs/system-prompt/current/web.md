@@ -99,7 +99,7 @@ Your working directory is <workspace>.
 </cwd>
 ```
 
-## Tools (56)
+## Tools (57)
 
 | Tool | Description (first line) |
 | --- | --- |
@@ -108,6 +108,7 @@ Your working directory is <workspace>.
 | `acryl_launcher_blends` | Blends in the public registry that an app can be made from (id, name, category, description). Give a query to narrow it; at most 25 are returned. |
 | `acryl_launcher_help` | How to use the ACRYL launcher and where to find what: its screens, buttons and the other launcher tools. Call it first when asked about the launcher. |
 | `acryl_launcher_new_app` | Make a new app, as the launcher's + New app does: from a starter (blank, nodejs, notes, chat, todo, agent) or from a registry Blend id (acrylblends_launcher_ble |
+| `acryl_launcher_plugin_catalog` | Search the public Cordis plugin catalog: id, name, kind, domain, compatibility and the source for acryl_launcher_pull_plugin. At most 25. |
 | `acryl_launcher_plugins` | The plugins of a RUNNING app: the ones made in it (shareable) and the ones pulled from a registry, with their source. |
 | `acryl_launcher_publish_plan` | Prepare publishing a plugin made in a RUNNING app: what would be sent (account, repository, version, license, files) and the line a friend pulls it with. Sends  |
 | `acryl_launcher_pull_plugin` | Pull a plugin from a registry source into a RUNNING app, as the launcher's Pull a plugin does. The source is github:owner/repo@version. |
