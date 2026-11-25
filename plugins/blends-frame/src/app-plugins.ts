@@ -6,8 +6,8 @@
  */
 
 import { execFile } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { isAbsolute, join, relative } from 'node:path'
 import { createRequire } from 'node:module'
 import { promisify } from 'node:util'
@@ -114,20 +114,45 @@ const NAME = /^[a-z0-9][a-z0-9-]*$/
 
 /** The folders in `plugins/` the `extensions` row starts: not a library copy (`library.json`), and with an entry file. */
 export async function madePlugins(root: string): Promise<string[]> {
+  return madePluginNames(root)
+}
+
+function madePluginNames(root: string): string[] {
   const dir = join(root, 'plugins')
   if (!existsSync(dir)) return []
   let library = new Set<string>()
   try {
-    const listed = (JSON.parse(await readFile(join(dir, 'library.json'), 'utf8')) as { plugins?: unknown }).plugins
+    const listed = (JSON.parse(readFileSync(join(dir, 'library.json'), 'utf8')) as { plugins?: unknown }).plugins
     if (Array.isArray(listed)) library = new Set(listed.filter((entry): entry is string => typeof entry === 'string'))
   } catch {
     // No library list: every folder is the app's own.
   }
-  const entries = await readdir(dir, { withFileTypes: true })
-  return entries
+  return readdirSync(dir, { withFileTypes: true })
     .filter(entry => entry.isDirectory() && NAME.test(entry.name) && !library.has(entry.name) && ENTRIES.some(file => existsSync(join(dir, entry.name, file))))
     .map(entry => entry.name)
     .sort()
+}
+
+/** One switchable plugin of the app, as the Plugins list shows it: its kind decides how `switchAppPlugin` switches it. */
+export interface AppPluginSwitch {
+  readonly name: string
+  readonly kind: 'row' | 'made'
+  readonly on: boolean
+}
+
+/** The app's switchable plugins read at once (no git, no network): the same names, kinds and on/off as `readAppPlugins`. */
+export function listAppPluginSwitches(root: string): AppPluginSwitch[] {
+  const text = readFileSync(join(root, 'blend.yaml'), 'utf8')
+  const off = new Set(extensionsOff(text))
+  const rows = parseBlendRows(text)
+  const own = madePluginNames(root)
+  return [
+    ...own.map((name): AppPluginSwitch => {
+      const row = rows.find(entry => entry.name === name)
+      return { name, kind: 'made', on: row === undefined ? !off.has(name) : !row.disabled }
+    }),
+    ...rows.filter(row => !own.includes(row.name)).map((row): AppPluginSwitch => ({ name: row.name, kind: 'row', on: !row.disabled })),
+  ]
 }
 
 /** The first sentence of a file's leading doc comment, without its code marks. */
@@ -364,6 +389,17 @@ export async function switchAppPlugin(root: string, kind: 'row' | 'made', name: 
 export function isFramePlugin(moduleName: string, entryId: string): boolean {
   if (entryId.startsWith('app-') || entryId === '@acryldev/door') return false
   return moduleName.startsWith('@acryldev/')
+}
+
+/**
+ * The app's plugins as the frame's service `frameAppPlugins`: the app's own switchable plugins, the frame's rows around them, and the same switch and restart
+ * Settings > Plugins uses.
+ */
+export interface FrameAppPlugins {
+  list(): AppPluginSwitch[]
+  frame(): FrameRow[]
+  switch(kind: AppPluginSwitch['kind'], name: string, on: boolean): Promise<void>
+  restart(): Promise<void>
 }
 
 /** A Loader row as the frame reads it: its id, module, whether it is switched off, and its fiber's state (Cordis `FiberState`). */

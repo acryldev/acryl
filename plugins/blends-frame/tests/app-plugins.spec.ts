@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   bumpPackageVersion, checkedShares, commitMaker, docSummary, extensionsOff, frameRowState, isFramePlugin, packageAppPlugin, parseBlendRows, planAppPluginShare,
-  insideApp, pluginPackageManifest, pluginPackagesOf, readAppPlugins, readSharedRecords, recordShare, saveAppPlugin, setMadeOn, setRowOn, shareAppPlugin, switchAppPlugin,
+  insideApp, listAppPluginSwitches, pluginPackageManifest, pluginPackagesOf, readAppPlugins, readSharedRecords, recordShare, saveAppPlugin, setMadeOn, setRowOn, shareAppPlugin, switchAppPlugin,
   type SharePorts,
 } from '../src/app-plugins.ts'
 import { appPluginRow, createAppPluginsApi, filterPlugins, framePluginRow, madeWhen, pullCommand, shareSentence } from '../src/client/plugins-navigator.ts'
@@ -118,6 +118,8 @@ describe('the app\'s own plugins', () => {
       expect(parseBlendRows(text).find(row => row.id === 'notes')?.disabled).toBe(true)
       expect(extensionsOff(text)).toEqual([])
       expect((await readAppPlugins(root, noGit)).find(plugin => plugin.name === 'notes')?.on).toBe(false)
+      // The list read at once, for the agent's plugin tools, is the navigator's list.
+      expect(listAppPluginSwitches(root)).toEqual((await readAppPlugins(root, noGit)).map(plugin => ({ name: plugin.name, kind: plugin.kind, on: plugin.on })))
       await switchAppPlugin(root, 'made', 'loose', false)
       expect(extensionsOff(readFileSync(join(root, 'blend.yaml'), 'utf8'))).toEqual(['loose'])
     } finally {
