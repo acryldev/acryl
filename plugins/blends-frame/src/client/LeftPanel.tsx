@@ -2,6 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { formatRelativeTime } from '@acryldev/versions/client'
+import { secondClick } from './field-button.ts'
 import { branchNameProblem, type FeedbackNoteView, type FeedbackView, type FrameBranch, type FrameState } from '../contract.ts'
 import type { VersionsLogView } from '@acryldev/versions'
 import { PTY_AGENTS, terminalMeta, type FrameTabs } from './tabs.ts'
@@ -369,7 +370,7 @@ export function LeftPanel({ state, readState, chats, versions, tabs, feedback, b
             type="button"
             className="acrylBlendsSmallButton"
             title="A new branch from the current version; your files stay as they are"
-            onClick={() => { setBranchProblem(undefined); setNaming(current => (current === undefined ? '' : undefined)) }}
+            onClick={() => { setBranchProblem(undefined); if (secondClick(naming) === 'submit') void createBranch(); else setNaming(current => (current === undefined ? '' : undefined)) }}
           >
             New
           </button>
@@ -482,7 +483,7 @@ export function LeftPanel({ state, readState, chats, versions, tabs, feedback, b
         <span className="acrylBlendsLabel">Versions</span>
         <span className="acrylBlendsPaneActions">
           <RemoteChips sync={gitSync} root={state.appRoot} revision={`${state.head ?? ''}:${String(state.upstreamHead ?? '')}`} />
-          <button type="button" className="acrylBlendsSmallButton" onClick={() => { setSaving(current => (current === undefined ? '' : undefined)) }}>
+          <button type="button" className="acrylBlendsSmallButton" onClick={() => { if (secondClick(saving) === 'submit') void save(); else setSaving(current => (current === undefined ? '' : undefined)) }}>
             Save point
           </button>
         </span>
