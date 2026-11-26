@@ -1,70 +1,118 @@
-# 054 ACRYL apps on phones (and Tauri as another shell)
+# 054 ACRYL Mobile: Blends on phones, opened and controlled from WebBoxes.ai
 
-Status: draft, written for the owner's decision (2026-11-25). Nothing here is measured yet; every claim about Tauri, Capacitor or nodejs-mobile is
-from general knowledge and is checked by the spikes below before anything is built on it.
+Status: draft for the owner's decision (2026-11-26). Rewritten from the first draft (2026-11-25) with the discussion in
+[`discussion_tauri_reactnative_for_acryl-mobile-apps.md`](discussion_tauri_reactnative_for_acryl-mobile-apps.md). Nothing about Tauri, React Native
+or Expo is measured in ACRYL yet: every such claim is general knowledge and is checked by the spikes below before anything is built on it.
 
-## The owner's words (2026-11-25)
+## The owner's words
 
-"also write this down as new spec, as i wanna try Tauri as yet another option, or consider other solutions to produce with ACRYL mobile apps"
+- 2026-11-25: "write this down as new spec, as i wanna try Tauri as yet another option, or consider other solutions to produce with ACRYL mobile
+  apps".
+- 2026-11-26: "make acryl-mobile 054 spec and suggest what we should take react-native or tauri for mobile apps to be able to run specific blends
+  and control their content also as mobile app displayed in webboxes.ai".
 
-Before that, the assessment the owner pasted back (this session, 2026-11-25): Tauri could work for desktop but would be a third desktop shell for
-little gain over Electrobun; where it really wins is mobile (Tauri 2 builds iOS and Android apps, which Electron and Electrobun cannot). Recommendation
-then: do not add Tauri for desktop now; finish Electrobun first; revisit Tauri for phones, as a spike like the Electrobun one.
+So the product is not "ACRYL's desktop app on a phone". It is: **a person opens one of their Blends (a WebBox) on a phone, uses it, and controls
+it (asks the agent, sees the versions, publishes), and webboxes.ai shows and hands out that phone face.**
 
-## What an ACRYL app is, and why phones are different
+## Recommendation
 
-An ACRYL app is a **Host** (Node or Bun: the page server, Cordis plugins, agents, `npm install`, `node-pty` terminals, `koffi` native calls) and a
-**window** that shows the page the Host serves on localhost. Live plugins and hot reload happen in the Host; any webview shows the result.
+**React Native with Expo for the phone app; the Blend itself stays a web page in a WebView; the Host stays in the WebBox.** Tauri is the
+fallback only if S2 shows Expo cannot do what S3 needs.
 
-| | Electron (today) | Electrobun (spec 052, released 2026-11-23) | Tauri 2 |
+| Question | Tauri 2 | React Native + Expo | Why it decides |
 |---|---|---|---|
-| Window engine | bundled Chromium | system webview (WebKit / WebView2 / WebKitGTK) | system webview, the same as Electrobun |
-| Backend runtime | Node, built in | Bun, built in | none for JS: a Rust core only |
-| Our Host | runs in its Node | runs in its Bun | must run as a **sidecar**: a separate Node or Bun binary the app ships and starts |
-| Size | ~250-700 MB per app (less with the shared install) | small (ADE: 71 MB download vs 205.5 MB, measured) | shell ~5-10 MB plus the sidecar runtime (~40-100 MB) |
-| Phones | no | no | **iOS and Android** |
+| Show a Blend's own screen | its webview shows the Blend's page | `react-native-webview` shows the same page | a tie: every Blend's screen is a web page served by its Host, so both show it the same way, unchanged |
+| The controls around it (box list, chat with the agent, versions, publish, sign-in) | web UI in the webview | real native UI | phones are the place where native UI matters; the controls are few and ours, so writing them once natively is cheap |
+| Phone features (camera upload for Content Machine, push when a render or an agent run ends, share sheet) | Tauri plugins (Rust, Swift, Kotlin) | Expo modules (TypeScript), large ecosystem | Expo is TypeScript all the way, like the rest of ACRYL |
+| Building for iOS and Android | Rust toolchain, Xcode and Android SDK on our own machines or CI | EAS builds iOS and Android in Expo's cloud | we have no Mac CI for store builds today; EAS removes that |
+| Updating the app without the store | a new binary, or the web content | over-the-air JavaScript updates (within the installed native code) | the controls change often in the prototype phase |
+| App Store review | a store app that is mostly one webview risks guideline 4.2 (minimum functionality) | native controls plus web content is the normal pattern | the store app must be more than a website in a frame |
+| Desktop | Tauri also does desktop | not a desktop shell | not needed: desktop is Electron, and Electrobun is being evaluated (spec 052); a third desktop shell is out of scope |
+| Running the ACRYL Host on the phone | no (needs a Node or Bun sidecar, impossible on iOS) | no (Hermes is not Node) | a tie: the Host runs in the WebBox in both |
 
-On a phone the Host cannot run the way it does on a computer:
-- **iOS** allows no second process and no JIT for an app's own code: a Node or Bun sidecar cannot be started. JavaScript runs only inside the
-  webview's engine, or in an embedded interpreter without JIT.
-- **Android** can start a bundled binary, but an app has no terminal, and `node-pty`, `koffi` and `npm install` at run time do not fit.
-- So the coding agent, terminals and live `npm install` stay where a computer is: on the person's own machine or on WebBoxes.ai.
+Tauri's real strength is wrapping an existing web app into desktop and mobile installers with one Rust shell. We already have desktop shells, and
+our Blend screens show in any webview, so what is left to decide is the phone-native part, where React Native is stronger. The discussion reached
+the same conclusion in its second half (section 8, "React Native + Expo").
 
-## The options
+## Architecture
 
-| Option | What the phone app is | Where the Host runs | What it costs us | Strength |
-|---|---|---|---|---|
-| A. Remote Host, any shell | a window on a Host elsewhere | WebBoxes.ai, or the person's own computer (a tunnel) | the smallest shell; sign-in and a reachable Host | everything works, agents included, from day one |
-| B. PWA (no store) | the app's page installed from the browser | the same as A | nothing new: the page exists | zero build; no app store; weaker offline and device access |
-| C. Tauri 2 mobile | a store app (iOS, Android) with a webview | A's Host, or the page alone with a small local store | a Rust toolchain, Xcode and Android SDK in CI, store accounts | one shell family for desktop and mobile; signing, updater, permissions |
-| D. Capacitor | a store app wrapping the web page, with native plugins in JS | the same as C | Xcode and Android SDK, store accounts; no Rust | the most mature web-to-store path; large plugin ecosystem |
-| E. On-device Host (nodejs-mobile) | the Host itself inside the app | the phone (Node without JIT on iOS) | the heaviest: our plugins without native modules, no terminals, no `npm install` | works offline; slow and limited |
+The five nouns ([spec 049 plan](../049-framework-architecture/plan.md)): the **App** is the Blend, its **Host** runs in its WebBox,
+**Plugins** are Cordis plugins in the Host, the **Surface** on a phone is the ACRYL Mobile app, and the **Driver** is the agent.
 
-The likely shape: **A or B first** (it needs almost nothing new and every ACRYL app gets a phone face), then **C or D** when an app needs the app
-stores, the camera, notifications or offline. E only if an app must run its own logic offline on the phone.
+```
+ACRYL Mobile (Expo, iOS and Android)
+  native: sign-in, my boxes, chat with the agent, versions, publish, push, camera, share
+  WebView: the Blend's own page (the published copy, or the editor's app canvas)
+        |  HTTPS (the box gate) + the Surface protocol (typed commands and events)
+WebBoxes.ai: account, boxes, the gate (owner session per box), runner
+        |
+WebBox: the Blend's Host (Node + Cordis plugins, the agent, files, git versions)
+```
+
+- **No Host on the phone.** iOS allows no second process and no JIT for an app's own code; Android has no terminal; `node-pty`, `koffi` and
+  `npm install` do not fit. The agent, terminals and installs stay in the WebBox (or on the person's own computer).
+- **No downloaded code in the app.** Apple guideline 2.5.2 forbids downloading code that changes the app's features. A Blend's new feature is a
+  Cordis plugin in its Host; the phone shows it through the Blend's web page, or through native controls the app already has. A feature that
+  needs new native code is a new app release.
+- **The Surface protocol** (the discussion's main point, section 10): the native controls talk to the Host through one typed, versioned contract
+  (host discovery and sign-in, app identity, commands and events, agent conversation, versions, publish, file upload, reconnection, capability
+  discovery), not by scraping the frame's web UI. The web frame, the desktop shells and the phone become clients of the same contract.
+- **Sign-in reuses what exists.** The app signs in to webboxes.ai (Supabase), lists the account's boxes, and opens one through the same owner
+  entry link the box page uses (`openWebBoxAppFunction`: `/__webbox/enter`, then `/__webbox/view?mode=public` for View live). The WebView keeps
+  the box session cookie; nothing new is needed on the gate for S2.
+
+### Shown in webboxes.ai
+
+- The box page gets a **phone view**: the Blend in a phone-sized frame (the same URL, a narrow viewport), and an **Open on phone** QR code that
+  opens the box in ACRYL Mobile (a deep link, `acryl://box/<id>`, falling back to the PWA when the app is not installed).
+- A published Blend's address (`<app>.webboxes.ai`) opens in the app when it is installed (universal links on iOS, app links on Android).
+- The store page of a Blend (acrylblends.github.io) says whether it has a phone face (the capability declaration below).
+
+### Which Blends work on a phone
+
+Not every Blend fits a phone. A declaration in `blend.yaml` (proposed, not an existing field) says what the phone face offers:
+
+```yaml
+platforms:
+  mobile:
+    supported: true          # the Blend's page works in a phone-sized webview
+    surface: webview         # webview | native-screens (later)
+    needs: [camera, notifications]   # device features the native app provides
+```
+
+Example, Content Machine on a phone: record or pick a video (camera, native), upload it to the box, follow transcription and rendering (events),
+approve the cut, get a push when the render ends, share the result (share sheet). FFmpeg and HyperFrames stay in the box. The open-city game:
+plays in the WebView as the published copy does in a mobile browser.
 
 ## Plan: spikes before decisions, like the Electrobun one
 
 | Step | What | Proof |
 |---|---|---|
-| S1 | PWA: a running app's page installable on a phone (manifest, icon, service worker for the shell), opened against a Host on WebBoxes.ai and against the person's own computer | it installs on iOS Safari and Android Chrome, the chat works, a live plugin appears without reinstalling |
-| S2 | Tauri 2 mobile spike: the Blank app as an iOS and an Android build whose webview opens a remote Host (S1's page) | it builds in CI, installs on a device or simulator, sizes recorded beside Electron and Electrobun |
-| S3 | Capacitor spike, the same app and the same checks | the same, so C and D are compared on measured facts |
-| S4 | (optional) nodejs-mobile: can the Host start on Android at all, what of the frame and the plugins loads | a written list of what runs and what does not |
-| S5 | the owner chooses: which shell for store apps, and whether Tauri also replaces anything on desktop | decision recorded here |
-
-## Desktop: Tauri as a third shell
-
-Not now (the assessment above): our Host needs a JS runtime anyway, so Tauri on desktop is "Electrobun plus a Rust build", and spec 052 wants two
-shell seams (Electron, Electrobun), not three. Revisited at S5 only if S2 shows a reason (for example one shell for desktop and mobile).
+| S1 | PWA, no store: a box's page installable from the phone browser (manifest, icon, service worker for the shell); the frame's layout on a phone-sized screen | it installs on iOS Safari and Android Chrome, open-city plays, the chat works; a list of what breaks in the frame's layout on a phone |
+| S2 | Expo shell: sign in to webboxes.ai, list my boxes, open one in a WebView through the owner entry link, View live and Open app | runs in Expo Go and as an EAS build on a real iPhone and Android phone; the box session survives app restarts; open-city plays with sound |
+| S3 | Native controls over a first slice of the Surface protocol: chat with the box's agent (send, stream the answer), the versions list, Publish | a change asked from the phone appears in the WebView and as a new version; Publish works; the protocol slice is written down and tested on the Host side |
+| S4 | Device features for one real Blend (Content Machine): camera or library upload, progress events, push when the render ends, share | the full phone flow from recording to sharing the finished video |
+| S5 | webboxes.ai: the phone view and the Open on phone QR on the box page; deep links and universal links | the QR opens the box in the app; a published address opens in the app |
+| S6 | Tauri comparison, only the blank part of S2 (sign-in, box list, WebView) | sizes, build steps and what was harder, written beside S2's, so the choice rests on measurements |
+| S7 | The owner decides: React Native for the store app or not, ACRYL Mobile first or per-Blend branded apps, store accounts | the decision recorded here |
 
 ## Decisions for the owner
 
-1. Phone face first through a remote Host (PWA, S1) before any store app?
-2. Spike both Tauri 2 and Capacitor (S2, S3), or Tauri only?
-3. Store accounts (Apple Developer, USD 99 a year; Google Play, USD 25 once) are needed for C and D: when, and in whose name? (Asked before any
-   account is made.)
+1. React Native with Expo as the mobile Surface, with Tauri only as the S6 comparison? (Recommended.)
+2. **ACRYL Mobile first** (one app that opens all of a person's Blends) and branded per-Blend apps later from the same packages? (Recommended: one
+   store listing, one review, one native layer; hundreds of near-identical Blend binaries are not worth it now.)
+3. Whose name on the stores: Apple Developer (USD 99 a year) and Google Play (USD 25 once) for S2's real-device builds, and an Expo account for
+   EAS (free tier first). Asked before any account is made.
+4. The app's name: "ACRYL Mobile", or WebBoxes.ai-branded, since it opens WebBoxes?
 
 ## Out of scope
 
-An on-phone coding agent with terminals; our own app store; desktop changes before S5.
+The ACRYL Host or a coding agent with terminals on the phone; downloading plugins or native code into the app; our own app store; Tauri or any new
+desktop shell (spec 052 owns desktop); rewriting existing Blend screens in React Native (a Blend's page is shown as it is; native screens per Blend
+come later, if ever).
+
+## Related
+
+Spec 052 (desktop shells, Electrobun), spec 049 M9 (WebBoxes edit and published copies, the box gate), WebBoxes spec 010 (resource metering: a
+phone user's box use is counted the same way). The discussion file keeps the full reasoning, including the first half's Tauri recommendation and
+why the second half changed it.
