@@ -233,6 +233,10 @@ beside Save to GitHub, Publish to registry and Deploy to WebBoxes.ai (T060); the
 
 - [x] T060 (built 2026-11-25 in Control Center: an app's Share opens its Share place, 1. Save to GitHub, 2. Build installer, 3. Deploy to WebBoxes.ai, 4. Publish a plugin; the app's own Settings get the same place with T061) One "Share" place in an app's Settings and per app in the Control Center: Save to GitHub (`@acryldev/save`), a feature to the
   registry (`@acryldev/plugin-share`), Deploy to WebBoxes.ai, each as today, gathered, not rewritten.
+- [ ] T071 (owner idea 2026-11-26, open) WebBoxes.ai: an app made in a box (an agentic SaaS) exported as a desktop client. Owner: Build installer is not
+  needed in a box. Proposed: a box hides Build installer (a Linux server cannot make the macOS or Windows installers) and its Share place says that
+  Share with team builds them: GitHub's runners pack every computer's installer (proven 2026-11-25, T061). Decide with the owner whether a box needs
+  more than that.
 - [x] T061 "Share with team": save and push, run the app repository's release workflow, show progress and one download link.
   Design (2026-11-25): an app made from a starter has no release workflow, and Control Center's GitHub sign-in asks only for `repo`, which GitHub
   refuses for a push that adds a workflow file. So: (a) `acrylblends release-workflow` writes `.github/workflows/release.yml` into the app,
