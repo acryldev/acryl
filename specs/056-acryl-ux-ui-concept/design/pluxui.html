@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pluxui - UX/UI study</title>
+<style>
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --secondary: #0369A1; --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12);
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  color-scheme: dark; }
+*, *::before, *::after { box-sizing: border-box; }
+:where(p, h1, h2, h3, li, td, th) { overflow-wrap: anywhere; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1060px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 44px; }
+h1 { font-size: 34px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 22px; margin: 0 0 4px; }
+p { margin: 0; max-width: 78ch; }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 16.5px; color: var(--dim); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+.dim { color: var(--dim); }
+.note { font-size: 12.5px; color: var(--dim); }
+code { font-family: var(--mono); font-size: 12.5px; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pill { display: inline-block; font: 600 10.5px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.btn { font: 600 12px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 5px 9px; border-radius: 6px; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.dark { background: var(--text); border-color: var(--text); color: var(--bg); }
+.topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.btn:focus-visible, button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.frame { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; min-width: 0; }
+.chrome { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--surface-2); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--dim); }
+.dots { display: inline-flex; gap: 4px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border); display: block; }
+.addr { font-family: var(--mono); font-size: 10.5px; background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 1px 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.pshell { display: grid; grid-template-columns: 150px 270px minmax(0, 1fr); min-height: 430px; font-size: 10px; }
+.pnav { border-right: 1px solid var(--border); background: var(--surface-2); padding: 8px 7px; display: flex; flex-direction: column; gap: 2px; color: var(--dim); }
+.pnav .ws { border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; background: var(--surface); color: var(--text); font-weight: 600; display: flex; justify-content: space-between; }
+.pnav .new { margin: 5px 0; text-align: center; }
+.pnav .item { padding: 3px 6px; border-radius: 5px; }
+.pnav .item.on { background: var(--surface); color: var(--text); }
+.pnav .cap { margin-top: 7px; padding: 2px 6px; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; }
+.pnav .row { display: flex; justify-content: space-between; gap: 6px; padding: 3px 6px; }
+.pfeed { border-right: 1px solid var(--border); padding: 9px; display: flex; flex-direction: column; gap: 6px; min-width: 0; overflow: hidden; }
+.pfeed h3 { font-size: 11px; }
+.sk { height: 9px; width: 55%; border-radius: 99px; background: var(--surface-2); }
+.frow { display: flex; align-items: center; gap: 5px; color: var(--dim); font-size: 9px; }
+.step { border: 1px solid var(--border); border-radius: 6px; padding: 6px 7px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); }
+.step b { color: var(--text); font-size: 9.5px; }
+.step .line { display: flex; justify-content: space-between; align-items: center; gap: 6px; color: var(--dim); }
+.step .mini { border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 8px; white-space: nowrap; }
+.step .out { display: flex; gap: 6px; align-items: center; }
+.thumb { width: 26px; height: 30px; border: 1px solid var(--border); border-radius: 3px; background: linear-gradient(150deg, var(--primary-dim), var(--surface-2)); flex: 0 0 auto; }
+.qcard { margin-top: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 8px; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.qhead { display: flex; justify-content: space-between; color: var(--dim); font-size: 8.5px; }
+.qcard > b { font-size: 10px; }
+.opt { border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; display: flex; align-items: center; gap: 6px; background: var(--bg); }
+.opt .rank { width: 14px; height: 14px; border: 1px solid var(--border); border-radius: 3px; display: grid; place-items: center; font-size: 8px; color: var(--dim); flex: 0 0 auto; }
+.opt b { display: block; font-size: 9px; }
+.opt span { color: var(--dim); font-size: 8.5px; }
+.opt .grow { flex: 1; min-width: 0; }
+.qask { border: 1px solid var(--border); border-radius: 5px; padding: 3px 6px; color: var(--dim); font-size: 8.5px; }
+.qfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+.qfoot .dim { font-size: 8.5px; }
+.pcanvas { display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+.pcbar { display: flex; align-items: center; gap: 7px; padding: 6px 8px; background: var(--surface); border-bottom: 1px solid var(--border); color: var(--dim); font-size: 9px; min-width: 0; }
+.pcbar .chip { border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; white-space: nowrap; }
+.pcbar .grow { flex: 1; }
+.pcurl { margin: 7px 9px 0; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--dim); font-size: 9px; padding: 3px 7px; display: flex; gap: 8px; }
+.pcv { flex: 1; margin: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; padding: 18px; min-height: 260px; }
+.pcv .stack { width: 34px; height: 30px; position: relative; }
+.pcv .stack i { position: absolute; left: 4px; width: 26px; height: 12px; border: 1.5px solid var(--primary); border-radius: 3px; transform: skewY(-12deg); background: var(--surface); }
+.pcv .stack i:nth-child(1) { top: 12px; }
+.pcv .stack i:nth-child(2) { top: 6px; }
+.pcv .stack i:nth-child(3) { top: 0; }
+.pcv b { font-size: 12px; }
+.pcv .dim { font-size: 9.5px; max-width: 34ch; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; color: var(--dim); font-weight: 650; background: var(--surface-2); }
+tr:last-child td { border-bottom: 0; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; overflow-x: auto; min-height: 160px; }
+@media (max-width: 900px) {
+  .pshell { grid-template-columns: 1fr; }
+  .pnav { display: none; }
+  .pfeed { border-right: 0; border-bottom: 1px solid var(--border); }
+  .qcard { margin-top: 6px; }
+}
+@media (max-width: 760px) {
+  h1 { font-size: 27px; }
+  .wrap { padding: 26px 12px 60px; gap: 34px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:14px">
+  <div class="topline">
+    <span class="eyebrow">Spec 056 / UX/UI study 4 of 4</span>
+    <button class="btn" id="theme" type="button">Dark</button>
+  </div>
+  <h1>pluxui: a marketing-engine workspace</h1>
+  <p class="lead">A redraw of one screen from an established AI marketing engine, from a single screenshot. Neutral styling, ACRYL's design tokens, no logo or brand copy. The source product is written as <b>pluxui</b>.</p>
+</header>
+
+<section>
+  <h2>What the single screen shows</h2>
+  <p>The screen is a three-column workspace for a marketing site: a narrow navigation column (workspace, chats, sites, projects, and a library of assets, docs, playbooks, integrations and databases), a middle run feed, and a site canvas. The feed reports each step of a running playbook with a duration and an action to open its chat or its output; a question card at the bottom asks one ranked multiple-choice question with a recommended answer and Skip/Next. The canvas has Pages, Select, Versions and Publish, and currently shows a "Home page placeholder" instead of a built page.</p>
+</section>
+
+<section>
+  <h2>The screen</h2>
+  <div class="frame">
+    <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="addr">workspace / getting started</span></div>
+    <div class="pshell">
+      <nav class="pnav">
+        <div class="ws">Sample workspace <span>v</span></div>
+        <div class="new"><span class="btn primary">+ New chat</span></div>
+        <div class="item">Overview</div>
+        <div class="item">Chats</div>
+        <div class="item">Sites</div>
+        <div class="item">Projects</div>
+        <div class="cap">Library</div>
+        <div class="item">Assets</div>
+        <div class="item">Docs</div>
+        <div class="item">Playbooks</div>
+        <div class="item">Integrations</div>
+        <div class="item">Databases</div>
+        <div class="cap">Recent sites</div>
+        <div class="row"><span>Sample site</span><span>2m</span></div>
+        <div class="cap">Your chats</div>
+        <div class="row"><span>Campaign brief</span><span>lock</span></div>
+        <div class="row"><span>Variant ideas</span><span>lock</span></div>
+        <div class="row"><span>SEO audit</span><span>check</span></div>
+        <div class="row"><span>Lead list</span><span>lock</span></div>
+      </nav>
+      <section class="pfeed">
+        <h3>Getting started</h3>
+        <div class="sk"></div>
+        <div class="frow">Read playbook</div>
+        <div class="step"><div class="line"><b>Read web pages +1 more</b><span>11s</span></div></div>
+        <div class="step"><b>Researching your current site</b><div class="line"><span>Step - reported back</span><span class="mini">Open chat</span></div></div>
+        <div class="step"><b>Researching your market</b><div class="line"><span>Step - reported back</span><span class="mini">Open chat</span></div></div>
+        <div class="frow">Bubbled - 7s</div>
+        <div class="frow">Asked a question</div>
+        <div class="step"><div class="out"><span class="thumb"></span><div class="grow"><b>See output</b><div class="line"><span>1 new</span><span class="mini">&gt;</span></div></div></div></div>
+        <div class="qcard">
+          <div class="qhead"><span>Question 1 of 4</span><span>x</span></div>
+          <b>Who would your clients hire instead?</b>
+          <div class="opt"><span class="rank">1</span><div class="grow"><b>A big agency</b><span>Higher price, slower, junior staff.</span></div><span class="pill ok">Recommended</span></div>
+          <div class="opt"><span class="rank">2</span><div class="grow"><b>A solo freelancer</b><span>Cheap to start, risky when they go quiet.</span></div></div>
+          <div class="opt"><span class="rank">3</span><div class="grow"><b>A DIY builder</b><span>Fast to start, limited on custom work.</span></div></div>
+          <div class="opt"><span class="rank">4</span><div class="grow"><b>An in-house team</b><span>Months of hiring, already busy.</span></div></div>
+          <div class="qask">Something else...</div>
+          <div class="qfoot"><span class="dim">Skip</span><span class="btn primary">Next</span></div>
+        </div>
+      </section>
+      <section class="pcanvas">
+        <div class="pcbar"><span class="chip">Pages v</span><span class="chip">code</span><span class="chip">Select v</span><span class="grow"></span><span>Versions</span><span class="btn dark">Publish</span></div>
+        <div class="pcurl">/ <span>reload</span></div>
+        <div class="pcv">
+          <div class="stack"><i></i><i></i><i></i></div>
+          <b>Home page placeholder</b>
+          <span class="dim">Navigate the site with Pages; rebuild the page by asking the agent.</span>
+          <span class="btn dark">View design system</span>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="notes" style="font-size:13.5px;color:var(--dim);display:flex;flex-direction:column;gap:2px">
+    <p><b style="color:var(--text)">What it does.</b> The screen puts a running marketing playbook beside the site it is changing: steps report back inline, a step opens its own chat, and an output card opens the artifact it produced. The question card turns the agent's uncertainty into a ranked choice with one recommendation, a free-text escape and Skip/Next. The canvas is a site editor with page navigation, element selection, versions and publish.</p>
+    <p><b style="color:var(--text)">What it does not show.</b> There is one screenshot and it is a single state. It does not show the chat contents, the playbook editor, the library screens (assets, docs, integrations, databases), the version list, the publish dialog, settings, a finished page, or any mobile layout. The canvas is a placeholder, so the editor's real tools and the effect of Publish are unknown.</p>
+  </div>
+</section>
+
+<section>
+  <h2>The flow this screen shows</h2>
+  <p class="note">Solid edges are visible in the single screenshot; dashed edges are actions whose result is not in it.</p>
+  <div class="mermaid">
+flowchart TB
+  ws["Workspace"] --> playbook["Run a playbook"]
+  playbook --> steps["Steps report back with a duration"]
+  steps --> chat["Open a step's chat"]
+  steps --> out["See an output card"]
+  steps --> q["Ranked question (1 of 4)"]
+  q -->|"answer, Skip or Next"| next["Next question or result: not in the screen"]
+  out --> canvas["Site canvas"]
+  canvas --> pages["Pages / Select"]
+  canvas --> versions["Versions"]
+  canvas --> publish["Publish"]
+  versions -.-> vdialog["Version UI: not in the screen"]
+  publish -.-> pdialog["Publish UI: not in the screen"]
+  chat -.-> chatbody["Chat contents: not in the screen"]
+  classDef unknown fill:none,stroke-dasharray:4 4
+  class next,vdialog,pdialog,chatbody unknown
+  </div>
+</section>
+
+<section>
+  <h2>Take for ACRYL / Do not take / Why</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Take</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>A separate library beside the chats</td><td>Assets, docs, playbooks, integrations and databases are one step from the work, not buried in settings.</td></tr>
+        <tr><td>A step feed with durations and "reported back"</td><td>Long agent work becomes a short, scannable timeline of steps instead of one spinner.</td></tr>
+        <tr><td>Each step opens its chat or its output</td><td>The conversation and the artifact stay linked, so a reviewer can inspect either side.</td></tr>
+        <tr><td>A ranked question with a recommendation</td><td>Structured choices are faster than free text, and the agent can ask while it keeps working.</td></tr>
+        <tr><td>Pages, Select, Versions, Publish in one bar</td><td>Editing and shipping are on the same surface; the canvas names its own actions.</td></tr>
+        <tr><td>A visible design-system entry</td><td>The design system is a first-class artifact, not an invisible setting.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Do not take</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>The question card covering the bottom of the feed</td><td>It competes with the running steps and hides the latest output; ask inline in the chat or above the composer.</td></tr>
+        <tr><td>Lock icons on individual chats without a reason</td><td>The screen gives no explanation of the gate; an unexplained lock reads as a bug.</td></tr>
+        <tr><td>A placeholder as the first canvas state</td><td>"Home page placeholder" plus "rebuild by asking" is a dead end; show a usable page or a clear next step.</td></tr>
+        <tr><td>Deep sidebar nesting in the first screen</td><td>Workspace, library, recent sites and chats compete for the same narrow column.</td></tr>
+        <tr><td>Two navigation affordances for the same chat</td><td>An "Open chat" button on every step plus a chat list doubles the routes to one place.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Maps to ACRYL today</h2>
+  <p class="note">ACRYL's frame: left panel with chats and versions, canvas, right panel, Settings. Spec 055 defines History, Publish, Share and GitHub sync.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Source pattern</th><th>ACRYL today</th><th>Fit / gap</th></tr></thead>
+      <tbody>
+        <tr><td>Workspace sidebar with a library</td><td>Left panel with chats and versions; Settings</td><td>Partial; add a workspace scope above chats and a library entry.</td></tr>
+        <tr><td>Step feed with durations</td><td>Agent turns and Changes; no step timeline</td><td>Missing; a per-turn step feed fits the frame.</td></tr>
+        <tr><td>Ranked question card</td><td>Questions arrive as chat text</td><td>Gap; a structured question turn would cut back-and-forth.</td></tr>
+        <tr><td>Pages / Select / Versions / Publish bar</td><td>Canvas; spec 055 History and Publish</td><td>Partial; add Pages and Select, keep History and Publish.</td></tr>
+        <tr><td>Design-system entry</td><td>Design tokens exist in specs, not as a frame surface</td><td>Gap; expose the tokens the app uses.</td></tr>
+        <tr><td>Locked chats</td><td>None</td><td>Do not copy without a clear rule and an explanation.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Coverage</h2>
+  <p class="note">The source folder holds one screenshot and no text captures. The file name is kept as captured; the product name is not repeated.</p>
+  <div class="card"><ul style="font-size:12.5px;color:var(--dim)">
+    <li><code>Screenshot 2026-10-13 at 02.42.55.png</code> - the only source; all sections</li>
+  </ul>
+  <p class="note" style="margin-top:6px">No other images, screenshots, .md or .txt files are in the folder.</p></div>
+</section>
+
+<section>
+  <h2>What the single screen cannot tell us</h2>
+  <div class="card"><ul>
+    <li>The chat and the playbook editor; only their entry points are visible.</li>
+    <li>The library screens (assets, docs, playbooks, integrations, databases).</li>
+    <li>The version list and publish dialog; only the labels are visible.</li>
+    <li>The question flow beyond question 1 of 4; the result of Skip or Next is unknown.</li>
+    <li>Whether the canvas is a page builder, a code editor or a preview; it is a placeholder.</li>
+    <li>Onboarding, pricing, account, settings, collaboration and the product's phone layout.</li>
+  </ul></div>
+</section>
+
+<footer class="note">pluxui - spec 056 UX/UI study. Redrawn from one private screenshot; no source image, logo or brand copy is included. Neutral styling with ACRYL's AOS design tokens.</footer>
+
+</div>
+<script>
+const root = document.documentElement;
+const themeButton = document.getElementById('theme');
+const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+function isDark() { return root.dataset.theme ? root.dataset.theme === 'dark' : themeQuery.matches; }
+function labelTheme() { themeButton.textContent = isDark() ? 'Light' : 'Dark'; }
+themeButton.addEventListener('click', () => { root.dataset.theme = isDark() ? 'light' : 'dark'; labelTheme(); });
+themeQuery.addEventListener('change', labelTheme);
+labelTheme();
+</script>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs";
+const diagrams = [...document.querySelectorAll(".mermaid")].map((el) => ({ el, src: el.innerHTML }));
+let applied;
+async function render() {
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = dark ? "dark" : "default";
+  if (theme === applied) return;
+  mermaid.initialize({ startOnLoad: false, theme, securityLevel: "strict" });
+  for (const { el, src } of diagrams) { el.removeAttribute("data-processed"); el.innerHTML = src; }
+  try { await mermaid.run({ nodes: diagrams.map((d) => d.el) }); applied = theme; }
+  catch (error) { console.error("Mermaid render failed:", error); }
+}
+if (document.readyState === "complete") render();
+else window.addEventListener("load", render, { once: true });
+new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+</script>
+</body>
+</html>
