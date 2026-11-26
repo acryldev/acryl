@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect Telegram</title>
+<style>
+/* Tokens from specs/052-acryl-app-os/design/aos.html, the frame's own mockup palette. */
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --error-dim: rgba(220,38,38,.09);
+  --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12); --win-bar: #e4e4ea;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --error-dim: rgba(248,113,113,.12);
+  --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12); --win-bar: #222226; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --error-dim: rgba(248,113,113,.12);
+  --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12); --win-bar: #222226; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 48px; }
+h1 { font-size: 34px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 23px; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 78ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.dim { color: var(--dim); }
+.note { font-size: 12.5px; color: var(--dim); }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.err { background: var(--error-dim); color: var(--error); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+.pill.agent { background: var(--agent-dim); color: var(--agent); }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--dim); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+input[type=text] { font: 13px var(--sans); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; background: var(--surface); color: var(--text); min-width: 0; }
+
+/* Change summary */
+.changes { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.changes .card h3 { display: flex; gap: 8px; align-items: center; }
+.gone { text-decoration: line-through; color: var(--dim); }
+
+/* The app window */
+.win { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 50px -28px rgba(0,0,0,.4); min-width: 0; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--win-bar); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--border); display: block; }
+.bar .app { font-weight: 600; font-size: 13px; }
+.bar .sp { flex: 1; }
+.syncchip { font: 600 11.5px var(--mono); color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; }
+.dot.warn { background: var(--warning); } .dot.err { background: var(--error); } .dot.off { background: var(--border); }
+.body { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); min-height: 380px; }
+.panel { border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.canvas { padding: 16px; background: var(--bg); display: flex; align-items: flex-start; justify-content: center; min-width: 0; }
+.canvas .fake { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; }
+.canvas .fake i { display: block; height: 12px; border-radius: 6px; background: var(--surface-2); }
+@media (max-width: 760px) { .body { grid-template-columns: 1fr; } .panel { border-right: 0; border-bottom: 1px solid var(--border); } }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tabs button { all: unset; cursor: pointer; padding: 6px 10px; font-size: 13px; color: var(--dim); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--text); font-weight: 600; border-bottom-color: var(--primary); }
+.vlist { display: flex; flex-direction: column; gap: 2px; }
+.v { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 8px; border-radius: 8px; }
+.v:hover { background: var(--surface-2); }
+.v.cur { background: var(--primary-dim); }
+.v .t { font-size: 13px; overflow-wrap: anywhere; }
+.v .m { font-size: 11.5px; color: var(--dim); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.v .acts { display: flex; gap: 2px; align-items: center; }
+.star { all: unset; cursor: pointer; color: var(--dim); font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 5px; }
+.star.on { color: var(--warning); }
+.who { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font: 700 9px var(--mono); margin-top: 2px; }
+.who.ai { background: var(--agent-dim); color: var(--agent); }
+.who.me { background: var(--primary-dim); color: var(--primary); }
+.who.gh { background: var(--surface-2); color: var(--dim); }
+.banner { border-radius: 9px; padding: 9px 11px; font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; }
+.banner.info { background: var(--primary-dim); }
+.banner.ok { background: var(--success-dim); }
+.banner.warn { background: var(--warning-dim); }
+.banner.err { background: var(--error-dim); }
+.banner .row { display: flex; gap: 6px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 28px 12px; color: var(--dim); font-size: 13px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+/* Dialogs and popovers drawn inline */
+.dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); width: 100%; max-width: 560px; overflow: hidden; }
+.dialog header { padding: 14px 16px 0; display: flex; justify-content: space-between; align-items: center; }
+.dialog .content { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.dialog footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.field > span { color: var(--dim); }
+.line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.plat { display: grid; grid-template-columns: 90px minmax(0,1fr) auto; gap: 8px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.plat:last-child { border-bottom: 0; }
+.bar2 { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.bar2 b { display: block; height: 100%; background: var(--primary); }
+.pop { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); width: 100%; max-width: 380px; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.pop .item { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 9px 8px; border-radius: 8px; }
+.pop .item:hover { background: var(--surface-2); }
+.pop .ic { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-2); display: grid; place-items: center; font-size: 13px; }
+.pop .item small { display: block; color: var(--dim); font-size: 12px; }
+.pop hr { border: 0; border-top: 1px solid var(--border); margin: 4px 2px; }
+.settings { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 12px; }
+.srow { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.srow h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.code1 { font: 700 22px var(--mono); letter-spacing: .14em; background: var(--surface-2); padding: 6px 12px; border-radius: 8px; }
+
+/* Case switcher */
+.cases { display: flex; flex-wrap: wrap; gap: 6px; }
+.cases button { all: unset; cursor: pointer; font: 600 12px var(--sans); padding: 5px 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--dim); }
+.cases button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.case[hidden] { display: none !important; }
+.why { font-size: 13px; color: var(--dim); border-left: 3px solid var(--primary); padding: 2px 0 2px 12px; }
+
+/* Comparison */
+.vs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.vs .card h3 { margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+
+/* Decisions */
+form.q { display: flex; flex-direction: column; gap: 8px; }
+form.q label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+form.q textarea { font: 13px var(--sans); border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--surface); color: var(--text); width: 100%; min-height: 56px; }
+@media (prefers-reduced-motion: no-preference) { .case { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } } }
+</style>
+<style>
+.avs { display: inline-flex; } .av { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 10px var(--mono); color: #fff; border: 2px solid var(--win-bar); margin-left: -6px; }
+.a1 { background: #3652D9; } .a2 { background: #047857; } .a3 { background: #B45309; }
+.fake { position: relative; } .cursors { position: absolute; right: 20%; top: 46%; } .cur.c2 { font: 600 11px var(--sans); background: #047857; color: #fff; padding: 2px 6px; border-radius: 6px 6px 6px 0; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; overflow-x: auto; display: flex; justify-content: center; }
+.phone { width: 100%; max-width: 340px; border: 1px solid var(--border); border-radius: 26px; overflow: hidden; background: var(--surface); box-shadow: 0 18px 50px -28px rgba(0,0,0,.45); }
+.ph-bar { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: baseline; } .ph-bar small { color: var(--dim); }
+.ph-body { padding: 12px; min-height: 300px; background: var(--bg); display: flex; flex-direction: column; gap: 8px; }
+.ph-body .case { display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 82%; padding: 8px 11px; border-radius: 14px; font-size: 13.5px; }
+.msg.me { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg.file { font-family: var(--mono); font-size: 12.5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; } .chips span { font-size: 12.5px; border: 1px solid var(--primary); color: var(--primary); padding: 4px 9px; border-radius: 99px; } .chips span.ok { background: var(--primary); color: #fff; }
+.stamp { align-self: center; font: 600 11px var(--mono); color: var(--dim); }
+.drop { border: 2px dashed var(--border); border-radius: 10px; padding: 24px 12px; text-align: center; color: var(--dim); font-size: 13px; }
+.tx { font-size: 13px; line-height: 1.7; } .tx s { color: var(--dim); }
+.screen { aspect-ratio: 16/9; border-radius: 10px; background: #18181b; color: #e8e8ea; display: grid; place-items: center; font: 600 13px var(--mono); }
+.tl { display: flex; gap: 3px; height: 26px; } .tl .clip { background: var(--primary-dim); border: 1px solid var(--primary); border-radius: 5px; } .tl .clip.gen { background: var(--agent-dim); border-color: var(--agent); }
+.tl.music span { display: block; height: 14px; border-radius: 4px; background: var(--success-dim); border: 1px solid var(--success); }
+ol { display: flex; flex-direction: column; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Spec 057 · T050 · design, not built</div>
+  <h1>Connect Telegram: drive a Blend from your phone</h1>
+  <p class="lead">A Cordis plugin, <code>acryl-connect-telegram</code>, links one Blend's session to a Telegram chat. You talk to the app's agent from the phone, approve risky steps with a tap, and get files back. Nothing to install on the phone beyond Telegram. WhatsApp, Slack and Discord follow the same contract (T052, T053).</p>
+</header>
+
+<section data-group="t">
+  <div class="eyebrow">Setting it up, in the app</div>
+  <div class="cases" role="group" aria-label="Setup cases">
+    <button aria-pressed="true" data-case="t-off">Not connected</button>
+    <button aria-pressed="false" data-case="t-token">Paste the bot token</button>
+    <button aria-pressed="false" data-case="t-pair">Pairing code</button>
+    <button aria-pressed="false" data-case="t-on">Connected</button>
+    <button aria-pressed="false" data-case="t-stranger">Someone not allowed writes</button>
+    <button aria-pressed="false" data-case="t-dead">Token revoked</button>
+  </div>
+  <div class="settings">
+    <div class="case srow" data-id="t-off">
+      <h4>Telegram <span class="pill off">not connected</span></h4>
+      <p class="note">Talk to this app's agent from Telegram. You create your own bot, so messages go only through your bot and this app.</p>
+      <ol class="note" style="margin:0;padding-left:18px"><li>In Telegram, open @BotFather and send <code>/newbot</code>.</li><li>Copy the token it gives you.</li></ol>
+      <div class="line"><button class="btn primary">I have the token</button></div>
+    </div>
+    <div class="case srow" data-id="t-token" hidden>
+      <h4>Telegram <span class="pill">step 1 of 2</span></h4>
+      <label class="field"><span>Bot token (kept in Settings &gt; Secrets, never in the app's code)</span><input type="text" value="••••••••••:•••••••••••••••••" aria-label="Bot token"></label>
+      <div class="line"><button class="btn primary">Check and continue</button><button class="btn small ghost">Cancel</button></div>
+    </div>
+    <div class="case srow" data-id="t-pair" hidden>
+      <h4>Telegram <span class="pill">step 2 of 2</span></h4>
+      <p style="font-size:13px">Send this code to <b>@smallcrm_team_bot</b> from each Telegram account that may use the app:</p>
+      <div class="line"><span class="code1">PAIR 4821</span><button class="btn small">Copy</button></div>
+      <p class="note">The code works for 10 minutes. Each account that sends it is asked for here before it is added.</p>
+    </div>
+    <div class="case srow" data-id="t-on" hidden>
+      <h4>Telegram <span class="pill ok">connected</span></h4>
+      <p style="font-size:13px">@smallcrm_team_bot · 2 people allowed</p>
+      <div class="vlist">
+        <div class="v"><span class="who me">A</span><div><div class="t">@alex (you)</div><div class="m">owner · can approve</div></div></div>
+        <div class="v"><span class="who gh">B</span><div><div class="t">@ben</div><div class="m">viewer · can ask, cannot change</div></div><div class="acts"><button class="btn small ghost">Remove</button></div></div>
+      </div>
+      <div class="line"><button class="btn small">Add someone</button><button class="btn small ghost">Disconnect</button></div>
+    </div>
+    <div class="case srow" data-id="t-stranger" hidden>
+      <h4>Telegram <span class="pill warn">1 request</span></h4>
+      <div class="banner warn"><b>@unknown_user wrote to the bot</b>They are not allowed, so the agent did not see the message. Allow them?<div class="row"><button class="btn small">Allow as viewer</button><button class="btn small ghost">Ignore</button></div></div>
+    </div>
+    <div class="case srow" data-id="t-dead" hidden>
+      <h4>Telegram <span class="pill err">stopped</span></h4>
+      <p style="font-size:13px">Telegram no longer accepts the bot token (it was revoked in @BotFather). Messages sent meanwhile are lost by Telegram after 24 hours.</p>
+      <div class="line"><button class="btn primary">Paste a new token</button></div>
+    </div>
+  </div>
+</section>
+
+<section data-group="p">
+  <div class="eyebrow">Using it, on the phone</div>
+  <div class="cases" role="group" aria-label="Phone cases">
+    <button aria-pressed="true" data-case="p-ask">Ask</button>
+    <button aria-pressed="false" data-case="p-approve">Approve a step</button>
+    <button aria-pressed="false" data-case="p-file">Get a file</button>
+    <button aria-pressed="false" data-case="p-later">Answer hours later</button>
+  </div>
+  <div class="phone">
+    <div class="ph-bar"><b>Small CRM team</b><small>bot</small></div>
+    <div class="ph-body">
+      <div class="case" data-id="p-ask">
+        <div class="msg me">How many leads came in this week?</div>
+        <div class="msg bot">14 new leads, 3 marked hot: Kovac, Lindner, Petrov. Want the list?</div>
+        <div class="chips"><span>Show the list</span><span>Only hot ones</span></div>
+      </div>
+      <div class="case" data-id="p-approve" hidden>
+        <div class="msg me">Send the price list to the 3 hot leads</div>
+        <div class="msg bot">This sends 3 emails from office@… and cannot be undone. Send?</div>
+        <div class="chips"><span class="ok">Send</span><span>Show the email first</span><span>Cancel</span></div>
+        <div class="msg bot">Sent to 3 people. ✓</div>
+      </div>
+      <div class="case" data-id="p-file" hidden>
+        <div class="msg me">Export this month's deals</div>
+        <div class="msg bot file">📄 deals-november.csv · 18 KB</div>
+        <div class="msg bot">42 deals, 61,200 EUR in total.</div>
+      </div>
+      <div class="case" data-id="p-later" hidden>
+        <div class="msg bot">Is the price list final? I will send it to the hot leads when you say yes.</div>
+        <div class="stamp">6 hours later</div>
+        <div class="msg me">yes</div>
+        <div class="msg bot">Sending now. ✓ (The app waited without running; ACRYL Durable, T016.)</div>
+      </div>
+    </div>
+  </div>
+  <p class="why">What the agent may do from Telegram is the same as in the app for that person's role. A viewer can ask; only an owner can approve a step that is not safe to repeat.</p>
+</section>
+</div>
+<script>
+for (const group of document.querySelectorAll('[data-group]')) {
+  const buttons = group.querySelectorAll('.cases button');
+  const show = (id) => { for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.case === id)); for (const c of group.querySelectorAll('.case')) c.hidden = c.dataset.id !== id; };
+  for (const b of buttons) b.addEventListener('click', () => show(b.dataset.case));
+}
+</script>
+
+</body>
+</html>

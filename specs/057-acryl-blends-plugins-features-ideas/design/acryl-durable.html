@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACRYL Durable</title>
+<style>
+/* Tokens from specs/052-acryl-app-os/design/aos.html, the frame's own mockup palette. */
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --error-dim: rgba(220,38,38,.09);
+  --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12); --win-bar: #e4e4ea;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --error-dim: rgba(248,113,113,.12);
+  --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12); --win-bar: #222226; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --error-dim: rgba(248,113,113,.12);
+  --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12); --win-bar: #222226; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 48px; }
+h1 { font-size: 34px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 23px; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 78ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.dim { color: var(--dim); }
+.note { font-size: 12.5px; color: var(--dim); }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.err { background: var(--error-dim); color: var(--error); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+.pill.agent { background: var(--agent-dim); color: var(--agent); }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--dim); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+input[type=text] { font: 13px var(--sans); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; background: var(--surface); color: var(--text); min-width: 0; }
+
+/* Change summary */
+.changes { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.changes .card h3 { display: flex; gap: 8px; align-items: center; }
+.gone { text-decoration: line-through; color: var(--dim); }
+
+/* The app window */
+.win { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 50px -28px rgba(0,0,0,.4); min-width: 0; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--win-bar); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--border); display: block; }
+.bar .app { font-weight: 600; font-size: 13px; }
+.bar .sp { flex: 1; }
+.syncchip { font: 600 11.5px var(--mono); color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; }
+.dot.warn { background: var(--warning); } .dot.err { background: var(--error); } .dot.off { background: var(--border); }
+.body { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); min-height: 380px; }
+.panel { border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.canvas { padding: 16px; background: var(--bg); display: flex; align-items: flex-start; justify-content: center; min-width: 0; }
+.canvas .fake { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; }
+.canvas .fake i { display: block; height: 12px; border-radius: 6px; background: var(--surface-2); }
+@media (max-width: 760px) { .body { grid-template-columns: 1fr; } .panel { border-right: 0; border-bottom: 1px solid var(--border); } }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tabs button { all: unset; cursor: pointer; padding: 6px 10px; font-size: 13px; color: var(--dim); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--text); font-weight: 600; border-bottom-color: var(--primary); }
+.vlist { display: flex; flex-direction: column; gap: 2px; }
+.v { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 8px; border-radius: 8px; }
+.v:hover { background: var(--surface-2); }
+.v.cur { background: var(--primary-dim); }
+.v .t { font-size: 13px; overflow-wrap: anywhere; }
+.v .m { font-size: 11.5px; color: var(--dim); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.v .acts { display: flex; gap: 2px; align-items: center; }
+.star { all: unset; cursor: pointer; color: var(--dim); font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 5px; }
+.star.on { color: var(--warning); }
+.who { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font: 700 9px var(--mono); margin-top: 2px; }
+.who.ai { background: var(--agent-dim); color: var(--agent); }
+.who.me { background: var(--primary-dim); color: var(--primary); }
+.who.gh { background: var(--surface-2); color: var(--dim); }
+.banner { border-radius: 9px; padding: 9px 11px; font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; }
+.banner.info { background: var(--primary-dim); }
+.banner.ok { background: var(--success-dim); }
+.banner.warn { background: var(--warning-dim); }
+.banner.err { background: var(--error-dim); }
+.banner .row { display: flex; gap: 6px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 28px 12px; color: var(--dim); font-size: 13px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+/* Dialogs and popovers drawn inline */
+.dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); width: 100%; max-width: 560px; overflow: hidden; }
+.dialog header { padding: 14px 16px 0; display: flex; justify-content: space-between; align-items: center; }
+.dialog .content { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.dialog footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.field > span { color: var(--dim); }
+.line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.plat { display: grid; grid-template-columns: 90px minmax(0,1fr) auto; gap: 8px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.plat:last-child { border-bottom: 0; }
+.bar2 { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.bar2 b { display: block; height: 100%; background: var(--primary); }
+.pop { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); width: 100%; max-width: 380px; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.pop .item { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 9px 8px; border-radius: 8px; }
+.pop .item:hover { background: var(--surface-2); }
+.pop .ic { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-2); display: grid; place-items: center; font-size: 13px; }
+.pop .item small { display: block; color: var(--dim); font-size: 12px; }
+.pop hr { border: 0; border-top: 1px solid var(--border); margin: 4px 2px; }
+.settings { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 12px; }
+.srow { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.srow h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.code1 { font: 700 22px var(--mono); letter-spacing: .14em; background: var(--surface-2); padding: 6px 12px; border-radius: 8px; }
+
+/* Case switcher */
+.cases { display: flex; flex-wrap: wrap; gap: 6px; }
+.cases button { all: unset; cursor: pointer; font: 600 12px var(--sans); padding: 5px 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--dim); }
+.cases button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.case[hidden] { display: none !important; }
+.why { font-size: 13px; color: var(--dim); border-left: 3px solid var(--primary); padding: 2px 0 2px 12px; }
+
+/* Comparison */
+.vs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.vs .card h3 { margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+
+/* Decisions */
+form.q { display: flex; flex-direction: column; gap: 8px; }
+form.q label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+form.q textarea { font: 13px var(--sans); border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--surface); color: var(--text); width: 100%; min-height: 56px; }
+@media (prefers-reduced-motion: no-preference) { .case { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } } }
+</style>
+<style>
+.avs { display: inline-flex; } .av { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 10px var(--mono); color: #fff; border: 2px solid var(--win-bar); margin-left: -6px; }
+.a1 { background: #3652D9; } .a2 { background: #047857; } .a3 { background: #B45309; }
+.fake { position: relative; } .cursors { position: absolute; right: 20%; top: 46%; } .cur.c2 { font: 600 11px var(--sans); background: #047857; color: #fff; padding: 2px 6px; border-radius: 6px 6px 6px 0; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; overflow-x: auto; display: flex; justify-content: center; }
+.phone { width: 100%; max-width: 340px; border: 1px solid var(--border); border-radius: 26px; overflow: hidden; background: var(--surface); box-shadow: 0 18px 50px -28px rgba(0,0,0,.45); }
+.ph-bar { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: baseline; } .ph-bar small { color: var(--dim); }
+.ph-body { padding: 12px; min-height: 300px; background: var(--bg); display: flex; flex-direction: column; gap: 8px; }
+.ph-body .case { display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 82%; padding: 8px 11px; border-radius: 14px; font-size: 13.5px; }
+.msg.me { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg.file { font-family: var(--mono); font-size: 12.5px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; } .chips span { font-size: 12.5px; border: 1px solid var(--primary); color: var(--primary); padding: 4px 9px; border-radius: 99px; } .chips span.ok { background: var(--primary); color: #fff; }
+.stamp { align-self: center; font: 600 11px var(--mono); color: var(--dim); }
+.drop { border: 2px dashed var(--border); border-radius: 10px; padding: 24px 12px; text-align: center; color: var(--dim); font-size: 13px; }
+.tx { font-size: 13px; line-height: 1.7; } .tx s { color: var(--dim); }
+.screen { aspect-ratio: 16/9; border-radius: 10px; background: #18181b; color: #e8e8ea; display: grid; place-items: center; font: 600 13px var(--mono); }
+.tl { display: flex; gap: 3px; height: 26px; } .tl .clip { background: var(--primary-dim); border: 1px solid var(--primary); border-radius: 5px; } .tl .clip.gen { background: var(--agent-dim); border-color: var(--agent); }
+.tl.music span { display: block; height: 14px; border-radius: 4px; background: var(--success-dim); border: 1px solid var(--success); }
+ol { display: flex; flex-direction: column; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Spec 057 · T011 · design, not built</div>
+  <h1>ACRYL Durable: one running app, the whole team inside it</h1>
+  <p class="lead">A Blend runs in a WebBoxes.ai box and keeps running when every window is closed. Anyone signed in to the app can attach from the desktop, the web, the CLI or Telegram and sees the same live state. A crash or a restart resumes where it was.</p>
+  <p class="note">Modeled on Pi Durable (MIT, earendil-works/pi, packages/durable): every step written down before and after it runs, tools that say whether they are safe to repeat, tasks that wait with no process running, versioned documents sent as small patches.</p>
+</header>
+
+<section data-group="d">
+  <div class="eyebrow">The session, every case</div>
+  <div class="cases" role="group" aria-label="Durable cases">
+    <button aria-pressed="true" data-case="d-live">Three people attached</button>
+    <button aria-pressed="false" data-case="d-join">Someone joins</button>
+    <button aria-pressed="false" data-case="d-crash">The box restarts</button>
+    <button aria-pressed="false" data-case="d-unsafe">A step that is not safe to repeat</button>
+    <button aria-pressed="false" data-case="d-park">A task waiting for tomorrow</button>
+    <button aria-pressed="false" data-case="d-fork">Fork a conversation</button>
+    <button aria-pressed="false" data-case="d-improve">The app proposes an improvement</button>
+    <button aria-pressed="false" data-case="d-solo">Alone, nothing changes</button>
+  </div>
+  <div class="win">
+    <div class="bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <span class="app">Small CRM · team</span>
+      <span class="sp"></span>
+      <span class="syncchip"><span class="dot"></span>Running in a box · 14 days</span>
+      <span class="avs"><b class="av a1" title="Alex, desktop">A</b><b class="av a2" title="Ana, web">N</b><b class="av a3" title="Ben, Telegram">B</b></span>
+      <button class="btn small">Share</button>
+      <button class="btn small primary">Publish</button>
+    </div>
+    <div class="body">
+      <div class="panel">
+        <div class="tabs"><button aria-selected="true">Session</button><button aria-selected="false">History</button></div>
+
+        <div class="case" data-id="d-live">
+          <div class="field"><span>People here</span></div>
+          <div class="vlist">
+            <div class="v"><span class="who me">A</span><div><div class="t">Alex (you)</div><div class="m">Desktop app · owner</div></div><div class="acts"><span class="pill ok">here</span></div></div>
+            <div class="v"><span class="who ai">N</span><div><div class="t">Ana</div><div class="m">Web · editor · typing…</div></div><div class="acts"><span class="pill ok">here</span></div></div>
+            <div class="v"><span class="who gh">B</span><div><div class="t">Ben</div><div class="m">Telegram · viewer</div></div><div class="acts"><span class="pill">phone</span></div></div>
+          </div>
+          <div class="field"><span>Running now</span></div>
+          <div class="banner info"><b>Agent: "Import 240 contacts from the CSV"</b>Step 3 of 4 · asked by Ana · everyone sees the progress</div>
+        </div>
+
+        <div class="case" data-id="d-join" hidden>
+          <div class="banner ok"><b>Ben joined from Telegram</b>He sees the app as a viewer and can ask the agent questions. Change his role in Share.</div>
+          <p class="note">Joining needs an invitation (spec 055 Share) and a sign-in. A link alone never opens a session.</p>
+        </div>
+
+        <div class="case" data-id="d-crash" hidden>
+          <div class="banner warn"><b>The box restarted at 14:02.</b>Back at 14:03. The import was at step 3 of 4: it went on from step 3, not from the start. Nothing was done twice.</div>
+          <div class="vlist">
+            <div class="v"><span class="who ai">✓</span><div><div class="t">Read the CSV</div><div class="m">done before the restart</div></div></div>
+            <div class="v"><span class="who ai">✓</span><div><div class="t">Check for duplicates</div><div class="m">done before the restart</div></div></div>
+            <div class="v cur"><span class="who ai">↻</span><div><div class="t">Write contacts 121-240</div><div class="m">resumed · safe to repeat</div></div></div>
+          </div>
+        </div>
+
+        <div class="case" data-id="d-unsafe" hidden>
+          <div class="banner warn"><b>The box restarted while "Send welcome email to 240 contacts" was running.</b>Sending is not safe to repeat, so the agent stopped. 118 were sent, 122 were not.<div class="row"><button class="btn small primary">Send the other 122</button><button class="btn small">Show who got it</button><button class="btn small ghost">Stop here</button></div></div>
+          <p class="note">Each tool says whether it is safe to run again. A safe one resumes by itself; an unsafe one asks the owner.</p>
+        </div>
+
+        <div class="case" data-id="d-park" hidden>
+          <div class="banner info"><b>Waiting until tomorrow 09:00</b>"Remind Ana to call the three hot leads." No process runs while it waits; the reminder arrives on Ana's Telegram.<div class="row"><button class="btn small">Change time</button><button class="btn small ghost">Cancel</button></div></div>
+          <div class="banner info"><b>Waiting for a reply</b>"Ask Ben on Telegram whether the price list is final." It goes on when Ben answers, even days later.</div>
+        </div>
+
+        <div class="case" data-id="d-fork" hidden>
+          <div class="banner info"><b>Fork "Pricing ideas" from turn 12</b><div class="row"><label class="line" style="font-size:13px"><input type="radio" name="fk" checked> A frozen copy: try things, the app stays as it is</label></div><div class="row"><label class="line" style="font-size:13px"><input type="radio" name="fk"> Share the live data: changes show for everyone</label></div><div class="row"><button class="btn small primary">Fork</button></div></div>
+        </div>
+
+        <div class="case" data-id="d-improve" hidden>
+          <div class="banner info"><b>The app suggests a change</b>This week 9 people searched contacts by city and found nothing, because there is no city filter. Proposed: add a City filter to the contact list.<div class="row"><button class="btn small primary">Preview it</button><button class="btn small">Accept as a version</button><button class="btn small ghost">Not now</button></div></div>
+          <p class="note">Only an owner can accept. Accepting makes a version in History, so it can be restored like any other.</p>
+        </div>
+
+        <div class="case" data-id="d-solo" hidden>
+          <div class="empty"><b style="color:var(--text)">Only you</b>A Blend on your own computer works as today. Durable is on when the app runs in a box and you invite someone, or connect Telegram.</div>
+        </div>
+      </div>
+      <div class="canvas"><div class="fake"><i style="width:45%"></i><i></i><i style="height:28px"></i><i style="height:28px"></i><i style="height:28px"></i><i style="width:70%"></i><div class="cursors"><span class="cur c2">Ana</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">How it works</div>
+  <h2>Every step is written down twice</h2>
+  <div class="mermaid">
+flowchart LR
+  I["Write the intent"] --> E["Run the step"]
+  E --> R["Write the result"]
+  R --> A["Move to the next step"]
+  E -. crash .-> C{"Safe to repeat?"}
+  C -- yes --> E
+  C -- no --> Q["Ask the owner"]
+  </div>
+  <div class="grid3">
+    <div class="card"><h3>Persistent objects</h3><p class="note">The app's data are versioned JSON documents. A change is a small patch: stored, so you can rewind, and sent to everyone attached, so screens update at once.</p></div>
+    <div class="card"><h3>One id per message</h3><p class="note">A message sent twice, from a retry or two devices, is handled once.</p></div>
+    <div class="card"><h3>One Cordis service</h3><p class="note">A <code>durable</code> service with storage providers (a file, the box volume, later a database). No second runtime next to Cordis.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Open questions for the owner</div>
+  <ul>
+    <li>Use Pi's durable package as a dependency, or port the ideas into a Cordis plugin of our own?</li>
+    <li>Where is the session's home: always a WebBoxes box, or also a desktop that stays on?</li>
+    <li>Self-improvement: weekly suggestions, or only when the owner asks?</li>
+  </ul>
+</section>
+</div>
+<script>
+for (const group of document.querySelectorAll('[data-group]')) {
+  const buttons = group.querySelectorAll('.cases button');
+  const show = (id) => { for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.case === id)); for (const c of group.querySelectorAll('.case')) c.hidden = c.dataset.id !== id; };
+  for (const b of buttons) b.addEventListener('click', () => show(b.dataset.case));
+}
+</script>
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs"; const dark = matchMedia("(prefers-color-scheme: dark)").matches; mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "neutral", securityLevel: "strict" });</script>
+</body>
+</html>
