@@ -3,7 +3,7 @@
 Example: `../example-plugins/packages/host-route-basic/`. Build your routes as one app and serve it on the framework's router:
 
 ```js
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 export const inject = ['router', 'routerHttp']
 export function apply(ctx) {
   const app = new Acryl()

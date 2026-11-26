@@ -46,7 +46,7 @@
     "debt:check": "node specs/001-acryl-refactor-improvements-and-tech-debt/proof/architecture-guardrails.mjs",
     "gui": "node scripts/dev-local.mjs",
     "check:framework": "pnpm --dir framework run check",
-    "check:foundation": "pnpm --filter \"acrylblends...\" run build"
+    "check:foundation": "pnpm --filter \"@acryldev/blends...\" run build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

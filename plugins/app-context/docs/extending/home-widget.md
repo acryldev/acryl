@@ -5,7 +5,7 @@ row's service. The first screen renders every widget at each request, and a widg
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import type {} from '../home/index.ts'
 
 export const name = 'counter'

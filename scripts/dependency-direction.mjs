@@ -143,8 +143,6 @@ export function directionViolations(graph) {
 export const FRAMEWORK_TOOLS = new Set([
   '@acryldev/create-blends',
   '@acryldev/monorepo',
-  'acrylblends',
-  'create-acrylblends',
 ])
 export function unlistedFoundation(graph) {
   return [...graph]

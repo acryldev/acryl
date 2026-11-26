@@ -19,7 +19,7 @@ app): a pull installs into the running app. You need `gh` signed in (`gh auth lo
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'sh-guide-clock'
 export const inject = ['router']

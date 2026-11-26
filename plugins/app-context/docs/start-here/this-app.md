@@ -72,8 +72,8 @@ the app's rows and starts them from the new code, then reloads the canvas. The c
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'   // the plugin's context type
-import { Acryl } from 'acrylblends'                    // routes: an Acryl app (the web framework; docs/framework/ in this app)
-import type {} from '../home/index.ts'                 // types ctx.home (the home row's service)
+import { Acryl } from '@acryldev/blends'             // routes: an Acryl app (the web framework; docs/framework/ in this app)
+import type {} from '../home/index.ts'               // types ctx.home (the home row's service)
 import type {} from '@acryldev/instance'             // types ctx.appInstance (where the app keeps its data)
 ```
 

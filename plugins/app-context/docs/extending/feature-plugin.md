@@ -11,7 +11,7 @@ name, its row id and the name it is shared under. Pick a name no folder in `plug
 ```ts
 /** Notes: a list of short notes on the home page. */
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 import type {} from '../home/index.ts'
 
 export const name = 'notes'

@@ -3,7 +3,7 @@
 A plugin's routes are an `Acryl` app (the app's web framework, documented in `docs/framework/` of this app) mounted on the app's router.
 
 ```ts
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const inject = ['router']
 

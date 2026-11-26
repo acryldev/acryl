@@ -9,7 +9,7 @@ A plugin is a folder `plugins/<name>/` with an `index.ts` exporting `name` (its 
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { Acryl } from 'acrylblends'
+import { Acryl } from '@acryldev/blends'
 
 export const name = 'due-dates'
 export const inject = ['router']

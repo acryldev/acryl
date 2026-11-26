@@ -57,7 +57,7 @@ test('the runtime has no plugin exception: any plugin it depends on is named', (
 test('a framework package must be named foundation or tool', () => {
   const graph = graphOf([
     ['@acryldev/blends', 'framework/packages/cli', []],
-    ['create-acrylblends', 'framework/packages/create', []],
+    ['@acryldev/create-blends', 'framework/packages/create', []],
     ['acryl-surprise', 'framework/packages/acryl-surprise', []],
   ])
   assert.deepEqual(unlistedFoundation(graph), [
