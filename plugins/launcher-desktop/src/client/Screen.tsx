@@ -11,6 +11,10 @@ import { PluginStoreView } from './PluginStore.tsx'
 import { readRail, saveRail } from './skin.ts'
 import { isDarkColor, readSkin, saveSkin, SKIN_LABEL, SKIN_NOTE, SKINS, type Skin } from './skin.ts'
 import type { LauncherVisibility } from './store.ts'
+import { UpdatesSection } from './UpdatesSection.tsx'
+
+/** The window event the desktop shell's "Check for Updates..." sends in an app run from its Blend copy (@acryldev/desktop-shell update-menu.ts). */
+export const CHECK_UPDATES_EVENT = 'acryl:check-updates'
 
 export interface LauncherScreenProps {
   readonly api: LauncherApi
@@ -33,6 +37,13 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
   const [state, setState] = useState<StateResponse | undefined>(undefined)
   const [problem, setProblem] = useState<string | undefined>(undefined)
   const [view, setView] = useState<View>('apps')
+  // Each "Check for Updates..." from the menu opens the Updates place and checks again (a new key mounts a fresh check).
+  const [checks, setChecks] = useState(0)
+  useEffect(() => {
+    const check = (): void => { visibility.set(true); setView('updates'); setChecks(count => count + 1) }
+    window.addEventListener(CHECK_UPDATES_EVENT, check)
+    return () => { window.removeEventListener(CHECK_UPDATES_EVENT, check) }
+  }, [visibility])
   const [panel, setPanel] = useState<Panel>('none')
   const [selected, setSelected] = useState<string | undefined>(undefined)
   const [search, setSearch] = useState('')
@@ -122,6 +133,7 @@ export function LauncherScreen({ api, visibility, openExternal, adeUnderneath = 
         )}
         {view === 'running' && <RunningView apps={apps.filter(app => app.state === 'running' || app.state === 'starting')} openExternal={openExternal} onStop={id => act(() => api.stop(id))} />}
         {view === 'drafts' && <DraftsView apps={apps.filter(app => app.madeBy === 'agent')} />}
+        {view === 'updates' && <UpdatesSection key={checks} api={api} />}
         {view === 'updates' && <UpdatesView apps={apps.filter(app => app.update !== undefined)} onUpdate={id => act(() => api.update(id))} />}
         {view === 'store' && <StoreView api={api} state={state} openExternal={openExternal} onCreate={async (request) => { const refused = await create(request); if (refused === undefined) setView('apps'); return refused }} />}
         {view === 'plugins' && <PluginStoreView api={api} apps={apps} onStart={id => act(() => api.start(id))} openExternal={openExternal} />}
@@ -765,7 +777,7 @@ function UpdatesView({ apps, onUpdate }: { apps: readonly AppView[], onUpdate: (
   return (
     <section className="acrylHomeForm">
       <h3 style={{ margin: 0 }}>Updates</h3>
-      <p className="acrylHomeNote">An app made from a Blend gets that Blend's newer releases from the registry. Updating merges the release into the app and keeps your changes; each step is a version you can go back to. ACRYL Control Center itself updates from its menu: Check for Updates.</p>
+      <p className="acrylHomeNote">An app made from a Blend gets that Blend's newer releases from the registry. Updating merges the release into the app and keeps your changes; each step is a version you can go back to. ACRYL Control Center itself is above: the same as Settings, Updates, and its menu's Check for Updates.</p>
       {apps.length === 0 ? <p className="acrylHomeNote">Every app is on the latest release of its Blend.</p> : (
         <div className="acrylHomeList">
           {apps.map(app => <div className="acrylHomeItem" key={app.id}><div className="acrylHomeIcon" style={{ background: iconColor(app.id) }}>{initial(app.name)}</div><div><b>{app.name}</b><small>{app.blend} {app.version} to {app.update}</small></div><button type="button" className="acrylHomeBtn" data-primary onClick={() => { void onUpdate(app.id) }}>Update to {app.update}</button></div>)}

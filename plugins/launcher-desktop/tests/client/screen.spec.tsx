@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testi
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { AppView, StateResponse } from '../../src/contract.ts'
 import type { LauncherApi } from '../../src/client/api.ts'
-import { LauncherScreen } from '../../src/client/Screen.tsx'
+import { CHECK_UPDATES_EVENT, LauncherScreen } from '../../src/client/Screen.tsx'
 import { LauncherVisibility } from '../../src/client/store.ts'
 import { createLauncherApi } from '../../src/client/api.ts'
 import { iconColor, tilesOf, visibleApps } from '../../src/client/model.ts'
@@ -417,6 +417,18 @@ describe('its own update', () => {
     await waitFor(() => { expect(api.updateSelf).toHaveBeenCalled() })
     expect((await screen.findByText(/Updating ACRYL Control Center to 0\.2\.15/u))).toBeTruthy()
     expect(screen.getByText('npm http fetch')).toBeTruthy()
+  })
+  it('the menu\'s Check for Updates opens the screen on Updates and checks the registry again, also when it says the copy is current', async () => {
+    const current = { ...state([]), self: { name: 'ACRYL Control Center', version: '0.2.31', update: '0.2.31', status: 'current' as const } }
+    const api = fake(current)
+    const visibility = open(api, new LauncherVisibility(false))
+    act(() => { window.dispatchEvent(new Event(CHECK_UPDATES_EVENT)) })
+    expect(visibility.isOpen()).toBe(true)
+    await screen.findByText('ACRYL Control Center 0.2.31 is the latest release.')
+    expect(screen.queryByRole('status', { name: 'ACRYL Control Center update' })).toBeNull()
+    const before = vi.mocked(api.blends).mock.calls.length
+    act(() => { window.dispatchEvent(new Event(CHECK_UPDATES_EVENT)) })
+    await waitFor(() => { expect(vi.mocked(api.blends).mock.calls.length).toBeGreaterThan(before) })
   })
 })
 

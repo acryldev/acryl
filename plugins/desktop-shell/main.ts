@@ -52,7 +52,7 @@ import {
 import { productGit, withGitFirst } from './git.ts'
 import { appendHostLog, hostCrashed, hostRestarting, nextRestart } from './host-supervisor.ts'
 import { aboutPlacement, aboutText, hasSettings, settingsPlacement } from './menu.ts'
-import { openProductAppForStart, seedSource } from './product.ts'
+import { isBlendCopy, openProductAppForStart, seedSource } from './product.ts'
 import { createDesktopShutdown, installShutdownRequests } from './shutdown.ts'
 import {
   COPY_DEADLINE_MS,
@@ -64,7 +64,7 @@ import {
   updateWindowUrl,
   waitAtMost,
 } from './startup.ts'
-import { offerUpdates } from './update-menu.ts'
+import { offerBlendUpdates, offerUpdates } from './update-menu.ts'
 import { resolveDesktopUserDataOverride } from './user-data.ts'
 import { cascade, windowOptions, windowSize } from './window.ts'
 
@@ -140,6 +140,15 @@ function ownVersions(): {
   }
 }
 /** macOS's About panel: the version, then in parentheses the Blend's and the framework's. Again after an update, which changes them. */
+/** A file's text, or undefined when it cannot be read. */
+const readPackageText = (path: string): string | undefined => {
+  try {
+    return readFileSync(path, 'utf8')
+  } catch {
+    return undefined
+  }
+}
+
 const applyAbout = (): void => {
   const own = ownVersions()
   app.setAboutPanelOptions({
@@ -643,6 +652,8 @@ if (!app.requestSingleInstanceLock()) {
     }
     if (product?.releases !== undefined)
       offerUpdates(product.releases, () => live()[0], join(userData, 'updates'))
+    else if (isBlendCopy(readPackageText(join(projectRoot, 'package.json'))))
+      offerBlendUpdates(() => BrowserWindow.getFocusedWindow() ?? live()[0])
     // Windows and Linux: Help > About <name> shows the version (macOS has the About panel).
     const helpMenu = Menu.getApplicationMenu()
     const aboutAt = helpMenu === null ? undefined : aboutPlacement(helpMenu.items, process.platform)

@@ -13,7 +13,7 @@ import { join, sep } from 'node:path'
 import { after, test } from 'node:test'
 import { readProduct } from '@acryldev/instance/bundle'
 import { openProductStorage } from '@acryldev/instance/storage'
-import { openProductApp, openProductAppForStart, seedSource } from '../product.ts'
+import { isBlendCopy, openProductApp, openProductAppForStart, seedSource } from '../product.ts'
 
 /** Temporary folders this file makes; removed after its tests, also when one fails. */
 const tempDirs: string[] = []
@@ -406,4 +406,14 @@ test("the window's start gets the update to run later: nothing is copied and no 
   assert.equal(readFileSync(join(again.app.home, 'product-build'), 'utf8'), 'b2\n')
   assert.equal(lines.filter((line) => line.includes('updating')).length, 1)
   assert.equal(openProductAppForStart(storage(), next, root, () => {}).update, undefined)
+})
+
+test('an app made from a Blend is told by its package.json, and gets the Blend-copy update menu item', () => {
+  assert.equal(
+    isBlendCopy(JSON.stringify({ acryl: { from: 'acryl.control-center#0.2.28' } })),
+    true,
+  )
+  assert.equal(isBlendCopy(JSON.stringify({ name: 'notes' })), false)
+  assert.equal(isBlendCopy('not json'), false)
+  assert.equal(isBlendCopy(undefined), false)
 })

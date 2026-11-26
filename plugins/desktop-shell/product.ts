@@ -242,3 +242,15 @@ function writeBuild(app: AppInstance, build: string): void {
   mkdirSync(app.home, { recursive: true })
   writeFileSync(join(app.home, PRODUCT_BUILD_FILE), `${build}\n`)
 }
+
+/** Whether an app's package.json says it is a copy made from a Blend (`acryl.from`, which create-acrylblends writes): it updates from the registry. */
+export function isBlendCopy(packageText: string | undefined): boolean {
+  if (packageText === undefined) return false
+  try {
+    return (
+      typeof (JSON.parse(packageText) as { acryl?: { from?: unknown } }).acryl?.from === 'string'
+    )
+  } catch {
+    return false
+  }
+}

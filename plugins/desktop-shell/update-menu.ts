@@ -1,7 +1,7 @@
 /**
  * The in-app update of a packed product, in Electron: a "Check for Updates..." menu item (under About on macOS, in Help elsewhere) and one quiet check
  * shortly after start. The person says yes twice, as in DeepSeek Harness: once to download, once to restart into the new version. The logic is
- * updater.ts; this file only asks and shows.
+ * updater.ts; this file only asks and shows. An app run from its Blend copy gets the same item, which asks its window to check (offerBlendUpdates).
  */
 
 import { app, type BrowserWindow, dialog, Menu, MenuItem, shell } from 'electron'
@@ -104,23 +104,50 @@ export function offerUpdates(
     }
   }
 
-  const menu = Menu.getApplicationMenu()
-  const item = new MenuItem({ label: 'Check for Updates...', click: () => void check(true) })
-  if (menu !== null) {
-    if (process.platform === 'darwin') {
-      const first = menu.items[0]?.submenu
-      const about =
-        first?.items.findIndex(
-          (entry: MenuItem) => entry.role === 'about' || /^about\b/iu.test(entry.label),
-        ) ?? -1
-      first?.insert(about + 1, item)
-    } else {
-      const help = menu.items.find(
-        (entry: MenuItem) => entry.role === 'help' || /^&?help$/iu.test(entry.label),
-      )?.submenu
-      help?.append(item)
-    }
-    Menu.setApplicationMenu(menu)
-  }
+  placeCheckForUpdates(() => void check(true))
   setTimeout(() => void check(false), 15_000).unref()
+}
+
+/** Put "Check for Updates..." where people look for it: under About on macOS, in Help elsewhere. */
+function placeCheckForUpdates(click: () => void): void {
+  const menu = Menu.getApplicationMenu()
+  if (menu === null) return
+  const item = new MenuItem({ label: 'Check for Updates...', click })
+  if (process.platform === 'darwin') {
+    const first = menu.items[0]?.submenu
+    const about =
+      first?.items.findIndex(
+        (entry: MenuItem) => entry.role === 'about' || /^about\b/iu.test(entry.label),
+      ) ?? -1
+    first?.insert(about + 1, item)
+  } else {
+    const help = menu.items.find(
+      (entry: MenuItem) => entry.role === 'help' || /^&?help$/iu.test(entry.label),
+    )?.submenu
+    help?.append(item)
+  }
+  Menu.setApplicationMenu(menu)
+}
+
+/** The window event the menu item sends to an app made from a Blend; @acryldev/launcher-desktop's screen answers it. Keep the string in step. */
+export const CHECK_UPDATES_EVENT = 'acryl:check-updates'
+
+/**
+ * The same menu item for an app that runs from its Blend copy (ACRYL Control Center in ~/.acryl/control-center) rather than a packed install: its update is
+ * `acrylblends update` from the registry, which the app's own screen runs, so the item asks the window to check and show the result.
+ */
+export function offerBlendUpdates(window: () => BrowserWindow | undefined): void {
+  placeCheckForUpdates(() => {
+    const target = window()
+    if (target === undefined) return
+    if (target.isMinimized()) target.restore()
+    target.focus()
+    target.webContents
+      .executeJavaScript(`window.dispatchEvent(new Event(${JSON.stringify(CHECK_UPDATES_EVENT)}))`)
+      .catch((cause: unknown) => {
+        console.warn(
+          `desktop: update: the check could not be asked of the window: ${cause instanceof Error ? cause.message : String(cause)}`,
+        )
+      })
+  })
 }
