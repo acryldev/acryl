@@ -31,7 +31,11 @@ const walk = (dir, inside, out) => { for (const e of readdirSync(dir).sort()) { 
 const app = mkdtempSync(join(tmpdir(), 'history-app-'))
 mkdirSync(join(app, 'plugins'))
 const result = {}
-for (const plugin of readLibrary().values()) { copyPlugin(plugin, app); result[plugin.name] = walk(join(app, 'plugins', plugin.name), '', {}) }
+for (const plugin of readLibrary().values()) {
+  // A packaged plugin (desktop-shell, instance) is installed by npm, never copied: it has no copies to remember.
+  try { copyPlugin(plugin, app) } catch { continue }
+  result[plugin.name] = walk(join(app, 'plugins', plugin.name), '', {})
+}
 rmSync(app, { recursive: true, force: true })
 process.stdout.write(JSON.stringify(result))
 `
@@ -43,7 +47,7 @@ for (const version of versions) {
       'npm',
       [
         'install',
-        `acrylblends@${version}`,
+        `@acryldev/blends@${version}`,
         '--ignore-scripts',
         '--no-audit',
         '--no-fund',
@@ -60,7 +64,7 @@ for (const version of versions) {
     })
     if (probe.status !== 0)
       throw new Error(
-        `acrylblends@${version} could not list its plugins: ${probe.stderr.slice(0, 600)}`,
+        `@acryldev/blends@${version} could not list its plugins: ${probe.stderr.slice(0, 600)}`,
       )
     const result = JSON.parse(probe.stdout)
     let added = 0
