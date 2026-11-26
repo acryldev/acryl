@@ -134,6 +134,7 @@ describe('framework docs: code', () => {
     const inCordis = (b: Block) =>
       b.page.startsWith('cordis') ||
       b.page === join('api', 'summary.md') ||
+      b.page === join('guides', 'share-plugins.md') ||
       b.page.startsWith('agents')
     const appPaths = JSON.parse(
       readFileSync(join(root, 'packages', 'cli', 'templates', 'agent', 'tsconfig.json'), 'utf8'),
