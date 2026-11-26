@@ -6,9 +6,9 @@
   "provides": ["pluginShare"],
   "dependencies": {
     "@deepseek-ai/cordis": "4.0.4",
-    "@acryldev/app-persistence": "0.1.7",
+    "@acryldev/app-persistence": "0.1.8",
     "@acryldev/blends-core": "0.6.2",
-    "@acryldev/plugin-hub-core": "0.2.5",
+    "@acryldev/plugin-hub-core": "0.2.6",
     "yaml": "2.9.0"
   },
   "mount": "mount it after extensions, in development builds: root.plugin(pluginShare, { dir: join(root, 'plugins') }); dir must be an extensions source",

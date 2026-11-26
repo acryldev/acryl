@@ -76,6 +76,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes @acryldev/create-blends 1.7.32](release-notes/create-blends-1.7.32.md) - released with blends 1.7.32
 - [Release notes @acryldev/blends 1.7.33](release-notes/blends-1.7.33.md) - the Dock and Cmd+Tab name a desktop app as its window does (desktop-shell 0.1.14)
 - [Release notes @acryldev/create-blends 1.7.33](release-notes/create-blends-1.7.33.md) - released with blends 1.7.33
+- [Release notes @acryldev/blends 1.7.41](release-notes/blends-1.7.41.md) - Share with team in every app's Settings > Share; the framework by its name
+- [Release notes @acryldev/create-blends 1.7.41](release-notes/create-blends-1.7.41.md) - released with blends 1.7.41
 - [Release notes @acryldev/blends 1.7.40](release-notes/blends-1.7.40.md) - one copy of settings in an app again (workspace 0.2.6, blends-frame 0.2.20)
 - [Release notes @acryldev/create-blends 1.7.40](release-notes/create-blends-1.7.40.md) - released with blends 1.7.40
 - [Release notes @acryldev/blends 1.7.39](release-notes/blends-1.7.39.md) - acrylblends own; frame packages carry their source; updates in a Blend copy
