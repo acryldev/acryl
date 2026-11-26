@@ -99,9 +99,9 @@ Category is the Blends store category (the repository number prefix follows it).
 
 | Task | Blend | Category | Source (license, stars) | Status |
 | --- | --- | --- | --- | --- |
-| T080 | **AI video editor** ("Tyler" in the example): transcript, captions, clean cut, podcast-grade sound, music and sound effects, video effects, stock footage, 3D animation, image and video generation, any input (file, YouTube link, MP3), post text, thumbnails and 2-10 shorts per video, knows the brand and pricing | media | HyperFrames for the video side, `heygen-com/hyperframes` (Apache-2.0, 90k) | mockup |
+| T080 | **AI video editor** ("Tyler" in the example): transcript, captions, clean cut, podcast-grade sound, music and sound effects, video effects, stock footage, 3D animation, image and video generation, any input (file, YouTube link, MP3), post text, thumbnails and 2-10 shorts per video, knows the brand and pricing | media | HyperFrames for the video side, `heygen-com/hyperframes` (Apache-2.0, 90k) | done: v0.1.0, `acrylblends/13-content-machine`, store Media > Content creation (2026-11-26) |
 | T081 | Video animation with code | media | `heygen-com/hyperframes` (Apache-2.0, 90k) | idea |
-| T082 | Media manager, a content machine: one recording in, a month of posts out | media | none | idea |
+| T082 | Media manager, a content machine: one recording in, a month of posts out | media | none | merged into T080 (the same app: ACRYL Content Machine) |
 | T083 | Voice studio and voice processor | media | `jamiepine/voicebox` (MIT, 61k); `debpalash/VoiceStudio` is AGPL-3.0, reference only | idea |
 | T084 | Music editor, live concert processor | media | none | idea |
 | T085 | Virtual company: media person (T080), then finance, lawyer, developer, as Blends that call each other (T020) | business | none | idea |
@@ -127,6 +127,22 @@ Category is the Blends store category (the repository number prefix follows it).
 | T105 | Project backlog in markdown | productivity | `MrLesk/Backlog.md` (MIT, 7k) and `MrLesk/Groma.md` (MIT) | idea |
 | T106 | Automation like n8n | automation | `activepieces/activepieces`, only outside `packages/ee/` and `packages/server/api/src/app/ee` (MIT there). Overlaps the Workflow Automation Blend: extend it rather than a second one | idea |
 | T107 | Human and agent team board | business | `multica-ai/multica` (custom terms, see T097) | idea |
+
+## T080 as built (2026-11-26)
+
+ACRYL Content Machine, `acrylblends/13-content-machine` (v0.1.0), in the store at Media > Content creation. Thirteen Cordis plugins: `content`
+(the domain and a feature registry the screen, the API and the agent all read), one plugin per step (`content-ingest`, `content-transcribe`,
+`content-cut`, `content-sound`, `content-music`, `content-visuals`, `content-shorts`, `content-thumbnail`, `content-posts`), `content-api`,
+`content-studio` (React) and `content-tools` (ten `content_*` tools for the ACRYL agent).
+
+Proven on a 53.7 s sample recording made with `scripts/make-sample.mjs` (fillers, a sentence said twice, long pauses): 4 fillers, 5 pauses and
+the earlier take found, cut to 42.6 s; the sound at -16 LUFS; captions, title card and progress bar drawn by HyperFrames; one vertical short,
+a thumbnail, and posts written by DeepSeek; all steps in 62 s (`scripts/e2e.ts`). In the ACRYL frame, the chat (DeepSeek) listed the
+projects, switched the captions to karaoke, and re-rendered the finished video through the tools. 20 tests.
+
+Not proven: transcription through a speech-to-text API. The stored OpenAI and z.ai accounts have no credit and OrcaRouter has no speech
+model, so the proof imported the sample's exact word times; the API path is written against OpenAI's documented `verbose_json` shape and
+its parsing is tested. Owner action: a speech-to-text key with credit, set in the app's Settings.
 
 ## Sources not usable as code (reference only)
 
