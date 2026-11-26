@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/workspace",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "ACRYL's first-party workspace shell (spec 040-agentic-multiplexer-ade): a worktree-aware sidebar, a tile-based main canvas (chat/terminal/file/browser/diff/kanban/doc), and a git-aware details panel, required in advanced desktop mode",
   "license": "MIT",
   "repository": {
