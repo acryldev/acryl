@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/web",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "The acrylWeb service: where the carrier serves the page (DSH's webServer today), so ACRYL's plugins can check the loopback address without injecting a harness service. One plugin for ACRYL's engine and every Blends app (row id acryl-web, published as @acryldev/web).",
   "license": "MIT",
   "repository": {

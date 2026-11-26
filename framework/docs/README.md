@@ -76,6 +76,8 @@ generated Blend app the same names are the vendored plugin source in `plugins/ro
 - [Release notes @acryldev/create-blends 1.7.32](release-notes/create-blends-1.7.32.md) - released with blends 1.7.32
 - [Release notes @acryldev/blends 1.7.33](release-notes/blends-1.7.33.md) - the Dock and Cmd+Tab name a desktop app as its window does (desktop-shell 0.1.14)
 - [Release notes @acryldev/create-blends 1.7.33](release-notes/create-blends-1.7.33.md) - released with blends 1.7.33
+- [Release notes @acryldev/blends 1.7.39](release-notes/blends-1.7.39.md) - acrylblends own; frame packages carry their source; updates in a Blend copy
+- [Release notes @acryldev/create-blends 1.7.39](release-notes/create-blends-1.7.39.md) - released with blends 1.7.39
 - [Release notes @acryldev/blends 1.7.38](release-notes/blends-1.7.38.md) - one OS id per app in the desktop shell; one copy of instance
 - [Release notes @acryldev/create-blends 1.7.38](release-notes/create-blends-1.7.38.md) - released with blends 1.7.38
 - [Release notes @acryldev/blends 1.7.37](release-notes/blends-1.7.37.md) - one copy of app-persistence in an app again (plugin-hub-core 0.2.5)

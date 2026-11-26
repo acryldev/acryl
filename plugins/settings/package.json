@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/settings",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "ACRYL-owned surface preferences: a small settings service (register, get, update, replace, watch) backed by one YAML file in the ACRYL home, independent of the DeepSeek Harness settings design.",
   "license": "MIT",
   "repository": {

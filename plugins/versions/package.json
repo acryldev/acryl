@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/versions",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "ACRYL Versions, one Cordis plugin with a Host and a client half: a version is a commit, save makes one, restore brings a version back as a new commit, and share is an explicit push, all behind private same-origin routes",
   "license": "MIT",
   "repository": {

@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/app-context",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "The app builder's own docs, as ACRYL IDE's agent has them: a routed index of how a Blends app is made and extended, verified example plugins, and the prompt section that points the frame's agent at them before it writes a plugin",
   "license": "MIT",
   "repository": {

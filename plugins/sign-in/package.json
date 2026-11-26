@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/sign-in",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "ACRYL sign-in: sign in to a model provider with an account (Claude, ChatGPT/OpenAI Codex and the rest of the catalog's flows; DeepSeek through DeepSeek's own account dialog) from Settings > Models on Web and Desktop, over the harness authorization flows; the terminal's DeepSeek account sign-in through its own loopback callback",
   "license": "MIT",
   "repository": {

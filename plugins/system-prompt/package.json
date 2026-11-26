@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/system-prompt",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "ACRYL's own shaping of the system prompt on top of the harness's sections: ACRYL identity, pi.dev-style tagged sections, no empty sections, and a drift record of what upstream contributes",
   "license": "MIT",
   "publishConfig": {
