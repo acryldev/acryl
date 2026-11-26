@@ -1,0 +1,1816 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bs44uxui: a prompt-first app builder with a three-pane workspace</title>
+<style>
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --secondary: #0369A1; --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12);
+  --term-bg: #0b0b0d; --term-text: #e8e8ea; --term-dim: #8b8b93;
+  --win-bar: #e4e4ea; --desk: linear-gradient(160deg, #dfe3f5 0%, #eef0f7 55%, #e9eef0 100%);
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; --desk: linear-gradient(160deg, #15172a 0%, #111216 60%, #12171a 100%); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; --desk: linear-gradient(160deg, #15172a 0%, #111216 60%, #12171a 100%); color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); overflow-wrap: anywhere; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 48px; min-width: 0; }
+h1 { font-size: 36px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 23px; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.quote { border-left: 3px solid var(--primary); padding: 4px 0 4px 16px; color: var(--dim); font-style: italic; max-width: 90ch; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.dim { color: var(--dim); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.note { font-size: 12.5px; color: var(--dim); }
+.tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.tbl table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 12.5px; }
+.tbl th, .tbl td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tbl th { font-weight: 600; color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl td:first-child { font-weight: 600; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-x: auto; min-width: 0; }
+.flow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font: 12px var(--mono); }
+.flow span { border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; background: var(--bg); }
+.flow i { color: var(--dim); font-style: normal; }
+
+/* icon sprite */
+.ic { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ic.sm { width: 11px; height: 11px; }
+.ic.md { width: 18px; height: 18px; }
+
+/* mockup primitives */
+.mk { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 24px 60px -46px rgba(0,0,0,.55); overflow: hidden; min-width: 0; font-size: 12px; }
+.mkbar { display: flex; align-items: center; gap: 7px; padding: 7px 9px; background: var(--win-bar); border-bottom: 1px solid var(--border); flex-wrap: wrap; min-width: 0; }
+.mkbar .grow { flex: 1; min-width: 0; }
+.branddot { width: 17px; height: 17px; border-radius: 5px; background: var(--primary); color: #fff; display: grid; place-items: center; font: 700 9px/1 var(--sans); flex: none; }
+.mkbar .nm { font-weight: 650; font-size: 11.5px; white-space: nowrap; }
+.seg { display: inline-flex; align-items: center; gap: 2px; background: var(--surface-2); border-radius: 8px; padding: 2px; min-width: 0; }
+.seg > button, .seg > span.it { all: unset; box-sizing: border-box; font: 600 11px/1.2 var(--sans); color: var(--dim); padding: 4px 9px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.seg > button:hover, .seg > span.it:hover { color: var(--text); }
+.seg > button[aria-selected="true"], .seg > span.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.seg > button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.seg .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
+.rail { width: 196px; border-right: 1px solid var(--border); background: var(--bg); padding: 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rail .seg { margin-bottom: 6px; }
+.it { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; color: var(--text); font-size: 11.5px; line-height: 1.3; min-width: 0; }
+.it .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.it .chev { margin-left: auto; color: var(--dim); }
+.it.on { background: var(--surface-2); font-weight: 650; }
+.it.bold { font-weight: 650; }
+.cap { font: 600 9.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--dim); padding: 8px 8px 2px; }
+.railFoot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+.upg { border: 1px solid var(--border); border-radius: 9px; background: var(--surface); padding: 7px 8px; font-size: 10.5px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.upg b { display: block; font-size: 11px; }
+.wsw { display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--border); padding-top: 7px; font-size: 10.5px; min-width: 0; }
+.wsw .grow { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.body2 { display: grid; grid-template-columns: 196px minmax(0,1fr); min-width: 0; }
+.main { padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.h1m { font-size: 19px; font-weight: 750; letter-spacing: -.01em; margin: 0; line-height: 1.2; }
+.sub { color: var(--dim); font-size: 11.5px; max-width: 62ch; }
+.toprow { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.mbtn { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); padding: 4px 9px; font: 600 10.5px var(--sans); white-space: nowrap; }
+.mbtn.p { background: var(--primary); border-color: var(--primary); color: #fff; }
+.mbtn.d { background: var(--text); border-color: var(--text); color: var(--bg); }
+.mbtn.ghost { background: transparent; border-color: transparent; color: var(--dim); }
+.mbtn.soft { background: var(--primary-dim); border-color: transparent; color: var(--primary); }
+.mbtn.sm { padding: 3px 7px; font-size: 10px; }
+.inp { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--dim); padding: 5px 8px; font-size: 11px; min-width: 0; }
+.inp .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 10.5px; color: var(--text); background: var(--surface); white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 99px; padding: 3px 9px; font-size: 10.5px; white-space: nowrap; }
+.chip.d { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+.tag { background: var(--surface-2); color: var(--dim); border-radius: 4px; padding: 1px 5px; font: 600 9.5px var(--mono); white-space: nowrap; }
+.new { background: var(--primary); color: #fff; border-radius: 4px; padding: 1px 4px; font: 700 9px var(--mono); white-space: nowrap; }
+.live { border: 1px solid color-mix(in srgb, var(--success) 45%, var(--border)); color: var(--success); background: var(--success-dim); border-radius: 5px; padding: 1px 6px; font: 600 9.5px var(--mono); }
+.cardm { border: 1px solid var(--border); border-radius: 9px; background: var(--surface); padding: 9px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.thumb { position: relative; border-radius: 7px; border: 1px solid var(--border); overflow: hidden; aspect-ratio: 16 / 9; background: var(--surface-2); }
+.thumb .sk { position: absolute; left: 9%; right: 9%; border-radius: 3px; background: rgba(255,255,255,.72); }
+.t1 { background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 38%, var(--surface-2)), color-mix(in srgb, var(--secondary) 30%, var(--surface-2))); }
+.t2 { background: linear-gradient(135deg, color-mix(in srgb, var(--success) 30%, var(--surface-2)), color-mix(in srgb, var(--warning) 26%, var(--surface-2))); }
+.t3 { background: linear-gradient(135deg, color-mix(in srgb, var(--agent) 32%, var(--surface-2)), color-mix(in srgb, var(--primary) 26%, var(--surface-2))); }
+.t4 { background: linear-gradient(135deg, color-mix(in srgb, var(--secondary) 28%, var(--surface-2)), color-mix(in srgb, var(--success) 24%, var(--surface-2))); }
+.t5 { background: linear-gradient(135deg, color-mix(in srgb, var(--warning) 30%, var(--surface-2)), color-mix(in srgb, var(--error) 16%, var(--surface-2))); }
+.t6 { background: linear-gradient(135deg, var(--surface-2), color-mix(in srgb, var(--primary) 14%, var(--surface-2))); }
+.thumb .badge { position: absolute; top: 6px; right: 6px; }
+.tile { width: 20px; height: 20px; border-radius: 5px; background: var(--surface-2); color: var(--dim); display: grid; place-items: center; font: 700 9px var(--sans); flex: none; }
+.tile.p { background: var(--primary-dim); color: var(--primary); }
+.tile.round { border-radius: 50%; }
+.tile.lg { width: 30px; height: 30px; border-radius: 8px; font-size: 12px; }
+.rowf { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.grow { flex: 1; min-width: 0; }
+.muted { color: var(--dim); }
+.small { font-size: 10.5px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.grid4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+
+/* mock buttons with hover state inside templates */
+.tpl { position: relative; }
+.tpl .view { display: none; position: absolute; right: 6px; bottom: 6px; }
+.tpl:hover .view, .tpl:focus-within .view { display: inline-flex; }
+
+/* chat */
+.chatpane { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.bub { background: var(--surface-2); border-radius: 9px; padding: 6px 9px; font-size: 11px; line-height: 1.45; max-width: 95%; min-width: 0; overflow-wrap: anywhere; }
+.bub.me { align-self: flex-end; background: var(--primary); color: #fff; }
+.assistant { display: flex; gap: 6px; align-items: flex-start; min-width: 0; }
+.assistant .grow { min-width: 0; }
+.av { width: 16px; height: 16px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font: 700 8px var(--sans); flex: none; margin-top: 1px; }
+.meta { display: flex; gap: 6px; align-items: center; font: 9.5px var(--mono); color: var(--dim); }
+.divider { display: flex; align-items: center; gap: 8px; color: var(--dim); font: 600 9.5px var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+.divider::before, .divider::after { content: ""; height: 1px; background: var(--border); flex: 1; }
+[data-panel].chatpane { flex: 1 1 auto; }
+.composer { border: 1px solid var(--border); border-radius: 9px; background: var(--bg); padding: 7px 8px; display: flex; flex-direction: column; gap: 6px; }
+.composer .ph { color: var(--dim); font-size: 11px; }
+.composer .tools { display: flex; align-items: center; gap: 6px; color: var(--dim); }
+.composer .tools .grow { flex: 1; }
+.send { width: 22px; height: 22px; border-radius: 6px; background: var(--primary-dim); color: var(--primary); display: grid; place-items: center; }
+.collapseRow { display: flex; align-items: center; gap: 6px; font-weight: 650; font-size: 10.5px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+.bullets { margin: 0; padding-left: 15px; gap: 2px; font-size: 11px; }
+.sugg { display: flex; gap: 5px; flex-wrap: wrap; }
+.sugg .chip { background: var(--surface); }
+.setup { border: 1px solid var(--border); border-radius: 9px; padding: 8px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; font-size: 10.5px; }
+.progress { height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--primary); }
+.checklist { display: flex; flex-direction: column; gap: 4px; }
+.checklist .ci { display: flex; gap: 6px; align-items: flex-start; color: var(--dim); }
+.checklist .ci.done { text-decoration: line-through; }
+.cico { width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--border); flex: none; margin-top: 1px; }
+.ci.done .cico { background: var(--success); border-color: var(--success); }
+
+/* toggles */
+.tog { position: relative; display: inline-flex; flex: none; }
+.tog input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tog i { display: block; width: 26px; height: 15px; border-radius: 99px; background: var(--border); position: relative; transition: background .15s; }
+.tog i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: left .15s; }
+.tog input:checked + i { background: var(--success); }
+.tog input:checked + i::after { left: 13px; }
+.tog input:focus-visible + i { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* dashboard workspace */
+.ws { display: grid; grid-template-columns: 236px 156px minmax(0,1fr); min-width: 0; }
+.wsA { border-right: 1px solid var(--border); padding: 8px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.wsB { border-right: 1px solid var(--border); background: var(--bg); padding: 6px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.wsC { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.appnav .it { font-size: 10.5px; padding: 4px 6px; border-radius: 6px; }
+.creditcard { border: 1px dashed var(--border); border-radius: 9px; padding: 8px; display: flex; flex-direction: column; gap: 5px; font-size: 10.5px; }
+.creditbar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font: 600 10px var(--mono); color: var(--dim); }
+.heroCard { border: 1px solid var(--border); border-radius: 9px; background: var(--surface); padding: 9px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.attention { display: flex; flex-direction: column; gap: 6px; }
+.attention .arow { display: flex; align-items: center; gap: 8px; justify-content: space-between; border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; flex-wrap: wrap; }
+.attention .arow b { display: block; font-size: 11px; }
+.attention .arow small { color: var(--dim); font-size: 10px; }
+.urlrow { display: flex; align-items: center; gap: 6px; justify-content: center; background: var(--bg); border-bottom: 1px solid var(--border); padding: 4px 8px; font-size: 10px; color: var(--dim); flex-wrap: wrap; }
+
+/* preview canvas */
+.pv { display: grid; grid-template-columns: 296px minmax(0,1fr); min-width: 0; }
+.canvas { background: var(--bg); padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fakepage { background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 12px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.fnav { display: flex; align-items: center; gap: 10px; font-size: 9.5px; color: var(--dim); flex-wrap: wrap; }
+.fnav b { color: var(--text); font-size: 11px; }
+.fmain { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr); gap: 10px; min-width: 0; }
+.fh1 { font-size: 17px; font-weight: 800; letter-spacing: -.02em; line-height: 1.18; margin: 0; }
+.seltext { background: var(--primary); color: #fff; border-radius: 2px; padding: 0 2px; }
+.etool { display: inline-flex; align-items: center; gap: 1px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); box-shadow: 0 10px 24px -16px rgba(0,0,0,.5); padding: 3px 4px; font-size: 9px; color: var(--dim); flex-wrap: wrap; max-width: 100%; }
+.etool .e { padding: 2px 4px; border-radius: 4px; white-space: nowrap; }
+.etool .e.on { background: var(--primary-dim); color: var(--primary); font-weight: 650; }
+.etool .vsep { width: 1px; height: 12px; background: var(--border); margin: 0 2px; }
+.browser { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: 0 16px 30px -24px rgba(0,0,0,.5); padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 9px; min-width: 0; }
+.browser .burl { display: flex; gap: 5px; align-items: center; color: var(--dim); font: 9px var(--mono); min-width: 0; }
+.browser .burl .d { width: 5px; height: 5px; border-radius: 50%; background: var(--border); flex: none; }
+.bl { height: 6px; border-radius: 3px; background: var(--surface-2); }
+.approve { border: 1px solid var(--border); border-radius: 7px; padding: 6px; background: var(--bg); font-size: 9.5px; display: flex; flex-direction: column; gap: 4px; }
+.how { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; min-width: 0; }
+.how > div { text-align: center; display: flex; flex-direction: column; gap: 3px; align-items: center; font-size: 9.5px; color: var(--dim); }
+.how b { font-size: 10.5px; color: var(--text); }
+.numdot { width: 18px; height: 18px; border-radius: 50%; background: var(--primary-dim); color: var(--primary); display: grid; place-items: center; font: 700 9px var(--mono); }
+.filechips { display: flex; gap: 4px; flex-wrap: wrap; }
+.fchip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); background: var(--surface); border-radius: 6px; padding: 3px 7px; font: 600 9.5px var(--mono); color: var(--text); }
+
+/* branch popover */
+.branchwrap { position: relative; min-width: 0; }
+.branchwrap .dimmed { opacity: .32; }
+.popover { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: min(300px, 94%); border: 1px solid var(--border); border-radius: 11px; background: var(--surface); box-shadow: 0 28px 56px -26px rgba(0,0,0,.55); padding: 8px; display: flex; flex-direction: column; gap: 7px; z-index: 2; }
+.popover .mrow { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 7px; padding: 5px 7px; font-size: 11px; }
+.popover .create { text-align: center; padding: 2px 4px; display: flex; flex-direction: column; gap: 5px; }
+.popover .create b { font-size: 12px; }
+.popover .create small { color: var(--dim); font-size: 10.5px; line-height: 1.45; }
+
+/* panels: history, theme */
+.panel { max-width: 400px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); padding: 10px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.vhead { display: flex; align-items: center; gap: 6px; font-weight: 650; font-size: 13px; }
+.vcard { border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; display: flex; flex-direction: column; gap: 2px; }
+.vcard .rowf { justify-content: space-between; }
+.vcard b { font-size: 11.5px; }
+.swatchbar { display: flex; height: 22px; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.swatchbar i { flex: 1; }
+.aa { font-size: 20px; font-weight: 700; letter-spacing: -.03em; display: flex; align-items: baseline; gap: 6px; }
+.aa small { font: 400 9.5px var(--mono); color: var(--dim); }
+.tf { border: 1px solid var(--border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+
+/* community map */
+.mapcard { display: grid; grid-template-columns: minmax(0,1fr) 190px; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; min-width: 0; }
+.mapbox { position: relative; background: var(--bg); padding: 8px; min-width: 0; }
+.mapbox svg { width: 100%; display: block; }
+.legend { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+.statcol { border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+.stat { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.stat:last-child { border-bottom: 0; }
+.stat small { display: block; color: var(--dim); font-size: 9.5px; }
+.stat b { font-size: 17px; font-weight: 750; }
+.ecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.ecard { border: 1px solid var(--border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ecard .thumb { aspect-ratio: 16/8; }
+.ecard b { font-size: 10.5px; }
+
+/* launchpad */
+.lp { display: grid; grid-template-columns: minmax(0,1fr) 240px; gap: 10px; min-width: 0; }
+.rank { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); padding: 7px 0; min-width: 0; }
+.rank .n { font: 700 13px var(--mono); color: var(--dim); text-align: center; }
+.rank .mv { font: 9px var(--mono); color: var(--dim); text-align: center; }
+.rank .mv.up { color: var(--success); }
+.rank .mv.down { color: var(--error); }
+.votes { display: flex; gap: 4px; }
+.vote { border: 1px solid var(--border); border-radius: 5px; padding: 3px 6px; display: flex; flex-direction: column; align-items: center; font: 600 9.5px var(--mono); color: var(--dim); min-width: 30px; gap: 1px; }
+.railcard { border: 1px solid var(--border); border-radius: 9px; padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 10.5px; }
+.count { font: 700 13px var(--mono); letter-spacing: .04em; }
+.activity { display: flex; flex-direction: column; gap: 5px; font-size: 10px; }
+.activity .a { display: flex; gap: 5px; align-items: flex-start; }
+
+/* partners */
+.pcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--border); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-width: 0; font-size: 10.5px; }
+.match { background: var(--primary-dim); border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border)); border-radius: 9px; padding: 9px; display: flex; flex-direction: column; gap: 6px; }
+.match .ta { border: 1px solid var(--border); border-radius: 6px; background: var(--surface); padding: 6px 8px; color: var(--dim); font-size: 10px; min-height: 40px; }
+.dotb { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); display: inline-block; }
+
+/* notes / files / memory / data */
+.notes { display: grid; grid-template-columns: 190px minmax(0,1fr); min-width: 0; }
+.notelist { border-right: 1px solid var(--border); padding: 7px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.doc { padding: 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.doc h4 { margin: 0; font-size: 15px; }
+.doc h5 { margin: 4px 0 0; font-size: 11px; }
+.doc p, .doc ul { margin: 0; font-size: 10.5px; color: var(--dim); }
+.doc ul { padding-left: 16px; gap: 2px; }
+.doc .foot { border-top: 1px solid var(--border); padding-top: 5px; color: var(--dim); font-size: 9.5px; }
+.folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.folder { border: 1px solid var(--border); border-radius: 8px; padding: 8px; display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.tabs { display: flex; gap: 14px; border-bottom: 1px solid var(--border); padding: 0 2px; font-size: 11.5px; color: var(--dim); flex-wrap: wrap; }
+.tabs .on { color: var(--text); font-weight: 650; border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: -1px; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 8px; text-align: center; color: var(--dim); font-size: 11px; }
+.empty .icbig { width: 28px; height: 28px; border-radius: 8px; background: var(--surface-2); display: grid; place-items: center; color: var(--dim); }
+.toolbar { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 7px; }
+.tw { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.tw th { text-align: left; background: var(--bg); color: var(--dim); font: 600 9px var(--mono); text-transform: uppercase; letter-spacing: .05em; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.tw td { padding: 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.tw tr:last-child td { border-bottom: 0; }
+
+/* onboarding */
+.onb { padding: 22px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.dots2 { display: flex; gap: 4px; }
+.dots2 i { width: 14px; height: 3px; border-radius: 2px; background: var(--surface-2); }
+.dots2 i.on { background: var(--dim); }
+.routine { display: flex; gap: 10px; align-items: flex-start; width: min(520px,100%); text-align: left; padding: 9px 0; border-top: 1px solid var(--border); }
+.routine .grow { flex: 1; min-width: 0; }
+.routine b { display: block; font-size: 11.5px; }
+.routine small { color: var(--dim); font-size: 10.5px; display: block; margin-top: 1px; }
+.prep { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: auto; padding-top: 14px; color: var(--dim); font-size: 10px; }
+
+@media (max-width: 900px) {
+  .wrap { padding: 24px 12px 60px; gap: 36px; }
+  h1 { font-size: 30px; }
+  .ws, .pv, .body2, .lp, .notes, .mapcard { grid-template-columns: 1fr; }
+  .rail { width: auto; flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--border); }
+  .rail .cap, .railFoot { display: none; }
+  .rail .it { padding: 4px 7px; }
+  .rail .it .chev { display: none; }
+  .wsA, .wsB, .notelist { border-right: 0; border-bottom: 1px solid var(--border); }
+  .wsB { flex-direction: row; flex-wrap: wrap; gap: 2px; }
+  .statcol { border-left: 0; border-top: 1px solid var(--border); flex-direction: row; }
+  .stat { flex: 1; border-bottom: 0; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: 0; }
+  .fmain, .how { grid-template-columns: 1fr; }
+  .etool { position: static; margin-bottom: 6px; }
+  .popover { position: static; transform: none; width: auto; margin-top: 6px; }
+  .branchwrap .dimmed { display: none; }
+  .onb { padding: 16px 8px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/></symbol>
+  <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 9v11"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14.5c2.5.3 4 2 4 5.5"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v4"/><path d="M15 3v4"/><path d="M6 7h12v4a6 6 0 0 1-12 0z"/><path d="M12 17v4"/></symbol>
+  <symbol id="i-case" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V5"/><path d="m6 11 6-6 6 6"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><path d="M12 17.5V21"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M6 8.5v7"/><path d="M18 8.5c0 4-4.5 4.5-9.5 5.5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.6 5.6 1.4-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M10 10v10"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><path d="M8 6h4a2 2 0 0 1 2 2v2"/><path d="M8 18h4a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M9 3a2 2 0 0 1 4 0v1h3a1 1 0 0 1 1 1v3h1a2 2 0 0 1 0 4h-1v3a1 1 0 0 1-1 1h-3v1a2 2 0 0 1-4 0v-1H6a1 1 0 0 1-1-1v-3H4a2 2 0 0 1 0-4h1V5a1 1 0 0 1 1-1h3z"/></symbol>
+  <symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M4 12h15"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-arrow-l" viewBox="0 0 24 24"><path d="M20 12H5"/><path d="m11 6-6 6 6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M8 5 3 10l5 5"/><path d="M3 10h11a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="m16 5 5 5-5 5"/><path d="M21 10H10a6 6 0 0 0 0 12h3"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m5 5 14 14"/><path d="m19 5-14 14"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.5 2.3 3.8 5.2 3.8 8.5s-1.3 6.2-3.8 8.5c-2.5-2.3-3.8-5.2-3.8-8.5S9.5 5.8 12 3.5z"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m4 12 16-8-5 16-3.5-6z"/><path d="M11.5 14 20 4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6-5.2-6-10a6 6 0 0 1 12 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.2"/></symbol>
+</svg>
+
+<div class="wrap">
+
+<section>
+  <span class="eyebrow">Spec 056 · design · study bs44uxui</span>
+  <h1>A prompt-first app builder with a three-pane workspace and a second life as a personal agent</h1>
+  <p class="lead">The product is a web app builder in two halves. The builder half starts on a single home question ("Hi there. What will you build next?") with one prompt box and a Build / Auto mode control; an app then opens into a three-pane workspace: agent chat on the left, a canvas in the middle, app navigation and an admin dashboard on the right, with Preview, Dashboard and Edit modes, in-place text editing on the canvas, a chat branch popover, a version history with a Live marker, a theme picker that sends its choice to the chat, a Publish button with a public URL and a Connect domain step, and a Templates gallery to start from. The agent half is a separate Agent mode with its own rail: a first-run routine setup, one conversation list, chat started from the web, a messaging app, or a phone channel, scheduled and triggered Workflows, Plugins (connectors and skills), Notes, Files, Memory with source filters, and Data tables. Around both sit workspace areas: an Apps list, Templates, a code environment that connects GitHub, a Connectors list, a community map with events, a weekly launch leaderboard, and a partner marketplace with direct messages. Credits and Upgrade sit inside the working surfaces, and the builder treats plan limits as an answer the agent can give.</p>
+  <p class="note">Method: 25 screenshots from the owner's private research folder, read in full and redrawn here in neutral styling with HTML and CSS, using the light and dark tokens of spec 052's AOS mockup. No screenshot is embedded. Names of people, companies, apps, notes and URLs are illustrative replacements; the studied product's name, brand, colors and logo appear nowhere. Source file names in the coverage list are shown with the product token replaced by <code>&lt;product&gt;</code>. Product states that the screenshots do not show are marked "not in the screens".</p>
+</section>
+
+<section>
+  <h2>1. Workspace home</h2>
+  <div class="mk" role="img" aria-label="Redrawn home screen: left rail with apps and workspace navigation, centered greeting and a prompt box with Auto and Build controls, footer tabs">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span><svg class="ic sm"><use href="#i-panel"/></svg></span></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-search"/></svg><span class="grow">Search</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-code"/></svg><span class="grow">Codebase</span></div>
+        <div class="it"><svg class="ic"><use href="#i-layout"/></svg><span class="grow">Templates</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Favorites</div>
+        <div class="it"><span class="grow muted">No favorites yet</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Recents</div>
+        <div class="it"><span class="grow muted">Demo App</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="railFoot">
+          <div class="upg"><span><b>Upgrade your plan</b><span class="muted">Get more out of your apps</span></span><svg class="ic"><use href="#i-case"/></svg></div>
+          <div class="wsw"><span class="tile">S</span><span class="grow">Studio<br><span class="muted">Studio Company</span></span><svg class="ic sm"><use href="#i-chev"/></svg><svg class="ic sm"><use href="#i-bell"/></svg></div>
+        </div>
+      </div>
+      <div class="main" style="justify-content:center; align-items:center; min-height:440px; gap:16px">
+        <div style="text-align:center">
+          <div style="font-size:24px; font-weight:500; line-height:1.2">Hi there.</div>
+          <div style="font-size:26px; font-weight:750; letter-spacing:-.02em; line-height:1.2">What will you build next?</div>
+        </div>
+        <div class="cardm" style="width:min(560px,100%); padding:10px 12px; gap:12px">
+          <div class="muted small">Describe the app you want to create...</div>
+          <div class="rowf" style="justify-content:space-between">
+            <div class="rowf">
+              <span class="mbtn ghost"><svg class="ic"><use href="#i-plus"/></svg></span>
+              <span class="sel"><svg class="ic sm"><use href="#i-spark"/></svg>Auto</span>
+            </div>
+            <div class="rowf">
+              <span class="sel">Build <svg class="ic sm"><use href="#i-chev"/></svg></span>
+              <svg class="ic"><use href="#i-mic"/></svg>
+              <span class="send"><svg class="ic sm"><use href="#i-up"/></svg></span>
+            </div>
+          </div>
+        </div>
+        <div class="rowf" style="width:100%; justify-content:space-between; border-top:1px solid var(--border); padding-top:8px; margin-top:auto">
+          <div class="rowf small"><b>Recent apps</b><span class="muted">Community templates</span><span class="muted">Official templates</span></div>
+          <span class="small muted">Browse all <svg class="ic sm"><use href="#i-arrow-r"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The first screen is a single question with one box. Describe an app in a sentence, optionally switch the mode from Build to Auto, and send; the plus adds files and the microphone adds voice. The rail keeps Home, Search, All apps, Codebase, Templates, Community, Connectors and Partners one click away, with Favorites and Recents below, an upgrade card, and the workspace switcher at the bottom. A footer points at recent apps and two template sources. Only the empty box is in the screens; the result of sending a prompt is not.</p>
+</section>
+
+<section>
+  <h2>2. Apps</h2>
+  <div class="mk" role="img" aria-label="Redrawn apps screen: search and filters above one app card with a thumbnail, Published badge, owner and last edited time">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-search"/></svg><span class="grow">Search</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-code"/></svg><span class="grow">Codebase</span></div>
+        <div class="it"><svg class="ic"><use href="#i-layout"/></svg><span class="grow">Templates</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="railFoot">
+          <div class="upg"><span><b>Upgrade your plan</b><span class="muted">Get more out of your apps</span></span><svg class="ic"><use href="#i-case"/></svg></div>
+          <div class="wsw"><span class="tile">S</span><span class="grow">Studio<br><span class="muted">Studio Company</span></span><svg class="ic sm"><use href="#i-bell"/></svg></div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="toprow">
+          <div><div class="h1m">Apps</div><div class="sub">Create, organize, and manage all apps in your workspace.</div></div>
+          <div class="rowf"><span class="mbtn"><svg class="ic sm"><use href="#i-dots"/></svg></span><span class="mbtn"><svg class="ic sm"><use href="#i-folder"/></svg>New folder</span><span class="mbtn d"><svg class="ic sm"><use href="#i-plus"/></svg>Create app</span></div>
+        </div>
+        <div class="rowf">
+          <span class="inp grow" style="max-width:330px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search apps</span></span>
+          <span class="grow"></span>
+          <span class="sel">Any owner <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">Any status <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">Last edited <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <svg class="ic"><use href="#i-star"/></svg>
+          <span class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg></span><span class="it"><svg class="ic sm"><use href="#i-layout"/></svg></span></span>
+        </div>
+        <div class="grid4" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr))">
+          <div class="cardm">
+            <div class="thumb t6">
+              <span class="badge"><span class="pill ok" style="background:var(--surface); color:var(--dim)">Published</span></span>
+              <span class="sk" style="top:14%; height:5px; right:45%"></span>
+              <span class="sk" style="top:24%; height:5px; right:52%"></span>
+              <span class="sk" style="top:38%; left:9%; right:58%; height:34px; background:rgba(54,82,217,.28)"></span>
+              <span class="sk" style="top:80%; left:9%; width:22%; height:8px; background:rgba(54,82,217,.55)"></span>
+              <span class="sk" style="top:20%; left:52%; right:9%; height:44px; background:rgba(255,255,255,.5); border:1px solid var(--border)"></span>
+            </div>
+            <div class="rowf"><b style="font-size:12px">Demo App</b><svg class="ic sm muted"><use href="#i-check"/></svg><span class="grow"></span><svg class="ic sm muted"><use href="#i-dots"/></svg></div>
+            <div class="muted small">By Studio Company</div>
+            <div class="muted small">Last edited 1 second ago</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>All apps in the workspace as cards: a live thumbnail, the name, the owner, a Published badge and the last-edited time. Search plus owner, status and sort filters sit above the grid; New folder and Create app sit at the top right. The screens show one card and one status; an empty workspace and a folder view are not shown.</p>
+</section>
+
+<section>
+  <h2>3. Templates</h2>
+  <div class="mk" role="img" aria-label="Redrawn templates screen: three tabs, search, filters, category chips and a grid of eight template cards with name, author and install count">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-search"/></svg><span class="grow">Search</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-code"/></svg><span class="grow">Codebase</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-layout"/></svg><span class="grow">Templates</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span></div>
+        <div class="it"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main">
+        <div class="h1m">Templates</div>
+        <div class="tabs"><span class="on">All</span><span>Official</span><span>Community</span></div>
+        <div class="rowf">
+          <span class="inp grow" style="max-width:330px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search</span></span>
+          <span class="sel">All types <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">Popular <svg class="ic sm"><use href="#i-chev"/></svg></span>
+        </div>
+        <div class="chips">
+          <span class="chip d">All</span><span class="chip">Productivity</span><span class="chip">Health &amp; Wellness</span><span class="chip">Business Intelligence</span><span class="chip">Educational</span><span class="chip">Entertainment</span><span class="chip">Marketing and sales</span><span class="chip">Content Generation</span><span class="chip">More <svg class="ic sm"><use href="#i-chev"/></svg></span>
+        </div>
+        <div class="grid4">
+          <div class="cardm tpl">
+            <div class="thumb t1"><span class="sk" style="top:22%; height:5px"></span><span class="sk" style="top:34%; height:5px; right:35%"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">Health Clinic</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 386</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t2"><span class="sk" style="top:30%; height:5px; right:30%"></span><span class="sk" style="top:44%; height:5px; right:46%"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">Wedding Invitation</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 157</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t3"><span class="sk" style="top:20%; left:12%; width:30%; height:32px; background:rgba(255,255,255,.55)"></span><span class="sk" style="top:60%; height:5px; right:40%"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">Personalized Tutor</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 390</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t4"><span class="sk" style="top:28%; height:6px; left:24%; right:24%"></span><span class="sk" style="top:40%; height:6px; left:30%; right:30%"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">Organic Goods Store</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 226</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t5"><span class="sk" style="top:30%; height:5px; left:20%; right:20%"></span><span class="sk" style="top:44%; height:12px; left:38%; right:38%; background:rgba(255,255,255,.75)"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">SAAS Company</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 1.1k</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t6"><span class="sk" style="top:20%; left:14%; width:34%; height:36px; background:rgba(255,255,255,.85); border:1px solid var(--border)"></span><span class="sk" style="top:64%; height:5px; right:30%"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">To Do List App</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 365</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t1"><span class="sk" style="top:18%; left:10%; width:22%; height:40px; background:rgba(255,255,255,.65)"></span><span class="sk" style="top:18%; right:10%; width:22%; height:40px; background:rgba(255,255,255,.65)"></span><span class="sk" style="bottom:14%; left:14%; width:24%; height:26px; background:rgba(255,255,255,.5)"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">Streetwear Store</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 167</div>
+          </div>
+          <div class="cardm tpl">
+            <div class="thumb t2"><span class="sk" style="top:24%; left:12%; right:12%; height:44px; background:rgba(255,255,255,.5)"></span><span class="sk" style="bottom:12%; height:5px; right:34%"></span></div>
+            <span class="view"><span class="mbtn d sm">View details</span></span>
+            <b style="font-size:11.5px">Home &amp; Furniture</b>
+            <div class="muted small">By Templates Studio</div>
+            <div class="muted small"><svg class="ic sm"><use href="#i-download"/></svg> 66</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A gallery of starting points with three tabs (all, official, community), a search, a type filter, a popularity sort and category chips. Each card shows a picture, a name, the author line and an install count; hover reveals View details. Eight cards are in the screens; the screens do not open a template, so what a template pre-fills is not visible.</p>
+</section>
+
+<section>
+  <h2>4. Codebase: connect a repository</h2>
+  <div class="mk" role="img" aria-label="Redrawn codebase screen: a coupon banner, a hero card connecting GitHub to a cloud environment, and three short feature descriptions">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="small muted">Get 30 days of the code environment free - use code <span class="tag">CODE-XXXX</span> - valid on the default model</span><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="mbtn" style="margin-bottom:4px"><svg class="ic sm"><use href="#i-code"/></svg>Connect repo</div>
+        <div class="it on"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-search"/></svg><span class="grow">Search</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-code"/></svg><span class="grow">Codebase</span></div>
+        <div class="it"><svg class="ic"><use href="#i-layout"/></svg><span class="grow">Templates</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main">
+        <div class="toprow">
+          <div><div class="h1m">Codebase</div><div class="sub">View your repos, connect new ones and collaborate with your team.</div></div>
+          <span class="small" style="color:var(--primary)">Have a coupon?</span>
+        </div>
+        <div class="cardm" style="padding:0; overflow:hidden">
+          <div class="rowf" style="padding:14px 14px 0"><span class="tile lg">G</span><span class="muted">- - -</span><span class="branddot">B</span></div>
+          <div class="fmain" style="padding:10px 14px 14px; align-items:start">
+            <div style="display:flex; flex-direction:column; gap:8px; min-width:0">
+              <div class="h1m" style="font-size:17px">Your codebase, ready to build.</div>
+              <p class="sub">The code environment sets up a cloud development environment for your existing codebase, with live previews and a place for your whole team to build together.</p>
+              <div><span class="mbtn d">Connect GitHub</span></div>
+            </div>
+            <div class="thumb t6" style="aspect-ratio:16/10">
+              <span class="sk" style="top:12%; height:4px; left:16%; right:40%; opacity:.5"></span>
+              <span class="sk" style="top:22%; height:4px; left:24%; right:30%; opacity:.5"></span>
+              <span class="sk" style="top:32%; height:4px; left:16%; right:44%; opacity:.5"></span>
+              <span class="sk" style="top:46%; left:16%; width:18%; height:30px; background:rgba(255,255,255,.6)"></span>
+              <span class="sk" style="bottom:16%; left:16%; width:34%; height:40px; background:rgba(255,255,255,.55); border:1px solid var(--border)"></span>
+              <span class="sk" style="top:14%; right:12%; width:30%; height:44%; background:rgba(54,82,217,.22)"></span>
+            </div>
+          </div>
+          <div class="how" style="padding:0 14px 14px">
+            <div style="text-align:left; align-items:flex-start"><b>Cloud environment</b><span>Learns your codebase and sets up an environment your team can use.</span></div>
+            <div style="text-align:left; align-items:flex-start"><b>Live previews</b><span>See changes as you build, with a live preview for every branch.</span></div>
+            <div style="text-align:left; align-items:flex-start"><b>Build together</b><span>Product, design, QA, marketing and engineering work directly on the product.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>Connects an existing GitHub repository and sets up a cloud development environment for it. The hero lists three promises (cloud environment, a live preview per branch, one place for the whole team) and one button starts the connection. A coupon banner runs across the top. The screens do not show what happens after Connect GitHub.</p>
+</section>
+
+<section>
+  <h2>5. Connectors</h2>
+  <div class="mk" role="img" aria-label="Redrawn connectors screen: an intro row with Add connector, and one connected Mail account with a View button">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-search"/></svg><span class="grow">Search</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-code"/></svg><span class="grow">Codebase</span></div>
+        <div class="it"><svg class="ic"><use href="#i-layout"/></svg><span class="grow">Templates</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main">
+        <div class="h1m">Connectors</div>
+        <div class="cardm">
+          <div class="rowf" style="justify-content:space-between">
+            <span class="small muted">Explore all available connectors and see what is already connected in this workspace.</span>
+            <span class="mbtn d"><svg class="ic sm"><use href="#i-plus"/></svg>Add connector</span>
+          </div>
+          <div class="rowf" style="border:1px solid var(--border); border-radius:7px; padding:7px 8px; justify-content:space-between">
+            <div class="rowf"><span class="tile lg p"><svg class="ic"><use href="#i-mail"/></svg></span><span><b style="font-size:11.5px">Mail</b><br><span class="small muted">team@example.com</span></span></div>
+            <span class="mbtn">View</span>
+          </div>
+        </div>
+        <div class="toprow"><span class="small muted">Manage connectors</span><span class="mbtn"><svg class="ic sm"><use href="#i-settings"/></svg>Manage</span></div>
+      </div>
+    </div>
+  </div>
+  <p>A flat list of accounts already connected to the workspace, one row each with the service, the account address and View. Add connector and Manage connectors sit on the frame. Exactly one connected account is in the screens; the add flow is not.</p>
+</section>
+
+<section>
+  <h2>6. Community map</h2>
+  <div class="mk" role="img" aria-label="Redrawn community screen: a dot map with markers and counts, then search, filters and four event cards with RSVP">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-search"/></svg><span class="grow">Search</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-code"/></svg><span class="grow">Codebase</span></div>
+        <div class="it"><svg class="ic"><use href="#i-layout"/></svg><span class="grow">Templates</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it"><span class="grow" style="padding-left:22px">Community map</span></div>
+        <div class="it"><span class="grow" style="padding-left:22px">Launchpad</span></div>
+        <div class="it"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main">
+        <div class="toprow">
+          <div><div class="h1m">Community</div><div class="sub">Show up to the next event and find a community near you.</div></div>
+          <span class="mbtn">Submit your community</span>
+        </div>
+        <b style="font-size:12.5px">Where builders gather</b>
+        <div class="mapcard">
+          <div class="mapbox">
+            <svg viewBox="0 0 620 200" role="img" aria-label="Abstract dot map with community and event markers">
+              <defs>
+                <pattern id="mapdots" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="1.4" cy="1.4" r="1" fill="var(--border)"/></pattern>
+              </defs>
+              <rect x="0" y="0" width="620" height="200" fill="var(--surface)"/>
+              <rect x="0" y="0" width="620" height="200" fill="url(#mapdots)"/>
+              <ellipse cx="120" cy="90" rx="62" ry="40" fill="color-mix(in srgb, var(--primary) 7%, transparent)"/>
+              <ellipse cx="250" cy="70" rx="52" ry="34" fill="color-mix(in srgb, var(--success) 7%, transparent)"/>
+              <ellipse cx="330" cy="110" rx="44" ry="42" fill="color-mix(in srgb, var(--primary) 7%, transparent)"/>
+              <ellipse cx="420" cy="70" rx="66" ry="36" fill="color-mix(in srgb, var(--success) 6%, transparent)"/>
+              <ellipse cx="510" cy="130" rx="46" ry="30" fill="color-mix(in srgb, var(--primary) 6%, transparent)"/>
+              <g fill="var(--primary)" opacity=".25">
+                <circle cx="96" cy="70" r="9"/><circle cx="160" cy="104" r="9"/><circle cx="380" cy="120" r="9"/><circle cx="520" cy="146" r="9"/>
+              </g>
+              <g fill="var(--success)" opacity=".25">
+                <circle cx="240" cy="58" r="8"/><circle cx="300" cy="92" r="8"/><circle cx="440" cy="58" r="8"/><circle cx="470" cy="86" r="8"/>
+              </g>
+              <g fill="var(--primary)"><circle cx="96" cy="70" r="2.6"/><circle cx="160" cy="104" r="2.6"/><circle cx="380" cy="120" r="2.6"/><circle cx="520" cy="146" r="2.6"/><circle cx="250" cy="130" r="2.6"/></g>
+              <g fill="var(--success)"><circle cx="240" cy="58" r="2.6"/><circle cx="300" cy="92" r="2.6"/><circle cx="440" cy="58" r="2.6"/><circle cx="470" cy="86" r="2.6"/></g>
+            </svg>
+            <div class="legend"><span class="pill">20 active communities</span><span class="pill ok">51 upcoming events</span></div>
+          </div>
+          <div class="statcol">
+            <div class="stat"><small>Builders</small><b>139K+</b></div>
+            <div class="stat"><small>Communities</small><b>20</b></div>
+            <div class="stat"><small>Continents</small><b>6</b></div>
+          </div>
+        </div>
+        <div class="tabs"><span class="on">Events</span><span>Communities</span></div>
+        <div class="rowf">
+          <span class="inp grow" style="max-width:330px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search events, communities, or cities</span></span>
+          <span class="sel">All formats <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">All types <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">All locations <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">All upcoming <svg class="ic sm"><use href="#i-chev"/></svg></span>
+        </div>
+        <div class="ecards">
+          <div class="ecard">
+            <div class="thumb t1"><span class="badge"><span class="pill ok" style="background:var(--surface)">Live now</span></span><span class="sk" style="top:34%; left:12%; width:44%; height:7px"></span><span class="sk" style="top:48%; left:12%; width:30%; height:7px"></span></div>
+            <div class="rowf"><b>Build a band</b><span class="tag">Hackathon</span></div>
+            <div class="small muted">Thursday 8 Oct, 19:00 - Thursday 15 Oct, 19:00</div>
+            <div class="small muted">Virtual</div>
+            <div class="small muted">67 going</div>
+            <div class="rowf"><span class="mbtn">RSVP</span><span class="mbtn">View details</span></div>
+          </div>
+          <div class="ecard">
+            <div class="thumb t2"><span class="sk" style="top:22%; left:14%; width:50%; height:6px"></span><span class="sk" style="top:36%; left:14%; width:38%; height:6px"></span><span class="sk" style="bottom:12%; right:10%; width:30%; height:10px; background:rgba(54,82,217,.6)"></span></div>
+            <div class="rowf"><b>Build a game in one night</b><span class="tag">Other</span></div>
+            <div class="small muted">Monday 12 Oct, 17:00 - 21:00</div>
+            <div class="small muted">City cafe, Main Street</div>
+            <div class="rowf"><span class="mbtn d">Register</span><span class="mbtn">View details</span></div>
+          </div>
+          <div class="ecard">
+            <div class="thumb t3"><span class="sk" style="top:18%; left:50%; width:36%; height:52%; background:rgba(255,255,255,.6)"></span><span class="sk" style="top:34%; left:10%; width:36%; height:6px"></span></div>
+            <div class="rowf"><b>Fix one thing</b><span class="tag">Workshop</span></div>
+            <div class="small muted">Tuesday 13 Oct, 0:00 - 5:00</div>
+            <div class="small muted">City hub, Third Avenue</div>
+            <div class="small muted">3 going</div>
+            <div class="rowf"><span class="mbtn">RSVP</span><span class="mbtn">View details</span></div>
+          </div>
+          <div class="ecard">
+            <div class="thumb t4"><span class="sk" style="top:26%; left:16%; width:54%; height:6px"></span><span class="sk" style="top:40%; left:16%; width:30%; height:6px"></span></div>
+            <div class="rowf"><b>Build for the city</b><span class="tag">Workshop</span></div>
+            <div class="small muted">Tuesday 13 Oct, 5:15 - 9:00</div>
+            <div class="small muted">City hub, Third Avenue</div>
+            <div class="small muted">4 going</div>
+            <div class="rowf"><span class="mbtn">RSVP</span><span class="mbtn">View details</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A community area with a dot map, three counts (builders, communities, continents) and two tabs, Events and Communities. Event cards carry a picture, title, format tag, date and time, place, attendee count, RSVP and View details, with format, type, location and time filters above. The map is redrawn as an abstract dot field. The Events tab is the only one in the screens.</p>
+</section>
+
+<section>
+  <h2>7. Launchpad</h2>
+  <div class="mk" role="img" aria-label="Redrawn launchpad screen: ranked apps with upvote cells and a right rail with a prize card, countdown and live activity">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it"><span class="grow" style="padding-left:22px">Community map</span></div>
+        <div class="it"><span class="grow" style="padding-left:22px; font-weight:650">Launchpad</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main">
+        <div class="h1m">Launchpad</div>
+        <div class="sub">Submit your published app to the weekly showcase. The community can discover it, vote, and help you reach new users.</div>
+        <div class="tabs"><span class="on">Current week</span><span>Wall of fame</span></div>
+        <div class="lp">
+          <div>
+            <div class="rowf" style="justify-content:space-between"><b style="font-size:12.5px">Top apps launching this week</b><span class="sel">Most upvoted <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+            <div class="rank"><div><div class="n">1</div><div class="mv up">8</div></div><div class="rowf"><span class="tile lg" style="background:var(--success-dim); color:var(--success)">H</span><div style="min-width:0"><b style="font-size:11px">HerdMaster</b><div class="small muted">Manage your farm and compete across five leaderboards in a herd-building game.</div><div class="rowf"><span class="tag">Entertainment</span><span class="tag">Educational</span><span class="tag">Productivity</span><span class="small muted">by A. Kumar</span></div></div></div><div class="votes"><div class="vote"><svg class="ic sm"><use href="#i-mail"/></svg>4</div><div class="vote"><svg class="ic sm"><use href="#i-up"/></svg>56</div></div></div>
+            <div class="rank"><div><div class="n">2</div><div class="mv down">1</div></div><div class="rowf"><span class="tile lg" style="background:var(--error); color:#fff">C</span><div style="min-width:0"><b style="font-size:11px">Colony Arcade</b><div class="small muted">Hold the line against alien swarms with tactical cover and active reloads.</div><div class="rowf"><span class="tag">Entertainment</span><span class="small muted">by Studio North</span></div></div></div><div class="votes"><div class="vote"><svg class="ic sm"><use href="#i-mail"/></svg>14</div><div class="vote"><svg class="ic sm"><use href="#i-up"/></svg>50</div></div></div>
+            <div class="rank"><div><div class="n">3</div></div><div class="rowf"><span class="tile lg" style="background:var(--primary-dim); color:var(--primary)">D</span><div style="min-width:0"><b style="font-size:11px">Drift Horizon</b><div class="small muted">Physics-based drifting against AI opponents on high-speed tracks.</div><div class="rowf"><span class="tag">Entertainment</span><span class="small muted">by Atlas G.</span></div></div></div><div class="votes"><div class="vote"><svg class="ic sm"><use href="#i-mail"/></svg>3</div><div class="vote"><svg class="ic sm"><use href="#i-up"/></svg>30</div></div></div>
+            <div class="rank"><div><div class="n">4</div><div class="mv down">2</div></div><div class="rowf"><span class="tile lg" style="background:var(--secondary); color:#fff">S</span><div style="min-width:0"><b style="font-size:11px">Study Hub</b><div class="small muted">Practice exams with AI testing, progress analytics and job tracking.</div><div class="rowf"><span class="tag">Educational</span><span class="tag">Productivity</span><span class="small muted">by Kestrel Services</span></div></div></div><div class="votes"><div class="vote"><svg class="ic sm"><use href="#i-mail"/></svg>3</div><div class="vote"><svg class="ic sm"><use href="#i-up"/></svg>29</div></div></div>
+            <div class="rank"><div><div class="n">5</div><div class="mv down">1</div></div><div class="rowf"><span class="tile lg" style="background:var(--agent); color:#fff">B</span><div style="min-width:0"><b style="font-size:11px">BlockVerse Sandbox</b><div class="small muted">Dig, build and explore voxel worlds in the browser.</div><div class="rowf"><span class="tag">Entertainment</span><span class="small muted">by J. Larsen</span></div></div></div><div class="votes"><div class="vote"><svg class="ic sm"><use href="#i-mail"/></svg>5</div><div class="vote"><svg class="ic sm"><use href="#i-up"/></svg>18</div></div></div>
+            <div class="cardm" style="margin-top:8px">
+              <div class="small muted">Submissions open</div>
+              <b style="font-size:11.5px">Building something for the best app of the week? Put it on the next leaderboard.</b>
+              <div class="small muted">Winners take 200 credits / 100 credits / 50 credits and a feature in the Launchpad.</div>
+              <div class="rowf"><span class="mbtn d">Submit your app</span><span class="mbtn">Learn more</span></div>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px">
+            <div class="railcard">
+              <b>Best app of the week</b>
+              <span class="muted">Enter an app you built here and compete for prizes and a spot on the leaderboard.</span>
+              <span class="muted">Submissions close in</span>
+              <span class="count">02d : 22h : 48m : 34s</span>
+              <span class="muted">Voting 8 Oct - 15 Oct</span>
+              <span class="muted">Prizes: 200 credits / 100 credits / 50 credits</span>
+              <span class="mbtn d">Submit your app</span>
+              <svg viewBox="0 0 120 80" style="width:100%; max-width:140px; align-self:center" aria-hidden="true">
+                <g fill="none" stroke="var(--border)"><circle cx="60" cy="40" r="34"/><circle cx="60" cy="40" r="22"/><circle cx="60" cy="40" r="10"/></g>
+                <path d="M18 62 60 40l34-16" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+                <circle cx="26" cy="58" r="2.5" fill="var(--border)"/><circle cx="94" cy="24" r="3" fill="var(--primary)"/>
+              </svg>
+            </div>
+            <div class="railcard">
+              <div class="rowf" style="justify-content:space-between"><b>Live rankings <span class="muted">- 50 apps</span></b></div>
+              <b>Best app of the week</b>
+              <span class="muted">Apps compete for 200, 100 or 50 message credits and a featured spot.</span>
+              <span class="muted">Voting ends in</span>
+              <span class="count">02d : 22h : 48m : 34s</span>
+            </div>
+            <div class="railcard">
+              <div class="rowf"><b>Recent activity</b><span class="pill ok">Live</span></div>
+              <div class="activity">
+                <div class="a"><span class="tile" style="width:14px;height:14px;font-size:7px">C</span><span>Colony Arcade moved down to #2</span></div>
+                <div class="a"><span class="tile" style="width:14px;height:14px;font-size:7px">H</span><span>HerdMaster moved up to #1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A weekly showcase for published apps. The current week is a voted leaderboard (rank, movement, app, tags, author, comment count, upvotes) with a sort control; Submit your app is the one action. The right rail repeats the prize, a countdown and a live activity feed. Wall of fame is a tab with no content in the screens.</p>
+</section>
+
+<section>
+  <h2>8. Partners</h2>
+  <div class="mk" role="img" aria-label="Redrawn partners screen: a project matching form and three partner cards with Specialist badges, tags, rates and Contact buttons">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span></div>
+        <div class="it"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it"><span class="grow" style="padding-left:22px">Messages</span></div>
+        <div class="it"><span class="grow" style="padding-left:22px; font-weight:650">Hire a partner</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main">
+        <div class="h1m">Partners</div>
+        <div class="sub">From first steps to advanced builds, partners provide the expertise and insight to help you achieve the best outcome.</div>
+        <div class="rowf">
+          <span class="inp grow" style="max-width:300px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search partners</span></span>
+          <span class="grow"></span>
+          <span class="sel">All services <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          <span class="sel">All languages <svg class="ic sm"><use href="#i-chev"/></svg></span>
+        </div>
+        <div class="match">
+          <b style="font-size:12px">Tell us what you need and we will match you with the right partner</b>
+          <span class="small muted">We will pick the top 3 partners for your project.</span>
+          <div class="ta">e.g. I am building a booking app for my clinic. I need a partner to polish the design, connect payments, and launch within a month. Budget around $2,000.</div>
+          <div class="rowf" style="justify-content:flex-end"><span class="mbtn" style="opacity:.55">Match me with partners</span></div>
+        </div>
+        <div class="rowf small muted">Near you - Partners in Austria - Update in profile</div>
+        <div class="pcards">
+          <div class="pcard">
+            <div class="rowf"><span class="tile lg round" style="background:var(--primary-dim); color:var(--primary)">S</span><span><b style="font-size:11px">Studio Weber</b><br><span class="small" style="color:var(--primary)"><span class="dotb"></span> Specialist</span></span><span class="grow"></span><span class="small muted"><svg class="ic sm"><use href="#i-star"/></svg> 5.0</span></div>
+            <div class="muted">Web apps and integrations for small teams, from design to launch.</div>
+            <div class="muted">Vienna, Austria</div>
+            <div class="muted">Languages: German, English</div>
+            <div class="chips"><span class="chip">API &amp; Integrations</span><span class="chip">AI Expert</span><span class="chip">Strategic Consulting</span></div>
+            <div class="rowf" style="justify-content:space-between; border-top:1px solid var(--border); padding-top:6px"><span class="small muted"><svg class="ic sm"><use href="#i-clock"/></svg> $108/hr</span><span class="mbtn">Contact</span></div>
+          </div>
+          <div class="pcard">
+            <div class="rowf"><span class="tile lg round" style="background:var(--success-dim); color:var(--success)">B</span><span><b style="font-size:11px">Brightline Agency</b><br><span class="small" style="color:var(--primary)"><span class="dotb"></span> Specialist</span></span></div>
+            <div class="muted">Digital agency for e-commerce and process automation in small businesses.</div>
+            <div class="muted">Vienna, Austria</div>
+            <div class="muted">Languages: Hebrew, English, German, Russian</div>
+            <div class="chips"><span class="chip">UI/UX Design</span><span class="chip">Application Development</span><span class="chip">Strategic Consulting</span></div>
+            <div class="rowf" style="justify-content:space-between; border-top:1px solid var(--border); padding-top:6px"><span class="small muted">From $1K</span><span class="mbtn">Contact</span></div>
+          </div>
+          <div class="pcard">
+            <div class="rowf"><span class="tile lg round" style="background:var(--surface-2); color:var(--dim)">K</span><span><b style="font-size:11px">Kestrel Solutions</b><br><span class="small" style="color:var(--primary)"><span class="dotb"></span> Specialist</span></span></div>
+            <div class="muted">Turnkey web apps, workflow automation and custom API work.</div>
+            <div class="muted">Salzburg, Austria</div>
+            <div class="muted">Languages: English, German</div>
+            <div class="chips"><span class="chip">AI Expert</span><span class="chip">UI/UX Design</span><span class="chip">Application Development</span></div>
+            <div class="rowf" style="justify-content:space-between; border-top:1px solid var(--border); padding-top:6px"><span class="small muted">$90/hr</span><span class="mbtn">Contact</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A directory of partners with a matching form: describe the project and get the top three matches. Cards show name, a Specialist badge, a short bio, city, languages, service tags and a rate, plus Contact. Search and two filters sit above. The screen shows the first cards only; what a match returns is not in the screens.</p>
+</section>
+
+<section>
+  <h2>9. Partner messages</h2>
+  <div class="mk" role="img" aria-label="Redrawn partner messages screen: a list pane with No direct messages yet and a right pane asking to select a direct message">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it on"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it"><svg class="ic"><use href="#i-home"/></svg><span class="grow">Home</span></div>
+        <div class="it"><svg class="ic"><use href="#i-grid"/></svg><span class="grow">All apps</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Community</span></div>
+        <div class="it"><svg class="ic"><use href="#i-plug"/></svg><span class="grow">Connectors</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-case"/></svg><span class="grow">Partners</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it"><span class="grow" style="padding-left:22px; font-weight:650">Messages</span></div>
+        <div class="it"><span class="grow" style="padding-left:22px">Hire a partner</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main" style="padding:0">
+        <div class="h1m" style="padding:12px 14px 4px">Messages</div>
+        <div class="notes" style="grid-template-columns:260px minmax(0,1fr); border-top:1px solid var(--border)">
+          <div class="notelist" style="padding:10px">
+            <span class="inp"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search direct messages</span></span>
+            <div class="empty" style="padding:26px 8px">
+              <span class="icbig"><svg class="ic md"><use href="#i-lock"/></svg></span>
+              <b style="font-size:11.5px; color:var(--text)">No direct messages yet</b>
+              <span>Your direct conversations with partners will appear here.</span>
+              <span class="mbtn d">Browse partners</span>
+            </div>
+          </div>
+          <div class="empty" style="border-left:1px solid var(--border); padding:40px 12px">
+            <span class="icbig"><svg class="ic md"><use href="#i-mail"/></svg></span>
+            <b style="font-size:11.5px; color:var(--text)">Select a direct message</b>
+            <span>Pick a partner from the list to open the message.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The partner inbox: a searchable list on the left and the conversation on the right. With no conversations, both panes show an empty state with one action (Browse partners) and a hint (Select a direct message). Only the empty state is in the screens; a real conversation is not.</p>
+</section>
+
+<section>
+  <h2>10. The project workspace: dashboard view</h2>
+  <div class="mk" role="img" aria-label="Redrawn project workspace in dashboard mode: chat on the left with a credits card, 16-item app navigation, and an app dashboard with visibility, invites and attention rows">
+    <div class="mkbar">
+      <span class="branddot">B</span>
+      <span class="rowf"><span class="tile p"><svg class="ic sm"><use href="#i-spark"/></svg></span><b class="nm">Demo App</b><svg class="ic sm muted"><use href="#i-chev"/></svg></span>
+      <svg class="ic muted"><use href="#i-eye"/></svg><svg class="ic muted"><use href="#i-clock"/></svg><svg class="ic muted"><use href="#i-panel"/></svg>
+      <span class="seg"><span class="it">Preview</span><span class="it on">Dashboard</span></span>
+      <span class="grow"></span>
+      <span class="tile round" style="background:var(--surface-2)">A</span><span class="mbtn sm"><svg class="ic sm"><use href="#i-plus"/></svg></span>
+      <span class="mbtn sm"><svg class="ic sm"><use href="#i-dots"/></svg></span>
+      <span class="mbtn soft">Upgrade</span>
+      <span class="mbtn d">Publish</span>
+    </div>
+    <div class="urlrow"><svg class="ic sm"><use href="#i-globe"/></svg><span class="tag">https://demo.example.app</span><span class="mbtn sm">Connect domain</span></div>
+    <div class="ws">
+      <div class="wsA">
+        <div class="chatpane" style="font-size:10.5px">
+          <div class="muted">The shell is built: header, hero, pricing and the sign-up flow. The dashboard section comes next.</div>
+          <div class="meta"><span>2 months ago</span><svg class="ic sm"><use href="#i-doc"/></svg><svg class="ic sm"><use href="#i-dots"/></svg></div>
+        </div>
+        <div class="creditcard" style="margin-top:auto">
+          <div class="creditbar"><svg class="ic sm"><use href="#i-clock"/></svg>0 credits remaining<span class="grow"></span><span>renews in 4d 21h</span><svg class="ic sm"><use href="#i-x"/></svg></div>
+          <div style="border:1px dashed var(--border); border-radius:7px; padding:7px; display:flex; flex-direction:column; gap:5px; text-align:center; align-items:center">
+            <b style="font-size:11px">You are out of monthly credits</b>
+            <span class="muted">Upgrade for more credits, unlimited apps, a custom domain and powerful tools.</span>
+            <span class="mbtn p" style="width:100%; justify-content:center">View plans</span>
+          </div>
+        </div>
+        <div class="composer">
+          <div class="ph">What do you want to change?</div>
+          <div class="tools">
+            <svg class="ic sm"><use href="#i-plus"/></svg>
+            <span class="sel"><svg class="ic sm"><use href="#i-spark"/></svg>Auto</span>
+            <span class="grow"></span>
+            <svg class="ic sm"><use href="#i-dots"/></svg><svg class="ic sm"><use href="#i-mic"/></svg>
+            <span class="send"><svg class="ic sm" style="transform:rotate(90deg)"><use href="#i-up"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="wsB appnav">
+        <span class="inp" style="margin-bottom:5px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search...</span></span>
+        <div class="it on"><svg class="ic sm"><use href="#i-home"/></svg><span class="grow">Overview</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-users"/></svg><span class="grow">App Users</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-db"/></svg><span class="grow">Data</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-layout"/></svg><span class="grow">Analytics</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-arrow-r"/></svg><span class="grow">Marketing</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-globe"/></svg><span class="grow">Domains</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-plug"/></svg><span class="grow">Integrations</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-lock"/></svg><span class="grow">Security</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-code"/></svg><span class="grow">Code</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-spark"/></svg><span class="grow">Agents</span><span class="new">New</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-flow"/></svg><span class="grow">Workflows</span><span class="new">New</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-mail"/></svg><span class="grow">Emails</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-eye"/></svg><span class="grow">Monitoring</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-code"/></svg><span class="grow">API</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-settings"/></svg><span class="grow">Settings</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-puzzle"/></svg><span class="grow">MCP</span></div>
+      </div>
+      <div class="wsC">
+        <div class="rowf" style="align-items:flex-start">
+          <span class="tile lg p" style="width:36px;height:36px"><svg class="ic md"><use href="#i-spark"/></svg></span>
+          <div class="grow"><div class="rowf"><b style="font-size:14px">Demo App</b><svg class="ic sm muted"><use href="#i-star"/></svg></div><div class="small muted">A small app for planning weekly reviews, with a landing page and a sign-up flow.</div><div class="small muted">Created 2 months ago</div></div>
+          <span class="mbtn">Earn credits</span><span class="mbtn">View usage</span><span class="mbtn"><svg class="ic sm"><use href="#i-dots"/></svg></span>
+        </div>
+        <div class="two">
+          <div class="heroCard"><b style="font-size:11px">App Visibility</b><span class="small muted">Control who can access your application</span><span class="sel"><svg class="ic sm"><use href="#i-globe"/></svg>Public <svg class="ic sm"><use href="#i-chev"/></svg></span></div>
+          <div class="heroCard"><b style="font-size:11px">Invite Users</b><span class="small muted">Grow your user base by inviting others</span><div class="rowf"><span class="mbtn grow" style="justify-content:center"><svg class="ic sm"><use href="#i-link"/></svg>Copy Link</span><span class="mbtn grow" style="justify-content:center">Send Invites</span></div></div>
+        </div>
+        <div class="attention">
+          <div class="rowf small" style="color:var(--warning)"><svg class="ic sm"><use href="#i-lock"/></svg><b>Needs your attention</b></div>
+          <div class="arow"><div><b>Security</b><small>Check your data and settings for risks.</small></div><span class="mbtn">Check Security</span></div>
+          <div class="arow"><div><b>Production Agent</b><small>Get alerted about credits and plan limits in production.</small></div><span class="mbtn">Turn on alerts</span></div>
+          <div class="arow"><div><b>Platform badge</b><small>The platform badge is currently visible on your app.</small></div><span class="mbtn">Hide Badge</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The project workspace in dashboard mode. The left column is the agent chat that built the app: transcript, a credits card, and the change box with Auto and Build controls. The app navigation lists every generated area, 16 items from Overview to MCP. The right pane is the app's admin home: visibility, invites, and a Needs your attention list (security, production agent, platform badge). Only this dashboard state is in the screens; the other navigation items are labels without content.</p>
+</section>
+
+<section>
+  <h2>11. The project workspace: preview and live edit</h2>
+  <div class="mk" role="img" aria-label="Redrawn project workspace in preview mode: chat with spec files and build steps, a canvas with an editable heading and an inline toolbar, and an agent approval card">
+    <div class="mkbar">
+      <span class="branddot">B</span>
+      <span class="rowf"><span class="tile p"><svg class="ic sm"><use href="#i-spark"/></svg></span><b class="nm">Demo App</b><span class="sel"><svg class="ic sm"><use href="#i-branch"/></svg>Main <svg class="ic sm"><use href="#i-chev"/></svg></span></span>
+      <svg class="ic muted"><use href="#i-clock"/></svg><svg class="ic muted"><use href="#i-undo"/></svg>
+      <span class="seg"><span class="it on">Preview</span><span class="it">Dashboard</span><span class="it">Edit</span></span>
+      <span class="grow"></span>
+      <svg class="ic muted"><use href="#i-monitor"/></svg><svg class="ic sm muted"><use href="#i-phone"/></svg><svg class="ic sm muted"><use href="#i-undo"/></svg><svg class="ic sm muted"><use href="#i-redo"/></svg><svg class="ic sm muted"><use href="#i-share"/></svg><span class="mbtn sm"><svg class="ic sm"><use href="#i-dots"/></svg></span>
+      <span class="mbtn soft">Upgrade</span><span class="mbtn d">Publish</span>
+    </div>
+    <div class="urlrow"><svg class="ic sm"><use href="#i-globe"/></svg><span class="tag">https://demo.example.app</span><span class="mbtn sm">Connect domain</span></div>
+    <div class="pv">
+      <div class="wsA" style="border-left:0">
+        <div class="filechips"><span class="fchip"><svg class="ic sm"><use href="#i-download"/></svg>wireframes.html</span><span class="fchip"><svg class="ic sm"><use href="#i-doc"/></svg>UX-SPEC.md</span></div>
+        <span class="fchip" style="align-self:flex-start">Brand_UI_Mocku...</span>
+        <div class="bub">please create a landing page for the app: hero, three steps, and a sign-up form. read the MD doc for specs...</div>
+        <div class="small muted" style="text-align:right">Show more <svg class="ic sm"><use href="#i-chev"/></svg></div>
+        <div class="assistant"><span class="av">A</span><div class="grow">I will read the spec and the mockup to understand the visual direction and requirements before building.</div></div>
+        <div class="small"><div class="collapseRow">Read UX-SPEC <svg class="ic sm"><use href="#i-chev"/></svg></div><div class="collapseRow">Built the styles and fixtures <svg class="ic sm"><use href="#i-chev"/></svg></div><div class="collapseRow">Built the UI and the shell <svg class="ic sm"><use href="#i-chev"/></svg></div><div class="collapseRow">Now the shell, the tooltips and the public site <svg class="ic sm"><use href="#i-chev"/></svg></div></div>
+        <div class="cap" style="padding-left:0">Suggestions</div>
+        <div class="sugg"><span class="chip">Build usage billing</span><span class="chip">Add project templates</span><span class="chip"><svg class="ic sm"><use href="#i-branch"/></svg>Sync GitHub</span></div>
+        <div class="composer" style="margin-top:auto">
+          <div class="ph">What do you want to change?</div>
+          <div class="tools"><svg class="ic sm"><use href="#i-plus"/></svg><span class="sel"><svg class="ic sm"><use href="#i-spark"/></svg>Auto</span><span class="sel">Build <svg class="ic sm"><use href="#i-chev"/></svg></span><span class="grow"></span><svg class="ic sm"><use href="#i-mic"/></svg><span class="send"><svg class="ic sm" style="transform:rotate(90deg)"><use href="#i-up"/></svg></span></div>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="fakepage">
+          <div class="fnav"><b>W Demo</b><span>Product</span><span>Blueprints</span><span>Pricing</span><span>Limits</span><span>Docs</span><span class="grow"></span><span>Sign in</span><span class="mbtn p sm">Start free</span></div>
+          <div class="fmain">
+            <div style="display:flex; flex-direction:column; gap:7px; min-width:0">
+              <div class="etool">
+                <span class="e"><svg class="ic sm"><use href="#i-spark"/></svg> Edit Element</span><span class="vsep"></span>
+                <span class="e on"><b>T</b></span><span class="e">Default <svg class="ic sm"><use href="#i-chev"/></svg></span><span class="e">36 <svg class="ic sm"><use href="#i-chev"/></svg></span><span class="e"><b>T</b></span><span class="e"><b>B</b></span><span class="e"><svg class="ic sm"><use href="#i-link"/></svg></span><span class="e"><svg class="ic sm"><use href="#i-doc"/></svg></span><span class="e"><svg class="ic sm"><use href="#i-x"/></svg></span>
+              </div>
+              <div class="fh1">A project that can build itself, and that you can <span class="seltext">take with you.</span></div>
+              <div class="small muted">Your app, your code, your tasks, and an agent that works inside it. Export the whole thing to git whenever you like.</div>
+              <div class="rowf"><span class="mbtn p">Start free <svg class="ic sm"><use href="#i-arrow-r"/></svg></span><span class="mbtn">See a blueprint</span></div>
+            </div>
+            <div class="browser">
+              <div class="burl"><span class="d"></span><span class="d"></span><span class="d"></span><span class="grow">gtd-planner.example.app</span></div>
+              <span class="bl" style="width:70%"></span><span class="bl"></span><span class="bl" style="width:86%"></span>
+              <span class="bl" style="width:52%; height:26px; background:var(--primary-dim)"></span>
+              <span class="mbtn p sm" style="align-self:flex-end">Add a weekly review checklist</span>
+              <div class="approve">
+                <div class="rowf"><span class="tile" style="width:14px;height:14px;font-size:7px">A</span><span>Edited 3 files. Install capability: Weekly review?</span></div>
+                <div class="rowf"><span class="mbtn p sm">Approve</span><span class="mbtn sm">Reject</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="divider" style="margin-top:4px">How it works</div>
+          <div class="how">
+            <div><span class="numdot">1</span><b>Pick a template</b><span>Start from a reusable template from the open registry, or start blank.</span></div>
+            <div><span class="numdot">2</span><b>Tell the agent what you want</b><span>The agent works inside the app. It proposes changes. You approve them.</span></div>
+            <div><span class="numdot">3</span><b>Run it, share it, or export it</b><span>Your app runs for you. Export the whole thing to git any time.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The workspace in preview mode. The chat shows the spec files, the build steps the agent reported, suggestion chips and the change box. The canvas shows the app itself; a heading is selected and carries a small formatting toolbar, so text is edited in place. An agent proposal floats over the canvas with Approve and Reject. The mode switch (Preview, Dashboard, Edit), breakpoints, undo and redo, share and publish sit in the top bar. The Edit mode itself is not in the screens, only the in-place toolbar.</p>
+</section>
+
+<section>
+  <h2>12. Chat branches</h2>
+  <div class="mk branchwrap" role="img" aria-label="Redrawn chat branch popover: Main chat, then Create your first branch with a Create new branch button, over a dimmed conversation">
+    <div class="mkbar"><span class="rowf"><span class="branddot" style="background:var(--text)">B</span><span class="tile p"><svg class="ic sm"><use href="#i-spark"/></svg></span><b class="nm">Demo App</b><svg class="ic sm muted"><use href="#i-chev"/></svg></span><span class="grow"></span><svg class="ic muted"><use href="#i-branch"/></svg><svg class="ic muted"><use href="#i-clock"/></svg><svg class="ic muted"><use href="#i-panel"/></svg><span class="mbtn">Preview</span></div>
+    <div style="padding:10px; min-height:250px; display:flex; flex-direction:column; gap:8px">
+      <div class="dimmed chatpane">
+        <div class="bub">The partner marketplace flow is built: find a partner, a partner profile, and messages.</div>
+        <div class="bub">Next I can build the box sub-pages: overview, files, history.</div>
+        <div class="composer"><div class="ph">What do you want to change?</div><div class="tools"><span class="sel"><svg class="ic sm"><use href="#i-spark"/></svg>Auto</span><span class="grow"></span><span class="send"><svg class="ic sm"><use href="#i-up"/></svg></span></div></div>
+      </div>
+      <div class="popover" style="top:16px">
+        <div class="mrow"><span class="grow">Main chat</span><svg class="ic sm muted"><use href="#i-chev"/></svg></div>
+        <div class="create">
+          <b>Create your first branch</b>
+          <small>Build, test, and experiment before merging changes into main.</small>
+          <span class="mbtn" style="width:100%; justify-content:center"><svg class="ic sm"><use href="#i-plus"/></svg>Create new branch</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A popover in the chat header branches the conversation. Main chat is the current line; Create new branch starts a separate line to build and test before merging into main. The screens show the first-branch state only: no merged branch, no branch list and no merge action.</p>
+</section>
+
+<section>
+  <h2>13. Version history and themes</h2>
+  <div data-cases>
+    <div class="seg" role="tablist" aria-label="Version history and theme states">
+      <button type="button" role="tab" data-case="history">History</button>
+      <button type="button" role="tab" data-case="theme">Theme</button>
+    </div>
+    <div class="mk" style="margin-top:10px">
+      <div class="mkbar"><span class="branddot">B</span><span class="rowf"><span class="tile p"><svg class="ic sm"><use href="#i-spark"/></svg></span><b class="nm">Demo App</b><svg class="ic sm muted"><use href="#i-chev"/></svg></span><span class="grow"></span><span class="seg"><span class="it">Preview</span><span class="it">Dashboard</span></span></div>
+      <div style="background:var(--bg); padding:14px; display:flex; justify-content:center">
+        <div class="panel" data-panel="history" role="tabpanel">
+          <div class="vhead"><svg class="ic"><use href="#i-arrow-l"/></svg>Version History</div>
+          <div class="vcard"><div class="rowf"><b>Manual Edits</b><svg class="ic sm muted"><use href="#i-dots"/></svg></div><span class="small muted">a month ago</span></div>
+          <div class="vcard"><div class="rowf"><b>Manual Edits</b><svg class="ic sm muted"><use href="#i-dots"/></svg></div><span class="small muted">a month ago</span></div>
+          <div class="vcard"><div class="rowf"><b>Implement complete ...</b><span class="live">Live</span><svg class="ic sm muted"><use href="#i-dots"/></svg></div><span class="small muted">2 months ago</span></div>
+        </div>
+        <div class="panel" data-panel="theme" role="tabpanel" hidden>
+          <div class="vhead"><span class="grow">Theme</span><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+          <span class="small muted">Control your app elements' colors and fonts by connecting them to the theme.</span>
+          <div class="tf">
+            <div class="swatchbar"><i style="background:#ffffff"></i><i style="background:#f7f7f8"></i><i style="background:#efeff1"></i><i style="background:#e7e7ea"></i><i style="background:#1b1b23"></i></div>
+            <div class="aa">AaBb <small>ui-sans-serif</small></div>
+          </div>
+          <div class="rowf"><span class="small"><b style="font-size:11px">Explore new themes</b></span><span class="grow"></span><svg class="ic sm muted"><use href="#i-undo"/></svg></div>
+          <div class="tf">
+            <div class="swatchbar"><i style="background:#fdfdff"></i><i style="background:#f0f2ff"></i><i style="background:#b6beff"></i><i style="background:#6a7cf0"></i><i style="background:#0f1430"></i></div>
+            <div class="aa">AaBb <small>Plus Jakarta Sans</small></div>
+          </div>
+          <div class="tf">
+            <div class="swatchbar"><i style="background:#0f1430"></i><i style="background:#1d2547"></i><i style="background:#5bc4f2"></i><i style="background:#8fd6f7"></i><i style="background:#ffffff"></i></div>
+            <div class="aa">AaBb <small>Space Grotesk</small></div>
+          </div>
+          <div class="rowf" style="justify-content:flex-end; border-top:1px solid var(--border); padding-top:7px"><span class="mbtn">Cancel</span><span class="mbtn" style="opacity:.5">Send to chat</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>History lists versions as cards (Manual Edits, agent builds marked Live) with a per-version menu. Theme opens over the same panel: the current palette and font, then alternative themes with a swatch strip and sample type; Cancel leaves it, Send to chat turns the choice into a request. The screens show two manual versions and one live build; what a restore or a merge does is not shown.</p>
+</section>
+
+<section>
+  <h2>14. The agent side: where to start talking</h2>
+  <div class="mk" role="img" aria-label="Redrawn agent landing: Meet your Agent, with four entry rows for the web app and messaging channels">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="railFoot"><div class="upg"><span><b>Upgrade your plan</b><span class="muted">Get more out of your apps</span></span><svg class="ic"><use href="#i-case"/></svg></div></div>
+      </div>
+      <div class="main" style="align-items:center; justify-content:center; min-height:380px; gap:14px">
+        <div style="text-align:center">
+          <div style="font-size:22px; font-weight:600">Meet your</div>
+          <div style="font-size:26px; font-weight:750; letter-spacing:-.01em"><span style="background:var(--primary); color:#fff; padding:1px 8px; border-radius:3px">#Agent</span></div>
+        </div>
+        <div class="small muted">Choose where to start talking with your agent</div>
+        <div style="display:flex; flex-direction:column; gap:6px; width:min(420px,100%)">
+          <div class="cardm" style="flex-direction:row; align-items:center; padding:8px 10px"><span class="tile p"><svg class="ic sm"><use href="#i-spark"/></svg></span><b style="font-size:11.5px">Continue here</b></div>
+          <div class="cardm" style="flex-direction:row; align-items:center; padding:8px 10px"><span class="tile" style="background:var(--success-dim); color:var(--success)"><svg class="ic sm"><use href="#i-phone"/></svg></span><b style="font-size:11.5px">Messaging app on your phone</b></div>
+          <div class="cardm" style="flex-direction:row; align-items:center; padding:8px 10px"><span class="tile" style="background:var(--secondary); color:#fff"><svg class="ic sm"><use href="#i-send"/></svg></span><b style="font-size:11.5px">Chat app</b></div>
+          <div class="cardm" style="flex-direction:row; align-items:center; padding:8px 10px"><span class="tile" style="background:var(--success); color:#fff"><svg class="ic sm"><use href="#i-mail"/></svg></span><b style="font-size:11.5px">Desktop chat</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A separate Agent mode asks where the conversation should start: in the web app, or in a messaging app on the phone or desktop. The rail shrinks to the apps and agent switch. Four entry rows, one per channel; no account setup, settings or conversation is in this screen. The real screen names the messaging services; this redraw keeps them generic.</p>
+</section>
+
+<section>
+  <h2>15. The agent side: first run</h2>
+  <div class="mk">
+    <div class="mkbar"><span class="branddot">B</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span></div>
+    <div class="onb">
+      <div class="dots2"><i class="on"></i><i></i></div>
+      <span class="tile p" style="width:26px;height:26px"><svg class="ic md"><use href="#i-spark"/></svg></span>
+      <div style="font-size:16px; font-weight:700">Hey there, let's start working</div>
+      <div class="small muted">Here are routines I can run for you</div>
+      <div style="width:min(520px,100%); text-align:left">
+        <div class="routine">
+          <svg class="ic"><use href="#i-cal"/></svg>
+          <div class="grow"><b>Taking care of your meetings</b><small>Joins your meetings and creates meeting notes</small></div>
+          <label class="tog"><input type="checkbox" checked aria-label="Taking care of your meetings"><i></i></label>
+        </div>
+        <div class="routine">
+          <svg class="ic"><use href="#i-mail"/></svg>
+          <div class="grow"><b>Taking care of your inbox</b><small>Labels your email so important messages stand out. Summarizes recurring newsletters when they arrive.</small></div>
+          <label class="tog"><input type="checkbox" checked aria-label="Taking care of your inbox"><i></i></label>
+        </div>
+        <div class="routine">
+          <svg class="ic"><use href="#i-doc"/></svg>
+          <div class="grow"><b>Keeping you briefed</b><small>Sends you a brief on your day, every morning at 8:00</small></div>
+          <label class="tog"><input type="checkbox" aria-label="Keeping you briefed"><i></i></label>
+        </div>
+      </div>
+      <div class="prep"><span class="tile p" style="width:20px;height:20px"><svg class="ic sm"><use href="#i-spark"/></svg></span>Preparing your agent...</div>
+    </div>
+  </div>
+  <p>First run is a short routine setup: three concrete routines (meeting notes; inbox labels and newsletter summaries; a morning brief at 8:00) with on and off switches, then a waiting state while it prepares. Two routines start on and the brief starts off. What comes after Preparing is not in the screens.</p>
+</section>
+
+<section>
+  <h2>16. The agent side: chat, channels and limits</h2>
+  <div data-cases>
+    <div class="seg" role="tablist" aria-label="Agent chat states">
+      <button type="button" role="tab" data-case="first">First chat</button>
+      <button type="button" role="tab" data-case="phone">Connect a phone</button>
+      <button type="button" role="tab" data-case="limit">Plan limit</button>
+    </div>
+    <div class="mk" style="margin-top:10px">
+      <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+      <div class="body2">
+        <div class="rail">
+          <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+          <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+          <div class="it"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+          <div class="it"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+          <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+          <div class="it"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+          <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+          <div class="it"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+          <div class="cap">Conversations</div>
+          <div class="it on"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span><span class="dot" style="width:5px;height:5px;border-radius:50%;background:var(--primary)"></span></div>
+          <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+          <div class="railFoot">
+            <div class="setup">
+              <div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+              <div class="small muted">3 of 5 complete</div>
+              <div class="progress"><i style="width:60%"></i></div>
+              <div class="checklist">
+                <div class="ci done"><span class="cico"></span>Connect your email and calendar</div>
+                <div class="ci done"><span class="cico"></span>Add the agent to your meetings</div>
+                <div class="ci"><span class="cico"></span>Connect a channel</div>
+                <div class="ci"><span class="cico"></span>Review the workflows set up for you</div>
+                <div class="ci"><span class="cico"></span>Connect the tools you already use</div>
+              </div>
+              <span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span>
+            </div>
+            <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+          </div>
+        </div>
+        <div class="main">
+          <div class="divider">Today</div>
+          <div data-panel="first" role="tabpanel" class="chatpane">
+            <div class="assistant"><span class="av">A</span><div class="grow">Hey, nice to meet you. I am your agent.</div></div>
+            <div class="assistant"><span class="av" style="visibility:hidden">A</span><div class="grow">
+              <b>I already set up a few routines for you:</b>
+              <ul class="bullets"><li>Labels your email so important messages stand out</li><li>Summarizes recurring newsletters when they arrive</li></ul>
+              <div style="margin-top:5px">Your calendar says the car insurance is still unpaid. Want me to draft a reply asking about your options?</div>
+              <div class="meta"><span>15:00</span><svg class="ic sm"><use href="#i-doc"/></svg><svg class="ic sm"><use href="#i-mic"/></svg></div>
+            </div></div>
+            <div><span class="tile p" style="width:16px;height:16px;border-radius:50%"><svg class="ic sm"><use href="#i-spark"/></svg></span></div>
+            <div class="sugg" style="margin-top:auto"><span class="chip"><svg class="ic sm"><use href="#i-mail"/></svg>Draft reply to the insurance company</span><span class="chip"><svg class="ic sm"><use href="#i-mail"/></svg>Ask for more insurance details</span><span class="chip"><svg class="ic sm"><use href="#i-cal"/></svg>Check my calendar</span><span class="grow"></span><svg class="ic sm muted"><use href="#i-undo"/></svg><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+          </div>
+          <div data-panel="phone" role="tabpanel" class="chatpane" hidden>
+            <div class="bub me">Connect a phone number for me so you can make calls on my behalf</div>
+            <div class="assistant"><span class="av">A</span><div class="grow">
+              <div class="collapseRow">Looked it up <svg class="ic sm"><use href="#i-chev"/></svg></div>
+              <div style="margin-top:5px">To connect the phone channel, I need your personal phone number (with country code) so I can verify it via SMS. Once verified, I will provision a separate number for me, then I can make and receive calls on your behalf.</div>
+              <div style="margin-top:5px">What is your number?</div>
+              <div class="meta"><span>15:02</span><svg class="ic sm"><use href="#i-doc"/></svg><svg class="ic sm"><use href="#i-mic"/></svg></div>
+            </div></div>
+            <div><span class="tile p" style="width:16px;height:16px;border-radius:50%"><svg class="ic sm"><use href="#i-spark"/></svg></span></div>
+            <div class="cardm" style="flex-direction:row; align-items:center; flex-wrap:wrap; padding:6px 8px; margin-top:auto"><span class="small muted">Chat with me from an app you already use</span><span class="chip">WhatsApp</span><span class="chip">Telegram</span><span class="chip">iMessage</span><span class="chip">Slack</span><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+          </div>
+          <div data-panel="limit" role="tabpanel" class="chatpane" hidden>
+            <div class="assistant"><span class="av" style="visibility:hidden">A</span><div class="grow">
+              <div class="collapseRow">Looked it up <svg class="ic sm"><use href="#i-chev"/></svg></div>
+              <div class="collapseRow" style="margin-top:3px">Activity <svg class="ic sm"><use href="#i-chev"/></svg></div>
+              <div style="margin-top:5px">Unfortunately, the phone channel requires a higher plan than the current one. To enable calls, the plan needs an upgrade in Settings, Plan. Everything else I can do via email and the other channels stays available in the meantime.</div>
+              <div class="meta"><span>15:04</span><svg class="ic sm"><use href="#i-doc"/></svg><svg class="ic sm"><use href="#i-mic"/></svg></div>
+            </div></div>
+            <div><span class="tile p" style="width:16px;height:16px;border-radius:50%"><svg class="ic sm"><use href="#i-spark"/></svg></span></div>
+            <div class="sugg" style="margin-top:auto"><span class="chip"><svg class="ic sm"><use href="#i-clock"/></svg>Check current plan</span><span class="chip"><svg class="ic sm"><use href="#i-settings"/></svg>Open my account settings page</span><span class="chip"><svg class="ic sm"><use href="#i-mail"/></svg>Send a confirmation email now</span><span class="grow"></span><svg class="ic sm muted"><use href="#i-undo"/></svg><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+          </div>
+          <div class="composer">
+            <div class="ph">Type a message...</div>
+            <div class="tools"><svg class="ic sm"><use href="#i-plus"/></svg><span class="sel"><svg class="ic sm"><use href="#i-spark"/></svg>Auto</span><span class="grow"></span><svg class="ic sm"><use href="#i-mic"/></svg><span class="mbtn d sm" style="padding:3px"><svg class="ic sm"><use href="#i-sliders"/></svg></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The agent's chat keeps the same rail as its other pages: a conversation list, a setup checklist that advances (the checklist shows 2 of 5 on the first chat and 3 of 5 on the next two) and suggestion chips above the input. The first case is a greeting plus the routines it set up, then one proactive finding with a question. The second asks for a phone number to open a phone channel, with Looked it up as a collapsible detail. The third reports that the channel needs a higher plan and offers follow-up actions. Auto mode, a microphone and a call-style button sit in the input. Only these three answers are in the screens; the checklist after Finish setup is not.</p>
+</section>
+
+<section>
+  <h2>17. The agent side: Workflows</h2>
+  <div class="mk" role="img" aria-label="Redrawn workflows screen: scheduled workflows in a table with cron schedules, last run, Run Now, and Active, Paused and Completed counts">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+        <div class="it"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+        <div class="it"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+        <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+        <div class="it"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Conversations</div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+        <div class="railFoot">
+          <div class="setup">
+            <div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div>
+            <div class="small muted">3 of 5 complete</div>
+            <div class="progress"><i style="width:60%"></i></div>
+            <span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span>
+          </div>
+          <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="toprow">
+          <div><div class="h1m">Workflows</div><div class="sub">Automated actions on a schedule or when a trigger happens.</div></div>
+          <span class="mbtn d"><svg class="ic sm"><use href="#i-plus"/></svg>New Workflow</span>
+        </div>
+        <div class="tabs"><span class="on">Scheduled Workflows</span><span>Triggered Workflows</span><span>Activity</span></div>
+        <div class="cardm" style="padding:0; overflow:hidden">
+          <div class="rowf" style="justify-content:space-between; padding:8px">
+            <div class="rowf"><span class="chip">Active (2)</span><span class="chip">Paused (0)</span><span class="chip">Completed (0)</span></div>
+            <span class="inp" style="width:200px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search Workflows</span></span>
+          </div>
+          <table class="tw">
+            <thead><tr><th>Schedule</th><th>Workflow name</th><th>Last run date</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="mono" style="font-size:10px">0 8,20 * * * (Europe/Vienna)</td><td>Tame newsletter noise</td><td class="muted">-</td><td><span class="mbtn sm"><svg class="ic sm"><use href="#i-play"/></svg>Run Now</span> <svg class="ic sm muted"><use href="#i-dots"/></svg></td></tr>
+              <tr><td class="mono" style="font-size:10px">0 8,20 * * * (Europe/Vienna)</td><td>Label your important emails</td><td class="muted">-</td><td><span class="mbtn sm"><svg class="ic sm"><use href="#i-play"/></svg>Run Now</span> <svg class="ic sm muted"><use href="#i-dots"/></svg></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>Scheduled and triggered automations in a table: cron schedule with timezone, name, last run, Run Now and a menu, with Active, Paused and Completed counts and a search. Two running workflows are in the screens with no last run yet; the Triggered and Activity tabs and New Workflow are not shown in action.</p>
+</section>
+
+<section>
+  <h2>18. The agent side: Plugins</h2>
+  <div class="mk" role="img" aria-label="Redrawn plugins screen: Connectors and Skills tabs, a purpose banner, eight popular connectors and two connected apps marked Active">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+        <div class="it"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+        <div class="it"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+        <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+        <div class="it"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Conversations</div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+        <div class="railFoot">
+          <div class="setup"><div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div><div class="small muted">3 of 5 complete</div><div class="progress"><i style="width:60%"></i></div><span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span></div>
+          <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="toprow">
+          <div><div class="h1m">Plugins</div><div class="sub">Enhance your agent experience by integrating with your favorite apps and custom connectors.</div></div>
+          <span class="mbtn d"><svg class="ic sm"><use href="#i-plus"/></svg>Add Connector</span>
+        </div>
+        <div class="tabs"><span class="on">Connectors</span><span>Skills</span></div>
+        <div style="border-radius:9px; padding:20px 12px; text-align:center; background: radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 45%), radial-gradient(circle at 80% 70%, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 40%), var(--primary-dim); display:flex; flex-direction:column; gap:4px; align-items:center">
+          <span class="mbtn" style="background:var(--surface)">Connect your agent to emails, social, and more</span>
+          <span class="small muted">Summarizes unread threads and channel activity</span>
+        </div>
+        <div class="rowf" style="justify-content:space-between"><b style="font-size:11.5px">Most popular</b><span class="small muted">Browse all <svg class="ic sm"><use href="#i-arrow-r"/></svg></span></div>
+        <div class="grid2">
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--warning-dim); color:var(--warning)">S</span><div><b style="font-size:10.5px">Slides</b><div class="small muted">Generate and manage presentations</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile p">D</span><div><b style="font-size:10.5px">Docs</b><div class="small muted">Create and edit documents</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--secondary); color:#fff">I</span><div><b style="font-size:10.5px">Support desk</b><div class="small muted">Support customers and manage tickets</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--success-dim); color:var(--success)">S</span><div><b style="font-size:10.5px">Sheets</b><div class="small muted">Read and write spreadsheet data</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--success); color:#fff">D</span><div><b style="font-size:10.5px">Drive</b><div class="small muted">Back up and store files in the cloud</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--error); color:#fff">S</span><div><b style="font-size:10.5px">Social posts</b><div class="small muted">Publish and manage social content</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--primary-dim); color:var(--primary)">O</span><div><b style="font-size:10.5px">Mail and calendar</b><div class="small muted">Manage email and calendar</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile">W</span><div><b style="font-size:10.5px">Site builder</b><div class="small muted">Access site data and store</div></div></div>
+        </div>
+        <div class="rowf"><b style="font-size:11.5px">Apps connected</b><span class="pill">2</span></div>
+        <div class="grid2">
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--primary-dim); color:var(--primary)">C</span><div class="grow"><b style="font-size:10.5px">Calendar <span class="pill ok">Active</span></b><div class="small muted">Manage schedules and events</div></div></div>
+          <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile" style="background:var(--surface-2)">M</span><div class="grow"><b style="font-size:10.5px">Mail <span class="pill ok">Active</span></b><div class="small muted">Send and manage email</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>Two tabs, Connectors and Skills, with Add Connector on the frame. A banner states the purpose; Most popular lists eight connectors in a two-column grid; Apps connected (2) lists the active ones with an Active badge. Each card carries a one-line description. The Skills tab and the add flow are not in the screens.</p>
+</section>
+
+<section>
+  <h2>19. The agent side: Notes</h2>
+  <div class="mk" role="img" aria-label="Redrawn notes screen: a list of notes on the left and a rendered markdown note with headings, a timeline and a connected-note footer">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+        <div class="it"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+        <div class="it"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+        <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+        <div class="it"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Conversations</div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+        <div class="railFoot">
+          <div class="setup"><div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div><div class="small muted">3 of 5 complete</div><div class="progress"><i style="width:60%"></i></div><span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span></div>
+          <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="notelist">
+          <div class="rowf" style="justify-content:space-between; padding:2px 4px 6px"><b style="font-size:11.5px">Notes</b><span class="rowf"><svg class="ic sm muted"><use href="#i-plus"/></svg><svg class="ic sm muted"><use href="#i-search"/></svg></span></div>
+          <div class="it on" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Release checklist</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Hiring plan</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Infrastructure notes</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Support runbook</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Product ideas</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Domain management</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Customer calls</span></div>
+          <div class="it" style="font-size:10.5px"><svg class="ic sm"><use href="#i-doc"/></svg><span class="grow">Company handbook</span></div>
+        </div>
+        <div class="doc">
+          <div class="rowf"><h4 class="grow">Release checklist</h4><span class="small muted">Edited Jan 1</span><svg class="ic sm muted"><use href="#i-dots"/></svg><svg class="ic sm muted"><use href="#i-panel"/></svg></div>
+          <p>Project dashboard for the app family and its cross-platform releases.</p>
+          <h5>Overview</h5>
+          <p>The app is a software project published under the team npm account. The available evidence covers a core package and platform-specific packages.</p>
+          <h5>Current state</h5>
+          <p>Version 0.2.4 is out for four platform targets. The previous three releases shipped in quick succession and the notes confirm the same family.</p>
+          <h5>Timeline</h5>
+          <ul>
+            <li>September 27: two additional scoped packages were published at 0.1.0.</li>
+            <li>October 6: the companion project published 0.1.0; its relationship is not established.</li>
+            <li>October 9: the core package and the four platform packages reached 0.2.4.</li>
+          </ul>
+          <div class="foot">Connected to this note</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>A notes list on the left and a rendered document on the right. The document has a title, a subtitle, an edited date, headings, bullet lists and a footer saying what the note is connected to. The list holds eight notes and the active one is highlighted. One document is in the screens; note editing and creating are not.</p>
+</section>
+
+<section>
+  <h2>20. The agent side: Files</h2>
+  <div class="mk" role="img" aria-label="Redrawn files screen: three folder cards with per-folder menus, Add New and a search">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+        <div class="it"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+        <div class="it"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+        <div class="it"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+        <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it" style="padding-left:22px"><svg class="ic sm"><use href="#i-folder"/></svg><span class="grow">Files</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Conversations</div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+        <div class="railFoot">
+          <div class="setup"><div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div><div class="small muted">3 of 5 complete</div><div class="progress"><i style="width:60%"></i></div><span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span></div>
+          <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="toprow">
+          <div><div class="h1m">Files</div><div class="sub">Files uploaded for your agent to use and reference.</div></div>
+          <div class="rowf"><span class="mbtn"><svg class="ic sm"><use href="#i-search"/></svg></span><span class="mbtn d"><svg class="ic sm"><use href="#i-plus"/></svg>Add New</span></div>
+        </div>
+        <div class="folders">
+          <div class="folder"><svg class="ic"><use href="#i-folder"/></svg><span class="grow">.agents</span><svg class="ic sm muted"><use href="#i-dots"/></svg></div>
+          <div class="folder"><svg class="ic"><use href="#i-folder"/></svg><span class="grow">app</span><svg class="ic sm muted"><use href="#i-dots"/></svg></div>
+          <div class="folder"><svg class="ic"><use href="#i-folder"/></svg><span class="grow">notes</span><svg class="ic sm muted"><use href="#i-dots"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>Uploaded files for the agent, as folder cards with a per-folder menu; Add New and a search sit in the header. Three folders are shown (.agents, an app folder, notes). The inside of a folder and the Add New flow are not in the screens.</p>
+</section>
+
+<section>
+  <h2>21. The agent side: Memory</h2>
+  <div class="mk" role="img" aria-label="Redrawn memory screen: memory access card, Knowledge, Working context and Memory log tabs, filters and an empty state with Add memory">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+        <div class="it"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+        <div class="it"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+        <div class="it"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+        <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it" style="padding-left:22px"><svg class="ic sm"><use href="#i-spark"/></svg><span class="grow">Memory</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Conversations</div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+        <div class="railFoot">
+          <div class="setup"><div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div><div class="small muted">3 of 5 complete</div><div class="progress"><i style="width:60%"></i></div><span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span></div>
+          <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+        </div>
+      </div>
+      <div class="main">
+        <div class="toprow"><div><div class="h1m">Memory</div><div class="sub">Review what your agent remembers and where each memory came from.</div></div><span class="mbtn ghost"><svg class="ic sm"><use href="#i-dots"/></svg></span></div>
+        <div class="cardm" style="flex-direction:row; align-items:center"><span class="tile p"><svg class="ic sm"><use href="#i-lock"/></svg></span><div class="grow"><b style="font-size:10.5px">Memory access</b><div class="small muted">The agent uses only memories from the active conversation.</div></div><span class="mbtn">Change access</span></div>
+        <div class="tabs"><span class="on">Knowledge</span><span>Working context</span><span>Memory log</span></div>
+        <div class="cardm" style="padding:0; overflow:hidden">
+          <div class="toolbar" style="padding:8px">
+            <b style="font-size:11px">Knowledge</b>
+            <span class="inp" style="width:150px"><svg class="ic sm"><use href="#i-search"/></svg><span class="grow">Search memories</span></span>
+            <span class="sel">Category: All categories <svg class="ic sm"><use href="#i-chev"/></svg></span>
+            <span class="sel">Type: All types <svg class="ic sm"><use href="#i-chev"/></svg></span>
+            <span class="sel">Source conversation: All <svg class="ic sm"><use href="#i-chev"/></svg></span>
+          </div>
+          <div class="empty" style="padding:26px 8px">
+            <span class="icbig"><svg class="ic md"><use href="#i-spark"/></svg></span>
+            <b style="font-size:11.5px; color:var(--text)">No saved memories</b>
+            <span>Your agent saves durable facts, preferences, instructions, and decisions here.</span>
+            <span class="mbtn d">Add memory</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>Memory review: an access note at the top (the agent uses only memories from the active conversation), three tabs (Knowledge, Working context, Memory log), and filters by search, category, type and source conversation. The Knowledge tab is empty: No saved memories, with Add memory as the one action. The other two tabs are not in the screens.</p>
+</section>
+
+<section>
+  <h2>22. The agent side: Data</h2>
+  <div class="mk" role="img" aria-label="Redrawn data screen: Tables and Backup and Restore tabs, with one stored table named User">
+    <div class="mkbar"><span class="branddot">B</span><span class="nm">Builder</span><span class="grow"></span><span class="mbtn ghost" style="color:var(--primary)">Upgrade</span><svg class="ic sm"><use href="#i-panel"/></svg></div>
+    <div class="body2">
+      <div class="rail">
+        <div class="seg"><span class="it"><svg class="ic sm"><use href="#i-grid"/></svg>Apps</span><span class="it on"><svg class="ic sm"><use href="#i-spark"/></svg>Agent</span></div>
+        <div class="it bold"><svg class="ic"><use href="#i-plus"/></svg><span class="grow">New conversation</span></div>
+        <div class="it"><svg class="ic"><use href="#i-flow"/></svg><span class="grow">Workflows</span></div>
+        <div class="it"><svg class="ic"><use href="#i-puzzle"/></svg><span class="grow">Plugins</span></div>
+        <div class="it"><svg class="ic"><use href="#i-users"/></svg><span class="grow">Channels</span></div>
+        <div class="it"><svg class="ic"><use href="#i-doc"/></svg><span class="grow">Notes</span></div>
+        <div class="it"><svg class="ic"><use href="#i-settings"/></svg><span class="grow">Agent Settings</span></div>
+        <div class="it on"><svg class="ic"><use href="#i-dots"/></svg><span class="grow">More</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="it" style="padding-left:22px"><svg class="ic sm"><use href="#i-db"/></svg><span class="grow">Data</span><svg class="ic sm chev"><use href="#i-chev"/></svg></div>
+        <div class="cap">Conversations</div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Connect phone num...</span></div>
+        <div class="it"><svg class="ic sm"><use href="#i-clock"/></svg><span class="grow">Unpaid insurance</span></div>
+        <div class="railFoot">
+          <div class="setup"><div class="rowf"><b style="font-size:10.5px">Set up your agent</b><span class="grow"></span><svg class="ic sm muted"><use href="#i-x"/></svg></div><div class="small muted">3 of 5 complete</div><div class="progress"><i style="width:60%"></i></div><span class="mbtn" style="justify-content:center; background:var(--primary-dim); border-color:transparent; color:var(--primary)">Finish setup</span></div>
+          <div class="upg"><span><b>Upgrade your plan</b></span><svg class="ic"><use href="#i-case"/></svg></div>
+        </div>
+      </div>
+      <div class="main">
+        <div><div class="h1m">Data</div><div class="sub">View and manage the data stored in your app.</div></div>
+        <div class="tabs"><span class="on">Tables</span><span>Backup &amp; Restore <span class="new">New</span></span></div>
+        <div class="folders" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+          <div class="folder"><svg class="ic"><use href="#i-table"/></svg><span class="grow">User</span><svg class="ic sm muted"><use href="#i-dots"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>The data behind the app: a Tables tab listing stored tables as cards (one table, User, with a menu) and a Backup &amp; Restore tab marked New. The table contents and the backup flow are not in the screens.</p>
+</section>
+
+<section>
+  <h2>23. The main flows</h2>
+  <p>The builder flow, from the screens: one idea in the home box or a template, an app that the agent builds in the workspace, a preview with in-place edits, versions and branches, then publish and share. GitHub appears twice: as the Codebase connection screen and as a Sync GitHub suggestion in the chat. The screens show the connect screen and the suggestion; they do not show a sync in progress or a synced repository.</p>
+  <div class="mermaid">
+flowchart TD
+  A["Home: one prompt, or a template"] --> T["Templates gallery"]
+  A --> W["Project workspace: chat builds the app"]
+  T --> W
+  W --> P["Preview on the canvas"]
+  P --> E["Edit in place, or ask in chat"]
+  E --> W
+  P --> H["History: versions, branches, themes"]
+  H -->|"Restore or merge"| W
+  P --> PB["Publish"]
+  PB --> U["Public URL"]
+  PB --> D["Connect a custom domain"]
+  PB --> S["Share: link and invites"]
+  PB --> L["Launchpad: weekly showcase"]
+  G["Codebase: Connect GitHub"] -.->|"connect screen and a Sync GitHub suggestion only; the sync itself is not shown"| R["Repository stays in sync"]
+  </div>
+  <p>The agent flow runs beside the builder, in its own rail: pick a channel, accept routines at first run, then one conversation list that the other agent pages hang off, including the phone channel that asks for a number and answers with a plan limit.</p>
+  <div class="mermaid">
+flowchart LR
+  O["Agent landing: pick a channel"] --> N["First run: routine toggles"]
+  N --> C["One conversation list"]
+  C --> WF["Workflows: scheduled and triggered"]
+  C --> PL["Plugins: connectors and skills"]
+  C --> NT["Notes"]
+  C --> F["Files"]
+  C --> M["Memory: with source filters"]
+  C --> DT["Data tables"]
+  C --> PH["Phone channel: asks for a number"]
+  PH --> LIM["Plan limit: answer and follow-ups"]
+  </div>
+</section>
+
+<section>
+  <h2>24. Take for ACRYL, do not take, and why</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Pattern in the screens</th><th>Take for ACRYL</th><th>Do not take</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Home start</td><td>One prompt box with a visible mode control (Auto, Build)</td><td>Community, Partners and a template marketplace in the main rail</td><td>One clear start. Marketplaces pull focus from making.</td></tr>
+      <tr><td>Workspace layout</td><td>Three panes: chat, canvas, app navigation or right panel</td><td>16 flat navigation items with New badges</td><td>The frame already has three panes. Generated areas need groups, not a wall.</td></tr>
+      <tr><td>Modes</td><td>Preview, Dashboard, Edit, with phone and tablet widths</td><td>A light home and a dark workspace</td><td>Explicit modes fit one canvas. Theme should follow the user, not the area.</td></tr>
+      <tr><td>Direct edit</td><td>Select text on the canvas with a small toolbar; agent proposals with Approve and Reject</td><td>A theme choice that can only apply through Send to chat</td><td>Direct manipulation is faster. Chat stays an option, not a toll gate.</td></tr>
+      <tr><td>Versions</td><td>History with a Live marker and a per-version menu</td><td>Version titles like Manual Edits with no diff or summary</td><td>A version must say what changed.</td></tr>
+      <tr><td>Branches</td><td>A one-line branch popover in the chat header</td><td>A branch feature with no merge example in sight</td><td>Explain advanced work where it happens.</td></tr>
+      <tr><td>Publish</td><td>Publish at top right, with the public URL and Connect domain beside it</td><td>Upgrade in the top bar of every screen</td><td>Shipping is the goal. Plan pressure belongs in plan settings.</td></tr>
+      <tr><td>Limits</td><td>One limit card when a limit actually blocks work</td><td>A permanent credits balance plus a dashed upsell that covers the transcript</td><td>Keep the working surface clean.</td></tr>
+      <tr><td>Showcase</td><td>A weekly Launchpad after Publish</td><td>Community map, events and a partner marketplace as first-class areas</td><td>The showcase feeds the builder loop. The rest is a second product.</td></tr>
+      <tr><td>Git</td><td>Connect GitHub as one button, with a repo list, and sync in Settings</td><td>A separate code area that duplicates git</td><td>Spec 055 puts GitHub sync in Settings. One place.</td></tr>
+      <tr><td>Agent</td><td>Routines as a first-run toggle list, a setup checklist, and many channels into one conversation list</td><td>An Agent with its own rail and its own navigation</td><td>One product, one shell. Channels are transport, not a second app.</td></tr>
+      <tr><td>Automation</td><td>A schedule table with cron, timezone, last run and Run Now</td><td>Plan gating inside a normal agent answer</td><td>Inspectable automation earns trust. Limits belong in plan screens.</td></tr>
+      <tr><td>Plugins</td><td>Most popular plus Apps connected (n) with Active badges</td><td>A full-width banner above the list</td><td>Inventory first, marketing second.</td></tr>
+      <tr><td>Memory</td><td>Source filters on every memory</td><td>Notes, Files, Memory and Data as four top-level destinations</td><td>Provenance makes memory trustworthy. Four destinations fragment one context.</td></tr>
+      <tr><td>Empty states</td><td>One action per empty state</td><td>Pages hidden behind a More menu</td><td>An empty state should teach the next step. Every page in one click.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>25. Maps to ACRYL today</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Studied pattern</th><th>ACRYL today</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Home prompt box</td><td>AOS launcher and chat (spec 052 design); the Blends frame has no workspace home</td><td>Gap: a start screen that takes one sentence.</td></tr>
+      <tr><td>Apps list with owner, status and sort filters</td><td>Control Center box list; AOS desktop icons (052 design)</td><td>Gap: no filters and no Published state in the frame.</td></tr>
+      <tr><td>Templates gallery</td><td>Blends registry (100 categories) and the <code>acryl new --from</code> list in create-blends</td><td>Gap: no gallery with previews inside the frame.</td></tr>
+      <tr><td>Codebase: Connect GitHub</td><td>Spec 055: Settings &gt; GitHub, sync both ways (design, not built)</td><td>Match in intent. Keep it in Settings.</td></tr>
+      <tr><td>Connectors list</td><td>Plugin admin (<code>plugins/acryl-plugin-admin</code>) and the plugin market (<code>plugins/cordis-plugin-market</code>, off by default)</td><td>Close: plugins are not per-account connectors.</td></tr>
+      <tr><td>Community map, Launchpad, Partners</td><td>None</td><td>Out of scope for ACRYL.</td></tr>
+      <tr><td>Three-pane workspace</td><td>The Blends frame: left panel (chats, versions), canvas, right panel, Settings</td><td>Direct match. The strongest pattern to keep.</td></tr>
+      <tr><td>Generated-app navigation with admin pages</td><td>Frame right panel; AOS app windows (052 design)</td><td>Gap: no generated-app admin.</td></tr>
+      <tr><td>Preview, Dashboard, Edit, breakpoints, inline edit, Approve and Reject</td><td>Frame canvas</td><td>Gap: mode switch, breakpoints and in-canvas editing are not built.</td></tr>
+      <tr><td>Branch popover; History with Live</td><td>Spec 055 History (auto versions, star, restore) and the branch switch (open decision)</td><td>Matches 055. The Live marker maps to the published version.</td></tr>
+      <tr><td>Theme panel</td><td>Appearance in Settings; Blends carry design tokens</td><td>Gap: no theme picker with previews.</td></tr>
+      <tr><td>Publish, public URL, Connect domain</td><td>Spec 055 Publish (Web, Desktop app, Blends store); WebBoxes deploy</td><td>Match, except the custom domain, which 055 does not design.</td></tr>
+      <tr><td>Share: link and invites</td><td>Spec 055 Share (copy link, GitHub invite, ZIP)</td><td>Direct match.</td></tr>
+      <tr><td>Agent landing and channel choice</td><td>One ACRYL chat over the DSH agent</td><td>Gap: no messaging or phone channels.</td></tr>
+      <tr><td>Routines at first run and a setup checklist</td><td>None; Settings</td><td>Gap: a candidate for first run.</td></tr>
+      <tr><td>Workflow table (schedule, last run, Run Now)</td><td>AOS chat can save a run as a workflow (052 design)</td><td>Gap: no schedule, trigger or run table.</td></tr>
+      <tr><td>Plugins: most popular and connected apps</td><td>Plugin market and plugin admin</td><td>Close: add an Active state per connected account.</td></tr>
+      <tr><td>Notes, Files, Memory, Data</td><td>None in the frame; DSH keeps session history</td><td>Out of scope for now.</td></tr>
+      <tr><td>Credits and Upgrade inside the working surfaces</td><td>None; ACRYL has no credits</td><td>Keep absent.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>26. Coverage</h2>
+  <p class="note">Every source file read, and the section that uses it. The folder contains 25 images and no .md or .txt files, so every readable source was an image. File and folder names below show the studied product's token as <code>&lt;product&gt;</code> so the name appears nowhere in this file. Folder <code>&lt;product&gt;.com_UX_UI_screens</code>, subfolders <code>projectPageView_&lt;product&gt;</code> and <code>suepragent_&lt;product&gt;</code>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Source file</th><th>Section</th><th>What it gave</th></tr></thead>
+    <tbody>
+      <tr><td>&lt;product&gt;_main_screen_1.png</td><td>1</td><td>Home rail, greeting, prompt box with Auto and Build, footer tabs</td></tr>
+      <tr><td>&lt;product&gt;_main_allapps_1.png</td><td>2</td><td>Apps grid, filters, Published badge, card metadata</td></tr>
+      <tr><td>&lt;product&gt;_main_templates_1.png</td><td>3</td><td>Template tabs, chips, sort, card layout and counts</td></tr>
+      <tr><td>&lt;product&gt;_main_basecode_1.png</td><td>4</td><td>Coupon banner, GitHub connect hero, three features</td></tr>
+      <tr><td>&lt;product&gt;_main_connectors_1.png</td><td>5</td><td>Connector list row, Add and Manage</td></tr>
+      <tr><td>&lt;product&gt;_main_community_basecamp_1.png</td><td>6</td><td>Map, counts, Events tab, filters, event cards</td></tr>
+      <tr><td>&lt;product&gt;_main_community_launchpad_1.png</td><td>7</td><td>Ranked list, votes, prize rail, countdown, activity</td></tr>
+      <tr><td>&lt;product&gt;_main_partners_getProHelp_1.png</td><td>8</td><td>Match form, partner cards, badges, rates</td></tr>
+      <tr><td>&lt;product&gt;_main_partners_messages_1.png</td><td>9</td><td>Two-pane empty inbox</td></tr>
+      <tr><td>projectPageView_&lt;product&gt;/1_project_view_DASHBOARD.png</td><td>10</td><td>Three-pane workspace, chat, credits card, app nav, admin dashboard</td></tr>
+      <tr><td>projectPageView_&lt;product&gt;/1_live_edit_feature_1.png</td><td>11</td><td>Preview mode, file chips, build steps, inline edit toolbar, approval card</td></tr>
+      <tr><td>projectPageView_&lt;product&gt;/2_project_CHAT_BRANCHout.png</td><td>12</td><td>Main chat and Create your first branch popover</td></tr>
+      <tr><td>projectPageView_&lt;product&gt;/2_project_version_history.png</td><td>13</td><td>Version cards, Live badge, per-version menu</td></tr>
+      <tr><td>projectPageView_&lt;product&gt;/3_theme_design_system.png</td><td>13</td><td>Theme panel: current theme, alternative themes, Cancel and Send to chat</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/&lt;product&gt;_superagent_1.png</td><td>14</td><td>Agent landing and four channel entries</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.00.10.png</td><td>15</td><td>First-run routines with toggles and the preparing state</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.00.25.png</td><td>16</td><td>First chat, routines summary, setup checklist 2 of 5, suggestions</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.03.02.png</td><td>16</td><td>Phone channel request, Looked it up, channel suggestion bar, checklist 3 of 5</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.05.12.png</td><td>16</td><td>Plan limit answer, Activity detail, follow-up suggestions</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.05.33.png</td><td>17</td><td>Workflow tabs, counts, table with cron and Run Now</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.05.43.png</td><td>18</td><td>Plugins tabs, banner, popular grid, connected apps</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.06.13.png</td><td>19</td><td>Notes list and rendered document with a connected footer</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.06.33.png</td><td>20</td><td>Files folders, Add New, search</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.06.44.png</td><td>21</td><td>Memory access, tabs, filters, empty state</td></tr>
+      <tr><td>suepragent_&lt;product&gt;/Screenshot 2026-10-12 at 15.06.57.png</td><td>22</td><td>Data tabs and the User table card</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<script>
+document.querySelectorAll('[data-cases]').forEach(function (group) {
+  var buttons = group.querySelectorAll('[data-case]');
+  var panels = group.querySelectorAll('[data-panel]');
+  function show(key) {
+    buttons.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.case === key)); });
+    panels.forEach(function (p) { p.hidden = p.dataset.panel !== key; });
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.case); }); });
+  if (buttons[0]) show(buttons[0].dataset.case);
+});
+</script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs";
+
+  // Render Mermaid in a theme that matches the artifact page, and re-render when
+  // the viewer flips the page theme. Mermaid never restyles an already-rendered
+  // SVG on its own, so a fixed theme clashes in either light or dark mode.
+  const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const paint = document.createElement("canvas").getContext("2d");
+  function toRgba(color) {
+    paint.clearRect(0, 0, 1, 1);
+    paint.fillStyle = "#000";
+    paint.fillStyle = color;
+    paint.fillRect(0, 0, 1, 1);
+    return paint.getImageData(0, 0, 1, 1).data;
+  }
+
+  function compositeRgba(foreground, background) {
+    const foregroundAlpha = foreground[3] / 255;
+    const backgroundAlpha = background[3] / 255;
+    const alpha = foregroundAlpha + backgroundAlpha * (1 - foregroundAlpha);
+    if (alpha === 0) return [0, 0, 0, 0];
+    return [
+      (foreground[0] * foregroundAlpha + background[0] * backgroundAlpha * (1 - foregroundAlpha)) / alpha,
+      (foreground[1] * foregroundAlpha + background[1] * backgroundAlpha * (1 - foregroundAlpha)) / alpha,
+      (foreground[2] * foregroundAlpha + background[2] * backgroundAlpha * (1 - foregroundAlpha)) / alpha,
+      alpha * 255,
+    ];
+  }
+
+  function pageIsDark() {
+    const root = document.documentElement;
+    const rootBackground = toRgba(getComputedStyle(root).backgroundColor);
+    const bodyBackground = document.body ? toRgba(getComputedStyle(document.body).backgroundColor) : [0, 0, 0, 0];
+    const [r, g, b, a] = compositeRgba(bodyBackground, rootBackground);
+    if (a > 0) {
+      return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5;
+    }
+    const colorScheme = getComputedStyle(root).colorScheme;
+    if (colorScheme.includes("dark") && !colorScheme.includes("light")) return true;
+    if (colorScheme.includes("light") && !colorScheme.includes("dark")) return false;
+    return darkQuery.matches;
+  }
+
+  const diagrams = [...document.querySelectorAll(".mermaid")].map((el) => ({ el, src: el.innerHTML }));
+  let applied;
+  let rendering = false;
+  let queued = false;
+  function queueRender() {
+    queued = true;
+    if (rendering) return;
+    void render();
+  }
+  async function render() {
+    rendering = true;
+    try {
+      while (queued) {
+        queued = false;
+        const theme = pageIsDark() ? "dark" : "default";
+        if (theme === applied) continue;
+        mermaid.initialize({ startOnLoad: false, theme, securityLevel: "strict" });
+        for (const { el, src } of diagrams) {
+          el.removeAttribute("data-processed");
+          el.innerHTML = src;
+        }
+        try {
+          await mermaid.run({ nodes: diagrams.map((d) => d.el) });
+        } catch (error) {
+          console.error("Mermaid diagram render failed:", error);
+          return;
+        }
+        applied = theme;
+      }
+    } finally {
+      rendering = false;
+      if (queued) queueRender();
+    }
+  }
+
+  if (document.readyState === "complete") queueRender();
+  else window.addEventListener("load", queueRender, { once: true });
+  const themeObserver = new MutationObserver(queueRender);
+  for (const el of [document.documentElement, document.body]) {
+    if (!el) continue;
+    themeObserver.observe(el, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
+  }
+  document.addEventListener("change", queueRender, true);
+  document.addEventListener("transitionend", ({ propertyName }) => {
+    if (propertyName === "background-color") queueRender();
+  }, true);
+  darkQuery.addEventListener("change", queueRender);
+</script>
+
+</div>
+</body>
+</html>
