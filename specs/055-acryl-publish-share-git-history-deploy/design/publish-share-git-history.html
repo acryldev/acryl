@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en" data-lavish-annotate="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Publish, Share, Git, History</title>
+<style>
+/* Tokens from specs/052-acryl-app-os/design/aos.html, the frame's own mockup palette. */
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --error-dim: rgba(220,38,38,.09);
+  --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12); --win-bar: #e4e4ea;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --error-dim: rgba(248,113,113,.12);
+  --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12); --win-bar: #222226; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --error-dim: rgba(248,113,113,.12);
+  --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12); --win-bar: #222226; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 48px; }
+h1 { font-size: 34px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 23px; margin: 0; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 78ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.dim { color: var(--dim); }
+.note { font-size: 12.5px; color: var(--dim); }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid2 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.err { background: var(--error-dim); color: var(--error); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+.pill.agent { background: var(--agent-dim); color: var(--agent); }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--dim); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+input[type=text] { font: 13px var(--sans); border: 1px solid var(--border); border-radius: 7px; padding: 6px 9px; background: var(--surface); color: var(--text); min-width: 0; }
+
+/* Change summary */
+.changes { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); }
+.changes .card h3 { display: flex; gap: 8px; align-items: center; }
+.gone { text-decoration: line-through; color: var(--dim); }
+
+/* The app window */
+.win { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 18px 50px -28px rgba(0,0,0,.4); min-width: 0; }
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--win-bar); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--border); display: block; }
+.bar .app { font-weight: 600; font-size: 13px; }
+.bar .sp { flex: 1; }
+.syncchip { font: 600 11.5px var(--mono); color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; }
+.dot.warn { background: var(--warning); } .dot.err { background: var(--error); } .dot.off { background: var(--border); }
+.body { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); min-height: 380px; }
+.panel { border-right: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.canvas { padding: 16px; background: var(--bg); display: flex; align-items: flex-start; justify-content: center; min-width: 0; }
+.canvas .fake { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; }
+.canvas .fake i { display: block; height: 12px; border-radius: 6px; background: var(--surface-2); }
+@media (max-width: 760px) { .body { grid-template-columns: 1fr; } .panel { border-right: 0; border-bottom: 1px solid var(--border); } }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tabs button { all: unset; cursor: pointer; padding: 6px 10px; font-size: 13px; color: var(--dim); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--text); font-weight: 600; border-bottom-color: var(--primary); }
+.vlist { display: flex; flex-direction: column; gap: 2px; }
+.v { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 7px 8px; border-radius: 8px; }
+.v:hover { background: var(--surface-2); }
+.v.cur { background: var(--primary-dim); }
+.v .t { font-size: 13px; overflow-wrap: anywhere; }
+.v .m { font-size: 11.5px; color: var(--dim); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.v .acts { display: flex; gap: 2px; align-items: center; }
+.star { all: unset; cursor: pointer; color: var(--dim); font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 5px; }
+.star.on { color: var(--warning); }
+.who { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font: 700 9px var(--mono); margin-top: 2px; }
+.who.ai { background: var(--agent-dim); color: var(--agent); }
+.who.me { background: var(--primary-dim); color: var(--primary); }
+.who.gh { background: var(--surface-2); color: var(--dim); }
+.banner { border-radius: 9px; padding: 9px 11px; font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; }
+.banner.info { background: var(--primary-dim); }
+.banner.ok { background: var(--success-dim); }
+.banner.warn { background: var(--warning-dim); }
+.banner.err { background: var(--error-dim); }
+.banner .row { display: flex; gap: 6px; flex-wrap: wrap; }
+.empty { text-align: center; padding: 28px 12px; color: var(--dim); font-size: 13px; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+
+/* Dialogs and popovers drawn inline */
+.dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); width: 100%; max-width: 560px; overflow: hidden; }
+.dialog header { padding: 14px 16px 0; display: flex; justify-content: space-between; align-items: center; }
+.dialog .content { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.dialog footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+.field > span { color: var(--dim); }
+.line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.plat { display: grid; grid-template-columns: 90px minmax(0,1fr) auto; gap: 8px; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.plat:last-child { border-bottom: 0; }
+.bar2 { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.bar2 b { display: block; height: 100%; background: var(--primary); }
+.pop { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px -20px rgba(0,0,0,.45); width: 100%; max-width: 380px; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.pop .item { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 9px 8px; border-radius: 8px; }
+.pop .item:hover { background: var(--surface-2); }
+.pop .ic { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-2); display: grid; place-items: center; font-size: 13px; }
+.pop .item small { display: block; color: var(--dim); font-size: 12px; }
+.pop hr { border: 0; border-top: 1px solid var(--border); margin: 4px 2px; }
+.settings { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 12px; }
+.srow { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.srow h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.code1 { font: 700 22px var(--mono); letter-spacing: .14em; background: var(--surface-2); padding: 6px 12px; border-radius: 8px; }
+
+/* Case switcher */
+.cases { display: flex; flex-wrap: wrap; gap: 6px; }
+.cases button { all: unset; cursor: pointer; font: 600 12px var(--sans); padding: 5px 10px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--dim); }
+.cases button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.case[hidden] { display: none !important; }
+.why { font-size: 13px; color: var(--dim); border-left: 3px solid var(--primary); padding: 2px 0 2px 12px; }
+
+/* Comparison */
+.vs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+.vs .card h3 { margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+
+/* Decisions */
+form.q { display: flex; flex-direction: column; gap: 8px; }
+form.q label { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+form.q textarea { font: 13px var(--sans); border: 1px solid var(--border); border-radius: 8px; padding: 8px; background: var(--surface); color: var(--text); width: 100%; min-height: 56px; }
+@media (prefers-reduced-motion: no-preference) { .case { animation: fade .18s ease-out; } @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">Spec 055 · design, not built</div>
+  <h1>Publish, Share, Git sync and History, the Lovable way</h1>
+  <p class="lead">Every change becomes a version automatically. Connect GitHub once and the app syncs by itself. One Publish button covers the web, the desktop installers and the Blends store. Share is for people. Below, every state each part can be in, plus how the WebBoxes deploy that is waiting looks in each case.</p>
+  <p class="note">Modeled on Lovable (History with Bookmarks, Restore as a new step, two-way GitHub sync) and Base44. Built on what the frame already has: the Git tab's push and pull with a confirmed plan (<code>RemoteSync.tsx</code>), GitHub's device-code connect (<code>ShareChooser.tsx</code>), the secret check, and Share with team (<code>app-team-release.ts</code>).</p>
+</header>
+
+<section>
+  <div class="eyebrow">What changes</div>
+  <div class="changes">
+    <div class="card"><h3>History <span class="pill">replaces Versions</span></h3><p class="note">Automatic versions after each agent turn and after your own edits. A star bookmarks one. Restore brings one back as a new version. <span class="gone">Save point button and its name field</span></p></div>
+    <div class="card"><h3>GitHub sync <span class="pill">replaces Share to GitHub</span></h3><p class="note">Connect once in Settings &gt; GitHub. It creates a private repository and keeps it in sync both ways. The secret check runs before every sync. <span class="gone">The plan form for each push</span></p></div>
+    <div class="card"><h3>Publish <span class="pill">new, top bar</span></h3><p class="note">One dialog with three tabs: Web, Desktop app and Blends store. <span class="gone">"Share with team"</span> becomes Publish &gt; Desktop app.</p></div>
+    <div class="card"><h3>Share <span class="pill">new, top bar</span></h3><p class="note">For people only: copy the app's link, invite someone on GitHub, or download the code as a ZIP.</p></div>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section data-group="history">
+  <div class="eyebrow">1 · History</div>
+  <h2>History panel: every case</h2>
+  <div class="cases" role="group" aria-label="History cases">
+    <button aria-pressed="true" data-case="h-empty">New app</button>
+    <button aria-pressed="false" data-case="h-list">Versions</button>
+    <button aria-pressed="false" data-case="h-editing">Editing now</button>
+    <button aria-pressed="false" data-case="h-bookmark">Naming a bookmark</button>
+    <button aria-pressed="false" data-case="h-bookmarks">Bookmarks tab</button>
+    <button aria-pressed="false" data-case="h-restore">Restore</button>
+    <button aria-pressed="false" data-case="h-restored">After restore</button>
+    <button aria-pressed="false" data-case="h-pulled">Changes from GitHub</button>
+    <button aria-pressed="false" data-case="h-branches">Branches switch</button>
+  </div>
+
+  <div class="win">
+    <div class="bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <span class="app">notes</span>
+      <span class="sp"></span>
+      <span class="syncchip"><span class="dot"></span>Synced with GitHub</span>
+      <button class="btn small">History</button>
+      <button class="btn small">Share</button>
+      <button class="btn small primary">Publish</button>
+    </div>
+    <div class="body">
+      <div class="panel">
+        <div class="tabs" role="tablist"><button role="tab" aria-selected="true" class="tab-all">All versions</button><button role="tab" aria-selected="false" class="tab-bm">Bookmarks</button></div>
+
+        <div class="case" data-id="h-empty">
+          <div class="empty"><b style="color:var(--text)">No versions yet</b>Ask the agent for a change, or edit a file. Each change is saved here by itself, so you can always go back.</div>
+        </div>
+
+        <div class="case" data-id="h-list" hidden>
+          <div class="vlist">
+            <div class="v cur"><span class="who ai">AI</span><div><div class="t">Add a pause menu</div><div class="m">2 min · current</div></div><div class="acts"><button class="star" aria-label="Bookmark">☆</button></div></div>
+            <div class="v"><span class="who me">Me</span><div><div class="t">Edited style.css</div><div class="m">14 min</div></div><div class="acts"><button class="star" aria-label="Bookmark">☆</button><button class="btn small ghost">Restore</button></div></div>
+            <div class="v"><span class="who ai">AI</span><div><div class="t">Score shows top right</div><div class="m">1 h · <span class="pill off">★ Works on phone</span></div></div><div class="acts"><button class="star on" aria-label="Bookmarked">★</button><button class="btn small ghost">Restore</button></div></div>
+            <div class="v"><span class="who ai">AI</span><div><div class="t">Make the board 8 by 8</div><div class="m">yesterday</div></div><div class="acts"><button class="star" aria-label="Bookmark">☆</button><button class="btn small ghost">Restore</button></div></div>
+            <div class="v"><span class="who me">Me</span><div><div class="t">Created the app</div><div class="m">Mon</div></div><div class="acts"><button class="star" aria-label="Bookmark">☆</button><button class="btn small ghost">Restore</button></div></div>
+          </div>
+          <p class="note">Named after what you asked the agent. Your own edits are named after the files. Hover a row for Restore.</p>
+        </div>
+
+        <div class="case" data-id="h-editing" hidden>
+          <div class="banner info"><b>Editing style.css…</b>Saved as a version when you pause for a few seconds.</div>
+          <div class="vlist">
+            <div class="v cur"><span class="who ai">AI</span><div><div class="t">Add a pause menu</div><div class="m">2 min · current</div></div><div class="acts"><button class="star">☆</button></div></div>
+            <div class="v"><span class="who ai">AI</span><div><div class="t">Score shows top right</div><div class="m">1 h</div></div><div class="acts"><button class="star on">★</button><button class="btn small ghost">Restore</button></div></div>
+          </div>
+          <p class="note">While the agent is working, the row reads "Agent is working…" and the version appears when its turn ends.</p>
+        </div>
+
+        <div class="case" data-id="h-bookmark" hidden>
+          <div class="vlist">
+            <div class="v cur" style="grid-template-columns:16px minmax(0,1fr)"><span class="who ai">AI</span><div style="display:flex;flex-direction:column;gap:6px"><div class="t">Add a pause menu</div>
+              <div class="line"><input type="text" value="712" aria-label="Bookmark name (optional)" style="flex:1"><button class="btn small primary">Bookmark</button></div>
+              <div class="m">The name is optional. Enter or Bookmark saves it, Esc cancels. Clicking outside also saves what you typed.</div></div></div>
+          </div>
+          <p class="note">This is the 712 case from today: typed text is never thrown away.</p>
+        </div>
+
+        <div class="case" data-id="h-bookmarks" hidden>
+          <div class="vlist">
+            <div class="v"><span class="who ai">AI</span><div><div class="t">Works on phone</div><div class="m">Score shows top right · 1 h</div></div><div class="acts"><button class="star on">★</button><button class="btn small ghost">Restore</button></div></div>
+            <div class="v"><span class="who me">Me</span><div><div class="t">712</div><div class="m">Add a pause menu · 2 min</div></div><div class="acts"><button class="star on">★</button></div></div>
+          </div>
+          <p class="note">Empty: "Star a version you want to find again, like one that works."</p>
+        </div>
+
+        <div class="case" data-id="h-restore" hidden>
+          <div class="banner warn"><b>Restore "Score shows top right"?</b>Your app goes back to how it was 1 h ago. Nothing is lost: the current version stays in History, and you can come back to it.<div class="row"><button class="btn small primary">Restore</button><button class="btn small">Cancel</button><button class="btn small ghost">Preview first</button></div></div>
+          <p class="note">Preview opens the old version in the canvas read-only, with "Restore this" and "Back to current".</p>
+        </div>
+
+        <div class="case" data-id="h-restored" hidden>
+          <div class="banner ok"><b>Restored "Score shows top right"</b><div class="row"><button class="btn small">Undo</button></div></div>
+          <div class="vlist">
+            <div class="v cur"><span class="who me">↺</span><div><div class="t">Restored "Score shows top right"</div><div class="m">now · current</div></div><div class="acts"><button class="star">☆</button></div></div>
+            <div class="v"><span class="who ai">AI</span><div><div class="t">Add a pause menu</div><div class="m">3 min</div></div><div class="acts"><button class="star">☆</button><button class="btn small ghost">Restore</button></div></div>
+          </div>
+        </div>
+
+        <div class="case" data-id="h-pulled" hidden>
+          <div class="banner info"><b>2 versions came from GitHub</b>Made by @ana. Your app now includes them.</div>
+          <div class="vlist">
+            <div class="v cur"><span class="who gh">ana</span><div><div class="t">Fix typo on start screen</div><div class="m">from GitHub · 5 min · current</div></div><div class="acts"><button class="star">☆</button></div></div>
+            <div class="v"><span class="who gh">ana</span><div><div class="t">Darker buttons</div><div class="m">from GitHub · 9 min</div></div><div class="acts"><button class="star">☆</button><button class="btn small ghost">Restore</button></div></div>
+            <div class="v"><span class="who ai">AI</span><div><div class="t">Add a pause menu</div><div class="m">1 h</div></div><div class="acts"><button class="star">☆</button><button class="btn small ghost">Restore</button></div></div>
+          </div>
+        </div>
+
+        <div class="case" data-id="h-branches" hidden>
+          <div class="line" style="justify-content:space-between"><span style="font-size:13px">Branches</span><span class="pill off">off</span></div>
+          <p class="note">Off by default, as in Lovable and Base44. Switched on, a line at the top shows <code>main ▾</code> with New branch, and History shows the chosen branch. This is the existing branches feature, moved here.</p>
+        </div>
+      </div>
+      <div class="canvas"><div class="fake"><i style="width:60%"></i><i></i><i style="width:80%"></i><i style="height:120px"></i><i style="width:40%"></i></div></div>
+    </div>
+  </div>
+  <p class="why">Why automatic: today a version exists only if you click Save point and type a name, and the owner's 712 test lost it. Lovable and Base44 have no such button: each change is a version, and bookmarks mark the good ones.</p>
+</section>
+
+<!-- ============ GITHUB SYNC ============ -->
+<section data-group="sync">
+  <div class="eyebrow">2 · GitHub sync</div>
+  <h2>Settings &gt; GitHub, and the chip in the top bar</h2>
+  <div class="cases" role="group" aria-label="GitHub sync cases">
+    <button aria-pressed="true" data-case="g-off">Not connected</button>
+    <button aria-pressed="false" data-case="g-code">Connecting</button>
+    <button aria-pressed="false" data-case="g-repo">Choose repository</button>
+    <button aria-pressed="false" data-case="g-synced">Synced</button>
+    <button aria-pressed="false" data-case="g-syncing">Syncing</button>
+    <button aria-pressed="false" data-case="g-secret">Secret found</button>
+    <button aria-pressed="false" data-case="g-conflict">Both sides changed</button>
+    <button aria-pressed="false" data-case="g-offline">Offline</button>
+    <button aria-pressed="false" data-case="g-expired">Sign-in expired</button>
+    <button aria-pressed="false" data-case="g-existing">App already on GitHub</button>
+  </div>
+  <div class="grid2" style="align-items:start">
+    <div class="settings">
+      <div class="case srow" data-id="g-off">
+        <h4>GitHub <span class="pill off">not connected</span></h4>
+        <p class="note">Keep a copy of this app on GitHub, synced automatically. Everything else keeps working without it.</p>
+        <div class="line"><button class="btn primary">Connect GitHub</button></div>
+      </div>
+      <div class="case srow" data-id="g-code" hidden>
+        <h4>GitHub <span class="pill">waiting for you</span></h4>
+        <p class="note">Enter this code at github.com/login/device. It opened in your browser.</p>
+        <div class="line"><span class="code1">7F3K-92QX</span><button class="btn small">Copy code</button><button class="btn small ghost">Cancel</button></div>
+      </div>
+      <div class="case srow" data-id="g-repo" hidden>
+        <h4>GitHub <span class="pill ok">@musichen</span></h4>
+        <label class="field"><span>New repository</span><input type="text" value="musichen/notes"></label>
+        <div class="line"><label class="line" style="font-size:13px"><input type="radio" name="vis" checked> Private</label><label class="line" style="font-size:13px"><input type="radio" name="vis"> Public</label></div>
+        <p class="note">The repository gets every version so far. Then each new version syncs by itself.</p>
+        <div class="line"><button class="btn primary">Create and sync</button><button class="btn small ghost">Use an existing repository</button></div>
+      </div>
+      <div class="case srow" data-id="g-synced" hidden>
+        <h4>GitHub <span class="pill ok">synced</span></h4>
+        <p style="font-size:13px">github.com/musichen/notes · private · synced 1 min ago</p>
+        <div class="line"><button class="btn small">Open on GitHub</button><button class="btn small">Sync now</button><button class="btn small ghost">Pause sync</button><button class="btn small ghost">Disconnect</button></div>
+      </div>
+      <div class="case srow" data-id="g-syncing" hidden>
+        <h4>GitHub <span class="pill">syncing</span></h4>
+        <p style="font-size:13px">Sending 3 versions to github.com/musichen/notes…</p>
+        <div class="bar2"><b style="width:55%"></b></div>
+      </div>
+      <div class="case srow" data-id="g-secret" hidden>
+        <h4>GitHub <span class="pill warn">paused</span></h4>
+        <div class="banner warn"><b>Not sent: src/config.ts line 4 looks like an API key.</b>Anyone who can read the repository could use it. Move it to Settings &gt; Secrets, and the agent can do it for you.<div class="row"><button class="btn small primary">Ask the agent to move it</button><button class="btn small">Open the file</button><button class="btn small ghost">It is not a secret, send it</button></div></div>
+      </div>
+      <div class="case srow" data-id="g-conflict" hidden>
+        <h4>GitHub <span class="pill warn">needs you</span></h4>
+        <div class="banner warn"><b>You and @ana both changed style.css.</b>Nothing was overwritten. Choose which one to keep, or let the agent combine them.<div class="row"><button class="btn small primary">Let the agent combine them</button><button class="btn small">Keep mine</button><button class="btn small">Keep GitHub's</button></div></div>
+        <p class="note">Changes to different files are combined by themselves, with no question.</p>
+      </div>
+      <div class="case srow" data-id="g-offline" hidden>
+        <h4>GitHub <span class="pill off">offline</span></h4>
+        <p style="font-size:13px">2 versions are waiting. They sync when you are back online.</p>
+      </div>
+      <div class="case srow" data-id="g-expired" hidden>
+        <h4>GitHub <span class="pill err">sign in again</span></h4>
+        <p style="font-size:13px">GitHub no longer accepts this sign-in (it was revoked or expired). Your versions are safe here.</p>
+        <div class="line"><button class="btn primary">Connect again</button></div>
+      </div>
+      <div class="case srow" data-id="g-existing" hidden>
+        <h4>GitHub <span class="pill ok">synced</span></h4>
+        <p style="font-size:13px">This app already came from github.com/acrylworkshop/notes. Connected as @musichen, who can push there, so it syncs to it.</p>
+        <p class="note">If @musichen can only read it: "You can get changes from this repository but not send yours. Make your own copy on GitHub?" [Make my copy]</p>
+      </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px">
+      <h3>The chip in the top bar</h3>
+      <div class="line"><span class="syncchip"><span class="dot off"></span>Not on GitHub</span><span class="note">hidden until connected</span></div>
+      <div class="line"><span class="syncchip"><span class="dot"></span>Synced</span></div>
+      <div class="line"><span class="syncchip"><span class="dot warn"></span>Syncing 3…</span></div>
+      <div class="line"><span class="syncchip"><span class="dot warn"></span>Sync paused</span><span class="note">secret, both sides changed, offline</span></div>
+      <div class="line"><span class="syncchip"><span class="dot err"></span>Sign in again</span></div>
+      <p class="note">Clicking the chip opens Settings &gt; GitHub. Sync sends after each version and checks GitHub every minute while the app is open. The Git tab with Push and Pull stays for people who want it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PUBLISH ============ -->
+<section data-group="publish">
+  <div class="eyebrow">3 · Publish</div>
+  <h2>Publish dialog: three tabs, every case</h2>
+  <div class="cases" role="group" aria-label="Publish cases">
+    <button aria-pressed="true" data-case="p-web-local">Web, from this computer</button>
+    <button aria-pressed="false" data-case="p-web-live">Web, live</button>
+    <button aria-pressed="false" data-case="p-web-box">Web, in a WebBoxes box</button>
+    <button aria-pressed="false" data-case="p-desk-nogh">Desktop, no GitHub</button>
+    <button aria-pressed="false" data-case="p-desk-perm">Desktop, needs permission</button>
+    <button aria-pressed="false" data-case="p-desk-ready">Desktop, ready</button>
+    <button aria-pressed="false" data-case="p-desk-run">Desktop, building</button>
+    <button aria-pressed="false" data-case="p-desk-done">Desktop, done</button>
+    <button aria-pressed="false" data-case="p-desk-fail">Desktop, a platform failed</button>
+    <button aria-pressed="false" data-case="p-store-private">Store, private repository</button>
+    <button aria-pressed="false" data-case="p-store-ready">Store, ready</button>
+    <button aria-pressed="false" data-case="p-store-listed">Store, listed</button>
+  </div>
+
+  <div class="dialog" style="max-width:600px">
+    <header><h3>Publish notes</h3><button class="btn small ghost" aria-label="Close">✕</button></header>
+    <div class="content">
+      <div class="tabs" role="tablist"><button role="tab" class="pt" data-tab="web" aria-selected="true">Web</button><button role="tab" class="pt" data-tab="desk" aria-selected="false">Desktop app</button><button role="tab" class="pt" data-tab="store" aria-selected="false">Blends store</button></div>
+
+      <div class="case" data-id="p-web-local" data-tab="web">
+        <p style="font-size:14px">Put this app on the web at its own address, on WebBoxes.ai.</p>
+        <label class="field"><span>Address</span><div class="line"><input type="text" value="notes" style="width:160px"><span class="mono dim">.webboxes.ai</span></div></label>
+        <p class="note">Needs a WebBoxes.ai account. Signing in opens in your browser.</p>
+        <div class="line" style="justify-content:flex-end"><button class="btn primary">Sign in and publish</button></div>
+      </div>
+      <div class="case" data-id="p-web-live" data-tab="web" hidden>
+        <div class="banner ok"><b>Live at notes.webboxes.ai</b>Version "Add a pause menu", published 3 min ago.<div class="row"><button class="btn small">Open</button><button class="btn small">Copy link</button></div></div>
+        <p style="font-size:13px">2 newer versions are not on the web yet.</p>
+        <div class="line" style="justify-content:flex-end"><button class="btn small ghost">Take it offline</button><button class="btn primary">Update the web version</button></div>
+      </div>
+      <div class="case" data-id="p-web-box" data-tab="web" hidden>
+        <div class="banner ok"><b>This app is already on the web at open-city.webboxes.ai</b>It runs in your WebBoxes box, and every change is live as soon as it is made.<div class="row"><button class="btn small">Copy link</button></div></div>
+      </div>
+
+      <div class="case" data-id="p-desk-nogh" data-tab="desk" hidden>
+        <p style="font-size:14px">Installers for Mac, Windows and Linux, on one download page.</p>
+        <div class="banner info"><b>GitHub builds the desktop installers for this app.</b>Connect GitHub first: it takes a minute and you do it once.<div class="row"><button class="btn small primary">Connect GitHub</button></div></div>
+      </div>
+      <div class="case" data-id="p-desk-perm" data-tab="desk" hidden>
+        <div class="banner warn"><b>GitHub needs one more permission.</b>To build installers, this app adds a build file to its repository, and GitHub asks you to allow that once.<div class="row"><button class="btn small primary">Allow on GitHub</button></div></div>
+      </div>
+      <div class="case" data-id="p-desk-ready" data-tab="desk" hidden>
+        <label class="field"><span>Version</span><input type="text" value="0.1.4" style="width:110px"></label>
+        <p class="note">Last published: 0.1.3, 2 days ago. GitHub builds the desktop installers for this app; the download page is github.com/musichen/notes/releases.</p>
+        <div class="line"><label class="line" style="font-size:13px"><input type="checkbox" checked> Mac</label><label class="line" style="font-size:13px"><input type="checkbox" checked> Windows</label><label class="line" style="font-size:13px"><input type="checkbox" checked> Linux</label></div>
+        <div class="line" style="justify-content:flex-end"><button class="btn primary">Publish 0.1.4</button></div>
+      </div>
+      <div class="case" data-id="p-desk-run" data-tab="desk" hidden>
+        <p style="font-size:13px">Building 0.1.4 on GitHub. You can close this; the top bar shows when it is done.</p>
+        <div>
+          <div class="plat"><span>Mac</span><div class="bar2"><b style="width:100%;background:var(--success)"></b></div><span class="pill ok">done</span></div>
+          <div class="plat"><span>Windows</span><div class="bar2"><b style="width:60%"></b></div><span class="pill">6 min</span></div>
+          <div class="plat"><span>Linux</span><div class="bar2"><b style="width:35%"></b></div><span class="pill">8 min</span></div>
+        </div>
+      </div>
+      <div class="case" data-id="p-desk-done" data-tab="desk" hidden>
+        <div class="banner ok"><b>0.1.4 is out</b>Mac, Windows and Linux installers are on the download page. People who installed an earlier version are offered the update.<div class="row"><button class="btn small primary">Open the download page</button><button class="btn small">Copy link</button></div></div>
+      </div>
+      <div class="case" data-id="p-desk-fail" data-tab="desk" hidden>
+        <div class="banner err"><b>Windows failed; Mac and Linux are out.</b>GitHub said: "signtool: certificate not found". The download page has Mac and Linux.<div class="row"><button class="btn small primary">Ask the agent to fix it</button><button class="btn small">Show GitHub's log</button><button class="btn small">Try Windows again</button></div></div>
+      </div>
+
+      <div class="case" data-id="p-store-private" data-tab="store" hidden>
+        <p style="font-size:14px">List the app in the Blends store, so others can make their own copy.</p>
+        <div class="banner warn"><b>The store lists public apps.</b>github.com/musichen/notes is private. Make it public? Everyone could then read its code and its whole history.<div class="row"><button class="btn small primary">Make it public and continue</button><button class="btn small">Not now</button></div></div>
+      </div>
+      <div class="case" data-id="p-store-ready" data-tab="store" hidden>
+        <label class="field"><span>Name</span><input type="text" value="Notes"></label>
+        <label class="field"><span>One line</span><input type="text" value="Quick notes with tags and search"></label>
+        <label class="field"><span>Category</span><input type="text" value="Productivity"></label>
+        <p class="note">Screenshots come from the app's docs/screenshots.json. The listing appears within an hour.</p>
+        <div class="line" style="justify-content:flex-end"><button class="btn primary">List in the store</button></div>
+      </div>
+      <div class="case" data-id="p-store-listed" data-tab="store" hidden>
+        <div class="banner ok"><b>Listed: Notes, in Productivity</b>12 people made a copy. New versions show in the store automatically.<div class="row"><button class="btn small">Open the listing</button><button class="btn small ghost">Remove from the store</button></div></div>
+      </div>
+    </div>
+  </div>
+  <p class="why">Desktop app is today's Share with team, renamed for what it does. In a box, Build installer stays hidden, and this tab is the box's path to installers.</p>
+</section>
+
+<!-- ============ SHARE ============ -->
+<section data-group="share">
+  <div class="eyebrow">4 · Share</div>
+  <h2>Share popover: for people, every case</h2>
+  <div class="cases" role="group" aria-label="Share cases">
+    <button aria-pressed="true" data-case="s-local">Nothing published yet</button>
+    <button aria-pressed="false" data-case="s-live">On the web and GitHub</button>
+    <button aria-pressed="false" data-case="s-invite">Inviting someone</button>
+    <button aria-pressed="false" data-case="s-invited">Invited</button>
+  </div>
+  <div class="grid2" style="align-items:start">
+    <div>
+      <div class="case pop" data-id="s-local">
+        <div class="item"><span class="ic">🔗</span><div>Copy link<small>Publish to the web first. <a href="#publish">Publish…</a></small></div><button class="btn small" disabled>Copy</button></div>
+        <div class="item"><span class="ic">👤</span><div>Invite people<small>Connect GitHub first; invited people can edit with you.</small></div><button class="btn small">Connect</button></div>
+        <hr>
+        <div class="item"><span class="ic">⬇</span><div>Download code<small>The whole app as a ZIP, without secrets.</small></div><button class="btn small">ZIP</button></div>
+      </div>
+      <div class="case pop" data-id="s-live" hidden>
+        <div class="item"><span class="ic">🔗</span><div>Copy link<small>notes.webboxes.ai</small></div><button class="btn small">Copy</button></div>
+        <div class="item"><span class="ic">👤</span><div>Invite people<small>They can edit with you on GitHub.</small></div><button class="btn small">Invite</button></div>
+        <div class="item"><span class="ic">⧉</span><div>Copy GitHub link<small>github.com/musichen/notes · private</small></div><button class="btn small">Copy</button></div>
+        <hr>
+        <div class="item"><span class="ic">⬇</span><div>Download code<small>The whole app as a ZIP, without secrets.</small></div><button class="btn small">ZIP</button></div>
+      </div>
+      <div class="case pop" data-id="s-invite" hidden>
+        <div style="padding:8px;display:flex;flex-direction:column;gap:8px">
+          <b style="font-size:13px">Invite to musichen/notes</b>
+          <div class="line"><input type="text" placeholder="GitHub username or email" value="ana" style="flex:1"><button class="btn small primary">Invite</button></div>
+          <p class="note">GitHub sends the invitation. They can then open the app in ACRYL with "Get from GitHub".</p>
+        </div>
+      </div>
+      <div class="case pop" data-id="s-invited" hidden>
+        <div style="padding:8px;display:flex;flex-direction:column;gap:8px">
+          <div class="banner ok"><b>@ana is invited</b>They join when they accept on GitHub.</div>
+          <p class="note">People: @musichen (you, owner) · @ana (invited)</p>
+        </div>
+      </div>
+    </div>
+    <div class="card"><h3>Solo builder</h3><p class="note" style="margin-top:6px">Nothing here assumes a team. Alone, you use History, maybe GitHub sync as a backup, and Publish. Share is only for the day you send someone a link.</p></div>
+  </div>
+</section>
+
+<!-- ============ WEBBOXES DEPLOY ============ -->
+<section data-group="wb" id="webboxes">
+  <div class="eyebrow">5 · WebBoxes deploy (waiting for your go)</div>
+  <h2>What the production deploy changes in a box, case by case</h2>
+  <p>Branch <code>webbox-frame-current</code> in the WebBoxes repository: new boxes start with the current frame (blends-frame 0.2.21), existing boxes get it through the scheduler's update, Build installer is hidden in a box, and Settings &gt; Share gets the Share with team row with its line. It is the shape that already runs on the test box. Spec 055 later renames that row to Publish &gt; Desktop app.</p>
+  <div class="cases" role="group" aria-label="WebBoxes cases">
+    <button aria-pressed="true" data-case="w-now">Production today</button>
+    <button aria-pressed="false" data-case="w-nogh">After: GitHub not connected</button>
+    <button aria-pressed="false" data-case="w-norepo">After: app not on GitHub</button>
+    <button aria-pressed="false" data-case="w-perm">After: no workflow permission</button>
+    <button aria-pressed="false" data-case="w-ready">After: ready</button>
+    <button aria-pressed="false" data-case="w-run">After: building</button>
+    <button aria-pressed="false" data-case="w-done">After: done</button>
+    <button aria-pressed="false" data-case="w-update">Existing box: update</button>
+    <button aria-pressed="false" data-case="w-rollback">Existing box: update failed</button>
+  </div>
+  <div class="settings">
+    <div class="case srow" data-id="w-now">
+      <h4>Settings &gt; Share <span class="pill off">production today, older frame</span></h4>
+      <div class="line" style="justify-content:space-between"><span style="font-size:13px">Share to GitHub</span><button class="btn small">Review what would be sent</button></div>
+      <div class="line" style="justify-content:space-between"><span style="font-size:13px">Build installer</span><button class="btn small">Build</button></div>
+      <p class="note">Build installer cannot work in a box: it needs the desktop tools of the computer it runs on. No Share with team.</p>
+    </div>
+    <div class="case srow" data-id="w-nogh" hidden>
+      <h4>Settings &gt; Share <span class="pill">after deploy</span></h4>
+      <div class="line" style="justify-content:space-between"><span style="font-size:13px">GitHub</span><button class="btn small primary">Connect GitHub</button></div>
+      <div class="line" style="justify-content:space-between;opacity:.6"><span style="font-size:13px">Share with team</span><button class="btn small" disabled>Share with team</button></div>
+      <p class="note">GitHub builds the desktop installers for this app. Connect GitHub first (above).</p>
+    </div>
+    <div class="case srow" data-id="w-norepo" hidden>
+      <h4>Settings &gt; Share <span class="pill">after deploy</span></h4>
+      <div class="banner warn"><b>Not shared: the app is not on GitHub yet.</b>Share to GitHub first (above), then Share with team builds the installers.</div>
+      <p class="note">This is the message the owner saw today. In 055, Publish &gt; Desktop app creates the repository itself, so this step disappears.</p>
+    </div>
+    <div class="case srow" data-id="w-perm" hidden>
+      <h4>Settings &gt; Share <span class="pill">after deploy</span></h4>
+      <div class="banner warn"><b>GitHub did not allow this app to add its build file.</b>Connect again and allow workflows.<div class="row"><button class="btn small primary">Connect again</button></div></div>
+    </div>
+    <div class="case srow" data-id="w-ready" hidden>
+      <h4>Settings &gt; Share <span class="pill">after deploy</span></h4>
+      <div class="line" style="justify-content:space-between"><span style="font-size:13px">GitHub</span><span class="pill ok">@musichen</span></div>
+      <div class="line" style="justify-content:space-between"><span style="font-size:13px">Share with team</span><button class="btn small primary">Share with team</button></div>
+      <p class="note">GitHub builds the desktop installers for this app.</p>
+    </div>
+    <div class="case srow" data-id="w-run" hidden>
+      <h4>Settings &gt; Share <span class="pill">after deploy</span></h4>
+      <div class="line" style="justify-content:space-between"><span style="font-size:13px">Share with team</span><button class="btn small" disabled>Building…</button></div>
+      <p class="note">Release 0.1.0 is building on GitHub: github.com/musichen/notes/actions</p>
+    </div>
+    <div class="case srow" data-id="w-done" hidden>
+      <h4>Settings &gt; Share <span class="pill">after deploy</span></h4>
+      <div class="banner ok"><b>Release 0.1.0 is out.</b>The installers are at github.com/musichen/notes/releases/tag/v0.1.0</div>
+    </div>
+    <div class="case srow" data-id="w-update" hidden>
+      <h4>Box status <span class="pill">existing box</span></h4>
+      <div class="banner info"><b>Update available: ACRYL frame 0.2.21</b>Your app and its files stay as they are. The box restarts once, which takes about a minute.<div class="row"><button class="btn small primary">Update</button><button class="btn small">Later</button></div></div>
+    </div>
+    <div class="case srow" data-id="w-rollback" hidden>
+      <h4>Box status <span class="pill err">update failed</span></h4>
+      <div class="banner err"><b>The update did not finish, so your box is back on the version it had.</b>Nothing in your app changed. The scheduler tries again on its next check.</div>
+    </div>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Box</th><th>What happens on deploy</th><th>Risk</th></tr></thead>
+      <tbody>
+        <tr><td>New box</td><td>Starts on the new image with create-blends 1.7.41 and gh.</td><td>Low: the test box runs it.</td></tr>
+        <tr><td>Existing box</td><td>Nothing at once. The scheduler's update check offers the frame update; <code>upgrade</code> runs with the frame check.</td><td>Medium: an update that fails rolls back to the version the box had.</td></tr>
+        <tr><td>Box with the app already on GitHub</td><td>Share with team works right away after connecting.</td><td>Low.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ DECISIONS ============ -->
+<section id="decisions">
+  <div class="eyebrow">Your decisions</div>
+  <h2>Two answers unblock the work</h2>
+  <div class="grid2" style="align-items:start">
+    <div class="card">
+      <form class="q" data-lavish-question="055-design" onsubmit="event.preventDefault(); const f=new FormData(event.currentTarget); const a=f.get('design'); const b=f.get('branches'); const n=f.get('note')||''; if(a&&window.lavish) window.lavish.queuePrompt('055 design: '+a+'. Branches: '+(b||'no answer')+'. '+n, {tag:'choice', text:'055: '+a, element:event.currentTarget, data:{question:'055-design', design:a, branches:b, note:n}});">
+        <h3>1. History, GitHub sync, Publish and Share</h3>
+        <label><input type="radio" name="design" value="Build it as shown"> Build it as shown</label>
+        <label><input type="radio" name="design" value="Build it with my changes (see note)"> Build it with my changes (note below, or annotate the page)</label>
+        <label><input type="radio" name="design" value="Not yet"> Not yet</label>
+        <h3 style="margin-top:6px">Branches</h3>
+        <label><input type="radio" name="branches" value="tuck into History behind a switch (recommended)"> Tuck into History behind a switch (recommended)</label>
+        <label><input type="radio" name="branches" value="keep as today"> Keep as today</label>
+        <label><input type="radio" name="branches" value="remove"> Remove</label>
+        <textarea name="note" placeholder="Anything to change"></textarea>
+        <div><button class="btn primary" type="submit">Queue this answer</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <form class="q" data-lavish-question="webboxes-deploy" onsubmit="event.preventDefault(); const a=new FormData(event.currentTarget).get('deploy'); if(a&&window.lavish) window.lavish.queuePrompt('WebBoxes production deploy: '+a, {tag:'choice', text:'WebBoxes: '+a, element:event.currentTarget, data:{question:'webboxes-deploy', answer:a}});">
+        <h3>2. WebBoxes production deploy</h3>
+        <label><input type="radio" name="deploy" value="Deploy now as on the test box (recommended)"> Deploy now as on the test box (recommended): boxes get the current frame and stop offering a Build installer that cannot work</label>
+        <label><input type="radio" name="deploy" value="Wait for 055"> Wait for 055, and deploy once with Publish &gt; Desktop app</label>
+        <div><button class="btn primary" type="submit">Queue this answer</button></div>
+      </form>
+    </div>
+  </div>
+  <div>
+    <button type="button" class="btn" onclick="(async (btn) => { const qs=[...document.querySelectorAll('[data-lavish-question]')]; const out=[]; for (const q of qs) { const lines=[]; for (const el of q.querySelectorAll('input, textarea')) { if ((el.type==='radio'||el.type==='checkbox') && !el.checked) continue; if (!el.value.trim()) continue; lines.push('  '+el.name+': '+el.value.trim()); } if (lines.length) out.push(q.getAttribute('data-lavish-question')+':\n'+lines.join('\n')); } const text=out.join('\n\n'); const s=btn.nextElementSibling; if (!text) { s.textContent='No answers yet.'; return; } try { await navigator.clipboard.writeText(text); s.textContent='Answers copied. Paste them in the chat.'; } catch { s.textContent=text; } })(this)">Copy all answers</button>
+    <span role="status" aria-live="polite" class="note"></span>
+  </div>
+</section>
+
+</div>
+<script>
+for (const group of document.querySelectorAll('[data-group]')) {
+  const buttons = group.querySelectorAll('.cases button');
+  const show = (id) => {
+    for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.case === id));
+    for (const c of group.querySelectorAll('.case')) c.hidden = c.dataset.id !== id;
+    const shown = group.querySelector(`.case[data-id="${id}"]`);
+    if (group.dataset.group === 'publish' && shown) for (const t of group.querySelectorAll('.pt')) t.setAttribute('aria-selected', String(t.dataset.tab === shown.dataset.tab));
+    if (group.dataset.group === 'history') { const bm = id === 'h-bookmarks'; group.querySelector('.tab-all').setAttribute('aria-selected', String(!bm)); group.querySelector('.tab-bm').setAttribute('aria-selected', String(bm)); }
+  };
+  for (const b of buttons) b.addEventListener('click', () => show(b.dataset.case));
+  if (group.dataset.group === 'publish') for (const t of group.querySelectorAll('.pt')) t.addEventListener('click', () => { const first = group.querySelector(`.case[data-tab="${t.dataset.tab}"]`); if (first) show(first.dataset.id); });
+}
+</script>
+</body>
+</html>
