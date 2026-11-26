@@ -35,3 +35,18 @@ export {
   type GithubSignInPoll,
   type GithubSignInStart,
 } from './github-login.js'
+export {
+  followRelease,
+  nextReleaseVersion,
+  RELEASE_WORKFLOW_FILE,
+  RELEASE_WORKFLOW_SPEC,
+  repositoryOf,
+  TEAM_RELEASE_CLI,
+  TEAM_RELEASE_SAY,
+  tagNames,
+  teamRelease,
+  type GithubAnswer,
+  type Ran,
+  type RepositoryApi,
+  type TeamReleaseResult,
+} from './team-release.js'

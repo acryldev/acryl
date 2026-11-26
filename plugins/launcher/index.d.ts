@@ -70,7 +70,7 @@ export function installApp(input: {
   platform?: string, node?: string, device?: (path: string) => number | bigint,
 }): Promise<{ readonly code: number, readonly program: 'used' | 'made' | 'retired' | 'none' }>
 
-/** Share with team (spec 052 T061, team-release.js): `node TEAM_RELEASE_CLI` in an app's folder with GH_TOKEN set pushes a version tag and follows GitHub's Release run. */
+/** Share with team (spec 052 T061, from @acryldev/app-persistence): `node TEAM_RELEASE_CLI` in an app's folder with GH_TOKEN set pushes a version tag and follows GitHub's Release run. */
 export const TEAM_RELEASE_CLI: string
 /** Every line the command says starts with this; `release: <url>` carries the release page, `failed: <reason>` why it stopped. */
 export const TEAM_RELEASE_SAY: string

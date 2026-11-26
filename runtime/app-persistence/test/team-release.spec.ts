@@ -1,20 +1,21 @@
-// Share with team (spec 052 T061) against fake git, npm and GitHub: what is pushed, in what order, which version is released, and how the run is followed.
+// Share with team (ACRYL spec 052 T061) against fake git, npm and GitHub: what is pushed, in what order, which version is released, and how the run is followed.
 import assert from 'node:assert/strict'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { test } from 'node:test'
-import { followRelease, nextReleaseVersion, RELEASE_WORKFLOW_FILE, repositoryOf, tagNames, teamRelease } from '../team-release.js'
+import { test } from 'vitest'
+import { followRelease, nextReleaseVersion, RELEASE_WORKFLOW_FILE, repositoryOf, tagNames, teamRelease } from '../src/index.js'
+import type { GithubAnswer, Ran, RepositoryApi, TeamReleaseResult } from '../src/index.js'
 
-function scratch(run) {
+function scratch(run: (root: string) => unknown): Promise<unknown> {
   const root = mkdtempSync(join(tmpdir(), 'acryl-team-'))
   return Promise.resolve(run(root)).finally(() => rmSync(root, { recursive: true, force: true }))
 }
 
 /** A git that answers like the app's, records every call, and has `remoteTags` on GitHub. */
 function fakeGit({ remote = 'https://github.com/ana/notes.git', remoteTags = '', dirty = '' } = {}) {
-  const calls = []
-  const git = (args) => {
+  const calls: string[] = []
+  const git = (args: readonly string[]): Ran => {
     calls.push(args.filter(arg => !arg.startsWith('credential.') && arg !== '-c').join(' '))
     const command = args.find(arg => !arg.startsWith('-') && !arg.includes('='))
     if (command === 'remote') return { status: 0, stdout: `${remote}\n`, stderr: '' }
@@ -27,9 +28,9 @@ function fakeGit({ remote = 'https://github.com/ana/notes.git', remoteTags = '',
 }
 
 /** GitHub answering from a script of states, one per poll. */
-function fakeApi(states, release = 'https://github.com/ana/notes/releases/tag/v1.0.1') {
+function fakeApi(states: readonly (Record<string, string> | undefined)[], release = 'https://github.com/ana/notes/releases/tag/v1.0.1'): RepositoryApi {
   let poll = 0
-  return async (path) => {
+  return async (path: string): Promise<GithubAnswer | undefined> => {
     if (path.startsWith('/actions/runs?')) {
       const state = states[Math.min(poll++, states.length - 1)]
       return { workflow_runs: state === undefined ? [] : [{ id: 7, name: 'Release', html_url: 'https://github.com/ana/notes/actions/runs/7', ...state }] }
@@ -40,7 +41,8 @@ function fakeApi(states, release = 'https://github.com/ana/notes/releases/tag/v1
   }
 }
 
-const clock = () => { let at = 0; return { now: () => at, wait: async (ms) => { at += ms } } }
+const reasonOf = (result: TeamReleaseResult): string => (result.ok ? '' : result.reason)
+const clock = () => { let at = 0; return { now: () => at, wait: async (ms: number) => { at += ms } } }
 
 test('the version and the repository: the next free patch, tags from ls-remote, owner/repo from https or ssh', () => {
   assert.equal(nextReleaseVersion('1.0.0', new Set()), '1.0.0')
@@ -55,9 +57,9 @@ test('the version and the repository: the next free patch, tags from ls-remote, 
 test('adds the workflow, saves the changes, releases the next free version, pushes the app before its tag, and follows the run to the release page', () => scratch(async folder => {
   writeFileSync(join(folder, 'package.json'), `${JSON.stringify({ name: 'notes', version: '1.0.0' }, null, 2)}\n`)
   const { git, calls } = fakeGit({ remoteTags: 'x\trefs/tags/v1.0.0\n', dirty: ' M src/app.ts\n' })
-  const npm = []
-  const npmExec = (args) => { npm.push(args.join(' ')); mkdirSync(join(folder, '.github', 'workflows'), { recursive: true }); writeFileSync(join(folder, RELEASE_WORKFLOW_FILE), 'name: Release\n'); return { status: 0, stdout: '', stderr: '' } }
-  const lines = []
+  const npm: string[] = []
+  const npmExec = (args: readonly string[]): Ran => { npm.push(args.join(' ')); mkdirSync(join(folder, '.github', 'workflows'), { recursive: true }); writeFileSync(join(folder, RELEASE_WORKFLOW_FILE), 'name: Release\n'); return { status: 0, stdout: '', stderr: '' } }
+  const lines: string[] = []
   const { now, wait } = clock()
   const result = await teamRelease({ folder, git, npmExec, api: fakeApi([undefined, { status: 'in_progress' }, { status: 'completed', conclusion: 'success' }]), say: line => lines.push(line), wait, now })
   assert.deepEqual(result, { ok: true, url: 'https://github.com/ana/notes/releases/tag/v1.0.1' })
@@ -75,7 +77,7 @@ test('an app not on GitHub is refused before anything is changed or pushed', () 
   const { git, calls } = fakeGit({ remote: '/somewhere/notes.git' })
   const result = await teamRelease({ folder, git, npmExec: () => { throw new Error('not reached') }, api: fakeApi([]), say: () => {}, wait: async () => {} })
   assert.equal(result.ok, false)
-  assert.match(result.reason, /not on GitHub yet: Save to GitHub first/u)
+  assert.match(reasonOf(result), /not on GitHub yet: Share to GitHub first/u)
   assert.deepEqual(calls, ['remote get-url origin'])
   assert.equal(existsSync(join(folder, RELEASE_WORKFLOW_FILE)), false)
 }))
@@ -84,7 +86,7 @@ test('a failed run, a run that never starts and one that never ends each say why
   const failed = await followRelease({ api: fakeApi([{ status: 'completed', conclusion: 'failure' }]), tag: 'v1.0.0', sha: 's', say: () => {}, ...clock() })
   assert.deepEqual(failed, { ok: false, reason: 'the Release run ended failure: its log says why', url: 'https://github.com/ana/notes/actions/runs/7' })
   const never = await followRelease({ api: fakeApi([undefined]), tag: 'v1.0.0', sha: 's', say: () => {}, ...clock() })
-  assert.match(never.reason, /started no Release run/u)
+  assert.match(reasonOf(never), /started no Release run/u)
   const endless = await followRelease({ api: fakeApi([{ status: 'in_progress' }]), tag: 'v1.0.0', sha: 's', say: () => {}, ...clock() })
-  assert.match(endless.reason, /longer than 100 minutes/u)
+  assert.match(reasonOf(endless), /longer than 100 minutes/u)
 })

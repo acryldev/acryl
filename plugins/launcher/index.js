@@ -9,4 +9,5 @@ export { MODEL_FILE, ORCAROUTER_REFERRAL_URL, PROVIDERS, clearModelKey, keyProbl
 export { GITHUB_CLIENT_ID, GITHUB_FILE, canPushWorkflows, clearGithub, githubClientId, githubEnv, pollGithubSignIn, readGithub, saveGithub, startGithubSignIn } from './github-login.js'
 export { NODE_MINIMUM, TOOLS_FOLDER, installGh, installNode, listedSum, nodeIsNewEnough, prepareTools, toolDirs, toolsEnv, versionOf } from './tools.js'
 export { INSTALL_CLI, PROGRAM_DIR, installApp, linkTree, programOf } from './app-install.js'
-export { RELEASE_WORKFLOW_FILE, SAY as TEAM_RELEASE_SAY, TEAM_RELEASE_CLI, followRelease, nextReleaseVersion, repositoryOf, teamRelease } from './team-release.js'
+// Share with team lives with the GitHub sign-in in @acryldev/app-persistence (an app's own Settings > Share runs it too); Control Center reads it here.
+export { RELEASE_WORKFLOW_FILE, TEAM_RELEASE_SAY, TEAM_RELEASE_CLI, followRelease, nextReleaseVersion, repositoryOf, teamRelease } from '@acryldev/app-persistence'
