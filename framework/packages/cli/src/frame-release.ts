@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import release from '../../../frame/packages.json' with { type: 'json' }
 import { DESKTOP_SHELL_PACKAGE, findDesktopShell } from './desktop-shell'
 import { FRAME_PACKAGES, type IdeProfileInput, type IdeProfilePackage } from './ide-profile'
-import { VERSION } from './version'
+import { compareVersions, VERSION } from './version'
 
 /** One frame package as it publishes: its folder (frame/packages.json `path`; a row package's folder is its source name), its published name, its version. */
 export interface FrameReleasePackage {
@@ -157,23 +157,40 @@ function frameProfileOfManifest(root: string): FrameProfileSpecs | undefined {
   const dshVersion = dependencies['@deepseek-ai/dsh-base']
   const frameworkVersion = dependencies['@acryldev/blends']
   if (typeof dshVersion !== 'string' || typeof frameworkVersion !== 'string') return undefined
-  const publishedOf = new Map(FRAME_RELEASE.map((entry) => [entry.source, entry.name]))
+  const releaseOf = new Map(FRAME_RELEASE.map((entry) => [entry.source, entry]))
   const packages: Record<string, string> = {}
   const names: Record<string, string> = {}
   for (const entry of FRAME_PACKAGES) {
     const source = dependencies[entry.name]
-    const publishedName = publishedOf.get(entry.name)
-    const published = publishedName === undefined ? undefined : dependencies[publishedName]
-    if (typeof source === 'string') packages[entry.name] = source
-    else if (typeof published === 'string' && publishedName !== undefined) {
-      packages[entry.name] = published
-      names[entry.name] = publishedName
+    const release = releaseOf.get(entry.name)
+    const published = release === undefined ? undefined : dependencies[release.name]
+    if (typeof source === 'string') packages[entry.name] = atLeastRelease(source, release?.version)
+    else if (typeof published === 'string' && release !== undefined) {
+      packages[entry.name] = atLeastRelease(published, release.version)
+      names[entry.name] = release.name
     }
   }
   if (Object.keys(packages).length === 0) return undefined
   // A registry range moves to this CLI's release, as the plugin step of an upgrade moves it; a checkout's `file:`/`link:` spec stays.
   const framework = /^[\^~]?\d/u.test(frameworkVersion) ? `^${VERSION}` : frameworkVersion
-  return { dshVersion, frameworkVersion: framework, packages, names }
+  // The frame packages and the DSH they were built for move together: DSH stays pinned exactly, as a new app pins it.
+  return {
+    dshVersion: atLeastRelease(dshVersion, FRAME_DSH_VERSION, ''),
+    frameworkVersion: framework,
+    packages,
+    names,
+  }
+}
+
+/**
+ * A frame package's registry range moves up to this release's version, as a new app gets it: otherwise the app's lockfile keeps the frame it was made with
+ * (an upgraded WebBox kept @acryldev/blends-frame 0.2.4 under 1.7.41). A newer range, and a checkout's `file:`/`link:` spec, stay.
+ */
+function atLeastRelease(spec: string, version: string | undefined, prefix = '^'): string {
+  const current = /^[\^~]?(\d+\.\d+\.\d+(?:-[\w.]+)?)$/u.exec(spec)?.[1]
+  return version !== undefined && current !== undefined && compareVersions(version, current) > 0
+    ? `${prefix}${version}`
+    : spec
 }
 
 /**

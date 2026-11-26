@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import {
+  FRAME_DSH_VERSION,
   FRAME_RELEASE,
   frameProfileForApp,
   frameProfileInput,
@@ -37,13 +38,25 @@ describe('the frame specs of an existing app', () => {
       [String(web?.name)]: '^0.1.0',
     })
     const specs = frameProfileForApp(root)
-    expect(specs?.packages['@acryldev/web']).toBe('^0.1.0')
+    // An older registry range moves up to the frame release (else the lockfile keeps the old frame); the name it installed stays.
+    expect(specs?.packages['@acryldev/web']).toBe(`^${web?.version}`)
     // The framework moves to this CLI's release, so the frame step does not write the old range back after the upgrade bumped it.
     expect(specs?.frameworkVersion).toBe(`^${VERSION}`)
     const input = frameProfileInput(specs ?? publishedFrameProfile(), 'on-npm', [])
-    expect(input.dependencies?.[String(web?.name)]).toBe('^0.1.0')
+    expect(input.dependencies?.[String(web?.name)]).toBe(`^${web?.version}`)
     const row = input.packages?.find((entry) => entry.row === 'acryl-web-service')
     expect(row?.name).toBe(web?.name)
+  })
+
+  it('a frame range newer than the release stays, and DSH moves with the frame', () => {
+    const root = app('ahead', {
+      '@deepseek-ai/dsh-base': '0.1.0',
+      '@acryldev/blends': '^1.2.0',
+      [String(web?.name)]: '^99.0.0',
+    })
+    const specs = frameProfileForApp(root)
+    expect(specs?.packages['@acryldev/web']).toBe('^99.0.0')
+    expect(specs?.dshVersion).toBe(FRAME_DSH_VERSION)
   })
 
   it('a checkout app keeps its file: specs under the source names', () => {
