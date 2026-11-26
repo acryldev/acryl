@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/node-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The framework's standalone HTTP adapter, one Cordis service: serves the whole router from a node:http listener where the ACRYL Host is not running",
   "license": "MIT",
   "repository": {
