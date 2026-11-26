@@ -99,7 +99,7 @@ Category is the Blends store category (the repository number prefix follows it).
 
 | Task | Blend | Category | Source (license, stars) | Status |
 | --- | --- | --- | --- | --- |
-| T080 | **AI video editor** ("Tyler" in the example): transcript, captions, clean cut, podcast-grade sound, music and sound effects, video effects, stock footage, 3D animation, image and video generation, any input (file, YouTube link, MP3), post text, thumbnails and 2-10 shorts per video, knows the brand and pricing | media | HyperFrames for the video side, `heygen-com/hyperframes` (Apache-2.0, 90k) | done: v0.1.0, `acrylblends/13-content-machine`, store Media > Content creation (2026-11-26) |
+| T080 | **AI video editor** ("Tyler" in the example): transcript, captions, clean cut, podcast-grade sound, music and sound effects, video effects, stock footage, 3D animation, image and video generation, any input (file, YouTube link, MP3), post text, thumbnails and 2-10 shorts per video, knows the brand and pricing | media | HyperFrames for the video side, `heygen-com/hyperframes` (Apache-2.0, 90k) | done: v0.1.1 (installers for macOS, Windows, Linux), `acrylblends/13-content-machine`, store Media > Content creation (2026-11-26) |
 | T081 | Video animation with code | media | `heygen-com/hyperframes` (Apache-2.0, 90k) | idea |
 | T082 | Media manager, a content machine: one recording in, a month of posts out | media | none | merged into T080 (the same app: ACRYL Content Machine) |
 | T083 | Voice studio and voice processor | media | `jamiepine/voicebox` (MIT, 61k); `debpalash/VoiceStudio` is AGPL-3.0, reference only | idea |
@@ -130,7 +130,7 @@ Category is the Blends store category (the repository number prefix follows it).
 
 ## T080 as built (2026-11-26)
 
-ACRYL Content Machine, `acrylblends/13-content-machine` (v0.1.0), in the store at Media > Content creation. Thirteen Cordis plugins: `content`
+ACRYL Content Machine, `acrylblends/13-content-machine` (v0.1.1; v0.1.0 never packed: the starter secret scan refused a literal test key), in the store at Media > Content creation. Thirteen Cordis plugins: `content`
 (the domain and a feature registry the screen, the API and the agent all read), one plugin per step (`content-ingest`, `content-transcribe`,
 `content-cut`, `content-sound`, `content-music`, `content-visuals`, `content-shorts`, `content-thumbnail`, `content-posts`), `content-api`,
 `content-studio` (React) and `content-tools` (ten `content_*` tools for the ACRYL agent).
