@@ -290,7 +290,7 @@ async function attempt(name) {
           { env: clean },
         )
       : (() => {
-          run('npm', ['install', 'create-acrylblends@latest', '--no-audit', '--no-fund'], dir, {
+          run('npm', ['install', '@acryldev/create-blends@latest', '--no-audit', '--no-fund'], dir, {
             env: clean,
           })
           return run(

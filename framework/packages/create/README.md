@@ -63,12 +63,12 @@ An app made here holds two kinds of code that are not its own, and says so in it
 
 - **The library plugins** (`plugins/door`, `@acryldev/router`, `desktop`, `instance`, `plugin-share` and the others named in
   `plugins/library.json`) are copies of the acrylblends library, from <https://github.com/acrylblends/acrylblends>.
-  `plugins/library.lock.json` records the release each came from and a hash of every file. `npx acrylblends upgrade` brings them to the
+  `plugins/library.lock.json` records the release each came from and a hash of every file. `npx @acryldev/blends upgrade` brings them to the
   newest release; when a file was changed here, it stops, shows the diff and changes nothing (`--force` replaces it and keeps a backup in
   `.acryl/upgrade-backup/`). Fix a library plugin in acrylblends, not here; your own code goes in a plugin of your own under `plugins/`.
 - **The frame and its parts** (`@acryldev/blends-frame`, `@acryldev/settings` and the other `@acryldev/*` packages in
   `package.json`) and the framework (`acrylblends`) come from npm, built from the same repository (`ide/` and `packages/`). `npm install`
-  installs them; `npx acrylblends upgrade` moves `package.json` to the release it brings.
+  installs them; `npx @acryldev/blends upgrade` moves `package.json` to the release it brings.
 
 Everything else (`blend.yaml`, `src/`, your plugins under `plugins/`) is the app's own, and an upgrade never touches it.
 
@@ -92,7 +92,7 @@ MIT license.
 - csrf protection on, a test for every route, and an `AGENTS.md` that describes the files so a coding agent can extend it;
 - a live character counter and an instant filter written as a small script in the page. When the client components of `acrylblends/jsx/dom` can be served without a bundler (planned for 0.7.2), they will replace that script here.
 
-`npx acrylblends add desktop` followed by `npm install` and `npm run desktop` runs it as a desktop window (see `docs/framework/getting-started/desktop.md`).
+`npx @acryldev/blends add desktop` followed by `npm install` and `npm run desktop` runs it as a desktop window (see `docs/framework/getting-started/desktop.md`).
 
 ## Templates from a repository or a package
 

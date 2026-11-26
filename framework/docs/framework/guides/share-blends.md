@@ -118,10 +118,10 @@ listed in the Blends store from v0.1.1: acrylblends.github.io shows it within ab
 Inside Ben's app, which has a file of his own (`BEN-NOTES.md`), committed:
 
 ```sh
-npx acrylblends@latest update
+npx @acryldev/blends@latest update
 ```
 
-Write it with `@latest`: plain `npx acrylblends update` runs the copy installed in the app, which may be older than the fixes for what you want to update.
+Write it with `@latest`: plain `npx @acryldev/blends update` runs the copy installed in the app, which may be older than the fixes for what you want to update.
 
 ```
 ben-notes was made from github:inboxxobni/sh-guide-notes 0.1.0. Asking the repository for its latest release...
@@ -156,7 +156,7 @@ account); what follows is what they reported, in their words shortened, and what
 3. **Publish** gives the box an address of its own. An anonymous visitor of that address gets the app, and gets nothing of the workspace (the terminal and agent
    routes answer 404 to anyone but the owner).
 4. **Update.** When the Blend you made the box from has a newer release (a newer version in the store, or a newer tag of the repository), the box shows **Update to X**.
-   It runs `npx acrylblends@latest update`, which is step 5 above (your edits are kept), then `npm install`, then restarts the box, and shows the command's output.
+   It runs `npx @acryldev/blends@latest update`, which is step 5 above (your edits are kept), then `npm install`, then restarts the box, and shows the command's output.
    The button appears only when `update --check` itself says a newer release exists.
 
 ## What this guide does not cover

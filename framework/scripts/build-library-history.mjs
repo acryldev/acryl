@@ -52,7 +52,7 @@ for (const version of versions) {
       { cwd: dir, encoding: 'utf8' },
     )
     if (install.status !== 0)
-      throw new Error(`npm install acrylblends@${version} failed: ${install.stderr}`)
+      throw new Error(`npm install @acryldev/blends@${version} failed: ${install.stderr}`)
     const probe = spawnSync(process.execPath, ['--input-type=module', '-e', PROBE], {
       cwd: dir,
       encoding: 'utf8',

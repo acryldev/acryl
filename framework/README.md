@@ -27,7 +27,7 @@ on top. It is a library of Cordis plugins extracted from ACRYL, and a command th
 - **save**: commit the app, refusing secrets and public remotes for private apps
 
 ```sh
-npm create @acryldev/blends my-app            # or simply: npm create acrylblends my-app
+npm create @acryldev/blends my-app            # or simply: npm create @acryldev/blends my-app
 cd my-app && npm install && npm run dev      # the app in the ACRYL frame: chat, agents, branches, versions, Settings
 npm run desktop                               # the same in its own window
 ```

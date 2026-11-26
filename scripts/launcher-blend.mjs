@@ -43,7 +43,7 @@ run('node', ['scripts/with-build-lock.mjs', 'corepack', 'pnpm', '--filter', '@ac
 if (!existsSync(join(app, 'blend.yaml'))) {
   console.log(`launcher blend: making the Blends app in ${app} (once)`)
   mkdirSync(dirname(app), { recursive: true })
-  run('npx', ['-y', 'create-acrylblends@latest', app.split(/[\\/]/u).pop(), 'blank', '--no-start'], { cwd: dirname(app), shell: process.platform === 'win32' })
+  run('npx', ['-y', '@acryldev/create-blends@latest', app.split(/[\\/]/u).pop(), 'blank', '--no-start'], { cwd: dirname(app), shell: process.platform === 'win32' })
 }
 
 // The Host half: the Blend entry and its package, the shared sources (imports rewritten to the names a Blends app has); the launcher journeys come from

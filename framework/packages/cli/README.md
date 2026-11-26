@@ -95,8 +95,8 @@ Every template is a Cordis app: `blend.yaml` lists its plugins, `plugins/` holds
 `docs/framework` (the pages this README links to), `AGENTS.md`, `CLAUDE.md`, one skill for a coding agent, and its own tests. `npm run dev`
 serves it and prints the URL, `npm test` runs the tests, `npm run check` type-checks.
 
-Adding a capability is one command: `npx acrylblends add <plugin>` copies a library plugin and what it needs into `plugins/`, prints the row to
-add to `blend.yaml`, and records what it copied so `acrylblends upgrade` can move it forward later. `npx acrylblends plugins` lists the library.
+Adding a capability is one command: `npx @acryldev/blends add <plugin>` copies a library plugin and what it needs into `plugins/`, prints the row to
+add to `blend.yaml`, and records what it copied so `acrylblends upgrade` can move it forward later. `npx @acryldev/blends plugins` lists the library.
 
 ## Run it in a browser or in a desktop window
 
@@ -106,9 +106,9 @@ The same app runs both ways; the routes, the plugins and the data are the ones y
 - **Desktop**: add the shell and run it as a window on the app's own server.
 
 ```sh
-npx acrylblends init my-app --desktop            # create an app with the shell (--template picks the template)
+npx @acryldev/blends init my-app --desktop            # create an app with the shell (--template picks the template)
 # or, in an app you already have:
-npx acrylblends add desktop
+npx @acryldev/blends add desktop
 npm install                                      # the shell needs electron
 npm run desktop                                  # an Electron window on the app's own server
 ```
@@ -157,7 +157,7 @@ npx @acryldev/blends@latest upgrade --dry-run   # the plan: what would be replac
 npx @acryldev/blends@latest upgrade             # an edited file stops it with the diff, unless --force
 ```
 
-Write `@latest`: a bare `npx acrylblends upgrade` runs the copy the app has installed, and an app made before 1.0 has an old one with no `upgrade` verb (it prints its help and exits 0, so it looks as if it worked, or answers "unknown command" and exits 2).
+Write `@latest`: a bare `npx @acryldev/blends upgrade` runs the copy the app has installed, and an app made before 1.0 has an old one with no `upgrade` verb (it prints its help and exits 0, so it looks as if it worked, or answers "unknown command" and exits 2).
 
 ## Use it as a library
 

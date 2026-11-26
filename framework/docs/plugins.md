@@ -111,7 +111,7 @@ has a tool registry. It never reads, stores or asks for a token: git and gh use 
 
 ## agent-panel
 
-**Experimental, development only** (it does nothing with `NODE_ENV=production`; see [what runs in production](framework/guides/production.md)). A chat panel inside the running app (spec 049 slice 14). an app made from the `agent` template has it (`npx acrylblends add agent-panel` copies it, with the agent family it needs, into an older one); add a row
+**Experimental, development only** (it does nothing with `NODE_ENV=production`; see [what runs in production](framework/guides/production.md)). A chat panel inside the running app (spec 049 slice 14). an app made from the `agent` template has it (`npx @acryldev/blends add agent-panel` copies it, with the agent family it needs, into an older one); add a row
 `- id: agent-panel` / `name: agent-panel` to `blend.yaml` **before** the `routes` row and `'agent-panel': panel` to the registry in `src/app.ts` (the line `acrylblends add` prints). Open the app in a browser:
 a button at the corner opens a side panel. Write what you want; the panel's agent builds it **through the same door** (`.acryl/bin/acryl`, see the app's `AGENTS.md`), and when a plugin was installed or
 removed the page reloads, so the feature shows with no restart.
@@ -131,7 +131,7 @@ removed the page reloads, so the feature shows with no restart.
 
 ## driver-pty
 
-**Experimental, development only** (it does nothing with `NODE_ENV=production`; see [what runs in production](framework/guides/production.md)). A coding agent in a real terminal inside the running app (M8). `npx acrylblends add driver-pty` copies the plugin (and installs `node-pty`) into an app that has [agent-panel](#agent-panel); add a row
+**Experimental, development only** (it does nothing with `NODE_ENV=production`; see [what runs in production](framework/guides/production.md)). A coding agent in a real terminal inside the running app (M8). `npx @acryldev/blends add driver-pty` copies the plugin (and installs `node-pty`) into an app that has [agent-panel](#agent-panel); add a row
 `- id: driver-pty` / `name: driver-pty` to `blend.yaml` **after** the `agent-panel` row and `'driver-pty': driverPty` to the registry in `src/app.ts`. The panel then offers `pty:claude`, `pty:codex` and
 `pty:pi` (the ones installed on the machine) next to its chat drivers; choosing one swaps the chat for the program's own terminal (xterm.js), in the app folder with `.acryl/bin` on its `PATH`, so the agent
 works in its interactive mode and acts through the door as the headless drivers do. `config.programs` (`{ node: ['agent.mjs'] }`) offers other programs as `pty:<name>`.
@@ -151,7 +151,7 @@ works in its interactive mode and acts through the door as the headless drivers 
 ## driver-acp
 
 **Experimental, development only** (it does nothing with `NODE_ENV=production`; see [what runs in production](framework/guides/production.md)). Any agent that speaks the
-[Agent Client Protocol](https://agentclientprotocol.com) (ACP v1 over stdio) as a chat in the [agent panel](#agent-panel) (M8). `npx acrylblends add driver-acp` copies the plugin into an app that has the
+[Agent Client Protocol](https://agentclientprotocol.com) (ACP v1 over stdio) as a chat in the [agent panel](#agent-panel) (M8). `npx @acryldev/blends add driver-acp` copies the plugin into an app that has the
 panel; add a row `- id: driver-acp` / `name: driver-acp` to `blend.yaml` **after** the `agent-panel` row and `'driver-acp': driverAcp` to the registry in `src/app.ts`. The panel then offers `acp:<name>`
 for each agent whose command is on the machine.
 

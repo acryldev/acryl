@@ -6,7 +6,7 @@ changes. Today it runs from source (`npm run desktop`); packaging a distributabl
 ## Use it
 
 ```sh
-npx acrylblends init my-app --template todo --desktop     # or: acrylblends add desktop, in an app you already have
+npx @acryldev/blends init my-app --template todo --desktop     # or: acrylblends add desktop, in an app you already have
 cd my-app
 npm install
 npm run desktop
@@ -17,7 +17,7 @@ binary the first time it runs. Behind a proxy or mirror, set `ELECTRON_MIRROR` (
 
 ## A plain Acryl app
 
-In an app made by `npm create @acryldev/blends@latest my-app -- --template nodejs`, `npx acrylblends add desktop-shell` adds `plugins/desktop-web` instead: it imports `src/app.ts` (`export default app`), serves `app.fetch` on
+In an app made by `npm create @acryldev/blends@latest my-app -- --template nodejs`, `npx @acryldev/blends add desktop-shell` adds `plugins/desktop-web` instead: it imports `src/app.ts` (`export default app`), serves `app.fetch` on
 `127.0.0.1` with a free port through `@acryldev/blends/node-server`, opens the window on it and, when the window closes, closes the server and exits. The rules below are the same, with `~/.acryl/apps/<id>/cache/electron` as the
 user-data folder.
 ## What `npm run desktop` does

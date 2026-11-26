@@ -1,7 +1,7 @@
 # Agents
 
 A coding agent (Claude Code, Codex, OpenCode, Copilot and others) builds on Acryl best when the documentation is in the folder it works in. A project created with
-`npm create @acryldev/blends@latest` (and one made with `npx acrylblends init`) therefore contains:
+`npm create @acryldev/blends@latest` (and one made with `npx @acryldev/blends init`) therefore contains:
 
 - `docs/framework/`: these pages. Start at `README.md`; `api/summary.md` is the one-page summary of the API.
 - `AGENTS.md`: where the API is, how a feature is built (an `Acryl` app mounted with `ctx.router.route`, a plugin registered in `src/app.ts` and `blend.yaml`, a state cell),
@@ -42,11 +42,11 @@ npm create @acryldev/blends@latest my-app agent
 cd my-app
 npm install
 npm run dev          # the panel is the button at the corner of the page
-npx acrylblends add driver-pty   # optional: real terminals (pty:claude, pty:codex, pty:pi) in the panel
+npx @acryldev/blends add driver-pty   # optional: real terminals (pty:claude, pty:codex, pty:pi) in the panel
 npm install
 ```
 
-- The panel needs the `agent` and `extensions` rows, which only the `agent` template has: `add agent-panel` on an app without them (a `blank` app) refuses before it copies anything and says which rows are missing, and on an `agent` app it says the panel is already there. An agent-template app made before 1.0.5 gets it with `npx acrylblends add agent-panel`.
+- The panel needs the `agent` and `extensions` rows, which only the `agent` template has: `add agent-panel` on an app without them (a `blank` app) refuses before it copies anything and says which rows are missing, and on an `agent` app it says the panel is already there. An agent-template app made before 1.0.5 gets it with `npx @acryldev/blends add agent-panel`.
 - `add driver-pty` puts the driver's row after the panel's in `blend.yaml` and registers it in `src/app.ts`.
 - A **run belongs to the app, not to the page**: when the page reloads (the door reloads it after a plugin change) the panel shows the question and the events so far and follows the run to its end; **Stop** is the only thing that cancels it.
 - **The panel's coding agents are yours.** `claude`, `codex` and `pi` run on the machine that runs the app, in the app folder, with the login of the person who started it: `claude` and `codex` use their own signed-in sessions, and `pi` is offered when `DEEPSEEK_API_KEY` is set or `pi` has stored a DeepSeek login (`~/.pi/agent/auth.json`, read from the `HOME` of the process that runs the app: an app started under another `HOME` does not see the login, and the panel then lists `pty:pi` but no chat `pi`). A program that is not installed, or is not logged in, is not offered; nothing is shared between machines, and a workshop laptop needs its own login. The panel's own `agent` (the offline scripted one) needs none.

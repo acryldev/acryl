@@ -29,7 +29,7 @@ Every generated app is TypeScript, has `npm test` (`node:test`) and `npm run che
 
 ## As a desktop app
 
-`npx acrylblends init my-app --template todo --desktop` (or `acrylblends add desktop-shell` in an existing app) adds `npm run desktop`: an Electron window on the app's own server, the same code as `npm run dev`. See [the desktop shell](desktop.md).
+`npx @acryldev/blends init my-app --template todo --desktop` (or `acrylblends add desktop-shell` in an existing app) adds `npm run desktop`: an Electron window on the app's own server, the same code as `npm run dev`. See [the desktop shell](desktop.md).
 
 ## Try the agent
 
@@ -53,8 +53,8 @@ answers before reporting it live. See [Extending a running app](agent/extending-
 ## Add plugins
 
 ```sh
-npx acrylblends plugins             # the library
-npx acrylblends add app-settings    # copy one into this app, with what it requires
+npx @acryldev/blends plugins             # the library
+npx @acryldev/blends add app-settings    # copy one into this app, with what it requires
 npm install                                                       # new dependencies, if it added any
 ```
 

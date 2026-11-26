@@ -77,7 +77,7 @@ await file.close()
 await sql.close()
 ```
 
-On the command line, `npx acrylblends kv import data/kv.json data/app.sqlite` does the same (add `--overwrite` to replace keys the table has).
+On the command line, `npx @acryldev/blends kv import data/kv.json data/app.sqlite` does the same (add `--overwrite` to replace keys the table has).
 The table is created on first use, beside the app's own tables; nothing else changes.
 
 ## Open the database

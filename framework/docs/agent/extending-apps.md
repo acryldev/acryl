@@ -112,7 +112,7 @@ A group's plugins come in together with `plugin pull --from <list>`: the list is
 https address of one (a gist's raw link), one source per line, `#` starts a comment. Each source is pulled on its own, so one
 that is refused (a route or name another plugin already has, a wrong digest) is named with its reason while the others come in
 and keep running; the command then fails, so a script sees it.
-`npx acrylblends add showcase` gives the group's app a page at `/showcase`: a card for every plugin (name, author's GitHub
+`npx @acryldev/blends add showcase` gives the group's app a page at `/showcase`: a card for every plugin (name, author's GitHub
 login, version, where it came from, state, and links to its pages, its home widget and its tool), updated live as plugins are
 pulled and removed. `GET /showcase/plugins` answers the same cards as JSON.
 

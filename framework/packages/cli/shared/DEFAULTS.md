@@ -6,18 +6,18 @@ and swap it at the one place that mounts it.
 
 | Choice | Default | To swap it |
 | --- | --- | --- |
-| Records | the `db` port on SQLite (already mounted in the notes and chat templates; elsewhere `npx acrylblends add db`) | mount another provider of `db` in `src/app.ts`; plugins use `ctx.db` and do not change |
-| Small state | the `kv` port on one JSON file (`npx acrylblends add kv`) | mount `@acryldev/kv-db` (the same port over `db`) or a provider of your own |
+| Records | the `db` port on SQLite (already mounted in the notes and chat templates; elsewhere `npx @acryldev/blends add db`) | mount another provider of `db` in `src/app.ts`; plugins use `ctx.db` and do not change |
+| Small state | the `kv` port on one JSON file (`npx @acryldev/blends add kv`) | mount `@acryldev/kv-db` (the same port over `db`) or a provider of your own |
 | Server | Node (`@acryldev/node-server`) | mount the adapter of another runtime in `src/app.ts` |
-| Window | the browser | `npx acrylblends add desktop` adds an Electron window on the same server |
+| Window | the browser | `npx @acryldev/blends add desktop` adds an Electron window on the same server |
 
 - **An outside tool** (a database server, a bundler, a router such as Vike) joins the app as a provider: a plugin in `plugins/<name>/` that implements a port and
   passes that port's conformance tests, then `src/app.ts` mounts it. Postgres is such a provider and is not part of this package; add it when the app needs it.
-- **The dependency rule:** only the file that mounts a provider imports it; everything else takes the port as an argument or injects it. `npx acrylblends check-deps` enforces it.
+- **The dependency rule:** only the file that mounts a provider imports it; everything else takes the port as an argument or injects it. `npx @acryldev/blends check-deps` enforces it.
 
 ## Plugins
 
-There is one plugin folder: `plugins/` at the root of the app. A plugin is a folder `plugins/<name>/` with an `index.ts`. `npx acrylblends add <name>` copies a library
+There is one plugin folder: `plugins/` at the root of the app. A plugin is a folder `plugins/<name>/` with an `index.ts`. `npx @acryldev/blends add <name>` copies a library
 plugin there; a plugin you or an agent write goes there too (the `extensions` plugin installs it into the running app, and `plugins/library.json` lists the copies it must not
 install a second time). Do not create `src/plugins/` or `extensions/`.
 

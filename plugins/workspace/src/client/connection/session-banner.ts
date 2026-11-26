@@ -5,7 +5,7 @@
  * the frame would show "Reconnecting..." indefinitely with no way to say why. This watches the connection's own recovery state and, while it is not
  * connected, polls one cheap same-origin endpoint that goes through the same admission (the workspace's own routes sit on a longer router prefix and are
  * not behind the browser session, so they cannot answer this). A 401 that holds for the configured confirmations means the session is gone: the banner
- * says so and names the command that prints a way back in - `npx acrylblends open` - instead of spinning. Any admitted answer (200, 400, 404, 500) means
+ * says so and names the command that prints a way back in - `npx @acryldev/blends open` - instead of spinning. Any admitted answer (200, 400, 404, 500) means
  * the session is alive and the banner stays quiet; a network failure means the host itself is not answering, which is the retry's business.
  */
 import type { Context } from '@deepseek-ai/cordis'
@@ -15,7 +15,7 @@ export type FrameSessionState = 'live' | 'waiting' | 'ended'
 
 /** The message when the session is gone: the command is the recovery, so it is named exactly. */
 export const FRAME_SESSION_ENDED_MESSAGE =
-  "This frame's session ended. Open the address the terminal printed, or run `npx acrylblends open` in the app folder and open the address it prints."
+  "This frame's session ended. Open the address the terminal printed, or run `npx @acryldev/blends open` in the app folder and open the address it prints."
 
 /** The part of DSH's client connection service this needs. */
 export interface ConnectionStateSource {

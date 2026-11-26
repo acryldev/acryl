@@ -116,7 +116,7 @@ Then anyone with access can start from it: `acryl new another --from https://git
 The framework also works on its own, without the ACRYL apps:
 
 ```bash
-npx acrylblends@0.2.0 init my-agent --agent --yes
+npx @acryldev/blends@0.2.0 init my-agent --agent --yes
 cd my-agent && npm install && npm start
 ```
 

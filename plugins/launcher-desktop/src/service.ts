@@ -362,7 +362,7 @@ export class LauncherService {
     const run = this.#ports.runner({ program: 'npm', args, cwd: entry.path, env: this.#environment() })
     const kind = INSTALLER_KIND[process.platform] ?? 'an installer'
     const job: Job = {
-      name: view.name, kind: 'build', line: `cd ${entry.path} && npx acrylblends pack --from . --product "${view.name}" --out ${folder}`, status: 'running', run, since: Date.now(), output: '',
+      name: view.name, kind: 'build', line: `cd ${entry.path} && npx @acryldev/blends pack --from . --product "${view.name}" --out ${folder}`, status: 'running', run, since: Date.now(), output: '',
       step: `Building ${kind} of ${view.name} for this computer: making the app from its folder with its packages, then packaging it (5 to 15 minutes, it downloads Electron's builder the first time). Next: the file, in ${folder}.`,
     }
     this.#job = job

@@ -71,7 +71,7 @@ irm https://acryl.dev/install.ps1 | iex
 2. **智能体用这些积木构建。** ACRYL 的聊天，以及 Claude Code、Codex 或 Pi，都通过应用的"门"来操作它。核心代码保持不动。
 3. **按人沙箱化。** 每个应用在自己的实例里运行，在你的电脑上，或在你自己的 [WebBox](https://webboxes.ai) 里，只拥有你自己的权限。
 4. **你的改动是一个带版本的层：一个 Blend。** 保存、回滚、分享到 GitHub、上架到商店。
-5. **底座继续发布新版本。** `npx acrylblends@latest update` 把新版本合并到你的层之下，你的改动依然保留。
+5. **底座继续发布新版本。** `npx @acryldev/blends@latest update` 把新版本合并到你的层之下，你的改动依然保留。
 
 别再卖功能了。卖一个让客户自己完成的平台。
 
@@ -89,7 +89,7 @@ irm https://acryl.dev/install.ps1 | iex
 
 - **Blends（整个应用）：** 把你的应用分享到你自己的 GitHub 仓库，并作为 Community 上架到商店（`npm run share -- --visibility public --list`）。
   任何人都可以用它创建应用（`npx acryl@latest new their-app --from github:you/your-app#v0.1.0`），之后用
-  `npx acrylblends@latest update` 取得你的下一个版本，同时保留自己的改动。
+  `npx @acryldev/blends@latest update` 取得你的下一个版本，同时保留自己的改动。
 - **Cordis 插件（单项能力）：** 把插件发布到你的 GitHub（`npm run acryl -- plugin publish <name>`），
   并通过地址把别人的插件拉进你的应用（`npm run acryl -- plugin pull github:owner/repo@version`）。
 - **WebBoxes：** 把任何 Blend 部署到你自己在 [webboxes.ai](https://webboxes.ai) 的托管 box，连同它的智能体一起。

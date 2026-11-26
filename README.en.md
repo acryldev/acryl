@@ -69,7 +69,7 @@ Always `@latest`: an old npm cache or a slow registry mirror can otherwise start
 2. **The agent builds with those blocks.** ACRYL's chat, and Claude Code, Codex or Pi, operate the app through its door. The core code stays untouched.
 3. **Sandboxed per person.** Every app runs in its own instance, on your machine or in your own [WebBox](https://webboxes.ai), with your rights only.
 4. **Your change is a versioned layer: a Blend.** Save, roll back, share it to GitHub, list it in the store.
-5. **The foundation keeps shipping.** `npx acrylblends@latest update` merges new releases under your layer, and your changes stay.
+5. **The foundation keeps shipping.** `npx @acryldev/blends@latest update` merges new releases under your layer, and your changes stay.
 
 Stop selling features. Sell a platform your customers finish themselves.
 
@@ -87,7 +87,7 @@ Stop selling features. Sell a platform your customers finish themselves.
 
 - **Blends (whole apps):** share your app to your own GitHub repository and list it in the store as Community (`npm run share -- --visibility public --list`).
   Anyone makes an app from it (`npx acryl@latest new their-app --from github:you/your-app#v0.1.0`) and later brings in your next release with
-  `npx acrylblends@latest update`, keeping their own changes.
+  `npx @acryldev/blends@latest update`, keeping their own changes.
 - **Cordis plugins (single capabilities):** publish a plugin to your GitHub (`npm run acryl -- plugin publish <name>`) and pull anyone's into your app
   by its address (`npm run acryl -- plugin pull github:owner/repo@version`).
 - **WebBoxes:** deploy any Blend to your own hosted box at [webboxes.ai](https://webboxes.ai), with its agents.

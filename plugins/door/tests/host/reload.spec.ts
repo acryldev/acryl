@@ -202,7 +202,7 @@ describe('act navigate says what the app answered at the path', () => {
     expect(answer.value).toEqual({ ok: true, action: 'installed' })
     expect(page.calls.filter((call) => call.request.op === 'reload')).toHaveLength(1)
     await expect(door(channel, { pluginShare: pulling({ ok: true }) }).run('plugin-pull', {}, never)).rejects.toThrow(/needs a source/)
-    await expect(door(channel).run('plugin-pull', { source: 'github:a/b' }, never)).rejects.toThrow(/npx acrylblends add plugin-share/)
+    await expect(door(channel).run('plugin-pull', { source: 'github:a/b' }, never)).rejects.toThrow(/npx @acryldev\/blends add plugin-share/)
   })
 
   it('plugin pull --from pulls a group list: a refused source is named with its reason, the others come in, and the page reloads once', async () => {

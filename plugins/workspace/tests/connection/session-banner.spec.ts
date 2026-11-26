@@ -59,7 +59,7 @@ describe('the frame session banner', () => {
     expect(banner.getSnapshot()).toBe('waiting')
     await vi.advanceTimersByTimeAsync(110)
     expect(banner.getSnapshot()).toBe('ended')
-    expect(FRAME_SESSION_ENDED_MESSAGE).toContain('npx acrylblends open')
+    expect(FRAME_SESSION_ENDED_MESSAGE).toContain('npx @acryldev/blends open')
     banner.dispose()
   })
 

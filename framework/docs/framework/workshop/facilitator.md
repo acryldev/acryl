@@ -95,7 +95,7 @@ and an empty data folder.
 
 - The frame's chat tab takes the focus when it binds its session after a restart; the app's tab is one click away and the guide says so.
 - The frame's address is stable across restarts: the launcher keeps the token in the app home (owner-only, atomic) and reuses it, so an open page
-  comes back by reloading its URL even if the browser lost its cookie. `npx acrylblends open` prints the address of the running frame;
-  `npx acrylblends open --new` rotates it (the old address stops working at once and the new one is printed). The frame-side banner that names the
+  comes back by reloading its URL even if the browser lost its cookie. `npx @acryldev/blends open` prints the address of the running frame;
+  `npx @acryldev/blends open --new` rotates it (the old address stops working at once and the new one is printed). The frame-side banner that names the
   command is still to come (after the 120 gate work).
 - The one-click WebBoxes.ai deploy and the browser-only section stay TODO(M9) until that workspace is live.

@@ -8,17 +8,17 @@ provider **while it runs**: the plugins that use the port wait, and carry on whe
 This page does it once, from start to end, with a real tool: [lowdb](https://github.com/typicode/lowdb), a small JSON-file database, becomes a provider of the `kv` port ([Data](data.md#a-tiny-app-kv)).
 Every step runs as written: the code on this page is extracted and run against a fresh app by `scripts/verify-byo-tool.mjs`.
 
-You need an app with the `extensions` plugin, which installs plugins while the app runs: `npx acrylblends init my-app --template agent`, then `cd my-app` and `npm install`.
+You need an app with the `extensions` plugin, which installs plugins while the app runs: `npx @acryldev/blends init my-app --template agent`, then `cd my-app` and `npm install`.
 
 ## 1. Bring the port, its suite and a way to run it
 
 ```sh
-npx acrylblends add kv --suite
+npx @acryldev/blends add kv --suite
 npm install
 ```
 
 `add kv` copies the port (`plugins/kv`) and the JSON-file provider (`plugins/kv-json`) and gives your plugins the names `#acryl-kv` and `#acryl-kv-json` (entries in `package.json` "imports").
-`--suite` also copies the port's conformance suite (`#acryl-kv/conformance`) and adds `vitest`, which runs it. The same works for the `db` port: `npx acrylblends add db --suite`.
+`--suite` also copies the port's conformance suite (`#acryl-kv/conformance`) and adds `vitest`, which runs it. The same works for the `db` port: `npx @acryldev/blends add db --suite`.
 
 ## 2. Install the tool
 
@@ -214,5 +214,5 @@ restart: the app remembers what was installed.
 - **Data does not move by itself.** The new store starts empty (the visits counted from 1 again). To carry it over, copy before you swap, in a script or a plugin: `copyKv(source, target)` from `#acryl-kv` copies one store into another.
 - **A failed install changes nothing.** A provider that throws on start, or that cannot import something, is refused and the previous state stays. To go back: `plugin remove kv-lowdb`, then `plugin add plugins/kv`.
 - **The suite checks the port, not your tool.** It cannot know that lowdb loses a write on a power cut. Read what the tool promises about durability before you trust it with more than a demo.
-- **Other ports and tools work the same way.** `db`: `npx acrylblends add db --suite`, wrap a driver or an ORM behind `Db`, pass `describeDbConformance`. Keep the opener rule ([Data](data.md#why-the-database-is-opened-in-one-place)): only the file that mounts the provider imports the tool.
+- **Other ports and tools work the same way.** `db`: `npx @acryldev/blends add db --suite`, wrap a driver or an ORM behind `Db`, pass `describeDbConformance`. Keep the opener rule ([Data](data.md#why-the-database-is-opened-in-one-place)): only the file that mounts the provider imports the tool.
 - **An agent can do all of it.** Give a coding agent in the app folder the page and one line: "wrap `<package>` as a provider of the `kv` port, pass its suite, and swap it in through the door". `AGENTS.md` in the app names the door.

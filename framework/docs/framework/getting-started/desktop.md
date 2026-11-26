@@ -11,12 +11,12 @@ In an app made by `npm create @acryldev/blends@latest my-app nodejs` (or `notes`
 ```sh
 cd my-app
 npm install
-npx acrylblends add desktop
+npx @acryldev/blends add desktop
 npm install
 npm run desktop
 ```
 
-In a Blend app, the same two commands (`npx acrylblends add desktop-shell`, `npm install`) add the Blend form of the shell, and `npx acrylblends init my-app --template todo --desktop` creates a Blend app with it already in.
+In a Blend app, the same two commands (`npx @acryldev/blends add desktop-shell`, `npm install`) add the Blend form of the shell, and `npx @acryldev/blends init my-app --template todo --desktop` creates a Blend app with it already in.
 `acrylblends add desktop-shell` chooses the right form: a Blend app (it depends on `@acryldev/instance`) or a plain Acryl app.
 
 ## What it adds

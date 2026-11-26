@@ -51,7 +51,7 @@ const commands = blocks
       .filter(Boolean),
   )
 for (const expected of [
-  'npx acrylblends add kv --suite',
+  'npx @acryldev/blends add kv --suite',
   'npm install lowdb',
   'npx vitest run test/kv-lowdb.spec.ts',
   '.acryl/bin/acryl plugin add plugins/kv-default',
@@ -79,7 +79,7 @@ try {
   const app = join(scratch, 'app')
   run(process.execPath, [cli, 'init', app, '--template', 'agent', '--bare', '-y'], scratch)
   run('npm', ['install', '--no-audit', '--no-fund'], app)
-  // `npx acrylblends add ...` is this checkout's command in the scratch app.
+  // `npx @acryldev/blends add ...` is this checkout's command in the scratch app.
   run(process.execPath, [cli, 'add', 'kv', '--suite'], app)
   run('npm', ['install', '--no-audit', '--no-fund'], app)
   run('npm', ['install', 'lowdb', '--no-audit', '--no-fund'], app)

@@ -351,12 +351,6 @@ importers:
         specifier: 5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@24.13.3)(typescript@6.0.3))(vite@8.2.4(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0))
 
-  framework/packages/cli-alias:
-    dependencies:
-      '@acryldev/blends':
-        specifier: workspace:*
-        version: link:../cli
-
   framework/packages/create:
     dependencies:
       '@acryldev/app-persistence':
@@ -372,12 +366,6 @@ importers:
       vitest:
         specifier: 5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1(@noble/hashes@2.3.0))(msw@2.15.0(@types/node@24.13.3)(typescript@6.0.3))(vite@8.2.4(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.0))
-
-  framework/packages/create-alias:
-    dependencies:
-      '@acryldev/create-blends':
-        specifier: workspace:*
-        version: link:../create
 
   framework/packages/framework:
     dependencies:

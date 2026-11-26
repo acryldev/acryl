@@ -68,7 +68,7 @@ It prints the plan: account, repository, version, visibility and license. Only a
 Every new app has this plugin, except one made from the todo template, which installs nothing live. `upgrade` does not add it to an older app, so add it and mount it by hand:
 
 ```
-npx acrylblends add plugin-share
+npx @acryldev/blends add plugin-share
 npm install
 ```
 

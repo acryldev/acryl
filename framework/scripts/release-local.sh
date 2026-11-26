@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# The manual npm release of the framework CLI and creator (@acryldev/blends, @acryldev/create-blends), their short-name aliases (acrylblends,
-# create-acrylblends) and every @acryldev package a new app installs that npm does not have yet. It is the path used while npm trusted
+# The manual npm release of the framework CLI and creator (@acryldev/blends, @acryldev/create-blends) and every @acryldev package a new app installs that npm does not have yet. It is the path used while npm trusted
 # publishing is not set up for the unscoped names (spec 051 T037); framework-release.yml takes over once it is.
 #   bash framework/scripts/release-local.sh         print-only (the default): packs everything, checks it, prints every outward step, publishes nothing
 #   bash framework/scripts/release-local.sh --go    the same checks, then publishes, tags, cancels the tag-triggered release runs, and proves both create commands
-#   --tag <name>   the npm dist-tag every publish uses (default latest). `--tag next` publishes the release without moving what `npm create acrylblends` gets.
+#   --tag <name>   the npm dist-tag every publish uses (default latest). `--tag next` publishes the release without moving what `npm create @acryldev/blends` gets.
 #   --promote      after a `--tag next` release is proven from npm: moves `latest` to this release, for exactly the packages whose `next` is the workspace's
 #                  version (the ones this release published), and prints each one's latest after. Print-only without --go, like the rest.
 # The version is the CLI's package.json version. Run it from an acryl checkout whose HEAD is a landed main commit (clean tree, on origin/main).
 # Checks: every @acryldev dependency of the CLI, the library plugins, the frame (framework/frame/packages.json), the templates, ADE and Control
 # Center is on npm with the same content or is packed and published first, in dependency order; a package whose npm copy differs at the same
 # version, or whose prepack check fails, stops the release; so does any tarball that imports the CLI by its alias (a bin with no exports).
-# Order: missing @acryldev packages and the scoped two (the acryldevadmin npm account), then the aliases (the webboxescom npm account).
+# Order: missing @acryldev packages, then the two (the acryldevadmin npm account). The short names acrylblends and create-acrylblends are deprecated
+# on npm and no longer released (owner 2026-11-26).
 # Tokens are read from ~/.secure-storage/npm/npm.json into temporary 0600 userconfigs that are deleted on exit; no token is ever printed or stored here.
 set -euo pipefail
 
@@ -35,13 +35,12 @@ cd "$repo"
 # shellcheck disable=SC2329
 outward() { if [ "$GO" = 1 ]; then echo "+ $*"; "$@"; else echo "would run: $*"; fi; }
 
-# The four packages: folder, published name, who owns the name on npm.
-DIRS=(cli create cli-alias create-alias)
+# The two packages: folder, published name (both owned by the acryldev npm account).
+DIRS=(cli create)
 # Plain functions, not associative arrays: macOS's /bin/bash is 3.2.
-name_of() { case $1 in cli) echo @acryldev/blends;; create) echo @acryldev/create-blends;; cli-alias) echo acrylblends;; create-alias) echo create-acrylblends;; esac; }
-owner_of() { case $1 in cli|create) echo acryldev;; *) echo webboxes;; esac; }
+name_of() { case $1 in cli) echo @acryldev/blends;; create) echo @acryldev/create-blends;; esac; }
 tag_of() { case $1 in cli) echo blends-v;; create) echo create-blends-v;; esac; }
-ALL_NAMES="@acryldev/blends @acryldev/create-blends acrylblends create-acrylblends"
+ALL_NAMES="@acryldev/blends @acryldev/create-blends"
 
 step "checkout"
 [ -z "$(git status --porcelain)" ] || die "the tree is not clean"
@@ -63,22 +62,20 @@ for d in "${DIRS[@]}"; do
 done
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/release-$version.XXXXXX")
-cfg_acryldev="$work/acryldev.npmrc"; cfg_webboxes="$work/webboxes.npmrc"
+cfg_acryldev="$work/acryldev.npmrc"
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/packed" "$work/cache"
 export npm_config_cache="$work/cache"
 tokens() {
   step "tokens (temporary 0600 userconfigs, never printed)"
   ( umask 077
-    python3 - "$cfg_acryldev" "$cfg_webboxes" <<'PY'
+    python3 - "$cfg_acryldev" <<'PY'
 import json, os, sys
 d = json.load(open(os.path.expanduser('~/.secure-storage/npm/npm.json')))
-for path, key in ((sys.argv[1], 'npm_accesstoken_acryldevadmin_of_org_acryldev_bypass_2fa'), (sys.argv[2], 'npm_accesstoken_webboxes_bypass_2fa')):
-    with open(path, 'w') as f: f.write('//registry.npmjs.org/:_authToken=' + d[key] + '\n')
+with open(sys.argv[1], 'w') as f: f.write('//registry.npmjs.org/:_authToken=' + d['npm_accesstoken_acryldevadmin_of_org_acryldev_bypass_2fa'] + '\n')
 PY
   )
   echo "acryldev token: $(npm whoami --userconfig "$cfg_acryldev" 2>&1 | tail -1)"
-  echo "webboxes token: $(npm whoami --userconfig "$cfg_webboxes" 2>&1 | tail -1)"
 }
 # Every public workspace package: name, folder.
 git ls-files '*package.json' | grep -v node_modules | while read -r f; do
@@ -99,7 +96,7 @@ if [ "$PROMOTE" = 1 ]; then
   echo "$(wc -l < "$work/promote.txt" | tr -d ' ') packages:"; sed 's/^/  /' "$work/promote.txt"
   [ "$GO" = 0 ] || tokens
   while read -r n v; do
-    case "$n" in @acryldev/*) c=$cfg_acryldev ;; acrylblends|create-acrylblends) c=$cfg_webboxes ;; *) die "$n: no npm account owns it here" ;; esac
+    case "$n" in @acryldev/*) c=$cfg_acryldev ;; *) die "$n: no npm account owns it here" ;; esac
     outward npm dist-tag add "$n@$v" latest --userconfig "$c"
     [ "$GO" = 1 ] && echo "$n latest: $(npm view "$n" dist-tags.latest)"
   done < "$work/promote.txt"
@@ -131,10 +128,6 @@ for d in "${DIRS[@]}"; do
   m=$(manifest "$d")
   echo "$m" | grep -q '"workspace:' && die "$(name_of "$d") still has a workspace: range after packing"
 done
-# The aliases pin the scoped package at exactly this version.
-[ "$(manifest cli-alias | node -p 'JSON.parse(require("fs").readFileSync(0)).dependencies["@acryldev/blends"]')" = "$version" ] || die "acrylblends does not pin @acryldev/blends $version"
-[ "$(manifest create-alias | node -p 'JSON.parse(require("fs").readFileSync(0)).dependencies["@acryldev/create-blends"]')" = "$version" ] || die "create-acrylblends does not pin @acryldev/create-blends $version"
-echo "aliases pin $version"
 # A bin written with import needs "type": "module", or Node warns on every run (MODULE_TYPELESS_PACKAGE_JSON).
 for d in "${DIRS[@]}"; do
   type=$(manifest "$d" | node -p 'JSON.parse(require("fs").readFileSync(0)).type ?? ""')
@@ -174,7 +167,7 @@ unpack_plain() { # $1 tarball, $2 folder
   mkdir -p "$2" && tar -xzf "$1" -C "$2"
   node -e 'const f=process.argv[1]+"/package/package.json",fs=require("fs"),m=JSON.parse(fs.readFileSync(f));delete m.version;fs.writeFileSync(f,JSON.stringify(m,null,2))' "$2"
 }
-# STOP on a reference to the CLI by its short name: `acrylblends` is now only a bin alias with no exports, so `acrylblends/<x>` cannot resolve.
+# STOP on a reference to the CLI by its old short name: `acrylblends` on npm is a deprecated alias with no exports, so `acrylblends/<x>` cannot resolve.
 scan() { # $1 tarball
   local d="$work/cmp/scan-$$-$RANDOM"; mkdir -p "$d"; tar -xzf "$1" -C "$d"
   local hits; hits=$(grep -rIlE --include='*.js' --include='*.mjs' --include='*.cjs' --include='*.ts' --include='*.mts' "(from|import\(|require\()[[:space:]]*['\"](acrylblends(/|['\"])|@acrylblends/)" "$d" | sed "s#$d/package/##" | head -5 || true)
@@ -277,12 +270,12 @@ done
 for d in "${DIRS[@]}"; do
   if npm view "$(name_of "$d")@$version" version >/dev/null 2>&1; then die "$(name_of "$d")@$version is already on npm"; fi
 done
-echo "none of the four is on npm at $version yet"
+echo "neither is on npm at $version yet"
 
 tokens
-cfg() { [ "$(owner_of "$1")" = acryldev ] && echo "$cfg_acryldev" || echo "$cfg_webboxes"; }
+cfg() { echo "$cfg_acryldev"; }
 
-step "publish (missing @acryldev dependencies, then the scoped two, then the aliases that depend on them)"
+step "publish (missing @acryldev dependencies, then the two)"
 # `npm publish` does not need a package's dependencies visible (the registry lags a few minutes), so nothing waits per package (28 packages took over an
 # hour that way, spec 051 T040): every published name@version is recorded here and waited for once, after the last publish, before the tags and the proofs.
 PUBLISHED=()
@@ -327,7 +320,7 @@ else
   echo "would cancel: every framework-release.yml run whose head is blends-v$version or create-blends-v$version (gh run list ... | gh run cancel)"
 fi
 
-step "proof from npm: both create commands in scratch HOMEs, plus the CLI alias"
+step "proof from npm: the create command in a scratch HOME, plus the CLI"
 prove() { # $1 label, rest: the npm create arguments
   local label=$1; shift
   local home="$work/proof-$label"; mkdir -p "$home"
@@ -340,14 +333,13 @@ prove() { # $1 label, rest: the npm create arguments
   echo "$label: app made, depends on: $(node -p "Object.keys(require('$home/my-app/package.json').dependencies).filter(k=>k.startsWith('@acryldev/')).length") @acryldev packages, no @webboxes"
 }
 prove scoped "@acryldev/blends@$version"
-prove alias "acrylblends@$version"
 if [ "$GO" = 1 ]; then
   home="$work/proof-cli"; mkdir -p "$home"
-  got=$(cd "$home" && HOME="$home" npm_config_cache="$home/.npm" npm exec --yes "acrylblends@$version" -- --version 2>&1 | tail -1)
-  [ "$got" = "$version" ] || die "npx acrylblends@$version --version printed '$got'"
-  echo "acrylblends@$version --version: $got"
+  got=$(cd "$home" && HOME="$home" npm_config_cache="$home/.npm" npm exec --yes "@acryldev/blends@$version" -- --version 2>&1 | tail -1)
+  [ "$got" = "$version" ] || die "npx @acryldev/blends@$version --version printed '$got'"
+  echo "@acryldev/blends@$version --version: $got"
 else
-  echo "would run in an empty HOME: npm exec --yes acrylblends@$version -- --version (expect $version)"
+  echo "would run in an empty HOME: npm exec --yes @acryldev/blends@$version -- --version (expect $version)"
 fi
 
 step "done"
