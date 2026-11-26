@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppShareRefused, appShareCommand, SHARE_COMMAND } from '../src/app-share.ts'
 import { type AppSharePlanView, parseAppShareRequest } from '../src/contract.ts'
 import { type ShareAppApi, ShareAppSection } from '../src/client/ShareAppSection.tsx'
+import type { AppTeamReleaseView } from '../src/contract.ts'
 
 afterEach(() => { cleanup() })
 
@@ -66,7 +67,7 @@ describe('Settings > Share', () => {
   const registry = { github: vi.fn(async () => ({ status: 'ready' as const })), connect: { start: vi.fn(), state: vi.fn() } }
 
   it('shows the plan first and shares only on the person\'s yes, with the visibility they chose', async () => {
-    const share: ShareAppApi = { plan: vi.fn(async () => PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/ana/shop.git', created: true })) }
+    const share: ShareAppApi = { plan: vi.fn(async () => PLAN), share: vi.fn(async () => ({ remote: 'https://github.com/ana/shop.git', created: true })), team: vi.fn(async () => ({ status: 'idle' as const })), startTeam: vi.fn(async () => ({ status: 'idle' as const })) }
     render(<ShareAppSection share={share} registry={registry as never} />)
     fireEvent.change(screen.getByRole('combobox', { name: 'Who can see it' }), { target: { value: 'public' } })
     await waitFor(() => { expect((screen.getByRole('button', { name: 'Review what would be sent' }) as HTMLButtonElement).disabled).toBe(false) })
@@ -89,6 +90,7 @@ describe('Settings > Share', () => {
     const share: ShareAppApi = {
       plan: vi.fn(async (request) => listing(request.list?.category ?? 'application', request.list?.category === undefined ? 'productivity' : request.list.subcategory)),
       share: vi.fn(async () => ({ remote: 'https://github.com/ana/shop.git', created: true, listed: { tag: 'v0.1.0', created: true } })),
+      team: vi.fn(async () => ({ status: 'idle' as const })), startTeam: vi.fn(async () => ({ status: 'idle' as const })),
     }
     try {
       render(<ShareAppSection share={share} registry={registry as never} />)
@@ -111,9 +113,29 @@ describe('Settings > Share', () => {
 
   it('cannot be started before GitHub is connected', async () => {
     const signedOut = { github: vi.fn(async () => ({ status: 'signed-out' as const, say: 'GitHub is not connected on this computer.', command: 'gh auth login' })), connect: undefined }
-    const share: ShareAppApi = { plan: vi.fn(), share: vi.fn() }
+    const share: ShareAppApi = { plan: vi.fn(), share: vi.fn(), team: vi.fn(async () => ({ status: 'idle' as const })), startTeam: vi.fn(async () => ({ status: 'idle' as const })) }
     render(<ShareAppSection share={share} registry={signedOut as never} />)
     expect(await screen.findByText('GitHub is not connected on this computer.')).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Review what would be sent' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Share with team' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('Share with team: says GitHub builds the installers, follows the build, then gives the release page', async () => {
+    const link = 'https://github.com/ana/shop/releases/tag/v0.1.0'
+    let now: AppTeamReleaseView = { status: 'idle' }
+    const share: ShareAppApi = {
+      plan: vi.fn(), share: vi.fn(),
+      team: vi.fn(async () => now),
+      startTeam: vi.fn(async () => { now = { status: 'running', step: 'GitHub is building the installers: 2 of 5 steps done' }; return now }),
+    }
+    render(<ShareAppSection share={share} registry={registry as never} />)
+    expect(screen.getByText('GitHub builds the desktop installers for this app.')).toBeTruthy()
+    const button = screen.getByRole('button', { name: 'Share with team' }) as HTMLButtonElement
+    await waitFor(() => { expect(button.disabled).toBe(false) })
+    fireEvent.click(button)
+    expect(await screen.findByText('GitHub is building the installers: 2 of 5 steps done')).toBeTruthy()
+    now = { status: 'done', link }
+    const opened = await screen.findByRole('link', { name: 'Open the release page' }, { timeout: 5000 })
+    expect(opened.getAttribute('href')).toBe(link)
   })
 })

@@ -12,7 +12,10 @@ import {
   type AppShareRequest,
   FRAME_APP_SHARE_PATH,
   FRAME_APP_SHARE_PLAN_PATH,
+  FRAME_APP_TEAM_RELEASE_PATH,
+  type AppTeamReleaseView,
   parseAppShared,
+  parseAppTeamRelease,
   parseAppSharePlan,
   STORE_CATEGORIES_URL,
 } from '../contract.ts'
@@ -23,6 +26,9 @@ import { type Github, GithubNote } from './ShareChooser.tsx'
 export interface ShareAppApi {
   plan(request: AppShareRequest): Promise<AppSharePlanView>
   share(request: AppShareRequest, confirm: AppSharePlanView): Promise<AppSharedView>
+  /** Where Share with team is, and starting it. */
+  team(): Promise<AppTeamReleaseView>
+  startTeam(): Promise<AppTeamReleaseView>
 }
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -41,6 +47,12 @@ export function createShareAppApi(fetcher: FetchLike = (input, init) => fetch(in
   return {
     plan: async request => parseAppSharePlan(await post(FRAME_APP_SHARE_PLAN_PATH, request)),
     share: async (request, confirm) => parseAppShared(await post(FRAME_APP_SHARE_PATH, { ...request, confirm })),
+    team: async () => {
+      const response = await fetcher(FRAME_APP_TEAM_RELEASE_PATH, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      if (!response.ok) throw await failureOf(response)
+      return parseAppTeamRelease(await response.json()) ?? { status: 'idle' }
+    },
+    startTeam: async () => parseAppTeamRelease(await post(FRAME_APP_TEAM_RELEASE_PATH, {})) ?? { status: 'idle' },
   }
 }
 
@@ -226,6 +238,44 @@ export function ShareAppSection({ share, registry }: ShareAppSectionInjected) {
           <small>{ready ? 'The plan comes first: which repository, who can see it, and what is saved first.' : 'Connect GitHub first (above).'}</small>
         </form>
       )}
+      <TeamRow share={share} ready={ready} />
+    </div>
+  )
+}
+
+const TEAM_POLL_MS = 3000
+
+/**
+ * Share with team: GitHub builds the desktop installers for this app (macOS, Windows, Linux) and puts them on one release page to send. The app must be
+ * on GitHub first (Share to GitHub); the command says so if it is not. It follows GitHub's build, so the row reads where it is while it runs.
+ */
+function TeamRow({ share, ready }: { readonly share: ShareAppApi; readonly ready: boolean }) {
+  const [view, setView] = useState<AppTeamReleaseView>({ status: 'idle' })
+  const [refused, setRefused] = useState<string | undefined>(undefined)
+  useEffect(() => { share.team().then(setView, () => {}) }, [share])
+  useEffect(() => {
+    if (view.status !== 'running') return undefined
+    const timer = setInterval(() => { share.team().then(setView, () => {}) }, TEAM_POLL_MS)
+    return () => { clearInterval(timer) }
+  }, [share, view.status])
+  const start = (): void => {
+    setRefused(undefined)
+    share.startTeam().then(setView, (cause: unknown) => { setRefused(cause instanceof Error ? cause.message : String(cause)) })
+  }
+  return (
+    <div className="acrylBlendsAppRow" data-wide="">
+      <b>Share with team</b>
+      <span className="acrylBlendsAppControls">
+        <button type="button" className="acrylBlendsAppButton" disabled={!ready || view.status === 'running'} onClick={start}>
+          {view.status === 'running' ? 'Building…' : 'Share with team'}
+        </button>
+        {view.status === 'done' && <a className="acrylBlendsMeta" href={view.link} target="_blank" rel="noreferrer noopener">Open the release page</a>}
+      </span>
+      <small>GitHub builds the desktop installers for this app.</small>
+      {view.status === 'running' && <small role="status">{view.step}</small>}
+      {view.status === 'done' && <small role="status">The installers for macOS, Windows and Linux are on the release page: send its link to your team.</small>}
+      {view.status === 'failed' && <small role="alert">Not shared: {view.reason}</small>}
+      {refused !== undefined && <small role="alert">{refused}</small>}
     </div>
   )
 }

@@ -259,6 +259,27 @@ export const FRAME_PLUGINS_SWITCH_PATH = `${FRAME_API_PREFIX}/plugins/switch`
 export const FRAME_APP_SHARE_PLAN_PATH = `${FRAME_API_PREFIX}/app/share-plan`
 /** POST `{ owner?, visibility?, confirm }`: share the app exactly as the confirmed plan says, or nothing. */
 export const FRAME_APP_SHARE_PATH = `${FRAME_API_PREFIX}/app/share`
+/** GET where Share with team is ({@link AppTeamReleaseView}); POST `{}` starts it (409 with the reason when it cannot). */
+export const FRAME_APP_TEAM_RELEASE_PATH = `${FRAME_API_PREFIX}/app/team-release`
+
+/** Share with team from Settings > Share: not run yet, a step on its way, the release page, or why it stopped. */
+export type AppTeamReleaseView =
+  | { readonly status: 'idle' }
+  | { readonly status: 'running'; readonly step: string }
+  | { readonly status: 'done'; readonly link: string }
+  | { readonly status: 'failed'; readonly reason: string }
+
+/** The view as the page reads it, or undefined for anything else. */
+export function parseAppTeamRelease(value: unknown): AppTeamReleaseView | undefined {
+  if (value === null || typeof value !== 'object') return undefined
+  const v = value as Record<string, unknown>
+  if (v.status === 'idle') return { status: 'idle' }
+  if (v.status === 'running' && typeof v.step === 'string') return { status: 'running', step: v.step }
+  if (v.status === 'done' && typeof v.link === 'string' && /^https:\/\/github\.com\//u.test(v.link)) return { status: 'done', link: v.link }
+  if (v.status === 'failed' && typeof v.reason === 'string') return { status: 'failed', reason: v.reason }
+  return undefined
+}
+
 /** POST `{ png: base64 }`: the app's own icon (assets/icon.png), drawn by the page at 512 px. */
 export const FRAME_APP_ICON_PATH = `${FRAME_API_PREFIX}/app/icon`
 

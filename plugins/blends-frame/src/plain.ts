@@ -21,7 +21,7 @@ export class PlainError extends Error {
   }
 }
 
-const KEEP_HERE = 'Keeping the plugin on this computer still works.'
+const KEEP_HERE = 'Everything else keeps working without it.'
 
 export const GITHUB_MISSING: GithubReadiness = {
   status: 'missing',

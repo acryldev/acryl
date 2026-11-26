@@ -26,6 +26,7 @@ import type { Entry } from '@deepseek-ai/cordis-plugin-loader'
 import { ghRepositoryCheck, githubSharePorts, planAppPluginShare, readAppPlugins, readFramePlugins, recordShare, saveAppPlugin, shareAppPlugin, switchAppPlugin, isFramePlugin, listAppPluginSwitches, type FrameAppPlugins, type FrameRow, type ShareAppPluginResult } from './app-plugins.ts'
 import { appFallbackTarget, appNavigationTarget } from './app-urls.ts'
 import { AppShareRefused, appShareCommand, type AppSharePort } from './app-share.ts'
+import { AppTeamReleaseRefused, appTeamRelease, type AppTeamReleasePort } from './app-team-release.ts'
 import { AppIconRefused, APP_ICON_MAX_BYTES, iconBytes, saveAppIcon } from './app-icon.ts'
 import { FRAME_GRAPH_EVENTS_PATH, FRAME_GRAPH_PATH } from './graph-contract.ts'
 import { githubReadiness, PlainError, plainPullRefusal, plainShareProblem, type Plain } from './plain.ts'
@@ -70,6 +71,7 @@ import {
   FRAME_PLUGINS_SHARE_PLAN_PATH,
   FRAME_APP_SHARE_PATH,
   FRAME_APP_SHARE_PLAN_PATH,
+  FRAME_APP_TEAM_RELEASE_PATH,
   parseAppSharePlan,
   parseAppShareRequest,
   parseShareOwner,
@@ -422,12 +424,27 @@ export interface FrameRoutesDeps {
   readonly selection?: SelectionInbox
   /** Share the whole app to GitHub (Settings > Share), through the app's own share command. */
   readonly appShare?: AppSharePort
+  /** Share with team from Settings > Share: GitHub builds the app's installers. Absent, its routes are not mounted. */
+  readonly teamRelease?: AppTeamReleasePort
   /** The app's folder, where Settings > App writes its icon. */
   readonly appIconRoot?: string
 }
 
-export function frameRoutes({ state, report = () => {}, plugins, graph, feedback, branches, branchChats, chatSaves, shared, realChats, gitSync, snapshot, appReload, selection, appShare, appIconRoot }: FrameRoutesDeps): Acryl {
+export function frameRoutes({ state, report = () => {}, plugins, graph, feedback, branches, branchChats, chatSaves, shared, realChats, gitSync, snapshot, appReload, selection, appShare, teamRelease, appIconRoot }: FrameRoutesDeps): Acryl {
   const app = new Acryl()
+  if (teamRelease !== undefined) {
+    app.get(FRAME_APP_TEAM_RELEASE_PATH, ownPage, c => c.json(teamRelease.view()))
+    // It pushes the app and a version tag under the person's GitHub name: only their click on this page starts it.
+    app.post(FRAME_APP_TEAM_RELEASE_PATH, ownPage, jsonBody(), (c) => {
+      try {
+        return c.json(teamRelease.start())
+      } catch (cause) {
+        if (cause instanceof AppTeamReleaseRefused) return c.json(plainBody({ say: cause.message }), 409)
+        report(cause)
+        return c.json(plainBody({ say: 'Share with team could not start.', details: cause instanceof Error ? cause.message : String(cause) }), 409)
+      }
+    })
+  }
   if (appShare !== undefined) {
     const refusal = (cause: unknown) => cause instanceof AppShareRefused
       ? { say: cause.message }
@@ -1111,6 +1128,7 @@ export function apply(ctx: Context, config: FrameConfig = {}): void {
       graph: graph.port,
       // Settings > Share: the app's own share command, with the environment this host runs in (git, gh and a GitHub token Control Center gave it).
       appShare: appShareCommand(root),
+      teamRelease: appTeamRelease(root, githubHome(process.env)),
       appIconRoot: root,
       // The app's feedback service may be isolated to its own composition (the template isolates it under the app-plugins row); read it from that
       // row's scope first, then from the frame's own, so both an isolated and an unisolated app answer.
