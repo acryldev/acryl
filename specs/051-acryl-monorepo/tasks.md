@@ -177,6 +177,8 @@ verify and check:layout and all 23 framework check steps green before it lands.
   f0f3c53a the identifiers that are not specifiers, 2494721f, d3fdf8b6, e22b277d the follow-ups). The only other names are the documented ones: `acryl`,
   `acrylblends`, `create-acrylblends` (what people type) and the private example `acryl-organizer`; the folders `framework/packages/cli` and `create`
   are `@acryldev/blends` and `@acryldev/create-blends`. Open: the CLAUDE.md row-id rule note for scoped packages (with T036's row-id decision).
+  Owner 2026-11-26: the short names are not kept. `acrylblends` and `create-acrylblends` are deprecated on npm (pointing to the scoped names) and no
+  longer released; framework/packages/cli-alias and create-alias are removed (2d226de6's parent). The one unscoped name we publish is `acryl`.
 - [ ] T037 [npm, deadline 2027-01] npm stops direct publishing with 2FA-bypass tokens in January 2027 (banner on npmjs.com, seen
   2026-11-19); every release here uses one. Set up npm trusted publishing for each package (GitHub Actions OIDC; today the release
   workflow's publish step 404s because nothing is configured on npm's side) and move publishing into the workflows.
