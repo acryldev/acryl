@@ -214,6 +214,9 @@ need() { # $1 dependent, $2 dep, $3 range
     local theirs; theirs=$(cd "$work/npm" && npm pack "$dep@$have" --silent 2>/dev/null | tail -1 || true)
     [ -f "$work/npm/$theirs" ] || die "could not download $dep@$have from npm to compare"
     rm -rf "$work/cmp/a" "$work/cmp/b"; unpack_plain "$tgz" "$work/cmp/a"; unpack_plain "$work/npm/$theirs" "$work/cmp/b"
+    # devDependencies are never installed by an app, and pack writes the workspace's own version into them (a frame package's dev pin on
+    # @acryldev/blends moves with every CLI release): compare without them, or every CLI release marks those packages stale.
+    for side in a b; do node -e 'const f=process.argv[1],p=require(f);delete p.devDependencies;require("fs").writeFileSync(f,JSON.stringify(p,null,2))' "$work/cmp/$side/package/package.json"; done
     local differ; differ=$(diff -rq "$work/cmp/a/package" "$work/cmp/b/package" 2>&1 | wc -l | tr -d ' ' || true)
     if [ "$differ" = 0 ]; then echo "$dependent -> $dep@$have: on npm, the same content"
     else
