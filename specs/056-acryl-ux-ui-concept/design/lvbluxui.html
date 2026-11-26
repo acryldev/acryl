@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lvbluxui - UX study</title>
+<style>
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --surface-2: #ececf0; --border: #dcdce2; --text: #18181b; --dim: #62626b;
+  --primary: #3652D9; --primary-dim: rgba(54,82,217,.10); --secondary: #0369A1; --success: #047857; --success-dim: rgba(4,120,87,.10);
+  --warning: #B45309; --warning-dim: rgba(180,83,9,.10); --error: #DC2626; --agent: #7a5a12; --agent-dim: rgba(161,120,20,.12);
+  --term-bg: #0b0b0d; --term-text: #e8e8ea; --term-dim: #8b8b93;
+  --win-bar: #e4e4ea; --desk: linear-gradient(160deg, #dfe3f5 0%, #eef0f7 55%, #e9eef0 100%);
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --pv-bg: #ffffff; --pv-text: #111114; --pv-dim: #5b5b63; --pv-border: #e4e4e8; --pv-soft: #f2f2f5;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; --desk: linear-gradient(160deg, #15172a 0%, #111216 60%, #12171a 100%); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0e0e10; --surface: #151518; --surface-2: #1d1d21; --border: #2a2a2f; --text: #e8e8ea; --dim: #8b8b93;
+  --primary: #4F6BFE; --primary-dim: rgba(79,107,254,.16); --secondary: #38BDF8; --success: #34D399; --success-dim: rgba(52,211,153,.12);
+  --warning: #FBBF24; --warning-dim: rgba(251,191,36,.12); --error: #F87171; --agent: #e8c15a; --agent-dim: rgba(232,193,90,.12);
+  --win-bar: #222226; --desk: linear-gradient(160deg, #15172a 0%, #111216 60%, #12171a 100%); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--sans); }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 40px 16px 80px; display: flex; flex-direction: column; gap: 48px; }
+h1 { font-size: 36px; line-height: 1.12; margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+h2 { font-size: 23px; margin: 0 0 4px; text-wrap: balance; }
+h3 { font-size: 15px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+.lead { font-size: 17px; color: var(--dim); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; min-width: 0; }
+.grid3 { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.dim { color: var(--dim); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.pill { display: inline-block; font: 600 11px/1 var(--mono); padding: 4px 7px; border-radius: 99px; background: var(--primary-dim); color: var(--primary); white-space: nowrap; }
+.pill.ok { background: var(--success-dim); color: var(--success); }
+.pill.warn { background: var(--warning-dim); color: var(--warning); }
+.pill.agent { background: var(--agent-dim); color: var(--agent); }
+.pill.off { background: var(--surface-2); color: var(--dim); }
+.btn { font: 600 13px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 7px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.note { font-size: 12.5px; color: var(--dim); }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+figcaption { font-size: 13px; color: var(--dim); max-width: 90ch; }
+
+/* mock device */
+.frame { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 22px 54px -34px rgba(0,0,0,.5); min-width: 0; }
+.fbar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--border); background: var(--surface-2); font-size: 12px; color: var(--dim); flex-wrap: wrap; min-height: 38px; }
+.fbar .grow { flex: 1; min-width: 6px; }
+.seg { display: inline-flex; gap: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 2px; flex-wrap: wrap; }
+.seg button { all: unset; cursor: pointer; padding: 4px 9px; border-radius: 6px; font: 600 11.5px var(--sans); color: var(--dim); white-space: nowrap; }
+.seg button[aria-selected="true"] { background: var(--surface); color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,.10); }
+.fbtn { font: 600 11.5px var(--sans); border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 7px; padding: 4px 9px; cursor: pointer; white-space: nowrap; }
+.fbtn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.fbtn.quiet { background: transparent; color: var(--dim); }
+button[disabled] { opacity: .45; cursor: not-allowed; }
+.ic { width: 12px; height: 12px; border: 1.5px solid currentColor; border-radius: 3px; opacity: .6; flex: none; }
+.ic.r { border-radius: 50%; }
+.ic.d { border-style: dashed; }
+.tile { width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: grid; place-items: center; color: #fff; font: 700 10px var(--mono); flex: none; }
+.tile.g { width: 26px; height: 26px; border-radius: 8px; background: var(--surface-2); color: var(--dim); font-size: 9px; overflow: hidden; }
+.ph { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); flex: none; }
+.row { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.col { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.t { font-weight: 600; }
+.s { font-size: 11.5px; color: var(--dim); }
+.wrap-any { overflow-wrap: anywhere; }
+[data-pane][hidden] { display: none; }
+
+/* shell: rail + chat + canvas */
+.pane3 { display: grid; grid-template-columns: 148px 268px minmax(0,1fr); height: 470px; }
+.pane2 { display: grid; grid-template-columns: 148px minmax(0,1fr); }
+.rail { border-right: 1px solid var(--border); background: var(--surface); padding: 8px 7px; display: flex; flex-direction: column; gap: 1px; font-size: 12px; min-height: 0; overflow: auto; }
+.rail .ws { display: flex; align-items: center; gap: 7px; font-weight: 650; font-size: 12px; padding: 5px 6px; border-radius: 7px; border: 1px solid var(--border); margin-bottom: 6px; }
+.rail .ws span.n { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail .nav { display: flex; gap: 8px; align-items: center; padding: 5px 7px; border-radius: 7px; color: var(--text); }
+.rail .nav.on { background: var(--primary-dim); color: var(--primary); font-weight: 600; }
+.rail .sec { font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--dim); padding: 10px 7px 3px; }
+.rail .proj { display: flex; gap: 7px; align-items: center; padding: 4px 7px; border-radius: 6px; color: var(--dim); }
+.rail .proj b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail .foot { margin-top: auto; border: 1px solid var(--border); border-radius: 9px; padding: 7px; background: var(--surface-2); }
+.chatcol { border-right: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
+.chead { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 650; }
+.cmsgs { padding: 9px 10px; display: flex; flex-direction: column; gap: 7px; font-size: 11.5px; color: var(--dim); overflow: auto; min-height: 0; }
+.bub { border: 1px solid var(--border); background: var(--surface-2); border-radius: 9px; padding: 7px 9px; color: var(--text); }
+.bub.me { background: var(--primary); border-color: var(--primary); color: #fff; }
+.res { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: var(--surface); color: var(--text); display: flex; flex-direction: column; gap: 4px; }
+.kv { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--dim); }
+.chk { display: grid; grid-template-columns: 12px minmax(0,1fr); gap: 6px; align-items: start; font-size: 11px; color: var(--text); }
+.chk i { color: var(--success); font-style: normal; font-weight: 700; }
+.credit { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; display: flex; align-items: center; gap: 6px; font-size: 11px; background: var(--surface); }
+.composer { margin-top: auto; border-top: 1px solid var(--border); padding: 8px; display: flex; gap: 5px; align-items: center; font-size: 11.5px; color: var(--dim); }
+.composer .box { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; background: var(--bg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.canvas { background: var(--bg); min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+.cvbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; font-size: 11.5px; }
+.cvbar .mid { display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 7px; padding: 2px 6px; color: var(--text); background: var(--bg); }
+.cvbody { padding: 10px; display: flex; flex-direction: column; gap: 9px; min-height: 0; }
+
+/* page preview inside the canvas */
+.web { background: var(--pv-bg); color: var(--pv-text); border: 1px solid var(--pv-border); border-radius: 8px; padding: 12px 14px; font-size: 11.5px; }
+.web .nav { display: flex; gap: 12px; align-items: center; color: var(--pv-dim); font-size: 11px; flex-wrap: wrap; }
+.web .nav b { margin-right: auto; color: var(--pv-text); font-size: 12px; }
+.web h4 { margin: 12px 0 4px; font-size: 19px; line-height: 1.15; letter-spacing: -.01em; }
+.web .lead2 { color: var(--pv-dim); max-width: 46ch; }
+.web .cta { display: inline-flex; gap: 6px; margin-top: 9px; }
+.web .cta span { border: 1px solid var(--pv-border); border-radius: 6px; padding: 4px 9px; font-weight: 600; }
+.web .cta span.b { background: #1b3fd8; border-color: #1b3fd8; color: #fff; }
+.web .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 12px; }
+.web .cards div { border: 1px solid var(--pv-border); border-radius: 7px; padding: 8px; background: var(--pv-soft); }
+.web .cards b { display: block; font-size: 11.5px; }
+
+/* code tab */
+.code { display: grid; grid-template-columns: 132px minmax(0,1fr); gap: 0; min-height: 0; flex: 1; }
+.tree { border-right: 1px solid var(--border); padding: 8px; font: 11px var(--mono); color: var(--dim); display: flex; flex-direction: column; gap: 2px; overflow: auto; }
+.tree b { color: var(--text); font-weight: 600; }
+.tree .on { background: var(--primary-dim); color: var(--primary); border-radius: 4px; }
+.editor { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.edhead { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-bottom: 1px solid var(--border); font: 11px var(--mono); color: var(--dim); }
+.edhead .tabf { color: var(--text); }
+pre.codeblk { margin: 0; padding: 8px 10px; overflow: auto; font: 11px/1.55 var(--mono); color: var(--text); background: var(--surface); min-height: 0; }
+pre.codeblk i { color: var(--dim); font-style: normal; }
+pre.codeblk b { color: var(--primary); font-weight: 600; }
+
+/* files tab */
+.files { display: flex; flex-direction: column; gap: 10px; }
+.coll { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.coll .c { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.coll .c .thumb { height: 68px; background: var(--surface-2); display: grid; place-items: center; color: var(--dim); border-bottom: 1px solid var(--border); }
+.coll .c .cap { padding: 5px 7px; font-size: 11px; }
+.gridf { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.gridf .f { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; background: var(--surface); font-size: 10.5px; }
+.gridf .f .thumb { height: 56px; background: var(--surface-2); display: grid; place-items: center; color: var(--dim); border-bottom: 1px solid var(--border); font: 10px var(--mono); }
+.gridf .f .cap { padding: 4px 6px; overflow-wrap: anywhere; }
+.chips { display: flex; gap: 5px; flex-wrap: wrap; font-size: 11px; }
+.chips span { border: 1px solid var(--border); border-radius: 99px; padding: 3px 8px; color: var(--dim); background: var(--surface); }
+.chips span.on { background: var(--primary-dim); color: var(--primary); border-color: transparent; font-weight: 600; }
+
+/* more tab */
+.more { display: grid; grid-template-columns: 152px minmax(0,1fr); height: 100%; min-height: 0; }
+.mside { border-right: 1px solid var(--border); padding: 8px 6px; display: flex; flex-direction: column; gap: 1px; font-size: 11.5px; overflow: auto; background: var(--surface); }
+.mside div { display: flex; gap: 7px; align-items: center; padding: 5px 7px; border-radius: 6px; color: var(--text); }
+.mside div.on { background: var(--surface-2); font-weight: 600; }
+.mbody { padding: 10px 12px; overflow: auto; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.mhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mhead h4 { margin: 0; font-size: 15px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 6px; }
+.stat { border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; background: var(--surface); }
+.stat b { display: block; font-size: 15px; }
+.stat span { font-size: 10.5px; color: var(--dim); }
+.empty { border: 1px solid var(--border); border-radius: 9px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; background: var(--surface); font-size: 11.5px; }
+.empty b { font-size: 12.5px; }
+.tilerow { display: flex; gap: 8px; align-items: flex-start; font-size: 11.5px; }
+.tilerow .tile.g { width: 22px; height: 22px; border-radius: 6px; font-size: 10px; }
+.banner { border-radius: 8px; padding: 6px 8px; font-size: 11px; background: var(--primary-dim); color: var(--primary); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.list { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); overflow: hidden; }
+.list .lr { display: flex; gap: 8px; align-items: center; padding: 6px 9px; border-top: 1px solid var(--border); font-size: 11.5px; }
+.list .lr:first-child { border-top: 0; }
+.list .lr .r { margin-left: auto; color: var(--dim); }
+.mrow { display: flex; gap: 8px; align-items: center; font-size: 11.5px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.mrow .r { margin-left: auto; color: var(--dim); font-size: 11px; }
+.toggle { display: inline-block; width: 26px; height: 14px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); position: relative; flex: none; vertical-align: middle; }
+.toggle::after { content: ""; position: absolute; top: 1px; left: 1px; width: 10px; height: 10px; border-radius: 50%; background: var(--dim); }
+.toggle.on { background: var(--primary); border-color: var(--primary); }
+.toggle.on::after { left: auto; right: 1px; background: #fff; }
+
+/* connectors modal */
+.modal2 { display: grid; grid-template-columns: 146px minmax(0,1fr); height: 430px; }
+.conn { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 7px; align-content: start; }
+.conn .k { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; display: flex; gap: 8px; align-items: flex-start; background: var(--surface); font-size: 11px; position: relative; }
+.conn .k .tile.g { width: 24px; height: 24px; border-radius: 6px; }
+.conn .k b { display: block; font-size: 11.5px; }
+.conn .k .dot { position: absolute; top: -3px; left: 24px; width: 6px; height: 6px; border-radius: 50%; background: var(--success); border: 1px solid var(--surface); }
+.pop { border: 1px solid var(--border); border-radius: 9px; background: var(--surface); box-shadow: 0 14px 36px -14px rgba(0,0,0,.45); padding: 6px; font-size: 11.5px; display: flex; flex-direction: column; gap: 2px; }
+.pop .p { padding: 5px 7px; border-radius: 6px; }
+.pop .p b { display: block; font-size: 11.5px; }
+.pop .p span { font-size: 10.5px; color: var(--dim); }
+.pop .p > span { display: block; }
+
+/* publish / share */
+.sheet { max-width: 420px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 20px 50px -30px rgba(0,0,0,.45); }
+.sheet h4 { margin: 0; font-size: 16px; }
+.promo { border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px; background: var(--surface-2); font-size: 11.5px; color: var(--dim); }
+.promo b { display: block; color: var(--text); font-size: 12.5px; margin-bottom: 3px; }
+.fld { border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 12px; color: var(--dim); background: var(--bg); }
+.fldrow { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); font-size: 12px; }
+.fldrow div { display: flex; gap: 8px; align-items: center; padding: 8px 10px; }
+.fldrow div + div { border-top: 1px solid var(--border); }
+.fldrow .r { margin-left: auto; color: var(--dim); }
+.status { display: flex; gap: 7px; align-items: center; font-weight: 600; font-size: 13px; }
+.dotg { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+
+/* annotation toolbar */
+.stage { position: relative; background: var(--bg); padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 260px; }
+.sect { position: relative; border: 1.5px solid var(--primary); border-radius: 6px; }
+.sect .tag { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); background: var(--primary); color: #fff; font: 600 10px var(--sans); border-radius: 99px; padding: 2px 8px; }
+.tools { display: inline-flex; gap: 2px; align-items: center; border: 1px solid var(--border); border-radius: 99px; padding: 4px; background: var(--surface); box-shadow: 0 10px 26px -16px rgba(0,0,0,.5); }
+.tools button { all: unset; cursor: pointer; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--dim); font: 600 12px var(--sans); }
+.tools button.on { background: var(--primary); color: #fff; }
+.tools .sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+.tooltip { background: #22222a; color: #fff; font: 600 11px var(--sans); border-radius: 6px; padding: 4px 8px; display: inline-block; }
+
+/* tables */
+.tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-weight: 600; color: var(--dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+.tbl table { min-width: 660px; }
+.tbl td:first-child { font-weight: 600; }
+.tbl tr:last-child td { border-bottom: 0; }
+.ok { color: var(--success); }
+.no { color: var(--error); }
+
+.mermaid { overflow-x: auto; }
+@media (max-width: 820px) { .mermaid svg { max-width: none; } }
+@media (max-width: 820px) {
+  .pane3, .pane2 { grid-template-columns: 1fr; height: auto; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--border); max-height: none; }
+  .chatcol { border-right: 0; border-bottom: 1px solid var(--border); max-height: 330px; }
+  .canvas { max-height: 460px; }
+  .more, .modal2, .code { grid-template-columns: 1fr; }
+  .mside { border-right: 0; border-bottom: 1px solid var(--border); max-height: 170px; flex-flow: row wrap; }
+  .mside div { flex: 0 0 auto; }
+  .tree { border-right: 0; border-bottom: 1px solid var(--border); max-height: 150px; }
+  .cvbar .mid { flex: 1 1 100%; justify-content: space-between; }
+  h1 { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="col" style="gap:10px">
+  <div class="eyebrow">Spec 056 - UX/UI study</div>
+  <h1>lvbluxui: a chat-first app builder, screen by screen</h1>
+  <p class="lead">Redrawn from 34 screenshots of one product, in neutral styling. No logos, no copied artwork, no real names. One of the four studies in spec 056; the design tokens match the ACRYL AOS study so the four read as one set.</p>
+</header>
+
+<section>
+  <h2>What the product is</h2>
+  <p>It is a chat-first builder for web apps. You start on a dashboard with one prompt box and a visible mode switch (Build, Chat, Plan), and the product writes and runs a whole app against its own hosted backend. Inside a project the screen is a three-part workspace: a narrow rail with the workspace, New, Search, Projects, Connectors, Automations and recent apps; a chat column where every turn is a prompt plus a result object you can inspect (a title, Details and Preview toggles, a checklist of what changed, an undo); and a canvas with four tabs, Preview, Code, Files and More. The canvas bar carries the device toggle, a route picker, Share and Publish, so the two outward actions are always one click away. Everything that is not chat or preview lives under More as a second level of pages: analytics, cloud, AI usage, agent integrations, payments, connectors, security, SEO and settings. Sharing is per project (email invite, invite link, workspace access). Publishing is a one-way live URL on a subdomain, with a security line checked before the button. Versions and a version history do not appear in any of the screens: the only trace is an "AI edits count" row in a settings page.</p>
+</section>
+
+<section>
+  <h2>1. Home: one prompt box, then recent apps</h2>
+  <figure>
+    <div class="frame">
+      <div class="fbar"><span class="tile">L</span><span class="mono">lvbluxui.app / dashboard</span><span class="grow"></span><span class="s">the browser's own toolbar is left out</span></div>
+      <div class="pane2" style="height:auto">
+        <div class="rail">
+          <div class="ws"><span class="tile">M</span><span class="n">My workspace</span><span class="s">v</span></div>
+          <div class="nav"><i class="ic"></i>New</div>
+          <div class="nav"><i class="ic r"></i>Search</div>
+          <div class="nav"><i class="ic d"></i>Connectors</div>
+          <div class="nav"><i class="ic"></i>Projects</div>
+          <div class="sec">Recents</div>
+          <div class="proj"><i class="ic r"></i><b>Idea Forge</b><span class="grow"></span><span class="dotg" style="background:var(--agent)"></span></div>
+          <div class="proj"><i class="ic r"></i><b>Showcase</b></div>
+          <div class="proj"><i class="ic r"></i><b>Portfolio site</b></div>
+          <div class="foot"><div class="t" style="font-size:11.5px">Upgrade to Pro</div><div class="s">Unlock more features</div></div>
+        </div>
+        <div style="padding:18px 16px; display:flex; flex-direction:column; gap:16px; background:linear-gradient(150deg, #7b8cff 0%, #b07cff 38%, #ff5f9e 72%, #ff9a3d 100%); min-height:340px">
+          <div style="text-align:center; color:#fff; font:700 17px var(--sans); text-shadow:0 1px 6px rgba(0,0,0,.25); margin-top:12px">What's on your mind?</div>
+          <div style="background:#fff; border-radius:12px; padding:10px 12px; color:#5b5b63; font-size:12.5px; display:flex; flex-direction:column; gap:8px; box-shadow:0 8px 24px -12px rgba(0,0,0,.4)">
+            <div>Ask lvbluxui to create a blog about...</div>
+            <div style="display:flex; gap:8px; align-items:center"><span style="border:1px solid #e4e4e8; border-radius:50%; width:18px; height:18px; display:grid; place-items:center; font-size:12px">+</span><span class="grow" style="flex:1"></span><span style="font-weight:600; color:#111114">Build v</span><span class="ic r" style="width:13px;height:13px;color:#5b5b63"></span></div>
+          </div>
+          <div class="grow" style="flex:1"></div>
+          <div style="background:rgba(255,255,255,.96); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px">
+            <div class="seg" role="tablist" data-group="g" style="align-self:flex-start">
+              <button role="tab" aria-selected="true" data-tab="mp">My projects</button>
+              <button role="tab" aria-selected="false" data-tab="rv">Recently viewed</button>
+              <button role="tab" aria-selected="false" data-tab="tp">Templates</button>
+            </div>
+            <div data-pane-group="g">
+              <div class="coll" data-pane="mp">
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Idea Forge</b><div class="s">Edited 2 minutes ago</div></div></div>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Showcase</b><div class="s">Edited 9 days ago</div></div></div>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Portfolio site</b><div class="s">Edited Dec 26, 2025</div></div></div>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Workstream</b><div class="s">Edited May 30, 2025</div></div></div>
+              </div>
+              <div class="coll" data-pane="rv" hidden>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Portfolio site</b><div class="s">opened 3 hours ago</div></div></div>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Idea Forge</b><div class="s">opened yesterday</div></div></div>
+              </div>
+              <div class="coll" data-pane="tp" hidden>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Form and table</b><div class="s">blank start</div></div></div>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Blog</b><div class="s">blank start</div></div></div>
+              </div>
+            </div>
+            <div class="s" style="text-align:right">Browse all -&gt;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>The whole first screen is a prompt box on a gradient, with the workspace rail on the left and the person's apps in a panel that overlaps the bottom of the gradient. The panel has its own tabs (My projects, Recently viewed, Templates) plus a search field and a "Browse all" link, and each card is a thumbnail with a name and a relative edit time. Click the three tabs to see the states.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>2. A new project: the first prompt, and the mode switch</h2>
+  <figure>
+    <div class="frame">
+      <div class="fbar"><span class="mono">lvbluxui.app / projects / 8f1c...</span><span class="grow"></span><span class="s">chat fills the whole window, no canvas yet</span></div>
+      <div class="pane3" style="grid-template-columns:minmax(0,1fr); height:auto; padding:14px 18px; gap:12px">
+        <div class="col" style="gap:10px">
+          <div class="row" style="justify-content:flex-end; gap:6px; flex-wrap:wrap">
+            <span class="pill off">page.html</span>
+            <span class="pill off">spec.md</span>
+            <span class="pill off">wireframe.png</span>
+          </div>
+          <div class="row" style="justify-content:flex-end"><div class="bub me" style="max-width:70%">please create a mockup of example.com, a competitor to lvbluxui<br><br>read the MD doc for specs<br><br>in html, an interactive mockup I will use with an agent to...</div></div>
+          <div class="s">Reading the spec and planning mockups -&gt;</div>
+          <div class="s" style="border-left:2px solid var(--border); padding-left:8px">Tip: Explore ideas in Chat. Ask anything about your app, like whether a feature is worth building. lvbluxui discusses it with you without changing anything.</div>
+          <div class="s">...</div>
+          <div class="grow" style="flex:1"></div>
+          <div class="row" style="gap:6px; flex-wrap:wrap; justify-content:flex-end">
+            <div class="pop" style="min-width:230px">
+              <div class="p"><div class="row"><b style="flex:1">Build</b><span class="ok">v</span></div><span>Make changes directly</span></div>
+              <div class="p" style="background:var(--primary-dim)"><div class="row"><b style="flex:1; color:var(--primary)">Chat <span class="pill">Free</span></b></div><span>Ask anything, explore ideas</span></div>
+              <div class="p"><div class="row"><b style="flex:1">Plan</b></div><span>Detailed spec for complex builds</span></div>
+              <div class="p" style="border-top:1px solid var(--border); margin-top:2px"><span>Switch modes with <code>Shift</code> and <code>.</code></span></div>
+            </div>
+          </div>
+          <div class="credit" style="justify-content:space-between"><span>Get notified when lvbluxui finishes</span><span class="s">i</span></div>
+          <div class="composer" style="border:1px solid var(--border); border-radius:9px; margin-top:0"><span>+</span><span class="box">Send follow-up...</span><span class="s">Build v</span><span class="ic r" style="width:13px;height:13px"></span><span class="fbtn primary" style="border-radius:7px">send</span></div>
+        </div>
+      </div>
+    </div>
+    <figcaption>A project opens as a chat with no canvas until there is something to show. The prompt can carry attachment chips (a page, a markdown spec, an image). The mode menu sits inside the composer: Build makes changes, Chat only discusses, Plan writes a specification, and the menu says how to switch modes with the keyboard. The "Get notified when lvbluxui finishes" row is a notification opt-in placed directly above the composer.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>3. The project shell: rail, chat, canvas with four tabs</h2>
+  <p class="dim">One shell, four states of the canvas. The rail and the chat column stay the same; clicking a tab swaps the canvas.</p>
+  <figure>
+    <div class="frame">
+      <div class="fbar">
+        <span class="seg" role="tablist" data-group="shell">
+          <button role="tab" aria-selected="true" data-tab="preview">Preview</button>
+          <button role="tab" aria-selected="false" data-tab="code">Code</button>
+          <button role="tab" aria-selected="false" data-tab="files">Files</button>
+          <button role="tab" aria-selected="false" data-tab="more">More</button>
+        </span>
+        <span class="grow"></span>
+        <span class="s">the four canvas tabs, as in the canvas top bar</span>
+      </div>
+      <div class="pane3">
+        <div class="rail">
+          <div class="ws"><span class="tile">M</span><span class="n">My workspace</span><span class="s">v</span></div>
+          <div class="nav"><i class="ic"></i>New</div>
+          <div class="nav"><i class="ic r"></i>Search</div>
+          <div class="nav"><i class="ic d"></i>Projects</div>
+          <div class="nav"><i class="ic d"></i>Connectors</div>
+          <div class="nav"><i class="ic r"></i>Automations</div>
+          <div class="sec">Projects</div>
+          <div class="proj"><i class="ic"></i><b>Digital Hub</b></div>
+          <div class="proj" style="background:var(--surface-2)"><i class="ic"></i><b>wbxAI</b></div>
+          <div class="proj"><i class="ic"></i><b>Showcase</b></div>
+          <div class="proj"><i class="ic"></i><b>Portfolio</b></div>
+          <div class="proj"><i class="ic"></i><b>Workstream</b></div>
+          <div class="foot"><div class="t" style="font-size:11.5px">Share lvbluxui</div><div class="s">Up to 400 credits per referral</div></div>
+        </div>
+        <div class="chatcol">
+          <div class="chead"><i class="ic r"></i>wbxAI<span class="grow" style="flex:1"></span><span class="s">reload</span><span class="s">panel</span></div>
+          <div class="cmsgs">
+            <div class="s">The other sidebar items open a "planned" placeholder page. The new-box wizard, popups and dialogs, the command palette, and the Docs and Become-a-partner pages are not there yet.</div>
+            <div class="s">To try the main flow: Start free, then the demo login, then open the planner, then Approve.</div>
+            <div class="res"><div class="row"><span class="t">Created example.com mockup</span><span class="grow" style="flex:1"></span><span class="s">-&gt;</span></div>
+              <div class="row" style="gap:5px"><span class="chips"><span class="on">Details</span><span>Preview</span></span></div>
+            </div>
+            <div class="res"><div class="row"><span class="t">Refactor: update design with the original palette</span><span class="s">bookmark</span></div>
+              <div class="row" style="gap:5px"><span class="chips"><span>Details</span><span>Preview</span></span></div>
+              <div class="s" style="margin-top:3px">Finished thinking</div>
+              <div class="s">I'll fetch the original site to extract its brand colors, fonts and images, then update the design system to match.</div>
+              <div class="chk"><i>v</i><span>Updated design system to a light palette</span></div>
+              <div class="chk"><i>v</i><span>Downloaded and integrated the real images</span></div>
+              <div class="chk"><i>v</i><span>Generated a new hero background</span></div>
+              <div class="chk"><i>v</i><span>Kept the responsive layout and animations</span></div>
+              <div class="kv"><span>Edited 3 files</span><span>Undo</span></div>
+            </div>
+            <div class="row" style="gap:5px; flex-wrap:wrap"><span class="fbtn primary">Publish your app</span><span class="fbtn">Build the new-box wizard</span></div>
+            <div class="credit" style="flex-direction:column; align-items:flex-start; gap:3px">
+              <div class="row" style="width:100%"><span class="t" style="font-size:11px">Get notified when lvbluxui finishes</span><span class="grow" style="flex:1"></span><span class="s">x</span></div>
+              <div class="s">- Also send me tips, product news and occasional offers by push notification.</div>
+              <div class="s">Change this anytime in Settings.</div>
+              <div class="row" style="gap:5px"><span class="fbtn">Turn on notifications</span><span class="fbtn quiet">Not now</span></div>
+            </div>
+            <div class="credit" style="justify-content:space-between"><span>0 free build credits left today</span><span class="fbtn primary" style="padding:2px 7px">Upgrade now</span></div>
+          </div>
+          <div class="composer"><span>+</span><span class="box">Ask lvbluxui...</span><span class="ic r" style="width:13px;height:13px"></span><span class="fbtn" style="border-radius:50%; padding:2px 6px">^</span></div>
+        </div>
+        <div data-pane-group="shell" style="min-width:0; display:flex; flex-direction:column">
+          <div data-pane="preview" class="canvas">
+            <div class="cvbar">
+              <span class="s">device</span>
+              <span class="mid" style="flex:1"><span class="s">reload</span><span class="t" style="flex:1; text-align:center">Homepage</span><span class="s">v</span></span>
+              <span class="s">open</span>
+            </div>
+            <div class="cvbody">
+              <div class="web">
+                <div class="nav"><b>example.com</b><span>Product</span><span>Blueprints</span><span>Pricing</span><span>Limits</span><span style="color:var(--pv-text); font-weight:600">Start free</span></div>
+                <h4>A project that can build itself, and that you can take with you.</h4>
+                <div class="lead2">Each box has your app, your code and an agent that works inside it.</div>
+                <div class="cta"><span class="b">Start free</span><span>See a blueprint</span></div>
+                <div class="cards">
+                  <div><b>1. Pick a blueprint</b>Start from a reusable starter, or from blank.</div>
+                  <div><b>2. Tell the agent</b>It proposes changes. You approve them.</div>
+                  <div><b>3. Run it</b>Your box runs at its own address. Take it with you.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div data-pane="code" class="canvas" hidden>
+            <div class="cvbar"><span class="s">Search code</span><span class="grow" style="flex:1"></span><span class="pill off">Read only</span><span class="fbtn quiet">Download</span></div>
+            <div class="code">
+              <div class="tree">
+                <span>public/</span><span>src/</span><span class="on">routes/index.tsx</span><span>components/</span><span>lib/</span><b>AGENTS.md</b><span>package.json</span><span>styles.css</span><span>.gitignore</span>
+              </div>
+              <div class="editor">
+                <div class="edhead"><span class="tabf">routes/index.tsx</span><span class="r">x</span><span class="grow" style="flex:1"></span><span class="s">copy</span><span class="s">Download</span></div>
+                <pre class="codeblk"><i>1</i>  import { createFileRoute } from "@app/router";
+<i>2</i>  import { ItemRow } from "@/components/ItemRow";
+<i>3</i>
+<i>4</i>  export const Route = createFileRoute("/")({
+<i>5</i>    head: () =&gt; ({ meta: [{ title: "Notes" }] }),
+<i>6</i>    component: Landing,
+<i>7</i>  });
+<i>8</i>
+<i>9</i>  function Landing() {
+<i>10</i>   return (
+<i>11</i>     &lt;main className="shell"&gt;
+<i>12</i>       &lt;h1&gt;Notes that stay on your machine&lt;/h1&gt;
+<i>13</i>       &lt;ItemRow label="First note" /&gt;
+<i>14</i>     &lt;/main&gt;
+<i>15</i>   );
+<i>16</i> }</pre>
+              </div>
+            </div>
+          </div>
+          <div data-pane="files" class="canvas" hidden>
+            <div class="cvbar"><span class="t">Files</span><span class="grow" style="flex:1"></span><span class="s">Search</span><div class="col" style="gap:0; position:relative"><span class="fbtn">New v</span><div class="pop" style="position:absolute; right:0; top:100%; margin-top:4px; z-index:5; min-width:180px"><div class="p"><b>Upload new files</b></div><div class="p"><b>Create new collection</b></div></div></div></div>
+            <div class="cvbody">
+              <div class="s">Collections</div>
+              <div class="coll">
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>Favorites</b><div class="s">0 files</div></div></div>
+                <div class="c"><div class="thumb"><span class="ph"></span></div><div class="cap"><b>collection123</b><div class="s">4 files</div></div></div>
+              </div>
+              <div class="chips"><span class="on">All files 4</span><span>Images 4</span><span>Videos 0</span><span>Docs 0</span><span class="grow" style="flex:1; border:0; background:transparent"></span><span>Updated</span><span>grid</span><span>list</span></div>
+              <div class="gridf">
+                <div class="f"><div class="thumb">PNG</div><div class="cap">Screenshot 2026-11...</div></div>
+                <div class="f"><div class="thumb">PNG</div><div class="cap">Screenshot 2026-11...</div></div>
+                <div class="f"><div class="thumb">PNG</div><div class="cap">Screenshot 2026-11...</div></div>
+                <div class="f"><div class="thumb">PNG</div><div class="cap">Screenshot 2026-11...</div></div>
+              </div>
+            </div>
+          </div>
+          <div data-pane="more" class="canvas" hidden>
+            <div class="cvbar"><span class="t">More</span><span class="grow" style="flex:1"></span><span class="s">close</span></div>
+            <div class="more" style="height:430px">
+              <div class="mside">
+                <div class="on"><i class="ic"></i>Analytics</div>
+                <div><i class="ic"></i>Cloud</div>
+                <div><i class="ic"></i>AI</div>
+                <div><i class="ic"></i>Agent integrations</div>
+                <div><i class="ic"></i>Payments</div>
+                <div><i class="ic"></i>Connectors</div>
+                <div><i class="ic"></i>Security</div>
+                <div><i class="ic"></i>SEO and AI search</div>
+                <div><i class="ic"></i>Settings</div>
+              </div>
+              <div class="mbody">
+                <div class="mhead"><h4>Analytics</h4><span class="grow" style="flex:1"></span><span class="s">Visits v</span></div>
+                <div class="chips"><span class="on">All</span><span>SEO and AEO</span><span>Social</span><span>Referral</span><span>Direct</span><span>Ads</span></div>
+                <div class="stats">
+                  <div class="stat"><b>3,261</b><span>Visits</span></div>
+                  <div class="stat"><b>0</b><span>Page views</span></div>
+                  <div class="stat"><b>0</b><span>Views per visit</span></div>
+                  <div class="stat"><b>0s</b><span>Visit duration</span></div>
+                  <div class="stat"><b>0%</b><span>Bounce rate</span></div>
+                </div>
+                <div class="empty"><span class="ph"></span><b>Publish your app to start tracking visits</b><span>Share your app with a live URL to see its traffic here.</span><span class="fbtn primary">Publish</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>The three columns never change: rail, chat, canvas. The canvas carries its own tabs and its own bar (device toggle, route picker, open in a new window), and the share and publish buttons sit above it in the window bar. The chat keeps the change as an object: a card with a title, Details and Preview, a checklist of what it did, "Edited 3 files" and Undo. Note the two prices in the chat: the notification opt-in now, and the "0 free build credits left today" banner right above the composer. Click the four tabs.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>4. The canvas bar: device, route, and the annotation tools</h2>
+  <p class="dim">Four states of the same preview surface. The product puts these on the canvas, not in Settings.</p>
+  <figure>
+    <div class="frame">
+      <div class="fbar">
+        <span class="seg" role="tablist" data-group="bar">
+          <button role="tab" aria-selected="true" data-tab="device">Device</button>
+          <button role="tab" aria-selected="false" data-tab="route">Route</button>
+          <button role="tab" aria-selected="false" data-tab="tools">Tools</button>
+          <button role="tab" aria-selected="false" data-tab="menu">Overflow</button>
+        </span>
+        <span class="grow"></span>
+        <span class="s">preview surface, states</span>
+      </div>
+      <div data-pane-group="bar">
+        <div data-pane="device" class="stage">
+          <div class="row" style="gap:6px; align-items:flex-start">
+            <div class="col" style="gap:5px; align-items:flex-start"><span class="fbtn quiet">device</span><span class="tooltip">Desktop view</span></div>
+            <span class="mid" style="display:flex; align-items:center; gap:6px; border:1px solid var(--border); border-radius:8px; padding:4px 8px; background:var(--surface); flex:1"><span class="s">reload</span><span class="t" style="flex:1; text-align:center">Homepage</span><span class="s">v</span></span>
+            <span class="s">open</span>
+          </div>
+          <div class="web"><div class="nav"><b>example.com</b><span>Product</span><span>Blueprints</span><span>Pricing</span><span>Limits</span></div><h4 style="font-size:15px">A project that can build itself.</h4></div>
+          <div class="s">The device button switches the frame width, and the tooltip names the current one, "Desktop view". A phone and a tablet width are implied by the same control; the screens show only the desktop label.</div>
+        </div>
+        <div data-pane="route" class="stage" hidden>
+          <div class="row" style="gap:6px; align-items:flex-start">
+            <span class="s">device</span>
+            <div class="col" style="flex:1; gap:4px">
+              <span class="mid" style="display:flex; align-items:center; gap:6px; border:1px solid var(--border); border-radius:8px; padding:4px 8px; background:var(--surface)"><span class="s">reload</span><span class="t" style="flex:1">/</span><span class="s">^</span></span>
+              <div class="pop">
+                <div class="p row" style="gap:6px"><span class="s">search</span><span class="grow" style="flex:1"></span><span class="s">x</span></div>
+                <div class="p row" style="gap:6px; background:var(--surface-2)"><span class="ok">v</span><b style="flex:1">/</b><span class="s">page</span></div>
+                <div class="p">/blueprints</div>
+                <div class="p">/limits</div>
+                <div class="p">/pricing</div>
+                <div class="p">/signin</div>
+              </div>
+            </div>
+            <span class="s">open</span>
+          </div>
+          <div class="s">The route picker is a searchable combobox over the app's own routes. Choosing a route changes what the preview shows and, by the same token, what a shared link would point at. The list is read from the app, not typed by hand.</div>
+        </div>
+        <div data-pane="tools" class="stage" hidden>
+          <div class="sect">
+            <div style="padding:16px 14px; font-size:12px">
+              <div class="t" style="font-size:14px; margin-bottom:6px">What is in a box</div>
+              <div class="card" style="padding:10px">
+                <div class="mono s">cabinet: Acme Studio</div>
+                <div style="border:1px solid var(--border); border-radius:8px; padding:9px; margin-top:6px">
+                  <div class="mono s">box: gtd-planner</div>
+                  <div class="row" style="gap:6px; flex-wrap:wrap; margin-top:6px; font-size:11px">
+                    <span class="pill off">Running app</span><span class="pill off">Agent chat</span><span class="pill off">Code and git</span><span class="pill off">Tasks</span><span class="pill off">Database</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <span class="tag">section</span>
+          </div>
+          <div class="row" style="justify-content:center; margin-top:10px">
+            <span class="tools">
+              <button class="on" aria-label="Select an area">sel</button>
+              <span class="sep"></span>
+              <button aria-label="Add text">T</button>
+              <button aria-label="Draw">pen</button>
+              <button aria-label="Comment">cmt</button>
+            </span>
+          </div>
+          <div class="s">Hovering a block outlines it and labels it ("section"). The floating pill has four tools: select an area, add text, draw, comment. A selection or a comment becomes a target for the next chat message.</div>
+        </div>
+        <div data-pane="menu" class="stage" hidden>
+          <div class="row" style="justify-content:center">
+            <div class="pop" style="min-width:210px">
+              <div class="p row" style="gap:6px; background:var(--surface-2)"><span class="s">dock</span><b style="flex:1">Dock</b><span class="s">check</span></div>
+              <div class="p row" style="gap:6px"><span class="s">min</span><b style="flex:1">Minimize</b></div>
+              <div class="p row" style="gap:6px"><span class="s">hide</span><b style="flex:1">Hide</b></div>
+              <div class="p s" style="font:600 10px var(--mono); text-transform:uppercase; letter-spacing:.06em; border-top:1px solid var(--border); margin-top:2px">Theme</div>
+              <div class="p row" style="gap:6px; background:var(--surface-2)"><span class="s">auto</span><b style="flex:1">Auto</b><span class="s">check</span></div>
+              <div class="p row" style="gap:6px"><span class="s">light</span><b style="flex:1">Light</b></div>
+              <div class="p row" style="gap:6px"><span class="s">dark</span><b style="flex:1">Dark</b></div>
+              <div class="p row" style="gap:6px; border-top:1px solid var(--border); margin-top:2px"><b style="flex:1">Keyboard shortcuts</b><span class="toggle"></span></div>
+            </div>
+          </div>
+          <div class="row" style="justify-content:center; margin-top:8px">
+            <span class="tools">
+              <button class="on" aria-label="Select an area">sel</button>
+              <span class="sep"></span>
+              <button aria-label="Add text">T</button>
+              <button aria-label="Draw">pen</button>
+              <button aria-label="Comment">cmt</button>
+              <span class="sep"></span>
+              <button aria-label="More tools">...</button>
+            </span>
+          </div>
+          <div class="s">The "..." at the end of the tool pill opens dock, minimize, hide, the preview's own theme (Auto, Light, Dark, independent of the product's theme) and a keyboard shortcuts switch.</div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Pointing at the app is the product's main way to ask for a change, so the tools live on the preview rather than in a menu. The theme switch here changes how the preview renders, not the product's own theme. The "Dock" and "Hide" entries are preview-window placement, not navigation.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>5. Publish and Share</h2>
+  <p class="dim">Two different objects. Share is about people; Publish is about the live URL. Both sit in the window bar.</p>
+  <figure>
+    <div class="frame">
+      <div class="fbar">
+        <span class="seg" role="tablist" data-group="ps">
+          <button role="tab" aria-selected="true" data-tab="share">Share</button>
+          <button role="tab" aria-selected="false" data-tab="pub">Publish</button>
+        </span>
+        <span class="grow"></span>
+        <span class="s">both panels over the same preview</span>
+      </div>
+      <div data-pane-group="ps" style="padding:14px; background:var(--bg); min-height:430px">
+        <div data-pane="share">
+          <div class="row" style="justify-content:flex-end; gap:6px; margin-bottom:10px"><span class="fbtn">Share</span><span class="fbtn" style="background:linear-gradient(90deg,#7b2bd6,#4a42e0); border:0; color:#fff">Upgrade</span><span class="fbtn primary">Publish</span></div>
+          <div class="sheet" style="margin-left:auto">
+            <h4>Share project</h4>
+            <div class="row" style="gap:6px"><span class="fld" style="flex:1">Invite by email</span><span class="fbtn primary" style="opacity:.45">Invite</span></div>
+            <div class="row" style="gap:8px"><span class="tile g">lk</span><div class="col" style="gap:1px"><span class="s">Invite link</span><span class="t" style="font-size:12px">Invite link disabled v</span></div></div>
+            <div class="fldrow">
+              <div><span class="tile g">W</span><span>you@example.com (You)</span><span class="r">Owner</span></div>
+            </div>
+            <div class="col" style="gap:4px">
+              <span class="s">General project access</span>
+              <div class="fldrow">
+                <div><span class="tile">M</span><span>My workspace</span><span class="r">Can edit v</span></div>
+                <div><span class="tile g">M</span><span>People in this workspace</span><span class="r">v</span></div>
+              </div>
+            </div>
+            <div class="col" style="gap:4px">
+              <span class="s">Workspace access</span>
+              <div class="fldrow">
+                <div><span class="tile">M</span><span>My workspace v</span><span class="r">Can edit v</span></div>
+                <div><span class="tile g">sh</span><span>Restricted</span><span class="r">Business</span></div>
+              </div>
+            </div>
+            <div class="row" style="justify-content:flex-end"><span class="fbtn">Share a preview link</span></div>
+          </div>
+        </div>
+        <div data-pane="pub" hidden>
+          <div class="row" style="justify-content:flex-end; gap:6px; margin-bottom:10px"><span class="fbtn">Share</span><span class="fbtn" style="background:linear-gradient(90deg,#7b2bd6,#4a42e0); border:0; color:#fff">Upgrade</span><span class="fbtn primary">Publish</span></div>
+          <div class="sheet" style="margin-left:auto">
+            <div class="row"><span class="status"><span class="dotg"></span>Not published</span><span class="grow" style="flex:1"></span><span class="s">...</span></div>
+            <div class="promo"><b>Ready to put your site live?</b>This lets visitors view what you've built. They never see the changes you make until you publish them.</div>
+            <div class="row"><span class="t" style="font-size:12.5px">Website URL</span><span class="grow" style="flex:1"></span><span class="s">+ Add domain</span><span class="pill off">Pro</span></div>
+            <div class="fldrow">
+              <div><span class="tile">P</span><span>appcraft-visions.example.app</span><span class="r">link</span></div>
+              <div><span class="tile g">wb</span><span>Visible to anyone with the link</span><span class="r">-&gt;</span></div>
+            </div>
+            <div class="row" style="gap:6px"><span class="ok">v</span><span class="t" style="font-size:12px">No security issues found</span></div>
+            <div class="row" style="justify-content:flex-end"><span class="fbtn primary">Publish</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Share has four things: invite by email, an invite link with a disabled state, the owner row, and general workspace access with a role. Publish has one state line, a live URL row with a rename control, a visibility row ("Visible to anyone with the link"), a security line, and the button. The product never shows a "Published" panel in these screenshots, so the published state is not in the screens.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>6. More: the nine per-project pages</h2>
+  <p class="dim">The second level under the More tab. Click a row on the left to see its page.</p>
+  <figure>
+    <div class="frame">
+      <div class="fbar"><span class="t">More</span><span class="grow"></span><span class="s">one page per row, all states as captured</span></div>
+      <div class="more" style="height:468px">
+        <div class="mside" role="tablist" data-group="mp">
+          <div class="on" role="tab" aria-selected="true" data-tab="an" style="cursor:pointer"><i class="ic"></i>Analytics</div>
+          <div role="tab" aria-selected="false" data-tab="cl" style="cursor:pointer"><i class="ic"></i>Cloud</div>
+          <div role="tab" aria-selected="false" data-tab="ai" style="cursor:pointer"><i class="ic"></i>AI</div>
+          <div role="tab" aria-selected="false" data-tab="ag" style="cursor:pointer"><i class="ic"></i>Agent integrations</div>
+          <div role="tab" aria-selected="false" data-tab="pay" style="cursor:pointer"><i class="ic"></i>Payments</div>
+          <div role="tab" aria-selected="false" data-tab="cn" style="cursor:pointer"><i class="ic"></i>Connectors</div>
+          <div role="tab" aria-selected="false" data-tab="sec" style="cursor:pointer"><i class="ic"></i>Security</div>
+          <div role="tab" aria-selected="false" data-tab="seo" style="cursor:pointer"><i class="ic"></i>SEO and AI search</div>
+          <div role="tab" aria-selected="false" data-tab="set" style="cursor:pointer"><i class="ic"></i>Settings</div>
+        </div>
+        <div data-pane-group="mp" class="mbody">
+          <div data-pane="an">
+            <div class="mhead" style="margin-bottom:9px"><h4>Analytics</h4><span class="grow" style="flex:1"></span><span class="s">Last 7 days v</span></div>
+            <div class="stats"><div class="stat"><b>0</b><span>Visits</span></div><div class="stat"><b>0</b><span>Page views</span></div><div class="stat"><b>0</b><span>Views per visit</span></div><div class="stat"><b>0s</b><span>Visit duration</span></div><div class="stat"><b>0%</b><span>Bounce rate</span></div></div>
+            <div class="empty" style="margin:9px 0"><span class="ph"></span><b>Publish your app to start tracking visits</b><span>Share your app with a live URL to see its traffic here.</span><span class="fbtn primary">Publish</span></div>
+            <div class="coll"><div class="c"><div class="cap"><b>Source</b><div class="s">No data found for this time period.</div></div></div><div class="c"><div class="cap"><b>Page</b><div class="s">No data found for this time period.</div></div></div><div class="c"><div class="cap"><b>Device</b><div class="s">No data found for this time period.</div></div></div><div class="c"><div class="cap"><b>Country</b><div class="s">No data found for this time period.</div></div></div></div>
+            <div class="s" style="margin-top:6px">The dark capture of the same page shows a single "Visits 3,261" number with a line chart and an empty overlay in the middle of it, plus a channel filter row (All, SEO and AEO, Social, Referral, Direct, Ads).</div>
+          </div>
+          <div data-pane="cl" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>Cloud</h4></div>
+            <div class="card">
+              <div class="row" style="gap:7px; margin-bottom:6px"><span class="tile">C</span><b>lvbluxui Cloud</b><span class="grow" style="flex:1"></span><span class="s">Read more</span></div>
+              <div class="s" style="margin-bottom:8px">Complete backend and AI models out of the box, so you can focus on building your app.</div>
+              <div class="tilerow" style="margin-bottom:7px"><span class="tile g">db</span><div><b>Built-in backend</b><div class="s">Database, storage, authentication and backend logic, all ready to use.</div></div></div>
+              <div class="tilerow" style="margin-bottom:7px"><span class="tile g">ai</span><div><b>Add an LLM to your app</b><div class="s">AI models with zero setup. Add chat, image generation and text analysis.</div></div></div>
+              <div class="tilerow"><span class="tile g">$</span><div><b>Free to start, pay as you scale</b><div class="s">Free usage included everywhere. Track usage in Settings - Usage.</div></div></div>
+              <div class="fbtn" style="background:#111114; color:#fff; text-align:center; margin-top:9px; padding:7px">Enable Cloud</div>
+              <div class="s" style="text-align:center; margin-top:6px">Already have a database project? Connect it here</div>
+            </div>
+          </div>
+          <div data-pane="ai" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>AI</h4><span class="s">Monitor your app's AI activity: what's running, its performance and cost</span><span class="grow" style="flex:1"></span><span class="fbtn">All AI models</span></div>
+            <div class="row" style="gap:6px; margin-bottom:8px"><span class="fld">Last 24 hours v</span><span class="grow" style="flex:1"></span><span class="s">reload</span></div>
+            <div class="banner" style="margin-bottom:8px"><span style="flex:1">Free plan shows the last 24 hours of logs. Upgrade to see up to 90 days.</span><span class="fbtn" style="background:linear-gradient(90deg,#7b2bd6,#4a42e0); border:0; color:#fff">Upgrade</span></div>
+            <div class="stats"><div class="stat"><b>0</b><span>Credits used</span></div><div class="stat"><b>0</b><span>AI requests</span></div><div class="stat"><b>-</b><span>Success rate</span></div><div class="stat"><b>-</b><span>Avg. time</span></div></div>
+            <div class="t" style="font-size:12px; margin:9px 0 4px">AI activity</div>
+            <div class="list"><div class="lr"><span class="s">Run name</span><span class="s">Model</span><span class="s">Credits</span><span class="s">Time</span><span class="s">Requests</span></div></div>
+            <div class="empty" style="margin-top:6px"><b>No activity</b><span>Nothing happened in this time range.</span></div>
+            <div class="fld" style="margin-top:8px">Set a limit for your AI credits -&gt;</div>
+          </div>
+          <div data-pane="ag" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>Agent integrations</h4><span class="grow" style="flex:1"></span><span class="s">Docs</span></div>
+            <div class="card" style="max-width:380px; margin:20px auto; display:flex; flex-direction:column; gap:9px">
+              <div style="height:120px; border-radius:8px; background:linear-gradient(160deg,#7b8cff,#b07cff 45%,#ff5f9e 80%,#ff9a3d); display:grid; place-items:center">
+                <div style="background:#fff; border-radius:8px; padding:6px 9px; font-size:11px; color:#111114">Hey, add a new task using the app.</div>
+              </div>
+              <b>Your app isn't just for people anymore. It's for AI too.</b>
+              <div class="s">Publish your app once and let AI assistants use it directly.</div>
+              <div class="fbtn" style="background:#111114; color:#fff; text-align:center; padding:7px">Enable agent integrations</div>
+            </div>
+          </div>
+          <div data-pane="pay" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>Payments</h4></div>
+            <div class="card" style="max-width:400px; margin:24px auto">
+              <div class="row" style="gap:7px; margin-bottom:6px"><span class="tile">P</span><b>Accept payments</b></div>
+              <div class="s" style="margin-bottom:9px">Add payments to your app and start earning. lvbluxui will help you set up the best option for your needs.</div>
+              <div class="tilerow" style="margin-bottom:8px"><span class="tile g">card</span><div><b>Built-in payments</b><div class="s">Sets up and manages payments in your app, helps you test changes, and keeps the business side in one place.</div></div></div>
+              <div class="tilerow"><span class="tile g">cart</span><div><b>Store connector</b><div class="s">Sell physical goods with a complete e-commerce solution, including inventory and shipping.</div></div></div>
+              <div class="fbtn" style="background:#111114; color:#fff; text-align:center; margin-top:10px; padding:7px">Explore payments</div>
+            </div>
+          </div>
+          <div data-pane="cn" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>Connectors</h4><span class="grow" style="flex:1"></span><span class="s">Docs</span><span class="fbtn">All connectors</span></div>
+            <div class="t" style="font-size:12px">Project connections</div>
+            <div class="s">The following services are connected to your project.</div>
+            <div class="empty" style="margin-top:6px"><div class="tile g" style="width:30px; height:30px; border-radius:50%">cn</div><b>No connections yet</b><span>Ask lvbluxui if you need help adding one.</span></div>
+          </div>
+          <div data-pane="sec" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>Security</h4><span class="grow" style="flex:1"></span><span class="s">Docs</span></div>
+            <div class="coll" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+              <div class="card"><div class="row" style="gap:6px; margin-bottom:5px"><b>Deep security scan</b><span class="pill">Recommended</span></div><div class="s">AI agents review all your code for issues specific to your app's logic, permissions and data. Takes about 4 minutes. Includes everything in the quick scan.</div><div class="mrow"><span class="s">Free - Not scanned yet</span><span class="r"><span class="fbtn">Run deep scan</span></span></div></div>
+              <div class="card"><div class="row" style="gap:6px; margin-bottom:5px"><b>Quick security scan</b><span class="pill off">Automatic</span></div><div class="s">Checks your code for common security issues and known misconfigurations. Runs automatically on every publish.</div><div class="mrow"><span class="s">Free - Not scanned yet</span><span class="r"><span class="fbtn">Run quick scan</span></span></div></div>
+            </div>
+            <div class="empty" style="margin-top:9px"><div class="tile g" style="width:28px; height:28px; border-radius:50%">sh</div><b>Scan results will appear here</b><span>Run a security scan to check your project for security issues.</span></div>
+            <div class="mrow" style="margin-top:9px"><span class="tile g">pkg</span><span><b>Project dependencies</b><br><span class="s">0 packages - 0 known issues</span></span><span class="r"><span class="fbtn">Review</span></span></div>
+          </div>
+          <div data-pane="seo" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4>Optimize search visibility</h4><span class="s">Help people discover your project through search engines and AI assistants.</span></div>
+            <div class="coll" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
+              <div class="card"><div class="row" style="gap:6px; margin-bottom:5px"><b>Research SEO with lvbluxui</b><span class="pill off">Powered by a keyword service</span></div><div class="s">Ask about your competitors, keywords, and what helps similar sites stand out in search.</div>
+                <div class="fld" style="margin-top:7px">How does example.com compare to its main competitors?</div>
+                <div class="fld" style="margin-top:5px">Which sites link to other companies that build web apps?</div>
+                <div class="fld" style="margin-top:5px">Where do most searches for software development agencies start?</div>
+                <div class="s" style="margin-top:6px">reload New questions</div>
+              </div>
+              <div class="card"><div class="row" style="gap:6px; margin-bottom:5px"><b>Get a custom domain</b><span class="pill off">Pro</span></div><div class="s">A custom domain helps your site stand out and rank higher in search.</div>
+                <div class="chips" style="margin-top:7px"><span class="on">appcraftvisions.com</span><span>craftvisions.dev</span><span>getappcraftvisions.com</span></div>
+                <div class="fbtn" style="margin-top:8px; display:inline-block">Search domains</div>
+                <div class="s" style="margin-top:8px; border-top:1px solid var(--border); padding-top:6px">Already own a domain? Manage domains</div>
+              </div>
+            </div>
+            <div class="list" style="margin-top:9px">
+              <div class="lr"><b style="flex:1">Scanning your project...</b><span class="s">Usually under a minute</span><span class="fbtn quiet">Try to fix all</span></div>
+              <div class="lr"><span class="s">!</span><span style="flex:1">Add a sitemap</span><span class="r">-&gt;</span></div>
+              <div class="lr"><span class="ok">v</span><span style="flex:1">Crawler rules look good</span><span class="r">-&gt;</span></div>
+              <div class="lr"><span class="ok">v</span><span style="flex:1">Page basics are set</span><span class="r">-&gt;</span></div>
+              <div class="lr"><span class="s">o</span><span style="flex:1">Checking content and keywords, metadata review...</span></div>
+            </div>
+          </div>
+          <div data-pane="set" hidden>
+            <div class="mhead" style="margin-bottom:9px"><h4 style="display:flex; gap:7px; align-items:center"><span class="tile">P</span>appcraft-visions</h4></div>
+            <div class="s">Owned by you@example.com - Created Aug 29, 2025</div>
+            <div class="t" style="font-size:12px; margin:9px 0 4px">Project details</div>
+            <div class="list">
+              <div class="lr"><span style="flex:1">Project name</span><span class="r">appcraft-visions - edit</span></div>
+              <div class="lr"><span style="flex:1">URL subdomain</span><span class="r">appcraft-visions - edit</span></div>
+              <div class="lr"><span style="flex:1">Owner</span><span class="r">you@example.com</span></div>
+              <div class="lr"><span style="flex:1">Messages count</span><span class="r">3</span></div>
+              <div class="lr"><span style="flex:1">AI edits count</span><span class="r">3</span></div>
+              <div class="lr"><span style="flex:1">Credit usage</span><span class="r"><span class="fbtn">View usage</span></span></div>
+            </div>
+            <div class="t" style="font-size:12px; margin:10px 0 4px">Project monitoring</div>
+            <div class="mrow"><span><b>Project monitoring</b> <span class="pill off">Pro</span><br><span class="s">Checks the project for issues and improvements. Past checks and their credit use are stored in your history.</span></span><span class="r"><span class="toggle"></span></span></div>
+            <div class="t" style="font-size:12px; margin:10px 0 4px">Preview</div>
+            <div class="mrow"><span><b>Live preview</b><br><span class="s">Run the app on a live dev server in the editor. When off, the preview shows the latest built version.</span></span><span class="r"><span class="toggle on"></span></span></div>
+            <div class="t" style="font-size:12px; margin:10px 0 4px">Publishing</div>
+            <div class="mrow"><span><b>Project category</b><br><span class="s">Categorize your project to help others find it.</span></span><span class="r"><span class="fld">Select category v</span></span></div>
+            <div class="mrow"><span><b>Hide the lvbluxui badge</b> <span class="pill off">Pro</span></span><span class="r"><span class="toggle"></span></span></div>
+            <div class="s" style="margin-top:8px">The settings sidebar also lists General, Knowledge, Domains and Git. The Git page is not in the screens.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Nine pages behind one More tab, each with its own empty state that names the next action ("Publish your app to start tracking visits", "Run a security scan", "Ask lvbluxui if you need help adding one"). Two are real product decisions for ACRYL: the security page puts a quick scan on every publish and a deep scan on demand, and the AI page counts credits, requests, success rate and time per run. The settings page is the only place a Git page is mentioned at all.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>7. The connectors catalog</h2>
+  <p class="dim">A separate full-screen browser, opened from the rail. Grouped by outcome, not by vendor.</p>
+  <figure>
+    <div class="frame">
+      <div class="fbar">
+        <span class="seg" role="tablist" data-group="cg">
+          <button role="tab" aria-selected="true" data-tab="gro">Grow</button>
+          <button role="tab" aria-selected="false" data-tab="sel">Sell</button>
+          <button role="tab" aria-selected="false" data-tab="com">Communicate</button>
+          <button role="tab" aria-selected="false" data-tab="wor">Work</button>
+          <button role="tab" aria-selected="false" data-tab="aig">AI</button>
+          <button role="tab" aria-selected="false" data-tab="cus">Add custom</button>
+          <button role="tab" aria-selected="false" data-tab="det">Detail</button>
+        </span>
+        <span class="grow"></span>
+        <span class="s">one catalog, seven states</span>
+      </div>
+      <div class="modal2">
+        <div class="mside">
+          <div>Home</div>
+          <div>All connectors</div>
+          <div><span style="flex:1">Enabled</span><span class="s">7</span></div>
+          <div style="height:1px; background:var(--border); margin:5px 4px; padding:0"></div>
+          <div class="on"><i class="ic"></i>Grow</div>
+          <div><i class="ic"></i>Sell</div>
+          <div><i class="ic"></i>Communicate</div>
+          <div><i class="ic"></i>Work</div>
+          <div><i class="ic"></i>AI</div>
+          <div style="margin-top:auto; gap:5px"><span class="fbtn" style="flex:1; text-align:center">Add custom</span><span class="fbtn quiet">gear</span></div>
+        </div>
+        <div class="mbody" data-pane-group="cg">
+          <div class="row" style="gap:6px; font-size:11.5px; border-bottom:1px solid var(--border); padding-bottom:6px; margin-bottom:2px"><span class="s">Connectors /</span><b>Get found and grow</b><span class="grow" style="flex:1"></span><span class="fld" style="padding:3px 8px">Ask anything</span><span class="s">x</span></div>
+          <div data-pane="gro" class="conn">
+            <div class="k"><span class="tile g">S</span><span><b>Search console <span class="dotg" style="background:var(--success); display:inline-block"></span></b>Read search analytics and manage sites</span></div>
+            <div class="k"><span class="tile g">in</span><span><b>Professional network</b>Profile and posting integrations</span></div>
+            <div class="k"><span class="tile g">X</span><span><b>Social feed</b>Read posts, users and trends</span></div>
+            <div class="k"><span class="tile g">kw</span><span><b>Keyword research</b>SEO, keyword and competitor analysis</span></div>
+            <div class="k"><span class="tile g">W</span><span><b>Webmaster tools</b>Clicks, queries, crawl stats, URL submission</span></div>
+            <div class="k"><span class="tile g">A</span><span><b>Analytics</b>Web analytics and traffic insights</span></div>
+            <div class="k"><span class="tile g">Ad</span><span><b>Ads</b>Run campaigns from your app</span></div>
+            <div class="k"><span class="tile g">ph</span><span><b>Product analytics</b>Feature flags and event capture</span></div>
+            <div class="k"><span class="tile g">tt</span><span><b>Short video</b>User and content APIs</span></div>
+          </div>
+          <div data-pane="sel" class="conn" hidden>
+            <div class="k"><span class="tile g">$</span><span><b>Payments</b>Set up payments</span></div>
+            <div class="k"><span class="tile g">$</span><span><b>Payments and tax</b>Set up payments with tax handled for you</span></div>
+            <div class="k"><span class="tile g">sh</span><span><b>Storefront</b>Build an e-commerce store</span></div>
+            <div class="k"><span class="tile g">pp</span><span><b>Checkout</b>Checkout, order capture and refunds</span></div>
+            <div class="k"><span class="tile g">mp</span><span><b>Regional payments</b>Cards, wallets and local payment methods</span></div>
+            <div class="k"><span class="tile g">cb</span><span><b>Billing</b>Subscription billing and revenue management</span></div>
+            <div class="k"><span class="tile g">lx</span><span><b>Accounting</b>Invoices, contacts and vouchers</span></div>
+            <div class="k"><span class="tile g">li</span><span><b>Retail POS</b>Products, inventory, outlets and sales</span></div>
+            <div class="k"><span class="tile g">st</span><span><b>Store platform</b>Open-source e-commerce platform</span></div>
+            <div class="k"><span class="tile g">sd</span><span><b>Invoicing</b>Accounting, invoicing and contacts API</span></div>
+            <div class="k"><span class="tile g">wx</span><span><b>Site builder</b>Website, e-commerce and booking APIs</span></div>
+            <div class="k"><span class="tile g">xo</span><span><b>Accounting data</b>Connect accounting data</span></div>
+          </div>
+          <div data-pane="com" class="conn" hidden>
+            <div class="k"><span class="tile g">M</span><span><b>Email</b>Read, send and manage emails</span></div>
+            <div class="k"><span class="tile g">Sl</span><span><b>Team chat</b>Send messages and interact with workspaces</span></div>
+            <div class="k"><span class="tile g">Rs</span><span><b>Email API</b>Transactional email for developers</span></div>
+            <div class="k"><span class="tile g">Tw</span><span><b>SMS and voice</b>Cloud communications API</span></div>
+            <div class="k"><span class="tile g">Tg</span><span><b>Messaging bots</b>Bot API for automated interactions</span></div>
+            <div class="k"><span class="tile g">B</span><span><b>Marketing email</b>Email, SMS and marketing automation</span></div>
+            <div class="k"><span class="tile g">Kl</span><span><b>Campaigns</b>Email and SMS campaigns, customer profiles</span></div>
+            <div class="k"><span class="tile g">O</span><span><b>Mail and calendar</b>Read, send and manage email and events</span></div>
+            <div class="k"><span class="tile g">Tm</span><span><b>Team channels</b>Send messages and manage channels</span></div>
+            <div class="k"><span class="tile g">D</span><span><b>Community chat</b>Send and read messages with a bot</span></div>
+            <div class="k"><span class="tile g">Mg</span><span><b>Transactional email</b>Email API</span></div>
+            <div class="k"><span class="tile g">Mc</span><span><b>Mailing lists</b>Audiences, contacts and campaigns</span></div>
+            <div class="k"><span class="tile g">bh</span><span><b>Newsletter</b>Publications, posts and subscribers</span></div>
+            <div class="k"><span class="tile g">wa</span><span><b>Business chat</b>Business messages and templates</span></div>
+          </div>
+          <div data-pane="wor" class="conn" hidden>
+            <div class="k"><span class="tile g">M</span><span><b>Email</b>Read, send and manage emails</span></div>
+            <div class="k"><span class="tile g">Dr</span><span><b>Drive</b>Upload and download files</span></div>
+            <div class="k"><span class="tile g">Sh</span><span><b>Spreadsheets</b>Read and update sheet data</span></div>
+            <div class="k"><span class="tile g">Ca</span><span><b>Calendar</b>Create and manage events</span></div>
+            <div class="k"><span class="tile g">N</span><span><b>Notes and databases</b>Add pages and databases to your app</span></div>
+            <div class="k"><span class="tile g">Dc</span><span><b>Documents</b>Create and edit documents</span></div>
+            <div class="k"><span class="tile g">At</span><span><b>Tables</b>Spreadsheet-database hybrid</span></div>
+            <div class="k"><span class="tile g">Ex</span><span><b>Spreadsheet</b>Read and write spreadsheets</span></div>
+            <div class="k"><span class="tile g">On</span><span><b>Cloud files</b>Upload and read files</span></div>
+            <div class="k"><span class="tile g">Li</span><span><b>Issue tracking</b>Add issues and projects to your app</span></div>
+            <div class="k"><span class="tile g">Wr</span><span><b>Documents</b>Read and write documents</span></div>
+            <div class="k"><span class="tile g">As</span><span><b>Work management</b>Tasks, projects and teams</span></div>
+            <div class="k"><span class="tile g">Fi</span><span><b>Meeting notes</b>Transcription and conversation intelligence</span></div>
+            <div class="k"><span class="tile g">Cr</span><span><b>Scheduling</b>Add scheduling to your app</span></div>
+            <div class="k"><span class="tile g">Cs</span><span><b>CRM</b>Connect CRM data to your app</span></div>
+          </div>
+          <div data-pane="aig" class="conn" hidden>
+            <div class="k"><span class="tile g">gw <span class="dotg" style="background:var(--success); display:inline-block"></span></span><span><b>AI gateway</b>Use leading AI models in your app</span></div>
+            <div class="k"><span class="tile g">fc</span><span><b>Crawler</b>Scraper, search and retrieval</span></div>
+            <div class="k"><span class="tile g">el</span><span><b>Voice API</b>Voice generation and speech to text</span></div>
+            <div class="k"><span class="tile g">px</span><span><b>Search engine</b>Answer engine for your app</span></div>
+            <div class="k"><span class="tile g">lg</span><span><b>Logo API</b>Company logos by domain</span></div>
+            <div class="k"><span class="tile g">ap</span><span><b>Scraping</b>Actors and web scraping datasets</span></div>
+            <div class="k"><span class="tile g">kl</span><span><b>Media API</b>GIF, sticker, clip and emoji media</span></div>
+            <div class="k"><span class="tile g">fw</span><span><b>Model hosting</b>Text, image and embedding generation</span></div>
+            <div class="k"><span class="tile g">lp</span><span><b>Document parsing</b>Parse documents and search a knowledge base</span></div>
+            <div class="k"><span class="tile g">pl</span><span><b>Research API</b>Web search, extraction and research</span></div>
+            <div class="k"><span class="tile g">rp</span><span><b>Open models</b>Image, video and audio generation</span></div>
+            <div class="k"><span class="tile g">hg</span><span><b>Video API</b>Videos, avatars and translation</span></div>
+          </div>
+          <div data-pane="cus" hidden>
+            <div class="pop" style="max-width:300px; margin-top:10px">
+              <div class="p"><b>Custom connector</b><span>Connect an API to your workspace</span></div>
+              <div class="p"><b>MCP server</b><span>Connect an MCP server to your chat</span></div>
+              <div class="p"><b>MCP registry</b><span>Add a directory of MCP servers</span></div>
+            </div>
+            <div class="s" style="margin-top:8px">The "Add custom" button opens these three options, so an external API, one MCP server, and a whole MCP directory are three different doors into the same catalog.</div>
+          </div>
+          <div data-pane="det" hidden>
+            <div class="row" style="gap:8px; margin-top:6px"><span class="tile g" style="width:28px; height:28px">in</span><b>Professional network</b><span class="pill off">Not connected</span><span class="grow" style="flex:1"></span><span class="fbtn primary">Connect</span><span class="fbtn quiet">More options v</span></div>
+            <div class="s" style="margin:8px 0">Connect this service to read profile data and publish content from your app.</div>
+            <div class="empty" style="padding:30px 14px"><span class="ph"></span><b>No connections yet</b><span>Connect this service to use it in your projects.</span></div>
+            <div class="row" style="gap:14px; margin-top:10px; font-size:10.5px; color:var(--dim); border-top:1px solid var(--border); padding-top:6px; flex-wrap:wrap"><span>Created by the vendor</span><span>Docs</span><span>Terms</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>The catalog is grouped by what you want to happen (Grow, Sell, Communicate, Work, AI), not by the vendor's category, and it keeps a running "Enabled 7" count. Each card is an icon, a name and one line. A card opens a detail page with a Not connected badge, a Connect button and an empty state. Click the groups, Add custom, and Detail.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>8. Automations</h2>
+  <figure>
+    <div class="frame">
+      <div class="fbar"><span class="t">Automations</span><span class="grow"></span><span class="s">a top-level rail item with its own page</span></div>
+      <div style="display:grid; grid-template-columns:148px minmax(0,1fr); min-height:280px">
+        <div class="rail">
+          <div class="ws"><span class="tile">M</span><span class="n">My workspace</span></div>
+          <div class="nav"><i class="ic"></i>New</div>
+          <div class="nav"><i class="ic r"></i>Search</div>
+          <div class="nav"><i class="ic d"></i>Projects</div>
+          <div class="nav"><i class="ic d"></i>Connectors</div>
+          <div class="nav on"><i class="ic r"></i>Automations</div>
+        </div>
+        <div style="padding:12px; display:flex; flex-direction:column; gap:10px">
+          <div class="banner"><span style="flex:1">Add an extra layer of protection for your account with two-factor authentication.</span><span class="fbtn">Enable 2FA</span></div>
+          <div class="row"><span class="grow" style="flex:1"></span><span class="fbtn">Schedule a task</span></div>
+          <div class="empty" style="margin-top:auto; margin-bottom:auto; border:0"><span class="ph"></span><b>No automations</b><span>Ask lvbluxui to schedule a task and it will show up here.</span><span class="fbtn">Schedule a task</span></div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Automations is a top-level rail item with one page: an empty state, one button in the header, one button in the empty state, and a two-factor banner across the top. There is no field, no schedule and no link from an app in the screens, so what a "task" is, and when it runs, is not in the screens.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>The main flow, as far as the screens show</h2>
+  <p class="dim">Solid arrows are visible in the screens. Dotted arrows are the parts of the usual flow (versions, GitHub) that the screens do not show.</p>
+  <div class="card">
+    <div class="mermaid" data-src="flowchart TD
+  A[Idea in one prompt box] --> B[Mode: Build, Chat or Plan]
+  B -->|Build| C[The app runs in the canvas]
+  B -->|Chat| D[Talk only, nothing changes]
+  B -->|Plan| E[Spec only, nothing changes]
+  subgraph canvas[In the canvas, four tabs]
+    F[Preview: point at an area or ask in chat]
+    G[Code: source, read only]
+    I[Files: uploads and collections]
+  end
+  C --> F
+  C --> G
+  C --> I
+  F --> H[Change card: Details, Preview, Undo]
+  H --> C
+  subgraph more[Per app, under More]
+    O[Security: quick and deep scan]
+    P[Cloud: backend and models]
+    Q[Connectors: connect a service]
+  end
+  C --> O
+  C --> P
+  C --> Q
+  Q --> C
+  C --> J[Share: invite, invite link, workspace access]
+  C --> K[Publish: state, live URL, who can open it]
+  K --> L[Analytics: visits, sources, pages]
+  K --> M[SEO: sitemap, metadata, domain]
+  K --> N[Agent integrations: other AI assistants]
+  R[Versions and history] -. not in the screens .-> C
+  S[GitHub sync] -. only a Git row in Settings .-> C">flowchart TD
+  A[Idea in one prompt box] --> B[Mode: Build, Chat or Plan]
+  B -->|Build| C[The app runs in the canvas]
+  B -->|Chat| D[Talk only, nothing changes]
+  B -->|Plan| E[Spec only, nothing changes]
+  subgraph canvas[In the canvas, four tabs]
+    F[Preview: point at an area or ask in chat]
+    G[Code: source, read only]
+    I[Files: uploads and collections]
+  end
+  C --> F
+  C --> G
+  C --> I
+  F --> H[Change card: Details, Preview, Undo]
+  H --> C
+  subgraph more[Per app, under More]
+    O[Security: quick and deep scan]
+    P[Cloud: backend and models]
+    Q[Connectors: connect a service]
+  end
+  C --> O
+  C --> P
+  C --> Q
+  Q --> C
+  C --> J[Share: invite, invite link, workspace access]
+  C --> K[Publish: state, live URL, who can open it]
+  K --> L[Analytics: visits, sources, pages]
+  K --> M[SEO: sitemap, metadata, domain]
+  K --> N[Agent integrations: other AI assistants]
+  R[Versions and history] -. not in the screens .-> C
+  S[GitHub sync] -. only a Git row in Settings .-> C</div>
+  </div>
+  <p class="dim">Version history is the notable gap. A builder that publishes has to answer "what is live, and how do I go back"; this product answers the first half in the Publish panel and leaves the second half to an "AI edits count" row and an Undo on each result card. GitHub appears once, as a Settings row, and the page behind it is not in the screens.</p>
+</section>
+
+<section>
+  <h2>Take for ACRYL, do not take, and why</h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Take for ACRYL</th><th>Do not take</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Home is one prompt box with a visible mode switch (Build, Chat, Plan), each mode with a one-line consequence.</td><td>The credit counter and the Upgrade button inside the chat column.</td><td>The mode switch decides what the agent will do, which is the one thing a person needs before typing. The credit banner decides only whether they may continue, and it interrupts every build.</td></tr>
+        <tr><td>One project shell: rail, chat, canvas, with Preview, Code, Files and More as tabs of the canvas.</td><td>Read-only code and file views, with a "Read only" badge and Download as the only action.</td><td>The shell is the right shape for ACRYL's frame. But ACRYL's people edit code, so Code and Files must be equal surfaces, not viewers with a download link.</td></tr>
+        <tr><td>Each agent turn is an object: a title, Details and Preview toggles, a checklist of what changed, an edit count and Undo.</td><td>-</td><td>Spec 055's History needs one inspectable object per change. A checklist plus Undo gives a person the same facts in the chat that History will show in the panel.</td></tr>
+        <tr><td>Publish panel: one state line, the live URL row with rename, who can open it, a security line, then the button.</td><td>Turning the domain row into a Pro upsell next to the URL.</td><td>Spec 055's Publish needs exactly these facts in one place. The upsell sits on the one row a person must read, which makes the important panel look like a shop.</td></tr>
+        <tr><td>Device toggle, route picker and open-in-new-window on the canvas bar.</td><td>-</td><td>Preview and share are per page, so the page picker belongs next to the preview. A route list read from the app also means a shared link can point at a page that exists.</td></tr>
+        <tr><td>Annotation tools on the preview: select an area, add text, draw, comment, with the target sent as the next chat message.</td><td>Hiding theme, dock and shortcuts in an overflow "..." beside the tools.</td><td>Pointing at a region is the cheapest precise change request, and an agent can take the region as a structured target. The four tools deserve one visible row; the placement and theme switches can live in the overflow.</td></tr>
+        <tr><td>Connector catalog grouped by outcome (Grow, Sell, Communicate, Work, AI), with Add custom, MCP server and MCP registry as three explicit doors.</td><td>A second top-level Connectors product with its own sidebar, its own search and an "Enabled 7" counter.</td><td>Outcome grouping matches how a person asks for help, and ACRYL's plugin model is already MCP-shaped. But a parallel navigation beside the app list duplicates the frame, and the counter answers a question nobody asked.</td></tr>
+        <tr><td>One More area per app holding analytics, AI usage, security, SEO, domains and settings, each with an empty state that names the next action.</td><td>-</td><td>ACRYL's Settings today is app-level. Per-app settings, usage and security need one door; a settings page per feature would scatter them again.</td></tr>
+        <tr><td>Security before publish: quick scan automatic on every publish, deep scan on demand, dependency count with known issues.</td><td>-</td><td>It makes publish a reviewed step without adding a second workflow: the review happens in the same panel that ships the app.</td></tr>
+        <tr><td>Git as a project-level action, visible in the same bar as Publish and Share.</td><td>Burying Git as the last row of a settings sidebar, with the page never shown.</td><td>Spec 055 makes GitHub sync a first-class action. The screens put Git three levels down, which is where a feature goes to be forgotten.</td></tr>
+        <tr><td>-</td><td>The push-notification opt-in card inside the project chat.</td><td>It sits in the chat's most valuable place, the last block before the composer, and asks for a marketing permission in the middle of a build.</td></tr>
+        <tr><td>-</td><td>A gradient hero and a template gallery as the home screen's main content.</td><td>It pushes the person's own apps below the fold. ACRYL's home has apps, a store and a workshop to show, and the prompt box does not need a gradient to be found.</td></tr>
+        <tr><td>-</td><td>The "Share this product, up to 400 credits per referral" card pinned to the rail bottom.</td><td>Permanent marketing inside the product. ACRYL has no referral programme, and the slot is better used for the app's own state.</td></tr>
+        <tr><td>-</td><td>Automations as a top-level rail item with a page that has no fields and no link from an app.</td><td>In the screens it is one empty page with two identical buttons. ACRYL's scheduled runs belong to the app that uses them, not to a workspace-level page that cannot say what a task is.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Maps to ACRYL today</h2>
+  <p class="dim">ACRYL's frame: a left panel with chats and versions, the canvas, the right panel, Settings. Spec 055 designs History, Publish, Share, GitHub sync and Deploy. Nothing in this column is built yet; it is the design, not the product.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Screen in this study</th><th>ACRYL today</th><th>Decision it forces</th></tr></thead>
+      <tbody>
+        <tr><td>Home: one prompt box, then recent apps</td><td>Control Center launcher (spec 050); the frame's app list is designed in the AOS study (spec 052)</td><td>Does the frame open on a prompt box or on the app list? A prompt box with no app yet needs a place to put the new app.</td></tr>
+        <tr><td>Rail: workspace, New, Search, Projects, Connectors, Automations, recents</td><td>Left panel: chats and versions, per app</td><td>Two levels (workspace rail plus app panel) or one? The study pays for its rail with a narrower chat column.</td></tr>
+        <tr><td>Chat column with result cards, checklists and Undo</td><td>Frame chat with tool calls</td><td>Does a turn become a card with Details and Preview, the object spec 055's History lists and restores?</td></tr>
+        <tr><td>Canvas with Preview, Code, Files, More tabs</td><td>Canvas plus right panel; code and files live in the panel</td><td>Fold code, files and settings into canvas tabs, or keep the right panel? The study's answer costs the right panel its job.</td></tr>
+        <tr><td>Publish panel</td><td>Spec 055 Publish: Web, Desktop app, Blends store</td><td>Which of the three is "the live URL"? The study's single URL row has to become a choice.</td></tr>
+        <tr><td>Share panel: email invite, invite link, workspace access</td><td>Spec 055 Share: copy link, invite on GitHub, download as ZIP</td><td>Does ACRYL have accounts and workspaces in the frame, or is sharing a link plus a ZIP until hosting exists?</td></tr>
+        <tr><td>History: only an "AI edits count" row</td><td>Spec 055 History: every turn and pause is a version, star to restore</td><td>ACRYL's design is stronger here. The study's result cards should feed it, not replace it.</td></tr>
+        <tr><td>Git: one row in the settings sidebar, page not in the screens</td><td>Spec 055 GitHub sync: connect once in Settings, private repository, two-way</td><td>Promote Git out of Settings onto the bar next to Publish and Share.</td></tr>
+        <tr><td>Analytics, AI usage, Security, SEO</td><td>Not built; Settings only</td><td>Which are real for a local-first app: AI usage and security yes, SEO only for a published site.</td></tr>
+        <tr><td>Connectors catalog (outcome groups, MCP doors)</td><td>Blends store and the Cordis plugin market</td><td>Keep two doors (install a plugin, connect a hosted service) or unify them under one catalog?</td></tr>
+        <tr><td>Agent integrations ("your app is for AI too", MCP)</td><td>The agent door: <code>.acryl/bin/acryl</code>, proven by the T022 agents-drive proof</td><td>ACRYL already has the door the study advertises. The question is only where the switch lives.</td></tr>
+        <tr><td>Automations</td><td>Not in the frame</td><td>Skip until an app has something worth scheduling. A page that cannot define a task is a placeholder, not a decision.</td></tr>
+        <tr><td>Code tab, read only</td><td>ADE and the frame's code surfaces, editable</td><td>None. ACRYL's is the stronger version; do not copy the read-only constraint.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Coverage: every source file, and where it is used</h2>
+  <p class="dim">34 images read. The folder held no .md or .txt files. Two captures are dark-mode and light-mode pairs of the same screen; both are listed, and the light one is the one redrawn unless noted. One source file name contains the product's real name; it is written as <code>&lt;product&gt;</code> here so this file never carries the name.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Source file</th><th>Used in</th></tr></thead>
+      <tbody>
+        <tr><td>0_main_view_&lt;product&gt;_allApps_1.png</td><td>1. Home, and the summary</td></tr>
+        <tr><td>1_idea_forge_Project_view_init_1.png</td><td>2. First prompt and the mode switch</td></tr>
+        <tr><td>1_main_view_tab_APPCANVAS.png</td><td>3. Project shell, Preview state (dark)</td></tr>
+        <tr><td>1_main_view_tab_CODE.png</td><td>3. Project shell, Code state (dark)</td></tr>
+        <tr><td>1_main_view_tab_FILES.png</td><td>3. Project shell, Files state (dark)</td></tr>
+        <tr><td>1_main_view_tab_MORE.png</td><td>3. Project shell, More state, and 6. Analytics (dark, with the channel filter row and the 3,261 visits number)</td></tr>
+        <tr><td>1_proejct_view_shareproject.png</td><td>5. Share (light, with the workspace dropdown open)</td></tr>
+        <tr><td>1_project_responsiveness.png</td><td>4. Device state and the "Desktop view" tooltip</td></tr>
+        <tr><td>1_project_view_automations.png</td><td>8. Automations, and the two-factor banner</td></tr>
+        <tr><td>1_project_view_codeview_1.png</td><td>3. Project shell, Code state (light), and the checklist result card in the chat column</td></tr>
+        <tr><td>1_project_view_connectors_add_custom_connector.png</td><td>7. Add custom: Custom connector, MCP server, MCP registry</td></tr>
+        <tr><td>1_project_view_connectors_ai.png</td><td>7. AI group</td></tr>
+        <tr><td>1_project_view_connectors_communicate.png</td><td>7. Communicate group</td></tr>
+        <tr><td>1_project_view_connectors_grow_linkedin.png</td><td>7. Detail state: Not connected, Connect, empty state, vendor footer</td></tr>
+        <tr><td>1_project_view_connectors_grow.png</td><td>7. Grow group</td></tr>
+        <tr><td>1_project_view_connectors_sell.png</td><td>7. Sell group</td></tr>
+        <tr><td>1_project_view_connectors_work.png</td><td>7. Work group</td></tr>
+        <tr><td>1_project_view_filesview_1.png</td><td>3. Project shell, Files state (light), and the New menu</td></tr>
+        <tr><td>1_project_view_moreview_1.png</td><td>6. Analytics (light), with the source, page, device and country cards</td></tr>
+        <tr><td>1_project_view_preveiw_1.png</td><td>3. Preview state, and 4. the annotation pill on the preview</td></tr>
+        <tr><td>1_project_view_publish_project_1.png</td><td>5. Publish panel (light)</td></tr>
+        <tr><td>1_project_view_publish.png</td><td>5. Publish panel (dark), same state</td></tr>
+        <tr><td>1_project_view_routes.png</td><td>4. Route state</td></tr>
+        <tr><td>1_project_view_share.png</td><td>5. Share (dark), same state</td></tr>
+        <tr><td>1_project_view_toolset_select_comment_annotate_text_toolbaroptions.png</td><td>4. Overflow state: Dock, Minimize, Hide, Theme, keyboard shortcuts</td></tr>
+        <tr><td>1_project_view_toolset_select_comment_annotate_text.png</td><td>4. Tools state: the section outline and the four tools</td></tr>
+        <tr><td>1_project_view_moreView/cloud.png</td><td>6. Cloud page</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 16.59.53.png</td><td>6. AI page: credits, requests, success rate, avg time, the activity table and the credits limit row</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 17.00.09.png</td><td>6. Agent integrations page</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 17.00.20.png</td><td>6. Payments page</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 17.00.30.png</td><td>6. Connectors page (project connections, empty state)</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 17.00.40.png</td><td>6. Security page: deep scan, quick scan, dependencies</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 17.00.51.png</td><td>6. SEO and AI search page</td></tr>
+        <tr><td>1_project_view_moreView/Screenshot 2026-10-12 at 17.01.02.png</td><td>6. Settings page: project details, monitoring, live preview, publishing, and the General, Knowledge, Domains and Git rows</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="note" style="border-top:1px solid var(--border); padding-top:14px">
+  Built from the owner's private research screenshots for spec 056. Redrawn, not copied: every panel here is HTML and CSS, no image from the source appears in this file. Where a state or a page was not captured, the text says so.
+</footer>
+
+</div>
+
+<script>
+document.querySelectorAll('[role="tablist"]').forEach((list) => {
+  list.addEventListener('click', (event) => {
+    const tab = event.target.closest('button[data-tab], [data-tab]');
+    if (!tab || !list.contains(tab)) return;
+    const group = list.dataset.group;
+    list.querySelectorAll('[data-tab]').forEach((el) => {
+      const on = el === tab;
+      el.setAttribute('aria-selected', String(on));
+      if (el.tagName === 'DIV') el.classList.toggle('on', on);
+    });
+    document.querySelectorAll(`[data-pane-group="${group}"] > [data-pane]`).forEach((pane) => {
+      pane.hidden = pane.dataset.pane !== tab.dataset.tab;
+    });
+  });
+});
+</script>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs";
+const nodes = [...document.querySelectorAll('.mermaid')];
+for (const el of nodes) el.textContent = el.dataset.src;
+const dark = window.matchMedia('(prefers-color-scheme: dark)');
+let applied;
+async function render() {
+  const theme = dark.matches ? 'dark' : 'default';
+  if (theme === applied) return;
+  mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'strict' });
+  for (const el of nodes) {
+    el.removeAttribute('data-processed');
+    el.textContent = el.dataset.src;
+  }
+  await mermaid.run({ nodes });
+  applied = theme;
+}
+dark.addEventListener('change', () => { applied = undefined; render(); });
+render();
+</script>
+</body>
+</html>
