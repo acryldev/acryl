@@ -1,6 +1,6 @@
 {
   "name": "@acryldev/router",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The ACRYL router, one Cordis service: plugin-owned routes and middleware on Web-standard Request and Response, with an in-process fetch every surface can call",
   "license": "MIT",
   "repository": {
