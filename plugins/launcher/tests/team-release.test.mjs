@@ -61,7 +61,7 @@ test('adds the workflow, saves the changes, releases the next free version, push
   const { now, wait } = clock()
   const result = await teamRelease({ folder, git, npmExec, api: fakeApi([undefined, { status: 'in_progress' }, { status: 'completed', conclusion: 'success' }]), say: line => lines.push(line), wait, now })
   assert.deepEqual(result, { ok: true, url: 'https://github.com/ana/notes/releases/tag/v1.0.1' })
-  assert.deepEqual(npm, ['exec --yes acrylblends@latest -- release-workflow'])
+  assert.deepEqual(npm, ['exec --yes @acryldev/blends@latest -- release-workflow'])
   assert.equal(JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')).version, '1.0.1', 'v1.0.0 was released already')
   const order = calls.filter(call => /^(add|commit|tag v|push)/u.test(call.replace(/^user\.\S+ /gu, '')))
   assert.deepEqual(order.map(call => call.replace(/user\.\S+ /gu, '')), [

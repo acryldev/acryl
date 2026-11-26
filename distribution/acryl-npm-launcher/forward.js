@@ -14,8 +14,8 @@ import { fileURLToPath } from 'node:url'
 export const FORWARDED = ['new', 'make', 'create', 'plugin', 'plugins', 'blends', 'update']
 
 /** The package `acryl new` runs. `ACRYL_CREATE` pins another (a version, a tarball) without a new flag. */
-export const CREATE_SPEC = 'create-acrylblends@latest'
-export const BLENDS_SPEC = 'acrylblends'
+export const CREATE_SPEC = '@acryldev/create-blends@latest'
+export const BLENDS_SPEC = '@acryldev/blends'
 
 /**
  * The one install every place that installs an app runs (@acryldev/launcher app-install.js: it starts from the shared Program when one fits).

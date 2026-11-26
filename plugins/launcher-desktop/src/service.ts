@@ -60,9 +60,9 @@ const PACKED = /pack-blank-mac: done: (.+) \((\d+) MB\)/u
 /** What a person calls the installer this computer's OS gets. */
 const INSTALLER_KIND: Readonly<Record<string, string>> = { darwin: 'a DMG (macOS)', win32: 'an installer (Windows .exe)', linux: 'a Debian package (Linux .deb)' }
 /** The package `acryl new` runs (`distribution/acryl-npm-launcher/forward.js` CREATE_SPEC). */
-const CREATE_SPEC = 'create-acrylblends@latest'
+const CREATE_SPEC = '@acryldev/create-blends@latest'
 /** The command that updates an app from its Blend's newer release (`acrylblends update`, in the acrylblends package). */
-const UPDATE_SPEC = 'acrylblends@latest'
+const UPDATE_SPEC = '@acryldev/blends@latest'
 /** The app's own share command, from its folder (the `save` plugin of acrylblends). */
 const SHARE_COMMAND = join('plugins', 'save', 'share-cli.ts')
 /** ACRYL ADE: the Blend and the folder in the home that `acryl ade` makes and opens (`distribution/acryl-npm-launcher/managed.js` MANAGED.ade). */
@@ -455,7 +455,7 @@ export class LauncherService {
     const folder = join(request.where, request.name)
     if (this.#ports.exists(folder)) throw new LauncherRefusal(`there is already a folder named ${request.name} in ${request.where}`)
     this.#ports.makeFolder(request.where)
-    // What `acryl new` forwards to (the selector's `npm exec --yes create-acrylblends@latest -- <args>`), run directly so this screen does not depend on which
+    // What `acryl new` forwards to (the selector's `npm exec --yes @acryldev/create-blends@latest -- <args>`), run directly so this screen does not depend on which
     // `acryl` release is installed; the line shown is the one a person types.
     const source = request.blend === undefined ? [request.starter ?? ''] : ['--from', request.blend]
     // `--no-install`: a starter would install itself inside create-acrylblends; every app is installed by the one install here instead (#install), so
@@ -582,7 +582,7 @@ export class LauncherService {
     const entry = this.#entry(request.id)
     if (request.owner !== undefined && !ACCOUNT_NAME.test(request.owner)) throw new LauncherRefusal(`"${request.owner}" is not a GitHub account name`)
     if (!this.#ports.exists(join(entry.path, SHARE_COMMAND))) {
-      throw new LauncherRefusal(`This app was made before apps could share themselves. In ${entry.path} run "npx acrylblends@latest upgrade", then try again.`)
+      throw new LauncherRefusal(`This app was made before apps could share themselves. In ${entry.path} run "npx @acryldev/blends@latest upgrade", then try again.`)
     }
     // The person's choice is kept where the app's own share reads it, so the plan, the share and every later save agree.
     if (request.visibility !== undefined && confirm === undefined) {

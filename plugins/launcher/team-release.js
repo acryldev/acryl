@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 export const TEAM_RELEASE_CLI = fileURLToPath(new URL('./team-release-cli.mjs', import.meta.url))
 export const RELEASE_WORKFLOW_FILE = join('.github', 'workflows', 'release.yml')
 /** What runs `acrylblends release-workflow` (the published CLI: an app made on an older one does not carry the command). */
-export const RELEASE_WORKFLOW_SPEC = 'acrylblends@latest'
+export const RELEASE_WORKFLOW_SPEC = '@acryldev/blends@latest'
 /** Every line the script says to its caller starts with this; `release:` carries the link. */
 export const SAY = 'acryl-team:'
 /** git through gh's credential helper for github.com only (@acryldev/app-persistence GITHUB_VIA_GH). */

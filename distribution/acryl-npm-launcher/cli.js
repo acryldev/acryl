@@ -22,7 +22,7 @@ const selectorVersion = require('./package.json').version
 const runtimeVersion = require('./package.json').acrylRuntime ?? selectorVersion
 const args = process.argv.slice(2)
 // `npx --package=<spec> acryl` leaves the package list in the environment, and every `npm exec <package>` acryl starts (create-acrylblends, acrylblends)
-// would read it and run its argument as a command instead ("create-acrylblends@latest: command not found"). It names this package, never theirs.
+// would read it and run its argument as a command instead ("@acryldev/create-blends@latest: command not found"). It names this package, never theirs.
 delete process.env.npm_config_package
 
 function run({ command, args: commandArgs }) {

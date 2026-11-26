@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import type { SelfView } from './contract.ts'
 
 /** The command that updates an app from its Blend's newer release (as the service's `update`). */
-export const SELF_UPDATE_SPEC = 'acrylblends@latest'
+export const SELF_UPDATE_SPEC = '@acryldev/blends@latest'
 
 export interface SelfFiles {
   readonly read: (path: string) => string | undefined
@@ -74,7 +74,7 @@ export function selfView(copy: SelfCopy, latest: string | undefined, files: Self
 
 /**
  * The command that updates the copy, detached (its output goes to a file, so it outlives the service and this app's reload): node runs
- * `npm exec acrylblends@latest -- update` in the copy and writes its exit code to the end file. Records the start first.
+ * `npm exec @acryldev/blends@latest -- update` in the copy and writes its exit code to the end file. Records the start first.
  */
 export function selfUpdateCommand(copy: SelfCopy, to: string, files: SelfFiles & { makeFolder: (path: string) => void }, home: string, now: number): { program: string, args: string[], cwd: string, log: string } {
   const at = paths(home)

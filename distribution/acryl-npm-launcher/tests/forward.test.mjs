@@ -74,9 +74,9 @@ test('the npm that started acryl runs it, with no shell; on Windows the npm CLI 
   assert.equal(npmExec({ env: { npm_execpath: '/p/pnpm.cjs' }, platform: 'linux', execPath }, 'x', []).command, 'npm')
 })
 
-test('acryl blends and acryl update run the acrylblends command', () => {
-  assert.deepEqual(forwardCommand(['blends', 'add', 'kv'], base).args, ['exec', '--yes', 'acrylblends', '--', 'add', 'kv'])
-  assert.deepEqual(forwardCommand(['update', '--dry-run'], base).args, ['exec', '--yes', 'acrylblends', '--', 'upgrade', '--dry-run'])
+test('acryl blends and acryl update run the framework command (@acryldev/blends)', () => {
+  assert.deepEqual(forwardCommand(['blends', 'add', 'kv'], base).args, ['exec', '--yes', '@acryldev/blends', '--', 'add', 'kv'])
+  assert.deepEqual(forwardCommand(['update', '--dry-run'], base).args, ['exec', '--yes', '@acryldev/blends', '--', 'upgrade', '--dry-run'])
 })
 
 test('acryl plugin runs the door of the app this directory is in, from the app folder, whichever folder inside it', () => {

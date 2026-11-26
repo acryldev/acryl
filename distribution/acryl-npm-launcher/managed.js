@@ -9,7 +9,7 @@ import { CREATE_SPEC, INSTALL_CLI, npmCommand, npmExec } from './forward.js'
 export { INSTALL_CLI }
 
 /** What updates a Blend copy from its newer release (the acrylblends command; the Control Center window runs the same). */
-export const UPDATE_SPEC = 'acrylblends@latest'
+export const UPDATE_SPEC = '@acryldev/blends@latest'
 
 /** The apps acryl keeps in its own home: registry id, folder under ~/.acryl, name a person reads. */
 export const MANAGED = Object.freeze({

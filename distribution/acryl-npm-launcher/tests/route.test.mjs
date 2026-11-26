@@ -79,7 +79,7 @@ test('one Control Center copy in the ACRYL home: made once, then updated to its 
   const later = managedSteps(MANAGED.launcher, 'gui', { home: '/h/.acryl', context, exists: made, update: false })
   assert.deepEqual(later.map(step => [step.args.join(' '), step.cwd]), [['run desktop', join('/h/.acryl', 'control-center')]])
   const updated = managedSteps(MANAGED.launcher, 'web', { home: '/h/.acryl', context, exists: made })
-  assert.deepEqual(updated.map(step => step.args.join(' ')), ['exec --yes acrylblends@latest -- update', 'run dev'])
+  assert.deepEqual(updated.map(step => step.args.join(' ')), ['exec --yes @acryldev/blends@latest -- update', 'run dev'])
   assert.equal(updated[0].optional, true)
   assert.equal(updated[0].cwd, join('/h/.acryl', 'control-center'))
 })

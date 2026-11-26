@@ -59,7 +59,7 @@ const requestArgs = (request: AppShareRequest): string[] => [
 export function appShareCommand(root: string, env: NodeJS.ProcessEnv = process.env, run: Run = runCommand(root, env)): AppSharePort {
   const ask = async (args: readonly string[]): Promise<Record<string, unknown>> => {
     if (!existsSync(join(root, SHARE_COMMAND))) {
-      throw new AppShareRefused('This app was made before apps could share themselves. Update it (npx acrylblends@latest update), then try again.')
+      throw new AppShareRefused('This app was made before apps could share themselves. Update it (npx @acryldev/blends@latest update), then try again.')
     }
     const result = await run(['--json', ...args])
     const answer = lastJson(result.stdout)

@@ -79,7 +79,7 @@ describe('selfView', () => {
       return readFileSync(join(home, 'logs', 'control-center-update.end'), 'utf8')
     }
     expect(run()).toBe('0')
-    expect(readFileSync(join(root, 'asked'), 'utf8').trim()).toMatch(/control-center exec --yes acrylblends@latest -- update$/u)
+    expect(readFileSync(join(root, 'asked'), 'utf8').trim()).toMatch(/control-center exec --yes @acryldev\/blends@latest -- update$/u)
     writeFileSync(join(root, 'fail'), '')
     expect(run()).toBe('3')
   })
