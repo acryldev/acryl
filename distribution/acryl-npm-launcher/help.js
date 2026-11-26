@@ -7,6 +7,7 @@ ACRYL Control Center
   acryl --tui                 in this terminal: your apps, the Blends store, sharing, GitHub, the model key
   acryl --gui [--no-update]   in its own window (the installed app, else the Blend in ~/.acryl/control-center, brought to its newest release first)
   acryl --web [--no-update]   in your browser (the same Blend; the browser opens at its address)
+  acryl --gui --update        update ACRYL Control Center: bring its copy in ~/.acryl/control-center to the newest release, then open it
 
 Apps
   acryl apps                  list the apps on this computer
