@@ -290,11 +290,16 @@ async function attempt(name) {
           { env: clean },
         )
       : (() => {
-          run('npm', ['install', '@acryldev/create-blends@latest', '--no-audit', '--no-fund'], dir, {
-            env: clean,
-          })
+          run(
+            'npm',
+            ['install', '@acryldev/create-blends@latest', '--no-audit', '--no-fund'],
+            dir,
+            {
+              env: clean,
+            },
+          )
           return run(
-            join(dir, 'node_modules/.bin/create-acrylblends'),
+            join(dir, 'node_modules/.bin/create-blends'),
             ['app', '--template', values.setup, '-y'],
             dir,
             { env: clean },
